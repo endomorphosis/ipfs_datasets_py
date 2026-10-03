@@ -1,0 +1,5 @@
+{
+  "ipfs_datasets_py/duckdb_control/codebase_catalog.py": "c8d0ff5ce741b96742de7dd52e2d36d0fc3863b8348a25c20b57749e41834124",
+  "ipfs_datasets_py/logic/software_contracts/codebase_ir.py": "3493aa7739dab6a136539cfb555aeb21f9c53f5a365a512f524a47374a43643c",
+  "tests/unit/logic/software_contracts/test_codebase_manifest_memo.py": "272c99041c3acb6ea3b5989f18526bda9850bc2263821107a45cbad073bf7eb2"
+}

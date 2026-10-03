@@ -1,0 +1,78 @@
+{
+  "added_test_review": "External Path.read_bytes seam changes the semantic schema immediately after the initial producer fingerprint reads identity.py; comparator must raise at its final producer/registry fence. Native producer source is unchanged and the test does not weaken or replace the comparator.",
+  "distinct_tests": {
+    "appended_control": 1,
+    "appended_errors": 0,
+    "appended_failures": 0,
+    "appended_skipped": 0,
+    "suite": 113,
+    "suite_errors": 0,
+    "suite_failures": 0,
+    "suite_skipped": 0,
+    "total": 114
+  },
+  "limitations": [
+    "One native host run has only about37ms margin under90s; it does not establish robust timing or Docker success.",
+    "All127 decoded candidates remain fail_open_source_contract_unsupported; completion/proof/formalization/execution authority remain false.",
+    "This is a read-only code/test follow-up, not the closed package inventory audit."
+  ],
+  "mode": "read-only source and existing receipt/XML review; no tests or native calls rerun",
+  "native_04": {
+    "benchmark_result": false,
+    "coverage": {
+      "candidate_statuses": {
+        "fail_open_source_contract_unsupported": 127
+      },
+      "file_dispositions": {
+        "inventoried": 27,
+        "no_function_units": 4
+      },
+      "files": 31,
+      "functions": 944,
+      "selected_units": 128,
+      "unit_dispositions": {
+        "decoded_unverified_candidate": 127,
+        "deferred_gte_token_limit": 1,
+        "deferred_selection_budget": 737,
+        "unsupported_normalization": 79
+      }
+    },
+    "deadline_seconds": 90,
+    "inference_executed": true,
+    "manifest_memo": {
+      "bypasses": 0,
+      "entries": 1,
+      "evictions": 0,
+      "hits": 8,
+      "limit_bytes": 134217728,
+      "misses": 1,
+      "retained_bytes": 89231179
+    },
+    "model_loads": 1,
+    "native_margin_seconds": 0.0368826780031668,
+    "native_seconds": 89.96311732199683,
+    "outer_seconds_including_cleanup": 90.04130539299513,
+    "producer_before_after_equal": true,
+    "provider_calls": 0,
+    "receipt_sha256": "35dca822da2189ff2d7c2261ec35cb9485e4b3898730a91e44e7524e8ad40e14",
+    "source_files": 220,
+    "source_population": "original218-plus-native-instruction-and-public-smoke",
+    "status": "passed",
+    "training_steps": 0
+  },
+  "previous_113_test_snapshot_is_exact_prefix_ignoring_appended_separator_newlines": true,
+  "prior_review": "independent-review-equality.json",
+  "prior_review_sha256": "5c46f18376656226f8275ba7a84aa08e7a819087947c8ccd4c44cf35778d201c",
+  "producer_pins": {
+    "ipfs_datasets_py/duckdb_control/codebase_catalog.py": "91986bf58356b2917483884661237c49448c0f91f3dc40d4cd3d79fa4811afdf",
+    "ipfs_datasets_py/logic/software_contracts/codebase_ir.py": "2cc174e71f17a23daabd1c8855d96c621811addfe5152f386810ec23918b1463"
+  },
+  "reviewed_at_utc": "2026-10-03T08:21:54.487668+00:00",
+  "schema": "independent-review-followup@1",
+  "test_receipt_sha256": {
+    "comparison-race-06.xml": "52b231ce9d8a4c459be428b87b2a4cb8614e754b8a82d581f96af6a88a872384",
+    "targeted-05.xml": "797249b4776fafb37601084011ed9076cb43a02e92940002bb5e02d942ae086d"
+  },
+  "test_sha256": "c654f9abb7d793afed03084b214cec299aa6999cc7aa7b6b26d290aac988033b",
+  "verdict": "no blocker; appended drift control exercises final comparator producer fence"
+}

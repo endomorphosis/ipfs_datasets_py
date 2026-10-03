@@ -1,0 +1,84 @@
+{
+  "authority": {
+    "benchmark_result": false,
+    "proof_established": false,
+    "provider_calls": 0,
+    "source_semantics_verified": false,
+    "training_steps": 0
+  },
+  "environment": {
+    "MKL_NUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "TOKENIZERS_PARALLELISM": "false"
+  },
+  "full_diagnostic": {
+    "argument": "full-context-stages-03",
+    "script": "profile_full_context.py"
+  },
+  "full_native": [
+    {
+      "argument": "full-context-01",
+      "script": "run_full_context.py"
+    },
+    {
+      "argument": "full-context-02",
+      "script": "run_full_context.py"
+    },
+    {
+      "argument": "full-context-04",
+      "script": "run_full_context.py"
+    }
+  ],
+  "limits": {
+    "deadline_seconds": 90,
+    "duckdb_memory": "512MB",
+    "duckdb_threads": 1,
+    "memo_entries": 4,
+    "memo_retained_representation_bytes": 134217728,
+    "native_child_memory_mb": 4096,
+    "parent_cpu_slots": 3,
+    "parent_memory_mb": 6144
+  },
+  "schema": "source-combined-observation-commands@1",
+  "stage_diagnostics": [
+    {
+      "argument": "before-01",
+      "script": "profile_combined.py"
+    },
+    {
+      "argument": "after-01",
+      "script": "profile_combined.py"
+    },
+    {
+      "argument": "after-02",
+      "script": "profile_combined.py"
+    }
+  ],
+  "tests": {
+    "appended_control": {
+      "deselected": 38,
+      "passed": 1,
+      "path": "tests/unit/logic/software_contracts/test_codebase_manifest_memo.py",
+      "seconds": 0.2,
+      "selection": "native_comparison_refuses_producer_drift",
+      "source": "final-sources/tests/unit/logic/software_contracts/test_codebase_manifest_memo.py",
+      "xml": "tests/comparison-race-06.xml"
+    },
+    "final_suite": {
+      "memo_test_source": "targeted-05-sources/tests/unit/logic/software_contracts/test_codebase_manifest_memo.py",
+      "passed": 113,
+      "paths": [
+        "tests/unit/logic/software_contracts/test_codebase_manifest_memo.py",
+        "tests/integration/logic/software_contracts/test_codebase_current.py",
+        "tests/integration/logic/software_contracts/test_codebase_ir.py",
+        "tests/unit/duckdb_control/test_codebase_catalog.py",
+        "tests/unit/logic/software_contracts/test_codebase_ir_untrusted_previous.py"
+      ],
+      "seconds": 30.48,
+      "xml": "tests/targeted-05.xml"
+    }
+  }
+}

@@ -111,3 +111,15 @@ parameter-byte target; a larger already-valid row remains a singleton. Canonical
 projection validation, transaction hooks, source/head fences, rollback, and
 post-commit counters are unchanged. This qualifies bounded indexing and replay;
 it makes no claim about decoder accuracy, task success, or overall benchmark speed.
+
+The [combined preparation follow-up](evidence/source-combined-observation-performance-20261003/README.md)
+reuses exact canonical manifest reconstruction within a fixed four-entry,
+128 MiB retained-representation bound. Fresh CAS reads and all current-source,
+head, SQL, AST, model and producer checks still run. A guarded native comparison
+also avoids duplicate catalog serialization when exact typed equality is known;
+other representations keep the original comparison. The full local preparation
+completed at 89.963 seconds against the unchanged 90-second native deadline,
+while its outer wrapper returned at 90.041 seconds. That very small margin is
+not a Docker qualification or a general performance guarantee. Its 127 decoder
+candidates all remain unsupported for source-contract proof use. The package
+retains earlier failed attempts and 114 distinct final controls across two runs.

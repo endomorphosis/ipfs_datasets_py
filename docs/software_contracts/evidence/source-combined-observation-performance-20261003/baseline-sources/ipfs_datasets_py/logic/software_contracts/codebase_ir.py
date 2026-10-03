@@ -9,17 +9,11 @@ shared resource admission by default and never imports the repository it scans.
 from __future__ import annotations
 
 import json
-import hashlib
 import math
-import sys
-import threading
 import time
-from collections import OrderedDict
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, fields
-from enum import Enum
+from dataclasses import dataclass
 from pathlib import Path
-from types import FunctionType, MappingProxyType
 from typing import Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -199,266 +193,6 @@ class CodebaseIRManifest:
                      tuple(CodebaseUnit.from_dict(unit) for unit in value["units"]))
         if value["coverage"] != result.coverage:
             raise CodebaseIRError("coverage does not recompute from the complete inventory")
-        return result
-
-
-# Only the pure, detached reconstruction is retained. CAS reads, current heads,
-# source observations and active SQL facts are deliberately outside this memo.
-_MANIFEST_MEMO_ENTRIES = 4
-_MANIFEST_MEMO_BYTES = 128 * 1024 * 1024
-_MANIFEST_MEMO_LOCK = threading.RLock()
-_MANIFEST_MEMO: OrderedDict = OrderedDict()
-_MANIFEST_MEMO_SIZE = 0
-_MANIFEST_MEMO_STATS = dict(hits=0, misses=0, evictions=0, bypasses=0)
-
-
-def _manifest_modules():
-    from . import content
-    from .semantic_index import identity, models, snapshot
-    return (sys.modules[__name__], content, models, snapshot, identity)
-
-
-def _manifest_record_types():
-    from .semantic_index import models, snapshot
-    return (CodebaseIRManifest, CodebaseUnit, snapshot.RepositorySnapshot,
-            snapshot.SnapshotEntry, models.RepositoryState, models.SymbolRecord,
-            models.ArtifactRecord, models.DependencyEdge, models.SourceSpan)
-
-
-def _manifest_binding_value(value):
-    import dataclasses
-    if value is dataclasses.MISSING or value is dataclasses._HAS_DEFAULT_FACTORY:
-        return value
-    if isinstance(value, Enum):
-        return (type(value), value.value)
-    if value is None or type(value) in (str, int, float, bool, bytes):
-        return value
-    if type(value) in (tuple, list):
-        return tuple(_manifest_binding_value(item) for item in value)
-    if type(value) in (dict, MappingProxyType):
-        return tuple(sorted((key, _manifest_binding_value(item)) for key, item in value.items()))
-    if type(value) in (set, frozenset):
-        return frozenset(_manifest_binding_value(item) for item in value)
-    # Native class/function defaults are identity-bearing, never evaluated.
-    if isinstance(value, type) or type(value) is FunctionType:
-        return value
-    raise TypeError("non-native manifest producer default")
-
-
-def _manifest_function_binding(function):
-    return (function, function.__code__,
-            _manifest_binding_value(function.__defaults__),
-            _manifest_binding_value(function.__kwdefaults__))
-
-
-def _manifest_live_bindings():
-    result = []
-    modules = _manifest_modules()
-    native_modules = {module.__name__ for module in modules}
-    for module in modules:
-        for name, value in sorted(vars(module).items()):
-            if name.startswith("_MANIFEST_MEMO") or name == "_MANIFEST_NATIVE_BINDINGS":
-                continue
-            if type(value) is FunctionType:
-                result.append((module.__name__, name, _manifest_function_binding(value)))
-            elif isinstance(value, type) and value.__module__ in native_modules:
-                # from_dict also consults imported aliases in its own module.
-                result.append((module.__name__, name, value))
-            elif name.isupper() and type(value) in (str, int, float, bool, tuple, frozenset):
-                result.append((module.__name__, name, _manifest_binding_value(value)))
-    for cls in _manifest_record_types():
-        result.append((cls, tuple(field.name for field in fields(cls))))
-        for name, value in sorted(vars(cls).items()):
-            if isinstance(value, (classmethod, staticmethod)):
-                value = value.__func__
-            if isinstance(value, property):
-                result.append((cls, name, tuple(None if fn is None else _manifest_function_binding(fn)
-                                               for fn in (value.fget, value.fset, value.fdel))))
-            elif type(value) is FunctionType:
-                result.append((cls, name, _manifest_function_binding(value)))
-            elif name.isupper() and type(value) in (str, int, tuple, frozenset):
-                result.append((cls, name, _manifest_binding_value(value)))
-    return tuple(result)
-
-
-def _manifest_producer_key():
-    try:
-        if _manifest_live_bindings() != _MANIFEST_NATIVE_BINDINGS:
-            return None
-        return tuple((module.__name__, hashlib.sha256(Path(module.__file__).read_bytes()).digest())
-                     for module in _manifest_modules())
-    except (AttributeError, OSError, TypeError, ValueError):
-        return None
-
-
-def _manifest_clone(value):
-    """Clone exact native immutable records without rerunning their validation.
-
-    The privately retained graph is never returned, including on the miss path.
-    This also prevents object.__setattr__ on a caller's frozen record from
-    poisoning a later lookup. Public to_dict still returns detached lists/maps.
-    """
-    if value is None or type(value) in (str, int, float, bool, bytes):
-        return value
-    if type(value) is tuple:
-        return tuple(_manifest_clone(item) for item in value)
-    if type(value) is MappingProxyType:
-        return MappingProxyType({key: _manifest_clone(item) for key, item in value.items()})
-    if type(value) in _MANIFEST_NATIVE_RECORD_TYPES:
-        result = object.__new__(type(value))
-        for field in fields(value):
-            item = getattr(value, field.name)
-            shared_json = field.name in dict(_MANIFEST_NATIVE_JSON_FIELDS).get(type(value), ())
-            object.__setattr__(result, field.name, item if shared_json else _manifest_clone(item))
-        return result
-    raise TypeError("manifest memo requires exact immutable native records")
-
-
-def _manifest_retained_bytes(key, manifest):
-    # Account for the owned graph and serialized key, including proxy backing
-    # maps. This bounds retained representation, not allocator/peak process RSS.
-    raw, producer, registration = key
-    pending = [raw, producer, manifest]; seen = set()
-    # Registry registrations are existing library-owned immutable objects;
-    # account for the newly retained registration tuple, not their shared graph.
-    total = sys.getsizeof(key) + sys.getsizeof(registration) + sys.getsizeof((manifest, "", 0)) + 256
-    while pending:
-        value = pending.pop()
-        if id(value) in seen:
-            continue
-        seen.add(id(value)); total += sys.getsizeof(value)
-        if type(value) is tuple:
-            pending.extend(value)
-        elif type(value) is MappingProxyType:
-            total += 2 * sys.getsizeof(dict(value))
-            pending.extend(value.keys()); pending.extend(value.values())
-        elif type(value) in _MANIFEST_NATIVE_RECORD_TYPES:
-            for name in dict(_MANIFEST_NATIVE_JSON_FIELDS).get(type(value), ()):
-                _manifest_require_frozen_json(getattr(value, name))
-            pending.extend(getattr(value, field.name) for field in fields(value))
-        elif value is not None and type(value) not in (str, int, float, bool, bytes):
-            raise TypeError("non-native manifest retention")
-    return total
-
-
-def _manifest_require_frozen_json(value):
-    """Shared metadata contains no record objects or mutable containers."""
-    if value is None or type(value) in (str, int, float, bool):
-        return
-    if type(value) is tuple:
-        for item in value:
-            _manifest_require_frozen_json(item)
-        return
-    if type(value) is MappingProxyType and all(type(key) is str for key in value):
-        for item in value.values():
-            _manifest_require_frozen_json(item)
-        return
-    raise TypeError("manifest memo metadata must be recursively immutable JSON")
-
-
-def _manifest_native_equal(left, right):
-    """Fast affirmative equality only; other cases retain serialized comparison.
-
-    Both graphs are checked at the caller's existing post-read boundary. Exact
-    typed comparison omits only snapshot acquisition bytes/witnesses, which
-    their durable serialization also omits. No caller candidate is cached.
-    """
-    from . import content
-    producer = _manifest_producer_key()
-    registration = content._memo_registration_key()
-    if (producer is None or registration is None
-            or type(left) is not CodebaseIRManifest or type(right) is not CodebaseIRManifest):
-        return False
-    pending = [(left, right)]; seen = set()
-    while pending:
-        a, b = pending.pop()
-        if type(a) is not type(b):
-            return False
-        pair = (id(a), id(b))
-        if pair in seen:
-            continue
-        seen.add(pair)
-        if a is None or type(a) in (str, int, bool, bytes):
-            if a != b:
-                return False
-            continue
-        if type(a) is tuple:
-            if len(a) != len(b):
-                return False
-            pending.extend(zip(a, b))
-        elif type(a) is MappingProxyType:
-            if (not all(type(key) is str for key in (*a, *b))
-                    or a.keys() != b.keys()):
-                return False
-            pending.extend((a[key], b[key]) for key in a)
-        elif any(type(a) is cls for cls in _MANIFEST_NATIVE_RECORD_TYPES):
-            pending.extend((getattr(a, field.name), getattr(b, field.name)) for field in fields(a)
-                           if not (type(a) is _MANIFEST_NATIVE_RECORD_TYPES[3]
-                                   and field.name in {"captured_bytes", "witness"}))
-        else:
-            return False
-    if (producer != _manifest_producer_key()
-            or registration != content._memo_registration_key()):
-        raise CodebaseIRError("manifest comparison producer or registry changed")
-    return True
-
-
-def _reconstruct_manifest(value, expected_cid):
-    """Reconstruct exact bytes; callers must freshly read/verify their CAS.
-
-    Unknown/custom producers and registry layouts keep the original uncached
-    behavior. A supported producer/registry changing during a call is refused.
-    """
-    from . import content
-    global _MANIFEST_MEMO_SIZE
-    producer = _manifest_producer_key()
-    registration = content._memo_registration_key()
-    if producer is None or registration is None:
-        _MANIFEST_MEMO_STATS["bypasses"] += 1
-        result = CodebaseIRManifest.from_dict(value)
-        if result.cid != expected_cid:
-            raise CodebaseIRError("manifest identity does not verify")
-        return result
-    raw = content.canonical_dag_json_bytes(value)
-    key = (raw, producer, registration)
-
-    def unchanged():
-        if _manifest_producer_key() != producer or content._memo_registration_key() != registration:
-            raise CodebaseIRError("manifest reconstruction producer or registry changed")
-
-    with _MANIFEST_MEMO_LOCK:
-        cached = _MANIFEST_MEMO.get(key)
-        if cached is not None:
-            manifest, identity, size = cached
-            if identity != expected_cid:
-                raise CodebaseIRError("manifest identity does not verify")
-            result = _manifest_clone(manifest)
-            unchanged()
-            _MANIFEST_MEMO.move_to_end(key)
-            _MANIFEST_MEMO_STATS["hits"] += 1
-            return result
-    # Decode detached canonical bytes, never a caller-owned mutable structure.
-    manifest = CodebaseIRManifest.from_dict(json.loads(raw))
-    identity = manifest.cid
-    if identity != expected_cid:
-        raise CodebaseIRError("manifest identity does not verify")
-    unchanged()
-    size = _manifest_retained_bytes(key, manifest)
-    result = _manifest_clone(manifest)
-    with _MANIFEST_MEMO_LOCK:
-        unchanged()
-        _MANIFEST_MEMO_STATS["misses"] += 1
-        if size <= _MANIFEST_MEMO_BYTES:
-            previous = _MANIFEST_MEMO.pop(key, None)
-            if previous is not None:
-                _MANIFEST_MEMO_SIZE -= previous[2]
-            while _MANIFEST_MEMO and (len(_MANIFEST_MEMO) >= _MANIFEST_MEMO_ENTRIES
-                                     or _MANIFEST_MEMO_SIZE + size > _MANIFEST_MEMO_BYTES):
-                _, previous = _MANIFEST_MEMO.popitem(last=False)
-                _MANIFEST_MEMO_SIZE -= previous[2]
-                _MANIFEST_MEMO_STATS["evictions"] += 1
-            _MANIFEST_MEMO[key] = (manifest, identity, size)
-            _MANIFEST_MEMO_SIZE += size
         return result
 
 
@@ -757,7 +491,10 @@ class RepositoryCodebaseIndex:
         if self.artifacts is None:
             raise CodebaseIRError("loading a manifest requires an immutable artifact store")
         value = self.artifacts.get(manifest_cid, expected_schema=CODEBASE_IR_SCHEMA)
-        return _reconstruct_manifest(value, manifest_cid)
+        manifest = CodebaseIRManifest.from_dict(value)
+        if manifest.cid != manifest_cid:
+            raise CodebaseIRError("manifest identity does not verify")
+        return manifest
 
     def lookup(self, manifest: CodebaseIRManifest, path: str) -> ASTCatalogProjection | None:
         """Return an exact active AST projection; missing expected evidence fails."""
@@ -794,17 +531,6 @@ class RepositoryCodebaseIndex:
                 or provenance.repository_tree_cid != manifest.snapshot.snapshot_cid):
             raise CodebaseIRError("AST artifact does not match the manifest")
         return record
-
-
-# Capture native callable/default/schema identities before the first memo call;
-# import stays free of filesystem reads. Live producer bytes are read on use.
-_MANIFEST_NATIVE_RECORD_TYPES = _manifest_record_types()
-_MANIFEST_NATIVE_JSON_FIELDS = (
-    (_MANIFEST_NATIVE_RECORD_TYPES[5], ("metadata", "signature", "annotations", "normalized_ast")),
-    (_MANIFEST_NATIVE_RECORD_TYPES[6], ("metadata",)),
-    (_MANIFEST_NATIVE_RECORD_TYPES[7], ("metadata",)),
-)
-_MANIFEST_NATIVE_BINDINGS = _manifest_live_bindings()
 
 
 __all__ = ["CODEBASE_IR_SCHEMA", "CodebaseIRError", "StaleCodebaseError", "CodebaseScanLimits",

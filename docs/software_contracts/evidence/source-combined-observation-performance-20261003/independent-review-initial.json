@@ -1,0 +1,34 @@
+{
+  "blocking_findings": [
+    {
+      "finding": "Module class aliases used by constructors are not included in live binding fingerprint. Replacing codebase_ir.RepositorySnapshot or RepositoryState can retain the same key despite changed native constructor semantics.",
+      "id": "class-alias-binding",
+      "requested_control": "Guard module native class and enum aliases; warm and initially-cold alias replacement tests."
+    },
+    {
+      "finding": "The fingerprint excludes all _manifest_ helpers. Replacing _manifest_clone can return the private cached graph or changed output without unchanged() rejecting it.",
+      "id": "clone-helper-binding",
+      "requested_control": "Pin clone/retention/helper function code/defaults and direct clone dependencies including imported fields; move drift injection to a lower-level external operation."
+    }
+  ],
+  "generation_note": "Active full canary is using this pre-fix frozen generation. Do not modify sources during it; preserve later guard-fix qualification separately.",
+  "measurement_scope": "Reported same-script single-run timing is not independently rerun by reviewer; not whole-Docker or inference qualification.",
+  "mode": "read-only source review; no source edits, tests or native inference run by reviewer",
+  "reviewed_at_utc": "2026-10-03T07:59:39.974164+00:00",
+  "reviewed_invariants": [
+    "Every index load still freshly calls ImmutableCAS.get with schema and exact current bytes/CID verification.",
+    "Catalog sealed candidate retains bounded _read_artifact before reconstruction helper.",
+    "Cached key contains canonical bytes, live producer identity and current registry; expected CID checked on hit.",
+    "Current head, live source snapshot, SQL and AST comparisons remain uncached.",
+    "Native recursive clone detaches all nested record instances and MappingProxy backings on miss and hit; public to_dict remains detached.",
+    "LRU insertion/replacement/eviction byte accounting is protected by RLock; concurrent misses do not share returned graphs.",
+    "Fixed 4-entry/128MiB bound accounts retained serialized key and typed representation; oversized valid objects return uncached."
+  ],
+  "schema": "independent-source-review@1",
+  "scope": {
+    "ipfs_datasets_py/duckdb_control/codebase_catalog.py": "c8d0ff5ce741b96742de7dd52e2d36d0fc3863b8348a25c20b57749e41834124",
+    "ipfs_datasets_py/logic/software_contracts/codebase_ir.py": "3493aa7739dab6a136539cfb555aeb21f9c53f5a365a512f524a47374a43643c",
+    "tests/unit/logic/software_contracts/test_codebase_manifest_memo.py": "272c99041c3acb6ea3b5989f18526bda9850bc2263821107a45cbad073bf7eb2"
+  },
+  "verdict": "changes requested before final qualification"
+}

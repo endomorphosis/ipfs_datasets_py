@@ -1,0 +1,21 @@
+{
+  "diagnostic": true,
+  "manifest_cid": "baguqeerasfveol3cwfifxukmcdqvzj4lddij6y7bn7ytzc5plrnudginyhfa",
+  "neural_inference": false,
+  "provider_calls": 0,
+  "rounds": [
+    {
+      "canonical_manifest_identity_seconds": 1.959001832001377,
+      "fresh_cas_get_seconds": 0.47898008199990727,
+      "from_dict_seconds": 6.486526450000383
+    },
+    {
+      "canonical_manifest_identity_seconds": 1.9751556680021167,
+      "fresh_cas_get_seconds": 0.48012330399797065,
+      "from_dict_seconds": 3.5549629050001386
+    }
+  ],
+  "schema": "manifest-load-components@1",
+  "script_sha256": "7af8f73fa5be831bc6e072aabb893372f5c33b79b4618f9bc9aa78597e366e5a",
+  "training_steps": 0
+}

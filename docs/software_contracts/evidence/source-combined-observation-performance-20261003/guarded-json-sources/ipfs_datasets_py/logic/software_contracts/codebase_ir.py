@@ -356,53 +356,6 @@ def _manifest_require_frozen_json(value):
     raise TypeError("manifest memo metadata must be recursively immutable JSON")
 
 
-def _manifest_native_equal(left, right):
-    """Fast affirmative equality only; other cases retain serialized comparison.
-
-    Both graphs are checked at the caller's existing post-read boundary. Exact
-    typed comparison omits only snapshot acquisition bytes/witnesses, which
-    their durable serialization also omits. No caller candidate is cached.
-    """
-    from . import content
-    producer = _manifest_producer_key()
-    registration = content._memo_registration_key()
-    if (producer is None or registration is None
-            or type(left) is not CodebaseIRManifest or type(right) is not CodebaseIRManifest):
-        return False
-    pending = [(left, right)]; seen = set()
-    while pending:
-        a, b = pending.pop()
-        if type(a) is not type(b):
-            return False
-        pair = (id(a), id(b))
-        if pair in seen:
-            continue
-        seen.add(pair)
-        if a is None or type(a) in (str, int, bool, bytes):
-            if a != b:
-                return False
-            continue
-        if type(a) is tuple:
-            if len(a) != len(b):
-                return False
-            pending.extend(zip(a, b))
-        elif type(a) is MappingProxyType:
-            if (not all(type(key) is str for key in (*a, *b))
-                    or a.keys() != b.keys()):
-                return False
-            pending.extend((a[key], b[key]) for key in a)
-        elif any(type(a) is cls for cls in _MANIFEST_NATIVE_RECORD_TYPES):
-            pending.extend((getattr(a, field.name), getattr(b, field.name)) for field in fields(a)
-                           if not (type(a) is _MANIFEST_NATIVE_RECORD_TYPES[3]
-                                   and field.name in {"captured_bytes", "witness"}))
-        else:
-            return False
-    if (producer != _manifest_producer_key()
-            or registration != content._memo_registration_key()):
-        raise CodebaseIRError("manifest comparison producer or registry changed")
-    return True
-
-
 def _reconstruct_manifest(value, expected_cid):
     """Reconstruct exact bytes; callers must freshly read/verify their CAS.
 

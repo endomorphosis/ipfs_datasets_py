@@ -1,0 +1,117 @@
+{
+  "ast_load_total": 7.918509598021046,
+  "error": "codebase observation deadline exceeded",
+  "manifest_load_total": 7.84999254901777,
+  "manifest_memo": {
+    "bypasses": 0,
+    "entries": 1,
+    "evictions": 0,
+    "hits": 8,
+    "limit_bytes": 134217728,
+    "misses": 1,
+    "retained_bytes": 89231179
+  },
+  "primary_stages": [
+    {
+      "seconds": 15.996423119999235,
+      "stage": "CodebaseCatalog._validate_candidate",
+      "start_seconds": 27.64189645499573,
+      "status": "passed"
+    },
+    {
+      "seconds": 50.24728302400035,
+      "stage": "RepositoryCodebaseIndex.prepare_current",
+      "start_seconds": 0.5737025630005519,
+      "status": "passed"
+    },
+    {
+      "seconds": 5.5767707740014885,
+      "stage": "RepositoryCodebaseIndex.observe_current",
+      "start_seconds": 52.146708485997806,
+      "status": "passed"
+    },
+    {
+      "seconds": 1.6018363869952736,
+      "stage": "ipfs_datasets_py.logic.software_contracts.codebase_source_units_384._context",
+      "start_seconds": 57.7234994169994,
+      "status": "passed"
+    },
+    {
+      "seconds": 12.198493679999956,
+      "stage": "ipfs_datasets_py.logic.software_contracts.codebase_source_units_384._worker",
+      "start_seconds": 59.326527233999514,
+      "status": "passed"
+    },
+    {
+      "seconds": 5.511771628000133,
+      "stage": "RepositoryCodebaseIndex.observe_current",
+      "start_seconds": 71.55280237500119,
+      "status": "passed"
+    },
+    {
+      "seconds": 1.5595961599974544,
+      "stage": "ipfs_datasets_py.logic.software_contracts.codebase_source_units_384._context",
+      "start_seconds": 77.06460862299718,
+      "status": "passed"
+    },
+    {
+      "seconds": 5.194246119004674,
+      "stage": "RepositoryCodebaseIndex.observe_current",
+      "start_seconds": 78.76435641799617,
+      "status": "passed"
+    },
+    {
+      "seconds": 1.679265683000267,
+      "stage": "ipfs_datasets_py.logic.software_contracts.codebase_source_units_384._context",
+      "start_seconds": 83.96332724899548,
+      "status": "passed"
+    },
+    {
+      "seconds": 1.7749738909988082,
+      "stage": "ipfs_datasets_py.logic.software_contracts.codebase_source_units_384.load_source_unit_inference",
+      "start_seconds": 83.96332472100039,
+      "status": "passed"
+    },
+    {
+      "seconds": 4.394663563005452,
+      "stage": "RepositoryCodebaseIndex.observe_current",
+      "start_seconds": 85.73857061499439,
+      "status": "failed"
+    }
+  ],
+  "producer_after": {
+    "byte_reader": "a3b3943bacb0becc7789c86414adab9f92e6977021919fb3e84b5e3c2baba491",
+    "config": "4a42288ef9b889f9b3c9592631c20f86aadd4ba40d40884fdcaed9a8ac0fdc3b",
+    "consumer": "5e7da432a206b07900822044326dde963b5bf8cb9c1f39d313e1a6ceed56e66f",
+    "source_owners": {
+      "ipfs_datasets_py.duckdb_control.codebase_catalog": "c8d0ff5ce741b96742de7dd52e2d36d0fc3863b8348a25c20b57749e41834124",
+      "ipfs_datasets_py.logic.software_contracts.codebase_ir": "10d61b4f10c4f990edf7003d42eb51ed0a0792b5a40621ad27920a20ed132b46",
+      "ipfs_datasets_py.logic.software_contracts.content": "1e8c9bb9019bb593d6812ac6d1d1fa46e882be291d5f41bbb4894fb171056b43",
+      "ipfs_datasets_py.logic.software_contracts.duckdb_ast_store": "736c77ebdc66607ef234ab1aa2f4d84c4768811f11d568962a11692dfdcfad2f",
+      "ipfs_datasets_py.logic.software_contracts.duckdb_ingest": "cec3c3686d10dc5d9a0d5ccf853cd873284f3e4098e41ecdd6dc517a2b73c50e",
+      "ipfs_datasets_py.logic.software_contracts.python_frontend": "baf1c1ec5e6a5f83a0eb640b988850264d35311cdcedc87d22cff610d05308df",
+      "ipfs_datasets_py.logic.software_contracts.semantic_index.python_analysis": "5b95b014af601305eeb6d0d424d3baf3861e641a62ccfc892a5f3bcc5c9754b0",
+      "ipfs_datasets_py.logic.software_contracts.semantic_index.scanner": "002957f910a0bc1ff29de1ed72aca9c2464218ac5f65478be34a7c8f04e166a1",
+      "ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot": "5135e623a0a3f970252da63dce049be167e8bb73db5355f6c3116316b70aafa6"
+    }
+  },
+  "producer_before": {
+    "byte_reader": "a3b3943bacb0becc7789c86414adab9f92e6977021919fb3e84b5e3c2baba491",
+    "config": "4a42288ef9b889f9b3c9592631c20f86aadd4ba40d40884fdcaed9a8ac0fdc3b",
+    "consumer": "5e7da432a206b07900822044326dde963b5bf8cb9c1f39d313e1a6ceed56e66f",
+    "source_owners": {
+      "ipfs_datasets_py.duckdb_control.codebase_catalog": "c8d0ff5ce741b96742de7dd52e2d36d0fc3863b8348a25c20b57749e41834124",
+      "ipfs_datasets_py.logic.software_contracts.codebase_ir": "10d61b4f10c4f990edf7003d42eb51ed0a0792b5a40621ad27920a20ed132b46",
+      "ipfs_datasets_py.logic.software_contracts.content": "1e8c9bb9019bb593d6812ac6d1d1fa46e882be291d5f41bbb4894fb171056b43",
+      "ipfs_datasets_py.logic.software_contracts.duckdb_ast_store": "736c77ebdc66607ef234ab1aa2f4d84c4768811f11d568962a11692dfdcfad2f",
+      "ipfs_datasets_py.logic.software_contracts.duckdb_ingest": "cec3c3686d10dc5d9a0d5ccf853cd873284f3e4098e41ecdd6dc517a2b73c50e",
+      "ipfs_datasets_py.logic.software_contracts.python_frontend": "baf1c1ec5e6a5f83a0eb640b988850264d35311cdcedc87d22cff610d05308df",
+      "ipfs_datasets_py.logic.software_contracts.semantic_index.python_analysis": "5b95b014af601305eeb6d0d424d3baf3861e641a62ccfc892a5f3bcc5c9754b0",
+      "ipfs_datasets_py.logic.software_contracts.semantic_index.scanner": "002957f910a0bc1ff29de1ed72aca9c2464218ac5f65478be34a7c8f04e166a1",
+      "ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot": "5135e623a0a3f970252da63dce049be167e8bb73db5355f6c3116316b70aafa6"
+    }
+  },
+  "schema": "full-public-source384-native-context@1",
+  "seconds": 90.17887058199994,
+  "status": "failed"
+}

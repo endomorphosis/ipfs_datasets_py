@@ -18,9 +18,7 @@ from typing import Any
 
 from ipfs_datasets_py.logic.software_contracts.ast_ir import ASTRecord
 from ipfs_datasets_py.logic.software_contracts.cache import ImmutableCAS
-from ipfs_datasets_py.logic.software_contracts.codebase_ir import (
-    CodebaseIRManifest, _reconstruct_manifest, _manifest_native_equal,
-)
+from ipfs_datasets_py.logic.software_contracts.codebase_ir import CodebaseIRManifest, _reconstruct_manifest
 from ipfs_datasets_py.logic.software_contracts.content import (
     canonical_dag_json_bytes, cid_for_bytes, cid_for_structured, validate_cid,
 )
@@ -388,11 +386,7 @@ class CodebaseCatalog:
             raise CodebaseCatalogError("publication exceeds the entry bound")
         manifest_cid = manifest.cid
         sealed = self._read_artifact(manifest_cid, self.limits.max_manifest_bytes)
-        reconstructed = _reconstruct_manifest(sealed, manifest_cid)
-        # Preserve the post-read candidate fence and the original comparison
-        # for any custom/unknown representation or non-affirmative native result.
-        if (not _manifest_native_equal(reconstructed, manifest)
-                and reconstructed.to_dict() != manifest.to_dict()):
+        if _reconstruct_manifest(sealed, manifest_cid).to_dict() != manifest.to_dict():
             raise CodebaseCatalogError("manifest does not match its sealed canonical artifact")
         entries = {entry.source_key: entry for entry in manifest.snapshot.entries}
         by_path: dict[str, ASTCatalogProjection] = {}

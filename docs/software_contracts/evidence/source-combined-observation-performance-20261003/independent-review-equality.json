@@ -1,0 +1,49 @@
+{
+  "blocking_findings": [],
+  "mode": "read-only source review; reviewer did not run tests or native inference and did not edit producer/test sources",
+  "nonblocking_notes": [
+    "Clone docstring says entire private graph is never returned; precise wording should distinguish cloned record instances from shared immutable JSON subtrees.",
+    "Frozen JSON admission helper permits float although upstream canonical DAG-JSON rejects floats; native input path does not admit this case.",
+    "128MiB bounds accounted retained representation, not transient allocation or RSS.",
+    "Single-run timing diagnostics are not whole-Docker or benchmark success.",
+    "A dedicated comparison-time producer/registry race control was suggested; existing race tests cover the shared reconstruction helper."
+  ],
+  "prior_review": "independent-review-final.json",
+  "prior_review_sha256": "60fa2ea5567edcace8019d306ffabf81fba376d4e768b79dfdc61591e486ff6c",
+  "resolved_findings": [
+    "Native module record/enum class aliases are captured, including imported aliases used by constructors.",
+    "All function aliases are captured with live code/default identity, including cloning/accounting/JSON admission helpers and imported fields.",
+    "Cache native record and shareable JSON-field constants are included in the producer guard."
+  ],
+  "reviewed_at_utc": "2026-10-03T08:16:27.467432+00:00",
+  "reviewed_invariants": [
+    "Fresh bounded CAS reads and schema/body/CID validation precede every memo use in both index and catalog callers.",
+    "Expected manifest identity is verified on cache hit, and exact canonical serialized input is part of the key.",
+    "Source/module body digests and native callable/schema identities plus live CID registry are checked before and after supported reconstruction or hit cloning.",
+    "Unknown/custom producers preserve uncached constructor behavior and cannot hit a prior native result.",
+    "Every dataclass record is cloned on hit and miss; collection tuples containing records are recursively cloned.",
+    "Only named native JSON metadata/signature/annotations/normalized_ast fields are shared after one-time recursive exact-type admission excludes records and mutable containers.",
+    "Forced mutation of a returned record does not affect retained private records; to_dict returns detached mutable serialization.",
+    "Fixed 4-entry/128MiB retained representation cap, eviction and replacement bookkeeping remain locked; oversized valid manifests decode uncached.",
+    "Concurrent callers receive independent record objects; current head, source observation, active SQL and AST comparisons are never cached.",
+    "Catalog retains post-read comparison against the current candidate, including custom fallback output; regression covers mid-read mutation leaving no durable publication.",
+    "Affirmative post-CAS comparison recursively requires equal exact types; Python bool/int and float/int coercive equality cannot authorize the fast path.",
+    "MappingProxy keys must be exact strings before key-set equality; nested values and tuple elements are recursively compared without custom scalar or record __eq__ calls.",
+    "All native record fields are compared except explicitly reviewed SnapshotEntry captured_bytes/witness, matching durable serialization omissions; arbitrary dataclass Field.compare flags do not skip fields.",
+    "The comparator itself and native record methods join import-time/live producer guards; producer and CID registration identity are checked before and after affirmative comparison.",
+    "Every unsupported, non-native, custom-producer or different result takes the original reconstructed.to_dict versus current candidate.to_dict comparison after the CAS read.",
+    "New catalog mutation control covers both durable-field drift and bool-to-int metadata drift during fresh CAS read; no head or AST rows are published."
+  ],
+  "schema": "independent-source-review@1",
+  "scope": {
+    "ipfs_datasets_py/duckdb_control/codebase_catalog.py": "91986bf58356b2917483884661237c49448c0f91f3dc40d4cd3d79fa4811afdf",
+    "ipfs_datasets_py/logic/software_contracts/codebase_ir.py": "2cc174e71f17a23daabd1c8855d96c621811addfe5152f386810ec23918b1463",
+    "tests/unit/duckdb_control/test_codebase_catalog.py": "567eeab7afcd419da9a862f8a26a620b354d4d52513d2c5a1a4f8b9fd8136702",
+    "tests/unit/logic/software_contracts/test_codebase_manifest_memo.py": "d8c52ed5cb5b721be07035fcdcab744f8fb2e10319ac00153b01b34a182aa74c"
+  },
+  "test_evidence_scope": {
+    "native_full_context": "Next final native canary not yet launched at review time; no completed inference or deadline claim inferred.",
+    "owner_report": "113 targeted controls running at review time; not rerun by reviewer"
+  },
+  "verdict": "no blocking finding; guarded native equality suitable for final native qualification"
+}

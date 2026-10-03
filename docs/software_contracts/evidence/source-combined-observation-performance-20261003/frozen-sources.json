@@ -1,0 +1,9 @@
+{
+  "ipfs_datasets_py/duckdb_control/codebase_catalog.py": "91986bf58356b2917483884661237c49448c0f91f3dc40d4cd3d79fa4811afdf",
+  "ipfs_datasets_py/logic/software_contracts/codebase_ir.py": "2cc174e71f17a23daabd1c8855d96c621811addfe5152f386810ec23918b1463",
+  "tests/integration/logic/software_contracts/test_codebase_current.py": "096f53549d31499b51f1dbb001063c9b487ddaa5e250ebe67ed312d2ca53f931",
+  "tests/integration/logic/software_contracts/test_codebase_ir.py": "9ee6adceb92f2bfe8686f2f25a255a767166cb620bacd012fbbe16a1f863b081",
+  "tests/unit/duckdb_control/test_codebase_catalog.py": "567eeab7afcd419da9a862f8a26a620b354d4d52513d2c5a1a4f8b9fd8136702",
+  "tests/unit/logic/software_contracts/test_codebase_ir_untrusted_previous.py": "d154762ee1e681b8329805ad8d3d8dbf2e226cb2a9033a0571833a9008f5a07c",
+  "tests/unit/logic/software_contracts/test_codebase_manifest_memo.py": "c654f9abb7d793afed03084b214cec299aa6999cc7aa7b6b26d290aac988033b"
+}

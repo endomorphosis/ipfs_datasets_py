@@ -1,0 +1,16 @@
+{
+  "bytes": 14777823,
+  "json_value_types": {
+    "NoneType": 33757,
+    "bool": 9041,
+    "dict": 162867,
+    "int": 59086,
+    "list": 59149,
+    "str": 357194
+  },
+  "manifest_cid": "baguqeeraekf4vg44vec2hoxgtze22qm63r6le6pcz4xd6d4vawedexmgimea",
+  "runtime_fast_comparison_counter_available": false,
+  "schema": "manifest-json-types-readonly-audit@1",
+  "scope": "Stored canonical manifest JSON only; not a replay or proof of which runtime branch executed.",
+  "sha256": "228bca9b9ca905a3bae69e49ad419edc7cb279e2cf2e3f0f950588325d864308"
+}

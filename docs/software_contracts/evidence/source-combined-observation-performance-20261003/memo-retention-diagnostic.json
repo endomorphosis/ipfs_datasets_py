@@ -1,0 +1,1 @@
+{"producer_known": true, "seconds": 9.421455977000733, "stats": {"hits": 0, "misses": 1, "evictions": 0, "bypasses": 0}, "entries": 0, "retained_bytes": 0, "measured_representation_bytes": 89077615, "raw_bytes": 14711241, "limit_bytes": 67108864}

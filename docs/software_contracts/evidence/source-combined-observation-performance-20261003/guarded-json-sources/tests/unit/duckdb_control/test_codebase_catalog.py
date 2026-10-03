@@ -82,17 +82,9 @@ def test_exact_head_receipt_replay_and_aba_generation(fixture):
     assert connection.execute("SELECT count(*) FROM codebase_control.operations").fetchone()[0] == 3
 
 
-@pytest.mark.parametrize("mutation", ["durable_field", "metadata_scalar_type"])
-def test_warm_manifest_does_not_hide_candidate_mutation_during_cas_read(fixture, monkeypatch, mutation):
-    from types import MappingProxyType
+def test_warm_manifest_does_not_hide_candidate_mutation_during_cas_read(fixture, monkeypatch):
     catalog, connection, candidate, _, _ = fixture
     manifest, projections = candidate()
-    artifact = manifest.semantic_state.artifacts[0]
-    if mutation == "metadata_scalar_type":
-        artifact = replace(artifact, metadata={**artifact.metadata, "typed_probe": True})
-        manifest = replace(manifest, semantic_state=replace(manifest.semantic_state,
-            artifacts=(artifact, *manifest.semantic_state.artifacts[1:])))
-        catalog.artifacts.put(manifest.to_dict())
     cid = manifest.cid
     # Warm the same pure reconstruction used by publication, then mutate only
     # the caller's original frozen graph during its fresh artifact read.
@@ -104,10 +96,7 @@ def test_warm_manifest_does_not_hide_candidate_mutation_during_cas_read(fixture,
         result = original(identity, *args, **kwargs)
         if identity == cid and not changed:
             changed.append(True)
-            if mutation == "durable_field":
-                object.__setattr__(manifest.semantic_state, "extractor_version", "changed-during-read")
-            else:
-                object.__setattr__(artifact, "metadata", MappingProxyType({**artifact.metadata, "typed_probe": 1}))
+            object.__setattr__(manifest.semantic_state, "extractor_version", "changed-during-read")
         return result
     monkeypatch.setattr(catalog, "_read_artifact", read)
     with pytest.raises(CodebaseCatalogError, match="sealed canonical artifact"):

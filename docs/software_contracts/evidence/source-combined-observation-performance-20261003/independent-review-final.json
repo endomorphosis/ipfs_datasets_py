@@ -1,0 +1,43 @@
+{
+  "blocking_findings": [],
+  "mode": "read-only source review; reviewer did not run tests or native inference and did not edit producer/test sources",
+  "nonblocking_notes": [
+    "Clone docstring says entire private graph is never returned; precise wording should distinguish cloned record instances from shared immutable JSON subtrees.",
+    "Frozen JSON admission helper permits float although upstream canonical DAG-JSON rejects floats; native input path does not admit this case.",
+    "128MiB bounds accounted retained representation, not transient allocation or RSS.",
+    "Single-run timing diagnostics are not whole-Docker or benchmark success."
+  ],
+  "prior_review": "independent-review-initial.json",
+  "prior_review_sha256": "fd76ccab124830ed0267bb21545aa481042d59a21986cf850f2b536d4f05b1ac",
+  "resolved_findings": [
+    "Native module record/enum class aliases are captured, including imported aliases used by constructors.",
+    "All function aliases are captured with live code/default identity, including cloning/accounting/JSON admission helpers and imported fields.",
+    "Cache native record and shareable JSON-field constants are included in the producer guard."
+  ],
+  "reviewed_at_utc": "2026-10-03T08:05:42.515854+00:00",
+  "reviewed_invariants": [
+    "Fresh bounded CAS reads and schema/body/CID validation precede every memo use in both index and catalog callers.",
+    "Expected manifest identity is verified on cache hit, and exact canonical serialized input is part of the key.",
+    "Source/module body digests and native callable/schema identities plus live CID registry are checked before and after supported reconstruction or hit cloning.",
+    "Unknown/custom producers preserve uncached constructor behavior and cannot hit a prior native result.",
+    "Every dataclass record is cloned on hit and miss; collection tuples containing records are recursively cloned.",
+    "Only named native JSON metadata/signature/annotations/normalized_ast fields are shared after one-time recursive exact-type admission excludes records and mutable containers.",
+    "Forced mutation of a returned record does not affect retained private records; to_dict returns detached mutable serialization.",
+    "Fixed 4-entry/128MiB retained representation cap, eviction and replacement bookkeeping remain locked; oversized valid manifests decode uncached.",
+    "Concurrent callers receive independent record objects; current head, source observation, active SQL and AST comparisons are never cached.",
+    "Catalog retains post-read comparison against the current candidate, including custom fallback output; regression covers mid-read mutation leaving no durable publication."
+  ],
+  "schema": "independent-source-review@1",
+  "scope": {
+    "ipfs_datasets_py/duckdb_control/codebase_catalog.py": "c8d0ff5ce741b96742de7dd52e2d36d0fc3863b8348a25c20b57749e41834124",
+    "ipfs_datasets_py/logic/software_contracts/codebase_ir.py": "10d61b4f10c4f990edf7003d42eb51ed0a0792b5a40621ad27920a20ed132b46",
+    "tests/unit/duckdb_control/test_codebase_catalog.py": "affa59a7ca3e55c3dfed1e4a39987c16fb0b269dbdbd46b8b7322f4b93de1bd2",
+    "tests/unit/logic/software_contracts/test_codebase_manifest_memo.py": "00cb1b6b4ba00176913fd55c96de317d1a60eea28d474b26fdb948d193face9c"
+  },
+  "test_evidence_scope": {
+    "native_full_context": "Final full-context-02 running at review time; no completion or performance claim inferred.",
+    "owner_report": "108 targeted controls passed in 27.89 seconds: 34 memo and 74 neighboring/new catalog controls",
+    "reviewer_reran_tests": false
+  },
+  "verdict": "no blocking finding; suitable for final native qualification"
+}
