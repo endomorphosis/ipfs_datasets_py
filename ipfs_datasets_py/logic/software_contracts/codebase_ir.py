@@ -710,23 +710,28 @@ class RepositoryCodebaseIndex:
         receipts = []
 
         def publish(manifest: CodebaseIRManifest, publication: Any, checkpoint: Any) -> None:
-            # Reobserve after extraction/artifact work. This is a source fence,
-            # not a filesystem lock: consumers must also check when using it.
-            checkpoint()
             captured = manifest.snapshot
-            observed = snapshot_repository(
-                repository, repository_id=repository_id,
-                max_file_bytes=captured.max_file_bytes, max_entries=captured.max_entries,
-                exclusions=captured.exclusions,
-            )
-            checkpoint()
-            if observed.snapshot_cid != captured.snapshot_cid:
-                raise StaleCodebaseError("repository changed before head publication")
+
+            def source_fence() -> None:
+                # Reobserve after extraction and within the publication transaction.
+                # Consumers still need an observation when using the evidence.
+                checkpoint()
+                observed = snapshot_repository(
+                    repository, repository_id=repository_id,
+                    max_file_bytes=captured.max_file_bytes, max_entries=captured.max_entries,
+                    exclusions=captured.exclusions,
+                )
+                checkpoint()
+                if observed.snapshot_cid != captured.snapshot_cid:
+                    raise StaleCodebaseError("repository changed before head publication")
+
+            source_fence()
             # Only the durable owner may derive prior-generation invalidation.
             # The ingestor's optional process-local history is not authoritative.
             receipts.append(self.catalog.publish(
                 operation_id=operation_id, manifest=manifest, expected_head=expected_head,
                 projections=publication.projections, checkpoint=checkpoint,
+                publication_checkpoint=source_fence,
             ))
 
         self._prepare(

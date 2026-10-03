@@ -1,0 +1,82 @@
+{
+  "schema": "codebase-ir-currentness-handoff/v1",
+  "worktree": "/home/barberb/lift_coding/.worktrees/codebase-currentness-20261003",
+  "parent_commit": "7a40a59c80ae68bb64cad4f01622c4bf43c880b8",
+  "branch": "codex/codebase-currentness-20261003",
+  "receipt_links": [
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-currentness-qualification-20261003/acquisition.json",
+      "bytes": 3790,
+      "sha256": "5428371480cd22f6b527c3233fa5fc44de1f2c9cbea3dd2c83947d8190b9c1df"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-currentness-qualification-20261003/admission.json",
+      "bytes": 17896,
+      "sha256": "cf3fa4189defaa4dbc2f30aeec6fe4c2746a15c06dfaecff7caa8cf78887ec40"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-currentness-qualification-20261003/dependency-profile.json",
+      "bytes": 99183,
+      "sha256": "c7b4c8836d8c1649be15e0af3d0d35c28bacca6bf01905fcb6f42b9d2488dca9"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-currentness-qualification-20261003/launcher-v3.json",
+      "bytes": 1426,
+      "sha256": "e175a2ace084b45f7ffa9b28db46f69afa07bc32c6d7e185849fd470f7970cd6"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-currentness-qualification-20261003/corrections.json",
+      "bytes": 1482,
+      "sha256": "7f4cfa82acaf67a65ba8d708c425cdecb7b06f39607b9e70df1ba6bd75051e0e"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-currentness-qualification-20261003/gap-status.json",
+      "bytes": 9929,
+      "sha256": "a245a1fee12a82ec752fb9765d1bad8043c82b910018747cfd6bf23a4cb54c6e"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-currentness-qualification-20261003/preservation-start.json",
+      "bytes": 228460,
+      "sha256": "d5f41134649794991ad6e5ff71e6958fd709bc3a3dc1f13c935087b8ab784c6a"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-currentness-qualification-20261003/runs/currentness-v3/result.json",
+      "bytes": 52084,
+      "sha256": "dfad8cce004b7daf6e70b7eee528a330e83109d5e102eb351e435a06b9bfd6da"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-currentness-qualification-20261003/runs/currentness-v3/import-origins.json",
+      "bytes": 269788,
+      "sha256": "c7a24507db333b267c5942f53eadbd2e64d5bf8412b8411813182cb0c6161fe3"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-currentness-qualification-20261003/runs/currentness-v3/effect-observations.json",
+      "bytes": 1629141,
+      "sha256": "f9044e18a462f49e52b690de5ad5f6e53fee4564dde946657863d436148d345d"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-currentness-qualification-20261003/runs/currentness-v3/plugin-registries.json",
+      "bytes": 26412,
+      "sha256": "c3776127f2e38b898a21dffb9bf4f321e8ba378d5623a23b350539acde7e716a"
+    }
+  ],
+  "qualification_scope": "Selected source-bound structural currentness and native DuckDB publication; no proof/model/DuckLake/training/promotion authority",
+  "test_cases_passed": 56,
+  "new_cases": 8,
+  "deferred_cases": 2,
+  "independent_ir_families": [
+    "codebase_ir",
+    "security_ir",
+    "legal_ir",
+    "intent_ir"
+  ],
+  "dimension_sizes": [
+    8,
+    384,
+    768
+  ],
+  "independent_cells": 12,
+  "original_assets_preserved": 26,
+  "original_inventory_documents_preserved": 13,
+  "next_cohort": "Private normalized UNKNOWN proof discovery/catalog/projection/query cohort with exact source generations; then qualify bounded scan producer and semantic/native code correspondence before planner or model admission"
+}

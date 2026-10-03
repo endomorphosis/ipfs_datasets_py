@@ -734,13 +734,15 @@ def _working_entry(root: Path, raw: bytes, max_file_bytes: int, **evidence: Any)
         if nofollow is None: return _opaque(path, "symlink_or_nonregular", before.st_size, raw=raw, **evidence)
         fd = os.open(candidate, os.O_RDONLY | nofollow)
         with os.fdopen(fd, "rb") as handle:
-            if not stat.S_ISREG(os.fstat(handle.fileno()).st_mode): return _opaque(path, "symlink_or_nonregular", before.st_size, raw=raw, **evidence)
+            opened = os.fstat(handle.fileno())
+            if not stat.S_ISREG(opened.st_mode): return _opaque(path, "symlink_or_nonregular", before.st_size, raw=raw, **evidence)
             data = handle.read(max_file_bytes + 1)
+            read_end = os.fstat(handle.fileno())
         after = candidate.stat(follow_symlinks=False)
     except FileNotFoundError: return _opaque(path, "missing", raw=raw, **evidence)
     except OSError: return _opaque(path, "unreadable", raw=raw, **evidence)
     witness = (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns, before.st_ctime_ns)
-    if witness != (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns, after.st_ctime_ns): return _opaque(path, "raced", after.st_size, raw=raw, **evidence)
+    if any(witness != (item.st_dev, item.st_ino, item.st_size, item.st_mtime_ns, item.st_ctime_ns) for item in (opened, read_end, after)): return _opaque(path, "raced", after.st_size, raw=raw, **evidence)
     return _entry(path, raw, data, max_file_bytes, witness=witness, **evidence)
 
 def _tree_oids(root: Path, tree: str, exclusions: Sequence[bytes]) -> dict[bytes, str]:
@@ -854,8 +856,25 @@ def snapshot_repository(repository: str | os.PathLike[str], *, repository_id: st
     status = _status(git_root); index = _index_oids(git_root, raw_exclusions); head_oids = _tree_oids(git_root, tree, raw_exclusions)
     selected_status = {raw: code for raw, code in status.items() if not _ignored_raw(raw, raw_exclusions)}
     if not selected_status:
-        entries = tuple(_clean_entries(git_root, tree, max_file_bytes, max_entries, raw_exclusions)); mode = "git-clean"
+        clean_entries = tuple(_clean_entries(git_root, tree, max_file_bytes, max_entries, raw_exclusions))
+        verified_entries: list[SnapshotEntry] = []
+        # Git status may hide physical edits (index flags, filters or stat caches).
+        # Retain committed acquisition only after bounded physical byte checks.
+        for item in clean_entries:
+            if item.is_opaque:
+                verified_entries.append(item)
+                continue
+            working = _working_entry(git_root, bytes.fromhex(item.raw_path_hex or ""), max_file_bytes)
+            if working.is_opaque or working.source_cid != item.source_cid:
+                break
+            verified_entries.append(replace(item, witness=working.witness))
+        else:
+            entries = tuple(verified_entries); mode = "git-clean"
+        if len(verified_entries) != len(clean_entries):
+            mode = "git-working"
     else:
+        mode = "git-working"
+    if mode == "git-working":
         paths = _working_paths(git_root, raw_exclusions) | set(index) | set(head_oids) | set(selected_status)
         if len(paths) > max_entries: raise SnapshotError("selected entries exceed max_entries")
         entries_list: list[SnapshotEntry] = []
@@ -873,6 +892,15 @@ def snapshot_repository(repository: str | os.PathLike[str], *, repository_id: st
     if _status(git_root) != status or _index_oids(git_root, raw_exclusions) != index:
         raise GitSnapshotError("git working generation changed during snapshot")
     if _ascii_oid(_require_git(git_root, ("rev-parse", "--verify", "HEAD"), "HEAD fence"), "HEAD fence") != commit: raise GitSnapshotError("git generation changed during snapshot")
+    for item in entries:
+        if item.witness is None:
+            continue
+        try:
+            current = (git_root / os.fsdecode(bytes.fromhex(item.raw_path_hex or ""))).stat(follow_symlinks=False)
+        except OSError as exc:
+            raise GitSnapshotError("captured working file changed during snapshot") from exc
+        if not stat.S_ISREG(current.st_mode) or item.witness != (current.st_dev, current.st_ino, current.st_size, current.st_mtime_ns, current.st_ctime_ns):
+            raise GitSnapshotError("captured working file changed during snapshot")
     return RepositorySnapshot(identity, entries, mode, max_file_bytes, max_entries, tree, commit, rendered_exclusions)
 
 __all__ = ["DEFAULT_MAX_ENTRIES", "DEFAULT_MAX_FILE_BYTES", "GIT_COMMAND_TIMEOUT_SECONDS", "GitCommandTimeout", "GitSnapshotError", "GitUnbornRepository", "RepositorySnapshot", "SNAPSHOT_ENTRY_SCHEMA", "SNAPSHOT_SCHEMA", "SnapshotEntry", "SnapshotError", "repository_identity", "snapshot_repository"]
