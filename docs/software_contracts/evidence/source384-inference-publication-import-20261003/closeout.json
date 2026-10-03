@@ -1,0 +1,57 @@
+{
+  "actual_inference_scope": "authored local source fixture with real pinned checkpoint/GTE, import blocking and reopened registry replay",
+  "authority_or_decoder_accuracy_improvement_claimed": false,
+  "benchmark_score_claimed": false,
+  "change": "Move identical canonical JSON staging to already pinned shared Source384 owner; generation compatibility delegates, inference avoids training imports.",
+  "checkpoint_release_performed": false,
+  "consumer_test_scope": "A13 raw controls included; A source snapshots and full Docker follow-up are retained in their separate consumer evidence package",
+  "controls": {
+    "accelerate-04": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 13
+    },
+    "datasets-02": {
+      "errors": 20,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 43
+    },
+    "datasets-03": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 43
+    },
+    "focused-01": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 5
+    }
+  },
+  "distinct_final_tests": 56,
+  "docker_qualification_claimed": false,
+  "excluded": [
+    "model weights",
+    "databases",
+    "raw benchmark corpus",
+    "full fixture inference output"
+  ],
+  "final_datasets_sources": {
+    "ipfs_datasets_py/logic/software_contracts/codebase_model_generation.py": "a5801a7a0edef1e7b6b77e8e2fdc6108fd4c904e7276008abde3f708a3bdde17",
+    "ipfs_datasets_py/logic/software_contracts/codebase_source_384.py": "f00ff90983770e0e9ac32d8a16c9654059630cfb2880e00bf891902fafe4bb03",
+    "ipfs_datasets_py/logic/software_contracts/codebase_source_units_384.py": "1ab971c23d2b8982d4e1c8af74b24cc10da704ec29fa260777836d7be1db68f6",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_schema_lake.py": "f78a630fc808278b6c82eaa248fbaeefd7f60462db7e974fccdb634938ac9d55",
+    "tests/integration/logic/software_contracts/test_codebase_source384_publication.py": "281c3f50a91cbe089f892530fc62c7825c3b3093231bba5ce5be4cd34e02cfed",
+    "tests/integration/logic/software_contracts/test_codebase_source_units_384.py": "c506e9186640d2f78c192ecfc37125f7080b027ec3705deb29b09a49d2b88cbd",
+    "tests/integration/logic/software_contracts/test_codebase_training_generation.py": "d558934cc1d4bb2350bbed6ee6bcf09b7233e32ebaa2b2e77cbfefe50798a94e"
+  },
+  "model_weights_changed": false,
+  "prior_failure": "D02 selected Elan launcher and failed 20 fixture setups with zero checked properties; exact native Lake path fixes setup without relaxing assertions; test-owned replacement-registry teardown also corrected.",
+  "runtime_deadlines_changed": false,
+  "schema": "source384-inference-publication-import-closeout@1",
+  "training_regression_scope": "existing authored scalar generation tests include bounded fitting and native Lake property checks; inference itself never trains",
+  "training_workspace_guard_changed": false
+}

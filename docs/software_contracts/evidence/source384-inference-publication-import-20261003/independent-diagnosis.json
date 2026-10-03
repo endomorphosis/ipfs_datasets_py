@@ -1,0 +1,46 @@
+{
+  "at": "2026-10-03T11:05:46.292352+00:00",
+  "chain": [
+    "codebase_source_units_384.py:253 lazy imports codebase_model_generation._stage",
+    "codebase_model_generation.py:20 imports codebase_training_corpus",
+    "codebase_training_corpus.py:17 imports source_state_lake",
+    "source_state_lake.py:78 evaluates _IMPORTED = _pins()",
+    "source_state_lake.py:53 imports autoencoder_schema_lake while enumerating proof producers",
+    "autoencoder_schema_lake.py:444 pins imported modules; _workspace at75 requires ancestor .git plus tree_pin.py and refuses deployed D source layout"
+  ],
+  "diagnosis": "Generic inference artifact publication unnecessarily imports training and proof-workspace owners; canonical-workspace guard is correctly refusing its unavailable scope.",
+  "evidence_limits": {
+    "control_flow_inference": [
+      "Bounded _worker returned before this line, requiring returncode0, cleanup and no timeout/cancellation/resource failure.",
+      "Closed output validation, current source observation and context-key equality succeeded before the failing import."
+    ],
+    "not_established": [
+      "No staged source-unit inference artifact or committed IndexSourceUnitInference operation.",
+      "No complete A inference.json/native source384 receipt or final observation success.",
+      "No retained output enables independent model_load/count/coverage verification.",
+      "No completed Source384 qualification, proof authority or benchmark result."
+    ]
+  },
+  "failing_archive_sha256": "567a7357df9a6b25aa60855633c841b75ae619f41de934ea5bfe785277ebe788",
+  "failure_receipt_sha256": "632b6644adc171b64d581a52f6911dc9b5e86a2691aee161695434454d1b9af0",
+  "minimal_fix": "Move identical canonical JSON temporary-file staging to an already pinned shared inference/source384 owner, reuse it from source-unit inference and preserve generation._stage compatibility; do not relax workspace guard or change registry staging/operation fences.",
+  "observed_error": "SchemaLakeError: canonical workspace checkout is unavailable",
+  "proposed_controls": [
+    "Fresh relocated source tree without .git can execute inference publication without importing training/proof owners.",
+    "Same tree still refuses direct canonical proof-workspace checks.",
+    "Canonical staged bytes/digest, bounds, temporary cleanup and registry error forwarding remain.",
+    "Shared helper producer changes alter existing inference producer pin; no dependency omitted.",
+    "Actual frozen-checkpoint inference and full original Docker qualifier must be rerun under unchanged90-second deadline."
+  ],
+  "review_scope": "Read-only source/trace diagnosis; no source changes, model calls or runtime tests.",
+  "schema": "source384-publication-import-independent-diagnosis@1",
+  "source_pins": {
+    "ipfs_datasets_py/logic/formalization/autoencoder/source_state_lake.py": "c09ddd4ef5c98ff22b4b9b06751f689872abc741d9fcf23bf505577b141bc0a2",
+    "ipfs_datasets_py/logic/software_contracts/codebase_model_generation.py": "213d323cd8c906590b310b181d91698f2c8257940870a5b055595da696e56063",
+    "ipfs_datasets_py/logic/software_contracts/codebase_source_units_384.py": "4e43ba59fd26a11a6b371634918fbaae2a9899ba51da1ec53cf850d565d2e246",
+    "ipfs_datasets_py/logic/software_contracts/codebase_training_corpus.py": "f040f6a5e958daaaebe0a7833621ac93396d075f217e2656771d75ca28b61d20",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_schema_lake.py": "f78a630fc808278b6c82eaa248fbaeefd7f60462db7e974fccdb634938ac9d55"
+  },
+  "trace_path": "/home/barberb/lift_coding/artifacts/source384-docker-wheel-20261003/docker-01/source384-probe.stdout",
+  "trace_sha256": "ae6eb452a5b0bb9d50b0f73830efc918d68f15e8d324195674380ca9c082906c"
+}

@@ -49,7 +49,7 @@ def captured(tmp_path_factory):
     registry=AutoencoderRegistry(root/'models.duckdb',root/'models')
     value=SimpleNamespace(root=root,repo=repo,index=index,head=head,registry=registry,source=source)
     yield value
-    value.registry.close();cx.close()
+    registry.close();cx.close()
 
 
 def options(current):

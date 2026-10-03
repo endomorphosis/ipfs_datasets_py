@@ -13,6 +13,7 @@ import json
 from pathlib import Path
 import platform
 import sys
+import tempfile
 import time
 
 from . import codebase_source_384 as source384
@@ -87,7 +88,10 @@ def _weights(checkpoint):
 
 
 def _stage(registry, value):
-    return source384._stage(registry, value)
+    with tempfile.TemporaryDirectory(prefix="codebase-generation-") as directory:
+        path = Path(directory) / "artifact.json"
+        path.write_bytes(_raw(value))
+        return registry.stage_artifact(path)
 
 
 def _parent_exposure(parent_checkpoint, corpus):

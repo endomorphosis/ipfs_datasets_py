@@ -1,0 +1,53 @@
+{
+  "at": "2026-10-03T11:14:15.927419+00:00",
+  "blocking_findings": [],
+  "controls": {
+    "actual_checkpoint_inference_and_gte": true,
+    "canonical_bytes_and_temporary_cleanup": true,
+    "canonical_workspace_guard_unchanged_and_refusal_tested": true,
+    "cold_reopened_registry_operation_artifact_replay": true,
+    "final_datasets_suite": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 43
+    },
+    "five_focused_controls_are_subset_not_additional": true,
+    "forbidden_training_proof_imports_asserted_during_inference_publication_replay": true,
+    "generation_wrapper_delegation": true,
+    "xml_sha256": "874ab52dc9878c6cc1af1f2eb6a22e242468ad425c18888caf56cfab5f57e740"
+  },
+  "limitations": [
+    "Read-only source/tests/results review; no tests, training or inference run by this reviewer for this patch.",
+    "Host import blocking exercises the dependency boundary; it is not a complete relocated Docker qualification.",
+    "Accelerate13-consumer suite still running at review; original container full90-second phase must qualify independently.",
+    "Changing shared producer bytes intentionally changes provenance identities; historical receipts remain tied to previous owner generation."
+  ],
+  "original_failure_claim_limit": "Trace implies bounded worker returned and output/source/context checks passed, but no persisted inference artifact, model-load count or full qualification can be claimed for the failed wheel run.",
+  "retained_failed_setup": {
+    "cause": "ExplicitElan launcher refused by unchanged native Lake policy, not compiler syntax rejection.",
+    "corrected_config": "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+    "failure_audit_sha256": "0a0a279970b30f67244f18dd1744e6f80685e7fd0d2db6e7b1e3bc3f582bd582",
+    "fixture_errors": 20,
+    "passed": 23,
+    "suite": "datasets-02.xml"
+  },
+  "reviewed_changes": [
+    "Identical canonical JSON serialization, tempfile prefix, filename and native registry stage call extracted into shared source384 owner.",
+    "Generation._stage delegates for existing callers; source-unit inference uses already-imported shared owner without training/proof import.",
+    "Shared source file is already included in numerical/inference producer pin closure.",
+    "Source/model observations, cancellation/deadline checks, operation mutation and cold replay remain unchanged.",
+    "Test fixture now closes the replacement registry after reopen replay."
+  ],
+  "schema": "source384-publication-import-independent-review@1",
+  "source_and_test_pins": {
+    "ipfs_datasets_py/logic/software_contracts/codebase_model_generation.py": "a5801a7a0edef1e7b6b77e8e2fdc6108fd4c904e7276008abde3f708a3bdde17",
+    "ipfs_datasets_py/logic/software_contracts/codebase_source_384.py": "f00ff90983770e0e9ac32d8a16c9654059630cfb2880e00bf891902fafe4bb03",
+    "ipfs_datasets_py/logic/software_contracts/codebase_source_units_384.py": "1ab971c23d2b8982d4e1c8af74b24cc10da704ec29fa260777836d7be1db68f6",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_schema_lake.py": "f78a630fc808278b6c82eaa248fbaeefd7f60462db7e974fccdb634938ac9d55",
+    "tests/integration/logic/software_contracts/test_codebase_source384_publication.py": "281c3f50a91cbe089f892530fc62c7825c3b3093231bba5ce5be4cd34e02cfed",
+    "tests/integration/logic/software_contracts/test_codebase_source_units_384.py": "c506e9186640d2f78c192ecfc37125f7080b027ec3705deb29b09a49d2b88cbd",
+    "tests/integration/logic/software_contracts/test_codebase_training_generation.py": "d558934cc1d4bb2350bbed6ee6bcf09b7233e32ebaa2b2e77cbfefe50798a94e"
+  },
+  "verdict": "No blocker found in minimal shared staging extraction and its scoped regressions."
+}

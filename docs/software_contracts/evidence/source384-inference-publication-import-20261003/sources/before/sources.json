@@ -1,0 +1,8 @@
+{
+  "ipfs_datasets_py/logic/software_contracts/codebase_source_384.py": "1d9685ff53d0ba04dad4056fae11e0ddf8abf6bafe387bff428aa79e8e29b378",
+  "ipfs_datasets_py/logic/software_contracts/codebase_source_units_384.py": "4e43ba59fd26a11a6b371634918fbaae2a9899ba51da1ec53cf850d565d2e246",
+  "ipfs_datasets_py/logic/software_contracts/codebase_model_generation.py": "213d323cd8c906590b310b181d91698f2c8257940870a5b055595da696e56063",
+  "tests/integration/logic/software_contracts/test_codebase_source_units_384.py": "229f41a8af2800d1d19093c450cd5a67d5fc55882a4b65b35d614f9ae27faefb",
+  "tests/integration/logic/software_contracts/test_codebase_training_generation.py": "d558934cc1d4bb2350bbed6ee6bcf09b7233e32ebaa2b2e77cbfefe50798a94e",
+  "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_schema_lake.py": "f78a630fc808278b6c82eaa248fbaeefd7f60462db7e974fccdb634938ac9d55"
+}

@@ -1,0 +1,26 @@
+{
+  "accelerate_04": {
+    "datasets_source": "sources/final-sources",
+    "errors": 0,
+    "passed": 13
+  },
+  "datasets_02": {
+    "errors": 20,
+    "passed": 23,
+    "reason": "native Lake launcher refused; final source-unit fixture closes replacement registry",
+    "source": "sources/datasets-02-sources"
+  },
+  "datasets_03": {
+    "errors": 0,
+    "lake": "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+    "passed": 43,
+    "source": "sources/final-sources",
+    "source_pins": "frozen-sources.json"
+  },
+  "focused_01": {
+    "note": "Publication test file unchanged in final generation; five tests are a subset of final43.",
+    "source": "sources/datasets-02-sources",
+    "tests": 5
+  },
+  "schema": "source384-publication-control-generations@1"
+}

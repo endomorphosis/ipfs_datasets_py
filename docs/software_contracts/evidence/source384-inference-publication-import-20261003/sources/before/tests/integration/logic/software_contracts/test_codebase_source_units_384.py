@@ -4,9 +4,7 @@ Local source files are declared fixtures. Numerical work uses actual cached
 model assets and the native datasets scheduler, never provider calls.
 """
 from copy import deepcopy
-import builtins
 import hashlib
-from importlib.util import resolve_name
 import os
 from pathlib import Path
 import subprocess
@@ -49,7 +47,7 @@ def captured(tmp_path_factory):
     registry=AutoencoderRegistry(root/'models.duckdb',root/'models')
     value=SimpleNamespace(root=root,repo=repo,index=index,head=head,registry=registry,source=source)
     yield value
-    value.registry.close();cx.close()
+    registry.close();cx.close()
 
 
 def options(current):
@@ -87,20 +85,6 @@ def test_actual_pinned_parent_units_defer_long_tokens_and_replay_without_models(
     path=Path(checkpoint)
     parent=shared.register_shared_parent(captured.registry,checkpoint_path=path,expected_sha256=hashlib.sha256(path.read_bytes()).hexdigest())
     args=dict(**options(captured),registry=captured.registry,version_id=parent,embedding_snapshot=snapshot,timeout_seconds=180,memory_mb=4096)
-    # Inference and publication must work in a packaged checkout without the
-    # training/proof workspace. Guard imports even if another test loaded them.
-    blocked=('ipfs_datasets_py.logic.software_contracts.codebase_model_generation',
-        'ipfs_datasets_py.logic.software_contracts.codebase_training_corpus',
-        'ipfs_datasets_py.logic.formalization.autoencoder.source_state_lake',
-        'ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_schema_lake')
-    native_import=builtins.__import__
-    def inference_import(name,globals=None,locals=None,fromlist=(),level=0):
-        resolved=resolve_name('.'*level+name,globals['__package__']) if level else name
-        requested=(resolved,*(resolved+'.'+member for member in (fromlist or ())))
-        assert not any(request==module or request.startswith(module+'.')
-            for request in requested for module in blocked),'inference imported a training/proof owner'
-        return native_import(name,globals,locals,fromlist,level)
-    monkeypatch.setattr(builtins,'__import__',inference_import)
     result=owner.infer_shared_parent_units(captured.index,captured.repo,**args)
     assert result['native_worker_executed'] and result['inference_executed']
     report=result['report'];rows=report['output']['rows']
@@ -114,15 +98,6 @@ def test_actual_pinned_parent_units_defer_long_tokens_and_replay_without_models(
     monkeypatch.setattr(owner,'_worker',forbidden)
     again=owner.infer_shared_parent_units(captured.index,captured.repo,**args)
     assert again['artifact']==result['artifact'] and not again['native_worker_executed'] and not again['inference_executed']
-    # Reopening the registry reconstructs the committed artifact/operation;
-    # successful replay cannot depend on a transient staging object.
-    from ipfs_datasets_py.duckdb_control.autoencoder_registry import AutoencoderRegistry
-    captured.registry.close()
-    captured.registry=AutoencoderRegistry(captured.root/'models.duckdb',captured.root/'models')
-    args['registry']=captured.registry
-    cold=owner.infer_shared_parent_units(captured.index,captured.repo,**args)
-    assert cold['artifact']==result['artifact'] and not cold['native_worker_executed']
-    assert cold['report']==result['report']
     assert owner.validate_shared_parent_units(captured.index,captured.repo,result,registry=captured.registry,
         embedding_snapshot=snapshot)==result
     for field in ('preparation','output','coverage'):

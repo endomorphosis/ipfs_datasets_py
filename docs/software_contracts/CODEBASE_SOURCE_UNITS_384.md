@@ -132,3 +132,11 @@ isolated dependency experiment found repeated unsuccessful pandas imports during
 DuckDB scalar conversion and measured their cost with real package absence.
 These results guide a deployment dependency fix; they do not qualify a corrected
 Docker runtime, change source/proof checks, or establish a benchmark score.
+
+The [inference publication follow-up](evidence/source384-inference-publication-import-20261003/README.md)
+removes an accidental training/proof import from inference artifact staging.
+Canonical JSON staging lives in the shared Source384 owner; training retains its
+compatibility wrapper and its canonical checkout guard. Actual checkpoint/GTE
+inference and reopened-registry replay pass while training imports are blocked.
+The decoded candidates remain unverified; this import separation does not grant
+proof authority or establish a completed Docker benchmark.

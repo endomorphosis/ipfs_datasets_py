@@ -1,0 +1,245 @@
+{
+  "files": [
+    {
+      "bytes": 3313,
+      "path": "README.md",
+      "sha256": "848abc1df2509cf26bef1c1353213f4c7e50bc632564b490841260a5555f6bed"
+    },
+    {
+      "bytes": 13013,
+      "path": "actual-inference-verdict.json",
+      "sha256": "d771990c8069131a958657b8f9ff11639463b7def961dad7526eefbf7931fa17"
+    },
+    {
+      "bytes": 2046,
+      "path": "actual-training-proof-verdict.json",
+      "sha256": "f2620d63ec57316bb45170e1d74ed4bf9aeb5bb3e15a5cb5730efc732446f142"
+    },
+    {
+      "bytes": 2901,
+      "path": "closeout.json",
+      "sha256": "08bc9ae5e25cb763e42c05c9c2a2bc7181334fb16677242964c7f5f5b76f9087"
+    },
+    {
+      "bytes": 784,
+      "path": "control-generations.json",
+      "sha256": "ee77aa808299b8d185d9180c06e0d152993ee70a9ac96e99e9ce33a9caba7008"
+    },
+    {
+      "bytes": 2582,
+      "path": "controls/accelerate-04-command.json",
+      "sha256": "cff0052add2c9a310138f7d4c6e70a7295af91c4e4aaa2aa33a04f65e8903d1d"
+    },
+    {
+      "bytes": 93,
+      "path": "controls/accelerate-04-exit.json",
+      "sha256": "0dee405ca6f02e1136f04b3f2768102f9802b5b50c5d7b9aaff22d30cd00a427"
+    },
+    {
+      "bytes": 13724,
+      "path": "controls/accelerate-04.log",
+      "sha256": "1d2c510139ab0271fac3cf6beff622a061926c183122df4d45696441456f8a4d"
+    },
+    {
+      "bytes": 2710,
+      "path": "controls/accelerate-04.xml",
+      "sha256": "0d9bc656b2b053593f08a4184b8ee2df16335f4378837a87682d75d885e39198"
+    },
+    {
+      "bytes": 2573,
+      "path": "controls/datasets-02-command.json",
+      "sha256": "478301a8ae10c173855294305317d65e1739c72a88331da920f4d279da45ae70"
+    },
+    {
+      "bytes": 83,
+      "path": "controls/datasets-02-exit.json",
+      "sha256": "840c4173a5c4ea82de595540c73b68a94f37c6c36f26c60e00492794b29a5c01"
+    },
+    {
+      "bytes": 11191,
+      "path": "controls/datasets-02.log",
+      "sha256": "6243a95ea3f5405075770a1eeb5db24bd63c6078b9a19c02cdcad957db87d056"
+    },
+    {
+      "bytes": 13470,
+      "path": "controls/datasets-02.xml",
+      "sha256": "299b8841a98741b81facade6774a38a8338573df0fc2c63abcb224e2ff1ad2f6"
+    },
+    {
+      "bytes": 2612,
+      "path": "controls/datasets-03-command.json",
+      "sha256": "525c3eda641231d0900481a81516457471af5273caffdb6e8b6c6e682bc81a92"
+    },
+    {
+      "bytes": 83,
+      "path": "controls/datasets-03-exit.json",
+      "sha256": "a77417de410c61785662aae4161868277772f8fa802b183d6d4e370226d3e03b"
+    },
+    {
+      "bytes": 1498,
+      "path": "controls/datasets-03.log",
+      "sha256": "4cfb4e09bd31d18f769fc88ab56382e07c2f149be14ce62011c0069d83b99172"
+    },
+    {
+      "bytes": 8369,
+      "path": "controls/datasets-03.xml",
+      "sha256": "874ab52dc9878c6cc1af1f2eb6a22e242468ad425c18888caf56cfab5f57e740"
+    },
+    {
+      "bytes": 1275,
+      "path": "controls/focused-01-command.json",
+      "sha256": "f7f961cb753a0ad3f8989d8d14493e691b248561daf0b861926e85753e57a525"
+    },
+    {
+      "bytes": 57,
+      "path": "controls/focused-01-exit.json",
+      "sha256": "43ea32b9b91a44399b6472abcec7bd56386de5d820869c377c2f29f31517b20d"
+    },
+    {
+      "bytes": 1161,
+      "path": "controls/focused-01.log",
+      "sha256": "9db7ce00d1ceb9ffde0dacbfcd523e83210ee9b64a07cc45f7b7fd1a5f8a4d11"
+    },
+    {
+      "bytes": 1172,
+      "path": "controls/focused-01.xml",
+      "sha256": "afe1ed4f77c5791f20bf8471cf7882ded998671d6ce3ed59f2409ff7b2cd92e6"
+    },
+    {
+      "bytes": 954,
+      "path": "datasets-02-lake-failure.json",
+      "sha256": "dcf4e339a989a4ae21c7993fe2d0ab1f2267bb8ccd35e7621951bac5dd90be0c"
+    },
+    {
+      "bytes": 1039,
+      "path": "frozen-sources.json",
+      "sha256": "ce046195b59ace8e4b8ad18072cb24c9b008ac0efbff6c41ad5bbd2b5836ea00"
+    },
+    {
+      "bytes": 6843,
+      "path": "implementation.patch",
+      "sha256": "ab5096d499c169a77341b5a0e21563a3387f619dc39af14c85445297a7682b84"
+    },
+    {
+      "bytes": 3747,
+      "path": "independent-diagnosis.json",
+      "sha256": "14be3e033bd1b3e35ca19bcc5761c9837be1c018f19dde054543db7be29a3502"
+    },
+    {
+      "bytes": 3735,
+      "path": "independent-review.json",
+      "sha256": "7f412b54080ef41767e37301e0223da94cd69a29c2ddac5e1f777ce590f53902"
+    },
+    {
+      "bytes": 9103,
+      "path": "package_evidence.py",
+      "sha256": "78248a41239d1a43e0259936e1e94cd1018cee8e1f003331341b777a903294e6"
+    },
+    {
+      "bytes": 15842,
+      "path": "sources/before/ipfs_datasets_py/logic/software_contracts/codebase_model_generation.py",
+      "sha256": "213d323cd8c906590b310b181d91698f2c8257940870a5b055595da696e56063"
+    },
+    {
+      "bytes": 26165,
+      "path": "sources/before/ipfs_datasets_py/logic/software_contracts/codebase_source_384.py",
+      "sha256": "1d9685ff53d0ba04dad4056fae11e0ddf8abf6bafe387bff428aa79e8e29b378"
+    },
+    {
+      "bytes": 19577,
+      "path": "sources/before/ipfs_datasets_py/logic/software_contracts/codebase_source_units_384.py",
+      "sha256": "4e43ba59fd26a11a6b371634918fbaae2a9899ba51da1ec53cf850d565d2e246"
+    },
+    {
+      "bytes": 24606,
+      "path": "sources/before/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_schema_lake.py",
+      "sha256": "f78a630fc808278b6c82eaa248fbaeefd7f60462db7e974fccdb634938ac9d55"
+    },
+    {
+      "bytes": 884,
+      "path": "sources/before/sources.json",
+      "sha256": "2c7db7fad616602947a3e658579a563f78bd770f3179c3e6a1be0f11ff3b079d"
+    },
+    {
+      "bytes": 7596,
+      "path": "sources/before/tests/integration/logic/software_contracts/test_codebase_source_units_384.py",
+      "sha256": "229f41a8af2800d1d19093c450cd5a67d5fc55882a4b65b35d614f9ae27faefb"
+    },
+    {
+      "bytes": 24670,
+      "path": "sources/before/tests/integration/logic/software_contracts/test_codebase_training_generation.py",
+      "sha256": "d558934cc1d4bb2350bbed6ee6bcf09b7233e32ebaa2b2e77cbfefe50798a94e"
+    },
+    {
+      "bytes": 15657,
+      "path": "sources/datasets-02-sources/ipfs_datasets_py/logic/software_contracts/codebase_model_generation.py",
+      "sha256": "a5801a7a0edef1e7b6b77e8e2fdc6108fd4c904e7276008abde3f708a3bdde17"
+    },
+    {
+      "bytes": 26495,
+      "path": "sources/datasets-02-sources/ipfs_datasets_py/logic/software_contracts/codebase_source_384.py",
+      "sha256": "f00ff90983770e0e9ac32d8a16c9654059630cfb2880e00bf891902fafe4bb03"
+    },
+    {
+      "bytes": 19526,
+      "path": "sources/datasets-02-sources/ipfs_datasets_py/logic/software_contracts/codebase_source_units_384.py",
+      "sha256": "1ab971c23d2b8982d4e1c8af74b24cc10da704ec29fa260777836d7be1db68f6"
+    },
+    {
+      "bytes": 24606,
+      "path": "sources/datasets-02-sources/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_schema_lake.py",
+      "sha256": "f78a630fc808278b6c82eaa248fbaeefd7f60462db7e974fccdb634938ac9d55"
+    },
+    {
+      "bytes": 3785,
+      "path": "sources/datasets-02-sources/tests/integration/logic/software_contracts/test_codebase_source384_publication.py",
+      "sha256": "281c3f50a91cbe089f892530fc62c7825c3b3093231bba5ce5be4cd34e02cfed"
+    },
+    {
+      "bytes": 9336,
+      "path": "sources/datasets-02-sources/tests/integration/logic/software_contracts/test_codebase_source_units_384.py",
+      "sha256": "7aebb57e374fec0817baa015c18c1f8ceb419b279bbeb2bde37b16454e3ab34b"
+    },
+    {
+      "bytes": 24670,
+      "path": "sources/datasets-02-sources/tests/integration/logic/software_contracts/test_codebase_training_generation.py",
+      "sha256": "d558934cc1d4bb2350bbed6ee6bcf09b7233e32ebaa2b2e77cbfefe50798a94e"
+    },
+    {
+      "bytes": 15657,
+      "path": "sources/final-sources/ipfs_datasets_py/logic/software_contracts/codebase_model_generation.py",
+      "sha256": "a5801a7a0edef1e7b6b77e8e2fdc6108fd4c904e7276008abde3f708a3bdde17"
+    },
+    {
+      "bytes": 26495,
+      "path": "sources/final-sources/ipfs_datasets_py/logic/software_contracts/codebase_source_384.py",
+      "sha256": "f00ff90983770e0e9ac32d8a16c9654059630cfb2880e00bf891902fafe4bb03"
+    },
+    {
+      "bytes": 19526,
+      "path": "sources/final-sources/ipfs_datasets_py/logic/software_contracts/codebase_source_units_384.py",
+      "sha256": "1ab971c23d2b8982d4e1c8af74b24cc10da704ec29fa260777836d7be1db68f6"
+    },
+    {
+      "bytes": 24606,
+      "path": "sources/final-sources/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_schema_lake.py",
+      "sha256": "f78a630fc808278b6c82eaa248fbaeefd7f60462db7e974fccdb634938ac9d55"
+    },
+    {
+      "bytes": 3785,
+      "path": "sources/final-sources/tests/integration/logic/software_contracts/test_codebase_source384_publication.py",
+      "sha256": "281c3f50a91cbe089f892530fc62c7825c3b3093231bba5ce5be4cd34e02cfed"
+    },
+    {
+      "bytes": 9342,
+      "path": "sources/final-sources/tests/integration/logic/software_contracts/test_codebase_source_units_384.py",
+      "sha256": "c506e9186640d2f78c192ecfc37125f7080b027ec3705deb29b09a49d2b88cbd"
+    },
+    {
+      "bytes": 24670,
+      "path": "sources/final-sources/tests/integration/logic/software_contracts/test_codebase_training_generation.py",
+      "sha256": "d558934cc1d4bb2350bbed6ee6bcf09b7233e32ebaa2b2e77cbfefe50798a94e"
+    }
+  ],
+  "schema": "source384-inference-publication-import-evidence@1"
+}

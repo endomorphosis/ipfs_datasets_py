@@ -250,7 +250,8 @@ def infer_shared_parent_units(index,repository,*,expected_head,registry,version_
             saved=dict(schema=SCHEMA,key=key,preparation=preparation,output=output,worker_receipt=receipt,
                 coverage=_coverage(preparation,output),
                 retention='unknown_not_evaluated',**FALSE)
-            artifact=shared._stage(registry,saved)
+            from .codebase_model_generation import _stage
+            artifact=_stage(registry,saved)
             remaining();observe()
             previous=registry._mutate(operation,'IndexSourceUnitInference',dict(key=key),lambda cx:dict(artifact=artifact))
         saved=load_source_unit_inference(index,registry,previous['artifact'],**options)

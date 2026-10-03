@@ -1,0 +1,36 @@
+{
+  "schema": "source384-publication-import-training-regression@1",
+  "retained_receipt_path": "/home/barberb/lift_coding/artifacts/source384-inference-publication-import-20261003/datasets-03-temp/strict3840/owned/public/property-lake/receipt.json",
+  "retained_receipt_sha256": "61c108f074f52b4daa4d6724cfc456a4998ada250cb57dfbb765119a08b4ff7a",
+  "status": "passed",
+  "execution": {
+    "backend_executed": true,
+    "command": [
+      "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+      "build",
+      "SecuritySourceStates"
+    ],
+    "executable_sha256": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+    "input_files_sha256": {
+      "SecuritySourceStates.lean": "6e35cbadf9ade4b0640921faadf0575773200b885012aff5c317609ce52586d3",
+      "lakefile.toml": "880cd3bfaa2ccf24ecc17b68e3a344f78a984f991ecc6f701ed4c9b68c02dba0",
+      "lean-toolchain": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b"
+    },
+    "output_truncated": false,
+    "returncode": 0,
+    "status": "passed",
+    "stderr": "info: native_family_securitysourcestates: no previous manifest, creating one from scratch\ninfo: toolchain not updated; already up-to-date\n",
+    "stdout": "\u2714 [2/3] Built SecuritySourceStates (1.2s)\nBuild completed successfully (3 jobs).\n",
+    "timed_out": false,
+    "toolchain": "leanprover/lean4:v4.34.1",
+    "workspace_limit_exceeded": false
+  },
+  "tool_binary_sha256": {
+    "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+    "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean": "79fb1d26fa5a39385d59fdc48a711a14b0710ca6480271acce99b4d177cea085"
+  },
+  "finite_correspondence_kernel_checked": true,
+  "source_semantics_verified": false,
+  "claim_proved": false,
+  "scope": "Existing authored scalar training-generation fixture exercises compatibility staging and independently bounded checked properties; no benchmark repair or new checkpoint release."
+}

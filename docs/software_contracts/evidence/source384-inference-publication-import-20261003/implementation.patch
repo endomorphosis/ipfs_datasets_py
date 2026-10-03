@@ -1,0 +1,117 @@
+diff --git a/ipfs_datasets_py/logic/software_contracts/codebase_model_generation.py b/ipfs_datasets_py/logic/software_contracts/codebase_model_generation.py
+index 27d424cb2..a30dce14a 100644
+--- a/ipfs_datasets_py/logic/software_contracts/codebase_model_generation.py
++++ b/ipfs_datasets_py/logic/software_contracts/codebase_model_generation.py
+@@ -13,7 +13,6 @@ import json
+ from pathlib import Path
+ import platform
+ import sys
+-import tempfile
+ import time
+ 
+ from . import codebase_source_384 as source384
+@@ -88,10 +87,7 @@ def _weights(checkpoint):
+ 
+ 
+ def _stage(registry, value):
+-    with tempfile.TemporaryDirectory(prefix="codebase-generation-") as directory:
+-        path = Path(directory) / "artifact.json"
+-        path.write_bytes(_raw(value))
+-        return registry.stage_artifact(path)
++    return source384._stage(registry, value)
+ 
+ 
+ def _parent_exposure(parent_checkpoint, corpus):
+diff --git a/ipfs_datasets_py/logic/software_contracts/codebase_source_384.py b/ipfs_datasets_py/logic/software_contracts/codebase_source_384.py
+index 794d8ab39..92abe1ee2 100644
+--- a/ipfs_datasets_py/logic/software_contracts/codebase_source_384.py
++++ b/ipfs_datasets_py/logic/software_contracts/codebase_source_384.py
+@@ -45,6 +45,14 @@ def _sha(value):
+     return hashlib.sha256(value).hexdigest()
+ 
+ 
++def _stage(registry, value):
++    """Stage canonical JSON without importing training or proof-workspace owners."""
++    with tempfile.TemporaryDirectory(prefix="codebase-generation-") as directory:
++        path = Path(directory) / "artifact.json"
++        path.write_bytes(_raw(value))
++        return registry.stage_artifact(path)
++
++
+ def _pins():
+     from ..formalization.autoencoder import structured_source_384 as decoder
+     from ..formalization.autoencoder import source_embeddings_384 as embedding
+diff --git a/ipfs_datasets_py/logic/software_contracts/codebase_source_units_384.py b/ipfs_datasets_py/logic/software_contracts/codebase_source_units_384.py
+index aef8e3799..c67e272ce 100644
+--- a/ipfs_datasets_py/logic/software_contracts/codebase_source_units_384.py
++++ b/ipfs_datasets_py/logic/software_contracts/codebase_source_units_384.py
+@@ -250,8 +250,7 @@ def infer_shared_parent_units(index,repository,*,expected_head,registry,version_
+             saved=dict(schema=SCHEMA,key=key,preparation=preparation,output=output,worker_receipt=receipt,
+                 coverage=_coverage(preparation,output),
+                 retention='unknown_not_evaluated',**FALSE)
+-            from .codebase_model_generation import _stage
+-            artifact=_stage(registry,saved)
++            artifact=shared._stage(registry,saved)
+             remaining();observe()
+             previous=registry._mutate(operation,'IndexSourceUnitInference',dict(key=key),lambda cx:dict(artifact=artifact))
+         saved=load_source_unit_inference(index,registry,previous['artifact'],**options)
+diff --git a/tests/integration/logic/software_contracts/test_codebase_source_units_384.py b/tests/integration/logic/software_contracts/test_codebase_source_units_384.py
+index aff542538..cb0dfc348 100644
+--- a/tests/integration/logic/software_contracts/test_codebase_source_units_384.py
++++ b/tests/integration/logic/software_contracts/test_codebase_source_units_384.py
+@@ -4,7 +4,9 @@ Local source files are declared fixtures. Numerical work uses actual cached
+ model assets and the native datasets scheduler, never provider calls.
+ """
+ from copy import deepcopy
++import builtins
+ import hashlib
++from importlib.util import resolve_name
+ import os
+ from pathlib import Path
+ import subprocess
+@@ -47,7 +49,7 @@ def captured(tmp_path_factory):
+     registry=AutoencoderRegistry(root/'models.duckdb',root/'models')
+     value=SimpleNamespace(root=root,repo=repo,index=index,head=head,registry=registry,source=source)
+     yield value
+-    registry.close();cx.close()
++    value.registry.close();cx.close()
+ 
+ 
+ def options(current):
+@@ -85,6 +87,20 @@ def test_actual_pinned_parent_units_defer_long_tokens_and_replay_without_models(
+     path=Path(checkpoint)
+     parent=shared.register_shared_parent(captured.registry,checkpoint_path=path,expected_sha256=hashlib.sha256(path.read_bytes()).hexdigest())
+     args=dict(**options(captured),registry=captured.registry,version_id=parent,embedding_snapshot=snapshot,timeout_seconds=180,memory_mb=4096)
++    # Inference and publication must work in a packaged checkout without the
++    # training/proof workspace. Guard imports even if another test loaded them.
++    blocked=('ipfs_datasets_py.logic.software_contracts.codebase_model_generation',
++        'ipfs_datasets_py.logic.software_contracts.codebase_training_corpus',
++        'ipfs_datasets_py.logic.formalization.autoencoder.source_state_lake',
++        'ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_schema_lake')
++    native_import=builtins.__import__
++    def inference_import(name,globals=None,locals=None,fromlist=(),level=0):
++        resolved=resolve_name('.'*level+name,globals['__package__']) if level else name
++        requested=(resolved,*(resolved+'.'+member for member in (fromlist or ())))
++        assert not any(request==module or request.startswith(module+'.')
++            for request in requested for module in blocked),'inference imported a training/proof owner'
++        return native_import(name,globals,locals,fromlist,level)
++    monkeypatch.setattr(builtins,'__import__',inference_import)
+     result=owner.infer_shared_parent_units(captured.index,captured.repo,**args)
+     assert result['native_worker_executed'] and result['inference_executed']
+     report=result['report'];rows=report['output']['rows']
+@@ -98,6 +114,15 @@ def test_actual_pinned_parent_units_defer_long_tokens_and_replay_without_models(
+     monkeypatch.setattr(owner,'_worker',forbidden)
+     again=owner.infer_shared_parent_units(captured.index,captured.repo,**args)
+     assert again['artifact']==result['artifact'] and not again['native_worker_executed'] and not again['inference_executed']
++    # Reopening the registry reconstructs the committed artifact/operation;
++    # successful replay cannot depend on a transient staging object.
++    from ipfs_datasets_py.duckdb_control.autoencoder_registry import AutoencoderRegistry
++    captured.registry.close()
++    captured.registry=AutoencoderRegistry(captured.root/'models.duckdb',captured.root/'models')
++    args['registry']=captured.registry
++    cold=owner.infer_shared_parent_units(captured.index,captured.repo,**args)
++    assert cold['artifact']==result['artifact'] and not cold['native_worker_executed']
++    assert cold['report']==result['report']
+     assert owner.validate_shared_parent_units(captured.index,captured.repo,result,registry=captured.registry,
+         embedding_snapshot=snapshot)==result
+     for field in ('preparation','output','coverage'):

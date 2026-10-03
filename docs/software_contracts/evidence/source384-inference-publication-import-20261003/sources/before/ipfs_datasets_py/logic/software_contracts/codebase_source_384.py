@@ -45,14 +45,6 @@ def _sha(value):
     return hashlib.sha256(value).hexdigest()
 
 
-def _stage(registry, value):
-    """Stage canonical JSON without importing training or proof-workspace owners."""
-    with tempfile.TemporaryDirectory(prefix="codebase-generation-") as directory:
-        path = Path(directory) / "artifact.json"
-        path.write_bytes(_raw(value))
-        return registry.stage_artifact(path)
-
-
 def _pins():
     from ..formalization.autoencoder import structured_source_384 as decoder
     from ..formalization.autoencoder import source_embeddings_384 as embedding

@@ -1,0 +1,123 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 43 items
+
+tests/integration/logic/software_contracts/test_codebase_source384_publication.py . [  2%]
+....                                                                     [ 11%]
+tests/integration/logic/software_contracts/test_codebase_source_units_384.py . [ 13%]
+......                                                                   [ 27%]
+tests/integration/logic/software_contracts/test_codebase_training_generation.py . [ 30%]
+.........EEE.EEEEEEEEEEEEEEEEE                                           [100%]
+
+==================================== ERRORS ====================================
+_ ERROR at setup of test_actual_kernel_checked_property_is_distinct_from_syntax_or_source_equivalence _
+tests/integration/logic/software_contracts/test_codebase_training_generation.py:173: in qualified
+    assert value["denominator"]["checked_properties"] == 2
+E   assert 0 == 2
+---------------------------- Captured stdout setup -----------------------------
+logic tree pin compiler=/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+_ ERROR at setup of test_checked_label_requires_exact_live_independent_result[saved_handle] _
+tests/integration/logic/software_contracts/test_codebase_training_generation.py:173: in qualified
+    assert value["denominator"]["checked_properties"] == 2
+E   assert 0 == 2
+_ ERROR at setup of test_checked_label_requires_exact_live_independent_result[wrong_domains] _
+tests/integration/logic/software_contracts/test_codebase_training_generation.py:173: in qualified
+    assert value["denominator"]["checked_properties"] == 2
+E   assert 0 == 2
+_ ERROR at setup of test_actual_strict_child_has_versioned_byte_layout_environment_and_run_binding _
+tests/integration/logic/software_contracts/test_codebase_training_generation.py:173: in qualified
+    assert value["denominator"]["checked_properties"] == 2
+E   assert 0 == 2
+____ ERROR at setup of test_exact_adaptation_replay_performs_no_second_fit _____
+tests/integration/logic/software_contracts/test_codebase_training_generation.py:173: in qualified
+    assert value["denominator"]["checked_properties"] == 2
+E   assert 0 == 2
+_ ERROR at setup of test_overall_deadline_is_consumed_before_fit_and_checked_before_attachment _
+tests/integration/logic/software_contracts/test_codebase_training_generation.py:173: in qualified
+    assert value["denominator"]["checked_properties"] == 2
+E   assert 0 == 2
+_ ERROR at setup of test_changed_source_after_retained_fit_cannot_attach_generation _
+tests/integration/logic/software_contracts/test_codebase_training_generation.py:173: in qualified
+    assert value["denominator"]["checked_properties"] == 2
+E   assert 0 == 2
+_ ERROR at setup of test_resealed_generation_tampering_cannot_detach_native_numerical_work[weights] _
+tests/integration/logic/software_contracts/test_codebase_training_generation.py:173: in qualified
+    assert value["denominator"]["checked_properties"] == 2
+E   assert 0 == 2
+_ ERROR at setup of test_resealed_generation_tampering_cannot_detach_native_numerical_work[codebook] _
+tests/integration/logic/software_contracts/test_codebase_training_generation.py:173: in qualified
+    assert value["denominator"]["checked_properties"] == 2
+E   assert 0 == 2
+_ ERROR at setup of test_resealed_generation_tampering_cannot_detach_native_numerical_work[layout] _
+tests/integration/logic/software_contracts/test_codebase_training_generation.py:173: in qualified
+    assert value["denominator"]["checked_properties"] == 2
+E   assert 0 == 2
+_ ERROR at setup of test_resealed_generation_tampering_cannot_detach_native_numerical_work[seed] _
+tests/integration/logic/software_contracts/test_codebase_training_generation.py:173: in qualified
+    assert value["denominator"]["checked_properties"] == 2
+E   assert 0 == 2
+_ ERROR at setup of test_resealed_generation_tampering_cannot_detach_native_numerical_work[environment] _
+tests/integration/logic/software_contracts/test_codebase_training_generation.py:173: in qualified
+    assert value["denominator"]["checked_properties"] == 2
+E   assert 0 == 2
+_ ERROR at setup of test_resealed_generation_tampering_cannot_detach_native_numerical_work[parent] _
+tests/integration/logic/software_contracts/test_codebase_training_generation.py:173: in qualified
+    assert value["denominator"]["checked_properties"] == 2
+E   assert 0 == 2
+_ ERROR at setup of test_resealed_generation_tampering_cannot_detach_native_numerical_work[source] _
+tests/integration/logic/software_contracts/test_codebase_training_generation.py:173: in qualified
+    assert value["denominator"]["checked_properties"] == 2
+E   assert 0 == 2
+_ ERROR at setup of test_resealed_generation_tampering_cannot_detach_native_numerical_work[corpus] _
+tests/integration/logic/software_contracts/test_codebase_training_generation.py:173: in qualified
+    assert value["denominator"]["checked_properties"] == 2
+E   assert 0 == 2
+_ ERROR at setup of test_resealed_generation_tampering_cannot_detach_native_numerical_work[expected_head] _
+tests/integration/logic/software_contracts/test_codebase_training_generation.py:173: in qualified
+    assert value["denominator"]["checked_properties"] == 2
+E   assert 0 == 2
+______ ERROR at setup of test_stale_expected_parent_is_refused_before_fit ______
+tests/integration/logic/software_contracts/test_codebase_training_generation.py:173: in qualified
+    assert value["denominator"]["checked_properties"] == 2
+E   assert 0 == 2
+_______ ERROR at setup of test_retention_failure_does_not_promote_child ________
+tests/integration/logic/software_contracts/test_codebase_training_generation.py:173: in qualified
+    assert value["denominator"]["checked_properties"] == 2
+E   assert 0 == 2
+_ ERROR at setup of test_native_head_cas_uses_qualified_identical_parent_copies_and_refuses_stale_result _
+tests/integration/logic/software_contracts/test_codebase_training_generation.py:173: in qualified
+    assert value["denominator"]["checked_properties"] == 2
+E   assert 0 == 2
+_ ERROR at setup of test_cold_generation_replay_uses_durable_owners_without_fitting _
+tests/integration/logic/software_contracts/test_codebase_training_generation.py:173: in qualified
+    assert value["denominator"]["checked_properties"] == 2
+E   assert 0 == 2
+- generated xml file: /home/barberb/lift_coding/artifacts/source384-inference-publication-import-20261003/datasets-02.xml -
+=========================== short test summary info ============================
+ERROR tests/integration/logic/software_contracts/test_codebase_training_generation.py::test_actual_kernel_checked_property_is_distinct_from_syntax_or_source_equivalence
+ERROR tests/integration/logic/software_contracts/test_codebase_training_generation.py::test_checked_label_requires_exact_live_independent_result[saved_handle]
+ERROR tests/integration/logic/software_contracts/test_codebase_training_generation.py::test_checked_label_requires_exact_live_independent_result[wrong_domains]
+ERROR tests/integration/logic/software_contracts/test_codebase_training_generation.py::test_actual_strict_child_has_versioned_byte_layout_environment_and_run_binding
+ERROR tests/integration/logic/software_contracts/test_codebase_training_generation.py::test_exact_adaptation_replay_performs_no_second_fit
+ERROR tests/integration/logic/software_contracts/test_codebase_training_generation.py::test_overall_deadline_is_consumed_before_fit_and_checked_before_attachment
+ERROR tests/integration/logic/software_contracts/test_codebase_training_generation.py::test_changed_source_after_retained_fit_cannot_attach_generation
+ERROR tests/integration/logic/software_contracts/test_codebase_training_generation.py::test_resealed_generation_tampering_cannot_detach_native_numerical_work[weights]
+ERROR tests/integration/logic/software_contracts/test_codebase_training_generation.py::test_resealed_generation_tampering_cannot_detach_native_numerical_work[codebook]
+ERROR tests/integration/logic/software_contracts/test_codebase_training_generation.py::test_resealed_generation_tampering_cannot_detach_native_numerical_work[layout]
+ERROR tests/integration/logic/software_contracts/test_codebase_training_generation.py::test_resealed_generation_tampering_cannot_detach_native_numerical_work[seed]
+ERROR tests/integration/logic/software_contracts/test_codebase_training_generation.py::test_resealed_generation_tampering_cannot_detach_native_numerical_work[environment]
+ERROR tests/integration/logic/software_contracts/test_codebase_training_generation.py::test_resealed_generation_tampering_cannot_detach_native_numerical_work[parent]
+ERROR tests/integration/logic/software_contracts/test_codebase_training_generation.py::test_resealed_generation_tampering_cannot_detach_native_numerical_work[source]
+ERROR tests/integration/logic/software_contracts/test_codebase_training_generation.py::test_resealed_generation_tampering_cannot_detach_native_numerical_work[corpus]
+ERROR tests/integration/logic/software_contracts/test_codebase_training_generation.py::test_resealed_generation_tampering_cannot_detach_native_numerical_work[expected_head]
+ERROR tests/integration/logic/software_contracts/test_codebase_training_generation.py::test_stale_expected_parent_is_refused_before_fit
+ERROR tests/integration/logic/software_contracts/test_codebase_training_generation.py::test_retention_failure_does_not_promote_child
+ERROR tests/integration/logic/software_contracts/test_codebase_training_generation.py::test_native_head_cas_uses_qualified_identical_parent_copies_and_refuses_stale_result
+ERROR tests/integration/logic/software_contracts/test_codebase_training_generation.py::test_cold_generation_replay_uses_durable_owners_without_fitting
+======================== 23 passed, 20 errors in 16.18s ========================

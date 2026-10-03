@@ -1,0 +1,72 @@
+[1m============================= test session starts ==============================[0m
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /home/barberb/lift_coding/.worktrees/ir-release-accelerate-20261002
+configfile: pytest.ini
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, asyncio-1.3.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0, anyio-4.14.2
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+
+[1m----------------------------- live log collection ------------------------------[0m
+2026-10-03 11:12:58 [[32m    INFO[0m] Registered service: ipfs (service_manager.py:93)
+2026-10-03 11:12:58 [[32m    INFO[0m] Registered test suite: core_infrastructure (test_framework.py:82)
+2026-10-03 11:12:58 [[32m    INFO[0m] Registered test suite: performance (test_framework.py:82)
+2026-10-03 11:12:58 [[32m    INFO[0m] Registered test suite: integration (test_framework.py:82)
+2026-10-03 11:12:58 [[32m    INFO[0m] Successfully imported ipfs_kit_py modules from /home/barberb/HACC/complaint-generator/ipfs_datasets_py/ipfs_kit_py/ipfs_kit_py/__init__.py (ipfs_kit_integration.py:327)
+2026-10-03 11:12:58 [[32m    INFO[0m] IPFS Kit integration enabled successfully (ipfs_kit_integration.py:344)
+2026-10-03 11:12:58 [[32m    INFO[0m] Storage initialized with distributed backend (storage_wrapper.py:92)
+collected 13 items
+
+benchmarks/agent_supervisor/container_coding/test_terminal_source384_context.py::test_real_pinned_inference_reaches_planner_and_dispatch_without_replay 
+[1m-------------------------------- live log call ---------------------------------[0m
+2026-10-03 11:13:19 [[32m    INFO[0m] agent-supervisor quack prefer: no_live_owner database=/home/barberb/lift_coding/artifacts/source384-inference-publication-import-20261003/accelerate-04-temp/test_real_pinned_inference_rea0/state/intent.duckdb reason=no_live_owner source=none rejections=status_missing; falling back to exclusive DuckDB file (duckdb_state.py:1857)
+2026-10-03 11:13:19 [[32m    INFO[0m] agent-supervisor quack prefer: no_live_owner database=/home/barberb/lift_coding/artifacts/source384-inference-publication-import-20261003/accelerate-04-temp/test_real_pinned_inference_rea0/state/intent.duckdb reason=no_live_owner source=none rejections=status_missing; falling back to exclusive DuckDB file (duckdb_state.py:1857)
+2026-10-03 11:13:20 [[32m    INFO[0m] agent-supervisor quack prefer: no_live_owner database=/home/barberb/lift_coding/artifacts/source384-inference-publication-import-20261003/accelerate-04-temp/test_real_pinned_inference_rea0/state/intent.duckdb reason=no_live_owner source=none rejections=status_missing; falling back to exclusive DuckDB file (duckdb_state.py:1857)
+2026-10-03 11:13:21 [[32m    INFO[0m] agent-supervisor quack prefer: no_live_owner database=/home/barberb/lift_coding/artifacts/source384-inference-publication-import-20261003/accelerate-04-temp/test_real_pinned_inference_rea0/state/intent.duckdb reason=no_live_owner source=none rejections=status_missing; falling back to exclusive DuckDB file (duckdb_state.py:1857)
+2026-10-03 11:13:21 [[32m    INFO[0m] agent-supervisor quack prefer: no_live_owner database=/home/barberb/lift_coding/artifacts/source384-inference-publication-import-20261003/accelerate-04-temp/test_real_pinned_inference_rea0/state/intent.duckdb reason=no_live_owner source=none rejections=status_missing; falling back to exclusive DuckDB file (duckdb_state.py:1857)
+2026-10-03 11:13:22 [[32m    INFO[0m] agent-supervisor quack prefer: no_live_owner database=/home/barberb/lift_coding/artifacts/source384-inference-publication-import-20261003/accelerate-04-temp/test_real_pinned_inference_rea0/state/intent.duckdb reason=no_live_owner source=none rejections=status_missing; falling back to exclusive DuckDB file (duckdb_state.py:1857)
+2026-10-03 11:13:23 [[32m    INFO[0m] agent-supervisor quack prefer: no_live_owner database=/home/barberb/lift_coding/artifacts/source384-inference-publication-import-20261003/accelerate-04-temp/test_real_pinned_inference_rea0/state/intent.duckdb reason=no_live_owner source=none rejections=status_missing; falling back to exclusive DuckDB file (duckdb_state.py:1857)
+2026-10-03 11:13:23 [[32m    INFO[0m] agent-supervisor quack prefer: no_live_owner database=/home/barberb/lift_coding/artifacts/source384-inference-publication-import-20261003/accelerate-04-temp/test_real_pinned_inference_rea0/state/intent.duckdb reason=no_live_owner source=none rejections=status_missing; falling back to exclusive DuckDB file (duckdb_state.py:1857)
+2026-10-03 11:13:23 [[32m    INFO[0m] agent-supervisor quack prefer: no_live_owner database=/home/barberb/lift_coding/artifacts/source384-inference-publication-import-20261003/accelerate-04-temp/test_real_pinned_inference_rea0/state/intent.duckdb reason=no_live_owner source=none rejections=status_missing; falling back to exclusive DuckDB file (duckdb_state.py:1857)
+2026-10-03 11:13:24 [[32m    INFO[0m] agent-supervisor quack prefer: no_live_owner database=/home/barberb/lift_coding/artifacts/source384-inference-publication-import-20261003/accelerate-04-temp/test_real_pinned_inference_rea0/state/intent.duckdb reason=no_live_owner source=none rejections=status_missing; falling back to exclusive DuckDB file (duckdb_state.py:1857)
+2026-10-03 11:13:24 [[32m    INFO[0m] agent-supervisor quack prefer: no_live_owner database=/home/barberb/lift_coding/artifacts/source384-inference-publication-import-20261003/accelerate-04-temp/test_real_pinned_inference_rea0/state/intent.duckdb reason=no_live_owner source=none rejections=status_missing; falling back to exclusive DuckDB file (duckdb_state.py:1857)
+2026-10-03 11:13:24 [[32m    INFO[0m] agent-supervisor quack prefer: no_live_owner database=/home/barberb/lift_coding/artifacts/source384-inference-publication-import-20261003/accelerate-04-temp/test_real_pinned_inference_rea0/state/intent.duckdb reason=no_live_owner source=none rejections=status_missing; falling back to exclusive DuckDB file (duckdb_state.py:1857)
+[32mPASSED[0m[32m                                                                   [  7%][0m
+benchmarks/agent_supervisor/container_coding/test_terminal_source384_context.py::test_source384_missing_selection_cannot_silently_use_legacy_profile 
+[1m-------------------------------- live log call ---------------------------------[0m
+2026-10-03 11:13:28 [[32m    INFO[0m] agent-supervisor quack prefer: no_live_owner database=/home/barberb/lift_coding/artifacts/source384-inference-publication-import-20261003/accelerate-04-temp/test_source384_missing_selecti0/state/intent.duckdb reason=no_live_owner source=none rejections=status_missing; falling back to exclusive DuckDB file (duckdb_state.py:1857)
+2026-10-03 11:13:28 [[32m    INFO[0m] agent-supervisor quack prefer: no_live_owner database=/home/barberb/lift_coding/artifacts/source384-inference-publication-import-20261003/accelerate-04-temp/test_source384_missing_selecti0/state/intent.duckdb reason=no_live_owner source=none rejections=status_missing; falling back to exclusive DuckDB file (duckdb_state.py:1857)
+2026-10-03 11:13:28 [[32m    INFO[0m] agent-supervisor quack prefer: no_live_owner database=/home/barberb/lift_coding/artifacts/source384-inference-publication-import-20261003/accelerate-04-temp/test_source384_missing_selecti0/state/intent.duckdb reason=no_live_owner source=none rejections=status_missing; falling back to exclusive DuckDB file (duckdb_state.py:1857)
+[32mPASSED[0m[32m                                                                   [ 15%][0m
+benchmarks/agent_supervisor/container_coding/test_terminal_source384_context.py::test_checkpoint_change_during_router_is_rejected_before_admission 
+[1m-------------------------------- live log call ---------------------------------[0m
+2026-10-03 11:13:36 [[32m    INFO[0m] agent-supervisor quack prefer: no_live_owner database=/home/barberb/lift_coding/artifacts/source384-inference-publication-import-20261003/accelerate-04-temp/test_checkpoint_change_during_0/state/intent.duckdb reason=no_live_owner source=none rejections=status_missing; falling back to exclusive DuckDB file (duckdb_state.py:1857)
+2026-10-03 11:13:36 [[32m    INFO[0m] agent-supervisor quack prefer: no_live_owner database=/home/barberb/lift_coding/artifacts/source384-inference-publication-import-20261003/accelerate-04-temp/test_checkpoint_change_during_0/state/intent.duckdb reason=no_live_owner source=none rejections=status_missing; falling back to exclusive DuckDB file (duckdb_state.py:1857)
+2026-10-03 11:13:37 [[32m    INFO[0m] agent-supervisor quack prefer: no_live_owner database=/home/barberb/lift_coding/artifacts/source384-inference-publication-import-20261003/accelerate-04-temp/test_checkpoint_change_during_0/state/intent.duckdb reason=no_live_owner source=none rejections=status_missing; falling back to exclusive DuckDB file (duckdb_state.py:1857)
+2026-10-03 11:13:37 [[32m    INFO[0m] agent-supervisor quack prefer: no_live_owner database=/home/barberb/lift_coding/artifacts/source384-inference-publication-import-20261003/accelerate-04-temp/test_checkpoint_change_during_0/state/intent.duckdb reason=no_live_owner source=none rejections=status_missing; falling back to exclusive DuckDB file (duckdb_state.py:1857)
+2026-10-03 11:13:38 [[32m    INFO[0m] agent-supervisor quack prefer: no_live_owner database=/home/barberb/lift_coding/artifacts/source384-inference-publication-import-20261003/accelerate-04-temp/test_checkpoint_change_during_0/state/intent.duckdb reason=no_live_owner source=none rejections=status_missing; falling back to exclusive DuckDB file (duckdb_state.py:1857)
+[32mPASSED[0m[32m                                                                   [ 23%][0m
+benchmarks/agent_supervisor/container_coding/test_terminal_source384_context.py::test_source384_rejects_legacy_training_before_writes [32mPASSED[0m[32m [ 30%][0m
+benchmarks/agent_supervisor/container_coding/test_terminal_source384_context.py::test_complete_create_manifest_source_population [32mPASSED[0m[32m [ 38%][0m
+benchmarks/agent_supervisor/container_coding/test_terminal_source384_context.py::test_native_inventory_rejects_undeclared_captured_source [32mPASSED[0m[32m [ 46%][0m
+benchmarks/agent_supervisor/container_coding/test_terminal_source384_context.py::test_native_inference_cannot_shrink_declared_population[paths0-1024-128] [32mPASSED[0m[32m [ 53%][0m
+benchmarks/agent_supervisor/container_coding/test_terminal_source384_context.py::test_native_inference_cannot_shrink_declared_population[paths1-512-128] [32mPASSED[0m[32m [ 61%][0m
+benchmarks/agent_supervisor/container_coding/test_terminal_source384_context.py::test_native_inference_cannot_shrink_declared_population[paths2-1024-64] [32mPASSED[0m[32m [ 69%][0m
+benchmarks/agent_supervisor/container_coding/test_terminal_source384_context.py::test_observation_deadline_includes_read_and_asset_validation_time [32mPASSED[0m[32m [ 76%][0m
+benchmarks/agent_supervisor/container_coding/test_terminal_source384_context.py::test_preparation_deadline_includes_preflight_before_output_or_admission[_output] [32mPASSED[0m[32m [ 84%][0m
+benchmarks/agent_supervisor/container_coding/test_terminal_source384_context.py::test_preparation_deadline_includes_preflight_before_output_or_admission[_sources] [32mPASSED[0m[32m [ 92%][0m
+benchmarks/agent_supervisor/container_coding/test_terminal_source384_context.py::test_preparation_deadline_includes_preflight_before_output_or_admission[_pins] [32mPASSED[0m[32m [100%][0m
+
+- generated xml file: /home/barberb/lift_coding/artifacts/source384-inference-publication-import-20261003/accelerate-04.xml -
+============================= slowest 10 durations =============================
+15.11s call     benchmarks/agent_supervisor/container_coding/test_terminal_source384_context.py::test_real_pinned_inference_reaches_planner_and_dispatch_without_replay
+9.80s call     benchmarks/agent_supervisor/container_coding/test_terminal_source384_context.py::test_checkpoint_change_during_router_is_rejected_before_admission
+2.15s call     benchmarks/agent_supervisor/container_coding/test_terminal_source384_context.py::test_source384_missing_selection_cannot_silently_use_legacy_profile
+0.34s call     benchmarks/agent_supervisor/container_coding/test_terminal_source384_context.py::test_source384_rejects_legacy_training_before_writes
+0.06s setup    benchmarks/agent_supervisor/container_coding/test_terminal_source384_context.py::test_real_pinned_inference_reaches_planner_and_dispatch_without_replay
+0.05s setup    benchmarks/agent_supervisor/container_coding/test_terminal_source384_context.py::test_checkpoint_change_during_router_is_rejected_before_admission
+0.02s call     benchmarks/agent_supervisor/container_coding/test_terminal_source384_context.py::test_complete_create_manifest_source_population
+0.01s setup    benchmarks/agent_supervisor/container_coding/test_terminal_source384_context.py::test_source384_missing_selection_cannot_silently_use_legacy_profile
+0.01s setup    benchmarks/agent_supervisor/container_coding/test_terminal_source384_context.py::test_source384_rejects_legacy_training_before_writes
+
+(1 durations < 0.005s hidden.  Use -vv to show these durations.)
+[32m============================= [32m[1m13 passed[0m[32m in 41.37s[0m[32m ==============================[0m

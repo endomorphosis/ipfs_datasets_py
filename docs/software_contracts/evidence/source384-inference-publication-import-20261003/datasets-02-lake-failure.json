@@ -1,0 +1,16 @@
+{
+  "schema": "publication-import-test-setup-failure@1",
+  "original_receipt": "/home/barberb/lift_coding/artifacts/source384-inference-publication-import-20261003/datasets-02-temp/strict3840/owned/public/property-lake/receipt.json",
+  "original_sha256": "620c885f29ecbfb213e87ad93d3766ce4e601aa65c4673933b34dcf52ce58db1",
+  "status": "unavailable",
+  "execution": {
+    "backend_executed": false,
+    "reason": "select_installed_native_lake_not_elan_shim",
+    "status": "unavailable"
+  },
+  "tool_binary_sha256": {
+    "/home/barberb/.elan/bin/lake": "b480595a22661f4cb22b37602b0de664ab1aaf815e243c42b7e7eb51c6163b7d",
+    "/home/barberb/.elan/bin/lean": "b480595a22661f4cb22b37602b0de664ab1aaf815e243c42b7e7eb51c6163b7d"
+  },
+  "reason": "CODEBASE384_LAKE selected Elan launcher rather than prior qualified native toolchain binary; suite fixture obtained zero checked properties. Retained failed run; no assertion or producer changes to repair it."
+}
