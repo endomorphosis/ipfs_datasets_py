@@ -1,0 +1,8 @@
+{
+  "ipfs_datasets_py/logic/software_contracts/cache.py": "a0b1711a5fa1f5b39b92d43748548c8802f632d1131ad9a64dd7f49df51bdd8c",
+  "ipfs_datasets_py/logic/software_contracts/codebase_ir.py": "4aa2e5287885aaecf2c2319a100b8e4b8bdad21b082990a4beadda84d7c61018",
+  "ipfs_datasets_py/logic/software_contracts/codebase_source_units_384.py": "e917f1f5be82b9aa31256aae415606f86a7da25e58c753357428dd6a08695eba",
+  "tests/unit/logic/software_contracts/test_codebase_manifest_byte_replay.py": "8f53eb3ae608d75310a520c1ae86a379566b37adad67d0db7fa5b77a4b206d23",
+  "tests/unit/logic/software_contracts/test_codebase_manifest_compaction.py": "c490796c258f45f007ca7bf41f13a722ed364d8cae2a5645e5d6dae14a8bdf2a",
+  "tests/unit/logic/software_contracts/test_codebase_source_units_lifetime.py": "c1c8fe1db596efc4cdfab80f9fe329eee380e3ce2b60711fb1877f878c9a6d50"
+}

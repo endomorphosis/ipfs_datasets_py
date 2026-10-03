@@ -1,0 +1,227 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 273 items
+
+.worktrees/ir-release-datasets-20261002/tests/unit/logic/software_contracts/test_codebase_manifest_compaction.py . [  0%]
+............                                                             [  4%]
+.worktrees/ir-release-datasets-20261002/tests/unit/logic/software_contracts/test_cache.py . [  5%]
+............                                                             [  9%]
+.worktrees/ir-release-datasets-20261002/tests/unit/logic/software_contracts/test_content_identity.py . [  9%]
+...................                                                      [ 16%]
+.worktrees/ir-release-datasets-20261002/tests/unit/logic/software_contracts/test_codebase_manifest_memo.py . [ 17%]
+......................................                                   [ 31%]
+.worktrees/ir-release-datasets-20261002/tests/unit/logic/software_contracts/test_codebase_manifest_byte_replay.py . [ 31%]
+.......................................................................  [ 57%]
+.worktrees/ir-release-datasets-20261002/tests/unit/duckdb_control/test_codebase_catalog.py . [ 57%]
+..............................                                           [ 68%]
+.worktrees/ir-release-datasets-20261002/tests/unit/logic/software_contracts/test_codebase_ir_untrusted_previous.py . [ 69%]
+.                                                                        [ 69%]
+.worktrees/ir-release-datasets-20261002/tests/integration/logic/software_contracts/test_codebase_ir.py . [ 69%]
+....................                                                     [ 77%]
+.worktrees/ir-release-datasets-20261002/tests/integration/logic/software_contracts/test_codebase_scan_policy.py . [ 77%]
+...........................................                              [ 93%]
+.worktrees/ir-release-datasets-20261002/tests/integration/logic/software_contracts/test_codebase_source_units_384.py E [ 93%]
+EEEEEE                                                                   [ 95%]
+.worktrees/ir-release-datasets-20261002/tests/integration/logic/software_contracts/test_codebase_source384_publication.py . [ 96%]
+....                                                                     [ 97%]
+.worktrees/ir-release-datasets-20261002/tests/unit/logic/software_contracts/test_codebase_source_units_lifetime.py . [ 98%]
+.....                                                                    [100%]
+
+==================================== ERRORS ====================================
+_ ERROR at setup of test_preparation_keeps_full_inventory_and_bounded_selection _
+.worktrees/ir-release-datasets-20261002/tests/integration/logic/software_contracts/test_codebase_source_units_384.py:47: in captured
+    head=index.prepare_current(repo,repository_id='source-unit-fixture',operation_id='capture',expected_head=None,
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/codebase_ir.py:732: in prepare_current
+    self._prepare(
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/codebase_ir.py:776: in _prepare
+    with acquire_codebase_resources(
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/codebase_resources.py:77: in acquire_codebase_resources
+    owner = scheduler if scheduler is not None else get_global_resource_scheduler()
+                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:1919: in get_global_resource_scheduler
+    scheduler = GlobalResourceScheduler(effective)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:812: in __init__
+    with self._locked_state():
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:873: in _locked_state
+    self._validate_state_configuration(state)
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:928: in _validate_state_configuration
+    raise ResourceConfigurationError(
+E   ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler.ResourceConfigurationError: scheduler capacity differs from active shared state at /tmp/ipfs-datasets-resource-scheduler-1000.json
+_ ERROR at setup of test_prepared_source_map_replay_refuses_tampering[target] __
+.worktrees/ir-release-datasets-20261002/tests/integration/logic/software_contracts/test_codebase_source_units_384.py:47: in captured
+    head=index.prepare_current(repo,repository_id='source-unit-fixture',operation_id='capture',expected_head=None,
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/codebase_ir.py:732: in prepare_current
+    self._prepare(
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/codebase_ir.py:776: in _prepare
+    with acquire_codebase_resources(
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/codebase_resources.py:77: in acquire_codebase_resources
+    owner = scheduler if scheduler is not None else get_global_resource_scheduler()
+                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:1919: in get_global_resource_scheduler
+    scheduler = GlobalResourceScheduler(effective)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:812: in __init__
+    with self._locked_state():
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:873: in _locked_state
+    self._validate_state_configuration(state)
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:928: in _validate_state_configuration
+    raise ResourceConfigurationError(
+E   ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler.ResourceConfigurationError: scheduler capacity differs from active shared state at /tmp/ipfs-datasets-resource-scheduler-1000.json
+___ ERROR at setup of test_prepared_source_map_replay_refuses_tampering[map] ___
+.worktrees/ir-release-datasets-20261002/tests/integration/logic/software_contracts/test_codebase_source_units_384.py:47: in captured
+    head=index.prepare_current(repo,repository_id='source-unit-fixture',operation_id='capture',expected_head=None,
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/codebase_ir.py:732: in prepare_current
+    self._prepare(
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/codebase_ir.py:776: in _prepare
+    with acquire_codebase_resources(
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/codebase_resources.py:77: in acquire_codebase_resources
+    owner = scheduler if scheduler is not None else get_global_resource_scheduler()
+                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:1919: in get_global_resource_scheduler
+    scheduler = GlobalResourceScheduler(effective)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:812: in __init__
+    with self._locked_state():
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:873: in _locked_state
+    self._validate_state_configuration(state)
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:928: in _validate_state_configuration
+    raise ResourceConfigurationError(
+E   ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler.ResourceConfigurationError: scheduler capacity differs from active shared state at /tmp/ipfs-datasets-resource-scheduler-1000.json
+__ ERROR at setup of test_prepared_source_map_replay_refuses_tampering[head] ___
+.worktrees/ir-release-datasets-20261002/tests/integration/logic/software_contracts/test_codebase_source_units_384.py:47: in captured
+    head=index.prepare_current(repo,repository_id='source-unit-fixture',operation_id='capture',expected_head=None,
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/codebase_ir.py:732: in prepare_current
+    self._prepare(
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/codebase_ir.py:776: in _prepare
+    with acquire_codebase_resources(
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/codebase_resources.py:77: in acquire_codebase_resources
+    owner = scheduler if scheduler is not None else get_global_resource_scheduler()
+                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:1919: in get_global_resource_scheduler
+    scheduler = GlobalResourceScheduler(effective)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:812: in __init__
+    with self._locked_state():
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:873: in _locked_state
+    self._validate_state_configuration(state)
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:928: in _validate_state_configuration
+    raise ResourceConfigurationError(
+E   ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler.ResourceConfigurationError: scheduler capacity differs from active shared state at /tmp/ipfs-datasets-resource-scheduler-1000.json
+__ ERROR at setup of test_prepared_source_map_replay_refuses_tampering[omit] ___
+.worktrees/ir-release-datasets-20261002/tests/integration/logic/software_contracts/test_codebase_source_units_384.py:47: in captured
+    head=index.prepare_current(repo,repository_id='source-unit-fixture',operation_id='capture',expected_head=None,
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/codebase_ir.py:732: in prepare_current
+    self._prepare(
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/codebase_ir.py:776: in _prepare
+    with acquire_codebase_resources(
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/codebase_resources.py:77: in acquire_codebase_resources
+    owner = scheduler if scheduler is not None else get_global_resource_scheduler()
+                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:1919: in get_global_resource_scheduler
+    scheduler = GlobalResourceScheduler(effective)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:812: in __init__
+    with self._locked_state():
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:873: in _locked_state
+    self._validate_state_configuration(state)
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:928: in _validate_state_configuration
+    raise ResourceConfigurationError(
+E   ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler.ResourceConfigurationError: scheduler capacity differs from active shared state at /tmp/ipfs-datasets-resource-scheduler-1000.json
+_ ERROR at setup of test_prepared_source_map_replay_refuses_tampering[selection] _
+.worktrees/ir-release-datasets-20261002/tests/integration/logic/software_contracts/test_codebase_source_units_384.py:47: in captured
+    head=index.prepare_current(repo,repository_id='source-unit-fixture',operation_id='capture',expected_head=None,
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/codebase_ir.py:732: in prepare_current
+    self._prepare(
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/codebase_ir.py:776: in _prepare
+    with acquire_codebase_resources(
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/codebase_resources.py:77: in acquire_codebase_resources
+    owner = scheduler if scheduler is not None else get_global_resource_scheduler()
+                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:1919: in get_global_resource_scheduler
+    scheduler = GlobalResourceScheduler(effective)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:812: in __init__
+    with self._locked_state():
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:873: in _locked_state
+    self._validate_state_configuration(state)
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:928: in _validate_state_configuration
+    raise ResourceConfigurationError(
+E   ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler.ResourceConfigurationError: scheduler capacity differs from active shared state at /tmp/ipfs-datasets-resource-scheduler-1000.json
+_ ERROR at setup of test_actual_pinned_parent_units_defer_long_tokens_and_replay_without_models _
+.worktrees/ir-release-datasets-20261002/tests/integration/logic/software_contracts/test_codebase_source_units_384.py:47: in captured
+    head=index.prepare_current(repo,repository_id='source-unit-fixture',operation_id='capture',expected_head=None,
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/codebase_ir.py:732: in prepare_current
+    self._prepare(
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/codebase_ir.py:776: in _prepare
+    with acquire_codebase_resources(
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/codebase_resources.py:77: in acquire_codebase_resources
+    owner = scheduler if scheduler is not None else get_global_resource_scheduler()
+                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:1919: in get_global_resource_scheduler
+    scheduler = GlobalResourceScheduler(effective)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:812: in __init__
+    with self._locked_state():
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:873: in _locked_state
+    self._validate_state_configuration(state)
+.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:928: in _validate_state_configuration
+    raise ResourceConfigurationError(
+E   ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler.ResourceConfigurationError: scheduler capacity differs from active shared state at /tmp/ipfs-datasets-resource-scheduler-1000.json
+- generated xml file: /home/barberb/lift_coding/artifacts/source384-manifest-actual-20261003/controls-02.xml -
+=========================== short test summary info ============================
+ERROR .worktrees/ir-release-datasets-20261002/tests/integration/logic/software_contracts/test_codebase_source_units_384.py::test_preparation_keeps_full_inventory_and_bounded_selection
+ERROR .worktrees/ir-release-datasets-20261002/tests/integration/logic/software_contracts/test_codebase_source_units_384.py::test_prepared_source_map_replay_refuses_tampering[target]
+ERROR .worktrees/ir-release-datasets-20261002/tests/integration/logic/software_contracts/test_codebase_source_units_384.py::test_prepared_source_map_replay_refuses_tampering[map]
+ERROR .worktrees/ir-release-datasets-20261002/tests/integration/logic/software_contracts/test_codebase_source_units_384.py::test_prepared_source_map_replay_refuses_tampering[head]
+ERROR .worktrees/ir-release-datasets-20261002/tests/integration/logic/software_contracts/test_codebase_source_units_384.py::test_prepared_source_map_replay_refuses_tampering[omit]
+ERROR .worktrees/ir-release-datasets-20261002/tests/integration/logic/software_contracts/test_codebase_source_units_384.py::test_prepared_source_map_replay_refuses_tampering[selection]
+ERROR .worktrees/ir-release-datasets-20261002/tests/integration/logic/software_contracts/test_codebase_source_units_384.py::test_actual_pinned_parent_units_defer_long_tokens_and_replay_without_models
+=================== 266 passed, 7 errors in 62.28s (0:01:02) ===================

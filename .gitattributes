@@ -28,3 +28,6 @@ docs/software_contracts/evidence/source-cold-index-performance-20261003/** -whit
 docs/software_contracts/evidence/source-combined-observation-performance-20261003/** -whitespace
 docs/software_contracts/evidence/source-sql-column-performance-20261003/** -whitespace
 docs/software_contracts/evidence/source384-inference-publication-import-20261003/** -whitespace
+# Preserve immutable, hash-addressed diagnostic logs and patches.
+docs/software_contracts/evidence/source384-manifest-combined-comparison-20261003/** -whitespace
+docs/software_contracts/evidence/source384-manifest-replay-candidate-20261003/** -whitespace

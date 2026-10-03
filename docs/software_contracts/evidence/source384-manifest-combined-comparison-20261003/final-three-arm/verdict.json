@@ -1,0 +1,77 @@
+{
+  "canonical_output_cid": "baguqeeraekf4vg44vec2hoxgtze22qm63r6le6pcz4xd6d4vawedexmgimea",
+  "canonical_output_sha256": "228bca9b9ca905a3bae69e49ad419edc7cb279e2cf2e3f0f950588325d864308",
+  "canonical_parity_serialization_only_after_final_observation_sample": true,
+  "comparison_script_sha256": "d669388be39d36bce498df58e519fcfbdd84c728940a122d5846d44c5fc249f5",
+  "comparison_sha256": "2acd5b037b5146535fd7bd3352bdb79fb37443d067658e75bebccad75bf74322",
+  "gc_collect_called": false,
+  "interpretation": [
+    "Both candidates remove the observed warm-load anonymous-memory increase and have shorter warm observation time in this single sample.",
+    "Combined private memo accounting is smaller and sampled live Python block count is lower; accounted retention is not process RSS.",
+    "Neither candidate improves anonymous RSS at the second observation return versus this baseline.",
+    "Combined sampled peak is lower, while kernel high-water RSS is higher; sampled endpoints do not capture every transient allocation.",
+    "Lower post-close RSS is a separate lifecycle boundary after explicit parity serialization, not the admission boundary.",
+    "These measurements do not establish resource admission, end-to-end inference, throughput generalization, token savings or benchmark reward. Native full-pipeline qualification remains required."
+  ],
+  "malloc_trim_called": false,
+  "measured": {
+    "baseline-01": {
+      "accounted_memo_bytes": 89210779,
+      "after_parity_and_connection_close_anon_bytes": 222941184,
+      "first_return_anon_bytes": 294309888,
+      "kernel_peak_rss_bytes": 465170432,
+      "observation_seconds": [
+        14.549949831001868,
+        5.338975854996534
+      ],
+      "sampled_peak_anon_bytes": 336863232,
+      "second_return_anon_bytes": 271384576,
+      "second_return_python_blocks": 1247085,
+      "sql_memory_bytes_at_return": 22544384,
+      "warm_load_anon_increase_bytes": 42483712
+    },
+    "byte-only-01": {
+      "accounted_memo_bytes": 89210996,
+      "after_parity_and_connection_close_anon_bytes": 251789312,
+      "first_return_anon_bytes": 299118592,
+      "kernel_peak_rss_bytes": 476299264,
+      "observation_seconds": [
+        14.005927869002335,
+        4.53873901800398
+      ],
+      "sampled_peak_anon_bytes": 361574400,
+      "second_return_anon_bytes": 298422272,
+      "second_return_python_blocks": 1303001,
+      "sql_memory_bytes_at_return": 22544384,
+      "warm_load_anon_increase_bytes": 0
+    },
+    "combined-01": {
+      "accounted_memo_bytes": 29251864,
+      "after_parity_and_connection_close_anon_bytes": 211398656,
+      "first_return_anon_bytes": 296181760,
+      "kernel_peak_rss_bytes": 476557312,
+      "observation_seconds": [
+        14.416430043005676,
+        4.58741655099584
+      ],
+      "sampled_peak_anon_bytes": 306896896,
+      "second_return_anon_bytes": 299008000,
+      "second_return_python_blocks": 620007,
+      "sql_memory_bytes_at_return": 22544384,
+      "warm_load_anon_increase_bytes": 0
+    }
+  },
+  "model_loads": 0,
+  "native_guards_and_observation_deadlines_unchanged": true,
+  "provider_calls": 0,
+  "scheduler_policy_changed": false,
+  "schema": "source384-final-three-arm-measurement-verdict@1",
+  "scope": "One two-observation same-connection run per arm, three fresh host processes, copied SQL database and original immutable bound CAS; source-only diagnostic without model/preparation/report lifetimes.",
+  "script_sha256": "fb74d57ba0a0e571e92851c2423799b1c17837197c37ff4bcd09ff021372ae6b",
+  "source_and_canonical_output_parity": true,
+  "source_db_cas_public_source_unchanged": true,
+  "source_observation_results_retained_across_rounds": false,
+  "status": "all_three_native_source_observation_processes_passed",
+  "tests_or_live_sources_changed": false,
+  "training_steps": 0
+}

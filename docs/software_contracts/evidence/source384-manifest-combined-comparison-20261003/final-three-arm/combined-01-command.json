@@ -1,0 +1,43 @@
+{
+  "argv": [
+    "/home/barberb/.local/bin/python",
+    "-B",
+    "/home/barberb/lift_coding/artifacts/source384-manifest-combined-comparison-20261003/profile_observation.py",
+    "--label",
+    "combined-01",
+    "--replay-shape",
+    "same_connection",
+    "--candidate-owner",
+    "/home/barberb/lift_coding/artifacts/source384-manifest-combined-replay-20261003/proposed/ipfs_datasets_py/logic/software_contracts/codebase_ir.py",
+    "--candidate-owner-sha256",
+    "4aa2e5287885aaecf2c2319a100b8e4b8bdad21b082990a4beadda84d7c61018",
+    "--candidate-cache",
+    "/home/barberb/lift_coding/artifacts/source384-manifest-combined-replay-20261003/proposed/ipfs_datasets_py/logic/software_contracts/cache.py",
+    "--candidate-cache-sha256",
+    "a0b1711a5fa1f5b39b92d43748548c8802f632d1131ad9a64dd7f49df51bdd8c"
+  ],
+  "cwd": "/home/barberb/lift_coding",
+  "env": {
+    "HF_HUB_OFFLINE": "1",
+    "MKL_NUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONPATH": "/home/barberb/lift_coding/.worktrees/ir-release-accelerate-20261002:/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002:/home/barberb/lift_coding/.venvs/terminal-bench-harbor/lib/python3.12/site-packages:/home/barberb/.local/lib/python3.12/site-packages:/usr/local/lib/python3.12/dist-packages:/usr/lib/python3/dist-packages",
+    "TOKENIZERS_PARALLELISM": "false",
+    "TRANSFORMERS_OFFLINE": "1"
+  },
+  "script_sha256": "fb74d57ba0a0e571e92851c2423799b1c17837197c37ff4bcd09ff021372ae6b",
+  "selected_candidates": {
+    "codebase_ir.py": {
+      "path": "/home/barberb/lift_coding/artifacts/source384-manifest-combined-replay-20261003/proposed/ipfs_datasets_py/logic/software_contracts/codebase_ir.py",
+      "sha256": "4aa2e5287885aaecf2c2319a100b8e4b8bdad21b082990a4beadda84d7c61018"
+    },
+    "cache.py": {
+      "path": "/home/barberb/lift_coding/artifacts/source384-manifest-combined-replay-20261003/proposed/ipfs_datasets_py/logic/software_contracts/cache.py",
+      "sha256": "a0b1711a5fa1f5b39b92d43748548c8802f632d1131ad9a64dd7f49df51bdd8c"
+    }
+  },
+  "subprocess_timeout": 240
+}

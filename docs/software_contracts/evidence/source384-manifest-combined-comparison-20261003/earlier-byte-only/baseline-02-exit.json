@@ -1,0 +1,9 @@
+{
+  "candidate_pins_after": {
+    "cache.py": "844f14da62860135f4b15f753d19c21fa0901c27a9b99a7d3e05c23c174dab1f",
+    "codebase_ir.py": "da535d53d73772ebaeaeb8366c61a5c45b0de65f338932e1b8c532cf964c33a9"
+  },
+  "returncode": 0,
+  "script_sha256": "5185dfb86e279cdb9be5063deea66e5585e52dc43307c054b07c29eb2c9a491e",
+  "seconds": 29.728258027003903
+}

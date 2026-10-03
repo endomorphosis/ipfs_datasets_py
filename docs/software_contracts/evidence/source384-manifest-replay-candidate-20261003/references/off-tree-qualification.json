@@ -1,0 +1,108 @@
+{
+  "actual_checkpoint_fixture": {
+    "completed_benchmark": false,
+    "decoded_unverified_candidates": 4,
+    "model_loads": 1,
+    "proof_authority": false,
+    "provider_calls": 0,
+    "source_and_authority_drift_rejected": true,
+    "source_executed": false,
+    "token_deferred_units": 1,
+    "training_steps": 0,
+    "warm_and_cold_replay_without_numerical_worker": true
+  },
+  "compaction_included": true,
+  "files": {
+    "bootstrap/sitecustomize.py": "05cb72c16cec065081a70dfdd2438a68ed66075bbc9ba0fc07bda3070386b879",
+    "controls-01-child-import.json": "6b13d95b76d49e991464f335f059e14f159ef1f6ca87cd14c3ac9c8bcf7cb447",
+    "controls-01-command.json": "b0cb746c8ce568531d3fd1f3530584c811e77d6123082cef794635bc88cd3533",
+    "controls-01-exit.json": "09d6d9beddae49e44837f661fa71fc3b9d758436a29623af7fc1d51ead86b5fd",
+    "controls-01-runtime-diagnosis.json": "f607fd6c945288a8a1e4c55ea2b5610212125f5d6c83e13a01d6c1e8d4b7bfdf",
+    "controls-01.log": "6d7557ec63a2fee145fda6533c8f378dd970439b4066db4f3bd0c172421be0a3",
+    "controls-01.xml": "084ecf9527825ef87da7d8c5cc0ee1a061dc9ec21860b21765aca82d0a2f2d65",
+    "controls-02-child-import.json": "6b13d95b76d49e991464f335f059e14f159ef1f6ca87cd14c3ac9c8bcf7cb447",
+    "controls-02-command.json": "f372dcd074df13e5a4971e2f915cae50c2379d8f8db4c611af1d891d4c7770ed",
+    "controls-02-exit.json": "69191af481ca07168b31193f7397b89dd51b62f60d0e7a425aff7d259812cd3c",
+    "controls-02.log": "037728de2cbe74ea7e9088d1a78afcb9d38b701188294391075bc8aa86efa0bf",
+    "controls-02.xml": "0937498073ff73a7e2483fd036bc84b163139e0b3725b0aa9e1b8ff5f90b4168",
+    "production-pins.json": "d5e8630559537c27c3b249b232d5063ef6ea0a746a39cf413cf6c74a6e214cd7",
+    "production.patch": "22e82be912c39fb78a03bb095af31c2c84a469bfeab31cb6e8d551438b5ef153",
+    "proposed/ipfs_datasets_py/logic/software_contracts/cache.py": "a0b1711a5fa1f5b39b92d43748548c8802f632d1131ad9a64dd7f49df51bdd8c",
+    "proposed/ipfs_datasets_py/logic/software_contracts/codebase_ir.py": "4aa2e5287885aaecf2c2319a100b8e4b8bdad21b082990a4beadda84d7c61018",
+    "proposed/tests/unit/logic/software_contracts/test_codebase_manifest_byte_replay.py": "d205f3384c71fe4f0ecaa4e10638df2283f85fec9196dd28e9aa50bfe5dadc8c",
+    "proposed/tests/unit/logic/software_contracts/test_codebase_manifest_compaction.py": "1c5ed2d4f429ee6ad8858c03f29ab919e347badcd8d4a3a731510baaeb336979",
+    "run_final_controls.py": "2c01e40bf92ce43d05b4b3a9522b4b5378f12aa46693b4b3c32c471b10292781",
+    "run_source_final.py": "45a57ef462cfd1d8d6adf236066c281f6a5cb0385a56bd856c1ff4a01ee41514",
+    "seal_qualification.py": "fbb0a5baefcb4a3e350f1809b955b280ea7c1a3b4e85de4ff9a8bed353067094"
+  },
+  "final_distinct_controls": 267,
+  "generation_notes": [
+    {
+      "failed": 1,
+      "label": "controls-01",
+      "passed": 266,
+      "pytest_seconds": 62.1,
+      "skipped": 0
+    },
+    {
+      "failed": 0,
+      "label": "controls-02",
+      "passed": 1,
+      "pytest_seconds": 10.35,
+      "skipped": 0
+    }
+  ],
+  "invariants": [
+    "Every memo hit freshly reads bounded CAS bytes, checks exact canonical key and fresh body digest, and returns detached records under unchanged native producer/registration/config guards.",
+    "Cache-owned early reader/JSON/direct validation dependency anchors preserve cache-first custom reader behavior; unknown/custom layouts fall back to ordinary public get.",
+    "Private graph compaction uses call-local exact-type scalar/immutable JSON containers only; records remain detached and cloned for every caller.",
+    "Canonical raw key remains exact, memo bounds stay4 entries/128MiB, and source/head/SQL/currentness/admission/deadline/authority checks are unchanged."
+  ],
+  "live_sources_changed": false,
+  "performance": {
+    "accounted_retained_bytes": {
+      "baseline": 89210779,
+      "combined": 29251864
+    },
+    "admission_window_rss_improvement": false,
+    "comparison": "/home/barberb/lift_coding/artifacts/source384-manifest-combined-comparison-20261003/comparison.json",
+    "observation_seconds": {
+      "baseline": [
+        14.55,
+        5.339
+      ],
+      "combined": [
+        14.416,
+        4.587
+      ]
+    },
+    "scope": "Single source-only pair per arm; exact copied-DB/source/canonical-output/producer parity passed. No completed Docker pipeline or general performance claim.",
+    "second_return_anon_mib": {
+      "baseline": 258.812,
+      "combined": 285.156
+    },
+    "sha256": "2acd5b037b5146535fd7bd3352bdb79fb37443d067658e75bebccad75bf74322",
+    "warm_load_anon_increase_mib": {
+      "baseline": 40.516,
+      "combined": 0
+    }
+  },
+  "schema": "off-tree-manifest-combined-replay-qualification@1",
+  "setup_failure_diagnosis": "controls-01 parent explicitly prepended unrelated Harbor site-packages, selecting tokenizers0.23.2; native isolated worker selected actual interpreter0.21.4 and correctly refused the mismatch. Retry only the failed case with bootstrap+D PYTHONPATH passed. No owner/test source or runtime version check changed.",
+  "skips": 0,
+  "status": "267_distinct_controls_passed_no_admission_window_rss_improvement",
+  "test_groups": {
+    "test_cache": 13,
+    "test_codebase_catalog": 31,
+    "test_codebase_ir": 21,
+    "test_codebase_ir_untrusted_previous": 2,
+    "test_codebase_manifest_byte_replay": 72,
+    "test_codebase_manifest_compaction": 13,
+    "test_codebase_manifest_memo": 39,
+    "test_codebase_scan_policy": 44,
+    "test_codebase_source384_publication": 5,
+    "test_codebase_source_units_384": 7,
+    "test_content_identity": 20
+  },
+  "test_identity": "Normalize pytest classname prefix to its unique module basename and pair with exact test name; retry launched from a narrower root produces a different classname prefix."
+}

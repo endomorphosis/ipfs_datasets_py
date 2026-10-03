@@ -24,8 +24,6 @@ import os
 import tempfile
 import threading
 import time
-import sys
-from types import BuiltinMethodType, FunctionType, ModuleType
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
@@ -42,7 +40,6 @@ from ipfs_datasets_py.logic.software_contracts.content import (
     decode_and_recompute_structured,
     validate_cid,
 )
-from ipfs_datasets_py.logic.software_contracts import content as _structured_content
 
 try:  # pragma: no cover - exercised on POSIX, optional elsewhere
     import fcntl
@@ -585,149 +582,6 @@ class ImmutableCAS:
         except (ContentIdentityError, TypeError, ValueError) as exc:
             raise CacheIntegrityError("stored source object CID mismatch") from exc
         return payload
-
-
-def _structured_callable_binding(function):
-    # Native reader/JSON defaults are scalars, types or immutable callables.
-    # Capture values inside the mutable kwdefaults dictionary, not its id.
-    return (function, function.__code__,
-            tuple((type(value), id(value)) for value in (function.__defaults__ or ())),
-            tuple((name, type(value), id(value)) for name, value in sorted((function.__kwdefaults__ or {}).items())))
-
-
-def _structured_reader_bindings():
-    bindings = [ImmutableCAS, json]
-    for function in (canonical_dag_json_bytes, cid_for_structured,
-                     decode_and_recompute_structured, validate_cid):
-        bindings.append(_structured_callable_binding(function))
-    for cls in (ImmutableCAS, json.JSONDecoder, json.JSONEncoder):
-        bindings.append(cls)
-        for name, value in sorted(vars(cls).items()):
-            if isinstance(value, (classmethod, staticmethod)):
-                value = value.__func__
-            if type(value) is FunctionType:
-                bindings.append((cls, name, _structured_callable_binding(value)))
-            else:
-                bindings.append((cls, name, type(value), id(value)))
-    for module in (json, json.decoder, json.encoder, json.scanner, _structured_content):
-        bindings.append(module)
-        for name, value in sorted(vars(module).items()):
-            if type(value) is ModuleType:
-                bindings.append((module.__name__, name, type(value), id(value)))
-            elif type(value) is FunctionType:
-                bindings.append((module.__name__, name, _structured_callable_binding(value)))
-            elif name in {"c_make_encoder", "c_make_scanner", "scanstring",
-                          "encode_basestring", "encode_basestring_ascii"}:
-                bindings.append((module.__name__, name, type(value), id(value)))
-    for name in ("_default_decoder", "_default_encoder"):
-        value = getattr(json, name)
-        bindings.append((name, type(value), id(value),
-                         tuple((key, type(item), id(item)) for key, item in sorted(vars(value).items()))))
-    return tuple(bindings)
-
-
-def _structured_json_provenance():
-    """Conservative stdlib eligibility, never a substitute JSON validator.
-
-    Wrappers installed before this module imports must keep the ordinary get
-    path too. Unsupported interpreter/layouts merely lose private byte replay.
-    """
-    try:
-        modules = (json, json.decoder, json.encoder, json.scanner)
-        for module in modules:
-            if type(module) is not ModuleType or sys.modules.get(module.__name__) is not module:
-                return False
-            for value in vars(module).values():
-                if type(value) is FunctionType:
-                    if not value.__module__.startswith("json"):
-                        return False
-                    source = sys.modules.get(value.__module__)
-                    if source not in modules or value.__code__.co_filename != source.__file__:
-                        return False
-        for function in (json.loads, json.dumps):
-            if (type(function) is not FunctionType or function.__module__ != "json"
-                    or function.__code__.co_filename != json.__file__ or function.__defaults__ is not None):
-                return False
-        expected = ((json.loads, dict(cls=None, object_hook=None, parse_float=None, parse_int=None,
-                                     parse_constant=None, object_pairs_hook=None)),
-                    (json.dumps, dict(skipkeys=False, ensure_ascii=True, check_circular=True,
-                                     allow_nan=True, cls=None, indent=None, separators=None,
-                                     default=None, sort_keys=False)))
-        for function, defaults in expected:
-            actual = function.__kwdefaults__
-            if type(actual) is not dict or set(actual) != set(defaults) or any(
-                    actual[key] is not value for key, value in defaults.items()):
-                return False
-        for cls, module in ((json.JSONDecoder, json.decoder), (json.JSONEncoder, json.encoder)):
-            if cls.__module__ != module.__name__:
-                return False
-            for value in vars(cls).values():
-                if type(value) is FunctionType and (value.__module__ != module.__name__
-                        or value.__code__.co_filename != module.__file__):
-                    return False
-        defaults = json.JSONDecoder.decode.__defaults__
-        if type(defaults) is not tuple or len(defaults) != 1:
-            return False
-        whitespace = defaults[0]
-        if (not isinstance(whitespace, BuiltinMethodType)
-                or whitespace.__self__ is not json.decoder.WHITESPACE
-                or whitespace.__name__ != "match"
-                or json.decoder.WHITESPACE.pattern != r"[ \t\n\r]*"
-                or json.decoder.WHITESPACE.flags != 120):
-            return False
-        decoder, encoder = json._default_decoder, json._default_encoder
-        if type(decoder) is not json.JSONDecoder or type(encoder) is not json.JSONEncoder:
-            return False
-        native_encoder = dict(skipkeys=False, ensure_ascii=True, check_circular=True,
-                              allow_nan=True, sort_keys=False, indent=None)
-        if set(vars(encoder)) != set(native_encoder) or any(
-                vars(encoder)[key] is not value for key, value in native_encoder.items()):
-            return False
-        native_decoder = dict(object_hook=None, object_pairs_hook=None, parse_float=float,
-                              parse_int=int, strict=True, parse_object=json.decoder.JSONObject,
-                              parse_array=json.decoder.JSONArray, parse_string=json.decoder.scanstring)
-        if set(vars(decoder)) != set(native_decoder) | {"parse_constant", "memo", "scan_once"}:
-            return False
-        if any(vars(decoder)[key] is not value for key, value in native_decoder.items()):
-            return False
-        if type(decoder.memo) is not dict or decoder.memo:
-            return False
-        scanner = decoder.scan_once
-        if (type(scanner) is not json.scanner.c_make_scanner
-                or type(scanner).__module__ != "_json"):
-            return False
-        for name in ("strict", "object_hook", "object_pairs_hook", "parse_float", "parse_int"):
-            if getattr(scanner, name) is not native_decoder[name]:
-                return False
-        for function in (decoder.parse_constant, scanner.parse_constant):
-            if (not isinstance(function, BuiltinMethodType)
-                    or function.__self__ is not json.decoder._CONSTANTS
-                    or function.__name__ != "__getitem__"):
-                return False
-        if _structured_content.json is not json:
-            return False
-        for function in (canonical_dag_json_bytes, cid_for_structured,
-                         decode_and_recompute_structured, validate_cid):
-            if (type(function) is not FunctionType
-                    or function.__module__ != _structured_content.__name__
-                    or function.__code__.co_filename != _structured_content.__file__):
-                return False
-        return True
-    except (AttributeError, TypeError, ValueError):
-        return False
-
-
-def _structured_reader_is_native():
-    try:
-        return _native_structured_json and _structured_reader_bindings() == _native_structured_bindings
-    except (AttributeError, TypeError, ValueError):
-        return False
-
-
-# Cache-owned anchors precede any later import of the manifest consumer. They
-# cannot bless a reader installed between importing cache and codebase_ir.
-_native_structured_json = _structured_json_provenance()
-_native_structured_bindings = _structured_reader_bindings() if _native_structured_json else None
 
 
 @dataclass(frozen=True)

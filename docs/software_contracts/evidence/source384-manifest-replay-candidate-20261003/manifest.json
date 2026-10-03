@@ -1,0 +1,180 @@
+{
+  "files": [
+    {
+      "bytes": 4509,
+      "path": "README.md",
+      "sha256": "db476432645bcd409191df47f8a3b907ff699e3a0b9d51e2f6262c3e406de2a1"
+    },
+    {
+      "bytes": 14923,
+      "path": "before-test-import-fix/tests/unit/logic/software_contracts/test_codebase_manifest_byte_replay.py",
+      "sha256": "d205f3384c71fe4f0ecaa4e10638df2283f85fec9196dd28e9aa50bfe5dadc8c"
+    },
+    {
+      "bytes": 6440,
+      "path": "before-test-import-fix/tests/unit/logic/software_contracts/test_codebase_manifest_compaction.py",
+      "sha256": "1c5ed2d4f429ee6ad8858c03f29ab919e347badcd8d4a3a731510baaeb336979"
+    },
+    {
+      "bytes": 4730,
+      "path": "before-test-import-fix/tests/unit/logic/software_contracts/test_codebase_source_units_lifetime.py",
+      "sha256": "c1c8fe1db596efc4cdfab80f9fe329eee380e3ce2b60711fb1877f878c9a6d50"
+    },
+    {
+      "bytes": 5235,
+      "path": "controls/build_evidence.py",
+      "sha256": "7573f0dca0095a898f21a81c00f3e5201bf7f2860c495726b43930d2c4594f1e"
+    },
+    {
+      "bytes": 2758,
+      "path": "controls/configured_client_plugin.py",
+      "sha256": "e011a9acc70348b69b3d9b98a39ded5257a1e2eff27925fea2f860a09bd2a96c"
+    },
+    {
+      "bytes": 5476,
+      "path": "controls/controls-01-command.json",
+      "sha256": "bf8173145de841f4068c1af3072baf8ce8ad2c88c2a5a91dfee842c25dabc43a"
+    },
+    {
+      "bytes": 2387,
+      "path": "controls/controls-01-exit.json",
+      "sha256": "35bced4377c78bd8c92c216df05b21b4d69b4ab79de0fba1e285f8baba3752a1"
+    },
+    {
+      "bytes": 2716,
+      "path": "controls/controls-01.log",
+      "sha256": "21dc3a68e4a065ea1fc46cd8d13d0cd4bfa58b541b6eea5f6018b1defc5c435c"
+    },
+    {
+      "bytes": 1648,
+      "path": "controls/controls-01.xml",
+      "sha256": "abe650c4caa8d9d7953a45513e100736b6a0d31785c04832f8998b2dce25ece9"
+    },
+    {
+      "bytes": 5482,
+      "path": "controls/controls-02-command.json",
+      "sha256": "978304f1fd18d5ddb49ddd0351a6cb946f6c77e012ca812e01f5c16a5ac08c07"
+    },
+    {
+      "bytes": 2390,
+      "path": "controls/controls-02-exit.json",
+      "sha256": "5c2128eff2ba24ea66e2ca1dad07ffecc7f01b08ca2df89be6dd74c794355eef"
+    },
+    {
+      "bytes": 2118,
+      "path": "controls/controls-02-scheduler-diagnosis.json",
+      "sha256": "5a3b97daafc084bcb97ead9964d78091c8e52090486ee54817b19beeb7d7912d"
+    },
+    {
+      "bytes": 19723,
+      "path": "controls/controls-02.log",
+      "sha256": "a9d3e54a053398ce94d43bfeed600bb520a2dcf612741fcdb964c787b069903c"
+    },
+    {
+      "bytes": 63703,
+      "path": "controls/controls-02.xml",
+      "sha256": "03cb1b47e930d6ba2b6edd929cc46357fbdb4a5318d9c09529b9df0c466bb475"
+    },
+    {
+      "bytes": 2556,
+      "path": "controls/controls-03-command.json",
+      "sha256": "786e0abe4a525214fcbfac9c8e47755feb36074d3224ccf4568dc9932daddafc"
+    },
+    {
+      "bytes": 2171,
+      "path": "controls/controls-03-configured-client-after.json",
+      "sha256": "0177caece95b25788ef3f9e42425aab6ede53f64d0d7651803c0cffcc4944217"
+    },
+    {
+      "bytes": 2330,
+      "path": "controls/controls-03-configured-client-before.json",
+      "sha256": "fefeeb5cad7bf5314cb3b884d2f42f0de448b81d6dd867ad0c67a0dfb2b6b5a8"
+    },
+    {
+      "bytes": 1004,
+      "path": "controls/controls-03-exit.json",
+      "sha256": "d5aa25c7cf9cac71ea3b85731d768c3f3718d7352a3a8c1fa8da77cc9bbb8741"
+    },
+    {
+      "bytes": 1184,
+      "path": "controls/controls-03.log",
+      "sha256": "349ff4899795506a3c2a526540f9d082bc3b90740cc3c09288779a718030ada0"
+    },
+    {
+      "bytes": 1494,
+      "path": "controls/controls-03.xml",
+      "sha256": "0f9928f2e28b2b67e0e356b9c72746db908d6007c9ddab035df60a2edbe7c97a"
+    },
+    {
+      "bytes": 2644,
+      "path": "controls/run_controls.py",
+      "sha256": "a5fa58aff65f7540412c1c5836b8dbb10483b17ae76da4449a8079c8f163f398"
+    },
+    {
+      "bytes": 2644,
+      "path": "controls/run_controls_02.py",
+      "sha256": "3a02ba2c4048852f7d5175d8eac01613cd7956056f877b02901615f1b4f2a271"
+    },
+    {
+      "bytes": 2346,
+      "path": "controls/run_source_controls_03.py",
+      "sha256": "a798a99e1a17807f7e6d3c51033e89a81f0c358b2b6f3fe3d17df086191f7ad4"
+    },
+    {
+      "bytes": 842,
+      "path": "final-source-pins.json",
+      "sha256": "a9123d399ac9de5fd275dd2885e084a5d65b78ce84ddb5fe9af88ab96f10de9b"
+    },
+    {
+      "bytes": 66397,
+      "path": "final-sources/ipfs_datasets_py/logic/software_contracts/cache.py",
+      "sha256": "a0b1711a5fa1f5b39b92d43748548c8802f632d1131ad9a64dd7f49df51bdd8c"
+    },
+    {
+      "bytes": 49233,
+      "path": "final-sources/ipfs_datasets_py/logic/software_contracts/codebase_ir.py",
+      "sha256": "4aa2e5287885aaecf2c2319a100b8e4b8bdad21b082990a4beadda84d7c61018"
+    },
+    {
+      "bytes": 19545,
+      "path": "final-sources/ipfs_datasets_py/logic/software_contracts/codebase_source_units_384.py",
+      "sha256": "e917f1f5be82b9aa31256aae415606f86a7da25e58c753357428dd6a08695eba"
+    },
+    {
+      "bytes": 14959,
+      "path": "final-sources/tests/unit/logic/software_contracts/test_codebase_manifest_byte_replay.py",
+      "sha256": "8f53eb3ae608d75310a520c1ae86a379566b37adad67d0db7fa5b77a4b206d23"
+    },
+    {
+      "bytes": 6476,
+      "path": "final-sources/tests/unit/logic/software_contracts/test_codebase_manifest_compaction.py",
+      "sha256": "c490796c258f45f007ca7bf41f13a722ed364d8cae2a5645e5d6dae14a8bdf2a"
+    },
+    {
+      "bytes": 4730,
+      "path": "final-sources/tests/unit/logic/software_contracts/test_codebase_source_units_lifetime.py",
+      "sha256": "c1c8fe1db596efc4cdfab80f9fe329eee380e3ce2b60711fb1877f878c9a6d50"
+    },
+    {
+      "bytes": 4337,
+      "path": "qualification.json",
+      "sha256": "99b04a27c76fa8737fd250c112cb77adb9305a3486580385b5fa48d71d0faaab"
+    },
+    {
+      "bytes": 5747,
+      "path": "references/off-tree-qualification.json",
+      "sha256": "31450d074f8354ceb8c813d87a47c174ca2c972082984e109894c8e041a29ada"
+    },
+    {
+      "bytes": 1875,
+      "path": "references/off-tree-runtime-diagnosis.json",
+      "sha256": "f607fd6c945288a8a1e4c55ea2b5610212125f5d6c83e13a01d6c1e8d4b7bfdf"
+    },
+    {
+      "bytes": 2912,
+      "path": "reviews/off-tree-source-review.json",
+      "sha256": "86710f4045fd1ba60988025f1598bacfee74b13011eb79fb7545278422e08b6e"
+    }
+  ],
+  "schema": "source384-manifest-replay-candidate-evidence@1"
+}

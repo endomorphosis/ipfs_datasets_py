@@ -1,0 +1,35 @@
+"""Seal source-free byte-replay diagnostic generations without promoting them."""
+from pathlib import Path
+import hashlib,json,shutil
+B=Path(__file__).resolve().parent;W=B.parents[1];O=B/'public-evidence'
+if O.exists():raise ValueError('closed package already exists')
+O.mkdir();selected=[]
+sources={'final-three-arm':B,'earlier-byte-only':W/'artifacts/source384-manifest-warm-replay-comparison-20261003'}
+for prefix,root in sources.items():
+ for path in sorted(root.rglob('*')):
+  rel=path.relative_to(root)
+  if not path.is_file() or path.is_symlink() or any(p in ('public-evidence','__pycache__') for p in rel.parts):continue
+  allowed=(len(rel.parts)==1 and path.suffix in ('.py','.json','.stdout','.stderr','.log')) or (len(rel.parts)==2 and path.name in ('receipt.json','events.jsonl')) or rel.parts[0] in ('measured-sources','measured-candidate-sources')
+  if not allowed:continue
+  if path.suffix not in ('.py','.json','.stdout','.stderr','.log','.jsonl'):raise ValueError('unexpected evidence extension')
+  if path.stat().st_size>8*1024**2:raise ValueError('unexpected source-free evidence size')
+  dest=O/prefix/rel;dest.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(path,dest)
+  selected.append({'path':str(dest.relative_to(O)),'original':str(path.relative_to(W))})
+(O/'README.txt').write_text('''Final source-only manifest comparison and earlier unpromoted byte replay
+
+All three final fresh processes passed two native observations with identical canonical output and preserved original source, CAS and database bytes. The final candidate graphs were selected under canonical module names before import-time producer capture. Producer/registration guards were not bypassed. Every observation used its original90s deadline, parent6144MiB/child4096MiB resource reservations, and one-thread512MB DuckDB profile. There were no model loads, provider calls, training, scheduler changes, GC calls or allocator trimming.
+
+Final corrected byte-only source: fccfc25a / cache a0b1711a. Final combined compaction+byte source: 4aa2e528 / cache a0b1711a. Baseline native source: 2cc174e7. Exact full hashes and runtime snapshots are retained per arm. Baseline cold/warm observation14.550/5.339s; byte-only14.006/4.539s; combined14.416/4.587s. This single instrumented host sample is not a general throughput claim.
+
+The combined cache retained accounting falls from89,210,779 to29,251,864bytes and roughly600,000 fewer allocated Python blocks remain. Both byte candidates remove the measured40.516MiB warm-load anonymous allocation increase. However, anonymous RSS at the second observation return is258.812MiB baseline,284.598 byte-only and285.156 combined. Neither candidate improves that admission-relevant host boundary. Combined sampled peak anonymous memory is lower, while kernel VmHWM is higher; endpoint samples do not capture every transient allocation. Combined post-parity-and-connection-close RSS is lower, which is a different lifecycle boundary.
+
+No observation result is retained across rounds. Explicit canonical output serialization happens only after the final observation-return sample. Copied source SQL databases are not included; their original immutable CAS absolute binding is preserved during measurement. The actual model/preparation reports and model registry are absent from these source-only runs. Only a fresh complete native pipeline can determine actual admission; this package claims no inference qualification, resource-admission fix, benchmark reward or token score.
+
+The earlier-byte-only directory preserves a prior unpromoted da535d53/844f14da generation, both same-connection and three-stage reopen profiles. That candidate lacked the later cache-owned early native-binding anchor. Its output-parity passes and negative end-boundary RSS result remain evidence, not qualification of final sources. Reopening SQL owners was measurement-only and is not a proposed production lifecycle change. Earlier and final source/control generations are separately pinned.
+
+Canonical returned output SHA256 is228bca9b9ca905a3bae69e49ad419edc7cb279e2cf2e3f0f950588325d864308. No benchmark task source bodies, database files, CAS objects, model weights, credentials or verifier inputs are included. Reproduction requires the retained local source fixture identified by receipt paths and byte hashes. The manifest exhaustively lists all package members; no controls or model results from another package are implicitly counted here.
+''')
+(O/'provenance.json').write_text(json.dumps({'schema':'source-only-byte-replay-evidence-provenance@1','selected_files':selected,'task_source_bodies_included':False,'cas_objects_included':False,'databases_included':False,'weights_included':False,'credentials_included':False,'hidden_verifier_inputs_read':False,'full_native_pipeline_qualified':False,'production_promotion_not_established_by_this_package':True},sort_keys=True,indent=2)+'\n')
+files=[{'path':str(p.relative_to(O)),'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()} for p in sorted(O.rglob('*')) if p.is_file()]
+m={'schema':'closed-source-only-manifest-replay-evidence@1','files':files};(O/'manifest.json').write_text(json.dumps(m,sort_keys=True,indent=2)+'\n')
+print(json.dumps({'manifest_sha256':hashlib.sha256((O/'manifest.json').read_bytes()).hexdigest(),'members':len(files),'bytes':sum(f['bytes'] for f in files)}))

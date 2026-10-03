@@ -1,0 +1,427 @@
+{
+  "baseline": {
+    "metrics": {
+      "after_close": {
+        "allocated_python_blocks": 1221472,
+        "duckdb_bytes": 0,
+        "elapsed_seconds": 23.97804518599878,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 1,
+          "misses": 1,
+          "retained_bytes": 89210779
+        },
+        "rss_anon_bytes": 224006144,
+        "rss_bytes": 300736512
+      },
+      "before_close": {
+        "allocated_python_blocks": 1221507,
+        "duckdb_bytes": 22544384,
+        "elapsed_seconds": 23.960806843999308,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 1,
+          "misses": 1,
+          "retained_bytes": 89210779
+        },
+        "rss_anon_bytes": 317124608,
+        "rss_bytes": 393789440
+      },
+      "before_connection": {
+        "allocated_python_blocks": 163667,
+        "duckdb_bytes": 0,
+        "elapsed_seconds": 0.0008933409990277141,
+        "memo": {
+          "bypasses": 0,
+          "entries": 0,
+          "evictions": 0,
+          "hits": 0,
+          "misses": 0,
+          "retained_bytes": 0
+        },
+        "rss_anon_bytes": 33042432,
+        "rss_bytes": 71831552
+      },
+      "cold_load_enter": {
+        "allocated_python_blocks": 368298,
+        "duckdb_bytes": 2097152,
+        "elapsed_seconds": 0.2185366729972884,
+        "memo": {
+          "bypasses": 0,
+          "entries": 0,
+          "evictions": 0,
+          "hits": 0,
+          "misses": 0,
+          "retained_bytes": 0
+        },
+        "rss_anon_bytes": 74883072,
+        "rss_bytes": 151089152
+      },
+      "cold_load_return": {
+        "allocated_python_blocks": 1222314,
+        "duckdb_bytes": 2097152,
+        "elapsed_seconds": 9.838171866998891,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 0,
+          "misses": 1,
+          "retained_bytes": 89210779
+        },
+        "rss_anon_bytes": 271269888,
+        "rss_bytes": 347607040
+      },
+      "first_observation_return": {
+        "allocated_python_blocks": 1256203,
+        "duckdb_bytes": 22544384,
+        "elapsed_seconds": 14.711208659995464,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 0,
+          "misses": 1,
+          "retained_bytes": 89210779
+        },
+        "rss_anon_bytes": 295686144,
+        "rss_bytes": 372350976
+      },
+      "second_observation_return": {
+        "allocated_python_blocks": 1247211,
+        "duckdb_bytes": 22544384,
+        "elapsed_seconds": 20.286967950996768,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 1,
+          "misses": 1,
+          "retained_bytes": 89210779
+        },
+        "rss_anon_bytes": 272863232,
+        "rss_bytes": 349528064
+      },
+      "warm_load_enter": {
+        "allocated_python_blocks": 1255199,
+        "duckdb_bytes": 22544384,
+        "elapsed_seconds": 14.736758530998486,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 0,
+          "misses": 1,
+          "retained_bytes": 89210779
+        },
+        "rss_anon_bytes": 295706624,
+        "rss_bytes": 372371456
+      },
+      "warm_load_return": {
+        "allocated_python_blocks": 1221322,
+        "duckdb_bytes": 22544384,
+        "elapsed_seconds": 15.704471902994555,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 1,
+          "misses": 1,
+          "retained_bytes": 89210779
+        },
+        "rss_anon_bytes": 338198528,
+        "rss_bytes": 414863360
+      }
+    },
+    "observed_head": {
+      "ast_revision_id": "rev:terminal-source384:cf59eff6c467429866bc22000288e86814d49f7669dbbcf1f5406d73febd580f:snapshot:baguqeeraxmhnn53dvgqdqahnyue4bjd3l5fathpq4kihcjdgu5g7dfo2oopa",
+      "generation": 1,
+      "manifest_cid": "baguqeeraekf4vg44vec2hoxgtze22qm63r6le6pcz4xd6d4vawedexmgimea",
+      "receipt_cid": "baguqeerax52f7guhoz6hxombwdvfwlpc7un3ehy5cerpp4vjbh6khtmtlu4q",
+      "repository_id": "terminal-source384:cf59eff6c467429866bc22000288e86814d49f7669dbbcf1f5406d73febd580f",
+      "schema": "codebase-head@1",
+      "snapshot_cid": "baguqeeraxmhnn53dvgqdqahnyue4bjd3l5fathpq4kihcjdgu5g7dfo2oopa"
+    },
+    "owner_sha256": "2cc174e71f17a23daabd1c8855d96c621811addfe5152f386810ec23918b1463",
+    "peak": {
+      "kernel_vm_hwm_bytes": 466575360,
+      "sampled_rss_anon_bytes": 338530304,
+      "sampled_rss_bytes": 415195136,
+      "scope": "Through second observation return, before explicit output parity serialization"
+    },
+    "receipt_sha256": "40b768477bbe629c2bbf514e92c4486180a37febd5f69b8a4d972e2e3eb823dd",
+    "replay_shape": "same_connection",
+    "returned_manifest_canonical_sha256": "228bca9b9ca905a3bae69e49ad419edc7cb279e2cf2e3f0f950588325d864308",
+    "returned_manifest_cid": "baguqeeraekf4vg44vec2hoxgtze22qm63r6le6pcz4xd6d4vawedexmgimea",
+    "rounds": [
+      {
+        "number": 0,
+        "seconds": 14.51071213799878
+      },
+      {
+        "number": 1,
+        "seconds": 5.571579454001039
+      }
+    ],
+    "seconds": 23.97822632399766,
+    "selected_producers": {
+      "ipfs_datasets_py.logic.software_contracts.cache": {
+        "path": "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/cache.py",
+        "sha256": "d708bb536860334a43a97244652765bf926d949286207cc25ff68788bf85751f"
+      },
+      "ipfs_datasets_py.logic.software_contracts.codebase_ir": {
+        "path": "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/codebase_ir.py",
+        "sha256": "2cc174e71f17a23daabd1c8855d96c621811addfe5152f386810ec23918b1463"
+      }
+    }
+  },
+  "candidate": {
+    "metrics": {
+      "after_close": {
+        "allocated_python_blocks": 1631181,
+        "duckdb_bytes": 0,
+        "elapsed_seconds": 23.259441452995816,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 1,
+          "misses": 1,
+          "retained_bytes": 89210996
+        },
+        "rss_anon_bytes": 252063744,
+        "rss_bytes": 328785920
+      },
+      "before_close": {
+        "allocated_python_blocks": 1631216,
+        "duckdb_bytes": 22544384,
+        "elapsed_seconds": 23.241741382997134,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 1,
+          "misses": 1,
+          "retained_bytes": 89210996
+        },
+        "rss_anon_bytes": 346693632,
+        "rss_bytes": 423350272
+      },
+      "before_connection": {
+        "allocated_python_blocks": 162536,
+        "duckdb_bytes": 0,
+        "elapsed_seconds": 0.0008871649988577701,
+        "memo": {
+          "bypasses": 0,
+          "entries": 0,
+          "evictions": 0,
+          "hits": 0,
+          "misses": 0,
+          "retained_bytes": 0
+        },
+        "rss_anon_bytes": 33079296,
+        "rss_bytes": 71860224
+      },
+      "cold_load_enter": {
+        "allocated_python_blocks": 368965,
+        "duckdb_bytes": 2097152,
+        "elapsed_seconds": 0.19279419599479297,
+        "memo": {
+          "bypasses": 0,
+          "entries": 0,
+          "evictions": 0,
+          "hits": 0,
+          "misses": 0,
+          "retained_bytes": 0
+        },
+        "rss_anon_bytes": 75083776,
+        "rss_bytes": 151281664
+      },
+      "cold_load_return": {
+        "allocated_python_blocks": 1980345,
+        "duckdb_bytes": 2097152,
+        "elapsed_seconds": 9.687781196000287,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 0,
+          "misses": 1,
+          "retained_bytes": 89210996
+        },
+        "rss_anon_bytes": 353009664,
+        "rss_bytes": 429338624
+      },
+      "first_observation_return": {
+        "allocated_python_blocks": 1249096,
+        "duckdb_bytes": 22544384,
+        "elapsed_seconds": 14.727299351994589,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 0,
+          "misses": 1,
+          "retained_bytes": 89210996
+        },
+        "rss_anon_bytes": 296722432,
+        "rss_bytes": 373379072
+      },
+      "second_observation_return": {
+        "allocated_python_blocks": 1270183,
+        "duckdb_bytes": 22544384,
+        "elapsed_seconds": 19.564679063994845,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 1,
+          "misses": 1,
+          "retained_bytes": 89210996
+        },
+        "rss_anon_bytes": 295710720,
+        "rss_bytes": 372367360
+      },
+      "warm_load_enter": {
+        "allocated_python_blocks": 1248120,
+        "duckdb_bytes": 22544384,
+        "elapsed_seconds": 14.754993195994757,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 0,
+          "misses": 1,
+          "retained_bytes": 89210996
+        },
+        "rss_anon_bytes": 296747008,
+        "rss_bytes": 373403648
+      },
+      "warm_load_return": {
+        "allocated_python_blocks": 1280393,
+        "duckdb_bytes": 22544384,
+        "elapsed_seconds": 14.853754226998717,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 1,
+          "misses": 1,
+          "retained_bytes": 89210996
+        },
+        "rss_anon_bytes": 296747008,
+        "rss_bytes": 373403648
+      }
+    },
+    "observed_head": {
+      "ast_revision_id": "rev:terminal-source384:cf59eff6c467429866bc22000288e86814d49f7669dbbcf1f5406d73febd580f:snapshot:baguqeeraxmhnn53dvgqdqahnyue4bjd3l5fathpq4kihcjdgu5g7dfo2oopa",
+      "generation": 1,
+      "manifest_cid": "baguqeeraekf4vg44vec2hoxgtze22qm63r6le6pcz4xd6d4vawedexmgimea",
+      "receipt_cid": "baguqeerax52f7guhoz6hxombwdvfwlpc7un3ehy5cerpp4vjbh6khtmtlu4q",
+      "repository_id": "terminal-source384:cf59eff6c467429866bc22000288e86814d49f7669dbbcf1f5406d73febd580f",
+      "schema": "codebase-head@1",
+      "snapshot_cid": "baguqeeraxmhnn53dvgqdqahnyue4bjd3l5fathpq4kihcjdgu5g7dfo2oopa"
+    },
+    "owner_sha256": "da535d53d73772ebaeaeb8366c61a5c45b0de65f338932e1b8c532cf964c33a9",
+    "peak": {
+      "kernel_vm_hwm_bytes": 475774976,
+      "sampled_rss_anon_bytes": 361881600,
+      "sampled_rss_bytes": 438472704,
+      "scope": "Through second observation return, before explicit output parity serialization"
+    },
+    "receipt_sha256": "05221f5580d853b064304295bfaa16dd13db4ff7d0bf2dae760ef6f6d8e9fed7",
+    "replay_shape": "same_connection",
+    "returned_manifest_canonical_sha256": "228bca9b9ca905a3bae69e49ad419edc7cb279e2cf2e3f0f950588325d864308",
+    "returned_manifest_cid": "baguqeeraekf4vg44vec2hoxgtze22qm63r6le6pcz4xd6d4vawedexmgimea",
+    "rounds": [
+      {
+        "number": 0,
+        "seconds": 14.553647059001378
+      },
+      {
+        "number": 1,
+        "seconds": 4.833477386004233
+      }
+    ],
+    "seconds": 23.259634032001486,
+    "selected_producers": {
+      "ipfs_datasets_py.logic.software_contracts.cache": {
+        "path": "/home/barberb/lift_coding/artifacts/source384-manifest-byte-replay-20261003/proposed/ipfs_datasets_py/logic/software_contracts/cache.py",
+        "sha256": "844f14da62860135f4b15f753d19c21fa0901c27a9b99a7d3e05c23c174dab1f"
+      },
+      "ipfs_datasets_py.logic.software_contracts.codebase_ir": {
+        "path": "/home/barberb/lift_coding/artifacts/source384-manifest-byte-replay-20261003/proposed/ipfs_datasets_py/logic/software_contracts/codebase_ir.py",
+        "sha256": "da535d53d73772ebaeaeb8366c61a5c45b0de65f338932e1b8c532cf964c33a9"
+      }
+    }
+  },
+  "candidate_minus_baseline": {
+    "after_close": {
+      "allocated_python_blocks": 409709,
+      "duckdb_bytes": 0,
+      "rss_anon_bytes": 28057600,
+      "rss_bytes": 28049408
+    },
+    "before_close": {
+      "allocated_python_blocks": 409709,
+      "duckdb_bytes": 0,
+      "rss_anon_bytes": 29569024,
+      "rss_bytes": 29560832
+    },
+    "before_connection": {
+      "allocated_python_blocks": -1131,
+      "duckdb_bytes": 0,
+      "rss_anon_bytes": 36864,
+      "rss_bytes": 28672
+    },
+    "cold_load_enter": {
+      "allocated_python_blocks": 667,
+      "duckdb_bytes": 0,
+      "rss_anon_bytes": 200704,
+      "rss_bytes": 192512
+    },
+    "cold_load_return": {
+      "allocated_python_blocks": 758031,
+      "duckdb_bytes": 0,
+      "rss_anon_bytes": 81739776,
+      "rss_bytes": 81731584
+    },
+    "first_observation_return": {
+      "allocated_python_blocks": -7107,
+      "duckdb_bytes": 0,
+      "rss_anon_bytes": 1036288,
+      "rss_bytes": 1028096
+    },
+    "second_observation_return": {
+      "allocated_python_blocks": 22972,
+      "duckdb_bytes": 0,
+      "rss_anon_bytes": 22847488,
+      "rss_bytes": 22839296
+    },
+    "warm_load_enter": {
+      "allocated_python_blocks": -7079,
+      "duckdb_bytes": 0,
+      "rss_anon_bytes": 1040384,
+      "rss_bytes": 1032192
+    },
+    "warm_load_return": {
+      "allocated_python_blocks": 59071,
+      "duckdb_bytes": 0,
+      "rss_anon_bytes": -41451520,
+      "rss_bytes": -41459712
+    }
+  },
+  "gc_collect_called": false,
+  "interpretation": "Paired instrumented source-only host observations in fresh processes. This is not Docker admission, model inference, a benchmark reward, or a general scaling result. Retained representation and RSS measure different quantities.",
+  "malloc_trim_called": false,
+  "model_loads": 0,
+  "provider_calls": 0,
+  "scheduler_policy_changed": false,
+  "schema": "native-manifest-warm-replay-comparison-summary@1",
+  "source_and_sql_checks_unchanged": true,
+  "training_steps": 0
+}

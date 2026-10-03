@@ -1,0 +1,385 @@
+{
+  "cas_objects_included": false,
+  "credentials_included": false,
+  "databases_included": false,
+  "full_native_pipeline_qualified": false,
+  "hidden_verifier_inputs_read": false,
+  "production_promotion_not_established_by_this_package": true,
+  "schema": "source-only-byte-replay-evidence-provenance@1",
+  "selected_files": [
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/baseline-01/events.jsonl",
+      "path": "final-three-arm/baseline-01/events.jsonl"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/baseline-01/receipt.json",
+      "path": "final-three-arm/baseline-01/receipt.json"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/baseline-01-command.json",
+      "path": "final-three-arm/baseline-01-command.json"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/baseline-01-exit.json",
+      "path": "final-three-arm/baseline-01-exit.json"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/baseline-01.stderr",
+      "path": "final-three-arm/baseline-01.stderr"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/baseline-01.stdout",
+      "path": "final-three-arm/baseline-01.stdout"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/baseline.stderr",
+      "path": "final-three-arm/baseline.stderr"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/baseline.stdout",
+      "path": "final-three-arm/baseline.stdout"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/byte-only-01/events.jsonl",
+      "path": "final-three-arm/byte-only-01/events.jsonl"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/byte-only-01/receipt.json",
+      "path": "final-three-arm/byte-only-01/receipt.json"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/byte-only-01-command.json",
+      "path": "final-three-arm/byte-only-01-command.json"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/byte-only-01-exit.json",
+      "path": "final-three-arm/byte-only-01-exit.json"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/byte-only-01.stderr",
+      "path": "final-three-arm/byte-only-01.stderr"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/byte-only-01.stdout",
+      "path": "final-three-arm/byte-only-01.stdout"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/byte-overlay.stderr",
+      "path": "final-three-arm/byte-overlay.stderr"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/byte-overlay.stdout",
+      "path": "final-three-arm/byte-overlay.stdout"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/cache-symlink.stderr",
+      "path": "final-three-arm/cache-symlink.stderr"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/cache-symlink.stdout",
+      "path": "final-three-arm/cache-symlink.stdout"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/combined-01/events.jsonl",
+      "path": "final-three-arm/combined-01/events.jsonl"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/combined-01/receipt.json",
+      "path": "final-three-arm/combined-01/receipt.json"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/combined-01-command.json",
+      "path": "final-three-arm/combined-01-command.json"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/combined-01-exit.json",
+      "path": "final-three-arm/combined-01-exit.json"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/combined-01.stderr",
+      "path": "final-three-arm/combined-01.stderr"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/combined-01.stdout",
+      "path": "final-three-arm/combined-01.stdout"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/combined-overlay.stderr",
+      "path": "final-three-arm/combined-overlay.stderr"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/combined-overlay.stdout",
+      "path": "final-three-arm/combined-overlay.stdout"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/compare.py",
+      "path": "final-three-arm/compare.py"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/comparison.json",
+      "path": "final-three-arm/comparison.json"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/controls-01.json",
+      "path": "final-three-arm/controls-01.json"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/fixture-cache.py",
+      "path": "final-three-arm/fixture-cache.py"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/fixture-codebase_ir.py",
+      "path": "final-three-arm/fixture-codebase_ir.py"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/incomplete-selection.stderr",
+      "path": "final-three-arm/incomplete-selection.stderr"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/incomplete-selection.stdout",
+      "path": "final-three-arm/incomplete-selection.stdout"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/measured-sources/baseline-01/cache.py",
+      "path": "final-three-arm/measured-sources/baseline-01/cache.py"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/measured-sources/baseline-01/codebase_ir.py",
+      "path": "final-three-arm/measured-sources/baseline-01/codebase_ir.py"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/measured-sources/byte-only-01/cache.py",
+      "path": "final-three-arm/measured-sources/byte-only-01/cache.py"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/measured-sources/byte-only-01/codebase_ir.py",
+      "path": "final-three-arm/measured-sources/byte-only-01/codebase_ir.py"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/measured-sources/combined-01/cache.py",
+      "path": "final-three-arm/measured-sources/combined-01/cache.py"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/measured-sources/combined-01/codebase_ir.py",
+      "path": "final-three-arm/measured-sources/combined-01/codebase_ir.py"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/package_evidence.py",
+      "path": "final-three-arm/package_evidence.py"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/profile_observation.py",
+      "path": "final-three-arm/profile_observation.py"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/reopen-shape-refused.stderr",
+      "path": "final-three-arm/reopen-shape-refused.stderr"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/reopen-shape-refused.stdout",
+      "path": "final-three-arm/reopen-shape-refused.stdout"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/verdict.json",
+      "path": "final-three-arm/verdict.json"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/wrong-cache-pin.stderr",
+      "path": "final-three-arm/wrong-cache-pin.stderr"
+    },
+    {
+      "original": "artifacts/source384-manifest-combined-comparison-20261003/wrong-cache-pin.stdout",
+      "path": "final-three-arm/wrong-cache-pin.stdout"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/baseline-01/events.jsonl",
+      "path": "earlier-byte-only/baseline-01/events.jsonl"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/baseline-01/receipt.json",
+      "path": "earlier-byte-only/baseline-01/receipt.json"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/baseline-01-command.json",
+      "path": "earlier-byte-only/baseline-01-command.json"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/baseline-01-exit.json",
+      "path": "earlier-byte-only/baseline-01-exit.json"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/baseline-01.log",
+      "path": "earlier-byte-only/baseline-01.log"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/baseline-02/events.jsonl",
+      "path": "earlier-byte-only/baseline-02/events.jsonl"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/baseline-02/receipt.json",
+      "path": "earlier-byte-only/baseline-02/receipt.json"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/baseline-02-command.json",
+      "path": "earlier-byte-only/baseline-02-command.json"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/baseline-02-exit.json",
+      "path": "earlier-byte-only/baseline-02-exit.json"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/baseline-02.log",
+      "path": "earlier-byte-only/baseline-02.log"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/baseline.stderr",
+      "path": "earlier-byte-only/baseline.stderr"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/baseline.stdout",
+      "path": "earlier-byte-only/baseline.stdout"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/cache-symlink.stderr",
+      "path": "earlier-byte-only/cache-symlink.stderr"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/cache-symlink.stdout",
+      "path": "earlier-byte-only/cache-symlink.stdout"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/candidate-01/events.jsonl",
+      "path": "earlier-byte-only/candidate-01/events.jsonl"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/candidate-01/receipt.json",
+      "path": "earlier-byte-only/candidate-01/receipt.json"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/candidate-01-command.json",
+      "path": "earlier-byte-only/candidate-01-command.json"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/candidate-01-exit.json",
+      "path": "earlier-byte-only/candidate-01-exit.json"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/candidate-01.log",
+      "path": "earlier-byte-only/candidate-01.log"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/candidate-02/events.jsonl",
+      "path": "earlier-byte-only/candidate-02/events.jsonl"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/candidate-02/receipt.json",
+      "path": "earlier-byte-only/candidate-02/receipt.json"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/candidate-02-command.json",
+      "path": "earlier-byte-only/candidate-02-command.json"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/candidate-02-exit.json",
+      "path": "earlier-byte-only/candidate-02-exit.json"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/candidate-02.log",
+      "path": "earlier-byte-only/candidate-02.log"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/compare.py",
+      "path": "earlier-byte-only/compare.py"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/compare_reopened.py",
+      "path": "earlier-byte-only/compare_reopened.py"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/comparison-reopened.json",
+      "path": "earlier-byte-only/comparison-reopened.json"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/comparison.json",
+      "path": "earlier-byte-only/comparison.json"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/controls-01.json",
+      "path": "earlier-byte-only/controls-01.json"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/fixture-cache.py",
+      "path": "earlier-byte-only/fixture-cache.py"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/fixture-codebase_ir.py",
+      "path": "earlier-byte-only/fixture-codebase_ir.py"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/incomplete-selection.stderr",
+      "path": "earlier-byte-only/incomplete-selection.stderr"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/incomplete-selection.stdout",
+      "path": "earlier-byte-only/incomplete-selection.stdout"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/measured-candidate-sources/cache.py",
+      "path": "earlier-byte-only/measured-candidate-sources/cache.py"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/measured-candidate-sources/codebase_ir.py",
+      "path": "earlier-byte-only/measured-candidate-sources/codebase_ir.py"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/measured-candidate-sources/pins.json",
+      "path": "earlier-byte-only/measured-candidate-sources/pins.json"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/observation-return-lifetimes.json",
+      "path": "earlier-byte-only/observation-return-lifetimes.json"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/profile_observation.py",
+      "path": "earlier-byte-only/profile_observation.py"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/reopened-owner-overlay.stderr",
+      "path": "earlier-byte-only/reopened-owner-overlay.stderr"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/reopened-owner-overlay.stdout",
+      "path": "earlier-byte-only/reopened-owner-overlay.stdout"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/shape-label-mismatch.stderr",
+      "path": "earlier-byte-only/shape-label-mismatch.stderr"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/shape-label-mismatch.stdout",
+      "path": "earlier-byte-only/shape-label-mismatch.stdout"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/two-owner-overlay.stderr",
+      "path": "earlier-byte-only/two-owner-overlay.stderr"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/two-owner-overlay.stdout",
+      "path": "earlier-byte-only/two-owner-overlay.stdout"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/verdict.json",
+      "path": "earlier-byte-only/verdict.json"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/wrong-cache-pin.stderr",
+      "path": "earlier-byte-only/wrong-cache-pin.stderr"
+    },
+    {
+      "original": "artifacts/source384-manifest-warm-replay-comparison-20261003/wrong-cache-pin.stdout",
+      "path": "earlier-byte-only/wrong-cache-pin.stdout"
+    }
+  ],
+  "task_source_bodies_included": false,
+  "weights_included": false
+}

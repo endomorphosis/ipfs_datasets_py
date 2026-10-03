@@ -1,0 +1,67 @@
+{
+  "command": [
+    "/home/barberb/.local/bin/python",
+    "/home/barberb/lift_coding/artifacts/source384-manifest-actual-20261003/run_controls_02.py"
+  ],
+  "cwd": "/home/barberb/lift_coding",
+  "pytest_args": [
+    "-q",
+    "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/tests/unit/logic/software_contracts/test_codebase_manifest_compaction.py",
+    "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/tests/unit/logic/software_contracts/test_cache.py",
+    "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/tests/unit/logic/software_contracts/test_content_identity.py",
+    "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/tests/unit/logic/software_contracts/test_codebase_manifest_memo.py",
+    "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/tests/unit/logic/software_contracts/test_codebase_manifest_byte_replay.py",
+    "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/tests/unit/duckdb_control/test_codebase_catalog.py",
+    "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/tests/unit/logic/software_contracts/test_codebase_ir_untrusted_previous.py",
+    "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/tests/integration/logic/software_contracts/test_codebase_ir.py",
+    "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/tests/integration/logic/software_contracts/test_codebase_scan_policy.py",
+    "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/tests/integration/logic/software_contracts/test_codebase_source_units_384.py",
+    "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/tests/integration/logic/software_contracts/test_codebase_source384_publication.py",
+    "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/tests/unit/logic/software_contracts/test_codebase_source_units_lifetime.py",
+    "--junitxml=/home/barberb/lift_coding/artifacts/source384-manifest-actual-20261003/controls-02.xml"
+  ],
+  "environment": {
+    "PYTHONPATH": "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1",
+    "NUMEXPR_MAX_THREADS": "1",
+    "CUDA_VISIBLE_DEVICES": "",
+    "TOKENIZERS_PARALLELISM": "false",
+    "HF_HUB_OFFLINE": "1",
+    "TRANSFORMERS_OFFLINE": "1",
+    "CODEBASE384_CHECKPOINT": "/home/barberb/lift_coding/artifacts/distributed384-20261001/run-01/security_ir/coordinator/checkpoints/2ca38dfcc05536315fc3e2c0647b710b930ef4066b474061a7b4e5bfb9a258c5.json",
+    "CODEBASE384_EMBEDDING_SNAPSHOT": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/snapshots/17e1f347d17fe144873b1201da91788898c639cd",
+    "CODEBASE384_LAKE": "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake"
+  },
+  "versions": {
+    "torch": "2.13.0",
+    "numpy": "1.26.4",
+    "transformers": "4.52.1",
+    "sentence-transformers": "5.4.1",
+    "tokenizers": "0.21.4"
+  },
+  "pins": {
+    "ipfs_datasets_py/logic/software_contracts/codebase_ir.py": "4aa2e5287885aaecf2c2319a100b8e4b8bdad21b082990a4beadda84d7c61018",
+    "ipfs_datasets_py/logic/software_contracts/cache.py": "a0b1711a5fa1f5b39b92d43748548c8802f632d1131ad9a64dd7f49df51bdd8c",
+    "ipfs_datasets_py/logic/software_contracts/codebase_source_units_384.py": "e917f1f5be82b9aa31256aae415606f86a7da25e58c753357428dd6a08695eba",
+    "/home/barberb/lift_coding/artifacts/source384-manifest-actual-20261003/run_controls_02.py": "3a02ba2c4048852f7d5175d8eac01613cd7956056f877b02901615f1b4f2a271",
+    "tests/unit/logic/software_contracts/test_codebase_manifest_compaction.py": "c490796c258f45f007ca7bf41f13a722ed364d8cae2a5645e5d6dae14a8bdf2a",
+    "tests/unit/logic/software_contracts/test_cache.py": "0c15fe456de9d75457083d1a65646c292c4ffca569d83dc543ebb0a9799533cb",
+    "tests/unit/logic/software_contracts/test_content_identity.py": "2ee2bf2d98e41143aa1c533a2b91ab50b15348b3f49e8eed67b7f259a5b4a615",
+    "tests/unit/logic/software_contracts/test_codebase_manifest_memo.py": "c654f9abb7d793afed03084b214cec299aa6999cc7aa7b6b26d290aac988033b",
+    "tests/unit/logic/software_contracts/test_codebase_manifest_byte_replay.py": "8f53eb3ae608d75310a520c1ae86a379566b37adad67d0db7fa5b77a4b206d23",
+    "tests/unit/duckdb_control/test_codebase_catalog.py": "567eeab7afcd419da9a862f8a26a620b354d4d52513d2c5a1a4f8b9fd8136702",
+    "tests/unit/logic/software_contracts/test_codebase_ir_untrusted_previous.py": "d154762ee1e681b8329805ad8d3d8dbf2e226cb2a9033a0571833a9008f5a07c",
+    "tests/integration/logic/software_contracts/test_codebase_ir.py": "9ee6adceb92f2bfe8686f2f25a255a767166cb620bacd012fbbe16a1f863b081",
+    "tests/integration/logic/software_contracts/test_codebase_scan_policy.py": "548e94435eeb92ed154c72bee8aa9fd3d7f0e79c1b6362703d089903c72ac752",
+    "tests/integration/logic/software_contracts/test_codebase_source_units_384.py": "c506e9186640d2f78c192ecfc37125f7080b027ec3705deb29b09a49d2b88cbd",
+    "tests/integration/logic/software_contracts/test_codebase_source384_publication.py": "281c3f50a91cbe089f892530fc62c7825c3b3093231bba5ce5be4cd34e02cfed",
+    "tests/unit/logic/software_contracts/test_codebase_source_units_lifetime.py": "c1c8fe1db596efc4cdfab80f9fe329eee380e3ce2b60711fb1877f878c9a6d50"
+  },
+  "actual_on_disk_sources": true,
+  "overlay_used": false,
+  "native_producer_recognized": true
+}

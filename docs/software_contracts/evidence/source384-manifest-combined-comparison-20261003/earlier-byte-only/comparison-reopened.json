@@ -1,0 +1,651 @@
+{
+  "baseline": {
+    "metrics": {
+      "after_close": {
+        "allocated_python_blocks": 1221542,
+        "duckdb_bytes": 0,
+        "elapsed_seconds": 28.931933225001558,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 2,
+          "misses": 1,
+          "retained_bytes": 89210779
+        },
+        "rss_anon_bytes": 224702464,
+        "rss_bytes": 301432832
+      },
+      "before_close": {
+        "allocated_python_blocks": 1221577,
+        "duckdb_bytes": 22544384,
+        "elapsed_seconds": 28.911470661005296,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 2,
+          "misses": 1,
+          "retained_bytes": 89210779
+        },
+        "rss_anon_bytes": 314261504,
+        "rss_bytes": 390991872
+      },
+      "before_connection": {
+        "allocated_python_blocks": 163645,
+        "duckdb_bytes": 0,
+        "elapsed_seconds": 0.0008769240012043156,
+        "memo": {
+          "bypasses": 0,
+          "entries": 0,
+          "evictions": 0,
+          "hits": 0,
+          "misses": 0,
+          "retained_bytes": 0
+        },
+        "rss_anon_bytes": 33058816,
+        "rss_bytes": 71847936
+      },
+      "cold_load_enter": {
+        "allocated_python_blocks": 368185,
+        "duckdb_bytes": 2097152,
+        "elapsed_seconds": 0.1956892450034502,
+        "memo": {
+          "bypasses": 0,
+          "entries": 0,
+          "evictions": 0,
+          "hits": 0,
+          "misses": 0,
+          "retained_bytes": 0
+        },
+        "rss_anon_bytes": 74891264,
+        "rss_bytes": 151097344
+      },
+      "cold_load_return": {
+        "allocated_python_blocks": 1222274,
+        "duckdb_bytes": 2097152,
+        "elapsed_seconds": 9.66234530100337,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 0,
+          "misses": 1,
+          "retained_bytes": 89210779
+        },
+        "rss_anon_bytes": 274362368,
+        "rss_bytes": 350699520
+      },
+      "first_replay_observation_return": {
+        "allocated_python_blocks": 1247202,
+        "duckdb_bytes": 22544384,
+        "elapsed_seconds": 19.75337969600514,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 1,
+          "misses": 1,
+          "retained_bytes": 89210779
+        },
+        "rss_anon_bytes": 279961600,
+        "rss_bytes": 356691968
+      },
+      "priming_observation_return": {
+        "allocated_python_blocks": 1256201,
+        "duckdb_bytes": 22544384,
+        "elapsed_seconds": 14.152377544000046,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 0,
+          "misses": 1,
+          "retained_bytes": 89210779
+        },
+        "rss_anon_bytes": 295415808,
+        "rss_bytes": 372080640
+      },
+      "replay_sql_before_close": {
+        "allocated_python_blocks": 1256240,
+        "duckdb_bytes": 22544384,
+        "elapsed_seconds": 14.163012538003386,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 0,
+          "misses": 1,
+          "retained_bytes": 89210779
+        },
+        "rss_anon_bytes": 295415808,
+        "rss_bytes": 372080640
+      },
+      "replay_sql_closed": {
+        "allocated_python_blocks": 1256211,
+        "duckdb_bytes": 0,
+        "elapsed_seconds": 14.18118870699982,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 0,
+          "misses": 1,
+          "retained_bytes": 89210779
+        },
+        "rss_anon_bytes": 212017152,
+        "rss_bytes": 288747520
+      },
+      "replay_sql_reopened": {
+        "allocated_python_blocks": 1255478,
+        "duckdb_bytes": 2097152,
+        "elapsed_seconds": 14.2121554990008,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 0,
+          "misses": 1,
+          "retained_bytes": 89210779
+        },
+        "rss_anon_bytes": 216338432,
+        "rss_bytes": 293068800
+      },
+      "second_replay_load_enter": {
+        "allocated_python_blocks": 1247758,
+        "duckdb_bytes": 22544384,
+        "elapsed_seconds": 19.779856776003726,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 1,
+          "misses": 1,
+          "retained_bytes": 89210779
+        },
+        "rss_anon_bytes": 279990272,
+        "rss_bytes": 356720640
+      },
+      "second_replay_load_return": {
+        "allocated_python_blocks": 1220073,
+        "duckdb_bytes": 22544384,
+        "elapsed_seconds": 20.75485386299988,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 2,
+          "misses": 1,
+          "retained_bytes": 89210779
+        },
+        "rss_anon_bytes": 322908160,
+        "rss_bytes": 399638528
+      },
+      "second_replay_observation_return": {
+        "allocated_python_blocks": 1246348,
+        "duckdb_bytes": 22544384,
+        "elapsed_seconds": 25.27052584100602,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 2,
+          "misses": 1,
+          "retained_bytes": 89210779
+        },
+        "rss_anon_bytes": 268382208,
+        "rss_bytes": 345112576
+      },
+      "warm_load_enter": {
+        "allocated_python_blocks": 1256111,
+        "duckdb_bytes": 2097152,
+        "elapsed_seconds": 14.235116630006814,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 0,
+          "misses": 1,
+          "retained_bytes": 89210779
+        },
+        "rss_anon_bytes": 216539136,
+        "rss_bytes": 293269504
+      },
+      "warm_load_return": {
+        "allocated_python_blocks": 1221302,
+        "duckdb_bytes": 2097152,
+        "elapsed_seconds": 15.235785241005942,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 1,
+          "misses": 1,
+          "retained_bytes": 89210779
+        },
+        "rss_anon_bytes": 232718336,
+        "rss_bytes": 309448704
+      }
+    },
+    "observed_head": {
+      "ast_revision_id": "rev:terminal-source384:cf59eff6c467429866bc22000288e86814d49f7669dbbcf1f5406d73febd580f:snapshot:baguqeeraxmhnn53dvgqdqahnyue4bjd3l5fathpq4kihcjdgu5g7dfo2oopa",
+      "generation": 1,
+      "manifest_cid": "baguqeeraekf4vg44vec2hoxgtze22qm63r6le6pcz4xd6d4vawedexmgimea",
+      "receipt_cid": "baguqeerax52f7guhoz6hxombwdvfwlpc7un3ehy5cerpp4vjbh6khtmtlu4q",
+      "repository_id": "terminal-source384:cf59eff6c467429866bc22000288e86814d49f7669dbbcf1f5406d73febd580f",
+      "schema": "codebase-head@1",
+      "snapshot_cid": "baguqeeraxmhnn53dvgqdqahnyue4bjd3l5fathpq4kihcjdgu5g7dfo2oopa"
+    },
+    "owner_sha256": "2cc174e71f17a23daabd1c8855d96c621811addfe5152f386810ec23918b1463",
+    "peak": {
+      "kernel_vm_hwm_bytes": 449613824,
+      "sampled_rss_anon_bytes": 323522560,
+      "sampled_rss_bytes": 400252928,
+      "scope": "Through third observation return, before explicit output parity serialization"
+    },
+    "receipt_sha256": "0722e89d32d936a3634d46171e9eba30a2cb0c91178f1c5e6fe17232178d185a",
+    "replay_shape": "reopened_connection",
+    "returned_manifest_canonical_sha256": "228bca9b9ca905a3bae69e49ad419edc7cb279e2cf2e3f0f950588325d864308",
+    "returned_manifest_cid": "baguqeeraekf4vg44vec2hoxgtze22qm63r6le6pcz4xd6d4vawedexmgimea",
+    "rounds": [
+      {
+        "number": 0,
+        "seconds": 13.975277613004437
+      },
+      {
+        "number": 1,
+        "seconds": 5.539893490000395
+      },
+      {
+        "number": 2,
+        "seconds": 5.5127029010036495
+      }
+    ],
+    "seconds": 28.932205293000152,
+    "selected_producers": {
+      "ipfs_datasets_py.logic.software_contracts.cache": {
+        "path": "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/cache.py",
+        "sha256": "d708bb536860334a43a97244652765bf926d949286207cc25ff68788bf85751f"
+      },
+      "ipfs_datasets_py.logic.software_contracts.codebase_ir": {
+        "path": "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/codebase_ir.py",
+        "sha256": "2cc174e71f17a23daabd1c8855d96c621811addfe5152f386810ec23918b1463"
+      }
+    }
+  },
+  "candidate": {
+    "metrics": {
+      "after_close": {
+        "allocated_python_blocks": 1220655,
+        "duckdb_bytes": 0,
+        "elapsed_seconds": 27.35502780800016,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 2,
+          "misses": 1,
+          "retained_bytes": 89210996
+        },
+        "rss_anon_bytes": 213946368,
+        "rss_bytes": 290676736
+      },
+      "before_close": {
+        "allocated_python_blocks": 1220691,
+        "duckdb_bytes": 22544384,
+        "elapsed_seconds": 27.335315005002485,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 2,
+          "misses": 1,
+          "retained_bytes": 89210996
+        },
+        "rss_anon_bytes": 305049600,
+        "rss_bytes": 381779968
+      },
+      "before_connection": {
+        "allocated_python_blocks": 162527,
+        "duckdb_bytes": 0,
+        "elapsed_seconds": 0.0008874519990058616,
+        "memo": {
+          "bypasses": 0,
+          "entries": 0,
+          "evictions": 0,
+          "hits": 0,
+          "misses": 0,
+          "retained_bytes": 0
+        },
+        "rss_anon_bytes": 33075200,
+        "rss_bytes": 71864320
+      },
+      "cold_load_enter": {
+        "allocated_python_blocks": 368987,
+        "duckdb_bytes": 2097152,
+        "elapsed_seconds": 0.19192732599913143,
+        "memo": {
+          "bypasses": 0,
+          "entries": 0,
+          "evictions": 0,
+          "hits": 0,
+          "misses": 0,
+          "retained_bytes": 0
+        },
+        "rss_anon_bytes": 75075584,
+        "rss_bytes": 151281664
+      },
+      "cold_load_return": {
+        "allocated_python_blocks": 1980370,
+        "duckdb_bytes": 2097152,
+        "elapsed_seconds": 9.492433211002208,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 0,
+          "misses": 1,
+          "retained_bytes": 89210996
+        },
+        "rss_anon_bytes": 351940608,
+        "rss_bytes": 428277760
+      },
+      "first_replay_observation_return": {
+        "allocated_python_blocks": 1302642,
+        "duckdb_bytes": 22544384,
+        "elapsed_seconds": 18.840874690999044,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 1,
+          "misses": 1,
+          "retained_bytes": 89210996
+        },
+        "rss_anon_bytes": 278884352,
+        "rss_bytes": 355614720
+      },
+      "priming_observation_return": {
+        "allocated_python_blocks": 1249128,
+        "duckdb_bytes": 22544384,
+        "elapsed_seconds": 14.044166701001814,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 0,
+          "misses": 1,
+          "retained_bytes": 89210996
+        },
+        "rss_anon_bytes": 297168896,
+        "rss_bytes": 373833728
+      },
+      "replay_sql_before_close": {
+        "allocated_python_blocks": 1249167,
+        "duckdb_bytes": 22544384,
+        "elapsed_seconds": 14.04944195599819,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 0,
+          "misses": 1,
+          "retained_bytes": 89210996
+        },
+        "rss_anon_bytes": 297168896,
+        "rss_bytes": 373833728
+      },
+      "replay_sql_closed": {
+        "allocated_python_blocks": 1249138,
+        "duckdb_bytes": 0,
+        "elapsed_seconds": 14.068034971001907,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 0,
+          "misses": 1,
+          "retained_bytes": 89210996
+        },
+        "rss_anon_bytes": 213098496,
+        "rss_bytes": 289828864
+      },
+      "replay_sql_reopened": {
+        "allocated_python_blocks": 1248387,
+        "duckdb_bytes": 2097152,
+        "elapsed_seconds": 14.09771165499842,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 0,
+          "misses": 1,
+          "retained_bytes": 89210996
+        },
+        "rss_anon_bytes": 217391104,
+        "rss_bytes": 294121472
+      },
+      "second_replay_load_enter": {
+        "allocated_python_blocks": 1301635,
+        "duckdb_bytes": 22544384,
+        "elapsed_seconds": 18.872155074001057,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 1,
+          "misses": 1,
+          "retained_bytes": 89210996
+        },
+        "rss_anon_bytes": 277446656,
+        "rss_bytes": 354177024
+      },
+      "second_replay_load_return": {
+        "allocated_python_blocks": 1333902,
+        "duckdb_bytes": 22544384,
+        "elapsed_seconds": 18.976181204998284,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 2,
+          "misses": 1,
+          "retained_bytes": 89210996
+        },
+        "rss_anon_bytes": 277446656,
+        "rss_bytes": 354177024
+      },
+      "second_replay_observation_return": {
+        "allocated_python_blocks": 1249564,
+        "duckdb_bytes": 22544384,
+        "elapsed_seconds": 23.710903928003972,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 2,
+          "misses": 1,
+          "retained_bytes": 89210996
+        },
+        "rss_anon_bytes": 276070400,
+        "rss_bytes": 352800768
+      },
+      "warm_load_enter": {
+        "allocated_python_blocks": 1249004,
+        "duckdb_bytes": 2097152,
+        "elapsed_seconds": 14.121150783001212,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 0,
+          "misses": 1,
+          "retained_bytes": 89210996
+        },
+        "rss_anon_bytes": 217595904,
+        "rss_bytes": 294326272
+      },
+      "warm_load_return": {
+        "allocated_python_blocks": 1280517,
+        "duckdb_bytes": 2097152,
+        "elapsed_seconds": 14.227475815001526,
+        "memo": {
+          "bypasses": 0,
+          "entries": 1,
+          "evictions": 0,
+          "hits": 1,
+          "misses": 1,
+          "retained_bytes": 89210996
+        },
+        "rss_anon_bytes": 232517632,
+        "rss_bytes": 309248000
+      }
+    },
+    "observed_head": {
+      "ast_revision_id": "rev:terminal-source384:cf59eff6c467429866bc22000288e86814d49f7669dbbcf1f5406d73febd580f:snapshot:baguqeeraxmhnn53dvgqdqahnyue4bjd3l5fathpq4kihcjdgu5g7dfo2oopa",
+      "generation": 1,
+      "manifest_cid": "baguqeeraekf4vg44vec2hoxgtze22qm63r6le6pcz4xd6d4vawedexmgimea",
+      "receipt_cid": "baguqeerax52f7guhoz6hxombwdvfwlpc7un3ehy5cerpp4vjbh6khtmtlu4q",
+      "repository_id": "terminal-source384:cf59eff6c467429866bc22000288e86814d49f7669dbbcf1f5406d73febd580f",
+      "schema": "codebase-head@1",
+      "snapshot_cid": "baguqeeraxmhnn53dvgqdqahnyue4bjd3l5fathpq4kihcjdgu5g7dfo2oopa"
+    },
+    "owner_sha256": "da535d53d73772ebaeaeb8366c61a5c45b0de65f338932e1b8c532cf964c33a9",
+    "peak": {
+      "kernel_vm_hwm_bytes": 476057600,
+      "sampled_rss_anon_bytes": 360685568,
+      "sampled_rss_bytes": 437284864,
+      "scope": "Through third observation return, before explicit output parity serialization"
+    },
+    "receipt_sha256": "2d1186a33d41333ee1d69daa6e5f8aca799d7b02b25dc0326c37abe3ef8b8472",
+    "replay_shape": "reopened_connection",
+    "returned_manifest_canonical_sha256": "228bca9b9ca905a3bae69e49ad419edc7cb279e2cf2e3f0f950588325d864308",
+    "returned_manifest_cid": "baguqeeraekf4vg44vec2hoxgtze22qm63r6le6pcz4xd6d4vawedexmgimea",
+    "rounds": [
+      {
+        "number": 0,
+        "seconds": 13.869690747000277
+      },
+      {
+        "number": 1,
+        "seconds": 4.741802491000271
+      },
+      {
+        "number": 2,
+        "seconds": 4.8642837840016
+      }
+    ],
+    "seconds": 27.355209954999737,
+    "selected_producers": {
+      "ipfs_datasets_py.logic.software_contracts.cache": {
+        "path": "/home/barberb/lift_coding/artifacts/source384-manifest-byte-replay-20261003/proposed/ipfs_datasets_py/logic/software_contracts/cache.py",
+        "sha256": "844f14da62860135f4b15f753d19c21fa0901c27a9b99a7d3e05c23c174dab1f"
+      },
+      "ipfs_datasets_py.logic.software_contracts.codebase_ir": {
+        "path": "/home/barberb/lift_coding/artifacts/source384-manifest-byte-replay-20261003/proposed/ipfs_datasets_py/logic/software_contracts/codebase_ir.py",
+        "sha256": "da535d53d73772ebaeaeb8366c61a5c45b0de65f338932e1b8c532cf964c33a9"
+      }
+    }
+  },
+  "candidate_minus_baseline": {
+    "after_close": {
+      "allocated_python_blocks": -887,
+      "duckdb_bytes": 0,
+      "rss_anon_bytes": -10756096,
+      "rss_bytes": -10756096
+    },
+    "before_close": {
+      "allocated_python_blocks": -886,
+      "duckdb_bytes": 0,
+      "rss_anon_bytes": -9211904,
+      "rss_bytes": -9211904
+    },
+    "before_connection": {
+      "allocated_python_blocks": -1118,
+      "duckdb_bytes": 0,
+      "rss_anon_bytes": 16384,
+      "rss_bytes": 16384
+    },
+    "cold_load_enter": {
+      "allocated_python_blocks": 802,
+      "duckdb_bytes": 0,
+      "rss_anon_bytes": 184320,
+      "rss_bytes": 184320
+    },
+    "cold_load_return": {
+      "allocated_python_blocks": 758096,
+      "duckdb_bytes": 0,
+      "rss_anon_bytes": 77578240,
+      "rss_bytes": 77578240
+    },
+    "first_replay_observation_return": {
+      "allocated_python_blocks": 55440,
+      "duckdb_bytes": 0,
+      "rss_anon_bytes": -1077248,
+      "rss_bytes": -1077248
+    },
+    "priming_observation_return": {
+      "allocated_python_blocks": -7073,
+      "duckdb_bytes": 0,
+      "rss_anon_bytes": 1753088,
+      "rss_bytes": 1753088
+    },
+    "replay_sql_before_close": {
+      "allocated_python_blocks": -7073,
+      "duckdb_bytes": 0,
+      "rss_anon_bytes": 1753088,
+      "rss_bytes": 1753088
+    },
+    "replay_sql_closed": {
+      "allocated_python_blocks": -7073,
+      "duckdb_bytes": 0,
+      "rss_anon_bytes": 1081344,
+      "rss_bytes": 1081344
+    },
+    "replay_sql_reopened": {
+      "allocated_python_blocks": -7091,
+      "duckdb_bytes": 0,
+      "rss_anon_bytes": 1052672,
+      "rss_bytes": 1052672
+    },
+    "second_replay_load_enter": {
+      "allocated_python_blocks": 53877,
+      "duckdb_bytes": 0,
+      "rss_anon_bytes": -2543616,
+      "rss_bytes": -2543616
+    },
+    "second_replay_load_return": {
+      "allocated_python_blocks": 113829,
+      "duckdb_bytes": 0,
+      "rss_anon_bytes": -45461504,
+      "rss_bytes": -45461504
+    },
+    "second_replay_observation_return": {
+      "allocated_python_blocks": 3216,
+      "duckdb_bytes": 0,
+      "rss_anon_bytes": 7688192,
+      "rss_bytes": 7688192
+    },
+    "warm_load_enter": {
+      "allocated_python_blocks": -7107,
+      "duckdb_bytes": 0,
+      "rss_anon_bytes": 1056768,
+      "rss_bytes": 1056768
+    },
+    "warm_load_return": {
+      "allocated_python_blocks": 59215,
+      "duckdb_bytes": 0,
+      "rss_anon_bytes": -200704,
+      "rss_bytes": -200704
+    }
+  },
+  "gc_collect_called": false,
+  "interpretation": "Paired instrumented source-only host observations in fresh processes. One priming observation followed by a source SQL owner close/reopen and two replay observations; the native memo stays intact. This is not Docker admission, model inference, a benchmark reward, or a general scaling result. Retained representation and RSS measure different quantities.",
+  "malloc_trim_called": false,
+  "model_loads": 0,
+  "provider_calls": 0,
+  "scheduler_policy_changed": false,
+  "schema": "native-manifest-warm-replay-comparison-summary@1",
+  "source_and_sql_checks_unchanged": true,
+  "training_steps": 0
+}

@@ -19,8 +19,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, fields
 from enum import Enum
 from pathlib import Path
-from types import (BuiltinFunctionType, FunctionType, MappingProxyType, ModuleType,
-                   MethodDescriptorType, WrapperDescriptorType)
+from types import FunctionType, MappingProxyType
 from typing import Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -214,9 +213,9 @@ _MANIFEST_MEMO_STATS = dict(hits=0, misses=0, evictions=0, bypasses=0)
 
 
 def _manifest_modules():
-    from . import cache, content
+    from . import content
     from .semantic_index import identity, models, snapshot
-    return (sys.modules[__name__], content, models, snapshot, identity, cache)
+    return (sys.modules[__name__], content, models, snapshot, identity)
 
 
 def _manifest_record_types():
@@ -241,7 +240,7 @@ def _manifest_binding_value(value):
     if type(value) in (set, frozenset):
         return frozenset(_manifest_binding_value(item) for item in value)
     # Native class/function defaults are identity-bearing, never evaluated.
-    if isinstance(value, (type, BuiltinFunctionType, MethodDescriptorType, WrapperDescriptorType)) or type(value) is FunctionType:
+    if isinstance(value, type) or type(value) is FunctionType:
         return value
     raise TypeError("non-native manifest producer default")
 
@@ -260,9 +259,7 @@ def _manifest_live_bindings():
         for name, value in sorted(vars(module).items()):
             if name.startswith("_MANIFEST_MEMO") or name == "_MANIFEST_NATIVE_BINDINGS":
                 continue
-            if type(value) is ModuleType:
-                result.append((module.__name__, name, type(value), id(value)))
-            elif type(value) is FunctionType:
+            if type(value) is FunctionType:
                 result.append((module.__name__, name, _manifest_function_binding(value)))
             elif isinstance(value, type) and value.__module__ in native_modules:
                 # from_dict also consults imported aliases in its own module.
@@ -281,15 +278,11 @@ def _manifest_live_bindings():
                 result.append((cls, name, _manifest_function_binding(value)))
             elif name.isupper() and type(value) in (str, int, tuple, frozenset):
                 result.append((cls, name, _manifest_binding_value(value)))
-    result.append(("native_cas_readers", _manifest_cas_bindings()))
     return tuple(result)
 
 
 def _manifest_producer_key():
-    from . import cache
     try:
-        if not cache._structured_reader_is_native():
-            return None
         if _manifest_live_bindings() != _MANIFEST_NATIVE_BINDINGS:
             return None
         return tuple((module.__name__, hashlib.sha256(Path(module.__file__).read_bytes()).digest())
@@ -319,73 +312,6 @@ def _manifest_clone(value):
             object.__setattr__(result, field.name, item if shared_json else _manifest_clone(item))
         return result
     raise TypeError("manifest memo requires exact immutable native records")
-
-
-def _manifest_compact_value(value, scalars, containers):
-    """Intern exact immutable values using call-local, type-sensitive keys.
-
-    Tokens keep composite keys small: no hash of source text, custom equality,
-    recursive key expansion, or process-global string interning is used. Native
-    records are rebuilt individually and never enter either intern table.
-    """
-    kind = type(value)
-    if value is None or kind in (str, int, bool, bytes, float):
-        # Float values are not admitted by canonical DAG-JSON, but retaining
-        # exact signed-zero identity here also makes this helper type-safe.
-        if kind is float and not math.isfinite(value):
-            raise TypeError("non-finite manifest compact scalar")
-        key = (kind, value.hex() if kind is float else value)
-        prior = scalars.get(key)
-        if prior is not None:
-            return prior
-        result = (value, len(scalars) + len(containers))
-        scalars[key] = result
-        return result
-    if kind is tuple:
-        items = tuple(_manifest_compact_value(item, scalars, containers) for item in value)
-        compact = tuple(item for item, _ in items)
-        if any(token is None for _, token in items):
-            return compact, None
-        key = (tuple, tuple(token for _, token in items))
-    elif kind is MappingProxyType:
-        if any(type(key) is not str for key in value):
-            raise TypeError("manifest compact maps require exact string keys")
-        items = tuple((_manifest_compact_value(key, scalars, containers),
-                       _manifest_compact_value(item, scalars, containers))
-                      for key, item in value.items())
-        if any(token is None for _, (_, token) in items):
-            raise TypeError("manifest compact metadata cannot contain records")
-        compact = MappingProxyType({key: item for (key, _), (item, _) in items})
-        # Preserve mapping iteration order as well as all durable values.
-        key = (MappingProxyType, tuple((kt, vt) for (_, kt), (_, vt) in items))
-    elif kind in _MANIFEST_NATIVE_RECORD_TYPES:
-        result = object.__new__(kind)
-        for field in fields(value):
-            item = getattr(value, field.name)
-            if field.name in dict(_MANIFEST_NATIVE_JSON_FIELDS).get(kind, ()):
-                _manifest_require_frozen_json(item)
-            object.__setattr__(result, field.name,
-                               _manifest_compact_value(item, scalars, containers)[0])
-        return result, None
-    else:
-        raise TypeError("manifest compaction requires exact immutable native records")
-    prior = containers.get(key)
-    if prior is not None:
-        return prior
-    result = (compact, len(scalars) + len(containers))
-    containers[key] = result
-    return result
-
-
-def _manifest_compact(manifest):
-    """Compact only a newly validated private graph; keep no working tables.
-
-    Record objects remain detached, including records whose fields are equal.
-    The existing return-time clone still isolates every caller from this graph.
-    """
-    if type(manifest) is not CodebaseIRManifest:
-        raise TypeError("manifest compaction requires an exact native manifest")
-    return _manifest_compact_value(manifest, {}, {})[0]
 
 
 def _manifest_retained_bytes(key, manifest):
@@ -477,98 +403,6 @@ def _manifest_native_equal(left, right):
     return True
 
 
-def _manifest_cas_bindings():
-    """Include the concrete read owner and its JSON decoder/encoder hooks."""
-    result = []
-    for cls in (ImmutableCAS, json.JSONDecoder, json.JSONEncoder):
-        result.append(cls)
-        for name, value in sorted(vars(cls).items()):
-            if isinstance(value, (classmethod, staticmethod)):
-                value = value.__func__
-            if type(value) is FunctionType:
-                result.append((cls, name, _manifest_function_binding(value)))
-            elif isinstance(value, property):
-                result.append((cls, name, tuple(None if fn is None else _manifest_function_binding(fn)
-                                               for fn in (value.fget, value.fset, value.fdel))))
-            else:
-                result.append((cls, name, type(value), id(value)))
-    for module in (json, json.decoder, json.encoder, json.scanner):
-        for name, value in sorted(vars(module).items()):
-            if type(value) is FunctionType:
-                result.append((module.__name__, name, _manifest_function_binding(value)))
-            elif name in {"c_make_encoder", "c_make_scanner", "scanstring",
-                          "encode_basestring", "encode_basestring_ascii"}:
-                result.append((module.__name__, name, type(value), id(value)))
-    for name in ("_default_decoder", "_default_encoder"):
-        value = getattr(json, name)
-        result.append((name, type(value), id(value),
-                       tuple((key, type(item), id(item)) for key, item in sorted(vars(value).items()))))
-    return tuple(result)
-
-
-def _manifest_native_cas_state(cas):
-    """Only ordinary native instances can use a private verified-byte replay."""
-    if type(cas) is not ImmutableCAS:
-        return None
-    values = vars(cas)
-    if set(values) != {"root", "structured_root", "source_root", "max_object_bytes"}:
-        return None
-    maximum = values["max_object_bytes"]
-    path_type = type(Path())
-    if type(maximum) is not int or maximum <= 0 or any(
-            type(values[name]) is not path_type for name in ("root", "structured_root", "source_root")):
-        return None
-    return (maximum, *(str(values[name]) for name in ("root", "structured_root", "source_root")))
-
-
-def _load_manifest_from_cas(cas, manifest_cid):
-    """Fresh exact body identity may reuse only a privately validated manifest.
-
-    Unknown owners take their original get path. A miss still decodes,
-    canonicalizes, hashes and schema-checks through the ordinary CAS owner.
-    A hit avoids JSON materialization, not the bounded read or body digest.
-    """
-    from . import content
-    from .cache import CacheIntegrityError
-    producer = _manifest_producer_key()
-    registration = content._memo_registration_key()
-    state = _manifest_native_cas_state(cas) if producer is not None else None
-    if producer is None or registration is None or state is None:
-        return _reconstruct_manifest(cas.get(manifest_cid, expected_schema=CODEBASE_IR_SCHEMA), manifest_cid)
-
-    def unchanged():
-        if (producer != _manifest_producer_key()
-                or registration != content._memo_registration_key()
-                or state != _manifest_native_cas_state(cas)):
-            raise CodebaseIRError("manifest read producer, registry or owner changed")
-
-    raw = cas._read_structured_payload(manifest_cid)
-    unchanged()
-    key = (raw, producer, registration)
-    with _MANIFEST_MEMO_LOCK:
-        cached = _MANIFEST_MEMO.get(key)
-        if cached is not None:
-            # Exact bytes were previously canonical/schema-validated, but the
-            # current body digest and registration are still checked afresh.
-            identity = content._cid_from_digest_bytes(raw, codec=content.STRUCTURED_CODEC)
-            if identity != manifest_cid:
-                raise CacheIntegrityError("stored structured object CID mismatch")
-            unchanged()
-            manifest, identity, _ = cached
-            if identity != manifest_cid:
-                raise CodebaseIRError("manifest identity does not verify")
-            result = _manifest_clone(manifest)
-            unchanged()
-            _MANIFEST_MEMO.move_to_end(key)
-            _MANIFEST_MEMO_STATS["hits"] += 1
-            return result
-    value = cas._decode_structured_payload(manifest_cid, raw, expected_schema=CODEBASE_IR_SCHEMA)
-    unchanged()
-    result = _reconstruct_manifest(value, manifest_cid)
-    unchanged()
-    return result
-
-
 def _reconstruct_manifest(value, expected_cid):
     """Reconstruct exact bytes; callers must freshly read/verify their CAS.
 
@@ -609,7 +443,6 @@ def _reconstruct_manifest(value, expected_cid):
     if identity != expected_cid:
         raise CodebaseIRError("manifest identity does not verify")
     unchanged()
-    manifest = _manifest_compact(manifest)
     size = _manifest_retained_bytes(key, manifest)
     result = _manifest_clone(manifest)
     with _MANIFEST_MEMO_LOCK:
@@ -923,7 +756,8 @@ class RepositoryCodebaseIndex:
     def load(self, manifest_cid: str) -> CodebaseIRManifest:
         if self.artifacts is None:
             raise CodebaseIRError("loading a manifest requires an immutable artifact store")
-        return _load_manifest_from_cas(self.artifacts, manifest_cid)
+        value = self.artifacts.get(manifest_cid, expected_schema=CODEBASE_IR_SCHEMA)
+        return _reconstruct_manifest(value, manifest_cid)
 
     def lookup(self, manifest: CodebaseIRManifest, path: str) -> ASTCatalogProjection | None:
         """Return an exact active AST projection; missing expected evidence fails."""

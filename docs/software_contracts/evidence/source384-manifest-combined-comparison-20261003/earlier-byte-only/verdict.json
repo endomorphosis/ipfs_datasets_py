@@ -1,0 +1,28 @@
+{
+  "admission_fix_demonstrated": false,
+  "all_four_processes_passed": true,
+  "candidate_applied": false,
+  "canonical_output_equal": true,
+  "comparison_sha256": "6de928557c7871703844308db939cfed152492ce182a0da3adc9eba7bbd3acb8",
+  "docker_qualified": false,
+  "lifetime_receipt_sha256": "7bc01fda405e5d1151ac3f309de1fa5c07ed45c840deff4a5e14ec2d81d9d4ac",
+  "limitations": [
+    "Source-only host probes do not include model/preparation report allocation lifetimes.",
+    "Current component generation has a subsequently discovered pre-codebase-import customization guard gap; retained measurements are unpromoted diagnostics.",
+    "Reopening sourceSQL is measurement-only and not a proposed production lifecycle change.",
+    "Explicit output parity is computed after final return; final reference_deleted and after_close samples include that extra allocation history."
+  ],
+  "model_loads": 0,
+  "next_generation": "Separate corrected early native guard plus exact immutable graph compaction; final actual pipeline remains decisive.",
+  "observation_end_rss_improvement_demonstrated": false,
+  "producer_generation": {
+    "cache.py": "844f14da62860135f4b15f753d19c21fa0901c27a9b99a7d3e05c23c174dab1f",
+    "codebase_ir.py": "da535d53d73772ebaeaeb8366c61a5c45b0de65f338932e1b8c532cf964c33a9"
+  },
+  "provider_calls": 0,
+  "reopened_comparison_sha256": "9fa7f3987f32f48162e1699b91a3b8b031e3f04fd4def689543b9489fd291296",
+  "schema": "byte-only-observation-diagnostic-verdict@1",
+  "source_cas_original_database_unchanged": true,
+  "training_steps": 0,
+  "warm_load_allocation_spike_avoided": true
+}

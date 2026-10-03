@@ -286,10 +286,7 @@ def _manifest_live_bindings():
 
 
 def _manifest_producer_key():
-    from . import cache
     try:
-        if not cache._structured_reader_is_native():
-            return None
         if _manifest_live_bindings() != _MANIFEST_NATIVE_BINDINGS:
             return None
         return tuple((module.__name__, hashlib.sha256(Path(module.__file__).read_bytes()).digest())
@@ -319,73 +316,6 @@ def _manifest_clone(value):
             object.__setattr__(result, field.name, item if shared_json else _manifest_clone(item))
         return result
     raise TypeError("manifest memo requires exact immutable native records")
-
-
-def _manifest_compact_value(value, scalars, containers):
-    """Intern exact immutable values using call-local, type-sensitive keys.
-
-    Tokens keep composite keys small: no hash of source text, custom equality,
-    recursive key expansion, or process-global string interning is used. Native
-    records are rebuilt individually and never enter either intern table.
-    """
-    kind = type(value)
-    if value is None or kind in (str, int, bool, bytes, float):
-        # Float values are not admitted by canonical DAG-JSON, but retaining
-        # exact signed-zero identity here also makes this helper type-safe.
-        if kind is float and not math.isfinite(value):
-            raise TypeError("non-finite manifest compact scalar")
-        key = (kind, value.hex() if kind is float else value)
-        prior = scalars.get(key)
-        if prior is not None:
-            return prior
-        result = (value, len(scalars) + len(containers))
-        scalars[key] = result
-        return result
-    if kind is tuple:
-        items = tuple(_manifest_compact_value(item, scalars, containers) for item in value)
-        compact = tuple(item for item, _ in items)
-        if any(token is None for _, token in items):
-            return compact, None
-        key = (tuple, tuple(token for _, token in items))
-    elif kind is MappingProxyType:
-        if any(type(key) is not str for key in value):
-            raise TypeError("manifest compact maps require exact string keys")
-        items = tuple((_manifest_compact_value(key, scalars, containers),
-                       _manifest_compact_value(item, scalars, containers))
-                      for key, item in value.items())
-        if any(token is None for _, (_, token) in items):
-            raise TypeError("manifest compact metadata cannot contain records")
-        compact = MappingProxyType({key: item for (key, _), (item, _) in items})
-        # Preserve mapping iteration order as well as all durable values.
-        key = (MappingProxyType, tuple((kt, vt) for (_, kt), (_, vt) in items))
-    elif kind in _MANIFEST_NATIVE_RECORD_TYPES:
-        result = object.__new__(kind)
-        for field in fields(value):
-            item = getattr(value, field.name)
-            if field.name in dict(_MANIFEST_NATIVE_JSON_FIELDS).get(kind, ()):
-                _manifest_require_frozen_json(item)
-            object.__setattr__(result, field.name,
-                               _manifest_compact_value(item, scalars, containers)[0])
-        return result, None
-    else:
-        raise TypeError("manifest compaction requires exact immutable native records")
-    prior = containers.get(key)
-    if prior is not None:
-        return prior
-    result = (compact, len(scalars) + len(containers))
-    containers[key] = result
-    return result
-
-
-def _manifest_compact(manifest):
-    """Compact only a newly validated private graph; keep no working tables.
-
-    Record objects remain detached, including records whose fields are equal.
-    The existing return-time clone still isolates every caller from this graph.
-    """
-    if type(manifest) is not CodebaseIRManifest:
-        raise TypeError("manifest compaction requires an exact native manifest")
-    return _manifest_compact_value(manifest, {}, {})[0]
 
 
 def _manifest_retained_bytes(key, manifest):
@@ -609,7 +539,6 @@ def _reconstruct_manifest(value, expected_cid):
     if identity != expected_cid:
         raise CodebaseIRError("manifest identity does not verify")
     unchanged()
-    manifest = _manifest_compact(manifest)
     size = _manifest_retained_bytes(key, manifest)
     result = _manifest_clone(manifest)
     with _MANIFEST_MEMO_LOCK:

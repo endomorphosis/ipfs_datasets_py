@@ -1,0 +1,8 @@
+usage: profile_observation.py [-h] --label LABEL
+                              [--candidate-owner CANDIDATE_OWNER]
+                              [--candidate-owner-sha256 CANDIDATE_OWNER_SHA256]
+                              [--candidate-cache CANDIDATE_CACHE]
+                              [--candidate-cache-sha256 CANDIDATE_CACHE_SHA256]
+                              [--verify-import-only] --replay-shape
+                              {same_connection}
+profile_observation.py: error: argument --replay-shape: invalid choice: 'reopened_connection' (choose from 'same_connection')

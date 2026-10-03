@@ -1,0 +1,13 @@
+{
+  "exit_code": 0,
+  "seconds": 10.575033799002995,
+  "pins_after": {
+    "ipfs_datasets_py/logic/software_contracts/codebase_ir.py": "4aa2e5287885aaecf2c2319a100b8e4b8bdad21b082990a4beadda84d7c61018",
+    "ipfs_datasets_py/logic/software_contracts/cache.py": "a0b1711a5fa1f5b39b92d43748548c8802f632d1131ad9a64dd7f49df51bdd8c",
+    "ipfs_datasets_py/logic/software_contracts/codebase_source_units_384.py": "e917f1f5be82b9aa31256aae415606f86a7da25e58c753357428dd6a08695eba",
+    "/home/barberb/lift_coding/artifacts/source384-manifest-actual-20261003/run_source_controls_03.py": "a798a99e1a17807f7e6d3c51033e89a81f0c358b2b6f3fe3d17df086191f7ad4",
+    "/home/barberb/lift_coding/artifacts/source384-manifest-actual-20261003/configured_client_plugin.py": "e011a9acc70348b69b3d9b98a39ded5257a1e2eff27925fea2f860a09bd2a96c",
+    "tests/integration/logic/software_contracts/test_codebase_source_units_384.py": "c506e9186640d2f78c192ecfc37125f7080b027ec3705deb29b09a49d2b88cbd"
+  },
+  "pins_unchanged": true
+}

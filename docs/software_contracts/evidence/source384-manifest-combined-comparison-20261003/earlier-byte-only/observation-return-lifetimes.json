@@ -1,0 +1,228 @@
+{
+  "explicit_canonical_serialization_only_after_final_return": true,
+  "inference_reports_present": false,
+  "interpretation": "Returned sample precedes explicit del; next enter occurs after release. Final reference_deleted sample follows canonical output serialization and is not a clean return-only measurement.",
+  "model_registry_present": false,
+  "observations_retained_across_rounds": false,
+  "rounds": {
+    "baseline-01": [
+      {
+        "elapsed_seconds": 0.2005638669943437,
+        "phase": "enter",
+        "rss_anon_bytes": 74678272,
+        "rss_bytes": 150884352,
+        "stage": "observation0"
+      },
+      {
+        "elapsed_seconds": 14.711208659995464,
+        "phase": "returned",
+        "rss_anon_bytes": 295686144,
+        "rss_bytes": 372350976,
+        "stage": "observation0"
+      },
+      {
+        "elapsed_seconds": 14.713890474995424,
+        "phase": "reference_deleted",
+        "rss_anon_bytes": 295686144,
+        "rss_bytes": 372350976,
+        "stage": "observation0"
+      },
+      {
+        "elapsed_seconds": 14.715435553000134,
+        "phase": "enter",
+        "rss_anon_bytes": 295686144,
+        "rss_bytes": 372350976,
+        "stage": "observation1"
+      },
+      {
+        "elapsed_seconds": 20.286967950996768,
+        "phase": "returned",
+        "rss_anon_bytes": 272863232,
+        "rss_bytes": 349528064,
+        "stage": "observation1"
+      },
+      {
+        "elapsed_seconds": 23.921601406000264,
+        "phase": "reference_deleted",
+        "rss_anon_bytes": 358023168,
+        "rss_bytes": 434688000,
+        "stage": "observation1"
+      }
+    ],
+    "baseline-02": [
+      {
+        "elapsed_seconds": 0.17739206300029764,
+        "phase": "enter",
+        "rss_anon_bytes": 74678272,
+        "rss_bytes": 150884352,
+        "stage": "observation0"
+      },
+      {
+        "elapsed_seconds": 14.152377544000046,
+        "phase": "returned",
+        "rss_anon_bytes": 295415808,
+        "rss_bytes": 372080640,
+        "stage": "observation0"
+      },
+      {
+        "elapsed_seconds": 14.159796430001734,
+        "phase": "reference_deleted",
+        "rss_anon_bytes": 295415808,
+        "rss_bytes": 372080640,
+        "stage": "observation0"
+      },
+      {
+        "elapsed_seconds": 14.213582575001055,
+        "phase": "enter",
+        "rss_anon_bytes": 216338432,
+        "rss_bytes": 293068800,
+        "stage": "observation1"
+      },
+      {
+        "elapsed_seconds": 19.75337969600514,
+        "phase": "returned",
+        "rss_anon_bytes": 279961600,
+        "rss_bytes": 356691968,
+        "stage": "observation1"
+      },
+      {
+        "elapsed_seconds": 19.756197606002388,
+        "phase": "reference_deleted",
+        "rss_anon_bytes": 279961600,
+        "rss_bytes": 356691968,
+        "stage": "observation1"
+      },
+      {
+        "elapsed_seconds": 19.75784238000051,
+        "phase": "enter",
+        "rss_anon_bytes": 279961600,
+        "rss_bytes": 356691968,
+        "stage": "observation2"
+      },
+      {
+        "elapsed_seconds": 25.27052584100602,
+        "phase": "returned",
+        "rss_anon_bytes": 268382208,
+        "rss_bytes": 345112576,
+        "stage": "observation2"
+      },
+      {
+        "elapsed_seconds": 28.86944889300503,
+        "phase": "reference_deleted",
+        "rss_anon_bytes": 355160064,
+        "rss_bytes": 431890432,
+        "stage": "observation2"
+      }
+    ],
+    "candidate-01": [
+      {
+        "elapsed_seconds": 0.17377717400086112,
+        "phase": "enter",
+        "rss_anon_bytes": 74874880,
+        "rss_bytes": 151072768,
+        "stage": "observation0"
+      },
+      {
+        "elapsed_seconds": 14.727299351994589,
+        "phase": "returned",
+        "rss_anon_bytes": 296722432,
+        "rss_bytes": 373379072,
+        "stage": "observation0"
+      },
+      {
+        "elapsed_seconds": 14.729564599001606,
+        "phase": "reference_deleted",
+        "rss_anon_bytes": 296722432,
+        "rss_bytes": 373379072,
+        "stage": "observation0"
+      },
+      {
+        "elapsed_seconds": 14.731299951999972,
+        "phase": "enter",
+        "rss_anon_bytes": 296722432,
+        "rss_bytes": 373379072,
+        "stage": "observation1"
+      },
+      {
+        "elapsed_seconds": 19.564679063994845,
+        "phase": "returned",
+        "rss_anon_bytes": 295710720,
+        "rss_bytes": 372367360,
+        "stage": "observation1"
+      },
+      {
+        "elapsed_seconds": 23.21268253099697,
+        "phase": "reference_deleted",
+        "rss_anon_bytes": 361455616,
+        "rss_bytes": 438112256,
+        "stage": "observation1"
+      }
+    ],
+    "candidate-02": [
+      {
+        "elapsed_seconds": 0.1745565320015885,
+        "phase": "enter",
+        "rss_anon_bytes": 74866688,
+        "rss_bytes": 151072768,
+        "stage": "observation0"
+      },
+      {
+        "elapsed_seconds": 14.044166701001814,
+        "phase": "returned",
+        "rss_anon_bytes": 297168896,
+        "rss_bytes": 373833728,
+        "stage": "observation0"
+      },
+      {
+        "elapsed_seconds": 14.047361304001242,
+        "phase": "reference_deleted",
+        "rss_anon_bytes": 297168896,
+        "rss_bytes": 373833728,
+        "stage": "observation0"
+      },
+      {
+        "elapsed_seconds": 14.099142010003561,
+        "phase": "enter",
+        "rss_anon_bytes": 217391104,
+        "rss_bytes": 294121472,
+        "stage": "observation1"
+      },
+      {
+        "elapsed_seconds": 18.840874690999044,
+        "phase": "returned",
+        "rss_anon_bytes": 278884352,
+        "rss_bytes": 355614720,
+        "stage": "observation1"
+      },
+      {
+        "elapsed_seconds": 18.8444408830037,
+        "phase": "reference_deleted",
+        "rss_anon_bytes": 278884352,
+        "rss_bytes": 355614720,
+        "stage": "observation1"
+      },
+      {
+        "elapsed_seconds": 18.846705713003757,
+        "phase": "enter",
+        "rss_anon_bytes": 278884352,
+        "rss_bytes": 355614720,
+        "stage": "observation2"
+      },
+      {
+        "elapsed_seconds": 23.710903928003972,
+        "phase": "returned",
+        "rss_anon_bytes": 276070400,
+        "rss_bytes": 352800768,
+        "stage": "observation2"
+      },
+      {
+        "elapsed_seconds": 27.293191393997404,
+        "phase": "reference_deleted",
+        "rss_anon_bytes": 357486592,
+        "rss_bytes": 434216960,
+        "stage": "observation2"
+      }
+    ]
+  },
+  "schema": "source-observation-caller-lifetimes@1"
+}

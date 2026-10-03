@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "/home/barberb/lift_coding/artifacts/source384-manifest-warm-replay-comparison-20261003/profile_observation.py", line 51, in <module>
+    from ipfs_datasets_py.duckdb_control.codebase_catalog import CodebaseCatalog,CodebaseHead
+  File "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/duckdb_control/codebase_catalog.py", line 20, in <module>
+    from ipfs_datasets_py.logic.software_contracts.cache import ImmutableCAS
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1322, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1262, in _find_spec
+  File "/home/barberb/lift_coding/artifacts/source384-manifest-warm-replay-comparison-20261003/profile_observation.py", line 44, in find_spec
+    raise ValueError('candidate source hash changed')
+ValueError: candidate source hash changed

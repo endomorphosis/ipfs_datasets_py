@@ -1,0 +1,77 @@
+{
+  "timestamp": 1791044337.1065266,
+  "state_sha256": "fe00fed07212c4c5a78f8b138771d79b1aa1f3f86d12631bb83ef58b7ec384c9",
+  "stored_config": {
+    "lane_reservations": {
+      "validation": {
+        "cpu_slots": 1,
+        "memory_mb": 0
+      }
+    },
+    "max_gpu_memory_percent": null,
+    "max_memory_percent": null,
+    "max_swap_percent": null,
+    "max_waiting_requests": 256,
+    "proof_backoff_seconds": 2.0,
+    "proof_cpu_stall_percent": 50.0,
+    "proof_io_stall_percent": 10.0,
+    "proof_memory_headroom_mb": 2458,
+    "proof_memory_stall_percent": 2.0,
+    "proof_safety_enabled": true,
+    "require_known_gpu_for_gpu_work": true,
+    "reserved_gpu_memory_mb": 0,
+    "reserved_memory_mb": 0,
+    "total_child_process_slots": 4,
+    "total_cpu_slots": 4,
+    "total_gpu_memory_mb": null,
+    "total_memory_mb": 9830,
+    "total_unified_memory_mb": null
+  },
+  "expected_config": {
+    "max_waiting_requests": 256,
+    "proof_safety_enabled": true,
+    "proof_memory_headroom_mb": 24922,
+    "proof_memory_stall_percent": 2.0,
+    "proof_cpu_stall_percent": 50.0,
+    "proof_io_stall_percent": 10.0,
+    "proof_backoff_seconds": 2.0,
+    "proof_recovery_enabled": false,
+    "proof_recovery_samples": 2,
+    "proof_recovery_interval_seconds": 0.25,
+    "proof_recovery_grants": 4,
+    "total_cpu_slots": 16,
+    "total_memory_mb": 99688,
+    "total_gpu_memory_mb": null,
+    "total_unified_memory_mb": null,
+    "total_child_process_slots": 16,
+    "reserved_memory_mb": 0,
+    "reserved_gpu_memory_mb": 0,
+    "lane_reservations": {
+      "validation": {
+        "cpu_slots": 2,
+        "memory_mb": 0
+      }
+    },
+    "max_memory_percent": null,
+    "max_swap_percent": null,
+    "max_gpu_memory_percent": null,
+    "require_known_gpu_for_gpu_work": true
+  },
+  "counts": {
+    "leases": 1,
+    "waiters": 0,
+    "proof_recovery": 0
+  },
+  "leases": [
+    {
+      "pid": null,
+      "owner_pid": 1934465,
+      "request_id": "daemon:37b1cafe20b24d85a6b999bea018d4e1",
+      "cpu_slots": 1,
+      "memory_mb": 4096,
+      "lane": "hammer_lean",
+      "created_at": null
+    }
+  ],
+  "waiters": []
+}

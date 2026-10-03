@@ -1,0 +1,47 @@
+{
+  "schema": "independent-manifest-byte-replay-source-review@1",
+  "reviewer": "peer_recovery_fresh",
+  "verdict": "no_source_blocker_found",
+  "reviewed_files": {
+    "production.patch": "22e82be912c39fb78a03bb095af31c2c84a469bfeab31cb6e8d551438b5ef153",
+    "qualification.json": "31450d074f8354ceb8c813d87a47c174ca2c972082984e109894c8e041a29ada",
+    "proposed/ipfs_datasets_py/logic/software_contracts/codebase_ir.py": "4aa2e5287885aaecf2c2319a100b8e4b8bdad21b082990a4beadda84d7c61018",
+    "proposed/ipfs_datasets_py/logic/software_contracts/cache.py": "a0b1711a5fa1f5b39b92d43748548c8802f632d1131ad9a64dd7f49df51bdd8c",
+    "proposed/tests/unit/logic/software_contracts/test_codebase_manifest_byte_replay.py": "d205f3384c71fe4f0ecaa4e10638df2283f85fec9196dd28e9aa50bfe5dadc8c",
+    "proposed/tests/unit/logic/software_contracts/test_codebase_manifest_compaction.py": "1c5ed2d4f429ee6ad8858c03f29ab919e347badcd8d4a3a731510baaeb336979"
+  },
+  "method": "Read-only source/diff/control-receipt audit; reviewer ran no tests, native scans or model calls.",
+  "resolved_previous_blocker": "Cache-owned native reader anchors are now captured before any later codebase_ir import. A CAS get/code/default/alias installed between those imports cannot be blessed by the manifest consumer baseline. Conservative stdlib JSON provenance disables replay for reviewed earlier custom hooks.",
+  "reviewed_invariants": [
+    "Unknown/custom readers retain public get and full validation.",
+    "Every replay freshly reads bounded raw bytes; exact cache key and fresh CID digest are checked.",
+    "Producer/module aliases, reader callables/code/defaults, JSON hooks, registry and instance configuration are rechecked around read and clone.",
+    "Cold paths retain canonical/schema/CID validation.",
+    "Compaction interns only exact immutable scalar/metadata containers using call-local tables; native records remain detached and per-caller cloned.",
+    "No source observation, catalog/SQL, admission, deadline, authority or checkpoint selection weakening."
+  ],
+  "test_receipt_audit": {
+    "runs": [
+      {
+        "label": "controls-01",
+        "passed": 266,
+        "failed": 1,
+        "skipped": 0
+      },
+      {
+        "label": "controls-02",
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      }
+    ],
+    "distinct_passing_cases": 267,
+    "skipped": 0,
+    "retained_failure": "First native-worker attempt correctly refused mismatched parent tokenizers0.23.2 versus isolated worker0.21.4; exact failed case passes with coherent interpreter site roots, no owner changes."
+  },
+  "limitations": [
+    "Not a hostile interpreter integrity boundary; unsupported/custom layouts conservatively fall back.",
+    "No new Docker or full-supervisor qualification.",
+    "No admission-window RSS improvement claimed; measured combined second-return anonymous memory is higher than baseline."
+  ]
+}

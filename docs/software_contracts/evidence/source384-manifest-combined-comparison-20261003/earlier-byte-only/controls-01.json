@@ -1,0 +1,175 @@
+{
+  "cases": [
+    {
+      "argv": [
+        "/home/barberb/.local/bin/python",
+        "-B",
+        "/home/barberb/lift_coding/artifacts/source384-manifest-warm-replay-comparison-20261003/profile_observation.py",
+        "--label",
+        "baseline-01",
+        "--replay-shape",
+        "same_connection",
+        "--verify-import-only"
+      ],
+      "name": "baseline",
+      "passed": true,
+      "returncode": 0,
+      "seconds": 0.15328973599389428
+    },
+    {
+      "argv": [
+        "/home/barberb/.local/bin/python",
+        "-B",
+        "/home/barberb/lift_coding/artifacts/source384-manifest-warm-replay-comparison-20261003/profile_observation.py",
+        "--label",
+        "candidate-01",
+        "--replay-shape",
+        "same_connection",
+        "--candidate-owner",
+        "/home/barberb/lift_coding/artifacts/source384-manifest-warm-replay-comparison-20261003/fixture-codebase_ir.py",
+        "--candidate-owner-sha256",
+        "2cc174e71f17a23daabd1c8855d96c621811addfe5152f386810ec23918b1463",
+        "--candidate-cache",
+        "/home/barberb/lift_coding/artifacts/source384-manifest-warm-replay-comparison-20261003/fixture-cache.py",
+        "--candidate-cache-sha256",
+        "d708bb536860334a43a97244652765bf926d949286207cc25ff68788bf85751f",
+        "--verify-import-only"
+      ],
+      "name": "two-owner-overlay",
+      "passed": true,
+      "returncode": 0,
+      "seconds": 0.17061507800099207
+    },
+    {
+      "argv": [
+        "/home/barberb/.local/bin/python",
+        "-B",
+        "/home/barberb/lift_coding/artifacts/source384-manifest-warm-replay-comparison-20261003/profile_observation.py",
+        "--label",
+        "candidate-02",
+        "--replay-shape",
+        "reopened_connection",
+        "--candidate-owner",
+        "/home/barberb/lift_coding/artifacts/source384-manifest-warm-replay-comparison-20261003/fixture-codebase_ir.py",
+        "--candidate-owner-sha256",
+        "2cc174e71f17a23daabd1c8855d96c621811addfe5152f386810ec23918b1463",
+        "--candidate-cache",
+        "/home/barberb/lift_coding/artifacts/source384-manifest-warm-replay-comparison-20261003/fixture-cache.py",
+        "--candidate-cache-sha256",
+        "d708bb536860334a43a97244652765bf926d949286207cc25ff68788bf85751f",
+        "--verify-import-only"
+      ],
+      "name": "reopened-owner-overlay",
+      "passed": true,
+      "returncode": 0,
+      "seconds": 0.15079454700025963
+    },
+    {
+      "argv": [
+        "/home/barberb/.local/bin/python",
+        "-B",
+        "/home/barberb/lift_coding/artifacts/source384-manifest-warm-replay-comparison-20261003/profile_observation.py",
+        "--label",
+        "candidate-01",
+        "--replay-shape",
+        "same_connection",
+        "--candidate-owner",
+        "/home/barberb/lift_coding/artifacts/source384-manifest-warm-replay-comparison-20261003/fixture-codebase_ir.py",
+        "--candidate-owner-sha256",
+        "2cc174e71f17a23daabd1c8855d96c621811addfe5152f386810ec23918b1463",
+        "--candidate-cache",
+        "/home/barberb/lift_coding/artifacts/source384-manifest-warm-replay-comparison-20261003/fixture-cache.py",
+        "--candidate-cache-sha256",
+        "0000000000000000000000000000000000000000000000000000000000000000",
+        "--verify-import-only"
+      ],
+      "name": "wrong-cache-pin",
+      "passed": true,
+      "returncode": 1,
+      "seconds": 0.11922232100187102
+    },
+    {
+      "argv": [
+        "/home/barberb/.local/bin/python",
+        "-B",
+        "/home/barberb/lift_coding/artifacts/source384-manifest-warm-replay-comparison-20261003/profile_observation.py",
+        "--label",
+        "candidate-01",
+        "--replay-shape",
+        "same_connection",
+        "--candidate-owner",
+        "/home/barberb/lift_coding/artifacts/source384-manifest-warm-replay-comparison-20261003/fixture-codebase_ir.py",
+        "--candidate-owner-sha256",
+        "2cc174e71f17a23daabd1c8855d96c621811addfe5152f386810ec23918b1463",
+        "--candidate-cache",
+        "/home/barberb/lift_coding/artifacts/source384-manifest-warm-replay-comparison-20261003/fixture-cache-link.py",
+        "--candidate-cache-sha256",
+        "d708bb536860334a43a97244652765bf926d949286207cc25ff68788bf85751f",
+        "--verify-import-only"
+      ],
+      "name": "cache-symlink",
+      "passed": true,
+      "returncode": 1,
+      "seconds": 0.10383969100075774
+    },
+    {
+      "argv": [
+        "/home/barberb/.local/bin/python",
+        "-B",
+        "/home/barberb/lift_coding/artifacts/source384-manifest-warm-replay-comparison-20261003/profile_observation.py",
+        "--label",
+        "candidate-01",
+        "--replay-shape",
+        "same_connection",
+        "--candidate-owner",
+        "/home/barberb/lift_coding/artifacts/source384-manifest-warm-replay-comparison-20261003/fixture-codebase_ir.py",
+        "--candidate-owner-sha256",
+        "2cc174e71f17a23daabd1c8855d96c621811addfe5152f386810ec23918b1463",
+        "--verify-import-only"
+      ],
+      "name": "incomplete-selection",
+      "passed": true,
+      "returncode": 1,
+      "seconds": 0.05285165500390576
+    },
+    {
+      "argv": [
+        "/home/barberb/.local/bin/python",
+        "-B",
+        "/home/barberb/lift_coding/artifacts/source384-manifest-warm-replay-comparison-20261003/profile_observation.py",
+        "--label",
+        "candidate-01",
+        "--replay-shape",
+        "reopened_connection",
+        "--candidate-owner",
+        "/home/barberb/lift_coding/artifacts/source384-manifest-warm-replay-comparison-20261003/fixture-codebase_ir.py",
+        "--candidate-owner-sha256",
+        "2cc174e71f17a23daabd1c8855d96c621811addfe5152f386810ec23918b1463",
+        "--candidate-cache",
+        "/home/barberb/lift_coding/artifacts/source384-manifest-warm-replay-comparison-20261003/fixture-cache.py",
+        "--candidate-cache-sha256",
+        "d708bb536860334a43a97244652765bf926d949286207cc25ff68788bf85751f",
+        "--verify-import-only"
+      ],
+      "name": "shape-label-mismatch",
+      "passed": true,
+      "returncode": 1,
+      "seconds": 0.03461080900160596
+    }
+  ],
+  "fixtures": {
+    "cache": [
+      "/home/barberb/lift_coding/artifacts/source384-manifest-warm-replay-comparison-20261003/fixture-cache.py",
+      "d708bb536860334a43a97244652765bf926d949286207cc25ff68788bf85751f"
+    ],
+    "codebase_ir": [
+      "/home/barberb/lift_coding/artifacts/source384-manifest-warm-replay-comparison-20261003/fixture-codebase_ir.py",
+      "2cc174e71f17a23daabd1c8855d96c621811addfe5152f386810ec23918b1463"
+    ]
+  },
+  "model_loads": 0,
+  "native_observations": 0,
+  "passed": true,
+  "schema": "two-owner-warm-replay-import-controls@1",
+  "script_sha256": "5185dfb86e279cdb9be5063deea66e5585e52dc43307c054b07c29eb2c9a491e"
+}

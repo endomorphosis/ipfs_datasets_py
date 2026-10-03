@@ -1,0 +1,1264 @@
+{
+  "arm": "combined-01",
+  "cas_bytes": 25509559,
+  "diagnostic_only": true,
+  "duckdb_version": "1.5.5",
+  "event_count": 271,
+  "events_sha256": "70a6b76d2d739a1674d0c93f2f60d6b950ddca8bfc5421cfaf54ae917c3bb361",
+  "gc_collect_called": false,
+  "head": {
+    "ast_revision_id": "rev:terminal-source384:cf59eff6c467429866bc22000288e86814d49f7669dbbcf1f5406d73febd580f:snapshot:baguqeeraxmhnn53dvgqdqahnyue4bjd3l5fathpq4kihcjdgu5g7dfo2oopa",
+    "generation": 1,
+    "manifest_cid": "baguqeeraekf4vg44vec2hoxgtze22qm63r6le6pcz4xd6d4vawedexmgimea",
+    "receipt_cid": "baguqeerax52f7guhoz6hxombwdvfwlpc7un3ehy5cerpp4vjbh6khtmtlu4q",
+    "repository_id": "terminal-source384:cf59eff6c467429866bc22000288e86814d49f7669dbbcf1f5406d73febd580f",
+    "schema": "codebase-head@1",
+    "snapshot_cid": "baguqeeraxmhnn53dvgqdqahnyue4bjd3l5fathpq4kihcjdgu5g7dfo2oopa"
+  },
+  "malloc_trim_called": false,
+  "memory_limit": "512MB",
+  "model_loads": 0,
+  "native_observation_seconds": 90,
+  "native_producer_guard_recognized": true,
+  "observation_count": 2,
+  "original_state": "/home/barberb/lift_coding/artifacts/source-combined-observation-performance-20261003/full-context-04/state",
+  "overlay_selected": true,
+  "owner_module": "ipfs_datasets_py.logic.software_contracts.codebase_ir",
+  "owner_path": "/home/barberb/lift_coding/artifacts/source384-manifest-combined-replay-20261003/proposed/ipfs_datasets_py/logic/software_contracts/codebase_ir.py",
+  "owner_sha256": "4aa2e5287885aaecf2c2319a100b8e4b8bdad21b082990a4beadda84d7c61018",
+  "owner_unchanged": true,
+  "producer_after": {
+    "ipfs_datasets_py/duckdb_control/codebase_catalog.py": "91986bf58356b2917483884661237c49448c0f91f3dc40d4cd3d79fa4811afdf",
+    "ipfs_datasets_py/logic/software_contracts/cache.py": "d708bb536860334a43a97244652765bf926d949286207cc25ff68788bf85751f",
+    "ipfs_datasets_py/logic/software_contracts/codebase_ir.py": "2cc174e71f17a23daabd1c8855d96c621811addfe5152f386810ec23918b1463",
+    "ipfs_datasets_py/logic/software_contracts/content.py": "1e8c9bb9019bb593d6812ac6d1d1fa46e882be291d5f41bbb4894fb171056b43",
+    "ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py": "736c77ebdc66607ef234ab1aa2f4d84c4768811f11d568962a11692dfdcfad2f",
+    "ipfs_datasets_py/logic/software_contracts/duckdb_ingest.py": "cec3c3686d10dc5d9a0d5ccf853cd873284f3e4098e41ecdd6dc517a2b73c50e"
+  },
+  "producer_before": {
+    "ipfs_datasets_py/duckdb_control/codebase_catalog.py": "91986bf58356b2917483884661237c49448c0f91f3dc40d4cd3d79fa4811afdf",
+    "ipfs_datasets_py/logic/software_contracts/cache.py": "d708bb536860334a43a97244652765bf926d949286207cc25ff68788bf85751f",
+    "ipfs_datasets_py/logic/software_contracts/codebase_ir.py": "2cc174e71f17a23daabd1c8855d96c621811addfe5152f386810ec23918b1463",
+    "ipfs_datasets_py/logic/software_contracts/content.py": "1e8c9bb9019bb593d6812ac6d1d1fa46e882be291d5f41bbb4894fb171056b43",
+    "ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py": "736c77ebdc66607ef234ab1aa2f4d84c4768811f11d568962a11692dfdcfad2f",
+    "ipfs_datasets_py/logic/software_contracts/duckdb_ingest.py": "cec3c3686d10dc5d9a0d5ccf853cd873284f3e4098e41ecdd6dc517a2b73c50e"
+  },
+  "provider_calls": 0,
+  "reopen_source_owners_after_first": false,
+  "replay_shape": "same_connection",
+  "repository": "/home/barberb/lift_coding/artifacts/source-combined-observation-performance-20261003/after-02/app",
+  "retained_before": {
+    "cas": {
+      "source/bafk/bafkreia2rbdodiw5xqq75c7swmijhkdu7pkembmjdzpwrosa6niinb4yf4": {
+        "bytes": 64,
+        "sha256": "1a8846e1a2ddbc21fe8bf2b31093a874fbd44605891e5f68ba40f3508687982f"
+      },
+      "source/bafk/bafkreia3d4x3zdsabav4xmg64ajhobxlyrsgniw52q6ktqg6e6mugrjmo4": {
+        "bytes": 1238,
+        "sha256": "1b1f2fbc8e40082bcbb0dee0127706ebc46466a2ddd43ca9c0de279943452c77"
+      },
+      "source/bafk/bafkreia3vzl3elhs4ch5t7fa3tceoezhfenmqruu7awvhdfa33w2prudnq": {
+        "bytes": 5602,
+        "sha256": "1bae57b22cf2e08fd9fca0dcc4471327291ac84694f82d538ca0deeda7c6836c"
+      },
+      "source/bafk/bafkreia52hx5dl4w6wvqgon2o4npoednowsnfsl42g7d3qhzn4pcjs5go4": {
+        "bytes": 3322,
+        "sha256": "1dd1efd1af96f5ab0339ba771af7106d75a4d2c97cd1be3dc0f96f1e24cba677"
+      },
+      "source/bafk/bafkreia6ktw7ozc2bqbj7n2xufwaka3o5bv4ugvhzhr4mowvdzn4eucyte": {
+        "bytes": 17,
+        "sha256": "1e54edf7645a0c029fb757a16c05036ee86bca1aa7c9e3c63ad51e5bc2505899"
+      },
+      "source/bafk/bafkreia6v5ecnchouklew27njyfjjsjigxxsgltpu2p2jbryerokatb3g4": {
+        "bytes": 8706,
+        "sha256": "1eaf482688eea2964b6bed4e0a94c92835ef232e6fa69fa48638245ca04c3b37"
+      },
+      "source/bafk/bafkreia6yyfpvbkt3jncjirb2krrzng4anajb37tgfojmeiyfey5bhkeh4": {
+        "bytes": 17055,
+        "sha256": "1ec60afa8553da5a24a221d2a31cb4dc034090eff3315c9611182931d09d443f"
+      },
+      "source/bafk/bafkreiaa4nfrmjmygvxvotiwqx7d6i2tpomjhsf3tr44cuzs7k242ee2km": {
+        "bytes": 11027,
+        "sha256": "00e34b162598356f574d1685fe3f23537b9893c8bb9c79c15332fab5cd109a53"
+      },
+      "source/bafk/bafkreiaayjzl4qz46yxxnznzs3pyqvkr26k4lp5tt2jzveegensqobjnxy": {
+        "bytes": 9361,
+        "sha256": "00c272be433cf62f76e5b996df885551d795c5bfb39e939a9086236507052dbe"
+      },
+      "source/bafk/bafkreiae33b5loarzh6ik5p72mnqvkreuy5brxclccfnvje2z6lnkzy6jy": {
+        "bytes": 39,
+        "sha256": "04dec3d5b811c9fc8575ffd31b0aaa24a63a18dc4b108adaa49acf96d5671e4e"
+      },
+      "source/bafk/bafkreiae6w4grmj23sm3ufvds624fhhgs2stcbaj4idu5b5dy7h3qlvjua": {
+        "bytes": 2185,
+        "sha256": "04f5b868b13adc99ba16a397b5c29ce696a5310409e2074e87a3c7cfb82ea9a0"
+      },
+      "source/bafk/bafkreiaeapvqoj7zbbxo3skutz4oq4vtj2iexasug6mkylgwkpg6pu6iyu": {
+        "bytes": 24198,
+        "sha256": "0403eb0727f9086eedc9549e78e872b34e904b82543798ac2cd653cde7d3c8c5"
+      },
+      "source/bafk/bafkreiaf4xb47s4urglnloooep52j4zjmchfjroag6cszm7zrkqv3gfb44": {
+        "bytes": 9378,
+        "sha256": "05e5c3cfcb948996d5b9ce23fba4f329608e54c5c037852cb3f98aa15d98a1e7"
+      },
+      "source/bafk/bafkreiafqcocjvnv4nmsxtsn2no2isuukfi3cdqntfa6kcbtifejfg3moe": {
+        "bytes": 7213,
+        "sha256": "05809c24d5b5e3592bce4dd35da44a945151b10e0d9941e508334148929b6c71"
+      },
+      "source/bafk/bafkreiagagv6bfvwilsysugsbgoqq2owilji2qr23yvy7wpmfogestywai": {
+        "bytes": 2615,
+        "sha256": "0601abe096b642e58950d2099d0869d642d28d423ade2b8fd9ec2b8c494f1602"
+      },
+      "source/bafk/bafkreiajys7rkumwmauddf23fyq2ixske22pnqs6en7t6lhfa3iwmlusmy": {
+        "bytes": 51157,
+        "sha256": "09c4bf155196602831975b2e21a45e4a26b4f6c25e237f3f2ce506d1662e9266"
+      },
+      "source/bafk/bafkreiak3papimaa3a3armn2e3zxwqn35k3aqynq7zhsvezllpdodwmbju": {
+        "bytes": 11025,
+        "sha256": "0adbc0f43000d83608b1ba26f37b41bbeab60861b0fe4f2a932b5bc6e1d9814d"
+      },
+      "source/bafk/bafkreialnb5f4uzftszrh42teu4tap7ck6j7optiapcagonuuantik5yuy": {
+        "bytes": 8919,
+        "sha256": "0b687a5e53259cb313f3532539303fe25793f73e6803c40339b4a01b342bb8a6"
+      },
+      "source/bafk/bafkreiamrwlsh2urbi2ylsx5rutp6cfuwsi5nnkuctbbaxauz3x7yuu34u": {
+        "bytes": 13686,
+        "sha256": "0c8d9723ea910a3585cafd8d26ff08b4b491d6b55414c2105c14ceeffc529be5"
+      },
+      "source/bafk/bafkreianpu27wrxlri5ozjr5g2z5pbmioo7havdl7vbjlq63l3d4k26foy": {
+        "bytes": 2957,
+        "sha256": "0d7d35fb46eb8a3aeca63d36b3d7858873be70546bfd4295c3db5ec7c56bc576"
+      },
+      "source/bafk/bafkreiaohstn2zysyjm5b4iqznm2q4wcsi7hljzthjt2xthbaarg44gh3m": {
+        "bytes": 4596,
+        "sha256": "0e3ca6dd6712c259d0f110cb59a872c2923e75a7333a67abcce100226e70c7db"
+      },
+      "source/bafk/bafkreiapgpke44h4wx6eotket7jmqdfxq2ducfr64li37x3qzuh4biwfiu": {
+        "bytes": 46,
+        "sha256": "0f33d44e70fcb5fc474d449fd2c80cb7868741163ee2d1bfdf70cd0fc0a2c545"
+      },
+      "source/bafk/bafkreiaqsxdteqonclgbxh6t3jdoyasdsdhxrfvf6wfpq5dfki5c4szscm": {
+        "bytes": 49884,
+        "sha256": "1095c73241cd12cc1b9fd3da46ec024390cf7896a5f58af87465523a2e4b3213"
+      },
+      "source/bafk/bafkreiarrx4ey4spcgsivsf3dkjtovf37bmaoulbaimmsb7ivxszcjperq": {
+        "bytes": 20666,
+        "sha256": "118df84c724f11a48ac8bb1a933754bbf8580751610218c907e8ade59125e48c"
+      },
+      "source/bafk/bafkreiat2cbkcrpxsfx3qzq6ohhuamrhvukflpbvdvqb757odnl35gen5u": {
+        "bytes": 2481,
+        "sha256": "13d082a145f7916fb8661e71cf403227ad1455bc351d601ff7ee1b57be988ded"
+      },
+      "source/bafk/bafkreiatupfbhdfev5brbwvd6jijbdsgwpzcdvtw3aulc6ammcvexgksii": {
+        "bytes": 46601,
+        "sha256": "13a3ca138ca4af4310daa3f250908e46b3f221d676d828b1780c60aa4b995242"
+      },
+      "source/bafk/bafkreiau34h2rjom4nf5entrafcfxvs3gpxtea3k2ll6skrabyyjdrxdaa": {
+        "bytes": 24207,
+        "sha256": "14df0fa8a5cce34bd2367101445bd65b33ef32036ad2d7e92a200e3091c6e300"
+      },
+      "source/bafk/bafkreiau7565dps7k6jva3skgjjlebo23qqfa7pdvfkynkreik3i4eqosm": {
+        "bytes": 4416,
+        "sha256": "14ff7dd1be5f5793506e4a3252b205dadc20507de3a95586aa2442b68e120e93"
+      },
+      "source/bafk/bafkreiaugujb2vgfypnsxnfnacwl7gvxu3jeps6vpijibvve3c475556xe": {
+        "bytes": 77937,
+        "sha256": "1435121d54c5c3db2bb4ad00acbf9ab7a6d247cbd57a1280d6a4d8b9fef7beb9"
+      },
+      "source/bafk/bafkreiavdbtzioiisahi5eegve75fz3swm7wtwzrubooguddmd7zl4uf4i": {
+        "bytes": 50015,
+        "sha256": "151867943908900e8e9086a93fd2e772b33f69db31a05ce3506360ff95f285e2"
+      },
+      "source/bafk/bafkreiayn4nnbhqsuvqy3qdgljmpipn5cxjbxmfdezdnpfmzjukwwbrjru": {
+        "bytes": 14469,
+        "sha256": "186f1ad09e12a5618dc0665a58f43dbd15d21bb0a32646d795994d156b06298d"
+      },
+      "source/bafk/bafkreiayons6ooat3wieg6uoh6ll73haygryt335yvmdharts2yyjgqnrm": {
+        "bytes": 14624,
+        "sha256": "187365e73813dd90437a8e3f96bfece0c1a389ef7dc55833823396b1849a0d8b"
+      },
+      "source/bafk/bafkreiayxm5oloooqtxsb3d62mrvamtsqe3fnhdzxs4gknobwxg7evaawu": {
+        "bytes": 3650,
+        "sha256": "18bb3ae5b9ce84ef20ec7ed3235032728136569c79bcb86535c1b5cdf25400b5"
+      },
+      "source/bafk/bafkreib277tmqjkygy6gkmgiasrcs3zq4gt6yanz4eiw3in4sohp5kxtq4": {
+        "bytes": 37,
+        "sha256": "3affe6c82558363c6530c804a2296f30e1a7ec01b9e1116da1bc938efeaaf387"
+      },
+      "source/bafk/bafkreib6h35c4p4vxgsa7silfgyjvsjmv6iktrkjtchrlrjp42hemznuvu": {
+        "bytes": 1220,
+        "sha256": "3e3efa2e3f95b9a40fc90b29b09ac92caf90a9c549988f15c52fe68e4665b4ad"
+      },
+      "source/bafk/bafkreiba4xfmhyqdwm5rubxzh7f5g76utbwqhnv6jspuw56urtahulylj4": {
+        "bytes": 2347,
+        "sha256": "20e5cac3e203b33b1a06f93fcbd37fd4986d03b6be4c9f4b77d48cc07a2f0b4f"
+      },
+      "source/bafk/bafkreibcre53jfvzlnduht44zjr4fqo7stvs3p4g3gq53urxkhgcdwvkdu": {
+        "bytes": 8327,
+        "sha256": "22893bb496b95b4743cf9cca63c2c1df94eb2dbf86d9a1ddd23751cc21daaa1d"
+      },
+      "source/bafk/bafkreibcudf3jfa5bh6d2shezmgzqyr7xjoku4nsju4qgzrofo6fvey444": {
+        "bytes": 10476,
+        "sha256": "22a0cbb4941d09fc3d48e4cb0d98623fba5caa71b24d3903662e2bbc5a931ce7"
+      },
+      "source/bafk/bafkreibd6pa22eapbzu3idwutjiexlq7m5q7icyxcqkswjs3n74upd5gfu": {
+        "bytes": 31058,
+        "sha256": "23f3c1ad100f0e69b40ed49a504bae1f6761f40b1714152b265b6ff9478fa62d"
+      },
+      "source/bafk/bafkreibeceggutdypqqp7yayyq5irq4rjtcpgnds2xrigijgxhbafkkeua": {
+        "bytes": 8938,
+        "sha256": "24110c6a4c787c20ffe018c43a88c3914cc4f33472d5e2832126b9c202a944a0"
+      },
+      "source/bafk/bafkreibegama4jhpkh7hjk5eszpycni76iwmcma5z6wb3whfgplrfglhnm": {
+        "bytes": 7372,
+        "sha256": "2430180e24ef51fe74aba4965f81351ff22cc1301dcfac1dd8e533d71299676b"
+      },
+      "source/bafk/bafkreibfqdckkvugyh4ugs32fgoommr5bwkeblckqfsfwz3qhxwiiqgdtm": {
+        "bytes": 8344,
+        "sha256": "2580c4a55686c1f9434b7a299ce6323d0d9440ac4a81645b67703dec8440c39b"
+      },
+      "source/bafk/bafkreibh433jlvzunckxlyvamo3xm2fb7k44pkbqoejummhwuaxl62lvsi": {
+        "bytes": 4,
+        "sha256": "27e6f695d734689575e2a063b77668a1fab9c7a83071134630f6a02ebf697592"
+      },
+      "source/bafk/bafkreibhftdoopliowaty435o76jb7u3szri5jjmsmthy2kbteuejgb55a": {
+        "bytes": 6949,
+        "sha256": "272cc6e73d6875813c737d77fc90fe9b96628ea52c93267c6941992844983de8"
+      },
+      "source/bafk/bafkreibhifzmy4c6cm6mitmpxseuwvwd26gdqnquzaarpjjmlaclmqhspy": {
+        "bytes": 13993,
+        "sha256": "274172cc705e133cc44d8fbc894b56c3d78c383614c80117a52c5804b640f27e"
+      },
+      "source/bafk/bafkreibirrz5xuwx5uhg4gtlq73qxvp6ijroz5il2o7btgemdrkvjmjnku": {
+        "bytes": 808,
+        "sha256": "288c73dbd2d7ed0e6e1a6b87f70bd5fe4262ecf50bd3be19988c1c5554b12d55"
+      },
+      "source/bafk/bafkreibjapjativtklgcrvzojsbnj2ro2ubtmh4rb36l7g4lclvtrmsl24": {
+        "bytes": 50224,
+        "sha256": "2903d209a2b352cc28d72e4c82d4ea2ed503361f910efcbf9b8b12eb38b24bd7"
+      },
+      "source/bafk/bafkreibomfl5jz67kfyjpysucvf74gcaawvfnsph5yocjdnlbzx4uwka44": {
+        "bytes": 13045,
+        "sha256": "2e6157d4e7df517097e254154bfe184005aa56c9e7ee1c248dab0e6fca5940e7"
+      },
+      "source/bafk/bafkreibp4araqfuiihaaldw42zxbhlonlvlpdkqswhjfzlpjucl3u7jhmi": {
+        "bytes": 5650,
+        "sha256": "2fe02208168841c0058edcd66e13adcd5d56f1aa12b1d25cade9a097ba7d2762"
+      },
+      "source/bafk/bafkreibp5o56izyj2dzrg2hrqsho6ph2z3rqyhbfronguffyqlldxqtgfa": {
+        "bytes": 18769,
+        "sha256": "2febbbe46709d0f31368f1848eef3cfacee30c1c258b9a6a14b882d63bc26628"
+      },
+      "source/bafk/bafkreibptskfz7ulp4r5mteafwn3ddq5pzpdpyytabhquxiplyqmwt743q": {
+        "bytes": 102,
+        "sha256": "2f9c945cfe8b7f23d64c802d9bb18e1d7e5e37e313004f0a5d0f5e20cb4ffcdc"
+      },
+      "source/bafk/bafkreibpvy4e24xk32xogm4wbybp6hvmpea7o63tqlrv236pxteqsjbe6a": {
+        "bytes": 9074,
+        "sha256": "2fae384d72eadeaee333960e02ff1eac7901f77b7382e35d6fcfbcc9092424f0"
+      },
+      "source/bafk/bafkreiburgyulvhadgkbu6yvxf4fvxfokgu2zjgpgntdd47gwugeogzc4q": {
+        "bytes": 31051,
+        "sha256": "3489b145d4e019941a7b15b9785adcae51a9aca4cf336631f3e6b50c471b22e4"
+      },
+      "source/bafk/bafkreibvswxfzw7oo6puzsahlb6of3lnbdnjdxujm72b7w3cei427ugh6q": {
+        "bytes": 17,
+        "sha256": "3595ae5cdbee779f4cc807587ce2ed6d08da91de8967f41fdb622239afd0c7f4"
+      },
+      "source/bafk/bafkreibwu5fm7y4uqjfftgwsnhzjbyehimywequdxopb252r2cxcl3loye": {
+        "bytes": 13035,
+        "sha256": "36a74acfe394824a599ad269f290e0874331624283bb9e1d7751d0ae25ed6ec1"
+      },
+      "source/bafk/bafkreibxzdpjia5nkraov44goux4nprgfaq4qzlccdvvxbxlte7ewiujcm": {
+        "bytes": 6045,
+        "sha256": "37c8de9403ad5440eaf386752fc6be262821c8656210eb5b86eb993e4b228913"
+      },
+      "source/bafk/bafkreibyclnv5vuak2dzz7i3gnpum2f5anqon6e25kfg4ehtpdsf7ph2uy": {
+        "bytes": 6084,
+        "sha256": "3812db5ed68056879cfd1b335f4668bd0360e6f89aea8a6e10f378e45fbcfaa6"
+      },
+      "source/bafk/bafkreibypmzbybfq3ekbzqz2l7x7yk2yfedlws4xj34gmudrclg3pjqr7u": {
+        "bytes": 188,
+        "sha256": "387b321c04b0d9141cc33a5feffc2b582906bb4b974ef866507112cdb7a611fd"
+      },
+      "source/bafk/bafkreic22c7umywonjvv5cigyj4eavu2mn4rhptdtwqt7fcayllh7bdt5a": {
+        "bytes": 1135,
+        "sha256": "5ad0bf4662ce6a6b5e8906c27840569a637913be639da13f9440c2d67f8473e8"
+      },
+      "source/bafk/bafkreic2x4mkj5trqufbjr76nfygearid4wgugviujthzknvsoibthoqii": {
+        "bytes": 63,
+        "sha256": "5abf18a4f671850a14c7fe69706202281f2c6a1aa8a2667ca9b59390199dd042"
+      },
+      "source/bafk/bafkreic3nsbzmdtirdsmfn7lrvd2nr342uw4iblvv2ucewbc7geu3zbvvy": {
+        "bytes": 6701,
+        "sha256": "5b6c83960e6888e4c2b7eb8d47a6c77cd52dc40575aea8225822f9894de435ae"
+      },
+      "source/bafk/bafkreic4d6ukjpuag5slcdwzplxaaklizoushpt3qjjsgeuvj6m675zfwu": {
+        "bytes": 8173,
+        "sha256": "5c1fa8a4be803764b10ed97aee002968cba923be7b82532312954f99eff725b5"
+      },
+      "source/bafk/bafkreic77e7xbmwk6ad7h2djqcexl4luriklbg7zkegqfxcdrcedwusbhy": {
+        "bytes": 13054,
+        "sha256": "5ff93f70b2caf007f3e869808975f1748a14b09bf9510d02dc4388883b52413e"
+      },
+      "source/bafk/bafkreicbb64v2nvjtchjqtfrot3v55u2ci2lq45it4z6z7somwzgaidlka": {
+        "bytes": 6120,
+        "sha256": "410fb95d36a9988e984cb174f75ef69a1234b873a89f33ecfe4e65b260206b50"
+      },
+      "source/bafk/bafkreiccwsra6raszo22c5cnff5obi5li5wzpiq6qetamrpizcc3p4tpki": {
+        "bytes": 5760,
+        "sha256": "42b4a20f4412cbb5a1744d297ae0a3ab476d97a21e81260645e8c885b7f26f52"
+      },
+      "source/bafk/bafkreicdv7k4oypjgwotcenk5t2lqwtskwgvzg7agxajp6hsip2o44s4f4": {
+        "bytes": 1066,
+        "sha256": "43afd5c761e9359d3111aaecf4b85a72558d5c9be035c097f8f243f4ee725c2f"
+      },
+      "source/bafk/bafkreichrdirinsdfvgiqjz2n24xhu6ltyatajy7m5y55btiv5asbfahiq": {
+        "bytes": 51772,
+        "sha256": "4788d11436432d4c88273a6eb973d3cb9e0130271f6771de8668af4120940744"
+      },
+      "source/bafk/bafkreici3kfvhab73v5ifmwptryazqxbafnkzcghen2jcgtu4rxffm6zju": {
+        "bytes": 8189,
+        "sha256": "48da8b53803fdd7a82b2cf9c700cc2e1015aac88c72374911a74e46e52b3d94d"
+      },
+      "source/bafk/bafkreicldymexhpemfkwe6hdfz6slpb6ohrokhqi4w266qlw3fnqzespky": {
+        "bytes": 2745,
+        "sha256": "4b1e184b9de461556278e32e7d25bc3e71e2e51e08e5b5ef4176d95b0c924f56"
+      },
+      "source/bafk/bafkreicm4tyd2v6pudzh7ta2hpgntx4c2rlkgcaeju7knzjewmk66b7cpy": {
+        "bytes": 8287,
+        "sha256": "4ce4f03d57cfa0f27fcc1a3bccd9df82d456a308044d3ea6e524b315ef07e27e"
+      },
+      "source/bafk/bafkreicqfvrpwf6ot6kb7bezyoqragyysl5gjctycgr5leuqy7caz2gmkq": {
+        "bytes": 1328,
+        "sha256": "502d62fb17ce9f941f8499c3a1101b1892fa648a7811a3d59290c7c40ce8cc54"
+      },
+      "source/bafk/bafkreicqp6lphmjqdiszxdv6r6vhrzmbnxuurpbratonu7khvptpxyme2y": {
+        "bytes": 2470,
+        "sha256": "507f96f3b1301a259b8ebe8faa78e5816de948bc3104dcda7d47abe6fbe184d6"
+      },
+      "source/bafk/bafkreicrgvovvqckv65rqltedz6jtgehhazctpbgxzpoyqvckshp5i25te": {
+        "bytes": 3129,
+        "sha256": "51355d5ac04aafbb182e641e7c999887383229bc26be5eec42a2548efea35d99"
+      },
+      "source/bafk/bafkreicsxeanzrak3qs432ngn5qmdomh4gzdq2rphwkbj5bjbyrbr5gx5e": {
+        "bytes": 10673,
+        "sha256": "52b900dcc40adc25cde9a66f60c1b987e1b2386a2f3d9414f4290e2218f4d7e9"
+      },
+      "source/bafk/bafkreicvkidzmujxu7uoq6ncudvwuuexf6zuc6vmmxvbv4lfu2jsptwzne": {
+        "bytes": 5913,
+        "sha256": "555207965137a7e8e879a2a0eb6a50972fb3417aac65ea1af165a69327ced969"
+      },
+      "source/bafk/bafkreicvmft7kg52briwqkd3amyxaa72qwc6swc3bcizxssm5dbyapxjdq": {
+        "bytes": 14390,
+        "sha256": "556167f51bba0c5168287b03317003fa8585e9585b08919bca4ce8c3803ee91c"
+      },
+      "source/bafk/bafkreicvv3naeu5eloehs7vij3wzsewxe3cbhllf66sbwaexz32owph2ka": {
+        "bytes": 42,
+        "sha256": "55aeda0253a45b88797ea84eed9912d726c413ad65f7a41b0097cef4eb3cfa50"
+      },
+      "source/bafk/bafkreicwz4xkg7oksuv2tajdf7v5o3cjipf2pe34c3im3l5wnnpsvokjvu": {
+        "bytes": 12559,
+        "sha256": "56cf2ea37dca952ba981232febd76c4943cba7937c16d0cdafb66b5f2ab949ad"
+      },
+      "source/bafk/bafkreicy4czj26nz6bhs7kp4cf7tqa24oxipjibuxiv7tml5h2aevsnlsu": {
+        "bytes": 8592,
+        "sha256": "58e0b29d79b9f04f2fa9fc117f38035c75d0f4a034ba2bf9b17d3e804ac9ab95"
+      },
+      "source/bafk/bafkreid3zfpzjkrddh7zs7l4bnw3o6iscvs6lwcfga5vwrbna6sy76iyme": {
+        "bytes": 12795,
+        "sha256": "7bc95f94aa2319ff997d7c0b6db779121565e5d845303b5b442d07a58ff91861"
+      },
+      "source/bafk/bafkreid46ih54c7yo5ft3fg6kbvmn5w42xc3no64jcmrxkuz37ntvbxadq": {
+        "bytes": 11064,
+        "sha256": "7cf20fde0bf8774b3d94de506ac6f6dcd5c5b6bbdc48991baa99dfdb3a86e01c"
+      },
+      "source/bafk/bafkreid4bsfixpqtz5piz4oy5tuvb2o6zqo6zbgyidfvyqaqflrtw5tllm": {
+        "bytes": 26213,
+        "sha256": "7c0c8a8bbe13cf5e8cf1d8ece950e9decc1dec84d840cb5c40102ae33b766b5b"
+      },
+      "source/bafk/bafkreid5x73s2wpu572g76kvwr6dyjdyzlqvyzmdcsaekdb3urn54om3ny": {
+        "bytes": 8604,
+        "sha256": "7dbff72d59f4eff46ff955b47c3c2478cae15c65831480450c3ba45bde399b6e"
+      },
+      "source/bafk/bafkreidb22v6bunbxl5nptk2wk3tqi5ygrzpkdhcq4rygrar5nqooxuwxu": {
+        "bytes": 51056,
+        "sha256": "61d6abe0d1a1bafad7cd5ab2b73823b83472f50ce28723834411eb60e75e96bd"
+      },
+      "source/bafk/bafkreidbscubocnlbmy5kjxk5zysoubghqo7446ru37wqitjrtwsfyhdla": {
+        "bytes": 3490,
+        "sha256": "6190a81709ab0b31d526eaee712750263c1dfe73d1a6ff6822698ced22e0e358"
+      },
+      "source/bafk/bafkreidcxkswmgf2oqdf5kyqev7xrtes2y4cfc7tfac73to7ieq3pp62b4": {
+        "bytes": 49958,
+        "sha256": "62baa56618ba74065eab10257f78cc92d638228bf32805fdcddf4121b7bfda0f"
+      },
+      "source/bafk/bafkreidd4mccl673kauqsfrku5flvqbvtlqob3sp73njz4c3xq56w6vboa": {
+        "bytes": 1290,
+        "sha256": "63e30425fbfb502909162aa74abac0359ae0e0ee4ffeda9cf05bbc3beb7aa170"
+      },
+      "source/bafk/bafkreidd6icfcstrpzkszqi52yy3pauncilyodkbkqvxiuy6qct4kkrx74": {
+        "bytes": 18,
+        "sha256": "63f204514a717e552cc11dd631b7828d1217870d41542b74531e80a7c52a37ff"
+      },
+      "source/bafk/bafkreiddqnbrk7gmsutwhcrqnexwjckt5lawlp4srlsu4mclzyycpfn7tq": {
+        "bytes": 10338,
+        "sha256": "638343157ccc9527638a30692f648953eac165bf928ae54e304bce302795bf9c"
+      },
+      "source/bafk/bafkreidfsnxv3oycvu3zqc7mwg4sjn3n5q2zrglms5tfejkauqpsxo55b4": {
+        "bytes": 2209,
+        "sha256": "65936f5dbb02ad37980becb1b924b76dec3598996c9766522540a41f2bbbbd0f"
+      },
+      "source/bafk/bafkreidhnlyywkswmlvnlt4lnxb3f6h2cvr6jf3azcbf6om4anzevpgj5e": {
+        "bytes": 46771,
+        "sha256": "676af18b2a5662ead5cf8b6dc3b2f8fa1563e49760c8825f399c03724abcc9e9"
+      },
+      "source/bafk/bafkreidjdywhqjwyg4rsjdl2wpjpdjndtyf3gsnpn5hm66xk4z5qqurut4": {
+        "bytes": 43,
+        "sha256": "691e2c7826d83723248d7ab3d2f1a5a39e0bb349af6f4ecf7aeae67b0852349f"
+      },
+      "source/bafk/bafkreidlemowzjfw3qqq4kwwo2wxikglqr6nwhn5tpgsrqje4ruw46dowq": {
+        "bytes": 10331,
+        "sha256": "6b231d6ca4b6dc210e2ad676ad7428cb847cdb1dbd9bcd28c124e4696e786eb4"
+      },
+      "source/bafk/bafkreidm4jx2feqpsrjhcvsfmzkvlv6p4h6k72glnyovs5eheupvwt46uq": {
+        "bytes": 23220,
+        "sha256": "6ce26fa2920f9452715645665555d7cfe1fcafe8cb6e1d597487251f5b4f9ea4"
+      },
+      "source/bafk/bafkreidq52ihl6zzpf6r74bj4hrhrs342bxdxo4gjljoioa57pfglj56vq": {
+        "bytes": 14488,
+        "sha256": "70ee9075fb39797d1ff029e1e278cb7cd06e3bbb864ad2e4381dfbca65a7beac"
+      },
+      "source/bafk/bafkreids4wq2h4bh2r6ffxawrltpq6hxfm7rhcnsoivmil7ky642et6a7a": {
+        "bytes": 7922,
+        "sha256": "72e5a1a3f027d47c52dc168ae6f878f72b3f1389b2722ac42feac7b9a24fc0f8"
+      },
+      "source/bafk/bafkreidtmr6xpfxzdjmdriq4gempk5yrizoqbmwovyu5slnc3a5okbjee4": {
+        "bytes": 6285,
+        "sha256": "73647d7796f91a5838a21c3118f57711465d00b2ceae29d92da2d83ae5052427"
+      },
+      "source/bafk/bafkreidtq3opcpb6sr2o62uytnfzr2fe7gbqj2rspaz3ba6ctahxftskfq": {
+        "bytes": 38675,
+        "sha256": "7386dcf13c3e9474ef6a989b4b98e8a4f98304ea327833b083c2980f72ce4a2c"
+      },
+      "source/bafk/bafkreiduwtkgtdcdqkf7e7foxzkj6ebqp3cawu2v3equhwcu7yaxpzutoa": {
+        "bytes": 2966,
+        "sha256": "74b4d4698c43828bf27caebe549f10307ec40b5355d92143d854fe0177e69370"
+      },
+      "source/bafk/bafkreidvaj36hsq57dopw4m3uyeqyso7cogwm7kn24ngssiugdzjvdkkbu": {
+        "bytes": 36,
+        "sha256": "750277e3ca1df8dcfb719ba6090c49df138d667d4dd71a69491430f29a8d4a0d"
+      },
+      "source/bafk/bafkreidvim7eagwgluxtnhntzogxym57rmsailvobrgrrg5nzqu5rsp5j4": {
+        "bytes": 8502,
+        "sha256": "75433e401ac65d2f369db3cb8d7c33bf8b24042eae0c4d189badcc29d8c9fd4f"
+      },
+      "source/bafk/bafkreidvrdenqcwf3ur6shbzr6lik4fp6cnrok3tv26obeqyzwe2qngaxq": {
+        "bytes": 83,
+        "sha256": "7588c8d80ac5dd23e91c398f968570aff09b172b73aebce09218cd89a834c0bc"
+      },
+      "source/bafk/bafkreidwc5lm4mlvhzjgysgsrtf4ue5f2jetwfx6g6x7hype2lx26orlxi": {
+        "bytes": 175565,
+        "sha256": "761756ce31753e526c48d28ccbca13a5d2493b16fe37aff3e1e4d2efaf3a2bba"
+      },
+      "source/bafk/bafkreidwswnncbmaz4b77ddpfmu5gvpuul2axymsky5c6qz27uq274i54e": {
+        "bytes": 43414,
+        "sha256": "76959ad10580cf03ff8c6f2b29d355f4a2f40be192563a2f433afd21aff11de1"
+      },
+      "source/bafk/bafkreidyoxdo2hlh3me227kc44eh46z6po5fiap7j65oo7pzl4d7hmomma": {
+        "bytes": 23565,
+        "sha256": "7875c6ed1d67db09ad7d42e7087e7b3e7bba5401ff4fbae77df95f07f3b1cc60"
+      },
+      "source/bafk/bafkreie3qmemqbdbwarp7udprqbp4zlrtglxqcza6c5nzpy2qbj3l3iguy": {
+        "bytes": 5495,
+        "sha256": "9b8308c80461b022ffd06f8c02fe65719997780b20f0badcbf1a8053b5ed06a6"
+      },
+      "source/bafk/bafkreie5ekmjdmifbsuao42oabd4h5hwpnivwpudup7qrfs5iz2wp5y6hu": {
+        "bytes": 6402,
+        "sha256": "9d229891b1050ca807734e0047c3f4f67b515b3e83a3ff08965d467567f71e3d"
+      },
+      "source/bafk/bafkreie5eomizzftc3fe363acziijzywttw4q5hyfabhnsk5wnnmbe3m4m": {
+        "bytes": 6129,
+        "sha256": "9d23988ce4b316ca4dfb60165084e7169cedc874f8280276c95db35ac0936ce3"
+      },
+      "source/bafk/bafkreie6c26rnlscs6cp76nvr5kophph7as2fv5vphb4mi2jyxbfbkjuzm": {
+        "bytes": 6265,
+        "sha256": "9e16bd16ae429784fff9b58f54e79de7f825a2d7b579c3c62349c5c250a934cb"
+      },
+      "source/bafk/bafkreiebkyhkf47ohvjfyssqduybsb6xbgdow5fty2gssounmcb5em4lny": {
+        "bytes": 2493,
+        "sha256": "81560ea2f3ee3d525c4a501d301907d70986eb74b3c68d293a8d6083d2338b6e"
+      },
+      "source/bafk/bafkreiec7vrfo3bgzn45rxffp55minmczbzgxz3jqbdt5c2m6z5nfcbrl4": {
+        "bytes": 3774,
+        "sha256": "82fd62576c26cb79d8dca57f7ac43582c8726be76980473e8b4cf67ad288315f"
+      },
+      "source/bafk/bafkreied23eyl373hd4y2a6v5ihm3leniwyucaebkivl4yuflpvx36lequ": {
+        "bytes": 24205,
+        "sha256": "83d6c985effb38f98d03d5ea0ecdac8d45b1410081522abe62855beb7df96485"
+      },
+      "source/bafk/bafkreiedtmrw7freaap6ph5vhozqe52icebnop6njrhawr4l2bvfrgzhxe": {
+        "bytes": 13949,
+        "sha256": "839b236f9624001fe79fb53bb30277481102d73fcd4c4e0b478bd06a589b27b9"
+      },
+      "source/bafk/bafkreiee6nv6zxmgr2xovi45vjobztewdugyhzeiddchgys4u5j5xfz3pi": {
+        "bytes": 4281,
+        "sha256": "84f36becdd868eaeeaa39daa5c1ccc961d0d83e48818c473625ca753db973b7a"
+      },
+      "source/bafk/bafkreiefxh62u2fts2xo4adejx5rbe4f7qefowr7hirb23jkkmhqb2ar74": {
+        "bytes": 24238,
+        "sha256": "85b9fdaa68b396aeee00644dfb109385fc08575a3f3a221d6d2a530f00e811ff"
+      },
+      "source/bafk/bafkreieg6p6ytnqse6lef7hlezbqslesyhg4pbzhz2gmqmvhqysszejbke": {
+        "bytes": 3324,
+        "sha256": "86f3fd89b612279642fceb2643092c92c1cdc78727ce8cc832a786252c912151"
+      },
+      "source/bafk/bafkreiehczeiwhncxitvzo5oatwzqt7v2sii427wkwy7o4e25dgf5xbdju": {
+        "bytes": 4115,
+        "sha256": "8716488b1da2ba275cbbae04ed984ff5d4908e6bf655b1f7709ae8cc5edc234d"
+      },
+      "source/bafk/bafkreiehhimbenuytzvmit53z5uenmoh3cresrvmmtzhdgbdtk3nsoxvfe": {
+        "bytes": 45534,
+        "sha256": "873a181236989e6ac44fbbcf6846b1c7d8a24946ac64f27198239ab6d93af529"
+      },
+      "source/bafk/bafkreiejwgv56cxrsom7oibdhnon62zoryh7pnxd7y7cuoxq2tjjrkdedi": {
+        "bytes": 3873,
+        "sha256": "89b1abdf0af19399f720233b5cdf6b2e8e0ff7b6e3fe3e2a3af0d4d298a8641a"
+      },
+      "source/bafk/bafkreiekr2sqduo54i4sbjyb5ywqdy7kpc6n6remla5qce26isloxgo4ti": {
+        "bytes": 7828,
+        "sha256": "8a8ea501d1dde23920a701ee2d01e3ea78bcdf448c583b01135e4496eb99dc9a"
+      },
+      "source/bafk/bafkreiemkrcvuad2uihzshfehfb2j2n3jowoobwab7i2cetkpnvav7ddma": {
+        "bytes": 13195,
+        "sha256": "8c54455a007aa20f991ca43943a4e9bb4bace706c00fd1a1126a7b6a0afc6360"
+      },
+      "source/bafk/bafkreien36sd2qm6esnd7fm7geosg2n6u5nxiy7yjmlxubcnzsxz4634k4": {
+        "bytes": 10340,
+        "sha256": "8ddfa43d419e249a3f959f311d2369bea75b7463f84b177a044dccaf9e7b7c57"
+      },
+      "source/bafk/bafkreienli7yudkxah3ryehpn5oqpfd4u7yo2gq62xjgur7gq3fgh2ulhq": {
+        "bytes": 49874,
+        "sha256": "8d5a3f8a0d5701f71c10ef6f5d07947ca7f0ed1a1ed5d26a47e686ca63ea8b3c"
+      },
+      "source/bafk/bafkreieooxptmj2xux4ojujj6tdo4i3vrjshalmqaudvofifouzsr575qq": {
+        "bytes": 215,
+        "sha256": "8e75df362757a5f8e4d129f4c6ee23758a64702d900507571505753328f7fd84"
+      },
+      "source/bafk/bafkreiep7e73gap6tzhwktp6rp7cszz7xbyt4hlgrpswvygaagebz3njoi": {
+        "bytes": 2846,
+        "sha256": "8ff93fb301fe9e4f654dfe8bfe29673fb8713e1d668be56ae0c001881ceda972"
+      },
+      "source/bafk/bafkreiepeiip3csbf3hvm2lvirg62muq4fkzxe72dffumv4ub55hb3majm": {
+        "bytes": 4199,
+        "sha256": "8f2210fd8a412ecf566975444ded3290e1559b93fa194b4657940f7a70ed804b"
+      },
+      "source/bafk/bafkreieslkandblok3vlpml3saesctfnjdlxpzjzhb6yvz5svdg2kxyi2i": {
+        "bytes": 2478,
+        "sha256": "925a80d1856e56eab7b17b9009214cad48d777e539387d8ae7b2a8cda55f08d2"
+      },
+      "source/bafk/bafkreiewwpp3nhvnmm4suyxjhc2co5xs5xi3jwmonxnd74ti4tgdaiqfza": {
+        "bytes": 7107,
+        "sha256": "96b3dfb69ead63392a62e938b42776f2edd1b4d98e6dda3ff268e4cc302205c8"
+      },
+      "source/bafk/bafkreiez5tmmj4423wzggtdjf6k5d4532tmvnx74c5gda2xrh5o4cdb2e4": {
+        "bytes": 18480,
+        "sha256": "99ecd8c4f39addb2634c692f95d1f3bbd4d956dffc174c306af13f5dc10c3a27"
+      },
+      "source/bafk/bafkreif2gr3j66isgitykmlvry45xgqgbrrmvuvbso47g7uglpjzfts4h4": {
+        "bytes": 6392,
+        "sha256": "ba34769f791232278531758e39db9a060c62cad2a193b9f37e865bd392ce5c3f"
+      },
+      "source/bafk/bafkreif2obrfgdkcnlj65eo6mtzm6mtih2cot4ypmrpppak2krdbvlyqey": {
+        "bytes": 6409,
+        "sha256": "ba7062530d426ad3ee91de64f2cf32683e84e9f30f645ef7815a54461aaf1026"
+      },
+      "source/bafk/bafkreif3hu7cjkrqtbo5soiemf5j63yb64rxkxygcmy2fptluwrumytjai": {
+        "bytes": 2561,
+        "sha256": "bb3d3e24aa30985dd93904617a9f6f01f723755f061331a2be6ba5a346626902"
+      },
+      "source/bafk/bafkreifa6zvm26mjftmld3p4uyravkwkeoqoumrebkj4azchhi3fhw6kly": {
+        "bytes": 11018,
+        "sha256": "a0f66acd79892cd8b1edfca6220aaaca23a0ea32240a93c064473a3653dbca5e"
+      },
+      "source/bafk/bafkreifagsukmcrs746pmkvktvvno2rx6x56mt67qqdqbhtozfykb3oa6m": {
+        "bytes": 11163,
+        "sha256": "a034a8a60a32ff3cf62aaa9d6ad76a37f5fbe64fdf8407009e6ec970a0edc0f3"
+      },
+      "source/bafk/bafkreifcrjrugz45nryman6urwn2amskepohgjmkxkq3tu2srjw3q2qqj4": {
+        "bytes": 2816,
+        "sha256": "a28a6343679d6c70c037d48d9ba0324a23dc73258abaa1b9d3528a6db86a104f"
+      },
+      "source/bafk/bafkreifcvp6julxro3ks6xhztewmk4wzr4euna6jac7qvhceaeg5p7neju": {
+        "bytes": 8929,
+        "sha256": "a2abfc9a2ef176d52f5cf9992cc572d98f094683c900bf0a9c44010dd7fda44d"
+      },
+      "source/bafk/bafkreifesopqi3xhqexa5sfwtoik4ck7uv2fuuxn3uejzsybuy3tl77i4y": {
+        "bytes": 50098,
+        "sha256": "a4939f046ee7812e0ec8b69b90ae095fa5745a52eddd089ccb01a63735ffe8e6"
+      },
+      "source/bafk/bafkreifez5d4edochgrhpagi7eq3idxmqroxt74jlyvjcnuomcakdwjjny": {
+        "bytes": 1761,
+        "sha256": "a4cf47c20dc239a27780c8f921b40eec845d79ff895e2a91368e6080a1d9296e"
+      },
+      "source/bafk/bafkreifh4m43pgxez5t5d2ltfpdeivgjdztge5xtrhis2twxfd2ljgyxga": {
+        "bytes": 4462,
+        "sha256": "a7e339b79ae4cf67d1e9732bc64454c91e666276f389d12d4ed728f4b49b1730"
+      },
+      "source/bafk/bafkreifjr6lpjb6du7bykfqw3oglqhosotc6ahk5quqzweib2sqrjpnl5u": {
+        "bytes": 6110,
+        "sha256": "a98f96f487c3a7c3851616db8cb81dd274c5e01d5d85219b1101d4a114bdabed"
+      },
+      "source/bafk/bafkreifk37nwejyiwajwqg7dbar5mabkdyaa7ahc3p5gw2k5hhmvzx57vu": {
+        "bytes": 13190,
+        "sha256": "aadfdb622708b013681be30823d6002a1e000f80e2dbfa6b695d39d95cdfbfad"
+      },
+      "source/bafk/bafkreifkfrytee45crtjl5ino3sajj3jrzvelylwnbtrbx6mgg4n3stqrm": {
+        "bytes": 7669,
+        "sha256": "aa2c7132139d146695f50d76e404a7698e6a45e176686710dfcc31b8ddca708b"
+      },
+      "source/bafk/bafkreifopkn7ji4nesrlf6zv3ojr424ujdflh75if3tchvucx4conao2zu": {
+        "bytes": 8192,
+        "sha256": "ae7a9bf4a38d24a2b2fb35db931e6b9448cab3ffa82ee623d682bf04e681dacd"
+      },
+      "source/bafk/bafkreifplo5y3sz5ulzmmapgah4xryi4zebupqjxxobnlgohrrfiycs7ai": {
+        "bytes": 7085,
+        "sha256": "af5bbb8dcb3da2f2c601e601f978e11cc90347c137bb82d599c78c4a8c0a5f02"
+      },
+      "source/bafk/bafkreifq7rpn5yez2neas75xj62l3h7aygbhmerygbakdrkeow23jzls3a": {
+        "bytes": 5499,
+        "sha256": "b0fc5edee099d348097fb74fb4bd9fe0c1827612383040a1c54475b5b4e572d8"
+      },
+      "source/bafk/bafkreifqkqlcli277ee4ezajxjk3pwx3r6sfbxqj7sngqhzwwxasdgpjya": {
+        "bytes": 29,
+        "sha256": "b0541625a35ff909c26409ba55b7dafb8fa450de09fc9a681f36b5c12199e9c0"
+      },
+      "source/bafk/bafkreifqxtn6pkhuukb54vmbtltsfihpu66jjxs3gnbjezdzntvpythely": {
+        "bytes": 955,
+        "sha256": "b0bcdbe7a8f4a283de55819ae722a0efa7bc94de5b33429264796ceafc4ce45e"
+      },
+      "source/bafk/bafkreifr6zw3g6emfllsgo6hb6dxcsyvfcbmoqnnqpt2eqb3swo5e2scam": {
+        "bytes": 6547,
+        "sha256": "b1f66db3788c2ad7233bc70f87714b152882c741ad83e7a2403b959dd26a4203"
+      },
+      "source/bafk/bafkreifrn4gbj7rsfog5gj2glhsaub72muw2rk2ofdblxo7h3l7ok75gk4": {
+        "bytes": 10712,
+        "sha256": "b16f0c14fe322b8dd3274659e40a07fa652da8ab4e28c2bbbbe7dafee57fa657"
+      },
+      "source/bafk/bafkreifrpa6k76zl2rtpgxtxb45plooxnhz7lcp46vjtylcoh2b3a5xtgq": {
+        "bytes": 1112,
+        "sha256": "b1783caffb2bd466f35e770f3af5b9d769f3f589fcf5533c2c4e3e83b076f334"
+      },
+      "source/bafk/bafkreifse76jocnr3b2ytheli637qcwmq7xm5ff77auzrcu6j7yfzz5cce": {
+        "bytes": 6298,
+        "sha256": "b227fc9709b1d875899c8b47b7f80acc87eece94bff829988a9e4ff05ce7a211"
+      },
+      "source/bafk/bafkreifup3cxmlf6ioxjypbuemnq6g3y63stvvn6iuw4rnuomdyu3zawba": {
+        "bytes": 14479,
+        "sha256": "b47ec5762cbe43ae9c3c34231b0f1b78f6e53ad5be452dc8b68e60f14de41608"
+      },
+      "source/bafk/bafkreifuvaqd5md3uazgh4hxbnblunizxufkkwt24irqdqald2yvea7yiq": {
+        "bytes": 151,
+        "sha256": "b4a8203eb07ba03263f0f70b42ba3519bd0aa55a7ae22301c00b1eb15203f844"
+      },
+      "source/bafk/bafkreifvczjijzdl33fx4eiduibv2fy2mdjbhjjcplqorzaq3n6wer4jj4": {
+        "bytes": 521,
+        "sha256": "b5165284e46bdecb7e1103a2035d171a60d213a5227ae0e8e410db7d6247894f"
+      },
+      "source/bafk/bafkreifvr2tbcdwpqsfnpnqj4qrb5eqil5iueguw26p4qk4unkyzum4ioy": {
+        "bytes": 10365,
+        "sha256": "b58ea6110ecf848ad7b609e4221e92085f51421a96d79fc82b946ab19a338876"
+      },
+      "source/bafk/bafkreifx4jwq7vkaonsv6bgtdusn4lmumdvbqkyvcdce6sn72heel5syhi": {
+        "bytes": 3788,
+        "sha256": "b7e26d0fd54073655f04d31d24de2d9460ea182b1510c44f49bfd1c845f6583a"
+      },
+      "source/bafk/bafkreifyw5x3hrwpmsh6j3pqmoxk624ycfm6ob6dxaeefcyj6uce5uq35q": {
+        "bytes": 634,
+        "sha256": "b8b76fb3c6cf648fe4edf063aeaf6b981159e707c3b808428b09f5044ed21bec"
+      },
+      "source/bafk/bafkreifzrk35h3w5to55agkhce4wuiqh5ayqx7trab5345fwn7apesv5je": {
+        "bytes": 17,
+        "sha256": "b98ab7d3eedd9bbbd0194711396a2207e8310bfe71007bbe74b66fc0f24abd49"
+      },
+      "source/bafk/bafkreig3qz2a5qniudpbfb2kdih4kn4v34xkvccdo4ahioehm4fjqoawbe": {
+        "bytes": 5023,
+        "sha256": "db86740ec1a8a0de12874a1a0fc53795df2eaa88437700743887670a98381609"
+      },
+      "source/bafk/bafkreig4e6g5dinhd6e7ageqpx4o26bdkgjqkp43ymcegkoz5ydbhud64a": {
+        "bytes": 10022,
+        "sha256": "dc278dd1a1a71f89f018907df8ed78235193053f9bc3044329d9ee0613d07ee0"
+      },
+      "source/bafk/bafkreig6l6jfka3lomtujnw24cwecqpt2qftcaqcmgzjgoyz5rsizu7vxe": {
+        "bytes": 8113,
+        "sha256": "de5f9255036b732744b6dae0ac4141f3d40b31020261b2933b19ec648cd3f5b9"
+      },
+      "source/bafk/bafkreig7ffkaadgmq2fon6dlrpmnxhmbwx4p7eiaibmeaoz7duwinfi5ia": {
+        "bytes": 2693,
+        "sha256": "df2954000ccc868ae6f86b8bd8db9d81b5f8ff91004058403b3f1d2c86951d40"
+      },
+      "source/bafk/bafkreiga7bqcmdnaf3ho7wt5ybzna3zdoi2rfbqcrvlzdxyrt7nbw7zmwq": {
+        "bytes": 1975,
+        "sha256": "c0f860260da02eceefda7dc072d06f2372351286028d5791df119fda1b7f2cb4"
+      },
+      "source/bafk/bafkreigabfv6mcoq5madm5r5qe7x42v2c4yyxjipdr5mf7lnff3qddaxyi": {
+        "bytes": 9396,
+        "sha256": "c0096be609d0eb0036763d813f7e6aba17318ba50f1c7ac2fd6d2977018c17c2"
+      },
+      "source/bafk/bafkreigasq5cmsym4j5clqjo656ue6cjveiavatqzuuiwyxaakj7l6v6fq": {
+        "bytes": 50029,
+        "sha256": "c0943a264b0ce27a25c12ef77d427849a9100a8270cd288b62e00293f5fabe2c"
+      },
+      "source/bafk/bafkreigbx4f3kqud7wxggidp5qikuqxssz5gpesrplx6ainpg2mp4ftgc4": {
+        "bytes": 31720,
+        "sha256": "c1bf0bb54283fdae63206fec10aa42f2967a6792517aefe021af3698fe166617"
+      },
+      "source/bafk/bafkreigcr4mawpopbu3hybbrpcqdsoju7423itwa4kpmwhq64aelfjqidy": {
+        "bytes": 13948,
+        "sha256": "c28f180b3dcf0d367c043178a0393934ff35b44ec0e29ecb1e1ee008b2a6081e"
+      },
+      "source/bafk/bafkreigf7gv65fwyjgbriu5po76ijz7fegty5fn54ko5gxxzagwgrzvine": {
+        "bytes": 49417,
+        "sha256": "c5f9abee96d849831453af77fc84e7e521a78e95bde29dd35ef901ac68e6a869"
+      },
+      "source/bafk/bafkreiggltzvopcgb3diq3up6a4j3radppplkrq3yw6l64hpxrj74qzl74": {
+        "bytes": 8183,
+        "sha256": "c65cf3573c460ec6886e8ff0389dc4037bdeb5461bc5bcbf70efbc53fe432bff"
+      },
+      "source/bafk/bafkreiglya2awse6slzmlmcmefxyl7k43kvi4jhiwc4pmq3iyaigiroqy4": {
+        "bytes": 1741,
+        "sha256": "cbc0340b489e92f2c5b04c216f85fd5cdaaa8e24e8b0b8f64368c0106445d0c7"
+      },
+      "source/bafk/bafkreigohz65ujwnpifq3cojad42kiwk77l3whrnvrrrmxbxholxkkxgcq": {
+        "bytes": 10980,
+        "sha256": "ce3e7dda26cd7a0b0d89c900f9a522caffd7bb1e2dac63165c373b97752ae614"
+      },
+      "source/bafk/bafkreigpphyglkd6u2xva7mpbu2r6dq74oove73qi6xnd7cqcjgrulwwpu": {
+        "bytes": 9377,
+        "sha256": "cf79f065a87ea6af507d8f0d351f0e1fe39d527f7047aed1fc50124d1a2ed67d"
+      },
+      "source/bafk/bafkreigq2nq7hlwal5m5uieqzqchpg73mpg4xf3ic7ariuus3kkh2egcby": {
+        "bytes": 31041,
+        "sha256": "d0d361f3aec05f59da2090cc04779bfb63cdcb976817c1145292da947d10c20e"
+      },
+      "source/bafk/bafkreigqv5krdc6sfaqyr2ajnveoe6mvticz2yvkh3lqi4b2rqh3wprhya": {
+        "bytes": 14123,
+        "sha256": "d0af55118bd2282188e8096d48e279959a059d62aa3ed704703a8c0fbb3e27c0"
+      },
+      "source/bafk/bafkreigt5rqunqw5yfqwozg4meondq42h47smh2hjzim3gfbndllhzjhre": {
+        "bytes": 24343,
+        "sha256": "d3ec6146c2ddc1616764dc611cd1c39a3f3f261f474e50cd98a168d6b3e52789"
+      },
+      "source/bafk/bafkreigtciiosnu4jkny3m2wjgi4l33dyvcordlmlpcxtagcbtw6mkpihq": {
+        "bytes": 345,
+        "sha256": "d31210e9369c4a9b8db3564991c5ef63c544e88d6c5bc57980c20cede629e83c"
+      },
+      "source/bafk/bafkreigvomfxv2ezvch2p7iojnzp2nz3d4konxl4tsqamj7ttczubg2c2m": {
+        "bytes": 13052,
+        "sha256": "d5730b7ae899a88fa7fd0e4b72fd373b1f14e6dd7c9ca00627f398b3409b42d3"
+      },
+      "source/bafk/bafkreigvtcej5t6l6cjuworckzzvvf4om3keojgcmz77o4dd7jr6f6r44a": {
+        "bytes": 52058,
+        "sha256": "d598889ecfcbf0934b3a2256735a978e66d44724c2667ff77063fa63e2fa3ce0"
+      },
+      "source/bafk/bafkreigyxdt7aklry7pibuszhdqjqq4kpfrrvfkktcg3yjux5bwelabrx4": {
+        "bytes": 31060,
+        "sha256": "d8b8e7f02971c7de80d25938e098438a79631a954a988dbc2697e86c458031bf"
+      },
+      "source/bafk/bafkreigz64tfaaf5u6odi5dzcvcaxfizko7ezncnm5pkqeksqeohtdufsq": {
+        "bytes": 9516,
+        "sha256": "d9f7265000bda79c34747915440b951953be4cb44d675ea81152811c798e8594"
+      },
+      "source/bafk/bafkreigzkwfyt4vasfdo7v4y47ggc4uqayodhkwtlw6cq6hjcgi4gkn3pe": {
+        "bytes": 405,
+        "sha256": "d9558b89f2a09146efd798e7cc617290061c33aad35dbc2878e91191c329bb79"
+      },
+      "source/bafk/bafkreigzwbkulopfrvegk73qhulgs2x2bxpi3jxqqmzsjy5my3sjnomdje": {
+        "bytes": 13885,
+        "sha256": "d9b05545b9e58d48657f703d16696afa0dde8da6f0833324e3acc6e496b98349"
+      },
+      "source/bafk/bafkreih3dq6j3bvzk75bjwfo6msu24f46u3mtp7y33s3uqw7ocsk4ktaqi": {
+        "bytes": 9056,
+        "sha256": "fb1c3c9d86b957fa14d8aef3254d70bcf536c9bff8dee5ba42df70a4ae2a6082"
+      },
+      "source/bafk/bafkreih4qh6qreyeciq4qnyc6wlifjrzu2nstrwjfm44lsjjlmdrays3wu": {
+        "bytes": 602,
+        "sha256": "fc81fd0893041221c83702f59682a639a69b29c6c92b39c5c9295b0710625bb5"
+      },
+      "source/bafk/bafkreih5lbq7bjyojsopuayd4epvk7dvrqhpsgztdvg4hnnkdbobqwk5qi": {
+        "bytes": 38341,
+        "sha256": "fd5861f0a70e4c9cfa0303e11f557c758c0ef91b331d4dc3b5aa185c18595d82"
+      },
+      "source/bafk/bafkreih6lmmqsowb4drkerajen2fzenisrywzvu7ft3j5tfjfna4trtbjy": {
+        "bytes": 10321,
+        "sha256": "fe5b19093ac1e0e2a2440923745c91a894716cd69f2cf69ecca92b41c9c6614e"
+      },
+      "source/bafk/bafkreih6ttfrvgd5h4dmmqcaam4cnsfjqyeewqdtgmhsz3ny6y6kc5uef4": {
+        "bytes": 24188,
+        "sha256": "fe9ccb1a987d3f06c64040033826c8a986084b4073330f2cedb8f63ca176842f"
+      },
+      "source/bafk/bafkreih7ocygblczukiye5fry5fsoa6a76u2tvkconrw2kodgz4ovrhknq": {
+        "bytes": 49,
+        "sha256": "ff70b060ac59a2918274b1c74b2703c0ffa9a9d54273636d29c33678eac4ea6c"
+      },
+      "source/bafk/bafkreihbrk54eb2yy2b2jkkinq3j6pn225eesyseasmlmz5fjr2jw3orte": {
+        "bytes": 6127,
+        "sha256": "e18abbc20758c683a4a9486c369f3dbad7484962440498b667a54c749b6dd199"
+      },
+      "source/bafk/bafkreihck2dqvnyftepdou6b6zxsptnnbn5owzcrevqxx4scgrqd3q24gm": {
+        "bytes": 49056,
+        "sha256": "e256870ab705991e3753c1f66f27cdad0b7aeb645125617bf24234603dc35c33"
+      },
+      "source/bafk/bafkreihgif6bebpi2eg76l2yvsotqphwmxiy3levzo3bnsgdsrbdz6dj5a": {
+        "bytes": 2008,
+        "sha256": "e6417c1205e8d10dff2f58ac9d383cf665d18dac95cbb616c8c394423cf869e8"
+      },
+      "source/bafk/bafkreihi7ydrrwtehqvddvvclf5ultgniehevxqf4onwdiwuif4dxohxhm": {
+        "bytes": 29986,
+        "sha256": "e8fe0718da643c2a31d6a2597b45cccd410e4ade05e39b61a2d441783bb8f73b"
+      },
+      "source/bafk/bafkreihiezdh5firg7ygoak5ixt7vnp4xofyts3hzhfm25nv7czp37ruoy": {
+        "bytes": 3102,
+        "sha256": "e826467e951137f067015d45e7fab5fcbb8b89cb67c9cacd75b5f8b2fdfe3476"
+      },
+      "source/bafk/bafkreihisu6epi5qvljnts3uddgygamo5swuih4jgodgqgsregfmarw6pq": {
+        "bytes": 3065,
+        "sha256": "e8953c47a3b0aad2d9cb7418cd83018eecad441f893386681a51218ac046de7c"
+      },
+      "source/bafk/bafkreihize3gwuxedpsx2kap526hfktx42qewiadefmp4fggftljltgohe": {
+        "bytes": 7526,
+        "sha256": "e8c9366b52e41be57d280feebc72aa77e6a04b20032158fe14c62cd695ccce39"
+      },
+      "source/bafk/bafkreihktyh3x3f2pbwht7c7udufkrn7d5i6ucbkegcmuuxbsqunxlvruu": {
+        "bytes": 707,
+        "sha256": "ea9e0fbbecba786c79fc5fa0e85545bf1f51ea082a2184ca52e19428dbaeb1a5"
+      },
+      "source/bafk/bafkreihouc5q5al475puknua46piddcnxtp4kzpy54lairwtxej3nxxf6i": {
+        "bytes": 910,
+        "sha256": "eea0bb0e817cff5f453680e79e818c4dbcdfc565f8ef160446d3b913b6dee5f2"
+      },
+      "source/bafk/bafkreihp4qz35wqpz53k5qkjsjnncmbkdnsfw2ze6zcatq7ly7ehci7bwy": {
+        "bytes": 4005,
+        "sha256": "efe433beda0fcf76aec149925ad1302a1b645b6b24f64409c3ebc7c87123e1b6"
+      },
+      "source/bafk/bafkreihsenmcynrndwz4dcr6yu6l6tdvxu7ewgkisilagadtrcpzdwfbp4": {
+        "bytes": 536,
+        "sha256": "f223582c362d1db3c18a3ec53cbf4c75bd3e4b19489216030073889f91d8a17f"
+      },
+      "source/bafk/bafkreihuvtkupvs53skgmcec5e6fcb4xkln3eggm5eqq2e7dsfjo3lfffu": {
+        "bytes": 8936,
+        "sha256": "f4acd547d65ddc94660882e93c51079752dbb218cce9210d13e39152edaca52d"
+      },
+      "source/bafk/bafkreihwp24neoukzm4eali4t5e5tfn2ifdgkc64a24nkfqzi4did5svhi": {
+        "bytes": 10891,
+        "sha256": "f67eb8d23a8acb38402d1c9f49d995ba4146650bdc06b8d51619470681f6553a"
+      },
+      "source/bafk/bafkreihy5lfzxv65nlcbmdbs2dihkh5dwoiupanfwg3zlia2ztegwhqcam": {
+        "bytes": 47791,
+        "sha256": "f8eacb9bd7dd6ac4160c32d0d0751fa3b3914781a5b1b795a01accc86b1e0203"
+      },
+      "source/bafk/bafkreihyc56zi5hqxyn634tsnppjpodu4hyzzg6xnp54n3r23ghff5be6y": {
+        "bytes": 6256,
+        "sha256": "f8177d9474f0be1bedf2726bde97b874e1f19c9bd76bfbc6ee3ad98e52f424f6"
+      },
+      "source/bafk/bafkreihyyiicc455dnl5odjcev2ibqlpm3ntb7tftywfn2ntcyut6xjrpm": {
+        "bytes": 31196,
+        "sha256": "f8c2102173bd1b57d70d22257480c16f66db30fe659e2c56e9b316293f5d317b"
+      },
+      "structured/bagu/baguqeera6vsudkzncqvd5zodfwqki3p3hnrgep6augocq2qoql6moaj23ouq": {
+        "bytes": 65760,
+        "sha256": "f56541ab2d142a3ee5c32da0a46dfb3b62623fc0a19c286a0e82fcc7013adba9"
+      },
+      "structured/bagu/baguqeera7kzj2ioifmbtapfgiv4j5srfzzo6j6lezrjjxr5cvm7ahsuwfeca": {
+        "bytes": 146618,
+        "sha256": "fab29d21c82b03303ca645789eca25ce5de4f964cc529bc7a2ab3e03ca962904"
+      },
+      "structured/bagu/baguqeerabdbqmssoziv5y64r63s5ex2pnaxdotujxrqzwgbp5ir3vmitngba": {
+        "bytes": 220162,
+        "sha256": "08c3064a4eca2bdc7b91f6e5d25f4f682e374e89bc619b182fea23bab1136982"
+      },
+      "structured/bagu/baguqeerabnf6uakschixr7q5siutt2dfew3g67yele3odhi5zje7u2dherfq": {
+        "bytes": 6930,
+        "sha256": "0b4bea015211d178fe1d922939e86525b66f7f045936e19d1dca49fa6867244b"
+      },
+      "structured/bagu/baguqeerabwfshzyv65nqm4bastxm7mnsnwzqi3pau6nf7kqhr2wira2v7jrq": {
+        "bytes": 192037,
+        "sha256": "0d8b23e715f75b06702094eecfb1b26db3046de0a79a5faa078eac888355fa63"
+      },
+      "structured/bagu/baguqeeracmpklxrlgpvzb4maft6c3aoeqecwjpmkthastw4bfr46asvibelq": {
+        "bytes": 54054,
+        "sha256": "131ea5de2b33eb90f1802cfc2d81c4810564bd8a99c129db812c79e04aa80917"
+      },
+      "structured/bagu/baguqeeracs5zonr5ll4ixxpflu22ngsp2xf2vw42um6rtidtmjdzz7vgia7q": {
+        "bytes": 33677,
+        "sha256": "14bb97363d5af88bdde55d35a69a4fd5cbaadb9aa33d19a07362479cfea6403f"
+      },
+      "structured/bagu/baguqeeracuvqskijy4c5e52lj5ryz2kodciefsr4iw34wftrojjkgypohcyq": {
+        "bytes": 188957,
+        "sha256": "152b092909c705d2774b4f638ce94e189042ca3c45b7cb16717252a361ee38b1"
+      },
+      "structured/bagu/baguqeeradhfiyqyfvkfzgjkvd5xhnssv4a2aiarxo4hbeqdau5fgxel3fidq": {
+        "bytes": 126650,
+        "sha256": "19ca8c4305aa8b9325551f6e76ca55e034040237770e124060a74a6b917b2a07"
+      },
+      "structured/bagu/baguqeeradqjd2aa5saashlxm5ybf2b4s6mykjdgqqefdg6nh6ob5fc6dwbxa": {
+        "bytes": 522278,
+        "sha256": "1c123d001d900123aeecee025d0792f330a48cd0810a3379a7f383d28bc3b06e"
+      },
+      "structured/bagu/baguqeeraekf4vg44vec2hoxgtze22qm63r6le6pcz4xd6d4vawedexmgimea": {
+        "bytes": 14777823,
+        "sha256": "228bca9b9ca905a3bae69e49ad419edc7cb279e2cf2e3f0f950588325d864308"
+      },
+      "structured/bagu/baguqeerafwcsz5xwk2vuy2tjwloklnipywiqycetdkndj7dwttwqjjr4puta": {
+        "bytes": 86627,
+        "sha256": "2d852cf6f656ab4c6a69b2dca5b50fc5910c08931a9a34fc769ced04a63c7d26"
+      },
+      "structured/bagu/baguqeerah7c66izyxz4cc6o7duvqkb76s5z7enaqwibgl2b2hcr3mnbrfeyq": {
+        "bytes": 35456,
+        "sha256": "3fc5ef2338be782179df1d2b0507fe9773f23410b20265e83a38a3b634312931"
+      },
+      "structured/bagu/baguqeeraipl5i4kkjsvcoworetlw4fle6h7hpsyg4raojhxooroovj3a6gqa": {
+        "bytes": 73298,
+        "sha256": "43d7d4714a4caa2759d124d76e1564f1fe77cb06e440e49eee745ceaa760f1a0"
+      },
+      "structured/bagu/baguqeerak6lkcxvi7kdaddr7mfwr3uvd6rkuaibgy72gg2ul5fnx5tx3ffta": {
+        "bytes": 1071958,
+        "sha256": "5796a15ea8fa86018e3f616d1dd2a3f455402026c7f4636a8be95b7ecefb2966"
+      },
+      "structured/bagu/baguqeeram77fgjjrt5flstlo4smm7qukhvkr76evclytdmgc4wu5emjscr5q": {
+        "bytes": 297968,
+        "sha256": "67fe5325319f4ab94d6ee498cfc28a3d551ff89512f131b0c2e5a9d23132147b"
+      },
+      "structured/bagu/baguqeeramzgsgbwemtqtoxg3f2vyssicusimqxvmkja2ffbyqrhdaxh2tbnq": {
+        "bytes": 3590608,
+        "sha256": "664d2306c464e1375cdb2eab894902a490c85eac5241a29438844e305cfa985b"
+      },
+      "structured/bagu/baguqeerao3a3gs7hhbc6c2hbhucoyiggqemms5cbxzscmzpba56a2657tfmq": {
+        "bytes": 78872,
+        "sha256": "76c1b34be73845e168e13d04ec20c68118c97441be642665e1077c0d7bbf9959"
+      },
+      "structured/bagu/baguqeerap6jcm3x3fug527pflgyehs5zw7monqnym7vsfy3dqp4rqsaynxia": {
+        "bytes": 13831,
+        "sha256": "7f92266efb2d0ddd7de559b043cbb9b7d8e6c1b867eb22e36383f91848186dd0"
+      },
+      "structured/bagu/baguqeerapxf3mmolq67d5d2qvlrxosn6hnllzrw4jkfpp7auxyvw4ttwr3ta": {
+        "bytes": 309878,
+        "sha256": "7dcbb631cb87be3e8f50aae37749be3b56bcc6dc4a8af7fc14be2b6e4e768ee6"
+      },
+      "structured/bagu/baguqeeraqjewfivbkgjartcngvjlok7h7bhyyk3ttalh3bmh3haqydiovuba": {
+        "bytes": 24999,
+        "sha256": "824962a2a1519208cc4d3552b72be7f84f8c2b7398167d8587d9c10c0d0ead02"
+      },
+      "structured/bagu/baguqeeraqvfudpg6ovba7e5vda22sdvsfe5ne66kifqoxhgk6g76fqrsfleq": {
+        "bytes": 2486,
+        "sha256": "854b41bcde75420f93b51835a90eb2293ad27bca4160eb9ccaf1bfe2c2322ac9"
+      },
+      "structured/bagu/baguqeerauqtp2p2ucggyc6hp4kpjv62tu3gfmbohxa5wscsb5zpuzxqielga": {
+        "bytes": 176562,
+        "sha256": "a426fd3f54118d8178efe29e9afb53a6cc5605c7b83b690a41ee5f4cde0822cc"
+      },
+      "structured/bagu/baguqeerauwr3uu32rpvenqdufjgqoijw3z4gutrabc4lrvrbq6rordshb36q": {
+        "bytes": 25666,
+        "sha256": "a5a3ba537a8bea46c0742a4d072136de786a4e2008b8b8d62187a2e88e470efd"
+      },
+      "structured/bagu/baguqeeraw7jwsoio6sfnz7bngksb6r6exp4uga4yyuiu65fkxp5ljpbem7xq": {
+        "bytes": 291319,
+        "sha256": "b7d369390ef48adcfc2d32a41f47c4bbf9430398c5114f74aabbfab4bc2467ef"
+      },
+      "structured/bagu/baguqeerawdzwfnzdnlhnedvtch5vvy32u6cts4i7qnemqpmb3ol5wva2ljhq": {
+        "bytes": 222066,
+        "sha256": "b0f362b7236aced20eb311fb5ae37aa78539711f8348c83d81db97db541a5a4f"
+      },
+      "structured/bagu/baguqeerawgvidi2iant5ndedcg4k6nnxauzyykdv2nzd6n5bq4hoaxbzph2q": {
+        "bytes": 12597,
+        "sha256": "b1aa81a3480367d68c8311b8af35b705338c2875d3723f37a1870ee05c3979f5"
+      },
+      "structured/bagu/baguqeerawuubtrjfepvshve57sn6nlz4nlijxmzwiocjm4uli6wfe6fvht6a": {
+        "bytes": 91203,
+        "sha256": "b52819c52523eb23d49dfc9be6af3c6ad09bb336438496728b47ac5278b53cfc"
+      },
+      "structured/bagu/baguqeeraxv5cr6mu3iqwit3qrkr4rddgohxis3wtw5zqxe4qcusorimrnpqq": {
+        "bytes": 10767,
+        "sha256": "bd7a28f994da21644f708aa3c88c6671ee896ed3b7730b93901524e8a1916be1"
+      },
+      "structured/bagu/baguqeeray3eoiv34hrkee543lhhq4qrt4ya4yleafgrlf6ymktymnfefzwia": {
+        "bytes": 7266,
+        "sha256": "c6c8e4577c3c5442779b59cf0e4233e601cc2c8029a2b2fb0c54f0c69485cd90"
+      },
+      "structured/bagu/baguqeerayavhmce5b6yo64njwbx72a2dftsp5xukxpbyq4bqstceat2kjq4q": {
+        "bytes": 28366,
+        "sha256": "c02a76089d0fb0ef71a9b06ffd03432ce4fede8abbc388703094c4404f4a4c39"
+      },
+      "structured/bagu/baguqeeraziqv5zau3zlwqa6quhgjapnjflauwnu7ljbkmjsmpn77gxrm54mq": {
+        "bytes": 38544,
+        "sha256": "ca215ee414de576803d0a1cc903da92ac14b369f5a42a6264c7b7ff35e2cef19"
+      }
+    },
+    "source_db_sha256": "7c76a64c462a709983150d8ec88c3d6d7cfa159dfbb5c836f064e49516138761",
+    "source_hashes": {
+      ".github/FUNDING.yml": "3affe6c82558363c6530c804a2296f30e1a7ec01b9e1116da1bc938efeaaf387",
+      ".github/workflows/run_tests.yml": "fc81fd0893041221c83702f59682a639a69b29c6c92b39c5c9295b0710625bb5",
+      ".gitignore": "387b321c04b0d9141cc33a5feffc2b582906bb4b974ef866507112cdb7a611fd",
+      ".readthedocs.yaml": "b8b76fb3c6cf648fe4edf063aeaf6b981159e707c3b808428b09f5044ed21bec",
+      ".supervisor-instruction.md": "89b1abdf0af19399f720233b5cdf6b2e8e0ff7b6e3fe3e2a3af0d4d298a8641a",
+      ".supervisor-public-smoke.py": "288c73dbd2d7ed0e6e1a6b87f70bd5fe4262ecf50bd3be19988c1c5554b12d55",
+      "AUTHORS": "502d62fb17ce9f941f8499c3a1101b1892fa648a7811a3d59290c7c40ce8cc54",
+      "LICENSE": "43afd5c761e9359d3111aaecf4b85a72558d5c9be035c097f8f243f4ee725c2f",
+      "Makefile": "b1783caffb2bd466f35e770f3af5b9d769f3f589fcf5533c2c4e3e83b076f334",
+      "README.rst": "8ff93fb301fe9e4f654dfe8bfe29673fb8713e1d668be56ae0c001881ceda972",
+      "bottle.py": "761756ce31753e526c48d28ccbca13a5d2493b16fe37aff3e1e4d2efaf3a2bba",
+      "docs/_locale/.tx/config": "e6417c1205e8d10dff2f58ac9d383cf665d18dac95cbb616c8c394423cf869e8",
+      "docs/_locale/README.txt": "d9558b89f2a09146efd798e7cc617290061c33aad35dbc2878e91191c329bb79",
+      "docs/_locale/_pot/api.pot": "e256870ab705991e3753c1f66f27cdad0b7aeb645125617bf24234603dc35c33",
+      "docs/_locale/_pot/async.pot": "8a8ea501d1dde23920a701ee2d01e3ea78bcdf448c583b01135e4496eb99dc9a",
+      "docs/_locale/_pot/changelog.pot": "7875c6ed1d67db09ad7d42e7087e7b3e7bba5401ff4fbae77df95f07f3b1cc60",
+      "docs/_locale/_pot/configuration.pot": "dc278dd1a1a71f89f018907df8ed78235193053f9bc3044329d9ee0613d07ee0",
+      "docs/_locale/_pot/contact.pot": "20e5cac3e203b33b1a06f93fcbd37fd4986d03b6be4c9f4b77d48cc07a2f0b4f",
+      "docs/_locale/_pot/deployment.pot": "b16f0c14fe322b8dd3274659e40a07fa652da8ab4e28c2bbbbe7dafee57fa657",
+      "docs/_locale/_pot/development.pot": "c28f180b3dcf0d367c043178a0393934ff35b44ec0e29ecb1e1ee008b2a6081e",
+      "docs/_locale/_pot/faq.pot": "a28a6343679d6c70c037d48d9ba0324a23dc73258abaa1b9d3528a6db86a104f",
+      "docs/_locale/_pot/index.pot": "6190a81709ab0b31d526eaee712750263c1dfe73d1a6ff6822698ced22e0e358",
+      "docs/_locale/_pot/plugindev.pot": "56cf2ea37dca952ba981232febd76c4943cba7937c16d0cdafb66b5f2ab949ad",
+      "docs/_locale/_pot/plugins/index.pot": "73647d7796f91a5838a21c3118f57711465d00b2ceae29d92da2d83ae5052427",
+      "docs/_locale/_pot/recipes.pot": "fb1c3c9d86b957fa14d8aef3254d70bcf536c9bff8dee5ba42df70a4ae2a6082",
+      "docs/_locale/_pot/routing.pot": "555207965137a7e8e879a2a0eb6a50972fb3417aac65ea1af165a69327ced969",
+      "docs/_locale/_pot/stpl.pot": "58e0b29d79b9f04f2fa9fc117f38035c75d0f4a034ba2bf9b17d3e804ac9ab95",
+      "docs/_locale/_pot/tutorial.pot": "f8eacb9bd7dd6ac4160c32d0d0751fa3b3914781a5b1b795a01accc86b1e0203",
+      "docs/_locale/_pot/tutorial_app.pot": "e8fe0718da643c2a31d6a2597b45cccd410e4ade05e39b61a2d441783bb8f73b",
+      "docs/_locale/de_DE/LC_MESSAGES/api.po": "a4939f046ee7812e0ec8b69b90ae095fa5745a52eddd089ccb01a63735ffe8e6",
+      "docs/_locale/de_DE/LC_MESSAGES/async.po": "48da8b53803fdd7a82b2cf9c700cc2e1015aac88c72374911a74e46e52b3d94d",
+      "docs/_locale/de_DE/LC_MESSAGES/changelog.po": "83d6c985effb38f98d03d5ea0ecdac8d45b1410081522abe62855beb7df96485",
+      "docs/_locale/de_DE/LC_MESSAGES/configuration.po": "638343157ccc9527638a30692f648953eac165bf928ae54e304bce302795bf9c",
+      "docs/_locale/de_DE/LC_MESSAGES/contact.po": "bb3d3e24aa30985dd93904617a9f6f01f723755f061331a2be6ba5a346626902",
+      "docs/_locale/de_DE/LC_MESSAGES/deployment.po": "0adbc0f43000d83608b1ba26f37b41bbeab60861b0fe4f2a932b5bc6e1d9814d",
+      "docs/_locale/de_DE/LC_MESSAGES/development.po": "7c0c8a8bbe13cf5e8cf1d8ece950e9decc1dec84d840cb5c40102ae33b766b5b",
+      "docs/_locale/de_DE/LC_MESSAGES/faq.po": "0e3ca6dd6712c259d0f110cb59a872c2923e75a7333a67abcce100226e70c7db",
+      "docs/_locale/de_DE/LC_MESSAGES/index.po": "18bb3ae5b9ce84ef20ec7ed3235032728136569c79bcb86535c1b5cdf25400b5",
+      "docs/_locale/de_DE/LC_MESSAGES/plugindev.po": "d5730b7ae899a88fa7fd0e4b72fd373b1f14e6dd7c9ca00627f398b3409b42d3",
+      "docs/_locale/de_DE/LC_MESSAGES/plugins/index.po": "ba7062530d426ad3ee91de64f2cf32683e84e9f30f645ef7815a54461aaf1026",
+      "docs/_locale/de_DE/LC_MESSAGES/recipes.po": "05e5c3cfcb948996d5b9ce23fba4f329608e54c5c037852cb3f98aa15d98a1e7",
+      "docs/_locale/de_DE/LC_MESSAGES/routing.po": "e18abbc20758c683a4a9486c369f3dbad7484962440498b667a54c749b6dd199",
+      "docs/_locale/de_DE/LC_MESSAGES/stpl.po": "f4acd547d65ddc94660882e93c51079752dbb218cce9210d13e39152edaca52d",
+      "docs/_locale/de_DE/LC_MESSAGES/tutorial.po": "d598889ecfcbf0934b3a2256735a978e66d44724c2667ff77063fa63e2fa3ce0",
+      "docs/_locale/de_DE/LC_MESSAGES/tutorial_app.po": "23f3c1ad100f0e69b40ed49a504bae1f6761f40b1714152b265b6ff9478fa62d",
+      "docs/_locale/fr/LC_MESSAGES/api.po": "8d5a3f8a0d5701f71c10ef6f5d07947ca7f0ed1a1ed5d26a47e686ca63ea8b3c",
+      "docs/_locale/fr/LC_MESSAGES/async.po": "5c1fa8a4be803764b10ed97aee002968cba923be7b82532312954f99eff725b5",
+      "docs/_locale/fr/LC_MESSAGES/changelog.po": "fe9ccb1a987d3f06c64040033826c8a986084b4073330f2cedb8f63ca176842f",
+      "docs/_locale/fr/LC_MESSAGES/configuration.po": "fe5b19093ac1e0e2a2440923745c91a894716cd69f2cf69ecca92b41c9c6614e",
+      "docs/_locale/fr/LC_MESSAGES/contact.po": "82fd62576c26cb79d8dca57f7ac43582c8726be76980473e8b4cf67ad288315f",
+      "docs/_locale/fr/LC_MESSAGES/deployment.po": "7cf20fde0bf8774b3d94de506ac6f6dcd5c5b6bbdc48991baa99dfdb3a86e01c",
+      "docs/_locale/fr/LC_MESSAGES/development.po": "186f1ad09e12a5618dc0665a58f43dbd15d21bb0a32646d795994d156b06298d",
+      "docs/_locale/fr/LC_MESSAGES/faq.po": "74b4d4698c43828bf27caebe549f10307ec40b5355d92143d854fe0177e69370",
+      "docs/_locale/fr/LC_MESSAGES/index.po": "efe433beda0fcf76aec149925ad1302a1b645b6b24f64409c3ebc7c87123e1b6",
+      "docs/_locale/fr/LC_MESSAGES/plugindev.po": "36a74acfe394824a599ad269f290e0874331624283bb9e1d7751d0ae25ed6ec1",
+      "docs/_locale/fr/LC_MESSAGES/plugins/index.po": "ba34769f791232278531758e39db9a060c62cad2a193b9f37e865bd392ce5c3f",
+      "docs/_locale/fr/LC_MESSAGES/recipes.po": "00c272be433cf62f76e5b996df885551d795c5bfb39e939a9086236507052dbe",
+      "docs/_locale/fr/LC_MESSAGES/routing.po": "a98f96f487c3a7c3851616db8cb81dd274c5e01d5d85219b1101d4a114bdabed",
+      "docs/_locale/fr/LC_MESSAGES/stpl.po": "0b687a5e53259cb313f3532539303fe25793f73e6803c40339b4a01b342bb8a6",
+      "docs/_locale/fr/LC_MESSAGES/tutorial.po": "c5f9abee96d849831453af77fc84e7e521a78e95bde29dd35ef901ac68e6a869",
+      "docs/_locale/fr/LC_MESSAGES/tutorial_app.po": "d0d361f3aec05f59da2090cc04779bfb63cdcb976817c1145292da947d10c20e",
+      "docs/_locale/ja_JP/LC_MESSAGES/api.po": "1095c73241cd12cc1b9fd3da46ec024390cf7896a5f58af87465523a2e4b3213",
+      "docs/_locale/ja_JP/LC_MESSAGES/async.po": "c65cf3573c460ec6886e8ff0389dc4037bdeb5461bc5bcbf70efbc53fe432bff",
+      "docs/_locale/ja_JP/LC_MESSAGES/changelog.po": "0403eb0727f9086eedc9549e78e872b34e904b82543798ac2cd653cde7d3c8c5",
+      "docs/_locale/ja_JP/LC_MESSAGES/configuration.po": "6b231d6ca4b6dc210e2ad676ad7428cb847cdb1dbd9bcd28c124e4696e786eb4",
+      "docs/_locale/ja_JP/LC_MESSAGES/contact.po": "507f96f3b1301a259b8ebe8faa78e5816de948bc3104dcda7d47abe6fbe184d6",
+      "docs/_locale/ja_JP/LC_MESSAGES/deployment.po": "a0f66acd79892cd8b1edfca6220aaaca23a0ea32240a93c064473a3653dbca5e",
+      "docs/_locale/ja_JP/LC_MESSAGES/development.po": "b47ec5762cbe43ae9c3c34231b0f1b78f6e53ad5be452dc8b68e60f14de41608",
+      "docs/_locale/ja_JP/LC_MESSAGES/faq.po": "0d7d35fb46eb8a3aeca63d36b3d7858873be70546bfd4295c3db5ec7c56bc576",
+      "docs/_locale/ja_JP/LC_MESSAGES/index.po": "2fe02208168841c0058edcd66e13adcd5d56f1aa12b1d25cade9a097ba7d2762",
+      "docs/_locale/ja_JP/LC_MESSAGES/plugindev.po": "2e6157d4e7df517097e254154bfe184005aa56c9e7ee1c248dab0e6fca5940e7",
+      "docs/_locale/ja_JP/LC_MESSAGES/plugins/index.po": "9d229891b1050ca807734e0047c3f4f67b515b3e83a3ff08965d467567f71e3d",
+      "docs/_locale/ja_JP/LC_MESSAGES/recipes.po": "cf79f065a87ea6af507d8f0d351f0e1fe39d527f7047aed1fc50124d1a2ed67d",
+      "docs/_locale/ja_JP/LC_MESSAGES/routing.po": "410fb95d36a9988e984cb174f75ef69a1234b873a89f33ecfe4e65b260206b50",
+      "docs/_locale/ja_JP/LC_MESSAGES/stpl.po": "a2abfc9a2ef176d52f5cf9992cc572d98f094683c900bf0a9c44010dd7fda44d",
+      "docs/_locale/ja_JP/LC_MESSAGES/tutorial.po": "61d6abe0d1a1bafad7cd5ab2b73823b83472f50ce28723834411eb60e75e96bd",
+      "docs/_locale/ja_JP/LC_MESSAGES/tutorial_app.po": "3489b145d4e019941a7b15b9785adcae51a9aca4cf336631f3e6b50c471b22e4",
+      "docs/_locale/pt_BR/LC_MESSAGES/_pot/api.po": "13a3ca138ca4af4310daa3f250908e46b3f221d676d828b1780c60aa4b995242",
+      "docs/_locale/pt_BR/LC_MESSAGES/_pot/async.po": "72e5a1a3f027d47c52dc168ae6f878f72b3f1389b2722ac42feac7b9a24fc0f8",
+      "docs/_locale/pt_BR/LC_MESSAGES/_pot/changelog.po": "1ec60afa8553da5a24a221d2a31cb4dc034090eff3315c9611182931d09d443f",
+      "docs/_locale/pt_BR/LC_MESSAGES/_pot/configuration.po": "272cc6e73d6875813c737d77fc90fe9b96628ea52c93267c6941992844983de8",
+      "docs/_locale/pt_BR/LC_MESSAGES/_pot/contact.po": "65936f5dbb02ad37980becb1b924b76dec3598996c9766522540a41f2bbbbd0f",
+      "docs/_locale/pt_BR/LC_MESSAGES/_pot/deployment.po": "f67eb8d23a8acb38402d1c9f49d995ba4146650bdc06b8d51619470681f6553a",
+      "docs/_locale/pt_BR/LC_MESSAGES/_pot/development.po": "556167f51bba0c5168287b03317003fa8585e9585b08919bca4ce8c3803ee91c",
+      "docs/_locale/pt_BR/LC_MESSAGES/_pot/faq.po": "df2954000ccc868ae6f86b8bd8db9d81b5f8ff91004058403b3f1d2c86951d40",
+      "docs/_locale/pt_BR/LC_MESSAGES/_pot/index.po": "86f3fd89b612279642fceb2643092c92c1cdc78727ce8cc832a786252c912151",
+      "docs/_locale/pt_BR/LC_MESSAGES/_pot/plugindev.po": "7bc95f94aa2319ff997d7c0b6db779121565e5d845303b5b442d07a58ff91861",
+      "docs/_locale/pt_BR/LC_MESSAGES/_pot/plugins/index.po": "8f2210fd8a412ecf566975444ded3290e1559b93fa194b4657940f7a70ed804b",
+      "docs/_locale/pt_BR/LC_MESSAGES/_pot/recipes.po": "4ce4f03d57cfa0f27fcc1a3bccd9df82d456a308044d3ea6e524b315ef07e27e",
+      "docs/_locale/pt_BR/LC_MESSAGES/_pot/routing.po": "b0fc5edee099d348097fb74fb4bd9fe0c1827612383040a1c54475b5b4e572d8",
+      "docs/_locale/pt_BR/LC_MESSAGES/_pot/stpl.po": "de5f9255036b732744b6dae0ac4141f3d40b31020261b2933b19ec648cd3f5b9",
+      "docs/_locale/pt_BR/LC_MESSAGES/_pot/tutorial.po": "62baa56618ba74065eab10257f78cc92d638228bf32805fdcddf4121b7bfda0f",
+      "docs/_locale/pt_BR/LC_MESSAGES/_pot/tutorial_app.po": "c1bf0bb54283fdae63206fec10aa42f2967a6792517aefe021af3698fe166617",
+      "docs/_locale/pt_BR/LC_MESSAGES/api.po": "151867943908900e8e9086a93fd2e772b33f69db31a05ce3506360ff95f285e2",
+      "docs/_locale/pt_BR/LC_MESSAGES/async.po": "ae7a9bf4a38d24a2b2fb35db931e6b9448cab3ffa82ee623d682bf04e681dacd",
+      "docs/_locale/pt_BR/LC_MESSAGES/changelog.po": "14df0fa8a5cce34bd2367101445bd65b33ef32036ad2d7e92a200e3091c6e300",
+      "docs/_locale/pt_BR/LC_MESSAGES/configuration.po": "8ddfa43d419e249a3f959f311d2369bea75b7463f84b177a044dccaf9e7b7c57",
+      "docs/_locale/pt_BR/LC_MESSAGES/contact.po": "81560ea2f3ee3d525c4a501d301907d70986eb74b3c68d293a8d6083d2338b6e",
+      "docs/_locale/pt_BR/LC_MESSAGES/deployment.po": "00e34b162598356f574d1685fe3f23537b9893c8bb9c79c15332fab5cd109a53",
+      "docs/_locale/pt_BR/LC_MESSAGES/development.po": "70ee9075fb39797d1ff029e1e278cb7cd06e3bbb864ad2e4381dfbca65a7beac",
+      "docs/_locale/pt_BR/LC_MESSAGES/faq.po": "e8953c47a3b0aad2d9cb7418cd83018eecad441f893386681a51218ac046de7c",
+      "docs/_locale/pt_BR/LC_MESSAGES/index.po": "1bae57b22cf2e08fd9fca0dcc4471327291ac84694f82d538ca0deeda7c6836c",
+      "docs/_locale/pt_BR/LC_MESSAGES/plugindev.po": "5ff93f70b2caf007f3e869808975f1748a14b09bf9510d02dc4388883b52413e",
+      "docs/_locale/pt_BR/LC_MESSAGES/plugins/index.po": "1eaf482688eea2964b6bed4e0a94c92835ef232e6fa69fa48638245ca04c3b37",
+      "docs/_locale/pt_BR/LC_MESSAGES/recipes.po": "c0096be609d0eb0036763d813f7e6aba17318ba50f1c7ac2fd6d2977018c17c2",
+      "docs/_locale/pt_BR/LC_MESSAGES/routing.po": "9d23988ce4b316ca4dfb60165084e7169cedc874f8280276c95db35ac0936ce3",
+      "docs/_locale/pt_BR/LC_MESSAGES/stpl.po": "24110c6a4c787c20ffe018c43a88c3914cc4f33472d5e2832126b9c202a944a0",
+      "docs/_locale/pt_BR/LC_MESSAGES/tutorial.po": "09c4bf155196602831975b2e21a45e4a26b4f6c25e237f3f2ce506d1662e9266",
+      "docs/_locale/pt_BR/LC_MESSAGES/tutorial_app.po": "d8b8e7f02971c7de80d25938e098438a79631a954a988dbc2697e86c458031bf",
+      "docs/_locale/requirements.txt": "750277e3ca1df8dcfb719ba6090c49df138d667d4dd71a69491430f29a8d4a0d",
+      "docs/_locale/ru_RU/LC_MESSAGES/api.po": "c0943a264b0ce27a25c12ef77d427849a9100a8270cd288b62e00293f5fabe2c",
+      "docs/_locale/ru_RU/LC_MESSAGES/async.po": "22893bb496b95b4743cf9cca63c2c1df94eb2dbf86d9a1ddd23751cc21daaa1d",
+      "docs/_locale/ru_RU/LC_MESSAGES/changelog.po": "d3ec6146c2ddc1616764dc611cd1c39a3f3f261f474e50cd98a168d6b3e52789",
+      "docs/_locale/ru_RU/LC_MESSAGES/configuration.po": "22a0cbb4941d09fc3d48e4cb0d98623fba5caa71b24d3903662e2bbc5a931ce7",
+      "docs/_locale/ru_RU/LC_MESSAGES/contact.po": "0601abe096b642e58950d2099d0869d642d28d423ade2b8fd9ec2b8c494f1602",
+      "docs/_locale/ru_RU/LC_MESSAGES/deployment.po": "a034a8a60a32ff3cf62aaa9d6ad76a37f5fbe64fdf8407009e6ec970a0edc0f3",
+      "docs/_locale/ru_RU/LC_MESSAGES/development.po": "187365e73813dd90437a8e3f96bfece0c1a389ef7dc55833823396b1849a0d8b",
+      "docs/_locale/ru_RU/LC_MESSAGES/faq.po": "e826467e951137f067015d45e7fab5fcbb8b89cb67c9cacd75b5f8b2fdfe3476",
+      "docs/_locale/ru_RU/LC_MESSAGES/index.po": "b7e26d0fd54073655f04d31d24de2d9460ea182b1510c44f49bfd1c845f6583a",
+      "docs/_locale/ru_RU/LC_MESSAGES/plugindev.po": "aadfdb622708b013681be30823d6002a1e000f80e2dbfa6b695d39d95cdfbfad",
+      "docs/_locale/ru_RU/LC_MESSAGES/plugins/index.po": "b1f66db3788c2ad7233bc70f87714b152882c741ad83e7a2403b959dd26a4203",
+      "docs/_locale/ru_RU/LC_MESSAGES/recipes.po": "d9f7265000bda79c34747915440b951953be4cb44d675ea81152811c798e8594",
+      "docs/_locale/ru_RU/LC_MESSAGES/routing.po": "9e16bd16ae429784fff9b58f54e79de7f825a2d7b579c3c62349c5c250a934cb",
+      "docs/_locale/ru_RU/LC_MESSAGES/stpl.po": "2fae384d72eadeaee333960e02ff1eac7901f77b7382e35d6fcfbcc9092424f0",
+      "docs/_locale/ru_RU/LC_MESSAGES/tutorial.po": "4788d11436432d4c88273a6eb973d3cb9e0130271f6771de8668af4120940744",
+      "docs/_locale/ru_RU/LC_MESSAGES/tutorial_app.po": "f8c2102173bd1b57d70d22257480c16f66db30fe659e2c56e9b316293f5d317b",
+      "docs/_locale/zh_CN/LC_MESSAGES/_pot/api.po": "13a3ca138ca4af4310daa3f250908e46b3f221d676d828b1780c60aa4b995242",
+      "docs/_locale/zh_CN/LC_MESSAGES/_pot/async.po": "72e5a1a3f027d47c52dc168ae6f878f72b3f1389b2722ac42feac7b9a24fc0f8",
+      "docs/_locale/zh_CN/LC_MESSAGES/_pot/changelog.po": "1ec60afa8553da5a24a221d2a31cb4dc034090eff3315c9611182931d09d443f",
+      "docs/_locale/zh_CN/LC_MESSAGES/_pot/configuration.po": "272cc6e73d6875813c737d77fc90fe9b96628ea52c93267c6941992844983de8",
+      "docs/_locale/zh_CN/LC_MESSAGES/_pot/contact.po": "65936f5dbb02ad37980becb1b924b76dec3598996c9766522540a41f2bbbbd0f",
+      "docs/_locale/zh_CN/LC_MESSAGES/_pot/deployment.po": "f67eb8d23a8acb38402d1c9f49d995ba4146650bdc06b8d51619470681f6553a",
+      "docs/_locale/zh_CN/LC_MESSAGES/_pot/development.po": "556167f51bba0c5168287b03317003fa8585e9585b08919bca4ce8c3803ee91c",
+      "docs/_locale/zh_CN/LC_MESSAGES/_pot/faq.po": "df2954000ccc868ae6f86b8bd8db9d81b5f8ff91004058403b3f1d2c86951d40",
+      "docs/_locale/zh_CN/LC_MESSAGES/_pot/index.po": "86f3fd89b612279642fceb2643092c92c1cdc78727ce8cc832a786252c912151",
+      "docs/_locale/zh_CN/LC_MESSAGES/_pot/plugindev.po": "7bc95f94aa2319ff997d7c0b6db779121565e5d845303b5b442d07a58ff91861",
+      "docs/_locale/zh_CN/LC_MESSAGES/_pot/plugins/index.po": "8f2210fd8a412ecf566975444ded3290e1559b93fa194b4657940f7a70ed804b",
+      "docs/_locale/zh_CN/LC_MESSAGES/_pot/recipes.po": "4ce4f03d57cfa0f27fcc1a3bccd9df82d456a308044d3ea6e524b315ef07e27e",
+      "docs/_locale/zh_CN/LC_MESSAGES/_pot/routing.po": "b0fc5edee099d348097fb74fb4bd9fe0c1827612383040a1c54475b5b4e572d8",
+      "docs/_locale/zh_CN/LC_MESSAGES/_pot/stpl.po": "de5f9255036b732744b6dae0ac4141f3d40b31020261b2933b19ec648cd3f5b9",
+      "docs/_locale/zh_CN/LC_MESSAGES/_pot/tutorial.po": "62baa56618ba74065eab10257f78cc92d638228bf32805fdcddf4121b7bfda0f",
+      "docs/_locale/zh_CN/LC_MESSAGES/_pot/tutorial_app.po": "c1bf0bb54283fdae63206fec10aa42f2967a6792517aefe021af3698fe166617",
+      "docs/_locale/zh_CN/LC_MESSAGES/api.po": "2903d209a2b352cc28d72e4c82d4ea2ed503361f910efcbf9b8b12eb38b24bd7",
+      "docs/_locale/zh_CN/LC_MESSAGES/async.po": "d9b05545b9e58d48657f703d16696afa0dde8da6f0833324e3acc6e496b98349",
+      "docs/_locale/zh_CN/LC_MESSAGES/changelog.po": "85b9fdaa68b396aeee00644dfb109385fc08575a3f3a221d6d2a530f00e811ff",
+      "docs/_locale/zh_CN/LC_MESSAGES/configuration.po": "8c54455a007aa20f991ca43943a4e9bb4bace706c00fd1a1126a7b6a0afc6360",
+      "docs/_locale/zh_CN/LC_MESSAGES/contact.po": "13d082a145f7916fb8661e71cf403227ad1455bc351d601ff7ee1b57be988ded",
+      "docs/_locale/zh_CN/LC_MESSAGES/deployment.po": "839b236f9624001fe79fb53bb30277481102d73fcd4c4e0b478bd06a589b27b9",
+      "docs/_locale/zh_CN/LC_MESSAGES/development.po": "6ce26fa2920f9452715645665555d7cfe1fcafe8cb6e1d597487251f5b4f9ea4",
+      "docs/_locale/zh_CN/LC_MESSAGES/faq.po": "a7e339b79ae4cf67d1e9732bc64454c91e666276f389d12d4ed728f4b49b1730",
+      "docs/_locale/zh_CN/LC_MESSAGES/index.po": "db86740ec1a8a0de12874a1a0fc53795df2eaa88437700743887670a98381609",
+      "docs/_locale/zh_CN/LC_MESSAGES/plugindev.po": "118df84c724f11a48ac8bb1a933754bbf8580751610218c907e8ade59125e48c",
+      "docs/_locale/zh_CN/LC_MESSAGES/plugins/index.po": "05809c24d5b5e3592bce4dd35da44a945151b10e0d9941e508334148929b6c71",
+      "docs/_locale/zh_CN/LC_MESSAGES/recipes.po": "d0af55118bd2282188e8096d48e279959a059d62aa3ed704703a8c0fbb3e27c0",
+      "docs/_locale/zh_CN/LC_MESSAGES/routing.po": "7dbff72d59f4eff46ff955b47c3c2478cae15c65831480450c3ba45bde399b6e",
+      "docs/_locale/zh_CN/LC_MESSAGES/stpl.po": "52b900dcc40adc25cde9a66f60c1b987e1b2386a2f3d9414f4290e2218f4d7e9",
+      "docs/_locale/zh_CN/LC_MESSAGES/tutorial.po": "1435121d54c5c3db2bb4ad00acbf9ab7a6d247cbd57a1280d6a4d8b9fef7beb9",
+      "docs/_locale/zh_CN/LC_MESSAGES/tutorial_app.po": "873a181236989e6ac44fbbcf6846b1c7d8a24946ac64f27198239ab6d93af529",
+      "docs/api.rst": "37c8de9403ad5440eaf386752fc6be262821c8656210eb5b86eb993e4b228913",
+      "docs/async.rst": "2580c4a55686c1f9434b7a299ce6323d0d9440ac4a81645b67703dec8440c39b",
+      "docs/bottle.svg": "b58ea6110ecf848ad7b609e4221e92085f51421a96d79fc82b946ab19a338876",
+      "docs/changelog.rst": "2febbbe46709d0f31368f1848eef3cfacee30c1c258b9a6a14b882d63bc26628",
+      "docs/conf.py": "eea0bb0e817cff5f453680e79e818c4dbcdfc565f8ef160446d3b913b6dee5f2",
+      "docs/configuration.rst": "af5bbb8dcb3da2f2c601e601f978e11cc90347c137bb82d599c78c4a8c0a5f02",
+      "docs/contributors.rst": "5abf18a4f671850a14c7fe69706202281f2c6a1aa8a2667ca9b59390199dd042",
+      "docs/deployment.rst": "42b4a20f4412cbb5a1744d297ae0a3ab476d97a21e81260645e8c885b7f26f52",
+      "docs/development.rst": "3812db5ed68056879cfd1b335f4668bd0360e6f89aea8a6e10f378e45fbcfaa6",
+      "docs/faq.rst": "274172cc705e133cc44d8fbc894b56c3d78c383614c80117a52c5804b640f27e",
+      "docs/index.rst": "84f36becdd868eaeeaa39daa5c1ccc961d0d83e48818c473625ca753db973b7a",
+      "docs/plugins/dev.rst": "ce3e7dda26cd7a0b0d89c900f9a522caffd7bb1e2dac63165c373b97752ae614",
+      "docs/plugins/index.rst": "aa2c7132139d146695f50d76e404a7698e6a45e176686710dfcc31b8ddca708b",
+      "docs/plugins/list.rst": "1dd1efd1af96f5ab0339ba771af7106d75a4d2c97cd1be3dc0f96f1e24cba677",
+      "docs/routing.rst": "9b8308c80461b022ffd06f8c02fe65719997780b20f0badcbf1a8053b5ed06a6",
+      "docs/stpl.rst": "75433e401ac65d2f369db3cb8d7c33bf8b24042eae0c4d189badcc29d8c9fd4f",
+      "docs/tutorial.rst": "76959ad10580cf03ff8c6f2b29d355f4a2f40be192563a2f433afd21aff11de1",
+      "docs/tutorial_app.rst": "676af18b2a5662ead5cf8b6dc3b2f8fa1563e49760c8825f399c03724abcc9e9",
+      "pyproject.toml": "cbc0340b489e92f2c5b04c216f85fd5cdaaa8e24e8b0b8f64368c0106445d0c7",
+      "test/.coveragerc": "2f9c945cfe8b7f23d64c802d9bb18e1d7e5e37e313004f0a5d0f5e20cb4ffcdc",
+      "test/__init__.py": "8e75df362757a5f8e4d129f4c6ee23758a64702d900507571505753328f7fd84",
+      "test/build_python.sh": "3e3efa2e3f95b9a40fc90b29b09ac92caf90a9c549988f15c52fe68e4665b4ad",
+      "test/example_settings.py": "04dec3d5b811c9fc8575ffd31b0aaa24a63a18dc4b108adaa49acf96d5671e4e",
+      "test/test_app.py": "f223582c362d1db3c18a3ec53cbf4c75bd3e4b19489216030073889f91d8a17f",
+      "test/test_auth.py": "d31210e9369c4a9b8db3564991c5ef63c544e88d6c5bc57980c20cede629e83c",
+      "test/test_config.py": "2430180e24ef51fe74aba4965f81351ff22cc1301dcfac1dd8e533d71299676b",
+      "test/test_contextlocals.py": "1b1f2fbc8e40082bcbb0dee0127706ebc46466a2ddd43ca9c0de279943452c77",
+      "test/test_environ.py": "7386dcf13c3e9474ef6a989b4b98e8a4f98304ea327833b083c2980f72ce4a2c",
+      "test/test_exc.py": "5ad0bf4662ce6a6b5e8906c27840569a637913be639da13f9440c2d67f8473e8",
+      "test/test_fileupload.py": "925a80d1856e56eab7b17b9009214cad48d777e539387d8ae7b2a8cda55f08d2",
+      "test/test_formsdict.py": "b5165284e46bdecb7e1103a2035d171a60d213a5227ae0e8e410db7d6247894f",
+      "test/test_html_helper.py": "ea9e0fbbecba786c79fc5fa0e85545bf1f51ea082a2184ca52e19428dbaeb1a5",
+      "test/test_importhook.py": "63e30425fbfb502909162aa74abac0359ae0e0ee4ffeda9cf05bbc3beb7aa170",
+      "test/test_jinja2.py": "4b1e184b9de461556278e32e7d25bc3e71e2e51e08e5b5ef4176d95b0c924f56",
+      "test/test_mako.py": "04f5b868b13adc99ba16a397b5c29ce696a5310409e2074e87a3c7cfb82ea9a0",
+      "test/test_mdict.py": "c0f860260da02eceefda7dc072d06f2372351286028d5791df119fda1b7f2cb4",
+      "test/test_mount.py": "14ff7dd1be5f5793506e4a3252b205dadc20507de3a95586aa2442b68e120e93",
+      "test/test_multipart.py": "fd5861f0a70e4c9cfa0303e11f557c758c0ef91b331d4dc3b5aa185c18595d82",
+      "test/test_oorouting.py": "b0bcdbe7a8f4a283de55819ae722a0efa7bc94de5b33429264796ceafc4ce45e",
+      "test/test_outputfilter.py": "b227fc9709b1d875899c8b47b7f80acc87eece94bff829988a9e4ff05ce7a211",
+      "test/test_plugins.py": "e8c9366b52e41be57d280feebc72aa77e6a04b20032158fe14c62cd695ccce39",
+      "test/test_resources.py": "51355d5ac04aafbb182e641e7c999887383229bc26be5eec42a2548efea35d99",
+      "test/test_route.py": "8716488b1da2ba275cbbae04ed984ff5d4908e6bf655b1f7709ae8cc5edc234d",
+      "test/test_router.py": "5b6c83960e6888e4c2b7eb8d47a6c77cd52dc40575aea8225822f9894de435ae",
+      "test/test_securecookies.py": "a4cf47c20dc239a27780c8f921b40eec845d79ff895e2a91368e6080a1d9296e",
+      "test/test_sendfile.py": "96b3dfb69ead63392a62e938b42776f2edd1b4d98e6dda3ff268e4cc302205c8",
+      "test/test_stpl.py": "0c8d9723ea910a3585cafd8d26ff08b4b491d6b55414c2105c14ceeffc529be5",
+      "test/test_wsgi.py": "99ecd8c4f39addb2634c692f95d1f3bbd4d956dffc174c306af13f5dc10c3a27",
+      "test/tools.py": "f8177d9474f0be1bedf2726bde97b874e1f19c9bd76bfbc6ee3ad98e52f424f6",
+      "test/views/jinja2_base.tpl": "691e2c7826d83723248d7ab3d2f1a5a39e0bb349af6f4ecf7aeae67b0852349f",
+      "test/views/jinja2_inherit.tpl": "1a8846e1a2ddbc21fe8bf2b31093a874fbd44605891e5f68ba40f3508687982f",
+      "test/views/jinja2_simple.tpl": "3595ae5cdbee779f4cc807587ce2ed6d08da91de8967f41fdb622239afd0c7f4",
+      "test/views/mako_base.tpl": "1e54edf7645a0c029fb757a16c05036ee86bca1aa7c9e3c63ad51e5bc2505899",
+      "test/views/mako_inherit.tpl": "55aeda0253a45b88797ea84eed9912d726c413ad65f7a41b0097cef4eb3cfa50",
+      "test/views/mako_simple.tpl": "b98ab7d3eedd9bbbd0194711396a2207e8310bfe71007bbe74b66fc0f24abd49",
+      "test/views/stpl_include.tpl": "0f33d44e70fcb5fc474d449fd2c80cb7868741163ee2d1bfdf70cd0fc0a2c545",
+      "test/views/stpl_no_vars.tpl": "27e6f695d734689575e2a063b77668a1fab9c7a83071134630f6a02ebf697592",
+      "test/views/stpl_simple.tpl": "63f204514a717e552cc11dd631b7828d1217870d41542b74531e80a7c52a37ff",
+      "test/views/stpl_t2base.tpl": "7588c8d80ac5dd23e91c398f968570aff09b172b73aebce09218cd89a834c0bc",
+      "test/views/stpl_t2inc.tpl": "ff70b060ac59a2918274b1c74b2703c0ffa9a9d54273636d29c33678eac4ea6c",
+      "test/views/stpl_t2main.tpl": "b4a8203eb07ba03263f0f70b42ba3519bd0aa55a7ae22301c00b1eb15203f844",
+      "test/views/stpl_unicode.tpl": "b0541625a35ff909c26409ba55b7dafb8fa450de09fc9a681f36b5c12199e9c0"
+    }
+  },
+  "retained_unchanged": true,
+  "returned_manifest_canonical_bytes": 14777823,
+  "returned_manifest_canonical_sha256": "228bca9b9ca905a3bae69e49ad419edc7cb279e2cf2e3f0f950588325d864308",
+  "returned_manifest_cid": "baguqeeraekf4vg44vec2hoxgtze22qm63r6le6pcz4xd6d4vawedexmgimea",
+  "rounds": [
+    {
+      "number": 0,
+      "seconds": 14.416430043005676
+    },
+    {
+      "number": 1,
+      "seconds": 4.58741655099584
+    }
+  ],
+  "scheduler_policy_changed": false,
+  "schema": "native-manifest-combined-comparison@1",
+  "script_sha256": "fb74d57ba0a0e571e92851c2423799b1c17837197c37ff4bcd09ff021372ae6b",
+  "seconds": 22.67024294300063,
+  "selected_producer_after": {
+    "ipfs_datasets_py.logic.software_contracts.cache": {
+      "path": "/home/barberb/lift_coding/artifacts/source384-manifest-combined-replay-20261003/proposed/ipfs_datasets_py/logic/software_contracts/cache.py",
+      "sha256": "a0b1711a5fa1f5b39b92d43748548c8802f632d1131ad9a64dd7f49df51bdd8c"
+    },
+    "ipfs_datasets_py.logic.software_contracts.codebase_ir": {
+      "path": "/home/barberb/lift_coding/artifacts/source384-manifest-combined-replay-20261003/proposed/ipfs_datasets_py/logic/software_contracts/codebase_ir.py",
+      "sha256": "4aa2e5287885aaecf2c2319a100b8e4b8bdad21b082990a4beadda84d7c61018"
+    }
+  },
+  "selected_producer_before": {
+    "ipfs_datasets_py.logic.software_contracts.cache": {
+      "path": "/home/barberb/lift_coding/artifacts/source384-manifest-combined-replay-20261003/proposed/ipfs_datasets_py/logic/software_contracts/cache.py",
+      "sha256": "a0b1711a5fa1f5b39b92d43748548c8802f632d1131ad9a64dd7f49df51bdd8c"
+    },
+    "ipfs_datasets_py.logic.software_contracts.codebase_ir": {
+      "path": "/home/barberb/lift_coding/artifacts/source384-manifest-combined-replay-20261003/proposed/ipfs_datasets_py/logic/software_contracts/codebase_ir.py",
+      "sha256": "4aa2e5287885aaecf2c2319a100b8e4b8bdad21b082990a4beadda84d7c61018"
+    }
+  },
+  "source_files": 220,
+  "status": "passed",
+  "threads": 1,
+  "tracemalloc": false,
+  "training_steps": 0
+}

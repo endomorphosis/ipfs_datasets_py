@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="2" failures="0" skipped="0" tests="2" time="0.321" timestamp="2026-10-03T16:14:54.716966+00:00" hostname="spark-b271"><testcase classname="" name="tests.unit.logic.software_contracts.test_codebase_manifest_compaction" time="0.000"><error message="collection failure">ImportError while importing test module '/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/tests/unit/logic/software_contracts/test_codebase_manifest_compaction.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+.worktrees/ir-release-datasets-20261002/tests/unit/logic/software_contracts/test_codebase_manifest_compaction.py:8: in &lt;module&gt;
+    from test_codebase_manifest_memo import empty_cache, specimen
+E   ModuleNotFoundError: No module named 'test_codebase_manifest_memo'</error></testcase><testcase classname="" name="tests.unit.logic.software_contracts.test_codebase_manifest_byte_replay" time="0.000"><error message="collection failure">ImportError while importing test module '/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/tests/unit/logic/software_contracts/test_codebase_manifest_byte_replay.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+.worktrees/ir-release-datasets-20261002/tests/unit/logic/software_contracts/test_codebase_manifest_byte_replay.py:11: in &lt;module&gt;
+    from test_codebase_manifest_memo import empty_cache, specimen
+E   ModuleNotFoundError: No module named 'test_codebase_manifest_memo'</error></testcase></testsuite></testsuites>

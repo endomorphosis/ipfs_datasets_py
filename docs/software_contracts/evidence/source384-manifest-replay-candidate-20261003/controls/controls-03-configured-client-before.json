@@ -1,0 +1,74 @@
+{
+  "mode": "explicit_configured_client_same_native_ledger",
+  "dependency": "codebase_resources.get_global_resource_scheduler",
+  "canonical_api": "get_global_resource_scheduler(existing_config)",
+  "before": {
+    "timestamp": 1791044601.2351093,
+    "state_path": "/tmp/ipfs-datasets-resource-scheduler-1000.json",
+    "state_sha256": "b2aa42ce5f77edf3a117b58720127cd5e431821d922188de2385d61f4a9f0252",
+    "config": {
+      "lane_reservations": {
+        "validation": {
+          "cpu_slots": 1,
+          "memory_mb": 0
+        }
+      },
+      "max_gpu_memory_percent": null,
+      "max_memory_percent": null,
+      "max_swap_percent": null,
+      "max_waiting_requests": 256,
+      "proof_backoff_seconds": 2.0,
+      "proof_cpu_stall_percent": 50.0,
+      "proof_io_stall_percent": 10.0,
+      "proof_memory_headroom_mb": 2458,
+      "proof_memory_stall_percent": 2.0,
+      "proof_safety_enabled": true,
+      "require_known_gpu_for_gpu_work": true,
+      "reserved_gpu_memory_mb": 0,
+      "reserved_memory_mb": 0,
+      "total_child_process_slots": 4,
+      "total_cpu_slots": 4,
+      "total_gpu_memory_mb": null,
+      "total_memory_mb": 9830,
+      "total_unified_memory_mb": null
+    },
+    "leases": [],
+    "waiters": [],
+    "proof_recovery_present": false
+  },
+  "selected_config": {
+    "max_waiting_requests": 256,
+    "proof_safety_enabled": true,
+    "proof_memory_headroom_mb": 2458,
+    "proof_memory_stall_percent": 2.0,
+    "proof_cpu_stall_percent": 50.0,
+    "proof_io_stall_percent": 10.0,
+    "proof_backoff_seconds": 2.0,
+    "proof_recovery_enabled": false,
+    "proof_recovery_samples": 2,
+    "proof_recovery_interval_seconds": 0.25,
+    "proof_recovery_grants": 4,
+    "total_cpu_slots": 4,
+    "total_memory_mb": 9830,
+    "total_gpu_memory_mb": null,
+    "total_unified_memory_mb": null,
+    "total_child_process_slots": 4,
+    "reserved_memory_mb": 0,
+    "reserved_gpu_memory_mb": 0,
+    "lane_reservations": {
+      "validation": {
+        "cpu_slots": 1,
+        "memory_mb": 0
+      }
+    },
+    "max_memory_percent": null,
+    "max_swap_percent": null,
+    "max_gpu_memory_percent": null,
+    "require_known_gpu_for_gpu_work": true
+  },
+  "native_sampler": true,
+  "thresholds_changed": false,
+  "new_ledger": false,
+  "daemon_modified": false,
+  "host_default_qualification": false
+}

@@ -1,0 +1,37 @@
+{
+  "argv": [
+    "/home/barberb/.local/bin/python",
+    "-B",
+    "/home/barberb/lift_coding/artifacts/source384-manifest-warm-replay-comparison-20261003/profile_observation.py",
+    "--label",
+    "candidate-01",
+    "--replay-shape",
+    "same_connection",
+    "--candidate-owner",
+    "/home/barberb/lift_coding/artifacts/source384-manifest-byte-replay-20261003/proposed/ipfs_datasets_py/logic/software_contracts/codebase_ir.py",
+    "--candidate-owner-sha256",
+    "da535d53d73772ebaeaeb8366c61a5c45b0de65f338932e1b8c532cf964c33a9",
+    "--candidate-cache",
+    "/home/barberb/lift_coding/artifacts/source384-manifest-byte-replay-20261003/proposed/ipfs_datasets_py/logic/software_contracts/cache.py",
+    "--candidate-cache-sha256",
+    "844f14da62860135f4b15f753d19c21fa0901c27a9b99a7d3e05c23c174dab1f"
+  ],
+  "candidate_pins": {
+    "cache.py": "844f14da62860135f4b15f753d19c21fa0901c27a9b99a7d3e05c23c174dab1f",
+    "codebase_ir.py": "da535d53d73772ebaeaeb8366c61a5c45b0de65f338932e1b8c532cf964c33a9"
+  },
+  "cwd": "/home/barberb/lift_coding",
+  "env": {
+    "HF_HUB_OFFLINE": "1",
+    "MKL_NUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONPATH": "/home/barberb/lift_coding/.worktrees/ir-release-accelerate-20261002:/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002:/home/barberb/lift_coding/.venvs/terminal-bench-harbor/lib/python3.12/site-packages:/home/barberb/.local/lib/python3.12/site-packages:/usr/local/lib/python3.12/dist-packages:/usr/lib/python3/dist-packages",
+    "TOKENIZERS_PARALLELISM": "false",
+    "TRANSFORMERS_OFFLINE": "1"
+  },
+  "script_sha256": "5185dfb86e279cdb9be5063deea66e5585e52dc43307c054b07c29eb2c9a491e",
+  "subprocess_timeout": 240
+}

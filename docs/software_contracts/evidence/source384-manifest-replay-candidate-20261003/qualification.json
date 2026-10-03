@@ -1,0 +1,72 @@
+{
+  "actual_inference_fixture": {
+    "admission": "configured_client_existing_shared_profile",
+    "decoded_unverified_candidates": 4,
+    "host_default_startup_qualified": false,
+    "model_loads": 1,
+    "proof_authority": false,
+    "provider_calls": 0,
+    "source_executed": false,
+    "token_deferred_units": 1,
+    "training_steps": 0
+  },
+  "actual_sources": true,
+  "comparison_package": {
+    "manifest_sha256": "a85f841e16040803863c5845d23e6302baecfe9563b67abfdc80c0d7ecc52a48",
+    "path": "docs/software_contracts/evidence/source384-manifest-combined-comparison-20261003/manifest.json"
+  },
+  "configured_client_concurrency_scope": "Foreign lease was present in the controls-02 diagnosis but naturally absent by controls-03 before-sample; same stored profile was retained, without daemon intervention. This is not evidence of concurrent work beside that daemon.",
+  "distinct_controls": 273,
+  "final_unresolved_failures": 0,
+  "limitations": [
+    "Local unpublished candidate qualification; no new Docker or full-supervisor run is qualified by this package.",
+    "Configured-client actual inference shares the existing native ledger/policy and does not qualify host-default startup under the foreign active profile.",
+    "Source-only three-arm measurement lowers accounted memo bytes and warm allocation spikes, but does not show lower anonymous RSS at the second observation return.",
+    "Source/report lifetime cleanup is a separate owner change; source-only timing did not exercise its full consumer path.",
+    "Checks preserve current source/head/SQL/AST/read/registry fences, scheduler reservations, deadlines, immutable expected source/model identities, and candidate non-authority."
+  ],
+  "native_producer_recognized": true,
+  "overlay": false,
+  "retained_failures": [
+    {
+      "collected_test_errors": 2,
+      "label": "controls-01",
+      "reason": "Two authored tests used bare sibling fixture imports. The off-tree runner supplied that directory on sys.path; native repository importlib pytest mode did not. Only these two imports were changed to the package-qualified test path before controls-02; runtime owners were unchanged.",
+      "tests_executed": 0
+    },
+    {
+      "fixture_errors": 7,
+      "label": "controls-02",
+      "passed": 266,
+      "reason": "The existing shared ledger had an active foreign daemon with4CPU/9830MiB policy, while host-default startup requested16CPU/99688MiB. Native configuration fencing correctly refused. Retry selected the exact existing profile via canonical get_global_resource_scheduler(config), at the consumer dependency in an external test plugin, and passed all7 cases on the same ledger with native sampler. No state reset, new ledger, capacity/headroom/pressure change, or daemon modification occurred."
+    }
+  ],
+  "runs": [
+    {
+      "exit_code": 1,
+      "label": "controls-02",
+      "passed": 266,
+      "process_seconds": 64.31518571099878,
+      "tests": 273
+    },
+    {
+      "exit_code": 0,
+      "label": "controls-03",
+      "passed": 7,
+      "process_seconds": 10.575033799002995,
+      "tests": 7
+    }
+  ],
+  "schema": "source384-manifest-replay-local-candidate@1",
+  "scope": "Canonical public CAS/CID/cache/manifest/source/catalog controls plus actual offline384D checkpoint inference/publication/cold replay, and six source-report lifetime controls.",
+  "skips": 0,
+  "source_pins": {
+    "ipfs_datasets_py/logic/software_contracts/cache.py": "a0b1711a5fa1f5b39b92d43748548c8802f632d1131ad9a64dd7f49df51bdd8c",
+    "ipfs_datasets_py/logic/software_contracts/codebase_ir.py": "4aa2e5287885aaecf2c2319a100b8e4b8bdad21b082990a4beadda84d7c61018",
+    "ipfs_datasets_py/logic/software_contracts/codebase_source_units_384.py": "e917f1f5be82b9aa31256aae415606f86a7da25e58c753357428dd6a08695eba",
+    "tests/unit/logic/software_contracts/test_codebase_manifest_byte_replay.py": "8f53eb3ae608d75310a520c1ae86a379566b37adad67d0db7fa5b77a4b206d23",
+    "tests/unit/logic/software_contracts/test_codebase_manifest_compaction.py": "c490796c258f45f007ca7bf41f13a722ed364d8cae2a5645e5d6dae14a8bdf2a",
+    "tests/unit/logic/software_contracts/test_codebase_source_units_lifetime.py": "c1c8fe1db596efc4cdfab80f9fe329eee380e3ce2b60711fb1877f878c9a6d50"
+  },
+  "status": "actual_source_configured_client_controls_passed_pending_full_pipeline"
+}

@@ -1,0 +1,783 @@
+{
+  "arms": {
+    "baseline-01": {
+      "metrics": {
+        "after_close": {
+          "allocated_python_blocks": 1221348,
+          "duckdb_bytes": 0,
+          "elapsed_seconds": 23.797142457005975,
+          "memo": {
+            "bypasses": 0,
+            "entries": 1,
+            "evictions": 0,
+            "hits": 1,
+            "misses": 1,
+            "retained_bytes": 89210779
+          },
+          "rss_anon_bytes": 222941184,
+          "rss_bytes": 299679744
+        },
+        "before_close": {
+          "allocated_python_blocks": 1221384,
+          "duckdb_bytes": 22544384,
+          "elapsed_seconds": 23.78017501100112,
+          "memo": {
+            "bypasses": 0,
+            "entries": 1,
+            "evictions": 0,
+            "hits": 1,
+            "misses": 1,
+            "retained_bytes": 89210779
+          },
+          "rss_anon_bytes": 314556416,
+          "rss_bytes": 391229440
+        },
+        "before_connection": {
+          "allocated_python_blocks": 163561,
+          "duckdb_bytes": 0,
+          "elapsed_seconds": 0.0007218130049295723,
+          "memo": {
+            "bypasses": 0,
+            "entries": 0,
+            "evictions": 0,
+            "hits": 0,
+            "misses": 0,
+            "retained_bytes": 0
+          },
+          "rss_anon_bytes": 32993280,
+          "rss_bytes": 71790592
+        },
+        "cold_load_enter": {
+          "allocated_python_blocks": 368095,
+          "duckdb_bytes": 2097152,
+          "elapsed_seconds": 0.20222621699940646,
+          "memo": {
+            "bypasses": 0,
+            "entries": 0,
+            "evictions": 0,
+            "hits": 0,
+            "misses": 0,
+            "retained_bytes": 0
+          },
+          "rss_anon_bytes": 74838016,
+          "rss_bytes": 151052288
+        },
+        "cold_load_return": {
+          "allocated_python_blocks": 1222188,
+          "duckdb_bytes": 2097152,
+          "elapsed_seconds": 9.958381752003334,
+          "memo": {
+            "bypasses": 0,
+            "entries": 1,
+            "evictions": 0,
+            "hits": 0,
+            "misses": 1,
+            "retained_bytes": 89210779
+          },
+          "rss_anon_bytes": 271527936,
+          "rss_bytes": 347873280
+        },
+        "first_observation_return": {
+          "allocated_python_blocks": 1256055,
+          "duckdb_bytes": 22544384,
+          "elapsed_seconds": 14.734199871003511,
+          "memo": {
+            "bypasses": 0,
+            "entries": 1,
+            "evictions": 0,
+            "hits": 0,
+            "misses": 1,
+            "retained_bytes": 89210779
+          },
+          "rss_anon_bytes": 294309888,
+          "rss_bytes": 370982912
+        },
+        "first_reference_deleted": {
+          "allocated_python_blocks": 1256076,
+          "duckdb_bytes": 22544384,
+          "elapsed_seconds": 14.735967423002876,
+          "memo": {
+            "bypasses": 0,
+            "entries": 1,
+            "evictions": 0,
+            "hits": 0,
+            "misses": 1,
+            "retained_bytes": 89210779
+          },
+          "rss_anon_bytes": 294309888,
+          "rss_bytes": 370982912
+        },
+        "second_observation_enter": {
+          "allocated_python_blocks": 1256095,
+          "duckdb_bytes": 22544384,
+          "elapsed_seconds": 14.737260960006097,
+          "memo": {
+            "bypasses": 0,
+            "entries": 1,
+            "evictions": 0,
+            "hits": 0,
+            "misses": 1,
+            "retained_bytes": 89210779
+          },
+          "rss_anon_bytes": 294309888,
+          "rss_bytes": 370982912
+        },
+        "second_observation_return": {
+          "allocated_python_blocks": 1247085,
+          "duckdb_bytes": 22544384,
+          "elapsed_seconds": 20.07619868700567,
+          "memo": {
+            "bypasses": 0,
+            "entries": 1,
+            "evictions": 0,
+            "hits": 1,
+            "misses": 1,
+            "retained_bytes": 89210779
+          },
+          "rss_anon_bytes": 271384576,
+          "rss_bytes": 348057600
+        },
+        "warm_load_enter": {
+          "allocated_python_blocks": 1255059,
+          "duckdb_bytes": 22544384,
+          "elapsed_seconds": 14.755381365001085,
+          "memo": {
+            "bypasses": 0,
+            "entries": 1,
+            "evictions": 0,
+            "hits": 0,
+            "misses": 1,
+            "retained_bytes": 89210779
+          },
+          "rss_anon_bytes": 294379520,
+          "rss_bytes": 371052544
+        },
+        "warm_load_return": {
+          "allocated_python_blocks": 1221180,
+          "duckdb_bytes": 22544384,
+          "elapsed_seconds": 15.699568814001395,
+          "memo": {
+            "bypasses": 0,
+            "entries": 1,
+            "evictions": 0,
+            "hits": 1,
+            "misses": 1,
+            "retained_bytes": 89210779
+          },
+          "rss_anon_bytes": 336863232,
+          "rss_bytes": 413536256
+        }
+      },
+      "observed_head": {
+        "ast_revision_id": "rev:terminal-source384:cf59eff6c467429866bc22000288e86814d49f7669dbbcf1f5406d73febd580f:snapshot:baguqeeraxmhnn53dvgqdqahnyue4bjd3l5fathpq4kihcjdgu5g7dfo2oopa",
+        "generation": 1,
+        "manifest_cid": "baguqeeraekf4vg44vec2hoxgtze22qm63r6le6pcz4xd6d4vawedexmgimea",
+        "receipt_cid": "baguqeerax52f7guhoz6hxombwdvfwlpc7un3ehy5cerpp4vjbh6khtmtlu4q",
+        "repository_id": "terminal-source384:cf59eff6c467429866bc22000288e86814d49f7669dbbcf1f5406d73febd580f",
+        "schema": "codebase-head@1",
+        "snapshot_cid": "baguqeeraxmhnn53dvgqdqahnyue4bjd3l5fathpq4kihcjdgu5g7dfo2oopa"
+      },
+      "owner_sha256": "2cc174e71f17a23daabd1c8855d96c621811addfe5152f386810ec23918b1463",
+      "peak": {
+        "kernel_vm_hwm_bytes": 465170432,
+        "sampled_rss_anon_bytes": 336863232,
+        "sampled_rss_bytes": 413536256,
+        "scope": "Through second observation return, before explicit output parity serialization"
+      },
+      "receipt_sha256": "92bb7b6daad17f3feefb361e3c727719e45df3e3f46922c5be6ff6169b8cb5c8",
+      "replay_shape": "same_connection",
+      "returned_manifest_canonical_sha256": "228bca9b9ca905a3bae69e49ad419edc7cb279e2cf2e3f0f950588325d864308",
+      "returned_manifest_cid": "baguqeeraekf4vg44vec2hoxgtze22qm63r6le6pcz4xd6d4vawedexmgimea",
+      "rounds": [
+        {
+          "number": 0,
+          "seconds": 14.549949831001868
+        },
+        {
+          "number": 1,
+          "seconds": 5.338975854996534
+        }
+      ],
+      "seconds": 23.797293578005338,
+      "selected_producers": {
+        "ipfs_datasets_py.logic.software_contracts.cache": {
+          "path": "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/cache.py",
+          "sha256": "d708bb536860334a43a97244652765bf926d949286207cc25ff68788bf85751f"
+        },
+        "ipfs_datasets_py.logic.software_contracts.codebase_ir": {
+          "path": "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/codebase_ir.py",
+          "sha256": "2cc174e71f17a23daabd1c8855d96c621811addfe5152f386810ec23918b1463"
+        }
+      }
+    },
+    "byte-only-01": {
+      "metrics": {
+        "after_close": {
+          "allocated_python_blocks": 1630000,
+          "duckdb_bytes": 0,
+          "elapsed_seconds": 22.437029515000177,
+          "memo": {
+            "bypasses": 0,
+            "entries": 1,
+            "evictions": 0,
+            "hits": 1,
+            "misses": 1,
+            "retained_bytes": 89210996
+          },
+          "rss_anon_bytes": 251789312,
+          "rss_bytes": 328527872
+        },
+        "before_close": {
+          "allocated_python_blocks": 1630037,
+          "duckdb_bytes": 22544384,
+          "elapsed_seconds": 22.421890577999875,
+          "memo": {
+            "bypasses": 0,
+            "entries": 1,
+            "evictions": 0,
+            "hits": 1,
+            "misses": 1,
+            "retained_bytes": 89210996
+          },
+          "rss_anon_bytes": 307609600,
+          "rss_bytes": 384282624
+        },
+        "before_connection": {
+          "allocated_python_blocks": 164582,
+          "duckdb_bytes": 0,
+          "elapsed_seconds": 0.0007485440000891685,
+          "memo": {
+            "bypasses": 0,
+            "entries": 0,
+            "evictions": 0,
+            "hits": 0,
+            "misses": 0,
+            "retained_bytes": 0
+          },
+          "rss_anon_bytes": 33218560,
+          "rss_bytes": 72015872
+        },
+        "cold_load_enter": {
+          "allocated_python_blocks": 369436,
+          "duckdb_bytes": 2097152,
+          "elapsed_seconds": 0.18416015200637048,
+          "memo": {
+            "bypasses": 0,
+            "entries": 0,
+            "evictions": 0,
+            "hits": 0,
+            "misses": 0,
+            "retained_bytes": 0
+          },
+          "rss_anon_bytes": 75091968,
+          "rss_bytes": 151306240
+        },
+        "cold_load_return": {
+          "allocated_python_blocks": 1980810,
+          "duckdb_bytes": 2097152,
+          "elapsed_seconds": 9.482335350003268,
+          "memo": {
+            "bypasses": 0,
+            "entries": 1,
+            "evictions": 0,
+            "hits": 0,
+            "misses": 1,
+            "retained_bytes": 89210996
+          },
+          "rss_anon_bytes": 353054720,
+          "rss_bytes": 429400064
+        },
+        "first_observation_return": {
+          "allocated_python_blocks": 1249465,
+          "duckdb_bytes": 22544384,
+          "elapsed_seconds": 14.173771934001707,
+          "memo": {
+            "bypasses": 0,
+            "entries": 1,
+            "evictions": 0,
+            "hits": 0,
+            "misses": 1,
+            "retained_bytes": 89210996
+          },
+          "rss_anon_bytes": 299118592,
+          "rss_bytes": 375791616
+        },
+        "first_reference_deleted": {
+          "allocated_python_blocks": 1249485,
+          "duckdb_bytes": 22544384,
+          "elapsed_seconds": 14.175890303005872,
+          "memo": {
+            "bypasses": 0,
+            "entries": 1,
+            "evictions": 0,
+            "hits": 0,
+            "misses": 1,
+            "retained_bytes": 89210996
+          },
+          "rss_anon_bytes": 299118592,
+          "rss_bytes": 375791616
+        },
+        "second_observation_enter": {
+          "allocated_python_blocks": 1249505,
+          "duckdb_bytes": 22544384,
+          "elapsed_seconds": 14.177534496004228,
+          "memo": {
+            "bypasses": 0,
+            "entries": 1,
+            "evictions": 0,
+            "hits": 0,
+            "misses": 1,
+            "retained_bytes": 89210996
+          },
+          "rss_anon_bytes": 299118592,
+          "rss_bytes": 375791616
+        },
+        "second_observation_return": {
+          "allocated_python_blocks": 1303001,
+          "duckdb_bytes": 22544384,
+          "elapsed_seconds": 18.716191482002614,
+          "memo": {
+            "bypasses": 0,
+            "entries": 1,
+            "evictions": 0,
+            "hits": 1,
+            "misses": 1,
+            "retained_bytes": 89210996
+          },
+          "rss_anon_bytes": 298422272,
+          "rss_bytes": 375095296
+        },
+        "warm_load_enter": {
+          "allocated_python_blocks": 1248476,
+          "duckdb_bytes": 22544384,
+          "elapsed_seconds": 14.200432237004861,
+          "memo": {
+            "bypasses": 0,
+            "entries": 1,
+            "evictions": 0,
+            "hits": 0,
+            "misses": 1,
+            "retained_bytes": 89210996
+          },
+          "rss_anon_bytes": 297816064,
+          "rss_bytes": 374489088
+        },
+        "warm_load_return": {
+          "allocated_python_blocks": 1280852,
+          "duckdb_bytes": 22544384,
+          "elapsed_seconds": 14.300121186002798,
+          "memo": {
+            "bypasses": 0,
+            "entries": 1,
+            "evictions": 0,
+            "hits": 1,
+            "misses": 1,
+            "retained_bytes": 89210996
+          },
+          "rss_anon_bytes": 297816064,
+          "rss_bytes": 374489088
+        }
+      },
+      "observed_head": {
+        "ast_revision_id": "rev:terminal-source384:cf59eff6c467429866bc22000288e86814d49f7669dbbcf1f5406d73febd580f:snapshot:baguqeeraxmhnn53dvgqdqahnyue4bjd3l5fathpq4kihcjdgu5g7dfo2oopa",
+        "generation": 1,
+        "manifest_cid": "baguqeeraekf4vg44vec2hoxgtze22qm63r6le6pcz4xd6d4vawedexmgimea",
+        "receipt_cid": "baguqeerax52f7guhoz6hxombwdvfwlpc7un3ehy5cerpp4vjbh6khtmtlu4q",
+        "repository_id": "terminal-source384:cf59eff6c467429866bc22000288e86814d49f7669dbbcf1f5406d73febd580f",
+        "schema": "codebase-head@1",
+        "snapshot_cid": "baguqeeraxmhnn53dvgqdqahnyue4bjd3l5fathpq4kihcjdgu5g7dfo2oopa"
+      },
+      "owner_sha256": "fccfc25ab161cd489093bbce505f6708cc360a3e17729468abf4d6d6c3de17af",
+      "peak": {
+        "kernel_vm_hwm_bytes": 476299264,
+        "sampled_rss_anon_bytes": 361574400,
+        "sampled_rss_bytes": 438181888,
+        "scope": "Through second observation return, before explicit output parity serialization"
+      },
+      "receipt_sha256": "f382bdfc088e457284092ee8648cf30b32487c10a2875953deafcef46613feca",
+      "replay_shape": "same_connection",
+      "returned_manifest_canonical_sha256": "228bca9b9ca905a3bae69e49ad419edc7cb279e2cf2e3f0f950588325d864308",
+      "returned_manifest_cid": "baguqeeraekf4vg44vec2hoxgtze22qm63r6le6pcz4xd6d4vawedexmgimea",
+      "rounds": [
+        {
+          "number": 0,
+          "seconds": 14.005927869002335
+        },
+        {
+          "number": 1,
+          "seconds": 4.53873901800398
+        }
+      ],
+      "seconds": 22.437242268002592,
+      "selected_producers": {
+        "ipfs_datasets_py.logic.software_contracts.cache": {
+          "path": "/home/barberb/lift_coding/artifacts/source384-manifest-byte-replay-anchor-20261003/proposed/ipfs_datasets_py/logic/software_contracts/cache.py",
+          "sha256": "a0b1711a5fa1f5b39b92d43748548c8802f632d1131ad9a64dd7f49df51bdd8c"
+        },
+        "ipfs_datasets_py.logic.software_contracts.codebase_ir": {
+          "path": "/home/barberb/lift_coding/artifacts/source384-manifest-byte-replay-anchor-20261003/proposed/ipfs_datasets_py/logic/software_contracts/codebase_ir.py",
+          "sha256": "fccfc25ab161cd489093bbce505f6708cc360a3e17729468abf4d6d6c3de17af"
+        }
+      }
+    },
+    "combined-01": {
+      "metrics": {
+        "after_close": {
+          "allocated_python_blocks": 614789,
+          "duckdb_bytes": 0,
+          "elapsed_seconds": 22.670136527005525,
+          "memo": {
+            "bypasses": 0,
+            "entries": 1,
+            "evictions": 0,
+            "hits": 1,
+            "misses": 1,
+            "retained_bytes": 29251864
+          },
+          "rss_anon_bytes": 211398656,
+          "rss_bytes": 288137216
+        },
+        "before_close": {
+          "allocated_python_blocks": 614828,
+          "duckdb_bytes": 22544384,
+          "elapsed_seconds": 22.65686024400202,
+          "memo": {
+            "bypasses": 0,
+            "entries": 1,
+            "evictions": 0,
+            "hits": 1,
+            "misses": 1,
+            "retained_bytes": 29251864
+          },
+          "rss_anon_bytes": 266530816,
+          "rss_bytes": 343203840
+        },
+        "before_connection": {
+          "allocated_python_blocks": 164656,
+          "duckdb_bytes": 0,
+          "elapsed_seconds": 0.0008950080009526573,
+          "memo": {
+            "bypasses": 0,
+            "entries": 0,
+            "evictions": 0,
+            "hits": 0,
+            "misses": 0,
+            "retained_bytes": 0
+          },
+          "rss_anon_bytes": 33226752,
+          "rss_bytes": 72024064
+        },
+        "cold_load_enter": {
+          "allocated_python_blocks": 369558,
+          "duckdb_bytes": 2097152,
+          "elapsed_seconds": 0.19571916299901204,
+          "memo": {
+            "bypasses": 0,
+            "entries": 0,
+            "evictions": 0,
+            "hits": 0,
+            "misses": 0,
+            "retained_bytes": 0
+          },
+          "rss_anon_bytes": 75079680,
+          "rss_bytes": 151293952
+        },
+        "cold_load_return": {
+          "allocated_python_blocks": 623943,
+          "duckdb_bytes": 2097152,
+          "elapsed_seconds": 10.187223166998592,
+          "memo": {
+            "bypasses": 0,
+            "entries": 1,
+            "evictions": 0,
+            "hits": 0,
+            "misses": 1,
+            "retained_bytes": 29251864
+          },
+          "rss_anon_bytes": 272805888,
+          "rss_bytes": 349151232
+        },
+        "first_observation_return": {
+          "allocated_python_blocks": 651123,
+          "duckdb_bytes": 22544384,
+          "elapsed_seconds": 14.595416955999099,
+          "memo": {
+            "bypasses": 0,
+            "entries": 1,
+            "evictions": 0,
+            "hits": 0,
+            "misses": 1,
+            "retained_bytes": 29251864
+          },
+          "rss_anon_bytes": 296181760,
+          "rss_bytes": 372854784
+        },
+        "first_reference_deleted": {
+          "allocated_python_blocks": 651143,
+          "duckdb_bytes": 22544384,
+          "elapsed_seconds": 14.598576349999348,
+          "memo": {
+            "bypasses": 0,
+            "entries": 1,
+            "evictions": 0,
+            "hits": 0,
+            "misses": 1,
+            "retained_bytes": 29251864
+          },
+          "rss_anon_bytes": 296181760,
+          "rss_bytes": 372854784
+        },
+        "second_observation_enter": {
+          "allocated_python_blocks": 651162,
+          "duckdb_bytes": 22544384,
+          "elapsed_seconds": 14.600296110998897,
+          "memo": {
+            "bypasses": 0,
+            "entries": 1,
+            "evictions": 0,
+            "hits": 0,
+            "misses": 1,
+            "retained_bytes": 29251864
+          },
+          "rss_anon_bytes": 296181760,
+          "rss_bytes": 372854784
+        },
+        "second_observation_return": {
+          "allocated_python_blocks": 620007,
+          "duckdb_bytes": 22544384,
+          "elapsed_seconds": 19.187679572998604,
+          "memo": {
+            "bypasses": 0,
+            "entries": 1,
+            "evictions": 0,
+            "hits": 1,
+            "misses": 1,
+            "retained_bytes": 29251864
+          },
+          "rss_anon_bytes": 299008000,
+          "rss_bytes": 375681024
+        },
+        "warm_load_enter": {
+          "allocated_python_blocks": 650114,
+          "duckdb_bytes": 22544384,
+          "elapsed_seconds": 14.62887879000482,
+          "memo": {
+            "bypasses": 0,
+            "entries": 1,
+            "evictions": 0,
+            "hits": 0,
+            "misses": 1,
+            "retained_bytes": 29251864
+          },
+          "rss_anon_bytes": 296263680,
+          "rss_bytes": 372936704
+        },
+        "warm_load_return": {
+          "allocated_python_blocks": 682464,
+          "duckdb_bytes": 22544384,
+          "elapsed_seconds": 14.726855890003208,
+          "memo": {
+            "bypasses": 0,
+            "entries": 1,
+            "evictions": 0,
+            "hits": 1,
+            "misses": 1,
+            "retained_bytes": 29251864
+          },
+          "rss_anon_bytes": 296263680,
+          "rss_bytes": 372936704
+        }
+      },
+      "observed_head": {
+        "ast_revision_id": "rev:terminal-source384:cf59eff6c467429866bc22000288e86814d49f7669dbbcf1f5406d73febd580f:snapshot:baguqeeraxmhnn53dvgqdqahnyue4bjd3l5fathpq4kihcjdgu5g7dfo2oopa",
+        "generation": 1,
+        "manifest_cid": "baguqeeraekf4vg44vec2hoxgtze22qm63r6le6pcz4xd6d4vawedexmgimea",
+        "receipt_cid": "baguqeerax52f7guhoz6hxombwdvfwlpc7un3ehy5cerpp4vjbh6khtmtlu4q",
+        "repository_id": "terminal-source384:cf59eff6c467429866bc22000288e86814d49f7669dbbcf1f5406d73febd580f",
+        "schema": "codebase-head@1",
+        "snapshot_cid": "baguqeeraxmhnn53dvgqdqahnyue4bjd3l5fathpq4kihcjdgu5g7dfo2oopa"
+      },
+      "owner_sha256": "4aa2e5287885aaecf2c2319a100b8e4b8bdad21b082990a4beadda84d7c61018",
+      "peak": {
+        "kernel_vm_hwm_bytes": 476557312,
+        "sampled_rss_anon_bytes": 306896896,
+        "sampled_rss_bytes": 383569920,
+        "scope": "Through second observation return, before explicit output parity serialization"
+      },
+      "receipt_sha256": "6121fb10f7cb6aa36f1d33a29a0df71b3d1ea795b464ad10875b0fae7e9d3acc",
+      "replay_shape": "same_connection",
+      "returned_manifest_canonical_sha256": "228bca9b9ca905a3bae69e49ad419edc7cb279e2cf2e3f0f950588325d864308",
+      "returned_manifest_cid": "baguqeeraekf4vg44vec2hoxgtze22qm63r6le6pcz4xd6d4vawedexmgimea",
+      "rounds": [
+        {
+          "number": 0,
+          "seconds": 14.416430043005676
+        },
+        {
+          "number": 1,
+          "seconds": 4.58741655099584
+        }
+      ],
+      "seconds": 22.67024294300063,
+      "selected_producers": {
+        "ipfs_datasets_py.logic.software_contracts.cache": {
+          "path": "/home/barberb/lift_coding/artifacts/source384-manifest-combined-replay-20261003/proposed/ipfs_datasets_py/logic/software_contracts/cache.py",
+          "sha256": "a0b1711a5fa1f5b39b92d43748548c8802f632d1131ad9a64dd7f49df51bdd8c"
+        },
+        "ipfs_datasets_py.logic.software_contracts.codebase_ir": {
+          "path": "/home/barberb/lift_coding/artifacts/source384-manifest-combined-replay-20261003/proposed/ipfs_datasets_py/logic/software_contracts/codebase_ir.py",
+          "sha256": "4aa2e5287885aaecf2c2319a100b8e4b8bdad21b082990a4beadda84d7c61018"
+        }
+      }
+    }
+  },
+  "candidate_minus_baseline": {
+    "byte-only-01": {
+      "after_close": {
+        "allocated_python_blocks": 408652,
+        "duckdb_bytes": 0,
+        "rss_anon_bytes": 28848128,
+        "rss_bytes": 28848128
+      },
+      "before_close": {
+        "allocated_python_blocks": 408653,
+        "duckdb_bytes": 0,
+        "rss_anon_bytes": -6946816,
+        "rss_bytes": -6946816
+      },
+      "before_connection": {
+        "allocated_python_blocks": 1021,
+        "duckdb_bytes": 0,
+        "rss_anon_bytes": 225280,
+        "rss_bytes": 225280
+      },
+      "cold_load_enter": {
+        "allocated_python_blocks": 1341,
+        "duckdb_bytes": 0,
+        "rss_anon_bytes": 253952,
+        "rss_bytes": 253952
+      },
+      "cold_load_return": {
+        "allocated_python_blocks": 758622,
+        "duckdb_bytes": 0,
+        "rss_anon_bytes": 81526784,
+        "rss_bytes": 81526784
+      },
+      "first_observation_return": {
+        "allocated_python_blocks": -6590,
+        "duckdb_bytes": 0,
+        "rss_anon_bytes": 4808704,
+        "rss_bytes": 4808704
+      },
+      "first_reference_deleted": {
+        "allocated_python_blocks": -6591,
+        "duckdb_bytes": 0,
+        "rss_anon_bytes": 4808704,
+        "rss_bytes": 4808704
+      },
+      "second_observation_enter": {
+        "allocated_python_blocks": -6590,
+        "duckdb_bytes": 0,
+        "rss_anon_bytes": 4808704,
+        "rss_bytes": 4808704
+      },
+      "second_observation_return": {
+        "allocated_python_blocks": 55916,
+        "duckdb_bytes": 0,
+        "rss_anon_bytes": 27037696,
+        "rss_bytes": 27037696
+      },
+      "warm_load_enter": {
+        "allocated_python_blocks": -6583,
+        "duckdb_bytes": 0,
+        "rss_anon_bytes": 3436544,
+        "rss_bytes": 3436544
+      },
+      "warm_load_return": {
+        "allocated_python_blocks": 59672,
+        "duckdb_bytes": 0,
+        "rss_anon_bytes": -39047168,
+        "rss_bytes": -39047168
+      }
+    },
+    "combined-01": {
+      "after_close": {
+        "allocated_python_blocks": -606559,
+        "duckdb_bytes": 0,
+        "rss_anon_bytes": -11542528,
+        "rss_bytes": -11542528
+      },
+      "before_close": {
+        "allocated_python_blocks": -606556,
+        "duckdb_bytes": 0,
+        "rss_anon_bytes": -48025600,
+        "rss_bytes": -48025600
+      },
+      "before_connection": {
+        "allocated_python_blocks": 1095,
+        "duckdb_bytes": 0,
+        "rss_anon_bytes": 233472,
+        "rss_bytes": 233472
+      },
+      "cold_load_enter": {
+        "allocated_python_blocks": 1463,
+        "duckdb_bytes": 0,
+        "rss_anon_bytes": 241664,
+        "rss_bytes": 241664
+      },
+      "cold_load_return": {
+        "allocated_python_blocks": -598245,
+        "duckdb_bytes": 0,
+        "rss_anon_bytes": 1277952,
+        "rss_bytes": 1277952
+      },
+      "first_observation_return": {
+        "allocated_python_blocks": -604932,
+        "duckdb_bytes": 0,
+        "rss_anon_bytes": 1871872,
+        "rss_bytes": 1871872
+      },
+      "first_reference_deleted": {
+        "allocated_python_blocks": -604933,
+        "duckdb_bytes": 0,
+        "rss_anon_bytes": 1871872,
+        "rss_bytes": 1871872
+      },
+      "second_observation_enter": {
+        "allocated_python_blocks": -604933,
+        "duckdb_bytes": 0,
+        "rss_anon_bytes": 1871872,
+        "rss_bytes": 1871872
+      },
+      "second_observation_return": {
+        "allocated_python_blocks": -627078,
+        "duckdb_bytes": 0,
+        "rss_anon_bytes": 27623424,
+        "rss_bytes": 27623424
+      },
+      "warm_load_enter": {
+        "allocated_python_blocks": -604945,
+        "duckdb_bytes": 0,
+        "rss_anon_bytes": 1884160,
+        "rss_bytes": 1884160
+      },
+      "warm_load_return": {
+        "allocated_python_blocks": -538716,
+        "duckdb_bytes": 0,
+        "rss_anon_bytes": -40599552,
+        "rss_bytes": -40599552
+      }
+    }
+  },
+  "explicit_output_parity_only_after_final_return": true,
+  "gc_collect_called": false,
+  "interpretation": "Same two-observation source-only host profile in three fresh processes. Model/preparation report lifetimes are absent. Actual full pipeline admission remains unqualified by these component measurements; no general scaling or benchmark claim.",
+  "malloc_trim_called": false,
+  "model_loads": 0,
+  "observations_retained_across_rounds": false,
+  "provider_calls": 0,
+  "scheduler_policy_changed": false,
+  "schema": "native-final-manifest-three-arm-comparison@1",
+  "source_and_sql_checks_unchanged": true,
+  "training_steps": 0
+}
