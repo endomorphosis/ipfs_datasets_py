@@ -131,15 +131,14 @@ def test_legacy_model_rejects_unplanned_context_sidecar_before_private_copy(monk
 
 @pytest.mark.parametrize("extra", [
     {"order_augmentation": {"preparation": {}, "embedding_observations": {}}},
-    {"generated_boundary_weight": .25},
 ])
 def test_context_training_rejects_unimplemented_optional_combinations_before_copy(monkeypatch, extra):
     model, _, train, tune, options = prepared()
     # Only the architecture precheck is substituted: this case tests rejection
-    # before either unsupported option can prepare data or copy the model.
+    # before unsupported order substitution can prepare data or copy the model.
     monkeypatch.setattr(subject, "_head_specification", lambda *args: {"schema": "clause-source-decoder-development/v1"})
     monkeypatch.setattr(subject, "deepcopy", lambda value: pytest.fail("private copy before compatibility check"))
-    with pytest.raises(ValueError, match="does not support order substitution or generated-boundary"):
+    with pytest.raises(ValueError, match="does not support order substitution"):
         subject.train(model, train, tune, source_value_weight=.25,
             source_contexts={"train": {}, "validation": {}}, **options, **extra)
 
