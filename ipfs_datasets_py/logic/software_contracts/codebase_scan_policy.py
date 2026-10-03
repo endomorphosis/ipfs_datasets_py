@@ -130,7 +130,7 @@ class CodebaseScanPolicy:
 
 
 def _implementation():
-    from . import ast_ir, cache, codebase_git_operation, codebase_ir, content, duckdb_ast_store, duckdb_ingest, python_frontend
+    from . import ast_ir, cache, codebase_git_operation, codebase_ir, codebase_path_boundary, content, duckdb_ast_store, duckdb_ingest, python_frontend
     from .semantic_index import models, python_analysis, pytest_analysis, scanner, symbol_graph
     from ipfs_datasets_py.duckdb_control import codebase_catalog
     from ..backends import process
@@ -138,7 +138,7 @@ def _implementation():
             for module in (sys.modules[__name__], ast_ir, cache, codebase_ir, content,
                            duckdb_ast_store, duckdb_ingest, python_frontend, snapshots,
                            models, python_analysis, pytest_analysis, scanner, symbol_graph,
-                           codebase_catalog, codebase_git_operation, process)}
+                           codebase_catalog, codebase_git_operation, codebase_path_boundary, process)}
 
 
 def _owner(index):
@@ -192,26 +192,43 @@ def _external_ignore_scope(index, root):
     if not info_path.is_absolute():
         info_path = root / info_path
     rows = []
+    from .codebase_path_boundary import PathBoundary, PathBoundaryError
     for kind, path in (("repository_info", info_path), ("global", global_path)):
         current_git_operation().remaining()
         # Preserve the selected leaf: resolving it would silently dereference a
         # symlink before O_NOFOLLOW has a chance to reject it.
+        _require(".." not in path.parts, "external ignore path cannot traverse parent components")
         path = Path(os.path.abspath(path))
         try:
-            _require(not stat.S_ISLNK(path.lstat().st_mode),
-                     "external ignore file must be regular without a symlink")
-            descriptor = os.open(path, os.O_RDONLY | os.O_NONBLOCK | getattr(os, "O_NOFOLLOW", 0))
-            with os.fdopen(descriptor, "rb") as stream:
-                before = os.fstat(stream.fileno())
-                _require(stat.S_ISREG(before.st_mode), "external ignore file must be regular")
-                raw = stream.read(MAX_FILE_BYTES + 1)
-                after = os.fstat(stream.fileno())
-            witness = lambda stat: (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns)
-            _require(witness(before) == witness(after) == witness(path.lstat()),
-                     "external ignore bytes changed during capture")
-            present = True
-        except FileNotFoundError:
-            raw, present = b"", False
+            with PathBoundary(path, allow_missing=True) as boundary:
+                try:
+                    leaf = boundary.stat_leaf()
+                except FileNotFoundError:
+                    raw, present = b"", False
+                    boundary.verify()
+                    try:
+                        boundary.stat_leaf()
+                    except FileNotFoundError:
+                        pass
+                    else:
+                        raise CodebaseScanPolicyError("absent external ignore file appeared during capture")
+                else:
+                    _require(not stat.S_ISLNK(leaf.st_mode),
+                             "external ignore file must be regular without a symlink")
+                    _require(stat.S_ISREG(leaf.st_mode), "external ignore file must be regular")
+                    descriptor = boundary.open_leaf()
+                    with os.fdopen(descriptor, "rb") as stream:
+                        before = os.fstat(stream.fileno())
+                        _require(stat.S_ISREG(before.st_mode), "external ignore file must be regular")
+                        raw = stream.read(MAX_FILE_BYTES + 1)
+                        after = os.fstat(stream.fileno())
+                    witness = lambda info: (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+                    _require(witness(leaf) == witness(before) == witness(after) == witness(boundary.stat_leaf()),
+                             "external ignore bytes changed during capture")
+                    boundary.verify()
+                    present = True
+        except PathBoundaryError as exc:
+            raise CodebaseScanPolicyError("external ignore ancestor binding is unsafe or changed") from exc
         current_git_operation().remaining()
         _require(len(raw) <= MAX_FILE_BYTES and all(not line or line.startswith(b"#") for line in raw.splitlines()),
                  "active or oversized external ignore patterns are outside the frozen profile")

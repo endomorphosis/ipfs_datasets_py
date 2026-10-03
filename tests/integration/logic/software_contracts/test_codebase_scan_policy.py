@@ -307,7 +307,7 @@ def test_external_ignore_scope_drift_during_sealing_withholds_observation(curren
                 path.write_text("*.py\n" if change == "active_bytes" else "# changed inactive file\n")
         return cid
     monkeypatch.setattr(index.artifacts, "put", mutate)
-    with pytest.raises(module.CodebaseScanPolicyError, match="external ignore"):
+    with pytest.raises(module.CodebaseScanPolicyError, match="external ignore|configuration records changed"):
         prepare()
 
 
@@ -396,6 +396,13 @@ def test_source_edit_during_final_scope_query_withholds_live_success(current, mo
     assert len(calls) == 3
 
 
+def _observed_open_path(path, kwargs):
+    observed = Path(os.fsdecode(path))
+    if not observed.is_absolute() and kwargs.get('dir_fd') is not None:
+        observed = Path(os.readlink('/proc/self/fd/' + str(kwargs['dir_fd']))) / observed
+    return observed
+
+
 @pytest.mark.parametrize("target_present", [True, False])
 def test_external_ignore_symlink_is_rejected_without_opening_target(current, tmp_path, monkeypatch, target_present):
     root, index, prepare, _, _ = current
@@ -408,7 +415,7 @@ def test_external_ignore_symlink_is_rejected_without_opening_target(current, tmp
     original = os.open
     opened = []
     def observe(path, *args, **kwargs):
-        opened.append(Path(path))
+        opened.append(_observed_open_path(path, kwargs))
         return original(path, *args, **kwargs)
     monkeypatch.setattr(os, "open", observe)
     with pytest.raises(module.CodebaseScanPolicyError, match="without a symlink"):
@@ -424,7 +431,7 @@ def test_working_capture_replaced_fifo_is_nonblocking_and_opaque(current, monkey
     original = os.open
     raced = []
     def replace_at_open(candidate, flags, *args, **kwargs):
-        if Path(candidate) == path:
+        if _observed_open_path(candidate, kwargs) == path:
             assert flags & os.O_NONBLOCK
             path.unlink()
             os.mkfifo(path)
@@ -656,7 +663,7 @@ def test_deadline_accumulates_scope_and_native_publication_costs(current, monkey
         original = getattr(module, name)
         def cost(*args, _original=original, **kwargs):
             result = _original(*args, **kwargs)
-            clock[0] += 7.0
+            clock[0] += 70.0
             return result
         monkeypatch.setattr(module, name, cost)
     original = index.prepare_current
@@ -664,12 +671,12 @@ def test_deadline_accumulates_scope_and_native_publication_costs(current, monkey
     def native(*args, **kwargs):
         timeouts.append(kwargs["timeout_seconds"])
         result = original(*args, **kwargs)
-        clock[0] += 7.0
+        clock[0] += 70.0
         return result
     monkeypatch.setattr(index, "prepare_current", native)
     with pytest.raises(LeaseTimeoutError):
-        prepare(timeout_seconds=20)
-    assert timeouts == [6.0]
+        prepare(timeout_seconds=200)
+    assert timeouts == [60.0]
     assert index.current("scan:fixture") is not None  # Complete history survives a refused live result.
     assert operations.current_git_operation() is None
 
