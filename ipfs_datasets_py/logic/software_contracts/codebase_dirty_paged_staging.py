@@ -8,10 +8,12 @@ Whole-source capture/fences and final graph assembly remain bounded batch work.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+from contextlib import contextmanager
 import hashlib
 import json
 from pathlib import Path, PurePosixPath
 import sys
+import time
 from types import SimpleNamespace
 
 from . import codebase_dirty_semantics as semantics
@@ -19,6 +21,7 @@ from .ast_ir import ASTRecord
 from .codebase_ir import CodebaseIRManifest, CodebaseUnit
 from .codebase_paged_staging import CodebasePagedStager, _require
 from .codebase_resources import acquire_codebase_resources
+from .codebase_git_operation import GitScanOperation
 from . import codebase_scan_policy as policy_owner
 from .content import canonical_dag_json_bytes, cid_for_bytes, validate_cid
 from .duckdb_ast_store import classify_parse_status, project_ast_record
@@ -75,6 +78,19 @@ class CodebaseDirtyPagedStager(CodebasePagedStager):
     existing CodebaseCatalog source/AST transaction, not a new promotion owner.
     """
 
+    @contextmanager
+    def _git_operation(self, root, check, deadline, signal, max_file_bytes):
+        def remaining():
+            check()
+            duration = deadline - time.monotonic()
+            if duration <= 0:
+                from ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler import LeaseTimeoutError
+                raise LeaseTimeoutError("dirty staging Git deadline expired")
+            return duration
+        with GitScanOperation(root, checkpoint=remaining, cancellation=signal,
+                              max_file_bytes=max_file_bytes, memory_mb=512):
+            yield remaining
+
     def _object(self, cid, *, source=False, maximum=MAX_OBJECT_BYTES):
         validate_cid(cid, codecs={"raw" if source else "dag-json"})
         _require(self.artifacts.path_for(cid, source=source).stat().st_size <= maximum,
@@ -124,6 +140,11 @@ class CodebaseDirtyPagedStager(CodebasePagedStager):
             max_entries=snapshot.max_entries, max_file_bytes=snapshot.max_file_bytes, exclusions=snapshot.exclusions)
         _require(current.snapshot_cid == snapshot.snapshot_cid, "dirty source differs from sealed generation")
         rules(); check()
+        final = snapshots.snapshot_repository(root, repository_id=snapshot.repository_id,
+            max_entries=snapshot.max_entries, max_file_bytes=snapshot.max_file_bytes,
+            exclusions=snapshot.exclusions)
+        _require(final.snapshot_cid == snapshot.snapshot_cid, "dirty source changed during final scope fence")
+        check()
 
     def prepare(self, repository, *, repository_id, limits=None, exclusions=(),
                 scheduler=None, parent_lease=None, cancel_event=None, timeout_seconds=120):
@@ -137,41 +158,45 @@ class CodebaseDirtyPagedStager(CodebasePagedStager):
                  and not self.owner._database_path.is_relative_to(root), "native owners must remain outside source")
         with acquire_codebase_resources(scheduler=scheduler, parent_lease=parent_lease,
                 cancel_event=cancel_event, memory_mb=512) as lease:
-            check = self._deadline(timeout_seconds, lease.combined_cancellation_signal(cancel_event))
-            check()
-            _require(snapshots._git_root(root) == root, "one committed Git root required")
-            external = policy_owner._external_ignore_scope(self.index, root)
-            scope = SimpleNamespace(exclusions=exclusions, max_entries=limits.max_entries)
-            rules = policy_owner._repository_rule_paths(root, scope)
-            snapshot = snapshots.snapshot_repository(root, repository_id=repository_id,
-                max_entries=limits.max_entries, max_file_bytes=limits.max_file_bytes, exclusions=exclusions)
-            _require(snapshot.mode in {"git-clean", "git-working"}, "committed dirty or clean Git scope required")
-            check()
-            for entry in snapshot.entries:
+            signal = lease.combined_cancellation_signal(cancel_event)
+            deadline = time.monotonic() + timeout_seconds
+            check = self._deadline(timeout_seconds, signal)
+            with self._git_operation(root, check, deadline, signal, limits.max_file_bytes) as check:
                 check()
-                if not entry.is_opaque:
-                    _require(type(entry.captured_bytes) is bytes and len(entry.captured_bytes) <= limits.max_file_bytes
-                        and self.artifacts.put_bytes(entry.captured_bytes) == entry.source_cid, "captured bytes differ")
-            request = dict(schema=REQUEST_SCHEMA, profile=PROFILE, repository=str(root),
-                snapshot_artifact_cid=self._put(snapshot.to_dict()), snapshot_cid=snapshot.snapshot_cid,
-                limits=asdict(limits), external_ignores=external, repository_ignore_rules=rules,
-                implementation=_implementation(), runtime=_runtime(), **FALSE)
-            generation = self._put(request)
-            request, snapshot, _ = self._request(generation)
-            self._fence(request, snapshot, check)
-            with self.owner.store._lock, self.owner.store._transaction():
-                self._schema()
-                existing = self.cx.execute("SELECT generation_cid FROM codebase_staging_control.generations WHERE generation_cid=?",
-                                           [generation]).fetchone()
-                if existing is None:
-                    _require(self.cx.execute("SELECT count(*) FROM codebase_staging_control.generations").fetchone()[0] < 128,
-                             "staging generation bound reached")
-                    self.cx.execute("INSERT INTO codebase_staging_control.generations VALUES (?,?,0,NULL)",
-                                    [generation, generation])
+                _require(snapshots._git_root(root) == root, "one committed Git root required")
+                external = policy_owner._external_ignore_scope(self.index, root)
+                scope = SimpleNamespace(exclusions=exclusions, max_entries=limits.max_entries)
+                rules = policy_owner._repository_rule_paths(root, scope)
+                snapshot = snapshots.snapshot_repository(root, repository_id=repository_id,
+                    max_entries=limits.max_entries, max_file_bytes=limits.max_file_bytes, exclusions=exclusions)
+                _require(snapshot.mode in {"git-clean", "git-working"}, "committed dirty or clean Git scope required")
                 check()
-            self._fence(request, snapshot, check)
-            return self.status(generation)
-
+                for entry in snapshot.entries:
+                    check()
+                    if not entry.is_opaque:
+                        _require(type(entry.captured_bytes) is bytes and len(entry.captured_bytes) <= limits.max_file_bytes
+                            and self.artifacts.put_bytes(entry.captured_bytes) == entry.source_cid, "captured bytes differ")
+                request = dict(schema=REQUEST_SCHEMA, profile=PROFILE, repository=str(root),
+                    snapshot_artifact_cid=self._put(snapshot.to_dict()), snapshot_cid=snapshot.snapshot_cid,
+                    limits=asdict(limits), external_ignores=external, repository_ignore_rules=rules,
+                    implementation=_implementation(), runtime=_runtime(), **FALSE)
+                generation = self._put(request)
+                request, snapshot, _ = self._request(generation)
+                self._fence(request, snapshot, check)
+                with self.owner.store._lock, self.owner.store._transaction():
+                    self._schema()
+                    existing = self.cx.execute("SELECT generation_cid FROM codebase_staging_control.generations WHERE generation_cid=?",
+                                               [generation]).fetchone()
+                    if existing is None:
+                        _require(self.cx.execute("SELECT count(*) FROM codebase_staging_control.generations").fetchone()[0] < 128,
+                                 "staging generation bound reached")
+                        self.cx.execute("INSERT INTO codebase_staging_control.generations VALUES (?,?,0,NULL)",
+                                        [generation, generation])
+                    check()
+                self._fence(request, snapshot, check)
+                result = self.status(generation)
+                check()
+                return result
     def _replay(self, generation_cid):
         self._schema()
         request, snapshot, limits = self._request(generation_cid)
@@ -242,84 +267,94 @@ class CodebaseDirtyPagedStager(CodebasePagedStager):
         _require(type(expected_cursor) is int and expected_cursor >= 0, "exact nonnegative dirty cursor required")
         with acquire_codebase_resources(scheduler=scheduler, parent_lease=parent_lease,
                 cancel_event=cancel_event, memory_mb=512) as lease:
+            deadline = time.monotonic() + timeout_seconds
             check = self._deadline(timeout_seconds, lease.combined_cancellation_signal(cancel_event))
             with self.owner.store._lock:
                 state, request, snapshot, limits, _ = self._replay(generation_cid)
             snapshot_cid = request["snapshot_cid"]
             _require(Path(repository).resolve(strict=True) == Path(request["repository"]), "dirty source root differs")
-            self._fence(request, snapshot, check)
-            _require(expected_cursor <= state["cursor"], "future dirty staging cursor")
-            if expected_cursor < state["cursor"]:
-                with self.owner.store._lock:
-                    _require(self.cx.execute("SELECT 1 FROM codebase_staging_control.shards WHERE generation_cid=? AND start_ordinal=?",
-                        [generation_cid, expected_cursor]).fetchone() is not None, "cursor is not a sealed dirty page boundary")
-                return dict(state, replayed=True, source_observed_live=True)
-            if state["complete_inventory_staged"]:
-                return dict(state, replayed=True, source_observed_live=True)
-            stop = min(expected_cursor + limits.max_batch_entries, len(snapshot.entries))
-            units = []
-            for entry in snapshot.entries[expected_cursor:stop]:
+            signal = lease.combined_cancellation_signal(cancel_event)
+            with self._git_operation(Path(request["repository"]), check, deadline, signal,
+                                     snapshot.max_file_bytes) as check:
+                self._fence(request, snapshot, check)
+                _require(expected_cursor <= state["cursor"], "future dirty staging cursor")
+                if expected_cursor < state["cursor"]:
+                    with self.owner.store._lock:
+                        _require(self.cx.execute("SELECT 1 FROM codebase_staging_control.shards WHERE generation_cid=? AND start_ordinal=?",
+                            [generation_cid, expected_cursor]).fetchone() is not None, "cursor is not a sealed dirty page boundary")
+                    check()
+                    return dict(state, replayed=True, source_observed_live=True)
+                if state["complete_inventory_staged"]:
+                    check()
+                    return dict(state, replayed=True, source_observed_live=True)
+                stop = min(expected_cursor + limits.max_batch_entries, len(snapshot.entries))
+                units = []
+                for entry in snapshot.entries[expected_cursor:stop]:
+                    check()
+                    disposition = _disposition(entry)
+                    ast_cid = semantic_cid = None
+                    if not entry.is_opaque:
+                        raw = self._object(entry.source_cid, source=True, maximum=limits.max_file_bytes)
+                        semantic_cid = self._put(semantics.extract(snapshot, entry, raw))
+                        if disposition == "captured_ast":
+                            ast = PythonASTExtractor().extract_from_source(raw, path=entry.path,
+                                repository_id=snapshot.repository_id, revision="snapshot:" + snapshot_cid,
+                                repository_tree_cid=snapshot_cid)
+                            ast_cid = self._put(ast.to_dict())
+                            disposition += "_" + classify_parse_status(ast)
+                    units.append(dict(source_key=entry.source_key, entry_cid=entry.entry_cid, source_cid=entry.source_cid,
+                        ast_cid=ast_cid, semantic_cid=semantic_cid, disposition=disposition))
+                receipt = dict(schema=SHARD_SCHEMA, generation_cid=generation_cid, snapshot_cid=snapshot_cid,
+                    start=expected_cursor, stop=stop, previous_receipt_cid=state["last_receipt_cid"], units=units, **FALSE)
+                cid = self._put(receipt)
+                self._fence(request, snapshot, check)
+                with self.owner.store._lock, self.owner.store._transaction():
+                    _require(self._replay(generation_cid)[0] == state, "dirty cursor changed during extraction")
+                    _require(self.cx.execute("SELECT count(*) FROM codebase_staging_control.shards").fetchone()[0] < 65536,
+                             "native staging shard bound reached")
+                    self._write_shard(generation_cid, expected_cursor, stop, cid)
+                    self._replay(generation_cid)
+                    check()
+                self._fence(request, snapshot, check)
+                result = dict(self.status(generation_cid), replayed=False, source_observed_live=True)
                 check()
-                disposition = _disposition(entry)
-                ast_cid = semantic_cid = None
-                if not entry.is_opaque:
-                    raw = self._object(entry.source_cid, source=True, maximum=limits.max_file_bytes)
-                    semantic_cid = self._put(semantics.extract(snapshot, entry, raw))
-                    if disposition == "captured_ast":
-                        ast = PythonASTExtractor().extract_from_source(raw, path=entry.path,
-                            repository_id=snapshot.repository_id, revision="snapshot:" + snapshot_cid,
-                            repository_tree_cid=snapshot_cid)
-                        ast_cid = self._put(ast.to_dict())
-                        disposition += "_" + classify_parse_status(ast)
-                units.append(dict(source_key=entry.source_key, entry_cid=entry.entry_cid, source_cid=entry.source_cid,
-                    ast_cid=ast_cid, semantic_cid=semantic_cid, disposition=disposition))
-            receipt = dict(schema=SHARD_SCHEMA, generation_cid=generation_cid, snapshot_cid=snapshot_cid,
-                start=expected_cursor, stop=stop, previous_receipt_cid=state["last_receipt_cid"], units=units, **FALSE)
-            cid = self._put(receipt)
-            self._fence(request, snapshot, check)
-            with self.owner.store._lock, self.owner.store._transaction():
-                _require(self._replay(generation_cid)[0] == state, "dirty cursor changed during extraction")
-                _require(self.cx.execute("SELECT count(*) FROM codebase_staging_control.shards").fetchone()[0] < 65536,
-                         "native staging shard bound reached")
-                self._write_shard(generation_cid, expected_cursor, stop, cid)
-                self._replay(generation_cid)
-                check()
-            self._fence(request, snapshot, check)
-            return dict(self.status(generation_cid), replayed=False, source_observed_live=True)
-
+                return result
     def finalize(self, repository, *, generation_cid, operation_id, expected_head,
                  scheduler=None, parent_lease=None, cancel_event=None, timeout_seconds=120):
         """Publish only the complete globally resolved inventory through its owner."""
         with acquire_codebase_resources(scheduler=scheduler, parent_lease=parent_lease,
                 cancel_event=cancel_event, memory_mb=512) as lease:
+            deadline = time.monotonic() + timeout_seconds
             check = self._deadline(timeout_seconds, lease.combined_cancellation_signal(cancel_event))
             with self.owner.store._lock:
                 state, request, snapshot, _, units = self._replay(generation_cid)
             snapshot_cid = request["snapshot_cid"]
             _require(state["complete_inventory_staged"], "partial dirty inventory cannot publish a head")
             _require(Path(repository).resolve(strict=True) == Path(request["repository"]), "dirty source root differs")
-            self._fence(request, snapshot, check)
-            facts, projections, native_units = {}, [], []
-            for entry, unit in zip(snapshot.entries, units):
-                check()
-                ast = None if unit["ast_cid"] is None else ASTRecord.from_dict(self._object(unit["ast_cid"]))
-                if ast is not None:
-                    projections.append(project_ast_record(ast, created_at=0))
-                if unit["semantic_cid"] is not None:
-                    facts[entry.source_key] = self._object(unit["semantic_cid"])
-                native_units.append(CodebaseUnit(entry.source_key, entry.entry_cid, unit["ast_cid"],
-                    "opaque" if entry.is_opaque else "unindexed" if ast is None else classify_parse_status(ast)))
-            semantic_state = semantics.assemble(snapshot, facts)
-            manifest = CodebaseIRManifest(snapshot, semantic_state,
-                f"rev:{snapshot.repository_id}:snapshot:{snapshot_cid}", tuple(native_units))
-            self._put(manifest.to_dict())
-            self._fence(request, snapshot, check)
-            receipt = self.owner.publish(operation_id=operation_id, expected_head=expected_head,
-                manifest=manifest, projections=projections,
-                checkpoint=check,
-                publication_checkpoint=lambda: self._fence(request, snapshot, check))
-            self._fence(request, snapshot, check)
-            return receipt
-
+            signal = lease.combined_cancellation_signal(cancel_event)
+            with self._git_operation(Path(request["repository"]), check, deadline, signal,
+                                     snapshot.max_file_bytes) as check:
+                self._fence(request, snapshot, check)
+                facts, projections, native_units = {}, [], []
+                for entry, unit in zip(snapshot.entries, units):
+                    check()
+                    ast = None if unit["ast_cid"] is None else ASTRecord.from_dict(self._object(unit["ast_cid"]))
+                    if ast is not None:
+                        projections.append(project_ast_record(ast, created_at=0))
+                    if unit["semantic_cid"] is not None:
+                        facts[entry.source_key] = self._object(unit["semantic_cid"])
+                    native_units.append(CodebaseUnit(entry.source_key, entry.entry_cid, unit["ast_cid"],
+                        "opaque" if entry.is_opaque else "unindexed" if ast is None else classify_parse_status(ast)))
+                semantic_state = semantics.assemble(snapshot, facts)
+                manifest = CodebaseIRManifest(snapshot, semantic_state,
+                    f"rev:{snapshot.repository_id}:snapshot:{snapshot_cid}", tuple(native_units))
+                self._put(manifest.to_dict())
+                self._fence(request, snapshot, check)
+                receipt = self.owner.publish(operation_id=operation_id, expected_head=expected_head,
+                    manifest=manifest, projections=projections,
+                    checkpoint=check,
+                    publication_checkpoint=lambda: self._fence(request, snapshot, check))
+                self._fence(request, snapshot, check)
+                return receipt
 
 __all__ = ["CodebaseDirtyPagedStager", "DirtyStagingLimits"]

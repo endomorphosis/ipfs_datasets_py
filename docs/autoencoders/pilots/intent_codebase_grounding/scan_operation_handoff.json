@@ -1,0 +1,145 @@
+{
+  "schema": "codebase-scan-operation-handoff/v1",
+  "persistent_worktree": "/home/barberb/lift_coding/.worktrees/codebase-scan-operation-qualification-20261003",
+  "parent_commit": "5e3558241f10b089771db9a4233a7c1e5871f72c",
+  "selected_tests_passed": 111,
+  "reused_cases": 50,
+  "new_regression_cases": 61,
+  "cases_deselected": 5,
+  "repair_source_paths": [
+    "ipfs_datasets_py/logic/software_contracts/codebase_git_operation.py",
+    "ipfs_datasets_py/logic/software_contracts/codebase_scan_policy.py",
+    "ipfs_datasets_py/logic/software_contracts/codebase_scan_policy_live.py",
+    "ipfs_datasets_py/logic/software_contracts/codebase_dirty_paged_staging.py",
+    "ipfs_datasets_py/logic/software_contracts/content.py",
+    "ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py",
+    "tests/integration/logic/software_contracts/test_codebase_scan_policy.py",
+    "tests/integration/logic/software_contracts/test_codebase_scan_operation_compatibility.py"
+  ],
+  "admitted_project_files": 104,
+  "external_python_sources": 452,
+  "guarded_source_loads": 475,
+  "private_git_launches": 12193,
+  "raw_bounded_git_calls": 11604,
+  "bounded_native_git_launches": 11603,
+  "prelaunch_cancelled_git_calls": 1,
+  "git_launches_outside_new_operation_bounds": 590,
+  "private_closed_duckdb_connections": 102,
+  "drained_scheduler_states": 101,
+  "retained_raw_policy_schema_records": 57,
+  "deliberate_rejected_authority_claim_records": 1,
+  "prior_authority_files_preserved": 1384,
+  "complete_unique_preserved_files": 1408,
+  "original_assets_preserved": 26,
+  "original_inventory_documents_preserved": 13,
+  "ir_families": [
+    "codebase_ir",
+    "security_ir",
+    "legal_ir",
+    "intent_ir"
+  ],
+  "dimension_sizes": [
+    8,
+    384,
+    768
+  ],
+  "independent_inventory_cells": 12,
+  "receipt_links": [
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-scan-qualification-20261003/verification.json",
+      "bytes": 84350,
+      "sha256": "3cb7b3eaf65d8eaf50c07d7455bebd4af7048f71d95a3836c92771112b299817"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-scan-operation-qualification-20261003/preservation-start.json",
+      "bytes": 392239,
+      "sha256": "3450377ccbd6a880ace3fcdae3e29ac2e78dd78461601818966eb6204425e593"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-scan-operation-qualification-20261003/preservation-end.json",
+      "bytes": 392239,
+      "sha256": "1e7d4b9bb450789e7ae53b2f29af0699437393f6bec0df8c614c7c9321fc52b8"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-scan-operation-qualification-20261003/admission-v4.json",
+      "bytes": 49613,
+      "sha256": "2227dd00a78c52652465ef2c278ffe80221559f911c9ddb301e217ab54843af5"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-scan-operation-qualification-20261003/dependency-profile.json",
+      "bytes": 99791,
+      "sha256": "733f3f315e8bf32aeaa10adf9e1dbdcb8fd69723df5ee672d43d126d313666e6"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-scan-operation-qualification-20261003/runs/operation-v4/result.json",
+      "bytes": 112110,
+      "sha256": "bd38d188186eb19d3b8eefc7d073d7f19747e61e313b41a0b09007e1ecbfeef9"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-scan-operation-qualification-20261003/runs/operation-v4/import-origins.json",
+      "bytes": 280156,
+      "sha256": "bb7948a5593e7925dcec94d2e71e56567ffa46f886e483c4afe989b8e09750dd"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-scan-operation-qualification-20261003/runs/operation-v4/effect-observations.json",
+      "bytes": 12824759,
+      "sha256": "84d78f55c39d2d584870d39229746918ba7ecca2ecb32b38e7581657fada8d69"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-scan-operation-qualification-20261003/runs/operation-v4/raw-git-observations.json",
+      "bytes": 28431190,
+      "sha256": "0f83cdb4964365ed61557a14b2923bd8883b44907ef363fcd3b2a985b5223b8b"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-scan-operation-qualification-20261003/artifact-observations.json",
+      "bytes": 257008,
+      "sha256": "eb4b26e7cfa84d6251b157a0a39f42b7074a29c7cf0d5529cbe692bcd7eeb88b"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-scan-operation-qualification-20261003/gap-status.json",
+      "bytes": 14500,
+      "sha256": "1aa157c563b00e5748b5b7225bbd604237c567ec9886195205977767b2a5c56b"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-scan-operation-qualification-20261003/runs/operation-v3/result.json",
+      "bytes": 106124,
+      "sha256": "de562253ffd8d1b49103c554c25ff07e0704837468724cf22dbe3ad7aa6b00c9"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-scan-operation-qualification-20261003/runs/operation-v2/result.json",
+      "bytes": 3103,
+      "sha256": "2fdf2ace5cfaa4acc1e26f3a54cdea7d6ed8e16a8d6fdab3706d254e9875f48c"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-scan-operation-qualification-20261003/runs/operation-v1/result.json",
+      "bytes": 86759,
+      "sha256": "76f4c6c2ba1ee801b6094166a0d3e81404bb431c4ecbe15328c0a42e75403383"
+    }
+  ],
+  "preliminary86case_run_retained": true,
+  "expanded_import_failure_retained": true,
+  "successful105case_run_retained": true,
+  "selected_git_configuration_equivalence_qualified": true,
+  "selected_policy_live_operation_admission_qualified": true,
+  "selected_dirty_execution_context_qualified": true,
+  "arbitrary_native_configuration_effects_qualified": false,
+  "dirty_admission_wait_in_deadline": false,
+  "ancestor_symlink_containment_qualified": false,
+  "proof_authority": false,
+  "runtime_release_qualified": false,
+  "model_task_qualified": false,
+  "training_admitted": false,
+  "promotion_admitted": false,
+  "source_observations_atomic_or_continuous": false,
+  "fresh_interpreter_restart_qualified": false,
+  "active_main_modified": false,
+  "merges": 0,
+  "pushes": 0,
+  "network_fetches": 0,
+  "new_embeddings_generated": 0,
+  "model_executions": 0,
+  "solver_native_launches": 0,
+  "ducklake_operations": 0,
+  "supervisor_operations": 0,
+  "next_executable_cohort": "Qualify repository native configuration effects and descriptor-relative ancestor containment, then guarded fresh-interpreter/submodule replay and noncommitted witnesses. Next admit positive typed native code/formal/domain/applicability correspondence and independent family/width/checkpoint/vector/store contracts before model execution or planner effects."
+}

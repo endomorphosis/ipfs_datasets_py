@@ -172,6 +172,10 @@ class RepositorySnapshot:
         return result
 
 def _git(root: Path, args: Sequence[str]) -> subprocess.CompletedProcess[bytes]:
+    from ..codebase_git_operation import current_git_operation
+    operation = current_git_operation()
+    if operation is not None:
+        return operation.run(root, args)
     try: return subprocess.run(["git", *args], cwd=str(root), stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False, timeout=GIT_COMMAND_TIMEOUT_SECONDS)
     except subprocess.TimeoutExpired as exc: raise GitCommandTimeout("git command timed out") from exc
     except OSError as exc: raise GitSnapshotError("git execution failed") from exc
