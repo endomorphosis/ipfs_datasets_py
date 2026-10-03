@@ -1,0 +1,46 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 127 items
+
+tests/unit/duckdb_control/test_autoencoder_artifact_reads.py ........... [  8%]
+.......................                                                  [ 26%]
+tests/unit/duckdb_control/test_autoencoder_registry.py ................. [ 40%]
+....................................................                     [ 81%]
+tests/unit/duckdb_control/test_autoencoder_registry_lifecycle.py ....... [ 86%]
+.................                                                        [100%]
+
+- generated xml file: /home/barberb/lift_coding/artifacts/registry-bounded-replay-20261003/final-storage-tests.xml -
+============================= 127 passed in 10.59s =============================
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 9 items
+
+tests/integration/logic/software_contracts/test_codebase_resident_inference.py . [ 11%]
+........                                                                 [100%]
+
+- generated xml file: /home/barberb/lift_coding/artifacts/registry-bounded-replay-20261003/final-resident-tests.xml -
+======================== 9 passed in 142.37s (0:02:22) =========================
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 31 items / 19 deselected / 12 selected
+
+tests/integration/logic/software_contracts/test_codebase_training_generation.py s [  8%]
+sssssssssss                                                              [100%]
+
+- generated xml file: /home/barberb/lift_coding/artifacts/registry-bounded-replay-20261003/final-generation-tests.xml -
+====================== 12 skipped, 19 deselected in 1.32s ======================

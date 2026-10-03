@@ -434,7 +434,8 @@ def infer_and_index(index,repository,*,expected_head,registry,version_id,paths,e
 
 def load_projection(index,registry,artifact,*,expected_head,version_id,paths,embedding_snapshot):
     """Historical projection replay; exact new model dependencies are mandatory."""
-    saved=json.loads(registry.read_artifact(artifact,max_bytes=MAX_BYTES))
+    registry.verify_artifact(artifact)
+    saved=json.loads(registry.artifact_path(artifact).read_bytes())
     expected,_,_=_projection_key(index,registry,expected_head=expected_head,version_id=version_id,
         paths=paths,embedding_snapshot=embedding_snapshot)
     require(saved['schema']=='codebase-model-projection-index@1' and saved['key']==expected

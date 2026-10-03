@@ -1,0 +1,27 @@
+[
+  {
+    "path": "ipfs_datasets_py/duckdb_control/autoencoder_registry.py",
+    "sha256": "f6e782db575b3b645439082bb244449152c55cd82bdf1f8787fce9a1381fab7f",
+    "snapshot": "/home/barberb/lift_coding/artifacts/registry-bounded-replay-20261003/sources/ipfs_datasets_py__duckdb_control__autoencoder_registry.py"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_source_384.py",
+    "sha256": "1d9685ff53d0ba04dad4056fae11e0ddf8abf6bafe387bff428aa79e8e29b378",
+    "snapshot": "/home/barberb/lift_coding/artifacts/registry-bounded-replay-20261003/sources/ipfs_datasets_py__logic__software_contracts__codebase_source_384.py"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py",
+    "sha256": "21fc93664bc149a8d514e4f2a7925d378e1bcce2e77ed960f73c183fbb44fc24",
+    "snapshot": "/home/barberb/lift_coding/artifacts/registry-bounded-replay-20261003/sources/ipfs_datasets_py__logic__software_contracts__codebase_prior_384.py"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_resident_inference.py",
+    "sha256": "a3d242aef70e8fe2a6bcd1e8ed06b63e72f0c8754bf164da7cc5b1d60267e330",
+    "snapshot": "/home/barberb/lift_coding/artifacts/registry-bounded-replay-20261003/sources/ipfs_datasets_py__logic__software_contracts__codebase_resident_inference.py"
+  },
+  {
+    "path": "tests/unit/duckdb_control/test_autoencoder_artifact_reads.py",
+    "sha256": "1bc626640079d0b0bb54c0b7f989256c93efb562115f1ae0a26d0e7e1555c1d5",
+    "snapshot": "/home/barberb/lift_coding/artifacts/registry-bounded-replay-20261003/sources/tests__unit__duckdb_control__test_autoencoder_artifact_reads.py"
+  }
+]

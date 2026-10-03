@@ -1,0 +1,92 @@
+{
+  "schema": "registry-bounded-replay-qualification@1",
+  "qualified": true,
+  "source_scope": [
+    {
+      "path": "ipfs_datasets_py/duckdb_control/autoencoder_registry.py",
+      "sha256": "f6e782db575b3b645439082bb244449152c55cd82bdf1f8787fce9a1381fab7f",
+      "snapshot": "/home/barberb/lift_coding/artifacts/registry-bounded-replay-20261003/final-sources/ipfs_datasets_py__duckdb_control__autoencoder_registry.py"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_source_384.py",
+      "sha256": "1d9685ff53d0ba04dad4056fae11e0ddf8abf6bafe387bff428aa79e8e29b378",
+      "snapshot": "/home/barberb/lift_coding/artifacts/registry-bounded-replay-20261003/final-sources/ipfs_datasets_py__logic__software_contracts__codebase_source_384.py"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py",
+      "sha256": "f14e43690cc98ae0b34ddfadf5c22a2600390ccffbf10f6e22b7b5f2b8dd1c51",
+      "snapshot": "/home/barberb/lift_coding/artifacts/registry-bounded-replay-20261003/final-sources/ipfs_datasets_py__logic__software_contracts__codebase_prior_384.py"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_model_generation.py",
+      "sha256": "213d323cd8c906590b310b181d91698f2c8257940870a5b055595da696e56063",
+      "snapshot": "/home/barberb/lift_coding/artifacts/registry-bounded-replay-20261003/final-sources/ipfs_datasets_py__logic__software_contracts__codebase_model_generation.py"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_resident_inference.py",
+      "sha256": "a3d242aef70e8fe2a6bcd1e8ed06b63e72f0c8754bf164da7cc5b1d60267e330",
+      "snapshot": "/home/barberb/lift_coding/artifacts/registry-bounded-replay-20261003/final-sources/ipfs_datasets_py__logic__software_contracts__codebase_resident_inference.py"
+    },
+    {
+      "path": "tests/unit/duckdb_control/test_autoencoder_artifact_reads.py",
+      "sha256": "1817fb13d533423b88fe07edce4790fb003208b3440b59797d15a0dff07a4f91",
+      "snapshot": "/home/barberb/lift_coding/artifacts/registry-bounded-replay-20261003/final-sources/tests__unit__duckdb_control__test_autoencoder_artifact_reads.py"
+    }
+  ],
+  "distinct_final_tests": 148,
+  "tests": [
+    {
+      "path": "final-storage-tests.xml",
+      "selected": 127,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 10.593
+    },
+    {
+      "path": "final-resident-tests.xml",
+      "selected": 9,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 142.369
+    },
+    {
+      "path": "generation-with-lake-tests.xml",
+      "selected": 12,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 18.994
+    }
+  ],
+  "earlier_generations": [
+    {
+      "path": "storage-tests.xml",
+      "selected": 121,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 11.501
+    },
+    {
+      "path": "resident-tests.xml",
+      "selected": 9,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 97.104
+    }
+  ],
+  "retained_unavailable_attempt": {
+    "path": "final-generation-tests.xml",
+    "selected": 12,
+    "failed": 0,
+    "skipped": 12,
+    "seconds": 1.323
+  },
+  "unavailable_reason": "Initial generation selection omitted the explicit CODEBASE384_LAKE variable; all12 skipped. Fresh run with pinned Lake executed and passed all12.",
+  "limits": [
+    "Artifact input bytes are bounded, not total peak RSS; chunk collection plus join has additional memory cost.",
+    "No artifact or producer generation is migrated and no checkpoint is promoted.",
+    "Native CPU inference and independent Lake/source checks do not establish general neural formalization, CUDA qualification or benchmark advantage.",
+    "Resident source fixture capture uses its declared injected sampler; numerical work uses default native datasets admission. Source-generation controls use existing isolated native scheduler with actual host sampling."
+  ],
+  "proof_authority": false,
+  "benchmark_score": false
+}

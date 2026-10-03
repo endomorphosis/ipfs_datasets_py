@@ -1,0 +1,32 @@
+[
+  {
+    "path": "ipfs_datasets_py/duckdb_control/autoencoder_registry.py",
+    "sha256": "f6e782db575b3b645439082bb244449152c55cd82bdf1f8787fce9a1381fab7f",
+    "snapshot": "/home/barberb/lift_coding/artifacts/registry-bounded-replay-20261003/final-sources/ipfs_datasets_py__duckdb_control__autoencoder_registry.py"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_source_384.py",
+    "sha256": "1d9685ff53d0ba04dad4056fae11e0ddf8abf6bafe387bff428aa79e8e29b378",
+    "snapshot": "/home/barberb/lift_coding/artifacts/registry-bounded-replay-20261003/final-sources/ipfs_datasets_py__logic__software_contracts__codebase_source_384.py"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py",
+    "sha256": "f14e43690cc98ae0b34ddfadf5c22a2600390ccffbf10f6e22b7b5f2b8dd1c51",
+    "snapshot": "/home/barberb/lift_coding/artifacts/registry-bounded-replay-20261003/final-sources/ipfs_datasets_py__logic__software_contracts__codebase_prior_384.py"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_model_generation.py",
+    "sha256": "213d323cd8c906590b310b181d91698f2c8257940870a5b055595da696e56063",
+    "snapshot": "/home/barberb/lift_coding/artifacts/registry-bounded-replay-20261003/final-sources/ipfs_datasets_py__logic__software_contracts__codebase_model_generation.py"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_resident_inference.py",
+    "sha256": "a3d242aef70e8fe2a6bcd1e8ed06b63e72f0c8754bf164da7cc5b1d60267e330",
+    "snapshot": "/home/barberb/lift_coding/artifacts/registry-bounded-replay-20261003/final-sources/ipfs_datasets_py__logic__software_contracts__codebase_resident_inference.py"
+  },
+  {
+    "path": "tests/unit/duckdb_control/test_autoencoder_artifact_reads.py",
+    "sha256": "1817fb13d533423b88fe07edce4790fb003208b3440b59797d15a0dff07a4f91",
+    "snapshot": "/home/barberb/lift_coding/artifacts/registry-bounded-replay-20261003/final-sources/tests__unit__duckdb_control__test_autoencoder_artifact_reads.py"
+  }
+]
