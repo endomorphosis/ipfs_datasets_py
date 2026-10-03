@@ -192,7 +192,7 @@ def train(student, training_rows, validation_rows, *, training_references, valid
           curriculum, strategy="reference_ce", config=None, cardinality_weight=0.,
           count_exposure="current_stage", source_value_weight=0.,
           order_augmentation=None, generated_boundary_weight=0., generated_boundary_gradient_scope="all_trainable",
-          source_contexts=None, action_contrastive_weight=0.):
+          source_contexts=None, action_contrastive_weight=0., generated_boundary_site_policy="first_last"):
     """Fresh reference-supervised fit; source fidelity gates experimental selection.
 
     The last complete attempt is retained as an explicitly unselected diagnostic.
@@ -219,6 +219,10 @@ def train(student, training_rows, validation_rows, *, training_references, valid
         "unknown generated-boundary gradient scope")
     core._require(generated_boundary_gradient_scope == "all_trainable" or generated_boundary_weight > 0,
         "count-only boundary gradient scope requires positive boundary weight")
+    core._require(type(generated_boundary_site_policy) is str
+        and generated_boundary_site_policy in ("first_last", "first_wrong"), "unknown generated-boundary site policy")
+    core._require(generated_boundary_site_policy == "first_last" or generated_boundary_weight > 0,
+        "targeted boundary policy requires positive boundary weight")
     core._require(order_augmentation is None or type(order_augmentation) is dict
         and set(order_augmentation) == {"preparation", "embedding_observations"},
         "closed order-augmentation inputs required")
@@ -231,11 +235,13 @@ def train(student, training_rows, validation_rows, *, training_references, valid
             "ordered-clause-recurrent-source-decoder-development/v1"),
         "positive action-contrastive weight requires action-factorized clause model")
     core._require(contextual == (source_contexts is not None), "clause source model and explicit contexts must be paired")
+    contextual_boundary = bool(generated_boundary_weight and (contextual or generated_boundary_site_policy != "first_last"))
+    core._require(not contextual_boundary or generated_boundary_gradient_scope == "all_trainable",
+        "contextual or targeted boundary loss requires all-trainable gradients")
     context_receipt = None
     training_contexts = validation_contexts = None
     if source_contexts is not None:
-        core._require(order_augmentation is None and generated_boundary_weight == 0.,
-            "context training does not support order substitution or generated-boundary loss")
+        core._require(order_augmentation is None, "context training does not support order substitution")
         from . import clause_source_context
         context_receipt = clause_source_context.validate_training_contexts(training_rows, validation_rows, source_contexts)
         training_contexts, validation_contexts = source_contexts["train"], source_contexts["validation"]
@@ -311,6 +317,14 @@ def train(student, training_rows, validation_rows, *, training_references, valid
         # addition to the unchanged reference loss. This is not an RSS quota.
         estimate += options["max_optimizer_steps"]*options["batch_size"]*options["max_target_tokens"]*48
         estimate += 134217728
+        if contextual_boundary:
+            # Complete seven-field rules need at least 32 consumed tokens.
+            # With the fixed <=512 output ceiling, 32 observed sites is a
+            # conservative bound. Include every observed full-vocabulary
+            # logit vector plus two selected and two replayed vectors, allowing
+            # 32 bytes per retained Python float/list slot. Larger vocabularies
+            # must pass explicit admission too; this remains an estimate, not RSS.
+            estimate += options["max_optimizer_steps"]*options["batch_size"]*36*len(codec["target_vocabulary"])*32
     if source_contexts is not None:
         estimate += 16*options["batch_size"]*8*student.dimension*4 + len(core._raw(source_contexts))
     if action_contrastive_weight:
@@ -358,7 +372,10 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     boundary_owner = None
     boundary_counts = None
     if generated_boundary_weight:
-        from . import generated_boundary_training as boundary_owner
+        if contextual_boundary:
+            from . import contextual_generated_boundary_training as boundary_owner
+        else:
+            from . import generated_boundary_training as boundary_owner
         boundary_counts = {identity: value+1 for identity, value in _count_labels(effective_references).items()}
     for stage in stages:
         if baseline is None or stopped != "epochs_completed":
@@ -432,12 +449,19 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                 boundary_result = None
                 if boundary_owner is not None:
                     try:
+                        boundary_sources = [dict(id=row["id"], input=row["input"],
+                            **({} if training_contexts is None else {"source_text": row["source_text"]})) for row in part]
+                        boundary_context = ({} if training_contexts is None else {"source_contexts":
+                            {row["id"]: training_contexts[row["id"]] for row in part}})
                         collection = boundary_owner.collect_source_boundary_prefixes(working,
-                            [dict(id=row["id"], input=row["input"]) for row in part], codec=codec,
+                            boundary_sources, codec=codec,
                             input_transform=input_transform, max_target_tokens=options["max_target_tokens"],
-                            batch_size=options["batch_size"], deadline=deadline, max_sites_per_row=2)
+                            batch_size=options["batch_size"], deadline=deadline, max_sites_per_row=2,
+                            **boundary_context)
                         boundary_result = boundary_owner.generated_boundary_loss(torch, working,
                             collection, boundary_counts, codec=codec, input_transform=input_transform, deadline=deadline,
+                            **boundary_context,
+                            **({"site_policy": generated_boundary_site_policy} if contextual_boundary else {}),
                             **({} if generated_boundary_gradient_scope == "all_trainable" else
                                {"gradient_scope": generated_boundary_gradient_scope}))
                     except TimeoutError:
@@ -611,8 +635,11 @@ def train(student, training_rows, validation_rows, *, training_references, valid
         report["generated_boundary_gradient_scope"] = generated_boundary_gradient_scope
     if boundary_owner is not None:
         report.update(generated_boundary_weight=generated_boundary_weight,
-            generated_boundary_policy="complete_source_only_greedy_then_first_and_last_distinct_visited_boundary",
-            generated_boundary_site_cap_per_row=2, generated_boundary_rows="current_effective_training_batch_only",
+            generated_boundary_policy=("complete_source_only_greedy_then_first_wrong_visited_boundary"
+                if generated_boundary_site_policy == "first_wrong" else
+                "complete_source_only_greedy_then_first_and_last_distinct_visited_boundary"),
+            generated_boundary_site_cap_per_row=1 if generated_boundary_site_policy == "first_wrong" else 2,
+            generated_boundary_rows="current_effective_training_batch_only",
             generated_boundary_supervision="full_vocabulary_CE; mean_per_active_row_then_active_rows",
             generated_boundary_reference_access="training_loss_labels_only; never_greedy_rollout",
             generated_boundary_used_for_selection=False)

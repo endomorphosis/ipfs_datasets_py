@@ -3216,3 +3216,143 @@ The 2,314 scoped regression tests pass, including 44 new architecture tests and 
 The result points toward testing boundary-specific training next. The existing generated-boundary collector samples the first and last visited boundaries; the saved diagnosis shows this would omit the first wrong close/continue decision in 12 of 17 erroneous rows of the prior best 768D validation arm. A future objective should retain full-vocabulary scoring, keep training labels out of generation, support the authenticated clause contexts, and test whether those actual errors improve. This experiment adds no such loss and claims no global convergence.
 
 No bridge-on legal-IR evaluation, native-family qualification or Lake build was run. Bridge names are `[]`, prover evaluation is `false`, metric disk cache is disabled, worker count is 1, and each panel contains 48 samples. These cached-source decoder timings cannot be used as parser/compile or bridge-on timings. No admit, formalized flag, `roundtrip_ok`, fresh-holdout claim or production promotion follows. The Constitution remains unformalized. Full evidence is published under `docs/implementation/reports/evidence/decoder-boundary-reconstruction-20261003/`: `results.json`, `manifest.json`, and ordered `evidence.tar.xz.part-*` chunks. Concatenate the parts in manifest order and verify both chunk and logical-archive hashes before extraction; predecessor artifacts have explicit immutable Git references.
+
+
+## Context-aware generated-boundary training (2026-10-03)
+
+The previously unsupported context-aware stopping loss now works across the experimental 8D/384D/768D formula sidecars. Eighteen fresh fits improve pooled exact reconstruction from 58/288 to 83/288 with first/last supervision and 81/288 with first-wrong supervision. These denominators count the same 48 exposed development paragraphs evaluated under six width/seed combinations, not 288 independent spans. No candidate passes every original gate, so no production recipe or checkpoint is replaced.
+
+This adds training supervision, not a different decoder architecture. The recurrent model, initialization, 32-token vocabulary, ordinary losses and source data are inherited unchanged. It uses 48 training and 48 development paragraphs, with 12 examples at each of 1/2/4/8 source clauses; both splits have 180 rule occurrences. The earlier training-only diagnosis found that recurrent conditioning reduced wrong stopping rows from 170 to 76 across six fits, while first/last sampling missed the earliest error in four of those remaining rows. That motivated a bounded first-wrong experiment, not a claim that this sampling policy is optimal. Each arm starts fresh and keeps 340 updates over four cumulative 20-epoch stages, batch 8, learning rate 0.001, the existing scheduler and all original source-fidelity selection rules.
+
+### Observed quality and tradeoffs
+
+This eighteen-fit experiment compares the same fresh recurrent decoder with no boundary loss, first/last boundary loss, and first-wrong boundary loss. Positive arms use coefficient 0.05; source rows, ordinary training exposure, optimizer, other losses and acceptance gates stay fixed. The values below describe final private attempts on repeatedly exposed validation rows, not a fresh held-out assessment.
+
+| Width | Seed | Exact baseline / first-last / first-wrong, out of 48 | Token CE | Duplicate rules | Fit seconds |
+|---:|---:|---|---|---|---|
+| 8 | 1729 | 1 / 1 / 1 | 0.13965 / 0.13029 / 0.13411 | 14 / 10 / 14 | 13.47 / 44.80 / 47.23 |
+| 8 | 2718 | 1 / 1 / 1 | 0.14216 / 0.12769 / 0.13475 | 18 / 11 / 12 | 12.69 / 46.50 / 41.08 |
+| 384 | 1729 | 9 / 13 / 12 | 0.09810 / 0.10807 / 0.09197 | 1 / 0 / 1 | 17.89 / 60.26 / 59.95 |
+| 384 | 2718 | 8 / 9 / 12 | 0.12526 / 0.10359 / 0.09603 | 0 / 0 / 17 | 17.44 / 63.75 / 54.37 |
+| 768 | 1729 | 9 / 17 / 14 | 0.09221 / 0.07903 / 0.09097 | 4 / 0 / 12 | 22.40 / 88.20 / 70.77 |
+| 768 | 2718 | 30 / 42 / 41 | 0.03448 / 0.02942 / 0.03429 | 20 / 0 / 15 | 23.30 / 91.12 / 82.20 |
+
+Aggregate exact reconstruction across the six width/seed pairs is recurrent-clause: 58/288, boundary-first-last: 83/288, boundary-first-wrong: 81/288.
+
+| Width | Seed | Arm | Exact at lengths 1/2/4/8, each out of 12 | EOS / syntax, out of 48 | Missing / extra rules | Generated actor-action /180 |
+|---:|---:|---|---|---|---|---|
+| 8 | 1729 | recurrent-clause | 1/0/0/0 | 48 / 45 | 162 / 163 | 37 |
+| 8 | 1729 | boundary-first-last | 1/0/0/0 | 48 / 48 | 157 / 157 | 45 |
+| 8 | 1729 | boundary-first-wrong | 1/0/0/0 | 48 / 48 | 157 / 156 | 43 |
+| 8 | 2718 | recurrent-clause | 1/0/0/0 | 48 / 47 | 162 / 174 | 29 |
+| 8 | 2718 | boundary-first-last | 1/0/0/0 | 48 / 48 | 159 / 159 | 39 |
+| 8 | 2718 | boundary-first-wrong | 1/0/0/0 | 48 / 48 | 158 / 157 | 41 |
+| 384 | 1729 | recurrent-clause | 7/0/2/0 | 48 / 47 | 90 / 74 | 116 |
+| 384 | 1729 | boundary-first-last | 8/1/3/1 | 48 / 47 | 63 / 57 | 146 |
+| 384 | 1729 | boundary-first-wrong | 8/4/0/0 | 48 / 47 | 73 / 74 | 137 |
+| 384 | 2718 | recurrent-clause | 8/0/0/0 | 48 / 48 | 143 / 33 | 42 |
+| 384 | 2718 | boundary-first-last | 8/1/0/0 | 48 / 35 | 99 / 67 | 113 |
+| 384 | 2718 | boundary-first-wrong | 8/2/1/1 | 48 / 48 | 71 / 92 | 138 |
+| 768 | 1729 | recurrent-clause | 8/0/1/0 | 48 / 47 | 95 / 50 | 87 |
+| 768 | 1729 | boundary-first-last | 9/4/4/0 | 48 / 45 | 63 / 50 | 121 |
+| 768 | 1729 | boundary-first-wrong | 9/3/2/0 | 48 / 47 | 59 / 68 | 127 |
+| 768 | 2718 | recurrent-clause | 12/5/5/8 | 48 / 48 | 10 / 33 | 170 |
+| 768 | 2718 | boundary-first-last | 12/12/11/7 | 48 / 48 | 7 / 7 | 173 |
+| 768 | 2718 | boundary-first-wrong | 12/11/7/11 | 48 / 48 | 2 / 20 | 178 |
+
+Selected-epoch distribution: epoch 0: 18 fits. Selected and final attempts remain separate; numerical progress cannot override any original per-length gate.
+
+Every final candidate fails a per-length extra-rule nonregression check; some also fail invalid-rule checks. Full reasons are retained in the evidence instead of being relaxed.
+
+The complete uncollapsed final reasons and all-validation reason frequencies remain in outcomes.json. Higher exact counts, lower CE or fewer duplicates cannot compensate for a regression in another required per-length condition.
+
+| Width | Seed | Boundary policy | Active row presentations | Selected labels | Stop / continue labels | No-error skips / no-site rows | Rollout / replay row tokens | Collection / loss-helper seconds |
+|---:|---:|---|---:|---:|---|---|---|---|
+| 8 | 1729 | first_last | 2319 | 3239 | 1737 / 1502 | 0 / 121 | 206101 / 181305 | 21.143 / 6.862 |
+| 8 | 1729 | first_wrong | 282 | 282 | 53 / 229 | 2088 / 70 | 248660 / 11160 | 25.015 / 4.459 |
+| 8 | 2718 | first_last | 2373 | 3431 | 1920 / 1511 | 0 / 67 | 210373 / 194952 | 22.308 / 7.091 |
+| 8 | 2718 | first_wrong | 311 | 311 | 57 / 254 | 2082 / 47 | 203479 / 13421 | 20.435 / 5.058 |
+| 384 | 1729 | first_last | 2334 | 2804 | 1224 / 1580 | 0 / 106 | 171644 / 132789 | 25.424 / 13.965 |
+| 384 | 1729 | first_wrong | 459 | 459 | 25 / 434 | 1874 / 107 | 173871 / 17478 | 27.881 / 11.218 |
+| 384 | 2718 | first_last | 2363 | 2917 | 1377 / 1540 | 0 / 77 | 201841 / 155939 | 27.708 / 14.220 |
+| 384 | 2718 | first_wrong | 414 | 414 | 30 / 384 | 1952 / 74 | 169246 / 16539 | 24.530 / 10.345 |
+| 768 | 1729 | first_last | 2326 | 3034 | 1385 / 1649 | 0 / 114 | 208565 / 158134 | 39.207 / 21.153 |
+| 768 | 1729 | first_wrong | 519 | 519 | 28 / 491 | 1829 / 92 | 160467 / 20589 | 29.834 / 16.351 |
+| 768 | 2718 | first_last | 2365 | 3334 | 1817 / 1517 | 0 / 75 | 211839 / 189079 | 39.986 / 21.906 |
+| 768 | 2718 | first_wrong | 295 | 295 | 33 / 262 | 2050 / 95 | 214303 / 12367 | 39.822 / 16.288 |
+
+First-wrong selects at most one observed error per training row after the full greedy rollout; its correct/no-site rows attach no boundary graph. First/last selects at most two actual boundaries regardless of correctness. Their label counts, replay lengths and objective contributions differ. This comparison fixes optimizer updates and ordinary exposure; it is not matched by wall-clock training time. Equal ordinary optimizer exposure does not mean equal total computation or auxiliary supervision. Boundary loss remains full-vocabulary CE, averaged within each active row and then across active rows. Added loss cost and reconstruction changes do not establish the fastest convergence; a later comparison would need equal wall time or a separately tested reduction in rollout frequency.
+
+| Width | Seed | Arm | Numerical seconds/48 | Numerical seconds/span | Full panel seconds/span | Training row presentations/second |
+|---:|---:|---|---:|---:|---:|---:|
+| 8 | 1729 | recurrent-clause | 0.306437 | 0.006384 | 0.009393 | 181.15 |
+| 8 | 1729 | boundary-first-last | 0.309418 | 0.006446 | 0.009481 | 54.47 |
+| 8 | 1729 | boundary-first-wrong | 0.299754 | 0.006245 | 0.009267 | 51.67 |
+| 8 | 2718 | recurrent-clause | 0.399309 | 0.008319 | 0.011306 | 192.25 |
+| 8 | 2718 | boundary-first-last | 0.306456 | 0.006384 | 0.009409 | 52.47 |
+| 8 | 2718 | boundary-first-wrong | 0.298737 | 0.006224 | 0.009265 | 59.40 |
+| 384 | 1729 | recurrent-clause | 0.461183 | 0.009608 | 0.020026 | 136.36 |
+| 384 | 1729 | boundary-first-last | 0.430970 | 0.008979 | 0.019368 | 40.49 |
+| 384 | 1729 | boundary-first-wrong | 0.492266 | 0.010256 | 0.020999 | 40.70 |
+| 384 | 2718 | recurrent-clause | 0.313434 | 0.006530 | 0.016625 | 139.91 |
+| 384 | 2718 | boundary-first-last | 0.441981 | 0.009208 | 0.019564 | 38.27 |
+| 384 | 2718 | boundary-first-wrong | 0.535835 | 0.011163 | 0.021871 | 44.88 |
+| 768 | 1729 | recurrent-clause | 0.632243 | 0.013172 | 0.031180 | 108.92 |
+| 768 | 1729 | boundary-first-last | 0.598622 | 0.012471 | 0.030638 | 27.67 |
+| 768 | 1729 | boundary-first-wrong | 0.611835 | 0.012747 | 0.030935 | 34.48 |
+| 768 | 2718 | recurrent-clause | 0.671941 | 0.013999 | 0.032442 | 104.71 |
+| 768 | 2718 | boundary-first-last | 0.607532 | 0.012657 | 0.031666 | 26.78 |
+| 768 | 2718 | boundary-first-wrong | 0.949027 | 0.019771 | 0.038829 | 29.69 |
+
+The complete numerical runner took 1262.585s; training calls summed to 857.411s. Each fit completed 340 updates, 2,440 ordinary row/count presentations, 225,840 reference-token presentations and 25,600 scalar labels; additional boundary work is recorded separately. Positive arms use a 1 GiB conservative tensor-work allowance because of retained prefixes/graphs; the zero-loss replay preserves its predecessor allowance. This is not an RSS quota or a change in training exposure.
+
+All timings are observed shared-host CPU wall times with worker count 1, cached authenticated source embeddings, bridge names [], prover evaluation false, and metric disk cache disabled. Each evaluation has 48 samples. No encoder forward or weight download occurs. The numerical call includes teacher-forced reference CE, free generation and identity-projection checks; the full panel adds controls and source-fidelity/readout scoring. Separately retained potential-residual observations and serialization are outside those panel timings. Generated lengths differ, so shorter output does not demonstrate better conversion throughput.
+
+Legal-IR bridge targets were not measured; legal_ir_target_count is not asserted to be zero or positive. These measurements are not bridge-on evaluations and claim no bridge-on speed improvement. Identity projection MSE is not learned reconstruction. The historical 8D linguistic teacher is unchanged. No native-family qualification or Lake build occurred, and no admission, formalization, roundtrip_ok, production promotion, fresh-holdout claim or proof of convergence follows. The Constitution remains unformalized.
+
+
+The gains are uneven. First/last improves pooled exactness but reduces syntax-valid evaluations from 282/288 to 271/288; first-wrong reaches 286/288. The 384D seed 2718 first/last candidate has only 35/48 syntax-valid outputs, versus 48/48 at baseline. Both 8D seeds remain at 1/48 exact. These failures remain visible in the tables and archived predictions.
+
+For 768D seed 2718, first/last reaches 42/48 exact, emits exactly 180 rules and has no syntax errors or duplicates, but still substitutes seven incorrect whole rules. Its exact counts by length are 12/12/11/7, so eight-clause exactness falls from 8/12 to 7/12. First-wrong reaches 41/48 with 12/11/7/11 by length, improving eight-clause exactness to 11/12, but emits 198 rules with 15 duplicates, 20 extra and two missing whole rules. Extra/missing counts include incorrect substitutions as well as differences in length. Both fit all 48 training paragraphs exactly, so the remaining failures are visible source-fidelity/generalization gaps on this exposed development set.
+
+For those two best final states, whole-source and context-only shuffles both reduce exactness to 0/48. Removing the learned recurrent clause residual reduces first/last from 42 to 10 exact and first-wrong from 41 to 18. Zero-source controls yield 1 and 0 exact respectively. These are fixed-state controls, not additional training or independent semantic validation.
+
+The six baseline training calls total 107.202 s, first/last totals 394.626 s (3.68 times baseline), and first-wrong totals 355.583 s (3.32 times). First-wrong uses 2,280 labels versus 18,759, but both policies still perform 14,640 complete source-row rollouts. Collection takes 167.518 s versus 175.776 s, and loss-helper work takes 63.719 s versus 85.197 s. Fewer selected labels therefore reduce total fit time by only about ten percent between these two policies. No fastest-convergence or throughput improvement is established by this fixed-update comparison.
+
+### Optional training path and reproduction
+
+`long_span_source_value_training.train` now accepts `generated_boundary_site_policy="first_last"` or `"first_wrong"` with a positive `generated_boundary_weight`. Contextual clause, action-factorized and ordered-recurrent models use the new `contextual_generated_boundary_training.py` owner. The shared-slot default `first_last` path keeps its historical owner. With weight zero, there is no boundary collection, graph or report field. Contextual and targeted loss supports `all_trainable` gradients; count-head-only replay remains available only on the original legacy path. Order substitution with clause contexts remains unsupported.
+
+The new collector accepts only `id`, `input` and `source_text` for contextual models (only `id` and `input` for shared-slot models), plus the exact authenticated context subset supplied separately. It does not accept reference documents, reference prefixes, reference counts or a site policy. It completes temperature-zero source-only generation, recording every actual complete-rule boundary, chosen next token and full-vocabulary logits. The training loss then receives authenticated training counts and selects either the first and last distinct boundary or the first decision whose argmax differs from the count-derived comma/closing-bracket label. `first_wrong` skips correct and no-site rows without attaching a loss graph.
+
+Selected prefixes are replayed once per active row with the original source contexts. Replay logits must match the recorded decisions within explicit float tolerance. The objective is full-vocabulary cross-entropy, averaged over selected sites within a row and then over active rows. No vocabulary mask, synthetic boundary, count-forced generation or additional optimizer step is introduced. Counts supervise this auxiliary loss only after rollout; the unchanged validation gates judge the actual generated formulas.
+
+Each committed update retains prefix/decision evidence, full-vocabulary logits, loss coefficients, stop/continue labels, row/site counts, source/context hashes and collection/loss timings. Vector arrays are omitted from the trainer receipts; authenticated preprocessing files retain their source. No model deep copy is made by the helper. Caller modes, tensors, gradients and ambient RNG are checked for preservation. Deadline expiry in collection, replay or before the optimizer step discards the partial update. The existing AdamW, clipping, scheduler and selection logic remain unchanged.
+
+The candidate tensor-work estimate now includes vocabulary-dependent retained logit arrays. This experiment uses a 1 GiB estimate allowance for positive-boundary arms and retains the baseline's 512 MiB allowance for exact replay; neither is a kernel memory quota. The outer guard reserves 4 GiB and polls process-group RSS. Larger vocabularies still have to pass explicit admission.
+
+`scripts/ops/autoencoder/benchmark_context_boundary_training.py` owns the sealed 18-fit recipe. Use the archived `run_training_reserved.py --phase training --attempt <fresh-directory>` with the matching frozen dependency tree, extension sources and manifests. The underlying runner takes `--dependency-root`, `--extension-root`, `--manifest`, `--plan`, `--output` and `--phase training`. Do not substitute live parser imports, change source/reference inputs, reuse an existing output directory, or warm-start a failed final state while calling it the original baseline.
+
+The helper is specific to the existing seven-field Legal rule grammar. This round does not establish other modality/family coverage or native semantics. It does not retrain the historical 8D linguistic teacher, execute an encoder, download weights, or change either 512-token limit. The identity projection's zero MSE is not learned reconstruction. The authored source segmentation has one source clause per rule; real statutory segmentation remains outside this experiment.
+
+
+### Verification, resources and remaining work
+
+The frozen scoped suite passes 2,430 tests. This includes 65 new helper tests and 52 new trainer/runner tests; one obsolete test expecting rejection of the newly supported combination was removed, while unsupported order-substitution rejection remains tested. The known 16 setup cases for an incompatible, unused retained Legal 384 release remain outside this scope and are preserved in predecessor evidence. Six complete baseline training reports, tensor states and all nine selected/final control panels replay the prior recurrent experiment exactly, excluding elapsed time.
+
+The independent audit authenticates source-only prefixes, actual argmax decisions, post-rollout label selection, complete-vocabulary cross-entropy, reduction/objective/exposure arithmetic, source/context hashes, state exports, scalar/count readouts, controls and original gates. It is saved-data arithmetic, not an independent replay of every optimizer update or every neural autoregressive operation. The separate outcome analysis recomputes 147,108 checks. Frozen imports stay in the canonical dependency snapshot and extension tree; no HACC parser is used.
+
+All 54 typed initial/selected/final states, 324 evaluation panels and complete per-update training receipts are retained. State exports do not include optimizer/RNG state for training resume. The top-level summary references full reports by path/hash instead of duplicating their arrays. The numerical child and guardian both exit 0; no cleanup reconciliation is needed in this run. The one-CPU reservation uses 4 GiB RAM and 3 GB output under the unchanged 140 GB campaign cap. CUDA is disabled. The observed child RSS maximum is 2,185,134,080 bytes across 67 samples, and final attempt accounting is 1,093,983,172 bytes. The guardian takes 1,348.317 s through child exit, including initial admission and monitoring; the numerical runner takes 1,262.585 s. These shared-host observations do not imply isolated hardware throughput.
+
+The next training gap is to reduce incorrect rule content and extra rules without losing the improved long-span behavior. First/last also needs its syntax regression resolved. A future efficiency experiment should compare equal wall time and explicitly measure any reduced rollout frequency or restricted auxiliary-gradient path; changing auxiliary exposure would be a new recipe. None of these future changes is implemented or claimed here, and acceptance rules remain unchanged.
+
+Full evidence is under `docs/implementation/reports/evidence/decoder-context-boundary-training-20261003/`: `results.json`, `manifest.json` and ordered `evidence.tar.xz.part-*` chunks. Reassemble in manifest order, verify each part and the logical archive hash, then extract. Prior source and model inputs retain exact immutable Git/archive references. Lake remains the only Lean admit; this experiment executes no Lake build, grants no admission or `roundtrip_ok`, and does not formalize the Constitution.
+
+
+### Integration with concurrent main-branch work
+
+While this experiment ran, `origin/main` advanced to `c64107b0e042b0611be88abb185148c34d3ebdd1`, including a change to `autoencoder_embedding_runtime.py` for optional release of verified asset pages. The eighteen fits did not import that runtime; the original scoped tests did import its historical version. The original frozen sources, test provenance and training receipts remain unchanged.
+
+A separate merge-compatibility check extracted the exact newer Git blob and overrode only that module for the same scoped suite: all 2,430 tests passed again in 43.01 s. Its 402-check receipt records both hashes, module provenance and the narrow AST review. This was a compatibility test with synthetic decoder fixtures, not a rerun of the eighteen fits or native encoder inference. No weights were downloaded. An initial preflight incorrectly assumed the shared working-tree file already matched remote main; it stopped before tests, and its failed script/log are retained. The successful check instead preserves the local working-tree bytes while testing the exact remote blob.
+
+The publication manifest separates the historical `validated_producer_source_sha256` from `publication_producer_source_sha256` and declares exactly this reviewed override. The archive keeps the historical source under `source/` and the tested newer source under `validation/compatibility-source/`. Publication starts from current main and preserves its newer runtime without staging the stale shared working-tree file. Exact review hashes, archived review membership, both producer hashes and ancestry checks prevent silently substituting a different producer or discarding concurrent work.
