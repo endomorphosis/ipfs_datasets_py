@@ -32,6 +32,30 @@ def _head_specification(model, codec, source_value_weight):
     if not present:
         return None
     description = model.describe()
+    if description.get("schema") == "projected-source-decoder-development/v1":
+        from . import projected_source_decoder_experiment as projected_values
+        core._require(description.get("feature_kind") == "projected_source"
+            and description.get("feature_dimension") == model.dimension
+            and description.get("max_rules") == values.MAX_RULES
+            and description.get("source_fields") == list(values.SOURCE_FIELDS)
+            and description.get("vocabulary_size") == len(codec["target_vocabulary"])
+            and description.get("codec_sha256") == core.digest(codec)
+            and type(description.get("guidance")) is bool
+            and type(description.get("guide_boundary")) is bool
+            and description.get("count_features") == "normalized_projected_source"
+            and description.get("count_classes") == list(range(1,33))
+            and description.get("projection_frozen") is True
+            and description.get("normalization_statistics_frozen") is True
+            and description.get("count_prior_frozen") is True
+            and description.get("output_support") == "complete_inherited_vocabulary"
+            and description.get("source_value_target_access_during_generation") is False
+            and description.get("source_reference_count_access") is False
+            and description.get("syntax_forced") is False
+            and description.get("closure_forced") is False,
+            "authenticated projected-source model specification required")
+        projected_values._checked_receipts(description.get("normalization"),
+            description.get("count_prior"), model.dimension)
+        return deepcopy(description)
     core._require(description.get("schema") == values.SCHEMA
         and description.get("feature_kind") in ("projected_source", "inherited_conditioning")
         and description.get("max_rules") == values.MAX_RULES
@@ -151,6 +175,16 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     train_ids, train_sources = core._rows(training_rows, student.dimension, codec["target_vocabulary"], options["max_target_tokens"])
     tune_ids, tune_sources = core._rows(validation_rows, student.dimension, codec["target_vocabulary"], options["max_target_tokens"])
     core._require(not train_ids & tune_ids and not train_sources & tune_sources, "training/validation overlap")
+    if head_specification is not None and head_specification.get("schema") == "projected-source-decoder-development/v1":
+        inventory = [dict(id=row["id"], source_sha256=hashlib.sha256(row["source_text"].encode()).hexdigest())
+            for row in training_rows]
+        for name in ("normalization", "count_prior"):
+            receipt = head_specification[name]
+            core._require(receipt["training_rows_sha256"] == core.digest(training_rows)
+                and receipt["training_inventory"] == inventory
+                and receipt["expected_training_ids"] == [row["id"] for row in training_rows]
+                and set(receipt["forbidden_validation_ids"]) == tune_ids,
+                "projected-source receipt cohort differs from actual training/validation rows")
     weights = reference_weights(training_rows, training_references, codec, strategy=strategy, validate_rule=validate_rule)
     reference_weights(validation_rows, validation_references, codec, strategy="reference_ce", validate_rule=validate_rule)
     source_labels = (None if head_specification is None else values.reference_source_values(

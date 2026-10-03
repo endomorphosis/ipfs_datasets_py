@@ -1754,3 +1754,289 @@ the Constitution. Fresh holdouts, populated qualifiers, realistic statute spans,
 and faithful multi-rule generation remain open gaps. Further work must improve
 source binding and sequence/cardinality behavior together while retaining the
 existing fidelity and Lake gates.
+
+## Projected-source count and scalar reconstruction experiment (2026-10-03)
+
+This experiment tests joint sequence learning with direct source readouts after
+the preceding source-head-only fits preserved syntax but generated only one rule
+per validation paragraph. It uses the original authenticated 384D donor, the same
+48 authored training paragraphs and 48 repeatedly exposed validation paragraphs,
+and the existing strict selection rules. It is development work, not a fresh
+holdout study, legacy 8D teacher update, or production decoder replacement.
+
+### Why count guidance needs a training prior
+
+The old cardinality head reads the source-conditioned initial hidden state and
+centers its stopping correction on a uniform distribution over 32 count classes.
+That correction adds `log(32-k)` to the stop-versus-tail log odds after rule `k`.
+The actual training inventory has twelve paragraphs each with 1, 2, 4, or 8 rules.
+Even a source-independent predictor matching those four equally frequent classes
+would therefore receive a positive first-rule stopping correction of approximately
+`log(31/3)`, rather than zero, under the uniform-32 reference.
+
+A read-only diagnostic recomputes this hypothetical correction from the four
+previous joint fits' saved validation count logits. Its mean at the first rule
+is +2.228 to +2.237 across those fits. Centering the same saved logits on the
+fixed smoothed training prior instead gives means from -0.0833 to -0.0746. These
+are arithmetic comparisons at a fixed hypothetical boundary, **not new generated
+outputs or evidence that reconstruction improved**. Those four prior fits had
+boundary guidance disabled, so this correction was not the cause of their
+observed errors. The finding prevents a misleading guidance-only follow-up.
+
+The new count prior has positive support for all 32 classes. If `n[k]` is the
+number of original training paragraphs with count `k`, the fixed prior is
+`pi[k] = (n[k] + 1/32) / (N + 1)`: a symmetric Dirichlet smoothing mass of exactly
+one, declared before training. No validation labels fit or tune this prior.
+The readout returns learned count residual logits plus serialized float32
+`log(pi)`. After a complete rule in the decoder's own valid causal prefix, the
+optional correction to the rules-list closing bracket is:
+
+```text
+log p(count = k | source) - log p(count > k | source)
+  - log pi(count = k) + log pi(count > k)
+```
+
+The implementation subtracts two identically shaped, selected-relative
+`logsumexp` terms. Zero learned count residuals therefore produce a bit-exact
+zero boundary correction, including float32 rounding. This is a source-dependent
+odds ratio relative to an empirical training prior, not a calibrated stopping
+probability. The recurrent decoder also reads the source. No count class is
+removed, and there is no hard count, forced continuation, forced closure, token
+mask, or valid-syntax repair. Guidance is inactive at counts of 32 or more and
+permanently disabled after an invalid recognized prefix.
+
+### Entry points and training-only preprocessing
+
+The private numerical owner is
+[`projected_source_decoder_experiment.py`](../../ipfs_datasets_py/logic/formalization/autoencoder/projected_source_decoder_experiment.py),
+with schema `projected-source-decoder-development/v1`. The runner is
+[`benchmark_projected_source_reconstruction.py`](../../scripts/ops/autoencoder/benchmark_projected_source_reconstruction.py).
+It accepts the same authenticated `--dependency-root`, `--extension-root`,
+`--manifest`, `--plan`, and `--output` arguments as the earlier experiments.
+
+- `fit_source_normalization(feature_rows, kind=..., expected_training_ids=...,
+  forbidden_validation_ids=..., training_rows_sha256=...)` accepts source-bound
+  projected **training** vectors only. `none` is the identity transform.
+  `center_rms` subtracts the training coordinate mean and divides by one global
+  RMS of centered row L2 norms, matching the earlier frozen-source probe. A
+  constant training feature set uses scale one. This is not per-coordinate
+  standardization or a changed encoder representation.
+- `fit_source_count_prior(training_count_rows, ...)` accepts the same training
+  identity/source inventory and the authenticated training reference counts.
+  It returns the fixed smoothed prior and its exact float32 logarithms.
+- `bind_projected_source_model(persistent_model, codec=...,
+  normalization_receipt=..., count_prior_receipt=..., guide_boundary=...,
+  scalar_guidance=True)` privately copies the persistent-source decoder and
+  adds independent linear count and scalar heads reading the actual projected
+  384-vector. It exposes `project`, `count_logits`, `source_value_logits`,
+  `start`, `next_logits`, and `describe`.
+- `bind_zero_condition_model(model)` removes both initial and persistent
+  recurrent source access and supplies zero normalized features to both heads.
+  It retains learned head biases and the frozen count prior. In `center_rms`
+  mode, the head control represents the training feature mean; in `none` mode
+  it represents the raw feature origin. The two controls are labeled accordingly.
+
+Both preprocessing receipts retain the exact training inventory, row/feature
+digests, fitted statistics, split exclusion identities, and count histogram.
+The new-schema training path also binds these receipts to the actual supplied
+training/validation cohorts, including source hashes and row digests; internally
+consistent receipts from a different cohort are rejected. The architecture
+records both receipts. `source_mean`, `source_scale`, and
+`count_prior_logits` are frozen state buffers; a state load that would replace
+them with different values is rejected before model mutation. The inherited
+autoencoder projection stays frozen. The sequence decoder, source-to-embedding
+conditioner, projected count residual head, and full-vocabulary scalar head
+remain jointly trainable.
+
+Scalar scores cover eight ordered slots with actor, action, modality, and object
+values. Their residual is applied only at the scalar site selected by the
+decoder's already consumed lexical prefix. Qualifiers still receive the complete
+sequence loss; no absent slot, reference count, reference prefix, or target token
+is supplied to generation. The new count and scalar residual heads start at zero,
+so all arms must reproduce the original donor's complete greedy training and
+validation predictions before fitting. This initial generation parity does not
+imply equality of the initial count loss: the count prior deliberately differs
+from the historical uniform head.
+
+### Fixed comparison and retained gates
+
+The predeclared experiment has eight fits: `none` or `center_rms` normalization,
+each with boundary guidance off or on, at seeds 1729 and 2718. Every arm uses the
+original donor, rather than a previously selected or rejected fitted candidate.
+Each fit retains 340 optimizer updates, 2,440 decoder and balanced count-row
+presentations, 225,840 target-token presentations, and 25,600 present scalar
+labels across the same 80 curriculum epochs. Batch size is eight, initial learning
+rate is 0.001, and count/scalar auxiliary weights are both 0.25. The existing
+semantic-field sequence loss, continuous AdamW/scheduler state, validation
+interval, and per-length nonregression selection remain in force.
+
+Within this new comparison the normalization and guidance axes are controlled.
+A comparison with the older joint fits is broader: count source geometry, count
+prior initialization, and the boundary reference distribution all change. It
+must not be described as a one-setting ablation against the old architecture.
+The head-only fits above also froze the sequence model, so their wall times are
+not directly comparable measures of equal gradient work.
+
+A source-inventory diagnostic clarifies what the unchanged validation split
+tests. The training rules contain 15 distinct actor/action pairs; validation
+contains five different pairs with no overlap. Every validation scalar class
+does occur somewhere in training. Correct validation reconstruction therefore
+requires combining familiar values into previously untrained actor/action
+pairings, in addition to recovering clause count and order. This is useful
+context for the observed actor/action errors, not proof of their sole cause.
+The diagnostic changes no training rows or selection criteria; validation pairs
+must remain excluded from training.
+
+Every selected and last-complete attempted state is serialized, reloaded, and
+evaluated using five postfit panels: ordinary training, ordinary validation,
+zero-source validation, within-length shuffled-source validation, and
+cross-length shuffled-source validation. Cross-length shuffling is a fixed
+rotation between the balanced count bins. It changes only the input vectors;
+original targets and source identities remain available to the scorer. The
+within-length control tests scalar associations while deliberately preserving
+count class. The cross-length control also tests the count association. Neither
+is a fresh generalization dataset, and neither participates in fitting or
+checkpoint selection. This panel catalog replaces the preceding experiment's
+training-shuffle panel with cross-length validation; the difference is explicit.
+
+Full autoregressive output fidelity remains decisive: EOS and parseable syntax
+are distinct from correct rule counts, ordered actor/action/modality/object
+values, missing/extra rules, and whole-paragraph exactness. Auxiliary count or
+scalar accuracy and teacher-forced sequence CE cannot override a failed gate.
+The authored references still have empty condition, exception, and temporal
+lists. These runs cannot establish populated-qualifier fidelity, real statute
+coverage, or correctness across all native logic-family projections.
+
+The new owner has 46 synthetic tests covering training-only preprocessing,
+initial bit-exact generation logits, positive count support, guidance direction
+and gradients, frozen projection/buffer behavior, full-prefix versus incremental
+decoding, interleaved requests, invalid prefixes, and source ablations. Its
+synthetic dimensional-shape checks do not train or validate the historical 8D
+linguistic teacher or a 768D semantic encoder. Actual fits are 384D only.
+Encoder context and decoder output ceiling remain 512, temperature remains zero,
+and no weights are downloaded. These development entry points confer no native
+qualification or Lean admission; only an actual `lake build <Lib>` can establish
+the latter. The Constitution remains unformalized.
+
+### Completed reconstruction results
+
+All eight fits completed the full 340-update budget and all 80 postfit panels.
+Initial greedy predictions matched the original donor exactly in every arm.
+The independent audit confirms the training-only fit statistics, frozen
+projection and preprocessing buffers, saved-state bindings, output scoring, and
+unchanged exposure/selection arithmetic. **Every selected state remains at epoch
+zero, and every final attempt still has 0/48 exact validation paragraphs.** No
+checkpoint is accepted or promoted.
+
+The following table describes unselected last-complete attempts. Rule totals
+count valid generated rules from the full-document scorer; malformed or
+unparseable output is not repaired into successful formulas. Each validation
+split contains 48 paragraphs and 180 reference rules.
+
+| Normalization / guidance / seed | Sequence CE | Count correct /48 | Training exact /48 | Validation EOS / syntax /48 | Valid generated rules | Fit call seconds |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| None / off /1729 | 0.199236 | 22 | 1 | 14 / 14 | 14 | 13.010 |
+| None / on /1729 | 0.191651 | 21 | 3 | 48 / 48 | 112 | 12.364 |
+| Center RMS / off /1729 | 0.206820 | 27 | 5 | 25 / 25 | 25 | 12.070 |
+| Center RMS / on /1729 | 0.268138 | 23 | 2 | 48 / 26 | 26 | 11.513 |
+| None / off /2718 | 0.186596 | 26 | 0 | 0 / 0 | 0 | 14.181 |
+| None / on /2718 | 0.191581 | 23 | 4 | 48 / 48 | 85 | 11.820 |
+| Center RMS / off /2718 | 0.211549 | 26 | 5 | 43 / 43 | 50 | 11.147 |
+| Center RMS / on /2718 | 0.197750 | 24 | 6 | 48 / 48 | 110 | 11.173 |
+
+Boundary guidance improves termination in all four matched comparisons, reaching
+EOS on all 48 validation rows. With unnormalized features it also reaches full
+syntax validity in both seeds, compared with 14 and zero valid documents without
+guidance. But the normalized seed-1729 candidate terminates with only 26 valid
+documents: the soft correction does not guarantee valid syntax. Neither
+termination nor the larger number of generated clauses yields an exact
+multi-rule training or validation paragraph. All exact training paragraphs in
+the table contain one rule.
+
+Even the three guided arms with 48/48 valid documents recover only 18–23 correct
+ordered actor values, 18–22 action values, 26–33 modalities, and 42–56 objects out
+of the 180 reference positions. Each arm still has zero exact whole-rule matches
+on validation. The scorer consequently reports all 180 reference rules missing
+under **exact rule matching**, even when a candidate emits 85–112 syntactically
+valid rules. This is a semantic mismatch count, not a claim that no text or
+clauses were generated. Empty qualifier agreement does not close that gap.
+
+The source-only count heads recover 21–27/48 validation counts, compared with
+12/48 for the zero-feature prior controls. Within-length shuffling preserves
+those totals, as expected from its construction; cross-length shuffling reduces
+them to 8–9/48. Thus the count readout uses a real association with the source,
+but its accuracy remains insufficient and is not a selection criterion. The
+earlier inherited-hidden-state count heads scored lower, but the broader
+architecture/prior change prevents attributing this difference to feature
+geometry alone.
+
+The scalar head still has a large training/validation gap. These conditional
+counts score only the 720 scalar positions present in the references; they are
+not counts of generated correct formulas.
+
+| Normalization / guidance / seed | Training /720 | Validation /720 | Within-length shuffle /720 | Zero feature /720 | Cross-length shuffle /720 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| None / off /1729 | 381 | 244 | 231 | 229 | 220 |
+| None / on /1729 | 375 | 247 | 234 | 229 | 223 |
+| Center RMS / off /1729 | 400 | 245 | 220 | 228 | 195 |
+| Center RMS / on /1729 | 399 | 247 | 215 | 228 | 191 |
+| None / off /2718 | 396 | 244 | 240 | 224 | 217 |
+| None / on /2718 | 365 | 253 | 231 | 231 | 217 |
+| Center RMS / off /2718 | 402 | 242 | 211 | 233 | 188 |
+| Center RMS / on /2718 | 399 | 243 | 222 | 235 | 194 |
+
+A supplemental saved-output diagnostic pairs the head's actor and action
+predictions at the same reference-present slot. Only 5–7 of 180 such pairs are
+jointly correct in each arm. The separate raw-JSON pair census is explicitly
+broader than full syntax-valid formula scoring and must not replace the table
+above. These diagnostics show why better stopping alone is insufficient; they
+do not establish one cause for every error. Reliable binding of source values
+to ordered clauses, including the held-out actor/action combinations, remains
+the central unresolved reconstruction task.
+
+### Validation, timing, and evidence scope
+
+The frozen focused suite passes **1,183 tests**, including the previous 1,071
+regression tests, 46 new model tests, and 66 runner/trainer tests. Another 34
+scheduler-adapter tests pass. Pre-run readiness passes 187 checks; the independent
+post-run audit passes **53,408 checks with zero findings**. Its scope is saved
+state and source bindings, affine head arithmetic, fitted statistics, generated
+token/grammar/facet/count scoring, and exposure/selection reconstruction. It
+does not rerun recurrent generation, replay gradients, recompute the full token
+CE, invoke external provers, or execute native family qualification or Lake.
+
+All fits train 431,392 parameters while preserving the inherited projection.
+The eight fit calls total 97.278 seconds, and postfit persistence, reloads,
+controls, and output writes total another 36.131 seconds. Guardian wall time is
+173.122 seconds, including resource accounting. The attempt retains 298,316,138
+bytes within its released 800 MB reservation. Peak polled process-group RSS is
+964,694,016 bytes under the 4 GiB allocation; polling does not establish the exact
+peak. The campaign cap remains 140 GB.
+
+For conditioned validation, the existing numerical evaluation API reports
+0.00246–0.01740 wall seconds per span across these eight final states, with 48
+samples per call. That interval includes numerical validation, teacher-forced
+CE, target-free generation, copying, and identity checks, and excludes the
+separate source-fidelity/head diagnostics and artifact writes. Generated lengths
+and failure modes differ substantially, so faster invalid or shorter outputs
+are not faster successful reconstruction. Device is CPU with one worker;
+bridge names are `[]`, prover evaluation is false, and the legal-IR metric disk
+cache is off. Embeddings are warm, verified cached vectors; no encoder forward
+occurs. **This is not a bridge-on timing or an end-to-end statute conversion
+speedup.**
+
+Selected and rejected states, complete generated tokens, all control panels,
+training receipts, exact preprocessing vectors/statistics, source snapshots,
+test reports, audit programs, and resource receipts remain retained. The
+[published evidence](../implementation/reports/evidence/decoder-projected-source-20261003/results.json)
+separates this completed experiment from the historical comparison inputs and
+the supplemental compositional diagnostics. Its archive physically includes the
+original five inputs, prior public metadata and raw boundary-diagnostic inputs,
+all new run outputs, 94 frozen producer sources, 31 test files, and the audit
+programs and local arithmetic helper. It requires no nested predecessor archive
+to recover those artifacts. Host Python packages and the execution environment
+are not bundled; replay still requires compatible runtime setup and path
+relocation. Improved count association and
+termination are development findings; no full validation reconstruction,
+convergence claim, teacher qualification, native logic-family validation, or
+Lean admission follows from them.
