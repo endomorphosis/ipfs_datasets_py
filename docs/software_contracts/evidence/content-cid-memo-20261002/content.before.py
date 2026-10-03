@@ -26,7 +26,6 @@ from __future__ import annotations
 
 import json
 import math
-from functools import lru_cache
 from pathlib import Path
 from typing import Any, Final, Iterable
 
@@ -57,162 +56,6 @@ _ALLOWED_STRUCTURED_CODECS: Final[frozenset[str]] = frozenset(
 _ALLOWED_READ_CODECS: Final[frozenset[str]] = frozenset(
     {SOURCE_CODEC, STRUCTURED_CODEC}
 )
-
-# Only pure, small encoding/validation results are retained. Payloads and
-# structured values never enter either cache; every read still hashes its body.
-_CID_MEMO_MAXSIZE: Final[int] = 4096
-
-
-@lru_cache(maxsize=1)
-def _native_registry_layout():
-    """Recognize the reviewed multiformats 0.3.1 table layout, once.
-
-    A wrapped or replaced getter present on first use is not a native layout.
-    Unsupported versions/layouts retain the public API path below. Tables are
-    never copied or cached: the fast path reads their current module bindings.
-    """
-    from types import FunctionType
-    import multiformats
-    from bases.encoding import fixchar
-    from multiformats import multibase, multicodec, multihash
-
-    if multiformats.__version__ != "0.3.1":
-        return None
-    try:
-        owners = (multicodec, multibase, multibase.raw, multihash, multihash.raw)
-        getters = tuple(owner.get for owner in owners)
-        extras = (multihash.raw.exists, multihash.Multihash.__new__,
-                  multihash.Multihash.implementation.fget,
-                  multihash.Multihash.max_digest_size.fget)
-        functions = getters + extras
-        modules = owners + (multihash.raw, multihash, multihash, multihash)
-        for function, module in zip(functions, modules):
-            if (type(function) is not FunctionType
-                    or function.__module__ != module.__name__
-                    or Path(function.__code__.co_filename).resolve()
-                    != Path(module.__file__).resolve()):
-                return None
-        classes = (multicodec.Multicodec, multibase.Multibase,
-                   multihash.Multihash, fixchar.FixcharBaseEncoding)
-        return (owners, functions, tuple(f.__code__ for f in functions),
-                classes, multiformats, fixchar)
-    except (AttributeError, TypeError, ValueError, OSError):
-        return None
-
-
-def _memo_registration_key() -> tuple[Any, ...] | None:
-    """Read live native tables without repeating generic type validation."""
-    native = _native_registry_layout()
-    if native is not None:
-        owners, functions, codes, classes, multiformats, fixchar = native
-        multicodec, multibase, base_raw, multihash, hash_raw = owners
-        try:
-            current_functions = tuple(owner.get for owner in owners) + (
-                hash_raw.exists, multihash.Multihash.__new__,
-                multihash.Multihash.implementation.fget,
-                multihash.Multihash.max_digest_size.fget)
-            if (multiformats.__version__ == "0.3.1"
-                    and all(current is original and current.__code__ is code
-                    for current, original, code in zip(current_functions, functions, codes))
-                    and (multicodec.Multicodec, multibase.Multibase,
-                         multihash.Multihash, fixchar.FixcharBaseEncoding) == classes):
-                tables = (multicodec._name_table, multicodec._code_table,
-                          multibase._name_table, multibase._code_table,
-                          base_raw._raw_encodings, hash_raw._hashfun)
-                if all(type(table) is dict for table in tables):
-                    names, numbers, bases, prefixes, encodings, hashes = tables
-                    registrations = tuple(names[name] for name in
-                                          (SOURCE_CODEC, STRUCTURED_CODEC, MULTIHASH_TYPE))
-                    base, encoding = bases[CID_BASE], encodings[CID_BASE]
-                    implementation = hashes[MULTIHASH_TYPE]
-                    if (all(type(entry) is classes[0] and entry.code == code
-                            and numbers[code] == entry for entry, code in
-                            zip(registrations, (0x55, 0x0129, 0x12)))
-                            and registrations[2].tag in ("hash", "multihash")
-                            and type(base) is classes[1] and base.code == "b"
-                            and prefixes["b"] == base and type(encoding) is classes[3]
-                            and type(implementation) is tuple and len(implementation) == 2
-                            and implementation[1] == 32):
-                        key = (CID_VERSION, CID_BASE, MULTIHASH_TYPE, SOURCE_CODEC,
-                               STRUCTURED_CODEC, *registrations, base, encoding,
-                               implementation)
-                        hash(key)
-                        return key
-        except (KeyError, AttributeError, ValueError, TypeError):
-            pass
-    # Missing raw entries may need the library's JIT registration. Custom
-    # layouts or bindings must preserve the original public API behavior.
-    return _memo_registration_key_slow()
-
-
-def _memo_registration_key_slow() -> tuple[Any, ...] | None:
-    """Bind memo hits to the live standard multiformats registrations.
-
-    Multiformats allows codecs and raw encoders to be replaced at runtime.
-    Keep their immutable registrations in the key, checking both lookup
-    directions. Nonstandard codes, custom/stateful encoders, and missing
-    registrations take the original uncached path with its original errors.
-    """
-    from bases.encoding.fixchar import FixcharBaseEncoding
-    from multiformats import multibase, multicodec, multihash
-
-    try:
-        registrations = []
-        for name, code in ((SOURCE_CODEC, 0x55), (STRUCTURED_CODEC, 0x0129),
-                           (MULTIHASH_TYPE, 0x12)):
-            current = multicodec.get(name)
-            if current.code != code or multicodec.get(code=code) != current:
-                return None
-            registrations.append(current)
-        base = multibase.get(CID_BASE)
-        if base.code != "b" or multibase.get(code="b") != base:
-            return None
-        encoding = multibase.raw.get(CID_BASE)
-        if type(encoding) is not FixcharBaseEncoding:
-            return None
-        hashfun = multihash.get(MULTIHASH_TYPE)
-        if hashfun.max_digest_size != 32:
-            return None
-        key = (CID_VERSION, CID_BASE, MULTIHASH_TYPE, SOURCE_CODEC,
-               STRUCTURED_CODEC, *registrations, base, encoding,
-               hashfun.implementation)
-        hash(key)  # Custom unhashable implementations retain uncached behavior.
-        return key
-    except (KeyError, ValueError, TypeError):
-        return None
-
-
-@lru_cache(maxsize=_CID_MEMO_MAXSIZE)
-def _memo_encode_digest(digest: bytes, codec: str, registration: tuple[Any, ...]) -> str:
-    from multiformats import CID
-
-    result = str(CID(CID_BASE, CID_VERSION, codec, digest))
-    _require_unchanged_registration(registration)
-    return result
-
-
-class _MemoRegistrationChanged(RuntimeError):
-    """An observed registry change must never populate an earlier memo key."""
-
-
-def _require_unchanged_registration(registration: tuple[Any, ...]) -> None:
-    if _memo_registration_key() != registration:
-        raise _MemoRegistrationChanged
-
-
-def _encode_digest(digest: bytes, *, codec: str) -> str:
-    from multiformats import CID
-
-    registration = _memo_registration_key()
-    if (registration is not None and type(codec) is str and type(digest) is bytes
-            and len(digest) == 34 and digest[:2] == b"\x12\x20"):
-        try:
-            result = _memo_encode_digest(digest, codec, registration)
-            _require_unchanged_registration(registration)
-            return result
-        except _MemoRegistrationChanged:
-            pass
-    return str(CID(CID_BASE, CID_VERSION, codec, digest))
 
 class ContentIdentityError(ValueError):
     """Raised when content fails the software-contract CID profile."""
@@ -361,14 +204,14 @@ def _cid_from_digest_bytes(
     *,
     codec: str,
 ) -> str:
-    from multiformats import multihash
+    from multiformats import CID, multihash
 
     if codec not in _ALLOWED_READ_CODECS:
         raise ContentIdentityError(
             f"codec {codec!r} is outside the software-contract CID profile"
         )
     digest = multihash.digest(data, MULTIHASH_TYPE)
-    return _encode_digest(digest, codec=codec)
+    return str(CID(CID_BASE, CID_VERSION, codec, digest))
 
 
 def cid_for_bytes(data: bytes) -> str:
@@ -386,7 +229,7 @@ def cid_for_byte_chunks(chunks: Iterable[bytes], *, max_chunk_bytes: int) -> str
     Chunk boundaries do not change the source content identity.
     """
     import hashlib
-    from multiformats import multihash
+    from multiformats import CID, multihash
 
     if type(max_chunk_bytes) is not int or max_chunk_bytes < 1:
         raise ContentIdentityError("max_chunk_bytes must be a positive integer")
@@ -396,8 +239,8 @@ def cid_for_byte_chunks(chunks: Iterable[bytes], *, max_chunk_bytes: int) -> str
         if len(chunk) > max_chunk_bytes:
             raise ContentIdentityError("source frame exceeds max_chunk_bytes")
         digest.update(chunk)
-    return _encode_digest(multihash.wrap(digest.digest(), MULTIHASH_TYPE),
-                          codec=SOURCE_CODEC)
+    return str(CID(CID_BASE, CID_VERSION, SOURCE_CODEC,
+                   multihash.wrap(digest.digest(), MULTIHASH_TYPE)))
 
 
 def cid_for_obj(obj: Any) -> str:
@@ -438,29 +281,6 @@ def validate_cid(
             f"{sorted(_ALLOWED_READ_CODECS)}"
         )
 
-    # Preserve the historical isinstance(str) API and the original returned
-    # object. Subclasses (including unhashable/spoofed equality objects) never
-    # enter a memo key. Only successful short native strings are retained.
-    if type(value) is str and len(value) <= 128 and all(type(c) is str for c in allowed):
-        registration = _memo_registration_key()
-        if registration is not None:
-            try:
-                result = _memo_validate_cid(value, allowed, registration)
-                _require_unchanged_registration(registration)
-                return result
-            except _MemoRegistrationChanged:
-                pass
-    return _validate_cid_uncached(value, allowed)
-
-
-@lru_cache(maxsize=_CID_MEMO_MAXSIZE)
-def _memo_validate_cid(value: str, allowed: frozenset[str], registration: tuple[Any, ...]) -> str:
-    result = _validate_cid_uncached(value, allowed)
-    _require_unchanged_registration(registration)
-    return result
-
-
-def _validate_cid_uncached(value: str, allowed: frozenset[str]) -> str:
     from multiformats import CID, multihash
 
     try:

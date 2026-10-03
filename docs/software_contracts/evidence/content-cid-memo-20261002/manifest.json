@@ -1,0 +1,115 @@
+{
+  "schema": "canonical-cid-memo-evidence@1",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 1256,
+      "sha256": "c19b46fd2937a1fcc03b6590d3e1752bc6926d188d62923ff8ca896eef159d23"
+    },
+    {
+      "path": "content.before.py",
+      "bytes": 20207,
+      "sha256": "c69cb85f0901a9a678bcbdf7738ab00095bbe45c5b40d875f2099474bd2a059c"
+    },
+    {
+      "path": "first.log",
+      "bytes": 2363,
+      "sha256": "8028bde03e4a830fe0859e0694afea79d2fd36827aa1b98cef1fd97a6744c4a2"
+    },
+    {
+      "path": "first.xml",
+      "bytes": 8745,
+      "sha256": "20ac25f515c1d6d00a385a30cef2cb5ffcca6c4249d1b65bc951e72da530f9e7"
+    },
+    {
+      "path": "qualification.json",
+      "bytes": 1940,
+      "sha256": "c249d6f7de6e77995a6191321900c04f3a158c3e755a9d71d0034d0c7cf5cb0d"
+    },
+    {
+      "path": "restart-01.log",
+      "bytes": 1369,
+      "sha256": "eb7d71bf63091d54107d798dbf45d495017c455bfb57817bbecc1b762b482d55"
+    },
+    {
+      "path": "restart-01.xml",
+      "bytes": 8556,
+      "sha256": "ebd678281c076a0de2c56b23fbca45bc5859743ec447c6d76a20eecf1de2bc33"
+    },
+    {
+      "path": "restart-fast-03.log",
+      "bytes": 1374,
+      "sha256": "46bcc6604459c39d905ec30290dd487df9f016a01515fd16a84a89154898be7d"
+    },
+    {
+      "path": "restart-fast-03.xml",
+      "bytes": 10091,
+      "sha256": "53afe3ea7c4727216d49ab037fa3379c381088087482b3afddc4c26dc4d8c107"
+    },
+    {
+      "path": "restart-fast-final/content.py",
+      "bytes": 28720,
+      "sha256": "b6f0299be63eb3d7d2517abcc431d51ff28668555fe464c0a54c99507d248eb4"
+    },
+    {
+      "path": "restart-fast-final/frozen-sources.json",
+      "bytes": 565,
+      "sha256": "f6516145cba72d575bd8cc711fb67d66409ee0976b4e5c5fba3bd13b234bca00"
+    },
+    {
+      "path": "restart-fast-final/measure-memo.py",
+      "bytes": 3843,
+      "sha256": "18f37f025b93b2b5884cb20379c15b5523c5d41496eca11eea2d99dea4c84b43"
+    },
+    {
+      "path": "restart-fast-final/test_content_memo.py",
+      "bytes": 20636,
+      "sha256": "0f5b47ee6d680432ae8ff0c103814da905db47822d5b78f7ad50710e24b2142d"
+    },
+    {
+      "path": "restart-fast-final/timings.json",
+      "bytes": 3536,
+      "sha256": "0816229bb63d1c4b976285956067a803cec9c11c0be6d1d9c206e56f8e06bdda"
+    },
+    {
+      "path": "restart-recovery/content.py",
+      "bytes": 24211,
+      "sha256": "5085f785bbb7b906acc0a3e955e865cf835ab7492d1c82e71a6890463368d061"
+    },
+    {
+      "path": "restart-recovery/frozen-sources.json",
+      "bytes": 565,
+      "sha256": "7f86cd0d95ffae3600440d9659b3216acf36a22fc1ba683253c88c6047737b17"
+    },
+    {
+      "path": "restart-recovery/historical-initial-content.patch",
+      "bytes": 5454,
+      "sha256": "457a91e3754b1869b36517ce32c4e82e8394a4cc4c1a003d4a1367b9489d8f58"
+    },
+    {
+      "path": "restart-recovery/historical-test-content-memo-first255.py",
+      "bytes": 11794,
+      "sha256": "3abbd0788fa0fd5d33a7e360db3d575882a9d0f9ca80e6b3e52c4cdcc6ac6971"
+    },
+    {
+      "path": "restart-recovery/measure-memo.py",
+      "bytes": 3843,
+      "sha256": "18f37f025b93b2b5884cb20379c15b5523c5d41496eca11eea2d99dea4c84b43"
+    },
+    {
+      "path": "restart-recovery/recovery.json",
+      "bytes": 868,
+      "sha256": "7078fb4a5539197f8a59f313c4b5cd2970aa2680b3d160a66fa4a9dc1600b078"
+    },
+    {
+      "path": "restart-recovery/test_content_memo.py",
+      "bytes": 16133,
+      "sha256": "609446ad90775b78c583b09172c74a3f3a082aa74358512675074ca0ebb68310"
+    },
+    {
+      "path": "restart-recovery/timings.json",
+      "bytes": 3509,
+      "sha256": "30f0822c861a79d2999c916e52c984069dae7e3ce37b418c44b9ccc5fb508b2b"
+    }
+  ]
+}

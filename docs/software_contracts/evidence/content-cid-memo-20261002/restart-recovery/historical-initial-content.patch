@@ -1,0 +1,133 @@
+diff --git a/ipfs_datasets_py/logic/software_contracts/content.py b/ipfs_datasets_py/logic/software_contracts/content.py
+index b0f623798..bec7e117c 100644
+--- a/ipfs_datasets_py/logic/software_contracts/content.py
++++ b/ipfs_datasets_py/logic/software_contracts/content.py
+@@ -26,6 +26,7 @@ from __future__ import annotations
+ 
+ import json
+ import math
++from functools import lru_cache
+ from pathlib import Path
+ from typing import Any, Final, Iterable
+ 
+@@ -57,6 +58,60 @@ _ALLOWED_READ_CODECS: Final[frozenset[str]] = frozenset(
+     {SOURCE_CODEC, STRUCTURED_CODEC}
+ )
+ 
++# Only pure, small encoding/validation results are retained. Payloads and
++# structured values never enter either cache; every read still hashes its body.
++_CID_MEMO_MAXSIZE: Final[int] = 4096
++
++
++def _memo_registration_key() -> tuple[Any, ...] | None:
++    """Bind memo hits to the live standard multiformats registrations.
++
++    Multiformats allows codecs and raw encoders to be replaced at runtime.
++    Keep their immutable registrations in the key, checking both lookup
++    directions. Nonstandard codes, custom/stateful encoders, and missing
++    registrations take the original uncached path with its original errors.
++    """
++    from bases.encoding.fixchar import FixcharBaseEncoding
++    from multiformats import multibase, multicodec, multihash
++
++    try:
++        registrations = []
++        for name, code in ((SOURCE_CODEC, 0x55), (STRUCTURED_CODEC, 0x0129),
++                           (MULTIHASH_TYPE, 0x12)):
++            current = multicodec.get(name)
++            if current.code != code or multicodec.get(code=code) != current:
++                return None
++            registrations.append(current)
++        base = multibase.get(CID_BASE)
++        if base.code != "b" or multibase.get(code="b") != base:
++            return None
++        encoding = multibase.raw.get(CID_BASE)
++        if type(encoding) is not FixcharBaseEncoding:
++            return None
++        hashfun = multihash.get(MULTIHASH_TYPE)
++        if hashfun.max_digest_size != 32:
++            return None
++        return (*registrations, base, encoding, hashfun.implementation)
++    except (KeyError, ValueError, TypeError):
++        return None
++
++
++@lru_cache(maxsize=_CID_MEMO_MAXSIZE)
++def _memo_encode_digest(digest: bytes, codec: str, registration: tuple[Any, ...]) -> str:
++    from multiformats import CID
++
++    return str(CID(CID_BASE, CID_VERSION, codec, digest))
++
++
++def _encode_digest(digest: bytes, *, codec: str) -> str:
++    from multiformats import CID
++
++    registration = _memo_registration_key()
++    if (registration is not None and type(codec) is str and type(digest) is bytes
++            and len(digest) == 34 and digest[:2] == b"\x12\x20"):
++        return _memo_encode_digest(digest, codec, registration)
++    return str(CID(CID_BASE, CID_VERSION, codec, digest))
++
+ class ContentIdentityError(ValueError):
+     """Raised when content fails the software-contract CID profile."""
+ 
+@@ -204,14 +259,14 @@ def _cid_from_digest_bytes(
+     *,
+     codec: str,
+ ) -> str:
+-    from multiformats import CID, multihash
++    from multiformats import multihash
+ 
+     if codec not in _ALLOWED_READ_CODECS:
+         raise ContentIdentityError(
+             f"codec {codec!r} is outside the software-contract CID profile"
+         )
+     digest = multihash.digest(data, MULTIHASH_TYPE)
+-    return str(CID(CID_BASE, CID_VERSION, codec, digest))
++    return _encode_digest(digest, codec=codec)
+ 
+ 
+ def cid_for_bytes(data: bytes) -> str:
+@@ -229,7 +284,7 @@ def cid_for_byte_chunks(chunks: Iterable[bytes], *, max_chunk_bytes: int) -> str
+     Chunk boundaries do not change the source content identity.
+     """
+     import hashlib
+-    from multiformats import CID, multihash
++    from multiformats import multihash
+ 
+     if type(max_chunk_bytes) is not int or max_chunk_bytes < 1:
+         raise ContentIdentityError("max_chunk_bytes must be a positive integer")
+@@ -239,8 +294,8 @@ def cid_for_byte_chunks(chunks: Iterable[bytes], *, max_chunk_bytes: int) -> str
+         if len(chunk) > max_chunk_bytes:
+             raise ContentIdentityError("source frame exceeds max_chunk_bytes")
+         digest.update(chunk)
+-    return str(CID(CID_BASE, CID_VERSION, SOURCE_CODEC,
+-                   multihash.wrap(digest.digest(), MULTIHASH_TYPE)))
++    return _encode_digest(multihash.wrap(digest.digest(), MULTIHASH_TYPE),
++                          codec=SOURCE_CODEC)
+ 
+ 
+ def cid_for_obj(obj: Any) -> str:
+@@ -281,6 +336,22 @@ def validate_cid(
+             f"{sorted(_ALLOWED_READ_CODECS)}"
+         )
+ 
++    # Preserve the historical isinstance(str) API and the original returned
++    # object. Subclasses (including unhashable/spoofed equality objects) never
++    # enter a memo key. Only successful short native strings are retained.
++    if type(value) is str and len(value) <= 128 and all(type(c) is str for c in allowed):
++        registration = _memo_registration_key()
++        if registration is not None:
++            return _memo_validate_cid(value, allowed, registration)
++    return _validate_cid_uncached(value, allowed)
++
++
++@lru_cache(maxsize=_CID_MEMO_MAXSIZE)
++def _memo_validate_cid(value: str, allowed: frozenset[str], registration: tuple[Any, ...]) -> str:
++    return _validate_cid_uncached(value, allowed)
++
++
++def _validate_cid_uncached(value: str, allowed: frozenset[str]) -> str:
+     from multiformats import CID, multihash
+ 
+     try:

@@ -1,0 +1,35 @@
+{
+  "schema": "canonical-cid-memo-qualification@1",
+  "qualified": true,
+  "qualified_scope": "bounded pure CID encoding and successful validation memo; every source/structured body still hashes on every read",
+  "distinct_tests": 63,
+  "content_identity_tests": 20,
+  "memo_tests": 30,
+  "cas_tests": 13,
+  "pytest_seconds": 2.38,
+  "xml_seconds": 2.384,
+  "producer_manifest": "restart-fast-final/frozen-sources.json",
+  "historical_first_run": {
+    "passed": 48,
+    "failed": 1,
+    "failure": "test assumed optional CID fixture existed",
+    "qualified_final_source": false
+  },
+  "historical_final_run": "interrupted; emptyfinal.log/noXML; no success claimed",
+  "recovery": "Initial production diff and first255testlines recovered from retained tool outputs; missing profile, bounded eviction, parallel tests reconstructed; registration race guards and four deterministic race cases are new after restart.",
+  "timing": "restart-fast-final/timings.json",
+  "authoritative_proof_or_model_cache": false,
+  "limitations": [
+    "Memory-only4096-entryLRUs hold fixed-size digest encoding and bounded exact-string successful validation, never source bodies or mutable IR.",
+    "Registrations are checked at lookup and completion, including during misses; third-party registry mutation remains point-in-time observation, not a global cross-module transaction.",
+    "Warm sixteen-identity microbenchmark does not qualify end-to-end repository, official benchmark or model speedups."
+  ],
+  "initial_restart_qualification": {
+    "tests": 53,
+    "pytest_seconds": 3.91,
+    "producer_manifest": "restart-recovery/frozen-sources.json",
+    "timing": "restart-recovery/timings.json",
+    "current_final_source": false
+  },
+  "native_fast_path": "Reviewed multiformats0.3.1 native dict layout; live getter/code/class/property/version bindings and native table contents; unsupported/replaced/missing/JIT entries use prior public key path"
+}

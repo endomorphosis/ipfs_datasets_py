@@ -1,0 +1,120 @@
+{
+  "schema": "canonical-cid-paired-microbenchmark@1",
+  "scope": "warm16identityfixture; no repository scan, proof checker, model or official benchmark workload",
+  "python": "3.12.3 (main, Mar  3 2026, 12:15:18) [GCC 13.3.0]",
+  "source_sha256": {
+    "uncached": "c69cb85f0901a9a678bcbdf7738ab00095bbe45c5b40d875f2099474bd2a059c",
+    "memoized": "b6f0299be63eb3d7d2517abcc431d51ff28668555fe464c0a54c99507d248eb4"
+  },
+  "source_drift": false,
+  "fixture_count": 16,
+  "per_pair_iterations": 512,
+  "all_outputs_equal": true,
+  "all_body_bytes_rehashed": true,
+  "raw_samples": [
+    {
+      "pair": 0,
+      "mode": "uncached",
+      "iterations": 512,
+      "verified_body_reads": 1024,
+      "digest_calls": 1024,
+      "hashed_bytes": 72448,
+      "wall_seconds": 0.34572571700027765,
+      "process_cpu_seconds": 0.345660512,
+      "verified_reads_per_second": 2961.885534246148
+    },
+    {
+      "pair": 0,
+      "mode": "memoized",
+      "iterations": 512,
+      "verified_body_reads": 1024,
+      "digest_calls": 1024,
+      "hashed_bytes": 72448,
+      "wall_seconds": 0.03728514600015842,
+      "process_cpu_seconds": 0.037272640000000024,
+      "verified_reads_per_second": 27464.020121998426
+    },
+    {
+      "pair": 1,
+      "mode": "memoized",
+      "iterations": 512,
+      "verified_body_reads": 1024,
+      "digest_calls": 1024,
+      "hashed_bytes": 72448,
+      "wall_seconds": 0.037463453999862395,
+      "process_cpu_seconds": 0.037457455999999945,
+      "verified_reads_per_second": 27333.304612109743
+    },
+    {
+      "pair": 1,
+      "mode": "uncached",
+      "iterations": 512,
+      "verified_body_reads": 1024,
+      "digest_calls": 1024,
+      "hashed_bytes": 72448,
+      "wall_seconds": 0.34088402900033543,
+      "process_cpu_seconds": 0.34081654399999994,
+      "verified_reads_per_second": 3003.954168820835
+    },
+    {
+      "pair": 2,
+      "mode": "uncached",
+      "iterations": 512,
+      "verified_body_reads": 1024,
+      "digest_calls": 1024,
+      "hashed_bytes": 72448,
+      "wall_seconds": 0.3403457019999223,
+      "process_cpu_seconds": 0.34027889599999994,
+      "verified_reads_per_second": 3008.7055425786857
+    },
+    {
+      "pair": 2,
+      "mode": "memoized",
+      "iterations": 512,
+      "verified_body_reads": 1024,
+      "digest_calls": 1024,
+      "hashed_bytes": 72448,
+      "wall_seconds": 0.037585880999813526,
+      "process_cpu_seconds": 0.03757963199999992,
+      "verified_reads_per_second": 27244.272922725435
+    },
+    {
+      "pair": 3,
+      "mode": "memoized",
+      "iterations": 512,
+      "verified_body_reads": 1024,
+      "digest_calls": 1024,
+      "hashed_bytes": 72448,
+      "wall_seconds": 0.037443052000071475,
+      "process_cpu_seconds": 0.03743617599999993,
+      "verified_reads_per_second": 27348.19800474719
+    },
+    {
+      "pair": 3,
+      "mode": "uncached",
+      "iterations": 512,
+      "verified_body_reads": 1024,
+      "digest_calls": 1024,
+      "hashed_bytes": 72448,
+      "wall_seconds": 0.33983795499989355,
+      "process_cpu_seconds": 0.3397641760000001,
+      "verified_reads_per_second": 3013.2008062499103
+    }
+  ],
+  "memo_encode": {
+    "hits": 4192,
+    "misses": 32,
+    "maxsize": 4096,
+    "currsize": 32
+  },
+  "memo_validate": {
+    "hits": 4192,
+    "misses": 32,
+    "maxsize": 4096,
+    "currsize": 32
+  },
+  "limitations": [
+    "Small warm repeated identity set; no cold scan or end-to-end speedup claim.",
+    "Host runs other work; paired wall and process CPU times are retained separately."
+  ]
+}

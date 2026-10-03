@@ -1,0 +1,31 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /tmp/ir-release-datasets-20261001
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 49 items
+
+tests/unit/logic/software_contracts/test_content_identity.py ........... [ 22%]
+.........                                                                [ 40%]
+tests/unit/logic/software_contracts/test_content_memo.py F.............. [ 71%]
+.                                                                        [ 73%]
+tests/unit/logic/software_contracts/test_cache.py .............          [100%]
+
+=================================== FAILURES ===================================
+____________ test_native_golden_vectors_and_generated_differential _____________
+tests/unit/logic/software_contracts/test_content_memo.py:66: in test_native_golden_vectors_and_generated_differential
+    vectors = json.loads(fixture.read_bytes())["vectors"]
+                         ^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1021: in read_bytes
+    with self.open(mode='rb') as f:
+         ^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1015: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: '/tmp/ir-release-datasets-20261001/tests/fixtures/software_contracts/cid_vectors.json'
+- generated xml file: /home/barberb/lift_coding/artifacts/content-cid-memo-20261002/first.xml -
+=========================== short test summary info ============================
+FAILED tests/unit/logic/software_contracts/test_content_memo.py::test_native_golden_vectors_and_generated_differential
+========================= 1 failed, 48 passed in 2.74s =========================

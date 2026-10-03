@@ -1,0 +1,14 @@
+[
+  {
+    "path": "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/content.py",
+    "artifact": "content.py",
+    "sha256": "b6f0299be63eb3d7d2517abcc431d51ff28668555fe464c0a54c99507d248eb4",
+    "bytes": 28720
+  },
+  {
+    "path": "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/tests/unit/logic/software_contracts/test_content_memo.py",
+    "artifact": "test_content_memo.py",
+    "sha256": "0f5b47ee6d680432ae8ff0c103814da905db47822d5b78f7ad50710e24b2142d",
+    "bytes": 20636
+  }
+]

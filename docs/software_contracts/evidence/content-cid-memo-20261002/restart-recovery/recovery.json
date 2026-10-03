@@ -1,0 +1,22 @@
+{
+  "schema": "cid-memo-source-recovery@1",
+  "source_session": "rollout-2026-10-02T04-35-58-01a0fae5-c900-7a62-9098-c671c16b6bec.jsonl",
+  "recovered": [
+    {
+      "record_line_zero_based": 6723,
+      "timestamp": "2026-10-02T18:06:33.862Z",
+      "artifact": "historical-initial-content.patch",
+      "sha256": "457a91e3754b1869b36517ce32c4e82e8394a4cc4c1a003d4a1367b9489d8f58",
+      "complete_source": true
+    },
+    {
+      "record_line_zero_based": 6813,
+      "timestamp": "2026-10-02T18:12:57.795Z",
+      "artifact": "historical-test-content-memo-first255.py",
+      "sha256": "3abbd0788fa0fd5d33a7e360db3d575882a9d0f9ca80e6b3e52c4cdcc6ac6971",
+      "complete_source": false
+    }
+  ],
+  "final_pre_restart_run": "interrupted; final.log empty; no final.xml",
+  "note": "Only scoped tool output bodies retained, not conversation or unrelated commands."
+}
