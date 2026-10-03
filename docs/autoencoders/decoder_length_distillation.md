@@ -2715,3 +2715,132 @@ and controls that shuffle the corresponding context as well as the paragraph
 vector. Target component identifiers or reference counts must not supply that
 context, and source-derived clause count must not force EOS. This paragraph is
 a proposed experiment, not an implemented decoder or qualification result.
+
+### Explicit clause context for source reconstruction
+
+`benchmark_clause_context_source_training.py` compares the pooled shared-slot
+head with a separate, opt-in clause-context head. This supplies richer source
+input: the existing paragraph vector remains, while each literal blank-line
+clause receives its own authenticated cached semantic vector. It is a private
+384D Legal development experiment, not a replacement for the 8D linguistic
+teacher or a general segmentation pipeline for federal statutes. The parent
+paragraphs already passed the fixed 512-token encoder checks; clause splitting
+does not authorize encoding a longer parent context.
+
+The public experiment interfaces are:
+
+- `clause_source_context.prepare_source_contexts(...)` validates published cache
+  bindings and returns separate training/validation context mappings. Cache rows
+  contain only `id`, `source_text`, and `input`; target tokens are stripped before
+  this call. Exact source text selects vectors. Component IDs and formulas do
+  not select or order the context.
+- `clause_source_decoder_experiment.bind_clause_source_model(...)` privately
+  copies the projected donor and installs a shared 64-unit clause field head.
+  Its required `clause_normalization_receipt` includes a hash-bound
+  `training_contexts_sha256`. Normalization uses the 113 distinct training
+  clauses in first-observed order, excluding all 54 validation clauses and
+  padding; repeated training occurrences do not reweight that fit.
+- `long_span_source_value_training.train(..., source_contexts=...)` trains the
+  decoder and clause scalar head together using the existing losses and strict
+  selection. A clause model requires context, and a pooled model refuses it.
+  This version rejects combining context with order-augmentation substitution
+  or generated-boundary training instead of dropping the new input silently.
+- `decoder_distillation_experiment.evaluate_model(..., source_contexts=...)`
+  uses the same explicit context for teacher-forced CE and independent greedy
+  generation. Low-level `start`, `source_value_logits`, and
+  `source_value_guidance_logits` require `source_context=`. There is no hidden
+  context cache on the model, target-derived lookup, or missing-context fallback.
+
+The model-facing packet contains only float32 vectors `[batch,8,384]` and a
+boolean source-derived padding mask. The existing input transform is applied
+before zero padding, then the same frozen autoencoder projection is applied per
+clause. The new head computes `tanh(W*normalized_projected_clause+b)` followed by
+full-vocabulary field readouts. It removes the 512 learned slot parameters:
+70,112 trainable parameters versus 70,624 in the pooled baseline. Shared initial
+parameter values and inherited buffers match, and a zero-initialized field
+readout preserves complete initial greedy predictions. The recurrent decoder,
+count head, vocabulary, output limit, temperature and selection gates are
+unchanged. The source mask only zeros absent scalar residuals; it never forces
+syntax, a target rule count, or EOS.
+
+Conditioned training/validation, zero-condition, same-length source shuffle,
+cross-length source shuffle, context-only shuffle, context reversal and context
+rotation are retained for both selected and final states. Whole-source controls
+move paragraph vectors, text and clause context together. Context-only controls
+explicitly record the deliberate mismatch between the unchanged paragraph
+vector and the changed clause context. Zero-condition removes normalized clause
+values and the original mask, using eight bias-only slots so padding cannot
+reveal source length. These controls score against unchanged original references.
+The clause head is permutation-equivariant by construction; an equivariant raw
+head alone is not evidence that the full decoder learned ordered reconstruction.
+
+The four measured fits completed all 340 updates and identical supervision
+budgets. Both pooled baselines exactly reproduced their earlier complete
+training trajectories and five original selected/final controls. The new
+candidate improved auxiliary clause-value classification on both seeds, but
+**did not produce a consistently better full decoder**. All selected checkpoints
+remain at epoch zero. The table describes unselected final attempts on the same
+48 previously exposed validation paragraphs, with 180 reference rules and 720
+actor/action/modality/object positions.
+
+| Variant / seed | Sequence CE | Generated scalar matches /720 | Auxiliary scalar matches /720 | Exact documents /48 | EOS / syntax /48 | Generated rules | Fit seconds |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Pooled /1729 | 0.187817 | 208 | 263 | 0 | 44 /44 | 219 | 12.757 |
+| Clauses /1729 | 0.177376 | 299 | 345 | 1 | 48 /48 | 213 | 15.238 |
+| Pooled /2718 | 0.187983 | 217 | 265 | 0 | 48 /48 | 195 | 10.814 |
+| Clauses /2718 | 0.184076 | 121 | 354 | 0 | 48 /48 | 70 | 13.890 |
+
+For seed 1729, the final candidate's remaining rejection reasons are whole-rule
+extras at every source length. Seed 2718 also regresses single-clause action
+fidelity; its 70 generated rules are far fewer than the 180 reference rules.
+A wrong or missing rule and an extra generated rule are different accounting
+categories: reducing duplicate counts does not establish correct content or
+stopping. Lower teacher-forced CE and better auxiliary values therefore cannot
+justify promotion. The candidate's training auxiliary values improve from
+327/720 to 488/720 and from 325/720 to 490/720, while exact training documents are
+3/48 and 4/48. Those in-sample results are not holdout convergence.
+
+Joint values remain a separate failure: the candidate auxiliary head recovers
+zero complete actor/action pairs out of 180 validation rule positions in both
+seeds despite its better marginal scalar scores. Full generation recovers
+17/180 and 6/180 such pairs, versus 1/180 and 2/180 for the pooled baselines.
+The improvement in individual fields does not solve relational binding on validation.
+
+The new controls confirm dependence on correct clause content. Context-only
+shuffling reduces candidate validation auxiliary values from 345 to 209 and
+from 354 to 210, and actual generated scalar matches from 299 to 185 and from
+121 to 77. Pooled outputs stay exactly unchanged under the three clause-only
+controls. Reversal and rotation include ineffective single-clause rows, which
+are explicitly recorded rather than discarded. All original source controls,
+selected/final predictions, full logits and the 108-source order panel remain
+in the evidence. Clause-head permutation equivariance is structural; full
+sequence generation and correct relational binding remain separate tests.
+
+This richer input is slower in this small CPU comparison. Training throughput
+is 191.27 versus 160.13 row presentations/second for seed 1729 and 225.63 versus
+175.67 for seed 2718, including periodic validation. Conditioned validation
+costs 0.015691 versus 0.021524 seconds/span and 0.011708 versus 0.016796
+seconds/span, respectively. Each is a single measured fit/call, not a repeated
+speed estimate. The complete runner takes 106.969 seconds; the guardian takes
+147.126 seconds including admission, accounting and durable release. The
+258,817,862-byte attempt fits its unchanged 800 MB reservation. Six samples of
+process-group RSS have maximum 962,945,024 bytes, not a kernel-measured peak.
+
+Telemetry is one CPU worker, 48 samples per validation call, bridge names `[]`,
+prover evaluation false, metric disk cache off, and warm verified semantic
+embedding caches. Historical clause cache production used CUDA and paragraph
+embedding production used CPU; those producer receipts are preserved. This run
+performs no encoder forward, weight download or bridge-on evaluation, so it is
+not a legal-IR conversion speed baseline. The CPU, 4 GiB, one-child resource
+reservation and 140 GB campaign cap remain unchanged.
+
+The frozen regression suite passes **1,856 tests**. The independent saved-output
+audit passes **39,209 checks with zero findings**. Its plan/input review occurred
+after execution; the passing frozen regression suite preceded training. The
+[complete clause-context evidence](../implementation/reports/evidence/decoder-clause-context-training-20261003/results.json)
+retains all 12 typed initial/selected/final states and all 64 control panels.
+No production checkpoint is promoted. This experiment establishes neither a
+fresh-holdout gain nor convergence, native logic-family qualification, a Lake
+admit, Constitution formalization, or an actual 8D/768D training result. The
+next reconstruction problem is reliable full-sequence content and stopping;
+better clause classification alone does not solve it.

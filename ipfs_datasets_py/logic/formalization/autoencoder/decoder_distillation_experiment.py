@@ -185,10 +185,19 @@ def _batch(torch, rows, transform):
     return data, labels
 
 
-def _logits(torch, model, data, prefix, vocabulary_size):
+def _source_context_kwargs(torch, rows, contexts, transform):
+    """Build explicit source-only tensors; absent sidecars preserve the old path."""
+    if contexts is None:
+        return {}
+    from . import clause_source_context
+    return {"source_context": clause_source_context.batch_source_context(torch, rows, contexts, transform)}
+
+
+def _logits(torch, model, data, prefix, vocabulary_size, *, source_context=None):
     projected = model.project(data)
     _require(projected.shape == data.shape and _finite(torch, projected), "invalid reconstructed input")
-    logits, hidden = model.next_logits(prefix, model.start(projected))
+    logits, hidden = model.next_logits(prefix, model.start(projected,
+        **({} if source_context is None else {"source_context": source_context})))
     _require(tuple(logits.shape) == (*prefix.shape, vocabulary_size) and _finite(torch, logits)
         and _finite(torch, hidden), "decoder vocabulary, shape or finite-state mismatch")
     return projected, logits
@@ -208,10 +217,10 @@ def _loss(torch, student_logits, teacher_logits, labels, alpha):
     return ce + alpha * kl, ce, kl
 
 
-def _greedy(torch, model, data, cap, size, deadline):
+def _greedy(torch, model, data, cap, size, deadline, *, source_context=None):
     projected = model.project(data)
     _require(projected.shape == data.shape and _finite(torch, projected), "invalid reconstructed input")
-    hidden = model.start(projected)
+    hidden = model.start(projected, **({} if source_context is None else {"source_context": source_context}))
     current = torch.ones((len(data), 1), dtype=torch.long)
     outputs = [[] for _ in data]
     statuses = ["output_limit"] * len(data)
@@ -239,7 +248,7 @@ def _greedy(torch, model, data, cap, size, deadline):
     return projected, outputs, statuses
 
 
-def _evaluate(torch, model, rows, transform, config, size, deadline):
+def _evaluate(torch, model, rows, transform, config, size, deadline, *, source_contexts=None):
     predictions, ce_sum, token_count, error_sum, coordinates = [], 0., 0, 0., 0
     model.eval()
     with torch.inference_mode():
@@ -248,13 +257,14 @@ def _evaluate(torch, model, rows, transform, config, size, deadline):
                 return None
             part = rows[start:start+config["batch_size"]]
             data, labels = _batch(torch, part, transform)
-            _, logits = _logits(torch, model, data, labels[:, :-1], size)
+            context_kwargs = _source_context_kwargs(torch, part, source_contexts, transform)
+            _, logits = _logits(torch, model, data, labels[:, :-1], size, **context_kwargs)
             ce = torch.nn.functional.cross_entropy(logits.flatten(0, 1), labels[:, 1:].flatten(),
                 ignore_index=0, reduction="sum")
             _require(_finite(torch, ce), "nonfinite validation cross-entropy reduction")
             ce_sum += float(ce)
             token_count += int((labels[:, 1:] != 0).sum())
-            generated = _greedy(torch, model, data, config["max_target_tokens"], size, deadline)
+            generated = _greedy(torch, model, data, config["max_target_tokens"], size, deadline, **context_kwargs)
             if generated is None:
                 return None
             projected, tokens, statuses = generated
@@ -340,10 +350,12 @@ def _optimizer_state(model, optimizer):
 
 
 def evaluate_model(model, validation_rows, *, codec, input_transform, lineage,
-                   max_target_tokens, max_seconds, batch_size=16, max_memory_bytes=536870912):
+                   max_target_tokens, max_seconds, batch_size=16, max_memory_bytes=536870912,
+                   source_contexts=None):
     """Evaluate fixed experimental weights at an explicit output-stop budget.
 
-    Generation receives only input vectors. References are used for separate
+    Generation receives input vectors and, when explicitly provided, source-only
+    clause vectors and a source-derived padding mask. References are used for separate
     teacher-forced CE and post-generation token equality. This API neither fits
     nor selects weights; repeated caps are readout/cost comparisons, not fresh
     training arms. Original model tensors and training flags remain untouched.
@@ -356,22 +368,29 @@ def evaluate_model(model, validation_rows, *, codec, input_transform, lineage,
     _model(model, torch)
     size = len(_validate(codec, input_transform, lineage, model.dimension))
     _rows(validation_rows, model.dimension, codec["target_vocabulary"], config["max_target_tokens"])
+    if source_contexts is not None:
+        from . import clause_source_context
+        clause_source_context.validate_contexts(validation_rows, source_contexts)
     parameter_bytes = sum(tensor.numel() * tensor.element_size() for tensor in model.state_dict().values())
     width = max(len(row["target_ids"]) for row in validation_rows)
     estimate = 4 * parameter_bytes + 8 * config["batch_size"] * width * size * 4 + \
         4 * len(validation_rows) * model.dimension
+    if source_contexts is not None:
+        estimate += 16 * config["batch_size"] * 8 * model.dimension * 4
+        estimate += len(_raw(source_contexts))
     _require(estimate <= config["max_memory_bytes"], "evaluation tensor estimate exceeds explicit memory budget")
     before = tensor_digest(model)
     modes = {name: module.training for name, module in model.named_modules()}
     private = deepcopy(model).eval()
-    result = _evaluate(torch, private, validation_rows, input_transform, config, size, deadline)
+    result = _evaluate(torch, private, validation_rows, input_transform, config, size, deadline,
+        **({} if source_contexts is None else {"source_contexts": source_contexts}))
     _require(tensor_digest(model) == before and tensor_digest(private) == before, "evaluation changed weights")
     _require({name: module.training for name, module in model.named_modules()} == modes, "evaluation changed caller modes")
     predictions = [] if result is None else deepcopy(result["predictions"])
     metrics = None if result is None else {key: value for key, value in result.items() if key != "predictions"}
     codec_sha, transform_sha, rows_sha = digest(codec), digest(input_transform), digest(validation_rows)
     elapsed = time.monotonic() - started
-    return dict(report=dict(schema=SCHEMA, operation="fixed_weights_output_budget_evaluation",
+    evaluated = dict(report=dict(schema=SCHEMA, operation="fixed_weights_output_budget_evaluation",
         scope="exposed_development_only", lineage=deepcopy(lineage), input_dimension=model.dimension,
         model_weights_sha256=before, codec_sha256=codec_sha, input_transform_sha256=transform_sha,
         validation_rows_sha256=rows_sha, max_target_tokens=max_target_tokens,
@@ -386,6 +405,10 @@ def evaluate_model(model, validation_rows, *, codec, input_transform, lineage,
         lineage_hashes_are_caller_declarations=True, teacher_qualification="not_established",
         tensor_memory_estimate_bytes=estimate, memory_estimate_excludes_python_import_allocator_rss=True,
         deadline_cooperative=True, **FALSE), predictions=predictions)
+    if source_contexts is not None:
+        evaluated["report"].update(source_contexts_sha256=digest(source_contexts),
+            source_context_schema=clause_source_context.SCHEMA, source_context_target_access=False)
+    return evaluated
 
 
 def run_trial(teacher, train_rows, validation_rows, *, codec, input_transform, lineage,

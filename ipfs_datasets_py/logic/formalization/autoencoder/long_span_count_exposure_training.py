@@ -138,8 +138,10 @@ def _count_evaluation(torch, model, rows, references, transform, options, deadli
         reference_count_supplied_to_generation=False)
 
 
-def _evaluate(torch, model, rows, references, transform, options, codec, deadline, validate_rule, validator_id):
-    numeric = core._evaluate(torch, model, rows, transform, options, len(codec["target_vocabulary"]), deadline)
+def _evaluate(torch, model, rows, references, transform, options, codec, deadline, validate_rule, validator_id,
+              *, source_contexts=None):
+    numeric = core._evaluate(torch, model, rows, transform, options, len(codec["target_vocabulary"]), deadline,
+        **({} if source_contexts is None else {"source_contexts": source_contexts}))
     if numeric is None:
         return None
     source = fidelity.score_predictions(references, numeric["predictions"], codec=codec,

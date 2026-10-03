@@ -32,6 +32,9 @@ def _head_specification(model, codec, source_value_weight):
     if not present:
         return None
     description = model.describe()
+    if description.get("schema") == "clause-source-decoder-development/v1":
+        from . import clause_source_decoder_experiment as clause_values
+        return clause_values.checked_specification(model, codec)
     if description.get("schema") == "shared-slot-source-decoder-development/v1":
         from . import shared_slot_source_decoder_experiment as shared_values
         return shared_values.checked_specification(model, codec)
@@ -97,8 +100,9 @@ def _head_specification(model, codec, source_value_weight):
     return deepcopy(description)
 
 
-def _source_value_logits(torch, model, projected, vocabulary_size):
-    result = model.source_value_logits(projected)
+def _source_value_logits(torch, model, projected, vocabulary_size, *, source_context=None):
+    result = model.source_value_logits(projected,
+        **({} if source_context is None else {"source_context": source_context}))
     core._require(isinstance(result, torch.Tensor) and result.dtype == torch.float32
         and result.device.type == "cpu"
         and tuple(result.shape) == (len(projected), values.MAX_RULES, len(values.SOURCE_FIELDS), vocabulary_size)
@@ -106,7 +110,7 @@ def _source_value_logits(torch, model, projected, vocabulary_size):
     return result
 
 
-def _source_value_evaluation(torch, model, rows, labels, transform, options, codec, deadline):
+def _source_value_evaluation(torch, model, rows, labels, transform, options, codec, deadline, *, source_contexts=None):
     """Conditional present-value metrics; absence is neither masked generation nor success."""
     by_length, by_field, predictions = {}, {}, []
     loss_sum, count, correct = 0., 0, 0
@@ -117,7 +121,8 @@ def _source_value_evaluation(torch, model, rows, labels, transform, options, cod
                 return None
             part = rows[offset:offset+options["batch_size"]]
             projected = model.project(_source_batch(torch, part, transform))
-            logits = _source_value_logits(torch, model, projected, len(codec["target_vocabulary"]))
+            logits = _source_value_logits(torch, model, projected, len(codec["target_vocabulary"]),
+                **core._source_context_kwargs(torch, part, source_contexts, transform))
             targets = torch.tensor([labels[row["id"]] for row in part], dtype=torch.long)
             observed = torch.nn.functional.cross_entropy(logits.flatten(0, 2), targets.flatten(),
                 ignore_index=-1, reduction="sum")
@@ -161,13 +166,15 @@ def _source_value_evaluation(torch, model, rows, labels, transform, options, cod
 
 
 def _evaluate(torch, model, rows, references, transform, options, codec, deadline,
-              validate_rule, validator_id, source_labels=None):
+              validate_rule, validator_id, source_labels=None, *, source_contexts=None):
     result = exposure._evaluate(torch, model, rows, references, transform, options, codec, deadline,
-                                validate_rule, validator_id)
+                                validate_rule, validator_id,
+                                **({} if source_contexts is None else {"source_contexts": source_contexts}))
     if result is None:
         return None
     diagnostic = (None if source_labels is None else _source_value_evaluation(torch, model, rows,
-        source_labels, transform, options, codec, deadline))
+        source_labels, transform, options, codec, deadline,
+        **({} if source_contexts is None else {"source_contexts": source_contexts})))
     if (source_labels is not None and diagnostic is None) or time.monotonic() >= deadline:
         return None
     result["source_values"] = diagnostic
@@ -178,7 +185,8 @@ def train(student, training_rows, validation_rows, *, training_references, valid
           codec, input_transform, lineage, validate_rule, validator_id,
           curriculum, strategy="reference_ce", config=None, cardinality_weight=0.,
           count_exposure="current_stage", source_value_weight=0.,
-          order_augmentation=None, generated_boundary_weight=0., generated_boundary_gradient_scope="all_trainable"):
+          order_augmentation=None, generated_boundary_weight=0., generated_boundary_gradient_scope="all_trainable",
+          source_contexts=None):
     """Fresh reference-supervised fit; source fidelity gates experimental selection.
 
     The last complete attempt is retained as an explicitly unselected diagnostic.
@@ -207,6 +215,24 @@ def train(student, training_rows, validation_rows, *, training_references, valid
         and set(order_augmentation) == {"preparation", "embedding_observations"},
         "closed order-augmentation inputs required")
     head_specification = _head_specification(student, codec, source_value_weight)
+    contextual = head_specification is not None and head_specification.get("schema") == "clause-source-decoder-development/v1"
+    core._require(contextual == (source_contexts is not None), "clause source model and explicit contexts must be paired")
+    context_receipt = None
+    training_contexts = validation_contexts = None
+    if source_contexts is not None:
+        core._require(order_augmentation is None and generated_boundary_weight == 0.,
+            "context training does not support order substitution or generated-boundary loss")
+        from . import clause_source_context
+        context_receipt = clause_source_context.validate_training_contexts(training_rows, validation_rows, source_contexts)
+        training_contexts, validation_contexts = source_contexts["train"], source_contexts["validation"]
+        receipt = head_specification["clause_normalization"]
+        inventory = context_receipt["training_clause_inventory"]
+        core._require(receipt["training_rows_sha256"] == core.digest(training_rows)
+            and receipt.get("training_contexts_sha256") == core.digest(training_contexts)
+            and receipt["training_inventory"] == inventory
+            and receipt["expected_training_ids"] == [row["id"] for row in inventory]
+            and set(receipt["forbidden_validation_ids"]) == {row["id"] for row in context_receipt["validation_clause_inventory"]},
+            "clause normalization receipt differs from actual source context inventory")
     count_labels = _count_labels(training_references)
     _count_labels(validation_references)
     deadline = started + options["max_seconds"]
@@ -219,7 +245,7 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     core._require(not train_ids & tune_ids and not train_sources & tune_sources, "training/validation overlap")
     if head_specification is not None and head_specification.get("schema") in (
             "projected-source-decoder-development/v1", "mean-centered-source-decoder-development/v1",
-            "shared-slot-source-decoder-development/v1"):
+            "shared-slot-source-decoder-development/v1", "clause-source-decoder-development/v1"):
         inventory = [dict(id=row["id"], source_sha256=hashlib.sha256(row["source_text"].encode()).hexdigest())
             for row in training_rows]
         for name in ("normalization", "count_prior"):
@@ -264,6 +290,8 @@ def train(student, training_rows, validation_rows, *, training_references, valid
         # addition to the unchanged reference loss. This is not an RSS quota.
         estimate += options["max_optimizer_steps"]*options["batch_size"]*options["max_target_tokens"]*48
         estimate += 134217728
+    if source_contexts is not None:
+        estimate += 16*options["batch_size"]*8*student.dimension*4 + len(core._raw(source_contexts))
     core._require(estimate <= options["max_memory_bytes"], "trial tensor work exceeds budget")
     count_selector = (_BalancedCountSelector(training_rows, count_labels, options["seed"])
                       if count_exposure == "balanced_all" else None)
@@ -281,7 +309,8 @@ def train(student, training_rows, validation_rows, *, training_references, valid
         min_lr=options["learning_rate"]*options["min_learning_rate_ratio"])
     generator = torch.Generator().manual_seed(options["seed"])
     evaluate = lambda: _evaluate(torch, working, validation_rows, validation_references, input_transform,
-        options, codec, deadline, validate_rule, validator_id, validation_source_labels)
+        options, codec, deadline, validate_rule, validator_id, validation_source_labels,
+        **({} if validation_contexts is None else {"source_contexts": validation_contexts}))
     baseline = evaluate()
     selected = last_complete = baseline
     last_complete_step = 0 if baseline is not None else None
@@ -331,7 +360,9 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                 token_weights = torch.tensor([weights[row["id"]] + [0.]*(labels.shape[1]-len(weights[row["id"]]))
                     for row in part], dtype=torch.float32)[:, 1:]
                 optimizer.zero_grad(set_to_none=True)
-                projected, logits = core._logits(torch, working, data, labels[:, :-1], len(codec["target_vocabulary"]))
+                context_kwargs = core._source_context_kwargs(torch, part, training_contexts, input_transform)
+                projected, logits = core._logits(torch, working, data, labels[:, :-1], len(codec["target_vocabulary"]),
+                    **context_kwargs)
                 ce = torch.nn.functional.cross_entropy(logits.flatten(0, 1), labels[:, 1:].flatten(),
                     ignore_index=0, reduction="none").reshape(labels.shape[0], -1)
                 plain = ce.sum()/(labels[:, 1:] != 0).sum()
@@ -346,7 +377,8 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                 source_loss = weighted.new_zeros(())
                 source_positions = 0
                 if source_labels is not None:
-                    source_logits = _source_value_logits(torch, working, projected, len(codec["target_vocabulary"]))
+                    source_logits = _source_value_logits(torch, working, projected, len(codec["target_vocabulary"]),
+                        **context_kwargs)
                     source_targets = torch.tensor([source_labels[row["id"]] for row in part], dtype=torch.long)
                     source_positions = int((source_targets != -1).sum())
                     source_loss = torch.nn.functional.cross_entropy(source_logits.flatten(0, 2),
@@ -523,6 +555,10 @@ def train(student, training_rows, validation_rows, *, training_references, valid
         tensor_work_estimate_bytes=estimate, memory_estimate_excludes_python_import_allocator_rss=True,
         deadline_cooperative=True, **FALSE)
     report["elapsed_seconds"] = time.monotonic()-started
+    if context_receipt is not None:
+        report.update(source_contexts_sha256=core.digest(source_contexts), source_context_inventory=context_receipt,
+            source_context_target_access=False, source_context_used_for_scalar_head_only=True,
+            source_context_training_policy="unique_source_clause_normalization; original_paragraph_supervision")
     if order_selector is not None:
         report.update(order_augmentation=dict(initial=order_initial, final=order_selector.snapshot(),
             selector_draws_may_include_uncommitted_final_batch=True,
