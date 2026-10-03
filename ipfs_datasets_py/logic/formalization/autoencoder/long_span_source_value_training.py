@@ -32,6 +32,9 @@ def _head_specification(model, codec, source_value_weight):
     if not present:
         return None
     description = model.describe()
+    if description.get("schema") == "ordered-clause-recurrent-source-decoder-development/v1":
+        from . import ordered_clause_recurrent_decoder_experiment as recurrent_values
+        return recurrent_values.checked_specification(model, codec)
     if description.get("schema") == "action-factorized-clause-source-decoder-development/v1":
         from . import action_factorized_clause_decoder_experiment as action_values
         return action_values.checked_specification(model, codec)
@@ -221,9 +224,11 @@ def train(student, training_rows, validation_rows, *, training_references, valid
         "closed order-augmentation inputs required")
     head_specification = _head_specification(student, codec, source_value_weight)
     contextual = head_specification is not None and head_specification.get("schema") in (
-        "clause-source-decoder-development/v1", "action-factorized-clause-source-decoder-development/v1")
+        "clause-source-decoder-development/v1", "action-factorized-clause-source-decoder-development/v1",
+        "ordered-clause-recurrent-source-decoder-development/v1")
     core._require(action_contrastive_weight == 0. or head_specification is not None
-        and head_specification.get("schema") == "action-factorized-clause-source-decoder-development/v1",
+        and head_specification.get("schema") in ("action-factorized-clause-source-decoder-development/v1",
+            "ordered-clause-recurrent-source-decoder-development/v1"),
         "positive action-contrastive weight requires action-factorized clause model")
     core._require(contextual == (source_contexts is not None), "clause source model and explicit contexts must be paired")
     context_receipt = None
@@ -255,7 +260,8 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     if head_specification is not None and head_specification.get("schema") in (
             "projected-source-decoder-development/v1", "mean-centered-source-decoder-development/v1",
             "shared-slot-source-decoder-development/v1", "clause-source-decoder-development/v1",
-            "action-factorized-clause-source-decoder-development/v1"):
+            "action-factorized-clause-source-decoder-development/v1",
+            "ordered-clause-recurrent-source-decoder-development/v1"):
         inventory = [dict(id=row["id"], source_sha256=hashlib.sha256(row["source_text"].encode()).hexdigest())
             for row in training_rows]
         for name in ("normalization", "count_prior"):
@@ -592,7 +598,8 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     report["elapsed_seconds"] = time.monotonic()-started
     if context_receipt is not None:
         report.update(source_contexts_sha256=core.digest(source_contexts), source_context_inventory=context_receipt,
-            source_context_target_access=False, source_context_used_for_scalar_head_only=True,
+            source_context_target_access=False,
+            source_context_used_for_scalar_head_only=head_specification.get("source_context_used_for_scalar_head_only", True),
             source_context_training_policy="unique_source_clause_normalization; original_paragraph_supervision")
     if order_selector is not None:
         report.update(order_augmentation=dict(initial=order_initial, final=order_selector.snapshot(),

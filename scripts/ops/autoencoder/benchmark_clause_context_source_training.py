@@ -200,7 +200,7 @@ def restored_tensors(ctx,state,template):
         if value.dtype==torch.float32:
             restored[name]=ctx['numerical']._tensor(state[name],value,name)
         else:
-            require(name=='head_initialization_seed'
+            require(name in ('head_initialization_seed', 'ordered_clause_recurrent_version')
                 and value.dtype==torch.long and value.device.type=='cpu' and tuple(value.shape)==()
                 and type(state[name]) is int and state[name]==int(value),
                 'persisted integer architecture buffer differs')
@@ -270,7 +270,9 @@ def save_state(ctx,model,recipe,role,selected,path):
 def contextual(model):
     return model.describe().get('schema') in (
         'clause-source-decoder-development/v1',
-        'action-factorized-clause-source-decoder-development/v1')
+        'action-factorized-clause-source-decoder-development/v1',
+        'ordered-clause-recurrent-source-decoder-development/v1',
+        'ordered-clause-recurrent-residual-off-control/v1')
 
 
 def guidance_diagnostic(ctx,model,rows,contexts,deadline):
@@ -310,7 +312,9 @@ def evaluate(ctx,model,split,control):
         'conditioned' if control=='zero_condition' else control)
     if control=='zero_condition':
         require(use_context,'context zero-control requires contextual model')
-        owner=('action_factorized_clause_decoder_experiment'
+        owner=('ordered_clause_recurrent_decoder_experiment'
+            if model.describe().get('schema')=='ordered-clause-recurrent-source-decoder-development/v1'
+            else 'action_factorized_clause_decoder_experiment'
             if model.describe().get('schema')=='action-factorized-clause-source-decoder-development/v1'
             else 'clause_source_decoder_experiment')
         model=owners[owner].bind_zero_condition_model(model)

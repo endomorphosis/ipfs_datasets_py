@@ -99,7 +99,7 @@ def source_action_contrastive_loss(torch, model, projected, rows, *, source_cont
     """
     _deadline(deadline)
     core._require(callable(getattr(model, "source_action_features", None))
-        and model.describe().get("schema") == MODEL_SCHEMA, "explicit action-factorized model required")
+        and model.describe().get("schema") in (MODEL_SCHEMA, "ordered-clause-recurrent-source-decoder-development/v1"), "explicit action-factorized model required")
     unique, positions, counts = _batch_inventory(rows, inventory)
     core._require(type(source_context) is dict and set(source_context) == {"vectors", "mask"},
         "explicit source-only context packet required")
