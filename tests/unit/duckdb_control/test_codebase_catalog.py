@@ -57,6 +57,24 @@ def publish(catalog, candidate, operation_id, previous=None):
                            expected_head=previous, projections=projections)
 
 
+def test_falsey_callable_cancellation_checkpoint_is_not_discarded(fixture):
+    catalog, connection, candidate, _, _ = fixture
+    item = candidate()
+
+    class FalseyCancellation:
+        def __bool__(self):
+            return False
+
+        def __call__(self):
+            raise InterruptedError("falsey cancellation remains active")
+
+    with pytest.raises(InterruptedError, match="falsey cancellation"):
+        catalog.publish(operation_id="falsey-cancellation", manifest=item[0], expected_head=None,
+                        projections=item[1], checkpoint=FalseyCancellation())
+    assert catalog.current("fixture") is None
+    assert connection.execute("SELECT count(*) FROM codebase_control.operations").fetchone()[0] == 0
+
+
 def test_exact_head_receipt_replay_and_aba_generation(fixture):
     catalog, connection, candidate, _, _ = fixture
     one = candidate(1)

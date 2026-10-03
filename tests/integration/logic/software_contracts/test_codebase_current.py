@@ -90,6 +90,85 @@ def change(repository, number=2):
     (repository / "counter.py").write_text(f"def increment(n: int) -> int:\n    return n + {number}\n")
 
 
+@pytest.mark.parametrize("flag", ["--assume-unchanged", "--skip-worktree"])
+def test_hidden_git_edit_is_stale_and_preserves_durable_rows(repository, current_index, scheduler, flag):
+    index, connection, _ = current_index
+    owner, _, _ = scheduler
+    first = publish(index, repository, owner, "first")
+    first_ast_cid = index.lookup(index.load(first.head.manifest_cid), "counter.py").ast_cid
+    original_head = git(repository, "rev-parse", "HEAD")
+    git(repository, "update-index", flag, "counter.py")
+    change(repository)
+    assert git(repository, "status", "--porcelain") == ""
+    assert git(repository, "rev-parse", "HEAD") == original_head
+    before = rows(connection)
+    with pytest.raises(StaleCodebaseError):
+        index.observe_current(repository, expected_head=first.head, scheduler=owner)
+    assert rows(connection) == before
+    assert index.current(VIEW) == first.head
+    second = publish(index, repository, owner, "hidden-edit", first.head)
+    observation = index.observe_current(repository, expected_head=second.head, scheduler=owner)
+    assert observation.manifest.snapshot.mode == "git-working"
+    assert index.lookup(observation.manifest, "counter.py").ast_cid != first_ast_cid
+
+
+@pytest.mark.parametrize("boundary", ["before_ast", "before_head", "after_head"])
+def test_source_change_inside_publication_rolls_back_every_table(repository, current_index, scheduler, monkeypatch, boundary):
+    index, connection, _ = current_index
+    owner, _, _ = scheduler
+    first = publish(index, repository, owner, "first")
+    change(repository, 2)
+    before = rows(connection)
+    original = index.catalog.publish
+    observed = []
+
+    def publish_with_edit(**arguments):
+        fence = arguments["publication_checkpoint"]
+
+        def edit_at_boundary():
+            generation = connection.execute("SELECT generation FROM codebase_control.heads WHERE repository_id=?", [VIEW]).fetchone()[0]
+            candidate_rows = connection.execute("SELECT count(*) FROM source_revisions WHERE revision_id<>?", [first.head.ast_revision_id]).fetchone()[0]
+            actual = "after_head" if generation != first.head.generation else "before_head" if candidate_rows else "before_ast"
+            observed.append(actual)
+            if actual == boundary:
+                change(repository, 3)
+            fence()
+
+        arguments["publication_checkpoint"] = edit_at_boundary
+        return original(**arguments)
+
+    monkeypatch.setattr(index.catalog, "publish", publish_with_edit)
+    with pytest.raises(StaleCodebaseError, match="repository changed"):
+        publish(index, repository, owner, "second", first.head)
+    assert boundary in observed
+    assert rows(connection) == before
+    assert index.current(VIEW) == first.head
+    monkeypatch.setattr(index.catalog, "publish", original)
+    recovered = publish(index, repository, owner, "second", first.head)
+    assert recovered.head.generation == first.head.generation + 1
+
+
+@pytest.mark.parametrize("working", [False, True])
+def test_hidden_change_after_capture_is_rejected_by_final_witness(repository, monkeypatch, working):
+    from ipfs_datasets_py.logic.software_contracts.semantic_index import snapshot as snapshot_module
+    if working:
+        change(repository, 2)
+    git(repository, "update-index", "--assume-unchanged", "other.py")
+    original = snapshot_module._status
+    calls = []
+
+    def status_with_hidden_write(root):
+        value = original(root)
+        calls.append(value)
+        if len(calls) == 2:
+            (repository / "other.py").write_text("def unchanged():\n    return False\n")
+        return value
+
+    monkeypatch.setattr(snapshot_module, "_status", status_with_hidden_write)
+    with pytest.raises(snapshot_module.GitSnapshotError, match="captured working file changed"):
+        snapshot_module.snapshot_repository(repository, repository_id=VIEW)
+
+
 def test_durable_current_head_and_observation_replay_in_fresh_process(repository, current_index, scheduler, tmp_path):
     index, connection, database = current_index
     owner, _, _ = scheduler

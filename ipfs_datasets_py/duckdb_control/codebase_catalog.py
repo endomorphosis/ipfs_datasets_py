@@ -439,19 +439,26 @@ class CodebaseCatalog:
                 expected_head: CodebaseHead | None,
                 projections: Sequence[ASTCatalogProjection],
                 invalidations: Sequence[InvalidationRow] = (),
-                checkpoint: Callable[[], None] | None = None) -> CodebasePublicationReceipt:
+                checkpoint: Callable[[], None] | None = None,
+                publication_checkpoint: Callable[[], None] | None = None) -> CodebasePublicationReceipt:
         """CAS the head and AST revision atomically; replay never mutates ASTs.
 
         The catalog derives supersession from durable history. Ingestor-local
         invalidations are intentionally rejected; their selectors can depend on
         warm process state and cannot define a restart-stable operation identity.
+        The publication callback runs inside the transaction before AST writes,
+        before head writes, and after head writes. A raised error rolls back the
+        complete publication. Exact operation replay invokes neither callback.
         """
         _text(operation_id, "operation_id", 256)
         if invalidations:
             raise CodebaseCatalogError("catalog derives invalidations from the durable previous head")
         if checkpoint is not None and not callable(checkpoint):
             raise CodebaseCatalogError("checkpoint must be callable")
-        check = checkpoint or (lambda: None)
+        if publication_checkpoint is not None and not callable(publication_checkpoint):
+            raise CodebaseCatalogError("publication_checkpoint must be callable")
+        check = (lambda: None) if checkpoint is None else checkpoint
+        publication_check = (lambda: None) if publication_checkpoint is None else publication_checkpoint
         request_cid = self.request_identity(manifest, expected_head)
         replay = self.resolve_operation(operation_id, request_cid)
         if replay is not None:
@@ -491,14 +498,17 @@ class CodebaseCatalog:
             heads, operations = self._check_counts()
             if operations >= self.limits.max_operations or (previous is None and heads >= self.limits.max_heads):
                 raise CodebaseCatalogError("publication would exceed the catalog row bound")
+            publication_check()
 
         def before_commit(connection: Any) -> None:
             check()
+            publication_check()
             head = receipt.head
             connection.execute("INSERT INTO codebase_control.heads VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(repository_id) DO UPDATE SET generation=excluded.generation, manifest_cid=excluded.manifest_cid, snapshot_cid=excluded.snapshot_cid, ast_revision_id=excluded.ast_revision_id, receipt_cid=excluded.receipt_cid",
                                [head.repository_id, head.generation, head.manifest_cid, head.snapshot_cid, head.ast_revision_id, head.receipt_cid])
             connection.execute("INSERT INTO codebase_control.operations VALUES (?, ?, ?, ?)",
                                [operation_id, request_cid, receipt.cid, encoded.decode("utf-8")])
+            publication_check()
             check()
 
         try:
