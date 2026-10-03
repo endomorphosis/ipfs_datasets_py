@@ -1,0 +1,13 @@
+{
+  "base_sha256": {
+    "ipfs_datasets_py/logic/software_contracts/codebase_source_units_384.py": "e917f1f5be82b9aa31256aae415606f86a7da25e58c753357428dd6a08695eba",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py": "27855f5ffd59ebc45444d5e37c18ff1569618084cd27b1503db112940051ffb0"
+  },
+  "owners": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41",
+    "ipfs_datasets_py/logic/software_contracts/codebase_source_units_384.py": "cad72bdf21e24b947e660f52bba5f1f95983a5f04e82a51425f29fda29198d58"
+  },
+  "test": "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/tests/unit/optimizers/logic_theorem_optimizer/test_verified_embedding_advice.py",
+  "root_authorized": true,
+  "committed": false
+}

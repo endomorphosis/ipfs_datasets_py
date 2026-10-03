@@ -1,0 +1,95 @@
+{
+  "checkpoint": {
+    "gte_revision": "17e1f347d17fe144873b1201da91788898c639cd",
+    "native_fixture": "five source functions; four decoded unverified candidates and one token deferral; one model load; reopened-registry replay does not infer",
+    "sha256": "2ca38dfcc05536315fc3e2c0647b710b930ef4066b474061a7b4e5bfb9a258c5"
+  },
+  "checkpoint_architecture_unchanged": true,
+  "claims": {
+    "admission_success_in_container": false,
+    "benchmark_score": false,
+    "freed_bytes_measured": false,
+    "model_provider_calls": 0,
+    "proof_authority": false,
+    "training": false
+  },
+  "default_release_verified_pages": false,
+  "distinct_current_tests": 47,
+  "embedding_verifier_source_explicitly_pinned": true,
+  "host_native_profile": {
+    "config": {
+      "lane_reservations": {
+        "validation": {
+          "cpu_slots": 2,
+          "memory_mb": 0
+        }
+      },
+      "max_gpu_memory_percent": null,
+      "max_memory_percent": null,
+      "max_swap_percent": null,
+      "max_waiting_requests": 256,
+      "proof_backoff_seconds": 2.0,
+      "proof_cpu_stall_percent": 50.0,
+      "proof_io_stall_percent": 10.0,
+      "proof_memory_headroom_mb": 24922,
+      "proof_memory_stall_percent": 2.0,
+      "proof_recovery_enabled": false,
+      "proof_recovery_grants": 4,
+      "proof_recovery_interval_seconds": 0.25,
+      "proof_recovery_samples": 2,
+      "proof_safety_enabled": true,
+      "require_known_gpu_for_gpu_work": true,
+      "reserved_gpu_memory_mb": 0,
+      "reserved_memory_mb": 0,
+      "total_child_process_slots": 16,
+      "total_cpu_slots": 16,
+      "total_gpu_memory_mb": null,
+      "total_memory_mb": 99688,
+      "total_unified_memory_mb": null
+    },
+    "host_default_startup_qualified": false,
+    "mode": "explicit_configured_client_same_native_ledger",
+    "new_ledger": false,
+    "policy_changed": false,
+    "sampler": "collect_proof_host_resources"
+  },
+  "limitations": [
+    "40 earlier overlay controls are repeated by the current actual40, not 40 additional tests.",
+    "Advice can partially succeed before a later syscall fails; it is not transactional and advises no memory guarantee.",
+    "Required full asset reads total67691071 bytes; the pages actually reloaded/reclaimed are not measured.",
+    "The existing host ledger has16CPU and99688MiB memory with24922MiB headroom, unlike the earlier4CPU fixture environment; this configured client reused its current values unchanged.",
+    "Source384 producer and requested-policy key changed; previous inference receipts are not rewritten or automatically upgraded. Numerical checkpoint architecture/weights are unchanged."
+  ],
+  "no_model_weight_changes": true,
+  "results": {
+    "actual-02": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 40
+    },
+    "controls-01": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 40
+    },
+    "native-03": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 7
+    }
+  },
+  "schema": "verified-embedding-advice-qualification@1",
+  "source384_explicit_policy": "verified_snapshot_dontneed_best_effort@1",
+  "source_pins": {
+    "ipfs_datasets_py/logic/software_contracts/codebase_source_units_384.py": "cad72bdf21e24b947e660f52bba5f1f95983a5f04e82a51425f29fda29198d58",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41",
+    "tests/integration/logic/software_contracts/test_codebase_source_units_384.py": "c506e9186640d2f78c192ecfc37125f7080b027ec3705deb29b09a49d2b88cbd",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_embedding_runtime.py": "88825805f91311917b6e21743108fc782eb22b22c07eac7f8b200d8aa4cc0598",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_verified_embedding_advice.py": "86888d8f3b339b7424c56e46311b1665d2206445f42366b125c8ccca3d3ec67d"
+  },
+  "status": "component_qualified_native_container_pending",
+  "validity": "All nine asset byte counts, digests, regular held descriptor identities checked before any advice. Hint failures are best effort; native TimeoutError propagates. No asset body read after advice in this verifier call."
+}

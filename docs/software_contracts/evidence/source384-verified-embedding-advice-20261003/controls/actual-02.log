@@ -1,0 +1,14 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 40 items
+
+tests/unit/optimizers/logic_theorem_optimizer/test_verified_embedding_advice.py . [  2%]
+......................                                                   [ 57%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_embedding_runtime.py . [ 60%]
+................                                                         [100%]
+
+- generated xml file: /home/barberb/lift_coding/artifacts/source384-verified-embedding-advice-20261003/actual-02.xml -
+============================== 40 passed in 1.44s ==============================

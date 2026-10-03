@@ -31,3 +31,4 @@ docs/software_contracts/evidence/source384-inference-publication-import-20261003
 # Preserve immutable, hash-addressed diagnostic logs and patches.
 docs/software_contracts/evidence/source384-manifest-combined-comparison-20261003/** -whitespace
 docs/software_contracts/evidence/source384-manifest-replay-candidate-20261003/** -whitespace
+docs/software_contracts/evidence/source384-verified-embedding-advice-20261003/** -whitespace

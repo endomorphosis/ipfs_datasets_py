@@ -1,0 +1,154 @@
+--- a/ipfs_datasets_py/logic/software_contracts/codebase_source_units_384.py
++++ b/ipfs_datasets_py/logic/software_contracts/codebase_source_units_384.py
+@@ -25,6 +25,7 @@
+ SCHEMA = "codebase-source-unit-inference@1"
+ PREPARATION_SCHEMA = "codebase-source-unit-preparation@1"
+ WORKER_SCHEMA = "codebase-source-unit-worker@1"
++EMBEDDING_CACHE_POLICY = "verified_snapshot_dontneed_best_effort@1"
+ MAX_BYTES = 32 * 1024**2
+ FALSE = dict(proof_authority=False, execution_authority=False, completion_authority=False,
+     source_semantics_verified=False, whole_file_semantics_verified=False,
+@@ -37,9 +38,11 @@
+     from . import codebase_source_units_384_worker as worker
+     from ..formalization.autoencoder import source_program_runtime_384 as runtime
+     from ..formalization.autoencoder import source_embeddings_384 as embeddings
++    from ...optimizers.logic_theorem_optimizer import autoencoder_embedding_runtime as verifier
+     return dict(owner=sha(Path(__file__).read_bytes()), worker=sha(Path(worker.__file__).read_bytes()),
+         extraction=units.pins(), shared=shared._pins(), runtime=sha(Path(runtime.__file__).read_bytes()),
+         embeddings=sha(Path(embeddings.__file__).read_bytes()),
++        embedding_verifier=sha(Path(verifier.__file__).read_bytes()),
+         registry=sha(Path(autoencoder_registry.__file__).read_bytes()))
+ 
+ 
+@@ -120,11 +123,11 @@
+     version,saved=shared._lineage(index,registry,version_id)[0]
+     require(saved['kind']=='shared_parent', "pinned shared parent required; trained children are not selected")
+     checkpoint=shared._root_view(saved)
+-    snapshot,assets=embeddings._snapshot_assets(embedding_snapshot)
++    snapshot,assets=embeddings._snapshot_assets(embedding_snapshot,release_verified_pages=True)
+     key=dict(schema=SCHEMA,source_head=expected_head.to_dict(),preparation_sha256=sha(raw(preparation)),
+         version_id=version_id,parent_artifact=version['artifact'],original_checkpoint_sha256=saved['original_checkpoint_sha256'],
+         runtime_checkpoint_sha256=sha(raw(checkpoint)),embedding_snapshot=str(snapshot),embedding_assets=assets,
+-        producer=pins(),device='cpu',batch_size=16,python=sys.version,
++        producer=pins(),embedding_cache_policy=EMBEDDING_CACHE_POLICY,device='cpu',batch_size=16,python=sys.version,
+         runtime_versions={n:package_version(n) for n in ('torch','numpy','transformers','sentence-transformers','tokenizers')})
+     return key,preparation,checkpoint
+ 
+--- a/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py
++++ b/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py
+@@ -8,12 +8,13 @@
+ """
+ from __future__ import annotations
+ 
+-from contextlib import contextmanager
++from contextlib import contextmanager, ExitStack
+ import hashlib
+ import os
+ from pathlib import Path
+ import platform
+ import socket
++import stat
+ import sys
+ import threading
+ from typing import Any, Sequence
+@@ -85,7 +86,23 @@
+                     os.environ[name] = old
+ 
+ 
+-def _snapshot_assets(snapshot_path: str | Path) -> tuple[Path, list[dict[str, Any]]]:
++def _asset_file_identity(info):
++    if not stat.S_ISREG(info.st_mode):
++        raise EmbeddingRuntimeError("model asset descriptor must be a regular file")
++    # Reading may update atime; it cannot legitimately change these fields.
++    return (info.st_dev, info.st_ino, info.st_mode, info.st_size,
++            info.st_mtime_ns, info.st_ctime_ns)
++
++
++def _snapshot_assets(snapshot_path: str | Path, *, release_verified_pages: bool = False) -> tuple[Path, list[dict[str, Any]]]:
++    """Verify the complete pinned snapshot; optionally advise verified file pages.
++
++    Advice is best effort and reports no freed-memory guarantee. The opt-in holds
++    all nine descriptors until every asset passes, then advises those descriptors
++    without rereading bodies. Default callers retain the existing read behavior.
++    """
++    if type(release_verified_pages) is not bool:
++        raise EmbeddingRuntimeError("release_verified_pages must be a boolean")
+     snapshot = Path(snapshot_path).expanduser()
+     if not snapshot.is_absolute():
+         raise EmbeddingRuntimeError("snapshot must be an absolute local path")
+@@ -112,26 +129,55 @@
+     repository = snapshot.parent.parent.resolve()
+     manifest = []
+     total = 0
+-    for name, (expected_size, expected_hash) in sorted(_PINNED_ASSETS.items()):
+-        path = snapshot / name
+-        resolved = path.resolve(strict=True)
+-        if not resolved.is_relative_to(repository) or not resolved.is_file():
+-            raise EmbeddingRuntimeError("asset must resolve inside the pinned model cache")
+-        size = resolved.stat().st_size
+-        total += size
+-        if size != expected_size or total > MAX_ASSET_BYTES:
+-            raise EmbeddingRuntimeError("model assets exceed pinned size or byte limit")
+-        digest = hashlib.sha256()
+-        read = 0
+-        with path.open("rb") as handle:
+-            for block in iter(lambda: handle.read(1024 * 1024), b""):
+-                read += len(block)
+-                if read > expected_size:
+-                    raise EmbeddingRuntimeError("model asset grew during verification")
+-                digest.update(block)
+-        if read != size or digest.hexdigest() != expected_hash:
+-            raise EmbeddingRuntimeError("model asset SHA-256 does not match pinned bytes")
+-        manifest.append({"name": name, "sha256": digest.hexdigest(), "bytes": read})
++    held = []
++    with ExitStack() as opened:
++        for name, (expected_size, expected_hash) in sorted(_PINNED_ASSETS.items()):
++            path = snapshot / name
++            resolved = path.resolve(strict=True)
++            if not resolved.is_relative_to(repository) or not resolved.is_file():
++                raise EmbeddingRuntimeError("asset must resolve inside the pinned model cache")
++            initial = resolved.stat()
++            size = initial.st_size
++            total += size
++            if size != expected_size or total > MAX_ASSET_BYTES:
++                raise EmbeddingRuntimeError("model assets exceed pinned size or byte limit")
++            digest = hashlib.sha256()
++            read = 0
++            # Retain verified descriptors only for the explicitly selected policy.
++            with ExitStack() as current:
++                handle = (opened if release_verified_pages else current).enter_context(path.open("rb"))
++                if release_verified_pages:
++                    before = _asset_file_identity(os.fstat(handle.fileno()))
++                    if before != _asset_file_identity(initial):
++                        raise EmbeddingRuntimeError("model asset changed before verification")
++                for block in iter(lambda: handle.read(1024 * 1024), b""):
++                    read += len(block)
++                    if read > expected_size:
++                        raise EmbeddingRuntimeError("model asset grew during verification")
++                    digest.update(block)
++                if read != size or digest.hexdigest() != expected_hash:
++                    raise EmbeddingRuntimeError("model asset SHA-256 does not match pinned bytes")
++                if release_verified_pages:
++                    if _asset_file_identity(os.fstat(handle.fileno())) != before:
++                        raise EmbeddingRuntimeError("model asset changed during verification")
++                    held.append((handle, before))
++            manifest.append({"name": name, "sha256": digest.hexdigest(), "bytes": read})
++        if release_verified_pages:
++            # Refuse a changed earlier asset before the first advice call.
++            for handle, before in held:
++                if _asset_file_identity(os.fstat(handle.fileno())) != before:
++                    raise EmbeddingRuntimeError("model asset changed after verification")
++            advise = getattr(os, "posix_fadvise", None)
++            policy = getattr(os, "POSIX_FADV_DONTNEED", None)
++            if advise is not None and policy is not None:
++                for handle, _ in held:
++                    try:
++                        advise(handle.fileno(), 0, 0, policy)
++                    except TimeoutError:
++                        raise
++                    except (OSError, NotImplementedError):
++                        # Unsupported hints must not change verified asset validity.
++                        pass
+     return snapshot, manifest
+ 
+ 

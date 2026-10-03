@@ -1,0 +1,40 @@
+{
+  "schema": "verified-embedding-advice-independent-review@1",
+  "reviewer": "restart_cid",
+  "decision": "no source blocker; actual checkpoint and container qualification remain pending",
+  "source_and_evidence_sha256": {
+    "proposed/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41",
+    "proposed/ipfs_datasets_py/logic/software_contracts/codebase_source_units_384.py": "cad72bdf21e24b947e660f52bba5f1f95983a5f04e82a51425f29fda29198d58",
+    "tests/test_verified_embedding_advice.py": "86888d8f3b339b7424c56e46311b1665d2206445f42366b125c8ccca3d3ec67d",
+    "bootstrap/sitecustomize.py": "e1e5803348bb7f6c93209884168bb5a20fc57008e3ff52c99a0877dd13e72bbb",
+    "controls-01.xml": "d4b4ee1fd53809d11f917149a457240f8e169d4e58ed4a77202830c3196f6d27",
+    "controls-01-command.json": "0f27a4ba7fbebbfd6fe800823a62340047eebd6186ad07ccf6038fc50e7432ea",
+    "controls-01-exit.json": "9c50558f77c5e5fabbbe6e26ea9443c36d98c782d64cc3e26aae887127119684"
+  },
+  "reviewed_contracts": [
+    "Default false preserves asset manifest and performs no advice; other IR consumers retain default behavior.",
+    "Opt-in retains all nine verified descriptors, checks size/SHA and initial/open/read/final identities before first hint, and advises those same descriptors without another body read.",
+    "Inside-cache blob symlinks remain supported; descriptor identity ties opened files to initially resolved regular files; external targets refuse.",
+    "TimeoutError is re-raised before OSError/NotImplementedError best-effort handling; ExitStack closes all handles on success or failure.",
+    "Source384 context explicitly opts in; its exact execution key carries the policy string and producer pins include the actual embedding-verifier file SHA.",
+    "The cold replay chain performs _context verification/advice, registry/report integrity checks, and its second source observation without an intervening parent-process GTE body rehash.",
+    "Checkpoint contents, model selection, resource reservations, admission thresholds, source checks and native deadlines are unchanged."
+  ],
+  "controls_inspected": {
+    "authored_advice": 23,
+    "existing_embedding": 17,
+    "passed": 40,
+    "pytest_seconds": 1.47,
+    "skipped": 0,
+    "reviewer_reran_tests": false
+  },
+  "qualification_limits": [
+    "These 40 controls use authored bytes/diagnostic tensors, not the real GTE or Source384 checkpoint.",
+    "Real checkpoint inference/replay compatibility and an ordinary full-container resource run remain required before operational success is claimed.",
+    "All assets are verified before the first advice call; successful hints are not rolled back if a later hint fails.",
+    "Best-effort DONTNEED does not guarantee reclaimed memory or a subsequent lease grant.",
+    "Worker-local model loading retains existing verification behavior; the no-rehash statement is limited to the parent cold-replay interval before its second observation.",
+    "File/source pins establish the native producer contract; no hostile in-memory interpreter integrity guarantee is added."
+  ],
+  "changes_by_reviewer": []
+}

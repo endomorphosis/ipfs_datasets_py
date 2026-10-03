@@ -140,3 +140,12 @@ compatibility wrapper and its canonical checkout guard. Actual checkpoint/GTE
 inference and reopened-registry replay pass while training imports are blocked.
 The decoded candidates remain unverified; this import separation does not grant
 proof authority or establish a completed Docker benchmark.
+
+The [verified embedding advice follow-up](evidence/source384-verified-embedding-advice-20261003/README.md)
+adds an opt-in to the shared GTE asset verifier; Source384 explicitly selects it.
+All nine assets pass byte-count, SHA-256 and held-descriptor identity checks
+before any best-effort file-cache advice. Other callers retain the default
+without advice. Source384 keys bind the requested policy and verifier source;
+checkpoint architecture and weights are unchanged. Forty current unit controls
+and seven real checkpoint/inference/replay controls pass. These component
+results do not demonstrate reclaimed memory, Docker admission or benchmark reward.

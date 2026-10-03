@@ -1,0 +1,47 @@
+{
+  "command": [
+    "/home/barberb/.local/bin/python",
+    "/home/barberb/lift_coding/artifacts/source384-verified-embedding-advice-20261003/run_source_native.py"
+  ],
+  "cwd": "/home/barberb/lift_coding",
+  "pytest_args": [
+    "-q",
+    "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/tests/integration/logic/software_contracts/test_codebase_source_units_384.py",
+    "--junitxml=/home/barberb/lift_coding/artifacts/source384-verified-embedding-advice-20261003/native-03.xml"
+  ],
+  "environment": {
+    "PYTHONPATH": "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1",
+    "NUMEXPR_MAX_THREADS": "1",
+    "CUDA_VISIBLE_DEVICES": "",
+    "TOKENIZERS_PARALLELISM": "false",
+    "HF_HUB_OFFLINE": "1",
+    "TRANSFORMERS_OFFLINE": "1",
+    "CODEBASE384_CHECKPOINT": "/home/barberb/lift_coding/artifacts/distributed384-20261001/run-01/security_ir/coordinator/checkpoints/2ca38dfcc05536315fc3e2c0647b710b930ef4066b474061a7b4e5bfb9a258c5.json",
+    "CODEBASE384_EMBEDDING_SNAPSHOT": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/snapshots/17e1f347d17fe144873b1201da91788898c639cd",
+    "CODEBASE384_LAKE": "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake"
+  },
+  "versions": {
+    "torch": "2.13.0",
+    "numpy": "1.26.4",
+    "transformers": "4.52.1",
+    "sentence-transformers": "5.4.1",
+    "tokenizers": "0.21.4"
+  },
+  "pins": {
+    "ipfs_datasets_py/logic/software_contracts/codebase_ir.py": "4aa2e5287885aaecf2c2319a100b8e4b8bdad21b082990a4beadda84d7c61018",
+    "ipfs_datasets_py/logic/software_contracts/cache.py": "a0b1711a5fa1f5b39b92d43748548c8802f632d1131ad9a64dd7f49df51bdd8c",
+    "ipfs_datasets_py/logic/software_contracts/codebase_source_units_384.py": "cad72bdf21e24b947e660f52bba5f1f95983a5f04e82a51425f29fda29198d58",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41",
+    "/home/barberb/lift_coding/artifacts/source384-verified-embedding-advice-20261003/run_source_native.py": "0c678e344a4caeaf4c6190beb34f54bfd060b17ae8c09a6a709916515c4be307",
+    "/home/barberb/lift_coding/artifacts/source384-verified-embedding-advice-20261003/configured_client_plugin.py": "34e05de973481d0bdf6052c835026eb7304533b82002c317d213a05c7fcaf67d",
+    "tests/integration/logic/software_contracts/test_codebase_source_units_384.py": "c506e9186640d2f78c192ecfc37125f7080b027ec3705deb29b09a49d2b88cbd"
+  },
+  "actual_on_disk_sources": true,
+  "overlay_used": false,
+  "native_producer_recognized": true
+}

@@ -1,0 +1,12 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 7 items
+
+.worktrees/ir-release-datasets-20261002/tests/integration/logic/software_contracts/test_codebase_source_units_384.py . [ 14%]
+......                                                                   [100%]
+
+- generated xml file: /home/barberb/lift_coding/artifacts/source384-verified-embedding-advice-20261003/native-03.xml -
+============================== 7 passed in 9.47s ===============================
