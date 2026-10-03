@@ -76,6 +76,44 @@ def validate_dependency(kind: str, value: str) -> None:
             raise _error("invalid dependency content identity") from exc
 
 
+def contract_dependencies(value: dict[str, Any], contract: dict[str, Any]) -> tuple[tuple[str, str], ...]:
+    """Derive the exact shared and contract-local dependency identities."""
+    common = value["dependencies"]
+    dependencies: set[tuple[str, str]] = set()
+
+    def dep(kind, item):
+        if item is not None:
+            validate_dependency(kind, item)
+            dependencies.add((kind, item))
+
+    for kind, field in (("source", "source_cid"), ("snapshot", "snapshot_cid"), ("manifest", "manifest_cid"),
+                        ("ast", "ast_cid"), ("ast_revision", "ast_revision_id"), ("head", "head_cid"), ("compiler", "pipeline_cid")):
+        dep(kind, common[field])
+    dep("verification", value["verification_cid"])
+    dep("applicability", value["applicability_cid"])
+    dep("authored_contract", contract["contract_cid"])
+    dep("lowered_contract", contract["lowered_contract_cid"])
+    dep("domain", contract["domain_cid"])
+    for phase in ("", "applicability_"):
+        if phase + "environment" in common:
+            environment = common[phase + "environment"]
+            dep("environment", cid_for_structured(environment))
+            for pin in environment["module_pins"]:
+                dep("implementation", "sha256:" + pin["sha256"])
+        if phase + "profile" in common:
+            dep("profile", cid_for_structured(common[phase + "profile"]))
+    for field in ("canonical_keys", "applicability_keys"):
+        for item in contract[field]:
+            native = CanonicalProofCacheKey.from_dict(item["key"])
+            body = native.to_dict()
+            if native.key_id != item["key_id"] or canonical_dag_json_bytes(body) != canonical_dag_json_bytes(item["key"]):
+                raise _error("normalized key does not recompute")
+            dep("canonical_key", native.key_id)
+            for dimension in REQUIRED_IDENTITY_FIELDS:
+                dep("canonical_" + dimension, body[dimension])
+    return tuple(sorted(dependencies))
+
+
 @dataclass(frozen=True, slots=True)
 class EvidenceInventory:
     head_cid: str
@@ -216,36 +254,13 @@ class VerificationProjectionStore:
             if (value.get("schema") != "codebase-conditional-verification-projection@1"
                     or canonical_dag_json_bytes(value.get("head")) != canonical_dag_json_bytes(head.to_dict())):
                 raise _error("sealed normalized projection belongs to another schema/head")
-            common = value["dependencies"]
             for contract in value["contracts"]:
                 checkpoint()
                 entry_id = cid_for_structured({"projection_cid": identity, "contract_id": contract["contract_id"]})
                 append_row(entries, (entry_id, cid_for_structured(head.to_dict()), identity, value["path"],
                     contract["contract_id"], contract["contract_cid"], contract["domain_id"] or "", contract["domain_cid"] or "", value["verification_cid"]), self.limits.max_entries)
-                deps = set()
-                def dep(kind, item):
-                    if item is not None:
-                        validate_dependency(kind, item)
-                        row = (entry_id, kind, item)
-                        if row not in deps:
-                            append_row(dependencies, row, self.limits.max_query_dependencies)
-                            deps.add(row)
-                for kind, field in (("source", "source_cid"), ("snapshot", "snapshot_cid"), ("manifest", "manifest_cid"),
-                    ("ast", "ast_cid"), ("ast_revision", "ast_revision_id"), ("head", "head_cid"), ("compiler", "pipeline_cid")):
-                    dep(kind, common[field])
-                dep("verification", value["verification_cid"])
-                dep("applicability", value["applicability_cid"])
-                dep("authored_contract", contract["contract_cid"])
-                dep("lowered_contract", contract["lowered_contract_cid"])
-                dep("domain", contract["domain_cid"])
-                for phase in ("", "applicability_"):
-                    if phase + "environment" in common:
-                        environment = common[phase + "environment"]
-                        dep("environment", cid_for_structured(environment))
-                        for pin in environment["module_pins"]:
-                            dep("implementation", "sha256:" + pin["sha256"])
-                    if phase + "profile" in common:
-                        dep("profile", cid_for_structured(common[phase + "profile"]))
+                for kind, item in contract_dependencies(value, contract):
+                    append_row(dependencies, (entry_id, kind, item), self.limits.max_query_dependencies)
                 for phase, field in (("verification", "canonical_keys"), ("applicability", "applicability_keys")):
                     for item in contract[field]:
                         checkpoint()
@@ -254,9 +269,6 @@ class VerificationProjectionStore:
                         if native.key_id != item["key_id"] or encoded_key != canonical_dag_json_bytes(item["key"]):
                             raise _error("normalized key does not recompute")
                         append_row(keys, (entry_id, native.key_id, phase, item.get("kind", ""), item["obligation_id"], encoded_key.decode()), self.limits.max_query_keys)
-                        dep("canonical_key", native.key_id)
-                        for dimension in REQUIRED_IDENTITY_FIELDS:
-                            dep("canonical_" + dimension, native.to_dict()[dimension])
         rows = {"entries": sorted(entries), "keys": sorted(keys), "dependencies": sorted(dependencies)}
         for table, values in rows.items():
             if len(set(values)) != len(values):

@@ -253,6 +253,12 @@ class CodebaseVerificationQueryPage:
             if (self.selector.canonical_key_id is not None
                     and self.selector.canonical_key_id not in row["canonical_key_ids"]):
                 raise CodebaseVerificationCatalogError("query entry lacks the exact canonical key")
+            if self.selector.dependency_kind is not None:
+                from .codebase_verification_projection import contract_dependencies
+                value = entry.projection.to_dict()
+                contract = next(c for c in value["contracts"] if c["contract_id"] == entry.contract_id)
+                if (self.selector.dependency_kind, self.selector.dependency_value) not in contract_dependencies(value, contract):
+                    raise CodebaseVerificationCatalogError("query entry does not match the exact dependency selector")
         if self.next_cursor is not None:
             cursor = self.next_cursor
             if type(cursor) is not CodebaseVerificationQueryCursor:

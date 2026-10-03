@@ -1,0 +1,83 @@
+{
+  "schema": "codebase-ir-proof-discovery-handoff/v1",
+  "worktree": "/home/barberb/lift_coding/.worktrees/proof-index-discovery-20261003",
+  "parent_commit": "c4fb7b98d34a421fd6f4972fadefc26860907519",
+  "branch": "codex/proof-index-discovery-20261003",
+  "receipt_links": [
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-proof-discovery-qualification-20261003/acquisition.json",
+      "bytes": 4641,
+      "sha256": "db9bb058bf383f593d2654c93dd9fd7b45c2bd4f9d3d4801cc60553125aae78f"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-proof-discovery-qualification-20261003/admission.json",
+      "bytes": 41889,
+      "sha256": "23c52cfdd22d512af6068551a28cef6d7397b4a5f87c072588abf674fc7c3cfa"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-proof-discovery-qualification-20261003/dependency-profile.json",
+      "bytes": 99631,
+      "sha256": "d9dec166d38a72792bf65cedafd96978a02ecf9098982791fd5d00a5808fe650"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-proof-discovery-qualification-20261003/launcher.json",
+      "bytes": 1444,
+      "sha256": "470dca12a028f9e212238e7134b7a698cdc2aa60aff655a9be85db490a1cb2d8"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-proof-discovery-qualification-20261003/preservation-start.json",
+      "bytes": 253592,
+      "sha256": "6789c1a56ec0834541bbb5536eb2aa23de4669de59e42df28b96c0eb60bdcd3a"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-proof-discovery-qualification-20261003/artifact-observations.json",
+      "bytes": 151758,
+      "sha256": "1594541e87a2021b3e4bf01bca04117062fda60ecdf71c9bb80959826672775b"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-proof-discovery-qualification-20261003/gap-status.json",
+      "bytes": 10584,
+      "sha256": "8ed926794041ec36b302a4eea488ce052cf9ab9b861436f8af73b0890279df5c"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-proof-discovery-qualification-20261003/runs/unknown-discovery-v1/result.json",
+      "bytes": 99671,
+      "sha256": "c4efa34286d218502d638d2f3bf35f76e397ffc0c91005dc2f6c2bcdfc8e8ff4"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-proof-discovery-qualification-20261003/runs/unknown-discovery-v1/import-origins.json",
+      "bytes": 306775,
+      "sha256": "6f2a4ef86650ea49ee2ff709c032fea8a26e62065a234aa27e75ac6c65930bd5"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-proof-discovery-qualification-20261003/runs/unknown-discovery-v1/effect-observations.json",
+      "bytes": 6930406,
+      "sha256": "2f19d2f7b0059706903c2470363a68d4a3ab6f1b775efcce6d4ad1df40b6b5ff"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-proof-discovery-qualification-20261003/runs/unknown-discovery-v1/plugin-registries.json",
+      "bytes": 26416,
+      "sha256": "583d2e57a9fef48ca45e7df6ed59f5059016e8de6bf69544bee641a24053fbd9"
+    }
+  ],
+  "test_cases_passed": 102,
+  "reused_cases": 81,
+  "new_cases": 21,
+  "deselected_cases": 8,
+  "scope": "Native SQL-only normalized historical UNKNOWN evidence with exact dependency-bound page receipts; retained ProgramIR/lowered contract references, no proof/model admission authority",
+  "independent_ir_families": [
+    "codebase_ir",
+    "security_ir",
+    "legal_ir",
+    "intent_ir"
+  ],
+  "dimension_sizes": [
+    8,
+    384,
+    768
+  ],
+  "independent_cells": 12,
+  "original_assets_preserved": 26,
+  "original_inventory_documents_preserved": 13,
+  "next_cohort": "Qualify complete repository scan policy and its bounded Git producer; use the authenticated general process transport or explicitly qualify the separate codebase_process fork before admitting complete inventory. Then qualify positive native code/key/applicability correspondence and typed twelve-cell model/IntentIR bindings."
+}
