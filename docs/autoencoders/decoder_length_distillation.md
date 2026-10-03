@@ -2607,3 +2607,111 @@ recurrent syntax decoder and separately test a representation that preserves
 clause-specific actor/action binding. These are hypotheses to test, not accepted
 improvements. Larger output limits and relaxed selection do not address the
 failures observed here.
+
+### Multiplicative source/position interaction and isolated stopping gradients
+
+`benchmark_multiplicative_source_training.py` tests one additional source-head
+interaction under the same exposed Legal development protocol. For normalized
+source features `x`, shared affine output `u=W*x+b`, and learned position vector
+`e_i`, the opt-in head uses `tanh(u*(1+e_i)+e_i)` in place of `tanh(u+e_i)`.
+Call `bind_shared_slot_source_model(...,
+slot_interaction="additive_multiplicative")` to construct this experiment;
+omitting the argument retains the existing additive model exactly. Both use
+64 hidden units, the same seeded parameter values and 70,624 trainable model
+parameters. The field readout starts at zero, so complete initial greedy
+predictions match. The candidate adds one frozen int64
+`slot_interaction_version=1` buffer; typed restoration refuses cross-mode states,
+including with `strict=False`. Its formula and mode are explicit in the model
+specification. It does not change the recurrent decoder, count path, vocabulary,
+source projection, normalization, or inference input contract.
+
+The four-fit comparison uses seeds 1729 and 2718 with original training rows
+only: no order augmentation or generated-boundary loss. Each fit retains 340
+updates, 2,440 decoder-row and count presentations, 225,840 reference token
+presentations, 25,600 scalar labels, the inherited AdamW/scheduler settings, and
+the unchanged complete-generation selection gates. The two additive baselines
+exactly reproduce the previous complete training reports, tensors and all five
+selected/final control predictions, excluding wall time and the already declared
+90-to-180-second allowance. Original parameters and buffers, trainability,
+initial greedy outputs, and the one candidate-only buffer are checked before
+training. The 48 authored training paragraphs, 48 exposed validation paragraphs,
+and unopened fresh holdout retain their existing roles.
+
+**No reconstruction gain was accepted.** Every validation result is 0/48 exact,
+and every selected checkpoint remains at epoch zero. These values describe the
+unselected final attempts; generated scalar matches count actual ordered
+actor/action/modality/object values, not auxiliary-head predictions.
+
+| Variant / seed | Validation sequence CE | Generated scalar matches /720 | EOS / syntax /48 | Generated rules / duplicates | Training head scalar matches /720 | Fit seconds |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Additive /1729 | 0.187817 | 208 | 44 / 44 | 219 / 121 | 327 | 14.396 |
+| Multiplicative /1729 | 0.191251 | 201 | 44 / 44 | 208 / 119 | 323 | 13.110 |
+| Additive /2718 | 0.187983 | 217 | 48 / 48 | 195 / 101 | 325 | 11.851 |
+| Multiplicative /2718 | 0.188451 | 198 | 48 / 48 | 156 / 71 | 316 | 11.606 |
+
+The multiplicative head raises sequence CE on both seeds and reduces actual
+scalar recovery. Its validation auxiliary-head matches are 265/720 on both
+seeds, compared with baseline 263/720 and 265/720; those small readout changes do
+not improve generated formulas. All four recover only 3/48 original training
+documents exactly. Training actor/action pairs remain unchanged: raw heads
+29/180 and 30/180 by seed, generated outputs 26/180 and 22/180. On the unchanged
+order diagnostic, all four produce 0/60 exact reordered documents, and all
+remain closer to fixed than permuted scalar-logit positions on 60/60 pairs.
+The reordered sources were not used for this experiment's training. This is
+failure of this specific intervention and budget, not proof that pooled vectors
+cannot support ordered reconstruction.
+
+The complete runner takes 80.929 seconds, including 50.963 seconds in fit calls;
+the guardian takes 125.760 seconds including admission, accounting and durable
+release. Retained attempt data is 187,176,851 bytes under the unchanged 800 MB
+reservation. Four resource observations have sampled maximum RSS 940,564,480
+bytes; this is not a kernel peak measurement. The reservation remains one CPU,
+4 GiB and one child, under the unchanged 140 GB campaign cap and explicitly
+recorded historical resource-owner snapshot.
+
+Conditioned final validation evaluation takes 0.016163, 0.016925, 0.012641 and
+0.011443 wall seconds per span in table order, with 48 samples per call. This
+includes numerical generation/CE, fidelity, count and scalar readouts, excluding
+writes. Fit throughput is respectively 169.50, 186.11, 205.89 and 210.24 training
+row presentations per second, including periodic validation inside each fit.
+Each is one measured fit, not a repeated timing estimate; shorter or less
+faithful output does not establish useful-conversion throughput. All runs use
+one CPU worker, bridge names `[]`, prover evaluation false, metric disk cache
+off, and verified warm cached semantic embeddings. No encoder forward or
+bridge-on evaluation occurs; no legal-IR conversion speed gain is claimed.
+
+Separately, `long_span_source_value_training.train` now accepts
+`generated_boundary_gradient_scope="count_head_only"` with a positive
+`generated_boundary_weight`. The default `"all_trainable"` preserves the old
+call and report. The helper authenticates the existing trainable count head,
+temporarily disables other parameter gradients only for the generated-prefix
+replay, and restores all flags before the ordinary combined backward. Actual
+source-only rollouts, full-vocabulary logits/CE, labels, reduction, clipping,
+optimizer and selection are unchanged. The trainer applies this only to its
+private working model; callers must not share that model concurrently during
+replay. Only that auxiliary loss is isolated;
+global clipping and later trajectories can still indirectly alter other updates.
+Synthetic tests verify bit-identical logits/loss/count gradients, no auxiliary
+non-count gradients, preservation of an already-built main-loss graph, and
+restoration on timeout or exceptions. This gradient-routing mode was **not**
+used in the four real fits and has no demonstrated reconstruction or speed gain.
+At an overshot boundary its count supervision can still conflict with the
+true-count loss; isolation does not repair that objective or other syntax logits.
+
+The frozen regression suite passes **1,678 tests**. The independent saved-output
+audit passes **25,408 checks with zero findings**, including complete baseline
+replay, all 12 typed states and 40 control panels, initialization parity,
+selection, exposure, source-head recomputation and joint/order binding metrics.
+The [complete evidence](../implementation/reports/evidence/decoder-multiplicative-source-training-20261003/results.json)
+retains both successful checks and rejected model outputs. Both new options
+remain opt-in; production defaults, the 8D teacher and the pinned checkpoint
+are unchanged. No 768D training, native-family/Lake qualification, convergence,
+formalization or model promotion is claimed.
+
+The next source-context hypothesis is to provide ordered clause vectors to a
+shared field head, using source-text segmentation and authenticated existing
+local embeddings. That requires an explicit inference/training context interface
+and controls that shuffle the corresponding context as well as the paragraph
+vector. Target component identifiers or reference counts must not supply that
+context, and source-derived clause count must not force EOS. This paragraph is
+a proposed experiment, not an implemented decoder or qualification result.

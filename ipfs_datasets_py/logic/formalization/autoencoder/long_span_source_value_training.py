@@ -178,7 +178,7 @@ def train(student, training_rows, validation_rows, *, training_references, valid
           codec, input_transform, lineage, validate_rule, validator_id,
           curriculum, strategy="reference_ce", config=None, cardinality_weight=0.,
           count_exposure="current_stage", source_value_weight=0.,
-          order_augmentation=None, generated_boundary_weight=0.):
+          order_augmentation=None, generated_boundary_weight=0., generated_boundary_gradient_scope="all_trainable"):
     """Fresh reference-supervised fit; source fidelity gates experimental selection.
 
     The last complete attempt is retained as an explicitly unselected diagnostic.
@@ -198,6 +198,11 @@ def train(student, training_rows, validation_rows, *, training_references, valid
         and 0 <= source_value_weight <= 1, "invalid source-value weight")
     core._require(type(generated_boundary_weight) in (int, float) and math.isfinite(generated_boundary_weight)
         and 0 <= generated_boundary_weight <= 1, "invalid generated-boundary weight")
+    core._require(type(generated_boundary_gradient_scope) is str
+        and generated_boundary_gradient_scope in ("all_trainable", "count_head_only"),
+        "unknown generated-boundary gradient scope")
+    core._require(generated_boundary_gradient_scope == "all_trainable" or generated_boundary_weight > 0,
+        "count-only boundary gradient scope requires positive boundary weight")
     core._require(order_augmentation is None or type(order_augmentation) is dict
         and set(order_augmentation) == {"preparation", "embedding_observations"},
         "closed order-augmentation inputs required")
@@ -363,7 +368,9 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                             input_transform=input_transform, max_target_tokens=options["max_target_tokens"],
                             batch_size=options["batch_size"], deadline=deadline, max_sites_per_row=2)
                         boundary_result = boundary_owner.generated_boundary_loss(torch, working,
-                            collection, boundary_counts, codec=codec, input_transform=input_transform, deadline=deadline)
+                            collection, boundary_counts, codec=codec, input_transform=input_transform, deadline=deadline,
+                            **({} if generated_boundary_gradient_scope == "all_trainable" else
+                               {"gradient_scope": generated_boundary_gradient_scope}))
                     except TimeoutError:
                         optimizer.zero_grad(set_to_none=True)
                         stopped, complete = "deadline_during_generated_boundary", False
@@ -522,6 +529,8 @@ def train(student, training_rows, validation_rows, *, training_references, valid
             original_rows_own_curriculum_normalization_and_count_stream=True,
             substituted_rows_own_reference_and_scalar_labels=True),
             source_value_training_row_policy="same decoder batch with authenticated same-parent order substitution")
+    if generated_boundary_gradient_scope != "all_trainable":
+        report["generated_boundary_gradient_scope"] = generated_boundary_gradient_scope
     if boundary_owner is not None:
         report.update(generated_boundary_weight=generated_boundary_weight,
             generated_boundary_policy="complete_source_only_greedy_then_first_and_last_distinct_visited_boundary",

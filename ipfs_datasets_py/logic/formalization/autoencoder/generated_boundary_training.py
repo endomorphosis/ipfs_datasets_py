@@ -5,6 +5,7 @@ First/last boundary selection is independent of reference counts. Only the loss
 receives authenticated training counts: continue before that count, close at or
 after it. This cardinality supervision cannot establish semantic reconstruction.
 """
+from contextlib import contextmanager
 import math
 import random
 import time
@@ -59,6 +60,40 @@ def _state_versions(model):
     # versions; the full tensor digest separately authenticates weight bytes.
     return [(name,parameter._version,None if parameter.grad is None else
         (id(parameter.grad),parameter.grad._version)) for name,parameter in model.named_parameters()]
+
+
+def _count_gradient_parameters(torch, model, description):
+    """Authenticate the only parameters allowed by the opt-in replay scope."""
+    _require(description.get("guide_boundary") is True,
+        "count-only boundary gradients require active count guidance")
+    head=model.body.count_head
+    names=("body.count_head.weight","body.count_head.bias")
+    actual=dict(model.named_parameters())
+    _require(type(head) is torch.nn.Linear and head.in_features==model.dimension
+        and head.out_features==32 and set(dict(head.named_parameters()))=={"weight","bias"}
+        and not dict(head.named_buffers()) and all(name in actual for name in names)
+        and actual[names[0]] is head.weight and actual[names[1]] is head.bias
+        and tuple(head.weight.shape)==(32,model.dimension) and tuple(head.bias.shape)==(32,)
+        and head.weight.requires_grad and head.bias.requires_grad,
+        "exact trainable count-head parameters required for count-only boundary gradients")
+    return names
+
+
+@contextmanager
+def _only_count_gradients(model, names):
+    # The main objective may already have a live graph. Change flags only for
+    # this forward, then restore them before its combined backward. No gradient
+    # is erased, no optimizer group changes, and no parameter value is copied.
+    original=[(name,p,p.requires_grad) for name,p in model.named_parameters()]
+    try:
+        for name,p,enabled in original:
+            if name not in names and enabled:p.requires_grad_(False)
+        yield
+    finally:
+        for _,p,enabled in original:
+            if p.requires_grad!=enabled:p.requires_grad_(enabled)
+        _require(all(p.requires_grad==enabled for _,p,enabled in original),
+            "count-only replay did not restore caller gradient flags")
 
 
 class _Collector:
@@ -197,16 +232,23 @@ def _validate_collection(model,collection,codec,input_transform,torch):
     return tables
 
 
-def generated_boundary_loss(torch,model,collection,training_counts_by_id,*,codec,input_transform,deadline):
+def generated_boundary_loss(torch,model,collection,training_counts_by_id,*,codec,input_transform,deadline,
+        gradient_scope="all_trainable"):
     """Return ``{loss: Tensor|None, receipt: dict}``; never update parameters.
 
 Training counts are actual counts1..32. The reference-dependent target is used
 only after the source rollout: comma for k<N, closing bracket for k>=N. Replay
 uses the student's own prefix once per row, not a target prefix. All vocabulary
 classes remain in CE. No-site collections return None with no attached graph.
+The opt-in count_head_only scope preserves those logits and losses but directs
+this auxiliary gradient only to the count head. Other losses, global clipping,
+and later generated trajectories can still affect the recurrent decoder.
 """
     started=time.monotonic();_check_deadline(deadline)
-    core._model(model,torch);shared.checked_specification(model,codec);_transform(input_transform,model.dimension)
+    _require(type(gradient_scope) is str and gradient_scope in ("all_trainable","count_head_only"),
+        "explicit supported boundary gradient scope required")
+    core._model(model,torch);description=shared.checked_specification(model,codec);_transform(input_transform,model.dimension)
+    count_names=_count_gradient_parameters(torch,model,description) if gradient_scope=="count_head_only" else None
     tables=_validate_collection(model,collection,codec,input_transform,torch)
     _require(type(training_counts_by_id) is dict and 1<=len(training_counts_by_id)<=4096
         and all(type(identity) is str and type(count) is int and 1<=count<=32 for identity,count in training_counts_by_id.items())
@@ -227,6 +269,11 @@ classes remain in CE. No-site collections return None with no attached graph.
         model_tensor_sha256=collection["model_tensor_sha256"],source_only=True,reference_count_access=False,
         rows=[dict(**row,prediction=prediction,input_sha256=core.digest(sources[row["id"]]["input"]))
             for row,prediction in zip(collection["rows"],collection["predictions"])])
+    if count_names is not None:
+        receipt.update(gradient_scope=gradient_scope,gradient_parameter_names=list(count_names),
+            gradient_parameter_count=sum(dict(model.named_parameters())[name].numel() for name in count_names),
+            gradient_isolation_scope="this_auxiliary_loss_only_before_global_clipping",
+            caller_gradient_flags_restored=True)
     if not active:
         _check_deadline(deadline);receipt["elapsed_seconds"]=time.monotonic()-started
         return dict(loss=None,receipt=receipt)
@@ -239,8 +286,13 @@ classes remain in CE. No-site collections return None with no attached graph.
             _check_deadline(deadline);part=active[offset:offset+collection["batch_size"]]
             prefixes=[r["consumed_prefix"][:r["replay_prefix_tokens"]] for r in part];width=max(map(len,prefixes))
             tokens=torch.tensor([p+[0]*(width-len(p)) for p in prefixes],dtype=torch.long)
-            _,logits=core._logits(torch,model,_data(torch,[sources[r["id"]] for r in part],input_transform),
-                tokens,len(codec["target_vocabulary"]))
+            if count_names is None:
+                _,logits=core._logits(torch,model,_data(torch,[sources[r["id"]] for r in part],input_transform),
+                    tokens,len(codec["target_vocabulary"]))
+            else:
+                with _only_count_gradients(model,count_names):
+                    _,logits=core._logits(torch,model,_data(torch,[sources[r["id"]] for r in part],input_transform),
+                        tokens,len(codec["target_vocabulary"]))
             _check_deadline(deadline)
             for index,row in enumerate(part):
                 count=training_counts_by_id[row["id"]];sites=row["selected_sites"]

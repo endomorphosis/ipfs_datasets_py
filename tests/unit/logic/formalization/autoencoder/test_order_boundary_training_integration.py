@@ -122,3 +122,33 @@ def test_boundary_training_cannot_override_generated_fidelity_regression(monkeyp
     result=fit(model,train,tune,options,generated_boundary_weight=.25)
     assert result['report']['selected_epoch']==0
     assert any('actor' in reason for reason in result['report']['history'][0]['rejection_reasons'])
+
+
+@pytest.mark.parametrize('scope',[None,True,[], 'count', 'syntax'])
+def test_unknown_boundary_gradient_scope_fails_before_copy(monkeypatch,scope):
+    model,_,train,tune,options=prepared()
+    monkeypatch.setattr(subject,'deepcopy',lambda _:pytest.fail('copied before scope validation'))
+    with pytest.raises(ValueError,match='gradient scope'):
+        fit(model,train,tune,options,generated_boundary_gradient_scope=scope)
+
+
+def test_count_only_scope_requires_enabled_loss(monkeypatch):
+    model,_,train,tune,options=prepared()
+    monkeypatch.setattr(subject,'deepcopy',lambda _:pytest.fail('copied before scope validation'))
+    with pytest.raises(ValueError,match='positive boundary weight'):
+        fit(model,train,tune,options,generated_boundary_gradient_scope='count_head_only')
+
+
+def test_scope_reaches_helper_and_report_without_altering_selection(monkeypatch):
+    model,_,train,tune,options=prepared();fake_boundary(monkeypatch)
+    from ipfs_datasets_py.logic.formalization.autoencoder import generated_boundary_training as boundary
+    original=boundary.generated_boundary_loss;seen=[]
+    def observe(*args,**kwargs):
+        seen.append(kwargs.get('gradient_scope'))
+        return original(*args,**kwargs)
+    monkeypatch.setattr(boundary,'generated_boundary_loss',observe)
+    result=fit(model,train,tune,options,generated_boundary_weight=.25,
+        generated_boundary_gradient_scope='count_head_only')
+    assert seen==['count_head_only']*result['report']['optimizer_steps']
+    assert result['report']['generated_boundary_gradient_scope']=='count_head_only'
+    assert result['report']['generated_boundary_used_for_selection'] is False
