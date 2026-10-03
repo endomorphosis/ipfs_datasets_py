@@ -3356,3 +3356,168 @@ While this experiment ran, `origin/main` advanced to `c64107b0e042b0611be88abb18
 A separate merge-compatibility check extracted the exact newer Git blob and overrode only that module for the same scoped suite: all 2,430 tests passed again in 43.01 s. Its 402-check receipt records both hashes, module provenance and the narrow AST review. This was a compatibility test with synthetic decoder fixtures, not a rerun of the eighteen fits or native encoder inference. No weights were downloaded. An initial preflight incorrectly assumed the shared working-tree file already matched remote main; it stopped before tests, and its failed script/log are retained. The successful check instead preserves the local working-tree bytes while testing the exact remote blob.
 
 The publication manifest separates the historical `validated_producer_source_sha256` from `publication_producer_source_sha256` and declares exactly this reviewed override. The archive keeps the historical source under `source/` and the tested newer source under `validation/compatibility-source/`. Publication starts from current main and preserves its newer runtime without staging the stale shared working-tree file. Exact review hashes, archived review membership, both producer hashes and ancestry checks prevent silently substituting a different producer or discarding concurrent work.
+
+
+## Generated scalar-field training and rollout cadence (2026-10-03)
+
+This experiment tests whether supervising errors at generated scalar positions improves reconstruction, and whether sharing or reducing auxiliary work controls its cost. Pooled final exact results are boundary-first-last: 83/288, generated-fields: 81/288, generated-fields-every2: 83/288. These totals reuse the same 48 exposed development paragraphs across six width/seed combinations; they are not 288 independent examples. Selected epoch distribution: epoch 0: 18 fits. Numerical improvements do not override any original acceptance condition.
+
+The choice of fields comes from training-only evidence. In the predecessor first/last runs, wrong visited training scalar sites were actor 36, action 27, modality 146 and object 166. The first-wrong comparison had actor 31, action 25, modality 135 and object 167. Accordingly, the objective covers all four fields. These counts diagnose positions actually visited; they do not count omitted rules as correct and are separate from the full source-fidelity scorer. No validation examples were used to fabricate training labels.
+
+Input provenance differs by width: the 8D sidecar uses nonsemantic linguistic-feature-hash vectors; the 384D and 768D sidecars use authenticated cached semantic embeddings. These experiments do not execute or retrain the historical 8D linguistic teacher.
+
+Extra and missing rules count unmatched whole-rule content. A scalar-content substitution can count as both even when the number of emitted rules is correct; these measures are not simply output-length errors.
+
+This eighteen-fit development comparison adds generated scalar supervision to the existing first/last boundary recipe, then separately reduces both auxiliary rollouts to every second committed update. Actor, action, modality and object are eligible; the first wrong visited token per field is selected after source-only generation. Baselines start from the same original initializers. All figures describe private final attempts on repeatedly exposed validation rows, not a fresh holdout.
+
+| Width | Seed | Exact baseline / fields / fields every2, out of 48 | Reference token CE | Fit seconds |
+|---:|---:|---|---|---|
+| 8 | 1729 | 1 / 1 / 1 | 0.13029 / 0.12908 / 0.13307 | 49.225 / 52.827 / 30.376 |
+| 8 | 2718 | 1 / 1 / 1 | 0.12769 / 0.13699 / 0.13070 | 48.110 / 48.607 / 30.435 |
+| 384 | 1729 | 13 / 14 / 12 | 0.10807 / 0.09264 / 0.09139 | 60.618 / 63.217 / 40.372 |
+| 384 | 2718 | 9 / 13 / 12 | 0.10359 / 0.09123 / 0.09770 | 65.742 / 65.316 / 42.708 |
+| 768 | 1729 | 17 / 10 / 16 | 0.07903 / 0.09255 / 0.08903 | 88.204 / 87.856 / 54.952 |
+| 768 | 2718 | 42 / 42 / 41 | 0.02942 / 0.02959 / 0.03170 | 87.174 / 94.090 / 58.957 |
+
+Aggregate exact counts out of 288: boundary-first-last: 83, generated-fields: 81, generated-fields-every2: 83.
+
+| Width | Seed | Arm | Exact at lengths 1/2/4/8 | EOS / syntax | Duplicates | Extra / missing | Generated actor / action / modality / object, out of 180 |
+|---:|---:|---|---|---|---:|---|---|
+| 8 | 1729 | boundary-first-last | 1/0/0/0 | 48 / 48 | 10 | 157 / 157 | 110/75/144/88 |
+| 8 | 1729 | generated-fields | 1/0/0/0 | 48 / 48 | 11 | 160 / 160 | 112/74/144/89 |
+| 8 | 1729 | generated-fields-every2 | 1/0/0/0 | 48 / 48 | 11 | 157 / 158 | 115/73/143/89 |
+| 8 | 2718 | boundary-first-last | 1/0/0/0 | 48 / 48 | 11 | 159 / 159 | 104/66/144/89 |
+| 8 | 2718 | generated-fields | 1/0/0/0 | 48 / 48 | 11 | 167 / 168 | 108/52/143/90 |
+| 8 | 2718 | generated-fields-every2 | 1/0/0/0 | 48 / 48 | 12 | 160 / 161 | 113/66/143/90 |
+| 384 | 1729 | boundary-first-last | 8/1/3/1 | 48 / 47 | 0 | 57 / 63 | 153/165/136/172 |
+| 384 | 1729 | generated-fields | 8/2/4/0 | 48 / 48 | 0 | 45 / 48 | 158/167/159/177 |
+| 384 | 1729 | generated-fields-every2 | 7/2/3/0 | 48 / 48 | 0 | 55 / 57 | 160/164/151/177 |
+| 384 | 2718 | boundary-first-last | 8/1/0/0 | 48 / 35 | 0 | 67 / 99 | 112/123/106/135 |
+| 384 | 2718 | generated-fields | 7/3/2/1 | 48 / 46 | 0 | 46 / 52 | 155/159/155/172 |
+| 384 | 2718 | generated-fields-every2 | 8/2/1/1 | 48 / 48 | 1 | 65 / 63 | 155/168/141/178 |
+| 768 | 1729 | boundary-first-last | 9/4/4/0 | 48 / 45 | 0 | 50 / 63 | 134/152/155/165 |
+| 768 | 1729 | generated-fields | 8/2/0/0 | 48 / 45 | 14 | 71 / 59 | 136/159/160/169 |
+| 768 | 1729 | generated-fields-every2 | 9/3/4/0 | 48 / 48 | 12 | 62 / 52 | 140/167/165/174 |
+| 768 | 2718 | boundary-first-last | 12/12/11/7 | 48 / 48 | 0 | 7 / 7 | 178/175/180/180 |
+| 768 | 2718 | generated-fields | 12/12/11/7 | 48 / 48 | 0 | 7 / 7 | 178/175/180/180 |
+| 768 | 2718 | generated-fields-every2 | 12/12/10/7 | 48 / 48 | 1 | 7 / 6 | 178/176/180/180 |
+
+Scalar matches use the existing saved fidelity scorer, including missing/invalid output. They are not counts only over visited scalar sites. Raw source-head scores, training panels, and all nine inference controls remain separate in outcomes.json.
+
+| Width | Seed | Arm | Selected epoch | Final rejection conditions, repeated baseline/incumbent wording collapsed |
+|---:|---:|---|---:|---|
+| 8 | 1729 | boundary-first-last | 0 | length=1/whole_rules_extra regressed; length=2/whole_rules_extra regressed; length=4/whole_rules_extra regressed; length=8/whole_rules_extra regressed |
+| 8 | 1729 | generated-fields | 0 | length=1/whole_rules_extra regressed; length=2/whole_rules_extra regressed; length=4/whole_rules_extra regressed; length=8/whole_rules_extra regressed |
+| 8 | 1729 | generated-fields-every2 | 0 | length=1/whole_rules_extra regressed; length=2/whole_rules_extra regressed; length=4/whole_rules_extra regressed; length=8/whole_rules_extra regressed |
+| 8 | 2718 | boundary-first-last | 0 | length=1/whole_rules_extra regressed; length=2/whole_rules_extra regressed; length=4/whole_rules_extra regressed; length=8/whole_rules_extra regressed |
+| 8 | 2718 | generated-fields | 0 | length=1/whole_rules_extra regressed; length=2/whole_rules_extra regressed; length=4/whole_rules_extra regressed; length=8/whole_rules_extra regressed |
+| 8 | 2718 | generated-fields-every2 | 0 | length=1/whole_rules_extra regressed; length=2/whole_rules_extra regressed; length=4/whole_rules_extra regressed; length=8/whole_rules_extra regressed |
+| 384 | 1729 | boundary-first-last | 0 | length=1/whole_rules_extra regressed; length=2/whole_rules_extra regressed; length=4/invalid_rule_count regressed; length=4/whole_rules_extra regressed; length=8/whole_rules_extra regressed |
+| 384 | 1729 | generated-fields | 0 | length=1/whole_rules_extra regressed; length=2/whole_rules_extra regressed; length=4/whole_rules_extra regressed; length=8/whole_rules_extra regressed |
+| 384 | 1729 | generated-fields-every2 | 0 | length=1/whole_rules_extra regressed; length=2/whole_rules_extra regressed; length=4/whole_rules_extra regressed; length=8/whole_rules_extra regressed |
+| 384 | 2718 | boundary-first-last | 0 | length=1/whole_rules_extra regressed; length=2/invalid_rule_count regressed; length=2/whole_rules_extra regressed; length=4/invalid_rule_count regressed; length=4/whole_rules_extra regressed; length=8/invalid_rule_count regressed; length=8/whole_rules_extra regressed |
+| 384 | 2718 | generated-fields | 0 | length=1/whole_rules_extra regressed; length=2/whole_rules_extra regressed; length=4/invalid_rule_count regressed; length=4/whole_rules_extra regressed; length=8/whole_rules_extra regressed |
+| 384 | 2718 | generated-fields-every2 | 0 | length=1/whole_rules_extra regressed; length=2/whole_rules_extra regressed; length=4/whole_rules_extra regressed; length=8/whole_rules_extra regressed |
+| 768 | 1729 | boundary-first-last | 0 | length=1/whole_rules_extra regressed; length=2/whole_rules_extra regressed; length=4/invalid_rule_count regressed; length=4/whole_rules_extra regressed; length=8/whole_rules_extra regressed |
+| 768 | 1729 | generated-fields | 0 | length=1/invalid_rule_count regressed; length=1/whole_rules_extra regressed; length=2/invalid_rule_count regressed; length=2/whole_rules_extra regressed; length=4/invalid_rule_count regressed; length=4/whole_rules_extra regressed; length=8/whole_rules_extra regressed |
+| 768 | 1729 | generated-fields-every2 | 0 | length=1/whole_rules_extra regressed; length=2/whole_rules_extra regressed; length=4/whole_rules_extra regressed; length=8/whole_rules_extra regressed |
+| 768 | 2718 | boundary-first-last | 0 | length=4/whole_rules_extra regressed; length=8/whole_rules_extra regressed |
+| 768 | 2718 | generated-fields | 0 | length=4/whole_rules_extra regressed; length=8/whole_rules_extra regressed |
+| 768 | 2718 | generated-fields-every2 | 0 | length=4/whole_rules_extra regressed; length=8/whole_rules_extra regressed |
+
+| Width | Seed | Arm | Scheduled / skipped updates | Boundary labels | Field labels actor/action/modality/object | Collection / loss-helper seconds | Union replay row tokens |
+|---:|---:|---|---|---:|---|---|---:|
+| 8 | 1729 | boundary-first-last | 340 / 0 | 3239 | disabled | 22.339 / 7.817 | 181305 |
+| 8 | 1729 | generated-fields | 340 / 0 | 3325 | 848/782/1033/1240 | 24.535 / 8.427 | 189927 |
+| 8 | 1729 | generated-fields-every2 | 170 / 170 | 1727 | 445/418/506/621 | 9.850 / 4.664 | 94996 |
+| 8 | 2718 | boundary-first-last | 340 / 0 | 3431 | disabled | 23.131 / 7.303 | 194952 |
+| 8 | 2718 | generated-fields | 340 / 0 | 3349 | 826/800/1079/1237 | 21.412 / 8.269 | 191117 |
+| 8 | 2718 | generated-fields-every2 | 170 / 170 | 1744 | 448/436/553/656 | 9.919 / 4.572 | 92621 |
+| 384 | 1729 | boundary-first-last | 340 / 0 | 2804 | disabled | 26.233 / 13.562 | 132789 |
+| 384 | 1729 | generated-fields | 340 / 0 | 3049 | 599/410/818/59 | 26.144 / 15.702 | 172996 |
+| 384 | 1729 | generated-fields-every2 | 170 / 170 | 1603 | 383/242/462/19 | 12.175 / 7.899 | 87341 |
+| 384 | 2718 | boundary-first-last | 340 / 0 | 2917 | disabled | 28.540 / 14.771 | 155939 |
+| 384 | 2718 | generated-fields | 340 / 0 | 3035 | 567/434/814/16 | 26.893 / 16.287 | 172487 |
+| 384 | 2718 | generated-fields-every2 | 170 / 170 | 1597 | 347/287/439/2 | 13.572 / 8.076 | 85088 |
+| 768 | 1729 | boundary-first-last | 340 / 0 | 3034 | disabled | 38.893 / 21.733 | 158134 |
+| 768 | 1729 | generated-fields | 340 / 0 | 2770 | 750/417/582/67 | 37.310 / 23.103 | 136347 |
+| 768 | 1729 | generated-fields-every2 | 170 / 170 | 1546 | 395/227/323/49 | 16.522 / 12.795 | 82183 |
+| 768 | 2718 | boundary-first-last | 340 / 0 | 3334 | disabled | 37.740 / 21.555 | 189079 |
+| 768 | 2718 | generated-fields | 340 / 0 | 3303 | 302/219/252/31 | 40.929 / 24.252 | 189556 |
+| 768 | 2718 | generated-fields-every2 | 170 / 170 | 1709 | 184/154/173/13 | 19.582 / 12.245 | 94285 |
+
+| Width | Seed | Joint arm | Bulk / discarded / retry batches | Physical replay calls / row tokens | Bulk / retry seconds |
+|---:|---:|---|---|---|---|
+| 8 | 1729 | generated-fields | 334 / 0 / 0 | 334 / 355007 | 3.077 / 0.000 |
+| 8 | 1729 | generated-fields-every2 | 167 / 0 / 0 | 167 / 170070 | 1.370 / 0.000 |
+| 8 | 2718 | generated-fields | 334 / 1 / 1 | 602 / 360953 | 2.962 / 0.099 |
+| 8 | 2718 | generated-fields-every2 | 167 / 1 / 1 | 204 / 174062 | 1.339 / 0.015 |
+| 384 | 1729 | generated-fields | 335 / 0 / 0 | 335 / 308373 | 4.137 / 0.000 |
+| 384 | 1729 | generated-fields-every2 | 167 / 0 / 0 | 167 / 149106 | 2.027 / 0.000 |
+| 384 | 2718 | generated-fields | 336 / 0 / 0 | 336 / 316206 | 4.216 / 0.000 |
+| 384 | 2718 | generated-fields-every2 | 168 / 0 / 0 | 168 / 151350 | 2.106 / 0.000 |
+| 768 | 1729 | generated-fields | 336 / 0 / 0 | 336 / 224077 | 5.097 / 0.000 |
+| 768 | 1729 | generated-fields-every2 | 168 / 0 / 0 | 168 / 142694 | 2.808 / 0.000 |
+| 768 | 2718 | generated-fields | 336 / 0 / 0 | 336 / 359064 | 6.021 / 0.000 |
+| 768 | 2718 | generated-fields-every2 | 168 / 0 / 0 | 168 / 181835 | 2.988 / 0.000 |
+
+Both components use full-vocabulary CE with their own mean across selected sites in each active row, then across active rows. Joint training uses one source-only rollout and one accepted union replay graph per active row. Full-prefix replay is checked at unchanged 2e-5 absolute and relative tolerances; a failed bulk attempt is discarded and retried incrementally with its original batch membership before any batch CE. Failed bulk work and strict retry calls, row tokens and timings are accounted separately. Attempt timings include forward execution and selected-tensor gathering; parity checks and component CE remain inside the total loss-helper time. The every2 arm skips both generated-site auxiliaries on alternate committed steps and does not multiply the remaining loss. It therefore changes auxiliary exposure as well as cost; ordinary teacher-forced, count, source-value and action-contrastive updates remain unchanged. Replay token bookkeeping is not a measured counterfactual speedup.
+
+| Width | Seed | Arm | Fit seconds | Training row presentations/second | Numerical seconds/48 | Numerical seconds/span | Full panel seconds/span |
+|---:|---:|---|---:|---:|---:|---:|---:|
+| 8 | 1729 | boundary-first-last | 49.225 | 49.57 | 0.333692 | 0.006952 | 0.009949 |
+| 8 | 1729 | generated-fields | 52.827 | 46.19 | 0.345725 | 0.007203 | 0.010258 |
+| 8 | 1729 | generated-fields-every2 | 30.376 | 80.33 | 0.311515 | 0.006490 | 0.009521 |
+| 8 | 2718 | boundary-first-last | 48.110 | 50.72 | 0.307935 | 0.006415 | 0.009406 |
+| 8 | 2718 | generated-fields | 48.607 | 50.20 | 0.336187 | 0.007004 | 0.010108 |
+| 8 | 2718 | generated-fields-every2 | 30.435 | 80.17 | 0.307697 | 0.006410 | 0.009430 |
+| 384 | 1729 | boundary-first-last | 60.618 | 40.25 | 0.458280 | 0.009547 | 0.020498 |
+| 384 | 1729 | generated-fields | 63.217 | 38.60 | 0.464141 | 0.009670 | 0.020282 |
+| 384 | 1729 | generated-fields-every2 | 40.372 | 60.44 | 0.458285 | 0.009548 | 0.020120 |
+| 384 | 2718 | boundary-first-last | 65.742 | 37.11 | 0.473307 | 0.009861 | 0.020373 |
+| 384 | 2718 | generated-fields | 65.316 | 37.36 | 0.434770 | 0.009058 | 0.019569 |
+| 384 | 2718 | generated-fields-every2 | 42.708 | 57.13 | 0.501773 | 0.010454 | 0.021156 |
+| 768 | 1729 | boundary-first-last | 88.204 | 27.66 | 0.594949 | 0.012395 | 0.030328 |
+| 768 | 1729 | generated-fields | 87.856 | 27.77 | 0.616241 | 0.012838 | 0.031115 |
+| 768 | 1729 | generated-fields-every2 | 54.952 | 44.40 | 0.629624 | 0.013117 | 0.031387 |
+| 768 | 2718 | boundary-first-last | 87.174 | 27.99 | 0.573577 | 0.011950 | 0.030177 |
+| 768 | 2718 | generated-fields | 94.090 | 25.93 | 0.575137 | 0.011982 | 0.030017 |
+| 768 | 2718 | generated-fields-every2 | 58.957 | 41.39 | 0.583148 | 0.012149 | 0.030510 |
+
+Runner wall time: 1483.287s. Summed training calls: 1068.786s. Each fit retains 340 optimizer updates, 2,440 ordinary row/count presentations, 225,840 target-token presentations and 25,600 scalar labels. The comparison fixes updates, not wall-clock training time. Additional generated-field labels and changed cadence do not establish the fastest convergence.
+
+The inherited first/last baseline preserves its 1 GiB tensor-work allowance; joint candidates use 2 GiB to account for additional retained full-vocabulary field logits. These estimates are not an RSS quota. All data and source contexts are authenticated; one source clause per reference rule is an explicit authored-fixture alignment contract. Missing, invalid or overshot reference slots receive no invented scalar targets.
+
+Measurements use one CPU worker, bridge names [], prover evaluation false, metric disk cache disabled and authenticated cached source inputs. Each evaluation contains 48 samples. No encoder execution or weights download occurs. Source inputs are warm cached representations; no cold parser/compile measurement occurs. Legal-IR bridge targets are unmeasured, and these are not bridge-on timings. Numerical evaluation includes reference CE, free generation and identity checks; full panels add control construction and fidelity/readout scoring. Potential-residual observations and serialization remain separate. Different generated lengths prevent an automatic conversion-throughput claim.
+
+All original acceptance gates remain unchanged. No native-family or Lake qualification was performed, no production checkpoint was promoted, and no admit, formalized flag, roundtrip_ok, fresh-holdout claim or proof of convergence follows. The historical 8D linguistic teacher remains unchanged; identity projection MSE is not learned reconstruction. The Constitution remains unformalized.
+A separate training-only input check found 113 distinct cached raw clause vectors for 113 unique clauses at each width, with 180 positioned occurrences and no exact conflicting-vector groups. That check therefore does not explain the 8D reconstruction limit. Its collision-only upper bounds are uninformative 100% values, not achievable scores or convergence evidence; float32/preprocessing collisions, geometry, optimization and model-capacity limits remain open. No validation targets or vectors were analyzed, and no recipe changed. The source and hash-bound receipt are `check_training_identifiability.py` and `training-identifiability.json` in the archived validation directory.
+
+
+### Training interface and alignment contract
+
+`long_span_source_value_training.train` now accepts `generated_field_weight=0.0` and `generated_site_interval=1`. Defaults preserve the prior report and optimizer path. A positive field weight requires an explicit contextual clause model, a positive generated-boundary weight, and `generated_boundary_gradient_scope="all_trainable"`. Nondefault cadence requires positive field supervision. The interval is an integer in 1–32; this study tests only 1 and 2. Encoder context and decoder output remain 512, and generation temperature remains zero.
+
+`generated_field_training.prepare_training_inventory` authenticates training references against positioned source contexts once per fit. Every reference rule must have exactly one corresponding source clause. Repeated literal clauses retain separate occurrence offsets, but contradictory scalar labels for the same literal source hash are rejected. This is an authored alignment contract, not a method for resolving ambiguous legislation.
+
+`collect_source_generated_sites` accepts closed source rows (`id`, `input`, `source_text`), codec, input transform, explicit source contexts, a batch size, output limit and deadline. It receives no references, inventory or selection policy. It records actual greedy prefixes, every visited scalar site, actual argmax choices and complete vocabulary logits alongside actual rule boundaries. The model vocabulary is never masked and output closure is never forced.
+
+`generated_site_losses` receives the completed collection and authenticated training inventory. It chooses the first wrong visited actor, action, modality and object token, up to four sites per row, plus the configured boundary sites. The fast path replays the union of selected sites in bulk; each component has its own mean over selected sites and active rows. Before forming any batch CE, every selected full-vocabulary vector is checked against collection. If that check fails, the bulk graph is discarded and the original collection batch is replayed one token at a time, at most once per original batch. This retry must pass the same prefix and logit checks. Only the accepted replay graph contributes to the loss, while receipts count both physical attempts and their extra work. Returned `boundary_loss`, `field_loss` and `receipt` expose the two objectives separately. There are no invented sites for missing rules or unavailable reference ordinals. Replay logits must agree with collected decisions within the existing numerical tolerance. Caller modes, RNG, existing gradients and parameters are preserved until the trainer performs its ordinary combined backward/update.
+
+Cadence uses the zero-based count of committed optimizer steps, across curriculum stages. Interval 2 schedules steps 0, 2, …, 338. Skipped updates record `explicit_auxiliary_cadence`; neither auxiliary is reweighted. Deadlines during collection or replay abort before committing that update and clear pending gradients. The existing precommit deadline, clipping, scheduler and source-fidelity selection remain in force.
+
+Receipts expose `generated_field_inventory`, field policy, interval, scheduled/skipped counts and per-update `generated_sites`. Each scheduled receipt contains source hashes, actual prefixes, observed and replayed full-vocabulary logits, selected sites, separate CE reductions, field label counts, union replay work and timings. The six replayed baselines match prior numerical reports and all control predictions after excluding only root elapsed time, boundary-helper elapsed time, generation elapsed time, and the collection digest that includes elapsed time. Raw records retain those fields; no logits, labels, decisions or weight hashes are excluded.
+
+The original attempt stopped after four complete fits when the fifth fit failed replay consistency. The bounded reproduction recovered the same error at committed update 158: a maximum difference of 0.0000311732292175293 in full-prefix replay, while original-batch incremental replay was bit-exact with gradients both on and off. No tolerance was widened and no update was committed after the diagnostic failure. The final comparison uses a new frozen source revision and fresh fits; the original source, partial results, failure receipts, diagnostic state and unsuccessful setup attempt are archived separately under `failed-prior/`. Reported comparison times exclude that earlier failed campaign and diagnostic work. The revised helper gathers selected logits through per-position views and a stack, which can change float32 gradient accumulation relative to the original advanced-index gather. Positive-field trajectories are therefore fresh measurements, not promised bitwise continuations of the failed study. The completed comparison recorded one accepted incremental retry in each of the two positive-field 8D/2718 arms; the table above records their discarded bulk work and successful retry work. All other fits recorded zero retries. The captured-state retry regression is separate evidence.
+
+### Validation, resources and evidence
+
+2,596 frozen scoped tests pass. Readiness checks: 2,162; independent saved-data audit checks: 1,550,423; both have zero findings. The inherited suite excludes 16 setup cases for a retained incompatible 384D release that this experiment does not execute. They are not counted as passing tests. The independent audit reconstructs grammar sites, targets and loss arithmetic from saved data; it is not a full independent neural forward or optimizer replay.
+
+Summed fit times: boundary-first-last 399.074s, generated-fields 411.912s, generated-fields-every2 257.800s. Relative to the baseline, generated-fields uses 1.032× fit time, generated-fields-every2 uses 0.646× fit time. The host is shared, and these sequential CPU measurements do not establish a universal hardware speedup or equal-wall-time convergence.
+
+The guardian reserved 4,000,000,000 bytes of output storage, 4,096 MiB of memory and one CPU slot under the existing 140,000,000,000-byte campaign cap. It exited successfully and released its reservation after durable artifact writes. The earlier failed study and failed diagnostic setup retain their separate 4 GB and 300 MB disk claims; this run does not remove them. Guardian wall time through child exit was 1512.143s; complete wrapper wall time was 1527.429s. Accounting and monitoring overhead are separate from the runner and per-fit timings.
+
+The frozen source uses the canonical validation tree plus hash-registered extensions. The published embedding runtime is explicitly frozen from the base Git commit and loaded for tests; no live editable HACC import is accepted. Source and import provenance, all 18 fresh training reports, 54 typed states, 324 control panels, training-only diagnosis and unsuccessful test attempts remain in the evidence. The archived restart12 checkpoint and old linguistic teacher are unchanged.
+
+Published artifacts are under `docs/implementation/reports/evidence/decoder-generated-field-training-r2-20261003/`. Read `results.json` and `manifest.json` first. Reassemble `evidence.tar.xz.part-*` in the manifest’s order, verify each part and the complete archive hash before extraction, and resolve predecessor inputs using their immutable Git/archive references. Local reproduction entry points are the archived `validation/run_frozen_tests.py`, `validation/run_training_reserved.py` and the frozen `source/scripts/ops/autoencoder/benchmark_generated_field_training.py`. Artifact paths must be reconstructed before replay; installed runtime libraries and the recorded local encoder assets remain external dependencies. No weights are fetched by this experiment.

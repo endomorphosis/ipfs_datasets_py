@@ -192,7 +192,8 @@ def train(student, training_rows, validation_rows, *, training_references, valid
           curriculum, strategy="reference_ce", config=None, cardinality_weight=0.,
           count_exposure="current_stage", source_value_weight=0.,
           order_augmentation=None, generated_boundary_weight=0., generated_boundary_gradient_scope="all_trainable",
-          source_contexts=None, action_contrastive_weight=0., generated_boundary_site_policy="first_last"):
+          source_contexts=None, action_contrastive_weight=0., generated_boundary_site_policy="first_last",
+          generated_field_weight=0., generated_site_interval=1):
     """Fresh reference-supervised fit; source fidelity gates experimental selection.
 
     The last complete attempt is retained as an explicitly unselected diagnostic.
@@ -223,6 +224,12 @@ def train(student, training_rows, validation_rows, *, training_references, valid
         and generated_boundary_site_policy in ("first_last", "first_wrong"), "unknown generated-boundary site policy")
     core._require(generated_boundary_site_policy == "first_last" or generated_boundary_weight > 0,
         "targeted boundary policy requires positive boundary weight")
+    core._require(type(generated_field_weight) in (int, float) and math.isfinite(generated_field_weight)
+        and 0 <= generated_field_weight <= 1, "invalid generated-field weight")
+    core._require(type(generated_site_interval) is int and 1 <= generated_site_interval <= 32,
+        "generated-site interval must be an integer1..32")
+    core._require(generated_site_interval == 1 or generated_field_weight > 0,
+        "generated-site cadence requires positive field weight")
     core._require(order_augmentation is None or type(order_augmentation) is dict
         and set(order_augmentation) == {"preparation", "embedding_observations"},
         "closed order-augmentation inputs required")
@@ -238,6 +245,9 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     contextual_boundary = bool(generated_boundary_weight and (contextual or generated_boundary_site_policy != "first_last"))
     core._require(not contextual_boundary or generated_boundary_gradient_scope == "all_trainable",
         "contextual or targeted boundary loss requires all-trainable gradients")
+    core._require(generated_field_weight == 0. or contextual and generated_boundary_weight > 0
+        and generated_boundary_gradient_scope == "all_trainable",
+        "generated-field training requires contextual model and positive all-trainable boundary loss")
     context_receipt = None
     training_contexts = validation_contexts = None
     if source_contexts is not None:
@@ -297,6 +307,11 @@ def train(student, training_rows, validation_rows, *, training_references, valid
         from . import action_contrastive_decoder_training as action_owner
         action_inventory = action_owner.prepare_training_inventory(training_rows, training_references,
             contexts=training_contexts, codec=codec, validate_rule=validate_rule)
+    field_owner = field_inventory = None
+    if generated_field_weight:
+        from . import generated_field_training as field_owner
+        field_inventory = field_owner.prepare_training_inventory(training_rows, training_references,
+            contexts=training_contexts, codec=codec, validate_rule=validate_rule)
     stages = core._curriculum(curriculum, training_rows, options)
     parameter_bytes = sum(t.numel()*t.element_size() for t in student.state_dict().values())
     width = max(len(r["target_ids"]) for r in [*training_rows, *validation_rows])
@@ -325,6 +340,17 @@ def train(student, training_rows, validation_rows, *, training_references, valid
             # 32 bytes per retained Python float/list slot. Larger vocabularies
             # must pass explicit admission too; this remains an estimate, not RSS.
             estimate += options["max_optimizer_steps"]*options["batch_size"]*36*len(codec["target_vocabulary"])*32
+    if field_owner is not None:
+        # Four scalar fields per rule, including a final incomplete rule, fit
+        # within 128 observed sites under the <=512 output ceiling. Retain four
+        # selected and four replayed full-vocabulary vectors as well, plus six
+        # failed bulk-replay vectors when a strict causal retry is required. Estimate
+        # every update conservatively even when the explicit cadence skips work.
+        estimate += options["max_optimizer_steps"]*options["batch_size"]*142*len(codec["target_vocabulary"])*32
+        estimate += len(core._raw(field_inventory))
+        # One bounded incremental retry graph; completed rejected bulk graphs
+        # are discarded before the causal retry is constructed.
+        estimate += 16*options["batch_size"]*options["max_target_tokens"]*128*4
     if source_contexts is not None:
         estimate += 16*options["batch_size"]*8*student.dimension*4 + len(core._raw(source_contexts))
     if action_contrastive_weight:
@@ -371,7 +397,7 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     global_epoch = 0
     boundary_owner = None
     boundary_counts = None
-    if generated_boundary_weight:
+    if generated_boundary_weight and field_owner is None:
         if contextual_boundary:
             from . import contextual_generated_boundary_training as boundary_owner
         else:
@@ -446,8 +472,27 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                         break
                     if action_result["loss"] is not None:
                         objective = objective + action_contrastive_weight*action_result["loss"]
-                boundary_result = None
-                if boundary_owner is not None:
+                boundary_result = generated_result = None
+                generated_scheduled = field_owner is not None and steps % generated_site_interval == 0
+                if generated_scheduled:
+                    try:
+                        generated_sources = [dict(id=row["id"], input=row["input"], source_text=row["source_text"]) for row in part]
+                        generated_contexts = {row["id"]: training_contexts[row["id"]] for row in part}
+                        collection = field_owner.collect_source_generated_sites(working, generated_sources,
+                            codec=codec, input_transform=input_transform, source_contexts=generated_contexts,
+                            max_target_tokens=options["max_target_tokens"], batch_size=options["batch_size"], deadline=deadline)
+                        generated_result = field_owner.generated_site_losses(torch, working, collection, field_inventory,
+                            codec=codec, input_transform=input_transform, source_contexts=generated_contexts,
+                            deadline=deadline, boundary_site_policy=generated_boundary_site_policy)
+                    except TimeoutError:
+                        optimizer.zero_grad(set_to_none=True)
+                        stopped, complete = "deadline_during_generated_sites", False
+                        break
+                    if generated_result["boundary_loss"] is not None:
+                        objective = objective + generated_boundary_weight*generated_result["boundary_loss"]
+                    if generated_result["field_loss"] is not None:
+                        objective = objective + generated_field_weight*generated_result["field_loss"]
+                elif boundary_owner is not None:
                     try:
                         boundary_sources = [dict(id=row["id"], input=row["input"],
                             **({} if training_contexts is None else {"source_text": row["source_text"]})) for row in part]
@@ -504,6 +549,11 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                     committed_updates[-1]["decoder_parent_row_ids"] = [row["id"] for row in parents]
                 if boundary_result is not None:
                     committed_updates[-1]["generated_boundary"] = boundary_result["receipt"]
+                if field_owner is not None:
+                    committed_updates[-1]["generated_sites"] = dict(scheduled=generated_scheduled,
+                        interval=generated_site_interval, zero_based_committed_step=steps-1,
+                        skip_reason=None if generated_scheduled else "explicit_auxiliary_cadence",
+                        receipt=None if generated_result is None else generated_result["receipt"])
                 if action_result is not None:
                     committed_updates[-1]["action_contrastive"] = action_result["receipt"]
                 norm = float(preclip_norm.detach())
@@ -633,7 +683,7 @@ def train(student, training_rows, validation_rows, *, training_references, valid
             source_value_training_row_policy="same decoder batch with authenticated same-parent order substitution")
     if generated_boundary_gradient_scope != "all_trainable":
         report["generated_boundary_gradient_scope"] = generated_boundary_gradient_scope
-    if boundary_owner is not None:
+    if boundary_owner is not None or field_owner is not None:
         report.update(generated_boundary_weight=generated_boundary_weight,
             generated_boundary_policy=("complete_source_only_greedy_then_first_wrong_visited_boundary"
                 if generated_boundary_site_policy == "first_wrong" else
@@ -643,6 +693,13 @@ def train(student, training_rows, validation_rows, *, training_references, valid
             generated_boundary_supervision="full_vocabulary_CE; mean_per_active_row_then_active_rows",
             generated_boundary_reference_access="training_loss_labels_only; never_greedy_rollout",
             generated_boundary_used_for_selection=False)
+    if field_owner is not None:
+        report.update(generated_field_weight=generated_field_weight, generated_site_interval=generated_site_interval,
+            generated_field_inventory=field_inventory, generated_field_policy="first_wrong_per_scalar_field",
+            generated_site_cadence="zero_based_committed_optimizer_step_mod_interval_equals_zero; no_reweighting",
+            generated_site_joint_replay=True, generated_field_used_for_selection=False,
+            generated_site_scheduled_updates=sum(update["generated_sites"]["scheduled"] for update in committed_updates),
+            generated_site_skipped_updates=sum(not update["generated_sites"]["scheduled"] for update in committed_updates))
     if action_owner is not None:
         report.update(action_contrastive_weight=action_contrastive_weight,
             action_contrastive_temperature=action_owner.TEMPERATURE,
