@@ -12,7 +12,7 @@ real conflict edges.
 
 ## IRF-001 Freeze the Security IR public surface
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: quality
@@ -36,7 +36,7 @@ real conflict edges.
 
 ## IRF-002 Create the Security IR v1 golden corpus
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: quality
@@ -60,7 +60,7 @@ real conflict edges.
 
 ## IRF-003 Inventory Security IR artifacts without deleting files
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: data
@@ -84,7 +84,7 @@ real conflict edges.
 
 ## IRF-010 Implement deterministic shared canonicalization and identity
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: platform
@@ -108,7 +108,7 @@ real conflict edges.
 
 ## IRF-011 Implement core provenance, evidence, and diagnostics
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: platform
@@ -132,7 +132,7 @@ real conflict edges.
 
 ## IRF-012 Implement the core schema and migration registry
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: platform
@@ -156,7 +156,7 @@ real conflict edges.
 
 ## IRF-013 Implement solver-neutral claims and result authority
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: platform
@@ -180,7 +180,7 @@ real conflict edges.
 
 ## IRF-014 Implement immutable artifact and run manifests
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: data
@@ -204,7 +204,7 @@ real conflict edges.
 
 ## IRF-020 Define immutable Security IR v1 and a legacy adapter
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: platform
@@ -228,7 +228,7 @@ real conflict edges.
 
 ## IRF-021 Isolate the crypto-exchange Security adapter
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: platform
@@ -252,7 +252,7 @@ real conflict edges.
 
 ## IRF-022 Isolate the Xaman Security adapter
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: platform
@@ -276,7 +276,7 @@ real conflict edges.
 
 ## IRF-023 Add side-effect-free proof backend adapters
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: runtime
@@ -300,7 +300,7 @@ real conflict edges.
 
 ## IRF-024 Separate Security verification result families
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: quality
@@ -324,7 +324,7 @@ real conflict edges.
 
 ## IRF-025 Create the Security artifact migration manifest
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P1
 - Track: data
@@ -348,7 +348,7 @@ real conflict edges.
 
 ## IRF-030 Harden Intent IR v1 schema and versioned decoding
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: platform
@@ -372,7 +372,7 @@ real conflict edges.
 
 ## IRF-031 Implement pinned SkillCenter snapshots and offline cache
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: data
@@ -396,7 +396,7 @@ real conflict edges.
 
 ## IRF-032 Enforce SkillCenter license and hostile-content policy
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: privacy
@@ -420,7 +420,7 @@ real conflict edges.
 
 ## IRF-033 Normalize SkillCenter records into grounded Intent IR
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: data
@@ -444,7 +444,7 @@ real conflict edges.
 
 ## IRF-034 Build the corpus-evidence GraphRAG ontology and projector
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: graphrag
@@ -468,7 +468,7 @@ real conflict edges.
 
 ## IRF-035 Project validated Intent IR into a semantic graph
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: graphrag
@@ -492,7 +492,7 @@ real conflict edges.
 
 ## IRF-036 Add a bounded two-bundle SkillCenter pilot
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P1
 - Track: data
@@ -516,7 +516,7 @@ real conflict edges.
 
 ## IRF-037 Add bounded GraphRAG retrieval and partition isolation
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P1
 - Track: graphrag
@@ -540,7 +540,7 @@ real conflict edges.
 
 ## IRF-040 Extract domain-neutral formalization contracts
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: platform
@@ -564,7 +564,7 @@ real conflict edges.
 
 ## IRF-041 Implement the deterministic Intent formalizer
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: platform
@@ -588,7 +588,7 @@ real conflict edges.
 
 ## IRF-042 Add Intent proof obligations and semantic decompilation
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P1
 - Track: quality
@@ -612,7 +612,7 @@ real conflict edges.
 
 ## IRF-043 Adapt Legal IR to shared formalization contracts
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P1
 - Track: platform
@@ -636,7 +636,7 @@ real conflict edges.
 
 ## IRF-044 Adapt Security IR to shared formalization contracts
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P1
 - Track: platform
@@ -660,7 +660,7 @@ real conflict edges.
 
 ## IRF-050 Build source-free features and leakage-safe splits
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: data
@@ -684,7 +684,7 @@ real conflict edges.
 
 ## IRF-051 Extract the generic formalization advisor core
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P1
 - Track: runtime
@@ -708,7 +708,7 @@ real conflict edges.
 
 ## IRF-052 Implement Intent advisor heads and checkpoint policy
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P1
 - Track: runtime
@@ -732,7 +732,7 @@ real conflict edges.
 
 ## IRF-053 Build paired formalization benchmarks
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P1
 - Track: quality
@@ -756,7 +756,7 @@ real conflict edges.
 
 ## IRF-060 Add compatibility facades, package exports, and registry wiring
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P1
 - Track: platform
@@ -780,7 +780,7 @@ real conflict edges.
 
 ## IRF-061 Add cross-domain conformance and offline Intent end-to-end tests
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P1
 - Track: quality
@@ -804,7 +804,7 @@ real conflict edges.
 
 ## IRF-062 Publish migration, operations, benchmark, and rollout gates
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P2
 - Track: ops
@@ -828,7 +828,7 @@ real conflict edges.
 
 ## IRF-063 Resolve validation retry-budget failure for IRF-031
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P1
 - Track: ops
@@ -839,7 +839,7 @@ real conflict edges.
 
 ## IRF-064 Resolve validation retry-budget failure for IRF-025
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P1
 - Track: ops
@@ -850,7 +850,7 @@ real conflict edges.
 
 ## IRF-065 Resolve validation retry-budget failure for IRF-034
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P1
 - Track: ops
