@@ -11,6 +11,7 @@ Sessions implemented:
 
 Total: 69 tests · 0 failing
 """
+
 from __future__ import annotations
 
 import time
@@ -27,14 +28,20 @@ class TestDispatchPipelineE2E:
     @pytest.fixture(autouse=True)
     def _imports(self):
         from ipfs_datasets_py.mcp_server.dispatch_pipeline import (
-            DispatchPipeline, PipelineStage, make_default_pipeline, make_full_pipeline,
+            DispatchPipeline,
+            PipelineStage,
+            make_default_pipeline,
+            make_full_pipeline,
         )
         from ipfs_datasets_py.mcp_server.compliance_checker import (
-            make_default_checker, ComplianceReport,
+            make_default_checker,
+            ComplianceReport,
         )
         from ipfs_datasets_py.mcp_server.risk_scorer import (
-            RiskScorer, RiskGateError,
+            RiskScorer,
+            RiskGateError,
         )
+
         self.DispatchPipeline = DispatchPipeline
         self.PipelineStage = PipelineStage
         self.make_default_pipeline = make_default_pipeline
@@ -49,7 +56,11 @@ class TestDispatchPipelineE2E:
         def _stage(intent):
             report = checker.check(intent)
             if not report.passed:
-                return {"allowed": False, "reason": "compliance", "failed_rules": report.failed_rules}
+                return {
+                    "allowed": False,
+                    "reason": "compliance",
+                    "failed_rules": report.failed_rules,
+                }
             return {"allowed": True}
 
         return self.PipelineStage("compliance", _stage)
@@ -70,20 +81,24 @@ class TestDispatchPipelineE2E:
         return self.PipelineStage("risk", _stage)
 
     def test_valid_intent_passes_all_stages(self):
-        pipeline = self.DispatchPipeline([
-            self._make_compliance_stage(),
-            self._make_risk_stage(),
-        ])
+        pipeline = self.DispatchPipeline(
+            [
+                self._make_compliance_stage(),
+                self._make_risk_stage(),
+            ]
+        )
         result = pipeline.run({"tool": "read_data", "actor": "alice", "params": {}})
         assert result.allowed is True
         assert "compliance" in result.stages_executed
         assert "risk" in result.stages_executed
 
     def test_invalid_tool_name_denied_by_compliance(self):
-        pipeline = self.DispatchPipeline([
-            self._make_compliance_stage(),
-            self._make_risk_stage(),
-        ])
+        pipeline = self.DispatchPipeline(
+            [
+                self._make_compliance_stage(),
+                self._make_risk_stage(),
+            ]
+        )
         result = pipeline.run({"tool": "!invalid", "actor": "alice", "params": {}})
         assert result.allowed is False
         assert result.denied_by == "compliance"
@@ -113,10 +128,12 @@ class TestDispatchPipelineE2E:
         assert result.denied_by == "compliance"
 
     def test_metrics_recorded_per_stage(self):
-        pipeline = self.DispatchPipeline([
-            self._make_compliance_stage(),
-            self._make_risk_stage(),
-        ])
+        pipeline = self.DispatchPipeline(
+            [
+                self._make_compliance_stage(),
+                self._make_risk_stage(),
+            ]
+        )
         pipeline.run({"tool": "read_data", "actor": "alice", "params": {}})
         pipeline.run({"tool": "read_data", "actor": "bob", "params": {}})
         m = pipeline.get_metrics()
@@ -129,10 +146,12 @@ class TestDispatchPipelineE2E:
         assert result.allowed is True
 
     def test_pipeline_stage_can_be_disabled(self):
-        pipeline = self.DispatchPipeline([
-            self._make_compliance_stage(),
-            self._make_risk_stage(),
-        ])
+        pipeline = self.DispatchPipeline(
+            [
+                self._make_compliance_stage(),
+                self._make_risk_stage(),
+            ]
+        )
         pipeline.skip_stage("compliance")
         # With compliance disabled, invalid tool name passes
         result = pipeline.run({"tool": "!invalid", "actor": "alice", "params": {}})
@@ -146,11 +165,16 @@ class TestCompliancePipelineIntegration:
     @pytest.fixture(autouse=True)
     def _imports(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import (
-            ComplianceChecker, ComplianceRule, ComplianceResult, make_default_checker,
+            ComplianceChecker,
+            ComplianceRule,
+            ComplianceResult,
+            make_default_checker,
         )
         from ipfs_datasets_py.mcp_server.dispatch_pipeline import (
-            DispatchPipeline, PipelineStage,
+            DispatchPipeline,
+            PipelineStage,
         )
+
         self.ComplianceChecker = ComplianceChecker
         self.ComplianceRule = ComplianceRule
         self.ComplianceResult = ComplianceResult
@@ -162,6 +186,7 @@ class TestCompliancePipelineIntegration:
         def _stage(intent):
             report = checker.check(intent)
             return {"allowed": report.passed, "failed_rules": report.failed_rules}
+
         return self.PipelineStage("compliance", _stage)
 
     def test_custom_deny_rule_blocks_tool(self):
@@ -224,8 +249,17 @@ class TestRiskRateLimiterIntegration:
 
     @pytest.fixture(autouse=True)
     def _imports(self):
-        from ipfs_datasets_py.mcp_server.risk_scorer import RiskScorer, RiskLevel, RiskScoringPolicy, RiskGateError
-        from ipfs_datasets_py.mcp_server.mcp_p2p_transport import TokenBucketRateLimiter, P2PSessionConfig
+        from ipfs_datasets_py.mcp_server.risk_scorer import (
+            RiskScorer,
+            RiskLevel,
+            RiskScoringPolicy,
+            RiskGateError,
+        )
+        from ipfs_datasets_py.mcp_server.mcp_p2p_transport import (
+            TokenBucketRateLimiter,
+            P2PSessionConfig,
+        )
+
         self.RiskScorer = RiskScorer
         self.RiskLevel = RiskLevel
         self.RiskScoringPolicy = RiskScoringPolicy
@@ -236,9 +270,11 @@ class TestRiskRateLimiterIntegration:
     def test_low_risk_uses_high_capacity_limiter(self):
         scorer = self.RiskScorer()
         assessment = scorer.score_intent("read", "alice", {})
-        limiter = self.TokenBucketRateLimiter(rate=100.0, capacity=100.0) \
-            if assessment.level in (self.RiskLevel.NEGLIGIBLE, self.RiskLevel.LOW) \
+        limiter = (
+            self.TokenBucketRateLimiter(rate=100.0, capacity=100.0)
+            if assessment.level in (self.RiskLevel.NEGLIGIBLE, self.RiskLevel.LOW)
             else self.TokenBucketRateLimiter(rate=1.0, capacity=2.0)
+        )
         assert limiter.consume() is True
 
     def test_high_risk_tool_gets_tight_limiter(self):
@@ -249,9 +285,11 @@ class TestRiskRateLimiterIntegration:
         scorer = self.RiskScorer(policy=policy)
         assessment = scorer.score_intent("nuke", "alice", {})
         # High/Critical risk → tight limiter with capacity=1
-        limiter = self.TokenBucketRateLimiter(rate=0.1, capacity=1.0) \
-            if assessment.level in (self.RiskLevel.HIGH, self.RiskLevel.CRITICAL) \
+        limiter = (
+            self.TokenBucketRateLimiter(rate=0.1, capacity=1.0)
+            if assessment.level in (self.RiskLevel.HIGH, self.RiskLevel.CRITICAL)
             else self.TokenBucketRateLimiter(rate=100.0, capacity=100.0)
+        )
         assert limiter.available() <= 1.0
 
     def test_rate_limit_exhaustion_denies_requests(self):
@@ -313,10 +351,12 @@ class TestAuditMetricsBridge:
     @pytest.fixture(autouse=True)
     def _imports(self):
         from ipfs_datasets_py.mcp_server.audit_metrics_bridge import (
-            AuditMetricsBridge, connect_audit_to_prometheus,
+            AuditMetricsBridge,
+            connect_audit_to_prometheus,
         )
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog
         from ipfs_datasets_py.mcp_server.prometheus_exporter import PrometheusExporter
+
         self.AuditMetricsBridge = AuditMetricsBridge
         self.connect = connect_audit_to_prometheus
         self.PolicyAuditLog = PolicyAuditLog
@@ -387,8 +427,11 @@ class TestAuditMetricsBridge:
         bridge.attach()
         for i in range(5):
             audit.record(
-                policy_cid="p", intent_cid=f"i{i}",
-                decision="allow", tool="read", actor="alice",
+                policy_cid="p",
+                intent_cid=f"i{i}",
+                decision="allow",
+                tool="read",
+                actor="alice",
             )
         assert bridge.forwarded_count == 5
 
@@ -410,8 +453,12 @@ class TestDelegationManagerLifecycle:
     @pytest.fixture(autouse=True)
     def _imports(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import (
-            DelegationManager, DelegationToken, Capability, get_delegation_manager,
+            DelegationManager,
+            DelegationToken,
+            Capability,
+            get_delegation_manager,
         )
+
         self.DelegationManager = DelegationManager
         self.DelegationToken = DelegationToken
         self.Capability = Capability
@@ -499,6 +546,7 @@ class TestDelegationManagerLifecycle:
 
     def test_singleton_factory(self):
         from ipfs_datasets_py.mcp_server import ucan_delegation as _mod
+
         old = _mod._global_manager
         _mod._global_manager = None
         try:
@@ -538,16 +586,21 @@ class TestNLPolicyConflictDetector:
     @pytest.fixture(autouse=True)
     def _imports(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (
-            NLPolicyConflictDetector, PolicyConflict, detect_conflicts,
+            NLPolicyConflictDetector,
+            PolicyConflict,
+            detect_conflicts,
         )
+
         self.NLPolicyConflictDetector = NLPolicyConflictDetector
         self.PolicyConflict = PolicyConflict
         self.detect_conflicts = detect_conflicts
 
     def _make_clause(self, clause_type, action="read", resource="*", actor="*"):
         """Build a minimal PolicyClause-like object."""
+
         class Clause:
             pass
+
         c = Clause()
         c.clause_type = clause_type
         c.action = action
@@ -617,7 +670,14 @@ class TestNLPolicyConflictDetector:
         ]
         conflicts = self.detect_conflicts(clauses)
         d = conflicts[0].to_dict()
-        assert set(d.keys()) >= {"conflict_type", "action", "resource", "actors", "clause_types", "description"}
+        assert set(d.keys()) >= {
+            "conflict_type",
+            "action",
+            "resource",
+            "actors",
+            "clause_types",
+            "description",
+        }
 
     def test_no_conflict_for_empty_clauses(self):
         assert self.detect_conflicts([]) == []
@@ -625,14 +685,18 @@ class TestNLPolicyConflictDetector:
     def test_detector_with_real_nl_output(self):
         """Integration: compile contradictory NL and detect conflict."""
         try:
-            from ipfs_datasets_py.logic.integration.nl_ucan_policy_compiler import NLUCANPolicyCompiler
+            from ipfs_datasets_py.logic.integration.nl_ucan_policy_compiler import (
+                NLUCANPolicyCompiler,
+            )
         except ImportError:
             pytest.skip("NLUCANPolicyCompiler not importable")
         compiler = NLUCANPolicyCompiler()
-        result = compiler.compile([
-            "Alice may read all documents.",
-            "Alice must not read any documents.",
-        ])
+        result = compiler.compile(
+            [
+                "Alice may read all documents.",
+                "Alice must not read any documents.",
+            ]
+        )
         if not result.policy_result or not result.policy_result.clauses:
             pytest.skip("NL compiler produced no clauses")
         conflicts = self.detect_conflicts(result.policy_result.clauses)
@@ -661,6 +725,7 @@ class TestCECBridgeCoverage:
     def _imports(self):
         try:
             from ipfs_datasets_py.logic.integration.cec_bridge import CECBridge, UnifiedProofResult
+
             self.CECBridge = CECBridge
             self.UnifiedProofResult = UnifiedProofResult
         except ImportError as exc:
@@ -712,9 +777,13 @@ class TestCECBridgeCoverage:
         bridge = self._bridge()
         # Override _prove_with_cec_manager to return a proved result
         from unittest.mock import patch
+
         proved_result = self.UnifiedProofResult(
-            is_proved=True, is_valid=True, prover_used="mock",
-            proof_time=0.0, status="proved",
+            is_proved=True,
+            is_valid=True,
+            prover_used="mock",
+            proof_time=0.0,
+            status="proved",
         )
         with patch.object(bridge, "_prove_with_cec_manager", return_value=proved_result):
             r1 = bridge.prove("formula_x", strategy="cec", use_cache=True)
@@ -731,8 +800,11 @@ class TestCECBridgeCoverage:
         def counting_prove(formula, axioms, timeout):
             call_count[0] += 1
             return self.UnifiedProofResult(
-                is_proved=False, is_valid=False, prover_used="cec_manager",
-                proof_time=0.0, status="unknown",
+                is_proved=False,
+                is_valid=False,
+                prover_used="cec_manager",
+                proof_time=0.0,
+                status="unknown",
             )
 
         bridge._prove_with_cec_manager = counting_prove
@@ -742,8 +814,11 @@ class TestCECBridgeCoverage:
 
     def test_unified_proof_result_fields(self):
         r = self.UnifiedProofResult(
-            is_proved=True, is_valid=True, prover_used="mock",
-            proof_time=0.01, status="proved",
+            is_proved=True,
+            is_valid=True,
+            prover_used="mock",
+            proof_time=0.01,
+            status="proved",
         )
         assert r.is_proved is True
         assert r.prover_used == "mock"
@@ -760,21 +835,25 @@ class TestTransportDocumentation:
 
     def test_mcp_p2p_protocol_id_is_primary(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import MCP_P2P_PROTOCOL_ID
+
         assert MCP_P2P_PROTOCOL_ID == "/mcp+p2p/1.0.0"
 
     def test_mcp_p2p_pubsub_topics_present(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import MCP_P2P_PUBSUB_TOPICS
+
         assert "interface_announce" in MCP_P2P_PUBSUB_TOPICS
         assert "receipt_disseminate" in MCP_P2P_PUBSUB_TOPICS
 
     def test_grpc_module_docstring_mentions_mcp_p2p_as_canonical(self):
         from ipfs_datasets_py.mcp_server import grpc_transport
+
         doc = grpc_transport.__doc__ or ""
         # The module docstring must now state MCP+P2P is the canonical transport
         assert "canonical" in doc.lower() or "mcp+p2p" in doc.lower()
 
     def test_grpc_adapter_is_optional(self):
         from ipfs_datasets_py.mcp_server.grpc_transport import GRPCTransportAdapter, GRPC_AVAILABLE
+
         adapter = GRPCTransportAdapter(object())
         assert adapter.is_running is False
         # Can exist without grpc package
@@ -783,6 +862,7 @@ class TestTransportDocumentation:
     def test_grpc_start_raises_without_grpc_package(self):
         import asyncio
         from ipfs_datasets_py.mcp_server.grpc_transport import GRPCTransportAdapter, GRPC_AVAILABLE
+
         if GRPC_AVAILABLE:
             pytest.skip("grpc package installed; skip ImportError test")
         adapter = GRPCTransportAdapter(object())
@@ -791,6 +871,7 @@ class TestTransportDocumentation:
 
     def test_mcp_message_transport_uses_mcp_p2p_framing(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import MCPMessage, LengthPrefixFramer
+
         msg = MCPMessage(method="tools/call", params={"name": "echo"})
         framer = LengthPrefixFramer()
         encoded = framer.encode(msg.to_bytes())

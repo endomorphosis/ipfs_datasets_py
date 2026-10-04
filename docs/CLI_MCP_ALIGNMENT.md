@@ -139,6 +139,7 @@ CLI → Core Module
 # cli_direct.py
 from ipfs_datasets_py.caching import CacheManager
 
+
 def cache_command(action, **kwargs):
     manager = CacheManager()
     if action == "get":
@@ -173,7 +174,7 @@ Standardize error responses:
     "success": false,
     "error": "Error message",
     "error_code": "CACHE_KEY_NOT_FOUND",
-    "timestamp": "2024-01-01T00:00:00"
+    "timestamp": "2024-01-01T00:00:00",
 }
 ```
 
@@ -186,13 +187,13 @@ Verify CLI and MCP produce identical results:
 ```python
 def test_cache_equivalence():
     # Via CLI
-    cli_result = subprocess.run([
-        "ipfs-datasets", "cache", "get", "--key", "test"
-    ], capture_output=True)
-    
+    cli_result = subprocess.run(
+        ["ipfs-datasets", "cache", "get", "--key", "test"], capture_output=True
+    )
+
     # Via MCP
     mcp_result = await cache_tools.cache_get(key="test")
-    
+
     # Should be identical
     assert cli_result == mcp_result
 ```

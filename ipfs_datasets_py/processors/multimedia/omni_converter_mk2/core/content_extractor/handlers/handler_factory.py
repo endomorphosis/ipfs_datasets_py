@@ -20,11 +20,11 @@ from utils.handlers import is_mock, can_handle, check_if_all_these_processors_ar
 def _create_text_handler(processors):
     """
     Factory function to create a TextHandler instance.
-    
+
     Args:
         resources: Additional resources to provide.
         configs: Configuration settings.
-        
+
     Returns:
         An instance of TextHandler.
     """
@@ -49,7 +49,7 @@ def _create_text_handler(processors):
 def _create_application_handler(processors) -> ApplicationHandler:
     """
     Factory function to create an ApplicationHandler instance.
-    
+
     Returns:
         An instance of ApplicationHandler.
     """
@@ -71,7 +71,7 @@ def _create_application_handler(processors) -> ApplicationHandler:
 def _create_audio_handler(processors):
     """
     Factory function to create an AudioHandler instance.
-    
+
     Returns:
         An instance of AudioHandler.
     """
@@ -84,7 +84,7 @@ def _create_audio_handler(processors):
         "logger": logger,
         "splitext": os.path.splitext,
     }
-    
+
     # Create and return the AudioHandler instance
     return AudioHandler(resources=resources, configs=configs)
 
@@ -131,7 +131,7 @@ def _create_image_handler(processors):
 
     resources: ImageHandlerResources = {
         "raster_image_processor": processors["raster_image_processor"],
-        "vector_image_processor": processors["vector_image_processor"], 
+        "vector_image_processor": processors["vector_image_processor"],
         "ocr_processor": processors["ocr_processor"],
         "format_extensions": SupportedFormats.IMAGE_FORMAT_EXTENSIONS,
         "supported_formats": SupportedFormats.SUPPORTED_IMAGE_FORMATS,
@@ -145,14 +145,15 @@ def _create_image_handler(processors):
     }
     return ImageHandler(resources=resources, configs=configs)
 
+
 def make_all_handlers() -> dict[str, Callable]:
     """
     Create factory functions for all format handlers.
-    
+
     Args:
         resources: Optional additional resources to provide to handlers.
         configs: Configuration settings.
-        
+
     Returns:
         Dictionary mapping handler types to factory functions.
     """
@@ -170,8 +171,6 @@ def make_all_handlers() -> dict[str, Callable]:
     ]:
         handlers[name] = func(processors)
 
-
     if not handlers:
         raise TypeError("Cannot instantiate any handlers, as all processors are mocks.")
     return handlers
-

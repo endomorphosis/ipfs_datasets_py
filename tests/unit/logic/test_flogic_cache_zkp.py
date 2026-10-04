@@ -22,6 +22,7 @@ from pathlib import Path
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _load_module(mod_name: str, rel_path: str):
     """Load a module by path, bypassing broken package __init__ chains."""
     if mod_name in sys.modules:
@@ -49,6 +50,7 @@ class TestFLogicCachedQueryResult:
     def setup_method(self):
         from ipfs_datasets_py.logic.flogic.flogic_proof_cache import FLogicCachedQueryResult
         from ipfs_datasets_py.logic.flogic.flogic_types import FLogicQuery, FLogicStatus
+
         self.FLogicCachedQueryResult = FLogicCachedQueryResult
         self.FLogicQuery = FLogicQuery
         self.FLogicStatus = FLogicStatus
@@ -75,6 +77,7 @@ class TestFLogicCachedQueryResult:
 
     def test_defaults(self):
         from ipfs_datasets_py.logic.flogic.flogic_types import FLogicStatus
+
         r = self.FLogicCachedQueryResult(
             goal="?Z : X",
             status=FLogicStatus.UNKNOWN,
@@ -92,7 +95,12 @@ class TestFLogicCachedQueryResult:
 class TestCachedErgoAIWrapper:
     def setup_method(self):
         from ipfs_datasets_py.logic.flogic.flogic_proof_cache import CachedErgoAIWrapper
-        from ipfs_datasets_py.logic.flogic.flogic_types import FLogicClass, FLogicFrame, FLogicStatus
+        from ipfs_datasets_py.logic.flogic.flogic_types import (
+            FLogicClass,
+            FLogicFrame,
+            FLogicStatus,
+        )
+
         self.CachedErgoAIWrapper = CachedErgoAIWrapper
         self.FLogicClass = FLogicClass
         self.FLogicFrame = FLogicFrame
@@ -151,8 +159,8 @@ class TestCachedErgoAIWrapper:
     def test_cache_statistics(self):
         ergo = self._make()
         ergo.add_class(self.FLogicClass("Cat"))
-        ergo.query("?X : Cat")   # miss
-        ergo.query("?X : Cat")   # hit
+        ergo.query("?X : Cat")  # miss
+        ergo.query("?X : Cat")  # hit
         stats = ergo.get_cache_statistics()
         assert stats["hits"] == 1
         assert stats["misses"] == 1
@@ -186,6 +194,7 @@ class TestCachedErgoAIWrapper:
 class TestZKPFLogicProver:
     def setup_method(self):
         import warnings
+
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             from ipfs_datasets_py.logic.flogic.flogic_zkp_integration import (
@@ -193,7 +202,12 @@ class TestZKPFLogicProver:
                 ZKPFLogicResult,
                 FLogicProvingMethod,
             )
-        from ipfs_datasets_py.logic.flogic.flogic_types import FLogicClass, FLogicFrame, FLogicStatus
+        from ipfs_datasets_py.logic.flogic.flogic_types import (
+            FLogicClass,
+            FLogicFrame,
+            FLogicStatus,
+        )
+
         self.ZKPFLogicProver = ZKPFLogicProver
         self.ZKPFLogicResult = ZKPFLogicResult
         self.FLogicProvingMethod = FLogicProvingMethod
@@ -203,10 +217,12 @@ class TestZKPFLogicProver:
 
     def _make(self):
         import warnings
+
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             # Use a private, non-global cache so tests are isolated
             from ipfs_datasets_py.logic.flogic.flogic_proof_cache import CachedErgoAIWrapper
+
             ergo = CachedErgoAIWrapper(
                 enable_caching=True,
                 use_global_cache=False,
@@ -238,9 +254,9 @@ class TestZKPFLogicProver:
     def test_standard_queries_counter(self):
         prover = self._make()
         prover.add_class(self.FLogicClass("Dog"))
-        prover.query("?X : Dog")          # standard (cache miss)
-        prover.query("?X : Dog")          # cached (same goal, same normalised key)
-        prover.query("?Z : Animal")       # standard (different goal)
+        prover.query("?X : Dog")  # standard (cache miss)
+        prover.query("?X : Dog")  # cached (same goal, same normalised key)
+        prover.query("?Z : Animal")  # standard (different goal)
         # Only the two cache-miss calls should increment the counter
         assert prover._standard_queries == 2
 
@@ -293,6 +309,7 @@ class TestZKPFLogicProver:
 class TestFlogicMCPTools:
     def setup_method(self):
         import warnings
+
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             from ipfs_datasets_py.mcp_server.tools.logic_tools.flogic_tool import (
@@ -305,23 +322,27 @@ class TestFlogicMCPTools:
         self.flogic_check_consistency = flogic_check_consistency
 
     def test_assert_classes_and_frames(self):
-        r = run(self.flogic_assert(
-            classes=[
-                {"class_id": "TestAnimal"},
-                {"class_id": "TestDog", "superclasses": ["TestAnimal"]},
-            ],
-            frames=[
-                {"object_id": "fido", "isa": "TestDog"},
-            ],
-        ))
+        r = run(
+            self.flogic_assert(
+                classes=[
+                    {"class_id": "TestAnimal"},
+                    {"class_id": "TestDog", "superclasses": ["TestAnimal"]},
+                ],
+                frames=[
+                    {"object_id": "fido", "isa": "TestDog"},
+                ],
+            )
+        )
         assert r["success"] is True
         assert r["classes_added"] == 2
         assert r["frames_added"] == 1
 
     def test_assert_rules(self):
-        r = run(self.flogic_assert(
-            rules=["?X[barks -> true] :- ?X : TestDog."],
-        ))
+        r = run(
+            self.flogic_assert(
+                rules=["?X[barks -> true] :- ?X : TestDog."],
+            )
+        )
         assert r["success"] is True
         assert r["rules_added"] == 1
 
@@ -348,18 +369,26 @@ class TestFlogicMCPTools:
         assert r["success"] is False
 
     def test_check_consistency_clean_triples(self):
-        r = run(self.flogic_check_consistency([
-            {"subject": "dog1", "predicate": "type", "object": "Dog"},
-            {"subject": "dog1", "predicate": "name", "object": "Rex"},
-        ]))
+        r = run(
+            self.flogic_check_consistency(
+                [
+                    {"subject": "dog1", "predicate": "type", "object": "Dog"},
+                    {"subject": "dog1", "predicate": "name", "object": "Rex"},
+                ]
+            )
+        )
         assert r["success"] is True
         assert r["consistent"] is True
         assert r["violations"] == []
 
     def test_check_consistency_blank_predicate_violation(self):
-        r = run(self.flogic_check_consistency([
-            {"subject": "dog1", "predicate": "", "object": "bad"},
-        ]))
+        r = run(
+            self.flogic_check_consistency(
+                [
+                    {"subject": "dog1", "predicate": "", "object": "bad"},
+                ]
+            )
+        )
         assert r["success"] is True
         assert r["consistent"] is False
         assert len(r["violations"]) >= 1
@@ -384,6 +413,7 @@ class TestLogicProcessorFlogic:
     def setup_method(self):
         try:
             from ipfs_datasets_py.core_operations.logic_processor import LogicProcessor
+
             self.lp = LogicProcessor()
         except Exception:
             self.lp = None
@@ -420,6 +450,7 @@ class TestLogicProcessorFlogic:
 
 def test_flogic_init_new_exports():
     import ipfs_datasets_py.logic.flogic as fl
+
     for name in [
         "CachedErgoAIWrapper",
         "get_global_cached_wrapper",
@@ -437,6 +468,7 @@ def test_mcp_tools_exports():
         flogic_query,
         flogic_check_consistency,
     )
+
     assert callable(flogic_assert)
     assert callable(flogic_query)
     assert callable(flogic_check_consistency)

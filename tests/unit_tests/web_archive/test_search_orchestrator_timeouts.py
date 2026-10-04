@@ -17,7 +17,9 @@ from ipfs_datasets_py.processors.web_archiving.search_engines.orchestrator impor
 class _SlowEngine(SearchEngineAdapter):
     calls = 0
 
-    def search(self, query: str, max_results: int = 20, offset: int = 0, **kwargs) -> SearchEngineResponse:
+    def search(
+        self, query: str, max_results: int = 20, offset: int = 0, **kwargs
+    ) -> SearchEngineResponse:
         type(self).calls += 1
         time.sleep(1.2)
         return SearchEngineResponse(
@@ -41,7 +43,9 @@ class _SlowEngine(SearchEngineAdapter):
 class _FastEngine(SearchEngineAdapter):
     calls = 0
 
-    def search(self, query: str, max_results: int = 20, offset: int = 0, **kwargs) -> SearchEngineResponse:
+    def search(
+        self, query: str, max_results: int = 20, offset: int = 0, **kwargs
+    ) -> SearchEngineResponse:
         type(self).calls += 1
         return SearchEngineResponse(
             results=[

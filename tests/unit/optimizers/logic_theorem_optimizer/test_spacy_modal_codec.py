@@ -15,7 +15,9 @@ from ipfs_datasets_py.logic.modal.compiler import (
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import build_us_code_sample
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_modal_parser import LegalModalParser
-from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import AdaptiveModalAutoencoder
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import (
+    AdaptiveModalAutoencoder,
+)
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
     ModalIRDocument,
     ModalIRFormula,
@@ -70,7 +72,9 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     signal_free_adaptive_ambiguity_targets,
     supports_signal_free_adaptive_ambiguity_pair,
 )
-from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import ModalTodoSupervisor
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import (
+    ModalTodoSupervisor,
+)
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec import (
     _apply_competing_scope_backfill,
     _apply_directional_modal_family_pair_backfill,
@@ -107,15 +111,9 @@ def test_packet_002837_registry_refines_modal_family_cue_policy() -> None:
     assert set(COMPILER_REFINED_PACKET_002837_FAMILY_PAIRS) == expected_pairs
     for predicted_family, target_family in COMPILER_REFINED_PACKET_002837_FAMILY_PAIRS:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -157,15 +155,9 @@ def test_packet_003002_registry_refines_modal_family_cue_policy() -> None:
     }
     for predicted_family, target_family in COMPILER_REFINED_PACKET_003002_FAMILY_PAIRS:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -209,15 +201,9 @@ def test_packet_007144_registry_refines_modal_family_cue_policy() -> None:
     }
     for predicted_family, target_family in COMPILER_REFINED_PACKET_007144_FAMILY_PAIRS:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -254,15 +240,9 @@ def test_packet_006902_registry_exposes_modal_ambiguity_policy() -> None:
     assert set(COMPILER_AMBIGUITY_PACKET_006902_FAMILY_PAIRS) == expected_pairs
     for predicted_family, target_family in COMPILER_AMBIGUITY_PACKET_006902_FAMILY_PAIRS:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -333,9 +313,7 @@ def test_modal_compiler_surfaces_packet_005666_adaptive_ambiguity_policy(
         target_family,
         family_margin,
     ) in enumerate(scenarios, start=1):
-        predicted_system, predicted_symbol, predicted_label = family_operator[
-            predicted_family
-        ]
+        predicted_system, predicted_symbol, predicted_label = family_operator[predicted_family]
         predicted_share = min(0.95, abs(family_margin) + 0.02)
         target_share = predicted_share + family_margin
         ranking = [
@@ -353,15 +331,12 @@ def test_modal_compiler_surfaces_packet_005666_adaptive_ambiguity_policy(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-005666-adaptive-evidence-{index}",
             text=f"Synthetic packet 005666 {predicted_family} ambiguity evidence.",
-            normalized_text=(
-                f"Synthetic packet 005666 {predicted_family} ambiguity evidence."
-            ),
+            normalized_text=(f"Synthetic packet 005666 {predicted_family} ambiguity evidence."),
             tokens=[],
             sentences=[],
             cues=[
@@ -413,9 +388,7 @@ def test_modal_compiler_surfaces_packet_005666_adaptive_ambiguity_policy(
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        expected_explicit_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -424,15 +397,9 @@ def test_modal_compiler_surfaces_packet_005666_adaptive_ambiguity_policy(
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -456,17 +423,13 @@ def test_modal_compiler_surfaces_packet_005666_adaptive_ambiguity_policy(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert base_ambiguity.severity == "requires_rule"
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -537,23 +500,14 @@ def test_modal_compiler_surfaces_packet_000486_adaptive_ambiguity_policy(
         {"family": runner_up_family, "share_raw": 0.46, "share": 0.46},
     ]
     family_shares = {
-        str(candidate["family"]): float(candidate["share_raw"])
-        for candidate in ranking
+        str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
     }
 
     policy_pair = f"{predicted_family}->{target_family}"
-    explicit_type = (
-        f"adaptive_{predicted_family}_{target_family}_{expected_direction}_margin_low"
-    )
-    assert (predicted_family, target_family) in set(
-        COMPILER_AMBIGUITY_PACKET_000486_FAMILY_PAIRS
-    )
-    assert target_family in compiler_required_adaptive_ambiguity_targets(
-        predicted_family
-    )
-    assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-        predicted_family
-    )
+    explicit_type = f"adaptive_{predicted_family}_{target_family}_{expected_direction}_margin_low"
+    assert (predicted_family, target_family) in set(COMPILER_AMBIGUITY_PACKET_000486_FAMILY_PAIRS)
+    assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+    assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
     assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
     assert supports_signal_free_adaptive_ambiguity_pair(
         predicted_family,
@@ -582,8 +536,7 @@ def test_modal_compiler_surfaces_packet_000486_adaptive_ambiguity_policy(
     assert any(
         ambiguity.ambiguity_type == explicit_type
         and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-        and ambiguity.metadata["adaptive_base_ambiguity_type"]
-        == "adaptive_family_margin_low"
+        and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
         for ambiguity in ambiguities
     )
 
@@ -606,15 +559,9 @@ def test_modal_compiler_surfaces_packet_002296_adaptive_ambiguity_policy() -> No
     )
     for predicted_family, target_family in COMPILER_AMBIGUITY_PACKET_002296_FAMILY_PAIRS:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -657,15 +604,9 @@ def test_modal_compiler_surfaces_packet_002296_adaptive_ambiguity_policy() -> No
                     operator=ModalIROperator(
                         family=predicted_family,
                         system=(
-                            "KD"
-                            if predicted_family == "conditional_normative"
-                            else "FRAME_BM25"
+                            "KD" if predicted_family == "conditional_normative" else "FRAME_BM25"
                         ),
-                        symbol=(
-                            "O|"
-                            if predicted_family == "conditional_normative"
-                            else "Frame"
-                        ),
+                        symbol=("O|" if predicted_family == "conditional_normative" else "Frame"),
                         label=predicted_family,
                     ),
                     predicate=ModalIRPredicate(
@@ -697,13 +638,10 @@ def test_modal_compiler_surfaces_packet_002296_adaptive_ambiguity_policy() -> No
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         policy_pair = f"{predicted_family}->{target_family}"
-        explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        explicit_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
 
         ambiguities = compiler._adaptive_family_margin_ambiguities(
             encoding,
@@ -727,18 +665,16 @@ def test_modal_compiler_surfaces_packet_002296_adaptive_ambiguity_policy() -> No
         assert base_ambiguity.metadata["is_priority_policy_pair"] is True
         assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == explicit_type
-        assert abs(
-            float(base_ambiguity.metadata["family_margin_raw"]) - family_margin
-        ) < 1e-12
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert any(
             ambiguity.ambiguity_type == explicit_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
             and ambiguity.metadata["is_explicit_adaptive_ambiguity"] is True
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
+
 
 _USCODE_25_422_HEADING_ONLY_TEXT = "Housing voucher benefits and utility allowances."
 _USCODE_48_1572_HEADING_ONLY_TEXT = "Administrative notice and hearing."
@@ -755,7 +691,7 @@ _USCODE_46_55318_TODO_TEXT = (
     "(Pub. L. 109–304, §8(c), Oct. 6, 2006, 120 Stat. 1648.) Historical and Revision "
     "Notes Revised Section Source (U.S. Code) Source (Statutes at Large) 55318 46 "
     "App.:1241p. Pub. L. 99–198, title XI, §1143, Dec. 23, 1985, 99 Stat. 1496. The "
-    "words \"section 1707a(b)(8) of title 7\" are omitted because the provision referred "
+    'words "section 1707a(b)(8) of title 7" are omitted because the provision referred '
     "to has been repealed."
 )
 _USCODE_SAVINGS_EFFECT_RESIDUAL_TEXT = (
@@ -771,7 +707,7 @@ _USCODE_8_606_TODO_TEXT = (
     "section 1407 of this title."
 )
 _USCODE_46_115_TODO_TEXT = (
-    "§115. Vessel In this title, the term \"vessel\" has the meaning given that term in "
+    '§115. Vessel In this title, the term "vessel" has the meaning given that term in '
     "section 3 of title 1. (Pub. L. 109–304, §4, Oct. 6, 2006, 120 Stat. 1487.) Historical "
     "and Revision Notes Revised Section Source (U.S. Code) Source (Statutes at Large) 115 "
     "46:2101(45)."
@@ -815,8 +751,8 @@ _USCODE_25_5396_TODO_TEXT = (
     "6 - Application of other sections of this chapter From the U.S. Government Publishing Office, www.gpo.gov §539"
     "6. Application of other sections of this chapter (a) Mandatory application All provisions of sections 5305(b),"
     " 5306, 5307, 5321(c) and (d), 5323, 5324(k) and (l), 5325(a) through (k), and 5332 of this title and section 3"
-    "14 of Public Law 101–512 (coverage under chapter 171 of title 28, commonly known as the \"Federal Tort Claims A"
-    "ct\"), to the extent not in conflict with this subchapter, shall apply to compacts and funding agreements autho"
+    '14 of Public Law 101–512 (coverage under chapter 171 of title 28, commonly known as the "Federal Tort Claims A'
+    'ct"), to the extent not in conflict with this subchapter, shall apply to compacts and funding agreements autho'
     "rized by this subchapter. (b) Discretionary application At the request of a participating Indian tribe, any ot"
     "her provision of subchapter I of this chapter, to the extent such provision is not in conflict with this subch"
     "apter, shall be made a part of a funding agreement or compact entered into under this subchapter. The Secretar"
@@ -827,7 +763,7 @@ _USCODE_25_5396_TODO_TEXT = (
     "lting compact and funding agreement. (Pub. L. 93–638, title V, §516, as added Pub. L. 106–260, §4, Aug. 18, 20"
     "00, 114 Stat. 729.) Editorial Notes References in Text Section 314 of Pub. L. 101–512, referred to in subsec. "
     "(a), is section 314 of Pub. L. 101–512, which is set out as a note under section 5321 of this title. Subchapte"
-    "r I of this chapter, referred to in subsec. (b), was in the original \"title I\", meaning title I of Pub. L. 93–"
+    'r I of this chapter, referred to in subsec. (b), was in the original "title I", meaning title I of Pub. L. 93–'
     "638, known as the Indian Self-Determination Act, which is classified principally to subchapter I (§5321 et seq"
     ".) of this chapter. For complete classification of title I to the Code, see Short Title note set out under sec"
     "tion 5301 of this title and Tables. Codification Section was formerly classified to section 458aaa–15 of this "
@@ -886,8 +822,7 @@ _USCODE_36_170307_TODO_TEXT = (
     "Administrative notice and hearing procedures are established for this subchapter."
 )
 _USCODE_36_21110_TODO_TEXT = (
-    "Sec. 21110 - Administrative notice and hearing activities. "
-    "Historical and Revision Notes."
+    "Sec. 21110 - Administrative notice and hearing activities. Historical and Revision Notes."
 )
 _USCODE_10_1095C_TODO_TEXT = (
     "Administrative review procedures are established for health care collection actions."
@@ -1052,9 +987,7 @@ def test_modal_compiler_surfaces_packet_000224_family_cue_policy(
         target_family,
         family_margin,
     ) in enumerate(scenarios, start=1):
-        predicted_system, predicted_symbol, predicted_label = family_operator[
-            predicted_family
-        ]
+        predicted_system, predicted_symbol, predicted_label = family_operator[predicted_family]
         predicted_share = min(0.999, max(0.2, abs(family_margin) + 0.001))
         target_share = predicted_share + family_margin
         ranking = [
@@ -1072,15 +1005,12 @@ def test_modal_compiler_surfaces_packet_000224_family_cue_policy(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-000224-adaptive-evidence-{index}",
             text=f"Synthetic packet 000224 {predicted_family} ambiguity evidence.",
-            normalized_text=(
-                f"Synthetic packet 000224 {predicted_family} ambiguity evidence."
-            ),
+            normalized_text=(f"Synthetic packet 000224 {predicted_family} ambiguity evidence."),
             tokens=[],
             sentences=[],
             cues=[
@@ -1132,9 +1062,7 @@ def test_modal_compiler_surfaces_packet_000224_family_cue_policy(
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        explicit_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -1142,12 +1070,8 @@ def test_modal_compiler_surfaces_packet_000224_family_cue_policy(
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert supports_signal_free_adaptive_ambiguity_pair(
             predicted_family,
@@ -1160,16 +1084,12 @@ def test_modal_compiler_surfaces_packet_000224_family_cue_policy(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == explicit_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert any(
             ambiguity.ambiguity_type == explicit_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -1196,15 +1116,9 @@ def test_modal_compiler_surfaces_packet_001029_ambiguity_policy(
     }
     assert set(COMPILER_AMBIGUITY_PACKET_001029_FAMILY_PAIRS) == expected_pairs
     for predicted_family, target_family in expected_pairs:
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -1271,9 +1185,7 @@ def test_modal_compiler_surfaces_packet_001029_ambiguity_policy(
         target_family,
         family_margin,
     ) in enumerate(scenarios, start=1):
-        predicted_system, predicted_symbol, predicted_label = family_operator[
-            predicted_family
-        ]
+        predicted_system, predicted_symbol, predicted_label = family_operator[predicted_family]
         predicted_share = min(0.999, max(0.2, abs(family_margin) + 0.001))
         target_share = predicted_share + family_margin
         ranking = [
@@ -1291,15 +1203,12 @@ def test_modal_compiler_surfaces_packet_001029_ambiguity_policy(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-001029-adaptive-evidence-{index}",
             text=f"Synthetic packet 001029 {predicted_family} ambiguity evidence.",
-            normalized_text=(
-                f"Synthetic packet 001029 {predicted_family} ambiguity evidence."
-            ),
+            normalized_text=(f"Synthetic packet 001029 {predicted_family} ambiguity evidence."),
             tokens=[],
             sentences=[],
             cues=[
@@ -1351,9 +1260,7 @@ def test_modal_compiler_surfaces_packet_001029_ambiguity_policy(
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        explicit_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -1368,16 +1275,12 @@ def test_modal_compiler_surfaces_packet_001029_ambiguity_policy(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == explicit_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert any(
             ambiguity.ambiguity_type == explicit_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -1404,15 +1307,9 @@ def test_modal_compiler_surfaces_packet_006897_adaptive_ambiguity_policy(
     assert set(COMPILER_AMBIGUITY_PACKET_006897_FAMILY_PAIRS) == expected_pairs
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -1461,9 +1358,7 @@ def test_modal_compiler_surfaces_packet_006897_adaptive_ambiguity_policy(
         target_family,
         family_margin,
     ) in enumerate(scenarios, start=1):
-        predicted_system, predicted_symbol, predicted_label = family_operator[
-            predicted_family
-        ]
+        predicted_system, predicted_symbol, predicted_label = family_operator[predicted_family]
         if predicted_family == target_family:
             runner_up_family = "deontic"
             predicted_share = 0.5
@@ -1504,15 +1399,12 @@ def test_modal_compiler_surfaces_packet_006897_adaptive_ambiguity_policy(
             expected_direction = "outvoted"
             expected_candidate_ids = [predicted_family, target_family]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-006897-adaptive-evidence-{index}",
             text=f"Synthetic packet 006897 {predicted_family} ambiguity evidence.",
-            normalized_text=(
-                f"Synthetic packet 006897 {predicted_family} ambiguity evidence."
-            ),
+            normalized_text=(f"Synthetic packet 006897 {predicted_family} ambiguity evidence."),
             tokens=[],
             sentences=[],
             cues=[
@@ -1565,8 +1457,7 @@ def test_modal_compiler_surfaces_packet_006897_adaptive_ambiguity_policy(
         )
         policy_pair = f"{predicted_family}->{target_family}"
         explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_"
-            f"{expected_direction}_margin_low"
+            f"adaptive_{predicted_family}_{target_family}_{expected_direction}_margin_low"
         )
         base_ambiguity = next(
             ambiguity
@@ -1581,17 +1472,13 @@ def test_modal_compiler_surfaces_packet_006897_adaptive_ambiguity_policy(
         assert base_ambiguity.metadata["is_priority_policy_pair"] is True
         assert base_ambiguity.metadata["adaptive_margin_direction"] == expected_direction
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == explicit_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert any(
             ambiguity.ambiguity_type == explicit_type
             and ambiguity.candidate_ids == expected_candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
             and ambiguity.metadata["is_explicit_adaptive_ambiguity"] is True
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -1665,8 +1552,7 @@ def test_modal_compiler_surfaces_packet_001316_deontic_ambiguity_policy(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-001316-adaptive-evidence-{index}",
@@ -1723,10 +1609,7 @@ def test_modal_compiler_surfaces_packet_001316_deontic_ambiguity_policy(
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_"
-            f"{margin_direction}_margin_low"
-        )
+        explicit_type = f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -1734,12 +1617,8 @@ def test_modal_compiler_surfaces_packet_001316_deontic_ambiguity_policy(
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert supports_signal_free_adaptive_ambiguity_pair(
             predicted_family,
@@ -1751,16 +1630,12 @@ def test_modal_compiler_surfaces_packet_001316_deontic_ambiguity_policy(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == margin_direction
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == explicit_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert any(
             ambiguity.ambiguity_type == explicit_type
             and ambiguity.candidate_ids == candidate_ids
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -1835,9 +1710,7 @@ def test_modal_compiler_surfaces_packet_000935_adaptive_ambiguity_policy(
         target_family,
         family_margin,
     ) in enumerate(scenarios, start=1):
-        predicted_system, predicted_symbol, predicted_label = family_operator[
-            predicted_family
-        ]
+        predicted_system, predicted_symbol, predicted_label = family_operator[predicted_family]
         predicted_share = min(0.999, max(0.2, abs(family_margin) + 0.001))
         target_share = predicted_share + family_margin
         ranking = [
@@ -1855,15 +1728,12 @@ def test_modal_compiler_surfaces_packet_000935_adaptive_ambiguity_policy(
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         encoding = SpaCyLegalEncoding(
             document_id=f"packet-000935-adaptive-evidence-{index}",
             text=f"Synthetic packet 000935 {predicted_family} ambiguity evidence.",
-            normalized_text=(
-                f"Synthetic packet 000935 {predicted_family} ambiguity evidence."
-            ),
+            normalized_text=(f"Synthetic packet 000935 {predicted_family} ambiguity evidence."),
             tokens=[],
             sentences=[],
             cues=[
@@ -1915,9 +1785,7 @@ def test_modal_compiler_surfaces_packet_000935_adaptive_ambiguity_policy(
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        explicit_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -1925,12 +1793,8 @@ def test_modal_compiler_surfaces_packet_000935_adaptive_ambiguity_policy(
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
         )
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert supports_signal_free_adaptive_ambiguity_pair(
             predicted_family,
@@ -1943,16 +1807,12 @@ def test_modal_compiler_surfaces_packet_000935_adaptive_ambiguity_policy(
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == explicit_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert any(
             ambiguity.ambiguity_type == explicit_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             for ambiguity in ambiguities
         )
 
@@ -1988,10 +1848,7 @@ def test_modal_registry_packet_000222_refines_family_cue_policy_pairs() -> None:
     for predicted_family, target_family in expected_pairs:
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
 
-    assert (
-        compiler_weak_typed_self_family_cue_margin_buffer("deontic", "deontic")
-        >= 0.155
-    )
+    assert compiler_weak_typed_self_family_cue_margin_buffer("deontic", "deontic") >= 0.155
     for target_family in (
         "conditional_normative",
         "deontic",
@@ -2000,14 +1857,8 @@ def test_modal_registry_packet_000222_refines_family_cue_policy_pairs() -> None:
         "frame",
         "temporal",
     ):
-        assert (
-            compiler_refined_modal_family_cue_margin_buffer("frame", target_family)
-            >= 0.015
-        )
-    assert (
-        compiler_weak_typed_self_family_cue_margin_buffer("frame", "frame")
-        >= 0.19
-    )
+        assert compiler_refined_modal_family_cue_margin_buffer("frame", target_family) >= 0.015
+    assert compiler_weak_typed_self_family_cue_margin_buffer("frame", "frame") >= 0.19
 
 
 def test_modal_registry_packet_000176_refines_frame_normative_temporal_pairs() -> None:
@@ -2020,6 +1871,8 @@ def test_modal_registry_packet_000176_refines_frame_normative_temporal_pairs() -
     }
 
     assert set(COMPILER_REFINED_PACKET_000176_FAMILY_PAIRS) == expected_pairs
+
+
 def test_packet_002414_registry_exposes_adaptive_family_ambiguity_policy() -> None:
     expected_pairs = {
         ("conditional_normative", "conditional_normative"),
@@ -2046,9 +1899,7 @@ def test_packet_002414_registry_exposes_adaptive_family_ambiguity_policy() -> No
 
 
 def test_packet_002414_adaptive_low_margins_emit_explicit_ambiguities() -> None:
-    compiler = DeterministicModalCompiler(
-        ModalCompilerConfig(spacy_model_name="blank")
-    )
+    compiler = DeterministicModalCompiler(ModalCompilerConfig(spacy_model_name="blank"))
     scenarios = (
         (
             "us-code-10-931a-f50abc457484ada6",
@@ -2173,16 +2024,12 @@ def test_packet_002414_adaptive_low_margins_emit_explicit_ambiguities() -> None:
             modal_ir=modal_ir,
             ranking=ranking,
             family_shares={
-                str(candidate["family"]): float(candidate["share_raw"])
-                for candidate in ranking
+                str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
             },
             predicted_family_source="adaptive_logits",
         )
         policy_pair = f"{predicted_family}->{target_family}"
-        explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_"
-            f"{margin_direction}_margin_low"
-        )
+        explicit_type = f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
         base_ambiguity = next(
             ambiguity
             for ambiguity in ambiguities
@@ -2295,12 +2142,8 @@ def test_modal_registry_packet_007373_exposes_normative_frame_ambiguity_pairs() 
 
     assert set(COMPILER_AMBIGUITY_PACKET_007373_FAMILY_PAIRS) == expected_pairs
     for predicted_family, target_family in expected_pairs:
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert supports_signal_free_adaptive_ambiguity_pair(
             predicted_family,
@@ -2470,13 +2313,11 @@ def test_spacy_encoder_refines_packet_000317_registry_family_cues() -> None:
         document_id="packet-000317-appropriations",
     )
     assert any(
-        cue.family == "temporal"
-        and cue.cue.lower() == "available without fiscal year limitation"
+        cue.family == "temporal" and cue.cue.lower() == "available without fiscal year limitation"
         for cue in appropriations.cues
     )
     assert any(
-        cue.family == "epistemic" and cue.cue.lower() == "determined"
-        for cue in appropriations.cues
+        cue.family == "epistemic" and cue.cue.lower() == "determined" for cue in appropriations.cues
     )
 
 
@@ -2488,10 +2329,7 @@ def test_spacy_encoder_treats_non_deadline_by_as_non_temporal_cue() -> None:
     )
 
     assert any(cue.family == "deontic" and cue.cue.lower() == "shall" for cue in encoding.cues)
-    assert not any(
-        cue.family == "temporal" and cue.cue.lower() == "by"
-        for cue in encoding.cues
-    )
+    assert not any(cue.family == "temporal" and cue.cue.lower() == "by" for cue in encoding.cues)
 
 
 def test_spacy_encoder_treats_statutory_cross_reference_by_as_non_temporal_cue() -> None:
@@ -2502,10 +2340,7 @@ def test_spacy_encoder_treats_statutory_cross_reference_by_as_non_temporal_cue()
     )
 
     assert any(cue.family == "deontic" and cue.cue.lower() == "shall" for cue in encoding.cues)
-    assert not any(
-        cue.family == "temporal" and cue.cue.lower() == "by"
-        for cue in encoding.cues
-    )
+    assert not any(cue.family == "temporal" and cue.cue.lower() == "by" for cue in encoding.cues)
 
 
 def test_spacy_encoder_treats_deadline_by_as_temporal_cue() -> None:
@@ -2515,10 +2350,7 @@ def test_spacy_encoder_treats_deadline_by_as_temporal_cue() -> None:
         document_id="sample-by-deadline",
     )
 
-    assert any(
-        cue.family == "temporal" and cue.cue.lower() == "by"
-        for cue in encoding.cues
-    )
+    assert any(cue.family == "temporal" and cue.cue.lower() == "by" for cue in encoding.cues)
 
 
 def test_spacy_encoder_treats_deadline_by_with_dotted_month_as_temporal_cue() -> None:
@@ -2528,10 +2360,7 @@ def test_spacy_encoder_treats_deadline_by_with_dotted_month_as_temporal_cue() ->
         document_id="sample-by-deadline-dotted-month",
     )
 
-    assert any(
-        cue.family == "temporal" and cue.cue.lower() == "by"
-        for cue in encoding.cues
-    )
+    assert any(cue.family == "temporal" and cue.cue.lower() == "by" for cue in encoding.cues)
 
 
 def test_spacy_encoder_treats_within_department_as_non_temporal_cue() -> None:
@@ -2543,8 +2372,7 @@ def test_spacy_encoder_treats_within_department_as_non_temporal_cue() -> None:
 
     assert any(cue.family == "deontic" and cue.cue.lower() == "shall" for cue in encoding.cues)
     assert not any(
-        cue.family == "temporal" and cue.cue.lower() == "within"
-        for cue in encoding.cues
+        cue.family == "temporal" and cue.cue.lower() == "within" for cue in encoding.cues
     )
     signals = modal_ambiguity_signals(encoding)
     assert signals["has_temporal_within_scope"] is False
@@ -2558,10 +2386,7 @@ def test_spacy_encoder_treats_within_days_as_temporal_cue_and_scope() -> None:
         document_id="sample-within-days-temporal",
     )
 
-    assert any(
-        cue.family == "temporal" and cue.cue.lower() == "within"
-        for cue in encoding.cues
-    )
+    assert any(cue.family == "temporal" and cue.cue.lower() == "within" for cue in encoding.cues)
     signals = modal_ambiguity_signals(encoding)
     assert signals["has_temporal_within_scope"] is True
     assert signals["has_temporal_scope"] is True
@@ -2574,10 +2399,7 @@ def test_spacy_encoder_treats_prior_to_as_temporal_cue() -> None:
         document_id="sample-prior-to-temporal",
     )
 
-    assert any(
-        cue.family == "temporal" and cue.cue.lower() == "prior to"
-        for cue in encoding.cues
-    )
+    assert any(cue.family == "temporal" and cue.cue.lower() == "prior to" for cue in encoding.cues)
 
 
 def test_spacy_encoder_detects_editorial_frame_scope_signals() -> None:
@@ -2622,7 +2444,9 @@ def test_spacy_encoder_detects_of_this_title_as_statutory_scope_reference() -> N
     assert signals["has_deontic_scope"] is True
 
 
-def test_spacy_encoder_detects_structural_authority_frame_scope_for_jurisdiction_and_executive_authority() -> None:
+def test_spacy_encoder_detects_structural_authority_frame_scope_for_jurisdiction_and_executive_authority() -> (
+    None
+):
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     jurisdiction_encoding = encoder.encode(
         (
@@ -2657,11 +2481,7 @@ def test_spacy_encoder_extracts_rescued_packet_001981_deontic_cues() -> None:
         document_id="packet-001981-rescued-deontic-cues",
     )
 
-    deontic_cues = {
-        cue.cue.lower()
-        for cue in encoding.cues
-        if cue.family == "deontic"
-    }
+    deontic_cues = {cue.cue.lower() for cue in encoding.cues if cue.family == "deontic"}
 
     assert {
         "shall conduct",
@@ -2937,8 +2757,7 @@ def test_spacy_encoder_promotes_failure_heading_as_conditional_normative_scope()
 
     assert signals["has_conditional_scope_phrase"] is True
     assert any(
-        cue.family == "conditional_normative"
-        and cue.cue.lower() == "failure of"
+        cue.family == "conditional_normative" and cue.cue.lower() == "failure of"
         for cue in encoding.cues
     )
     assert counts["conditional_normative"] > counts["frame"]
@@ -2961,13 +2780,15 @@ def test_packet_005718_registry_refines_frame_doxastic_temporal_cues() -> None:
 
     extracted_cues = {
         (cue.family, cue.cue.lower())
-        for cue in SpaCyLegalEncoder().encode(
+        for cue in SpaCyLegalEncoder()
+        .encode(
             (
                 "A return must be filed at such time and in the time and "
                 "manner prescribed. A person who knowingly and willfully "
                 "makes a false statement has the required intent."
             )
-        ).cues
+        )
+        .cues
     }
     assert ("temporal", "at such time") in extracted_cues
     assert ("temporal", "time and manner") in extracted_cues
@@ -2983,16 +2804,10 @@ def test_spacy_encoder_treats_bare_knowingly_as_doxastic_mens_rea() -> None:
         ),
         document_id="bare-knowingly-mens-rea",
     )
-    cues_by_family = {
-        (cue.family, cue.cue.lower())
-        for cue in encoding.cues
-    }
+    cues_by_family = {(cue.family, cue.cue.lower()) for cue in encoding.cues}
     signals = modal_ambiguity_signals(encoding)
     ranking = ranked_modal_families(encoding)
-    share_by_family = {
-        str(item["family"]): float(item["share_raw"])
-        for item in ranking
-    }
+    share_by_family = {str(item["family"]): float(item["share_raw"]) for item in ranking}
 
     assert ("doxastic", "knowingly") in cues_by_family
     assert signals["has_doxastic_cue"] is True
@@ -3028,12 +2843,8 @@ def test_packet_001002_registry_exposes_frame_deontic_doxastic_ambiguity_policy(
 
     assert COMPILER_AMBIGUITY_PACKET_001002_FAMILY_PAIRS == expected_pairs
     for predicted_family, target_family in expected_pairs:
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert supports_signal_free_adaptive_ambiguity_pair(
             predicted_family,
@@ -3203,10 +3014,9 @@ def test_packet_004071_registry_refines_frame_deontic_and_dynamic_self_buffers()
     assert is_compiler_ambiguity_policy_pair("frame", "deontic")
     assert compiler_refined_modal_family_cue_margin_buffer("frame", "deontic") >= 0.0015
     assert compiler_refined_modal_family_cue_margin_buffer("dynamic", "dynamic") >= 0.02
-    assert (
-        compiler_weak_typed_self_family_cue_margin_buffer("dynamic", "dynamic")
-        > compiler_weak_typed_self_family_cue_margin_buffer("deontic", "deontic")
-    )
+    assert compiler_weak_typed_self_family_cue_margin_buffer(
+        "dynamic", "dynamic"
+    ) > compiler_weak_typed_self_family_cue_margin_buffer("deontic", "deontic")
 
 
 def test_packet_004348_registry_refines_modal_family_cue_pairs() -> None:
@@ -3273,6 +3083,8 @@ def test_packet_000122_registry_refines_current_family_cue_pairs() -> None:
             )
             > 0.0
         )
+
+
 def test_packet_000205_registry_exposes_compiler_ambiguity_pairs() -> None:
     assert ("frame", "temporal") in COMPILER_AMBIGUITY_PACKET_000205_FAMILY_PAIRS
     assert ("temporal", "deontic") in COMPILER_AMBIGUITY_PACKET_000205_FAMILY_PAIRS
@@ -3301,6 +3113,8 @@ def test_temporal_deontic_ambiguity_marks_packet_000205_policy_bundle() -> None:
     assert ambiguity[0].metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
     assert ambiguity[0].metadata["compiler_ambiguity_policy_pair"] == "temporal->deontic"
     assert ambiguity[0].metadata["is_compiler_ambiguity_bundle_pair"] is True
+
+
 def test_packet_004828_registry_exposes_modal_ambiguity_pairs() -> None:
     assert set(COMPILER_AMBIGUITY_PACKET_004828_FAMILY_PAIRS) == {
         ("deontic", "temporal"),
@@ -3389,10 +3203,7 @@ def test_spacy_encoder_promotes_deontic_over_temporal_period_scaffold() -> None:
     ranking = ranked_modal_families(encoding)
     signals = modal_ambiguity_signals(encoding)
 
-    assert any(
-        cue.family == "deontic" and cue.cue.lower() == "shall"
-        for cue in encoding.cues
-    )
+    assert any(cue.family == "deontic" and cue.cue.lower() == "shall" for cue in encoding.cues)
     assert signals["has_temporal_scope"] is True
     assert signals["has_deontic_cue"] is True
     assert ranking[0]["family"] == "deontic"
@@ -3465,7 +3276,9 @@ def test_spacy_decoder_promotes_frame_logits_over_temporal_for_editorial_scope_t
     assert logits["frame"] > logits["temporal"]
 
 
-def test_spacy_decoder_debiases_editorial_frame_logits_when_deontic_scope_competes_without_frame_cues() -> None:
+def test_spacy_decoder_debiases_editorial_frame_logits_when_deontic_scope_competes_without_frame_cues() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -3490,7 +3303,9 @@ def test_spacy_decoder_debiases_editorial_frame_logits_when_deontic_scope_compet
     assert logits["deontic"] > logits["frame"]
 
 
-def test_spacy_decoder_debiases_editorial_frame_logits_when_temporal_scope_competes_without_frame_cues() -> None:
+def test_spacy_decoder_debiases_editorial_frame_logits_when_temporal_scope_competes_without_frame_cues() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -3603,9 +3418,7 @@ def test_spacy_encoder_extracts_packet_000004_registry_authority_cues() -> None:
 
     repealed_ranking = ranked_modal_families(repealed_encoding)
     authority_ranking = ranked_modal_families(authority_encoding)
-    authority_rank_by_family = {
-        item["family"]: item["share_raw"] for item in authority_ranking
-    }
+    authority_rank_by_family = {item["family"]: item["share_raw"] for item in authority_ranking}
 
     assert not repealed_encoding.cues
     assert repealed_ranking[0]["family"] == "frame"
@@ -3690,8 +3503,7 @@ def test_spacy_encoder_treats_editorial_required_as_non_deontic_scope() -> None:
     signals = modal_ambiguity_signals(encoding)
 
     assert not any(
-        cue.family == "deontic" and cue.cue.lower() == "required"
-        for cue in encoding.cues
+        cue.family == "deontic" and cue.cue.lower() == "required" for cue in encoding.cues
     )
     assert signals["has_frame_editorial_scope_phrase"] is True
     assert signals["has_temporal_status_scope"] is True
@@ -3720,8 +3532,7 @@ def test_spacy_encoder_treats_repealed_required_submission_as_history_scope() ->
     ranking = ranked_modal_families(encoding)
 
     assert not any(
-        cue.family == "deontic" and cue.cue.lower() == "required"
-        for cue in encoding.cues
+        cue.family == "deontic" and cue.cue.lower() == "required" for cue in encoding.cues
     )
     assert signals["has_statutory_status_frame_scope"] is True
     assert signals["has_deontic_scope"] is False
@@ -3757,10 +3568,7 @@ def test_spacy_encoder_treats_extended_over_status_as_temporal_scope_signal() ->
     extended_sample = build_us_code_sample(
         title="43",
         section="647",
-        text=(
-            "The provisions of this title are extended over these lands and "
-            "shall apply."
-        ),
+        text=("The provisions of this title are extended over these lands and shall apply."),
     )
 
     baseline_encoding = codec.encode_sample(baseline_sample)
@@ -3803,16 +3611,8 @@ def test_spacy_codec_debiases_generic_frame_share_for_repealed_statutory_scope()
     assert signals["has_temporal_scope"] is True
     assert signals["has_temporal_status_scope"] is True
     assert any(item["family"] == "temporal" for item in ranking)
-    temporal_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "temporal"
-    )
-    frame_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "frame"
-    )
+    temporal_share = next(float(item["share"]) for item in ranking if item["family"] == "temporal")
+    frame_share = next(float(item["share"]) for item in ranking if item["family"] == "frame")
     assert temporal_share > 0.3
     assert (frame_share - temporal_share) <= 0.05
 
@@ -3825,49 +3625,32 @@ def test_spacy_codec_debiases_generic_frame_cues_when_deontic_force_is_present()
     sample = build_us_code_sample(
         title="42",
         section="247b",
-        text=(
-            "Authority under this section and jurisdiction under this chapter "
-            "shall apply."
-        ),
+        text=("Authority under this section and jurisdiction under this chapter shall apply."),
     )
 
     ranking = ranked_modal_families(codec.encode_sample(sample))
 
     assert ranking[0]["family"] == "deontic"
     assert any(item["family"] == "frame" and item["count"] >= 1 for item in ranking)
-    deontic_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "deontic"
-    )
-    frame_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "frame"
-    )
+    deontic_share = next(float(item["share"]) for item in ranking if item["family"] == "deontic")
+    frame_share = next(float(item["share"]) for item in ranking if item["family"] == "frame")
     assert deontic_share > frame_share
 
 
-def test_spacy_codec_reinforces_statutory_structural_frame_cues_without_erasing_deontic_force() -> None:
+def test_spacy_codec_reinforces_statutory_structural_frame_cues_without_erasing_deontic_force() -> (
+    None
+):
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     encoding = encoder.encode(
-        "The corporation may not issue stock. A director or officer may not "
-        "receive a dividend."
+        "The corporation may not issue stock. A director or officer may not receive a dividend."
     )
 
     ranking = ranked_modal_families(encoding)
 
     assert any(cue.cue == "corporation" and cue.family == "frame" for cue in encoding.cues)
-    assert any(
-        cue.cue == "director or officer" and cue.family == "frame"
-        for cue in encoding.cues
-    )
+    assert any(cue.cue == "director or officer" and cue.family == "frame" for cue in encoding.cues)
     assert ranking[0]["family"] == "deontic"
-    frame_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "frame"
-    )
+    frame_share = next(float(item["share"]) for item in ranking if item["family"] == "frame")
     assert frame_share > 0.3
 
 
@@ -3879,10 +3662,7 @@ def test_spacy_decoder_debiases_generic_frame_logits_when_deontic_force_is_prese
     sample = build_us_code_sample(
         title="42",
         section="1395w",
-        text=(
-            "Authority under this section and jurisdiction under this chapter "
-            "shall apply."
-        ),
+        text=("Authority under this section and jurisdiction under this chapter shall apply."),
     )
 
     logits = codec.family_logits_for_sample(
@@ -3962,7 +3742,9 @@ def test_spacy_decoder_strengthens_conditional_scope_boost_for_statutory_frame_c
     assert competing_logits["conditional_normative"] > baseline_logits["conditional_normative"]
 
 
-def test_spacy_decoder_prefers_conditional_over_frame_for_statutory_deontic_scope_without_frame_cues() -> None:
+def test_spacy_decoder_prefers_conditional_over_frame_for_statutory_deontic_scope_without_frame_cues() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -4037,7 +3819,9 @@ def test_spacy_decoder_strengthens_deontic_scope_boost_for_temporal_competition(
     assert competing_logits["deontic"] > baseline_logits["deontic"]
 
 
-def test_spacy_decoder_strengthens_temporal_logits_for_strong_temporal_scope_with_deontic_competition() -> None:
+def test_spacy_decoder_strengthens_temporal_logits_for_strong_temporal_scope_with_deontic_competition() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -4050,10 +3834,7 @@ def test_spacy_decoder_strengthens_temporal_logits_for_strong_temporal_scope_wit
     competing = build_us_code_sample(
         title="29",
         section="2861d",
-        text=(
-            "No later than January 1, 2030, liability for noncompliance applies "
-            "within 90 days."
-        ),
+        text=("No later than January 1, 2030, liability for noncompliance applies within 90 days."),
     )
 
     baseline_logits = codec.family_logits_for_sample(
@@ -4096,7 +3877,9 @@ def test_spacy_decoder_strengthens_deontic_scope_boost_for_alethic_competition()
     assert competing_logits["deontic"] > baseline_logits["deontic"]
 
 
-def test_spacy_decoder_strengthens_deontic_scope_boost_for_alethic_competition_with_deontic_phrase() -> None:
+def test_spacy_decoder_strengthens_deontic_scope_boost_for_alethic_competition_with_deontic_phrase() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -4110,8 +3893,7 @@ def test_spacy_decoder_strengthens_deontic_scope_boost_for_alethic_competition_w
         title="28",
         section="1ab",
         text=(
-            "It is possible and necessary that the agency is under an obligation "
-            "to file notice."
+            "It is possible and necessary that the agency is under an obligation to file notice."
         ),
     )
 
@@ -4135,9 +3917,7 @@ def test_spacy_decoder_soft_caps_repeated_alethic_logits_for_deontic_competition
     baseline = build_us_code_sample(
         title="28",
         section="1c",
-        text=(
-            "It is possible and necessary and impossible that the filing proceeds."
-        ),
+        text=("It is possible and necessary and impossible that the filing proceeds."),
     )
     competing = build_us_code_sample(
         title="28",
@@ -4169,9 +3949,7 @@ def test_spacy_decoder_soft_caps_repeated_alethic_logits_for_epistemic_competiti
     baseline = build_us_code_sample(
         title="28",
         section="1e",
-        text=(
-            "It is possible and necessary and impossible that the filing proceeds."
-        ),
+        text=("It is possible and necessary and impossible that the filing proceeds."),
     )
     competing = build_us_code_sample(
         title="28",
@@ -4195,7 +3973,9 @@ def test_spacy_decoder_soft_caps_repeated_alethic_logits_for_epistemic_competiti
     assert competing_logits["epistemic"] > baseline_logits["epistemic"]
 
 
-def test_spacy_codec_backfills_conditional_and_epistemic_shares_for_alethic_scope_competition() -> None:
+def test_spacy_codec_backfills_conditional_and_epistemic_shares_for_alethic_scope_competition() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -4203,16 +3983,13 @@ def test_spacy_codec_backfills_conditional_and_epistemic_shares_for_alethic_scop
     baseline = build_us_code_sample(
         title="28",
         section="1g",
-        text=(
-            "It is possible and necessary and impossible that the filing proceeds."
-        ),
+        text=("It is possible and necessary and impossible that the filing proceeds."),
     )
     conditional_competing = build_us_code_sample(
         title="28",
         section="1h",
         text=(
-            "When designated, it is possible and necessary and impossible that the "
-            "filing proceeds."
+            "When designated, it is possible and necessary and impossible that the filing proceeds."
         ),
     )
     epistemic_competing = build_us_code_sample(
@@ -4253,9 +4030,7 @@ def test_spacy_codec_backfills_deontic_share_for_alethic_scope_with_deontic_phra
     baseline = build_us_code_sample(
         title="28",
         section="1j",
-        text=(
-            "It is possible and necessary and impossible that the filing proceeds."
-        ),
+        text=("It is possible and necessary and impossible that the filing proceeds."),
     )
     competing = build_us_code_sample(
         title="28",
@@ -4300,21 +4075,15 @@ def test_spacy_codec_backfills_temporal_share_for_generic_frame_only_scope() -> 
     ranking = ranked_modal_families(codec.encode_sample(sample))
 
     assert ranking[0]["family"] == "frame"
-    temporal_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "temporal"
-    )
-    frame_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "frame"
-    )
+    temporal_share = next(float(item["share"]) for item in ranking if item["family"] == "temporal")
+    frame_share = next(float(item["share"]) for item in ranking if item["family"] == "frame")
     assert temporal_share > 0.0
     assert frame_share > temporal_share
 
 
-def test_spacy_codec_backfills_strong_temporal_share_for_generic_frame_scope_with_calendar_date() -> None:
+def test_spacy_codec_backfills_strong_temporal_share_for_generic_frame_scope_with_calendar_date() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -4326,16 +4095,8 @@ def test_spacy_codec_backfills_strong_temporal_share_for_generic_frame_scope_wit
     )
 
     ranking = ranked_modal_families(codec.encode_sample(sample))
-    frame_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "frame"
-    )
-    temporal_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "temporal"
-    )
+    frame_share = next(float(item["share"]) for item in ranking if item["family"] == "frame")
+    temporal_share = next(float(item["share"]) for item in ranking if item["family"] == "temporal")
 
     assert ranking[0]["family"] == "temporal"
     assert temporal_share > frame_share
@@ -4356,15 +4117,9 @@ def test_spacy_codec_backfills_conditional_share_for_generic_frame_only_scope() 
 
     assert ranking[0]["family"] == "conditional_normative"
     conditional_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "conditional_normative"
+        float(item["share"]) for item in ranking if item["family"] == "conditional_normative"
     )
-    frame_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "frame"
-    )
+    frame_share = next(float(item["share"]) for item in ranking if item["family"] == "frame")
     assert conditional_share > 0.0
     assert conditional_share > frame_share
 
@@ -4383,21 +4138,15 @@ def test_spacy_codec_backfills_deontic_share_for_generic_frame_only_scope() -> N
     ranking = ranked_modal_families(codec.encode_sample(sample))
 
     assert ranking[0]["family"] == "frame"
-    deontic_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "deontic"
-    )
-    frame_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "frame"
-    )
+    deontic_share = next(float(item["share"]) for item in ranking if item["family"] == "deontic")
+    frame_share = next(float(item["share"]) for item in ranking if item["family"] == "frame")
     assert deontic_share > 0.0
     assert frame_share > deontic_share
 
 
-def test_spacy_codec_prioritizes_deontic_share_for_generic_frame_statutory_scope_with_strong_deontic_phrase() -> None:
+def test_spacy_codec_prioritizes_deontic_share_for_generic_frame_statutory_scope_with_strong_deontic_phrase() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -4411,16 +4160,8 @@ def test_spacy_codec_prioritizes_deontic_share_for_generic_frame_statutory_scope
     ranking = ranked_modal_families(codec.encode_sample(sample))
 
     assert ranking[0]["family"] == "deontic"
-    deontic_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "deontic"
-    )
-    frame_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "frame"
-    )
+    deontic_share = next(float(item["share"]) for item in ranking if item["family"] == "deontic")
+    frame_share = next(float(item["share"]) for item in ranking if item["family"] == "frame")
     assert deontic_share > frame_share
 
 
@@ -4458,7 +4199,9 @@ def test_spacy_codec_prioritizes_deontic_share_for_compensation_and_privilege_se
         assert shares["deontic"] > shares.get("frame", 0.0)
 
 
-def test_spacy_codec_prioritizes_temporal_share_for_generic_frame_statutory_scope_with_strong_temporal_scope_phrase() -> None:
+def test_spacy_codec_prioritizes_temporal_share_for_generic_frame_statutory_scope_with_strong_temporal_scope_phrase() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -4466,26 +4209,15 @@ def test_spacy_codec_prioritizes_temporal_share_for_generic_frame_statutory_scop
     sample = build_us_code_sample(
         title="43",
         section="2451b",
-        text=(
-            "Authority under this section applies for the period beginning on "
-            "January 1, 2030."
-        ),
+        text=("Authority under this section applies for the period beginning on January 1, 2030."),
     )
     encoding = codec.encode_sample(sample)
     ranking = ranked_modal_families(encoding)
 
     assert not any(cue.family == "temporal" for cue in encoding.cues)
     assert ranking[0]["family"] == "temporal"
-    temporal_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "temporal"
-    )
-    frame_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "frame"
-    )
+    temporal_share = next(float(item["share"]) for item in ranking if item["family"] == "temporal")
+    frame_share = next(float(item["share"]) for item in ranking if item["family"] == "frame")
     assert temporal_share > frame_share
 
 
@@ -4637,9 +4369,7 @@ def test_spacy_decoder_debiases_generic_frame_logits_when_epistemic_cues_are_pre
     sample = build_us_code_sample(
         title="20",
         section="80e",
-        text=(
-            "Authority under this chapter finds that the report is false."
-        ),
+        text=("Authority under this chapter finds that the report is false."),
     )
 
     logits = codec.family_logits_for_sample(
@@ -4650,7 +4380,9 @@ def test_spacy_decoder_debiases_generic_frame_logits_when_epistemic_cues_are_pre
     assert logits["epistemic"] > logits["frame"]
 
 
-def test_spacy_decoder_debiases_generic_frame_logits_when_epistemic_scope_is_present_without_epistemic_cues() -> None:
+def test_spacy_decoder_debiases_generic_frame_logits_when_epistemic_scope_is_present_without_epistemic_cues() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -4766,10 +4498,7 @@ def test_spacy_decoder_soft_caps_repeated_deontic_logits_for_frame_competition()
     competing = build_us_code_sample(
         title="10",
         section="1030",
-        text=(
-            "Vendor shall and must and shall and must submit reports "
-            "under this section."
-        ),
+        text=("Vendor shall and must and shall and must submit reports under this section."),
     )
 
     baseline_logits = codec.family_logits_for_sample(
@@ -4862,9 +4591,7 @@ def test_spacy_decoder_soft_caps_repeated_deontic_logits_for_dynamic_competition
     competing = build_us_code_sample(
         title="18",
         section="1034",
-        text=(
-            "Vendor shall and must and shall and must file and serve reports."
-        ),
+        text=("Vendor shall and must and shall and must file and serve reports."),
     )
 
     baseline_logits = codec.family_logits_for_sample(
@@ -4880,7 +4607,9 @@ def test_spacy_decoder_soft_caps_repeated_deontic_logits_for_dynamic_competition
     assert competing_logits["dynamic"] > baseline_logits["dynamic"]
 
 
-def test_spacy_decoder_strengthens_dynamic_logits_for_dense_deontic_scope_with_dynamic_phrase() -> None:
+def test_spacy_decoder_strengthens_dynamic_logits_for_dense_deontic_scope_with_dynamic_phrase() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -4893,9 +4622,7 @@ def test_spacy_decoder_strengthens_dynamic_logits_for_dense_deontic_scope_with_d
     competing = build_us_code_sample(
         title="18",
         section="1034b",
-        text=(
-            "Vendor shall and must and shall and must provide reports upon transfer."
-        ),
+        text=("Vendor shall and must and shall and must provide reports upon transfer."),
     )
 
     baseline_logits = codec.family_logits_for_sample(
@@ -4911,7 +4638,9 @@ def test_spacy_decoder_strengthens_dynamic_logits_for_dense_deontic_scope_with_d
     assert competing_logits["dynamic"] > baseline_logits["dynamic"]
 
 
-def test_spacy_decoder_strengthens_temporal_logits_for_dense_deontic_scope_with_temporal_phrase() -> None:
+def test_spacy_decoder_strengthens_temporal_logits_for_dense_deontic_scope_with_temporal_phrase() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -4924,9 +4653,7 @@ def test_spacy_decoder_strengthens_temporal_logits_for_dense_deontic_scope_with_
     competing = build_us_code_sample(
         title="47",
         section="221b",
-        text=(
-            "Vendor shall and must and shall and must submit reports while pending review."
-        ),
+        text=("Vendor shall and must and shall and must submit reports while pending review."),
     )
 
     baseline_logits = codec.family_logits_for_sample(
@@ -5009,10 +4736,7 @@ def test_spacy_decoder_soft_caps_repeated_temporal_logits_for_conditional_compet
     )
 
     assert competing_logits["temporal"] < baseline_logits["temporal"]
-    assert (
-        competing_logits["conditional_normative"]
-        > baseline_logits["conditional_normative"]
-    )
+    assert competing_logits["conditional_normative"] > baseline_logits["conditional_normative"]
 
 
 def test_spacy_decoder_soft_caps_repeated_frame_logits_for_temporal_competition() -> None:
@@ -5023,10 +4747,7 @@ def test_spacy_decoder_soft_caps_repeated_frame_logits_for_temporal_competition(
     baseline = build_us_code_sample(
         title="43",
         section="1700",
-        text=(
-            "Authority and jurisdiction and authority and jurisdiction "
-            "apply."
-        ),
+        text=("Authority and jurisdiction and authority and jurisdiction apply."),
     )
     competing = build_us_code_sample(
         title="43",
@@ -5058,10 +4779,7 @@ def test_spacy_decoder_soft_caps_repeated_frame_logits_for_deontic_competition()
     baseline = build_us_code_sample(
         title="43",
         section="1702",
-        text=(
-            "Authority and jurisdiction and authority and jurisdiction "
-            "apply."
-        ),
+        text=("Authority and jurisdiction and authority and jurisdiction apply."),
     )
     competing = build_us_code_sample(
         title="43",
@@ -5093,10 +4811,7 @@ def test_spacy_decoder_soft_caps_repeated_frame_logits_for_conditional_competiti
     baseline = build_us_code_sample(
         title="43",
         section="1704",
-        text=(
-            "Authority and jurisdiction and authority and jurisdiction "
-            "apply."
-        ),
+        text=("Authority and jurisdiction and authority and jurisdiction apply."),
     )
     competing = build_us_code_sample(
         title="43",
@@ -5117,10 +4832,7 @@ def test_spacy_decoder_soft_caps_repeated_frame_logits_for_conditional_competiti
     )
 
     assert competing_logits["frame"] < baseline_logits["frame"]
-    assert (
-        competing_logits["conditional_normative"]
-        > baseline_logits["conditional_normative"]
-    )
+    assert competing_logits["conditional_normative"] > baseline_logits["conditional_normative"]
 
 
 def test_spacy_frame_soft_cap_treats_strong_epistemic_scope_as_competing_signal() -> None:
@@ -5385,7 +5097,9 @@ def test_spacy_directional_backfill_adds_epistemic_support_for_conditional_scope
     assert counts["epistemic"] > 0.2
 
 
-def test_spacy_directional_backfill_adds_temporal_support_for_strong_conditional_scope_without_frame_context() -> None:
+def test_spacy_directional_backfill_adds_temporal_support_for_strong_conditional_scope_without_frame_context() -> (
+    None
+):
     counts = {
         "conditional_normative": 2.4,
         "temporal": 0.05,
@@ -5462,7 +5176,9 @@ def test_spacy_directional_backfill_reinforces_frame_to_deontic_with_explicit_sc
     assert counts["deontic"] > 0.85
 
 
-def test_spacy_directional_backfill_reinforces_frame_to_conditional_for_deontic_statutory_scope() -> None:
+def test_spacy_directional_backfill_reinforces_frame_to_conditional_for_deontic_statutory_scope() -> (
+    None
+):
     baseline_counts = {
         "frame": 2.2,
         "conditional_normative": 0.18,
@@ -5546,7 +5262,9 @@ def test_spacy_directional_backfill_adds_deontic_support_for_conditional_statuto
     assert counts["deontic"] > 0.7
 
 
-def test_spacy_directional_backfill_reinforces_deontic_to_temporal_for_strong_statutory_scope() -> None:
+def test_spacy_directional_backfill_reinforces_deontic_to_temporal_for_strong_statutory_scope() -> (
+    None
+):
     counts = {
         "deontic": 2.8,
         "temporal": 0.06,
@@ -5595,7 +5313,9 @@ def test_spacy_directional_backfill_reinforces_deontic_to_frame_without_frame_le
     assert counts["frame"] >= 0.78
 
 
-def test_spacy_directional_backfill_adds_temporal_support_for_weak_statutory_frame_deontic_scope() -> None:
+def test_spacy_directional_backfill_adds_temporal_support_for_weak_statutory_frame_deontic_scope() -> (
+    None
+):
     baseline_counts = {
         "frame": 2.0,
         "temporal": 0.04,
@@ -5627,7 +5347,9 @@ def test_spacy_directional_backfill_adds_temporal_support_for_weak_statutory_fra
     assert competing_counts["temporal"] > baseline_counts["temporal"]
 
 
-def test_spacy_directional_backfill_adds_frame_support_for_temporal_scope_with_editorial_frame_signals() -> None:
+def test_spacy_directional_backfill_adds_frame_support_for_temporal_scope_with_editorial_frame_signals() -> (
+    None
+):
     counts = {
         "temporal": 0.9,
         "frame": 0.1,
@@ -5651,7 +5373,9 @@ def test_spacy_directional_backfill_adds_frame_support_for_temporal_scope_with_e
     assert counts["frame"] > 0.3
 
 
-def test_spacy_directional_backfill_reinforces_temporal_to_deontic_for_strong_statutory_scope() -> None:
+def test_spacy_directional_backfill_reinforces_temporal_to_deontic_for_strong_statutory_scope() -> (
+    None
+):
     counts = {
         "temporal": 3.4,
         "deontic": 0.1,
@@ -5679,7 +5403,9 @@ def test_spacy_directional_backfill_reinforces_temporal_to_deontic_for_strong_st
     assert counts["deontic"] >= 1.0
 
 
-def test_spacy_directional_backfill_reinforces_temporal_to_frame_for_editorial_statutory_scope() -> None:
+def test_spacy_directional_backfill_reinforces_temporal_to_frame_for_editorial_statutory_scope() -> (
+    None
+):
     counts = {
         "temporal": 3.2,
         "deontic": 0.2,
@@ -5707,7 +5433,9 @@ def test_spacy_directional_backfill_reinforces_temporal_to_frame_for_editorial_s
     assert counts["frame"] >= 0.62
 
 
-def test_spacy_directional_backfill_reinforces_temporal_to_frame_for_statutory_context_without_editorial_phrase() -> None:
+def test_spacy_directional_backfill_reinforces_temporal_to_frame_for_statutory_context_without_editorial_phrase() -> (
+    None
+):
     counts = {
         "temporal": 3.0,
         "frame": 0.05,
@@ -5758,7 +5486,9 @@ def test_spacy_directional_backfill_reinforces_conditional_to_deontic_for_explic
     assert counts["deontic"] >= 0.4
 
 
-def test_spacy_directional_backfill_reinforces_deontic_to_temporal_for_strong_temporal_scope() -> None:
+def test_spacy_directional_backfill_reinforces_deontic_to_temporal_for_strong_temporal_scope() -> (
+    None
+):
     counts = {
         "deontic": 2.8,
         "temporal": 0.04,
@@ -5786,7 +5516,9 @@ def test_spacy_directional_backfill_reinforces_deontic_to_temporal_for_strong_te
     assert counts["temporal"] >= 0.7
 
 
-def test_spacy_refined_pair_balance_reinforces_temporal_and_conditional_for_deontic_temporal_conditional_competition() -> None:
+def test_spacy_refined_pair_balance_reinforces_temporal_and_conditional_for_deontic_temporal_conditional_competition() -> (
+    None
+):
     counts = {
         "deontic": 2.8,
         "temporal": 0.04,
@@ -5816,7 +5548,9 @@ def test_spacy_refined_pair_balance_reinforces_temporal_and_conditional_for_deon
     assert counts["conditional_normative"] >= 0.6
 
 
-def test_spacy_refined_pair_balance_reinforces_deontic_for_temporal_status_scope_competition() -> None:
+def test_spacy_refined_pair_balance_reinforces_deontic_for_temporal_status_scope_competition() -> (
+    None
+):
     counts = {
         "temporal": 2.0,
         "deontic": 0.05,
@@ -5880,7 +5614,9 @@ def test_spacy_refined_pair_balance_reinforces_deontic_for_statutory_repeal_stat
     assert counts["deontic"] > counts["conditional_normative"]
 
 
-def test_spacy_refined_pair_balance_softens_deontic_overflow_for_statutory_conditional_editorial_scope() -> None:
+def test_spacy_refined_pair_balance_softens_deontic_overflow_for_statutory_conditional_editorial_scope() -> (
+    None
+):
     counts = {
         "deontic": 3.369256,
         "conditional_normative": 3.0,
@@ -5917,7 +5653,9 @@ def test_spacy_refined_pair_balance_softens_deontic_overflow_for_statutory_condi
     assert (counts["deontic"] - counts["conditional_normative"]) <= 0.13
 
 
-def test_spacy_refined_pair_balance_reinforces_temporal_to_conditional_and_deontic_for_statutory_status_scope() -> None:
+def test_spacy_refined_pair_balance_reinforces_temporal_to_conditional_and_deontic_for_statutory_status_scope() -> (
+    None
+):
     counts = {
         "temporal": 2.6,
         "deontic": 0.05,
@@ -5953,7 +5691,9 @@ def test_spacy_refined_pair_balance_reinforces_temporal_to_conditional_and_deont
     assert counts["conditional_normative"] >= 0.57
 
 
-def test_spacy_refined_pair_balance_reinforces_frame_to_deontic_for_non_editorial_statutory_status_scope() -> None:
+def test_spacy_refined_pair_balance_reinforces_frame_to_deontic_for_non_editorial_statutory_status_scope() -> (
+    None
+):
     counts = {
         "frame": 2.2,
         "deontic": 0.05,
@@ -6058,7 +5798,9 @@ def test_spacy_refined_pair_balance_preserves_temporal_for_generic_statutory_fra
     assert counts["temporal"] >= 0.75
 
 
-def test_spacy_refined_pair_balance_preserves_conditional_and_deontic_for_temporal_statutory_scope() -> None:
+def test_spacy_refined_pair_balance_preserves_conditional_and_deontic_for_temporal_statutory_scope() -> (
+    None
+):
     counts = {
         "temporal": 2.8,
         "conditional_normative": 0.06,
@@ -6095,7 +5837,9 @@ def test_spacy_refined_pair_balance_preserves_conditional_and_deontic_for_tempor
     assert counts["deontic"] >= 0.84
 
 
-def test_spacy_refined_pair_balance_reinforces_frame_for_statutory_conditional_status_scope() -> None:
+def test_spacy_refined_pair_balance_reinforces_frame_for_statutory_conditional_status_scope() -> (
+    None
+):
     counts = {
         "deontic": 3.369256,
         "conditional_normative": 3.0,
@@ -6130,7 +5874,9 @@ def test_spacy_refined_pair_balance_reinforces_frame_for_statutory_conditional_s
     assert counts["frame"] >= 1.2
 
 
-def test_spacy_refined_pair_balance_reinforces_deontic_and_temporal_for_structural_conditional_scope() -> None:
+def test_spacy_refined_pair_balance_reinforces_deontic_and_temporal_for_structural_conditional_scope() -> (
+    None
+):
     counts = {
         "conditional_normative": 2.2,
         "deontic": 0.05,
@@ -6160,7 +5906,9 @@ def test_spacy_refined_pair_balance_reinforces_deontic_and_temporal_for_structur
     assert counts["temporal"] >= 0.52
 
 
-def test_spacy_refined_pair_balance_reinforces_frame_for_phrase_only_structural_conditional_scope() -> None:
+def test_spacy_refined_pair_balance_reinforces_frame_for_phrase_only_structural_conditional_scope() -> (
+    None
+):
     counts = {
         "conditional_normative": 2.2,
         "frame": 0.0,
@@ -6195,7 +5943,9 @@ def test_spacy_refined_pair_balance_reinforces_frame_for_phrase_only_structural_
     assert counts["conditional_normative"] < 2.2
 
 
-def test_spacy_refined_pair_balance_reinforces_conditional_for_phrase_only_statutory_deontic_scope() -> None:
+def test_spacy_refined_pair_balance_reinforces_conditional_for_phrase_only_statutory_deontic_scope() -> (
+    None
+):
     counts = {
         "deontic": 2.0,
         "conditional_normative": 0.04,
@@ -6223,7 +5973,9 @@ def test_spacy_refined_pair_balance_reinforces_conditional_for_phrase_only_statu
     assert counts["conditional_normative"] >= 0.4
 
 
-def test_spacy_refined_pair_balance_reinforces_conditional_for_structural_statutory_deontic_scope() -> None:
+def test_spacy_refined_pair_balance_reinforces_conditional_for_structural_statutory_deontic_scope() -> (
+    None
+):
     counts = {
         "deontic": 2.4,
         "conditional_normative": 0.05,
@@ -6259,7 +6011,9 @@ def test_spacy_refined_pair_balance_reinforces_conditional_for_structural_statut
     assert counts["conditional_normative"] >= 0.45
 
 
-def test_spacy_refined_pair_balance_reinforces_deontic_for_conditional_scope_phrase_with_explicit_deontic_force() -> None:
+def test_spacy_refined_pair_balance_reinforces_deontic_for_conditional_scope_phrase_with_explicit_deontic_force() -> (
+    None
+):
     counts = {
         "conditional_normative": 1.0,
         "deontic": 1.0,
@@ -6289,7 +6043,9 @@ def test_spacy_refined_pair_balance_reinforces_deontic_for_conditional_scope_phr
     assert counts["deontic"] > 1.0
 
 
-def test_spacy_refined_pair_balance_reinforces_deontic_for_clause_only_if_scope_with_explicit_deontic_force() -> None:
+def test_spacy_refined_pair_balance_reinforces_deontic_for_clause_only_if_scope_with_explicit_deontic_force() -> (
+    None
+):
     counts = {
         "conditional_normative": 2.3,
         "deontic": 0.2,
@@ -6342,7 +6098,9 @@ def test_spacy_refined_pair_balance_promotes_epistemic_over_generic_frame_scaffo
     assert counts["epistemic"] > counts["frame"]
 
 
-def test_spacy_refined_pair_balance_promotes_temporal_status_over_editorial_frame_scaffold() -> None:
+def test_spacy_refined_pair_balance_promotes_temporal_status_over_editorial_frame_scaffold() -> (
+    None
+):
     counts = {
         "frame": 2.5,
         "temporal": 0.45,
@@ -6416,7 +6174,9 @@ def test_spacy_refined_pair_balance_promotes_deontic_study_report_over_deadline_
     assert counts["deontic"] > counts["temporal"]
 
 
-def test_spacy_refined_pair_balance_promotes_structural_authority_frame_over_generic_deontic() -> None:
+def test_spacy_refined_pair_balance_promotes_structural_authority_frame_over_generic_deontic() -> (
+    None
+):
     counts = {
         "deontic": 2.0,
         "frame": 0.6,
@@ -6465,7 +6225,9 @@ def test_spacy_encoder_treats_to_the_extent_possible_as_deontic_qualifier_not_al
     assert signals["has_alethic_cue"] is False
 
 
-def test_spacy_refined_pair_balance_reinforces_deontic_for_phrase_only_structural_temporal_scope() -> None:
+def test_spacy_refined_pair_balance_reinforces_deontic_for_phrase_only_structural_temporal_scope() -> (
+    None
+):
     counts = {
         "temporal": 2.0,
         "deontic": 0.1,
@@ -6495,7 +6257,9 @@ def test_spacy_refined_pair_balance_reinforces_deontic_for_phrase_only_structura
     assert counts["deontic"] >= 0.48
 
 
-def test_spacy_refined_pair_balance_reinforces_deontic_for_temporal_appropriations_authorization_scope() -> None:
+def test_spacy_refined_pair_balance_reinforces_deontic_for_temporal_appropriations_authorization_scope() -> (
+    None
+):
     counts = {
         "temporal": 2.2,
         "deontic": 0.08,
@@ -6567,7 +6331,9 @@ def test_spacy_refined_pair_balance_reinforces_frame_for_temporal_deontic_statut
     assert counts["frame"] >= 0.57
 
 
-def test_spacy_refined_pair_balance_skips_purpose_only_conditional_reinforcement_for_explicit_deontic_scope() -> None:
+def test_spacy_refined_pair_balance_skips_purpose_only_conditional_reinforcement_for_explicit_deontic_scope() -> (
+    None
+):
     counts = {
         "deontic": 2.0,
         "conditional_normative": 0.04,
@@ -6596,7 +6362,9 @@ def test_spacy_refined_pair_balance_skips_purpose_only_conditional_reinforcement
     assert counts["conditional_normative"] == pytest.approx(0.04)
 
 
-def test_spacy_refined_pair_balance_caps_non_deadline_temporal_pressure_against_explicit_deontic_scope() -> None:
+def test_spacy_refined_pair_balance_caps_non_deadline_temporal_pressure_against_explicit_deontic_scope() -> (
+    None
+):
     counts = {
         "temporal": 2.0,
         "deontic": 0.5,
@@ -6628,7 +6396,9 @@ def test_spacy_refined_pair_balance_caps_non_deadline_temporal_pressure_against_
     assert counts["deontic"] == 0.5
 
 
-def test_spacy_refined_pair_balance_caps_generic_deontic_overflow_for_structural_temporal_frame_scope() -> None:
+def test_spacy_refined_pair_balance_caps_generic_deontic_overflow_for_structural_temporal_frame_scope() -> (
+    None
+):
     counts = {
         "deontic": 3.2,
         "temporal": 2.0,
@@ -6664,7 +6434,9 @@ def test_spacy_refined_pair_balance_caps_generic_deontic_overflow_for_structural
     assert counts["deontic"] > counts["temporal"]
 
 
-def test_spacy_refined_pair_balance_caps_editorial_deontic_overflow_with_temporal_status_scope() -> None:
+def test_spacy_refined_pair_balance_caps_editorial_deontic_overflow_with_temporal_status_scope() -> (
+    None
+):
     counts = {
         "deontic": 5.6,
         "temporal": 1.35,
@@ -6701,7 +6473,9 @@ def test_spacy_refined_pair_balance_caps_editorial_deontic_overflow_with_tempora
     assert counts["deontic"] > counts["temporal"]
 
 
-def test_spacy_refined_pair_balance_reinforces_deontic_when_explicit_statutory_conditional_scope_dominates() -> None:
+def test_spacy_refined_pair_balance_reinforces_deontic_when_explicit_statutory_conditional_scope_dominates() -> (
+    None
+):
     counts = {
         "conditional_normative": 4.6,
         "deontic": 3.4,
@@ -6736,7 +6510,9 @@ def test_spacy_refined_pair_balance_reinforces_deontic_when_explicit_statutory_c
     assert counts["deontic"] > 3.4
 
 
-def test_spacy_refined_pair_balance_reinforces_temporal_for_structural_statutory_conditional_scope_with_temporal_cue() -> None:
+def test_spacy_refined_pair_balance_reinforces_temporal_for_structural_statutory_conditional_scope_with_temporal_cue() -> (
+    None
+):
     counts = {
         "conditional_normative": 0.62,
         "deontic": 1.0,
@@ -6768,7 +6544,9 @@ def test_spacy_refined_pair_balance_reinforces_temporal_for_structural_statutory
     assert counts["temporal"] > 1.25
 
 
-def test_spacy_refined_pair_balance_reinforces_temporal_for_deadline_condition_clause_competition() -> None:
+def test_spacy_refined_pair_balance_reinforces_temporal_for_deadline_condition_clause_competition() -> (
+    None
+):
     counts = {
         "conditional_normative": 1.0,
         "deontic": 1.0,
@@ -6799,7 +6577,9 @@ def test_spacy_refined_pair_balance_reinforces_temporal_for_deadline_condition_c
     assert counts["temporal"] > 1.0
 
 
-def test_spacy_refined_pair_balance_caps_editorial_temporal_status_pressure_for_statutory_deontic_scope() -> None:
+def test_spacy_refined_pair_balance_caps_editorial_temporal_status_pressure_for_statutory_deontic_scope() -> (
+    None
+):
     counts = {
         "temporal": 3.26160091167848,
         "deontic": 1.35,
@@ -6834,7 +6614,9 @@ def test_spacy_refined_pair_balance_caps_editorial_temporal_status_pressure_for_
     assert counts["deontic"] == pytest.approx(1.35)
 
 
-def test_spacy_refined_pair_balance_reinforces_frame_for_purpose_scoped_deontic_statutory_scope() -> None:
+def test_spacy_refined_pair_balance_reinforces_frame_for_purpose_scoped_deontic_statutory_scope() -> (
+    None
+):
     counts = {
         "deontic": 2.5,
         "conditional_normative": 1.2,
@@ -6861,7 +6643,9 @@ def test_spacy_refined_pair_balance_reinforces_frame_for_purpose_scoped_deontic_
     assert counts["frame"] >= 0.6
 
 
-def test_spacy_refined_pair_balance_reinforces_temporal_for_purpose_scoped_strong_statutory_temporal_context() -> None:
+def test_spacy_refined_pair_balance_reinforces_temporal_for_purpose_scoped_strong_statutory_temporal_context() -> (
+    None
+):
     counts = {
         "deontic": 2.6,
         "temporal": 0.72,
@@ -6934,7 +6718,9 @@ def test_spacy_refined_pair_balance_reinforces_temporal_for_fiscal_until_expende
     assert counts["temporal"] >= 1.3
 
 
-def test_spacy_refined_pair_balance_reinforces_epistemic_for_temporal_statutory_competition() -> None:
+def test_spacy_refined_pair_balance_reinforces_epistemic_for_temporal_statutory_competition() -> (
+    None
+):
     counts = {
         "temporal": 2.4,
         "deontic": 1.2,
@@ -6973,7 +6759,9 @@ def test_spacy_refined_pair_balance_reinforces_epistemic_for_temporal_statutory_
     assert counts["epistemic"] > 0.05
 
 
-def test_spacy_refined_pair_balance_reinforces_alethic_for_temporal_definition_heading_scope() -> None:
+def test_spacy_refined_pair_balance_reinforces_alethic_for_temporal_definition_heading_scope() -> (
+    None
+):
     counts = {
         "temporal": 2.1,
         "alethic": 0.02,
@@ -7028,13 +6816,12 @@ def test_spacy_temporal_scope_boost_is_stronger_with_deontic_cue_competition() -
     base_boosts = _scope_signal_family_logit_boosts(base_signals)
     cue_competing_boosts = _scope_signal_family_logit_boosts(cue_competing_signals)
 
-    assert (
-        cue_competing_boosts["temporal"]
-        > base_boosts["temporal"]
-    )
+    assert cue_competing_boosts["temporal"] > base_boosts["temporal"]
 
 
-def test_spacy_temporal_scope_boost_is_weaker_for_weak_temporal_scope_with_deontic_competition() -> None:
+def test_spacy_temporal_scope_boost_is_weaker_for_weak_temporal_scope_with_deontic_competition() -> (
+    None
+):
     base_signals = {
         "has_temporal_scope": True,
         "has_temporal_scope_phrase": False,
@@ -7078,15 +6865,15 @@ def test_spacy_temporal_scope_boost_damps_editorial_calendar_noise_without_tempo
     }
 
     noise_boosts = _scope_signal_family_logit_boosts(noise_signals)
-    explicit_temporal_boosts = _scope_signal_family_logit_boosts(
-        explicit_temporal_signals
-    )
+    explicit_temporal_boosts = _scope_signal_family_logit_boosts(explicit_temporal_signals)
 
     assert noise_boosts["temporal"] < explicit_temporal_boosts["temporal"]
     assert noise_boosts["deontic"] > 0.0
 
 
-def test_spacy_temporal_scope_boost_damps_status_only_temporal_noise_in_non_statutory_frame_scope() -> None:
+def test_spacy_temporal_scope_boost_damps_status_only_temporal_noise_in_non_statutory_frame_scope() -> (
+    None
+):
     baseline_signals = {
         "has_temporal_scope": True,
         "has_temporal_scope_phrase": False,
@@ -7106,9 +6893,7 @@ def test_spacy_temporal_scope_boost_damps_status_only_temporal_noise_in_non_stat
     }
 
     baseline_boosts = _scope_signal_family_logit_boosts(baseline_signals)
-    statutory_boosts = _scope_signal_family_logit_boosts(
-        statutory_reference_signals
-    )
+    statutory_boosts = _scope_signal_family_logit_boosts(statutory_reference_signals)
 
     assert baseline_boosts["temporal"] < statutory_boosts["temporal"]
 
@@ -7172,7 +6957,9 @@ def test_spacy_frame_bonus_reinforces_deontic_conditional_statutory_frame_compet
     assert _frame_logit_bonus(competing_signals) > _frame_logit_bonus(baseline_signals) + 2.0
 
 
-def test_spacy_generic_frame_debias_bonus_reinforces_deontic_conditional_statutory_competition() -> None:
+def test_spacy_generic_frame_debias_bonus_reinforces_deontic_conditional_statutory_competition() -> (
+    None
+):
     baseline_signals = {
         "has_deontic_scope": True,
         "has_condition_or_exception_scope": True,
@@ -7193,12 +6980,15 @@ def test_spacy_generic_frame_debias_bonus_reinforces_deontic_conditional_statuto
         "has_conditional_scope_phrase": True,
     }
 
-    assert _debias_frame_bonus_for_generic_cues(competing_signals) > _debias_frame_bonus_for_generic_cues(
-        baseline_signals
-    ) + 1.0
+    assert (
+        _debias_frame_bonus_for_generic_cues(competing_signals)
+        > _debias_frame_bonus_for_generic_cues(baseline_signals) + 1.0
+    )
 
 
-def test_spacy_deontic_boost_reinforces_explicit_deontic_scope_in_procedural_frame_context() -> None:
+def test_spacy_deontic_boost_reinforces_explicit_deontic_scope_in_procedural_frame_context() -> (
+    None
+):
     baseline_signals = {
         "has_deontic_scope": True,
         "has_deontic_cue": True,
@@ -7364,10 +7154,7 @@ def test_spacy_codec_backfills_deontic_share_for_conditional_scope_with_deontic_
     sample = build_us_code_sample(
         title="20",
         section="1415",
-        text=(
-            "If designated and subject to subsection (b), liability for "
-            "noncompliance applies."
-        ),
+        text=("If designated and subject to subsection (b), liability for noncompliance applies."),
     )
     encoding = codec.encode_sample(sample)
     signals = modal_ambiguity_signals(encoding)
@@ -7377,15 +7164,13 @@ def test_spacy_codec_backfills_deontic_share_for_conditional_scope_with_deontic_
     assert signals["has_deontic_scope"] is True
     assert signals["has_deontic_scope_phrase"] is True
     assert signals["has_statutory_scope_reference"] is False
-    deontic_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "deontic"
-    )
+    deontic_share = next(float(item["share"]) for item in ranking if item["family"] == "deontic")
     assert deontic_share > 0.05
 
 
-def test_spacy_codec_strengthens_conditional_share_for_dense_deontic_scope_with_condition_clause() -> None:
+def test_spacy_codec_strengthens_conditional_share_for_dense_deontic_scope_with_condition_clause() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -7405,14 +7190,14 @@ def test_spacy_codec_strengthens_conditional_share_for_dense_deontic_scope_with_
     assert not any(cue.family == "conditional_normative" for cue in encoding.cues)
     assert signals["has_condition_clause"] is True
     conditional_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "conditional_normative"
+        float(item["share"]) for item in ranking if item["family"] == "conditional_normative"
     )
     assert conditional_share > 0.05
 
 
-def test_spacy_codec_backfills_temporal_share_for_conditional_scope_with_temporal_scope_phrase() -> None:
+def test_spacy_codec_backfills_temporal_share_for_conditional_scope_with_temporal_scope_phrase() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -7432,11 +7217,7 @@ def test_spacy_codec_backfills_temporal_share_for_conditional_scope_with_tempora
     assert not any(cue.family == "temporal" for cue in encoding.cues)
     assert signals["has_temporal_scope"] is True
     assert signals["has_temporal_scope_phrase"] is True
-    temporal_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "temporal"
-    )
+    temporal_share = next(float(item["share"]) for item in ranking if item["family"] == "temporal")
     assert temporal_share > 0.0
 
 
@@ -7459,11 +7240,7 @@ def test_spacy_codec_backfills_frame_share_for_conditional_scope_with_statutory_
 
     assert not any(cue.family == "frame" for cue in encoding.cues)
     assert signals["has_statutory_scope_reference"] is True
-    frame_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "frame"
-    )
+    frame_share = next(float(item["share"]) for item in ranking if item["family"] == "frame")
     assert frame_share > 0.0
 
 
@@ -7475,10 +7252,7 @@ def test_spacy_codec_backfills_deontic_share_for_conditional_scope_with_deontic_
     sample = build_us_code_sample(
         title="12",
         section="1819",
-        text=(
-            "If designated and except as otherwise provided, mandatory reporting "
-            "applies."
-        ),
+        text=("If designated and except as otherwise provided, mandatory reporting applies."),
     )
     encoding = codec.encode_sample(sample)
     signals = modal_ambiguity_signals(encoding)
@@ -7488,11 +7262,7 @@ def test_spacy_codec_backfills_deontic_share_for_conditional_scope_with_deontic_
     assert signals["has_deontic_scope"] is True
     assert signals["has_deontic_scope_phrase"] is False
     assert signals["has_statutory_scope_reference"] is False
-    deontic_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "deontic"
-    )
+    deontic_share = next(float(item["share"]) for item in ranking if item["family"] == "deontic")
     assert deontic_share > 0.0
 
 
@@ -7504,10 +7274,7 @@ def test_spacy_codec_backfills_temporal_share_for_conditional_scope_with_tempora
     sample = build_us_code_sample(
         title="12",
         section="1820",
-        text=(
-            "If designated and except as otherwise provided, annual review "
-            "applies."
-        ),
+        text=("If designated and except as otherwise provided, annual review applies."),
     )
     encoding = codec.encode_sample(sample)
     signals = modal_ambiguity_signals(encoding)
@@ -7517,15 +7284,13 @@ def test_spacy_codec_backfills_temporal_share_for_conditional_scope_with_tempora
     assert signals["has_temporal_scope"] is True
     assert signals["has_temporal_scope_phrase"] is False
     assert signals["has_statutory_scope_reference"] is False
-    temporal_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "temporal"
-    )
+    temporal_share = next(float(item["share"]) for item in ranking if item["family"] == "temporal")
     assert temporal_share > 0.0
 
 
-def test_spacy_codec_backfills_conditional_share_for_frame_scope_with_statutory_condition_reference() -> None:
+def test_spacy_codec_backfills_conditional_share_for_frame_scope_with_statutory_condition_reference() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -7534,8 +7299,7 @@ def test_spacy_codec_backfills_conditional_share_for_frame_scope_with_statutory_
         title="12",
         section="1821",
         text=(
-            "Authority and jurisdiction in this former section apply as provided in "
-            "subsection (b)."
+            "Authority and jurisdiction in this former section apply as provided in subsection (b)."
         ),
     )
     encoding = codec.encode_sample(sample)
@@ -7546,9 +7310,7 @@ def test_spacy_codec_backfills_conditional_share_for_frame_scope_with_statutory_
     assert signals["has_frame_scope_phrase"] is True
     assert signals["has_condition_or_exception_scope"] is True
     conditional_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "conditional_normative"
+        float(item["share"]) for item in ranking if item["family"] == "conditional_normative"
     )
     assert conditional_share > 0.0
 
@@ -7573,15 +7335,13 @@ def test_spacy_codec_backfills_deontic_share_for_frame_scope_with_conditional_co
     assert not any(cue.family == "deontic" for cue in encoding.cues)
     assert signals["has_deontic_scope"] is True
     assert signals["has_condition_or_exception_scope"] is True
-    deontic_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "deontic"
-    )
+    deontic_share = next(float(item["share"]) for item in ranking if item["family"] == "deontic")
     assert deontic_share > 0.0
 
 
-def test_spacy_codec_backfills_temporal_share_for_frame_scope_with_conditional_competition() -> None:
+def test_spacy_codec_backfills_temporal_share_for_frame_scope_with_conditional_competition() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -7601,15 +7361,13 @@ def test_spacy_codec_backfills_temporal_share_for_frame_scope_with_conditional_c
     assert not any(cue.family == "temporal" for cue in encoding.cues)
     assert signals["has_temporal_scope"] is True
     assert signals["has_condition_or_exception_scope"] is True
-    temporal_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "temporal"
-    )
+    temporal_share = next(float(item["share"]) for item in ranking if item["family"] == "temporal")
     assert temporal_share > 0.0
 
 
-def test_spacy_codec_backfills_temporal_share_for_single_frame_cue_with_deontic_competition() -> None:
+def test_spacy_codec_backfills_temporal_share_for_single_frame_cue_with_deontic_competition() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -7626,15 +7384,13 @@ def test_spacy_codec_backfills_temporal_share_for_single_frame_cue_with_deontic_
     assert signals["has_frame_cue"] is True
     assert signals["has_deontic_cue"] is True
     assert signals["has_temporal_scope"] is True
-    temporal_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "temporal"
-    )
+    temporal_share = next(float(item["share"]) for item in ranking if item["family"] == "temporal")
     assert temporal_share > 0.0
 
 
-def test_spacy_codec_backfills_deontic_share_for_single_frame_cue_with_temporal_competition() -> None:
+def test_spacy_codec_backfills_deontic_share_for_single_frame_cue_with_temporal_competition() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -7651,11 +7407,7 @@ def test_spacy_codec_backfills_deontic_share_for_single_frame_cue_with_temporal_
     assert signals["has_frame_cue"] is True
     assert signals["has_temporal_scope"] is True
     assert signals["has_deontic_scope"] is True
-    deontic_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "deontic"
-    )
+    deontic_share = next(float(item["share"]) for item in ranking if item["family"] == "deontic")
     assert deontic_share > 0.0
 
 
@@ -7777,7 +7529,9 @@ def test_spacy_codec_keeps_deadline_submit_clause_temporal() -> None:
     assert ranking[0]["family"] == "temporal"
 
 
-def test_spacy_codec_reinforces_deontic_share_for_moderate_temporal_scope_with_explicit_cue() -> None:
+def test_spacy_codec_reinforces_deontic_share_for_moderate_temporal_scope_with_explicit_cue() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -7796,19 +7550,11 @@ def test_spacy_codec_reinforces_deontic_share_for_moderate_temporal_scope_with_e
     competing_ranking = ranked_modal_families(codec.encode_sample(competing))
 
     baseline_deontic_share = next(
-        (
-            float(item["share"])
-            for item in baseline_ranking
-            if item["family"] == "deontic"
-        ),
+        (float(item["share"]) for item in baseline_ranking if item["family"] == "deontic"),
         0.0,
     )
     competing_deontic_share = next(
-        (
-            float(item["share"])
-            for item in competing_ranking
-            if item["family"] == "deontic"
-        ),
+        (float(item["share"]) for item in competing_ranking if item["family"] == "deontic"),
         0.0,
     )
 
@@ -7833,15 +7579,13 @@ def test_spacy_codec_backfills_temporal_share_for_deontic_competition_with_calen
     assert not any(cue.family == "temporal" for cue in encoding.cues)
     assert signals["has_deontic_cue"] is True
     assert signals["has_calendar_date_scope"] is True
-    temporal_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "temporal"
-    )
+    temporal_share = next(float(item["share"]) for item in ranking if item["family"] == "temporal")
     assert temporal_share > 0.0
 
 
-def test_spacy_codec_backfills_temporal_share_for_deontic_competition_with_dotted_month_calendar_scope() -> None:
+def test_spacy_codec_backfills_temporal_share_for_deontic_competition_with_dotted_month_calendar_scope() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -7858,15 +7602,13 @@ def test_spacy_codec_backfills_temporal_share_for_deontic_competition_with_dotte
     assert not any(cue.family == "temporal" for cue in encoding.cues)
     assert signals["has_deontic_cue"] is True
     assert signals["has_calendar_date_scope"] is True
-    temporal_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "temporal"
-    )
+    temporal_share = next(float(item["share"]) for item in ranking if item["family"] == "temporal")
     assert temporal_share > 0.0
 
 
-def test_spacy_codec_backfills_conditional_share_for_deontic_competition_with_statutory_scope() -> None:
+def test_spacy_codec_backfills_conditional_share_for_deontic_competition_with_statutory_scope() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -7884,9 +7626,7 @@ def test_spacy_codec_backfills_conditional_share_for_deontic_competition_with_st
     assert signals["has_deontic_cue"] is True
     assert signals["has_statutory_scope_reference"] is True
     conditional_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "conditional_normative"
+        float(item["share"]) for item in ranking if item["family"] == "conditional_normative"
     )
     assert conditional_share > 0.0
 
@@ -7908,10 +7648,7 @@ def test_spacy_codec_balances_frame_heavy_statutory_scope_with_normative_cues() 
     encoding = codec.encode_sample(sample)
     signals = modal_ambiguity_signals(encoding)
     ranking = ranked_modal_families(encoding)
-    share_by_family = {
-        str(item["family"]): float(item["share_raw"])
-        for item in ranking
-    }
+    share_by_family = {str(item["family"]): float(item["share_raw"]) for item in ranking}
 
     assert signals["has_frame_context"] is True
     assert signals["has_statutory_scope_reference"] is True
@@ -7925,7 +7662,9 @@ def test_spacy_codec_balances_frame_heavy_statutory_scope_with_normative_cues() 
     ) < 0.1
 
 
-def test_spacy_codec_backfills_conditional_share_for_single_frame_cue_with_statutory_scope() -> None:
+def test_spacy_codec_backfills_conditional_share_for_single_frame_cue_with_statutory_scope() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -7943,14 +7682,14 @@ def test_spacy_codec_backfills_conditional_share_for_single_frame_cue_with_statu
     assert signals["has_deontic_cue"] is True
     assert signals["has_statutory_scope_reference"] is True
     conditional_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "conditional_normative"
+        float(item["share"]) for item in ranking if item["family"] == "conditional_normative"
     )
     assert conditional_share > 0.0
 
 
-def test_spacy_codec_prefers_conditional_share_for_frame_statutory_scope_with_explicit_conditional_phrase() -> None:
+def test_spacy_codec_prefers_conditional_share_for_frame_statutory_scope_with_explicit_conditional_phrase() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -7959,8 +7698,7 @@ def test_spacy_codec_prefers_conditional_share_for_frame_statutory_scope_with_ex
         title="31",
         section="712a",
         text=(
-            "Authority and jurisdiction under this section, as provided in "
-            "subsection (b), apply."
+            "Authority and jurisdiction under this section, as provided in subsection (b), apply."
         ),
     )
     encoding = codec.encode_sample(sample)
@@ -7972,15 +7710,9 @@ def test_spacy_codec_prefers_conditional_share_for_frame_statutory_scope_with_ex
     assert signals["has_statutory_scope_reference"] is True
     assert signals["has_conditional_scope_phrase"] is True
 
-    frame_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "frame"
-    )
+    frame_share = next(float(item["share"]) for item in ranking if item["family"] == "frame")
     conditional_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "conditional_normative"
+        float(item["share"]) for item in ranking if item["family"] == "conditional_normative"
     )
     assert conditional_share > frame_share
 
@@ -8004,10 +7736,7 @@ def test_spacy_codec_prefers_conditional_override_for_relationship_to_other_law(
     encoding = codec.encode_sample(sample)
     signals = modal_ambiguity_signals(encoding)
     ranking = ranked_modal_families(encoding)
-    share_by_family = {
-        str(item["family"]): float(item["share_raw"])
-        for item in ranking
-    }
+    share_by_family = {str(item["family"]): float(item["share_raw"]) for item in ranking}
 
     assert signals["has_frame_context"] is True
     assert signals["has_exception_clause"] is True
@@ -8037,17 +7766,9 @@ def test_spacy_codec_avoids_conditional_backfill_for_bare_statutory_frame_scope(
     assert signals["has_conditional_scope_phrase"] is False
     assert signals["has_conditional_scope_token"] is False
 
-    frame_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "frame"
-    )
+    frame_share = next(float(item["share"]) for item in ranking if item["family"] == "frame")
     conditional_share = next(
-        (
-            float(item["share"])
-            for item in ranking
-            if item["family"] == "conditional_normative"
-        ),
+        (float(item["share"]) for item in ranking if item["family"] == "conditional_normative"),
         0.0,
     )
     assert ranking[0]["family"] == "frame"
@@ -8073,9 +7794,7 @@ def test_spacy_codec_backfills_epistemic_share_for_single_frame_cue_with_scope_p
     assert signals["has_deontic_cue"] is True
     assert signals["has_epistemic_scope"] is True
     epistemic_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "epistemic"
+        float(item["share"]) for item in ranking if item["family"] == "epistemic"
     )
     assert epistemic_share > 0.0
 
@@ -8093,10 +7812,7 @@ def test_spacy_codec_backfills_frame_share_for_statutory_reference_deontic_compe
     competing = build_us_code_sample(
         title="22",
         section="1642e",
-        text=(
-            "The Secretary shall administer this authority under section 1642e "
-            "of this title."
-        ),
+        text=("The Secretary shall administer this authority under section 1642e of this title."),
     )
     baseline_encoding = codec.encode_sample(baseline)
     competing_encoding = codec.encode_sample(competing)
@@ -8105,14 +7821,10 @@ def test_spacy_codec_backfills_frame_share_for_statutory_reference_deontic_compe
     competing_signals = modal_ambiguity_signals(competing_encoding)
 
     baseline_frame_share = next(
-        float(item["share"])
-        for item in baseline_ranking
-        if item["family"] == "frame"
+        float(item["share"]) for item in baseline_ranking if item["family"] == "frame"
     )
     competing_frame_share = next(
-        float(item["share"])
-        for item in competing_ranking
-        if item["family"] == "frame"
+        float(item["share"]) for item in competing_ranking if item["family"] == "frame"
     )
     assert competing_signals["has_statutory_scope_reference"] is True
     assert competing_signals["has_deontic_scope_phrase"] is False
@@ -8120,7 +7832,9 @@ def test_spacy_codec_backfills_frame_share_for_statutory_reference_deontic_compe
     assert competing_frame_share > baseline_frame_share
 
 
-def test_spacy_codec_backfills_frame_share_for_statutory_deontic_scope_without_frame_lexemes() -> None:
+def test_spacy_codec_backfills_frame_share_for_statutory_deontic_scope_without_frame_lexemes() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -8163,7 +7877,9 @@ def test_spacy_codec_keeps_deontic_dominant_for_statutory_reference_with_dense_f
     assert shares["deontic"] > shares["frame"]
 
 
-def test_spacy_codec_backfills_frame_share_for_statutory_reference_conditional_competition() -> None:
+def test_spacy_codec_backfills_frame_share_for_statutory_reference_conditional_competition() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -8177,15 +7893,9 @@ def test_spacy_codec_backfills_frame_share_for_statutory_reference_conditional_c
     ranking = ranked_modal_families(encoding)
     signals = modal_ambiguity_signals(encoding)
 
-    frame_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "frame"
-    )
+    frame_share = next(float(item["share"]) for item in ranking if item["family"] == "frame")
     conditional_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "conditional_normative"
+        float(item["share"]) for item in ranking if item["family"] == "conditional_normative"
     )
     assert signals["has_statutory_scope_reference"] is True
     assert signals["has_condition_clause"] is False
@@ -8211,21 +7921,11 @@ def test_spacy_codec_limits_statutory_frame_backfill_with_explicit_conditional_s
     ranking = ranked_modal_families(encoding)
     signals = modal_ambiguity_signals(encoding)
 
-    frame_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "frame"
-    )
+    frame_share = next(float(item["share"]) for item in ranking if item["family"] == "frame")
     conditional_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "conditional_normative"
+        float(item["share"]) for item in ranking if item["family"] == "conditional_normative"
     )
-    deontic_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "deontic"
-    )
+    deontic_share = next(float(item["share"]) for item in ranking if item["family"] == "deontic")
 
     assert signals["has_statutory_scope_reference"] is True
     assert signals["has_condition_or_exception_scope"] is True
@@ -8234,7 +7934,9 @@ def test_spacy_codec_limits_statutory_frame_backfill_with_explicit_conditional_s
     assert deontic_share > 0.0
 
 
-def test_spacy_codec_backfills_frame_share_for_dense_deontic_scope_with_frame_scope_phrase() -> None:
+def test_spacy_codec_backfills_frame_share_for_dense_deontic_scope_with_frame_scope_phrase() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -8242,9 +7944,7 @@ def test_spacy_codec_backfills_frame_share_for_dense_deontic_scope_with_frame_sc
     sample = build_us_code_sample(
         title="22",
         section="1642e-1",
-        text=(
-            "The Secretary shall and must and shall provide notice in this former section."
-        ),
+        text=("The Secretary shall and must and shall provide notice in this former section."),
     )
     encoding = codec.encode_sample(sample)
     signals = modal_ambiguity_signals(encoding)
@@ -8252,11 +7952,7 @@ def test_spacy_codec_backfills_frame_share_for_dense_deontic_scope_with_frame_sc
 
     assert not any(cue.family == "frame" for cue in encoding.cues)
     assert signals["has_frame_scope_phrase"] is True
-    frame_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "frame"
-    )
+    frame_share = next(float(item["share"]) for item in ranking if item["family"] == "frame")
     assert frame_share > 0.0
 
 
@@ -8268,10 +7964,7 @@ def test_spacy_codec_backfills_deontic_share_for_frame_scope_with_deontic_tokens
     sample = build_us_code_sample(
         title="12",
         section="1822",
-        text=(
-            "Authority and jurisdiction in this former section are mandatory for "
-            "reporting."
-        ),
+        text=("Authority and jurisdiction in this former section are mandatory for reporting."),
     )
     encoding = codec.encode_sample(sample)
     signals = modal_ambiguity_signals(encoding)
@@ -8281,11 +7974,7 @@ def test_spacy_codec_backfills_deontic_share_for_frame_scope_with_deontic_tokens
     assert signals["has_frame_scope_phrase"] is True
     assert signals["has_deontic_scope"] is True
     assert signals["has_statutory_scope_reference"] is False
-    deontic_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "deontic"
-    )
+    deontic_share = next(float(item["share"]) for item in ranking if item["family"] == "deontic")
     assert deontic_share > 0.0
 
 
@@ -8297,36 +7986,26 @@ def test_spacy_codec_soft_caps_repeated_frame_share_for_deontic_competition() ->
     baseline = build_us_code_sample(
         title="12",
         section="1822a",
-        text=(
-            "Authority and jurisdiction and authority and jurisdiction and "
-            "authority apply."
-        ),
+        text=("Authority and jurisdiction and authority and jurisdiction and authority apply."),
     )
     competing = build_us_code_sample(
         title="12",
         section="1822b",
         text=(
-            "Authority and jurisdiction and authority and jurisdiction and "
-            "authority shall apply."
+            "Authority and jurisdiction and authority and jurisdiction and authority shall apply."
         ),
     )
     baseline_ranking = ranked_modal_families(codec.encode_sample(baseline))
     competing_ranking = ranked_modal_families(codec.encode_sample(competing))
 
     baseline_frame_share = next(
-        float(item["share"])
-        for item in baseline_ranking
-        if item["family"] == "frame"
+        float(item["share"]) for item in baseline_ranking if item["family"] == "frame"
     )
     competing_frame_share = next(
-        float(item["share"])
-        for item in competing_ranking
-        if item["family"] == "frame"
+        float(item["share"]) for item in competing_ranking if item["family"] == "frame"
     )
     competing_deontic_share = next(
-        float(item["share"])
-        for item in competing_ranking
-        if item["family"] == "deontic"
+        float(item["share"]) for item in competing_ranking if item["family"] == "deontic"
     )
 
     assert competing_frame_share < baseline_frame_share
@@ -8355,19 +8034,11 @@ def test_spacy_codec_strengthens_deontic_share_for_generic_frame_scope_with_pena
     competing_ranking = ranked_modal_families(codec.encode_sample(competing))
 
     baseline_deontic_share = next(
-        (
-            float(item["share"])
-            for item in baseline_ranking
-            if item["family"] == "deontic"
-        ),
+        (float(item["share"]) for item in baseline_ranking if item["family"] == "deontic"),
         0.0,
     )
     competing_deontic_share = next(
-        (
-            float(item["share"])
-            for item in competing_ranking
-            if item["family"] == "deontic"
-        ),
+        (float(item["share"]) for item in competing_ranking if item["family"] == "deontic"),
         0.0,
     )
     assert competing_deontic_share > baseline_deontic_share
@@ -8385,10 +8056,7 @@ def test_spacy_codec_preserves_conditional_penalty_scope_over_frame_cue() -> Non
         document_id="packet-000178-conditional-penalty-scope",
     )
 
-    shares = {
-        item["family"]: float(item["share"])
-        for item in ranked_modal_families(encoding)
-    }
+    shares = {item["family"]: float(item["share"]) for item in ranked_modal_families(encoding)}
     assert shares["conditional_normative"] > shares["frame"]
     assert shares["conditional_normative"] >= shares["deontic"]
 
@@ -8401,8 +8069,7 @@ def test_spacy_encoder_marks_direct_civil_penalty_liability_as_deontic() -> None
     )
 
     assert any(
-        cue.family == "deontic"
-        and cue.cue.lower() == "liable for a civil penalty"
+        cue.family == "deontic" and cue.cue.lower() == "liable for a civil penalty"
         for cue in encoding.cues
     )
 
@@ -8417,10 +8084,7 @@ def test_spacy_encoder_marks_public_interest_opinion_as_epistemic() -> None:
         document_id="packet-000178-public-interest-opinion",
     )
 
-    shares = {
-        item["family"]: float(item["share"])
-        for item in ranked_modal_families(encoding)
-    }
+    shares = {item["family"]: float(item["share"]) for item in ranked_modal_families(encoding)}
     assert shares["epistemic"] > shares["deontic"]
     assert shares["epistemic"] > shares["conditional_normative"]
 
@@ -8436,14 +8100,10 @@ def test_spacy_encoder_marks_in_lieu_substitution_as_conditional_normative() -> 
     )
 
     assert any(
-        cue.family == "conditional_normative"
-        and cue.cue.lower() == "be in lieu of"
+        cue.family == "conditional_normative" and cue.cue.lower() == "be in lieu of"
         for cue in encoding.cues
     )
-    shares = {
-        item["family"]: float(item["share"])
-        for item in ranked_modal_families(encoding)
-    }
+    shares = {item["family"]: float(item["share"]) for item in ranked_modal_families(encoding)}
     assert shares["conditional_normative"] > shares["deontic"]
 
 
@@ -8476,9 +8136,7 @@ def test_spacy_codec_soft_caps_repeated_alethic_share_for_temporal_competition()
     baseline = build_us_code_sample(
         title="17",
         section="803",
-        text=(
-            "It is possible and necessary and impossible and possible and cannot comply."
-        ),
+        text=("It is possible and necessary and impossible and possible and cannot comply."),
     )
     competing = build_us_code_sample(
         title="17",
@@ -8492,19 +8150,13 @@ def test_spacy_codec_soft_caps_repeated_alethic_share_for_temporal_competition()
     competing_ranking = ranked_modal_families(codec.encode_sample(competing))
 
     baseline_alethic_share = next(
-        float(item["share"])
-        for item in baseline_ranking
-        if item["family"] == "alethic"
+        float(item["share"]) for item in baseline_ranking if item["family"] == "alethic"
     )
     competing_alethic_share = next(
-        float(item["share"])
-        for item in competing_ranking
-        if item["family"] == "alethic"
+        float(item["share"]) for item in competing_ranking if item["family"] == "alethic"
     )
     competing_temporal_share = next(
-        float(item["share"])
-        for item in competing_ranking
-        if item["family"] == "temporal"
+        float(item["share"]) for item in competing_ranking if item["family"] == "temporal"
     )
 
     assert competing_alethic_share < baseline_alethic_share
@@ -8519,10 +8171,7 @@ def test_spacy_codec_backfills_temporal_share_for_frame_scope_with_temporal_toke
     sample = build_us_code_sample(
         title="12",
         section="1823",
-        text=(
-            "Authority and jurisdiction in this former section apply before annual "
-            "review."
-        ),
+        text=("Authority and jurisdiction in this former section apply before annual review."),
     )
     encoding = codec.encode_sample(sample)
     signals = modal_ambiguity_signals(encoding)
@@ -8532,11 +8181,7 @@ def test_spacy_codec_backfills_temporal_share_for_frame_scope_with_temporal_toke
     assert signals["has_frame_scope_phrase"] is True
     assert signals["has_temporal_scope"] is True
     assert signals["has_statutory_scope_reference"] is False
-    temporal_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "temporal"
-    )
+    temporal_share = next(float(item["share"]) for item in ranking if item["family"] == "temporal")
     assert temporal_share > 0.0
 
 
@@ -8560,11 +8205,7 @@ def test_spacy_codec_backfills_alethic_share_for_frame_scope_with_alethic_tokens
     assert not any(cue.family == "alethic" for cue in encoding.cues)
     assert signals["has_frame_scope_phrase"] is True
     assert signals["has_alethic_scope"] is True
-    alethic_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "alethic"
-    )
+    alethic_share = next(float(item["share"]) for item in ranking if item["family"] == "alethic")
     assert alethic_share > 0.0
 
 
@@ -8576,9 +8217,7 @@ def test_spacy_codec_backfills_dynamic_share_for_frame_scope_with_dynamic_phrase
     sample = build_us_code_sample(
         title="12",
         section="1823b",
-        text=(
-            "Authority and jurisdiction in this former section apply upon service."
-        ),
+        text=("Authority and jurisdiction in this former section apply upon service."),
     )
     encoding = codec.encode_sample(sample)
     signals = modal_ambiguity_signals(encoding)
@@ -8587,15 +8226,13 @@ def test_spacy_codec_backfills_dynamic_share_for_frame_scope_with_dynamic_phrase
     assert not any(cue.family == "dynamic" for cue in encoding.cues)
     assert signals["has_frame_scope_phrase"] is True
     assert signals["has_dynamic_scope"] is True
-    dynamic_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "dynamic"
-    )
+    dynamic_share = next(float(item["share"]) for item in ranking if item["family"] == "dynamic")
     assert dynamic_share > 0.0
 
 
-def test_spacy_codec_backfills_temporal_share_for_dense_deontic_scope_with_temporal_scope_phrase() -> None:
+def test_spacy_codec_backfills_temporal_share_for_dense_deontic_scope_with_temporal_scope_phrase() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -8603,10 +8240,7 @@ def test_spacy_codec_backfills_temporal_share_for_dense_deontic_scope_with_tempo
     sample = build_us_code_sample(
         title="12",
         section="4405",
-        text=(
-            "The Secretary shall and must and shall and must issue notice "
-            "while pending review."
-        ),
+        text=("The Secretary shall and must and shall and must issue notice while pending review."),
     )
     encoding = codec.encode_sample(sample)
     signals = modal_ambiguity_signals(encoding)
@@ -8614,11 +8248,7 @@ def test_spacy_codec_backfills_temporal_share_for_dense_deontic_scope_with_tempo
 
     assert not any(cue.family == "temporal" for cue in encoding.cues)
     assert signals["has_temporal_scope"] is True
-    temporal_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "temporal"
-    )
+    temporal_share = next(float(item["share"]) for item in ranking if item["family"] == "temporal")
     assert temporal_share > 0.0
 
 
@@ -8630,9 +8260,7 @@ def test_spacy_codec_treats_during_as_temporal_scope_for_deontic_competition() -
     sample = build_us_code_sample(
         title="12",
         section="4405a",
-        text=(
-            "The Secretary shall and must and shall provide notice during review."
-        ),
+        text=("The Secretary shall and must and shall provide notice during review."),
     )
     encoding = codec.encode_sample(sample)
     signals = modal_ambiguity_signals(encoding)
@@ -8640,15 +8268,13 @@ def test_spacy_codec_treats_during_as_temporal_scope_for_deontic_competition() -
 
     assert not any(cue.family == "temporal" for cue in encoding.cues)
     assert signals["has_temporal_scope"] is True
-    temporal_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "temporal"
-    )
+    temporal_share = next(float(item["share"]) for item in ranking if item["family"] == "temporal")
     assert temporal_share > 0.0
 
 
-def test_spacy_codec_backfills_dynamic_share_for_conditional_scope_with_dynamic_scope_phrase() -> None:
+def test_spacy_codec_backfills_dynamic_share_for_conditional_scope_with_dynamic_scope_phrase() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -8656,10 +8282,7 @@ def test_spacy_codec_backfills_dynamic_share_for_conditional_scope_with_dynamic_
     sample = build_us_code_sample(
         title="14",
         section="905",
-        text=(
-            "If designated and except as otherwise provided, authority applies "
-            "upon transfer."
-        ),
+        text=("If designated and except as otherwise provided, authority applies upon transfer."),
     )
     encoding = codec.encode_sample(sample)
     signals = modal_ambiguity_signals(encoding)
@@ -8668,15 +8291,13 @@ def test_spacy_codec_backfills_dynamic_share_for_conditional_scope_with_dynamic_
     assert not any(cue.family == "dynamic" for cue in encoding.cues)
     assert signals["has_dynamic_scope"] is True
     assert signals["has_condition_or_exception_scope"] is True
-    dynamic_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "dynamic"
-    )
+    dynamic_share = next(float(item["share"]) for item in ranking if item["family"] == "dynamic")
     assert dynamic_share > 0.0
 
 
-def test_spacy_codec_backfills_dynamic_share_for_single_conditional_scope_with_dynamic_phrase() -> None:
+def test_spacy_codec_backfills_dynamic_share_for_single_conditional_scope_with_dynamic_phrase() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -8693,15 +8314,13 @@ def test_spacy_codec_backfills_dynamic_share_for_single_conditional_scope_with_d
     assert not any(cue.family == "dynamic" for cue in encoding.cues)
     assert signals["has_condition_or_exception_scope"] is True
     assert signals["has_dynamic_scope_phrase"] is True
-    dynamic_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "dynamic"
-    )
+    dynamic_share = next(float(item["share"]) for item in ranking if item["family"] == "dynamic")
     assert dynamic_share > 0.0
 
 
-def test_spacy_codec_backfills_dynamic_share_for_dense_deontic_scope_with_dynamic_scope_phrase() -> None:
+def test_spacy_codec_backfills_dynamic_share_for_dense_deontic_scope_with_dynamic_scope_phrase() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -8709,10 +8328,7 @@ def test_spacy_codec_backfills_dynamic_share_for_dense_deontic_scope_with_dynami
     sample = build_us_code_sample(
         title="16",
         section="743",
-        text=(
-            "The Secretary shall and must and shall and must provide notice "
-            "upon transfer."
-        ),
+        text=("The Secretary shall and must and shall and must provide notice upon transfer."),
     )
     encoding = codec.encode_sample(sample)
     signals = modal_ambiguity_signals(encoding)
@@ -8720,15 +8336,13 @@ def test_spacy_codec_backfills_dynamic_share_for_dense_deontic_scope_with_dynami
 
     assert not any(cue.family == "dynamic" for cue in encoding.cues)
     assert signals["has_dynamic_scope"] is True
-    dynamic_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "dynamic"
-    )
+    dynamic_share = next(float(item["share"]) for item in ranking if item["family"] == "dynamic")
     assert dynamic_share > 0.0
 
 
-def test_spacy_codec_backfills_conditional_share_for_dense_temporal_scope_with_condition_clause() -> None:
+def test_spacy_codec_backfills_conditional_share_for_dense_temporal_scope_with_condition_clause() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -8749,9 +8363,7 @@ def test_spacy_codec_backfills_conditional_share_for_dense_temporal_scope_with_c
     assert signals["has_condition_clause"] is True
     assert signals["has_temporal_scope"] is True
     conditional_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "conditional_normative"
+        float(item["share"]) for item in ranking if item["family"] == "conditional_normative"
     )
     assert conditional_share > 0.0
 
@@ -8778,9 +8390,7 @@ def test_spacy_codec_treats_as_provided_in_as_explicit_conditional_scope_phrase(
     assert signals["has_statutory_scope_reference"] is True
     assert signals["has_conditional_scope_phrase"] is True
     conditional_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "conditional_normative"
+        float(item["share"]) for item in ranking if item["family"] == "conditional_normative"
     )
     assert conditional_share > 0.0
 
@@ -8802,16 +8412,16 @@ def test_spacy_codec_treats_provided_comma_that_as_explicit_conditional_scope_ph
     signals = modal_ambiguity_signals(encoding)
 
     conditional_cues = [
-        cue.cue.lower()
-        for cue in encoding.cues
-        if cue.family == "conditional_normative"
+        cue.cue.lower() for cue in encoding.cues if cue.family == "conditional_normative"
     ]
     assert "provided , that" in conditional_cues
     assert signals["has_conditional_scope_phrase"] is True
     assert signals["has_condition_or_exception_scope"] is True
 
 
-def test_spacy_codec_backfills_epistemic_share_for_dense_temporal_scope_with_epistemic_tokens() -> None:
+def test_spacy_codec_backfills_epistemic_share_for_dense_temporal_scope_with_epistemic_tokens() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -8832,14 +8442,14 @@ def test_spacy_codec_backfills_epistemic_share_for_dense_temporal_scope_with_epi
     assert signals["has_temporal_scope"] is True
     assert signals["has_epistemic_scope"] is True
     epistemic_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "epistemic"
+        float(item["share"]) for item in ranking if item["family"] == "epistemic"
     )
     assert epistemic_share > 0.0
 
 
-def test_spacy_codec_backfills_temporal_share_for_dense_epistemic_scope_with_temporal_tokens() -> None:
+def test_spacy_codec_backfills_temporal_share_for_dense_epistemic_scope_with_temporal_tokens() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -8847,10 +8457,7 @@ def test_spacy_codec_backfills_temporal_share_for_dense_epistemic_scope_with_tem
     sample = build_us_code_sample(
         title="21",
         section="404b",
-        text=(
-            "Knowledge of the filing exists, and annual reports are due "
-            "each year upon review."
-        ),
+        text=("Knowledge of the filing exists, and annual reports are due each year upon review."),
     )
     encoding = codec.encode_sample(sample)
     signals = modal_ambiguity_signals(encoding)
@@ -8860,11 +8467,7 @@ def test_spacy_codec_backfills_temporal_share_for_dense_epistemic_scope_with_tem
     assert signals["has_epistemic_scope"] is True
     assert signals["has_temporal_scope"] is True
     assert signals["has_temporal_scope_token"] is True
-    temporal_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "temporal"
-    )
+    temporal_share = next(float(item["share"]) for item in ranking if item["family"] == "temporal")
     assert temporal_share > 0.0
 
 
@@ -8888,15 +8491,13 @@ def test_spacy_codec_backfills_frame_share_for_dense_temporal_scope_with_frame_c
     assert not any(cue.family == "frame" for cue in encoding.cues)
     assert signals["has_temporal_scope"] is True
     assert signals["has_frame_scope_phrase"] is True
-    frame_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "frame"
-    )
+    frame_share = next(float(item["share"]) for item in ranking if item["family"] == "frame")
     assert frame_share > 0.15
 
 
-def test_spacy_codec_strengthens_frame_share_for_sparse_frame_cues_in_dense_temporal_scope() -> None:
+def test_spacy_codec_strengthens_frame_share_for_sparse_frame_cues_in_dense_temporal_scope() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -8905,8 +8506,7 @@ def test_spacy_codec_strengthens_frame_share_for_sparse_frame_cues_in_dense_temp
         title="12",
         section="1824a",
         text=(
-            "Within 30 days and no later than January 1, 2030, this authority "
-            "remains effective."
+            "Within 30 days and no later than January 1, 2030, this authority remains effective."
         ),
     )
     competing = build_us_code_sample(
@@ -8925,14 +8525,10 @@ def test_spacy_codec_strengthens_frame_share_for_sparse_frame_cues_in_dense_temp
     competing_ranking = ranked_modal_families(competing_encoding)
 
     baseline_frame_share = next(
-        float(item["share"])
-        for item in baseline_ranking
-        if item["family"] == "frame"
+        float(item["share"]) for item in baseline_ranking if item["family"] == "frame"
     )
     competing_frame_share = next(
-        float(item["share"])
-        for item in competing_ranking
-        if item["family"] == "frame"
+        float(item["share"]) for item in competing_ranking if item["family"] == "frame"
     )
     assert baseline_signals["has_temporal_scope"] is True
     assert competing_signals["has_temporal_scope"] is True
@@ -8977,16 +8573,13 @@ def test_spacy_encoder_extracts_conditional_subject_to_terms_and_conditions_cue(
 def test_spacy_modal_signals_treat_subject_to_subsection_as_conditional_scope_phrase() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     encoding = encoder.encode(
-        (
-            "The agency shall issue notice subject to subsection (b) under this section."
-        ),
+        ("The agency shall issue notice subject to subsection (b) under this section."),
         document_id="sample-subject-to-subsection-conditional-scope",
     )
     signals = modal_ambiguity_signals(encoding)
 
     assert any(
-        cue.family == "conditional_normative"
-        and cue.cue.lower() == "subject to subsection"
+        cue.family == "conditional_normative" and cue.cue.lower() == "subject to subsection"
         for cue in encoding.cues
     )
     assert signals["has_conditional_scope_phrase"] is True
@@ -8996,21 +8589,16 @@ def test_spacy_modal_signals_treat_subject_to_subsection_as_conditional_scope_ph
 def test_spacy_encoder_extracts_conditional_scope_cues_from_statutory_phrases() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     encoding = encoder.encode(
-        (
-            "Notwithstanding subsection (b), for purposes of this section the agency "
-            "shall act."
-        ),
+        ("Notwithstanding subsection (b), for purposes of this section the agency shall act."),
         document_id="sample-conditional-statutory-phrases",
     )
 
     assert any(
-        cue.family == "conditional_normative"
-        and cue.cue.lower() == "notwithstanding"
+        cue.family == "conditional_normative" and cue.cue.lower() == "notwithstanding"
         for cue in encoding.cues
     )
     assert any(
-        cue.family == "conditional_normative"
-        and cue.cue.lower() == "for purposes of"
+        cue.family == "conditional_normative" and cue.cue.lower() == "for purposes of"
         for cue in encoding.cues
     )
     signals = modal_ambiguity_signals(encoding)
@@ -9028,8 +8616,7 @@ def test_spacy_encoder_extracts_dynamic_transfer_and_vesting_cues() -> None:
     )
 
     assert any(
-        cue.family == "dynamic"
-        and cue.cue.lower() == "transferred to and vested in"
+        cue.family == "dynamic" and cue.cue.lower() == "transferred to and vested in"
         for cue in encoding.cues
     )
 
@@ -9037,43 +8624,34 @@ def test_spacy_encoder_extracts_dynamic_transfer_and_vesting_cues() -> None:
 def test_spacy_encoder_extracts_temporal_scope_cues_from_deadline_phrases() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     encoding = encoder.encode(
-        (
-            "Authority under this section applies not later than 30 days after the "
-            "effective date."
-        ),
+        ("Authority under this section applies not later than 30 days after the effective date."),
         document_id="sample-temporal-deadline-phrases",
     )
 
     assert any(
-        cue.family == "temporal"
-        and cue.cue.lower() == "not later than"
-        for cue in encoding.cues
+        cue.family == "temporal" and cue.cue.lower() == "not later than" for cue in encoding.cues
     )
     assert any(
-        cue.family == "temporal"
-        and cue.cue.lower() == "effective date"
-        for cue in encoding.cues
+        cue.family == "temporal" and cue.cue.lower() == "effective date" for cue in encoding.cues
     )
 
 
 def test_spacy_encoder_extracts_temporal_cues_from_succeeding_fiscal_year_phrases() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     encoding = encoder.encode(
-        (
-            "Authority under this section applies for each succeeding fiscal year "
-            "thereafter."
-        ),
+        ("Authority under this section applies for each succeeding fiscal year thereafter."),
         document_id="sample-temporal-succeeding-fiscal-year-phrases",
     )
 
     assert any(
-        cue.family == "temporal"
-        and cue.cue.lower() == "for each succeeding fiscal year"
+        cue.family == "temporal" and cue.cue.lower() == "for each succeeding fiscal year"
         for cue in encoding.cues
     )
 
 
-def test_spacy_codec_strengthens_temporal_share_for_frame_context_with_succeeding_fiscal_year_phrase() -> None:
+def test_spacy_codec_strengthens_temporal_share_for_frame_context_with_succeeding_fiscal_year_phrase() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -9095,17 +8673,11 @@ def test_spacy_codec_strengthens_temporal_share_for_frame_context_with_succeedin
     baseline_ranking = ranked_modal_families(codec.encode_sample(baseline))
     competing_ranking = ranked_modal_families(codec.encode_sample(competing))
     baseline_temporal_share = next(
-        (
-            float(item["share"])
-            for item in baseline_ranking
-            if item["family"] == "temporal"
-        ),
+        (float(item["share"]) for item in baseline_ranking if item["family"] == "temporal"),
         0.0,
     )
     competing_temporal_share = next(
-        float(item["share"])
-        for item in competing_ranking
-        if item["family"] == "temporal"
+        float(item["share"]) for item in competing_ranking if item["family"] == "temporal"
     )
 
     assert competing_temporal_share > baseline_temporal_share
@@ -9119,8 +8691,7 @@ def test_spacy_encoder_extracts_deontic_obligation_phrase_cue() -> None:
     )
 
     assert any(
-        cue.family == "deontic"
-        and cue.cue.lower() == "under an obligation to"
+        cue.family == "deontic" and cue.cue.lower() == "under an obligation to"
         for cue in encoding.cues
     )
 
@@ -9132,23 +8703,14 @@ def test_spacy_encoder_avoids_alethic_may_be_cue_in_permission_context() -> None
         document_id="sample-may-be-permission-context",
     )
 
-    assert any(
-        cue.family == "deontic" and cue.cue.lower() == "may"
-        for cue in encoding.cues
-    )
-    assert not any(
-        cue.family == "alethic" and cue.cue.lower() == "may be"
-        for cue in encoding.cues
-    )
+    assert any(cue.family == "deontic" and cue.cue.lower() == "may" for cue in encoding.cues)
+    assert not any(cue.family == "alethic" and cue.cue.lower() == "may be" for cue in encoding.cues)
 
 
 def test_spacy_signals_mark_authorized_and_empowered_as_structural_frame_scope() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     encoding = encoder.encode(
-        (
-            "The Secretary is authorized and empowered, in his discretion, "
-            "to conduct the survey."
-        ),
+        ("The Secretary is authorized and empowered, in his discretion, to conduct the survey."),
         document_id="sample-authorized-empowered-structural-frame-scope",
     )
 
@@ -9185,8 +8747,7 @@ def test_spacy_encoder_treats_the_following_as_non_temporal_list_intro() -> None
     )
 
     assert not any(
-        cue.family == "temporal" and cue.cue.lower() == "following"
-        for cue in encoding.cues
+        cue.family == "temporal" and cue.cue.lower() == "following" for cue in encoding.cues
     )
 
 
@@ -9198,8 +8759,7 @@ def test_spacy_encoder_treats_following_section_reference_as_non_temporal_cue() 
     )
 
     assert not any(
-        cue.family == "temporal" and cue.cue.lower() == "following"
-        for cue in encoding.cues
+        cue.family == "temporal" and cue.cue.lower() == "following" for cue in encoding.cues
     )
 
 
@@ -9210,10 +8770,7 @@ def test_spacy_encoder_treats_editorial_after_reference_as_non_temporal_cue() ->
         document_id="sample-after-editorial-reference",
     )
 
-    assert not any(
-        cue.family == "temporal" and cue.cue.lower() == "after"
-        for cue in encoding.cues
-    )
+    assert not any(cue.family == "temporal" and cue.cue.lower() == "after" for cue in encoding.cues)
 
 
 def test_spacy_encoder_treats_after_notice_scope_as_non_temporal_cue() -> None:
@@ -9223,10 +8780,7 @@ def test_spacy_encoder_treats_after_notice_scope_as_non_temporal_cue() -> None:
         document_id="sample-after-notice-hearing-reference",
     )
 
-    assert not any(
-        cue.family == "temporal" and cue.cue.lower() == "after"
-        for cue in encoding.cues
-    )
+    assert not any(cue.family == "temporal" and cue.cue.lower() == "after" for cue in encoding.cues)
 
 
 def test_spacy_encoder_treats_by_secretary_may_as_non_temporal_deadline_cue() -> None:
@@ -9239,17 +8793,13 @@ def test_spacy_encoder_treats_by_secretary_may_as_non_temporal_deadline_cue() ->
         document_id="sample-by-secretary-may-non-temporal",
     )
 
-    assert not any(
-        cue.family == "temporal" and cue.cue.lower() == "by"
-        for cue in encoding.cues
-    )
-    assert any(
-        cue.family == "deontic" and cue.cue.lower() == "may"
-        for cue in encoding.cues
-    )
+    assert not any(cue.family == "temporal" and cue.cue.lower() == "by" for cue in encoding.cues)
+    assert any(cue.family == "deontic" and cue.cue.lower() == "may" for cue in encoding.cues)
 
 
-def test_spacy_encoder_treats_by_promulgated_standards_with_citation_date_as_non_temporal_deadline_cue() -> None:
+def test_spacy_encoder_treats_by_promulgated_standards_with_citation_date_as_non_temporal_deadline_cue() -> (
+    None
+):
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     encoding = encoder.encode(
         (
@@ -9259,10 +8809,7 @@ def test_spacy_encoder_treats_by_promulgated_standards_with_citation_date_as_non
         document_id="sample-by-promulgated-standards-non-temporal",
     )
 
-    assert not any(
-        cue.family == "temporal" and cue.cue.lower() == "by"
-        for cue in encoding.cues
-    )
+    assert not any(cue.family == "temporal" and cue.cue.lower() == "by" for cue in encoding.cues)
 
 
 def test_spacy_encoder_extracts_conditional_cue_except_as_provided_in() -> None:
@@ -9273,8 +8820,7 @@ def test_spacy_encoder_extracts_conditional_cue_except_as_provided_in() -> None:
     )
 
     assert any(
-        cue.family == "conditional_normative"
-        and cue.cue.lower() == "except as provided in"
+        cue.family == "conditional_normative" and cue.cue.lower() == "except as provided in"
         for cue in encoding.cues
     )
 
@@ -9287,8 +8833,7 @@ def test_spacy_encoder_extracts_conditional_cue_except_as_provided_by() -> None:
     )
 
     assert any(
-        cue.family == "conditional_normative"
-        and cue.cue.lower() == "except as provided by"
+        cue.family == "conditional_normative" and cue.cue.lower() == "except as provided by"
         for cue in encoding.cues
     )
 
@@ -9301,8 +8846,7 @@ def test_spacy_encoder_extracts_conditional_cue_does_not_affect() -> None:
     )
 
     assert any(
-        cue.family == "conditional_normative"
-        and cue.cue.lower() == "does not affect"
+        cue.family == "conditional_normative" and cue.cue.lower() == "does not affect"
         for cue in encoding.cues
     )
 
@@ -9317,9 +8861,7 @@ def test_spacy_codec_collapses_nested_conditional_cues_in_weighted_family_rankin
         document_id="sample-nested-conditional-cues",
     )
 
-    conditional_cues = [
-        cue for cue in encoding.cues if cue.family == "conditional_normative"
-    ]
+    conditional_cues = [cue for cue in encoding.cues if cue.family == "conditional_normative"]
     ranking = ranked_modal_families(encoding)
     shares = {str(item["family"]): float(item["share"]) for item in ranking}
 
@@ -9344,14 +8886,8 @@ def test_spacy_codec_collapses_nested_same_family_cues_for_weighted_logits() -> 
         modal_families=("deontic", "temporal"),
     )
 
-    assert any(
-        cue.family == "deontic" and cue.cue.lower() == "must not"
-        for cue in encoding.cues
-    )
-    assert any(
-        cue.family == "deontic" and cue.cue.lower() == "must"
-        for cue in encoding.cues
-    )
+    assert any(cue.family == "deontic" and cue.cue.lower() == "must not" for cue in encoding.cues)
+    assert any(cue.family == "deontic" and cue.cue.lower() == "must" for cue in encoding.cues)
     assert logits["deontic"] == logits["temporal"]
 
 
@@ -9366,13 +8902,10 @@ def test_spacy_encoder_extracts_temporal_cues_from_recurring_effective_date_phra
     )
 
     assert any(
-        cue.family == "temporal"
-        and cue.cue.lower() == "from time to time"
-        for cue in encoding.cues
+        cue.family == "temporal" and cue.cue.lower() == "from time to time" for cue in encoding.cues
     )
     assert any(
-        cue.family == "temporal"
-        and cue.cue.lower() in {"on or after", "beginning on or after"}
+        cue.family == "temporal" and cue.cue.lower() in {"on or after", "beginning on or after"}
         for cue in encoding.cues
     )
 
@@ -9434,8 +8967,7 @@ def test_spacy_encoder_extracts_epistemic_cues_for_knowledge_and_belief() -> Non
     )
 
     assert any(
-        cue.family == "epistemic"
-        and cue.cue.lower() in {"knowledge of", "has reason to believe"}
+        cue.family == "epistemic" and cue.cue.lower() in {"knowledge of", "has reason to believe"}
         for cue in encoding.cues
     )
 
@@ -9505,10 +9037,7 @@ def test_spacy_compiler_ignores_historical_authorized_cue_in_repealed_section_no
         and str(formula.metadata.get("cue", "")).lower() == "authorized"
         for formula in modal_ir.formulas
     )
-    fallback_rules = {
-        str(formula.metadata.get("fallback_rule"))
-        for formula in modal_ir.formulas
-    }
+    fallback_rules = {str(formula.metadata.get("fallback_rule")) for formula in modal_ir.formulas}
     assert "uscode_editorial_status_heading_v1" in fallback_rules
     assert "uscode_residual_span_coverage_v1" in fallback_rules
 
@@ -9547,16 +9076,13 @@ def test_spacy_and_regex_compilers_treat_repealed_required_history_as_frame() ->
             for formula in modal_ir.formulas
         )
         assert any(
-            formula.metadata.get("fallback_rule")
-            == "uscode_editorial_status_heading_v1"
+            formula.metadata.get("fallback_rule") == "uscode_editorial_status_heading_v1"
             for formula in modal_ir.formulas
         )
         assert any(
             formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
             and "required submission of specifications"
-            in modal_ir.normalized_text[
-                formula.provenance.start_char : formula.provenance.end_char
-            ]
+            in modal_ir.normalized_text[formula.provenance.start_char : formula.provenance.end_char]
             for formula in modal_ir.formulas
         )
 
@@ -9619,8 +9145,7 @@ def test_spacy_and_regex_parsers_ignore_editorial_history_authorized_cues() -> N
             source="us_code",
         )
         assert not any(
-            cue.family == "deontic" and cue.cue.lower() == "authorized"
-            for cue in encoding.cues
+            cue.family == "deontic" and cue.cue.lower() == "authorized" for cue in encoding.cues
         )
 
         spacy_ir = compiler.compile(encoding)
@@ -9633,19 +9158,19 @@ def test_spacy_and_regex_parsers_ignore_editorial_history_authorized_cues() -> N
 
         for modal_ir in (spacy_ir, regex_ir):
             assert not any(
-                formula.operator.family == "deontic"
-                and formula.metadata.get("cue") == "authorized"
+                formula.operator.family == "deontic" and formula.metadata.get("cue") == "authorized"
                 for formula in modal_ir.formulas
             )
             assert any(
                 formula.operator.family == "frame"
-                and formula.metadata.get("fallback_rule")
-                == "uscode_editorial_status_heading_v1"
+                and formula.metadata.get("fallback_rule") == "uscode_editorial_status_heading_v1"
                 for formula in modal_ir.formulas
             )
 
 
-def test_spacy_compiler_adds_residual_span_coverage_before_codification_fallback_for_50_2523b_style_text() -> None:
+def test_spacy_compiler_adds_residual_span_coverage_before_codification_fallback_for_50_2523b_style_text() -> (
+    None
+):
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     compiler = SpaCyModalIRCompiler()
     encoding = encoder.encode(
@@ -9667,10 +9192,7 @@ def test_spacy_compiler_adds_residual_span_coverage_before_codification_fallback
         if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
     ]
     assert residual_formulas
-    assert all(
-        formula.provenance.citation == "50 U.S.C. 2523b."
-        for formula in modal_ir.formulas
-    )
+    assert all(formula.provenance.citation == "50 U.S.C. 2523b." for formula in modal_ir.formulas)
 
 
 def test_spacy_compiler_adds_administrative_notice_hearing_residual_span_coverage() -> None:
@@ -9701,10 +9223,7 @@ def test_spacy_compiler_adds_administrative_notice_hearing_residual_span_coverag
         "Administrative notice and hearing procedures for eligibility review and petition records."
         in residual_text_spans
     )
-    assert all(
-        formula.provenance.citation == "10 U.S.C. 3101"
-        for formula in modal_ir.formulas
-    )
+    assert all(formula.provenance.citation == "10 U.S.C. 3101" for formula in modal_ir.formulas)
 
 
 def test_spacy_compiler_adds_administrative_proceeding_record_residual_span_coverage() -> None:
@@ -9736,7 +9255,9 @@ def test_spacy_compiler_adds_administrative_proceeding_record_residual_span_cove
     )
 
 
-def test_spacy_compiler_adds_administrative_approval_residual_span_coverage_for_packet_005219_shape() -> None:
+def test_spacy_compiler_adds_administrative_approval_residual_span_coverage_for_packet_005219_shape() -> (
+    None
+):
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     compiler = SpaCyModalIRCompiler()
     text = (
@@ -9808,18 +9329,14 @@ def test_spacy_compiler_adds_savings_effect_residual_span_coverage() -> None:
     }
 
     assert (
-        "Nothing in this part affects any other provision of law of "
-        "a Federal department or agency."
+        "Nothing in this part affects any other provision of law of a Federal department or agency."
     ) in residual_text_spans
 
 
 def test_spacy_compiler_adds_cost_analysis_residual_span_coverage() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     compiler = SpaCyModalIRCompiler()
-    text = (
-        "Sec. 1544 - Annual cost analysis by Fish and Wildlife Service. "
-        "Cost analysis."
-    )
+    text = "Sec. 1544 - Annual cost analysis by Fish and Wildlife Service. Cost analysis."
     encoding = encoder.encode(
         text,
         document_id="us-code-16-1544-cost-analysis-residual",
@@ -9864,8 +9381,7 @@ def test_spacy_compiler_preserves_coalesced_semicolon_uscode_catchline_coverage(
             int(formula.provenance.start_char) : int(formula.provenance.end_char)
         ].strip()
         for formula in modal_ir.formulas
-        if formula.metadata.get("fallback_rule")
-        == "uscode_section_catchline_coverage_v1"
+        if formula.metadata.get("fallback_rule") == "uscode_section_catchline_coverage_v1"
     }
     residual_spans = {
         modal_ir.normalized_text[
@@ -9905,8 +9421,7 @@ def test_spacy_compiler_covers_packet_000161_subsection_heading_spans() -> None:
             int(formula.provenance.start_char) : int(formula.provenance.end_char)
         ].strip()
         for formula in modal_ir.formulas
-        if formula.metadata.get("fallback_rule")
-        == "uscode_subsection_heading_coverage_v1"
+        if formula.metadata.get("fallback_rule") == "uscode_subsection_heading_coverage_v1"
     }
 
     assert "(a) In General ." in subsection_heading_spans
@@ -9938,8 +9453,7 @@ def test_spacy_compiler_covers_packet_000162_section_marker_spans() -> None:
             int(formula.provenance.start_char) : int(formula.provenance.end_char)
         ].strip()
         for formula in modal_ir.formulas
-        if formula.metadata.get("fallback_rule")
-        == "uscode_section_marker_coverage_v1"
+        if formula.metadata.get("fallback_rule") == "uscode_section_marker_coverage_v1"
     }
 
     assert "Sec. 2263 -" in marker_spans
@@ -9981,10 +9495,7 @@ def test_spacy_compiler_adds_packet_000004_short_structural_heading_spans() -> N
 def test_spacy_compiler_adds_compact_administration_heading_span_coverage() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     compiler = SpaCyModalIRCompiler()
-    text = (
-        "Administration. "
-        "The Secretary shall issue regulations for the park area."
-    )
+    text = "Administration. The Secretary shall issue regulations for the park area."
     encoding = encoder.encode(
         text,
         document_id="us-code-16-450dd-1-compact-administration",
@@ -10012,10 +9523,7 @@ def test_spacy_compiler_adds_compact_administration_heading_span_coverage() -> N
 def test_spacy_compiler_adds_criminal_penalty_enforcement_residual_span_coverage() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     compiler = SpaCyModalIRCompiler()
-    text = (
-        "Civil enforcement. "
-        "The Secretary shall maintain records for criminal penalties."
-    )
+    text = "Civil enforcement. The Secretary shall maintain records for criminal penalties."
     encoding = encoder.encode(
         text,
         document_id="us-code-50-2205.-44bac97fa2b482ea",
@@ -10058,8 +9566,7 @@ def test_spacy_compiler_adds_modal_heading_prefix_coverage_for_penalty_heading()
     prefix_formulas = [
         formula
         for formula in modal_ir.formulas
-        if formula.metadata.get("fallback_rule")
-        == "uscode_modal_heading_prefix_coverage_v1"
+        if formula.metadata.get("fallback_rule") == "uscode_modal_heading_prefix_coverage_v1"
     ]
     assert prefix_formulas
     prefix_spans = {
@@ -10090,8 +9597,7 @@ def test_spacy_compiler_adds_modal_heading_prefix_coverage_for_security_evaluati
     prefix_formulas = [
         formula
         for formula in modal_ir.formulas
-        if formula.metadata.get("fallback_rule")
-        == "uscode_modal_heading_prefix_coverage_v1"
+        if formula.metadata.get("fallback_rule") == "uscode_modal_heading_prefix_coverage_v1"
     ]
     assert prefix_formulas
     prefix_spans = {
@@ -10265,10 +9771,7 @@ def test_spacy_compiler_replays_packet_todo_symbolic_validity_sample_for_25_5396
 
     assert modal_ir.formulas
     assert any(formula.operator.family == "deontic" for formula in modal_ir.formulas)
-    assert all(
-        formula.provenance.citation == "25 U.S.C. 5396"
-        for formula in modal_ir.formulas
-    )
+    assert all(formula.provenance.citation == "25 U.S.C. 5396" for formula in modal_ir.formulas)
 
 
 def test_spacy_compiler_replays_packet_todo_samples_for_25_507_10_167_and_38_8112() -> None:
@@ -10448,9 +9951,7 @@ def test_spacy_compiler_adds_residual_span_coverage_for_25_57_todo_shape() -> No
         ].strip()
         for formula in residual_formulas
     }
-    assert any(
-        "U.S.C. Title 25 - INDIANS 25 U.S.C." in span for span in residual_text_spans
-    )
+    assert any("U.S.C. Title 25 - INDIANS 25 U.S.C." in span for span in residual_text_spans)
     assert any("43 Stat." in span for span in residual_text_spans)
 
 
@@ -10508,10 +10009,14 @@ def test_spacy_compiler_expands_split_omitted_codification_fallback_span() -> No
 
     assert fallback.metadata["fallback_rule"] == "uscode_codification_transfer_heading_v1"
     assert fallback_span.startswith("Omitted Editorial Notes Codification Section")
-    assert "was omitted from the Code as being of special and not general application" in fallback_span
+    assert (
+        "was omitted from the Code as being of special and not general application" in fallback_span
+    )
 
 
-def test_spacy_compiler_supports_usc_and_section_symbol_citation_variants_for_sec_headings() -> None:
+def test_spacy_compiler_supports_usc_and_section_symbol_citation_variants_for_sec_headings() -> (
+    None
+):
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     compiler = SpaCyModalIRCompiler()
     cases = [
@@ -10602,7 +10107,9 @@ def test_spacy_compiler_replays_embedded_sec_heading_zero_formula_cases() -> Non
         assert fallback.provenance.citation == citation
 
 
-def test_spacy_compiler_replays_symbolic_validity_todo_samples_with_coarse_section_heading_fallback() -> None:
+def test_spacy_compiler_replays_symbolic_validity_todo_samples_with_coarse_section_heading_fallback() -> (
+    None
+):
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     compiler = SpaCyModalIRCompiler()
     cases = [
@@ -10643,7 +10150,9 @@ def test_spacy_compiler_replays_symbolic_validity_todo_samples_with_coarse_secti
         assert fallback.provenance.citation == citation
 
 
-def test_spacy_compiler_replays_symbolic_validity_todo_samples_for_2_5602_5_5348_and_42_15251() -> None:
+def test_spacy_compiler_replays_symbolic_validity_todo_samples_for_2_5602_5_5348_and_42_15251() -> (
+    None
+):
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     compiler = SpaCyModalIRCompiler()
     cases = [
@@ -10742,7 +10251,9 @@ def test_spacy_compiler_replays_packet_todo_long_heading_sample_for_43_2430() ->
     assert fallback.provenance.citation == "43 U.S.C. 2430."
 
 
-def test_spacy_compiler_replays_packet_todo_article_prefixed_heading_samples_for_2_453_9_6_and_43_1656() -> None:
+def test_spacy_compiler_replays_packet_todo_article_prefixed_heading_samples_for_2_453_9_6_and_43_1656() -> (
+    None
+):
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     compiler = SpaCyModalIRCompiler()
     cases = [
@@ -10816,9 +10327,9 @@ def test_spacy_compiler_replays_uscode_declarative_statement_zero_formula_cases(
                 "TRANSITION SUBCHAPTER VII - COMMISSION ON 21st CENTURY PRODUCTION "
                 "AGRICULTURE Sec. 7311 - Establishment From the U.S. Government "
                 "Publishing Office, www.gpo.gov \u00a77311. Establishment There is "
-                "established a commission to be known as the \"Commission on 21st "
-                "Century Production Agriculture\" (in this subchapter referred to as "
-                "the \"Commission\"). (Pub. L. 104\u2013127, title I, \u00a7181, Apr. 4, "
+                'established a commission to be known as the "Commission on 21st '
+                'Century Production Agriculture" (in this subchapter referred to as '
+                'the "Commission"). (Pub. L. 104\u2013127, title I, \u00a7181, Apr. 4, '
                 "1996, 110 Stat. 938.)"
             ),
             "establishment_clause",
@@ -10865,7 +10376,9 @@ def test_spacy_compiler_replays_uscode_declarative_statement_zero_formula_cases(
         assert fallback.provenance.citation == citation
 
 
-def test_spacy_compiler_replays_heading_only_zero_formula_cases_for_25_422_48_1572_and_42_6323() -> None:
+def test_spacy_compiler_replays_heading_only_zero_formula_cases_for_25_422_48_1572_and_42_6323() -> (
+    None
+):
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     compiler = SpaCyModalIRCompiler()
     cases = [
@@ -10903,7 +10416,9 @@ def test_spacy_compiler_replays_heading_only_zero_formula_cases_for_25_422_48_15
         assert fallback.provenance.citation == citation
 
 
-def test_spacy_compiler_adds_residual_heading_fallback_when_modal_cues_cover_other_segments() -> None:
+def test_spacy_compiler_adds_residual_heading_fallback_when_modal_cues_cover_other_segments() -> (
+    None
+):
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     compiler = SpaCyModalIRCompiler()
     encoding = encoder.encode(
@@ -10926,7 +10441,9 @@ def test_spacy_compiler_adds_residual_heading_fallback_when_modal_cues_cover_oth
     assert fallback.provenance.citation == "25 U.S.C. 124"
 
 
-def test_spacy_compiler_adds_long_heading_residual_span_coverage_after_section_heading_fallback() -> None:
+def test_spacy_compiler_adds_long_heading_residual_span_coverage_after_section_heading_fallback() -> (
+    None
+):
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     compiler = SpaCyModalIRCompiler()
     encoding = encoder.encode(
@@ -10959,7 +10476,7 @@ def test_spacy_compiler_adds_purpose_clause_residual_span_coverage_for_institute
     text = (
         "\u00a7285 l . Purpose of Institute The general purpose of the National "
         "Institute of Environmental Health Sciences (in this subpart referred "
-        "to as the \"Institute\") is the conduct and support of research, "
+        'to as the "Institute") is the conduct and support of research, '
         "training, health information dissemination, and other programs with "
         "respect to factors in the environment that affect human health."
     )
@@ -10981,12 +10498,13 @@ def test_spacy_compiler_adds_purpose_clause_residual_span_coverage_for_institute
         if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
     }
     assert any(
-        span.startswith("Purpose of Institute The general purpose")
-        for span in residual_text_spans
+        span.startswith("Purpose of Institute The general purpose") for span in residual_text_spans
     )
 
 
-def test_spacy_compiler_adds_compact_frame_heading_residual_span_coverage_for_packet_000037_samples() -> None:
+def test_spacy_compiler_adds_compact_frame_heading_residual_span_coverage_for_packet_000037_samples() -> (
+    None
+):
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     compiler = SpaCyModalIRCompiler()
     cases = [
@@ -11132,14 +10650,8 @@ def test_spacy_decompiler_exports_frame_residual_deontic_and_conditional_cues() 
     )
 
     assert "frame->deontic:may" in slot_map["typed_decompiler_family_pair_cue"]
-    assert (
-        "frame->conditional_normative:subject_to"
-        in slot_map["typed_decompiler_family_pair_cue"]
-    )
-    assert (
-        "frame->deontic:may"
-        in slot_map["typed-decompiler-target-reconstruction-cue"]
-    )
+    assert "frame->conditional_normative:subject_to" in slot_map["typed_decompiler_family_pair_cue"]
+    assert "frame->deontic:may" in slot_map["typed-decompiler-target-reconstruction-cue"]
 
 
 def test_spacy_decoder_vector_and_family_logits_are_deterministic() -> None:
@@ -11155,7 +10667,9 @@ def test_spacy_decoder_vector_and_family_logits_are_deterministic() -> None:
 
     first = codec.decode_sample_embedding(sample, dimensions=6)
     second = codec.decode_sample_embedding(sample, dimensions=6)
-    logits = codec.family_logits_for_sample(sample, modal_families=("deontic", "temporal", "hybrid"))
+    logits = codec.family_logits_for_sample(
+        sample, modal_families=("deontic", "temporal", "hybrid")
+    )
 
     assert first == second
     assert len(first) == 6
@@ -11236,16 +10750,8 @@ def test_spacy_codec_strengthens_deontic_share_for_statutory_generic_frame_compe
     ranking = ranked_modal_families(encoding)
 
     assert not any(cue.family == "deontic" for cue in encoding.cues)
-    deontic_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "deontic"
-    )
-    frame_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "frame"
-    )
+    deontic_share = next(float(item["share"]) for item in ranking if item["family"] == "deontic")
+    frame_share = next(float(item["share"]) for item in ranking if item["family"] == "frame")
     assert deontic_share > 0.3
     assert frame_share > deontic_share
 
@@ -11267,16 +10773,8 @@ def test_spacy_codec_strengthens_temporal_share_for_statutory_generic_frame_comp
     ranking = ranked_modal_families(encoding)
 
     assert not any(cue.family == "temporal" for cue in encoding.cues)
-    temporal_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "temporal"
-    )
-    frame_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "frame"
-    )
+    temporal_share = next(float(item["share"]) for item in ranking if item["family"] == "temporal")
+    frame_share = next(float(item["share"]) for item in ranking if item["family"] == "frame")
     assert temporal_share > 0.3
     assert frame_share > temporal_share
 
@@ -11302,7 +10800,9 @@ def test_spacy_codec_marks_us_code_enforcement_and_duration_cues() -> None:
     assert shares["temporal"] > 0.2
 
 
-def test_spacy_codec_strengthens_conditional_share_for_dense_temporal_scope_statutory_conflict() -> None:
+def test_spacy_codec_strengthens_conditional_share_for_dense_temporal_scope_statutory_conflict() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -11320,14 +10820,14 @@ def test_spacy_codec_strengthens_conditional_share_for_dense_temporal_scope_stat
 
     assert not any(cue.family == "conditional_normative" for cue in encoding.cues)
     conditional_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "conditional_normative"
+        float(item["share"]) for item in ranking if item["family"] == "conditional_normative"
     )
     assert conditional_share > 0.12
 
 
-def test_spacy_codec_strengthens_temporal_share_for_dense_deontic_scope_statutory_conflict() -> None:
+def test_spacy_codec_strengthens_temporal_share_for_dense_deontic_scope_statutory_conflict() -> (
+    None
+):
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
         decoder=SpaCyModalDecoder(),
@@ -11344,11 +10844,7 @@ def test_spacy_codec_strengthens_temporal_share_for_dense_deontic_scope_statutor
     ranking = ranked_modal_families(encoding)
 
     assert not any(cue.family == "temporal" for cue in encoding.cues)
-    temporal_share = next(
-        float(item["share"])
-        for item in ranking
-        if item["family"] == "temporal"
-    )
+    temporal_share = next(float(item["share"]) for item in ranking if item["family"] == "temporal")
     assert temporal_share > 0.12
 
 
@@ -11395,24 +10891,16 @@ def test_spacy_codec_boosts_deontic_share_for_authorized_appropriation_fiscal_sc
     without_phrase_ranking = ranked_modal_families(codec.encode_sample(without_phrase))
 
     with_phrase_deontic_share = next(
-        float(item["share"])
-        for item in with_phrase_ranking
-        if item["family"] == "deontic"
+        float(item["share"]) for item in with_phrase_ranking if item["family"] == "deontic"
     )
     without_phrase_deontic_share = next(
-        float(item["share"])
-        for item in without_phrase_ranking
-        if item["family"] == "deontic"
+        float(item["share"]) for item in without_phrase_ranking if item["family"] == "deontic"
     )
     with_phrase_temporal_share = next(
-        float(item["share"])
-        for item in with_phrase_ranking
-        if item["family"] == "temporal"
+        float(item["share"]) for item in with_phrase_ranking if item["family"] == "temporal"
     )
     without_phrase_temporal_share = next(
-        float(item["share"])
-        for item in without_phrase_ranking
-        if item["family"] == "temporal"
+        float(item["share"]) for item in without_phrase_ranking if item["family"] == "temporal"
     )
 
     assert with_phrase_deontic_share > without_phrase_deontic_share
@@ -11561,8 +11049,7 @@ def test_spacy_codec_refines_packet_002939_mixed_scope_family_evidence() -> None
     for sample_id, text in samples.items():
         ranking = ranked_modal_families(encoder.encode(text, document_id=sample_id))
         shares_by_sample[sample_id] = {
-            str(item["family"]): float(item["share_raw"])
-            for item in ranking
+            str(item["family"]): float(item["share_raw"]) for item in ranking
         }
 
     assert shares_by_sample["removal_frame"]["frame"] > 0.14
@@ -11644,12 +11131,8 @@ def test_packet_003559_frame_policy_exposes_explicit_adaptive_ambiguity() -> Non
     )
     for predicted_family, target_family in COMPILER_AMBIGUITY_PACKET_003559_FAMILY_PAIRS:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert supports_signal_free_adaptive_ambiguity_pair(
             predicted_family,
@@ -11675,8 +11158,7 @@ def test_packet_003559_frame_policy_exposes_explicit_adaptive_ambiguity() -> Non
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         ambiguities = compiler._compiled_primary_family_adaptive_pair_ambiguities(
             compiled_primary_family=predicted_family,
@@ -11690,9 +11172,7 @@ def test_packet_003559_frame_policy_exposes_explicit_adaptive_ambiguity() -> Non
             compiled_modal_families=[predicted_family],
             predicted_family_source=f"packet_003559:{sample_id}",
         )
-        explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-        )
+        explicit_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
         policy_pair = f"{predicted_family}->{target_family}"
         base_ambiguity = next(
             ambiguity
@@ -11708,16 +11188,12 @@ def test_packet_003559_frame_policy_exposes_explicit_adaptive_ambiguity() -> Non
         assert base_ambiguity.metadata["is_compiler_required_policy_pair"] is True
         assert base_ambiguity.metadata["is_priority_policy_pair"] is True
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == explicit_type
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert any(
             ambiguity.ambiguity_type == explicit_type
             and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["is_explicit_adaptive_ambiguity"] is True
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
             for ambiguity in ambiguities
         )
@@ -11749,15 +11225,9 @@ def test_packet_003166_compiler_policy_exposes_explicit_adaptive_ambiguity() -> 
     )
     for predicted_family, target_family in COMPILER_AMBIGUITY_PACKET_003166_FAMILY_PAIRS:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -11781,9 +11251,7 @@ def test_packet_003166_compiler_policy_exposes_explicit_adaptive_ambiguity() -> 
         predicted_share = 0.3 if is_self_pair else 0.1
         competing_share = predicted_share - family_margin
         runner_up_family = (
-            "temporal"
-            if is_self_pair and predicted_family == "deontic"
-            else target_family
+            "temporal" if is_self_pair and predicted_family == "deontic" else target_family
         )
         ranking = [
             {
@@ -11800,8 +11268,7 @@ def test_packet_003166_compiler_policy_exposes_explicit_adaptive_ambiguity() -> 
             },
         ]
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         ambiguities = compiler._compiled_primary_family_adaptive_pair_ambiguities(
             compiled_primary_family=predicted_family,
@@ -11817,14 +11284,11 @@ def test_packet_003166_compiler_policy_exposes_explicit_adaptive_ambiguity() -> 
         )
         expected_direction = "outvoted" if family_margin <= 0.0 else "contested"
         expected_explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_"
-            f"{expected_direction}_margin_low"
+            f"adaptive_{predicted_family}_{target_family}_{expected_direction}_margin_low"
         )
         policy_pair = f"{predicted_family}->{target_family}"
         expected_candidate_ids = (
-            [predicted_family]
-            if is_self_pair
-            else [predicted_family, target_family]
+            [predicted_family] if is_self_pair else [predicted_family, target_family]
         )
         base_ambiguity = next(
             ambiguity
@@ -11840,16 +11304,12 @@ def test_packet_003166_compiler_policy_exposes_explicit_adaptive_ambiguity() -> 
         assert base_ambiguity.metadata["is_priority_policy_pair"] is True
         assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
         assert base_ambiguity.metadata["adaptive_margin_direction"] == expected_direction
-        assert (
-            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
-            < 1e-12
-        )
+        assert abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == expected_candidate_ids
             and ambiguity.metadata["is_explicit_adaptive_ambiguity"] is True
-            and ambiguity.metadata["adaptive_base_ambiguity_type"]
-            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
             for ambiguity in ambiguities
         )
@@ -11934,8 +11394,7 @@ def test_spacy_compiler_covers_uscode_effect_of_act_catchline_for_701e() -> None
     }
 
     assert (
-        "Effect of act June 22, 1936, on provisions for Mississippi River "
-        "and other projects."
+        "Effect of act June 22, 1936, on provisions for Mississippi River and other projects."
     ) in residual_spans
 
 
@@ -11965,8 +11424,7 @@ def test_spacy_compiler_bounds_packet_catchlines_before_body_starters() -> None:
             "charges due connecting commercial facilities In the operation "
             "of telegraph lines, members of the Signal Corps may collect "
             "forwarding charges.",
-            "Radiograms and telegrams: forwarding charges due connecting "
-            "commercial facilities",
+            "Radiograms and telegrams: forwarding charges due connecting commercial facilities",
         ),
     ]
 
@@ -11983,8 +11441,7 @@ def test_spacy_compiler_bounds_packet_catchlines_before_body_starters() -> None:
                 int(formula.provenance.start_char) : int(formula.provenance.end_char)
             ].strip()
             for formula in modal_ir.formulas
-            if formula.metadata.get("fallback_rule")
-            == "uscode_section_catchline_coverage_v1"
+            if formula.metadata.get("fallback_rule") == "uscode_section_catchline_coverage_v1"
         }
 
         assert expected_catchline in catchline_spans

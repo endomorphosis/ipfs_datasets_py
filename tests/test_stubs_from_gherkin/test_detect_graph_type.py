@@ -22,16 +22,17 @@ def test_detect_graph_type_with_explicit_graph_type_attribute():
     Then:
         result is wikipedia
     """
+
     # Given: graph_processor with graph_type attribute
     class MockGraphProcessor:
         graph_type = "wikipedia"
-    
+
     graph_processor = MockGraphProcessor()
     expected_result = "wikipedia"
-    
+
     # When: detect_graph_type is called
     actual_result = detect_graph_type(graph_processor)
-    
+
     # Then: result is wikipedia
     assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
@@ -51,27 +52,28 @@ def test_detect_wikipedia_graph_from_entity_types():
     Then:
         result is wikipedia
     """
+
     # Given: graph_processor with entities
     class MockGraphProcessor:
         def get_entities(self, limit=20):
             entities = []
             category_count = 8
             ipld_count = 2
-            
+
             for i in range(category_count):
-                entities.append({'type': 'category'})
-            
+                entities.append({"type": "category"})
+
             for i in range(ipld_count):
-                entities.append({'type': 'ipld'})
-            
+                entities.append({"type": "ipld"})
+
             return entities
-    
+
     graph_processor = MockGraphProcessor()
     expected_result = "wikipedia"
-    
+
     # When: detect_graph_type is called
     actual_result = detect_graph_type(graph_processor)
-    
+
     # Then: result is wikipedia
     assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
@@ -91,27 +93,28 @@ def test_detect_ipld_graph_from_entity_types():
     Then:
         result is ipld
     """
+
     # Given: graph_processor with entities
     class MockGraphProcessor:
         def get_entities(self, limit=20):
             entities = []
             category_count = 2
             cid_count = 7
-            
+
             for i in range(category_count):
-                entities.append({'type': 'category'})
-            
+                entities.append({"type": "category"})
+
             for i in range(cid_count):
-                entities.append({'type': 'cid'})
-            
+                entities.append({"type": "cid"})
+
             return entities
-    
+
     graph_processor = MockGraphProcessor()
     expected_result = "ipld"
-    
+
     # When: detect_graph_type is called
     actual_result = detect_graph_type(graph_processor)
-    
+
     # Then: result is ipld
     assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
@@ -131,17 +134,18 @@ def test_detect_wikipedia_graph_from_relationship_types():
     Then:
         result is wikipedia
     """
+
     # Given: graph_processor with relationship_types
     class MockGraphProcessor:
         def get_relationship_types(self):
-            return ['subclass_of', 'category_contains']
-    
+            return ["subclass_of", "category_contains"]
+
     graph_processor = MockGraphProcessor()
     expected_result = "wikipedia"
-    
+
     # When: detect_graph_type is called
     actual_result = detect_graph_type(graph_processor)
-    
+
     # Then: result is wikipedia
     assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
@@ -161,17 +165,18 @@ def test_detect_ipld_graph_from_relationship_types():
     Then:
         result is ipld
     """
+
     # Given: graph_processor with relationship_types
     class MockGraphProcessor:
         def get_relationship_types(self):
-            return ['links_to', 'references']
-    
+            return ["links_to", "references"]
+
     graph_processor = MockGraphProcessor()
     expected_result = "ipld"
-    
+
     # When: detect_graph_type is called
     actual_result = detect_graph_type(graph_processor)
-    
+
     # Then: result is ipld
     assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
@@ -191,27 +196,28 @@ def test_detect_unknown_graph_type():
     Then:
         result is unknown
     """
+
     # Given: graph_processor with mixed indicators
     class MockGraphProcessor:
         def get_entities(self, limit=20):
             entities = []
             wikipedia_entity_count = 3
             ipld_entity_count = 3
-            
+
             for i in range(wikipedia_entity_count):
-                entities.append({'type': 'category'})
-            
+                entities.append({"type": "category"})
+
             for i in range(ipld_entity_count):
-                entities.append({'type': 'cid'})
-            
+                entities.append({"type": "cid"})
+
             return entities
-    
+
     graph_processor = MockGraphProcessor()
     expected_result = "unknown"
-    
+
     # When: detect_graph_type is called
     actual_result = detect_graph_type(graph_processor)
-    
+
     # Then: result is unknown
     assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
@@ -230,17 +236,18 @@ def test_detect_with_no_entity_access():
     Then:
         detection continues with relationship analysis
     """
+
     # Given: graph_processor without entity access but with relationships
     class MockGraphProcessor:
         def get_relationship_types(self):
-            return ['subclass_of', 'category_contains']
-    
+            return ["subclass_of", "category_contains"]
+
     graph_processor = MockGraphProcessor()
     expected_result = "wikipedia"
-    
+
     # When: detect_graph_type is called
     actual_result = detect_graph_type(graph_processor)
-    
+
     # Then: detection continues with relationship analysis
     assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
@@ -259,20 +266,21 @@ def test_detect_with_entity_access_exception():
     Then:
         detection continues with relationship analysis
     """
+
     # Given: graph_processor with get_entities that raises exception
     class MockGraphProcessor:
         def get_entities(self, limit=20):
             raise Exception("Entity access failed")
-        
+
         def get_relationship_types(self):
-            return ['links_to', 'references']
-    
+            return ["links_to", "references"]
+
     graph_processor = MockGraphProcessor()
     expected_result = "ipld"
-    
+
     # When: detect_graph_type is called
     actual_result = detect_graph_type(graph_processor)
-    
+
     # Then: detection continues with relationship analysis
     assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
@@ -290,23 +298,24 @@ def test_detect_with_no_relationship_access():
     Then:
         detection uses entity analysis only
     """
+
     # Given: graph_processor with entities but no relationship methods
     class MockGraphProcessor:
         def get_entities(self, limit=20):
             entities = []
             entity_count = 8
-            
+
             for i in range(entity_count):
-                entities.append({'type': 'category'})
-            
+                entities.append({"type": "category"})
+
             return entities
-    
+
     graph_processor = MockGraphProcessor()
     expected_result = "wikipedia"
-    
+
     # When: detect_graph_type is called
     actual_result = detect_graph_type(graph_processor)
-    
+
     # Then: detection uses entity analysis only
     assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
@@ -324,27 +333,27 @@ def test_detect_with_sample_limit():
     Then:
         only 20 entities are analyzed
     """
+
     # Given: graph_processor with many entities
     class MockGraphProcessor:
         def __init__(self):
             self.last_limit = None
-        
+
         def get_entities(self, limit=20):
             self.last_limit = limit
             entities = []
-            
+
             for i in range(limit):
-                entities.append({'type': 'category'})
-            
+                entities.append({"type": "category"})
+
             return entities
-    
+
     graph_processor = MockGraphProcessor()
     expected_limit = 20
-    
+
     # When: detect_graph_type is called
     result = detect_graph_type(graph_processor)
     actual_limit = graph_processor.last_limit
-    
+
     # Then: only 20 entities are analyzed
     assert actual_limit == expected_limit, f"expected {expected_limit}, got {actual_limit}"
-

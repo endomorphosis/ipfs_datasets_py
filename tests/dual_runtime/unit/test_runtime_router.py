@@ -37,11 +37,11 @@ class TestRuntimeMetrics:
         THEN: Default values are set
         """
         metrics = RuntimeMetrics()
-        
+
         assert metrics.request_count == 0
         assert metrics.error_count == 0
         assert metrics.total_latency_ms == 0.0
-        assert metrics.min_latency_ms == float('inf')
+        assert metrics.min_latency_ms == float("inf")
         assert metrics.max_latency_ms == 0.0
         assert len(metrics.latencies) == 0
 
@@ -53,7 +53,7 @@ class TestRuntimeMetrics:
         """
         metrics = RuntimeMetrics()
         metrics.record_request(100.0, error=False)
-        
+
         assert metrics.request_count == 1
         assert metrics.error_count == 0
         assert metrics.total_latency_ms == 100.0
@@ -69,7 +69,7 @@ class TestRuntimeMetrics:
         """
         metrics = RuntimeMetrics()
         metrics.record_request(150.0, error=True)
-        
+
         assert metrics.request_count == 1
         assert metrics.error_count == 1
 
@@ -83,7 +83,7 @@ class TestRuntimeMetrics:
         metrics.record_request(50.0)
         metrics.record_request(100.0)
         metrics.record_request(150.0)
-        
+
         assert metrics.request_count == 3
         assert metrics.min_latency_ms == 50.0
         assert metrics.max_latency_ms == 150.0
@@ -107,7 +107,7 @@ class TestRuntimeMetrics:
         metrics = RuntimeMetrics()
         for i in range(1, 101):
             metrics.record_request(float(i))
-        
+
         p95 = metrics.p95_latency_ms
         assert 94 <= p95 <= 96
 
@@ -120,7 +120,7 @@ class TestRuntimeMetrics:
         metrics = RuntimeMetrics()
         for i in range(1, 101):
             metrics.record_request(float(i))
-        
+
         p99 = metrics.p99_latency_ms
         assert 98 <= p99 <= 100
 
@@ -133,7 +133,7 @@ class TestRuntimeMetrics:
         metrics = RuntimeMetrics()
         for i in range(1500):
             metrics.record_request(float(i))
-        
+
         assert len(metrics.latencies) == 1000
         assert metrics.latencies[0] >= 500.0
 
@@ -146,9 +146,9 @@ class TestRuntimeMetrics:
         metrics = RuntimeMetrics()
         metrics.record_request(100.0)
         metrics.record_request(200.0, error=True)
-        
+
         data = metrics.to_dict()
-        
+
         assert data["request_count"] == 2
         assert data["error_count"] == 1
         assert data["avg_latency_ms"] == 150.0
@@ -168,7 +168,7 @@ class TestRuntimeRouterInit:
         THEN: Default values are set
         """
         router = RuntimeRouter()
-        
+
         assert router.default_runtime == RUNTIME_FASTAPI
         assert router.enable_metrics is True
         assert router.enable_memory_tracking is False
@@ -224,9 +224,9 @@ class TestRuntimeRouterLifecycle:
         """
         router = RuntimeRouter()
         await router.startup()
-        
+
         assert router._is_running is True
-        
+
         await router.shutdown()
 
     @pytest.mark.asyncio
@@ -239,9 +239,9 @@ class TestRuntimeRouterLifecycle:
         router = RuntimeRouter()
         await router.startup()
         await router.startup()
-        
+
         assert "already running" in caplog.text.lower()
-        
+
         await router.shutdown()
 
     @pytest.mark.asyncio
@@ -254,7 +254,7 @@ class TestRuntimeRouterLifecycle:
         router = RuntimeRouter()
         await router.startup()
         await router.shutdown()
-        
+
         assert router._is_running is False
 
     @pytest.mark.asyncio
@@ -266,7 +266,7 @@ class TestRuntimeRouterLifecycle:
         """
         router = RuntimeRouter()
         await router.shutdown()
-        
+
         assert router._is_running is False
 
     @pytest.mark.asyncio
@@ -277,10 +277,10 @@ class TestRuntimeRouterLifecycle:
         THEN: Properly starts and stops
         """
         router = RuntimeRouter()
-        
+
         async with router.runtime_context() as r:
             assert r._is_running is True
-        
+
         assert router._is_running is False
 
 
@@ -295,10 +295,10 @@ class TestRuntimeDetection:
         """
         router = RuntimeRouter()
         router._tool_runtimes["cached_tool"] = RUNTIME_TRIO
-        
+
         def dummy_func():
             pass
-        
+
         runtime = router.detect_runtime("cached_tool", dummy_func)
         assert runtime == RUNTIME_TRIO
 
@@ -311,12 +311,12 @@ class TestRuntimeDetection:
         registry = ToolMetadataRegistry()
         metadata = ToolMetadata(name="registry_tool", runtime=RUNTIME_TRIO)
         registry.register(metadata)
-        
+
         router = RuntimeRouter(metadata_registry=registry)
-        
+
         def dummy_func():
             pass
-        
+
         runtime = router.detect_runtime("registry_tool", dummy_func)
         assert runtime == RUNTIME_TRIO
 
@@ -327,11 +327,12 @@ class TestRuntimeDetection:
         THEN: Function attribute is used
         """
         router = RuntimeRouter()
-        
+
         def func_with_runtime():
             pass
+
         func_with_runtime._mcp_runtime = RUNTIME_TRIO
-        
+
         # Use a name that doesn't match any patterns
         runtime = router.detect_runtime("custom_tool", func_with_runtime)
         assert runtime == RUNTIME_TRIO
@@ -343,11 +344,12 @@ class TestRuntimeDetection:
         THEN: Trio runtime is selected
         """
         router = RuntimeRouter()
-        
+
         def mock_func():
             pass
+
         mock_func.__module__ = "ipfs_datasets_py.mcp_server.mcplusplus.workflow"
-        
+
         runtime = router.detect_runtime("workflow_tool", mock_func)
         assert runtime == RUNTIME_TRIO
 
@@ -358,11 +360,12 @@ class TestRuntimeDetection:
         THEN: Trio runtime is selected
         """
         router = RuntimeRouter()
-        
+
         def mock_func():
             pass
+
         mock_func.__module__ = "ipfs_datasets_py.mcp_server.trio_adapter"
-        
+
         runtime = router.detect_runtime("trio_tool", mock_func)
         assert runtime == RUNTIME_TRIO
 
@@ -373,10 +376,10 @@ class TestRuntimeDetection:
         THEN: Trio runtime is selected
         """
         router = RuntimeRouter()
-        
+
         def mock_func():
             pass
-        
+
         runtime = router.detect_runtime("p2p_workflow_submit", mock_func)
         assert runtime == RUNTIME_TRIO
 
@@ -387,10 +390,10 @@ class TestRuntimeDetection:
         THEN: Trio runtime is selected
         """
         router = RuntimeRouter()
-        
+
         def mock_func():
             pass
-        
+
         runtime = router.detect_runtime("submit_workflow", mock_func)
         assert runtime == RUNTIME_TRIO
 
@@ -401,10 +404,10 @@ class TestRuntimeDetection:
         THEN: Trio runtime is selected
         """
         router = RuntimeRouter()
-        
+
         def mock_func():
             pass
-        
+
         runtime = router.detect_runtime("taskqueue_submit", mock_func)
         assert runtime == RUNTIME_TRIO
 
@@ -415,10 +418,10 @@ class TestRuntimeDetection:
         THEN: Default runtime is used
         """
         router = RuntimeRouter(default_runtime=RUNTIME_FASTAPI)
-        
+
         def plain_func():
             pass
-        
+
         runtime = router.detect_runtime("plain_tool", plain_func)
         assert runtime == RUNTIME_FASTAPI
 
@@ -429,10 +432,10 @@ class TestRuntimeDetection:
         THEN: Result is cached for next call
         """
         router = RuntimeRouter()
-        
+
         def mock_func():
             pass
-        
+
         router.detect_runtime("test_tool", mock_func)
         assert "test_tool" in router._tool_runtimes
 
@@ -448,7 +451,7 @@ class TestToolRegistration:
         """
         router = RuntimeRouter()
         router.register_tool_runtime("test_tool", RUNTIME_FASTAPI)
-        
+
         assert router._tool_runtimes["test_tool"] == RUNTIME_FASTAPI
 
     def test_register_tool_runtime_trio(self):
@@ -459,7 +462,7 @@ class TestToolRegistration:
         """
         router = RuntimeRouter()
         router.register_tool_runtime("test_tool", RUNTIME_TRIO)
-        
+
         assert router._tool_runtimes["test_tool"] == RUNTIME_TRIO
 
     def test_register_tool_runtime_invalid(self):
@@ -469,7 +472,7 @@ class TestToolRegistration:
         THEN: ValueError is raised
         """
         router = RuntimeRouter()
-        
+
         with pytest.raises(ValueError, match="Invalid runtime"):
             router.register_tool_runtime("test_tool", "invalid")
 
@@ -481,7 +484,7 @@ class TestToolRegistration:
         """
         router = RuntimeRouter()
         router.register_tool_runtime("test_tool", RUNTIME_TRIO)
-        
+
         runtime = router.get_tool_runtime("test_tool")
         assert runtime == RUNTIME_TRIO
 
@@ -505,10 +508,10 @@ class TestToolRegistration:
         router.register_tool_runtime("tool1", RUNTIME_FASTAPI)
         router.register_tool_runtime("tool2", RUNTIME_TRIO)
         router.register_tool_runtime("tool3", RUNTIME_FASTAPI)
-        
+
         fastapi_tools = router.list_tools_by_runtime(RUNTIME_FASTAPI)
         trio_tools = router.list_tools_by_runtime(RUNTIME_TRIO)
-        
+
         assert len(fastapi_tools) == 2
         assert len(trio_tools) == 1
         assert "tool1" in fastapi_tools
@@ -525,10 +528,10 @@ class TestToolRegistration:
         registry.register(ToolMetadata(name="tool1", runtime=RUNTIME_FASTAPI))
         registry.register(ToolMetadata(name="tool2", runtime=RUNTIME_TRIO))
         registry.register(ToolMetadata(name="tool3", runtime=RUNTIME_AUTO))
-        
+
         router = RuntimeRouter(metadata_registry=registry)
         count = router.bulk_register_tools_from_metadata()
-        
+
         assert count == 2  # AUTO is not registered
         assert router.get_tool_runtime("tool1") == RUNTIME_FASTAPI
         assert router.get_tool_runtime("tool2") == RUNTIME_TRIO
@@ -545,10 +548,10 @@ class TestToolRouting:
         THEN: RuntimeError is raised
         """
         router = RuntimeRouter()
-        
+
         async def dummy_tool():
             return "result"
-        
+
         with pytest.raises(RuntimeError, match="not started"):
             await router.route_tool_call("test_tool", dummy_tool)
 
@@ -561,12 +564,12 @@ class TestToolRouting:
         """
         router = RuntimeRouter(default_runtime=RUNTIME_FASTAPI)
         await router.startup()
-        
+
         async def async_tool():
             return "async_result"
-        
+
         result = await router.route_tool_call("test_tool", async_tool)
-        
+
         assert result == "async_result"
         await router.shutdown()
 
@@ -579,12 +582,12 @@ class TestToolRouting:
         """
         router = RuntimeRouter(default_runtime=RUNTIME_FASTAPI)
         await router.startup()
-        
+
         def sync_tool():
             return "sync_result"
-        
+
         result = await router.route_tool_call("test_tool", sync_tool)
-        
+
         assert result == "sync_result"
         await router.shutdown()
 
@@ -597,14 +600,14 @@ class TestToolRouting:
         """
         router = RuntimeRouter()
         await router.startup()
-        
+
         async def tool_with_args(a, b, c=None):
             return f"{a}-{b}-{c}"
-        
+
         result = await router.route_tool_call(
             "test_tool", tool_with_args, "arg1", "arg2", c="kwarg1"
         )
-        
+
         assert result == "arg1-arg2-kwarg1"
         await router.shutdown()
 
@@ -617,16 +620,16 @@ class TestToolRouting:
         """
         router = RuntimeRouter()
         await router.startup()
-        
+
         async def failing_tool():
             raise ValueError("Tool error")
-        
+
         with pytest.raises(ValueError, match="Tool error"):
             await router.route_tool_call("failing_tool", failing_tool)
-        
+
         metrics = router.get_metrics()
         assert metrics[RUNTIME_FASTAPI]["error_count"] == 1
-        
+
         await router.shutdown()
 
     @pytest.mark.asyncio
@@ -638,17 +641,17 @@ class TestToolRouting:
         """
         router = RuntimeRouter(enable_metrics=True)
         await router.startup()
-        
+
         async def test_tool():
             await asyncio.sleep(0.01)
             return "result"
-        
+
         await router.route_tool_call("test_tool", test_tool)
-        
+
         metrics = router.get_metrics()
         assert metrics[RUNTIME_FASTAPI]["request_count"] == 1
         assert metrics[RUNTIME_FASTAPI]["avg_latency_ms"] > 0
-        
+
         await router.shutdown()
 
 
@@ -664,7 +667,7 @@ class TestMetricsCollection:
         """
         router = RuntimeRouter()
         metrics = router.get_metrics()
-        
+
         assert metrics[RUNTIME_FASTAPI]["request_count"] == 0
         assert metrics[RUNTIME_TRIO]["request_count"] == 0
 
@@ -677,19 +680,19 @@ class TestMetricsCollection:
         """
         router = RuntimeRouter()
         await router.startup()
-        
+
         async def test_tool():
             return "result"
-        
+
         await router.route_tool_call("tool1", test_tool)
         await router.route_tool_call("tool2", test_tool)
-        
+
         stats = router.get_runtime_stats()
-        
+
         assert stats["total_requests"] == 2
         assert stats["total_errors"] == 0
         assert RUNTIME_FASTAPI in stats["by_runtime"]
-        
+
         await router.shutdown()
 
     @pytest.mark.asyncio
@@ -701,16 +704,16 @@ class TestMetricsCollection:
         """
         router = RuntimeRouter()
         await router.startup()
-        
+
         async def test_tool():
             return "result"
-        
+
         await router.route_tool_call("test_tool", test_tool)
         router.reset_metrics()
-        
+
         metrics = router.get_metrics()
         assert metrics[RUNTIME_FASTAPI]["request_count"] == 0
-        
+
         await router.shutdown()
 
     def test_get_metadata_registry_stats(self):
@@ -721,10 +724,10 @@ class TestMetricsCollection:
         """
         registry = ToolMetadataRegistry()
         registry.register(ToolMetadata(name="tool1", runtime=RUNTIME_FASTAPI))
-        
+
         router = RuntimeRouter(metadata_registry=registry)
         stats = router.get_metadata_registry_stats()
-        
+
         assert stats is not None
         assert stats["total_tools"] == 1
 
@@ -740,10 +743,10 @@ class TestCreateRouter:
         THEN: Router is created and started
         """
         router = await create_router()
-        
+
         assert router._is_running is True
         assert router.default_runtime == RUNTIME_FASTAPI
-        
+
         await router.shutdown()
 
     @pytest.mark.asyncio
@@ -753,15 +756,12 @@ class TestCreateRouter:
         WHEN: Creating router via create_router
         THEN: Custom router is created and started
         """
-        router = await create_router(
-            default_runtime=RUNTIME_TRIO,
-            enable_metrics=False
-        )
-        
+        router = await create_router(default_runtime=RUNTIME_TRIO, enable_metrics=False)
+
         assert router._is_running is True
         assert router.default_runtime == RUNTIME_TRIO
         assert router.enable_metrics is False
-        
+
         await router.shutdown()
 
 
@@ -777,9 +777,9 @@ class TestRouterRepr:
         router = RuntimeRouter(default_runtime=RUNTIME_TRIO)
         router.register_tool_runtime("tool1", RUNTIME_TRIO)
         router.register_tool_runtime("tool2", RUNTIME_FASTAPI)
-        
+
         repr_str = repr(router)
-        
+
         assert "RuntimeRouter" in repr_str
         assert "default=trio" in repr_str
         assert "running=False" in repr_str

@@ -111,7 +111,7 @@ from ipfs_datasets_py.error_reporting import ErrorReporter
 
 reporter = ErrorReporter(
     enabled=True,
-    min_report_interval=3600  # 1 hour between same error
+    min_report_interval=3600,  # 1 hour between same error
 )
 ```
 
@@ -133,7 +133,7 @@ reporter = get_global_error_reporter()
 try:
     risky_operation()
 except Exception as e:
-    reporter.report_exception(e, context={'user': 'admin'})
+    reporter.report_exception(e, context={"user": "admin"})
 ```
 
 ### 3. JavaScript (Automatic)

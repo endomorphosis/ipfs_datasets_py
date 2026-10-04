@@ -9,6 +9,7 @@ Reusable by:
     - CLI commands
     - Direct Python imports
 """
+
 from __future__ import annotations
 
 import logging

@@ -29,7 +29,7 @@ from ..patch_control import PatchManager
 @dataclass
 class CriticFeedback:
     """Feedback from the critic evaluating a solution.
-    
+
     Attributes:
         correctness_score: Score for correctness (0-1)
         performance_score: Score for performance (0-1)
@@ -37,6 +37,7 @@ class CriticFeedback:
         overall_score: Overall weighted score (0-1)
         comments: List of feedback comments
     """
+
     correctness_score: float
     performance_score: float
     style_score: float
@@ -47,29 +48,29 @@ class CriticFeedback:
 @dataclass
 class Policy:
     """Represents a learned policy for code generation.
-    
+
     Attributes:
         patterns: Learned code patterns that work well
         rewards: Cumulative rewards for each pattern
         usage_count: How many times each pattern was used
         success_rate: Success rate for each pattern
     """
-    
+
     patterns: Dict[str, str] = field(default_factory=dict)
     rewards: Dict[str, float] = field(default_factory=dict)
     usage_count: Dict[str, int] = field(default_factory=dict)
     success_rate: Dict[str, float] = field(default_factory=dict)
-    
+
     def add_pattern(self, pattern_id: str, pattern: str, reward: float):
         """Add or update a pattern."""
         self.patterns[pattern_id] = pattern
         self.rewards[pattern_id] = self.rewards.get(pattern_id, 0.0) + reward
         self.usage_count[pattern_id] = self.usage_count.get(pattern_id, 0) + 1
-        
+
         # Update success rate (reward > 0 = success)
         successes = sum(1 for r in [reward] if r > 0)
         self.success_rate[pattern_id] = successes / self.usage_count[pattern_id]
-    
+
     def get_best_patterns(self, n: int = 5) -> List[Tuple[str, str, float]]:
         """Get top N patterns by reward."""
         sorted_patterns = sorted(
@@ -77,11 +78,8 @@ class Policy:
             key=lambda x: self.rewards.get(x[0], 0.0),
             reverse=True,
         )
-        return [
-            (pid, pattern, self.rewards.get(pid, 0.0))
-            for pid, pattern in sorted_patterns[:n]
-        ]
-    
+        return [(pid, pattern, self.rewards.get(pid, 0.0)) for pid, pattern in sorted_patterns[:n]]
+
     def save(self, path: Path):
         """Save policy to file."""
         data = {
@@ -92,17 +90,17 @@ class Policy:
         }
         base_dir = path.parent if path.is_absolute() else None
         safe_path = validate_output_path(str(path), allow_overwrite=True, base_dir=base_dir)
-        with open(safe_path, 'w') as f:
+        with open(safe_path, "w") as f:
             json.dump(data, f, indent=2)
-    
+
     @classmethod
-    def load(cls, path: Path) -> 'Policy':
+    def load(cls, path: Path) -> "Policy":
         """Load policy from file."""
         base_dir = path.parent if path.is_absolute() else None
         safe_path = validate_input_path(str(path), must_exist=True, base_dir=base_dir)
-        with open(safe_path, 'r') as f:
+        with open(safe_path, "r") as f:
             data = json.load(f)
-        
+
         policy = cls()
         policy.patterns = data.get("patterns", {})
         policy.rewards = data.get("rewards", {})
@@ -113,15 +111,15 @@ class Policy:
 
 class ActorCriticOptimizer(AgenticOptimizer):
     """Actor-Critic optimization implementation.
-    
+
     This optimizer uses reinforcement learning with:
     - Actor: Proposes code changes based on learned patterns
     - Critic: Evaluates proposals and provides feedback
     - Learning: Improves over time based on success/failure
-    
+
     The optimizer learns which patterns work well and applies them
     to future optimization tasks.
-    
+
     Example:
         >>> from ipfs_datasets_py.llm_router import LLMRouter
         >>> router = LLMRouter()
@@ -138,7 +136,7 @@ class ActorCriticOptimizer(AgenticOptimizer):
         ... )
         >>> result = optimizer.optimize(task)
     """
-    
+
     def __init__(
         self,
         agent_id: str,
@@ -151,7 +149,7 @@ class ActorCriticOptimizer(AgenticOptimizer):
         logger: Optional[_logging.Logger] = None,
     ):
         """Initialize actor-critic optimizer.
-        
+
         Args:
             agent_id: Unique identifier for this agent
             llm_router: LLM router for text generation
@@ -166,83 +164,101 @@ class ActorCriticOptimizer(AgenticOptimizer):
         self.patch_manager = PatchManager()
         self.learning_rate = learning_rate
         self.exploration_rate = exploration_rate
-        
+
         # Load or initialize policy
         if policy_path and policy_path.exists():
             self.policy = Policy.load(policy_path)
         else:
             self.policy = Policy()
-        
+
         self.policy_path = policy_path or Path(f".optimizer-policy-{agent_id}.json")
-    
+
     def _get_method(self) -> OptimizationMethod:
         """Return the optimization method."""
         return OptimizationMethod.ACTOR_CRITIC
-    
+
     def optimize(self, task: OptimizationTask) -> OptimizationResult:
         """Perform actor-critic optimization.
-        
+
         Args:
             task: The optimization task to perform
-            
+
         Returns:
             OptimizationResult with success status and details
         """
         start_time = time.time()
-        
+
         try:
-            self._log.info("Starting actor-critic optimization", extra={
-                'task_id': task.task_id,
-                'agent_id': self.agent_id,
-                'learning_rate': self.learning_rate,
-                'exploration_rate': self.exploration_rate,
-            })
-            
+            self._log.info(
+                "Starting actor-critic optimization",
+                extra={
+                    "task_id": task.task_id,
+                    "agent_id": self.agent_id,
+                    "learning_rate": self.learning_rate,
+                    "exploration_rate": self.exploration_rate,
+                },
+            )
+
             # Step 1: Actor proposes change
             proposal = self._actor_propose(task)
-            self._log.debug("Actor proposed change", extra={
-                'task_id': task.task_id,
-                'proposal_id': proposal.get('id'),
-                'strategy': proposal.get('strategy'),
-                'pattern_id': proposal.get('pattern_id'),
-            })
-            
+            self._log.debug(
+                "Actor proposed change",
+                extra={
+                    "task_id": task.task_id,
+                    "proposal_id": proposal.get("id"),
+                    "strategy": proposal.get("strategy"),
+                    "pattern_id": proposal.get("pattern_id"),
+                },
+            )
+
             # Step 2: Critic evaluates proposal
             evaluation = self._critic_evaluate(proposal, task)
-            self._log.debug("Critic evaluated proposal", extra={
-                'task_id': task.task_id,
-                'reward': evaluation.get('reward', 0),
-                'correctness': evaluation.get('correctness', 0),
-                'performance': evaluation.get('performance', 0),
-            })
-            
+            self._log.debug(
+                "Critic evaluated proposal",
+                extra={
+                    "task_id": task.task_id,
+                    "reward": evaluation.get("reward", 0),
+                    "correctness": evaluation.get("correctness", 0),
+                    "performance": evaluation.get("performance", 0),
+                },
+            )
+
             # Step 3: Update policy based on feedback
             self._update_policy(proposal, evaluation)
-            self._log.debug("Updated policy", extra={
-                'task_id': task.task_id,
-                'policy_size': len(self.policy.patterns),
-            })
-            
+            self._log.debug(
+                "Updated policy",
+                extra={
+                    "task_id": task.task_id,
+                    "policy_size": len(self.policy.patterns),
+                },
+            )
+
             # Step 4: Validate if evaluation was positive
             if evaluation["reward"] > 0:
                 validation = self._validate_proposal(proposal, task.target_files)
-                self._log.info("Validated proposal", extra={
-                    'task_id': task.task_id,
-                    'validation_passed': validation.passed,
-                })
-                
+                self._log.info(
+                    "Validated proposal",
+                    extra={
+                        "task_id": task.task_id,
+                        "validation_passed": validation.passed,
+                    },
+                )
+
                 if validation.passed:
                     # Create patch
                     patch_path, patch_cid = self._create_patch(proposal, task)
-                    
+
                     execution_time = time.time() - start_time
-                    self._log.info("Optimization completed successfully", extra={
-                        'task_id': task.task_id,
-                        'total_time': execution_time,
-                        'reward': evaluation['reward'],
-                        'patch_path': str(patch_path) if patch_path else None,
-                    })
-                    
+                    self._log.info(
+                        "Optimization completed successfully",
+                        extra={
+                            "task_id": task.task_id,
+                            "total_time": execution_time,
+                            "reward": evaluation["reward"],
+                            "patch_path": str(patch_path) if patch_path else None,
+                        },
+                    )
+
                     return OptimizationResult(
                         task_id=task.task_id,
                         success=True,
@@ -260,15 +276,18 @@ class ActorCriticOptimizer(AgenticOptimizer):
                         execution_time=execution_time,
                         agent_id=self.agent_id,
                     )
-            
+
             # Proposal not good enough
             execution_time = time.time() - start_time
-            self._log.warning("Proposal rejected", extra={
-                'task_id': task.task_id,
-                'reward': evaluation['reward'],
-                'total_time': execution_time,
-            })
-            
+            self._log.warning(
+                "Proposal rejected",
+                extra={
+                    "task_id": task.task_id,
+                    "reward": evaluation["reward"],
+                    "total_time": execution_time,
+                },
+            )
+
             return OptimizationResult(
                 task_id=task.task_id,
                 success=False,
@@ -283,7 +302,7 @@ class ActorCriticOptimizer(AgenticOptimizer):
                 agent_id=self.agent_id,
                 error_message="Proposal did not meet quality threshold",
             )
-            
+
         except (
             AttributeError,
             OSError,
@@ -293,13 +312,17 @@ class ActorCriticOptimizer(AgenticOptimizer):
             KeyError,
         ) as e:
             execution_time = time.time() - start_time
-            self._log.error("Optimization failed", extra={
-                'task_id': task.task_id,
-                'error_type': type(e).__name__,
-                'error_message': str(e),
-                'total_time': execution_time,
-            }, exc_info=True)
-            
+            self._log.error(
+                "Optimization failed",
+                extra={
+                    "task_id": task.task_id,
+                    "error_type": type(e).__name__,
+                    "error_message": str(e),
+                    "total_time": execution_time,
+                },
+                exc_info=True,
+            )
+
             return OptimizationResult(
                 task_id=task.task_id,
                 success=False,
@@ -314,21 +337,21 @@ class ActorCriticOptimizer(AgenticOptimizer):
         finally:
             # Save policy after each optimization
             self._save_policy()
-    
+
     def _actor_propose(self, task: OptimizationTask) -> Dict[str, Any]:
         """Actor proposes a code change.
-        
+
         Args:
             task: Optimization task
-            
+
         Returns:
             Proposal dictionary with code and metadata
         """
         import random
-        
+
         # Decide: exploit learned patterns or explore new ones
         explore = random.random() < self.exploration_rate
-        
+
         if explore or not self.policy.patterns:
             # Explore: Generate new proposal using LLM
             proposal = self._generate_new_proposal(task)
@@ -337,22 +360,22 @@ class ActorCriticOptimizer(AgenticOptimizer):
             # Exploit: Use learned patterns
             proposal = self._generate_from_policy(task)
             proposal["strategy"] = "exploit"
-        
+
         return proposal
-    
+
     def _generate_new_proposal(self, task: OptimizationTask) -> Dict[str, Any]:
         """Generate new proposal by exploring.
-        
+
         Args:
             task: Optimization task
-            
+
         Returns:
             Proposal dictionary
         """
         prompt = f"""Propose an optimization for the following task:
 
 Task: {task.description}
-Target files: {', '.join(str(f) for f in task.target_files)}
+Target files: {", ".join(str(f) for f in task.target_files)}
 
 Requirements:
 1. Improve performance or code quality
@@ -361,21 +384,21 @@ Requirements:
 4. Follow best practices
 
 Generate optimized code with explanation."""
-        
+
         try:
             response = self.llm_router.generate(
                 prompt=prompt,
                 max_tokens=1500,
                 temperature=0.8,  # Higher temperature for exploration
             )
-            
+
             return {
                 "id": f"proposal-{int(time.time())}",
                 "code": self._extract_code(response),
                 "description": self._extract_description(response),
                 "pattern_id": None,  # New pattern
             }
-            
+
         except (
             AttributeError,
             OSError,
@@ -389,50 +412,50 @@ Generate optimized code with explanation."""
                 "description": f"Error generating proposal: {e}",
                 "pattern_id": None,
             }
-    
+
     def _generate_from_policy(self, task: OptimizationTask) -> Dict[str, Any]:
         """Generate proposal using learned policy.
-        
+
         Args:
             task: Optimization task
-            
+
         Returns:
             Proposal dictionary
         """
         # Get best patterns
         best_patterns = self.policy.get_best_patterns(n=3)
-        
+
         if not best_patterns:
             return self._generate_new_proposal(task)
-        
+
         # Use top pattern
         pattern_id, pattern_code, reward = best_patterns[0]
-        
+
         # Adapt pattern to current task using LLM
         prompt = f"""Adapt the following proven pattern to solve this task:
 
 Task: {task.description}
-Target files: {', '.join(str(f) for f in task.target_files)}
+Target files: {", ".join(str(f) for f in task.target_files)}
 
 Proven Pattern (reward: {reward:.2f}):
 {pattern_code}
 
 Generate adapted code that follows this pattern."""
-        
+
         try:
             response = self.llm_router.generate(
                 prompt=prompt,
                 max_tokens=1500,
                 temperature=0.5,  # Lower temperature for exploitation
             )
-            
+
             return {
                 "id": f"proposal-{int(time.time())}",
                 "code": self._extract_code(response),
                 "description": self._extract_description(response),
                 "pattern_id": pattern_id,
             }
-            
+
         except (
             AttributeError,
             OSError,
@@ -446,168 +469,164 @@ Generate adapted code that follows this pattern."""
                 "description": f"Using pattern {pattern_id}",
                 "pattern_id": pattern_id,
             }
-    
+
     def _critic_evaluate(
         self,
         proposal: Dict[str, Any],
         task: OptimizationTask,
     ) -> Dict[str, float]:
         """Critic evaluates the proposal.
-        
+
         Args:
             proposal: Proposal to evaluate
             task: Optimization task
-            
+
         Returns:
             Evaluation dictionary with scores
         """
         code = proposal["code"]
-        
+
         # Evaluate correctness (syntax, basic checks)
         correctness = self._evaluate_correctness(code)
-        
+
         # Evaluate performance (code quality indicators)
         performance = self._evaluate_performance(code)
-        
+
         # Evaluate style (follows best practices)
         style = self._evaluate_style(code)
-        
+
         # Calculate overall reward
-        reward = (
-            0.4 * correctness +
-            0.4 * performance +
-            0.2 * style
-        )
-        
+        reward = 0.4 * correctness + 0.4 * performance + 0.2 * style
+
         return {
             "correctness": correctness,
             "performance": performance,
             "style": style,
             "reward": reward,
         }
-    
+
     def _evaluate_correctness(self, code: str) -> float:
         """Evaluate code correctness.
-        
+
         Args:
             code: Code to evaluate
-            
+
         Returns:
             Score from 0.0 to 1.0
         """
         import ast
-        
+
         score = 0.0
-        
+
         # Check syntax
         try:
             ast.parse(code)
             score += 0.5
         except SyntaxError:
             return 0.0  # Syntax errors are fatal
-        
+
         # Check for common issues
         if "TODO" in code or "FIXME" in code:
             score -= 0.1
-        
+
         # Check for error handling
         if "try:" in code or "except" in code:
             score += 0.3
-        
+
         # Check for type hints
         if " -> " in code or ": " in code:
             score += 0.2
-        
+
         return min(1.0, max(0.0, score))
-    
+
     def _evaluate_performance(self, code: str) -> float:
         """Evaluate code performance indicators.
-        
+
         Args:
             code: Code to evaluate
-            
+
         Returns:
             Score from 0.0 to 1.0
         """
         score = 0.5  # Start at neutral
-        
+
         # Good patterns
         if "cache" in code.lower():
             score += 0.2
-        
+
         if "async " in code or "await " in code:
             score += 0.2
-        
+
         if "yield " in code:  # Generator usage
             score += 0.1
-        
+
         # Bad patterns
         if "global " in code:
             score -= 0.2
-        
+
         if code.count("for ") > 3:  # Nested loops
             score -= 0.1
-        
+
         return min(1.0, max(0.0, score))
-    
+
     def _evaluate_style(self, code: str) -> float:
         """Evaluate code style.
-        
+
         Args:
             code: Code to evaluate
-            
+
         Returns:
             Score from 0.0 to 1.0
         """
         score = 0.0
-        
+
         # Docstrings
         if '"""' in code or "'''" in code:
             score += 0.3
-        
+
         # Comments
-        comment_ratio = code.count('#') / max(len(code.split('\n')), 1)
+        comment_ratio = code.count("#") / max(len(code.split("\n")), 1)
         score += min(0.2, comment_ratio * 5)
-        
+
         # Naming (descriptive names)
         words = code.split()
         long_names = sum(1 for w in words if len(w) > 5)
         score += min(0.3, long_names / max(len(words), 1) * 3)
-        
+
         # Organization
         if "class " in code:
             score += 0.1
-        
+
         if "def " in code:
             score += 0.1
-        
+
         return min(1.0, score)
-    
+
     def _update_policy(
         self,
         proposal: Dict[str, Any],
         evaluation: Dict[str, float],
     ):
         """Update policy based on feedback.
-        
+
         Args:
             proposal: Proposal that was evaluated
             evaluation: Evaluation results
         """
         pattern_id = proposal.get("pattern_id")
         reward = evaluation["reward"]
-        
+
         # Create pattern ID if new
         if pattern_id is None:
             pattern_id = proposal["id"]
-        
+
         # Update policy with this experience
         self.policy.add_pattern(
             pattern_id=pattern_id,
             pattern=proposal["code"],
             reward=reward,
         )
-    
+
     def _save_policy(self):
         """Save current policy to disk."""
         try:
@@ -620,7 +639,7 @@ Generate adapted code that follows this pattern."""
             json.JSONDecodeError,
         ) as e:
             print(f"Warning: Failed to save policy: {e}")
-    
+
     def _extract_code(self, response: str) -> str:
         """Extract code from LLM response."""
         if "```python" in response:
@@ -628,34 +647,34 @@ Generate adapted code that follows this pattern."""
             if len(parts) > 1:
                 code = parts[1].split("```")[0]
                 return code.strip()
-        
+
         return response
-    
+
     def _extract_description(self, response: str) -> str:
         """Extract description from LLM response."""
         if "```python" in response:
             return response.split("```python")[0].strip()
-        
+
         return response[:200] + "..." if len(response) > 200 else response
-    
+
     def _validate_proposal(
         self,
         proposal: Dict[str, Any],
         target_files: List[Path],
     ) -> ValidationResult:
         """Validate the proposal.
-        
+
         Args:
             proposal: Proposal to validate
             target_files: Original target files
-            
+
         Returns:
             ValidationResult
         """
         import ast
-        
+
         errors = []
-        
+
         # Syntax check
         syntax_ok = True
         try:
@@ -663,26 +682,26 @@ Generate adapted code that follows this pattern."""
         except SyntaxError as e:
             syntax_ok = False
             errors.append(f"Syntax error: {e}")
-        
+
         validation = ValidationResult(
             passed=syntax_ok and len(errors) == 0,
             syntax_check=syntax_ok,
             errors=errors,
         )
-        
+
         return validation
-    
+
     def _create_patch(
         self,
         proposal: Dict[str, Any],
         task: OptimizationTask,
     ) -> Tuple[Optional[Path], Optional[str]]:
         """Create patch file for the proposal.
-        
+
         Args:
             proposal: Proposal to create patch for
             task: Optimization task
-            
+
         Returns:
             Tuple of (patch_path, patch_cid)
         """
@@ -694,10 +713,10 @@ Generate adapted code that follows this pattern."""
                 "method": "actor_critic",
                 "strategy": proposal.get("strategy", "unknown"),
             }
-            
+
             # Actual patch creation would go here
             return None, None
-            
+
         except (
             AttributeError,
             OSError,
@@ -731,10 +750,10 @@ class Policy:
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialize policy to dictionary for persistence.
-        
+
         Returns:
             Dictionary with policy pattern, success rate, average improvement, and usage count.
-            
+
         Example:
             >>> policy = Policy(pattern="refactor loops", success_rate=0.85)
             >>> policy.to_dict()
@@ -750,13 +769,13 @@ class Policy:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Policy":
         """Create Policy instance from dictionary.
-        
+
         Args:
             data: Dictionary containing pattern, success_rate, avg_improvement, and usage_count.
-            
+
         Returns:
             New Policy instance with values from the dictionary.
-            
+
         Example:
             >>> data = {'pattern': 'optimize imports', 'success_rate': 0.90}
             >>> policy = Policy.from_dict(data)
@@ -807,10 +826,10 @@ class ActorCriticOptimizer(AgenticOptimizer):
 
     def load_policies(self) -> None:
         """Load learned policies from persistent storage.
-        
+
         Reads policies from the JSON file specified in policy_file.
         If the file doesn't exist or is invalid, initializes empty policies.
-        
+
         Example:
             >>> optimizer = ActorCriticOptimizer(llm_router, policy_file="policies.json")
             >>> optimizer.load_policies()  # Loads from policies.json
@@ -839,10 +858,10 @@ class ActorCriticOptimizer(AgenticOptimizer):
 
     def save_policies(self) -> None:
         """Persist learned policies to disk.
-        
+
         Writes all policies to the JSON file specified in policy_file.
         Policies are serialized using Policy.to_dict().
-        
+
         Example:
             >>> optimizer.policies["pattern1"] = Policy("refactor loops", 0.85)
             >>> optimizer.save_policies()  # Saves to policy_file
@@ -855,11 +874,11 @@ class ActorCriticOptimizer(AgenticOptimizer):
 
     def get_best_policy(self) -> Optional[Policy]:
         """Retrieve the best-performing policy based on success rate.
-        
+
         Returns:
             The policy with highest success rate, then highest avg_improvement, then lowest usage_count.
             Returns None if no policies exist.
-            
+
         Example:
             >>> best = optimizer.get_best_policy()
             >>> if best:
@@ -867,7 +886,10 @@ class ActorCriticOptimizer(AgenticOptimizer):
         """
         if not self.policies:
             return None
-        return max(self.policies.values(), key=lambda p: (p.success_rate, p.avg_improvement, -p.usage_count))
+        return max(
+            self.policies.values(),
+            key=lambda p: (p.success_rate, p.avg_improvement, -p.usage_count),
+        )
 
     def actor_propose(
         self,
@@ -984,7 +1006,9 @@ class ActorCriticOptimizer(AgenticOptimizer):
         original_code = code or ""
         self._last_generation_diagnostics = []
 
-        proposal = self.actor_propose(task=task, code=original_code, baseline_metrics=baseline_metrics)
+        proposal = self.actor_propose(
+            task=task, code=original_code, baseline_metrics=baseline_metrics
+        )
         self._last_generation_diagnostics = [
             {
                 "file": ",".join(str(path) for path in (task.target_files or [])),
@@ -1005,7 +1029,9 @@ class ActorCriticOptimizer(AgenticOptimizer):
         self._last_generation_diagnostics[0]["correctness_score"] = feedback.correctness_score
         self._last_generation_diagnostics[0]["overall_score"] = feedback.overall_score
         if not accepted:
-            self._last_generation_diagnostics[0]["error_message"] = "Proposal did not meet quality threshold"
+            self._last_generation_diagnostics[0]["error_message"] = (
+                "Proposal did not meet quality threshold"
+            )
 
         return OptimizationResult(
             task_id=task.task_id,

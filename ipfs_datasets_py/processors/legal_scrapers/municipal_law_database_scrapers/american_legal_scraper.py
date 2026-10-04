@@ -4,6 +4,7 @@ American Legal Publishing Webscraper
 This module provides functions for scraping municipal codes from American Legal Publishing
 (codelibrary.amlegal.com), a major provider of municipal code content for 2,180+ US jurisdictions.
 """
+
 from typing import Any, Dict, Optional
 import anyio
 from datetime import datetime
@@ -27,21 +28,21 @@ async def search_jurisdictions(
     state: Optional[str] = None,
     jurisdiction: Optional[str] = None,
     keywords: Optional[str] = None,
-    limit: int = 100
+    limit: int = 100,
 ) -> Dict[str, Any]:
     """
     Search for jurisdictions in American Legal Publishing.
-    
+
     Searches the American Legal Publishing database for jurisdictions matching the specified
     criteria. Can filter by state code, jurisdiction name, or keywords. Returns a
     list of matching jurisdictions with their metadata.
-    
+
     Args:
         state (str, optional): Two-letter state code to filter by (e.g., "WA", "CA").
         jurisdiction (str, optional): Full or partial jurisdiction name to search for.
         keywords (str, optional): Keywords to search across jurisdiction data.
         limit (int, optional): Maximum number of results to return. Defaults to 100.
-    
+
     Returns:
         dict: A dictionary containing:
             - jurisdictions (list): List of jurisdiction dictionaries, each with:
@@ -53,12 +54,12 @@ async def search_jurisdictions(
                 - provider (str): Always "american_legal"
             - total (int): Total number of matching jurisdictions
             - limit (int): Applied limit value
-    
+
     Raises:
         ValueError: If state code is invalid or limit is negative.
         ConnectionError: If unable to connect to American Legal Publishing.
         TimeoutError: If the request times out.
-    
+
     Example:
         >>> import anyio
         >>> async def example():
@@ -73,7 +74,7 @@ async def search_jurisdictions(
     """
     base_url = "https://codelibrary.amlegal.com"
     jurisdictions_list = []
-    
+
     try:
         # Build search URL
         search_url = f"{base_url}/codes"
@@ -82,22 +83,22 @@ async def search_jurisdictions(
         if status != 200:
             raise ConnectionError(f"Failed to connect to American Legal Publishing: HTTP {status}")
 
-        soup = BeautifulSoup(html, 'html.parser')
+        soup = BeautifulSoup(html, "html.parser")
 
         # Parse jurisdictions from the page
-        links = soup.find_all('a', href=re.compile(r'^/codes/'))
+        links = soup.find_all("a", href=re.compile(r"^/codes/"))
 
         for link in links:
-            if not hasattr(link, 'get'):
+            if not hasattr(link, "get"):
                 continue
-            href = str(link.get('href', '')) if link.get('href') else ''
+            href = str(link.get("href", "")) if link.get("href") else ""
             text = link.get_text(strip=True)
 
             if not href or not text:
                 continue
 
             # Extract state from link text like "Seattle, WA"
-            text_parts = [p.strip() for p in text.split(',')]
+            text_parts = [p.strip() for p in text.split(",")]
             text_state = text_parts[-1].upper() if len(text_parts) >= 2 else ""
 
             if state and text_state != state.upper():
@@ -106,19 +107,25 @@ async def search_jurisdictions(
             if jurisdiction and jurisdiction.lower() not in text.lower():
                 continue
 
-            if keywords and keywords.lower() not in text.lower() and keywords.lower() not in href.lower():
+            if (
+                keywords
+                and keywords.lower() not in text.lower()
+                and keywords.lower() not in href.lower()
+            ):
                 continue
 
-            full_url = f"{base_url}{href}" if not href.startswith('http') else href
+            full_url = f"{base_url}{href}" if not href.startswith("http") else href
 
-            jurisdictions_list.append({
-                "name": text,
-                "state": text_state,
-                "url": full_url,
-                "code_url": full_url,
-                "provider": "american_legal",
-                "last_updated": datetime.now().isoformat() + "Z"
-            })
+            jurisdictions_list.append(
+                {
+                    "name": text,
+                    "state": text_state,
+                    "url": full_url,
+                    "code_url": full_url,
+                    "provider": "american_legal",
+                    "last_updated": datetime.now().isoformat() + "Z",
+                }
+            )
 
             if len(jurisdictions_list) >= limit:
                 break
@@ -127,36 +134,31 @@ async def search_jurisdictions(
         raise TimeoutError("Request timed out")
     except (aiohttp.ClientError, ConnectionError) as e:
         raise ConnectionError(f"Unable to connect to American Legal Publishing: {e}")
-    
-    return {
-        "jurisdictions": jurisdictions_list,
-        "total": len(jurisdictions_list),
-        "limit": limit
-    }
+
+    return {"jurisdictions": jurisdictions_list, "total": len(jurisdictions_list), "limit": limit}
 
 
 async def get_american_legal_jurisdictions(
-    state: Optional[str] = None,
-    limit: Optional[int] = None
+    state: Optional[str] = None, limit: Optional[int] = None
 ) -> list[str]:
     """
     Retrieve a list of available jurisdictions from American Legal Publishing.
-    
+
     Fetches all jurisdictions available in American Legal Publishing, optionally filtered
     by state. This is a convenience function that returns a simplified list of
     jurisdictions suitable for batch processing.
-    
+
     Args:
         state (str, optional): Two-letter state code to filter jurisdictions.
         limit (int, optional): Maximum number of jurisdictions to return.
-    
+
     Returns:
         list: List of jurisdiction strings in format "City, ST" (e.g., "Seattle, WA").
-    
+
     Raises:
         ConnectionError: If unable to connect to American Legal Publishing.
         ValueError: If state code is invalid.
-    
+
     Example:
         >>> import anyio
         >>> async def example():
@@ -172,24 +174,22 @@ async def get_american_legal_jurisdictions(
 
 
 async def scrape_jurisdiction(
-    jurisdiction_url: str,
-    include_metadata: bool = False,
-    max_sections: Optional[int] = None
+    jurisdiction_url: str, include_metadata: bool = False, max_sections: Optional[int] = None
 ) -> Dict[str, Any]:
     """
     Scrape code sections from a single jurisdiction.
-    
+
     Extracts all code sections from a specific jurisdiction in American Legal Publishing.
     Each section includes the title, content, section number, and optional metadata
     such as history notes and cross-references.
-    
+
     Args:
         jurisdiction_url (str): Full URL to the jurisdiction's code library.
         include_metadata (bool, optional): Whether to include metadata fields like
             history, cross_references, and annotations. Defaults to False.
         max_sections (int, optional): Maximum number of sections to scrape. Useful
             for testing or partial scraping. Defaults to None (scrape all).
-    
+
     Returns:
         dict: A dictionary containing:
             - jurisdiction (str): Name of the jurisdiction
@@ -204,13 +204,13 @@ async def scrape_jurisdiction(
             - total_sections (int): Total number of sections scraped
             - timestamp (str): ISO 8601 timestamp when scraped
             - provider (str): Always "american_legal"
-    
+
     Raises:
         ValueError: If jurisdiction_url is invalid or malformed.
         ConnectionError: If unable to connect to the jurisdiction URL.
         TimeoutError: If the request times out.
         HTTPError: If the server returns an error response.
-    
+
     Example:
         >>> import anyio
         >>> async def example():
@@ -226,14 +226,14 @@ async def scrape_jurisdiction(
     """
     if not jurisdiction_url:
         raise ValueError("jurisdiction_url is required")
-    
-    if not jurisdiction_url.startswith('http'):
+
+    if not jurisdiction_url.startswith("http"):
         raise ValueError("jurisdiction_url must be a valid HTTP(S) URL")
-    
+
     sections_list = []
     jurisdiction_name = "Seattle, WA"  # Default
     scraped_at = datetime.utcnow().isoformat() + "Z"
-    
+
     try:
         status, html = await _fetch_url(jurisdiction_url, timeout_seconds=30)
 
@@ -243,7 +243,7 @@ async def scrape_jurisdiction(
                 "url": jurisdiction_url,
                 "sections": [],
                 "error": "Jurisdiction not found",
-                "error_type": "not_found"
+                "error_type": "not_found",
             }
         if status == 429:
             return {
@@ -251,7 +251,7 @@ async def scrape_jurisdiction(
                 "url": jurisdiction_url,
                 "sections": [],
                 "error": "Rate limit exceeded",
-                "error_type": "rate_limit"
+                "error_type": "rate_limit",
             }
         if status >= 500:
             return {
@@ -259,7 +259,7 @@ async def scrape_jurisdiction(
                 "url": jurisdiction_url,
                 "sections": [],
                 "error": "Server error",
-                "error_type": "server_error"
+                "error_type": "server_error",
             }
         if status != 200:
             return {
@@ -267,22 +267,22 @@ async def scrape_jurisdiction(
                 "url": jurisdiction_url,
                 "sections": [],
                 "error": f"HTTP error {status}",
-                "error_type": "http_error"
+                "error_type": "http_error",
             }
 
-        soup = BeautifulSoup(html, 'html.parser')
+        soup = BeautifulSoup(html, "html.parser")
 
         # Parse sections from HTML
-        h1_tags = soup.find_all('h1')
+        h1_tags = soup.find_all("h1")
 
         for h1 in h1_tags:
             text = h1.get_text(strip=True)
-            match = re.match(r'([\d\.]+)\s+(.*)', text)
+            match = re.match(r"([\d\.]+)\s+(.*)", text)
             if match:
                 section_number = match.group(1)
                 title = match.group(2)
 
-                content_elem = h1.find_next('div')
+                content_elem = h1.find_next("div")
                 content = content_elem.get_text(strip=True) if content_elem else "Section content"
 
                 section = {
@@ -306,7 +306,7 @@ async def scrape_jurisdiction(
             "url": jurisdiction_url,
             "sections": [],
             "error": "DNS resolution failed",
-            "error_type": "dns"
+            "error_type": "dns",
         }
     except TimeoutError:
         return {
@@ -314,28 +314,30 @@ async def scrape_jurisdiction(
             "url": jurisdiction_url,
             "sections": [],
             "error": "Request timed out",
-            "error_type": "timeout"
+            "error_type": "timeout",
         }
     except Exception as e:
         # Handle malformed HTML or other parsing errors gracefully
         import logging
+
         logger = logging.getLogger(__name__)
         logger.error(f"Error scraping jurisdiction {jurisdiction_url}: {e}")
-        sections_list = sections_list if 'sections_list' in locals() else []
-    
+        sections_list = sections_list if "sections_list" in locals() else []
+
     result = {
         "jurisdiction": jurisdiction_name,
         "url": jurisdiction_url,
         "sections": sections_list,
         "total_sections": len(sections_list),
         "timestamp": scraped_at,
-        "provider": "american_legal"
+        "provider": "american_legal",
     }
-    
+
     if include_metadata:
         result["metadata"] = {"include_metadata": True}
-    
+
     return result
+
 
 async def batch_scrape(
     jurisdictions: Optional[list[str]] = None,
@@ -344,16 +346,16 @@ async def batch_scrape(
     include_metadata: bool = False,
     rate_limit_delay: float = 2.0,
     max_jurisdictions: Optional[int] = None,
-    max_sections_per_jurisdiction: Optional[int] = None
+    max_sections_per_jurisdiction: Optional[int] = None,
 ) -> Dict[str, Any]:
     """
     Scrape multiple jurisdictions in batch mode.
-    
+
     Performs bulk scraping of multiple jurisdictions with rate limiting and
     configurable output formats. Can scrape specific jurisdictions or all
     jurisdictions in specified states. Includes built-in rate limiting to
     respect server resources.
-    
+
     Args:
         jurisdictions (list, optional): List of jurisdiction identifiers in format
             "City, ST" (e.g., ["Seattle, WA", "Portland, OR"]).
@@ -369,7 +371,7 @@ async def batch_scrape(
             Useful for testing. Defaults to None (scrape all).
         max_sections_per_jurisdiction (int, optional): Maximum sections to scrape
             per jurisdiction. Defaults to None (scrape all).
-    
+
     Returns:
         dict: A dictionary containing:
             - results (list): List of jurisdiction results, each following the
@@ -383,13 +385,13 @@ async def batch_scrape(
                 - provider (str): Always "american_legal"
             - output_format (str): Format of the results
             - errors (list): List of any errors encountered during scraping
-    
+
     Raises:
         ValueError: If both jurisdictions and states are None, or if output_format
             is invalid.
         ConnectionError: If unable to connect to American Legal Publishing.
         TimeoutError: If requests consistently timeout.
-    
+
     Example:
         >>> import anyio
         >>> async def example():
@@ -411,65 +413,58 @@ async def batch_scrape(
     """
     # Validate inputs
     if not jurisdictions and not states:
-        return {
-            "error": "Either jurisdictions or states must be provided",
-            "data": []
-        }
-    
+        return {"error": "Either jurisdictions or states must be provided", "data": []}
+
     scraped_at = datetime.utcnow().isoformat() + "Z"
     data_list = []
-    
+
     # Build list of jurisdictions to scrape
     jurisdictions_to_scrape = []
-    
+
     if jurisdictions:
         jurisdictions_to_scrape = jurisdictions
     elif states:
         # Get jurisdictions for each state
         for state in states:
             state_jurisdictions = await get_american_legal_jurisdictions(
-                state=state,
-                limit=max_jurisdictions
+                state=state, limit=max_jurisdictions
             )
             jurisdictions_to_scrape.extend(state_jurisdictions)
-    
+
     # Apply max_jurisdictions limit
     if max_jurisdictions:
         jurisdictions_to_scrape = jurisdictions_to_scrape[:max_jurisdictions]
-    
+
     # Scrape each jurisdiction
     for jurisdiction_name in jurisdictions_to_scrape:
         # Convert jurisdiction name to URL
         # Format: "Seattle, WA" -> "https://codelibrary.amlegal.com/codes/seattle"
-        city_part = jurisdiction_name.split(',')[0].strip().lower().replace(' ', '')
+        city_part = jurisdiction_name.split(",")[0].strip().lower().replace(" ", "")
         jurisdiction_url = f"https://codelibrary.amlegal.com/codes/{city_part}"
-        
+
         result = await scrape_jurisdiction(
             jurisdiction_url=jurisdiction_url,
             include_metadata=include_metadata,
-            max_sections=max_sections_per_jurisdiction
+            max_sections=max_sections_per_jurisdiction,
         )
-        
+
         # Override jurisdiction name with the actual name
         result["jurisdiction"] = jurisdiction_name
-        
+
         data_list.append(result)
-        
+
         # Apply rate limiting between requests
         if len(data_list) < len(jurisdictions_to_scrape):
             await anyio.sleep(rate_limit_delay)
-    
-    response = {
-        "data": data_list,
-        "output_format": output_format
-    }
-    
+
+    response = {"data": data_list, "output_format": output_format}
+
     # Add metadata if requested
     if include_metadata:
         response["metadata"] = {
             "scraped_at": scraped_at,
             "jurisdictions_count": len(data_list),
-            "provider": "american_legal"
+            "provider": "american_legal",
         }
-    
+
     return response

@@ -8,6 +8,7 @@ Methods under test:
   - OntologyLearningAdapter.feedback_scores()
   - OntologyLearningAdapter.domain_threshold_delta()
 """
+
 import pytest
 from unittest.mock import MagicMock
 
@@ -16,15 +17,20 @@ from unittest.mock import MagicMock
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_mediator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import OntologyMediator
+
     gen = MagicMock()
     critic = MagicMock()
     return OntologyMediator(generator=gen, critic=critic)
 
 
 def _make_adapter(base_threshold=0.5):
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter(base_threshold=base_threshold)
 
 
@@ -35,6 +41,7 @@ def _push_feedback(adapter, score):
 # ---------------------------------------------------------------------------
 # OntologyMediator.action_frequency
 # ---------------------------------------------------------------------------
+
 
 class TestActionFrequency:
     def test_empty(self):
@@ -65,6 +72,7 @@ class TestActionFrequency:
 # OntologyMediator.has_actions
 # ---------------------------------------------------------------------------
 
+
 class TestHasActions:
     def test_empty_is_false(self):
         m = _make_mediator()
@@ -86,6 +94,7 @@ class TestHasActions:
 # OntologyMediator.action_diversity
 # ---------------------------------------------------------------------------
 
+
 class TestActionDiversity:
     def test_empty_is_zero(self):
         m = _make_mediator()
@@ -105,6 +114,7 @@ class TestActionDiversity:
 # ---------------------------------------------------------------------------
 # OntologyLearningAdapter.all_feedback_above
 # ---------------------------------------------------------------------------
+
 
 class TestAllFeedbackAbove:
     def test_empty_is_true(self):
@@ -127,6 +137,7 @@ class TestAllFeedbackAbove:
 # ---------------------------------------------------------------------------
 # OntologyLearningAdapter.feedback_scores
 # ---------------------------------------------------------------------------
+
 
 class TestFeedbackScores:
     def test_empty(self):
@@ -151,6 +162,7 @@ class TestFeedbackScores:
 # ---------------------------------------------------------------------------
 # OntologyLearningAdapter.domain_threshold_delta
 # ---------------------------------------------------------------------------
+
 
 class TestDomainThresholdDelta:
     def test_no_feedback_is_zero(self):

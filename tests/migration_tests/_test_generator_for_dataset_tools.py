@@ -26,11 +26,15 @@ try:
     from ipfs_datasets_py.mcp_server.tools.dataset_tools.load_dataset import load_dataset
     from ipfs_datasets_py.mcp_server.tools.dataset_tools.save_dataset import save_dataset
     from ipfs_datasets_py.mcp_server.tools.dataset_tools.process_dataset import process_dataset
-    from ipfs_datasets_py.mcp_server.tools.dataset_tools.convert_dataset_format import convert_dataset_format
+    from ipfs_datasets_py.mcp_server.tools.dataset_tools.convert_dataset_format import (
+        convert_dataset_format,
+    )
+
     DATASET_TOOLS_AVAILABLE = True
 except ImportError as e:
     print(f"Error importing Dataset tools: {e}")
     DATASET_TOOLS_AVAILABLE = False
+
 
 # Function to analyze the function signature
 def analyze_function_signature(func):
@@ -44,11 +48,7 @@ def analyze_function_signature(func):
             if "ForwardRef" in param_type:
                 param_type = param_type.split("'")[1]
         default = param.default if param.default != inspect.Parameter.empty else None
-        params.append({
-            'name': name,
-            'type': param_type,
-            'default': default
-        })
+        params.append({"name": name, "type": param_type, "default": default})
     return_type = sig.return_annotation
     if return_type != inspect.Signature.empty:
         return_type = str(return_type).replace("typing.", "").replace("'", "")
@@ -57,6 +57,7 @@ def analyze_function_signature(func):
     else:
         return_type = "Any"
     return params, return_type
+
 
 # Create a test class for load_dataset
 def generate_load_dataset_test():
@@ -155,6 +156,7 @@ class TestLoadDataset:
         print(f"Error generating test for load_dataset: {e}")
         return None
 
+
 # Create a test class for save_dataset
 def generate_save_dataset_test():
     try:
@@ -227,6 +229,7 @@ class TestSaveDataset:
     except Exception as e:
         print(f"Error generating test for save_dataset: {e}")
         return None
+
 
 # Create a test class for process_dataset
 def generate_process_dataset_test():
@@ -335,6 +338,7 @@ class TestProcessDataset:
     except Exception as e:
         print(f"Error generating test for process_dataset: {e}")
         return None
+
 
 # Create a test class for convert_dataset_format
 def generate_convert_dataset_format_test():
@@ -475,6 +479,7 @@ class TestConvertDatasetFormat:
         print(f"Error generating test for convert_dataset_format: {e}")
         return None
 
+
 # Generate the test file
 def generate_test_file():
     load_dataset_test = generate_load_dataset_test()
@@ -521,11 +526,13 @@ import pytest
 
     print(f"Generated test file: {test_file_path}")
 
+
 # Main function
 def main():
     print("Generating tests for Dataset tools...")
     generate_test_file()
     print("Done!")
+
 
 if __name__ == "__main__":
     main()

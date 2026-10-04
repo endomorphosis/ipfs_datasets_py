@@ -55,10 +55,10 @@ async def detect_query_language(
         lang = ml.detect_language(query)
 
         result: Dict[str, Any] = {
-            "status":            "success",
+            "status": "success",
             "detected_language": lang,
-            "confidence":        1.0,
-            "query":             query,
+            "confidence": 1.0,
+            "query": query,
         }
 
         if return_probabilities and hasattr(ml, "detect_language_with_probabilities"):
@@ -117,13 +117,13 @@ async def translate_legal_query(
         )
 
         return {
-            "status":           "success",
-            "original_query":   query,
+            "status": "success",
+            "original_query": query,
             "translated_query": tr.translated_text,
-            "source_language":  tr.source_lang,
-            "target_language":  tr.target_lang,
-            "confidence":       getattr(tr, "confidence", 1.0),
-            "preserved_terms":  getattr(tr, "preserved_terms", []),
+            "source_language": tr.source_lang,
+            "target_language": tr.target_lang,
+            "confidence": getattr(tr, "confidence", 1.0),
+            "preserved_terms": getattr(tr, "preserved_terms", []),
         }
 
     except ImportError as exc:
@@ -191,16 +191,16 @@ async def cross_language_legal_search(
         )
 
         results_by_lang = search_result.get("results_by_language", {})
-        total_results   = sum(len(v) for v in results_by_lang.values())
+        total_results = sum(len(v) for v in results_by_lang.values())
 
         return {
-            "status":                "success",
-            "original_query":        query,
-            "query_language":        query_language,
-            "results_by_language":   results_by_lang,
-            "total_results":         total_results,
-            "languages_searched":    languages,
-            "translated_queries":    search_result.get("translated_queries", {}),
+            "status": "success",
+            "original_query": query,
+            "query_language": query_language,
+            "results_by_language": results_by_lang,
+            "total_results": total_results,
+            "languages_searched": languages,
+            "translated_queries": search_result.get("translated_queries", {}),
         }
 
     except ImportError as exc:
@@ -257,10 +257,10 @@ async def get_legal_term_translations(
             translations[target_lang] = tr.translated_text
 
         return {
-            "status":          "success",
-            "original_term":   term,
+            "status": "success",
+            "original_term": term,
             "source_language": source_language,
-            "translations":    translations,
+            "translations": translations,
         }
 
     except ImportError as exc:

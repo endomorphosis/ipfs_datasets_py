@@ -4,6 +4,7 @@ MCP tool for recording audit events.
 
 This tool handles recording audit events for security, compliance, and operations tracking.
 """
+
 import anyio
 import json
 from typing import Dict, Any, Optional, Union, List
@@ -11,7 +12,7 @@ from typing import Dict, Any, Optional, Union, List
 import logging
 
 logger = logging.getLogger(__name__)
-from ipfs_datasets_py.audit import AuditLogger # Added import
+from ipfs_datasets_py.audit import AuditLogger  # Added import
 
 from ipfs_datasets_py.mcp_server.tools.mcp_helpers import (
     mcp_error_response,
@@ -19,7 +20,8 @@ from ipfs_datasets_py.mcp_server.tools.mcp_helpers import (
     parse_json_object,
 )
 
-async def record_audit_event( # Changed to async def
+
+async def record_audit_event(  # Changed to async def
     action: str,
     resource_id: Optional[str] = None,
     resource_type: Optional[str] = None,
@@ -27,7 +29,7 @@ async def record_audit_event( # Changed to async def
     details: Optional[Dict[str, Any]] = None,
     source_ip: Optional[str] = None,
     severity: str = "info",
-    tags: Optional[List[str]] = None
+    tags: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """
     Record an audit event for security, compliance, and operations tracking.
@@ -86,10 +88,7 @@ async def record_audit_event( # Changed to async def
         audit_logger = AuditLogger.get_instance()
 
         # Prepare the event
-        event = {
-            "action": action,
-            "severity": severity
-        }
+        event = {"action": action, "severity": severity}
 
         if resource_id:
             event["resource_id"] = resource_id
@@ -118,7 +117,7 @@ async def record_audit_event( # Changed to async def
             "warning": AuditLevel.WARNING,
             "error": AuditLevel.ERROR,
             "critical": AuditLevel.CRITICAL,
-            "debug": AuditLevel.DEBUG
+            "debug": AuditLevel.DEBUG,
         }
 
         audit_level = severity_map.get(severity.lower(), AuditLevel.INFO)
@@ -132,7 +131,7 @@ async def record_audit_event( # Changed to async def
             resource_id=resource_id,
             resource_type=resource_type,
             details=details,
-            client_ip=source_ip
+            client_ip=source_ip,
         )
 
         # Return information about the recorded event
@@ -142,18 +141,14 @@ async def record_audit_event( # Changed to async def
             "action": action,
             "severity": severity,
             "resource_id": resource_id,
-            "resource_type": resource_type
+            "resource_type": resource_type,
         }
         if mcp_mode:
             return mcp_text_response(result)
         return result
     except Exception as e:
         logger.error(f"Error recording audit event: {e}")
-        result = {
-            "status": "error",
-            "error": str(e),
-            "action": action
-        }
+        result = {"status": "error", "error": str(e), "action": action}
         if mcp_mode:
             return mcp_text_response(result)
         return result

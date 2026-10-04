@@ -4,11 +4,13 @@ Test stubs for resilient_operations module.
 Feature: Resilient Operations
   Fault-tolerant operations with retry and recovery
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def a_retryable_operation():
@@ -92,6 +94,7 @@ def operations_with_health_monitoring():
 
 
 # Test scenarios
+
 
 def test_execute_operation_with_retry():
     """
@@ -204,6 +207,7 @@ def test_monitor_operation_health():
 
 
 # Step definitions
+
 
 # Given steps
 @given("a retryable operation")
@@ -409,4 +413,3 @@ def transient_errors_are_retried():
     """Step: Then transient errors are retried"""
     # TODO: Implement step
     pass
-

@@ -4,11 +4,13 @@ Test stubs for content_discovery module.
 Feature: Content Discovery
   Discover and index content across sources
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def a_content_item():
@@ -74,6 +76,7 @@ def filtering_criteria():
 
 
 # Test scenarios
+
 
 def test_discover_content_from_source():
     """
@@ -164,6 +167,7 @@ def test_filter_content_by_criteria():
 
 
 # Step definitions
+
 
 # Given steps
 @given("a content item")
@@ -327,4 +331,3 @@ def only_unique_items_are_retained():
     """Step: Then only unique items are retained"""
     # TODO: Implement step
     pass
-

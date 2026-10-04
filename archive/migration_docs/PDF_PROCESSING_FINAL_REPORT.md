@@ -168,12 +168,11 @@ print(f"Document processed: {result['document_id']}")
 
 ### MCP Tool Usage
 ```python
-from ipfs_datasets_py.mcp_server.tools.pdf_tools.pdf_ingest_to_graphrag import pdf_ingest_to_graphrag
+from ipfs_datasets_py.mcp_server.tools.pdf_tools.pdf_ingest_to_graphrag import (
+    pdf_ingest_to_graphrag,
+)
 
-request = {
-    "pdf_path": "research_paper.pdf",
-    "options": {"enable_llm_optimization": True}
-}
+request = {"pdf_path": "research_paper.pdf", "options": {"enable_llm_optimization": True}}
 result = await pdf_ingest_to_graphrag(json.dumps(request))
 ```
 
@@ -183,7 +182,7 @@ from ipfs_datasets_py.mcp_server.tools.pdf_tools.pdf_query_corpus import pdf_que
 
 query = {
     "query": "What is the relationship between IPFS and peer-to-peer networks?",
-    "query_type": "semantic_search"
+    "query_type": "semantic_search",
 }
 results = await pdf_query_corpus(json.dumps(query))
 ```

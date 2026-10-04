@@ -125,6 +125,7 @@ def __getattr__(name: str):
             FLogicOptimizerResult,
             OntologyViolation,
         )
+
         _locals = {
             "FLogicSemanticOptimizer": FLogicSemanticOptimizer,
             "FLogicOptimizerConfig": FLogicOptimizerConfig,

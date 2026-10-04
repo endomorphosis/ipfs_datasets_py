@@ -6,6 +6,7 @@ Covers:
 - OntologyMediator rename_entity action
 - Snapshot test for known-good critic scores
 """
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock
@@ -17,20 +18,20 @@ import pytest
 # ValidationResult.invalid_entity_ids
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestValidationResultInvalidEntityIds:
     """invalid_entity_ids should be populated by _basic_consistency_check."""
 
     @pytest.fixture
     def validator(self):
         from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
         return LogicValidator(use_cache=False)
 
     def test_invalid_entity_ids_empty_on_valid_ontology(self, validator):
         ontology = {
             "entities": [{"id": "e1", "text": "Alice", "type": "Person"}],
-            "relationships": [
-                {"id": "r1", "source_id": "e1", "target_id": "e1", "type": "self"}
-            ],
+            "relationships": [{"id": "r1", "source_id": "e1", "target_id": "e1", "type": "self"}],
         }
         result = validator._basic_consistency_check(ontology)
         assert result.invalid_entity_ids == []
@@ -92,18 +93,19 @@ class TestValidationResultInvalidEntityIds:
 # OntologyGenerator.batch_extract
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestBatchExtract:
     """batch_extract() should return one result per document."""
 
     @pytest.fixture
     def generator_ctx(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
-            OntologyGenerator, OntologyGenerationContext,
+            OntologyGenerator,
+            OntologyGenerationContext,
         )
+
         gen = OntologyGenerator()
-        ctx = OntologyGenerationContext(
-            data_source="test", data_type="text", domain="general"
-        )
+        ctx = OntologyGenerationContext(data_source="test", data_type="text", domain="general")
         return gen, ctx
 
     def test_returns_list_of_same_length(self, generator_ctx):
@@ -114,6 +116,7 @@ class TestBatchExtract:
 
     def test_all_results_are_extraction_results(self, generator_ctx):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
         gen, ctx = generator_ctx
         docs = ["Alice.", "Bob.", "Carol."]
         results = gen.batch_extract(docs, ctx)
@@ -155,6 +158,7 @@ class TestBatchExtract:
 # rename_entity action
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestRenameEntityAction:
     """Mediator rename_entity action normalises entity text to Title Case."""
 
@@ -163,6 +167,7 @@ class TestRenameEntityAction:
         from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import OntologyMediator
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
         return OntologyMediator(
             generator=OntologyGenerator(),
             critic=OntologyCritic(use_llm=False),
@@ -223,6 +228,7 @@ class TestRenameEntityAction:
 # Snapshot test — freeze known-good critic scores
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestCriticScoreSnapshot:
     """Freeze known-good critic scores for a reference ontology.
 
@@ -234,33 +240,78 @@ class TestCriticScoreSnapshot:
     # Reference ontology chosen to be well-formed and domain-rich
     REFERENCE_ONTOLOGY = {
         "entities": [
-            {"id": "e1", "text": "Alice", "type": "Person", "confidence": 0.9,
-             "properties": {"role": "engineer"}},
-            {"id": "e2", "text": "Bob", "type": "Person", "confidence": 0.85,
-             "properties": {"role": "manager"}},
-            {"id": "e3", "text": "Acme Corp", "type": "Organization", "confidence": 0.95,
-             "properties": {"industry": "tech"}},
-            {"id": "e4", "text": "London", "type": "Location", "confidence": 0.88,
-             "properties": {"country": "UK"}},
-            {"id": "e5", "text": "Software", "type": "Concept", "confidence": 0.7,
-             "properties": {"domain": "technology"}},
+            {
+                "id": "e1",
+                "text": "Alice",
+                "type": "Person",
+                "confidence": 0.9,
+                "properties": {"role": "engineer"},
+            },
+            {
+                "id": "e2",
+                "text": "Bob",
+                "type": "Person",
+                "confidence": 0.85,
+                "properties": {"role": "manager"},
+            },
+            {
+                "id": "e3",
+                "text": "Acme Corp",
+                "type": "Organization",
+                "confidence": 0.95,
+                "properties": {"industry": "tech"},
+            },
+            {
+                "id": "e4",
+                "text": "London",
+                "type": "Location",
+                "confidence": 0.88,
+                "properties": {"country": "UK"},
+            },
+            {
+                "id": "e5",
+                "text": "Software",
+                "type": "Concept",
+                "confidence": 0.7,
+                "properties": {"domain": "technology"},
+            },
         ],
         "relationships": [
-            {"id": "r1", "source_id": "e1", "target_id": "e3", "type": "worksAt",
-             "confidence": 0.85},
-            {"id": "r2", "source_id": "e2", "target_id": "e3", "type": "manages",
-             "confidence": 0.8},
-            {"id": "r3", "source_id": "e1", "target_id": "e4", "type": "locatedIn",
-             "confidence": 0.7},
-            {"id": "r4", "source_id": "e3", "target_id": "e5", "type": "produces",
-             "confidence": 0.75},
+            {
+                "id": "r1",
+                "source_id": "e1",
+                "target_id": "e3",
+                "type": "worksAt",
+                "confidence": 0.85,
+            },
+            {
+                "id": "r2",
+                "source_id": "e2",
+                "target_id": "e3",
+                "type": "manages",
+                "confidence": 0.8,
+            },
+            {
+                "id": "r3",
+                "source_id": "e1",
+                "target_id": "e4",
+                "type": "locatedIn",
+                "confidence": 0.7,
+            },
+            {
+                "id": "r4",
+                "source_id": "e3",
+                "target_id": "e5",
+                "type": "produces",
+                "confidence": 0.75,
+            },
         ],
     }
 
     # Known-good baseline scores (determined empirically; update on intentional changes)
     # Tolerances are ±0.15 to allow minor score evolution without constant updates.
     SCORE_BASELINES = {
-        "overall": (0.3, 0.9),       # min, max acceptable range
+        "overall": (0.3, 0.9),  # min, max acceptable range
         "completeness": (0.2, 0.9),
         "consistency": (0.5, 1.0),
         "clarity": (0.2, 0.9),
@@ -271,6 +322,7 @@ class TestCriticScoreSnapshot:
     @pytest.fixture
     def score(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
         ctx = MagicMock()
         ctx.domain = "general"
         critic = OntologyCritic(use_llm=False)
@@ -297,8 +349,14 @@ class TestCriticScoreSnapshot:
         assert lo <= score.granularity <= hi
 
     def test_all_scores_are_valid_floats(self, score):
-        for dim in ("overall", "completeness", "consistency", "clarity",
-                    "granularity", "domain_alignment"):
+        for dim in (
+            "overall",
+            "completeness",
+            "consistency",
+            "clarity",
+            "granularity",
+            "domain_alignment",
+        ):
             val = getattr(score, dim)
             assert isinstance(val, float), f"{dim} is not a float"
             assert not (val != val), f"{dim} is NaN"  # NaN check

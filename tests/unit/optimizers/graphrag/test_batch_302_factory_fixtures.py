@@ -102,7 +102,8 @@ class TestMakeRelationshipFixture:
     def test_optional_properties_and_direction(self, make_relationship):
         """Relationship accepts optional properties and direction."""
         r = make_relationship(
-            "e1", "e2",
+            "e1",
+            "e2",
             properties={"strength": "strong"},
             direction="subject_to_object",
         )
@@ -112,7 +113,8 @@ class TestMakeRelationshipFixture:
     def test_all_parameters_together(self, make_relationship):
         """Relationship created with all parameters at once."""
         r = make_relationship(
-            "e_alice", "e_bob",
+            "e_alice",
+            "e_bob",
             rel_type="works_with",
             rel_id="rel_collaboration",
             confidence=0.88,

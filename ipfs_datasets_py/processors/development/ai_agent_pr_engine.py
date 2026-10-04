@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _extract_pr_number(pr_url: str) -> Optional[int]:
     """Extract PR number from a GitHub pull-request URL."""
     try:
@@ -70,6 +71,7 @@ def _build_pr_body(
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
 
 def create_ai_agent_pr(
     owner: str,
@@ -288,7 +290,12 @@ def analyze_code_for_pr(
                     for pattern, warning in _DANGEROUS_PATTERNS:
                         if pattern in content:
                             result["issues"].append(
-                                {"file": fp, "type": "security", "pattern": pattern, "warning": warning}
+                                {
+                                    "file": fp,
+                                    "type": "security",
+                                    "pattern": pattern,
+                                    "warning": warning,
+                                }
                             )
                 except OSError as exc:
                     logger.warning("Could not read %s: %s", fp, exc)
@@ -308,7 +315,15 @@ def _enable_auto_merge(owner: str, repo: str, pr_number: int) -> bool:
         )
 
         result = github_cli_execute(
-            command=["pr", "merge", str(pr_number), "--auto", "--squash", "--repo", f"{owner}/{repo}"],
+            command=[
+                "pr",
+                "merge",
+                str(pr_number),
+                "--auto",
+                "--squash",
+                "--repo",
+                f"{owner}/{repo}",
+            ],
             install_dir=None,
         )
         return bool(result.get("success"))

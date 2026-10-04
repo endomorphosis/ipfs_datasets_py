@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 def generate_html_demo():
     """Generate an HTML demo showing VSCode CLI tools in the MCP dashboard."""
-    
+
     html_content = """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -524,15 +524,15 @@ def generate_html_demo():
     </div>
 </body>
 </html>"""
-    
+
     # Save the HTML demo
     demo_dir = Path("test_screenshots/vscode_cli")
     demo_dir.mkdir(parents=True, exist_ok=True)
     demo_path = demo_dir / "vscode_cli_dashboard_demo.html"
-    
+
     with open(demo_path, "w") as f:
         f.write(html_content)
-    
+
     print(f"✅ HTML Demo created: {demo_path}")
     return str(demo_path)
 
@@ -548,28 +548,28 @@ def generate_test_report():
                 "category": "development",
                 "tested": True,
                 "gui_accessible": True,
-                "description": "Get VSCode CLI installation status"
+                "description": "Get VSCode CLI installation status",
             },
             {
                 "name": "vscode_cli_install",
                 "category": "development",
                 "tested": True,
                 "gui_accessible": True,
-                "description": "Install or update VSCode CLI"
+                "description": "Install or update VSCode CLI",
             },
             {
                 "name": "vscode_cli_execute",
                 "category": "development",
                 "tested": True,
                 "gui_accessible": True,
-                "description": "Execute VSCode CLI commands"
+                "description": "Execute VSCode CLI commands",
             },
             {
                 "name": "vscode_cli_extensions",
                 "category": "development",
                 "tested": True,
                 "gui_accessible": True,
-                "description": "Manage VSCode extensions"
+                "description": "Manage VSCode extensions",
             },
             {
                 "name": "vscode_cli_tunnel",
@@ -577,8 +577,8 @@ def generate_test_report():
                 "tested": True,
                 "gui_accessible": True,
                 "github_auth": True,
-                "description": "Manage VSCode tunnel with GitHub authentication"
-            }
+                "description": "Manage VSCode tunnel with GitHub authentication",
+            },
         ],
         "features_demonstrated": [
             "Tool discovery in dashboard",
@@ -588,56 +588,56 @@ def generate_test_report():
             "Tunnel configuration",
             "Platform auto-detection",
             "Error handling",
-            "Status monitoring"
+            "Status monitoring",
         ],
         "access_methods_verified": [
             "Web Dashboard GUI",
             "REST API Endpoints",
             "JavaScript MCP SDK",
-            "Python Module API"
+            "Python Module API",
         ],
         "authentication": {
             "github_oauth": "supported",
             "microsoft_oauth": "supported",
-            "setup_via_dashboard": "enabled"
+            "setup_via_dashboard": "enabled",
         },
         "summary": {
             "total_tools": 5,
             "all_accessible": True,
             "github_auth_functional": True,
-            "full_scope_exposed": True
-        }
+            "full_scope_exposed": True,
+        },
     }
-    
+
     # Save report
     report_dir = Path("test_screenshots/vscode_cli")
     report_dir.mkdir(parents=True, exist_ok=True)
     report_path = report_dir / "integration_test_report.json"
-    
+
     with open(report_path, "w") as f:
         json.dump(report, f, indent=2)
-    
+
     print(f"✅ Test Report created: {report_path}")
     print(f"\nTest Summary:")
     print(f"  Total Tools: {report['summary']['total_tools']}")
     print(f"  All Accessible: {report['summary']['all_accessible']}")
     print(f"  GitHub Auth: {report['summary']['github_auth_functional']}")
     print(f"  Full Scope Exposed: {report['summary']['full_scope_exposed']}")
-    
+
     return report
 
 
 if __name__ == "__main__":
     print("Generating VSCode CLI MCP Dashboard Integration Demo...")
     print("=" * 80)
-    
+
     # Generate HTML demo
     demo_path = generate_html_demo()
     print(f"\n📄 HTML Demo: file://{os.path.abspath(demo_path)}")
-    
+
     # Generate test report
     report = generate_test_report()
-    
+
     print("\n" + "=" * 80)
     print("✅ Demo and Report Generation Complete!")
     print("\nView the demo by opening the HTML file in your browser.")

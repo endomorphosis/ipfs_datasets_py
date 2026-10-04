@@ -122,9 +122,7 @@ _LEGAL_IR_VIEW_ALIGNMENT_PREDICATE_PREFIXES = (
     "compiler_guidance_legal_ir_",
     "learned_legal_ir_",
 )
-_CITATION_PREDICATE_PREFIXES = (
-    "citation_",
-)
+_CITATION_PREDICATE_PREFIXES = ("citation_",)
 _CITATION_TOKENS = (
     "citation",
     "section",
@@ -135,9 +133,7 @@ _CITATION_TOKENS = (
 _EDITORIAL_STATUS_PREDICATES = {
     "status_keyword",
 }
-_EDITORIAL_STATUS_PREDICATE_PREFIXES = (
-    "status_keyword_",
-)
+_EDITORIAL_STATUS_PREDICATE_PREFIXES = ("status_keyword_",)
 _EDITORIAL_STATUS_TOKENS = (
     "omitted",
     "repeal",
@@ -334,15 +330,9 @@ def modal_ir_to_neo4j_graph_data(
         triples,
         graph_id=f"{modal_ir.document_id}:flogic",
         metadata={
-            "frame_logic_ontology_name": str(
-                getattr(frame_logic, "ontology_name", "") or ""
-            ),
+            "frame_logic_ontology_name": str(getattr(frame_logic, "ontology_name", "") or ""),
             "frame_logic_selected_frame": str(
-                (
-                    getattr(frame_logic, "selected_frame", None)
-                    or selected_frame
-                    or ""
-                )
+                (getattr(frame_logic, "selected_frame", None) or selected_frame or "")
             ),
             "modal_ir_document_id": modal_ir.document_id,
             "modal_ir_hash": modal_ir.canonical_hash(),
@@ -557,9 +547,7 @@ def _projection_alignment_metadata(
         relationship_count=relationship_count,
     )
     graph_failure_penalty = 0.0 if node_count > 0 and relationship_count > 0 else 1.0
-    graph_projection_signal_count = _graph_projection_signal_count(
-        projection_view_counts
-    )
+    graph_projection_signal_count = _graph_projection_signal_count(projection_view_counts)
     projected_triple_aligned = relationship_count == len(triples)
     augmented_triple_count = max(0, len(triples) - normalized_triple_count)
     metadata: Dict[str, Any] = {
@@ -569,9 +557,7 @@ def _projection_alignment_metadata(
         "frame_logic_to_neo4j_alignment_total": relationship_count
         if projected_triple_aligned
         else 0,
-        "frame_logic_to_neo4j_component_pair": (
-            "modal.frame_logic->knowledge_graphs.neo4j_compat"
-        ),
+        "frame_logic_to_neo4j_component_pair": ("modal.frame_logic->knowledge_graphs.neo4j_compat"),
         "frame_logic_to_neo4j_source_component": "modal.frame_logic",
         "frame_logic_to_neo4j_target_component": "knowledge_graphs.neo4j_compat",
         "flogic_input_triple_count": input_triple_count,
@@ -601,8 +587,7 @@ def _projection_alignment_metadata(
         "frame_logic_projection_relationship_count": relationship_count,
         "frame_logic_projection_view_count": len(projection_view_counts),
         "frame_logic_projection_view_distribution": {
-            name: int(projection_view_counts[name])
-            for name in sorted(projection_view_counts)
+            name: int(projection_view_counts[name]) for name in sorted(projection_view_counts)
         },
         "frame_logic_projection_views": sorted(projection_view_counts),
         "frame_logic_unique_object_count": len(objects),
@@ -611,9 +596,7 @@ def _projection_alignment_metadata(
         "legal_ir_multiview_graph_failure_penalty": graph_failure_penalty,
         "legal_ir_graph_projection_signal_count": graph_projection_signal_count,
         "legal_ir_graph_projection_signal_ratio": (
-            graph_projection_signal_count / relationship_count
-            if relationship_count > 0
-            else 0.0
+            graph_projection_signal_count / relationship_count if relationship_count > 0 else 0.0
         ),
     }
     legal_view_metadata = _legal_view_coverage_metadata(
@@ -662,19 +645,14 @@ def _legal_view_coverage_metadata(
 def _required_legal_projection_views(
     triples: Sequence[Mapping[str, str]],
 ) -> List[str]:
-    predicates = {
-        str(triple.get("predicate") or "").strip().lower()
-        for triple in triples
-    }
+    predicates = {str(triple.get("predicate") or "").strip().lower() for triple in triples}
     if not predicates:
         return []
     has_source_id = any(
-        predicate == "source_id" or predicate.startswith("source_id_")
-        for predicate in predicates
+        predicate == "source_id" or predicate.startswith("source_id_") for predicate in predicates
     )
     has_citation = any(
-        predicate == "citation" or predicate.startswith("citation_")
-        for predicate in predicates
+        predicate == "citation" or predicate.startswith("citation_") for predicate in predicates
     )
     has_section = any(
         predicate.startswith(_SECTION_STRUCTURE_PREDICATE_PREFIXES)
@@ -695,8 +673,7 @@ def _required_legal_projection_views(
         for predicate in predicates
     )
     has_frame_link = any(
-        predicate in _FRAME_PREDICATES
-        or predicate.startswith(_FRAME_PREDICATE_PREFIXES)
+        predicate in _FRAME_PREDICATES or predicate.startswith(_FRAME_PREDICATE_PREFIXES)
         for predicate in predicates
     )
     required: List[str] = []
@@ -805,10 +782,7 @@ def _canonical_component_distribution(
         "modal.frame_logic": max(1, modal_count),
     }
     total = float(sum(distribution.values()))
-    return {
-        component: count / total
-        for component, count in sorted(distribution.items())
-    }
+    return {component: count / total for component, count in sorted(distribution.items())}
 
 
 def _graph_projection_signal_count(
@@ -869,9 +843,8 @@ def _projection_view_for_triple(predicate: str, obj: str = "") -> str:
         return "legal_ir_view_alignment"
     if normalized.startswith(_SECTION_STRUCTURE_PREDICATE_PREFIXES):
         return "section_structure"
-    if (
-        normalized in _SOURCE_ID_CITATION_STRUCTURE_PREDICATES
-        or normalized.startswith(_SOURCE_ID_CITATION_STRUCTURE_PREDICATE_PREFIXES)
+    if normalized in _SOURCE_ID_CITATION_STRUCTURE_PREDICATES or normalized.startswith(
+        _SOURCE_ID_CITATION_STRUCTURE_PREDICATE_PREFIXES
     ):
         return "citation_structure"
     if normalized in _MODAL_SEMANTIC_PREDICATES or normalized.startswith(
@@ -967,9 +940,7 @@ def _guided_legal_ir_projection_triples(
     gaps = _canonical_numeric_signed_mapping(
         metadata.get("compiler_guidance_legal_ir_view_gap_distribution")
     )
-    packet_gap_targets, packet_gap_values = _packet_legal_ir_view_gap_evidence(
-        metadata
-    )
+    packet_gap_targets, packet_gap_values = _packet_legal_ir_view_gap_evidence(metadata)
     if packet_gap_targets:
         target = {**target, **packet_gap_targets}
     if packet_gap_values:
@@ -1062,22 +1033,14 @@ def _metadata_implies_neo4j_projection_guidance(metadata: Mapping[str, Any]) -> 
     )
     if _NEO4J_COMPAT_TARGET_COMPONENT in target_distribution:
         return True
-    packet_gap_targets, _packet_gap_values = _packet_legal_ir_view_gap_evidence(
-        metadata
-    )
+    packet_gap_targets, _packet_gap_values = _packet_legal_ir_view_gap_evidence(metadata)
     if _NEO4J_COMPAT_TARGET_COMPONENT in packet_gap_targets:
         return True
     features = _compiler_guidance_metadata_features(metadata)
-    has_graph_route = any(
-        _GRAPH_PROJECTION_GUIDANCE_ROUTE in feature for feature in features
-    )
-    has_neo4j_target = any(
-        _NEO4J_COMPAT_TARGET_COMPONENT in feature for feature in features
-    )
+    has_graph_route = any(_GRAPH_PROJECTION_GUIDANCE_ROUTE in feature for feature in features)
+    has_neo4j_target = any(_NEO4J_COMPAT_TARGET_COMPONENT in feature for feature in features)
     feature_text = "\n".join(features)
-    has_graph_failure_metric = (
-        "legal_ir_multiview_graph_failure_penalty" in feature_text
-    )
+    has_graph_failure_metric = "legal_ir_multiview_graph_failure_penalty" in feature_text
     has_knowledge_graph_scope = "knowledge_graphs" in feature_text
     return (
         has_graph_route
@@ -1367,11 +1330,7 @@ def _canonical_numeric_distribution(value: Any) -> Dict[str, float]:
     total = sum(distribution.values())
     if total <= 0.0:
         return {}
-    return {
-        key: score / total
-        for key, score in sorted(distribution.items())
-        if score > 0.0
-    }
+    return {key: score / total for key, score in sorted(distribution.items()) if score > 0.0}
 
 
 def _canonical_numeric_signed_mapping(value: Any) -> Dict[str, float]:

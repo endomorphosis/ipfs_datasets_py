@@ -120,7 +120,7 @@ result = await ffmpeg_convert(
     output_file="output_video.mp4",
     video_codec="libx264",
     audio_codec="aac",
-    quality="high"
+    quality="high",
 )
 ```
 
@@ -131,10 +131,10 @@ Extract audio from a video file:
 ```python
 result = await ffmpeg_convert(
     input_file="video.mp4",
-    output_file="audio.mp3", 
+    output_file="audio.mp3",
     video_codec=None,  # Remove video stream
     audio_codec="mp3",
-    audio_bitrate="320k"
+    audio_bitrate="320k",
 )
 ```
 
@@ -148,7 +148,7 @@ result = await ffmpeg_convert(
     output_file="scaled.mp4",
     resolution="1920x1080",
     video_codec="libx264",
-    quality="medium"
+    quality="medium",
 )
 ```
 
@@ -159,7 +159,7 @@ result = await ffmpeg_apply_filters(
     input_file="input.mp4",
     output_file="filtered.mp4",
     video_filters=["scale=1280:720", "brightness=0.1", "contrast=1.2"],
-    audio_filters=["volume=0.8", "highpass=f=200"]
+    audio_filters=["volume=0.8", "highpass=f=200"],
 )
 ```
 
@@ -169,10 +169,7 @@ Get detailed information about a media file:
 
 ```python
 result = await ffmpeg_probe(
-    input_file="media.mp4",
-    show_format=True,
-    show_streams=True,
-    include_metadata=True
+    input_file="media.mp4", show_format=True, show_streams=True, include_metadata=True
 )
 ```
 
@@ -185,12 +182,8 @@ result = await ffmpeg_batch_process(
     input_files=["video1.avi", "video2.mov", "video3.mkv"],
     output_directory="./converted/",
     operation="convert",
-    operation_params={
-        "video_codec": "libx264",
-        "audio_codec": "aac",
-        "quality": "high"
-    },
-    max_parallel=3
+    operation_params={"video_codec": "libx264", "audio_codec": "aac", "quality": "high"},
+    max_parallel=3,
 )
 ```
 
@@ -202,7 +195,7 @@ Combine separate video and audio files:
 result = await ffmpeg_mux(
     input_files=["video.mp4", "audio.wav"],
     output_file="combined.mp4",
-    stream_mapping={"0:v": "video", "1:a": "audio"}
+    stream_mapping={"0:v": "video", "1:a": "audio"},
 )
 ```
 
@@ -215,7 +208,7 @@ result = await ffmpeg_cut(
     input_file="long_video.mp4",
     output_file="segment.mp4",
     start_time="00:02:30",
-    duration="00:01:45"
+    duration="00:01:45",
 )
 ```
 
@@ -237,10 +230,10 @@ All tools return a standardized response dictionary:
 {
     "status": "success" | "error",
     "input_file": "path/to/input",
-    "output_file": "path/to/output", 
+    "output_file": "path/to/output",
     "duration": 15.234,  # Processing time in seconds
     "file_size_before": 1048576,  # Input file size in bytes
-    "file_size_after": 524288,   # Output file size in bytes
+    "file_size_after": 524288,  # Output file size in bytes
     "message": "Operation completed successfully",
     "command": "ffmpeg command used",  # For debugging
     # Tool-specific additional fields
@@ -371,7 +364,8 @@ Enable detailed logging for troubleshooting:
 
 ```python
 import logging
-logging.getLogger('ipfs_datasets_py.mcp_server.tools.media_tools').setLevel(logging.DEBUG)
+
+logging.getLogger("ipfs_datasets_py.mcp_server.tools.media_tools").setLevel(logging.DEBUG)
 ```
 
 ## Future Enhancements

@@ -306,6 +306,7 @@ subprocess.run(user_input, shell=True)
 
 # AFTER (SAFE):
 import shlex
+
 subprocess.run(shlex.split(user_input), shell=False, timeout=30)
 ```
 
@@ -324,7 +325,7 @@ subprocess.run(shlex.split(user_input), shell=False, timeout=30)
 error_reporter.report_error(
     error_type=type(e).__name__,
     message=str(e),
-    context={"tool": tool_name, "kwargs": kwargs}  # May contain secrets!
+    context={"tool": tool_name, "kwargs": kwargs},  # May contain secrets!
 )
 ```
 
@@ -338,7 +339,7 @@ error_reporter.report_error(
 # Sanitize kwargs before reporting
 safe_context = {
     "tool": tool_name,
-    "kwargs_keys": list(kwargs.keys())  # Only key names, not values
+    "kwargs_keys": list(kwargs.keys()),  # Only key names, not values
 }
 error_reporter.report_error(..., context=safe_context)
 ```
@@ -370,23 +371,26 @@ error_reporter.report_error(..., context=safe_context)
 # BEFORE (BAD):
 _global_manager = None
 
+
 def get_global_manager():
     global _global_manager
     if _global_manager is None:
         _global_manager = ToolManager()
     return _global_manager
 
+
 # AFTER (GOOD):
 class ServerContext:
     def __init__(self):
         self.tool_manager = ToolManager()
         self.metadata_registry = MetadataRegistry()
-    
+
     def __enter__(self):
         return self
-    
+
     def __exit__(self, *args):
         self.tool_manager.cleanup()
+
 
 # Usage
 with ServerContext() as ctx:
@@ -416,6 +420,7 @@ with ServerContext() as ctx:
 class IMCPServer(Protocol):
     def register_tool(self, tool): ...
     def get_tool(self, name): ...
+
 
 # P2P adapter depends on protocol, not concrete server
 class P2PMCPAdapter:
@@ -491,6 +496,7 @@ async def _init_p2p_async(self):
         logger.warning(f"P2P init failed (non-critical): {e}")
         self.p2p_service = None
 
+
 # Start in background
 asyncio.create_task(self._init_p2p_async())
 ```
@@ -521,6 +527,7 @@ asyncio.create_task(self._init_p2p_async())
 def discover_tools_cached():
     """Cache tool discovery results."""
     return discover_tools()
+
 
 # OR use lazy loading with async discovery
 async def discover_tools_async():
@@ -555,18 +562,22 @@ def import_tools_from_directory(path):
     # 40 lines of nested logic
     ...
 
+
 # AFTER: Multiple focused functions
 def discover_tool_files(path):
     """Find all tool files in directory."""
     ...
 
+
 def filter_tool_files(files, exclude):
     """Filter out excluded tool files."""
     ...
 
+
 def import_tool_module(file_path):
     """Import a single tool module."""
     ...
+
 
 def import_tools_from_directory(path):
     """High-level orchestration."""
@@ -636,11 +647,13 @@ def import_tools_from_directory(path):
 import pytest
 from ipfs_datasets_py.mcp_server.server import IPFSDatasetsMCPServer
 
+
 def test_server_initialization():
     """Test server initializes correctly."""
     server = IPFSDatasetsMCPServer()
     assert server is not None
     assert server.mcp is not None
+
 
 def test_tool_registration():
     """Test tools are registered correctly."""
@@ -648,11 +661,13 @@ def test_tool_registration():
     server.register_tools()
     assert len(server.mcp.tools) > 0
 
+
 def test_hierarchical_dispatch():
     """Test hierarchical tool dispatch works."""
     server = IPFSDatasetsMCPServer()
     result = server.tools_dispatch("dataset_tools", "load_dataset", {...})
     assert result is not None
+
 
 # 50+ more tests needed
 ```

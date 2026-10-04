@@ -55,11 +55,7 @@ from ipfs_datasets_py.knowledge_graphs.transactions import WriteAheadLog
 wal = WriteAheadLog(log_path="/path/to/wal")
 
 # Append transaction entry
-await wal.append(TransactionEntry(
-    txn_id=txn.id,
-    operation="ADD_ENTITY",
-    data=entity
-))
+await wal.append(TransactionEntry(txn_id=txn.id, operation="ADD_ENTITY", data=entity))
 
 # Read transaction history
 entries = await wal.read(txn_id)
@@ -75,7 +71,7 @@ Type definitions for transactions.
 from ipfs_datasets_py.knowledge_graphs.transactions.types import (
     TransactionStatus,
     IsolationLevel,
-    OperationType
+    OperationType,
 )
 
 # Transaction statuses
@@ -83,7 +79,7 @@ status in [
     TransactionStatus.ACTIVE,
     TransactionStatus.COMMITTED,
     TransactionStatus.ABORTED,
-    TransactionStatus.PREPARING
+    TransactionStatus.PREPARING,
 ]
 
 # Isolation levels
@@ -91,7 +87,7 @@ isolation in [
     IsolationLevel.READ_UNCOMMITTED,
     IsolationLevel.READ_COMMITTED,
     IsolationLevel.REPEATABLE_READ,
-    IsolationLevel.SERIALIZABLE
+    IsolationLevel.SERIALIZABLE,
 ]
 ```
 
@@ -103,36 +99,33 @@ isolation in [
 from ipfs_datasets_py.knowledge_graphs.transactions import TransactionManager
 import asyncio
 
+
 async def basic_transaction():
     manager = TransactionManager(graph=kg)
-    
+
     # Begin transaction
     txn = await manager.begin()
-    
+
     try:
         # Add entity
-        txn.add_entity(Entity(
-            entity_id="e1",
-            entity_type="Person",
-            name="Alice"
-        ))
-        
+        txn.add_entity(Entity(entity_id="e1", entity_type="Person", name="Alice"))
+
         # Add relationship
-        txn.add_relationship(Relationship(
-            relationship_id="r1",
-            source_id="e1",
-            target_id="e2",
-            relationship_type="KNOWS"
-        ))
-        
+        txn.add_relationship(
+            Relationship(
+                relationship_id="r1", source_id="e1", target_id="e2", relationship_type="KNOWS"
+            )
+        )
+
         # Commit
         await manager.commit(txn)
         print("Transaction committed successfully")
-        
+
     except Exception as e:
         # Rollback on error
         await manager.rollback(txn)
         print(f"Transaction rolled back: {e}")
+
 
 asyncio.run(basic_transaction())
 ```
@@ -142,29 +135,31 @@ asyncio.run(basic_transaction())
 ```python
 from ipfs_datasets_py.knowledge_graphs.transactions import TransactionManager
 
+
 async def snapshot_example():
     manager = TransactionManager(graph=kg)
-    
+
     # Transaction 1: Read-only snapshot
     txn1 = await manager.begin(isolation=IsolationLevel.REPEATABLE_READ)
     snapshot1 = await manager.get_snapshot(txn1)
-    
+
     # Transaction 2: Modify graph
     txn2 = await manager.begin()
     txn2.add_entity(new_entity)
     await manager.commit(txn2)
-    
+
     # Transaction 1 still sees original snapshot
     entities_before = snapshot1.get_entities()
     # new_entity NOT in entities_before
-    
+
     await manager.commit(txn1)
-    
+
     # New transaction sees updated graph
     txn3 = await manager.begin()
     snapshot3 = await manager.get_snapshot(txn3)
     entities_after = snapshot3.get_entities()
     # new_entity IS in entities_after
+
 
 asyncio.run(snapshot_example())
 ```
@@ -175,27 +170,29 @@ asyncio.run(snapshot_example())
 from ipfs_datasets_py.knowledge_graphs.transactions import TransactionManager
 from ipfs_datasets_py.knowledge_graphs.exceptions import TransactionConflictError
 
+
 async def concurrent_modifications():
     manager = TransactionManager(graph=kg)
-    
+
     # Two concurrent transactions
     txn1 = await manager.begin()
     txn2 = await manager.begin()
-    
+
     # Both try to modify the same entity
     txn1.update_entity("e1", {"name": "Alice Updated 1"})
     txn2.update_entity("e1", {"name": "Alice Updated 2"})
-    
+
     # First commit succeeds
     await manager.commit(txn1)
     print("Transaction 1 committed")
-    
+
     # Second commit detects conflict
     try:
         await manager.commit(txn2)
     except TransactionConflictError as e:
         print(f"Conflict detected: {e}")
         await manager.rollback(txn2)
+
 
 asyncio.run(concurrent_modifications())
 ```
@@ -205,37 +202,27 @@ asyncio.run(concurrent_modifications())
 ```python
 from ipfs_datasets_py.knowledge_graphs.transactions import WriteAheadLog
 
+
 async def wal_example():
     wal = WriteAheadLog(log_path="/tmp/kg_wal")
-    
+
     # Record transaction operations
     txn_id = "txn123"
-    
-    await wal.append(TransactionEntry(
-        txn_id=txn_id,
-        operation="BEGIN",
-        timestamp=time.time()
-    ))
-    
-    await wal.append(TransactionEntry(
-        txn_id=txn_id,
-        operation="ADD_ENTITY",
-        data=entity.to_dict()
-    ))
-    
-    await wal.append(TransactionEntry(
-        txn_id=txn_id,
-        operation="COMMIT",
-        timestamp=time.time()
-    ))
-    
+
+    await wal.append(TransactionEntry(txn_id=txn_id, operation="BEGIN", timestamp=time.time()))
+
+    await wal.append(TransactionEntry(txn_id=txn_id, operation="ADD_ENTITY", data=entity.to_dict()))
+
+    await wal.append(TransactionEntry(txn_id=txn_id, operation="COMMIT", timestamp=time.time()))
+
     # Read transaction history
     entries = await wal.read(txn_id)
     print(f"Transaction {txn_id} had {len(entries)} operations")
-    
+
     # Recover from crash
     if crashed:
         await wal.recover()
+
 
 asyncio.run(wal_example())
 ```
@@ -245,30 +232,31 @@ asyncio.run(wal_example())
 ```python
 async def savepoint_example():
     manager = TransactionManager(graph=kg)
-    
+
     txn = await manager.begin()
-    
+
     # Initial operations
     txn.add_entity(entity1)
-    
+
     # Create savepoint
     savepoint = await manager.savepoint(txn, name="before_risky_ops")
-    
+
     try:
         # Risky operations
         txn.add_entity(entity2)
         txn.add_entity(entity3)
-        
+
         # Success - commit entire transaction
         await manager.commit(txn)
-        
+
     except Exception as e:
         # Rollback to savepoint (keep entity1, discard entity2/3)
         await manager.rollback_to_savepoint(txn, savepoint)
-        
+
         # Continue with safe operations
         txn.add_entity(safe_entity)
         await manager.commit(txn)
+
 
 asyncio.run(savepoint_example())
 ```
@@ -319,10 +307,10 @@ Transaction-specific exceptions:
 
 ```python
 from ipfs_datasets_py.knowledge_graphs.exceptions import (
-    TransactionError,         # Base transaction exception
-    TransactionConflictError, # Concurrent modification conflict
+    TransactionError,  # Base transaction exception
+    TransactionConflictError,  # Concurrent modification conflict
     TransactionAbortedError,  # Transaction was aborted
-    TransactionTimeoutError   # Transaction exceeded timeout
+    TransactionTimeoutError,  # Transaction exceeded timeout
 )
 
 try:
@@ -369,20 +357,21 @@ After a crash, the WAL can recover uncommitted transactions:
 ```python
 async def crash_recovery():
     wal = WriteAheadLog(log_path="/var/kg/wal")
-    
+
     # Recover uncommitted transactions
     recovered = await wal.recover()
-    
+
     for txn_id, entries in recovered.items():
         # Replay or rollback based on transaction state
         last_entry = entries[-1]
-        
+
         if last_entry.operation == "COMMIT":
             # Replay committed transaction
             await replay_transaction(entries)
         else:
             # Rollback incomplete transaction
             await rollback_transaction(entries)
+
 
 asyncio.run(crash_recovery())
 ```
@@ -410,12 +399,8 @@ async def batch_commit():
 ```python
 # Multiple concurrent transactions
 async def concurrent_transactions():
-    tasks = [
-        process_transaction(data1),
-        process_transaction(data2),
-        process_transaction(data3)
-    ]
-    
+    tasks = [process_transaction(data1), process_transaction(data2), process_transaction(data3)]
+
     results = await asyncio.gather(*tasks)
 ```
 

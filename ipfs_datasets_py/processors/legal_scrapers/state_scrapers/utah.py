@@ -15,28 +15,33 @@ from .registry import StateScraperRegistry
 
 class UtahScraper(BaseStateScraper):
     """Scraper for Utah state laws from https://le.utah.gov"""
-    _UT_VERSION_DEFAULT_RE = re.compile(r"var\s+versionDefault\s*=\s*['\"]([^'\"]*)['\"]", re.IGNORECASE)
+
+    _UT_VERSION_DEFAULT_RE = re.compile(
+        r"var\s+versionDefault\s*=\s*['\"]([^'\"]*)['\"]", re.IGNORECASE
+    )
     _UT_TITLE_WRAPPER_RE = re.compile(r"/xcode/title[0-9a-z]+/[0-9a-z]+\.html$", re.IGNORECASE)
-    _UT_SECTION_LINK_RE = re.compile(r"/xcode/title[0-9a-z]+/chapter[0-9a-z]+/[0-9a-z-]+-s[0-9a-z.]+\.html", re.IGNORECASE)
-    _UT_PART_LINK_RE = re.compile(r"/xcode/title[0-9a-z]+/chapter[0-9a-z]+/[0-9a-z-]+-p[0-9a-z.]+\.html", re.IGNORECASE)
-    _UT_CHAPTER_LINK_RE = re.compile(r"/xcode/title[0-9a-z]+/chapter[0-9a-z]+/[0-9a-z-]+\.html", re.IGNORECASE)
+    _UT_SECTION_LINK_RE = re.compile(
+        r"/xcode/title[0-9a-z]+/chapter[0-9a-z]+/[0-9a-z-]+-s[0-9a-z.]+\.html", re.IGNORECASE
+    )
+    _UT_PART_LINK_RE = re.compile(
+        r"/xcode/title[0-9a-z]+/chapter[0-9a-z]+/[0-9a-z-]+-p[0-9a-z.]+\.html", re.IGNORECASE
+    )
+    _UT_CHAPTER_LINK_RE = re.compile(
+        r"/xcode/title[0-9a-z]+/chapter[0-9a-z]+/[0-9a-z-]+\.html", re.IGNORECASE
+    )
     _UT_CHAPTER_RE = re.compile(
         r"Chapter\s+([0-9]+[A-Za-z]?)\s+(.+?)(?=\s+Chapter\s+[0-9]+[A-Za-z]?\s+|\s+<< Previous Title|\s+Download Options|$)",
         re.IGNORECASE,
     )
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for Utah's legislative website."""
         return "https://le.utah.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Utah."""
-        return [{
-            "name": "Utah Code",
-            "url": f"{self.get_base_url()}/",
-            "type": "Code"
-        }]
-    
+        return [{"name": "Utah Code", "url": f"{self.get_base_url()}/", "type": "Code"}]
+
     async def scrape_code(
         self,
         code_name: str,
@@ -44,11 +49,11 @@ class UtahScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from Utah's legislative website.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
@@ -71,11 +76,15 @@ class UtahScraper(BaseStateScraper):
             return official_sections[:return_threshold]
 
         if not self._full_corpus_enabled():
-            direct = await self._scrape_direct_seed_sections(code_name, max_statutes=return_threshold)
+            direct = await self._scrape_direct_seed_sections(
+                code_name, max_statutes=return_threshold
+            )
             if direct:
                 return direct[:return_threshold]
 
-        live_title_stubs = await self._scrape_live_title_stubs(code_name, max_statutes=max(10, return_threshold))
+        live_title_stubs = await self._scrape_live_title_stubs(
+            code_name, max_statutes=max(10, return_threshold)
+        )
         live_chapter_stubs = await self._scrape_live_chapter_stubs(
             code_name,
             title_limit=max(1, min(12, return_threshold)),
@@ -116,14 +125,18 @@ class UtahScraper(BaseStateScraper):
                 continue
             seen.add(candidate)
 
-            statutes = await self._generic_scrape(code_name, candidate, "Utah Code Ann.", max_sections=return_threshold)
+            statutes = await self._generic_scrape(
+                code_name, candidate, "Utah Code Ann.", max_sections=return_threshold
+            )
             _merge(statutes)
             if len(merged) >= return_threshold:
                 return merged
 
         return merged
 
-    async def _scrape_official_xml_code_tree(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def _scrape_official_xml_code_tree(
+        self, code_name: str, max_statutes: int
+    ) -> List[NormalizedStatute]:
         root_xml_url = await self._resolve_root_versioned_xml_url()
         if not root_xml_url:
             return []
@@ -144,7 +157,9 @@ class UtahScraper(BaseStateScraper):
             title_name = self._normalize_legal_text(title_node.findtext("catchline", default=""))
             for chapter_node in title_node.findall(".//chapter"):
                 chapter_number = str(chapter_node.attrib.get("number") or "").strip()
-                chapter_name = self._normalize_legal_text(chapter_node.findtext("catchline", default=""))
+                chapter_name = self._normalize_legal_text(
+                    chapter_node.findtext("catchline", default="")
+                )
                 for section_node in chapter_node.findall(".//section"):
                     if len(statutes) >= max_statutes:
                         return statutes
@@ -189,7 +204,9 @@ class UtahScraper(BaseStateScraper):
             return None
 
         section_name = self._normalize_legal_text(section_node.findtext("catchline", default=""))
-        body = self._normalize_legal_text(" ".join(text.strip() for text in section_node.itertext() if str(text or "").strip()))
+        body = self._normalize_legal_text(
+            " ".join(text.strip() for text in section_node.itertext() if str(text or "").strip())
+        )
         if len(body) < 120:
             return None
 
@@ -211,7 +228,9 @@ class UtahScraper(BaseStateScraper):
             section_name=section_name[:220] or f"Section {section_number}",
             full_text=body[:20000],
             source_url=source_url,
-            legal_area=self._identify_legal_area(f"{title_name} {chapter_name} {section_name} {body[:1200]}"),
+            legal_area=self._identify_legal_area(
+                f"{title_name} {chapter_name} {section_name} {body[:1200]}"
+            ),
             official_cite=f"Utah Code § {section_number}",
             metadata=StatuteMetadata(),
             structured_data={
@@ -221,7 +240,9 @@ class UtahScraper(BaseStateScraper):
             },
         )
 
-    async def _scrape_official_versioned_tree(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def _scrape_official_versioned_tree(
+        self, code_name: str, max_statutes: int
+    ) -> List[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
@@ -241,10 +262,14 @@ class UtahScraper(BaseStateScraper):
             title_wrapper_html = await self._fetch_text_with_archival(title_wrapper_url, timeout=25)
             if not title_wrapper_html:
                 continue
-            title_versioned_url = self._resolve_versioned_content_url(title_wrapper_url, title_wrapper_html)
+            title_versioned_url = self._resolve_versioned_content_url(
+                title_wrapper_url, title_wrapper_html
+            )
             if not title_versioned_url:
                 continue
-            title_content_html = await self._fetch_text_with_archival(title_versioned_url, timeout=25)
+            title_content_html = await self._fetch_text_with_archival(
+                title_versioned_url, timeout=25
+            )
             if not title_content_html:
                 continue
             title_soup = BeautifulSoup(title_content_html, "html.parser")
@@ -267,17 +292,23 @@ class UtahScraper(BaseStateScraper):
                 chapter_versioned_url = self._resolve_versioned_link(abs_url)
                 if not chapter_versioned_url:
                     chapter_wrapper_html = await self._fetch_text_with_archival(abs_url, timeout=25)
-                    chapter_versioned_url = self._resolve_versioned_content_url(abs_url, chapter_wrapper_html)
+                    chapter_versioned_url = self._resolve_versioned_content_url(
+                        abs_url, chapter_wrapper_html
+                    )
                 if not chapter_versioned_url:
                     continue
-                section_urls = await self._discover_section_urls_from_versioned_container(chapter_versioned_url)
+                section_urls = await self._discover_section_urls_from_versioned_container(
+                    chapter_versioned_url
+                )
                 for section_url in section_urls:
                     if len(statutes) >= max_statutes:
                         break
                     if section_url in seen_sections:
                         continue
                     seen_sections.add(section_url)
-                    statute = await self._build_official_section_from_versioned_url(code_name, section_url)
+                    statute = await self._build_official_section_from_versioned_url(
+                        code_name, section_url
+                    )
                     if statute is not None:
                         statutes.append(statute)
 
@@ -303,13 +334,17 @@ class UtahScraper(BaseStateScraper):
                 if section_url in seen_sections:
                     continue
                 seen_sections.add(section_url)
-                statute = await self._build_official_section_from_versioned_url(code_name, section_url)
+                statute = await self._build_official_section_from_versioned_url(
+                    code_name, section_url
+                )
                 if statute is not None:
                     statutes.append(statute)
 
         return statutes
 
-    async def _discover_section_urls_from_versioned_container(self, versioned_url: str) -> List[str]:
+    async def _discover_section_urls_from_versioned_container(
+        self, versioned_url: str
+    ) -> List[str]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
@@ -338,7 +373,9 @@ class UtahScraper(BaseStateScraper):
                 part_versioned_url = candidate
                 if not part_versioned_url:
                     part_wrapper_html = await self._fetch_text_with_archival(abs_url, timeout=25)
-                    part_versioned_url = self._resolve_versioned_content_url(abs_url, part_wrapper_html)
+                    part_versioned_url = self._resolve_versioned_content_url(
+                        abs_url, part_wrapper_html
+                    )
                 if not part_versioned_url:
                     continue
                 part_html = await self._fetch_text_with_archival(part_versioned_url, timeout=25)
@@ -400,7 +437,9 @@ class UtahScraper(BaseStateScraper):
             return None
         section_number = match.group(1)
         heading = soup.select_one("h3.heading")
-        heading_text = self._normalize_legal_text(heading.get_text(" ", strip=True) if heading else "")
+        heading_text = self._normalize_legal_text(
+            heading.get_text(" ", strip=True) if heading else ""
+        )
         section_name = heading_text
         if "Section " in heading_text:
             section_name = heading_text.split("Section ", 1)[-1]
@@ -428,7 +467,9 @@ class UtahScraper(BaseStateScraper):
 
     async def _fetch_text_with_archival(self, url: str, timeout: int = 25) -> str:
         try:
-            payload = await self._fetch_page_content_with_archival_fallback(url, timeout_seconds=timeout)
+            payload = await self._fetch_page_content_with_archival_fallback(
+                url, timeout_seconds=timeout
+            )
         except Exception:
             payload = b""
         if not payload:
@@ -454,7 +495,9 @@ class UtahScraper(BaseStateScraper):
         out: List[NormalizedStatute] = []
         for url in seeds[: max(1, int(max_statutes or 1))]:
             try:
-                payload = await self._fetch_page_content_with_archival_fallback(url, timeout_seconds=25)
+                payload = await self._fetch_page_content_with_archival_fallback(
+                    url, timeout_seconds=25
+                )
             except Exception:
                 payload = b""
             if not payload:
@@ -504,7 +547,9 @@ class UtahScraper(BaseStateScraper):
         except ImportError:
             return []
 
-        title_rows = await self._scrape_live_title_stubs(code_name, max_statutes=max(1, int(title_limit)))
+        title_rows = await self._scrape_live_title_stubs(
+            code_name, max_statutes=max(1, int(title_limit))
+        )
         out: List[NormalizedStatute] = []
         seen = set()
         for title_row in title_rows[:title_limit]:
@@ -512,7 +557,9 @@ class UtahScraper(BaseStateScraper):
             if not title_url:
                 continue
             try:
-                payload = await self._fetch_page_content_with_archival_fallback(title_url, timeout_seconds=35)
+                payload = await self._fetch_page_content_with_archival_fallback(
+                    title_url, timeout_seconds=35
+                )
                 if not payload:
                     continue
             except Exception:
@@ -560,7 +607,9 @@ class UtahScraper(BaseStateScraper):
             return match.group(1).upper()
         return self._normalize_legal_text(value) or "UNKNOWN"
 
-    async def _scrape_live_title_stubs(self, code_name: str, max_statutes: int = 60) -> List[NormalizedStatute]:
+    async def _scrape_live_title_stubs(
+        self, code_name: str, max_statutes: int = 60
+    ) -> List[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
@@ -625,7 +674,9 @@ class UtahScraper(BaseStateScraper):
         )
 
         try:
-            payload = await self._fetch_page_content_with_archival_fallback(cdx_url, timeout_seconds=35)
+            payload = await self._fetch_page_content_with_archival_fallback(
+                cdx_url, timeout_seconds=35
+            )
             rows = self._parse_json_rows(payload)
         except Exception:
             return []

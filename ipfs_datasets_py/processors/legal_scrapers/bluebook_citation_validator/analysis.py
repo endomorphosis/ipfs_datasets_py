@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 # Accuracy / confusion-matrix statistics
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ConfusionMatrixStats:
     """Accuracy statistics derived from a binary confusion matrix.
@@ -46,10 +47,7 @@ class ConfusionMatrixStats:
     def total(self) -> int:
         """Total number of evaluated citations."""
         return (
-            self.true_positives
-            + self.false_positives
-            + self.true_negatives
-            + self.false_negatives
+            self.true_positives + self.false_positives + self.true_negatives + self.false_negatives
         )
 
     @property
@@ -79,9 +77,7 @@ class ConfusionMatrixStats:
         return 2 * p * r / (p + r) if (p + r) else 0.0
 
 
-def calculate_accuracy_statistics(
-    total_citations: int, total_errors: int
-) -> ConfusionMatrixStats:
+def calculate_accuracy_statistics(total_citations: int, total_errors: int) -> ConfusionMatrixStats:
     """Build a :class:`ConfusionMatrixStats` from raw totals.
 
     Assumes the validator has perfect recall (no missed errors), so
@@ -100,6 +96,7 @@ def calculate_accuracy_statistics(
 # ---------------------------------------------------------------------------
 # Error-pattern analysis
 # ---------------------------------------------------------------------------
+
 
 def analyze_error_patterns(error_db, logger_=None) -> dict[str, int]:
     """Count errors in the database by type.
@@ -163,6 +160,7 @@ def analyze_error_patterns(error_db, logger_=None) -> dict[str, int]:
 # ---------------------------------------------------------------------------
 # Extrapolation
 # ---------------------------------------------------------------------------
+
 
 class ExtrapolateToFullDataset:
     """Extrapolates sample accuracy statistics to the full dataset."""
@@ -240,9 +238,9 @@ class ExtrapolateToFullDataset:
         z = self._Z_SCORE
         n = sample_size
         p = sample_accuracy
-        denom = 1 + z ** 2 / n
-        center = (p + z ** 2 / (2 * n)) / denom
-        margin = (z / denom) * math.sqrt((p * (1 - p) / n) + (z ** 2 / (4 * n ** 2)))
+        denom = 1 + z**2 / n
+        center = (p + z**2 / (2 * n)) / denom
+        margin = (z / denom) * math.sqrt((p * (1 - p) / n) + (z**2 / (4 * n**2)))
 
         confidence_lower = max(0.0, center - margin)
         confidence_upper = min(1.0, center + margin)
@@ -262,15 +260,11 @@ class ExtrapolateToFullDataset:
         # Finite population correction.
         fpc = 1.0
         if total_estimated_records > 0 and sample_size / total_estimated_records > 0.05:
-            fpc = math.sqrt(
-                (total_estimated_records - sample_size) / (total_estimated_records - 1)
-            )
+            fpc = math.sqrt((total_estimated_records - sample_size) / (total_estimated_records - 1))
             confidence_lower = max(0.0, center - margin * fpc)
             confidence_upper = min(1.0, center + margin * fpc)
 
-        reliability = (
-            "high" if sample_size >= 385 else "medium" if sample_size >= 100 else "low"
-        )
+        reliability = "high" if sample_size >= 385 else "medium" if sample_size >= 100 else "low"
 
         return {
             "estimated_accuracy": sample_accuracy,
@@ -298,6 +292,7 @@ class ExtrapolateToFullDataset:
 # ---------------------------------------------------------------------------
 # Top-level ResultsAnalyzer
 # ---------------------------------------------------------------------------
+
 
 class ResultsAnalyzer:
     """Orchestrates error-pattern analysis, accuracy stats, and extrapolation.

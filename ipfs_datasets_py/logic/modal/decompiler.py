@@ -286,8 +286,14 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("comprehensive inventory", "inventory_study_report"),
     ("uranium inventory study", "uranium_inventory_study"),
     ("inventory study", "inventory_study_report"),
-    ("university based research and development grant program", "university_research_grant_program"),
-    ("university-based research and development grant program", "university_research_grant_program"),
+    (
+        "university based research and development grant program",
+        "university_research_grant_program",
+    ),
+    (
+        "university-based research and development grant program",
+        "university_research_grant_program",
+    ),
     ("university based research and development program", "university_research_program"),
     ("university-based research and development program", "university_research_program"),
     ("research and development grant program", "research_development_grant_program"),
@@ -338,8 +344,14 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("museum of the american indian", "national_museum_american_indian"),
     ("board of trustees", "museum_board_trustees"),
     ("board of regents", "museum_board_regents"),
-    ("disposition of deceased veterans' personal property", "deceased_veterans_property_disposition"),
-    ("disposition of deceased veterans personal property", "deceased_veterans_property_disposition"),
+    (
+        "disposition of deceased veterans' personal property",
+        "deceased_veterans_property_disposition",
+    ),
+    (
+        "disposition of deceased veterans personal property",
+        "deceased_veterans_property_disposition",
+    ),
     ("deceased veterans' personal property", "deceased_veterans_property_disposition"),
     ("deceased veterans personal property", "deceased_veterans_property_disposition"),
     ("disposition of personal property", "personal_property_disposition"),
@@ -361,7 +373,10 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("common funded budgets of nato", "nato_common_funded_budget"),
     ("north atlantic treaty organization common-funded budgets", "nato_common_funded_budget"),
     ("north atlantic treaty organization common funded budgets", "nato_common_funded_budget"),
-    ("united states contributions to the north atlantic treaty organization", "nato_contribution_authority"),
+    (
+        "united states contributions to the north atlantic treaty organization",
+        "nato_contribution_authority",
+    ),
     ("nato common-funded budgets", "nato_common_funded_budget"),
     ("nato common funded budgets", "nato_common_funded_budget"),
     ("accountability and responsibility", "accountability_responsibility"),
@@ -398,7 +413,10 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("performance accountability system", "workforce_performance_accountability"),
     ("state performance reports", "workforce_performance_reporting"),
     ("workforce development", "workforce_development_program"),
-    ("independent living services and centers for independent living", "independent_living_services"),
+    (
+        "independent living services and centers for independent living",
+        "independent_living_services",
+    ),
     ("centers for independent living", "independent_living_center"),
     ("independent living services", "independent_living_services"),
     ("vocational rehabilitation", "vocational_rehabilitation_services"),
@@ -429,7 +447,10 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("irrigation reclamation and cultivation", "irrigation_reclamation_cultivation"),
     ("reclamation, and cultivation", "irrigation_reclamation_cultivation"),
     ("international boundary and water commission", "international_boundary_water_commission"),
-    ("international boundary and water commission, united states and mexico", "international_boundary_water_commission"),
+    (
+        "international boundary and water commission, united states and mexico",
+        "international_boundary_water_commission",
+    ),
     ("international storage dam", "international_storage_dam_authorization"),
     ("rio grande", "rio_grande_water_project"),
     ("joint construction, operation, and maintenance", "joint_infrastructure_operation"),
@@ -438,8 +459,14 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("local joint powers authorities", "local_joint_powers_authority"),
     ("joint powers authorities", "local_joint_powers_authority"),
     ("partnerships, grants, and cooperative agreements", "local_authority_partnership_grant"),
-    ("partner, provide a grant to, or enter into a cooperative agreement", "local_authority_partnership_grant"),
-    ("cooperative agreement with local joint powers authorities", "local_authority_cooperative_agreement"),
+    (
+        "partner, provide a grant to, or enter into a cooperative agreement",
+        "local_authority_partnership_grant",
+    ),
+    (
+        "cooperative agreement with local joint powers authorities",
+        "local_authority_cooperative_agreement",
+    ),
     ("provide a grant to", "grant_award_authority"),
     ("government of mexico", "mexico_bilateral_agreement"),
     ("united states and mexico", "mexico_bilateral_agreement"),
@@ -512,7 +539,10 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("purchase of paper in open market", "open_market_paper_purchase"),
     ("paper in open market", "open_market_paper_purchase"),
     ("government publishing office to purchase paper", "government_publication_purchase_authority"),
-    ("government publishing office may purchase paper", "government_publication_purchase_authority"),
+    (
+        "government publishing office may purchase paper",
+        "government_publication_purchase_authority",
+    ),
     ("use of timber and stone by settlers", "settler_resource_use"),
     ("timber and stone by settlers", "settler_resource_use"),
     ("cutting of timber within forest", "timber_cutting_forest_scope"),
@@ -732,7 +762,10 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("ornamental design", "design_patent_protection"),
     ("limitation on assessments", "fund_assessment_limitation"),
     ("limitation on assessment", "fund_assessment_limitation"),
-    ("assessments against migratory bird conservation fund", "migratory_bird_fund_assessment_limitation"),
+    (
+        "assessments against migratory bird conservation fund",
+        "migratory_bird_fund_assessment_limitation",
+    ),
     ("migratory bird conservation fund", "migratory_bird_conservation_fund"),
     ("gain or loss on disposition of property", "property_disposition_gain_loss"),
     ("gain or loss on disposition", "property_disposition_gain_loss"),
@@ -756,14 +789,20 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("force and effect", "statutory_force_effect"),
     ("same force and effect", "statutory_force_effect"),
     ("relationship to other law", "legal_relationship_override"),
-    ("relationship to middle class tax relief and job creation act", "legal_relationship_noninterference"),
+    (
+        "relationship to middle class tax relief and job creation act",
+        "legal_relationship_noninterference",
+    ),
     ("nothing in this chapter shall be construed", "legal_relationship_noninterference"),
     ("shall be construed to limit", "implementation_noninterference"),
     ("limit, restrict, or circumvent", "implementation_noninterference"),
     ("limit restrict or circumvent", "implementation_noninterference"),
     ("public safety broadband network", "public_safety_broadband_network"),
     ("nationwide public safety broadband network", "public_safety_broadband_network"),
-    ("supplementary to those set forth in existing authorizations", "supplemental_authorization_policy"),
+    (
+        "supplementary to those set forth in existing authorizations",
+        "supplemental_authorization_policy",
+    ),
     ("supplemental to existing authorizations", "supplemental_authorization_policy"),
     ("supplementary to existing authorizations", "supplemental_authorization_policy"),
     ("existing authorizations", "supplemental_authorization_policy"),
@@ -779,7 +818,10 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("securities and trust indentures", "securities_trust_indenture"),
     ("trust indentures", "securities_trust_indenture"),
     ("trust indenture", "securities_trust_indenture"),
-    ("integration of procedure with securities and exchange commission", "securities_trust_indenture_procedure"),
+    (
+        "integration of procedure with securities and exchange commission",
+        "securities_trust_indenture_procedure",
+    ),
     ("integration of procedure", "integrated_agency_procedure"),
     ("securities and exchange commission", "securities_exchange_commission"),
     ("establishment of the rio grande natural area", "natural_area_establishment"),
@@ -1219,9 +1261,7 @@ _CITATION_SECTION_RANGE_RE = re.compile(
     r"(?P<end>[0-9A-Za-z.\-]+)\s*$",
     re.IGNORECASE,
 )
-_CITATION_SECTION_PART_RE = re.compile(
-    r"^(?P<number>\d+)(?P<suffix>[A-Za-z]+)?$"
-)
+_CITATION_SECTION_PART_RE = re.compile(r"^(?P<number>\d+)(?P<suffix>[A-Za-z]+)?$")
 _USCODE_LEADING_SECTION_REF_RE = re.compile(
     rf"^\s*(?:(?:§{{1,2}}\s*|secs?\.?\s*|sections?\s+){_USCODE_SECTION_LIST_PATTERN}|{_USCODE_SECTION_TOKEN_PATTERN})\s*(?:[.:\-–—]+)?\s*",
     re.IGNORECASE,
@@ -1291,8 +1331,7 @@ _STATUTORY_SCOPE_CONNECTORS: tuple[str, ...] = (
     "in",
 )
 _STATUTORY_SCOPE_CONNECTOR_PATTERN = "|".join(
-    re.escape(connector)
-    for connector in _STATUTORY_SCOPE_CONNECTORS
+    re.escape(connector) for connector in _STATUTORY_SCOPE_CONNECTORS
 )
 _ROMAN_NUMERAL_RE = re.compile(r"^[ivxlcdm]+$", re.IGNORECASE)
 _STRICT_ROMAN_NUMERAL_RE = re.compile(
@@ -1956,8 +1995,7 @@ _EPISTEMIC_DEONTIC_BRIDGE_CUES: frozenset[str] = frozenset(
     }
 )
 _CLAUSE_PREFIX_BRIDGE_CUES: frozenset[str] = frozenset(
-    prefix_key
-    for _, prefix_key in (*_CONDITION_PREFIXES, *_EXCEPTION_PREFIXES)
+    prefix_key for _, prefix_key in (*_CONDITION_PREFIXES, *_EXCEPTION_PREFIXES)
 )
 _DEONTIC_TEMPORAL_BRIDGE_CUES: frozenset[str] = frozenset(
     {
@@ -2085,10 +2123,9 @@ class DecodedModalText:
 def decode_modal_ir_document(document: ModalIRDocument) -> DecodedModalText:
     """Reconstruct source semantics while preserving formula audit metadata."""
     source_phrases, modal_span_coverage = _source_reconstruction_phrases(document)
-    typed_reconstruction_provenance_only = (
-        bool(source_phrases)
-        and not _should_emit_guided_semantic_reconstruction(document)
-    )
+    typed_reconstruction_provenance_only = bool(
+        source_phrases
+    ) and not _should_emit_guided_semantic_reconstruction(document)
     formula_order = tuple(sorted(document.formulas, key=lambda item: item.formula_id))
     phrases: List[DecodedModalPhrase] = [
         *source_phrases,
@@ -2179,9 +2216,7 @@ def decode_modal_ir_document(document: ModalIRDocument) -> DecodedModalText:
 
     support_span = _support_span(document.formulas)
     parser_warnings = [
-        str(value)
-        for value in document.metadata.get("parser_warnings", [])
-        if value is not None
+        str(value) for value in document.metadata.get("parser_warnings", []) if value is not None
     ]
     reconstructed_text = _sentence_from_phrases(phrases)
     return DecodedModalText(
@@ -3269,8 +3304,7 @@ def _typed_ir_reconstruction_phrases(
             ),
             slot_prefix="typed_ir_status",
         )
-        if slot.startswith("uscode_editorial_status_")
-        and not slot.endswith("_keyword")
+        if slot.startswith("uscode_editorial_status_") and not slot.endswith("_keyword")
     ]
     targets = _typed_decompiler_bridge_target_families(
         formula=formula,
@@ -3300,14 +3334,10 @@ def _typed_ir_reconstruction_phrases(
     if (condition_values or exception_values) and "conditional_normative" not in targets:
         targets.append("conditional_normative")
     if family == "frame" and semantic_atoms:
-        for status_target in _typed_decompiler_status_atom_target_families(
-            semantic_atoms
-        ):
+        for status_target in _typed_decompiler_status_atom_target_families(semantic_atoms):
             if status_target not in targets:
                 targets.append(status_target)
-    for semantic_target in _typed_decompiler_semantic_atom_target_families(
-        semantic_atoms
-    ):
+    for semantic_target in _typed_decompiler_semantic_atom_target_families(semantic_atoms):
         if semantic_target not in targets:
             targets.append(semantic_target)
 
@@ -3333,8 +3363,7 @@ def _typed_ir_reconstruction_phrases(
     add_support(force)
     add_support(polarity.replace("_", " "))
     if "deontic" in targets or any(
-        "deontic" in _clean_text(value).lower()
-        for value in legal_ir_view_support
+        "deontic" in _clean_text(value).lower() for value in legal_ir_view_support
     ):
         add_support("deontic legal obligations")
         if force in {"obligation", "permission", "prohibition"}:
@@ -3674,9 +3703,7 @@ def _typed_ir_semantic_bridge_phrases(
     if not normalized_family or not targets:
         return []
     normalized_targets = [
-        _clean_text(target).lower()
-        for target in targets
-        if _clean_text(target).lower()
+        _clean_text(target).lower() for target in targets if _clean_text(target).lower()
     ]
     if not normalized_targets:
         return []
@@ -3822,25 +3849,13 @@ def _should_emit_guided_semantic_reconstruction(document: ModalIRDocument) -> bo
                     or ""
                 )
             ).lower()
-            bridge_failure = _clean_text(
-                str(source.get("bridge_failure_name") or "")
-            ).lower()
-            if (
-                action
-                in {
-                    "refine_semantic_decompiler_reconstruction",
-                    "refine_typed_ir_or_decompiler_slots",
-                }
-                and (
-                    target_component == "modal.ir_decompiler"
-                    or scope == "ir_decompiler"
-                )
-            ):
+            bridge_failure = _clean_text(str(source.get("bridge_failure_name") or "")).lower()
+            if action in {
+                "refine_semantic_decompiler_reconstruction",
+                "refine_typed_ir_or_decompiler_slots",
+            } and (target_component == "modal.ir_decompiler" or scope == "ir_decompiler"):
                 return True
-            if (
-                scope == "ir_decompiler"
-                and bridge_failure.startswith("source_decompiled_text_")
-            ):
+            if scope == "ir_decompiler" and bridge_failure.startswith("source_decompiled_text_"):
                 return True
     return False
 
@@ -3887,8 +3902,7 @@ def _guided_semantic_reconstruction_text(
         for term_index, target_term in enumerate(target_terms):
             target_tokens = set(_tokenize_for_similarity(target_term))
             is_pair_term = (
-                " source reconstructs " in target_term
-                or " source reconstruction" in target_term
+                " source reconstructs " in target_term or " source reconstruction" in target_term
             )
             if is_pair_term:
                 if target_term in lowered_text:
@@ -3902,9 +3916,7 @@ def _guided_semantic_reconstruction_text(
             elif target_tokens and target_tokens.issubset(candidate_tokens):
                 target_rank = min(target_rank, 2)
                 target_term_rank = min(target_term_rank, term_index)
-        candidates.append(
-            (target_rank, target_term_rank, slot_rank, -len(new_signal), text)
-        )
+        candidates.append((target_rank, target_term_rank, slot_rank, -len(new_signal), text))
     if not candidates:
         return ""
     _target_rank, _term_rank, _slot_rank, _signal_rank, text = sorted(candidates)[0]
@@ -3928,9 +3940,7 @@ def _guided_semantic_reconstruction_target_terms(
         predicted = _slot_safe_family_key(
             _clean_text(str(entry.get("predicted_family") or "")).lower()
         )
-        target = _slot_safe_family_key(
-            _clean_text(str(entry.get("target_family") or "")).lower()
-        )
+        target = _slot_safe_family_key(_clean_text(str(entry.get("target_family") or "")).lower())
         if target:
             add(_typed_ir_target_family_label(target))
         if predicted and target:
@@ -3948,6 +3958,8 @@ def _typed_decompiler_predicate_head_text(predicate_text: str) -> str:
     if not tokens:
         return ""
     return " ".join(tokens[:4])
+
+
 def _typed_ir_family_pair_semantic_reconstruction_text(
     *,
     source_family: str,
@@ -3994,9 +4006,7 @@ def _typed_ir_family_pair_bridge_label(source_family: str, target_family: str) -
         "deontic->deontic": "deontic duty preserves legal obligation",
         "deontic->frame": "deontic duty reconstructs legal frame",
         "deontic->temporal": "deontic duty reconstructs temporal deadline",
-        "frame->conditional_normative": (
-            "legal frame reconstructs conditional obligation"
-        ),
+        "frame->conditional_normative": ("legal frame reconstructs conditional obligation"),
         "frame->deontic": "legal frame reconstructs deontic duty",
         "frame->epistemic": "legal frame reconstructs knowledge finding",
         "frame->frame": "legal frame preserves ontology frame",
@@ -4004,6 +4014,8 @@ def _typed_ir_family_pair_bridge_label(source_family: str, target_family: str) -
         "temporal->temporal": "temporal rule preserves deadline period",
     }
     return labels.get(pair, "")
+
+
 def _typed_ir_policy_view_semantic_reconstruction_text(
     *,
     source_family: str,
@@ -4091,10 +4103,9 @@ def _typed_ir_target_view_semantic_clause_text(
         if cleaned:
             parts.append(cleaned)
 
-    pair_label = (
-        _typed_ir_family_pair_bridge_label(source, target)
-        or _typed_ir_family_pair_reconstruction_label(source, target)
-    )
+    pair_label = _typed_ir_family_pair_bridge_label(
+        source, target
+    ) or _typed_ir_family_pair_reconstruction_label(source, target)
     add(pair_label)
 
     subject = roles.get("subject", "")
@@ -4104,9 +4115,7 @@ def _typed_ir_target_view_semantic_clause_text(
     predicate_head = _typed_decompiler_predicate_head_text(predicate_text)
 
     if target == "conditional_normative":
-        first_condition = (
-            _clean_text(condition_values[0]).lower() if condition_values else ""
-        )
+        first_condition = _clean_text(condition_values[0]).lower() if condition_values else ""
         if not first_condition.startswith(
             ("if ", "unless ", "except ", "provided ", "subject to ")
         ):
@@ -4291,18 +4300,12 @@ def _typed_ir_semantic_surface_reconstruction_text(
     action = roles.get("action", "")
     object_value = roles.get("object", "")
     temporal = roles.get("temporal", "")
-    has_deontic_target = any(
-        _clean_text(target).lower() == "deontic" for target in targets
-    )
+    has_deontic_target = any(_clean_text(target).lower() == "deontic" for target in targets)
     has_conditional_target = any(
         _clean_text(target).lower() == "conditional_normative" for target in targets
     )
-    has_temporal_target = any(
-        _clean_text(target).lower() == "temporal" for target in targets
-    )
-    normalized_cues = {
-        _clean_text(cue).lower().replace(" ", "_") for cue in cue_values
-    }
+    has_temporal_target = any(_clean_text(target).lower() == "temporal" for target in targets)
+    normalized_cues = {_clean_text(cue).lower().replace(" ", "_") for cue in cue_values}
 
     if has_conditional_target and condition_values:
         add("conditioned on")
@@ -4415,9 +4418,7 @@ def _typed_ir_semantic_reconstruction_clause_text(
     """Render a typed, source-like clause for frame/deontic residuals."""
     normalized_family = _clean_text(family).lower()
     target_values = [
-        _clean_text(target).lower()
-        for target in targets
-        if _clean_text(target).lower()
+        _clean_text(target).lower() for target in targets if _clean_text(target).lower()
     ]
     if not normalized_family or not target_values:
         return ""
@@ -4915,18 +4916,22 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         normalized,
     ):
         add("study_report_duty")
-    if re.search(
-        r"\b(?:transfer|transferred|transferring)\b.{0,80}\bfunds?\b",
-        normalized,
-    ) or re.search(
-        r"\b(?:amounts?|appropriation|appropriated)\b.{0,120}"
-        r"\b(?:transfer|transferred|transferring)\b.{0,120}"
-        r"\b(?:account|appropriation|funds?)\b",
-        normalized,
-    ) or re.search(
-        r"\b(?:transfer|transferred|transferring)\b.{0,120}"
-        r"\b(?:amounts?|appropriation|appropriated|account|funds?)\b",
-        normalized,
+    if (
+        re.search(
+            r"\b(?:transfer|transferred|transferring)\b.{0,80}\bfunds?\b",
+            normalized,
+        )
+        or re.search(
+            r"\b(?:amounts?|appropriation|appropriated)\b.{0,120}"
+            r"\b(?:transfer|transferred|transferring)\b.{0,120}"
+            r"\b(?:account|appropriation|funds?)\b",
+            normalized,
+        )
+        or re.search(
+            r"\b(?:transfer|transferred|transferring)\b.{0,120}"
+            r"\b(?:amounts?|appropriation|appropriated|account|funds?)\b",
+            normalized,
+        )
     ):
         add("fund_transfer_authority")
     if re.search(
@@ -5416,9 +5421,7 @@ def _definition_condition_support_values(text: str) -> List[str]:
         add("eligibility condition")
     if re.search(r"\b(?:among|highest|lowest|ranking|per\s+capita)\b", normalized):
         add("ranking condition")
-    if re.search(r"\b(?:and|or)\b", normalized) and re.search(
-        r"\([a-z0-9ivxlcdm]+\)", normalized
-    ):
+    if re.search(r"\b(?:and|or)\b", normalized) and re.search(r"\([a-z0-9ivxlcdm]+\)", normalized):
         add("enumerated definition criteria")
     return values
 
@@ -5473,9 +5476,7 @@ def _leading_uscode_catchline_text(text: str, *, max_tokens: int) -> str:
     normalized = _clean_text(text)
     if not normalized:
         return ""
-    stripped = _clean_text(
-        _USCODE_LEADING_SECTION_REF_RE.sub("", normalized, count=1)
-    )
+    stripped = _clean_text(_USCODE_LEADING_SECTION_REF_RE.sub("", normalized, count=1))
     if not stripped or stripped == normalized:
         return ""
     stripped = _strip_uscode_gpo_attribution_fragment(stripped)
@@ -5486,9 +5487,7 @@ def _leading_uscode_catchline_text(text: str, *, max_tokens: int) -> str:
     if body_match is not None:
         stripped = _clean_text(stripped[: body_match.start()])
     else:
-        stripped = _clean_text(
-            _SECTION_HEADING_TAIL_SPLIT_RE.split(stripped, maxsplit=1)[0]
-        )
+        stripped = _clean_text(_SECTION_HEADING_TAIL_SPLIT_RE.split(stripped, maxsplit=1)[0])
     stripped = _TRAILING_SECTION_PUNCT_RE.sub("", stripped)
     if not stripped or _is_low_information_section_marker(stripped):
         return ""
@@ -5645,9 +5644,7 @@ def _trim_uscode_compilation_surface_text(
     if section_match is None:
         candidate = normalized
     else:
-        candidate = _clean_text(
-            normalized[section_match.end() :].lstrip(" \t\r\n-–—:;,.")
-        )
+        candidate = _clean_text(normalized[section_match.end() :].lstrip(" \t\r\n-–—:;,."))
     if not candidate:
         return ""
     candidate = _clean_text(_USCODE_GPO_ATTRIBUTION_RE.sub("", candidate))
@@ -5691,18 +5688,11 @@ def _is_low_information_section_marker(text: str) -> bool:
         return False
     if len(tokens) == 2:
         first, second = tokens
-        if (
-            first in (
-                _LOW_INFORMATION_SECTION_MARKER_TOKENS
-                | _LOW_INFORMATION_SECTION_MARKER_SINGLE_CHAR_TOKENS
-                | _STRUCTURAL_FRAME_CUE_TOKENS
-            )
-            and (
-                second.isdigit()
-                or len(second) == 1
-                or _is_canonical_roman_numeral(second)
-            )
-        ):
+        if first in (
+            _LOW_INFORMATION_SECTION_MARKER_TOKENS
+            | _LOW_INFORMATION_SECTION_MARKER_SINGLE_CHAR_TOKENS
+            | _STRUCTURAL_FRAME_CUE_TOKENS
+        ) and (second.isdigit() or len(second) == 1 or _is_canonical_roman_numeral(second)):
             return True
     return False
 
@@ -6087,9 +6077,7 @@ def _document_citation_phrases(document: ModalIRDocument) -> List[DecodedModalPh
     if not citation:
         if document.formulas:
             return []
-        inferred_citations = _inferred_citations_from_source_ids(
-            _document_source_ids(document)
-        )
+        inferred_citations = _inferred_citations_from_source_ids(_document_source_ids(document))
         if not inferred_citations:
             return []
         phrases: List[DecodedModalPhrase] = []
@@ -6147,9 +6135,7 @@ def _document_provenance_alignment_phrases(
 ) -> List[DecodedModalPhrase]:
     citation = _clean_text(document.metadata.get("citation") or "")
     if not citation and not document.formulas:
-        inferred_citations = _inferred_citations_from_source_ids(
-            _document_source_ids(document)
-        )
+        inferred_citations = _inferred_citations_from_source_ids(_document_source_ids(document))
         if inferred_citations:
             citation = inferred_citations[0]
     if not citation:
@@ -6258,9 +6244,7 @@ def _autoencoder_modal_family_guidance_slots(
         family_features = _modal_family_guidance_features(entry)
         for rank, family in enumerate(family_features, start=1):
             slots.append(("autoencoder_modal_family_prototype", family))
-            slots.append(
-                ("autoencoder_modal_family_prototype_ranked", f"{rank}:{family}")
-            )
+            slots.append(("autoencoder_modal_family_prototype_ranked", f"{rank}:{family}"))
             slots.append((f"autoencoder_modal_family_prototype_{family}", str(rank)))
         if len(family_features) >= 2:
             slots.append(
@@ -6271,9 +6255,7 @@ def _autoencoder_modal_family_guidance_slots(
             )
         for rank, view in enumerate(_legal_ir_view_guidance_features(entry), start=1):
             slots.append(("autoencoder_legal_ir_view_prototype", view))
-            slots.append(
-                ("autoencoder_legal_ir_view_prototype_ranked", f"{rank}:{view}")
-            )
+            slots.append(("autoencoder_legal_ir_view_prototype_ranked", f"{rank}:{view}"))
             for slot, value in _typed_identifier_slots(
                 view.replace(".", "_"),
                 slot_prefix="autoencoder_legal_ir_view_prototype",
@@ -6331,9 +6313,7 @@ def _autoencoder_family_pair_guidance_values(
     source_family: str = "",
 ) -> List[str]:
     """Return explicit source->target family-pair hints from guidance bundles."""
-    normalized_source = _slot_safe_family_key(
-        _clean_text(source_family).lower()
-    )
+    normalized_source = _slot_safe_family_key(_clean_text(source_family).lower())
     pairs: List[str] = []
 
     def add_pair(value: Any) -> None:
@@ -6396,9 +6376,7 @@ def _autoencoder_target_family_guidance_values(
     targets: List[str] = []
     for entry in _autoencoder_guidance_entries(document):
         for field in ("target_family", "selected_family"):
-            family = _slot_safe_family_key(
-                _clean_text(str(entry.get(field) or "")).lower()
-            )
+            family = _slot_safe_family_key(_clean_text(str(entry.get(field) or "")).lower())
             if family and family not in targets:
                 targets.append(family)
     return targets
@@ -6643,10 +6621,7 @@ def _resolved_modal_family_counts(
             continue
         formula_counts[family] = formula_counts.get(family, 0) + 1
     return sorted(
-        (
-            (family, str(count))
-            for family, count in formula_counts.items()
-        ),
+        ((family, str(count)) for family, count in formula_counts.items()),
         key=lambda item: item[0],
     )
 
@@ -6848,9 +6823,7 @@ def _source_id_slots(source_id: str) -> List[Tuple[str, str]]:
             _title_section_style_slots(
                 slot_namespace="source_id",
                 title=title,
-                section_style=_clean_text(
-                    source_style_map.get("source_id_section_style") or ""
-                ),
+                section_style=_clean_text(source_style_map.get("source_id_section_style") or ""),
                 section_style_canonical=_clean_text(
                     source_style_map.get("source_id_section_style_canonical") or ""
                 ),
@@ -6928,9 +6901,7 @@ def _provenance_alignment_slots(
         or citation_slot_map.get("citation_title_section_key")
         or ""
     )
-    source_canonical = _clean_text(
-        source_slot_map.get("source_id_citation_canonical") or ""
-    )
+    source_canonical = _clean_text(source_slot_map.get("source_id_citation_canonical") or "")
     citation_canonical = _clean_text(citation_slot_map.get("citation_canonical") or "")
     source_section_raw = _clean_text(
         source_slot_map.get("source_id_section_raw")
@@ -6961,9 +6932,7 @@ def _provenance_alignment_slots(
         slots.append(
             (
                 "citation_source_id_section_raw_match",
-                "true"
-                if source_section_raw.lower() == citation_section_raw.lower()
-                else "false",
+                "true" if source_section_raw.lower() == citation_section_raw.lower() else "false",
             )
         )
         slots.append(
@@ -6972,16 +6941,14 @@ def _provenance_alignment_slots(
                 f"{source_section_raw}|{citation_section_raw}",
             )
         )
-    if (
-        source_has_trailing_punct in {"true", "false"}
-        and citation_has_trailing_punct in {"true", "false"}
-    ):
+    if source_has_trailing_punct in {"true", "false"} and citation_has_trailing_punct in {
+        "true",
+        "false",
+    }:
         slots.append(
             (
                 "citation_source_id_section_trailing_punct_presence_match",
-                "true"
-                if source_has_trailing_punct == citation_has_trailing_punct
-                else "false",
+                "true" if source_has_trailing_punct == citation_has_trailing_punct else "false",
             )
         )
     if (
@@ -7035,9 +7002,7 @@ def _provenance_alignment_slots(
                 f"{source_canonical}|{citation_canonical}",
             )
         )
-    source_section_signature = _clean_text(
-        source_slot_map.get("source_id_section_signature") or ""
-    )
+    source_section_signature = _clean_text(source_slot_map.get("source_id_section_signature") or "")
     citation_section_signature = _clean_text(
         citation_slot_map.get("citation_section_signature") or ""
     )
@@ -7045,16 +7010,14 @@ def _provenance_alignment_slots(
         slots.append(
             (
                 "citation_source_id_section_signature_pair",
-                f"{source_section_signature or 'none'}|"
-                f"{citation_section_signature or 'none'}",
+                f"{source_section_signature or 'none'}|{citation_section_signature or 'none'}",
             )
         )
         slots.append(
             (
                 "citation_source_id_section_signature_match",
                 "true"
-                if source_section_signature.lower()
-                == citation_section_signature.lower()
+                if source_section_signature.lower() == citation_section_signature.lower()
                 else "false",
             )
         )
@@ -7076,8 +7039,7 @@ def _provenance_alignment_slots(
         slots.append(
             (
                 "citation_source_id_section_profile_pair",
-                f"{source_section_profile or 'none'}|"
-                f"{citation_section_profile or 'none'}",
+                f"{source_section_profile or 'none'}|{citation_section_profile or 'none'}",
             )
         )
         slots.append(
@@ -7096,12 +7058,8 @@ def _provenance_alignment_slots(
                 else "false",
             )
         )
-    source_section_style = _clean_text(
-        source_slot_map.get("source_id_section_style") or ""
-    )
-    citation_section_style = _clean_text(
-        citation_slot_map.get("citation_section_style") or ""
-    )
+    source_section_style = _clean_text(source_slot_map.get("source_id_section_style") or "")
+    citation_section_style = _clean_text(citation_slot_map.get("citation_section_style") or "")
     if source_section_style or citation_section_style:
         slots.append(
             (
@@ -7120,9 +7078,7 @@ def _provenance_alignment_slots(
         slots.append(
             (
                 "citation_source_id_section_style_presence_match",
-                "true"
-                if bool(source_section_style) == bool(citation_section_style)
-                else "false",
+                "true" if bool(source_section_style) == bool(citation_section_style) else "false",
             )
         )
     source_section_style_canonical = _clean_text(
@@ -7152,8 +7108,7 @@ def _provenance_alignment_slots(
             (
                 "citation_source_id_section_style_canonical_presence_match",
                 "true"
-                if bool(source_section_style_canonical)
-                == bool(citation_section_style_canonical)
+                if bool(source_section_style_canonical) == bool(citation_section_style_canonical)
                 else "false",
             )
         )
@@ -7175,8 +7130,7 @@ def _provenance_alignment_slots(
             (
                 "citation_source_id_section_suffix_style_match",
                 "true"
-                if source_section_suffix_style.lower()
-                == citation_section_suffix_style.lower()
+                if source_section_suffix_style.lower() == citation_section_suffix_style.lower()
                 else "false",
             )
         )
@@ -7184,8 +7138,7 @@ def _provenance_alignment_slots(
             (
                 "citation_source_id_section_suffix_style_presence_match",
                 "true"
-                if bool(source_section_suffix_style)
-                == bool(citation_section_suffix_style)
+                if bool(source_section_suffix_style) == bool(citation_section_suffix_style)
                 else "false",
             )
         )
@@ -7252,8 +7205,7 @@ def _provenance_alignment_slots(
             (
                 "citation_source_id_title_section_signature_presence_match",
                 "true"
-                if bool(source_title_section_signature)
-                == bool(citation_title_section_signature)
+                if bool(source_title_section_signature) == bool(citation_title_section_signature)
                 else "false",
             )
         )
@@ -7279,8 +7231,7 @@ def _provenance_alignment_slots(
             (
                 "citation_source_id_title_section_profile_match",
                 "true"
-                if source_title_section_profile.lower()
-                == citation_title_section_profile.lower()
+                if source_title_section_profile.lower() == citation_title_section_profile.lower()
                 else "false",
             )
         )
@@ -7288,15 +7239,12 @@ def _provenance_alignment_slots(
             (
                 "citation_source_id_title_section_profile_presence_match",
                 "true"
-                if bool(source_title_section_profile)
-                == bool(citation_title_section_profile)
+                if bool(source_title_section_profile) == bool(citation_title_section_profile)
                 else "false",
             )
         )
     source_title_number = _clean_text(source_slot_map.get("source_id_title_number") or "")
-    citation_title_number = _clean_text(
-        citation_slot_map.get("citation_title_number") or ""
-    )
+    citation_title_number = _clean_text(citation_slot_map.get("citation_title_number") or "")
     title_number_relation = _primary_terminal_number_relation(
         primary_number=source_title_number,
         terminal_number=citation_title_number,
@@ -7426,10 +7374,7 @@ def _provenance_alignment_slots(
     if (
         source_section_primary_suffix
         or citation_section_primary_suffix
-        or (
-            source_section_primary_number
-            and citation_section_primary_number
-        )
+        or (source_section_primary_number and citation_section_primary_number)
     ):
         slots.append(
             (
@@ -7442,8 +7387,7 @@ def _provenance_alignment_slots(
             (
                 "citation_source_id_section_primary_suffix_match",
                 "true"
-                if source_section_primary_suffix.lower()
-                == citation_section_primary_suffix.lower()
+                if source_section_primary_suffix.lower() == citation_section_primary_suffix.lower()
                 else "false",
             )
         )
@@ -7451,8 +7395,7 @@ def _provenance_alignment_slots(
             (
                 "citation_source_id_section_primary_suffix_presence_match",
                 "true"
-                if bool(source_section_primary_suffix)
-                == bool(citation_section_primary_suffix)
+                if bool(source_section_primary_suffix) == bool(citation_section_primary_suffix)
                 else "false",
             )
         )
@@ -7469,10 +7412,7 @@ def _provenance_alignment_slots(
     if (
         source_section_primary_suffix_kind
         or citation_section_primary_suffix_kind
-        or (
-            source_section_primary_number
-            and citation_section_primary_number
-        )
+        or (source_section_primary_number and citation_section_primary_number)
     ):
         slots.append(
             (
@@ -7512,10 +7452,7 @@ def _provenance_alignment_slots(
     if (
         source_section_terminal_suffix
         or citation_section_terminal_suffix
-        or (
-            source_section_terminal_number
-            and citation_section_terminal_number
-        )
+        or (source_section_terminal_number and citation_section_terminal_number)
     ):
         slots.append(
             (
@@ -7537,8 +7474,7 @@ def _provenance_alignment_slots(
             (
                 "citation_source_id_section_terminal_suffix_presence_match",
                 "true"
-                if bool(source_section_terminal_suffix)
-                == bool(citation_section_terminal_suffix)
+                if bool(source_section_terminal_suffix) == bool(citation_section_terminal_suffix)
                 else "false",
             )
         )
@@ -7555,10 +7491,7 @@ def _provenance_alignment_slots(
     if (
         source_section_terminal_suffix_kind
         or citation_section_terminal_suffix_kind
-        or (
-            source_section_terminal_number
-            and citation_section_terminal_number
-        )
+        or (source_section_terminal_number and citation_section_terminal_number)
     ):
         slots.append(
             (
@@ -7596,16 +7529,14 @@ def _provenance_alignment_slots(
             (
                 "citation_source_id_section_primary_component_signature_match",
                 "true"
-                if source_primary_component_signature
-                == citation_primary_component_signature
+                if source_primary_component_signature == citation_primary_component_signature
                 else "false",
             )
         )
         slots.append(
             (
                 "citation_source_id_section_primary_component_signature_pair",
-                f"{source_primary_component_signature}|"
-                f"{citation_primary_component_signature}",
+                f"{source_primary_component_signature}|{citation_primary_component_signature}",
             )
         )
     source_terminal_component_signature = _clean_text(
@@ -7619,16 +7550,14 @@ def _provenance_alignment_slots(
             (
                 "citation_source_id_section_terminal_component_signature_match",
                 "true"
-                if source_terminal_component_signature
-                == citation_terminal_component_signature
+                if source_terminal_component_signature == citation_terminal_component_signature
                 else "false",
             )
         )
         slots.append(
             (
                 "citation_source_id_section_terminal_component_signature_pair",
-                f"{source_terminal_component_signature}|"
-                f"{citation_terminal_component_signature}",
+                f"{source_terminal_component_signature}|{citation_terminal_component_signature}",
             )
         )
     source_section_profile = _clean_text(
@@ -7641,8 +7570,7 @@ def _provenance_alignment_slots(
         slots.append(
             (
                 "citation_source_id_section_component_profile_pair",
-                f"{source_section_profile or 'none'}|"
-                f"{citation_section_profile or 'none'}",
+                f"{source_section_profile or 'none'}|{citation_section_profile or 'none'}",
             )
         )
         slots.append(
@@ -7659,37 +7587,26 @@ def _provenance_alignment_slots(
     citation_section_is_range = _clean_text(
         citation_slot_map.get("citation_section_is_range") or ""
     ).lower()
-    if (
-        source_section_is_range in {"true", "false"}
-        or citation_section_is_range in {"true", "false"}
-    ):
+    if source_section_is_range in {"true", "false"} or citation_section_is_range in {
+        "true",
+        "false",
+    }:
         slots.append(
             (
                 "citation_source_id_section_is_range_pair",
-                f"{source_section_is_range or 'none'}|"
-                f"{citation_section_is_range or 'none'}",
+                f"{source_section_is_range or 'none'}|{citation_section_is_range or 'none'}",
             )
         )
         slots.append(
             (
                 "citation_source_id_section_is_range_match",
-                "true"
-                if source_section_is_range == citation_section_is_range
-                else "false",
+                "true" if source_section_is_range == citation_section_is_range else "false",
             )
         )
-    source_range_start = _clean_text(
-        source_slot_map.get("source_id_section_range_start") or ""
-    )
-    citation_range_start = _clean_text(
-        citation_slot_map.get("citation_section_range_start") or ""
-    )
-    source_range_end = _clean_text(
-        source_slot_map.get("source_id_section_range_end") or ""
-    )
-    citation_range_end = _clean_text(
-        citation_slot_map.get("citation_section_range_end") or ""
-    )
+    source_range_start = _clean_text(source_slot_map.get("source_id_section_range_start") or "")
+    citation_range_start = _clean_text(citation_slot_map.get("citation_section_range_start") or "")
+    source_range_end = _clean_text(source_slot_map.get("source_id_section_range_end") or "")
+    citation_range_end = _clean_text(citation_slot_map.get("citation_section_range_end") or "")
     source_range_connector = _clean_text(
         source_slot_map.get("source_id_section_range_connector") or ""
     )
@@ -7715,17 +7632,13 @@ def _provenance_alignment_slots(
         slots.append(
             (
                 "citation_source_id_section_range_start_match",
-                "true"
-                if source_range_start.lower() == citation_range_start.lower()
-                else "false",
+                "true" if source_range_start.lower() == citation_range_start.lower() else "false",
             )
         )
         slots.append(
             (
                 "citation_source_id_section_range_start_presence_match",
-                "true"
-                if bool(source_range_start) == bool(citation_range_start)
-                else "false",
+                "true" if bool(source_range_start) == bool(citation_range_start) else "false",
             )
         )
         slots.append(
@@ -7737,24 +7650,19 @@ def _provenance_alignment_slots(
         slots.append(
             (
                 "citation_source_id_section_range_end_match",
-                "true"
-                if source_range_end.lower() == citation_range_end.lower()
-                else "false",
+                "true" if source_range_end.lower() == citation_range_end.lower() else "false",
             )
         )
         slots.append(
             (
                 "citation_source_id_section_range_end_presence_match",
-                "true"
-                if bool(source_range_end) == bool(citation_range_end)
-                else "false",
+                "true" if bool(source_range_end) == bool(citation_range_end) else "false",
             )
         )
         slots.append(
             (
                 "citation_source_id_section_range_connector_pair",
-                f"{source_range_connector or 'none'}|"
-                f"{citation_range_connector or 'none'}",
+                f"{source_range_connector or 'none'}|{citation_range_connector or 'none'}",
             )
         )
         slots.append(
@@ -7791,12 +7699,8 @@ def _provenance_alignment_slots(
 
     title_match = source_title.lower() == citation_title.lower()
     section_match = source_section.lower() == citation_section.lower()
-    slots.append(
-        ("citation_source_id_title_match", "true" if title_match else "false")
-    )
-    slots.append(
-        ("citation_source_id_section_match", "true" if section_match else "false")
-    )
+    slots.append(("citation_source_id_title_match", "true" if title_match else "false"))
+    slots.append(("citation_source_id_section_match", "true" if section_match else "false"))
     if source_key and citation_key:
         slots.append(
             (
@@ -7808,9 +7712,7 @@ def _provenance_alignment_slots(
         slots.append(
             (
                 "citation_source_id_canonical_match",
-                "true"
-                if source_canonical.lower() == citation_canonical.lower()
-                else "false",
+                "true" if source_canonical.lower() == citation_canonical.lower() else "false",
             )
         )
     if title_match and section_match:
@@ -7868,15 +7770,9 @@ def _citation_source_id_alignment_profile_slots(
     source_has_punct_known = normalized_source_has_punct in {"true", "false"}
     citation_has_punct_known = normalized_citation_has_punct in {"true", "false"}
     if source_has_punct_known and citation_has_punct_known:
-        if (
-            normalized_source_has_punct == "false"
-            and normalized_citation_has_punct == "false"
-        ):
+        if normalized_source_has_punct == "false" and normalized_citation_has_punct == "false":
             punctuation_relation = "punct_none"
-        elif (
-            normalized_source_has_punct == "true"
-            and normalized_citation_has_punct == "true"
-        ):
+        elif normalized_source_has_punct == "true" and normalized_citation_has_punct == "true":
             punctuation_relation = (
                 "punct_exact"
                 if normalized_source_punct == normalized_citation_punct
@@ -7912,11 +7808,7 @@ def _slot_value_map(slots: Sequence[Tuple[str, str]]) -> Dict[str, str]:
     for slot, value in slots:
         normalized_slot = _clean_text(slot)
         normalized_value = _clean_text(value)
-        if (
-            not normalized_slot
-            or not normalized_value
-            or normalized_slot in values
-        ):
+        if not normalized_slot or not normalized_value or normalized_slot in values:
             continue
         values[normalized_slot] = normalized_value
     return values
@@ -8181,10 +8073,7 @@ def _frame_grounding_profile_slots(
     candidate_count = str(len(ranked_keys))
     normalized_terms = _unique_preserve_order(selected_frame_terms)
     term_count = str(len(normalized_terms))
-    profile = (
-        f"{frame_key}|rank:{selected_rank}|terms:{term_count}|"
-        f"candidates:{candidate_count}"
-    )
+    profile = f"{frame_key}|rank:{selected_rank}|terms:{term_count}|candidates:{candidate_count}"
     slots: List[Tuple[str, str]] = [
         ("frame_grounding_profile", profile),
         ("frame_grounding_selected_frame", frame_key),
@@ -8227,8 +8116,7 @@ def _frame_grounding_profile_slots(
         if not family_key:
             continue
         family_profile = (
-            f"{frame_key}|family:{family_key}|count:{count}|"
-            f"rank:{selected_rank}|terms:{term_count}"
+            f"{frame_key}|family:{family_key}|count:{count}|rank:{selected_rank}|terms:{term_count}"
         )
         slots.extend(
             (
@@ -8737,8 +8625,7 @@ def _source_span_slot_phrases(
                     family_pair = f"{formula_family}->{bridge_family}"
                     operator_pair = f"{formula_symbol}->{bridge_symbol}"
                     transition_signature = (
-                        f"{formula_family}:{formula_symbol}->"
-                        f"{bridge_family}:{bridge_symbol}:{cue}"
+                        f"{formula_family}:{formula_symbol}->{bridge_family}:{bridge_symbol}:{cue}"
                     )
                     pair_cue = f"{family_pair}:{cue}"
                     for transition_slot, transition_value in (
@@ -8852,8 +8739,7 @@ def _document_span_metric_phrases(
     modal_spans = _merged_formula_spans(document.formulas, source_length)
     modal_span_count = len(modal_spans)
     modal_span_char_count = sum(
-        max(0, span_end - span_start)
-        for span_start, span_end in modal_spans
+        max(0, span_end - span_start) for span_start, span_end in modal_spans
     )
     source_context_span_count = _source_context_span_count(
         modal_spans=modal_spans,
@@ -9454,9 +9340,7 @@ def _source_role_anchor_slots(
     slots: List[Tuple[str, str]] = []
 
     structural_roles = [
-        role
-        for role in ("subject", "action", "object")
-        if _clean_text(anchors.get(role, ""))
+        role for role in ("subject", "action", "object") if _clean_text(anchors.get(role, ""))
     ]
     role_set = "+".join(structural_roles)
     role_path = "->".join(structural_roles)
@@ -9639,9 +9523,7 @@ def _source_anchor_cue_window(
                 best_window = candidate
             else:
                 current_width = best_window[1] - best_window[0]
-                if width > current_width or (
-                    width == current_width and start < best_window[0]
-                ):
+                if width > current_width or (width == current_width and start < best_window[0]):
                     best_window = candidate
             break
     return best_window
@@ -9672,9 +9554,7 @@ def _preferred_source_anchor_candidate(
     prefer_temporal: bool = False,
 ) -> str:
     normalized_candidates = [
-        _clean_text(candidate).lower()
-        for candidate in candidates
-        if _clean_text(candidate)
+        _clean_text(candidate).lower() for candidate in candidates if _clean_text(candidate)
     ]
     if not normalized_candidates:
         return ""
@@ -10037,9 +9917,7 @@ def _typed_decompiler_role_slots(
             )
 
     role_signature = "+".join(
-        role
-        for role in ("subject", "action", "object", "temporal")
-        if role in role_values
+        role for role in ("subject", "action", "object", "temporal") if role in role_values
     )
     if role_signature:
         slots.extend(
@@ -10064,9 +9942,7 @@ def _typed_decompiler_role_slots(
         text=normalized_text,
         roles=role_values,
     )
-    for semantic_target in _typed_decompiler_semantic_atom_target_families(
-        semantic_atoms
-    ):
+    for semantic_target in _typed_decompiler_semantic_atom_target_families(semantic_atoms):
         if semantic_target not in bridge_targets:
             bridge_targets.append(semantic_target)
     for bridge_family in bridge_targets:
@@ -10136,20 +10012,24 @@ def _typed_decompiler_semantic_reconstruction_text(
         formula=formula,
         max_tokens=24,
     )
-    return _clean_text(
-        " ".join(
-            value
-            for value in (
-                predicate_text,
-                source_span_text,
-                heading_text,
-                fallback_text,
-                " ".join(_phrase_values(condition_values)),
-                " ".join(_phrase_values(exception_values)),
+    return (
+        _clean_text(
+            " ".join(
+                value
+                for value in (
+                    predicate_text,
+                    source_span_text,
+                    heading_text,
+                    fallback_text,
+                    " ".join(_phrase_values(condition_values)),
+                    " ".join(_phrase_values(exception_values)),
+                )
+                if _clean_text(value)
             )
-            if _clean_text(value)
         )
-    ).replace("_", " ").lower()
+        .replace("_", " ")
+        .lower()
+    )
 
 
 def _typed_decompiler_target_reconstruction_slots(
@@ -10216,8 +10096,7 @@ def _typed_decompiler_target_reconstruction_slots(
     )
     has_conditioned_scope = bool(condition_values or exception_values or condition_cues)
     has_temporal_scope = bool(
-        temporal_cues
-        or any(_temporal_clause_prefix_relation(cue) for cue in condition_cues)
+        temporal_cues or any(_temporal_clause_prefix_relation(cue) for cue in condition_cues)
     )
     if has_conditioned_scope and "conditional_normative" not in targets:
         targets.append("conditional_normative")
@@ -10231,25 +10110,17 @@ def _typed_decompiler_target_reconstruction_slots(
         and "deontic" not in targets
     ):
         targets.append("deontic")
-    for semantic_target in _typed_decompiler_semantic_atom_target_families(
-        semantic_atoms
-    ):
+    for semantic_target in _typed_decompiler_semantic_atom_target_families(semantic_atoms):
         if semantic_target not in targets:
             targets.append(semantic_target)
     if source_family == "frame":
-        for status_target in _typed_decompiler_status_atom_target_families(
-            semantic_atoms
-        ):
+        for status_target in _typed_decompiler_status_atom_target_families(semantic_atoms):
             if status_target not in targets:
                 targets.append(status_target)
-    for status_target in _typed_decompiler_status_detail_target_families(
-        status_detail_slots
-    ):
+    for status_target in _typed_decompiler_status_detail_target_families(status_detail_slots):
         if status_target not in targets:
             targets.append(status_target)
-    for directional_target in _typed_decompiler_directional_target_families(
-        source_family
-    ):
+    for directional_target in _typed_decompiler_directional_target_families(source_family):
         if directional_target not in targets:
             targets.append(directional_target)
 
@@ -10478,8 +10349,8 @@ def _typed_decompiler_target_reconstruction_slots(
                             "family_semantic_slot_legal_ir_view_prototype",
                             f"{target}||slot:cue-family:{cue}:{target}||{view}",
                         ),
+                    )
                 )
-            )
         for condition_index, _condition in enumerate(condition_values):
             typed_condition = _typed_clause_slot(
                 _condition,
@@ -10493,13 +10364,9 @@ def _typed_decompiler_target_reconstruction_slots(
             condition_role_values = _semantic_role_values_from_text(
                 _clean_text(condition_role_text).replace("_", " ").lower()
             )
-            temporal_condition_cues = _temporal_transition_context_cues_from_text(
-                _condition
-            )
+            temporal_condition_cues = _temporal_transition_context_cues_from_text(_condition)
             if temporal_condition_cues:
-                condition_role_values["temporal"] = "+".join(
-                    temporal_condition_cues
-                )
+                condition_role_values["temporal"] = "+".join(temporal_condition_cues)
             if condition_role_values:
                 role_names = [
                     role_name
@@ -10551,10 +10418,7 @@ def _typed_decompiler_target_reconstruction_slots(
                             )
                         )
                 for role_name, role_value in condition_role_values.items():
-                    role_slot = (
-                        f"slot-pair:conditions:{condition_index}|"
-                        f"predicate-role:{role_name}"
-                    )
+                    role_slot = f"slot-pair:conditions:{condition_index}|predicate-role:{role_name}"
                     role_value_slot = (
                         f"slot-pair:conditions:{condition_index}|"
                         f"predicate-role:{role_name}:{role_value}"
@@ -10700,10 +10564,7 @@ def _typed_decompiler_target_reconstruction_slots(
                         ("legal_ir_view_prototype", view),
                         (
                             "semantic_slot_legal_ir_view_prototype",
-                            (
-                                f"slot:typed-decompiler-family-pair-cue:{pair}:"
-                                f"{cue}||{view}"
-                            ),
+                            (f"slot:typed-decompiler-family-pair-cue:{pair}:{cue}||{view}"),
                         ),
                         (
                             "family_semantic_slot_legal_ir_view_prototype",
@@ -10732,10 +10593,7 @@ def _typed_decompiler_target_reconstruction_slots(
                         ("legal_ir_view_prototype", view),
                         (
                             "semantic_slot_legal_ir_view_prototype",
-                            (
-                                f"slot:typed-decompiler-family-pair-cue:{pair}:"
-                                f"{cue}||{view}"
-                            ),
+                            (f"slot:typed-decompiler-family-pair-cue:{pair}:{cue}||{view}"),
                         ),
                         (
                             "family_semantic_slot_legal_ir_view_prototype",
@@ -10994,9 +10852,7 @@ def _typed_decompiler_force_polarity_reconstruction_slots(
         for force_value in force_values:
             for polarity_value in polarity_values:
                 signature = f"{force_value}:{polarity_value}:{normalized_target}"
-                family_pair_signature = (
-                    f"{force_value}:{polarity_value}:{pair}"
-                )
+                family_pair_signature = f"{force_value}:{polarity_value}:{pair}"
                 slots.extend(
                     (
                         ("typed-decompiler-force-polarity", signature),
@@ -11023,10 +10879,7 @@ def _typed_decompiler_force_polarity_reconstruction_slots(
                     normalized_source,
                     normalized_target,
                 ):
-                    slot_value = (
-                        "slot:typed-decompiler-force-polarity:"
-                        f"{signature}||{view}"
-                    )
+                    slot_value = f"slot:typed-decompiler-force-polarity:{signature}||{view}"
                     pair_slot_value = (
                         "slot:typed-decompiler-force-polarity-family-pair:"
                         f"{family_pair_signature}||{view}"
@@ -11147,11 +11000,15 @@ def _typed_decompiler_force_polarity_scope_values(
         for cue in scope_cues
     ) or _temporal_transition_context_cues_from_text(normalized_text):
         add("temporal")
-    if condition_values or exception_values or any(
-        cue in _CLAUSE_PREFIX_BRIDGE_CUES
-        or cue.startswith("except")
-        or cue in {"provided", "provided_that", "unless", "with_consent"}
-        for cue in scope_cues
+    if (
+        condition_values
+        or exception_values
+        or any(
+            cue in _CLAUSE_PREFIX_BRIDGE_CUES
+            or cue.startswith("except")
+            or cue in {"provided", "provided_that", "unless", "with_consent"}
+            for cue in scope_cues
+        )
     ):
         add("conditional")
     if _statutory_scope_slots(normalized_text):
@@ -11240,8 +11097,7 @@ def _typed_decompiler_source_reconstruction_slots(
     ) and "conditional_normative" not in targets:
         targets.append("conditional_normative")
     if (
-        temporal_cues
-        or any(_temporal_clause_prefix_relation(cue) for cue in condition_cues)
+        temporal_cues or any(_temporal_clause_prefix_relation(cue) for cue in condition_cues)
     ) and "temporal" not in targets:
         targets.append("temporal")
     if source_family == "frame" and "frame" not in targets:
@@ -11252,25 +11108,17 @@ def _typed_decompiler_source_reconstruction_slots(
         and "deontic" not in targets
     ):
         targets.append("deontic")
-    for semantic_target in _typed_decompiler_semantic_atom_target_families(
-        semantic_atoms
-    ):
+    for semantic_target in _typed_decompiler_semantic_atom_target_families(semantic_atoms):
         if semantic_target not in targets:
             targets.append(semantic_target)
     if source_family == "frame":
-        for status_target in _typed_decompiler_status_atom_target_families(
-            semantic_atoms
-        ):
+        for status_target in _typed_decompiler_status_atom_target_families(semantic_atoms):
             if status_target not in targets:
                 targets.append(status_target)
-    for status_target in _typed_decompiler_status_detail_target_families(
-        status_detail_slots
-    ):
+    for status_target in _typed_decompiler_status_detail_target_families(status_detail_slots):
         if status_target not in targets:
             targets.append(status_target)
-    for directional_target in _typed_decompiler_directional_target_families(
-        source_family
-    ):
+    for directional_target in _typed_decompiler_directional_target_families(source_family):
         if directional_target not in targets:
             targets.append(directional_target)
 
@@ -11282,11 +11130,14 @@ def _typed_decompiler_source_reconstruction_slots(
         document=document,
     )
     raw_predicate_head = _typed_decompiler_predicate_head(formula)
-    predicate_head = _typed_decompiler_semantic_predicate_head(
-        formula=formula,
-        reconstruction_text=reconstruction_text,
-        semantic_atoms=semantic_atoms,
-    ) or raw_predicate_head
+    predicate_head = (
+        _typed_decompiler_semantic_predicate_head(
+            formula=formula,
+            reconstruction_text=reconstruction_text,
+            semantic_atoms=semantic_atoms,
+        )
+        or raw_predicate_head
+    )
     topology_parts = [
         part
         for part, present in (
@@ -11747,10 +11598,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "complaint",
         "proposal_prescription_duty",
         "statutory_amendment",
-    } or (
-        normalized_atom.endswith("_defined")
-        or normalized_atom.endswith("_definition")
-    ):
+    } or (normalized_atom.endswith("_defined") or normalized_atom.endswith("_definition")):
         add("CEC.native")
         add("knowledge_graphs.neo4j_compat")
         add("modal.frame_logic")
@@ -13034,10 +12882,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "study_report_duty",
             "uranium_inventory_study",
             "statutory_amendment",
-        } or (
-            normalized_atom.endswith("_defined")
-            or normalized_atom.endswith("_definition")
-        ):
+        } or (normalized_atom.endswith("_defined") or normalized_atom.endswith("_definition")):
             add("frame")
         if normalized_atom in {
             "active_status_list",
@@ -14142,13 +13987,9 @@ def _typed_decompiler_semantic_atom_supports_target(
     normalized_source = _clean_text(source_family).lower()
     if not normalized_atom or not normalized_target:
         return False
-    target_families = _typed_decompiler_semantic_atom_target_families(
-        [normalized_atom]
-    )
+    target_families = _typed_decompiler_semantic_atom_target_families([normalized_atom])
     if normalized_source == "frame":
-        for status_target in _typed_decompiler_status_atom_target_families(
-            [normalized_atom]
-        ):
+        for status_target in _typed_decompiler_status_atom_target_families([normalized_atom]):
             if status_target not in target_families:
                 target_families.append(status_target)
     return normalized_target in target_families
@@ -14246,9 +14087,7 @@ def _typed_decompiler_status_detail_slots(text: str) -> List[Tuple[str, str]]:
             }
         ]
         if target_section:
-            slots.append(
-                ("typed-decompiler-status-target_section", target_section)
-            )
+            slots.append(("typed-decompiler-status-target_section", target_section))
             if target_title:
                 slots.append(("typed-decompiler-status-target_title", target_title))
                 slots.append(
@@ -14711,10 +14550,7 @@ def _typed_decompiler_surface_profile_slots(
                     ),
                     (
                         "semantic_slot_legal_ir_view_prototype",
-                        (
-                            "slot:typed-decompiler-surface-profile-transition:"
-                            f"{transition}||{view}"
-                        ),
+                        (f"slot:typed-decompiler-surface-profile-transition:{transition}||{view}"),
                     ),
                 )
             )
@@ -14763,8 +14599,7 @@ def _typed_decompiler_reconstruction_profile_slots(
     surface_values = target_profiles or ["typed_ir_surface"]
     if source_profile:
         surface_values = [
-            f"{source_profile}->{target_profile}"
-            for target_profile in surface_values
+            f"{source_profile}->{target_profile}" for target_profile in surface_values
         ]
 
     slots: List[Tuple[str, str]] = []
@@ -14870,35 +14705,75 @@ def _typed_decompiler_target_surface_profiles(
     if _uscode_status_clause_keywords(document=document, formula=formula):
         add("uscode_editorial_status_surface")
     lowered = text.lower()
-    if re.search(r"\b(?:policy\s+disclosures?|conditions?\s+and\s+exclusions?|national\s+flood\s+insurance)\b", lowered):
+    if re.search(
+        r"\b(?:policy\s+disclosures?|conditions?\s+and\s+exclusions?|national\s+flood\s+insurance)\b",
+        lowered,
+    ):
         add("uscode_policy_disclosure_surface")
-    if re.search(r"\b(?:nontaxation|tax\s+treatment|taxable\s+income|internal\s+revenue\s+code)\b", lowered):
+    if re.search(
+        r"\b(?:nontaxation|tax\s+treatment|taxable\s+income|internal\s+revenue\s+code)\b", lowered
+    ):
         add("uscode_tax_treatment_surface")
-    if re.search(r"\b(?:audit(?:s)?\s+by\s+comptroller\s+general|government\s+accountability\s+office)\b", lowered):
+    if re.search(
+        r"\b(?:audit(?:s)?\s+by\s+comptroller\s+general|government\s+accountability\s+office)\b",
+        lowered,
+    ):
         add("uscode_audit_oversight_surface")
-    if re.search(r"\b(?:reports?\s+to\s+congress|submit\s+reports?|transmit\s+.+\breport|report\s+on\s+use)\b", lowered):
+    if re.search(
+        r"\b(?:reports?\s+to\s+congress|submit\s+reports?|transmit\s+.+\breport|report\s+on\s+use)\b",
+        lowered,
+    ):
         add("uscode_report_to_congress_surface")
-    if re.search(r"\b(?:relationship\s+to\s+other\s+law|shall\s+not\s+affect|not\s+affect\s+any\s+other\s+provision)\b", lowered):
+    if re.search(
+        r"\b(?:relationship\s+to\s+other\s+law|shall\s+not\s+affect|not\s+affect\s+any\s+other\s+provision)\b",
+        lowered,
+    ):
         add("uscode_law_relationship_surface")
-    if re.search(r"\b(?:general\s+eligibility|eligibility\s+requirements?|may\s+be\s+issued\s+under\s+this\s+chapter\s+only\s+if)\b", lowered):
+    if re.search(
+        r"\b(?:general\s+eligibility|eligibility\s+requirements?|may\s+be\s+issued\s+under\s+this\s+chapter\s+only\s+if)\b",
+        lowered,
+    ):
         add("uscode_eligibility_condition_surface")
-    if re.search(r"\b(?:eligibility\s+for\s+services|congregate\s+services|professional\s+assessment\s+committee)\b", lowered):
+    if re.search(
+        r"\b(?:eligibility\s+for\s+services|congregate\s+services|professional\s+assessment\s+committee)\b",
+        lowered,
+    ):
         add("uscode_service_eligibility_surface")
-    if re.search(r"\b(?:recreational\s+equipment|sport\s+fishing\s+equipment|manufacturers?\s+excise\s+tax(?:es)?|miscellaneous\s+excise\s+tax(?:es)?)\b", lowered):
+    if re.search(
+        r"\b(?:recreational\s+equipment|sport\s+fishing\s+equipment|manufacturers?\s+excise\s+tax(?:es)?|miscellaneous\s+excise\s+tax(?:es)?)\b",
+        lowered,
+    ):
         add("uscode_excise_tax_surface")
-    if re.search(r"\b(?:grievances?\s+concerning\s+former|former\s+(?:members?|employees?)\s+of\s+the\s+(?:service|department)|foreign\s+service\s+grievance)\b", lowered):
+    if re.search(
+        r"\b(?:grievances?\s+concerning\s+former|former\s+(?:members?|employees?)\s+of\s+the\s+(?:service|department)|foreign\s+service\s+grievance)\b",
+        lowered,
+    ):
         add("uscode_grievance_review_surface")
-    if re.search(r"\b(?:seal\s+of\s+department|seal\s+of\s+office|judicial\s+notice\s+shall\s+be\s+taken|judicial\s+notice)\b", lowered):
+    if re.search(
+        r"\b(?:seal\s+of\s+department|seal\s+of\s+office|judicial\s+notice\s+shall\s+be\s+taken|judicial\s+notice)\b",
+        lowered,
+    ):
         add("uscode_official_seal_surface")
     if re.search(r"\bseverability\b", lowered):
         add("uscode_severability_surface")
-    if re.search(r"\b(?:management\s+and\s+disposition\s+of\s+vessels|disposition\s+of\s+vessels\s+and\s+other\s+property|arising\s+out\s+of\s+fishery\s+loans?)\b", lowered):
+    if re.search(
+        r"\b(?:management\s+and\s+disposition\s+of\s+vessels|disposition\s+of\s+vessels\s+and\s+other\s+property|arising\s+out\s+of\s+fishery\s+loans?)\b",
+        lowered,
+    ):
         add("uscode_property_disposition_surface")
-    if re.search(r"\b(?:amendments?|struck\s+out|inserted|substituted|redesignated|reclassified)\b", lowered):
+    if re.search(
+        r"\b(?:amendments?|struck\s+out|inserted|substituted|redesignated|reclassified)\b", lowered
+    ):
         add("uscode_amendment_operation_surface")
-    if re.search(r"\b(?:receiving\s+loan\s+from\s+court\s+officer|court\s+officer|receiver|receivership)\b", lowered):
+    if re.search(
+        r"\b(?:receiving\s+loan\s+from\s+court\s+officer|court\s+officer|receiver|receivership)\b",
+        lowered,
+    ):
         add("uscode_court_officer_receivership_surface")
-    if re.search(r"\b(?:independent\s+living|vocational\s+rehabilitation|rehabilitation\s+services)\b", lowered):
+    if re.search(
+        r"\b(?:independent\s+living|vocational\s+rehabilitation|rehabilitation\s+services)\b",
+        lowered,
+    ):
         add("uscode_rehabilitation_service_surface")
     if re.search(r"\b(?:patents?\s+for\s+designs?|ornamental\s+design)\b", lowered):
         add("uscode_design_patent_surface")
@@ -14921,9 +14796,7 @@ def _typed_decompiler_family_pair_role_topology_slots(
         return []
 
     role_parts = [
-        role
-        for role in ("subject", "action", "object")
-        if _clean_text(roles.get(role, ""))
+        role for role in ("subject", "action", "object") if _clean_text(roles.get(role, ""))
     ]
     normalized_temporal_cues = _unique_text_values(
         _clean_text(cue).lower().replace(" ", "_")
@@ -14935,7 +14808,8 @@ def _typed_decompiler_family_pair_role_topology_slots(
         for cue in normalized_temporal_cues
         if cue in _TEMPORAL_BRIDGE_CONTEXT_TOKENS
         or _temporal_clause_prefix_relation(cue)
-        or cue in {
+        or cue
+        in {
             "calendar_year",
             "effective_date",
             "fiscal_year",
@@ -14948,9 +14822,7 @@ def _typed_decompiler_family_pair_role_topology_slots(
         }
     ]
     if (
-        has_temporal_scope
-        or _clean_text(roles.get("temporal", ""))
-        or temporal_scope_cues
+        has_temporal_scope or _clean_text(roles.get("temporal", "")) or temporal_scope_cues
     ) and "temporal" not in role_parts:
         role_parts.append("temporal")
     if not role_parts:
@@ -15146,10 +15018,7 @@ def _typed_decompiler_family_pair_predicate_slots(
                 slots.append(
                     (
                         "family_semantic_slot_legal_ir_view_prototype",
-                        (
-                            f"{family}||slot:typed-decompiler-family-pair-predicate:"
-                            f"{value}||{view}"
-                        ),
+                        (f"{family}||slot:typed-decompiler-family-pair-predicate:{value}||{view}"),
                     )
                 )
     return _unique_slot_values(slots)
@@ -15161,11 +15030,7 @@ def _typed_decompiler_predicate_classes(
     semantic_atoms: Sequence[str],
 ) -> List[str]:
     normalized = _clean_text(text).replace("_", " ").lower()
-    normalized_atoms = {
-        _clean_text(atom).lower()
-        for atom in semantic_atoms
-        if _clean_text(atom)
-    }
+    normalized_atoms = {_clean_text(atom).lower() for atom in semantic_atoms if _clean_text(atom)}
     classes: List[str] = []
 
     def add(value: str) -> None:
@@ -15180,8 +15045,7 @@ def _typed_decompiler_predicate_classes(
             "complaint",
         }
     ) or any(
-        atom.endswith("_defined") or atom.endswith("_definition")
-        for atom in normalized_atoms
+        atom.endswith("_defined") or atom.endswith("_definition") for atom in normalized_atoms
     ):
         add("statutory")
     if normalized_atoms.intersection(
@@ -15720,7 +15584,8 @@ def _semantic_role_values_from_text(text: str) -> Dict[str, str]:
     cue_indices = [
         index
         for index, token in enumerate(tokens)
-        if token in {
+        if token
+        in {
             "shall",
             "must",
             "may",
@@ -15892,9 +15757,7 @@ def _typed_decompiler_bridge_target_families(
             add(bridge_family)
     for bridge_family in _doxastic_bridge_families_from_text(text):
         add(bridge_family)
-    if family in {"deontic", "frame"} and _uscode_residual_fallback_decompiler_cues(
-        formula
-    ):
+    if family in {"deontic", "frame"} and _uscode_residual_fallback_decompiler_cues(formula):
         add("conditional_normative")
     if family == "frame" and _uscode_residual_fallback_decompiler_cues(formula):
         add("epistemic")
@@ -15961,12 +15824,7 @@ def _typed_decompiler_force_polarity_family_pair_slots(
     normalized_target = _clean_text(target_family).lower()
     force_key = _slot_safe_family_pair_key(force)
     polarity_key = _slot_safe_family_pair_key(polarity)
-    if (
-        not normalized_source
-        or not normalized_target
-        or not force_key
-        or not polarity_key
-    ):
+    if not normalized_source or not normalized_target or not force_key or not polarity_key:
         return []
     pair = f"{normalized_source}->{normalized_target}"
     force_polarity = f"{force_key}:{polarity_key}"
@@ -16020,9 +15878,7 @@ def _typed_decompiler_force_view_family_pair_slots(
         return []
 
     slots: List[Tuple[str, str]] = []
-    force_polarity = (
-        f"{force_key}:{polarity_key}" if polarity_key else force_key
-    )
+    force_polarity = f"{force_key}:{polarity_key}" if polarity_key else force_key
     for view in views:
         slots.extend(
             (
@@ -16037,10 +15893,7 @@ def _typed_decompiler_force_view_family_pair_slots(
                 ),
                 (
                     "semantic_slot_legal_ir_view_prototype",
-                    (
-                        "slot:typed-decompiler-force-view-family-pair:"
-                        f"{force_key}:{pair}||{view}"
-                    ),
+                    (f"slot:typed-decompiler-force-view-family-pair:{force_key}:{pair}||{view}"),
                 ),
                 (
                     "family_semantic_slot_legal_ir_view_prototype",
@@ -16146,9 +15999,7 @@ def _typed_decompiler_temporal_target_role_slots(
     if target != "temporal":
         return []
 
-    role_names = [
-        role for role in ("subject", "action", "object", "temporal") if roles.get(role)
-    ]
+    role_names = [role for role in ("subject", "action", "object", "temporal") if roles.get(role)]
     if not role_names and not temporal_cues and not condition_cues:
         return []
 
@@ -16159,15 +16010,14 @@ def _typed_decompiler_temporal_target_role_slots(
     if temporal_cues:
         temporal_signal = "+".join(_unique_text_values(list(temporal_cues))[:4])
     elif condition_cues:
-        temporal_signal = "+".join(
-            _unique_text_values(
-                [
-                    cue
-                    for cue in condition_cues
-                    if _temporal_clause_prefix_relation(cue)
-                ]
-            )[:4]
-        ) or "conditioned_temporal"
+        temporal_signal = (
+            "+".join(
+                _unique_text_values(
+                    [cue for cue in condition_cues if _temporal_clause_prefix_relation(cue)]
+                )[:4]
+            )
+            or "conditioned_temporal"
+        )
     elif has_temporal_scope:
         temporal_signal = "temporal_scope"
     elif roles.get("temporal"):
@@ -16270,9 +16120,7 @@ def _typed_decompiler_family_pair_cues(
             cues.append(normalized_cue)
 
     has_frame_scope = bool(_statutory_scope_slots(normalized_text)) or bool(
-        set(_CUE_TOKEN_RE.findall(normalized_text)).intersection(
-            _STRUCTURAL_FRAME_CUE_TOKENS
-        )
+        set(_CUE_TOKEN_RE.findall(normalized_text)).intersection(_STRUCTURAL_FRAME_CUE_TOKENS)
     )
     for cue in _deontic_surface_cues_from_text(normalized_text):
         bridge_pairs = _cue_bridge_operator_pairs(cue)
@@ -16299,8 +16147,7 @@ def _typed_decompiler_family_pair_cues(
             # In frame-scoped legal clauses, normative cue words in the same
             # typed span are useful evidence for an epistemic/frame correction.
             if any(
-                _clean_text(bridge_family).lower()
-                in {"deontic", "conditional_normative"}
+                _clean_text(bridge_family).lower() in {"deontic", "conditional_normative"}
                 for bridge_family, _bridge_symbol in bridge_pairs
             ):
                 add(cue)
@@ -16314,10 +16161,10 @@ def _typed_decompiler_family_pair_cues(
     fallback_rule = _clean_text(formula.metadata.get("fallback_rule") or "").lower()
     if fallback_rule:
         add(fallback_rule)
-    if (
-        _clean_text(formula.operator.family).lower() == "frame"
-        and normalized_target in {"conditional_normative", "epistemic"}
-    ):
+    if _clean_text(formula.operator.family).lower() == "frame" and normalized_target in {
+        "conditional_normative",
+        "epistemic",
+    }:
         for residual_cue in _uscode_residual_fallback_decompiler_cues(formula):
             add(residual_cue)
     return cues
@@ -16356,9 +16203,7 @@ def _typed_decompiler_cue_force_slots(
         for value in (*condition_values, *exception_values)
         if _clean_text(value)
     )
-    searchable_text = " ".join(
-        value for value in (normalized_text, clause_text) if value
-    )
+    searchable_text = " ".join(value for value in (normalized_text, clause_text) if value)
     cues: List[str] = []
     for cue in [
         *(_clean_text(cue).lower().replace(" ", "_") for cue in _formula_cues(formula)),
@@ -16616,9 +16461,7 @@ def _operator_cue_terms(formula: ModalIRFormula) -> List[str]:
             if _clean_text(operator.symbol) != symbol:
                 continue
             return [
-                _clean_text(cue_term)
-                for cue_term in operator.cue_terms
-                if _clean_text(cue_term)
+                _clean_text(cue_term) for cue_term in operator.cue_terms if _clean_text(cue_term)
             ]
     return []
 
@@ -16638,8 +16481,7 @@ def _canonical_cue_operator_symbol(
             continue
         for operator in profile.operators:
             if any(
-                _cue_matches_registry_term(cue_value, cue_term)
-                for cue_term in operator.cue_terms
+                _cue_matches_registry_term(cue_value, cue_term) for cue_term in operator.cue_terms
             ):
                 symbol = _clean_text(operator.symbol)
                 if symbol and symbol not in matching_symbols:
@@ -16685,8 +16527,7 @@ def _registry_cue_operator_matches(
             continue
         for operator in profile.operators:
             if not any(
-                _cue_matches_registry_term(cue_value, cue_term)
-                for cue_term in operator.cue_terms
+                _cue_matches_registry_term(cue_value, cue_term) for cue_term in operator.cue_terms
             ):
                 continue
             operator_symbol = _clean_text(operator.symbol)
@@ -16731,11 +16572,7 @@ def _cue_bridge_operator_pairs(
         ),
     ):
         pair = (_clean_text(family).lower(), _clean_text(symbol))
-        if (
-            not pair[0]
-            or not pair[1]
-            or pair in unique_pairs
-        ):
+        if not pair[0] or not pair[1] or pair in unique_pairs:
             continue
         unique_pairs.append(pair)
     return unique_pairs
@@ -16754,11 +16591,7 @@ def _augment_deontic_bridge_pairs(
     pairs: List[Tuple[str, str]] = []
     for family, symbol in bridge_pairs:
         normalized_pair = (_clean_text(family).lower(), _clean_text(symbol))
-        if (
-            not normalized_pair[0]
-            or not normalized_pair[1]
-            or normalized_pair in pairs
-        ):
+        if not normalized_pair[0] or not normalized_pair[1] or normalized_pair in pairs:
             continue
         pairs.append(normalized_pair)
     if not normalized_cue:
@@ -16776,17 +16609,11 @@ def _augment_deontic_bridge_pairs(
         deontic_scope_pair = ("deontic", "O")
         if deontic_scope_pair not in pairs:
             pairs.append(deontic_scope_pair)
-    if (
-        normalized_family == "deontic"
-        and cue_key in _DEONTIC_EPISTEMIC_BRIDGE_CUES
-    ):
+    if normalized_family == "deontic" and cue_key in _DEONTIC_EPISTEMIC_BRIDGE_CUES:
         deontic_epistemic_pair = ("epistemic", "K")
         if deontic_epistemic_pair not in pairs:
             pairs.append(deontic_epistemic_pair)
-    if (
-        normalized_family == "epistemic"
-        and cue_key in _EPISTEMIC_DEONTIC_BRIDGE_CUES
-    ):
+    if normalized_family == "epistemic" and cue_key in _EPISTEMIC_DEONTIC_BRIDGE_CUES:
         epistemic_deontic_pair = ("deontic", "O")
         if epistemic_deontic_pair not in pairs:
             pairs.append(epistemic_deontic_pair)
@@ -16805,12 +16632,8 @@ def _cue_matches_registry_term(
     cue_value: str,
     cue_term: str,
 ) -> bool:
-    normalized_cue_tokens = _CUE_TOKEN_RE.findall(
-        _clean_text(cue_value).replace("_", " ").lower()
-    )
-    normalized_term_tokens = _CUE_TOKEN_RE.findall(
-        _clean_text(cue_term).replace("_", " ").lower()
-    )
+    normalized_cue_tokens = _CUE_TOKEN_RE.findall(_clean_text(cue_value).replace("_", " ").lower())
+    normalized_term_tokens = _CUE_TOKEN_RE.findall(_clean_text(cue_term).replace("_", " ").lower())
     return bool(normalized_cue_tokens) and normalized_cue_tokens == normalized_term_tokens
 
 
@@ -16906,9 +16729,7 @@ def _modal_lexeme_slots(
     ]
     canonical_symbol = _canonical_cue_operator_symbol(formula, cue=cue_value)
     if canonical_symbol:
-        slots.append(
-            (f"{normalized_slot_prefix}_canonical_operator", canonical_symbol)
-        )
+        slots.append((f"{normalized_slot_prefix}_canonical_operator", canonical_symbol))
         slots.append(
             (
                 f"{normalized_slot_prefix}_canonical_signature",
@@ -16943,9 +16764,7 @@ def _modal_lexeme_slots(
                 f"{family}->{registry_family}",
             )
         )
-        registry_family_pair_key = _slot_safe_family_pair_key(
-            f"{family}->{registry_family}"
-        )
+        registry_family_pair_key = _slot_safe_family_pair_key(f"{family}->{registry_family}")
         if registry_family_pair_key:
             slots.append(
                 (
@@ -17029,9 +16848,7 @@ def _modal_lexeme_slots(
         if alias_prefix:
             slots.append((f"{alias_prefix}_bridge_family_pair", bridge_family_pair))
             if bridge_family_pair_key:
-                slots.append(
-                    (f"{alias_prefix}_bridge_family_pair_key", bridge_family_pair_key)
-                )
+                slots.append((f"{alias_prefix}_bridge_family_pair_key", bridge_family_pair_key))
             slots.append((f"{alias_prefix}_bridge_operator_pair", bridge_operator_pair))
         if bridge_family == family and bridge_symbol == symbol:
             slots.append((f"{normalized_slot_prefix}_self_bridge_family", bridge_family))
@@ -17321,9 +17138,8 @@ def _bridge_cues_from_text(text: str) -> List[str]:
         cue_surface = cue_key.replace("_", " ")
         if not cue_surface:
             continue
-        if (
-            cue_key not in cues
-            and re.search(rf"(?<!\w){re.escape(cue_surface)}(?!\w)", normalized_text)
+        if cue_key not in cues and re.search(
+            rf"(?<!\w){re.escape(cue_surface)}(?!\w)", normalized_text
         ):
             cues.append(cue_key)
     return cues
@@ -17415,11 +17231,7 @@ def _contextual_modal_cues_from_text(
         if cue_key
     )
     unique_terms = sorted(
-        {
-            term
-            for term in candidate_terms
-            if term
-        },
+        {term for term in candidate_terms if term},
         key=lambda item: (-len(item.split()), -len(item), item),
     )
 
@@ -17442,11 +17254,7 @@ def _cue_token_stem(token: str) -> str:
         return normalized
     if normalized.endswith("ies") and len(normalized) > 4:
         return f"{normalized[:-3]}y"
-    if (
-        normalized.endswith("es")
-        and len(normalized) > 4
-        and normalized[-3] in {"s", "x", "z", "h"}
-    ):
+    if normalized.endswith("es") and len(normalized) > 4 and normalized[-3] in {"s", "x", "z", "h"}:
         return normalized[:-2]
     if normalized.endswith("s") and len(normalized) > 4 and not normalized.endswith("ss"):
         return normalized[:-1]
@@ -17467,9 +17275,7 @@ def _text_contains_cue_term_with_stem(text: str, cue_term: str) -> bool:
     if not target_stem:
         return False
     token_stems = {
-        _cue_token_stem(token)
-        for token in _CUE_TOKEN_RE.findall(normalized_text)
-        if token
+        _cue_token_stem(token) for token in _CUE_TOKEN_RE.findall(normalized_text) if token
     }
     return target_stem in token_stems
 
@@ -17494,11 +17300,7 @@ def _stem_refined_modal_cues_from_text(
         if cue_key
     )
     unique_terms = sorted(
-        {
-            term
-            for term in candidate_terms
-            if term
-        },
+        {term for term in candidate_terms if term},
         key=lambda item: (-len(item.split()), -len(item), item),
     )
     cues: List[str] = []
@@ -17527,10 +17329,7 @@ def _structural_frame_cues_from_text(text: str) -> List[str]:
             singular = normalized_token[:-1]
             if singular in _STRUCTURAL_FRAME_CUE_TOKENS:
                 normalized_token = singular
-        if (
-            normalized_token in _STRUCTURAL_FRAME_CUE_TOKENS
-            and normalized_token not in cues
-        ):
+        if normalized_token in _STRUCTURAL_FRAME_CUE_TOKENS and normalized_token not in cues:
             cues.append(normalized_token)
     return cues
 
@@ -17598,15 +17397,9 @@ def _refined_cue_bridge_operator_pairs(
     alethic_symbol = _ALETHIC_SCOPE_CUE_OPERATOR_SYMBOLS.get(normalized_cue)
     if alethic_symbol and ("alethic", alethic_symbol) not in pairs:
         pairs.append(("alethic", alethic_symbol))
-    if (
-        normalized_cue in _STRUCTURAL_FRAME_CUE_TOKENS
-        and ("frame", "Frame") not in pairs
-    ):
+    if normalized_cue in _STRUCTURAL_FRAME_CUE_TOKENS and ("frame", "Frame") not in pairs:
         pairs.append(("frame", "Frame"))
-    if (
-        normalized_cue in _STRUCTURAL_FRAME_CUE_TOKENS
-        and ("deontic", "O") not in pairs
-    ):
+    if normalized_cue in _STRUCTURAL_FRAME_CUE_TOKENS and ("deontic", "O") not in pairs:
         pairs.append(("deontic", "O"))
     if normalized_cue in _USCODE_FALLBACK_STATUS_KEYWORDS:
         if ("frame", "Frame") not in pairs:
@@ -17746,10 +17539,7 @@ def _temporal_transition_context_cues_from_text(text: str) -> List[str]:
     token_set = set(tokens)
     for token in tokens:
         normalized_token = token[:-1] if token.endswith("s") else token
-        if (
-            normalized_token in _TEMPORAL_BRIDGE_CONTEXT_TOKENS
-            and normalized_token not in cues
-        ):
+        if normalized_token in _TEMPORAL_BRIDGE_CONTEXT_TOKENS and normalized_token not in cues:
             cues.append(normalized_token)
     if _TEMPORAL_BRIDGE_YEAR_RE.search(normalized_text):
         if "year" not in cues:
@@ -17786,17 +17576,11 @@ def _refined_temporal_transition_slots(
     if not context_cues:
         return []
     if formula_family == "deontic":
-        if (
-            normalized_cue not in _DEONTIC_TEMPORAL_BRIDGE_CUES
-            and not temporal_relation_context
-        ):
+        if normalized_cue not in _DEONTIC_TEMPORAL_BRIDGE_CUES and not temporal_relation_context:
             return []
         pair_source_family = "deontic"
     elif formula_family == "frame":
-        if (
-            normalized_cue not in _FRAME_TEMPORAL_BRIDGE_CUES
-            and not temporal_relation_context
-        ):
+        if normalized_cue not in _FRAME_TEMPORAL_BRIDGE_CUES and not temporal_relation_context:
             return []
         pair_source_family = "frame"
     else:
@@ -17810,9 +17594,7 @@ def _refined_temporal_transition_slots(
 
     pair = f"{pair_source_family}->temporal"
     pair_key = _slot_safe_family_pair_key(pair)
-    temporal_symbol = (
-        formula_symbol if formula_family == "temporal" and formula_symbol else "F"
-    )
+    temporal_symbol = formula_symbol if formula_family == "temporal" and formula_symbol else "F"
     operator_pair = f"{formula_symbol}->{temporal_symbol}"
     operator_pair_key = _modal_operator_pair_feature_key(
         formula_symbol,
@@ -17882,10 +17664,7 @@ def _refined_temporal_transition_slots(
                 ),
             )
         )
-    if (
-        formula_family == "temporal"
-        and normalized_cue in _DEONTIC_TEMPORAL_BRIDGE_CUES
-    ):
+    if formula_family == "temporal" and normalized_cue in _DEONTIC_TEMPORAL_BRIDGE_CUES:
         deontic_pair = "deontic->temporal"
         deontic_pair_key = _slot_safe_family_pair_key(deontic_pair)
         slots.extend(
@@ -18046,16 +17825,12 @@ def _statutory_scope_slots(text: str) -> List[Tuple[str, str]]:
         ):
             target = ""
         reference_parts = (
-            [connector, determiner, unit_surface]
-            if has_determiner
-            else [connector, unit_surface]
+            [connector, determiner, unit_surface] if has_determiner else [connector, unit_surface]
         )
         if target:
             reference_parts.append(target)
         reference = " ".join(reference_parts)
-        resolved_target = (
-            f"{determiner} {target}".strip() if has_determiner else target
-        )
+        resolved_target = f"{determiner} {target}".strip() if has_determiner else target
         if has_determiner and not target:
             resolved_target = determiner
         values: List[Tuple[str, str]] = [
@@ -18153,10 +17928,7 @@ def _statutory_condition_grounding_slots(text: str) -> List[Tuple[str, str]]:
                     ),
                     (
                         "semantic_slot_legal_ir_view_prototype",
-                        (
-                            "slot:statutory-condition-reference:"
-                            f"{reference_key}||CEC.native"
-                        ),
+                        (f"slot:statutory-condition-reference:{reference_key}||CEC.native"),
                     ),
                 )
             )
@@ -18384,9 +18156,7 @@ def _citation_slots(citation: str) -> List[Tuple[str, str]]:
             _title_section_style_slots(
                 slot_namespace="citation",
                 title=title,
-                section_style=_clean_text(
-                    citation_style_map.get("citation_section_style") or ""
-                ),
+                section_style=_clean_text(citation_style_map.get("citation_section_style") or ""),
                 section_style_canonical=_clean_text(
                     citation_style_map.get("citation_section_style_canonical") or ""
                 ),
@@ -18494,9 +18264,7 @@ def _section_structure_slots(
         )
     if normalized_title and normalized_signature:
         title_section_signature = f"{normalized_title}:{normalized_signature}"
-        slots.append(
-            (f"{normalized_namespace}_title_section_signature", title_section_signature)
-        )
+        slots.append((f"{normalized_namespace}_title_section_signature", title_section_signature))
         slots.append(
             (
                 f"{normalized_namespace}_title_section_signature_normalized",
@@ -18559,9 +18327,7 @@ def _title_section_style_slots(
         )
 
     if normalized_section_style_canonical:
-        title_section_style_canonical = (
-            f"{normalized_title}:{normalized_section_style_canonical}"
-        )
+        title_section_style_canonical = f"{normalized_title}:{normalized_section_style_canonical}"
         slots.append(
             (
                 f"{normalized_namespace}_title_section_style_canonical",
@@ -18678,18 +18444,15 @@ def _section_style_slots(
     if not normalized_namespace:
         return []
     profile = _clean_text(
-        section_slot_map.get(f"{normalized_namespace}_section_component_profile")
-        or ""
+        section_slot_map.get(f"{normalized_namespace}_section_component_profile") or ""
     )
     if not profile:
         return []
     suffix_kind = _clean_text(
-        section_slot_map.get(f"{normalized_namespace}_section_primary_suffix_kind")
-        or ""
+        section_slot_map.get(f"{normalized_namespace}_section_primary_suffix_kind") or ""
     )
     suffix_case = _clean_text(
-        section_slot_map.get(f"{normalized_namespace}_section_primary_suffix_case")
-        or ""
+        section_slot_map.get(f"{normalized_namespace}_section_primary_suffix_case") or ""
     )
     suffix_style = "none"
     if suffix_kind:
@@ -18801,9 +18564,7 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
             if kind:
                 delimiter_kinds.append(kind)
                 slots.append(("citation_section_delimiter", kind))
-                slots.append(
-                    ("citation_section_delimiter_positioned", f"{position}:{kind}")
-                )
+                slots.append(("citation_section_delimiter_positioned", f"{position}:{kind}"))
             slots.append(("citation_section_delimiter_token", delimiter_token))
             slots.append(
                 (
@@ -18821,9 +18582,7 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
             )
         if delimiter_kinds:
             delimiter_pattern = "-".join(delimiter_kinds)
-            slots.append(
-                ("citation_section_delimiter_pattern", delimiter_pattern)
-            )
+            slots.append(("citation_section_delimiter_pattern", delimiter_pattern))
             slots.append(
                 (
                     "citation_section_delimiter_distinct_count",
@@ -18878,17 +18637,11 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
                 )
             )
             if index == 1:
-                slots.append(
-                    ("citation_section_primary_component_signature", component_signature)
-                )
+                slots.append(("citation_section_primary_component_signature", component_signature))
             if index == total_components:
-                slots.append(
-                    ("citation_section_terminal_component_signature", component_signature)
-                )
+                slots.append(("citation_section_terminal_component_signature", component_signature))
             slots.append(("citation_section_component_kind", "other"))
-            slots.append(
-                ("citation_section_component_kind_positioned", f"{position}:other")
-            )
+            slots.append(("citation_section_component_kind_positioned", f"{position}:other"))
             if index == 1:
                 slots.append(("citation_section_primary_component_kind", "other"))
                 primary_component_kind = "other"
@@ -18995,9 +18748,7 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
         if index == 1:
             slots.append(("citation_section_primary_component_signature", component_signature))
         if index == total_components:
-            slots.append(
-                ("citation_section_terminal_component_signature", component_signature)
-            )
+            slots.append(("citation_section_terminal_component_signature", component_signature))
         if suffix:
             component_shapes.append("NA")
             suffix_component_count += 1
@@ -19109,9 +18860,7 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
         else:
             component_shapes.append("N")
             slots.append(("citation_section_component_kind", "numeric"))
-            slots.append(
-                ("citation_section_component_kind_positioned", f"{position}:numeric")
-            )
+            slots.append(("citation_section_component_kind_positioned", f"{position}:numeric"))
             if index == 1:
                 slots.append(("citation_section_primary_component_kind", "numeric"))
                 primary_component_kind = "numeric"
@@ -19339,12 +19088,8 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
                 slot_prefix="citation_section_hyphen_subsection_signature",
             )
         )
-    slots.append(
-        ("citation_section_numeric_component_count", str(numeric_component_count))
-    )
-    slots.append(
-        ("citation_section_suffix_component_count", str(suffix_component_count))
-    )
+    slots.append(("citation_section_numeric_component_count", str(numeric_component_count)))
+    slots.append(("citation_section_suffix_component_count", str(suffix_component_count)))
     slots.append(
         (
             "citation_section_roman_suffix_component_count",
@@ -19596,9 +19341,7 @@ def _numeric_signature_alignment_slots(
         slots.append(
             (
                 f"{normalized_slot_prefix}_{signature_name}_match",
-                "true"
-                if source_value.lower() == citation_value.lower()
-                else "false",
+                "true" if source_value.lower() == citation_value.lower() else "false",
             )
         )
         slots.append(
@@ -19745,11 +19488,7 @@ def _typed_identifier_slots(
     normalized = _clean_text(value).replace("-", "_")
     if not normalized:
         return []
-    tokens = [
-        token
-        for token in re.split(r"[_\s]+", normalized.lower())
-        if token
-    ]
+    tokens = [token for token in re.split(r"[_\s]+", normalized.lower()) if token]
     if not tokens:
         return []
     slots: List[Tuple[str, str]] = [
@@ -19849,10 +19588,7 @@ def _selected_frame(document: ModalIRDocument) -> str:
 
 
 def _tokenize_for_similarity(text: str) -> List[str]:
-    return [
-        token.lower()
-        for token in re.findall(r"[A-Za-z0-9][A-Za-z0-9_'-]*", str(text or ""))
-    ]
+    return [token.lower() for token in re.findall(r"[A-Za-z0-9][A-Za-z0-9_'-]*", str(text or ""))]
 
 
 __all__ = [

@@ -6,18 +6,18 @@ Test suite for valid LLMChunkMetadata creation scenarios.
 Tests successful instantiation of LLMChunkMetadata with valid field combinations
 and verifies that all required fields are properly populated and accessible.
 """
+
 import pytest
 
 from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunkMetadata
 from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk_metadata.llm_chunk_metadata_factory import (
-    LLMChunkMetadataTestDataFactory as DataFactory
+    LLMChunkMetadataTestDataFactory as DataFactory,
 )
 
 from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk_metadata.llm_chunk_metadata_test_utils import (
     field_values_exactly_match_dict_values,
-    all_words_are_present_in_error_msg
+    all_words_are_present_in_error_msg,
 )
-
 
 
 class TestLLMChunkMetadataValidCreation:
@@ -31,10 +31,10 @@ class TestLLMChunkMetadataValidCreation:
         """
         # Given
         valid_data = DataFactory.create_valid_baseline_data()
-        
+
         # When
         metadata = LLMChunkMetadata(**valid_data)
-        
+
         # Then
         assert isinstance(metadata, LLMChunkMetadata)
 
@@ -46,7 +46,7 @@ class TestLLMChunkMetadataValidCreation:
         """
         # Constants
         EXPECTED_RESULT = True
-        
+
         # Given
         valid_data = DataFactory.create_valid_baseline_data()
 
@@ -55,4 +55,3 @@ class TestLLMChunkMetadataValidCreation:
 
         # Then
         assert field_values_exactly_match_dict_values(valid_data, metadata) == EXPECTED_RESULT
-

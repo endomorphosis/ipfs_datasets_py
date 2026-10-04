@@ -140,21 +140,21 @@ ipfs_datasets_py/mcp_server/
 # Proposed unified tool base
 class UnifiedTool:
     """Base class for tools that work in both CLI and MCP contexts."""
-    
+
     def __init__(self, name: str, core_module, core_function: str):
         self.name = name
         self.core_module = core_module
         self.core_function = core_function
-    
+
     def validate_params(self, params: Dict) -> bool:
         """Shared validation for CLI and MCP."""
         pass
-    
+
     async def execute_core(self, **kwargs):
         """Execute core module function."""
         func = getattr(self.core_module, self.core_function)
         return await func(**kwargs)
-    
+
     # CLI interface
     def execute_cli(self, args) -> str:
         """Execute from CLI context."""
@@ -162,8 +162,8 @@ class UnifiedTool:
         self.validate_params(params)
         result = await self.execute_core(**params)
         return self._format_cli_output(result)
-    
-    # MCP interface  
+
+    # MCP interface
     async def execute_mcp(self, parameters: Dict) -> Dict:
         """Execute from MCP context."""
         self.validate_params(parameters)
@@ -254,7 +254,7 @@ TOOL_SCHEMAS = {
                 "required": True,
                 "description": "Source identifier",
                 "cli_arg": "--source",
-                "mcp_key": "source"
+                "mcp_key": "source",
             },
             "format": {
                 "type": "string",
@@ -263,8 +263,8 @@ TOOL_SCHEMAS = {
                 "cli_arg": "--format",
                 "mcp_key": "format",
                 "choices": ["json", "csv", "parquet"],
-                "default": "auto"
-            }
+                "default": "auto",
+            },
         }
     }
 }
@@ -280,13 +280,8 @@ def schema_to_argparse(schema: Dict) -> argparse.ArgumentParser:
         required = param_def.get("required", False)
         help_text = param_def.get("description", "")
         default = param_def.get("default")
-        
-        parser.add_argument(
-            cli_arg,
-            required=required,
-            help=help_text,
-            default=default
-        )
+
+        parser.add_argument(cli_arg, required=required, help=help_text, default=default)
     return parser
 ```
 
@@ -296,23 +291,19 @@ def schema_to_mcp_input_schema(schema: Dict) -> Dict:
     """Convert shared schema to MCP input schema."""
     properties = {}
     required = []
-    
+
     for param_name, param_def in schema["parameters"].items():
         mcp_key = param_def["mcp_key"]
         properties[mcp_key] = {
             "type": param_def["type"],
-            "description": param_def.get("description", "")
+            "description": param_def.get("description", ""),
         }
         if param_def.get("default"):
             properties[mcp_key]["default"] = param_def["default"]
         if param_def.get("required", False):
             required.append(mcp_key)
-    
-    return {
-        "type": "object",
-        "properties": properties,
-        "required": required
-    }
+
+    return {"type": "object", "properties": properties, "required": required}
 ```
 
 **4. Unified Validation**
@@ -379,7 +370,7 @@ from .dataset_processor import DatasetProcessor
 
 __all__ = [
     "DatasetLoader",
-    "DatasetSaver", 
+    "DatasetSaver",
     "DatasetProcessor",
 ]
 
@@ -408,8 +399,8 @@ def test_tool_imports_from_core():
     for tool_file in get_all_tool_files():
         imports = get_imports(tool_file)
         has_core_import = any(
-            imp.startswith("ipfs_datasets_py.") and 
-            not imp.startswith("ipfs_datasets_py.mcp_server")
+            imp.startswith("ipfs_datasets_py.")
+            and not imp.startswith("ipfs_datasets_py.mcp_server")
             for imp in imports
         )
         assert has_core_import, f"{tool_file} doesn't import from core"
@@ -422,12 +413,13 @@ def test_cli_mcp_alignment():
     for tool_name in get_all_tools():
         cli_tool = get_cli_tool(tool_name)
         mcp_tool = get_mcp_tool(tool_name)
-        
+
         cli_core_func = extract_core_function_call(cli_tool)
         mcp_core_func = extract_core_function_call(mcp_tool)
-        
-        assert cli_core_func == mcp_core_func, \
+
+        assert cli_core_func == mcp_core_func, (
             f"{tool_name}: CLI and MCP use different core functions"
+        )
 ```
 
 **4. Performance Testing**

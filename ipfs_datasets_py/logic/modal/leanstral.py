@@ -188,7 +188,9 @@ class ProjectionEvidence:
         hint: Optional[Any] = None,
     ) -> "ProjectionEvidence":
         source_span_hashes = {
-            formula.formula_id: _source_span_hash(sample, formula.provenance.start_char, formula.provenance.end_char)
+            formula.formula_id: _source_span_hash(
+                sample, formula.provenance.start_char, formula.provenance.end_char
+            )
             for formula in sample.modal_ir.formulas
         }
         losses = _numeric_mapping(autoencoder_guidance.get("legal_ir_view_metrics"))
@@ -217,9 +219,12 @@ class ProjectionEvidence:
             "synthesis_focus": synthesis_focus,
             "target_component": str(getattr(hint, "target_component", "") or ""),
         }
-        evidence_id = "projection-" + hashlib.sha256(
-            json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
-        ).hexdigest()[:16]
+        evidence_id = (
+            "projection-"
+            + hashlib.sha256(
+                json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
+            ).hexdigest()[:16]
+        )
         return cls(
             evidence_id=evidence_id,
             sample_id=sample.sample_id,
@@ -276,9 +281,12 @@ class CompilerChangeSpec:
             "evidence_id": evidence.evidence_id,
             "target_component": target_component,
         }
-        spec_id = "compiler-change-" + hashlib.sha256(
-            json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
-        ).hexdigest()[:16]
+        spec_id = (
+            "compiler-change-"
+            + hashlib.sha256(
+                json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
+            ).hexdigest()[:16]
+        )
         return cls(
             spec_id=spec_id,
             evidence_id=evidence.evidence_id,
@@ -365,9 +373,7 @@ class LegalIRLeanTask:
 
         formula = sample.modal_ir.formulas[0]
         span = sample.normalized_text[
-            max(0, int(formula.provenance.start_char)) : max(
-                0, int(formula.provenance.end_char)
-            )
+            max(0, int(formula.provenance.start_char)) : max(0, int(formula.provenance.end_char))
         ].strip()
         if not span:
             span = sample.text[
@@ -395,9 +401,12 @@ class LegalIRLeanTask:
             "sample_id": sample.sample_id,
             "target_statement": target_statement,
         }
-        task_id = "leanstral-" + hashlib.sha256(
-            json.dumps(task_payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
-        ).hexdigest()[:16]
+        task_id = (
+            "leanstral-"
+            + hashlib.sha256(
+                json.dumps(task_payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
+            ).hexdigest()[:16]
+        )
         return cls(
             task_id=task_id,
             sample_id=sample.sample_id,
@@ -454,9 +463,7 @@ class LeanstralProposal:
                     {
                         "action": str(hint.get("action", "")).strip(),
                         "rationale": str(hint.get("rationale", "")).strip(),
-                        "target_component": str(
-                            hint.get("target_component", "")
-                        ).strip(),
+                        "target_component": str(hint.get("target_component", "")).strip(),
                     }
                 )
         return cls(

@@ -24,11 +24,11 @@ if TYPE_CHECKING:
     from .ipld_logic_storage import LogicIPLDStorage
 
 __all__ = [
-    'ProofCache',
-    'get_global_cache',
-    'IPFSProofCache',
-    'get_global_ipfs_cache',
-    'LogicIPLDStorage',
+    "ProofCache",
+    "get_global_cache",
+    "IPFSProofCache",
+    "get_global_ipfs_cache",
+    "LogicIPLDStorage",
 ]
 
 _LAZY_EXPORTS = {

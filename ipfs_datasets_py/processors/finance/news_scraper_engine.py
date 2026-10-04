@@ -232,13 +232,12 @@ class NewsScraperBase:
 
         # Filter common words that aren't stock symbols
         common_words = {"THE", "AND", "FOR", "ARE", "WAS", "BUT", "NOT", "YOU", "ALL"}
-        entities["companies"] = [
-            sym for sym in potential_symbols if sym not in common_words
-        ][:10]  # Limit to 10
+        entities["companies"] = [sym for sym in potential_symbols if sym not in common_words][
+            :10
+        ]  # Limit to 10
 
         logger.warning(
-            "Entity extraction is a placeholder. "
-            "Implement NLP-based extraction in production."
+            "Entity extraction is a placeholder. Implement NLP-based extraction in production."
         )
 
         return entities
@@ -262,8 +261,7 @@ class NewsScraperBase:
         }
 
         logger.warning(
-            "Sentiment analysis is a placeholder. "
-            "Implement actual sentiment model in production."
+            "Sentiment analysis is a placeholder. Implement actual sentiment model in production."
         )
 
         return sentiment
@@ -317,8 +315,7 @@ class APNewsScraper(NewsScraperBase):
         self._check_rate_limit()
 
         logger.info(
-            f"Fetching AP News articles on '{topic}' "
-            f"from {start_date.date()} to {end_date.date()}"
+            f"Fetching AP News articles on '{topic}' from {start_date.date()} to {end_date.date()}"
         )
 
         # Placeholder: In production, implement actual scraping
@@ -367,8 +364,7 @@ class ReutersScraper(NewsScraperBase):
         self._check_rate_limit()
 
         logger.info(
-            f"Fetching Reuters articles on '{topic}' "
-            f"from {start_date.date()} to {end_date.date()}"
+            f"Fetching Reuters articles on '{topic}' from {start_date.date()} to {end_date.date()}"
         )
 
         logger.warning(

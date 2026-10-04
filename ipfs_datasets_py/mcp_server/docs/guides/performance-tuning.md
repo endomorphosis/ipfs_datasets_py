@@ -35,7 +35,7 @@ Categories are registered via `lazy_register_category(name, loader_fn)`.  The
 manager = HierarchicalToolManager()
 manager.lazy_register_category(
     "pdf_tools",
-    lambda: _build_pdf_category()   # called once, on first use
+    lambda: _build_pdf_category(),  # called once, on first use
 )
 ```
 
@@ -56,12 +56,12 @@ schemas are considered stable for the lifetime of a server process.
 ### Cache Statistics
 ```python
 cat = manager.get_category("graph_tools")
-info = cat.cache_info()   # {"hits": 42, "misses": 3, "size": 12}
+info = cat.cache_info()  # {"hits": 42, "misses": 3, "size": 12}
 ```
 
 ### Invalidating the Cache
 ```python
-cat.clear_schema_cache()   # resets hits/misses counters and purges entries
+cat.clear_schema_cache()  # resets hits/misses counters and purges entries
 ```
 
 ### When to Tune
@@ -83,7 +83,7 @@ the pool if it is not full.
 ### Pool Configuration
 ```python
 manager = P2PServiceManager()
-manager._pool_max_size = 20   # default: 10; increase for high-concurrency workloads
+manager._pool_max_size = 20  # default: 10; increase for high-concurrency workloads
 ```
 
 ### Pool Statistics
@@ -113,10 +113,12 @@ concurrently using `anyio.create_task_group()`.
 
 ### Example
 ```python
-results = await manager.dispatch_parallel([
-    {"category": "graph_tools", "tool": "graph_create", "params": {"name": "G1"}},
-    {"category": "search_tools", "tool": "semantic_search", "params": {"query": "AI"}},
-])
+results = await manager.dispatch_parallel(
+    [
+        {"category": "graph_tools", "tool": "graph_create", "params": {"name": "G1"}},
+        {"category": "search_tools", "tool": "semantic_search", "params": {"query": "AI"}},
+    ]
+)
 ```
 
 ### Performance Notes
@@ -247,7 +249,7 @@ The RuntimeRouter provides two execution modes:
     "fastapi_latency_ms": 15.2,
     "trio_latency_ms": 5.8,
     "improvement_pct": 61.8,
-    "iterations": 200
+    "iterations": 200,
 }
 ```
 
@@ -660,7 +662,8 @@ GC recovery: 96% (excellent)
        result = await execute_step(step)
        await cache.put(step.step_id, result, ttl=3600, inputs=step.inputs)
        return result
-   
+
+
    await dag_executor.execute_workflow(steps, cached_executor)
    ```
 

@@ -51,8 +51,7 @@ def test_v2_compiler_parity_detects_temporal_guard_mismatch() -> None:
     assert report["summary"]["has_inconsistencies"] is True
     assert report["summary"]["inconsistency_count"] >= 1
     assert any(
-        isinstance(item, dict)
-        and item.get("checks", {}).get("temporal_guard_consistent") is False
+        isinstance(item, dict) and item.get("checks", {}).get("temporal_guard_consistent") is False
         for item in report["inconsistencies"]
     )
 
@@ -70,8 +69,7 @@ def test_v2_compiler_parity_detects_target_ref_mismatch() -> None:
 
     assert report["summary"]["has_inconsistencies"] is True
     assert any(
-        isinstance(item, dict)
-        and item.get("checks", {}).get("target_ref_consistent") is False
+        isinstance(item, dict) and item.get("checks", {}).get("target_ref_consistent") is False
         for item in report["inconsistencies"]
     )
 

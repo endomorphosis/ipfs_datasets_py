@@ -8,12 +8,16 @@ Methods under test:
   - LogicValidator.entity_pair_count(ontology)
   - OntologyOptimizer.score_plateau_length()
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
@@ -25,11 +29,13 @@ def _push_feedback(a, score):
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
@@ -50,6 +56,7 @@ def _ont(rels):
 # ---------------------------------------------------------------------------
 # OntologyLearningAdapter.feedback_decay_sum
 # ---------------------------------------------------------------------------
+
 
 class TestFeedbackDecaySum:
     def test_empty_returns_zero(self):
@@ -81,6 +88,7 @@ class TestFeedbackDecaySum:
 # OntologyLearningAdapter.feedback_count_below
 # ---------------------------------------------------------------------------
 
+
 class TestFeedbackCountBelow:
     def test_empty_returns_zero(self):
         a = _make_adapter()
@@ -108,6 +116,7 @@ class TestFeedbackCountBelow:
 # OntologyLearningAdapter.feedback_above_threshold_fraction
 # ---------------------------------------------------------------------------
 
+
 class TestFeedbackAboveThresholdFraction:
     def test_empty_returns_zero(self):
         a = _make_adapter()
@@ -130,6 +139,7 @@ class TestFeedbackAboveThresholdFraction:
 # LogicValidator.relationship_diversity
 # ---------------------------------------------------------------------------
 
+
 class TestRelationshipDiversity:
     def test_empty_returns_zero(self):
         v = _make_validator()
@@ -137,31 +147,40 @@ class TestRelationshipDiversity:
 
     def test_single_type_zero_entropy(self):
         v = _make_validator()
-        rels = [{"source": "a", "target": "b", "type": "has"},
-                {"source": "c", "target": "d", "type": "has"}]
+        rels = [
+            {"source": "a", "target": "b", "type": "has"},
+            {"source": "c", "target": "d", "type": "has"},
+        ]
         assert v.relationship_diversity(_ont(rels)) == pytest.approx(0.0)
 
     def test_two_equal_types_max_entropy(self):
         v = _make_validator()
-        rels = [{"source": "a", "target": "b", "type": "has"},
-                {"source": "c", "target": "d", "type": "is"}]
+        rels = [
+            {"source": "a", "target": "b", "type": "has"},
+            {"source": "c", "target": "d", "type": "is"},
+        ]
         entropy = v.relationship_diversity(_ont(rels))
         assert entropy == pytest.approx(1.0)  # log2(2) = 1.0
 
     def test_more_types_higher_entropy(self):
         v = _make_validator()
-        rels_2 = [{"source": "a", "target": "b", "type": "A"},
-                  {"source": "c", "target": "d", "type": "B"}]
-        rels_4 = [{"source": "a", "target": "b", "type": "A"},
-                  {"source": "c", "target": "d", "type": "B"},
-                  {"source": "e", "target": "f", "type": "C"},
-                  {"source": "g", "target": "h", "type": "D"}]
+        rels_2 = [
+            {"source": "a", "target": "b", "type": "A"},
+            {"source": "c", "target": "d", "type": "B"},
+        ]
+        rels_4 = [
+            {"source": "a", "target": "b", "type": "A"},
+            {"source": "c", "target": "d", "type": "B"},
+            {"source": "e", "target": "f", "type": "C"},
+            {"source": "g", "target": "h", "type": "D"},
+        ]
         assert v.relationship_diversity(_ont(rels_4)) > v.relationship_diversity(_ont(rels_2))
 
 
 # ---------------------------------------------------------------------------
 # LogicValidator.entity_pair_count
 # ---------------------------------------------------------------------------
+
 
 class TestEntityPairCount:
     def test_empty_returns_zero(self):
@@ -170,20 +189,25 @@ class TestEntityPairCount:
 
     def test_unique_pairs(self):
         v = _make_validator()
-        rels = [{"source": "a", "target": "b", "type": "r"},
-                {"source": "b", "target": "c", "type": "r"}]
+        rels = [
+            {"source": "a", "target": "b", "type": "r"},
+            {"source": "b", "target": "c", "type": "r"},
+        ]
         assert v.entity_pair_count(_ont(rels)) == 2
 
     def test_duplicate_pairs_counted_once(self):
         v = _make_validator()
-        rels = [{"source": "a", "target": "b", "type": "r"},
-                {"source": "a", "target": "b", "type": "s"}]
+        rels = [
+            {"source": "a", "target": "b", "type": "r"},
+            {"source": "a", "target": "b", "type": "s"},
+        ]
         assert v.entity_pair_count(_ont(rels)) == 1
 
 
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.score_plateau_length
 # ---------------------------------------------------------------------------
+
 
 class TestScorePlateauLength:
     def test_empty_returns_zero(self):

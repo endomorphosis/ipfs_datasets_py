@@ -4,6 +4,7 @@ Tests for CLI tools.
 Tests cover:
 - execute_command: security stub that logs but does not execute commands
 """
+
 import asyncio
 
 import pytest
@@ -22,6 +23,7 @@ class TestExecuteCommand:
 
     def setup_method(self):
         from ipfs_datasets_py.mcp_server.tools.cli.execute_command import execute_command
+
         self.fn = execute_command
 
     def test_returns_dict(self):

@@ -53,10 +53,18 @@ def test_entity_roundtrip_property_via_from_dict() -> None:
     for _ in range(50):
         entity_id = "".join(rng.choice(alphabet) for _ in range(rng.randint(1, 8)))
         entity_type = "".join(rng.choice(alphabet) for _ in range(rng.randint(1, 8)))
-        entity_text = "".join(rng.choice(alphabet + " ") for _ in range(rng.randint(1, 16))).strip() or "x"
+        entity_text = (
+            "".join(rng.choice(alphabet + " ") for _ in range(rng.randint(1, 16))).strip() or "x"
+        )
         confidence = rng.random()
         properties = {
-            f"k{i}": rng.choice([rng.randint(0, 100), round(rng.random(), 6), "".join(rng.choice(alphabet) for _ in range(3))])
+            f"k{i}": rng.choice(
+                [
+                    rng.randint(0, 100),
+                    round(rng.random(), 6),
+                    "".join(rng.choice(alphabet) for _ in range(3)),
+                ]
+            )
             for i in range(rng.randint(0, 4))
         }
 

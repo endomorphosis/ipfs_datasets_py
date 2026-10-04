@@ -427,8 +427,11 @@ class TestRenderAscii:
         s2 = _make_step(Q)
         s3 = _make_step(pq, "And", "", premises=[P, Q])
         result = ProofResult(
-            status=ProofStatus.PROVED, formula=pq, proof_steps=[s1, s2, s3],
-            time_ms=1.0, method="test"
+            status=ProofStatus.PROVED,
+            formula=pq,
+            proof_steps=[s1, s2, s3],
+            time_ms=1.0,
+            method="test",
         )
         v = ProofTreeVisualizer(result, verbosity=VerbosityLevel.NORMAL)
         out = v.render_ascii(colors=False)
@@ -557,9 +560,7 @@ class TestRenderSvgPng:
             with patch(
                 "ipfs_datasets_py.logic.TDFOL.proof_tree_visualizer.subprocess.run"
             ) as mock_run:
-                mock_run.return_value = MagicMock(
-                    returncode=1, stderr="dot: command not found"
-                )
+                mock_run.return_value = MagicMock(returncode=1, stderr="dot: command not found")
                 with pytest.raises(RuntimeError, match="Failed to render"):
                     v._render_via_command_line(out_path, "svg")
         finally:
@@ -858,9 +859,7 @@ class TestVisualizeProof:
                 "ipfs_datasets_py.logic.TDFOL.proof_tree_visualizer.subprocess.run",
                 side_effect=svg_side_effect,
             ):
-                visualize_proof(
-                    result, output_format="html", output_path=html_path
-                )
+                visualize_proof(result, output_format="html", output_path=html_path)
             assert os.path.exists(html_path)
         finally:
             Path(html_path).unlink(missing_ok=True)

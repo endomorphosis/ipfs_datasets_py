@@ -10,12 +10,14 @@ Methods under test:
   - OntologyLearningAdapter.feedback_above_own_mean_count()
   - OntologyMediator.action_round_with_most()
 """
+
 import math
 import pytest
 from unittest.mock import MagicMock
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
+
 
 class _FakeEntry:
     def __init__(self, avg):
@@ -28,11 +30,13 @@ def _push_opt(o, avg):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
 def _make_entity(eid, text=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type="T", text=text or eid)
 
 
@@ -46,6 +50,7 @@ def _make_rel_mock(weight=1.0):
 
 def _make_result(entities=None, relationships=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities or [],
         relationships=relationships or [],
@@ -55,16 +60,19 @@ def _make_result(entities=None, relationships=None):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -75,21 +83,27 @@ def _push_run(p, score_val):
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
 def _push_feedback(a, score):
     from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import FeedbackRecord
+
     a._feedback.append(FeedbackRecord(final_score=score))
 
 
 def _make_mediator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import OntologyMediator
+
     return OntologyMediator(generator=MagicMock(), critic=MagicMock())
 
 
 # ── OntologyOptimizer.score_mean_above_baseline ──────────────────────────────
+
 
 class TestScoreMeanAboveBaseline:
     def test_empty_returns_zero(self):
@@ -118,6 +132,7 @@ class TestScoreMeanAboveBaseline:
 
 # ── OntologyOptimizer.history_volatility_ratio ───────────────────────────────
 
+
 class TestHistoryVolatilityRatio:
     def test_empty_returns_zero(self):
         o = _make_optimizer()
@@ -145,6 +160,7 @@ class TestHistoryVolatilityRatio:
 
 # ── OntologyGenerator.entity_with_longest_text ───────────────────────────────
 
+
 class TestEntityWithLongestText:
     def test_empty_returns_none(self):
         g = _make_generator()
@@ -166,6 +182,7 @@ class TestEntityWithLongestText:
 
 
 # ── OntologyGenerator.relationship_weight_entropy ────────────────────────────
+
 
 class TestRelationshipWeightEntropy:
     def test_empty_returns_zero(self):
@@ -195,6 +212,7 @@ class TestRelationshipWeightEntropy:
 
 # ── LogicValidator.max_path_length_estimate ──────────────────────────────────
 
+
 class TestMaxPathLengthEstimate:
     def test_empty_returns_zero(self):
         v = _make_validator()
@@ -207,25 +225,30 @@ class TestMaxPathLengthEstimate:
 
     def test_chain_length(self):
         v = _make_validator()
-        onto = {"relationships": [
-            {"source": "a", "target": "b"},
-            {"source": "b", "target": "c"},
-            {"source": "c", "target": "d"},
-        ]}
+        onto = {
+            "relationships": [
+                {"source": "a", "target": "b"},
+                {"source": "b", "target": "c"},
+                {"source": "c", "target": "d"},
+            ]
+        }
         assert v.max_path_length_estimate(onto) == 3
 
     def test_branching_returns_max(self):
         v = _make_validator()
-        onto = {"relationships": [
-            {"source": "root", "target": "b"},
-            {"source": "root", "target": "c"},
-            {"source": "c", "target": "d"},
-        ]}
+        onto = {
+            "relationships": [
+                {"source": "root", "target": "b"},
+                {"source": "root", "target": "c"},
+                {"source": "c", "target": "d"},
+            ]
+        }
         # max path: root→c→d = 2
         assert v.max_path_length_estimate(onto) == 2
 
 
 # ── OntologyPipeline.run_improvement_fraction ────────────────────────────────
+
 
 class TestRunImprovementFraction:
     def test_empty_returns_zero(self):
@@ -259,6 +282,7 @@ class TestRunImprovementFraction:
 
 # ── OntologyLearningAdapter.feedback_above_own_mean_count ────────────────────
 
+
 class TestFeedbackAboveOwnMeanCount:
     def test_empty_returns_zero(self):
         a = _make_adapter()
@@ -279,6 +303,7 @@ class TestFeedbackAboveOwnMeanCount:
 
 
 # ── OntologyMediator.action_round_with_most ──────────────────────────────────
+
 
 class TestActionRoundWithMost:
     def test_empty_returns_empty_string(self):

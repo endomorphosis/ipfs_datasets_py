@@ -9,7 +9,11 @@ from typing import List, Dict, Any, Tuple, Mapping
 from dataclasses import dataclass
 import json
 
-from .canonicalization import canonicalize_axioms, hash_axioms_commitment, tdfol_v1_axioms_commitment_hex_v2
+from .canonicalization import (
+    canonicalize_axioms,
+    hash_axioms_commitment,
+    tdfol_v1_axioms_commitment_hex_v2,
+)
 from .canonicalization import hash_theorem
 from .statement import Statement, Witness, format_circuit_ref, parse_circuit_ref_lenient
 from .legal_theorem_semantics import parse_tdfol_v1_axiom, parse_tdfol_v1_theorem
@@ -295,10 +299,7 @@ def _guidance_route_tokens(value: Mapping[str, Any]) -> set[str]:
 
 
 def _guidance_has_zkp_attestation_route(value: Mapping[str, Any]) -> bool:
-    return any(
-        "repair_zkp_attestation_bridge" in token
-        for token in _guidance_route_tokens(value)
-    )
+    return any("repair_zkp_attestation_bridge" in token for token in _guidance_route_tokens(value))
 
 
 def _guidance_quality_passes(value: Mapping[str, Any]) -> bool:
@@ -331,9 +332,7 @@ def _contract_from_guidance_evidence_row(value: Any) -> Dict[str, Any]:
     selected: Dict[str, Any] = {}
     for key, item in sorted(row.items(), key=lambda pair: str(pair[0])):
         name = str(key)
-        if name in _COMPILER_GUIDANCE_PACKET_KEYS or name.startswith(
-            "compiler_guidance_"
-        ):
+        if name in _COMPILER_GUIDANCE_PACKET_KEYS or name.startswith("compiler_guidance_"):
             selected[name] = _canonical_guidance_value(item)
 
     if route_matches and not selected.get("route"):
@@ -370,8 +369,7 @@ def _evidence_contract_from_metadata(metadata: Mapping[str, Any]) -> Dict[str, A
 
     compact_contract = _contract_from_guidance_evidence_row(metadata)
     if compact_contract and (
-        _guidance_has_zkp_attestation_route(metadata)
-        or _guidance_targets_zkp(metadata)
+        _guidance_has_zkp_attestation_route(metadata) or _guidance_targets_zkp(metadata)
     ):
         return compact_contract
     return {}
@@ -515,9 +513,7 @@ def build_proof_attestation_view(
         or metadata_dict.get("compiler_guidance_version")
     )
     proof_digest = hashlib.sha256(proof_bytes).hexdigest()
-    canonical_public_inputs, public_inputs_commitment = _public_input_commitment(
-        public_inputs_dict
-    )
+    canonical_public_inputs, public_inputs_commitment = _public_input_commitment(public_inputs_dict)
 
     attestation_basis = {
         "axioms_commitment": axioms_commitment,
@@ -581,9 +577,7 @@ def refresh_proof_attestation(proof: Any) -> Any:
         metadata=metadata,
     )
     public_inputs["attestation_ref"] = attestation_view["attestation_ref"]
-    public_inputs["attestation_view_version"] = int(
-        attestation_view["attestation_view_version"]
-    )
+    public_inputs["attestation_view_version"] = int(attestation_view["attestation_view_version"])
     metadata["attestation_view"] = attestation_view
     return proof
 
@@ -746,9 +740,7 @@ def proof_public_inputs_from_proof_dict(proof: Mapping[str, Any]) -> Dict[str, A
 
     completed = dict(public_inputs)
     completed["attestation_ref"] = attestation_view["attestation_ref"]
-    completed["attestation_view_version"] = int(
-        attestation_view["attestation_view_version"]
-    )
+    completed["attestation_view_version"] = int(attestation_view["attestation_view_version"])
 
     for key in (
         "axioms_commitment",
@@ -974,9 +966,7 @@ def _proofless_source_attestation_record(
     completed = dict(record)
     completed["attestation_ref"] = attestation_view["attestation_ref"]
     completed["attestation_view"] = attestation_view
-    completed["attestation_view_version"] = int(
-        attestation_view["attestation_view_version"]
-    )
+    completed["attestation_view_version"] = int(attestation_view["attestation_view_version"])
     completed["axioms_commitment"] = axioms_commitment
     completed["circuit_ref"] = attestation_view["circuit_ref"]
     completed["proof_hash"] = proof_hash
@@ -1024,9 +1014,7 @@ def complete_zkp_attestation_record(record: Mapping[str, Any]) -> Dict[str, Any]
     completed = dict(record_dict)
     proof = _mapping_dict(completed.get("proof"))
     if not proof and (
-        "proof_data" in completed
-        or "public_inputs" in completed
-        or "metadata" in completed
+        "proof_data" in completed or "public_inputs" in completed or "metadata" in completed
     ):
         proof = {
             "proof_data": completed.get("proof_data"),
@@ -1039,9 +1027,7 @@ def complete_zkp_attestation_record(record: Mapping[str, Any]) -> Dict[str, Any]
         _mapping_dict(proof.get("metadata") or completed.get("metadata")),
         completed,
     )
-    public_inputs = _mapping_dict(
-        proof.get("public_inputs") or completed.get("public_inputs")
-    )
+    public_inputs = _mapping_dict(proof.get("public_inputs") or completed.get("public_inputs"))
 
     if not public_inputs:
         source_attestation = _proofless_source_attestation_record(
@@ -1151,12 +1137,13 @@ def zkp_attestation_legal_ir_view_loss(
 class CircuitGate:
     """
     A single gate in a logic circuit.
-    
+
     Attributes:
         gate_type: Type of gate (AND, OR, NOT, IMPLIES, etc.)
         inputs: Input wire indices
         output: Output wire index
     """
+
     gate_type: str
     inputs: List[int]
     output: int
@@ -1165,10 +1152,10 @@ class CircuitGate:
 class ZKPCircuit:
     """
     Arithmetic circuit for zero-knowledge proofs of logic formulas.
-    
+
     Converts logic operations into arithmetic circuits over finite fields,
     which can then be proven using zkSNARKs.
-    
+
     Example:
         >>> circuit = ZKPCircuit()
         >>> # Create circuit for: (P AND Q) IMPLIES R
@@ -1178,30 +1165,30 @@ class ZKPCircuit:
         >>> pq_wire = circuit.add_and_gate(p_wire, q_wire)
         >>> output = circuit.add_implies_gate(pq_wire, r_wire)
         >>> circuit.set_output(output)
-        >>> 
+        >>>
         >>> print(f"Circuit has {circuit.num_gates()} gates")
         Circuit has 3 gates
-    
+
     Note:
         This is a high-level circuit representation. For actual zkSNARK
         proving, the circuit would be compiled to R1CS (Rank-1 Constraint
         System) constraints over a finite field.
     """
-    
+
     def __init__(self):
         """Initialize empty circuit."""
         self._gates: List[CircuitGate] = []
         self._inputs: Dict[str, int] = {}  # name -> wire index
         self._outputs: List[int] = []
         self._next_wire: int = 0
-    
+
     def add_input(self, name: str) -> int:
         """
         Add an input wire to the circuit.
-        
+
         Args:
             name: Name of the input (e.g., "P", "Q")
-        
+
         Returns:
             int: Wire index for this input
         """
@@ -1209,220 +1196,207 @@ class ZKPCircuit:
         self._next_wire += 1
         self._inputs[name] = wire
         return wire
-    
+
     def add_and_gate(self, wire_a: int, wire_b: int) -> int:
         """
         Add an AND gate to the circuit.
-        
+
         In arithmetic circuits over finite fields:
             AND(a, b) = a * b
-        
+
         Args:
             wire_a: First input wire
             wire_b: Second input wire
-        
+
         Returns:
             int: Output wire index
         """
         output_wire = self._next_wire
         self._next_wire += 1
-        
-        self._gates.append(CircuitGate(
-            gate_type="AND",
-            inputs=[wire_a, wire_b],
-            output=output_wire
-        ))
-        
+
+        self._gates.append(
+            CircuitGate(gate_type="AND", inputs=[wire_a, wire_b], output=output_wire)
+        )
+
         return output_wire
-    
+
     def add_or_gate(self, wire_a: int, wire_b: int) -> int:
         """
         Add an OR gate to the circuit.
-        
+
         In arithmetic circuits:
             OR(a, b) = a + b - (a * b)
-        
+
         Args:
             wire_a: First input wire
             wire_b: Second input wire
-        
+
         Returns:
             int: Output wire index
         """
         output_wire = self._next_wire
         self._next_wire += 1
-        
-        self._gates.append(CircuitGate(
-            gate_type="OR",
-            inputs=[wire_a, wire_b],
-            output=output_wire
-        ))
-        
+
+        self._gates.append(CircuitGate(gate_type="OR", inputs=[wire_a, wire_b], output=output_wire))
+
         return output_wire
-    
+
     def add_not_gate(self, wire: int) -> int:
         """
         Add a NOT gate to the circuit.
-        
+
         In arithmetic circuits:
             NOT(a) = 1 - a
-        
+
         Args:
             wire: Input wire
-        
+
         Returns:
             int: Output wire index
         """
         output_wire = self._next_wire
         self._next_wire += 1
-        
-        self._gates.append(CircuitGate(
-            gate_type="NOT",
-            inputs=[wire],
-            output=output_wire
-        ))
-        
+
+        self._gates.append(CircuitGate(gate_type="NOT", inputs=[wire], output=output_wire))
+
         return output_wire
-    
+
     def add_implies_gate(self, wire_a: int, wire_b: int) -> int:
         """
         Add an IMPLIES gate to the circuit.
-        
+
         In logic: A -> B = (NOT A) OR B
         In arithmetic: IMPLIES(a, b) = (1 - a) + b - ((1 - a) * b)
-        
+
         Args:
             wire_a: Antecedent wire
             wire_b: Consequent wire
-        
+
         Returns:
             int: Output wire index
         """
         output_wire = self._next_wire
         self._next_wire += 1
-        
-        self._gates.append(CircuitGate(
-            gate_type="IMPLIES",
-            inputs=[wire_a, wire_b],
-            output=output_wire
-        ))
-        
+
+        self._gates.append(
+            CircuitGate(gate_type="IMPLIES", inputs=[wire_a, wire_b], output=output_wire)
+        )
+
         return output_wire
-    
+
     def add_xor_gate(self, wire_a: int, wire_b: int) -> int:
         """
         Add an XOR gate to the circuit.
-        
+
         In arithmetic: XOR(a, b) = a + b - 2(a * b)
-        
+
         Args:
             wire_a: First input wire
             wire_b: Second input wire
-        
+
         Returns:
             int: Output wire index
         """
         output_wire = self._next_wire
         self._next_wire += 1
-        
-        self._gates.append(CircuitGate(
-            gate_type="XOR",
-            inputs=[wire_a, wire_b],
-            output=output_wire
-        ))
-        
+
+        self._gates.append(
+            CircuitGate(gate_type="XOR", inputs=[wire_a, wire_b], output=output_wire)
+        )
+
         return output_wire
-    
+
     def set_output(self, wire: int):
         """
         Mark a wire as a circuit output.
-        
+
         Args:
             wire: Wire index to mark as output
         """
         self._outputs.append(wire)
-    
+
     def num_gates(self) -> int:
         """Get the number of gates in the circuit."""
         return len(self._gates)
-    
+
     def num_inputs(self) -> int:
         """Get the number of input wires."""
         return len(self._inputs)
-    
+
     def num_wires(self) -> int:
         """Get the total number of wires."""
         return self._next_wire
-    
+
     def get_circuit_hash(self) -> str:
         """
         Compute a hash of the circuit structure.
-        
+
         Returns:
             str: Hex-encoded hash of circuit
         """
         circuit_data = {
-            'num_gates': len(self._gates),
-            'num_inputs': len(self._inputs),
-            'num_wires': self._next_wire,
-            'gates': [
-                {
-                    'type': gate.gate_type,
-                    'inputs': gate.inputs,
-                    'output': gate.output
-                }
+            "num_gates": len(self._gates),
+            "num_inputs": len(self._inputs),
+            "num_wires": self._next_wire,
+            "gates": [
+                {"type": gate.gate_type, "inputs": gate.inputs, "output": gate.output}
                 for gate in self._gates
             ],
         }
-        
+
         import json
+
         circuit_json = json.dumps(circuit_data, sort_keys=True)
         return hashlib.sha256(circuit_json.encode()).hexdigest()
-    
+
     def to_r1cs(self) -> Dict[str, Any]:
         """
         Convert circuit to R1CS (Rank-1 Constraint System).
-        
+
         R1CS is the constraint system used by zkSNARKs like Groth16.
         Each constraint has the form: (A · w) * (B · w) = (C · w)
         where w is the witness vector.
-        
+
         Returns:
             dict: R1CS representation with A, B, C matrices
-        
+
         Note:
             This is a simplified representation. Real R1CS compilation
             would produce sparse matrices over a finite field.
         """
         # Simplified R1CS representation
         constraints = []
-        
+
         for gate in self._gates:
             if gate.gate_type == "AND":
                 # a * b = c
-                constraints.append({
-                    'type': 'multiplication',
-                    'A': gate.inputs[0],
-                    'B': gate.inputs[1],
-                    'C': gate.output,
-                })
+                constraints.append(
+                    {
+                        "type": "multiplication",
+                        "A": gate.inputs[0],
+                        "B": gate.inputs[1],
+                        "C": gate.output,
+                    }
+                )
             elif gate.gate_type == "OR":
                 # OR(a,b) = a + b - a*b
                 # Needs multiple constraints
-                constraints.append({
-                    'type': 'or_composition',
-                    'inputs': gate.inputs,
-                    'output': gate.output,
-                })
+                constraints.append(
+                    {
+                        "type": "or_composition",
+                        "inputs": gate.inputs,
+                        "output": gate.output,
+                    }
+                )
             # Other gate types...
-        
+
         return {
-            'num_constraints': len(constraints),
-            'num_variables': self._next_wire,
-            'constraints': constraints,
-            'public_inputs': list(self._outputs),
+            "num_constraints": len(constraints),
+            "num_variables": self._next_wire,
+            "constraints": constraints,
+            "public_inputs": list(self._outputs),
         }
-    
+
     def __repr__(self) -> str:
         return (
             f"ZKPCircuit("
@@ -1431,46 +1405,48 @@ class ZKPCircuit:
             f"wires={self.num_wires()})"
         )
 
+
 # MVP (Minimum Viable Proof) Circuit Support
 # ==========================================
+
 
 @dataclass
 class MVPCircuit:
     """
     Minimum Viable Proof circuit for knowledge-of-axioms.
-    
+
     Circuit statement: "I know a set of axioms whose SHA256 commitment matches X."
-    
+
     This is a non-cryptographic first implementation.
     In production, this would be compiled to R1CS / arithmetic constraints.
     """
-    
+
     circuit_version: int = 1
     circuit_type: str = "knowledge_of_axioms"
-    
+
     def num_inputs(self) -> int:
         """Number of public input field elements."""
         return 4  # theorem_hash, axioms_commitment, circuit_version, ruleset_id
-    
+
     def num_constraints(self) -> int:
         """Number of constraints in circuit."""
         return 1  # commitment check constraint
-    
+
     def compile(self) -> Dict[str, Any]:
         """
         Compile circuit to schema (JSON representation).
-        
+
         In production, this would generate R1CS or other constraint format.
-        
+
         Returns:
             Dictionary describing circuit structure
         """
         return {
-            'version': self.circuit_version,
-            'type': self.circuit_type,
-            'num_inputs': self.num_inputs(),
-            'num_constraints': self.num_constraints(),
-            'description': 'Prove knowledge of axioms matching a commitment',
+            "version": self.circuit_version,
+            "type": self.circuit_type,
+            "num_inputs": self.num_inputs(),
+            "num_constraints": self.num_constraints(),
+            "description": "Prove knowledge of axioms matching a commitment",
         }
 
     def verify_constraints(self, witness: Witness, statement: Statement) -> bool:
@@ -1511,10 +1487,10 @@ class MVPCircuit:
 def create_knowledge_of_axioms_circuit(circuit_version: int = 1) -> MVPCircuit:
     """
     Create a knowledge-of-axioms circuit.
-    
+
     Args:
         circuit_version: Circuit version number (default 1 for MVP)
-    
+
     Returns:
         MVPCircuit instance
     """
@@ -1549,10 +1525,10 @@ class TDFOLv1DerivationCircuit:
 
     def compile(self) -> Dict[str, Any]:
         return {
-            'version': self.circuit_version,
-            'type': self.circuit_type,
-            'num_inputs': self.num_inputs(),
-            'description': 'Prove theorem holds under TDFOL_v1 Horn-fragment semantics using a derivation trace',
+            "version": self.circuit_version,
+            "type": self.circuit_type,
+            "num_inputs": self.num_inputs(),
+            "description": "Prove theorem holds under TDFOL_v1 Horn-fragment semantics using a derivation trace",
         }
 
     def verify_constraints(self, witness: Witness, statement: Statement) -> bool:
@@ -1624,19 +1600,20 @@ class TDFOLv1DerivationCircuit:
         except Exception:
             return False
 
+
 def create_implication_circuit(num_premises: int) -> ZKPCircuit:
     """
     Create a circuit for proving: (P1 AND P2 AND ... AND Pn) IMPLIES Q
-    
+
     This is useful for proving theorems where multiple premises
     lead to a conclusion.
-    
+
     Args:
         num_premises: Number of premise variables
-    
+
     Returns:
         ZKPCircuit: Circuit that verifies the implication
-    
+
     Example:
         >>> # Create circuit for: (P AND Q) IMPLIES R
         >>> circuit = create_implication_circuit(num_premises=2)
@@ -1644,16 +1621,16 @@ def create_implication_circuit(num_premises: int) -> ZKPCircuit:
         ZKPCircuit(inputs=3, gates=3, wires=7)
     """
     circuit = ZKPCircuit()
-    
+
     # Add premise inputs
     premise_wires = []
     for i in range(num_premises):
         wire = circuit.add_input(f"P{i}")
         premise_wires.append(wire)
-    
+
     # Add conclusion input
     q_wire = circuit.add_input("Q")
-    
+
     # AND all premises together
     if num_premises == 1:
         premises_wire = premise_wires[0]
@@ -1661,9 +1638,9 @@ def create_implication_circuit(num_premises: int) -> ZKPCircuit:
         premises_wire = circuit.add_and_gate(premise_wires[0], premise_wires[1])
         for i in range(2, num_premises):
             premises_wire = circuit.add_and_gate(premises_wire, premise_wires[i])
-    
+
     # Create implication: premises -> Q
     result_wire = circuit.add_implies_gate(premises_wire, q_wire)
     circuit.set_output(result_wire)
-    
+
     return circuit

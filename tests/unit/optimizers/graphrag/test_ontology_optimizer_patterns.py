@@ -14,9 +14,7 @@ def test_identify_patterns_computes_common_types_and_averages() -> None:
                 {"id": "e1", "type": "Person", "properties": {"age": 30}},
                 {"id": "e2", "type": "Person", "properties": {"age": 31}},
             ],
-            "relationships": [
-                {"id": "r1", "source_id": "e1", "target_id": "e2", "type": "knows"}
-            ],
+            "relationships": [{"id": "r1", "source_id": "e1", "target_id": "e2", "type": "knows"}],
         },
         {
             "entities": [
@@ -98,7 +96,10 @@ def test_ontology_optimizer_emits_trace_attributes_with_fake_tracer(monkeypatch)
 
 
 def test_ontology_optimizer_export_learning_curve_csv_in_memory() -> None:
-    from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer, OptimizationReport
+    from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import (
+        OntologyOptimizer,
+        OptimizationReport,
+    )
 
     optimizer = OntologyOptimizer()
     optimizer._history.append(
@@ -130,7 +131,10 @@ def test_ontology_optimizer_export_learning_curve_csv_in_memory() -> None:
 
 
 def test_ontology_optimizer_export_learning_curve_csv_to_file(tmp_path) -> None:
-    from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer, OptimizationReport
+    from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import (
+        OntologyOptimizer,
+        OptimizationReport,
+    )
 
     optimizer = OntologyOptimizer()
     optimizer._history.append(

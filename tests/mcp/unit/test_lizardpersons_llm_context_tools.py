@@ -8,6 +8,7 @@ Tests cover:
 - deadline_date mode
 - time_between single and dual timestamp modes
 """
+
 import re
 import time as time_mod
 

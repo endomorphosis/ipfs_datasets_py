@@ -14,7 +14,10 @@ class KansasScraper(BaseStateScraper):
     """Scraper for Kansas state laws from https://www.kslegislature.gov."""
 
     _CHAPTER_RE = re.compile(r"/laws/[0-9a-z]{3,4}_000_0000_chapter/?$", re.IGNORECASE)
-    _ARTICLE_RE = re.compile(r"/[0-9a-z]{3,4}_000_0000_chapter/[0-9a-z]{3,4}_[0-9a-z]{3,4}_0000_article/?$", re.IGNORECASE)
+    _ARTICLE_RE = re.compile(
+        r"/[0-9a-z]{3,4}_000_0000_chapter/[0-9a-z]{3,4}_[0-9a-z]{3,4}_0000_article/?$",
+        re.IGNORECASE,
+    )
     _SECTION_RE = re.compile(
         r"/[0-9a-z]{3,4}_000_0000_chapter/[0-9a-z]{3,4}_[0-9a-z]{3,4}_0000_article/"
         r"[0-9a-z]{3,4}_[0-9a-z]{3,4}_[0-9a-z]{4}_section/[0-9a-z]{3,4}_[0-9a-z]{3,4}_[0-9a-z]{4}_k/?$",
@@ -77,7 +80,9 @@ class KansasScraper(BaseStateScraper):
                         statutes.append(statute)
 
         if not statutes:
-            self.logger.warning("Kansas official direct crawl returned no statutes; skipping generic recovery fallback")
+            self.logger.warning(
+                "Kansas official direct crawl returned no statutes; skipping generic recovery fallback"
+            )
         return statutes[:limit] if limit is not None else statutes
 
     async def _fetch_official_ks_html(self, url: str, timeout_seconds: int = 18) -> str:
@@ -112,7 +117,9 @@ class KansasScraper(BaseStateScraper):
 
         self._record_fetch_event(provider="requests_direct", success=bool(payload))
         if payload:
-            await self._cache_successful_page_fetch(url=url, payload=payload, provider="requests_direct")
+            await self._cache_successful_page_fetch(
+                url=url, payload=payload, provider="requests_direct"
+            )
             return payload.decode("utf-8", errors="replace")
         return ""
 
@@ -125,7 +132,9 @@ class KansasScraper(BaseStateScraper):
     async def _discover_section_links(self, article_url: str) -> List[Tuple[str, str]]:
         return await self._discover_links(article_url, self._SECTION_RE)
 
-    async def _discover_links(self, page_url: str, pattern: re.Pattern[str]) -> List[Tuple[str, str]]:
+    async def _discover_links(
+        self, page_url: str, pattern: re.Pattern[str]
+    ) -> List[Tuple[str, str]]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
@@ -172,9 +181,7 @@ class KansasScraper(BaseStateScraper):
         number = self._text_or_empty(soup.select_one(".stat_5f_number")).rstrip(".")
         caption = self._text_or_empty(soup.select_one(".stat_5f_caption"))
         statute_paragraphs = [
-            self._text_or_empty(node)
-            for node in soup.select("p.p_pt")
-            if self._text_or_empty(node)
+            self._text_or_empty(node) for node in soup.select("p.p_pt") if self._text_or_empty(node)
         ]
         if statute_paragraphs:
             body = self._normalize_legal_text(" ".join(statute_paragraphs))

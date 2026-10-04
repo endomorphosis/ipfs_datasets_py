@@ -68,64 +68,49 @@ from typing import Callable
 logger = logging.getLogger(__name__)
 DEFAULT_ERGOAI_GIT_URL = "https://github.com/ErgoAI/ErgoEngine.git"
 DEFAULT_ERGOAI_RELEASE_URL = (
-    "https://github.com/ErgoAI/.github/releases/download/"
-    "v3.0_release/ergoAI_3.0.run"
+    "https://github.com/ErgoAI/.github/releases/download/v3.0_release/ergoAI_3.0.run"
 )
 DEFAULT_EXTERNAL_PROVER_ROOT = (
     Path.home() / ".local" / "share" / "ipfs_datasets_py" / "theorem-provers"
 )
 APALACHE_VERSION = "0.58.3"
 APALACHE_LINUX_X86_64_URL = (
-    "https://github.com/apalache-mc/apalache/releases/download/"
-    "v0.58.3/apalache-0.58.3.tgz"
+    "https://github.com/apalache-mc/apalache/releases/download/v0.58.3/apalache-0.58.3.tgz"
 )
-APALACHE_LINUX_X86_64_SHA256 = (
-    "ba622db9538aebf942cc7a7815f942a6b2b419012707e16dfdc25a73ff95d0a5"
-)
+APALACHE_LINUX_X86_64_SHA256 = "ba622db9538aebf942cc7a7815f942a6b2b419012707e16dfdc25a73ff95d0a5"
 TAMARIN_VERSION = "1.12.0"
 TAMARIN_LINUX_X86_64_URL = (
     "https://github.com/tamarin-prover/tamarin-prover/releases/download/"
     "1.12.0/tamarin-prover-1.12.0-linux64-ubuntu.tar.gz"
 )
-TAMARIN_LINUX_X86_64_SHA256 = (
-    "201be06f469e47cff554df6ca93db8366fc2c69d70c61fcbd1370a1074b469c6"
-)
+TAMARIN_LINUX_X86_64_SHA256 = "201be06f469e47cff554df6ca93db8366fc2c69d70c61fcbd1370a1074b469c6"
 MAUDE_VERSION = "3.5.1"
 MAUDE_LINUX_X86_64_URL = (
-    "https://github.com/maude-lang/Maude/releases/download/"
-    "Maude3.5.1/Maude-3.5.1-linux-x86_64.zip"
+    "https://github.com/maude-lang/Maude/releases/download/Maude3.5.1/Maude-3.5.1-linux-x86_64.zip"
 )
-MAUDE_LINUX_X86_64_SHA256 = (
-    "72ed1ca87e3b3d0dfc6ee1436baf154bf04c45ff97d521bec040c5e8dfc8f92c"
-)
+MAUDE_LINUX_X86_64_SHA256 = "72ed1ca87e3b3d0dfc6ee1436baf154bf04c45ff97d521bec040c5e8dfc8f92c"
 PROVERIF_VERSION = "2.05"
 PROVERIF_SOURCE_URL = "https://proverif.inria.fr/proverif2.05.tar.gz"
-PROVERIF_SOURCE_SHA256 = (
-    "4871f53c32ab4a04669a060c4886ba5d9080496963fb980a9a62d2c429ceabc4"
-)
+PROVERIF_SOURCE_SHA256 = "4871f53c32ab4a04669a060c4886ba5d9080496963fb980a9a62d2c429ceabc4"
 ROCQ_VERSION = "9.1.1"
 ROCQ_OPAM_REPOSITORY = "https://rocq-prover.org/opam/released"
 LEAN_TOOLCHAIN = "v4.31.0"
 CVC5_VERSION = "1.3.2"
 CVC5_RELEASES: dict[tuple[str, str], tuple[str, str]] = {
     ("linux", "x86_64"): (
-        "https://github.com/cvc5/cvc5/releases/download/cvc5-1.3.2/"
-        "cvc5-Linux-x86_64-static.zip",
+        "https://github.com/cvc5/cvc5/releases/download/cvc5-1.3.2/cvc5-Linux-x86_64-static.zip",
         "1060daaf507edef9d0a68e399cfc0e9038150bccb9e2d34d081d50a7687544d2",
     ),
     ("linux", "aarch64"): (
-        "https://github.com/cvc5/cvc5/releases/download/cvc5-1.3.2/"
-        "cvc5-Linux-arm64-static.zip",
+        "https://github.com/cvc5/cvc5/releases/download/cvc5-1.3.2/cvc5-Linux-arm64-static.zip",
         "21bd93916b3214ba64538cbd82bb2f6650ab441c5781f6c83afd3707d78d79da",
     ),
     ("darwin", "x86_64"): (
-        "https://github.com/cvc5/cvc5/releases/download/cvc5-1.3.2/"
-        "cvc5-macOS-x86_64-static.zip",
+        "https://github.com/cvc5/cvc5/releases/download/cvc5-1.3.2/cvc5-macOS-x86_64-static.zip",
         "b4ab528a63592da89c81eb10e35167f1e6051fd2ad8969f4e6ec54e0708fe774",
     ),
     ("darwin", "arm64"): (
-        "https://github.com/cvc5/cvc5/releases/download/cvc5-1.3.2/"
-        "cvc5-macOS-arm64-static.zip",
+        "https://github.com/cvc5/cvc5/releases/download/cvc5-1.3.2/cvc5-macOS-arm64-static.zip",
         "172b6ff70662184725aedf64b0189a870cc7562aca1bad9cd0ec92f682edb3af",
     ),
 }
@@ -193,7 +178,9 @@ def _external_prover_bin_dir() -> Path:
     return _external_prover_root() / "bin"
 
 
-def _announce(message: str, on_progress: ProgressCallback | None = None, *, phase: str = "installing") -> None:
+def _announce(
+    message: str, on_progress: ProgressCallback | None = None, *, phase: str = "installing"
+) -> None:
     """Emit progress before potentially long user-local installation steps."""
 
     print(f"[ipfs_datasets_py] {message}", flush=True)
@@ -275,9 +262,13 @@ def managed_solver_version_status() -> list[dict[str, str | bool | None]]:
         executable = (
             str(executable_name)
             if isinstance(executable_name, Path)
-            else _which(executable_name) if isinstance(executable_name, str) else None
+            else _which(executable_name)
+            if isinstance(executable_name, str)
+            else None
         )
-        observed = _distribution_version(distribution) if distribution else _read_version(executable)
+        observed = (
+            _distribution_version(distribution) if distribution else _read_version(executable)
+        )
         if name == "proverif" and executable and not observed:
             try:
                 launcher_contents = Path(executable).read_text(encoding="utf-8", errors="ignore")
@@ -300,7 +291,11 @@ def managed_solver_version_status() -> list[dict[str, str | bool | None]]:
                 "executable": executable,
                 "installed_version": observed or None,
                 "present": present,
-                "status": "managed" if matches else "manual_update_required" if present else "missing",
+                "status": "managed"
+                if matches
+                else "manual_update_required"
+                if present
+                else "missing",
                 "manual_update_required": not matches,
             }
         )
@@ -369,7 +364,9 @@ def _safe_extract_zip(archive: Path, destination: Path) -> None:
         bundle.extractall(destination)
 
 
-def _write_launcher(name: str, executable: Path, *, environment: dict[str, str] | None = None) -> Path:
+def _write_launcher(
+    name: str, executable: Path, *, environment: dict[str, str] | None = None
+) -> Path:
     """Create a user-local launcher that keeps solver dependencies discoverable."""
 
     bin_dir = _external_prover_bin_dir()
@@ -382,11 +379,11 @@ def _write_launcher(name: str, executable: Path, *, environment: dict[str, str] 
     for key, value in sorted((environment or {}).items()):
         if not key.isidentifier():
             raise ValueError(f"invalid launcher environment key: {key}")
-        exports.append(f"export {key}={shell_quote(str(value))}\"${{{key}:+:${key}}}\"")
+        exports.append(f'export {key}={shell_quote(str(value))}"${{{key}:+:${key}}}"')
     launcher.write_text(
         "#!/bin/sh\nset -eu\n"
         + "\n".join(exports)
-        + f"\nexec {shell_quote(str(executable))} \"$@\"\n",
+        + f'\nexec {shell_quote(str(executable))} "$@"\n',
         encoding="utf-8",
     )
     launcher.chmod(0o755)
@@ -400,7 +397,9 @@ def _run_custom_solver_installer(
     strict: bool,
     on_progress: ProgressCallback | None,
 ) -> bool:
-    command = str(os.environ.get(f"IPFS_DATASETS_PY_{solver.upper()}_INSTALL_COMMAND") or "").strip()
+    command = str(
+        os.environ.get(f"IPFS_DATASETS_PY_{solver.upper()}_INSTALL_COMMAND") or ""
+    ).strip()
     if not command:
         return False
     try:
@@ -414,7 +413,10 @@ def _run_custom_solver_installer(
 
 
 def _linux_x86_64() -> bool:
-    return platform.system().lower() == "linux" and platform.machine().lower() in {"x86_64", "amd64"}
+    return platform.system().lower() == "linux" and platform.machine().lower() in {
+        "x86_64",
+        "amd64",
+    }
 
 
 @dataclass(frozen=True)
@@ -433,8 +435,10 @@ class PlatformInstallProfile:
     def can_install_system_packages(self) -> bool:
         if self.package_manager is None:
             return False
-        return self.is_root or self.package_manager in {"brew", "conda", "mamba"} or bool(
-            self.sudo_path
+        return (
+            self.is_root
+            or self.package_manager in {"brew", "conda", "mamba"}
+            or bool(self.sudo_path)
         )
 
 
@@ -748,8 +752,7 @@ def _install_ergoai_release(*, strict: bool) -> bool:
         return False
 
     release_url = str(
-        os.environ.get("IPFS_DATASETS_PY_ERGOAI_RELEASE_URL")
-        or DEFAULT_ERGOAI_RELEASE_URL
+        os.environ.get("IPFS_DATASETS_PY_ERGOAI_RELEASE_URL") or DEFAULT_ERGOAI_RELEASE_URL
     ).strip()
     installer_name = release_url.rstrip("/").rsplit("/", 1)[-1] or "ergoAI.run"
     installer = root / installer_name
@@ -795,11 +798,11 @@ def _clone_or_update_ergoai(*, strict: bool) -> bool:
             print(f"Updating existing ErgoAI checkout at {destination}...")
             _run([git, "-C", str(destination), "pull", "--ff-only"], check=False)
         else:
-            non_placeholder_entries = [
-                path
-                for path in destination.iterdir()
-                if path.name != ".gitkeep"
-            ] if destination.exists() else []
+            non_placeholder_entries = (
+                [path for path in destination.iterdir() if path.name != ".gitkeep"]
+                if destination.exists()
+                else []
+            )
             if non_placeholder_entries:
                 print(
                     f"ErgoAI path exists but is not a git checkout: {destination}\n"
@@ -890,22 +893,35 @@ def ensure_z3(
         return True
 
     if not yes:
-        _announce("Z3 Python bindings are missing; rerun with --yes to install z3-solver.", on_progress, phase="blocked")
+        _announce(
+            "Z3 Python bindings are missing; rerun with --yes to install z3-solver.",
+            on_progress,
+            phase="blocked",
+        )
         return False
 
     try:
-        _announce("Installing z3-solver Python bindings with pip; this can take several minutes.", on_progress)
+        _announce(
+            "Installing z3-solver Python bindings with pip; this can take several minutes.",
+            on_progress,
+        )
         pip_kwargs = {"strict": strict}
         if force:
             pip_kwargs["upgrade"] = True
         if _pip_install("z3-solver>=4.12.0,<5.0.0", **pip_kwargs) and _module_available("z3"):
             _announce(
-                "Updated z3-solver Python bindings." if force else "Installed z3-solver Python bindings.",
+                "Updated z3-solver Python bindings."
+                if force
+                else "Installed z3-solver Python bindings.",
                 on_progress,
                 phase="installed",
             )
             return True
-        _announce("Unable to install Z3 automatically. Install with: pip install z3-solver", on_progress, phase="failed")
+        _announce(
+            "Unable to install Z3 automatically. Install with: pip install z3-solver",
+            on_progress,
+            phase="failed",
+        )
         return False
     except Exception as exc:
         _announce(f"Failed to install Z3: {exc}", on_progress, phase="failed")
@@ -922,11 +938,17 @@ def ensure_cvc5(
         return True
 
     if not yes:
-        _announce("CVC5 Python bindings are missing; rerun with --yes to install cvc5.", on_progress, phase="blocked")
+        _announce(
+            "CVC5 Python bindings are missing; rerun with --yes to install cvc5.",
+            on_progress,
+            phase="blocked",
+        )
         return False
 
     try:
-        _announce("Installing CVC5 Python bindings with pip; this can take several minutes.", on_progress)
+        _announce(
+            "Installing CVC5 Python bindings with pip; this can take several minutes.", on_progress
+        )
         pip_kwargs = {"strict": strict}
         if force:
             pip_kwargs["upgrade"] = True
@@ -937,7 +959,11 @@ def ensure_cvc5(
                 phase="installed",
             )
             return True
-        _announce("Unable to install CVC5 automatically. Install with: pip install cvc5", on_progress, phase="failed")
+        _announce(
+            "Unable to install CVC5 automatically. Install with: pip install cvc5",
+            on_progress,
+            phase="failed",
+        )
         return False
     except Exception as exc:
         _announce(f"Failed to install CVC5: {exc}", on_progress, phase="failed")
@@ -960,7 +986,11 @@ def ensure_symbolicai(
         pass
 
     if not yes:
-        _announce("SymbolicAI is missing; rerun with --yes to install symbolicai.", on_progress, phase="blocked")
+        _announce(
+            "SymbolicAI is missing; rerun with --yes to install symbolicai.",
+            on_progress,
+            phase="blocked",
+        )
         return False
 
     try:
@@ -979,7 +1009,11 @@ def ensure_symbolicai(
                     phase="installed",
                 )
                 return True
-        _announce("Unable to install SymbolicAI automatically. Install with: pip install symbolicai", on_progress, phase="failed")
+        _announce(
+            "Unable to install SymbolicAI automatically. Install with: pip install symbolicai",
+            on_progress,
+            phase="failed",
+        )
         return False
     except Exception as exc:
         _announce(f"Failed to install SymbolicAI: {exc}", on_progress, phase="failed")
@@ -1021,7 +1055,9 @@ def ensure_ergoai(
         )
         return False
 
-    _announce("Preparing user-local ErgoAI installation; this can take several minutes.", on_progress)
+    _announce(
+        "Preparing user-local ErgoAI installation; this can take several minutes.", on_progress
+    )
     if _run_custom_ergoai_installer(strict=strict):
         binary = _find_ergoai_binary()
         if binary is not None:
@@ -1037,7 +1073,9 @@ def ensure_ergoai(
             on_progress,
         )
         if _clone_or_update_ergoai(strict=strict):
-            _announce("Updated the configured ErgoAI source checkout.", on_progress, phase="installed")
+            _announce(
+                "Updated the configured ErgoAI source checkout.", on_progress, phase="installed"
+            )
             return True
 
     profile = detect_platform_install_profile()
@@ -1055,7 +1093,9 @@ def ensure_ergoai(
         return True
 
     if _clone_or_update_ergoai(strict=strict):
-        _announce("Installed ErgoAI from the configured source checkout.", on_progress, phase="installed")
+        _announce(
+            "Installed ErgoAI from the configured source checkout.", on_progress, phase="installed"
+        )
         return True
 
     _announce(
@@ -1089,14 +1129,20 @@ def ensure_lean(
         return True
 
     if not yes:
-        _announce("Lean is missing; rerun with --yes to attempt a user-local elan install.", on_progress, phase="blocked")
+        _announce(
+            "Lean is missing; rerun with --yes to attempt a user-local elan install.",
+            on_progress,
+            phase="blocked",
+        )
         return False
 
     try:
         elan = _which("elan")
         if force and elan is not None:
             toolchain = os.environ.get("IPFS_DATASETS_PY_LEAN_TOOLCHAIN", LEAN_TOOLCHAIN)
-            _announce("Updating elan and the reviewed Lean toolchain on operator request.", on_progress)
+            _announce(
+                "Updating elan and the reviewed Lean toolchain on operator request.", on_progress
+            )
             _run([elan, "self", "update"], check=False)
             if _run([elan, "toolchain", "install", toolchain], check=False) != 0:
                 raise RuntimeError(f"elan could not install Lean toolchain {toolchain}")
@@ -1124,11 +1170,17 @@ def ensure_lean(
         lean_path = _which("lean")
         lean_home = Path.home() / ".elan" / "bin" / "lean"
         if lean_path or lean_home.exists():
-            _announce(f"Installed Lean via elan: {lean_path or lean_home}", on_progress, phase="installed")
+            _announce(
+                f"Installed Lean via elan: {lean_path or lean_home}", on_progress, phase="installed"
+            )
             print("If Lean is not on PATH, add ~/.elan/bin to PATH.")
             return True
 
-        _announce("Attempted to install Lean via elan, but no lean binary was found afterwards.", on_progress, phase="failed")
+        _announce(
+            "Attempted to install Lean via elan, but no lean binary was found afterwards.",
+            on_progress,
+            phase="failed",
+        )
         return False
 
     except Exception as exc:
@@ -1165,9 +1217,7 @@ def _install_coq_via_opam(
 
     root = _coq_opam_root()
     switch = os.environ.get("IPFS_DATASETS_PY_COQ_OPAM_SWITCH", "ipfs-datasets-coq")
-    compiler = os.environ.get(
-        "IPFS_DATASETS_PY_COQ_OPAM_COMPILER", "ocaml-base-compiler.4.14.2"
-    )
+    compiler = os.environ.get("IPFS_DATASETS_PY_COQ_OPAM_COMPILER", "ocaml-base-compiler.4.14.2")
     switch_bin = root / switch / "bin"
     coqc = switch_bin / "coqc"
     coqtop = switch_bin / "coqtop"
@@ -1183,7 +1233,11 @@ def _install_coq_via_opam(
                 coqtop,
                 environment={"OPAMROOT": str(root), "OPAMSWITCH": switch},
             )
-        _announce(f"Coq is already available in user-local OPAM switch {switch}.", on_progress, phase="available")
+        _announce(
+            f"Coq is already available in user-local OPAM switch {switch}.",
+            on_progress,
+            phase="available",
+        )
         return _which("coqc") is not None
 
     root.mkdir(parents=True, exist_ok=True)
@@ -1192,26 +1246,41 @@ def _install_coq_via_opam(
     env["OPAMYES"] = "true"
     try:
         _announce(f"Initializing isolated OPAM root for Coq at {root}.", on_progress)
-        if _run(
-            [opam, "init", "--bare", "--disable-sandboxing", "--no-setup", "--yes"],
-            check=False,
-            env=env,
-        ) != 0:
+        if (
+            _run(
+                [opam, "init", "--bare", "--disable-sandboxing", "--no-setup", "--yes"],
+                check=False,
+                env=env,
+            )
+            != 0
+        ):
             raise RuntimeError("OPAM initialization failed")
         if not (root / switch).is_dir():
             _announce(
                 f"Creating OPAM switch {switch} with {compiler}; this can take several minutes.",
                 on_progress,
             )
-            if _run(
-                [opam, "switch", "create", switch, compiler, "--yes"],
-                check=False,
-                env=env,
-            ) != 0:
+            if (
+                _run(
+                    [opam, "switch", "create", switch, compiler, "--yes"],
+                    check=False,
+                    env=env,
+                )
+                != 0
+            ):
                 raise RuntimeError("OPAM switch creation failed")
         _announce("Refreshing the Rocq package index for the isolated OPAM switch.", on_progress)
         _run(
-            [opam, "repo", "add", "rocq-released", ROCQ_OPAM_REPOSITORY, "--switch", switch, "--yes"],
+            [
+                opam,
+                "repo",
+                "add",
+                "rocq-released",
+                ROCQ_OPAM_REPOSITORY,
+                "--switch",
+                switch,
+                "--yes",
+            ],
             check=False,
             env=env,
         )
@@ -1221,11 +1290,22 @@ def _install_coq_via_opam(
             f"Installing Rocq {ROCQ_VERSION} in the isolated OPAM switch; this can take several minutes.",
             on_progress,
         )
-        if _run(
-            [opam, "install", "rocq-prover", f"rocq-core={ROCQ_VERSION}", "--switch", switch, "--yes"],
-            check=False,
-            env=env,
-        ) != 0:
+        if (
+            _run(
+                [
+                    opam,
+                    "install",
+                    "rocq-prover",
+                    f"rocq-core={ROCQ_VERSION}",
+                    "--switch",
+                    switch,
+                    "--yes",
+                ],
+                check=False,
+                env=env,
+            )
+            != 0
+        ):
             raise RuntimeError("OPAM Rocq installation failed")
         if not coqc.is_file():
             raise RuntimeError("OPAM completed without a coqc binary")
@@ -1240,7 +1320,11 @@ def _install_coq_via_opam(
                 coqtop,
                 environment={"OPAMROOT": str(root), "OPAMSWITCH": switch},
             )
-        _announce(f"Installed Rocq {ROCQ_VERSION} in user-local OPAM switch {switch}.", on_progress, phase="installed")
+        _announce(
+            f"Installed Rocq {ROCQ_VERSION} in user-local OPAM switch {switch}.",
+            on_progress,
+            phase="installed",
+        )
         return _which("coqc") is not None
     except Exception as exc:
         _announce(f"User-local OPAM Coq installation failed: {exc}", on_progress, phase="failed")
@@ -1287,7 +1371,9 @@ def ensure_coq(
                 allow_sudo=allow_sudo,
                 strict=strict,
             ) and _which("coqc"):
-                _announce(f"Installed Coq via {profile.package_manager}.", on_progress, phase="installed")
+                _announce(
+                    f"Installed Coq via {profile.package_manager}.", on_progress, phase="installed"
+                )
                 return True
 
         return _install_coq_via_opam(strict=strict, on_progress=on_progress, force=force)
@@ -1309,7 +1395,11 @@ def ensure_apalache(
         _announce(f"Apalache is already available at {existing}", on_progress, phase="available")
         return True
     if not yes:
-        _announce("Apalache is missing; rerun with --yes to install it user-locally.", on_progress, phase="blocked")
+        _announce(
+            "Apalache is missing; rerun with --yes to install it user-locally.",
+            on_progress,
+            phase="blocked",
+        )
         return False
     if _run_custom_solver_installer("apalache", strict=strict, on_progress=on_progress):
         return _which("apalache-mc") is not None or _which("apalache") is not None
@@ -1345,9 +1435,13 @@ def ensure_apalache(
         _safe_extract_tar(archive, destination)
         candidates = [path for path in destination.rglob("apalache-mc") if path.is_file()]
         if len(candidates) != 1:
-            raise RuntimeError("Apalache archive did not contain exactly one apalache-mc executable")
+            raise RuntimeError(
+                "Apalache archive did not contain exactly one apalache-mc executable"
+            )
         _write_launcher("apalache-mc", candidates[0])
-        _announce(f"Installed Apalache {APALACHE_VERSION} user-locally.", on_progress, phase="installed")
+        _announce(
+            f"Installed Apalache {APALACHE_VERSION} user-locally.", on_progress, phase="installed"
+        )
         return _which("apalache-mc") is not None
     except Exception as exc:
         _announce(f"Apalache installation failed: {exc}", on_progress, phase="failed")
@@ -1366,7 +1460,11 @@ def ensure_maude(
         _announce(f"Maude is already available at {existing}", on_progress, phase="available")
         return True
     if not yes:
-        _announce("Maude is missing; rerun with --yes to install it user-locally.", on_progress, phase="blocked")
+        _announce(
+            "Maude is missing; rerun with --yes to install it user-locally.",
+            on_progress,
+            phase="blocked",
+        )
         return False
     if _run_custom_solver_installer("maude", strict=strict, on_progress=on_progress):
         return _which("maude") is not None
@@ -1415,7 +1513,11 @@ def ensure_tamarin(
     if existing and not force:
         return ensure_maude(yes=yes, strict=strict, on_progress=on_progress)
     if not yes:
-        _announce("Tamarin is missing; rerun with --yes to install it user-locally.", on_progress, phase="blocked")
+        _announce(
+            "Tamarin is missing; rerun with --yes to install it user-locally.",
+            on_progress,
+            phase="blocked",
+        )
         return False
     if not ensure_maude(yes=yes, strict=strict, on_progress=on_progress, force=force):
         return False
@@ -1446,9 +1548,15 @@ def ensure_tamarin(
         _safe_extract_tar(archive, destination)
         candidates = [path for path in destination.rglob("tamarin-prover") if path.is_file()]
         if len(candidates) != 1:
-            raise RuntimeError("Tamarin archive did not contain exactly one tamarin-prover executable")
+            raise RuntimeError(
+                "Tamarin archive did not contain exactly one tamarin-prover executable"
+            )
         _write_launcher("tamarin-prover", candidates[0])
-        _announce(f"Installed Tamarin {TAMARIN_VERSION} with Maude {MAUDE_VERSION}.", on_progress, phase="installed")
+        _announce(
+            f"Installed Tamarin {TAMARIN_VERSION} with Maude {MAUDE_VERSION}.",
+            on_progress,
+            phase="installed",
+        )
         return _which("tamarin-prover") is not None
     except Exception as exc:
         _announce(f"Tamarin installation failed: {exc}", on_progress, phase="failed")
@@ -1467,7 +1575,11 @@ def ensure_proverif(
         _announce(f"ProVerif is already available at {existing}", on_progress, phase="available")
         return True
     if not yes:
-        _announce("ProVerif is missing; rerun with --yes to build it user-locally.", on_progress, phase="blocked")
+        _announce(
+            "ProVerif is missing; rerun with --yes to build it user-locally.",
+            on_progress,
+            phase="blocked",
+        )
         return False
     if _run_custom_solver_installer("proverif", strict=strict, on_progress=on_progress):
         return _which("proverif") is not None
@@ -1497,16 +1609,27 @@ def ensure_proverif(
             return False
         _announce(f"Extracting ProVerif {PROVERIF_VERSION} source into {source_root}", on_progress)
         _safe_extract_tar(archive, source_root)
-        candidates = [path for path in source_root.iterdir() if path.is_dir() and path.name.startswith("proverif")]
+        candidates = [
+            path
+            for path in source_root.iterdir()
+            if path.is_dir() and path.name.startswith("proverif")
+        ]
         source_dir = candidates[0] if len(candidates) == 1 else source_root
-        _announce("Building ProVerif without its optional GTK interface; this can take several minutes.", on_progress)
+        _announce(
+            "Building ProVerif without its optional GTK interface; this can take several minutes.",
+            on_progress,
+        )
         if _run(["sh", "build", "-nointeract"], check=False, cwd=source_dir) != 0:
             raise RuntimeError("ProVerif headless build failed")
         executable = source_dir / "proverif"
         if not executable.is_file():
             raise RuntimeError("ProVerif build completed without a proverif executable")
         _write_launcher("proverif", executable)
-        _announce(f"Installed headless ProVerif {PROVERIF_VERSION} user-locally.", on_progress, phase="installed")
+        _announce(
+            f"Installed headless ProVerif {PROVERIF_VERSION} user-locally.",
+            on_progress,
+            phase="installed",
+        )
         return _which("proverif") is not None
     except Exception as exc:
         _announce(f"ProVerif installation failed: {exc}", on_progress, phase="failed")
@@ -1525,13 +1648,19 @@ def ensure_cvc5_cli(
         _announce(f"CVC5 CLI is already available at {existing}", on_progress, phase="available")
         return True
     if not yes:
-        _announce("CVC5 CLI is missing; rerun with --yes or set IPFS_DATASETS_PY_CVC5_INSTALL_COMMAND.", on_progress, phase="blocked")
+        _announce(
+            "CVC5 CLI is missing; rerun with --yes or set IPFS_DATASETS_PY_CVC5_INSTALL_COMMAND.",
+            on_progress,
+            phase="blocked",
+        )
         return False
     if _run_custom_solver_installer("cvc5", strict=strict, on_progress=on_progress):
         return _which("cvc5") is not None
     system = platform.system().lower()
     machine = platform.machine().lower()
-    machine = {"amd64": "x86_64", "arm64": "aarch64" if system == "linux" else "arm64"}.get(machine, machine)
+    machine = {"amd64": "x86_64", "arm64": "aarch64" if system == "linux" else "arm64"}.get(
+        machine, machine
+    )
     release = CVC5_RELEASES.get((system, machine))
     if release is None:
         _announce(
@@ -1561,7 +1690,9 @@ def ensure_cvc5_cli(
         if len(candidates) != 1:
             raise RuntimeError("CVC5 archive did not contain exactly one cvc5 executable")
         _write_launcher("cvc5", candidates[0])
-        _announce(f"Installed CVC5 CLI {CVC5_VERSION} user-locally.", on_progress, phase="installed")
+        _announce(
+            f"Installed CVC5 CLI {CVC5_VERSION} user-locally.", on_progress, phase="installed"
+        )
         return _which("cvc5") is not None
     except Exception as exc:
         _announce(f"CVC5 CLI installation failed: {exc}", on_progress, phase="failed")
@@ -1577,14 +1708,25 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--z3", action="store_true", help="Install/ensure Z3 Python bindings")
     parser.add_argument("--cvc5", action="store_true", help="Install/ensure CVC5 Python bindings")
     parser.add_argument("--lean", action="store_true", help="Install/ensure Lean")
-    parser.add_argument("--coq", "--rocq", action="store_true", help="Install/ensure Rocq 9.1.1 (Coq-compatible CLI)")
+    parser.add_argument(
+        "--coq",
+        "--rocq",
+        action="store_true",
+        help="Install/ensure Rocq 9.1.1 (Coq-compatible CLI)",
+    )
     parser.add_argument("--apalache", action="store_true", help="Install/ensure Apalache")
     parser.add_argument("--tamarin", action="store_true", help="Install/ensure Tamarin and Maude")
     parser.add_argument("--maude", action="store_true", help="Install/ensure the Maude runtime")
     parser.add_argument("--proverif", action="store_true", help="Install/ensure headless ProVerif")
-    parser.add_argument("--cvc5-cli", action="store_true", help="Install/ensure the CVC5 command-line binary")
-    parser.add_argument("--symbolicai", "--symai", action="store_true", help="Install/ensure SymbolicAI")
-    parser.add_argument("--ergoai", "--ergo", action="store_true", help="Install/ensure ErgoAI/ErgoEngine")
+    parser.add_argument(
+        "--cvc5-cli", action="store_true", help="Install/ensure the CVC5 command-line binary"
+    )
+    parser.add_argument(
+        "--symbolicai", "--symai", action="store_true", help="Install/ensure SymbolicAI"
+    )
+    parser.add_argument(
+        "--ergoai", "--ergo", action="store_true", help="Install/ensure ErgoAI/ErgoEngine"
+    )
     parser.add_argument(
         "--check-updates",
         action="store_true",
@@ -1614,7 +1756,9 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps({"managed_solvers": statuses}, indent=2, sort_keys=True))
         return 1 if args.strict and any(item["manual_update_required"] for item in statuses) else 0
     if args.update and not args.yes:
-        parser.error("--update requires --yes because it can download, build, or replace user-local solvers")
+        parser.error(
+            "--update requires --yes because it can download, build, or replace user-local solvers"
+        )
 
     want_z3 = bool(args.z3)
     want_cvc5 = bool(args.cvc5)
@@ -1628,9 +1772,17 @@ def main(argv: list[str] | None = None) -> int:
     want_symbolicai = bool(args.symbolicai)
     want_ergoai = bool(args.ergoai)
     if not (
-        want_z3 or want_cvc5 or want_lean or want_coq or want_apalache
-        or want_tamarin or want_maude or want_proverif or want_cvc5_cli
-        or want_symbolicai or want_ergoai
+        want_z3
+        or want_cvc5
+        or want_lean
+        or want_coq
+        or want_apalache
+        or want_tamarin
+        or want_maude
+        or want_proverif
+        or want_cvc5_cli
+        or want_symbolicai
+        or want_ergoai
     ):
         want_z3 = True
         want_cvc5 = True
@@ -1653,12 +1805,15 @@ def main(argv: list[str] | None = None) -> int:
     if want_lean:
         ok = ensure_lean(yes=args.yes, strict=args.strict, **update_kwargs) and ok
     if want_coq:
-        ok = ensure_coq(
-            yes=args.yes,
-            strict=args.strict,
-            allow_sudo=bool(args.allow_sudo),
-            **update_kwargs,
-        ) and ok
+        ok = (
+            ensure_coq(
+                yes=args.yes,
+                strict=args.strict,
+                allow_sudo=bool(args.allow_sudo),
+                **update_kwargs,
+            )
+            and ok
+        )
     if want_apalache:
         ok = ensure_apalache(yes=args.yes, strict=args.strict, **update_kwargs) and ok
     if want_maude:

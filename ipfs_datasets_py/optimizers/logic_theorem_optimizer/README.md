@@ -16,29 +16,20 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer import LogicTheoremOpti
 from ipfs_datasets_py.optimizers.common import OptimizerConfig, OptimizationContext
 
 # Configure optimizer
-config = OptimizerConfig(
-    max_iterations=10,
-    target_score=0.85,
-    metrics_enabled=True
-)
+config = OptimizerConfig(max_iterations=10, target_score=0.85, metrics_enabled=True)
 
 # Create optimizer
-optimizer = LogicTheoremOptimizer(
-    config=config,
-    use_provers=['z3', 'cvc5'],
-    domain='legal'
-)
+optimizer = LogicTheoremOptimizer(config=config, use_provers=["z3", "cvc5"], domain="legal")
 
 # Run optimization
 context = OptimizationContext(
     session_id="session-001",
     input_data="All employees must complete training annually",
-    domain="legal"
+    domain="legal",
 )
 
 result = optimizer.run_session(
-    data="All employees must complete training annually",
-    context=context
+    data="All employees must complete training annually", context=context
 )
 
 print(f"Score: {result['score']}")
@@ -173,13 +164,16 @@ LLM-based agent that extracts formal logical statements from arbitrary data.
 
 **Example:**
 ```python
-from ipfs_datasets_py.optimizers.logic_theorem_optimizer import LogicExtractor, LogicExtractionContext
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+    LogicExtractor,
+    LogicExtractionContext,
+)
 
 extractor = LogicExtractor(model="gpt-4")
 context = LogicExtractionContext(
     data="All employees must complete training within 30 days",
     extraction_mode=ExtractionMode.TDFOL,
-    domain="legal"
+    domain="legal",
 )
 result = extractor.extract(context)
 print(result.statements[0].formula)
@@ -209,7 +203,7 @@ Evaluates logical statement quality across multiple dimensions using theorem pro
 ```python
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import LogicCritic
 
-critic = LogicCritic(use_provers=['z3', 'cvc5'])
+critic = LogicCritic(use_provers=["z3", "cvc5"])
 score = critic.evaluate(extraction_result)
 print(f"Overall: {score.overall:.2f}")
 print(f"Soundness: {score.get_dimension_score(CriticDimensions.SOUNDNESS):.2f}")
@@ -256,12 +250,12 @@ Single extraction session with iterative refinement.
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import TheoremSession, SessionConfig
 
 extractor = LogicExtractor(model="gpt-4")
-critic = LogicCritic(use_provers=['z3'])
+critic = LogicCritic(use_provers=["z3"])
 
 session = TheoremSession(
     extractor=extractor,
     critic=critic,
-    config=SessionConfig(max_rounds=10, convergence_threshold=0.85)
+    config=SessionConfig(max_rounds=10, convergence_threshold=0.85),
 )
 
 result = session.run(data="All employees must complete training")
@@ -285,9 +279,7 @@ Batch processing with parallel execution.
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import LogicHarness, HarnessConfig
 
 harness = LogicHarness(
-    extractor=extractor,
-    critic=critic,
-    config=HarnessConfig(parallelism=4, max_retries=3)
+    extractor=extractor, critic=critic, config=HarnessConfig(parallelism=4, max_retries=3)
 )
 
 data_samples = ["Sample 1", "Sample 2", "Sample 3", ...]
@@ -313,9 +305,9 @@ Maintains knowledge graph ontology consistency.
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import KnowledgeGraphStabilizer
 
 ontology = {
-    'terms': ['Employee', 'Training', 'Completed'],
-    'relations': ['must', 'within'],
-    'types': ['Agent', 'Action', 'Temporal']
+    "terms": ["Employee", "Training", "Completed"],
+    "relations": ["must", "within"],
+    "types": ["Agent", "Action", "Temporal"],
 }
 
 stabilizer = KnowledgeGraphStabilizer(ontology, strict_mode=True)
@@ -338,10 +330,7 @@ The LogicExtractor integrates with ipfs_accelerate_py for AI model inference:
 ```python
 import ipfs_accelerate_py
 
-extractor = LogicExtractor(
-    model="gpt-4",
-    use_ipfs_accelerate=True
-)
+extractor = LogicExtractor(model="gpt-4", use_ipfs_accelerate=True)
 ```
 
 ### With Theorem Provers
@@ -350,7 +339,7 @@ Integrates with existing theorem prover infrastructure:
 
 ```python
 # Uses existing prover bridges from logic/external_provers/
-critic = LogicCritic(use_provers=['z3', 'cvc5', 'lean'])
+critic = LogicCritic(use_provers=["z3", "cvc5", "lean"])
 ```
 
 ### With TDFOL/CEC
@@ -360,7 +349,7 @@ Leverages existing logic frameworks:
 ```python
 context = LogicExtractionContext(
     data="...",
-    extraction_mode=ExtractionMode.TDFOL  # or CEC, FOL, etc.
+    extraction_mode=ExtractionMode.TDFOL,  # or CEC, FOL, etc.
 )
 ```
 
@@ -385,12 +374,12 @@ stabilizer = KnowledgeGraphStabilizer(ontology)
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
     LogicExtractor,
     LogicCritic,
-    TheoremSession
+    TheoremSession,
 )
 
 # Setup
 extractor = LogicExtractor(model="gpt-4")
-critic = LogicCritic(use_provers=['z3'])
+critic = LogicCritic(use_provers=["z3"])
 
 # Run session
 session = TheoremSession(extractor, critic)
@@ -410,7 +399,7 @@ harness = LogicHarness(extractor, critic)
 data_samples = [
     "All employees must complete training",
     "Contractors may access the building",
-    "Managers should approve requests within 48 hours"
+    "Managers should approve requests within 48 hours",
 ]
 
 result = harness.run_sessions(data_samples)
@@ -450,9 +439,9 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer import KnowledgeGraphSt
 
 # Define ontology
 ontology = {
-    'terms': ['Employee', 'Training', 'Manager', 'Request'],
-    'relations': ['must', 'should', 'may'],
-    'types': ['Agent', 'Action']
+    "terms": ["Employee", "Training", "Manager", "Request"],
+    "relations": ["must", "should", "may"],
+    "types": ["Agent", "Action"],
 }
 
 # Create stabilizer
@@ -461,7 +450,7 @@ stabilizer = KnowledgeGraphStabilizer(ontology, strict_mode=True)
 # Run extraction with stability checking
 for data in data_samples:
     result = session.run(data)
-    
+
     if result.success:
         added = stabilizer.add_statements(result.extraction_result.statements)
         print(f"Added {added}/{len(result.extraction_result.statements)} statements")
@@ -524,16 +513,16 @@ Combines neural LLM-based reasoning with symbolic theorem proving for robust ver
 ```python
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
     NeuralSymbolicHybridProver,
-    HybridStrategy
+    HybridStrategy,
 )
 
 # Initialize with parallel strategy
 prover = NeuralSymbolicHybridProver(
     strategy=HybridStrategy.PARALLEL,
-    neural_provers=['symbolicai'],
-    symbolic_provers=['z3', 'cvc5'],
+    neural_provers=["symbolicai"],
+    symbolic_provers=["z3", "cvc5"],
     neural_weight=0.4,
-    symbolic_weight=0.6
+    symbolic_weight=0.6,
 )
 
 # Prove a formula
@@ -568,27 +557,21 @@ Optimizes prompts for logic extraction using multiple strategies and metrics.
 ```python
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
     PromptOptimizer,
-    OptimizationStrategy
+    OptimizationStrategy,
 )
 
 # Initialize optimizer
-optimizer = PromptOptimizer(
-    strategy=OptimizationStrategy.MULTI_ARMED_BANDIT,
-    exploration_rate=0.1
-)
+optimizer = PromptOptimizer(strategy=OptimizationStrategy.MULTI_ARMED_BANDIT, exploration_rate=0.1)
 
 # Add baseline prompt
 optimizer.add_baseline_prompt("Extract logic from: {data}")
 
 # Add alternative prompts
 optimizer.add_prompt(
-    "Analyze {data} and extract {formalism} logical statements",
-    parameters={"formalism": "TDFOL"}
+    "Analyze {data} and extract {formalism} logical statements", parameters={"formalism": "TDFOL"}
 )
 
-optimizer.add_prompt(
-    "Convert the following to formal logic: {data}"
-)
+optimizer.add_prompt("Convert the following to formal logic: {data}")
 
 # Record usage
 optimizer.record_usage(
@@ -598,7 +581,7 @@ optimizer.record_usage(
     critic_score=0.85,
     extraction_time=1.5,
     domain="legal",
-    formalism="tdfol"
+    formalism="tdfol",
 )
 
 # Get best prompt for a domain
@@ -624,24 +607,21 @@ optimizer.export_library("prompts.json")
 **Old Code (Deprecated):**
 ```python
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
-    TheoremSession, LogicExtractor, LogicCritic, SessionConfig
+    TheoremSession,
+    LogicExtractor,
+    LogicCritic,
+    SessionConfig,
 )
 
 extractor = LogicExtractor(model="gpt-4")
-critic = LogicCritic(use_provers=['z3'])
+critic = LogicCritic(use_provers=["z3"])
 session = TheoremSession(
     extractor=extractor,
     critic=critic,
-    config=SessionConfig(
-        max_rounds=10,
-        convergence_threshold=0.85
-    )
+    config=SessionConfig(max_rounds=10, convergence_threshold=0.85),
 )
 
-result = session.run(
-    data="All employees must complete training",
-    context={'domain': 'legal'}
-)
+result = session.run(data="All employees must complete training", context={"domain": "legal"})
 
 print(f"Converged: {result.converged}")
 print(f"Score: {result.critic_score.overall}")
@@ -653,24 +633,14 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer import LogicTheoremOpti
 from ipfs_datasets_py.optimizers.common import OptimizerConfig, OptimizationContext
 
 optimizer = LogicTheoremOptimizer(
-    config=OptimizerConfig(
-        max_iterations=10,
-        target_score=0.85
-    ),
-    use_provers=['z3'],
-    domain='legal'
+    config=OptimizerConfig(max_iterations=10, target_score=0.85), use_provers=["z3"], domain="legal"
 )
 
 context = OptimizationContext(
-    session_id="session-001",
-    input_data="All employees must complete training",
-    domain="legal"
+    session_id="session-001", input_data="All employees must complete training", domain="legal"
 )
 
-result = optimizer.run_session(
-    data="All employees must complete training",
-    context=context
-)
+result = optimizer.run_session(data="All employees must complete training", context=context)
 
 print(f"Valid: {result['valid']}")
 print(f"Score: {result['score']}")
@@ -689,16 +659,15 @@ print(f"Metrics: {result['metrics']}")
 **Old Code (Deprecated):**
 ```python
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
-    LogicHarness, LogicExtractor, LogicCritic, HarnessConfig
+    LogicHarness,
+    LogicExtractor,
+    LogicCritic,
+    HarnessConfig,
 )
 
 extractor = LogicExtractor(model="gpt-4")
-critic = LogicCritic(use_provers=['z3', 'cvc5'])
-harness = LogicHarness(
-    extractor=extractor,
-    critic=critic,
-    config=HarnessConfig(parallelism=4)
-)
+critic = LogicCritic(use_provers=["z3", "cvc5"])
+harness = LogicHarness(extractor=extractor, critic=critic, config=HarnessConfig(parallelism=4))
 
 data_samples = ["Sample 1", "Sample 2", "Sample 3"]
 result = harness.run_sessions(data_samples)
@@ -714,12 +683,8 @@ from ipfs_datasets_py.optimizers.common import OptimizerConfig, OptimizationCont
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 optimizer = LogicTheoremOptimizer(
-    config=OptimizerConfig(
-        max_iterations=10,
-        target_score=0.85,
-        metrics_enabled=True
-    ),
-    use_provers=['z3', 'cvc5']
+    config=OptimizerConfig(max_iterations=10, target_score=0.85, metrics_enabled=True),
+    use_provers=["z3", "cvc5"],
 )
 
 data_samples = ["Sample 1", "Sample 2", "Sample 3"]
@@ -730,21 +695,19 @@ with ThreadPoolExecutor(max_workers=4) as executor:
     futures = []
     for i, sample in enumerate(data_samples):
         context = OptimizationContext(
-            session_id=f"session-{i}",
-            input_data=sample,
-            domain="general"
+            session_id=f"session-{i}", input_data=sample, domain="general"
         )
         future = executor.submit(optimizer.run_session, sample, context)
         futures.append(future)
-    
+
     for future in as_completed(futures):
         result = future.result()
         results.append(result)
 
 # Calculate metrics
-successful = [r for r in results if r['valid']]
+successful = [r for r in results if r["valid"]]
 success_rate = len(successful) / len(results)
-avg_score = sum(r['score'] for r in successful) / len(successful)
+avg_score = sum(r["score"] for r in successful) / len(successful)
 
 print(f"Success rate: {success_rate}")
 print(f"Average score: {avg_score}")

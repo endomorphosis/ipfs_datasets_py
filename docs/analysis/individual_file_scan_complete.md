@@ -112,7 +112,7 @@ patterns = {
     "old_cache": r"from ipfs_datasets_py\.cache\s+import",
     "old_web_archive": r"from ipfs_datasets_py\.web_archive(?!ing)",
     "old_libp2p": r"from ipfs_datasets_py\.libp2p_kit",
-    "root_enhanced_cli": r'(?<!/)`enhanced_cli\.py`(?! →)',
+    "root_enhanced_cli": r"(?<!/)`enhanced_cli\.py`(?! →)",
 }
 
 docs_dir = Path("docs")

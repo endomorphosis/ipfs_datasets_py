@@ -207,19 +207,23 @@ def long_function():
     # Section C: 50 lines
     pass
 
+
 # After
 def long_function():
     self._section_a()
     self._section_b()
     self._section_c()
 
+
 def _section_a(self):
     # 30 lines
     pass
 
+
 def _section_b(self):
     # 40 lines
     pass
+
 
 def _section_c(self):
     # 50 lines
@@ -278,8 +282,9 @@ After refactoring complete:
 ```python
 import ast
 
+
 def count_function_lines(filename):
-    with open(filename, 'r') as f:
+    with open(filename, "r") as f:
         content = f.read()
     tree = ast.parse(content)
     functions = []

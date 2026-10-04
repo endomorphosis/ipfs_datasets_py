@@ -89,15 +89,10 @@ DEFAULT_BRIDGE_LOSS_ADAPTERS = ",".join(DEFAULT_LEGAL_IR_BRIDGE_NAMES)
 BRIDGE_EVALUATE_PROVERS_ENV = "IPFS_DATASETS_BRIDGE_EVALUATE_PROVERS"
 _TRUE_ENV_VALUES = {"1", "true", "yes", "y", "on"}
 DEFAULT_BRIDGE_EVALUATE_PROVERS = (
-    str(os.environ.get(BRIDGE_EVALUATE_PROVERS_ENV) or "").strip().lower()
-    in _TRUE_ENV_VALUES
+    str(os.environ.get(BRIDGE_EVALUATE_PROVERS_ENV) or "").strip().lower() in _TRUE_ENV_VALUES
 )
-AUTOENCODER_METRIC_BRIDGE_ADAPTERS_ENV = (
-    "IPFS_DATASETS_AUTOENCODER_METRIC_BRIDGE_ADAPTERS"
-)
-AUTOENCODER_DIAGNOSTIC_BRIDGE_ADAPTERS_ENV = (
-    "IPFS_DATASETS_AUTOENCODER_DIAGNOSTIC_BRIDGE_ADAPTERS"
-)
+AUTOENCODER_METRIC_BRIDGE_ADAPTERS_ENV = "IPFS_DATASETS_AUTOENCODER_METRIC_BRIDGE_ADAPTERS"
+AUTOENCODER_DIAGNOSTIC_BRIDGE_ADAPTERS_ENV = "IPFS_DATASETS_AUTOENCODER_DIAGNOSTIC_BRIDGE_ADAPTERS"
 DEFAULT_AUTOENCODER_METRIC_BRIDGE_ADAPTERS = (
     "modal_frame_logic",
     "deontic_norms",
@@ -114,16 +109,13 @@ DEFAULT_AUTOENCODER_TODO_SUPERVISOR_MODE = "starved"
 DEFAULT_CANONICAL_AUTOENCODER_STATE_NAME = "legal-ir-autoencoder-canonical.state.json"
 AUTOENCODER_DAEMON_METRIC_SCHEMA_VERSION = "legal-ir-daemon-metrics-v2"
 AUTOENCODER_CANONICAL_WARM_START_ENV = "IPFS_DATASETS_AUTOENCODER_CANONICAL_WARM_START"
-AUTOENCODER_CANONICAL_WARM_START_STATE_ENV = (
-    "IPFS_DATASETS_AUTOENCODER_CANONICAL_WARM_START_STATE"
-)
+AUTOENCODER_CANONICAL_WARM_START_STATE_ENV = "IPFS_DATASETS_AUTOENCODER_CANONICAL_WARM_START_STATE"
 AUTOENCODER_CANONICAL_WARM_START_MODES = frozenset({"auto", "off", "require"})
 
 
 def _default_bridge_evaluate_provers() -> bool:
     return (
-        str(os.environ.get(BRIDGE_EVALUATE_PROVERS_ENV) or "").strip().lower()
-        in _TRUE_ENV_VALUES
+        str(os.environ.get(BRIDGE_EVALUATE_PROVERS_ENV) or "").strip().lower() in _TRUE_ENV_VALUES
     )
 
 
@@ -137,6 +129,7 @@ def _default_canonical_warm_start_mode() -> str:
         return "require"
     return "auto"
 
+
 CODEX_AST_SCOPES = tuple(
     dict.fromkeys(
         scope
@@ -146,11 +139,7 @@ CODEX_AST_SCOPES = tuple(
             "compiler_ambiguity",
             "ir_decompiler",
             "frame_logic",
-            *(
-                spec.ast_scope
-                for spec in logic_submodule_specs()
-                if spec.ast_scope
-            ),
+            *(spec.ast_scope for spec in logic_submodule_specs() if spec.ast_scope),
         )
         if scope
     )
@@ -158,110 +147,111 @@ CODEX_AST_SCOPES = tuple(
 
 
 CODEX_TARGET_FILE_HINTS = {
-    key: list(value)
-    for key, value in logic_optimizer_target_file_hints().items()
+    key: list(value) for key, value in logic_optimizer_target_file_hints().items()
 }
-CODEX_TARGET_FILE_HINTS.update({
-    "logic.optimizer.autoencoder": [
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
-        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py",
-        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
-    ],
-    "logic.optimizer.backlog": [
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
-        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
-    ],
-    "logic.optimizer.codex_bundler": [
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
-        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
-    ],
-    "logic.optimizer.residual_clusterer": [
-        "ipfs_datasets_py/logic/modal/synthesis.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
-        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py",
-        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
-    ],
-    "logic.optimizer.residual_router": [
-        "ipfs_datasets_py/logic/modal/synthesis.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
-        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py",
-        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
-    ],
-    "logic.optimizer.supervisor": [
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
-        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
-    ],
-    "logic.optimizer.validation_gate": [
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
-        "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
-    ],
-    "CEC.native": [
-        "ipfs_datasets_py/logic/bridge/cec_dcec.py",
-        "ipfs_datasets_py/logic/bridge/types.py",
-        "ipfs_datasets_py/logic/CEC/cec_framework.py",
-        "ipfs_datasets_py/logic/CEC/dcec_wrapper.py",
-        "ipfs_datasets_py/logic/CEC/native",
-    ],
-    "TDFOL.prover": [
-        "ipfs_datasets_py/logic/bridge/fol_tdfol.py",
-        "ipfs_datasets_py/logic/bridge/types.py",
-        "ipfs_datasets_py/logic/TDFOL/tdfol_core.py",
-        "ipfs_datasets_py/logic/TDFOL/tdfol_parser.py",
-        "ipfs_datasets_py/logic/TDFOL/tdfol_prover.py",
-    ],
-    "deontic.ir": [
-        "ipfs_datasets_py/logic/bridge/deontic_norms.py",
-        "ipfs_datasets_py/logic/bridge/types.py",
-        "ipfs_datasets_py/logic/deontic/converter.py",
-        "ipfs_datasets_py/logic/deontic/ir.py",
-        "ipfs_datasets_py/logic/deontic/formula_builder.py",
-        "ipfs_datasets_py/logic/deontic/prover_syntax.py",
-        "ipfs_datasets_py/logic/deontic/metrics.py",
-    ],
-    "modal.compiler": [
-        "ipfs_datasets_py/logic/modal/compiler.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_modal_parser.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/spacy_modal_codec.py",
-    ],
-    "modal.compiler.ambiguity": [
-        "ipfs_datasets_py/logic/modal/compiler.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_registry.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/spacy_modal_codec.py",
-    ],
-    "modal.compiler.registry": [
-        "ipfs_datasets_py/logic/modal/compiler.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_registry.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/spacy_modal_codec.py",
-    ],
-    "modal.frame_logic": [
-        "ipfs_datasets_py/logic/bridge/modal_frame_logic.py",
-        "ipfs_datasets_py/logic/bridge/types.py",
-        "ipfs_datasets_py/logic/modal/codec.py",
-        "ipfs_datasets_py/logic/modal/kg_bridge.py",
-        "ipfs_datasets_py/logic/flogic_optimizer.py",
-        "ipfs_datasets_py/optimizers/logic/flogic_optimizer.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/frame_bm25_selector.py",
-    ],
-    "modal.ir_decompiler": [
-        "ipfs_datasets_py/logic/modal/codec.py",
-        "ipfs_datasets_py/logic/modal/decompiler.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_ir.py",
-    ],
-    "external_provers.router": [
-        "ipfs_datasets_py/logic/bridge/external_prover_router.py",
-        "ipfs_datasets_py/logic/bridge/fol_tdfol.py",
-        "ipfs_datasets_py/logic/external_provers/prover_router.py",
-        "ipfs_datasets_py/logic/external_provers/lazy_installer.py",
-    ],
-})
+CODEX_TARGET_FILE_HINTS.update(
+    {
+        "logic.optimizer.autoencoder": [
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
+            "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py",
+            "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
+        ],
+        "logic.optimizer.backlog": [
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
+            "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
+        ],
+        "logic.optimizer.codex_bundler": [
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
+            "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
+        ],
+        "logic.optimizer.residual_clusterer": [
+            "ipfs_datasets_py/logic/modal/synthesis.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
+            "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py",
+            "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
+        ],
+        "logic.optimizer.residual_router": [
+            "ipfs_datasets_py/logic/modal/synthesis.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
+            "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py",
+            "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
+        ],
+        "logic.optimizer.supervisor": [
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
+            "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
+        ],
+        "logic.optimizer.validation_gate": [
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
+            "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
+        ],
+        "CEC.native": [
+            "ipfs_datasets_py/logic/bridge/cec_dcec.py",
+            "ipfs_datasets_py/logic/bridge/types.py",
+            "ipfs_datasets_py/logic/CEC/cec_framework.py",
+            "ipfs_datasets_py/logic/CEC/dcec_wrapper.py",
+            "ipfs_datasets_py/logic/CEC/native",
+        ],
+        "TDFOL.prover": [
+            "ipfs_datasets_py/logic/bridge/fol_tdfol.py",
+            "ipfs_datasets_py/logic/bridge/types.py",
+            "ipfs_datasets_py/logic/TDFOL/tdfol_core.py",
+            "ipfs_datasets_py/logic/TDFOL/tdfol_parser.py",
+            "ipfs_datasets_py/logic/TDFOL/tdfol_prover.py",
+        ],
+        "deontic.ir": [
+            "ipfs_datasets_py/logic/bridge/deontic_norms.py",
+            "ipfs_datasets_py/logic/bridge/types.py",
+            "ipfs_datasets_py/logic/deontic/converter.py",
+            "ipfs_datasets_py/logic/deontic/ir.py",
+            "ipfs_datasets_py/logic/deontic/formula_builder.py",
+            "ipfs_datasets_py/logic/deontic/prover_syntax.py",
+            "ipfs_datasets_py/logic/deontic/metrics.py",
+        ],
+        "modal.compiler": [
+            "ipfs_datasets_py/logic/modal/compiler.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_modal_parser.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/spacy_modal_codec.py",
+        ],
+        "modal.compiler.ambiguity": [
+            "ipfs_datasets_py/logic/modal/compiler.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_registry.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/spacy_modal_codec.py",
+        ],
+        "modal.compiler.registry": [
+            "ipfs_datasets_py/logic/modal/compiler.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_registry.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/spacy_modal_codec.py",
+        ],
+        "modal.frame_logic": [
+            "ipfs_datasets_py/logic/bridge/modal_frame_logic.py",
+            "ipfs_datasets_py/logic/bridge/types.py",
+            "ipfs_datasets_py/logic/modal/codec.py",
+            "ipfs_datasets_py/logic/modal/kg_bridge.py",
+            "ipfs_datasets_py/logic/flogic_optimizer.py",
+            "ipfs_datasets_py/optimizers/logic/flogic_optimizer.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/frame_bm25_selector.py",
+        ],
+        "modal.ir_decompiler": [
+            "ipfs_datasets_py/logic/modal/codec.py",
+            "ipfs_datasets_py/logic/modal/decompiler.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_ir.py",
+        ],
+        "external_provers.router": [
+            "ipfs_datasets_py/logic/bridge/external_prover_router.py",
+            "ipfs_datasets_py/logic/bridge/fol_tdfol.py",
+            "ipfs_datasets_py/logic/external_provers/prover_router.py",
+            "ipfs_datasets_py/logic/external_provers/lazy_installer.py",
+        ],
+    }
+)
 
 CODEX_ACTION_FILE_HINTS = {
     "add_deterministic_parser_rule": [
@@ -319,9 +309,7 @@ COMPILER_IR_METRIC_TEXT_POLICIES = ("skip", "truncate")
 DEFAULT_COMPILER_IR_METRIC_MAX_SAMPLE_TEXT_CHARS = 400
 DEFAULT_COMPILER_IR_METRIC_SAMPLE_TIMEOUT_SECONDS = 10.0
 DEFAULT_COMPILER_IR_METRIC_TEXT_POLICY = "truncate"
-CODEX_TARGET_METRIC_TIMEOUT_SECONDS_ENV = (
-    "IPFS_DATASETS_CODEX_TARGET_METRIC_TIMEOUT_SECONDS"
-)
+CODEX_TARGET_METRIC_TIMEOUT_SECONDS_ENV = "IPFS_DATASETS_CODEX_TARGET_METRIC_TIMEOUT_SECONDS"
 DEFAULT_CODEX_TARGET_METRIC_TIMEOUT_SECONDS = 300.0
 CODEX_TARGET_METRIC_TRADEOFF_POLICY_VERSION = "target-metric-tradeoff-v1"
 BRIDGE_IR_REPORT_CACHE_MAX = 4096
@@ -354,9 +342,7 @@ COMPILER_IR_METRIC_ALIASES = {
         "compiler_ir_source_decompiled_text_embedding_cosine_loss"
     ),
     "source_decompiled_text_token_loss": "compiler_ir_source_decompiled_text_token_loss",
-    "structural_text_reconstruction_loss": (
-        "compiler_ir_structural_text_reconstruction_loss"
-    ),
+    "structural_text_reconstruction_loss": ("compiler_ir_structural_text_reconstruction_loss"),
     "symbolic_validity_penalty": "compiler_ir_symbolic_validity_penalty",
     "text_reconstruction_loss": "compiler_ir_text_reconstruction_loss",
 }
@@ -452,10 +438,7 @@ def _metric_code_fingerprint() -> str:
             package_root / "optimizers" / "logic_theorem_optimizer" / "spacy_modal_codec.py",
         ]
         signature, fingerprint = _code_fingerprint_from_candidates(package_root, candidates)
-        if (
-            _METRIC_CODE_FINGERPRINT_SIGNATURE == signature
-            and _METRIC_CODE_FINGERPRINT_VALUE
-        ):
+        if _METRIC_CODE_FINGERPRINT_SIGNATURE == signature and _METRIC_CODE_FINGERPRINT_VALUE:
             return _METRIC_CODE_FINGERPRINT_VALUE
         _METRIC_CODE_FINGERPRINT_SIGNATURE = signature
         _METRIC_CODE_FINGERPRINT_VALUE = fingerprint
@@ -514,10 +497,7 @@ def _metric_cache_object_payload(value: Any) -> Any:
     if value is None or isinstance(value, (str, int, float, bool)):
         return value
     if isinstance(value, Mapping):
-        return {
-            str(key): _metric_cache_object_payload(item)
-            for key, item in value.items()
-        }
+        return {str(key): _metric_cache_object_payload(item) for key, item in value.items()}
     if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return [_metric_cache_object_payload(item) for item in value]
     if hasattr(value, "__dict__"):
@@ -575,8 +555,7 @@ def _compiler_ir_metric_guidance_cache_payload(
 
 def _sample_metric_cache_payload(sample: Any) -> Dict[str, Any]:
     embedding = [
-        round(float(value), 12)
-        for value in list(getattr(sample, "embedding_vector", []) or [])
+        round(float(value), 12) for value in list(getattr(sample, "embedding_vector", []) or [])
     ]
     embedding_hash = hashlib.sha256(
         json.dumps(embedding, ensure_ascii=True, separators=(",", ":")).encode("utf-8")
@@ -611,9 +590,10 @@ def _metric_disk_cache_path(kind: str, key: str) -> Optional[Path]:
     if root is None:
         return None
     safe_kind = re.sub(r"[^A-Za-z0-9_.-]+", "_", str(kind)).strip("._") or "metric"
-    key_text = re.sub(r"[^a-fA-F0-9]+", "", str(key)) or hashlib.sha256(
-        str(key).encode("utf-8")
-    ).hexdigest()
+    key_text = (
+        re.sub(r"[^a-fA-F0-9]+", "", str(key))
+        or hashlib.sha256(str(key).encode("utf-8")).hexdigest()
+    )
     return root / safe_kind / key_text[:2] / f"{key_text}.json"
 
 
@@ -1040,9 +1020,7 @@ def _sample_one_row(
             continue
         selected_indices.add(index)
         return index, sample, attempts
-    raise RuntimeError(
-        "Unable to sample a U.S. Code row matching daemon sampling constraints"
-    )
+    raise RuntimeError("Unable to sample a U.S. Code row matching daemon sampling constraints")
 
 
 def sample_train_validation_rows(
@@ -1113,12 +1091,9 @@ def metric_block(evaluation) -> Dict[str, Any]:
     legal_ir_losses = dict(getattr(evaluation, "legal_ir_losses", {}) or {})
     if legal_ir_losses:
         block["legal_ir_losses"] = {
-            name: round(float(value), 9)
-            for name, value in sorted(legal_ir_losses.items())
+            name: round(float(value), 9) for name, value in sorted(legal_ir_losses.items())
         }
-        block["legal_ir_target_count"] = int(
-            getattr(evaluation, "legal_ir_target_count", 0) or 0
-        )
+        block["legal_ir_target_count"] = int(getattr(evaluation, "legal_ir_target_count", 0) or 0)
         block["legal_ir_target_hashes"] = dict(
             sorted(dict(getattr(evaluation, "legal_ir_target_hashes", {}) or {}).items())
         )
@@ -1153,12 +1128,12 @@ def autoencoder_memory_gap_block(
 ) -> Dict[str, Any]:
     """Compare generalizable evaluation against sample-memory evaluation."""
 
-    cosine_gain = float(
-        getattr(sample_memory, "embedding_cosine_similarity", 0.0) or 0.0
-    ) - float(getattr(generalized, "embedding_cosine_similarity", 0.0) or 0.0)
-    reconstruction_gain = float(
-        getattr(generalized, "reconstruction_loss", 0.0) or 0.0
-    ) - float(getattr(sample_memory, "reconstruction_loss", 0.0) or 0.0)
+    cosine_gain = float(getattr(sample_memory, "embedding_cosine_similarity", 0.0) or 0.0) - float(
+        getattr(generalized, "embedding_cosine_similarity", 0.0) or 0.0
+    )
+    reconstruction_gain = float(getattr(generalized, "reconstruction_loss", 0.0) or 0.0) - float(
+        getattr(sample_memory, "reconstruction_loss", 0.0) or 0.0
+    )
     advantage = cosine_gain > 1e-9 or reconstruction_gain > 1e-9
     return {
         "cosine_gain_from_sample_memory": round(cosine_gain, 9),
@@ -1240,9 +1215,10 @@ def autoencoder_low_rank_load_report(
 ) -> Dict[str, Any]:
     """Optionally hydrate dense state from a low-rank shadow sidecar."""
 
-    enabled = str(
-        os.environ.get("IPFS_DATASETS_AUTOENCODER_LOW_RANK_LOAD") or ""
-    ).strip().lower() in _TRUE_ENV_VALUES
+    enabled = (
+        str(os.environ.get("IPFS_DATASETS_AUTOENCODER_LOW_RANK_LOAD") or "").strip().lower()
+        in _TRUE_ENV_VALUES
+    )
     sidecar_path = ModalAutoencoderTrainingState.low_rank_shadow_sidecar_path(state_path)
     if not enabled:
         return {
@@ -1307,9 +1283,7 @@ def learned_ir_metric_block(evaluation: Any) -> Dict[str, Any]:
         and name != "legal_ir_view_family_cross_entropy_excess_loss"
     }
     family_cosine_gaps = {
-        name.removeprefix("legal_ir_view_family_").removesuffix("_cosine_gap_loss"): float(
-            value
-        )
+        name.removeprefix("legal_ir_view_family_").removesuffix("_cosine_gap_loss"): float(value)
         for name, value in losses.items()
         if name.startswith("legal_ir_view_family_")
         and name.endswith("_cosine_gap_loss")
@@ -1333,8 +1307,7 @@ def learned_ir_metric_block(evaluation: Any) -> Dict[str, Any]:
         ),
         "predicted_family_distribution": _family_distribution(predicted_distribution),
         "predicted_view_distribution": {
-            name: round(float(value), 9)
-            for name, value in sorted(predicted_distribution.items())
+            name: round(float(value), 9) for name, value in sorted(predicted_distribution.items())
         },
         "target_count": int(getattr(evaluation, "legal_ir_target_count", 0) or 0),
         "target_family_distribution": _family_distribution(target_distribution),
@@ -1511,9 +1484,7 @@ def _compiler_ir_metric_sample_timeout(timeout_seconds: float) -> Iterator[bool]
     previous_timer = signal.getitimer(signal.ITIMER_REAL)
 
     def handle_timeout(_signum: int, _frame: Any) -> None:
-        raise CompilerIRMetricSampleTimeout(
-            f"compiler IR metric sample exceeded {timeout:.3f}s"
-        )
+        raise CompilerIRMetricSampleTimeout(f"compiler IR metric sample exceeded {timeout:.3f}s")
 
     signal.signal(signal.SIGALRM, handle_timeout)
     signal.setitimer(signal.ITIMER_REAL, timeout)
@@ -1806,9 +1777,7 @@ def compiler_ir_metric_block(
     max_sample_text_chars = max(0, int(max_sample_text_chars or 0))
     metric_text_policy = _normalise_compiler_ir_metric_text_policy(metric_text_policy)
     sample_timeout_seconds = max(0.0, float(sample_timeout_seconds or 0.0))
-    sample_timeout_supported = _compiler_ir_metric_sample_timeout_supported(
-        sample_timeout_seconds
-    )
+    sample_timeout_supported = _compiler_ir_metric_sample_timeout_supported(sample_timeout_seconds)
 
     def emit_progress(stage: str, **payload: Any) -> None:
         if progress_callback is None:
@@ -1862,9 +1831,7 @@ def compiler_ir_metric_block(
             guidance_cache_records.append(
                 {
                     "error": guidance_error,
-                    "guidance": _compiler_ir_metric_guidance_cache_payload(
-                        compiler_guidance
-                    ),
+                    "guidance": _compiler_ir_metric_guidance_cache_payload(compiler_guidance),
                     "sample": _sample_metric_cache_payload(sample),
                     "sample_index": sample_index,
                 }
@@ -1878,13 +1845,8 @@ def compiler_ir_metric_block(
         )
 
     persistent_cache_key: Optional[str] = None
-    metric_block_cacheable = (
-        (not use_autoencoder_guidance and autoencoder is None)
-        or (
-            use_autoencoder_guidance
-            and autoencoder is not None
-            and not guidance_failures
-        )
+    metric_block_cacheable = (not use_autoencoder_guidance and autoencoder is None) or (
+        use_autoencoder_guidance and autoencoder is not None and not guidance_failures
     )
     if metric_block_cacheable:
         persistent_cache_key = _compiler_ir_metric_block_cache_key(
@@ -1910,12 +1872,8 @@ def compiler_ir_metric_block(
             cached["persistent_cache_hit"] = True
             cached["persistent_cache_key"] = persistent_cache_key
             cached["persistent_cache_kind"] = "compiler_ir_metric_block"
-            cached["compiler_ir_guidance_cache_policy"] = (
-                _COMPILER_IR_GUIDANCE_CACHE_POLICY
-            )
-            cached["sample_timeout_cache_policy"] = (
-                _COMPILER_IR_SAMPLE_TIMEOUT_CACHE_POLICY
-            )
+            cached["compiler_ir_guidance_cache_policy"] = _COMPILER_IR_GUIDANCE_CACHE_POLICY
+            cached["sample_timeout_cache_policy"] = _COMPILER_IR_SAMPLE_TIMEOUT_CACHE_POLICY
             cached["sample_timeout_seconds"] = sample_timeout_seconds
             cached["sample_cache_not_consulted_due_block_hit"] = True
             cached["persistent_sample_cache_hits"] = 0
@@ -2149,9 +2107,7 @@ def compiler_ir_metric_block(
                 sample_index=sample_index,
             )
             try:
-                with _compiler_ir_metric_sample_timeout(
-                    sample_timeout_seconds
-                ) as timeout_guarded:
+                with _compiler_ir_metric_sample_timeout(sample_timeout_seconds) as timeout_guarded:
                     try:
                         result = codec.encode(
                             metric_sample.text,
@@ -2197,8 +2153,7 @@ def compiler_ir_metric_block(
                 sample_record = {
                     "compiler_ir_metric_timeout_fallback": True,
                     "compiler_ir_metric_timeout_fallback_kind": str(
-                        result.metadata.get("compiler_ir_metric_timeout_fallback_kind")
-                        or ""
+                        result.metadata.get("compiler_ir_metric_timeout_fallback_kind") or ""
                     ),
                     "citation": citation,
                     "metric_sample_id": metric_sample_id,
@@ -2220,9 +2175,7 @@ def compiler_ir_metric_block(
                     }
                 if len(sample_metric_records) < max(0, int(max_sample_metric_records)):
                     sample_metric_records.append(sample_record)
-                timeout_payload = _compiler_ir_metric_sample_timeout_cache_payload(
-                    sample_record
-                )
+                timeout_payload = _compiler_ir_metric_sample_timeout_cache_payload(sample_record)
                 _write_metric_disk_cache(
                     "compiler_ir_metric_sample",
                     sample_cache_key,
@@ -2257,11 +2210,7 @@ def compiler_ir_metric_block(
                     sample_seconds=round(time.time() - sample_started_at, 3),
                 )
                 continue
-            if not bool(
-                getattr(result, "metadata", {}).get(
-                    "compiler_ir_metric_timeout_fallback"
-                )
-            ):
+            if not bool(getattr(result, "metadata", {}).get("compiler_ir_metric_timeout_fallback")):
                 _write_metric_disk_cache(
                     "compiler_ir_metric_sample",
                     sample_cache_key,
@@ -2317,9 +2266,7 @@ def compiler_ir_metric_block(
                 metadata.get("sample_timeout_seconds", sample_timeout_seconds) or 0.0
             )
             sample_record["skip_reason"] = "sample_timeout"
-            family_distribution = metadata.get(
-                "compiler_ir_metric_timeout_family_distribution"
-            )
+            family_distribution = metadata.get("compiler_ir_metric_timeout_family_distribution")
             if isinstance(family_distribution, Mapping):
                 sample_record["compiler_ir_metric_timeout_family_distribution"] = {
                     str(key): float(value)
@@ -2353,9 +2300,8 @@ def compiler_ir_metric_block(
                 sample_record["compiler_guidance_semantic_overlay_terms"] = [
                     str(value) for value in overlay_terms if str(value)
                 ]
-            if (
-                metadata.get("compiler_guidance_selected_frame_before")
-                != metadata.get("compiler_guidance_selected_frame_after")
+            if metadata.get("compiler_guidance_selected_frame_before") != metadata.get(
+                "compiler_guidance_selected_frame_after"
             ):
                 guidance_frame_changed_count += 1
             slot_texts = compiler_guidance_slot_texts_from_result(result)
@@ -2375,8 +2321,7 @@ def compiler_ir_metric_block(
                 dict.fromkeys(sample_view_gaps)
             )
             sample_family_gaps = [
-                _compiler_guidance_legal_ir_family_gap(value)
-                for value in sample_view_gaps
+                _compiler_guidance_legal_ir_family_gap(value) for value in sample_view_gaps
             ]
             sample_record["compiler_guidance_legal_ir_view_family_gaps"] = list(
                 dict.fromkeys(sample_family_gaps)
@@ -2395,9 +2340,7 @@ def compiler_ir_metric_block(
                 for value in slot_texts.get("compiler_guidance_todo_route", [])
                 if str(value)
             ]
-            sample_record["compiler_guidance_todo_routes"] = list(
-                dict.fromkeys(sample_todo_routes)
-            )
+            sample_record["compiler_guidance_todo_routes"] = list(dict.fromkeys(sample_todo_routes))
             for value in sample_todo_routes:
                 guidance_todo_routes[value] += 1
             for route in dict.fromkeys(sample_todo_routes):
@@ -2409,12 +2352,10 @@ def compiler_ir_metric_block(
                         "citation": citation,
                         "sample_id": sample_id,
                         "selected_frame_after": str(
-                            metadata.get("compiler_guidance_selected_frame_after", "")
-                            or ""
+                            metadata.get("compiler_guidance_selected_frame_after", "") or ""
                         ),
                         "selected_frame_before": str(
-                            metadata.get("compiler_guidance_selected_frame_before", "")
-                            or ""
+                            metadata.get("compiler_guidance_selected_frame_before", "") or ""
                         ),
                         "text_preview": re.sub(r"\s+", " ", metric_text).strip()[:240],
                     }
@@ -2466,9 +2407,7 @@ def compiler_ir_metric_block(
         "timeout_fallback_count": timeout_fallback_count,
     }
     if use_autoencoder_guidance:
-        block["compiler_guidance_diagnostics_version"] = (
-            _COMPILER_IR_GUIDANCE_DIAGNOSTICS_VERSION
-        )
+        block["compiler_guidance_diagnostics_version"] = _COMPILER_IR_GUIDANCE_DIAGNOSTICS_VERSION
     for name, values in losses.items():
         if values:
             block[name] = round(sum(values) / len(values), 9)
@@ -2487,8 +2426,7 @@ def compiler_ir_metric_block(
         block["compiler_guidance_frame_changed_count"] = guidance_frame_changed_count
     if guidance_semantic_overlay_counts:
         block["compiler_guidance_semantic_overlay_count"] = round(
-            sum(guidance_semantic_overlay_counts)
-            / len(guidance_semantic_overlay_counts),
+            sum(guidance_semantic_overlay_counts) / len(guidance_semantic_overlay_counts),
             9,
         )
     if use_autoencoder_guidance or guidance_semantic_overlay_terms:
@@ -2496,9 +2434,7 @@ def compiler_ir_metric_block(
             guidance_semantic_overlay_terms.most_common(12)
         )
     if use_autoencoder_guidance or guidance_feature_groups:
-        block["compiler_guidance_feature_groups"] = dict(
-            guidance_feature_groups.most_common(12)
-        )
+        block["compiler_guidance_feature_groups"] = dict(guidance_feature_groups.most_common(12))
     if use_autoencoder_guidance or guidance_legal_ir_view_gaps:
         block["compiler_guidance_legal_ir_view_gaps"] = dict(
             guidance_legal_ir_view_gaps.most_common(12)
@@ -2512,9 +2448,7 @@ def compiler_ir_metric_block(
             guidance_surface_features.most_common(12)
         )
     if use_autoencoder_guidance or guidance_todo_routes:
-        block["compiler_guidance_todo_routes"] = dict(
-            guidance_todo_routes.most_common(12)
-        )
+        block["compiler_guidance_todo_routes"] = dict(guidance_todo_routes.most_common(12))
     if guidance_todo_routes:
         block["compiler_guidance_todo_route_examples"] = {
             route: guidance_todo_route_examples.get(route, [])[:3]
@@ -2523,8 +2457,8 @@ def compiler_ir_metric_block(
         }
     if sample_metric_records:
         block["sample_metric_records"] = sample_metric_records
-        block["worst_source_decompiled_text_records"] = (
-            _worst_source_decompiled_text_records(sample_metric_records)
+        block["worst_source_decompiled_text_records"] = _worst_source_decompiled_text_records(
+            sample_metric_records
         )
     if "modal_span_coverage_loss" in block:
         block["modal_span_coverage"] = round(
@@ -2625,9 +2559,7 @@ def _worst_source_decompiled_text_records(
                 score,
                 {
                     "citation": str(record.get("citation") or ""),
-                    "decompiled_text_preview": str(
-                        record.get("decompiled_text_preview") or ""
-                    ),
+                    "decompiled_text_preview": str(record.get("decompiled_text_preview") or ""),
                     "source_text_preview": str(record.get("source_text_preview") or ""),
                     "sample_id": str(record.get("sample_id") or ""),
                     "source_decompiled_text_embedding_cosine_loss": round(
@@ -2667,16 +2599,12 @@ def _compiler_ir_metric_block_cache_key(
             "config": _metric_cache_object_payload(getattr(codec, "config", None)),
             "type": f"{codec.__class__.__module__}.{codec.__class__.__qualname__}",
         },
-        "guidance_cache_records": _metric_cache_object_payload(
-            list(guidance_cache_records)
-        ),
+        "guidance_cache_records": _metric_cache_object_payload(list(guidance_cache_records)),
         "guidance_diagnostics_version": _COMPILER_IR_GUIDANCE_DIAGNOSTICS_VERSION,
         "guidance_top_k": int(guidance_top_k),
         "max_sample_metric_records": int(max_sample_metric_records),
         "max_sample_text_chars": int(max_sample_text_chars),
-        "metric_text_policy": _normalise_compiler_ir_metric_text_policy(
-            metric_text_policy
-        ),
+        "metric_text_policy": _normalise_compiler_ir_metric_text_policy(metric_text_policy),
         "samples": [_sample_metric_cache_payload(sample) for sample in samples],
         "successful_result_timeout_policy": "timeout_agnostic",
     }
@@ -2695,9 +2623,7 @@ def _compiler_ir_metric_sample_cache_key(
             "config": _metric_cache_object_payload(getattr(codec, "config", None)),
             "type": f"{codec.__class__.__module__}.{codec.__class__.__qualname__}",
         },
-        "compiler_guidance": _compiler_ir_metric_guidance_cache_payload(
-            compiler_guidance
-        ),
+        "compiler_guidance": _compiler_ir_metric_guidance_cache_payload(compiler_guidance),
         "guidance_top_k": int(guidance_top_k),
         "sample": _sample_metric_cache_payload(sample),
     }
@@ -2731,9 +2657,7 @@ def _compiler_ir_metric_result_cache_payload(result: Any) -> Dict[str, Any]:
     }
     slot_texts = compiler_guidance_slot_texts_from_result(result)
     if slot_texts:
-        payload["compiler_guidance_slot_texts"] = _metric_cache_object_payload(
-            slot_texts
-        )
+        payload["compiler_guidance_slot_texts"] = _metric_cache_object_payload(slot_texts)
     return payload
 
 
@@ -2744,9 +2668,7 @@ def _compiler_ir_metric_sample_timeout_cache_payload(
         "cache_entry_type": "sample_timeout",
         "record": _metric_cache_object_payload(sample_record),
         "sample_timeout_cache_policy": _COMPILER_IR_SAMPLE_TIMEOUT_CACHE_POLICY,
-        "sample_timeout_seconds": _float_or_zero(
-            sample_record.get("sample_timeout_seconds")
-        ),
+        "sample_timeout_seconds": _float_or_zero(sample_record.get("sample_timeout_seconds")),
     }
 
 
@@ -2759,10 +2681,7 @@ def _compiler_ir_metric_sample_timeout_record_from_cache_payload(
         return None
     if payload.get("cache_entry_type") != "sample_timeout":
         return None
-    if (
-        payload.get("sample_timeout_cache_policy")
-        != _COMPILER_IR_SAMPLE_TIMEOUT_CACHE_POLICY
-    ):
+    if payload.get("sample_timeout_cache_policy") != _COMPILER_IR_SAMPLE_TIMEOUT_CACHE_POLICY:
         return None
     requested_timeout = max(0.0, float(requested_timeout_seconds or 0.0))
     cached_timeout = _float_or_zero(payload.get("sample_timeout_seconds"))
@@ -3016,9 +2935,7 @@ def bridge_ir_metric_block(
                     bridge_names=tuple(adapter_names),
                     document=getattr(report, "document", None),
                     losses=dict(getattr(target, "losses", {}) or {}),
-                    view_distribution=dict(
-                        getattr(target, "view_distribution", {}) or {}
-                    ),
+                    view_distribution=dict(getattr(target, "view_distribution", {}) or {}),
                 )
             _write_legal_ir_target_disk_cache(target_cache_key, target)
         except Exception:
@@ -3092,9 +3009,7 @@ def bridge_ir_metric_block(
         "proof_failure_ratio": _mean(canonical_values["proof_failure_ratio"]),
         "total_loss": _mean(canonical_values["total_loss"]),
         "losses": {
-            name: _mean(values)
-            for name, values in sorted(canonical_loss_values.items())
-            if values
+            name: _mean(values) for name, values in sorted(canonical_loss_values.items()) if values
         },
         "view_coverage_loss": _mean(canonical_values["view_coverage_loss"]),
         "view_count": _mean(canonical_values["view_count"]),
@@ -3189,14 +3104,20 @@ def _adapter_metrics_from_reports(
             float(getattr(proof_gate, "unavailable_count", 0) or 0)
         )
         metric_values["proof_error_count"].append(float(getattr(proof_gate, "error_count", 0) or 0))
-        metric_values["proof_failed_count"].append(float(getattr(proof_gate, "failed_count", 0) or 0))
-        metric_values["proof_failure_ratio"].append(float(getattr(proof_gate, "failure_ratio", 0.0) or 0.0))
+        metric_values["proof_failed_count"].append(
+            float(getattr(proof_gate, "failed_count", 0) or 0)
+        )
+        metric_values["proof_failure_ratio"].append(
+            float(getattr(proof_gate, "failure_ratio", 0.0) or 0.0)
+        )
 
         graph_projection = getattr(report, "graph_projection", None)
         metric_values["graph_failure_penalty"].append(
             float(getattr(graph_projection, "graph_failure_penalty", 0.0) or 0.0)
         )
-        metric_values["graph_node_count"].append(float(getattr(graph_projection, "node_count", 0) or 0))
+        metric_values["graph_node_count"].append(
+            float(getattr(graph_projection, "node_count", 0) or 0)
+        )
         metric_values["graph_relationship_count"].append(
             float(getattr(graph_projection, "relationship_count", 0) or 0)
         )
@@ -3237,9 +3158,7 @@ def _adapter_metrics_from_reports(
         adapter_block["views"] = {
             view_name: {
                 "metadata": {
-                    key: _mean(values)
-                    for key, values in sorted(metadata.items())
-                    if values
+                    key: _mean(values) for key, values in sorted(metadata.items()) if values
                 },
                 "present_count": count,
                 "present_rate": round(count / evaluated_count, 9),
@@ -3282,8 +3201,7 @@ def _bridge_ir_report_cache_key(
 ) -> str:
     """Return a stable key for cached bridge/prover/KG diagnostics."""
     embedding = [
-        round(float(value), 12)
-        for value in list(getattr(sample, "embedding_vector", []) or [])
+        round(float(value), 12) for value in list(getattr(sample, "embedding_vector", []) or [])
     ]
     embedding_hash = hashlib.sha256(
         json.dumps(embedding, ensure_ascii=True, separators=(",", ":")).encode("utf-8")
@@ -3794,9 +3712,7 @@ def rollout_baseline_snapshot(
         diagnostic_bridge_adapters=diagnostic_bridge_adapters,
     )
     resolved_failed_validation_count = int(
-        failed_validation_count
-        or dict(queue_counts or {}).get("failed_validation", 0)
-        or 0
+        failed_validation_count or dict(queue_counts or {}).get("failed_validation", 0) or 0
     )
     return {
         "backend": dict(backend_metadata or {}),
@@ -3847,8 +3763,7 @@ def _sample_payloads_for_codex_metrics(
                 "citation": str(getattr(sample, "citation", "") or ""),
                 "embedding_model": str(getattr(sample, "embedding_model", "") or ""),
                 "embedding_vector": [
-                    float(value)
-                    for value in list(getattr(sample, "embedding_vector", []) or [])
+                    float(value) for value in list(getattr(sample, "embedding_vector", []) or [])
                 ],
                 "sample_id": str(getattr(sample, "sample_id", "") or ""),
                 "section": str(getattr(sample, "section", "") or ""),
@@ -4032,12 +3947,8 @@ def _compiler_guidance_mean_delta_block(
             "quality_gate": "inactive",
         }
     ce_delta = _mean([float(delta.get("ce_delta", 0.0)) for delta in deltas])
-    copy_hack_delta = _mean(
-        [float(delta.get("copy_hack_delta", 0.0)) for delta in deltas]
-    )
-    cosine_delta = _mean(
-        [float(delta.get("cosine_delta", 0.0)) for delta in deltas]
-    )
+    copy_hack_delta = _mean([float(delta.get("copy_hack_delta", 0.0)) for delta in deltas])
+    cosine_delta = _mean([float(delta.get("cosine_delta", 0.0)) for delta in deltas])
     return {
         "ce_delta": ce_delta,
         "copy_hack_delta": copy_hack_delta,
@@ -4183,11 +4094,11 @@ def compiler_guidance_canary_block(
         "source_copy_delta": plain_source_copy - guided_source_copy,
     }
     core_names = ("ce_delta", "copy_hack_delta", "cosine_delta")
-    improved = enabled and applied_count > 0 and any(
-        deltas[name] > threshold for name in core_names
+    improved = (
+        enabled and applied_count > 0 and any(deltas[name] > threshold for name in core_names)
     )
-    regressed = enabled and applied_count > 0 and any(
-        deltas[name] < -threshold for name in core_names
+    regressed = (
+        enabled and applied_count > 0 and any(deltas[name] < -threshold for name in core_names)
     )
     if not enabled or applied_count <= 0:
         quality_gate = "inactive"
@@ -4359,9 +4270,7 @@ def _compiler_guidance_todo_routes_from_legal_ir_view_gaps(
 ) -> Dict[str, float]:
     route_counts: Counter[str] = Counter()
     for gap_name, count in _top_numeric_items(view_gaps, limit=32).items():
-        route_counts[_compiler_guidance_legal_ir_view_gap_route(gap_name)] += float(
-            count
-        )
+        route_counts[_compiler_guidance_legal_ir_view_gap_route(gap_name)] += float(count)
     return _top_numeric_items(route_counts, limit=limit)
 
 
@@ -4372,9 +4281,8 @@ def compiler_guidance_route_scope(route: str) -> Dict[str, Any]:
         _normalized_guidance_route(action): target
         for action, target in PROGRAM_SYNTHESIS_ACTION_TARGETS.items()
     }
-    target_component = (
-        normalized_targets.get(normalized)
-        or GUIDANCE_ROUTE_TARGET_OVERRIDES.get(normalized)
+    target_component = normalized_targets.get(normalized) or GUIDANCE_ROUTE_TARGET_OVERRIDES.get(
+        normalized
     )
     matched_by = "action_target" if normalized in normalized_targets else "override"
     if not target_component:
@@ -4407,9 +4315,7 @@ def compiler_guidance_scope_hints(
     todo_routes = guided_block.get("compiler_guidance_todo_routes")
     if not isinstance(todo_routes, Mapping) or not todo_routes:
         legal_ir_view_gaps = guided_block.get("compiler_guidance_legal_ir_view_gaps")
-        legal_ir_view_family_gaps = guided_block.get(
-            "compiler_guidance_legal_ir_view_family_gaps"
-        )
+        legal_ir_view_family_gaps = guided_block.get("compiler_guidance_legal_ir_view_family_gaps")
         route_view_gaps: Mapping[str, Any] = {}
         if isinstance(legal_ir_view_gaps, Mapping) and legal_ir_view_gaps:
             route_view_gaps = legal_ir_view_gaps
@@ -4457,9 +4363,7 @@ def compiler_guidance_scope_hints(
         },
         "scope_weights": scope_weights,
         "target_component_counts": {
-            component: (
-                int(value) if float(value).is_integer() else round(float(value), 9)
-            )
+            component: (int(value) if float(value).is_integer() else round(float(value), 9))
             for component, value in target_component_counts.most_common(max(0, int(max_scopes)))
         },
     }
@@ -4489,9 +4393,7 @@ def compiler_guidance_promotion_gate(
         "promotion_allowed": promotion_allowed,
         "promotion_block_reason": "" if promotion_allowed else reason,
         "quality_gate": quality_gate,
-        "recommended_mode": (
-            "promote_deterministic_rules" if promotion_allowed else "canary_only"
-        ),
+        "recommended_mode": ("promote_deterministic_rules" if promotion_allowed else "canary_only"),
     }
 
 
@@ -4515,8 +4417,7 @@ def _compiler_guidance_attribution_summary(
             keys = [
                 str(key)
                 for key, block in sorted(group.items())
-                if isinstance(block, Mapping)
-                and str(block.get("quality_gate") or "") == gate
+                if isinstance(block, Mapping) and str(block.get("quality_gate") or "") == gate
             ]
             if keys:
                 summary[f"{gate}_{group_name}"] = keys
@@ -4533,12 +4434,8 @@ def compiler_guidance_distillation_candidates(
     feature_groups = guided_block.get("compiler_guidance_feature_groups")
     surface_features = guided_block.get("compiler_guidance_surface_features")
     legal_ir_view_gaps = guided_block.get("compiler_guidance_legal_ir_view_gaps")
-    legal_ir_view_family_gaps = guided_block.get(
-        "compiler_guidance_legal_ir_view_family_gaps"
-    )
-    semantic_overlay_terms = guided_block.get(
-        "compiler_guidance_semantic_overlay_terms"
-    )
+    legal_ir_view_family_gaps = guided_block.get("compiler_guidance_legal_ir_view_family_gaps")
+    semantic_overlay_terms = guided_block.get("compiler_guidance_semantic_overlay_terms")
     todo_routes = guided_block.get("compiler_guidance_todo_routes")
     todo_route_examples = guided_block.get("compiler_guidance_todo_route_examples")
     top_feature_groups = _top_numeric_items(
@@ -4554,9 +4451,7 @@ def compiler_guidance_distillation_candidates(
         limit=max_items,
     )
     top_legal_ir_view_family_gaps = _top_numeric_items(
-        legal_ir_view_family_gaps
-        if isinstance(legal_ir_view_family_gaps, Mapping)
-        else {},
+        legal_ir_view_family_gaps if isinstance(legal_ir_view_family_gaps, Mapping) else {},
         limit=max_items,
     )
     top_todo_routes = _top_numeric_items(
@@ -4649,9 +4544,7 @@ def compiler_guidance_distillation_candidates(
 
 
 def compiler_guidance_distillation_path(summary_path: Path) -> Path:
-    return summary_path.with_name(
-        f"{summary_path.stem}.compiler-guidance-distillation.json"
-    )
+    return summary_path.with_name(f"{summary_path.stem}.compiler-guidance-distillation.json")
 
 
 def save_compiler_guidance_distillation(
@@ -4795,9 +4688,7 @@ def _compiler_guidance_validation_commands(scope: str) -> List[str]:
     tests = list(
         GUIDANCE_SCOPE_VALIDATION_TESTS.get(
             str(scope),
-            (
-                "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
-            ),
+            ("tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",),
         )
     )
     tests = list(dict.fromkeys(str(test) for test in tests if str(test)))
@@ -4920,8 +4811,8 @@ def compiler_guidance_distillation_todos(
         target_component = str(route_scope.get("target_component") or "")
         scope = str(route_scope.get("scope") or "")
         examples = route_examples.get(route)
-        sample_ids, citations, evidence, metric_payloads = (
-            _compiler_guidance_example_payloads(examples, route=action)
+        sample_ids, citations, evidence, metric_payloads = _compiler_guidance_example_payloads(
+            examples, route=action
         )
         if not sample_ids:
             sample_ids = [f"compiler-guidance:{action}"]
@@ -5087,11 +4978,9 @@ def compiler_guidance_activation_todos(
         action = _normalized_guidance_route(route)
         target_component = str(route_scope.get("target_component") or "")
         scope = str(route_scope.get("scope") or "")
-        sample_ids, citations, evidence, metric_payloads = (
-            _compiler_guidance_example_payloads(
-                route_examples.get(route),
-                route=action,
-            )
+        sample_ids, citations, evidence, metric_payloads = _compiler_guidance_example_payloads(
+            route_examples.get(route),
+            route=action,
         )
         if not sample_ids:
             sample_ids = [f"compiler-guidance-activation:{action}"]
@@ -5102,9 +4991,7 @@ def compiler_guidance_activation_todos(
                 loss_name="compiler_guidance_activation",
             ),
             "compiler_guidance_activation_count": count,
-            "compiler_guidance_activation_reason": (
-                "guidance_applied_without_metric_movement"
-            ),
+            "compiler_guidance_activation_reason": ("guidance_applied_without_metric_movement"),
             "compiler_guidance_attribution": dict(
                 candidates.get("guidance_attribution")
                 if isinstance(candidates.get("guidance_attribution"), Mapping)
@@ -5385,6 +5272,7 @@ def compiler_guidance_guardrail_todos(
         )
     ]
 
+
 def cleanup_program_synthesis_terminal_queue(
     *,
     queue_path: str | Path,
@@ -5412,9 +5300,7 @@ def cleanup_program_synthesis_terminal_queue(
         )
         archived_status_counts: Dict[str, int] = {}
         for todo in archived:
-            archived_status_counts[todo.status] = (
-                archived_status_counts.get(todo.status, 0) + 1
-            )
+            archived_status_counts[todo.status] = archived_status_counts.get(todo.status, 0) + 1
 
         backup_path: Optional[Path] = None
         archive_path: Optional[Path] = None
@@ -5457,9 +5343,7 @@ def cleanup_program_synthesis_terminal_queue(
 def bridge_loss_adapter_names(args: argparse.Namespace) -> List[str]:
     """Return bridge adapters that should feed optimizer loss TODOs."""
 
-    raw = str(
-        getattr(args, "bridge_loss_adapters", DEFAULT_BRIDGE_LOSS_ADAPTERS) or ""
-    ).strip()
+    raw = str(getattr(args, "bridge_loss_adapters", DEFAULT_BRIDGE_LOSS_ADAPTERS) or "").strip()
     if raw.lower() in {"", "none", "off", "false"}:
         return []
     return [
@@ -5673,13 +5557,13 @@ def _codex_scope_filter(scope: Optional[str]) -> Optional[Dict[str, str]]:
 def _metadata_matches(todo: ModalTodo, metadata_filter: Optional[Mapping[str, str]]) -> bool:
     if not metadata_filter:
         return True
-    return all(str(todo.metadata.get(key) or "") == str(value) for key, value in metadata_filter.items())
+    return all(
+        str(todo.metadata.get(key) or "") == str(value) for key, value in metadata_filter.items()
+    )
 
 
 def _codex_task_fingerprint(todo: ModalTodo) -> str:
-    return hashlib.sha256(
-        program_synthesis_todo_embedding_text(todo).encode("utf-8")
-    ).hexdigest()
+    return hashlib.sha256(program_synthesis_todo_embedding_text(todo).encode("utf-8")).hexdigest()
 
 
 def _coerce_embedding_vector(value: Any) -> List[float]:
@@ -5813,7 +5697,9 @@ def _update_codex_task_vector_index(
 
     with queue_file_lock(index_path):
         latest_payload = _load_codex_task_vector_index(index_path)
-        latest_items = latest_payload.get("items") if isinstance(latest_payload.get("items"), dict) else {}
+        latest_items = (
+            latest_payload.get("items") if isinstance(latest_payload.get("items"), dict) else {}
+        )
         items: Dict[str, Dict[str, Any]] = {}
         for todo_id, todo in sorted(todos_by_id.items()):
             fingerprint = _codex_task_fingerprint(todo)
@@ -6041,10 +5927,7 @@ def _claim_vector_program_synthesis_batch(
             skipped_fresh_undersized_anchor_ids.append(alternate_anchor_id)
 
     selected_ids = [str(item["todo"].todo_id) for item in selected]
-    similarity_by_id = {
-        str(item["todo"].todo_id): float(item["similarity"])
-        for item in selected
-    }
+    similarity_by_id = {str(item["todo"].todo_id): float(item["similarity"]) for item in selected}
     fill_reason_by_id = {
         str(item["todo"].todo_id): str(item.get("fill_reason") or "")
         for item in selected
@@ -6052,9 +5935,7 @@ def _claim_vector_program_synthesis_batch(
     }
     anchor_id = selected_ids[0] if selected_ids else ""
     if skipped_fresh_undersized_anchor_ids:
-        vector_report["skipped_fresh_undersized_anchor_ids"] = (
-            skipped_fresh_undersized_anchor_ids
-        )
+        vector_report["skipped_fresh_undersized_anchor_ids"] = skipped_fresh_undersized_anchor_ids
     undersized_stale_bundle = (
         bool(selected)
         and len(selected) < min_bundle_size
@@ -6346,7 +6227,9 @@ def build_paired_daemon_commands(
             )
         ),
         "--compiler-ir-metric-text-policy",
-        str(getattr(args, "compiler_ir_metric_text_policy", DEFAULT_COMPILER_IR_METRIC_TEXT_POLICY)),
+        str(
+            getattr(args, "compiler_ir_metric_text_policy", DEFAULT_COMPILER_IR_METRIC_TEXT_POLICY)
+        ),
         "--compiler-ir-metric-sample-timeout-seconds",
         str(
             getattr(
@@ -6474,7 +6357,11 @@ def build_paired_daemon_commands(
         "--autoencoder-family-semantic-slot-embedding-weight-scale",
         str(getattr(args, "autoencoder_family_semantic_slot_embedding_weight_scale", 0.5)),
         "--autoencoder-family-semantic-slot-legal-ir-view-embedding-weight-scale",
-        str(getattr(args, "autoencoder_family_semantic_slot_legal_ir_view_embedding_weight_scale", 0.5)),
+        str(
+            getattr(
+                args, "autoencoder_family_semantic_slot_legal_ir_view_embedding_weight_scale", 0.5
+            )
+        ),
         "--autoencoder-family-legal-ir-view-embedding-weight-scale",
         str(getattr(args, "autoencoder_family_legal_ir_view_embedding_weight_scale", 0.5)),
         "--autoencoder-semantic-slot-family-logit-scale",
@@ -6562,15 +6449,31 @@ def build_paired_daemon_commands(
         "--compiler-ir-guided-train-every-n-cycles",
         str(getattr(args, "compiler_ir_guided_train_every_n_cycles", 4)),
         "--autoencoder-before-train-eval-mode",
-        str(getattr(args, "autoencoder_before_train_eval_mode", DEFAULT_AUTOENCODER_BEFORE_TRAIN_EVAL_MODE)),
+        str(
+            getattr(
+                args,
+                "autoencoder_before_train_eval_mode",
+                DEFAULT_AUTOENCODER_BEFORE_TRAIN_EVAL_MODE,
+            )
+        ),
         "--autoencoder-before-train-eval-every-n-cycles",
         str(getattr(args, "autoencoder_before_train_eval_every_n_cycles", 4)),
         "--autoencoder-sample-memory-probe-mode",
-        str(getattr(args, "autoencoder_sample_memory_probe_mode", DEFAULT_AUTOENCODER_SAMPLE_MEMORY_PROBE_MODE)),
+        str(
+            getattr(
+                args,
+                "autoencoder_sample_memory_probe_mode",
+                DEFAULT_AUTOENCODER_SAMPLE_MEMORY_PROBE_MODE,
+            )
+        ),
         "--autoencoder-sample-memory-probe-every-n-cycles",
         str(getattr(args, "autoencoder_sample_memory_probe_every_n_cycles", 4)),
         "--autoencoder-todo-supervisor-mode",
-        str(getattr(args, "autoencoder_todo_supervisor_mode", DEFAULT_AUTOENCODER_TODO_SUPERVISOR_MODE)),
+        str(
+            getattr(
+                args, "autoencoder_todo_supervisor_mode", DEFAULT_AUTOENCODER_TODO_SUPERVISOR_MODE
+            )
+        ),
         "--autoencoder-todo-supervisor-min-open",
         str(getattr(args, "autoencoder_todo_supervisor_min_open", 12)),
         "--learning-rate-floor-ratio",
@@ -6612,9 +6515,7 @@ def build_paired_daemon_commands(
             if scope_worker_count < 1:
                 continue
             for worker_index in range(1, scope_worker_count + 1):
-                worker_suffix = (
-                    scope if scope_worker_count == 1 else f"{scope}-{worker_index:02d}"
-                )
+                worker_suffix = scope if scope_worker_count == 1 else f"{scope}-{worker_index:02d}"
                 child_run_id = f"{codex_run_id}-{worker_suffix}"
                 child_worker_id = (
                     f"{args.worker_id}-{worker_suffix}"
@@ -6677,9 +6578,7 @@ def _paired_codex_children_succeeded(
     """Return whether Codex children finished cleanly for paired-run accounting."""
 
     auto_ok = (
-        bool(autoencoder_success)
-        if autoencoder_success is not None
-        else autoencoder_exit_code == 0
+        bool(autoencoder_success) if autoencoder_success is not None else autoencoder_exit_code == 0
     )
     if not codex_exit_codes or not auto_ok:
         return False
@@ -6718,10 +6617,10 @@ def _paired_autoencoder_succeeded(
         except (TypeError, ValueError):
             cycles = 0
         return bool(health.get("autoencoder_summary_final", False)) or cycles > 0
-    runner_stopped_by_signal = (
-        runner_stopped_child
-        and autoencoder_exit_code in {-signal.SIGTERM, -signal.SIGKILL}
-    )
+    runner_stopped_by_signal = runner_stopped_child and autoencoder_exit_code in {
+        -signal.SIGTERM,
+        -signal.SIGKILL,
+    }
     if not runner_stopped_by_signal:
         return False
     health = dict(autoencoder_child_health or {})
@@ -6795,7 +6694,9 @@ def paired_codex_worker_resource_plan(
     available_gb = float(health.get("memory_available_gb", 0.0) or 0.0)
     reserved_gb = max(0.0, float(getattr(args, "paired_reserved_memory_gb", 0.0) or 0.0))
     worker_gb = max(0.001, float(getattr(args, "paired_codex_worker_memory_gb", 1.0) or 1.0))
-    memory_cap = max(1, int((available_gb - reserved_gb) // worker_gb)) if available_gb else requested
+    memory_cap = (
+        max(1, int((available_gb - reserved_gb) // worker_gb)) if available_gb else requested
+    )
     min_swap_free_gb = max(0.0, float(getattr(args, "paired_min_swap_free_gb", 0.0) or 0.0))
     swap_free_gb = float(health.get("swap_free_gb", min_swap_free_gb) or 0.0)
     swap_pressure = bool(min_swap_free_gb > 0.0 and swap_free_gb < min_swap_free_gb)
@@ -6906,23 +6807,17 @@ def paired_autoencoder_child_health(
         health["autoencoder_active_cycle"] = int(data.get("active_cycle", 0) or 0)
     except (TypeError, ValueError):
         health["autoencoder_active_cycle"] = 0
-    health["autoencoder_active_cycle_phase"] = str(
-        data.get("active_cycle_phase", "") or ""
-    )
+    health["autoencoder_active_cycle_phase"] = str(data.get("active_cycle_phase", "") or "")
     health["autoencoder_active_cycle_projection_stage"] = str(
         data.get("active_cycle_projection_stage", "") or ""
     )
-    health["autoencoder_latest_stop_reason"] = str(
-        data.get("latest_stop_reason", "") or ""
-    )
+    health["autoencoder_latest_stop_reason"] = str(data.get("latest_stop_reason", "") or "")
     health["autoencoder_summary_final"] = bool(data.get("final", False))
     summary_age = age_seconds(data.get("updated_at"))
     heartbeat_age = age_seconds(data.get("active_cycle_last_heartbeat_at"))
     health["autoencoder_summary_age_seconds"] = summary_age
     health["autoencoder_active_cycle_heartbeat_age_seconds"] = heartbeat_age
-    effective_ages = [
-        age for age in (summary_age, heartbeat_age) if age is not None
-    ]
+    effective_ages = [age for age in (summary_age, heartbeat_age) if age is not None]
     health["autoencoder_effective_heartbeat_age_seconds"] = (
         max(effective_ages) if effective_ages else None
     )
@@ -7208,9 +7103,7 @@ def _codex_worktree_diff(worktree_path: Path) -> Dict[str, Any]:
     )
     names.check_returncode()
     target_files = [
-        path
-        for path in names.stdout.split("\0")
-        if path and not _is_codex_worktree_artifact(path)
+        path for path in names.stdout.split("\0") if path and not _is_codex_worktree_artifact(path)
     ]
     if target_files:
         diff = subprocess.run(
@@ -7573,9 +7466,7 @@ def _resolve_unmerged_targets_with_union(
         text=True,
         timeout=30.0,
     )
-    remaining_paths = [
-        path for path in (remaining.stdout or "").splitlines() if path.strip()
-    ]
+    remaining_paths = [path for path in (remaining.stdout or "").splitlines() if path.strip()]
     return {
         "paths": resolved_paths,
         "remaining_unmerged_paths": remaining_paths,
@@ -7831,9 +7722,7 @@ def _repair_codex_worktree_diff_against_main(
         "status": "failed",
     }
     target_files = [
-        str(path)
-        for path in packet.get("main_apply_target_files", [])
-        if str(path).strip()
+        str(path) for path in packet.get("main_apply_target_files", []) if str(path).strip()
     ]
     try:
         manager = WorktreeManager(repo_path=source_repo_root, worktrees_base=repair_base)
@@ -7917,9 +7806,9 @@ def _default_codex_apply_validation_commands(repo_root: Path) -> List[List[str]]
 def _codex_apply_validation_env() -> Dict[str, str]:
     """Run apply validation without contending with the autoencoder GPU loop."""
     env = dict(os.environ)
-    allow_cuda = str(
-        env.get("IPFS_DATASETS_CODEX_APPLY_VALIDATION_ALLOW_CUDA") or ""
-    ).strip().lower()
+    allow_cuda = (
+        str(env.get("IPFS_DATASETS_CODEX_APPLY_VALIDATION_ALLOW_CUDA") or "").strip().lower()
+    )
     if allow_cuda not in {"1", "true", "yes", "on"}:
         env["CUDA_VISIBLE_DEVICES"] = ""
     return env
@@ -8090,9 +7979,12 @@ def _codex_packet_metric_sample_payloads(
                 if not isinstance(payload, Mapping):
                     continue
                 sample_id = str(payload.get("sample_id") or "")
-                key = sample_id or hashlib.sha256(
-                    json.dumps(dict(payload), sort_keys=True, default=str).encode("utf-8")
-                ).hexdigest()
+                key = (
+                    sample_id
+                    or hashlib.sha256(
+                        json.dumps(dict(payload), sort_keys=True, default=str).encode("utf-8")
+                    ).hexdigest()
+                )
                 if key in seen:
                     continue
                 seen.add(key)
@@ -8182,7 +8074,7 @@ def _codex_packet_target_metric_snapshot(
             "status": "skipped",
             "target_metrics": target_metrics,
         }
-    script = r'''
+    script = r"""
 import json
 import sys
 
@@ -8249,7 +8141,7 @@ print(json.dumps({
     "status": "measured",
     "target_metrics": target_metrics,
 }, sort_keys=True))
-'''
+"""
     payload = {
         "bridge_names": bridge_names,
         "samples": sample_payload_list,
@@ -8308,9 +8200,7 @@ print(json.dumps({
         }
     snapshot["stderr_tail"] = str(result.get("stderr") or "")[-500:]
     snapshot["sample_role"] = sample_role
-    snapshot["target_bridge_names"] = list(
-        snapshot.get("target_bridge_names") or bridge_names
-    )
+    snapshot["target_bridge_names"] = list(snapshot.get("target_bridge_names") or bridge_names)
     snapshot["timeout_seconds"] = float(timeout_seconds)
     return snapshot
 
@@ -8344,9 +8234,7 @@ def _call_codex_packet_target_metric_snapshot(
             for parameter in signature.parameters.values()
         )
         unsupported = [
-            name
-            for name in kwargs
-            if name not in signature.parameters and not accepts_var_kwargs
+            name for name in kwargs if name not in signature.parameters and not accepts_var_kwargs
         ]
         if unsupported:
             return _codex_packet_target_metric_snapshot(packet, repo_root)
@@ -8562,9 +8450,7 @@ def _target_metric_improvement_delta_map(
             continue
         before_value = before_metrics[metric_name]
         after_value = after_metrics[metric_name]
-        if not isinstance(before_value, (int, float)) or not isinstance(
-            after_value, (int, float)
-        ):
+        if not isinstance(before_value, (int, float)) or not isinstance(after_value, (int, float)):
             continue
         deltas[metric_name] = round(
             _target_metric_improvement_delta(
@@ -8608,9 +8494,7 @@ def _codex_validation_comparison(
         "packet_only_failure_tokens": [
             token for token in packet_tokens if token not in baseline_set
         ],
-        "shared_failure_tokens": [
-            token for token in packet_tokens if token in baseline_set
-        ],
+        "shared_failure_tokens": [token for token in packet_tokens if token in baseline_set],
     }
 
 
@@ -8855,9 +8739,7 @@ def apply_codex_worktree_changes_to_main(
                 _save_packet_if_possible(updated, packet_path)
                 return updated
             reason = (
-                "apply-check-failed"
-                if not repair_status
-                else f"apply-check-failed-{repair_status}"
+                "apply-check-failed" if not repair_status else f"apply-check-failed-{repair_status}"
             )
             patch_path = _save_codex_packet_diff_patch(
                 updated,
@@ -8880,9 +8762,7 @@ def apply_codex_worktree_changes_to_main(
         target_files=target_files,
     )
     validation_metric_payloads = _codex_packet_validation_metric_sample_payloads(updated)
-    target_metric_timeout_seconds = _codex_target_metric_timeout_seconds(
-        validation_timeout_seconds
-    )
+    target_metric_timeout_seconds = _codex_target_metric_timeout_seconds(validation_timeout_seconds)
     target_metric_before = (
         _call_codex_packet_target_metric_snapshot(
             updated,
@@ -9596,12 +9476,8 @@ def _codex_packet_validation_report(packet: Mapping[str, Any]) -> Dict[str, Any]
         ),
         "main_apply_validation_gate": packet.get("main_apply_validation_gate"),
         "main_apply_validation_failed_command": failed_command,
-        "main_apply_validation_failed_tests": list(
-            main_validation.get("failed_tests", []) or []
-        ),
-        "main_apply_validation_failure_tokens": _codex_validation_failure_tokens(
-            main_validation
-        ),
+        "main_apply_validation_failed_tests": list(main_validation.get("failed_tests", []) or []),
+        "main_apply_validation_failure_tokens": _codex_validation_failure_tokens(main_validation),
         "main_apply_validation_syntax_locations": list(
             main_validation.get("syntax_locations", []) or []
         ),
@@ -9651,9 +9527,7 @@ def _codex_packet_metric_event_fields(packet: Mapping[str, Any]) -> Dict[str, An
         "holdout_target_metric_regressed_metrics": list(
             holdout_report.get("regressed_metrics", []) or []
         ),
-        "holdout_target_metric_sample_count": _target_metric_report_sample_count(
-            holdout_report
-        ),
+        "holdout_target_metric_sample_count": _target_metric_report_sample_count(holdout_report),
         "holdout_target_metric_status": holdout_report.get("status"),
         "main_apply_target_metric_gate": packet.get("main_apply_target_metric_gate"),
         "metric_deltas": dict(packet.get("metric_deltas", {}) or {}),
@@ -9661,17 +9535,11 @@ def _codex_packet_metric_event_fields(packet: Mapping[str, Any]) -> Dict[str, An
             target_report.get("hard_regressed_metrics", []) or []
         ),
         "target_metric_objective_delta": target_report.get("objective_delta"),
-        "target_metric_regressed_metrics": list(
-            target_report.get("regressed_metrics", []) or []
-        ),
+        "target_metric_regressed_metrics": list(target_report.get("regressed_metrics", []) or []),
         "target_metric_sample_count": _target_metric_report_sample_count(target_report),
         "target_metric_status": target_report.get("status"),
     }
-    return {
-        key: value
-        for key, value in fields.items()
-        if value not in ({}, [], None, "")
-    }
+    return {key: value for key, value in fields.items() if value not in ({}, [], None, "")}
 
 
 def _program_synthesis_metric_feedback_report(
@@ -9681,9 +9549,7 @@ def _program_synthesis_metric_feedback_report(
 ) -> Dict[str, Any]:
     """Summarize whether program-synthesis work is visible to compiler-IR canaries."""
     canary_ids = {
-        str(sample_id)
-        for sample_id in compiler_ir_validation_sample_ids
-        if str(sample_id).strip()
+        str(sample_id) for sample_id in compiler_ir_validation_sample_ids if str(sample_id).strip()
     }
     status_counts: Counter[str] = Counter()
     status_unique_samples: Dict[str, set[str]] = {}
@@ -9701,9 +9567,7 @@ def _program_synthesis_metric_feedback_report(
         status = str(todo.status or "unknown")
         status_counts[status] += 1
         sample_ids = {
-            str(sample_id)
-            for sample_id in list(todo.sample_ids or [])
-            if str(sample_id).strip()
+            str(sample_id) for sample_id in list(todo.sample_ids or []) if str(sample_id).strip()
         }
         status_unique_samples.setdefault(status, set()).update(sample_ids)
         overlap = sample_ids & canary_ids
@@ -9714,9 +9578,7 @@ def _program_synthesis_metric_feedback_report(
         if status == "completed":
             completed_report = todo.metadata.get("completed_validation_report")
             if isinstance(completed_report, Mapping):
-                target_status = str(
-                    completed_report.get("target_metric_status") or ""
-                ).strip()
+                target_status = str(completed_report.get("target_metric_status") or "").strip()
                 holdout_status = str(
                     completed_report.get("holdout_target_metric_status") or ""
                 ).strip()
@@ -9724,9 +9586,7 @@ def _program_synthesis_metric_feedback_report(
                     completed_target_status[target_status] += 1
                 if holdout_status:
                     completed_holdout_status[holdout_status] += 1
-                for metric, value in dict(
-                    completed_report.get("metric_deltas", {}) or {}
-                ).items():
+                for metric, value in dict(completed_report.get("metric_deltas", {}) or {}).items():
                     if isinstance(value, (int, float)) and math.isfinite(float(value)):
                         completed_metric_delta_sums[str(metric)] += float(value)
                 for metric, value in dict(
@@ -9743,10 +9603,7 @@ def _program_synthesis_metric_feedback_report(
             failed_reasons[reason or "unknown"] += 1
 
     def rounded_counter(counter: Counter[str]) -> Dict[str, float]:
-        return {
-            str(key): round(float(value), 9)
-            for key, value in sorted(counter.items())
-        }
+        return {str(key): round(float(value), 9) for key, value in sorted(counter.items())}
 
     report: Dict[str, Any] = {
         "canary_sample_count": len(canary_ids),
@@ -9758,12 +9615,8 @@ def _program_synthesis_metric_feedback_report(
         "completed_holdout_target_metric_status_counts": dict(
             sorted(completed_holdout_status.items())
         ),
-        "completed_metric_delta_sums": rounded_counter(
-            completed_metric_delta_sums
-        ),
-        "completed_target_metric_status_counts": dict(
-            sorted(completed_target_status.items())
-        ),
+        "completed_metric_delta_sums": rounded_counter(completed_metric_delta_sums),
+        "completed_target_metric_status_counts": dict(sorted(completed_target_status.items())),
         "failed_validation_reason_counts": dict(sorted(failed_reasons.items())),
         "status_counts": dict(sorted(status_counts.items())),
     }
@@ -10045,7 +9898,9 @@ def _save_packet_if_possible(packet: Mapping[str, Any], packet_path: Optional[Pa
 
 
 def _safe_artifact_name(value: str) -> str:
-    safe = "".join(character if character.isalnum() or character in "-_" else "-" for character in value)
+    safe = "".join(
+        character if character.isalnum() or character in "-_" else "-" for character in value
+    )
     return safe.strip("-")[:96] or "codex-worker"
 
 
@@ -10060,10 +9915,7 @@ def resolve_codex_worktree_repo_root(repo_root: Path) -> Path:
 
     root = Path(repo_root).resolve()
     nested = root / "ipfs_datasets_py"
-    if (
-        (nested / "ipfs_datasets_py" / "logic" / "modal").exists()
-        and _path_is_git_worktree(nested)
-    ):
+    if (nested / "ipfs_datasets_py" / "logic" / "modal").exists() and _path_is_git_worktree(nested):
         return nested
     return root
 
@@ -10121,7 +9973,9 @@ def save_summary(summary_path: Path, summary: Dict[str, Any], *, final: bool = F
     summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
-def initial_summary(args: argparse.Namespace, *, log_path: Path, queue_path: Path, state_path: Path) -> Dict[str, Any]:
+def initial_summary(
+    args: argparse.Namespace, *, log_path: Path, queue_path: Path, state_path: Path
+) -> Dict[str, Any]:
     seed, seed_source = _sampling_seed_for_args(args)
     return {
         "best_validation_ce": 1.0e12,
@@ -10180,7 +10034,9 @@ def initial_summary(args: argparse.Namespace, *, log_path: Path, queue_path: Pat
     }
 
 
-def _cycle_learning_rate(args: argparse.Namespace, summary: Mapping[str, Any]) -> tuple[float, Dict[str, Any]]:
+def _cycle_learning_rate(
+    args: argparse.Namespace, summary: Mapping[str, Any]
+) -> tuple[float, Dict[str, Any]]:
     """Return per-cycle learning rate using simple plateau/regression feedback."""
     base = max(1e-6, float(getattr(args, "learning_rate", 0.35)))
     floor_ratio = max(0.05, float(getattr(args, "learning_rate_floor_ratio", 0.25)))
@@ -11088,10 +10944,7 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         "--autoencoder-feature-activity-reference",
         type=int,
         default=64,
-        help=(
-            "Feature-count reference before adaptive feature contribution "
-            "down-scaling starts."
-        ),
+        help=("Feature-count reference before adaptive feature contribution down-scaling starts."),
     )
     parser.add_argument(
         "--autoencoder-feature-logit-clip",
@@ -11139,8 +10992,7 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         type=float,
         default=0.0,
         help=(
-            "Minimum post-SGD residual survival score required when the survival "
-            "gate is active."
+            "Minimum post-SGD residual survival score required when the survival gate is active."
         ),
     )
     parser.add_argument("--worker-id", default=None)
@@ -11330,8 +11182,7 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         "--codex-main-apply-lock-timeout-seconds",
         type=float,
         default=float(
-            os.environ.get("IPFS_DATASETS_CODEX_MAIN_APPLY_LOCK_TIMEOUT_SECONDS", "300")
-            or 300
+            os.environ.get("IPFS_DATASETS_CODEX_MAIN_APPLY_LOCK_TIMEOUT_SECONDS", "300") or 300
         ),
         help=(
             "Maximum seconds a Codex packet waits for the serialized main apply "
@@ -11342,8 +11193,7 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         "--codex-main-apply-max-inflight-packets",
         type=int,
         default=int(
-            os.environ.get("IPFS_DATASETS_CODEX_MAIN_APPLY_MAX_INFLIGHT_PACKETS", "1")
-            or 1
+            os.environ.get("IPFS_DATASETS_CODEX_MAIN_APPLY_MAX_INFLIGHT_PACKETS", "1") or 1
         ),
         help=(
             "Maximum active apply_to_main Codex packets before new claims are "
@@ -11428,10 +11278,14 @@ def resolve_warm_start_state_paths(args: argparse.Namespace, queue_dir: Path) ->
         seen.add(key)
         paths.append(resolved)
 
-    canonical_mode = str(
-        getattr(args, "autoencoder_canonical_warm_start", _default_canonical_warm_start_mode())
-        or "auto"
-    ).strip().lower()
+    canonical_mode = (
+        str(
+            getattr(args, "autoencoder_canonical_warm_start", _default_canonical_warm_start_mode())
+            or "auto"
+        )
+        .strip()
+        .lower()
+    )
     if canonical_mode not in AUTOENCODER_CANONICAL_WARM_START_MODES:
         canonical_mode = "auto"
     if canonical_mode != "off":
@@ -11442,7 +11296,9 @@ def resolve_warm_start_state_paths(args: argparse.Namespace, queue_dir: Path) ->
                 DEFAULT_CANONICAL_AUTOENCODER_STATE_NAME,
             )
         )
-        canonical_path = canonical_path if canonical_path.is_absolute() else queue_dir / canonical_path
+        canonical_path = (
+            canonical_path if canonical_path.is_absolute() else queue_dir / canonical_path
+        )
         if canonical_path.exists() or canonical_mode == "require":
             append_once(canonical_path)
         if canonical_mode == "require" and not canonical_path.exists():
@@ -11457,7 +11313,9 @@ def resolve_warm_start_state_paths(args: argparse.Namespace, queue_dir: Path) ->
     return paths
 
 
-def load_warm_start_state(paths: Sequence[Path]) -> tuple[ModalAutoencoderTrainingState, Dict[str, Any]]:
+def load_warm_start_state(
+    paths: Sequence[Path],
+) -> tuple[ModalAutoencoderTrainingState, Dict[str, Any]]:
     """Load and average generalizable state from previous runs."""
     loaded_states: List[ModalAutoencoderTrainingState] = []
     loaded_paths: List[str] = []
@@ -11474,42 +11332,28 @@ def load_warm_start_state(paths: Sequence[Path]) -> tuple[ModalAutoencoderTraini
         "compiler_quality_embedding_weight_entries": len(
             averaged.compiler_quality_embedding_weights
         ),
-        "compiler_quality_family_logit_entries": len(
-            averaged.compiler_quality_family_logits
-        ),
-        "logic_signature_embedding_weight_entries": len(
-            averaged.logic_signature_embedding_weights
-        ),
-        "logic_signature_family_logit_entries": len(
-            averaged.logic_signature_family_logits
-        ),
+        "compiler_quality_family_logit_entries": len(averaged.compiler_quality_family_logits),
+        "logic_signature_embedding_weight_entries": len(averaged.logic_signature_embedding_weights),
+        "logic_signature_family_logit_entries": len(averaged.logic_signature_family_logits),
         "logic_signature_legal_ir_view_logit_entries": len(
             averaged.logic_signature_legal_ir_view_logits
         ),
         "round_trip_signal_embedding_weight_entries": len(
             averaged.round_trip_signal_embedding_weights
         ),
-        "round_trip_signal_family_logit_entries": len(
-            averaged.round_trip_signal_family_logits
-        ),
+        "round_trip_signal_family_logit_entries": len(averaged.round_trip_signal_family_logits),
         "round_trip_signal_legal_ir_view_logit_entries": len(
             averaged.round_trip_signal_legal_ir_view_logits
         ),
-        "decompiler_plan_embedding_weight_entries": len(
-            averaged.decompiler_plan_embedding_weights
-        ),
-        "decompiler_plan_family_logit_entries": len(
-            averaged.decompiler_plan_family_logits
-        ),
+        "decompiler_plan_embedding_weight_entries": len(averaged.decompiler_plan_embedding_weights),
+        "decompiler_plan_family_logit_entries": len(averaged.decompiler_plan_family_logits),
         "decompiler_plan_legal_ir_view_logit_entries": len(
             averaged.decompiler_plan_legal_ir_view_logits
         ),
         "predicate_argument_embedding_weight_entries": len(
             averaged.predicate_argument_embedding_weights
         ),
-        "predicate_argument_family_logit_entries": len(
-            averaged.predicate_argument_family_logits
-        ),
+        "predicate_argument_family_logit_entries": len(averaged.predicate_argument_family_logits),
         "predicate_argument_legal_ir_view_logit_entries": len(
             averaged.predicate_argument_legal_ir_view_logits
         ),
@@ -11526,19 +11370,11 @@ def load_warm_start_state(paths: Sequence[Path]) -> tuple[ModalAutoencoderTraini
         "feature_embedding_weight_entries": len(averaged.feature_embedding_weights),
         "feature_family_logit_entries": len(averaged.feature_family_logits),
         "loaded_paths": loaded_paths,
-        "legal_ir_view_embedding_weight_entries": len(
-            averaged.legal_ir_view_embedding_weights
-        ),
-        "legal_ir_view_family_logit_entries": len(
-            averaged.legal_ir_view_family_logits
-        ),
+        "legal_ir_view_embedding_weight_entries": len(averaged.legal_ir_view_embedding_weights),
+        "legal_ir_view_family_logit_entries": len(averaged.legal_ir_view_family_logits),
         "missing_paths": missing_paths,
-        "semantic_slot_embedding_weight_entries": len(
-            averaged.semantic_slot_embedding_weights
-        ),
-        "semantic_slot_family_logit_entries": len(
-            averaged.semantic_slot_family_logits
-        ),
+        "semantic_slot_embedding_weight_entries": len(averaged.semantic_slot_embedding_weights),
+        "semantic_slot_family_logit_entries": len(averaged.semantic_slot_family_logits),
         "family_semantic_slot_legal_ir_view_logit_entries": len(
             averaged.family_semantic_slot_legal_ir_view_logits
         ),
@@ -11715,8 +11551,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
             while True:
                 auto_exit_code = auto_process.poll()
                 codex_exit_codes = {
-                    run_id: process.poll()
-                    for run_id, process in codex_processes.items()
+                    run_id: process.poll() for run_id, process in codex_processes.items()
                 }
                 summary["elapsed_seconds"] = round(time.time() - started, 3)
                 summary["autoencoder_pid"] = auto_process.pid
@@ -11773,10 +11608,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
 
         if auto_process is not None:
             auto_exit_code = auto_process.poll()
-        codex_exit_codes = {
-            run_id: process.poll()
-            for run_id, process in codex_processes.items()
-        }
+        codex_exit_codes = {run_id: process.poll() for run_id, process in codex_processes.items()}
 
         if stop_requested:
             summary["latest_stop_reason"] = f"signal_{stop_signal}"
@@ -11816,11 +11648,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
             stop_requested=stop_requested,
         )
         summary["autoencoder_runner_terminated"] = autoencoder_runner_terminated
-        summary["status"] = (
-            "succeeded"
-            if autoencoder_success and codex_success
-            else "failed"
-        )
+        summary["status"] = "succeeded" if autoencoder_success and codex_success else "failed"
         save_summary(summary_path, summary, final=True)
         append_event(
             log_path,
@@ -12088,12 +11916,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             getattr(args, "autoencoder_cosine_reconstruction_weight", 0.25)
         ),
         max_token_features=int(getattr(args, "autoencoder_max_token_features", 48)),
-        max_token_bigram_features=int(
-            getattr(args, "autoencoder_max_token_bigram_features", 24)
-        ),
-        max_token_trigram_features=int(
-            getattr(args, "autoencoder_max_token_trigram_features", 12)
-        ),
+        max_token_bigram_features=int(getattr(args, "autoencoder_max_token_bigram_features", 24)),
+        max_token_trigram_features=int(getattr(args, "autoencoder_max_token_trigram_features", 12)),
         max_legal_ir_token_features=int(
             getattr(args, "autoencoder_max_legal_ir_token_features", 24)
         ),
@@ -12136,9 +11960,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         max_contrastive_ir_boundary_features=int(
             getattr(args, "autoencoder_max_contrastive_ir_boundary_features", 64)
         ),
-        max_repair_plan_features=int(
-            getattr(args, "autoencoder_max_repair_plan_features", 64)
-        ),
+        max_repair_plan_features=int(getattr(args, "autoencoder_max_repair_plan_features", 64)),
         max_logic_view_contract_features=int(
             getattr(args, "autoencoder_max_logic_view_contract_features", 64)
         ),
@@ -12184,12 +12006,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         max_temporal_validity_features=int(
             getattr(args, "autoencoder_max_temporal_validity_features", 64)
         ),
-        feature_activity_reference=int(
-            getattr(args, "autoencoder_feature_activity_reference", 64)
-        ),
-        feature_logit_clip=float(
-            getattr(args, "autoencoder_feature_logit_clip", 24.0)
-        ),
+        feature_activity_reference=int(getattr(args, "autoencoder_feature_activity_reference", 64)),
+        feature_logit_clip=float(getattr(args, "autoencoder_feature_logit_clip", 24.0)),
     )
     summary["autoencoder_feature_family_logit_scale"] = float(
         getattr(args, "autoencoder_feature_family_logit_scale", 1.0)
@@ -12504,13 +12322,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 train_count=0,
                 validation_count=validation_canary_count,
                 blocked_validation_sample_ids=blocked_validation_sample_ids,
-                max_sample_text_chars=int(
-                    getattr(args, "max_sample_text_chars", 0) or 0
-                ),
+                max_sample_text_chars=int(getattr(args, "max_sample_text_chars", 0) or 0),
             )
-        validation_canary_sample_ids = {
-            sample.sample_id for sample in validation_canary_samples
-        }
+        validation_canary_sample_ids = {sample.sample_id for sample in validation_canary_samples}
         blocked_validation_sample_ids.update(validation_canary_sample_ids)
         summary["validation_canary_count"] = len(validation_canary_samples)
         summary["validation_canary_indices"] = list(validation_canary_indices)
@@ -12542,18 +12356,15 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 now = time.time()
                 previous = str(active_phase.get("name") or "")
                 if previous:
-                    cycle_phase_timings[previous] = (
-                        cycle_phase_timings.get(previous, 0.0)
-                        + max(0.0, now - float(active_phase["started_at"]))
+                    cycle_phase_timings[previous] = cycle_phase_timings.get(previous, 0.0) + max(
+                        0.0, now - float(active_phase["started_at"])
                     )
                 active_phase["name"] = str(phase)
                 active_phase["started_at"] = now
                 summary["active_cycle"] = cycle
                 summary["active_cycle_phase"] = str(phase)
                 summary["active_cycle_bridge_loss_adapters"] = list(bridge_adapters)
-                summary["active_cycle_metric_bridge_adapters"] = list(
-                    metric_bridge_adapters
-                )
+                summary["active_cycle_metric_bridge_adapters"] = list(metric_bridge_adapters)
                 summary["active_cycle_diagnostic_bridge_adapters"] = list(
                     diagnostic_bridge_adapters
                 )
@@ -12568,8 +12379,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 summary["active_cycle_last_heartbeat_at"] = utc_now()
                 summary["active_cycle_phase_payload"] = dict(payload)
                 summary["active_cycle_phase_timings"] = {
-                    name: round(seconds, 3)
-                    for name, seconds in sorted(cycle_phase_timings.items())
+                    name: round(seconds, 3) for name, seconds in sorted(cycle_phase_timings.items())
                 }
                 save_summary(summary_path, summary)
                 append_event(
@@ -12587,22 +12397,18 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 now = time.time()
                 previous = str(active_phase.get("name") or "")
                 if previous:
-                    cycle_phase_timings[previous] = (
-                        cycle_phase_timings.get(previous, 0.0)
-                        + max(0.0, now - float(active_phase["started_at"]))
+                    cycle_phase_timings[previous] = cycle_phase_timings.get(previous, 0.0) + max(
+                        0.0, now - float(active_phase["started_at"])
                     )
                 summary["active_cycle_phase_timings"] = {
-                    name: round(seconds, 3)
-                    for name, seconds in sorted(cycle_phase_timings.items())
+                    name: round(seconds, 3) for name, seconds in sorted(cycle_phase_timings.items())
                 }
 
             def projection_progress_callback(progress: Mapping[str, Any]) -> None:
                 payload = dict(progress)
                 summary["active_cycle"] = cycle
                 summary["active_cycle_phase"] = "projection_training"
-                summary["active_cycle_projection_stage"] = str(
-                    payload.get("stage") or ""
-                )
+                summary["active_cycle_projection_stage"] = str(payload.get("stage") or "")
                 summary["active_cycle_projection_progress"] = payload
                 summary["active_cycle_last_heartbeat_at"] = utc_now()
                 save_summary(summary_path, summary)
@@ -12656,11 +12462,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             )
             acceptance_validation_samples = validation_canary_samples or validation_samples
             acceptance_validation_indices = validation_canary_indices or validation_indices
-            validation_mode = (
-                "fixed_canary"
-                if validation_canary_samples
-                else "rotating_holdout"
-            )
+            validation_mode = "fixed_canary" if validation_canary_samples else "rotating_holdout"
             mark_cycle_phase(
                 "before_train_eval",
                 sample_count=len(train_samples),
@@ -12684,9 +12486,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 use_sample_memory=False,
             )
             compiler_ir_metric_kwargs = {
-                "max_sample_text_chars": int(
-                    getattr(args, "max_sample_text_chars", 0) or 0
-                ),
+                "max_sample_text_chars": int(getattr(args, "max_sample_text_chars", 0) or 0),
                 "metric_text_policy": str(
                     getattr(
                         args,
@@ -12742,8 +12542,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             )
             compiler_ir_validation_comparable = (
                 bool(previous_compiler_ir_validation_metrics)
-                and previous_compiler_ir_validation_sample_ids
-                == compiler_ir_validation_sample_ids
+                and previous_compiler_ir_validation_sample_ids == compiler_ir_validation_sample_ids
             )
             compiler_ir_validation_delta = (
                 _target_metric_improvement_delta_map(
@@ -12780,9 +12579,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 progress_callback=metric_progress_callback("bridge_ir_train"),
             )
             bridge_ir_train["bridge_loss_adapters"] = list(bridge_adapters)
-            bridge_ir_train["diagnostic_bridge_adapters"] = list(
-                diagnostic_bridge_adapters
-            )
+            bridge_ir_train["diagnostic_bridge_adapters"] = list(diagnostic_bridge_adapters)
             bridge_ir_train["metric_bridge_adapters"] = list(metric_bridge_adapters)
             mark_cycle_phase(
                 "bridge_ir_validation",
@@ -12796,9 +12593,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 progress_callback=metric_progress_callback("bridge_ir_validation"),
             )
             bridge_ir_validation["bridge_loss_adapters"] = list(bridge_adapters)
-            bridge_ir_validation["diagnostic_bridge_adapters"] = list(
-                diagnostic_bridge_adapters
-            )
+            bridge_ir_validation["diagnostic_bridge_adapters"] = list(diagnostic_bridge_adapters)
             bridge_ir_validation["metric_bridge_adapters"] = list(metric_bridge_adapters)
             feature_projection_report: Dict[str, Any] = {}
             generalizable_projection_epochs = max(
@@ -13011,14 +12806,10 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             guidance_canary = compiler_guidance_canary_block(
                 compiler_ir_validation,
                 compiler_ir_guided_validation,
-                plateau_threshold=float(
-                    getattr(args, "learning_rate_plateau_delta", 1.0e-5)
-                ),
+                plateau_threshold=float(getattr(args, "learning_rate_plateau_delta", 1.0e-5)),
             )
             guidance_promotion_gate = compiler_guidance_promotion_gate(guidance_canary)
-            guidance_scope_hints = compiler_guidance_scope_hints(
-                compiler_ir_guided_validation
-            )
+            guidance_scope_hints = compiler_guidance_scope_hints(compiler_ir_guided_validation)
             guidance_distillation = compiler_guidance_distillation_candidates(
                 compiler_ir_guided_validation,
                 guidance_canary,
@@ -13074,30 +12865,22 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 latest_queue.save_jsonl(queue_path)
                 supervisor.queue = latest_queue
                 queue = latest_queue
-            for guidance_kind, guidance_todo_candidates in (
-                guidance_todo_candidates_by_kind.items()
-            ):
+            for guidance_kind, guidance_todo_candidates in guidance_todo_candidates_by_kind.items():
                 if not guidance_todo_candidates:
                     continue
                 with queue_file_lock(queue_path):
                     latest_queue = ModalTodoQueue.load_jsonl(queue_path)
                     latest_queue.merge_from(
                         supervisor.queue,
-                        preserve_claimed_role=(
-                            supervisor.policy.program_synthesis_role
-                        ),
+                        preserve_claimed_role=(supervisor.policy.program_synthesis_role),
                     )
                     supervisor.queue = latest_queue
                     selected_guidance_todos = supervisor._bounded_new_todos(
                         guidance_todo_candidates,
                         track_program_deduped=True,
                     )
-                    deduped_count = int(
-                        supervisor.last_program_synthesis_deduped_count
-                    )
-                    before_guidance_todo_ids = {
-                        todo.todo_id for todo in supervisor.queue.all()
-                    }
+                    deduped_count = int(supervisor.last_program_synthesis_deduped_count)
+                    before_guidance_todo_ids = {todo.todo_id for todo in supervisor.queue.all()}
                     seeded_count = supervisor.queue.add_many(selected_guidance_todos)
                     guidance_todo_ids[guidance_kind] = [
                         todo.todo_id
@@ -13105,28 +12888,18 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                         if todo.todo_id not in before_guidance_todo_ids
                         and supervisor.queue.get(todo.todo_id) is not None
                     ]
-                    guidance_semantic_deduped_count = (
-                        supervisor.queue.deduplicate_semantic(
-                            optimizer_role=(
-                                supervisor.policy.program_synthesis_role
-                            ),
-                            near_duplicate_jaccard=(
-                                supervisor
-                                .policy
-                                .program_synthesis_near_duplicate_jaccard
-                            ),
-                        )
+                    guidance_semantic_deduped_count = supervisor.queue.deduplicate_semantic(
+                        optimizer_role=(supervisor.policy.program_synthesis_role),
+                        near_duplicate_jaccard=(
+                            supervisor.policy.program_synthesis_near_duplicate_jaccard
+                        ),
                     )
                     semantic_deduped_count += int(guidance_semantic_deduped_count)
-                    guidance_todo_counts[
-                        f"{guidance_kind}_deduped_count"
-                    ] = deduped_count
-                    guidance_todo_counts[
-                        f"{guidance_kind}_seeded_count"
-                    ] = int(seeded_count)
-                    guidance_todo_counts[
-                        f"{guidance_kind}_semantic_deduped_count"
-                    ] = int(guidance_semantic_deduped_count)
+                    guidance_todo_counts[f"{guidance_kind}_deduped_count"] = deduped_count
+                    guidance_todo_counts[f"{guidance_kind}_seeded_count"] = int(seeded_count)
+                    guidance_todo_counts[f"{guidance_kind}_semantic_deduped_count"] = int(
+                        guidance_semantic_deduped_count
+                    )
                     supervisor.queue.save_jsonl(queue_path)
                     queue = supervisor.queue
             mark_cycle_phase("state_save")
@@ -13135,8 +12908,12 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             finish_cycle_phase()
 
             train_ce_delta = before_train.cross_entropy_loss - after_train.cross_entropy_loss
-            validation_ce_delta = before_validation.cross_entropy_loss - after_validation.cross_entropy_loss
-            train_cos_delta = after_train.embedding_cosine_similarity - before_train.embedding_cosine_similarity
+            validation_ce_delta = (
+                before_validation.cross_entropy_loss - after_validation.cross_entropy_loss
+            )
+            train_cos_delta = (
+                after_train.embedding_cosine_similarity - before_train.embedding_cosine_similarity
+            )
             validation_cos_delta = (
                 after_validation.embedding_cosine_similarity
                 - before_validation.embedding_cosine_similarity
@@ -13144,9 +12921,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             before_train_metrics = metric_block(before_train)
             before_validation_metrics = metric_block(before_validation)
             after_train_metrics = metric_block(after_train)
-            after_train_generalized_probe_metrics = metric_block(
-                after_train_generalized_probe
-            )
+            after_train_generalized_probe_metrics = metric_block(after_train_generalized_probe)
             after_validation_metrics = metric_block(after_validation)
             after_validation_sample_memory_probe_metrics = metric_block(
                 after_validation_sample_memory_probe
@@ -13228,12 +13003,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 1.0e12,
             )
             latest_compiler_ir_guidance_ce_delta = float(guidance_canary["ce_delta"])
-            latest_compiler_ir_guidance_cosine_delta = float(
-                guidance_canary["cosine_delta"]
-            )
-            latest_compiler_ir_guidance_copy_hack_delta = float(
-                guidance_canary["copy_hack_delta"]
-            )
+            latest_compiler_ir_guidance_cosine_delta = float(guidance_canary["cosine_delta"])
+            latest_compiler_ir_guidance_copy_hack_delta = float(guidance_canary["copy_hack_delta"])
             latest_learned_ir_view_ce = _metric_value(
                 learned_ir_validation,
                 "view_cross_entropy_loss",
@@ -13261,8 +13032,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["latest_feature_projection_report"] = feature_projection_report
             summary["latest_cycle_seconds"] = latest_cycle_seconds
             summary["latest_cycle_phase_timings"] = {
-                name: round(seconds, 3)
-                for name, seconds in sorted(cycle_phase_timings.items())
+                name: round(seconds, 3) for name, seconds in sorted(cycle_phase_timings.items())
             }
             summary["latest_autoencoder_state_telemetry"] = latest_state_telemetry
             summary["latest_autoencoder_train"] = after_train_metrics
@@ -13280,12 +13050,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["latest_train_cosine"] = after_train.embedding_cosine_similarity
             summary["latest_train_reconstruction"] = after_train.reconstruction_loss
             summary["latest_validation_ce"] = after_validation.cross_entropy_loss
-            summary["latest_validation_cosine"] = (
-                after_validation.embedding_cosine_similarity
-            )
-            summary["latest_validation_reconstruction"] = (
-                after_validation.reconstruction_loss
-            )
+            summary["latest_validation_cosine"] = after_validation.embedding_cosine_similarity
+            summary["latest_validation_reconstruction"] = after_validation.reconstruction_loss
             summary["latest_train_ce_delta"] = train_ce_delta
             summary["latest_train_cosine_delta"] = train_cos_delta
             summary["latest_validation_ce_delta"] = validation_ce_delta
@@ -13293,9 +13059,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["latest_compiler_ir_train"] = compiler_ir_train
             summary["latest_compiler_ir_validation"] = compiler_ir_validation
             summary["latest_compiler_ir_guided_train"] = compiler_ir_guided_train
-            summary["latest_compiler_ir_guided_validation"] = (
-                compiler_ir_guided_validation
-            )
+            summary["latest_compiler_ir_guided_validation"] = compiler_ir_guided_validation
             summary["latest_compiler_ir_ce"] = latest_compiler_ir_ce
             summary["latest_compiler_ir_ce_excess"] = latest_compiler_ir_ce_excess
             summary["latest_compiler_ir_cosine"] = latest_compiler_ir_cosine
@@ -13307,8 +13071,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "deterministic compiler/decompiler structural IR round-trip"
                 ),
                 "compiler_ir_minus_autoencoder_embedding_cosine": round(
-                    latest_compiler_ir_cosine
-                    - after_validation.embedding_cosine_similarity,
+                    latest_compiler_ir_cosine - after_validation.embedding_cosine_similarity,
                     9,
                 ),
                 "compiler_raw_source_embedding_cosine_metric": (
@@ -13319,9 +13082,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     - after_validation.embedding_cosine_similarity,
                     9,
                 ),
-                "validation_cosine_metric": (
-                    "autoencoder decoded embedding vs source embedding"
-                ),
+                "validation_cosine_metric": ("autoencoder decoded embedding vs source embedding"),
             }
             summary["latest_validation_cosine_bottleneck"] = {
                 "autoencoder_embedding_cosine": round(
@@ -13348,13 +13109,10 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     after_validation.embedding_cosine_similarity < 0.25
                 ),
                 "worst_samples": list(
-                    after_validation_metrics.get("worst_sample_embedding_metrics", [])
-                    or []
+                    after_validation_metrics.get("worst_sample_embedding_metrics", []) or []
                 ),
             }
-            summary["latest_compiler_ir_source_copy_loss"] = (
-                latest_compiler_ir_source_copy_loss
-            )
+            summary["latest_compiler_ir_source_copy_loss"] = latest_compiler_ir_source_copy_loss
             summary["latest_compiler_ir_source_copy_reward_hack_penalty"] = (
                 latest_compiler_ir_source_copy_reward_hack_penalty
             )
@@ -13392,42 +13150,26 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 )[:8],
             }
             summary["latest_compiler_ir_guided_ce"] = latest_guided_compiler_ir_ce
-            summary["latest_compiler_ir_guided_ce_excess"] = (
-                latest_guided_compiler_ir_ce_excess
+            summary["latest_compiler_ir_guided_ce_excess"] = latest_guided_compiler_ir_ce_excess
+            summary["latest_compiler_ir_guided_cosine"] = latest_guided_compiler_ir_cosine
+            summary["latest_compiler_ir_guided_source_copy_reward_hack_penalty"] = (
+                latest_guided_compiler_ir_source_copy_reward_hack_penalty
             )
-            summary["latest_compiler_ir_guided_cosine"] = (
-                latest_guided_compiler_ir_cosine
-            )
-            summary[
-                "latest_compiler_ir_guided_source_copy_reward_hack_penalty"
-            ] = latest_guided_compiler_ir_source_copy_reward_hack_penalty
             summary["latest_compiler_ir_guidance_canary"] = guidance_canary
-            summary["latest_compiler_ir_guidance_quality_gate"] = guidance_canary[
-                "quality_gate"
-            ]
-            summary["latest_compiler_ir_guidance_promotion"] = (
-                guidance_promotion_gate
-            )
+            summary["latest_compiler_ir_guidance_quality_gate"] = guidance_canary["quality_gate"]
+            summary["latest_compiler_ir_guidance_promotion"] = guidance_promotion_gate
             summary["latest_compiler_ir_guidance_promotion_allowed"] = bool(
                 guidance_promotion_gate["promotion_allowed"]
             )
-            summary["latest_compiler_ir_guidance_promotion_block_reason"] = (
-                guidance_promotion_gate["promotion_block_reason"]
-            )
-            summary["latest_compiler_ir_guidance_scope_hints"] = (
-                guidance_scope_hints
-            )
-            summary["latest_compiler_ir_guidance_distillation"] = (
-                guidance_distillation
-            )
+            summary["latest_compiler_ir_guidance_promotion_block_reason"] = guidance_promotion_gate[
+                "promotion_block_reason"
+            ]
+            summary["latest_compiler_ir_guidance_scope_hints"] = guidance_scope_hints
+            summary["latest_compiler_ir_guidance_distillation"] = guidance_distillation
             summary["latest_compiler_ir_guidance_distillation_path"] = (
-                str(guidance_distillation_path)
-                if guidance_distillation_path is not None
-                else ""
+                str(guidance_distillation_path) if guidance_distillation_path is not None else ""
             )
-            summary["latest_compiler_ir_guidance_ce_delta"] = (
-                latest_compiler_ir_guidance_ce_delta
-            )
+            summary["latest_compiler_ir_guidance_ce_delta"] = latest_compiler_ir_guidance_ce_delta
             summary["latest_compiler_ir_guidance_cosine_delta"] = (
                 latest_compiler_ir_guidance_cosine_delta
             )
@@ -13435,9 +13177,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 latest_compiler_ir_guidance_copy_hack_delta
             )
             summary["latest_learned_ir_before_train"] = learned_ir_before_train
-            summary["latest_learned_ir_before_validation"] = (
-                learned_ir_before_validation
-            )
+            summary["latest_learned_ir_before_validation"] = learned_ir_before_validation
             summary["latest_learned_ir_train"] = learned_ir_train
             summary["latest_learned_ir_validation"] = learned_ir_validation
             summary["latest_learned_ir_view_ce"] = latest_learned_ir_view_ce
@@ -13472,20 +13212,21 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     compiler_ir_validation_sample_ids=compiler_ir_validation_sample_ids,
                 )
             )
-            summary["program_synthesis_seeded"] = int(
-                summary.get("program_synthesis_seeded", 0)
-            ) + sum(step.program_synthesis_seeded_count for step in run.steps) + sum(
-                value
-                for key, value in guidance_todo_counts.items()
-                if key.endswith("_seeded_count")
+            summary["program_synthesis_seeded"] = (
+                int(summary.get("program_synthesis_seeded", 0))
+                + sum(step.program_synthesis_seeded_count for step in run.steps)
+                + sum(
+                    value
+                    for key, value in guidance_todo_counts.items()
+                    if key.endswith("_seeded_count")
+                )
             )
             preinsert_deduped_count = sum(
                 step.program_synthesis_deduped_count for step in run.steps
             ) + sum(
                 value
                 for key, value in guidance_todo_counts.items()
-                if key.endswith("_deduped_count")
-                and not key.endswith("_semantic_deduped_count")
+                if key.endswith("_deduped_count") and not key.endswith("_semantic_deduped_count")
             )
             summary["latest_program_synthesis_seeded_count"] = sum(
                 step.program_synthesis_seeded_count for step in run.steps
@@ -13497,57 +13238,38 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["latest_program_synthesis_preinsert_deduped_count"] = int(
                 preinsert_deduped_count
             )
-            summary["latest_program_synthesis_semantic_deduped_count"] = int(
-                semantic_deduped_count
-            )
+            summary["latest_program_synthesis_semantic_deduped_count"] = int(semantic_deduped_count)
             for guidance_kind in ("activation", "distillation", "guardrail"):
-                summary[
-                    f"latest_compiler_ir_guidance_{guidance_kind}_deduped_count"
-                ] = int(guidance_todo_counts[f"{guidance_kind}_deduped_count"])
-                summary[
-                    f"latest_compiler_ir_guidance_{guidance_kind}_seeded_count"
-                ] = int(guidance_todo_counts[f"{guidance_kind}_seeded_count"])
-                summary[
-                    "latest_compiler_ir_guidance_"
-                    f"{guidance_kind}_semantic_deduped_count"
-                ] = int(
-                    guidance_todo_counts[
-                        f"{guidance_kind}_semantic_deduped_count"
-                    ]
+                summary[f"latest_compiler_ir_guidance_{guidance_kind}_deduped_count"] = int(
+                    guidance_todo_counts[f"{guidance_kind}_deduped_count"]
                 )
-                summary[
-                    f"latest_compiler_ir_guidance_{guidance_kind}_todo_ids"
-                ] = list(guidance_todo_ids[guidance_kind])
-                summary[
-                    f"compiler_ir_guidance_{guidance_kind}_seeded_total"
-                ] = int(
+                summary[f"latest_compiler_ir_guidance_{guidance_kind}_seeded_count"] = int(
+                    guidance_todo_counts[f"{guidance_kind}_seeded_count"]
+                )
+                summary[f"latest_compiler_ir_guidance_{guidance_kind}_semantic_deduped_count"] = (
+                    int(guidance_todo_counts[f"{guidance_kind}_semantic_deduped_count"])
+                )
+                summary[f"latest_compiler_ir_guidance_{guidance_kind}_todo_ids"] = list(
+                    guidance_todo_ids[guidance_kind]
+                )
+                summary[f"compiler_ir_guidance_{guidance_kind}_seeded_total"] = int(
                     summary.get(
                         f"compiler_ir_guidance_{guidance_kind}_seeded_total",
                         0,
                     )
                 ) + int(guidance_todo_counts[f"{guidance_kind}_seeded_count"])
-                summary[
-                    f"compiler_ir_guidance_{guidance_kind}_deduped_total"
-                ] = int(
+                summary[f"compiler_ir_guidance_{guidance_kind}_deduped_total"] = int(
                     summary.get(
                         f"compiler_ir_guidance_{guidance_kind}_deduped_total",
                         0,
                     )
                 ) + int(guidance_todo_counts[f"{guidance_kind}_deduped_count"])
-                summary[
-                    "compiler_ir_guidance_"
-                    f"{guidance_kind}_semantic_deduped_total"
-                ] = int(
+                summary[f"compiler_ir_guidance_{guidance_kind}_semantic_deduped_total"] = int(
                     summary.get(
-                        "compiler_ir_guidance_"
-                        f"{guidance_kind}_semantic_deduped_total",
+                        f"compiler_ir_guidance_{guidance_kind}_semantic_deduped_total",
                         0,
                     )
-                ) + int(
-                    guidance_todo_counts[
-                        f"{guidance_kind}_semantic_deduped_count"
-                    ]
-                )
+                ) + int(guidance_todo_counts[f"{guidance_kind}_semantic_deduped_count"])
             summary["program_synthesis_preinsert_deduped"] = int(
                 summary.get("program_synthesis_preinsert_deduped", 0)
             ) + int(preinsert_deduped_count)
@@ -13560,32 +13282,26 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             bridge_loss_failures = sum(step.bridge_loss_failure_count for step in run.steps)
             bridge_loss_samples = sum(step.bridge_loss_sample_count for step in run.steps)
             bridge_loss_signals = sum(step.bridge_loss_signal_count for step in run.steps)
-            summary["bridge_loss_failures"] = int(
-                summary.get("bridge_loss_failures", 0)
-            ) + int(bridge_loss_failures)
-            summary["bridge_loss_samples"] = int(
-                summary.get("bridge_loss_samples", 0)
-            ) + int(bridge_loss_samples)
-            summary["bridge_loss_signals"] = int(
-                summary.get("bridge_loss_signals", 0)
-            ) + int(bridge_loss_signals)
-            summary["bridge_metric_failures"] = int(
-                summary.get("bridge_metric_failures", 0)
-            ) + int(
+            summary["bridge_loss_failures"] = int(summary.get("bridge_loss_failures", 0)) + int(
+                bridge_loss_failures
+            )
+            summary["bridge_loss_samples"] = int(summary.get("bridge_loss_samples", 0)) + int(
+                bridge_loss_samples
+            )
+            summary["bridge_loss_signals"] = int(summary.get("bridge_loss_signals", 0)) + int(
+                bridge_loss_signals
+            )
+            summary["bridge_metric_failures"] = int(summary.get("bridge_metric_failures", 0)) + int(
                 bridge_ir_train.get("metric_failures", 0)
                 + bridge_ir_validation.get("metric_failures", 0)
             )
             summary["latest_logic_bridge_train"] = bridge_ir_train
             summary["latest_logic_bridge_validation"] = bridge_ir_validation
-            summary["latest_compiler_ir_validation_metrics"] = (
-                compiler_ir_validation_metrics
-            )
+            summary["latest_compiler_ir_validation_metrics"] = compiler_ir_validation_metrics
             summary["latest_compiler_ir_validation_sample_count"] = len(
                 compiler_ir_validation_sample_ids
             )
-            summary["latest_compiler_ir_validation_sample_ids"] = (
-                compiler_ir_validation_sample_ids
-            )
+            summary["latest_compiler_ir_validation_sample_ids"] = compiler_ir_validation_sample_ids
             summary["compiler_ir_validation_comparable_to_previous_cycle"] = bool(
                 compiler_ir_validation_comparable
             )
@@ -13608,9 +13324,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             for sample_id in compiler_ir_validation_sample_ids:
                 if sample_id and sample_id not in seen_compiler_ir_sample_ids:
                     seen_compiler_ir_sample_ids.append(sample_id)
-            summary["compiler_ir_validation_sample_ids_seen"] = (
-                seen_compiler_ir_sample_ids[-512:]
-            )
+            summary["compiler_ir_validation_sample_ids_seen"] = seen_compiler_ir_sample_ids[-512:]
             summary["compiler_ir_validation_unique_sample_count_seen"] = len(
                 set(seen_compiler_ir_sample_ids)
             )
@@ -13619,8 +13333,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             )
             summary["compiler_ir_validation_low_sample_warning"] = (
                 validation_mode == "fixed_canary"
-                and len(compiler_ir_validation_sample_ids)
-                < DEFAULT_VALIDATION_CANARY_COUNT
+                and len(compiler_ir_validation_sample_ids) < DEFAULT_VALIDATION_CANARY_COUNT
             )
             summary["metric_failures"] = int(summary.get("metric_failures", 0)) + int(
                 compiler_ir_train.get("metric_failures", 0)
@@ -13630,24 +13343,32 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 + bridge_ir_train.get("metric_failures", 0)
                 + bridge_ir_validation.get("metric_failures", 0)
             )
-            summary["train_ce_improved_cycles"] = int(summary.get("train_ce_improved_cycles", 0)) + int(train_ce_delta > 0.0)
-            summary["validation_ce_improved_cycles"] = int(summary.get("validation_ce_improved_cycles", 0)) + int(validation_ce_delta > 0.0)
-            summary["train_cosine_improved_cycles"] = int(summary.get("train_cosine_improved_cycles", 0)) + int(train_cos_delta > 0.0)
-            summary["validation_cosine_improved_cycles"] = int(summary.get("validation_cosine_improved_cycles", 0)) + int(validation_cos_delta > 0.0)
+            summary["train_ce_improved_cycles"] = int(
+                summary.get("train_ce_improved_cycles", 0)
+            ) + int(train_ce_delta > 0.0)
+            summary["validation_ce_improved_cycles"] = int(
+                summary.get("validation_ce_improved_cycles", 0)
+            ) + int(validation_ce_delta > 0.0)
+            summary["train_cosine_improved_cycles"] = int(
+                summary.get("train_cosine_improved_cycles", 0)
+            ) + int(train_cos_delta > 0.0)
+            summary["validation_cosine_improved_cycles"] = int(
+                summary.get("validation_cosine_improved_cycles", 0)
+            ) + int(validation_cos_delta > 0.0)
             plateau_threshold = max(
                 1e-9,
                 float(getattr(args, "learning_rate_plateau_delta", 1.0e-5)),
             )
             if validation_ce_delta <= plateau_threshold:
-                summary["learning_rate_plateau_streak"] = int(
-                    summary.get("learning_rate_plateau_streak", 0)
-                ) + 1
+                summary["learning_rate_plateau_streak"] = (
+                    int(summary.get("learning_rate_plateau_streak", 0)) + 1
+                )
             else:
                 summary["learning_rate_plateau_streak"] = 0
             if validation_cos_delta < 0.0:
-                summary["learning_rate_cosine_regression_streak"] = int(
-                    summary.get("learning_rate_cosine_regression_streak", 0)
-                ) + 1
+                summary["learning_rate_cosine_regression_streak"] = (
+                    int(summary.get("learning_rate_cosine_regression_streak", 0)) + 1
+                )
             else:
                 summary["learning_rate_cosine_regression_streak"] = 0
             guidance_improved = bool(guidance_canary.get("improved"))
@@ -13656,14 +13377,16 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             ) + int(guidance_improved)
             guidance_regressed = bool(guidance_canary.get("regressed"))
             if guidance_regressed:
-                summary["compiler_guidance_regression_streak"] = int(
-                    summary.get("compiler_guidance_regression_streak", 0)
-                ) + 1
+                summary["compiler_guidance_regression_streak"] = (
+                    int(summary.get("compiler_guidance_regression_streak", 0)) + 1
+                )
             else:
                 summary["compiler_guidance_regression_streak"] = 0
             summary["learning_rate_applied"] = float(cycle_learning_rate)
             summary["learning_rate_policy"] = cycle_lr_policy
-            summary["best_validation_ce"] = min(summary.get("best_validation_ce"), after_validation.cross_entropy_loss)
+            summary["best_validation_ce"] = min(
+                summary.get("best_validation_ce"), after_validation.cross_entropy_loss
+            )
             summary["best_validation_ir_ce"] = min(
                 summary.get("best_validation_ir_ce", 1.0e12),
                 latest_compiler_ir_ce,
@@ -13680,9 +13403,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 summary.get("best_validation_ir_guided_cosine", -1.0),
                 latest_guided_compiler_ir_cosine,
             )
-            summary[
-                "best_validation_ir_guided_source_copy_reward_hack_penalty"
-            ] = min(
+            summary["best_validation_ir_guided_source_copy_reward_hack_penalty"] = min(
                 summary.get(
                     "best_validation_ir_guided_source_copy_reward_hack_penalty",
                     1.0e12,
@@ -13756,9 +13477,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "autoencoder_after_validation": after_validation_metrics,
                     "autoencoder_before_train": before_train_metrics,
                     "autoencoder_before_validation": before_validation_metrics,
-                    "autoencoder_train_generalized_probe": (
-                        after_train_generalized_probe_metrics
-                    ),
+                    "autoencoder_train_generalized_probe": (after_train_generalized_probe_metrics),
                     "autoencoder_validation_sample_memory_probe": (
                         after_validation_sample_memory_probe_metrics
                     ),
@@ -13777,15 +13496,11 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                         guidance_todo_ids["activation"]
                     ),
                     "compiler_ir_guidance_canary": guidance_canary,
-                    "compiler_ir_guidance_ce_delta": (
-                        latest_compiler_ir_guidance_ce_delta
-                    ),
+                    "compiler_ir_guidance_ce_delta": (latest_compiler_ir_guidance_ce_delta),
                     "compiler_ir_guidance_copy_hack_delta": (
                         latest_compiler_ir_guidance_copy_hack_delta
                     ),
-                    "compiler_ir_guidance_cosine_delta": (
-                        latest_compiler_ir_guidance_cosine_delta
-                    ),
+                    "compiler_ir_guidance_cosine_delta": (latest_compiler_ir_guidance_cosine_delta),
                     "compiler_ir_guidance_distillation": guidance_distillation,
                     "compiler_ir_guidance_distillation_deduped_count": int(
                         guidance_todo_counts["distillation_deduped_count"]
@@ -13802,9 +13517,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "compiler_ir_guidance_guardrail_seeded_count": int(
                         guidance_todo_counts["guardrail_seeded_count"]
                     ),
-                    "compiler_ir_guidance_guardrail_todo_ids": list(
-                        guidance_todo_ids["guardrail"]
-                    ),
+                    "compiler_ir_guidance_guardrail_todo_ids": list(guidance_todo_ids["guardrail"]),
                     "compiler_ir_guidance_promotion": guidance_promotion_gate,
                     "compiler_ir_guidance_scope_hints": guidance_scope_hints,
                     "compiler_ir_train": compiler_ir_train,
@@ -13813,12 +13526,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                         compiler_ir_validation_comparable
                     ),
                     "compiler_ir_validation_delta": compiler_ir_validation_delta,
-                    "compiler_ir_validation_sample_count": len(
-                        compiler_ir_validation_sample_ids
-                    ),
-                    "compiler_ir_validation_sample_ids": (
-                        compiler_ir_validation_sample_ids[:32]
-                    ),
+                    "compiler_ir_validation_sample_count": len(compiler_ir_validation_sample_ids),
+                    "compiler_ir_validation_sample_ids": (compiler_ir_validation_sample_ids[:32]),
                     "logic_bridge_train": bridge_ir_train,
                     "logic_bridge_validation": bridge_ir_validation,
                     "learned_ir_before_train": learned_ir_before_train,
@@ -13830,7 +13539,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "cycle": cycle,
                     "duration_seconds": latest_cycle_seconds,
                     "event": "cycle",
-                    "failed_validation_count": sum(step.failed_validation_count for step in run.steps),
+                    "failed_validation_count": sum(
+                        step.failed_validation_count for step in run.steps
+                    ),
                     "feature_projection_report": feature_projection_report,
                     "learning_rate_applied": float(cycle_learning_rate),
                     "learning_rate_policy": cycle_lr_policy,
@@ -13873,7 +13584,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
 
             if cycle % args.test_every_cycles == 0:
                 test_result = run_tests(root, report_dir, cycle)
-                summary["test_failures"] = int(summary.get("test_failures", 0)) + int(test_result["exit_code"] != 0)
+                summary["test_failures"] = int(summary.get("test_failures", 0)) + int(
+                    test_result["exit_code"] != 0
+                )
                 append_event(log_path, args.run_id, test_result)
                 save_summary(summary_path, summary)
     finally:
@@ -13926,9 +13639,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         )
         summary["decoded_embedding_entries"] = len(autoencoder.state.decoded_embeddings)
         summary["elapsed_seconds"] = round(time.time() - started_at, 3)
-        summary["family_embedding_weight_entries"] = len(
-            autoencoder.state.family_embedding_weights
-        )
+        summary["family_embedding_weight_entries"] = len(autoencoder.state.family_embedding_weights)
         summary["family_semantic_slot_embedding_weight_entries"] = len(
             autoencoder.state.family_semantic_slot_embedding_weights
         )
@@ -13939,7 +13650,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             autoencoder.state.family_legal_ir_view_embedding_weights
         )
         summary["family_logit_entries"] = len(autoencoder.state.family_logits)
-        summary["feature_embedding_weight_entries"] = len(autoencoder.state.feature_embedding_weights)
+        summary["feature_embedding_weight_entries"] = len(
+            autoencoder.state.feature_embedding_weights
+        )
         summary["feature_family_logit_entries"] = len(autoencoder.state.feature_family_logits)
         summary["feature_legal_ir_view_logit_entries"] = len(
             autoencoder.state.feature_legal_ir_view_logits
@@ -13969,9 +13682,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             autoencoder.state.semantic_slot_legal_ir_view_logits
         )
         summary["finished_at"] = utc_now()
-        summary["legal_ir_view_logit_entries"] = len(
-            autoencoder.state.legal_ir_view_logits
-        )
+        summary["legal_ir_view_logit_entries"] = len(autoencoder.state.legal_ir_view_logits)
         summary["latest_queue_counts"] = supervisor.queue.status_counts()
         summary["latest_role_queue_counts"] = supervisor.queue.role_status_counts()
         update_program_synthesis_summary(
@@ -13996,10 +13707,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
     queue_path = queue_dir / f"{queue_run_id}.jsonl"
     log_path = log_dir / f"{args.run_id}.jsonl"
     summary_path = log_dir / f"{args.run_id}.summary"
-    worker_id = (
-        getattr(args, "worker_id", None)
-        or f"codex-program-synthesis-{args.run_id}"
-    )
+    worker_id = getattr(args, "worker_id", None) or f"codex-program-synthesis-{args.run_id}"
     log_dir.mkdir(parents=True, exist_ok=True)
     queue_dir.mkdir(parents=True, exist_ok=True)
     work_dir.mkdir(parents=True, exist_ok=True)
@@ -14041,9 +13749,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             "codex_execution_failure_count": 0,
             "codex_main_apply_count": 0,
             "codex_main_apply_failure_count": 0,
-            "codex_main_apply_lock_timeout_seconds": (
-                args.codex_main_apply_lock_timeout_seconds
-            ),
+            "codex_main_apply_lock_timeout_seconds": (args.codex_main_apply_lock_timeout_seconds),
             "codex_main_apply_repair_count": 0,
             "codex_packet_count": 0,
             "codex_patch_count": 0,
@@ -14077,7 +13783,9 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
     summary.setdefault("codex_scope", args.codex_scope)
     summary.setdefault("codex_task_embeddings_provider", args.codex_task_embeddings_provider)
     summary.setdefault("codex_vector_index_path", str(_codex_vector_index_path(args, queue_path)))
-    summary.setdefault("codex_vector_max_bundle_wait_seconds", args.codex_vector_max_bundle_wait_seconds)
+    summary.setdefault(
+        "codex_vector_max_bundle_wait_seconds", args.codex_vector_max_bundle_wait_seconds
+    )
     summary.setdefault("codex_vector_min_bundle_size", args.codex_vector_min_bundle_size)
     summary.setdefault("codex_vector_min_similarity", args.codex_vector_min_similarity)
     summary.setdefault("codex_main_apply_count", 0)
@@ -14099,9 +13807,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             "codex_lane_lock_mode": args.codex_lane_lock_mode,
             "codex_merge_repair_attempts": args.codex_merge_repair_attempts,
             "codex_merge_repair_mode": args.codex_merge_repair_mode,
-            "codex_main_apply_lock_timeout_seconds": (
-                args.codex_main_apply_lock_timeout_seconds
-            ),
+            "codex_main_apply_lock_timeout_seconds": (args.codex_main_apply_lock_timeout_seconds),
             "codex_scope": args.codex_scope,
             "codex_task_embeddings_provider": args.codex_task_embeddings_provider,
             "codex_vector_index_path": str(_codex_vector_index_path(args, queue_path)),
@@ -14183,13 +13889,9 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                         timeout_seconds=args.codex_timeout_seconds,
                         validation_commands=_codex_validation_commands_for_todos(claimed),
                     )
-                    exec_status = str(
-                        dict(packet.get("codex_exec", {})).get("status", "unknown")
-                    )
+                    exec_status = str(dict(packet.get("codex_exec", {})).get("status", "unknown"))
                     transient_requeue = _codex_packet_should_requeue_transient(packet)
-                    finalize_exec_status = (
-                        "transient_failure" if transient_requeue else exec_status
-                    )
+                    finalize_exec_status = "transient_failure" if transient_requeue else exec_status
                     with queue_file_lock(queue_path):
                         queue = ModalTodoQueue.load_jsonl(queue_path)
                         supervisor = ModalTodoSupervisor(queue=queue, policy=policy)
@@ -14219,53 +13921,47 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                         )
 
             summary["cycles"] = cycle
-            summary["codex_claimed_total"] = int(
-                summary.get("codex_claimed_total", 0)
-            ) + len(claimed)
+            summary["codex_claimed_total"] = int(summary.get("codex_claimed_total", 0)) + len(
+                claimed
+            )
             if packet.get("codex_exec"):
-                summary["codex_execution_count"] = int(
-                    summary.get("codex_execution_count", 0)
-                ) + 1
-                exec_status = str(
-                    packet.get("codex_exec", {}).get("status", "")
-                ).strip().lower()
+                summary["codex_execution_count"] = int(summary.get("codex_execution_count", 0)) + 1
+                exec_status = str(packet.get("codex_exec", {}).get("status", "")).strip().lower()
                 patch_status = str(packet.get("patch_status", "")).strip().lower()
                 if (
                     exec_status != "succeeded"
                     and patch_status not in CODEX_COMPLETED_WORK_STATUSES
                     and not packet.get("transient_requeue")
                 ):
-                    summary["codex_execution_failure_count"] = int(
-                        summary.get("codex_execution_failure_count", 0)
-                    ) + 1
+                    summary["codex_execution_failure_count"] = (
+                        int(summary.get("codex_execution_failure_count", 0)) + 1
+                    )
             if packet.get("transient_requeue"):
                 summary["codex_transient_requeue_count"] = int(
                     summary.get("codex_transient_requeue_count", 0)
-                ) + int(
-                    dict(packet.get("transient_requeue", {})).get("requeued_count", 0)
-                )
+                ) + int(dict(packet.get("transient_requeue", {})).get("requeued_count", 0))
             main_apply_status = str(packet.get("main_apply_status", "")).strip().lower()
             if main_apply_status == "applied":
-                summary["codex_main_apply_count"] = int(
-                    summary.get("codex_main_apply_count", 0)
-                ) + 1
+                summary["codex_main_apply_count"] = (
+                    int(summary.get("codex_main_apply_count", 0)) + 1
+                )
                 if str(packet.get("main_apply_repair_status", "")).strip().lower() == "repaired":
-                    summary["codex_main_apply_repair_count"] = int(
-                        summary.get("codex_main_apply_repair_count", 0)
-                    ) + 1
+                    summary["codex_main_apply_repair_count"] = (
+                        int(summary.get("codex_main_apply_repair_count", 0)) + 1
+                    )
             elif main_apply_status and main_apply_status not in {"no_changes", "skipped"}:
-                summary["codex_main_apply_failure_count"] = int(
-                    summary.get("codex_main_apply_failure_count", 0)
-                ) + 1
-            summary["codex_packet_count"] = int(
-                summary.get("codex_packet_count", 0)
-            ) + int(bool(packet.get("packet_path")))
-            summary["codex_patch_count"] = int(
-                summary.get("codex_patch_count", 0)
-            ) + int(bool(packet.get("patch_path")))
-            summary["codex_worktree_count"] = int(
-                summary.get("codex_worktree_count", 0)
-            ) + int(bool(packet.get("worktree_path")))
+                summary["codex_main_apply_failure_count"] = (
+                    int(summary.get("codex_main_apply_failure_count", 0)) + 1
+                )
+            summary["codex_packet_count"] = int(summary.get("codex_packet_count", 0)) + int(
+                bool(packet.get("packet_path"))
+            )
+            summary["codex_patch_count"] = int(summary.get("codex_patch_count", 0)) + int(
+                bool(packet.get("patch_path"))
+            )
+            summary["codex_worktree_count"] = int(summary.get("codex_worktree_count", 0)) + int(
+                bool(packet.get("worktree_path"))
+            )
             worktree_cleanup = (
                 cleanup_codex_packet_worktree(packet)
                 if packet.get("worktree_path")
@@ -14291,34 +13987,34 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             if metric_event_fields:
                 summary["latest_codex_target_metric_event"] = dict(metric_event_fields)
             event_payload = {
-                    "claimed_count": len(claimed),
-                    "cycle": cycle,
-                    "codex_exec_status": dict(packet.get("codex_exec", {})).get("status"),
-                    "codex_scope": getattr(args, "codex_scope", None),
-                    "codex_bundle_mode": getattr(args, "codex_bundle_mode", None),
-                    "codex_vector_claim_report": vector_claim_report,
-                    "duration_seconds": round(time.time() - cycle_started, 3),
-                    "event": "codex_program_synthesis_cycle",
-                    "main_apply_status": packet.get("main_apply_status"),
-                    "main_apply_repair_status": packet.get("main_apply_repair_status"),
-                    "main_apply_target_repo_root": packet.get("main_apply_target_repo_root"),
-                    "main_apply_validation_status": dict(
-                        packet.get("main_apply_validation", {})
-                    ).get("status"),
-                    "main_commit_status": dict(packet.get("main_commit", {})).get("status"),
-                    "packet_path": packet.get("packet_path"),
-                    "patch_path": packet.get("patch_path"),
-                    "patch_status": packet.get("patch_status"),
-                    "program_synthesis_claimed_count": status["claimed"],
-                    "program_synthesis_completed_count": status["completed"],
-                    "program_synthesis_execution_mode": status["execution_mode"],
-                    "program_synthesis_pending_count": status["pending"],
-                    "queue_run_id": queue_run_id,
-                    "transient_requeue": packet.get("transient_requeue"),
-                    "todo_list_path": packet.get("todo_list_path"),
-                    "todo_markdown_path": packet.get("todo_markdown_path"),
-                    "worktree_path": packet.get("worktree_path"),
-                    "worktree_cleanup": worktree_cleanup,
+                "claimed_count": len(claimed),
+                "cycle": cycle,
+                "codex_exec_status": dict(packet.get("codex_exec", {})).get("status"),
+                "codex_scope": getattr(args, "codex_scope", None),
+                "codex_bundle_mode": getattr(args, "codex_bundle_mode", None),
+                "codex_vector_claim_report": vector_claim_report,
+                "duration_seconds": round(time.time() - cycle_started, 3),
+                "event": "codex_program_synthesis_cycle",
+                "main_apply_status": packet.get("main_apply_status"),
+                "main_apply_repair_status": packet.get("main_apply_repair_status"),
+                "main_apply_target_repo_root": packet.get("main_apply_target_repo_root"),
+                "main_apply_validation_status": dict(packet.get("main_apply_validation", {})).get(
+                    "status"
+                ),
+                "main_commit_status": dict(packet.get("main_commit", {})).get("status"),
+                "packet_path": packet.get("packet_path"),
+                "patch_path": packet.get("patch_path"),
+                "patch_status": packet.get("patch_status"),
+                "program_synthesis_claimed_count": status["claimed"],
+                "program_synthesis_completed_count": status["completed"],
+                "program_synthesis_execution_mode": status["execution_mode"],
+                "program_synthesis_pending_count": status["pending"],
+                "queue_run_id": queue_run_id,
+                "transient_requeue": packet.get("transient_requeue"),
+                "todo_list_path": packet.get("todo_list_path"),
+                "todo_markdown_path": packet.get("todo_markdown_path"),
+                "worktree_path": packet.get("worktree_path"),
+                "worktree_cleanup": worktree_cleanup,
             }
             event_payload.update(metric_event_fields)
             append_event(

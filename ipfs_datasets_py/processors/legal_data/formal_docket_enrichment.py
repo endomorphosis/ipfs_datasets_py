@@ -54,7 +54,10 @@ _FORMAL_SINGLETONS: Dict[str, Any] | None = None
 
 
 def _formal_zkp_backend_name() -> str:
-    return str(os.getenv("IPFS_DATASETS_FORMAL_ZKP_BACKEND", "groth16") or "groth16").strip() or "groth16"
+    return (
+        str(os.getenv("IPFS_DATASETS_FORMAL_ZKP_BACKEND", "groth16") or "groth16").strip()
+        or "groth16"
+    )
 
 
 def _create_formal_zkp_prover() -> ZKPProver | None:
@@ -70,7 +73,9 @@ def _get_formal_singletons() -> Dict[str, Any]:
         return _FORMAL_SINGLETONS
     with _FORMAL_SINGLETON_LOCK:
         if _FORMAL_SINGLETONS is None:
-            extractor = KnowledgeGraphExtractor(use_spacy=False, use_transformers=False, use_tracer=False, use_srl=False)
+            extractor = KnowledgeGraphExtractor(
+                use_spacy=False, use_transformers=False, use_tracer=False, use_srl=False
+            )
             deontic_extractor = DeonticExtractor()
             conflict_detector = ConflictDetector()
             dcec_wrapper = EngDCECWrapper(use_native=True)
@@ -135,7 +140,12 @@ def enrich_docket_documents_with_formal_logic(
 ) -> Dict[str, Any]:
     """Extract formal artifacts from docket documents using repo-native modules."""
 
-    trace_enabled = str(os.getenv("IPFS_DATASETS_PY_FORMAL_TRACE", "")).strip().lower() in {"1", "true", "yes", "on"}
+    trace_enabled = str(os.getenv("IPFS_DATASETS_PY_FORMAL_TRACE", "")).strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
 
     def _trace(message: str) -> None:
         if trace_enabled:
@@ -171,7 +181,9 @@ def enrich_docket_documents_with_formal_logic(
                 flush=True,
             )
 
-    heartbeat_thread = threading.Thread(target=_heartbeat, name="formal-logic-heartbeat", daemon=True)
+    heartbeat_thread = threading.Thread(
+        target=_heartbeat, name="formal-logic-heartbeat", daemon=True
+    )
     heartbeat_thread.start()
 
     singletons = _get_formal_singletons()
@@ -181,7 +193,9 @@ def enrich_docket_documents_with_formal_logic(
     deontic_extractor = singletons.get("deontic_extractor") or DeonticExtractor()
     conflict_detector = singletons.get("conflict_detector") or ConflictDetector()
     dcec_wrapper = singletons.get("dcec_wrapper") or EngDCECWrapper(use_native=True)
-    dcec_ready = bool(singletons.get("dcec_ready")) if singletons else bool(dcec_wrapper.initialize())
+    dcec_ready = (
+        bool(singletons.get("dcec_ready")) if singletons else bool(dcec_wrapper.initialize())
+    )
     fol_converter = singletons.get("fol_converter")
     zkp_prover = singletons.get("zkp_prover")
 
@@ -226,10 +240,17 @@ def enrich_docket_documents_with_formal_logic(
         _LAST_FORMAL_PROGRESS.update({"stage": "kg_extract", "document_id": document_id})
         kg_started = time.monotonic()
         _trace(f"document_id={document_id} stage=kg_extract start")
-        kg = extractor.extract_knowledge_graph(payload_text, extraction_temperature=0.45, structure_temperature=0.35)
-        _trace(f"document_id={document_id} stage=kg_extract done elapsed={time.monotonic() - kg_started:.2f}s")
+        kg = extractor.extract_knowledge_graph(
+            payload_text, extraction_temperature=0.45, structure_temperature=0.35
+        )
+        _trace(
+            f"document_id={document_id} stage=kg_extract done elapsed={time.monotonic() - kg_started:.2f}s"
+        )
         kg_payload = kg.to_dict()
-        entities = [_normalize_kg_entity(item, document_id=document_id) for item in list(kg_payload.get("entities") or [])]
+        entities = [
+            _normalize_kg_entity(item, document_id=document_id)
+            for item in list(kg_payload.get("entities") or [])
+        ]
         entities = [item for item in entities if item]
         relationships = [
             _normalize_kg_relationship(item, document_id=document_id)
@@ -242,21 +263,29 @@ def enrich_docket_documents_with_formal_logic(
         deontic_started = time.monotonic()
         _trace(f"document_id={document_id} stage=deontic_extract start")
         statements = deontic_extractor.extract_statements(payload_text, document_id)
-        statements.extend(_extract_deontic_statements_fallback(payload_text, document_id=document_id))
+        statements.extend(
+            _extract_deontic_statements_fallback(payload_text, document_id=document_id)
+        )
         structured_signals = _extract_structured_legal_signals(
             payload_text,
             title=title,
             document_id=document_id,
             court=court,
         )
-        _trace(f"document_id={document_id} stage=deontic_extract done elapsed={time.monotonic() - deontic_started:.2f}s")
+        _trace(
+            f"document_id={document_id} stage=deontic_extract done elapsed={time.monotonic() - deontic_started:.2f}s"
+        )
         statements.extend(list(structured_signals.get("statements") or []))
         statements = _dedupe_statements(statements)
         all_statements.extend(statements)
         statements_by_doc[document_id].extend(statements)
         statement_dicts = [_statement_to_dict(stmt) for stmt in statements]
 
-        temporal_formula_strings = [formula for formula in (_tdfol_formula_from_statement(stmt) for stmt in statements) if formula]
+        temporal_formula_strings = [
+            formula
+            for formula in (_tdfol_formula_from_statement(stmt) for stmt in statements)
+            if formula
+        ]
         document_temporal_formula_strings = _build_document_temporal_formulas(
             document_id=document_id,
             title=title,
@@ -294,7 +323,9 @@ def enrich_docket_documents_with_formal_logic(
                 )
                 if formula_payload:
                     fol_formulas.append(formula_payload)
-            _trace(f"document_id={document_id} stage=fol_convert done elapsed={time.monotonic() - fol_started:.2f}s")
+            _trace(
+                f"document_id={document_id} stage=fol_convert done elapsed={time.monotonic() - fol_started:.2f}s"
+            )
 
         dcec_formulas: List[str] = list(structured_signals.get("dcec_formulas") or [])
         temporal_formula_strings.extend(list(structured_signals.get("temporal_formulas") or []))
@@ -311,13 +342,18 @@ def enrich_docket_documents_with_formal_logic(
                 result = dcec_wrapper.convert_to_dcec(sentence)
                 if result.success and result.dcec_formula:
                     dcec_formulas.append(str(result.dcec_formula).strip())
-            _trace(f"document_id={document_id} stage=dcec_convert done elapsed={time.monotonic() - dcec_started:.2f}s")
+            _trace(
+                f"document_id={document_id} stage=dcec_convert done elapsed={time.monotonic() - dcec_started:.2f}s"
+            )
 
         status["stage"] = "frames"
         _LAST_FORMAL_PROGRESS.update({"stage": "frames", "document_id": document_id})
         frame_started = time.monotonic()
         _trace(f"document_id={document_id} stage=frames start")
-        frames = [_frame_from_statement(stmt, docket_id=docket_id, case_name=case_name, court=court) for stmt in statements]
+        frames = [
+            _frame_from_statement(stmt, docket_id=docket_id, case_name=case_name, court=court)
+            for stmt in statements
+        ]
         frames.extend(list(structured_signals.get("frames") or []))
         document_frame = _document_frame(
             document_id=document_id,
@@ -331,11 +367,21 @@ def enrich_docket_documents_with_formal_logic(
         )
         frame_dicts = [frame for frame in frames if frame]
         for frame in frame_dicts:
-            aggregate_frames[str(frame.get("frame_id") or frame.get("object_id") or f"{document_id}:frame")] = dict(frame)
+            aggregate_frames[
+                str(frame.get("frame_id") or frame.get("object_id") or f"{document_id}:frame")
+            ] = dict(frame)
         if document_frame:
-            aggregate_document_frames[str(document_frame.get("frame_id") or document_frame.get("object_id") or f"{document_id}:document_frame")] = dict(document_frame)
+            aggregate_document_frames[
+                str(
+                    document_frame.get("frame_id")
+                    or document_frame.get("object_id")
+                    or f"{document_id}:document_frame"
+                )
+            ] = dict(document_frame)
 
-        _trace(f"document_id={document_id} stage=frames done elapsed={time.monotonic() - frame_started:.2f}s")
+        _trace(
+            f"document_id={document_id} stage=frames done elapsed={time.monotonic() - frame_started:.2f}s"
+        )
 
         status["stage"] = "proofs"
         _LAST_FORMAL_PROGRESS.update({"stage": "proofs", "document_id": document_id})
@@ -344,8 +390,16 @@ def enrich_docket_documents_with_formal_logic(
         propositions = [_proposition_from_statement(stmt) for stmt in statements]
         propositions.extend(list(structured_signals.get("propositions") or []))
         propositions.extend(_propositions_from_fol_formulas(fol_formulas))
-        propositions.extend(_propositions_from_logic_formulas(dcec_formulas, logic_system="deontic_cognitive_event_calculus"))
-        propositions.extend(_propositions_from_logic_formulas(temporal_formula_strings, logic_system="deontic_temporal_first_order_logic"))
+        propositions.extend(
+            _propositions_from_logic_formulas(
+                dcec_formulas, logic_system="deontic_cognitive_event_calculus"
+            )
+        )
+        propositions.extend(
+            _propositions_from_logic_formulas(
+                temporal_formula_strings, logic_system="deontic_temporal_first_order_logic"
+            )
+        )
         propositions = [prop for prop in propositions if prop]
         for proposition in propositions:
             proof = _build_formal_proof(
@@ -355,10 +409,16 @@ def enrich_docket_documents_with_formal_logic(
             )
             proofs[proof["proof_id"]] = proof
             certificates.extend(list(proof.get("certificates") or []))
-        _trace(f"document_id={document_id} stage=proofs done elapsed={time.monotonic() - proof_started:.2f}s")
+        _trace(
+            f"document_id={document_id} stage=proofs done elapsed={time.monotonic() - proof_started:.2f}s"
+        )
 
-        classification = _classify_from_formal_signals(statements=statements, entities=entities, title=title)
-        summary = _build_document_summary(title=title, entities=entities, statements=statements, dcec_formulas=dcec_formulas)
+        classification = _classify_from_formal_signals(
+            statements=statements, entities=entities, title=title
+        )
+        summary = _build_document_summary(
+            title=title, entities=entities, statements=statements, dcec_formulas=dcec_formulas
+        )
 
         analyses[document_id] = {
             "classification": classification,
@@ -423,15 +483,21 @@ def enrich_docket_documents_with_formal_logic(
         related = [
             _conflict_to_dict(conflict)
             for conflict in conflicts
-            if conflict.statement1.source_document == document_id or conflict.statement2.source_document == document_id
+            if conflict.statement1.source_document == document_id
+            or conflict.statement2.source_document == document_id
         ]
         if related and document_id in analyses:
             analyses[document_id]["deontic_conflicts"] = related
 
     deduped_fol_formulas = _dedupe_fol_formula_dicts(aggregate_fol_formulas)
-    deduped_certificates = _dedupe_dict_items(certificates, key_fields=("certificate_id", "backend", "theorem"))
+    deduped_certificates = _dedupe_dict_items(
+        certificates, key_fields=("certificate_id", "backend", "theorem")
+    )
     zkp_proof_certificates = _filter_zkp_certificates(deduped_certificates)
-    zkp_status = dict(singletons.get("zkp_status") or {"backend": _formal_zkp_backend_name(), "available": bool(zkp_prover)})
+    zkp_status = dict(
+        singletons.get("zkp_status")
+        or {"backend": _formal_zkp_backend_name(), "available": bool(zkp_prover)}
+    )
     zkp_certificate_ids = _dedupe_strings(
         str(item.get("certificate_id") or "")
         for item in zkp_proof_certificates
@@ -443,7 +509,9 @@ def enrich_docket_documents_with_formal_logic(
         "document_analyses": analyses,
         "knowledge_graph": {
             "entities": _dedupe_dict_items(aggregate_entities, key_fields=("id", "label", "type")),
-            "relationships": _dedupe_dict_items(aggregate_relationships, key_fields=("id", "source", "target", "type")),
+            "relationships": _dedupe_dict_items(
+                aggregate_relationships, key_fields=("id", "source", "target", "type")
+            ),
         },
         "temporal_fol": {
             "backend": "tdfol_constructor",
@@ -484,10 +552,18 @@ def enrich_docket_documents_with_formal_logic(
             "processed_document_count": processed_count,
             "skipped_document_count": skipped_count,
             "deontic_statement_count": len(all_statements),
-            "entity_count": len(_dedupe_dict_items(aggregate_entities, key_fields=("id", "label", "type"))),
-            "relationship_count": len(_dedupe_dict_items(aggregate_relationships, key_fields=("id", "source", "target", "type"))),
+            "entity_count": len(
+                _dedupe_dict_items(aggregate_entities, key_fields=("id", "label", "type"))
+            ),
+            "relationship_count": len(
+                _dedupe_dict_items(
+                    aggregate_relationships, key_fields=("id", "source", "target", "type")
+                )
+            ),
             "temporal_formula_count": len(_dedupe_strings(aggregate_temporal_formulas)),
-            "document_temporal_formula_count": len(_dedupe_strings(aggregate_document_temporal_formulas)),
+            "document_temporal_formula_count": len(
+                _dedupe_strings(aggregate_document_temporal_formulas)
+            ),
             "first_order_formula_count": len(deduped_fol_formulas),
             "dcec_formula_count": len(_dedupe_strings(aggregate_dcec_formulas)),
             "frame_count": len(aggregate_frames),
@@ -544,17 +620,22 @@ def _normalize_kg_entity(entity: Mapping[str, Any], *, document_id: str) -> Dict
     }
 
 
-def _normalize_kg_relationship(relationship: Mapping[str, Any], *, document_id: str) -> Dict[str, Any]:
+def _normalize_kg_relationship(
+    relationship: Mapping[str, Any], *, document_id: str
+) -> Dict[str, Any]:
     rel_id = str(relationship.get("id") or relationship.get("relationship_id") or "")
     source = str(relationship.get("source") or relationship.get("source_id") or "")
     target = str(relationship.get("target") or relationship.get("target_id") or "")
     if not source or not target:
         return {}
     return {
-        "id": rel_id or f"{document_id}:{source}:{target}:{relationship.get('relationship_type') or relationship.get('type') or 'related_to'}",
+        "id": rel_id
+        or f"{document_id}:{source}:{target}:{relationship.get('relationship_type') or relationship.get('type') or 'related_to'}",
         "source": source,
         "target": target,
-        "type": str(relationship.get("relationship_type") or relationship.get("type") or "related_to").upper(),
+        "type": str(
+            relationship.get("relationship_type") or relationship.get("type") or "related_to"
+        ).upper(),
         "properties": {
             "document_id": document_id,
             **dict(relationship.get("properties") or {}),
@@ -572,7 +653,9 @@ def _statement_to_dict(statement: DeonticStatement) -> Dict[str, Any]:
 def _conflict_to_dict(conflict: DeonticConflict) -> Dict[str, Any]:
     return {
         "id": conflict.id or f"{conflict.statement1.id}:{conflict.statement2.id}",
-        "conflict_type": conflict.conflict_type.value if isinstance(conflict.conflict_type, ConflictType) else str(conflict.conflict_type),
+        "conflict_type": conflict.conflict_type.value
+        if isinstance(conflict.conflict_type, ConflictType)
+        else str(conflict.conflict_type),
         "severity": conflict.severity,
         "explanation": conflict.explanation,
         "resolution_suggestions": list(conflict.resolution_suggestions or []),
@@ -599,9 +682,27 @@ def _events_from_statements(statements: Sequence[DeonticStatement]) -> List[Dict
 
 def _extract_deontic_statements_fallback(text: str, *, document_id: str) -> List[DeonticStatement]:
     patterns = [
-        (DeonticModality.OBLIGATION, re.compile(r"\b([A-Z][A-Za-z0-9 ,.'-]{1,80}?)\s+(must|shall|required to)\s+([^.;\n]{3,180})", re.IGNORECASE)),
-        (DeonticModality.PERMISSION, re.compile(r"\b([A-Z][A-Za-z0-9 ,.'-]{1,80}?)\s+(may|can|allowed to)\s+([^.;\n]{3,180})", re.IGNORECASE)),
-        (DeonticModality.PROHIBITION, re.compile(r"\b([A-Z][A-Za-z0-9 ,.'-]{1,80}?)\s+(must not|may not|cannot|shall not|prohibited from)\s+([^.;\n]{3,180})", re.IGNORECASE)),
+        (
+            DeonticModality.OBLIGATION,
+            re.compile(
+                r"\b([A-Z][A-Za-z0-9 ,.'-]{1,80}?)\s+(must|shall|required to)\s+([^.;\n]{3,180})",
+                re.IGNORECASE,
+            ),
+        ),
+        (
+            DeonticModality.PERMISSION,
+            re.compile(
+                r"\b([A-Z][A-Za-z0-9 ,.'-]{1,80}?)\s+(may|can|allowed to)\s+([^.;\n]{3,180})",
+                re.IGNORECASE,
+            ),
+        ),
+        (
+            DeonticModality.PROHIBITION,
+            re.compile(
+                r"\b([A-Z][A-Za-z0-9 ,.'-]{1,80}?)\s+(must not|may not|cannot|shall not|prohibited from)\s+([^.;\n]{3,180})",
+                re.IGNORECASE,
+            ),
+        ),
     ]
     statements: List[DeonticStatement] = []
     for modality, pattern in patterns:
@@ -671,9 +772,13 @@ def _extract_structured_legal_signals(
             )
             signals["statements"].append(statement)
             signals["normative_sentences"].append(norm_candidate["cnl_sentence"])
-            compile_result = _compile_cnl_sentence(norm_candidate["cnl_sentence"], jurisdiction=court or "default")
+            compile_result = _compile_cnl_sentence(
+                norm_candidate["cnl_sentence"], jurisdiction=court or "default"
+            )
             if compile_result:
-                signals["temporal_formulas"].extend(list(compile_result.get("temporal_formulas") or []))
+                signals["temporal_formulas"].extend(
+                    list(compile_result.get("temporal_formulas") or [])
+                )
                 signals["dcec_formulas"].extend(list(compile_result.get("dcec_formulas") or []))
                 signals["frames"].extend(
                     _frames_from_compiled_norm(
@@ -685,7 +790,9 @@ def _extract_structured_legal_signals(
                         compile_result=compile_result,
                     )
                 )
-            signals["entities"].append(_actor_entity(document_id=document_id, actor=norm_candidate["actor"]))
+            signals["entities"].append(
+                _actor_entity(document_id=document_id, actor=norm_candidate["actor"])
+            )
             signals["entities"].append(
                 _norm_entity(
                     norm_id=norm_id,
@@ -702,7 +809,10 @@ def _extract_structured_legal_signals(
                     "source": actor_entity_id,
                     "target": document_id,
                     "type": "SUBJECT_OF",
-                    "properties": {"document_id": document_id, "signal_type": norm_candidate["signal_type"]},
+                    "properties": {
+                        "document_id": document_id,
+                        "signal_type": norm_candidate["signal_type"],
+                    },
                 }
             )
             signals["relationships"].append(
@@ -790,7 +900,9 @@ def _extract_structured_legal_signals(
                     }
                 )
 
-        event_candidate = _extract_event_candidate_from_clause(clause, fallback_context=title or text)
+        event_candidate = _extract_event_candidate_from_clause(
+            clause, fallback_context=title or text
+        )
         if event_candidate:
             event_id = _canonical_event_id(
                 label=event_candidate["label"],
@@ -813,7 +925,10 @@ def _extract_structured_legal_signals(
                         "id": event_id,
                         "label": event_candidate["label"],
                         "type": "court_event",
-                        "properties": {"document_id": document_id, "date": event_candidate["event_date"]},
+                        "properties": {
+                            "document_id": document_id,
+                            "date": event_candidate["event_date"],
+                        },
                     }
                 )
                 signals["relationships"].append(
@@ -822,7 +937,10 @@ def _extract_structured_legal_signals(
                         "source": document_id,
                         "target": event_id,
                         "type": "SCHEDULES",
-                        "properties": {"document_id": document_id, "event_date": event_candidate["event_date"]},
+                        "properties": {
+                            "document_id": document_id,
+                            "event_date": event_candidate["event_date"],
+                        },
                     }
                 )
 
@@ -839,24 +957,38 @@ def _extract_structured_legal_signals(
                 )
 
     return {
-        key: (_dedupe_strings(value) if key in {"temporal_formulas", "dcec_formulas", "normative_sentences"} else value)
+        key: (
+            _dedupe_strings(value)
+            if key in {"temporal_formulas", "dcec_formulas", "normative_sentences"}
+            else value
+        )
         for key, value in signals.items()
     }
 
 
-def _iter_norm_candidates_from_clause(clause: str, *, fallback_context: str) -> List[Dict[str, Any]]:
+def _iter_norm_candidates_from_clause(
+    clause: str, *, fallback_context: str
+) -> List[Dict[str, Any]]:
     output: List[Dict[str, Any]] = []
-    direct_candidate = _extract_norm_candidate_from_clause(clause, fallback_context=fallback_context)
+    direct_candidate = _extract_norm_candidate_from_clause(
+        clause, fallback_context=fallback_context
+    )
     if direct_candidate:
         output.append(direct_candidate)
-    output.extend(_extract_deadline_candidates_from_clause(clause, fallback_context=fallback_context))
+    output.extend(
+        _extract_deadline_candidates_from_clause(clause, fallback_context=fallback_context)
+    )
     deduped: List[Dict[str, Any]] = []
     seen: set[tuple[str, str, str, str]] = set()
     for candidate in output:
         key = (
             str(candidate.get("actor") or ""),
             str(candidate.get("action") or ""),
-            str((candidate.get("modality") or DeonticModality.OBLIGATION).value if candidate.get("modality") else ""),
+            str(
+                (candidate.get("modality") or DeonticModality.OBLIGATION).value
+                if candidate.get("modality")
+                else ""
+            ),
             str(candidate.get("deadline") or ""),
         )
         if key in seen:
@@ -877,16 +1009,39 @@ def _split_legal_clauses(text: str, *, title: str) -> List[str]:
     return output
 
 
-def _extract_norm_candidate_from_clause(clause: str, *, fallback_context: str) -> Dict[str, Any] | None:
+def _extract_norm_candidate_from_clause(
+    clause: str, *, fallback_context: str
+) -> Dict[str, Any] | None:
     clause = _strip_introductory_legal_phrases(clause)
     actor_patterns = [
-        (DeonticModality.PROHIBITION, r"(?P<actor>[^.;]{2,80}?)\s+(?:is|are\s+)?prohibited from\s+(?P<action>[^.;]{3,220})"),
-        (DeonticModality.PROHIBITION, r"(?P<actor>[^.;]{2,80}?)\s+(?:must not|shall not|may not|cannot)\s+(?P<action>[^.;]{3,220})"),
-        (DeonticModality.OBLIGATION, r"(?P<actor>[^.;]{2,80}?)\s+(?:is|are)\s+directed to\s+(?P<action>[^.;]{3,220})"),
-        (DeonticModality.OBLIGATION, r"(?P<actor>[^.;]{2,80}?)\s+(?:is|are)\s+ordered to\s+(?P<action>[^.;]{3,220})"),
-        (DeonticModality.OBLIGATION, r"(?P<actor>[^.;]{2,80}?)\s+(?:is|are)\s+required to\s+(?P<action>[^.;]{3,220})"),
-        (DeonticModality.OBLIGATION, r"(?P<actor>[^.;]{2,80}?)\s+(?:must|shall|required to)\s+(?P<action>[^.;]{3,220})"),
-        (DeonticModality.PERMISSION, r"(?P<actor>[^.;]{2,80}?)\s+(?:may|can|allowed to)\s+(?P<action>[^.;]{3,220})"),
+        (
+            DeonticModality.PROHIBITION,
+            r"(?P<actor>[^.;]{2,80}?)\s+(?:is|are\s+)?prohibited from\s+(?P<action>[^.;]{3,220})",
+        ),
+        (
+            DeonticModality.PROHIBITION,
+            r"(?P<actor>[^.;]{2,80}?)\s+(?:must not|shall not|may not|cannot)\s+(?P<action>[^.;]{3,220})",
+        ),
+        (
+            DeonticModality.OBLIGATION,
+            r"(?P<actor>[^.;]{2,80}?)\s+(?:is|are)\s+directed to\s+(?P<action>[^.;]{3,220})",
+        ),
+        (
+            DeonticModality.OBLIGATION,
+            r"(?P<actor>[^.;]{2,80}?)\s+(?:is|are)\s+ordered to\s+(?P<action>[^.;]{3,220})",
+        ),
+        (
+            DeonticModality.OBLIGATION,
+            r"(?P<actor>[^.;]{2,80}?)\s+(?:is|are)\s+required to\s+(?P<action>[^.;]{3,220})",
+        ),
+        (
+            DeonticModality.OBLIGATION,
+            r"(?P<actor>[^.;]{2,80}?)\s+(?:must|shall|required to)\s+(?P<action>[^.;]{3,220})",
+        ),
+        (
+            DeonticModality.PERMISSION,
+            r"(?P<actor>[^.;]{2,80}?)\s+(?:may|can|allowed to)\s+(?P<action>[^.;]{3,220})",
+        ),
     ]
     for modality, pattern in actor_patterns:
         match = re.search(pattern, clause, re.IGNORECASE)
@@ -932,7 +1087,9 @@ def _extract_norm_candidate_from_clause(clause: str, *, fallback_context: str) -
     return None
 
 
-def _extract_deadline_candidates_from_clause(clause: str, *, fallback_context: str) -> List[Dict[str, Any]]:
+def _extract_deadline_candidates_from_clause(
+    clause: str, *, fallback_context: str
+) -> List[Dict[str, Any]]:
     clause = _strip_introductory_legal_phrases(clause)
     candidates: List[Dict[str, Any]] = []
     due_pattern = re.compile(
@@ -942,7 +1099,11 @@ def _extract_deadline_candidates_from_clause(clause: str, *, fallback_context: s
     for match in due_pattern.finditer(clause):
         action_label = _normalize_action(match.group("action"))
         deadline = _normalize_deadline(match.group("date"))
-        actor = "Defendant" if action_label.lower() == "answer" else _infer_party_actor(fallback_context)
+        actor = (
+            "Defendant"
+            if action_label.lower() == "answer"
+            else _infer_party_actor(fallback_context)
+        )
         mapped_action = _map_due_action(action_label)
         if actor and mapped_action and deadline:
             candidates.append(
@@ -976,7 +1137,9 @@ def _extract_deadline_candidates_from_clause(clause: str, *, fallback_context: s
     return candidates
 
 
-def _extract_event_candidate_from_clause(clause: str, *, fallback_context: str) -> Dict[str, str] | None:
+def _extract_event_candidate_from_clause(
+    clause: str, *, fallback_context: str
+) -> Dict[str, str] | None:
     clause = _strip_introductory_legal_phrases(clause)
     match = re.search(
         r"(?P<label>(?:Rule\s+\d+\s+)?(?:Scheduling\s+Conference|Final Pretrial Conference|Jury Trial|telephone status conference|hearing|conference|trial))\s+set\s+for\s+(?P<date>[A-Za-z0-9/,: -]{3,60})",
@@ -997,7 +1160,11 @@ def _extract_event_candidate_from_clause(clause: str, *, fallback_context: str) 
 
 def _extract_disposition_candidate(clause: str) -> Dict[str, str] | None:
     clause = _strip_introductory_legal_phrases(clause)
-    match = re.search(r"(?P<label>[^.;]{3,180}?)\s+is\s+(?P<disp>granted|denied|vacated|continued)\b", clause, re.IGNORECASE)
+    match = re.search(
+        r"(?P<label>[^.;]{3,180}?)\s+is\s+(?P<disp>granted|denied|vacated|continued)\b",
+        clause,
+        re.IGNORECASE,
+    )
     if not match:
         return None
     return {
@@ -1008,7 +1175,9 @@ def _extract_disposition_candidate(clause: str) -> Dict[str, str] | None:
 
 def _compile_cnl_sentence(sentence: str, *, jurisdiction: str) -> Dict[str, Any] | None:
     try:
-        ir, diagnostics = parse_cnl_to_ir_with_diagnostics(sentence, jurisdiction=jurisdiction or "default")
+        ir, diagnostics = parse_cnl_to_ir_with_diagnostics(
+            sentence, jurisdiction=jurisdiction or "default"
+        )
         ir = normalize_v2_ir(ir)
         return {
             "diagnostics": diagnostics,
@@ -1055,7 +1224,15 @@ def _frames_from_compiled_norm(
     ]
 
 
-def _event_frame(*, document_id: str, event_id: str, label: str, event_type: str, event_date: str, source_text: str) -> Dict[str, Any]:
+def _event_frame(
+    *,
+    document_id: str,
+    event_id: str,
+    label: str,
+    event_type: str,
+    event_date: str,
+    source_text: str,
+) -> Dict[str, Any]:
     frame = FLogicFrame(
         object_id=f"event_{_sanitize_symbol(event_id)}",
         scalar_methods={
@@ -1080,7 +1257,9 @@ def _event_frame(*, document_id: str, event_id: str, label: str, event_type: str
     }
 
 
-def _disposition_frame(*, document_id: str, label: str, disposition: str, source_text: str) -> Dict[str, Any]:
+def _disposition_frame(
+    *, document_id: str, label: str, disposition: str, source_text: str
+) -> Dict[str, Any]:
     frame = FLogicFrame(
         object_id=f"disp_{_sanitize_symbol(document_id)}_{_sanitize_symbol(label)[:24]}",
         scalar_methods={
@@ -1112,7 +1291,9 @@ def _actor_entity(*, document_id: str, actor: str) -> Dict[str, Any]:
     }
 
 
-def _deadline_entity(*, deadline_id: str, actor: str, action: str, deadline: str, document_id: str) -> Dict[str, Any]:
+def _deadline_entity(
+    *, deadline_id: str, actor: str, action: str, deadline: str, document_id: str
+) -> Dict[str, Any]:
     return {
         "id": deadline_id,
         "label": f"{actor} deadline for {action}",
@@ -1161,7 +1342,12 @@ def _candidate_to_cnl(*, actor: str, action: str, modality: DeonticModality) -> 
 
 
 def _normalize_actor(value: str) -> str:
-    actor = re.sub(r"^(?:the\s+court\s+directs\s+|the\s+court\s+orders\s+|the\s+court\s+hereby\s+)", "", str(value or "").strip(), flags=re.IGNORECASE)
+    actor = re.sub(
+        r"^(?:the\s+court\s+directs\s+|the\s+court\s+orders\s+|the\s+court\s+hereby\s+)",
+        "",
+        str(value or "").strip(),
+        flags=re.IGNORECASE,
+    )
     actor = re.sub(r"^(?:in light of\s+[^,]+,\s*)", "", actor, flags=re.IGNORECASE)
     actor = re.sub(
         r"^(?:within\s+\d+\s+(?:days|day|hours|hour|weeks|week|months|month|years|year)\s*,?\s*)",
@@ -1274,8 +1460,15 @@ def _map_due_action(action_label: str) -> str:
 
 
 def _strip_introductory_legal_phrases(clause: str) -> str:
-    cleaned = re.sub(r"^\s*text order entered by [^.]+\.\s*", "", str(clause or ""), flags=re.IGNORECASE)
-    cleaned = re.sub(r"^\s*in light of .*?,\s*(?=(plaintiff|defendant|the parties|clerk|court)\b)", "", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(
+        r"^\s*text order entered by [^.]+\.\s*", "", str(clause or ""), flags=re.IGNORECASE
+    )
+    cleaned = re.sub(
+        r"^\s*in light of .*?,\s*(?=(plaintiff|defendant|the parties|clerk|court)\b)",
+        "",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
     cleaned = re.sub(r"^\s*the court hereby\s+", "", cleaned, flags=re.IGNORECASE)
     return cleaned.strip()
 
@@ -1344,23 +1537,32 @@ def _tdfol_formula_from_statement(statement: DeonticStatement) -> str:
     elif statement.modality.value == "prohibition":
         formula = create_prohibition(predicate, agent=agent)
     elif statement.modality.value == "conditional":
-        trigger = Predicate(_sanitize_symbol(statement.conditions[0] if statement.conditions else "trigger"), (agent,))
+        trigger = Predicate(
+            _sanitize_symbol(statement.conditions[0] if statement.conditions else "trigger"),
+            (agent,),
+        )
         formula = create_implication(trigger, create_obligation(predicate, agent=agent))
     else:
         formula = create_always(predicate)
     return formula.to_string(pretty=True)
 
 
-def _build_document_temporal_formulas(*, document_id: str, title: str, date_filed: str) -> List[str]:
+def _build_document_temporal_formulas(
+    *, document_id: str, title: str, date_filed: str
+) -> List[str]:
     doc_const = Constant(_sanitize_symbol(document_id))
     formulas = [create_always(Predicate("document_exists", (doc_const,))).to_string(pretty=True)]
     if title:
         title_const = Constant(_sanitize_symbol(title)[:48])
-        formulas.append(Predicate("document_titled", (doc_const, title_const)).to_string(pretty=True))
+        formulas.append(
+            Predicate("document_titled", (doc_const, title_const)).to_string(pretty=True)
+        )
     if date_filed:
         date_const = Constant(_sanitize_symbol(date_filed))
         formulas.append(Predicate("filed_on", (doc_const, date_const)).to_string(pretty=True))
-        formulas.append(create_always(Predicate("docket_event_recorded", (doc_const,))).to_string(pretty=True))
+        formulas.append(
+            create_always(Predicate("docket_event_recorded", (doc_const,))).to_string(pretty=True)
+        )
     return formulas
 
 
@@ -1391,10 +1593,7 @@ def _frame_from_statement(
         "object_id": frame.object_id,
         "isa": frame.isa,
         "isaset": list(frame.isaset),
-        "slots": {
-            key: str(value).strip('"')
-            for key, value in frame.scalar_methods.items()
-        },
+        "slots": {key: str(value).strip('"') for key, value in frame.scalar_methods.items()},
         "ergo": frame.to_ergo_string(),
     }
 
@@ -1463,7 +1662,9 @@ def _propositions_from_fol_formulas(formulas: Sequence[Mapping[str, Any]]) -> Li
     return propositions
 
 
-def _propositions_from_logic_formulas(formulas: Sequence[str], *, logic_system: str) -> List[Dict[str, Any]]:
+def _propositions_from_logic_formulas(
+    formulas: Sequence[str], *, logic_system: str
+) -> List[Dict[str, Any]]:
     propositions: List[Dict[str, Any]] = []
     for formula in formulas:
         formula_text = str(formula or "").strip()
@@ -1479,18 +1680,26 @@ def _propositions_from_logic_formulas(formulas: Sequence[str], *, logic_system: 
     return propositions
 
 
-def _build_formal_proof(*, document_id: str, proposition: Mapping[str, Any], zkp_prover: ZKPProver | None) -> Dict[str, Any]:
+def _build_formal_proof(
+    *, document_id: str, proposition: Mapping[str, Any], zkp_prover: ZKPProver | None
+) -> Dict[str, Any]:
     statement = str(proposition.get("statement") or "").strip()
-    assumptions = [str(item) for item in list(proposition.get("assumptions") or []) if str(item).strip()]
+    assumptions = [
+        str(item) for item in list(proposition.get("assumptions") or []) if str(item).strip()
+    ]
     logic_system = str(proposition.get("logic_system") or "formal_logic").strip() or "formal_logic"
-    proof_hash = hashlib.sha256(f"{document_id}\n{logic_system}\n{statement}".encode("utf-8")).hexdigest()[:12]
+    proof_hash = hashlib.sha256(
+        f"{document_id}\n{logic_system}\n{statement}".encode("utf-8")
+    ).hexdigest()[:12]
     proof_id = f"formal_proof_{_sanitize_symbol(document_id)}_{_sanitize_symbol(statement)[:32]}_{proof_hash}"
     zkp_proof = None
     try:
         axioms = [_sanitize_symbol(item) for item in assumptions if _sanitize_symbol(item)]
         theorem = _sanitize_symbol(statement)
         if theorem and zkp_prover is not None:
-            zkp_proof = zkp_prover.generate_proof(theorem=theorem, private_axioms=axioms or ["document_exists"])
+            zkp_proof = zkp_prover.generate_proof(
+                theorem=theorem, private_axioms=axioms or ["document_exists"]
+            )
     except Exception:
         zkp_proof = None
     certificates = [
@@ -1510,8 +1719,14 @@ def _build_formal_proof(*, document_id: str, proposition: Mapping[str, Any], zkp
     ]
     if zkp_proof is not None:
         proof_metadata = dict(getattr(zkp_proof, "metadata", {}) or {})
-        proof_backend = str(proof_metadata.get("backend") or proof_metadata.get("proof_system") or "logic.zkp")
-        proof_format = "groth16_zksnark" if "groth16" in proof_backend.lower() and "simulated" not in proof_backend.lower() else "zkp_proof"
+        proof_backend = str(
+            proof_metadata.get("backend") or proof_metadata.get("proof_system") or "logic.zkp"
+        )
+        proof_format = (
+            "groth16_zksnark"
+            if "groth16" in proof_backend.lower() and "simulated" not in proof_backend.lower()
+            else "zkp_proof"
+        )
         certificates.append(
             {
                 "certificate_id": f"{proof_id}:certificate:zkp",
@@ -1663,10 +1878,14 @@ def _fol_conversion_to_dict(result: Any, *, document_id: str, source_text: str) 
             "source_text": source_text[:500],
             "backend": "fol_converter",
             "status": str(status or ""),
-            "confidence": float(getattr(result, "confidence", payload.get("confidence") or 0.0) or 0.0),
+            "confidence": float(
+                getattr(result, "confidence", payload.get("confidence") or 0.0) or 0.0
+            ),
             "warnings": _jsonable_logic_value(list(getattr(result, "warnings", []) or [])),
             "errors": _jsonable_logic_value(list(getattr(result, "errors", []) or [])),
-            "conversion_metadata": _jsonable_logic_value(dict(getattr(result, "metadata", {}) or {})),
+            "conversion_metadata": _jsonable_logic_value(
+                dict(getattr(result, "metadata", {}) or {})
+            ),
         }
     )
     return payload
@@ -1698,7 +1917,9 @@ def _filter_zkp_certificates(certificates: Iterable[Mapping[str, Any]]) -> List[
         payload = dict(certificate or {})
         backend = str(payload.get("backend") or "").lower()
         fmt = str(payload.get("format") or "").lower()
-        nested_payload = payload.get("payload") if isinstance(payload.get("payload"), Mapping) else {}
+        nested_payload = (
+            payload.get("payload") if isinstance(payload.get("payload"), Mapping) else {}
+        )
         nested_system = str((nested_payload or {}).get("proof_system") or "").lower()
         if (
             "zkp" in backend
@@ -1724,7 +1945,9 @@ def _dedupe_strings(values: Iterable[str]) -> List[str]:
     return output
 
 
-def _dedupe_dict_items(items: Iterable[Mapping[str, Any]], *, key_fields: Sequence[str]) -> List[Dict[str, Any]]:
+def _dedupe_dict_items(
+    items: Iterable[Mapping[str, Any]], *, key_fields: Sequence[str]
+) -> List[Dict[str, Any]]:
     seen: set[tuple[str, ...]] = set()
     output: List[Dict[str, Any]] = []
     for item in items:

@@ -134,14 +134,15 @@ tasks = [
 for task in tasks:
     coordinator.queue_task(task)
 
+
 # Process queue asynchronously
 async def main():
     results = await coordinator.process_queue()
-    
+
     # Print results
     for result in results:
         print(f"Task {result.task_id}: {'✓' if result.success else '✗'}")
-    
+
     # Get statistics
     stats = coordinator.get_statistics()
     print(f"\nStatistics:")
@@ -149,6 +150,7 @@ async def main():
     print(f"  Completed: {stats['total_completed']}")
     print(f"  Failed: {stats['total_failed']}")
     print(f"  Success rate: {stats['success_rate']:.1%}")
+
 
 asyncio.run(main())
 ```
@@ -326,17 +328,18 @@ from ipfs_datasets_py.optimizers.agentic import (
     ValidationResult,
 )
 
+
 class MyCustomOptimizer(AgenticOptimizer):
     """Custom optimization strategy."""
-    
+
     def _get_method(self) -> OptimizationMethod:
         return OptimizationMethod.ADVERSARIAL  # Or create custom enum
-    
+
     def optimize(self, task: OptimizationTask) -> OptimizationResult:
         """Implement your optimization logic."""
         # Your implementation here
         pass
-    
+
     def validate(self, result: OptimizationResult) -> ValidationResult:
         """Implement your validation logic."""
         # Your implementation here
@@ -372,10 +375,10 @@ for agent_id in coordinator.list_agents():
 limiter = controller.rate_limiter
 status = limiter.get_status()
 
-if not status['can_make_request']:
+if not status["can_make_request"]:
     print(f"Rate limit reached. Reset in {status['time_until_reset']:.0f}s")
     print("Switching to patch-based system...")
-    
+
     # Use patch controller instead
     patch_controller = PatchBasedChangeController(...)
 ```

@@ -40,15 +40,19 @@ def evaluate_clarity(ontology: Dict[str, Any], context: Any) -> float:
 
     # Sub-score 4: short-name penalty -- texts with < 3 chars suggest noisy extraction
     short_names = sum(
-        1 for e in entities
+        1
+        for e in entities
         if isinstance(e, dict) and len((e.get("text") or e.get("id") or "").strip()) < 3
     )
     short_penalty = short_names / len(entities)
 
     # Sub-score 5: confidence coverage -- fraction with explicit confidence > 0
     with_confidence = sum(
-        1 for e in entities
-        if isinstance(e, dict) and isinstance(e.get("confidence"), (int, float)) and e["confidence"] > 0
+        1
+        for e in entities
+        if isinstance(e, dict)
+        and isinstance(e.get("confidence"), (int, float))
+        and e["confidence"] > 0
     )
     confidence_score = with_confidence / len(entities)
 

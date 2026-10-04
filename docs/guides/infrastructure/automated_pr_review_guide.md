@@ -118,11 +118,7 @@ Automatically review all open PRs:
 ```python
 {
     "tool": "automated_pr_review",
-    "parameters": {
-        "dry_run": false,
-        "min_confidence": 60,
-        "limit": 100
-    }
+    "parameters": {"dry_run": false, "min_confidence": 60, "limit": 100},
 }
 ```
 
@@ -131,13 +127,7 @@ Automatically review all open PRs:
 Analyze a specific PR without invoking Copilot:
 
 ```python
-{
-    "tool": "analyze_pr",
-    "parameters": {
-        "pr_number": 123,
-        "min_confidence": 60
-    }
-}
+{"tool": "analyze_pr", "parameters": {"pr_number": 123, "min_confidence": 60}}
 ```
 
 #### InvokeCopilotOnPRTool
@@ -145,14 +135,7 @@ Analyze a specific PR without invoking Copilot:
 Invoke Copilot on a specific PR:
 
 ```python
-{
-    "tool": "invoke_copilot_on_pr",
-    "parameters": {
-        "pr_number": 123,
-        "force": false,
-        "dry_run": false
-    }
-}
+{"tool": "invoke_copilot_on_pr", "parameters": {"pr_number": 123, "force": false, "dry_run": false}}
 ```
 
 ## Example Output
@@ -278,9 +261,9 @@ You can customize the decision criteria by modifying `CRITERIA_WEIGHTS` in `Auto
 
 ```python
 CRITERIA_WEIGHTS = {
-    'is_draft': 30,
-    'has_auto_fix_label': 40,
-    'workflow_failure': 45,
+    "is_draft": 30,
+    "has_auto_fix_label": 40,
+    "workflow_failure": 45,
     # Add or modify weights here
 }
 ```

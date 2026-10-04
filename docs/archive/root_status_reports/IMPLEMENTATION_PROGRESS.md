@@ -110,9 +110,11 @@
 # Protocol classes enable duck typing with type safety
 from ipfs_datasets_py.logic.types import Prover, Formula
 
+
 class MyProver:
     def prove(self, formula: str, timeout: int = 30) -> ProofResult: ...
     def get_name(self) -> str: ...
+
 
 # Automatically satisfies Protocol
 prover: Prover = MyProver()

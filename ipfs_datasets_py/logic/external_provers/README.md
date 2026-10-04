@@ -78,10 +78,7 @@ pip install cvc5
 ### Basic Usage
 
 ```python
-from ipfs_datasets_py.logic.external_provers import (
-    Z3ProverBridge,
-    get_available_provers
-)
+from ipfs_datasets_py.logic.external_provers import Z3ProverBridge, get_available_provers
 from ipfs_datasets_py.logic.TDFOL import parse_tdfol
 
 # Check what's available
@@ -206,10 +203,7 @@ export ANTHROPIC_API_KEY="your-key"
 from ipfs_datasets_py.logic.external_provers import SymbolicAIProverBridge
 from ipfs_datasets_py.logic.TDFOL import parse_tdfol
 
-prover = SymbolicAIProverBridge(
-    confidence_threshold=0.8,
-    enable_cache=True
-)
+prover = SymbolicAIProverBridge(confidence_threshold=0.8, enable_cache=True)
 
 formula = parse_tdfol("P -> Q")
 
@@ -224,7 +218,7 @@ for s in strategies:
     print(f"- {s}")
 
 # Prove with hybrid approach (neural + symbolic fallback)
-result = prover.prove(formula, strategy='hybrid')
+result = prover.prove(formula, strategy="hybrid")
 print(f"Valid: {result.is_valid}")
 print(f"Confidence: {result.confidence:.1%}")
 print(f"Reasoning: {result.reasoning}")
@@ -275,7 +269,7 @@ from ipfs_datasets_py.logic.TDFOL import parse_tdfol
 prover = CVC5ProverBridge(
     timeout=5.0,
     use_proof=True,  # Generate proofs
-    enable_cache=True
+    enable_cache=True,
 )
 
 # Prove complex quantified formula
@@ -336,9 +330,7 @@ from ipfs_datasets_py.logic.external_provers import LeanProverBridge
 from ipfs_datasets_py.logic.TDFOL import parse_tdfol
 
 prover = LeanProverBridge(
-    timeout=30.0,
-    auto_tactics=["trivial", "simp", "tauto", "decide"],
-    enable_cache=True
+    timeout=30.0, auto_tactics=["trivial", "simp", "tauto", "decide"], enable_cache=True
 )
 
 # Prove a theorem with Lean
@@ -401,9 +393,7 @@ from ipfs_datasets_py.logic.external_provers import CoqProverBridge
 from ipfs_datasets_py.logic.TDFOL import parse_tdfol
 
 prover = CoqProverBridge(
-    timeout=30.0,
-    auto_tactics=["auto", "intuition", "tauto", "firstorder"],
-    enable_cache=True
+    timeout=30.0, auto_tactics=["auto", "intuition", "tauto", "firstorder"], enable_cache=True
 )
 
 # Prove a theorem with Coq
@@ -438,11 +428,7 @@ The `ProverRouter` provides intelligent selection and coordination of provers.
 ```python
 from ipfs_datasets_py.logic.external_provers import ProverRouter, ProverStrategy
 
-router = ProverRouter(
-    enable_z3=True,
-    enable_symbolicai=True,
-    enable_cache=True
-)
+router = ProverRouter(enable_z3=True, enable_symbolicai=True, enable_cache=True)
 
 # Automatic selection
 result = router.prove(formula, strategy=ProverStrategy.AUTO)
@@ -466,12 +452,7 @@ All provers use unified CID-based caching for O(1) lookups.
 
 ```python
 # CID computed from formula + axioms + prover + config
-cid = CID({
-    'formula': 'P -> Q',
-    'axioms': [],
-    'prover': 'Z3',
-    'config': {'timeout': 5.0}
-})
+cid = CID({"formula": "P -> Q", "axioms": [], "prover": "Z3", "config": {"timeout": 5.0}})
 
 # O(1) lookup
 cached_result = cache.get(cid)  # ~0.1ms
@@ -579,19 +560,11 @@ monitor.print_summary()
 
 ```python
 # Z3 with custom settings
-prover = Z3ProverBridge(
-    timeout=10.0,
-    use_unsat_core=True,
-    use_model=True,
-    enable_cache=True
-)
+prover = Z3ProverBridge(timeout=10.0, use_unsat_core=True, use_model=True, enable_cache=True)
 
 # SymbolicAI with specific LLM
 prover = SymbolicAIProverBridge(
-    confidence_threshold=0.9,
-    use_symbolic_fallback=True,
-    llm_engine="gpt-4",
-    enable_cache=True
+    confidence_threshold=0.9, use_symbolic_fallback=True, llm_engine="gpt-4", enable_cache=True
 )
 
 # Router with custom strategy
@@ -599,7 +572,7 @@ router = ProverRouter(
     enable_z3=True,
     enable_symbolicai=True,
     default_strategy=ProverStrategy.PARALLEL,
-    default_timeout=15.0
+    default_timeout=15.0,
 )
 ```
 
@@ -608,18 +581,14 @@ router = ProverRouter(
 ```python
 from ipfs_datasets_py.logic.external_provers import ProverRouter
 
-router = ProverRouter(
-    enable_z3=True,
-    enable_symbolicai=True,
-    enable_native=True
-)
+router = ProverRouter(enable_z3=True, enable_symbolicai=True, enable_native=True)
 
 # Try all provers in parallel
 result = router.prove_parallel(formula, timeout=10.0)
 
 # Check which provers succeeded
 for prover_name, prover_result in result.all_results.items():
-    if hasattr(prover_result, 'is_proved') and prover_result.is_proved():
+    if hasattr(prover_result, "is_proved") and prover_result.is_proved():
         print(f"✓ {prover_name} succeeded")
     else:
         print(f"✗ {prover_name} failed")
@@ -634,13 +603,10 @@ if result.is_proved():
 ```python
 from ipfs_datasets_py.logic.external_provers import SymbolicAIProverBridge
 
-prover = SymbolicAIProverBridge(
-    confidence_threshold=0.8,
-    use_symbolic_fallback=True
-)
+prover = SymbolicAIProverBridge(confidence_threshold=0.8, use_symbolic_fallback=True)
 
 # If neural reasoning has low confidence, fall back to symbolic
-result = prover.prove(formula, strategy='hybrid')
+result = prover.prove(formula, strategy="hybrid")
 
 if result.fallback_used:
     print("Symbolic prover confirmed the result!")

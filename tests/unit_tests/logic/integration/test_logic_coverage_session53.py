@@ -21,6 +21,7 @@ from unittest.mock import MagicMock, patch
 # Proof cache backward-compat API
 # =========================================================================
 
+
 class TestCachedProofDataclass:
     """GIVEN the backward-compat CachedProof dataclass
     WHEN creating instances and using methods
@@ -28,6 +29,7 @@ class TestCachedProofDataclass:
 
     def setup_method(self):
         from ipfs_datasets_py.logic.integration.proof_cache import CachedProof
+
         self.CachedProof = CachedProof
 
     def test_creation_with_required_fields(self):
@@ -90,6 +92,7 @@ class TestProofCacheBackwardCompat:
 
     def setup_method(self):
         from ipfs_datasets_py.logic.integration.proof_cache import ProofCache
+
         self.ProofCache = ProofCache
 
     def test_init_with_max_size(self):
@@ -271,6 +274,7 @@ class TestGetGlobalCacheSingleton:
     def test_singleton(self):
         """GIVEN two calls WHEN compared THEN same object."""
         from ipfs_datasets_py.logic.integration.proof_cache import get_global_cache
+
         c1 = get_global_cache()
         c2 = get_global_cache()
         assert c1 is c2
@@ -278,6 +282,7 @@ class TestGetGlobalCacheSingleton:
     def test_data_persists_across_calls(self):
         """GIVEN data stored in global cache WHEN retrieved via new call THEN found."""
         from ipfs_datasets_py.logic.integration.proof_cache import get_global_cache
+
         cache = get_global_cache()
         cache.put("_sess53_test", "z3", {"x": 99})
         cache2 = get_global_cache()
@@ -292,6 +297,7 @@ class TestGetGlobalCacheSingleton:
 # LogicVerifier backward-compat private methods
 # =========================================================================
 
+
 class TestLogicVerifierBackwardCompatAliases:
     """GIVEN LogicVerifier private-method backward-compat aliases
     WHEN called
@@ -299,6 +305,7 @@ class TestLogicVerifierBackwardCompatAliases:
 
     def setup_method(self):
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification import LogicVerifier
+
         self.verifier = LogicVerifier()
 
     def test_validate_syntax_valid_formula(self):
@@ -338,6 +345,7 @@ class TestLogicVerifierBackwardCompatAliases:
 # logic_verification_utils shim
 # =========================================================================
 
+
 class TestLogicVerificationUtilsShim:
     """GIVEN the logic_verification_utils shim module
     WHEN importing from integration package
@@ -346,37 +354,48 @@ class TestLogicVerificationUtilsShim:
     def test_import_verify_consistency(self):
         """GIVEN shim WHEN importing verify_consistency THEN callable."""
         from ipfs_datasets_py.logic.integration.logic_verification_utils import verify_consistency
+
         assert callable(verify_consistency)
 
     def test_import_verify_entailment(self):
         """GIVEN shim WHEN importing verify_entailment THEN callable."""
         from ipfs_datasets_py.logic.integration.logic_verification_utils import verify_entailment
+
         assert callable(verify_entailment)
 
     def test_import_create_logic_verifier(self):
         """GIVEN shim WHEN importing create_logic_verifier THEN callable."""
-        from ipfs_datasets_py.logic.integration.logic_verification_utils import create_logic_verifier
+        from ipfs_datasets_py.logic.integration.logic_verification_utils import (
+            create_logic_verifier,
+        )
+
         assert callable(create_logic_verifier)
 
     def test_import_are_contradictory(self):
         """GIVEN shim WHEN importing are_contradictory THEN callable."""
         from ipfs_datasets_py.logic.integration.logic_verification_utils import are_contradictory
+
         assert callable(are_contradictory)
 
     def test_import_validate_formula_syntax(self):
         """GIVEN shim WHEN importing validate_formula_syntax THEN callable."""
-        from ipfs_datasets_py.logic.integration.logic_verification_utils import validate_formula_syntax
+        from ipfs_datasets_py.logic.integration.logic_verification_utils import (
+            validate_formula_syntax,
+        )
+
         assert callable(validate_formula_syntax)
 
     def test_verify_consistency_returns_result(self):
         """GIVEN formulas WHEN verify_consistency called THEN returns object."""
         from ipfs_datasets_py.logic.integration.logic_verification_utils import verify_consistency
+
         result = verify_consistency(["P", "Q"])
         assert result is not None
 
     def test_are_contradictory_via_shim(self):
         """GIVEN shim WHEN are_contradictory called THEN correct result."""
         from ipfs_datasets_py.logic.integration.logic_verification_utils import are_contradictory
+
         assert are_contradictory("P", "¬P") is True
         assert are_contradictory("P", "Q") is False
 
@@ -384,6 +403,7 @@ class TestLogicVerificationUtilsShim:
 # =========================================================================
 # interactive_fol_constructor shim
 # =========================================================================
+
 
 class TestInteractiveFOLConstructorShim:
     """GIVEN the interactive_fol_constructor shim
@@ -393,23 +413,29 @@ class TestInteractiveFOLConstructorShim:
     def test_import_as_module(self):
         """GIVEN shim WHEN from integration import interactive_fol_constructor THEN works."""
         from ipfs_datasets_py.logic.integration import interactive_fol_constructor
+
         assert hasattr(interactive_fol_constructor, "InteractiveFOLConstructor")
 
     def test_instantiate_constructor(self):
         """GIVEN shim WHEN InteractiveFOLConstructor instantiated THEN works."""
         from ipfs_datasets_py.logic.integration import interactive_fol_constructor
+
         ctor = interactive_fol_constructor.InteractiveFOLConstructor()
         assert ctor is not None
 
     def test_constructor_has_add_statement(self):
         """GIVEN constructor WHEN checking attrs THEN add_statement present."""
         from ipfs_datasets_py.logic.integration import interactive_fol_constructor
+
         ctor = interactive_fol_constructor.InteractiveFOLConstructor()
         assert hasattr(ctor, "add_statement")
 
     def test_direct_import_also_works(self):
         """GIVEN direct import WHEN importing InteractiveFOLConstructor THEN works."""
-        from ipfs_datasets_py.logic.integration.interactive_fol_constructor import InteractiveFOLConstructor
+        from ipfs_datasets_py.logic.integration.interactive_fol_constructor import (
+            InteractiveFOLConstructor,
+        )
+
         ctor = InteractiveFOLConstructor()
         assert ctor is not None
 
@@ -417,6 +443,7 @@ class TestInteractiveFOLConstructorShim:
 # =========================================================================
 # legal_symbolic_analyzer fallback paths
 # =========================================================================
+
 
 class TestLegalSymbolicAnalyzerFallbacks:
     """GIVEN LegalSymbolicAnalyzer with SymbolicAI unavailable
@@ -427,6 +454,7 @@ class TestLegalSymbolicAnalyzerFallbacks:
         from ipfs_datasets_py.logic.integration.domain.legal_symbolic_analyzer import (
             LegalSymbolicAnalyzer,
         )
+
         self.LegalSymbolicAnalyzer = LegalSymbolicAnalyzer
         self.analyzer = LegalSymbolicAnalyzer()
 
@@ -504,6 +532,7 @@ class TestLegalReasoningEngineFallbacks:
             from ipfs_datasets_py.logic.integration.domain.legal_symbolic_analyzer import (
                 LegalReasoningEngine,
             )
+
             self.LegalReasoningEngine = LegalReasoningEngine
             self.engine = LegalReasoningEngine()
         except Exception:
@@ -525,7 +554,7 @@ class TestLegalReasoningEngineFallbacks:
         result = self.engine._fallback_consistency_check(rules)
         assert isinstance(result, dict)
         # May return 'consistent' or 'is_consistent' depending on implementation
-        assert ("consistent" in result or "is_consistent" in result)
+        assert "consistent" in result or "is_consistent" in result
 
     def test_fallback_precedent_analysis(self):
         """GIVEN case and precedents WHEN _fallback_precedent_analysis called THEN dict."""
@@ -552,6 +581,7 @@ class TestLegalReasoningEngineFallbacks:
 
 try:
     import ipfs_datasets_py.TDFOL  # noqa: F401
+
     _TDFOL_AVAILABLE = True
 except ImportError:
     _TDFOL_AVAILABLE = False
@@ -565,6 +595,7 @@ class TestTDFOLCECBridgeAdditionalPaths:
 
     def setup_method(self):
         from ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge import TDFOLCECBridge
+
         self.bridge = TDFOLCECBridge()
 
     def test_bridge_is_available_returns_bool(self):
@@ -574,6 +605,7 @@ class TestTDFOLCECBridgeAdditionalPaths:
     def test_get_applicable_cec_rules_no_cec(self):
         """GIVEN no CEC available WHEN get_applicable_cec_rules THEN empty list."""
         from ipfs_datasets_py.TDFOL.types import DeonticFormula, DeonticOperator
+
         formula = DeonticFormula(DeonticOperator.OBLIGATION, "pay(x)")
         rules = self.bridge.get_applicable_cec_rules(formula)
         assert isinstance(rules, list)
@@ -582,6 +614,7 @@ class TestTDFOLCECBridgeAdditionalPaths:
         """GIVEN no CEC WHEN prove_with_cec called THEN ProofResult with UNKNOWN."""
         from ipfs_datasets_py.TDFOL.types import DeonticFormula, DeonticOperator
         from ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge import TDFOLCECBridge
+
         bridge = TDFOLCECBridge()
         bridge.cec_available = False
         formula = DeonticFormula(DeonticOperator.OBLIGATION, "pay(x)")
@@ -591,6 +624,7 @@ class TestTDFOLCECBridgeAdditionalPaths:
     def test_tdfol_to_dcec_string_obligation(self):
         """GIVEN obligation formula WHEN tdfol_to_dcec_string THEN string returned."""
         from ipfs_datasets_py.TDFOL.types import DeonticFormula, DeonticOperator
+
         formula = DeonticFormula(DeonticOperator.OBLIGATION, "inform(a, b, c)")
         s = self.bridge.tdfol_to_dcec_string(formula)
         assert isinstance(s, str)
@@ -598,6 +632,7 @@ class TestTDFOLCECBridgeAdditionalPaths:
     def test_dcec_string_to_tdfol_no_crash(self):
         """GIVEN DCEC string WHEN dcec_string_to_tdfol called THEN no exception raised."""
         from ipfs_datasets_py.TDFOL.types import Formula
+
         # Just verify the call completes without raising — return value may be None
         try:
             result = self.bridge.dcec_string_to_tdfol("O(pay(a))")
@@ -616,11 +651,13 @@ class TestEnhancedTDFOLProverAdditional:
 
     def setup_method(self):
         from ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge import EnhancedTDFOLProver
+
         self.prover = EnhancedTDFOLProver(use_cec=False)
 
     def test_prove_returns_proof_result(self):
         """GIVEN formula WHEN prove called THEN ProofResult returned."""
         from ipfs_datasets_py.TDFOL.types import DeonticFormula, DeonticOperator
+
         formula = DeonticFormula(DeonticOperator.OBLIGATION, "pay(x)")
         result = self.prover.prove(formula)
         assert result is not None
@@ -628,6 +665,7 @@ class TestEnhancedTDFOLProverAdditional:
     def test_prove_with_timeout(self):
         """GIVEN formula and timeout WHEN prove called THEN result returned."""
         from ipfs_datasets_py.TDFOL.types import DeonticFormula, DeonticOperator
+
         formula = DeonticFormula(DeonticOperator.PERMISSION, "enter(x)")
         result = self.prover.prove(formula, timeout_ms=100)
         assert result is not None
@@ -637,6 +675,7 @@ class TestEnhancedTDFOLProverAdditional:
 # deontic_logic_converter additional paths
 # =========================================================================
 
+
 class TestDeonticLogicConverterAdditionalPaths:
     """GIVEN DeonticLogicConverter
     WHEN calling additional paths
@@ -644,6 +683,7 @@ class TestDeonticLogicConverterAdditionalPaths:
 
     def setup_method(self):
         from ipfs_datasets_py.logic.integration.deontic_logic_converter import DeonticLogicConverter
+
         self.converter = DeonticLogicConverter()
 
     def test_init_conversion_stats_exist(self):
@@ -658,14 +698,20 @@ class TestDeonticLogicConverterAdditionalPaths:
 
     def test_convert_empty_entity_list(self):
         """GIVEN empty list WHEN convert_entities_to_logic called THEN result returned."""
-        from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import ConversionContext
+        from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
+            ConversionContext,
+        )
+
         ctx = ConversionContext(source_document_path="test.pdf")
         result = self.converter.convert_entities_to_logic([], ctx)
         assert result is not None
 
     def test_convert_entities_with_mock_obligation(self):
         """GIVEN obligation entity WHEN converted THEN rule set returned."""
-        from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import ConversionContext
+        from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
+            ConversionContext,
+        )
+
         ctx = ConversionContext(source_document_path="doc.pdf")
         entity = MagicMock()
         entity.entity_id = "e1"
@@ -702,6 +748,7 @@ class TestDeonticLogicConverterAdditionalPaths:
 # Integration __init__ exports smoke test
 # =========================================================================
 
+
 class TestIntegrationPackageExports:
     """GIVEN the integration package
     WHEN importing top-level symbols
@@ -710,27 +757,35 @@ class TestIntegrationPackageExports:
     def test_logic_verifier_importable(self):
         """GIVEN package WHEN importing LogicVerifier THEN works."""
         from ipfs_datasets_py.logic.integration import LogicVerifier
+
         assert LogicVerifier is not None
 
     def test_deontic_formula_importable(self):
         """GIVEN package WHEN importing DeonticFormula THEN works."""
         from ipfs_datasets_py.logic.integration import DeonticFormula
+
         assert DeonticFormula is not None
 
     def test_proof_cache_importable_from_integration(self):
         """GIVEN package WHEN importing ProofCache from integration THEN works."""
         from ipfs_datasets_py.logic.integration.proof_cache import ProofCache
+
         assert ProofCache is not None
 
     def test_interactive_fol_constructor_importable(self):
         """GIVEN package WHEN importing InteractiveFOLConstructor THEN works."""
-        from ipfs_datasets_py.logic.integration.interactive_fol_constructor import InteractiveFOLConstructor
+        from ipfs_datasets_py.logic.integration.interactive_fol_constructor import (
+            InteractiveFOLConstructor,
+        )
+
         assert InteractiveFOLConstructor is not None
 
     def test_logic_verification_utils_importable(self):
         """GIVEN package WHEN importing from logic_verification_utils THEN works."""
         from ipfs_datasets_py.logic.integration.logic_verification_utils import (
-            verify_consistency, create_logic_verifier
+            verify_consistency,
+            create_logic_verifier,
         )
+
         assert callable(verify_consistency)
         assert callable(create_logic_verifier)

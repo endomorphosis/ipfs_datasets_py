@@ -7,6 +7,7 @@ Covers:
 - ExtractionConfig.max_confidence field
 - OntologyLearningAdapter.get_stats() p50/p90 percentiles
 """
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
@@ -18,18 +19,19 @@ import pytest
 # generate_ontology_rich elapsed_ms
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestGenerateOntologyRichElapsedMs:
     """generate_ontology_rich() should include elapsed_ms in result.metadata."""
 
     @pytest.fixture
     def generator_and_ctx(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
-            OntologyGenerator, OntologyGenerationContext,
+            OntologyGenerator,
+            OntologyGenerationContext,
         )
+
         gen = OntologyGenerator()
-        ctx = OntologyGenerationContext(
-            data_source="test", data_type="text", domain="general"
-        )
+        ctx = OntologyGenerationContext(data_source="test", data_type="text", domain="general")
         return gen, ctx
 
     def test_result_has_elapsed_ms(self, generator_and_ctx):
@@ -58,21 +60,26 @@ class TestGenerateOntologyRichElapsedMs:
 # OntologyOptimizer.prune_history
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestPruneHistory:
     """Tests for OntologyOptimizer.prune_history()."""
 
     @pytest.fixture
     def optimizer_with_history(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import (
-            OntologyOptimizer, OptimizationReport,
+            OntologyOptimizer,
+            OptimizationReport,
         )
+
         opt = OntologyOptimizer()
         for i in range(10):
-            opt._history.append(OptimizationReport(
-                average_score=0.1 * (i + 1),
-                trend="improving",
-                recommendations=[],
-            ))
+            opt._history.append(
+                OptimizationReport(
+                    average_score=0.1 * (i + 1),
+                    trend="improving",
+                    recommendations=[],
+                )
+            )
         return opt
 
     def test_prune_reduces_history_length(self, optimizer_with_history):
@@ -116,21 +123,26 @@ class TestPruneHistory:
 # OntologyOptimizer.compare_history
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestCompareHistory:
     """Tests for OntologyOptimizer.compare_history()."""
 
     @pytest.fixture
     def optimizer_with_history(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import (
-            OntologyOptimizer, OptimizationReport,
+            OntologyOptimizer,
+            OptimizationReport,
         )
+
         opt = OntologyOptimizer()
         for score in [0.5, 0.7, 0.65, 0.8]:
-            opt._history.append(OptimizationReport(
-                average_score=score,
-                trend="mixed",
-                recommendations=[],
-            ))
+            opt._history.append(
+                OptimizationReport(
+                    average_score=score,
+                    trend="mixed",
+                    recommendations=[],
+                )
+            )
         return opt
 
     def test_compare_history_length(self, optimizer_with_history):
@@ -139,8 +151,10 @@ class TestCompareHistory:
 
     def test_compare_history_empty_when_single_entry(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import (
-            OntologyOptimizer, OptimizationReport,
+            OntologyOptimizer,
+            OptimizationReport,
         )
+
         opt = OntologyOptimizer()
         opt._history.append(OptimizationReport(average_score=0.5, trend="ok", recommendations=[]))
         assert opt.compare_history() == []
@@ -175,48 +189,65 @@ class TestCompareHistory:
 # ExtractionConfig.max_confidence
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestMaxConfidence:
     """Tests for ExtractionConfig.max_confidence field."""
 
     def test_default_is_1_0(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
         assert ExtractionConfig().max_confidence == pytest.approx(1.0)
 
     def test_to_dict_includes_max_confidence(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
         d = ExtractionConfig(max_confidence=0.8).to_dict()
         assert d["max_confidence"] == pytest.approx(0.8)
 
     def test_from_dict_reads_max_confidence(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
         cfg = ExtractionConfig.from_dict({"max_confidence": 0.6})
         assert cfg.max_confidence == pytest.approx(0.6)
 
     def test_from_dict_default_max_confidence(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
         cfg = ExtractionConfig.from_dict({})
         assert cfg.max_confidence == pytest.approx(1.0)
 
     def test_max_confidence_caps_entity_confidence(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
-            OntologyGenerator, ExtractionConfig, OntologyGenerationContext,
+            OntologyGenerator,
+            ExtractionConfig,
+            OntologyGenerationContext,
         )
+
         gen = OntologyGenerator()
         ctx = OntologyGenerationContext(
-            data_source="test", data_type="text", domain="general",
+            data_source="test",
+            data_type="text",
+            domain="general",
             config=ExtractionConfig(max_confidence=0.3),
         )
         result = gen.extract_entities("Alice met Bob in London.", ctx)
         for ent in result.entities:
-            assert ent.confidence <= 0.3 + 1e-6, f"Entity {ent.text} confidence {ent.confidence} exceeds 0.3"
+            assert ent.confidence <= 0.3 + 1e-6, (
+                f"Entity {ent.text} confidence {ent.confidence} exceeds 0.3"
+            )
 
     def test_max_confidence_1_0_is_passthrough(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
-            OntologyGenerator, ExtractionConfig, OntologyGenerationContext,
+            OntologyGenerator,
+            ExtractionConfig,
+            OntologyGenerationContext,
         )
+
         gen = OntologyGenerator()
         ctx = OntologyGenerationContext(
-            data_source="test", data_type="text", domain="general",
+            data_source="test",
+            data_type="text",
+            domain="general",
             config=ExtractionConfig(max_confidence=1.0),
         )
         result = gen.extract_entities("Alice met Bob in London.", ctx)
@@ -229,11 +260,15 @@ class TestMaxConfidence:
 # OntologyLearningAdapter.get_stats() p50/p90
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestLearningAdapterPercentiles:
     """get_stats() should include p50_score and p90_score."""
 
     def _make_adapter_with_scores(self, scores):
-        from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+        from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+            OntologyLearningAdapter,
+        )
+
         adapter = OntologyLearningAdapter(min_samples=100)  # disable threshold adjustments
         for s in scores:
             adapter.apply_feedback(s)
@@ -266,7 +301,10 @@ class TestLearningAdapterPercentiles:
         assert 0.0 <= stats["p90_score"] <= 1.0
 
     def test_empty_feedback_returns_zeros(self):
-        from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+        from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+            OntologyLearningAdapter,
+        )
+
         adapter = OntologyLearningAdapter()
         stats = adapter.get_stats()
         assert stats["p50_score"] == pytest.approx(0.0)

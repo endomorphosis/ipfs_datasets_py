@@ -38,7 +38,9 @@ def _write_text(path: Path, text: str) -> None:
     path.write_text(text, encoding="utf-8")
 
 
-def _fetch_workflow_runs(owner: str, repo: str, workflow: str, per_page: int, token: str | None) -> Dict[str, Any]:
+def _fetch_workflow_runs(
+    owner: str, repo: str, workflow: str, per_page: int, token: str | None
+) -> Dict[str, Any]:
     url = (
         f"https://api.github.com/repos/{owner}/{repo}/actions/workflows/{workflow}/runs"
         f"?per_page={per_page}"
@@ -153,7 +155,9 @@ def _render_markdown(summary: Dict[str, Any]) -> str:
 def main() -> None:
     today_utc = datetime.now(timezone.utc).date().isoformat()
 
-    ap = argparse.ArgumentParser(description="Collect Legal V2 CI soak snapshot and compute consecutive green streak")
+    ap = argparse.ArgumentParser(
+        description="Collect Legal V2 CI soak snapshot and compute consecutive green streak"
+    )
     ap.add_argument("--owner", default="endomorphosis")
     ap.add_argument("--repo", default="ipfs_datasets_py")
     ap.add_argument("--workflow", default="legal-v2-reasoner-ci.yml")

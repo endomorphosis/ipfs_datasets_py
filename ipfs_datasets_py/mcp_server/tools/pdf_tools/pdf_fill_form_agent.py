@@ -71,7 +71,10 @@ async def pdf_fill_form_agent(
             pdf_path = str(pdf_source)
 
         if not pdf_path:
-            return {"status": "error", "message": "pdf_source must be a file path or dict with 'path' key"}
+            return {
+                "status": "error",
+                "message": "pdf_source must be a file path or dict with 'path' key",
+            }
 
         from ipfs_datasets_py.processors.form_filling_agent import FormFillingAgent
 
@@ -79,6 +82,7 @@ async def pdf_fill_form_agent(
         if enable_ocr:
             try:
                 from ipfs_datasets_py.processors.pdf_form_filler import build_tesseract_ocr_provider
+
                 ocr_provider = build_tesseract_ocr_provider()
             except Exception:
                 logger.warning("OCR provider unavailable; proceeding without OCR")
@@ -116,8 +120,7 @@ async def pdf_fill_form_agent(
                 "gaps": gaps,
                 "summary": agent.summary(),
                 "message": (
-                    f"Discovered {len(agent._field_map)} fields; "
-                    f"{len(gaps)} require user input."
+                    f"Discovered {len(agent._field_map)} fields; {len(gaps)} require user input."
                 ),
             }
         else:

@@ -204,9 +204,7 @@ def test_compiler_exposes_packet_000133_explicit_adaptive_ambiguities() -> None:
         family_margin,
         expected_direction,
     ) in evidence_cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="spacy")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
         ranking = _mock_adaptive_ranking(
             predicted_family=predicted_family,
             target_family=target_family,
@@ -235,9 +233,7 @@ def test_compiler_exposes_packet_000133_explicit_adaptive_ambiguities() -> None:
             if expected_direction == "outvoted"
             else threshold - abs(family_margin)
         )
-        expected_severity = (
-            "requires_rule" if expected_direction == "outvoted" else "review"
-        )
+        expected_severity = "requires_rule" if expected_direction == "outvoted" else "review"
 
         assert ambiguity.severity == expected_severity
         assert ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
@@ -245,7 +241,4 @@ def test_compiler_exposes_packet_000133_explicit_adaptive_ambiguities() -> None:
         assert ambiguity.metadata.get("adaptive_margin_direction") == expected_direction
         assert ambiguity.metadata.get("is_explicit_adaptive_ambiguity") is True
         assert ambiguity.metadata.get("explicit_ambiguity_type") == ambiguity.ambiguity_type
-        assert (
-            abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority)
-            <= 1e-12
-        )
+        assert abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority) <= 1e-12

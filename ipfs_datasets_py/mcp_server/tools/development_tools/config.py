@@ -16,6 +16,7 @@ import json
 @dataclass
 class TestGeneratorConfig:
     """Configuration for test generator tool."""
+
     output_dir: str = "tests"
     harness: str = "unittest"  # unittest, pytest
     default_fixtures: bool = False
@@ -27,24 +28,26 @@ class TestGeneratorConfig:
 @dataclass
 class DocumentationGeneratorConfig:
     """Configuration for documentation generator tool."""
+
     output_dir: str = "docs"
     docstring_style: str = "google"  # google, numpy, rest
     inheritance: bool = True
     format: str = "markdown"
     verbose: bool = False
-    ignore_patterns: List[str] = field(default_factory=lambda: [
-        "__pycache__", ".git", ".venv", "*.pyc", "*.pyo"
-    ])
+    ignore_patterns: List[str] = field(
+        default_factory=lambda: ["__pycache__", ".git", ".venv", "*.pyc", "*.pyo"]
+    )
 
 
 @dataclass
 class LintingToolsConfig:
     """Configuration for linting tools."""
+
     patterns: List[str] = field(default_factory=lambda: ["**/*.py"])
     file_patterns: List[str] = field(default_factory=lambda: ["**/*.py"])
-    exclude_dirs: List[str] = field(default_factory=lambda: [
-        ".venv", ".git", "__pycache__", "node_modules"
-    ])
+    exclude_dirs: List[str] = field(
+        default_factory=lambda: [".venv", ".git", "__pycache__", "node_modules"]
+    )
     fix_blank_lines: bool = True
     fix_trailing_whitespace: bool = True
     ensure_newlines: bool = True
@@ -57,6 +60,7 @@ class LintingToolsConfig:
 @dataclass
 class TestRunnerConfig:
     """Configuration for test runner tool."""
+
     check_all: bool = False
     run_mypy: bool = True
     run_flake8: bool = True
@@ -70,6 +74,7 @@ class TestRunnerConfig:
 @dataclass
 class CodebaseSearchConfig:
     """Configuration for codebase search tool."""
+
     case_insensitive: bool = False
     whole_word: bool = False
     regex: bool = False
@@ -79,9 +84,9 @@ class CodebaseSearchConfig:
     compact: bool = False
     group_by_file: bool = False
     summary: bool = False
-    extensions: List[str] = field(default_factory=lambda: [
-        ".py", ".md", ".txt", ".yml", ".yaml", ".json"
-    ])
+    extensions: List[str] = field(
+        default_factory=lambda: [".py", ".md", ".txt", ".yml", ".yaml", ".json"]
+    )
 
 
 @dataclass
@@ -90,7 +95,9 @@ class DevelopmentToolsConfig:
 
     # Tool-specific configurations
     test_generator: TestGeneratorConfig = field(default_factory=TestGeneratorConfig)
-    documentation_generator: DocumentationGeneratorConfig = field(default_factory=DocumentationGeneratorConfig)
+    documentation_generator: DocumentationGeneratorConfig = field(
+        default_factory=DocumentationGeneratorConfig
+    )
     linting_tools: LintingToolsConfig = field(default_factory=LintingToolsConfig)
     test_runner: TestRunnerConfig = field(default_factory=TestRunnerConfig)
     codebase_search: CodebaseSearchConfig = field(default_factory=CodebaseSearchConfig)
@@ -123,7 +130,7 @@ class DevelopmentToolsConfig:
                 print(f"Warning: LLM features disabled - {self.llm_api_key_env} not found")
 
     @classmethod
-    def from_file(cls, config_path: str) -> 'DevelopmentToolsConfig':
+    def from_file(cls, config_path: str) -> "DevelopmentToolsConfig":
         """
         Load configuration from a file.
 
@@ -138,11 +145,11 @@ class DevelopmentToolsConfig:
             return cls()  # Return default config
 
         try:
-            if config_file.suffix.lower() in ['.yml', '.yaml']:
-                with open(config_file, 'r') as f:
+            if config_file.suffix.lower() in [".yml", ".yaml"]:
+                with open(config_file, "r") as f:
                     config_data = yaml.safe_load(f)
             else:
-                with open(config_file, 'r') as f:
+                with open(config_file, "r") as f:
                     config_data = json.load(f)
 
             return cls.from_dict(config_data)
@@ -151,7 +158,7 @@ class DevelopmentToolsConfig:
             return cls()  # Return default config on error
 
     @classmethod
-    def from_dict(cls, config_dict: Dict[str, Any]) -> 'DevelopmentToolsConfig':
+    def from_dict(cls, config_dict: Dict[str, Any]) -> "DevelopmentToolsConfig":
         """
         Create configuration from dictionary.
 
@@ -162,16 +169,27 @@ class DevelopmentToolsConfig:
             DevelopmentToolsConfig instance
         """
         # Create tool-specific configs
-        test_gen_config = TestGeneratorConfig(**config_dict.get('test_generator', {}))
-        doc_gen_config = DocumentationGeneratorConfig(**config_dict.get('documentation_generator', {}))
-        lint_config = LintingToolsConfig(**config_dict.get('linting_tools', {}))
-        test_runner_config = TestRunnerConfig(**config_dict.get('test_runner', {}))
-        search_config = CodebaseSearchConfig(**config_dict.get('codebase_search', {}))
+        test_gen_config = TestGeneratorConfig(**config_dict.get("test_generator", {}))
+        doc_gen_config = DocumentationGeneratorConfig(
+            **config_dict.get("documentation_generator", {})
+        )
+        lint_config = LintingToolsConfig(**config_dict.get("linting_tools", {}))
+        test_runner_config = TestRunnerConfig(**config_dict.get("test_runner", {}))
+        search_config = CodebaseSearchConfig(**config_dict.get("codebase_search", {}))
 
         # Create main config
-        main_config_data = {k: v for k, v in config_dict.items()
-                           if k not in ['test_generator', 'documentation_generator',
-                                       'linting_tools', 'test_runner', 'codebase_search']}
+        main_config_data = {
+            k: v
+            for k, v in config_dict.items()
+            if k
+            not in [
+                "test_generator",
+                "documentation_generator",
+                "linting_tools",
+                "test_runner",
+                "codebase_search",
+            ]
+        }
 
         return cls(
             test_generator=test_gen_config,
@@ -179,7 +197,7 @@ class DevelopmentToolsConfig:
             linting_tools=lint_config,
             test_runner=test_runner_config,
             codebase_search=search_config,
-            **main_config_data
+            **main_config_data,
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -190,21 +208,21 @@ class DevelopmentToolsConfig:
             Configuration dictionary
         """
         return {
-            'test_generator': self.test_generator.__dict__,
-            'documentation_generator': self.documentation_generator.__dict__,
-            'linting_tools': self.linting_tools.__dict__,
-            'test_runner': self.test_runner.__dict__,
-            'codebase_search': self.codebase_search.__dict__,
-            'enable_audit_logging': self.enable_audit_logging,
-            'enable_ipfs_integration': self.enable_ipfs_integration,
-            'enable_llm_features': self.enable_llm_features,
-            'working_directory': self.working_directory,
-            'temp_directory': self.temp_directory,
-            'ipfs_pin_generated_content': self.ipfs_pin_generated_content,
-            'ipfs_gateway_url': self.ipfs_gateway_url,
-            'llm_provider': self.llm_provider,
-            'llm_model': self.llm_model,
-            'llm_api_key_env': self.llm_api_key_env,
+            "test_generator": self.test_generator.__dict__,
+            "documentation_generator": self.documentation_generator.__dict__,
+            "linting_tools": self.linting_tools.__dict__,
+            "test_runner": self.test_runner.__dict__,
+            "codebase_search": self.codebase_search.__dict__,
+            "enable_audit_logging": self.enable_audit_logging,
+            "enable_ipfs_integration": self.enable_ipfs_integration,
+            "enable_llm_features": self.enable_llm_features,
+            "working_directory": self.working_directory,
+            "temp_directory": self.temp_directory,
+            "ipfs_pin_generated_content": self.ipfs_pin_generated_content,
+            "ipfs_gateway_url": self.ipfs_gateway_url,
+            "llm_provider": self.llm_provider,
+            "llm_model": self.llm_model,
+            "llm_api_key_env": self.llm_api_key_env,
         }
 
     def save_to_file(self, config_path: str) -> None:
@@ -219,11 +237,11 @@ class DevelopmentToolsConfig:
 
         config_data = self.to_dict()
 
-        if config_file.suffix.lower() in ['.yml', '.yaml']:
-            with open(config_file, 'w') as f:
+        if config_file.suffix.lower() in [".yml", ".yaml"]:
+            with open(config_file, "w") as f:
                 yaml.dump(config_data, f, default_flow_style=False, indent=2)
         else:
-            with open(config_file, 'w') as f:
+            with open(config_file, "w") as f:
                 json.dump(config_data, f, indent=2)
 
 
@@ -248,7 +266,7 @@ def get_config() -> DevelopmentToolsConfig:
             "config/development_tools.json",
             ".ipfs_datasets_dev_config.yml",
             ".ipfs_datasets_dev_config.yaml",
-            ".ipfs_datasets_dev_config.json"
+            ".ipfs_datasets_dev_config.json",
         ]
 
         for config_path in config_paths:
@@ -290,15 +308,15 @@ async def config():
             "tool_type": "Configuration manager",
             "config_sections": [
                 "test_generator",
-                "documentation_generator", 
+                "documentation_generator",
                 "linting_tools",
                 "codebase_search",
-                "test_runner"
-            ]
+                "test_runner",
+            ],
         }
     except Exception as e:
         return {
             "status": "error",
             "message": f"Failed to load configuration: {str(e)}",
-            "tool_type": "Configuration manager"
+            "tool_type": "Configuration manager",
         }

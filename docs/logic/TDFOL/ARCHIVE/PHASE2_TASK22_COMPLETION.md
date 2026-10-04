@@ -86,12 +86,12 @@ Updated all dependent files to use new module structure:
 ```python
 # Old imports still work:
 from ipfs_datasets_py.logic.TDFOL.nl import (
-    LLMNLConverter,      # from llm_nl_converter
-    LLMResponseCache,    # from llm_nl_converter
-    LLMParseResult,      # from llm_nl_converter
+    LLMNLConverter,  # from llm_nl_converter
+    LLMResponseCache,  # from llm_nl_converter
+    LLMParseResult,  # from llm_nl_converter
     build_conversion_prompt,  # from llm_nl_prompts
-    create_cache_cid,    # from cache_utils
-    require_spacy,       # from spacy_utils
+    create_cache_cid,  # from cache_utils
+    require_spacy,  # from spacy_utils
 )
 
 # New imports also work:
@@ -184,7 +184,7 @@ cache_data = {
     "text": "All contractors must pay taxes",
     "provider": "openai",
     "prompt_hash": "abc123",
-    "version": "1.0"
+    "version": "1.0",
 }
 cid = create_cache_cid(cache_data)
 # Returns: "bafkreigaknpexyvxt76zgkitavbwx6ejgfheup5oybpm77f3pxzrvwpfli"
@@ -201,11 +201,7 @@ cid = create_cache_cid(cache_data)
 The `LLMNLConverter` implements a two-stage approach:
 
 ```python
-converter = LLMNLConverter(
-    confidence_threshold=0.85,
-    enable_llm=True,
-    enable_caching=True
-)
+converter = LLMNLConverter(confidence_threshold=0.85, enable_llm=True, enable_caching=True)
 
 result = converter.convert("All contractors must pay taxes")
 # result.method: "pattern" (fast, 80% accurate)

@@ -138,7 +138,8 @@ Added **`record_delegation_metrics(manager, collector)`**:
 
 ```python
 from ipfs_datasets_py.mcp_server.ucan_delegation import (
-    get_delegation_manager, record_delegation_metrics,
+    get_delegation_manager,
+    record_delegation_metrics,
 )
 from ipfs_datasets_py.mcp_server.monitoring import EnhancedMetricsCollector
 

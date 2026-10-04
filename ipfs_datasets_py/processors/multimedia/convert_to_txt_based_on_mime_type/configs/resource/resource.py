@@ -1,8 +1,6 @@
-
 from enum import Enum
 from pathlib import Path
 from typing import Callable, Coroutine, Optional
-
 
 
 from pydantic import BaseModel, Field, PrivateAttr
@@ -14,6 +12,7 @@ from converter_system.core.pipeline import Pipeline
 
 class FunctionType(Enum):
     """Enum for function types"""
+
     SAVE = "save"
     LOAD = "load"
     CONVERT = "convert"
@@ -23,7 +22,7 @@ class FunctionDictionary(BaseModel):
     """
     A container for a function and resources allocated to it.
     The function can be a callable or a coroutine. The resources are allocated based on the function type.
-    
+
     Example:
         func_dict = FunctionDictionary(**data)
         func_dict.model_dump()
@@ -36,6 +35,7 @@ class FunctionDictionary(BaseModel):
             "api_connection": 0
         }
     """
+
     func: Callable
     kwargs: Optional[dict] = None
     worker: Optional[int] = None
@@ -44,8 +44,8 @@ class FunctionDictionary(BaseModel):
     api_connection: Optional[int] = None
 
 
-
 from functools import partial
+
 
 class Resource(BaseModel):
     """
@@ -59,18 +59,31 @@ class Resource(BaseModel):
         total_workers: Total number of workers allocated to this resource.
         total_sys_mem: Total amount of system memory allocated to this resource.
         total_api_uses: Total number of API calls allocated to this resource.
-    
+
     Properties
         data: The data from the file path.
         converted_data: The data from the file path converted into plaintext, but not yet saved to a file.
     """
+
     file_path: Optional[Path] = None
-    func_dict: Optional[dict[FunctionType, FunctionDictionary]] = Field(default=None, description="A dictionary of functions and their associated resources.")
-    api_connection: Optional[list[ApiConnection]] = Field(default=None, description="List of API connections allocated to this resource.")
-    total_gpu_mem: Optional[int] = Field(default=None, description="Total amount of GPU memory allocated to this resource.")
-    total_workers: Optional[int] = Field(default=None, description="Total number of workers allocated to this resource.")
-    total_sys_mem: Optional[int] = Field(default=None, description="Total amount of system memory allocated to this resource.")
-    total_api_uses: Optional[int] = Field(default=None, description="Total number of API calls allocated to this resource.")
+    func_dict: Optional[dict[FunctionType, FunctionDictionary]] = Field(
+        default=None, description="A dictionary of functions and their associated resources."
+    )
+    api_connection: Optional[list[ApiConnection]] = Field(
+        default=None, description="List of API connections allocated to this resource."
+    )
+    total_gpu_mem: Optional[int] = Field(
+        default=None, description="Total amount of GPU memory allocated to this resource."
+    )
+    total_workers: Optional[int] = Field(
+        default=None, description="Total number of workers allocated to this resource."
+    )
+    total_sys_mem: Optional[int] = Field(
+        default=None, description="Total amount of system memory allocated to this resource."
+    )
+    total_api_uses: Optional[int] = Field(
+        default=None, description="Total number of API calls allocated to this resource."
+    )
 
     data: Optional[bytes] = None
     converted_data: Optional[bytes] = None
@@ -95,23 +108,21 @@ class Resource(BaseModel):
         """
         self._pipeline = Pipeline(self.model_copy(deep=True))
 
-
-    async def pipeline_func(self, resource: 'Resource', func_dict_key: str):
-            kwargs = self.func_dict[FunctionType.SAVE].kwargs
-            func = partial(self.func_dict[FunctionType.SAVE].func, **kwargs)
-            try:
-                return await func(resource) if resource is not None else None
-            except Exception as e:
-                return e
-            finally:
-                self.total_api_uses -= self.func_dict[FunctionType.SAVE].api_connection or 0
-                self.total_gpu_mem -= self.func_dict[FunctionType.SAVE].gpu_mem or 0
-                self.total_sys_mem -= self.func_dict[FunctionType.SAVE].sys_mem or 0
-                self.total_workers -= self.func_dict[FunctionType.LOAD].worker or 0
-
+    async def pipeline_func(self, resource: "Resource", func_dict_key: str):
+        kwargs = self.func_dict[FunctionType.SAVE].kwargs
+        func = partial(self.func_dict[FunctionType.SAVE].func, **kwargs)
+        try:
+            return await func(resource) if resource is not None else None
+        except Exception as e:
+            return e
+        finally:
+            self.total_api_uses -= self.func_dict[FunctionType.SAVE].api_connection or 0
+            self.total_gpu_mem -= self.func_dict[FunctionType.SAVE].gpu_mem or 0
+            self.total_sys_mem -= self.func_dict[FunctionType.SAVE].sys_mem or 0
+            self.total_workers -= self.func_dict[FunctionType.LOAD].worker or 0
 
     # NOTE These functions are meant to be passed in a pipeline
-    async def load(self, resource: 'Resource') -> Optional[bytes]:
+    async def load(self, resource: "Resource") -> Optional[bytes]:
         kwargs = self.func_dict[FunctionType.LOAD].kwargs
         func = partial(self.func_dict[FunctionType.LOAD].func, **kwargs)
         try:
@@ -122,7 +133,6 @@ class Resource(BaseModel):
             self.total_api_uses -= self.func_dict[FunctionType.LOAD].api_connection or 0
             self.total_gpu_mem -= self.func_dict[FunctionType.LOAD].gpu_mem or 0
             self.total_sys_mem -= self.func_dict[FunctionType.LOAD].sys_mem or 0
-
 
     async def convert(self, resource) -> Optional[bytes]:
         kwargs = self.func_dict[FunctionType.CONVERT].kwargs
@@ -136,8 +146,7 @@ class Resource(BaseModel):
             self.total_gpu_mem -= self.func_dict[FunctionType.CONVERT].gpu_mem or 0
             self.total_sys_mem -= self.func_dict[FunctionType.CONVERT].sys_mem or 0
 
-
-    async def save(self, resource: 'Resource') -> Optional[bytes]:
+    async def save(self, resource: "Resource") -> Optional[bytes]:
         kwargs = self.func_dict[FunctionType.SAVE].kwargs
         func = partial(self.func_dict[FunctionType.SAVE].func, **kwargs)
         try:
@@ -149,5 +158,3 @@ class Resource(BaseModel):
             self.total_gpu_mem -= self.func_dict[FunctionType.SAVE].gpu_mem or 0
             self.total_sys_mem -= self.func_dict[FunctionType.SAVE].sys_mem or 0
             self.total_workers -= self.func_dict[FunctionType.LOAD].worker or 0
-
-

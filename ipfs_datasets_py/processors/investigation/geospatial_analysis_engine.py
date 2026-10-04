@@ -4,6 +4,7 @@ Geospatial Analysis Engine
 Business logic for geographic entity extraction, spatiotemporal event mapping,
 and geographic context queries.
 """
+
 from __future__ import annotations
 
 import logging
@@ -42,17 +43,72 @@ KNOWN_COORDINATES: Dict[str, Tuple[float, float]] = {
 }
 
 LOCATION_KEYWORDS: List[str] = [
-    "afghanistan", "albania", "algeria", "argentina", "australia", "austria",
-    "bangladesh", "belgium", "brazil", "canada", "chile", "china", "colombia",
-    "denmark", "egypt", "finland", "france", "germany", "greece", "india",
-    "indonesia", "iran", "iraq", "ireland", "israel", "italy", "japan",
-    "jordan", "kenya", "korea", "lebanon", "malaysia", "mexico", "netherlands",
-    "nigeria", "norway", "pakistan", "philippines", "poland", "portugal",
-    "russia", "saudi arabia", "singapore", "south africa", "spain", "sweden",
-    "switzerland", "thailand", "turkey", "ukraine", "united kingdom",
-    "united states", "venezuela", "vietnam", "new york", "washington",
-    "london", "paris", "tokyo", "moscow", "beijing", "berlin", "sydney",
-    "los angeles", "chicago", "miami",
+    "afghanistan",
+    "albania",
+    "algeria",
+    "argentina",
+    "australia",
+    "austria",
+    "bangladesh",
+    "belgium",
+    "brazil",
+    "canada",
+    "chile",
+    "china",
+    "colombia",
+    "denmark",
+    "egypt",
+    "finland",
+    "france",
+    "germany",
+    "greece",
+    "india",
+    "indonesia",
+    "iran",
+    "iraq",
+    "ireland",
+    "israel",
+    "italy",
+    "japan",
+    "jordan",
+    "kenya",
+    "korea",
+    "lebanon",
+    "malaysia",
+    "mexico",
+    "netherlands",
+    "nigeria",
+    "norway",
+    "pakistan",
+    "philippines",
+    "poland",
+    "portugal",
+    "russia",
+    "saudi arabia",
+    "singapore",
+    "south africa",
+    "spain",
+    "sweden",
+    "switzerland",
+    "thailand",
+    "turkey",
+    "ukraine",
+    "united kingdom",
+    "united states",
+    "venezuela",
+    "vietnam",
+    "new york",
+    "washington",
+    "london",
+    "paris",
+    "tokyo",
+    "moscow",
+    "beijing",
+    "berlin",
+    "sydney",
+    "los angeles",
+    "chicago",
+    "miami",
 ]
 
 
@@ -71,6 +127,7 @@ class GeospatialAnalysisEngine:
         try:
             if isinstance(corpus_data, str):
                 import json
+
                 corpus = json.loads(corpus_data)
             else:
                 corpus = corpus_data
@@ -86,9 +143,7 @@ class GeospatialAnalysisEngine:
                 r"\bfrom\s+([A-Z][a-z]+(?: [A-Z][a-z]+)*)\b",
                 r"\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\s+(?:City|State|Country|Province|Region))\b",
             ]
-            documents = (
-                corpus.get("documents", []) if isinstance(corpus, dict) else corpus
-            )
+            documents = corpus.get("documents", []) if isinstance(corpus, dict) else corpus
             for doc_idx, document in enumerate(documents):
                 doc_text = (
                     document.get("content", "") if isinstance(document, dict) else str(document)
@@ -98,16 +153,19 @@ class GeospatialAnalysisEngine:
                     if isinstance(document, dict)
                     else f"doc_{doc_idx}"
                 )
-                doc_timestamp = (
-                    document.get("timestamp") if isinstance(document, dict) else None
-                )
+                doc_timestamp = document.get("timestamp") if isinstance(document, dict) else None
                 extracted_locations: set = set()
                 for pattern in location_patterns:
                     for match in re.finditer(pattern, doc_text):
                         location = (
                             match.group(1).strip() if match.groups() else match.group(0).strip()
                         )
-                        if len(location) > 2 and location.lower() not in ["the", "and", "for", "with"]:
+                        if len(location) > 2 and location.lower() not in [
+                            "the",
+                            "and",
+                            "for",
+                            "with",
+                        ]:
                             extracted_locations.add(location.lower())
                 for keyword in LOCATION_KEYWORDS:
                     if keyword in doc_text.lower():
@@ -145,9 +203,7 @@ class GeospatialAnalysisEngine:
                             existing["documents"].append(doc_id)
                     else:
                         geographic_entities.append(entity_data)
-            geographic_entities.sort(
-                key=lambda x: (x["confidence"], x["frequency"]), reverse=True
-            )
+            geographic_entities.sort(key=lambda x: (x["confidence"], x["frequency"]), reverse=True)
             mappable_entities = [e for e in geographic_entities if e["coordinates"] is not None]
             return {
                 "total_entities": len(geographic_entities),
@@ -196,9 +252,7 @@ class GeospatialAnalysisEngine:
                 lat, lng = entity["coordinates"]
                 event_time_str = entity.get("timestamp") or datetime.now().isoformat()
                 try:
-                    event_time = datetime.fromisoformat(
-                        str(event_time_str).replace("Z", "+00:00")
-                    )
+                    event_time = datetime.fromisoformat(str(event_time_str).replace("Z", "+00:00"))
                 except (ValueError, AttributeError, TypeError):
                     event_time = datetime.now()
                 if time_range:
@@ -217,17 +271,19 @@ class GeospatialAnalysisEngine:
                     event_id = f"{entity['entity']}_{event_type}_{event_time.date()}"
                     temporal_cluster = self._get_temporal_cluster(event_time, resolution)
                     spatial_cluster = f"cluster_{int(lat)}"
-                    spatiotemporal_events.append({
-                        "event_id": event_id,
-                        "entity": entity["entity"],
-                        "event_type": event_type,
-                        "latitude": lat,
-                        "longitude": lng,
-                        "timestamp": event_time.isoformat(),
-                        "confidence": entity.get("confidence", 0.0),
-                        "temporal_cluster": temporal_cluster,
-                        "spatial_cluster": spatial_cluster,
-                    })
+                    spatiotemporal_events.append(
+                        {
+                            "event_id": event_id,
+                            "entity": entity["entity"],
+                            "event_type": event_type,
+                            "latitude": lat,
+                            "longitude": lng,
+                            "timestamp": event_time.isoformat(),
+                            "confidence": entity.get("confidence", 0.0),
+                            "temporal_cluster": temporal_cluster,
+                            "spatial_cluster": spatial_cluster,
+                        }
+                    )
                     if temporal_cluster not in temporal_clusters:
                         temporal_clusters[temporal_cluster] = []
                     temporal_clusters[temporal_cluster].append(event_id)
@@ -286,17 +342,21 @@ class GeospatialAnalysisEngine:
                 distance_km = None
                 if center_coordinates and entity["coordinates"]:
                     distance_km = self._calculate_distance(
-                        center_coordinates[0], center_coordinates[1],
-                        entity["coordinates"][0], entity["coordinates"][1],
+                        center_coordinates[0],
+                        center_coordinates[1],
+                        entity["coordinates"][0],
+                        entity["coordinates"][1],
                     )
                     if distance_km <= radius_km:
                         relevance_score += max(0, (radius_km - distance_km) / radius_km * 3.0)
                 if relevance_score > 0.5:
-                    query_results.append({
-                        **entity,
-                        "relevance_score": relevance_score,
-                        "distance_from_center": distance_km,
-                    })
+                    query_results.append(
+                        {
+                            **entity,
+                            "relevance_score": relevance_score,
+                            "distance_from_center": distance_km,
+                        }
+                    )
             query_results.sort(key=lambda x: x["relevance_score"], reverse=True)
             return {
                 "query": location_query,
@@ -341,9 +401,7 @@ class GeospatialAnalysisEngine:
             return (55.3781, -3.4360)
         return None
 
-    def _calculate_distance(
-        self, lat1: float, lon1: float, lat2: float, lon2: float
-    ) -> float:
+    def _calculate_distance(self, lat1: float, lon1: float, lat2: float, lon2: float) -> float:
         """Calculate haversine distance in kilometres."""
         R = 6371.0
         lat1_rad = math.radians(lat1)
@@ -380,8 +438,16 @@ class GeospatialAnalysisEngine:
                 elif 60 <= lng <= 180:
                     regions.add("Asia/Pacific")
             entity_name = entity["entity"].lower()
-            for country in ["united states", "china", "russia", "india", "brazil",
-                             "germany", "france", "japan"]:
+            for country in [
+                "united states",
+                "china",
+                "russia",
+                "india",
+                "brazil",
+                "germany",
+                "france",
+                "japan",
+            ]:
                 if country in entity_name:
                     countries.add(country.title())
         return {
@@ -391,9 +457,7 @@ class GeospatialAnalysisEngine:
             "total_countries": len(countries),
         }
 
-    def _calculate_bounds(
-        self, entities: List[Dict[str, Any]]
-    ) -> Optional[Dict[str, float]]:
+    def _calculate_bounds(self, entities: List[Dict[str, Any]]) -> Optional[Dict[str, float]]:
         coords = [e["coordinates"] for e in entities if e.get("coordinates")]
         if not coords:
             return None

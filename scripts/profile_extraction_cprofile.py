@@ -6,6 +6,7 @@ Uses cProfile and line_profiler to identify exact bottlenecks.
 
 import sys
 import os
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import cProfile
@@ -68,88 +69,92 @@ def profile_extraction():
         data_type="text",
         domain="business",
     )
-    
+
     # Profile the extraction
     profiler = cProfile.Profile()
     profiler.enable()
-    
+
     # Run extraction multiple times for better statistics
     for i in range(5):
         result = generator.extract_entities(LARGE_DOC, context)
-    
+
     profiler.disable()
-    
+
     # Print profiling results
-    print("="*100)
+    print("=" * 100)
     print("CPROFILE RESULTS: OntologyGenerator.extract_entities()")
-    print("="*100)
-    print(f"\nProcessed: {len(result.entities)} entities, {len(result.relationships)} relationships")
+    print("=" * 100)
+    print(
+        f"\nProcessed: {len(result.entities)} entities, {len(result.relationships)} relationships"
+    )
     print(f"Document size: {len(LARGE_DOC)} characters\n")
-    
+
     s = io.StringIO()
-    ps = pstats.Stats(profiler, stream=s).sort_stats('cumulative')
+    ps = pstats.Stats(profiler, stream=s).sort_stats("cumulative")
     ps.print_stats(30)  # Top 30 functions
-    
+
     print(s.getvalue())
-    
+
     # Now print sorted by total time to find hotspots
     s2 = io.StringIO()
-    ps2 = pstats.Stats(profiler, stream=s2).sort_stats('time')
+    ps2 = pstats.Stats(profiler, stream=s2).sort_stats("time")
     ps2.print_stats(20)  # Top 20 functions by internal time
-    
-    print("\n" + "="*100)
+
+    print("\n" + "=" * 100)
     print("TOP FUNCTIONS BY INTERNAL TIME (hotspots)")
-    print("="*100)
+    print("=" * 100)
     print(s2.getvalue())
 
 
 def analyze_relationship_inference():
     """Analyze the relationship inference bottleneck specifically."""
-    print("\n" + "="*100)
+    print("\n" + "=" * 100)
     print("TARGETED ANALYSIS: Relationship Inference")
-    print("="*100)
-    
+    print("=" * 100)
+
     generator = OntologyGenerator()
-    
+
     # Extract entities first
     context = OntologyGenerationContext(
         data_source="profile_test",
         data_type="text",
         domain="business",
     )
-    
+
     extraction = generator.extract_entities(LARGE_DOC, context)
     entities = extraction.entities
-    
+
     print(f"\nAnalyzing relationship inference for {len(entities)} entities...")
     print(f"Expected pairs to compare: {len(entities) * (len(entities) - 1) // 2}")
-    
+
     # Profile just the relationship inference
     profiler = cProfile.Profile()
     profiler.enable()
-    
+
     for i in range(3):
         relationships = generator.infer_relationships(entities, context, LARGE_DOC)
-    
+
     profiler.disable()
-    
+
     s = io.StringIO()
-    ps = pstats.Stats(profiler, stream=s).sort_stats('cumulative')
+    ps = pstats.Stats(profiler, stream=s).sort_stats("cumulative")
     ps.print_stats(25)
-    
+
     print(s.getvalue())
-    
+
     print(f"\nInferred: {len(relationships)} relationships")
-    print(f"Per-entity-pair density: {len(relationships) / (len(entities) * (len(entities) - 1) // 2) * 100:.2f}%")
+    print(
+        f"Per-entity-pair density: {len(relationships) / (len(entities) * (len(entities) - 1) // 2) * 100:.2f}%"
+    )
 
 
 if __name__ == "__main__":
     profile_extraction()
     analyze_relationship_inference()
-    
-    print("\n" + "="*100)
+
+    print("\n" + "=" * 100)
     print("HOT-PATH SUMMARY & OPTIMIZATION OPPORTUNITIES")
-    print("="*100)
+    print("=" * 100)
     print("""
 Key Findings:
 1. **Relationship Inference** is the primary bottleneck (60-80% of runtime)

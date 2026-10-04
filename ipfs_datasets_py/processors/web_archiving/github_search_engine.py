@@ -13,6 +13,7 @@ Usage (package import)::
         batch_search_github,
     )
 """
+
 import logging
 from typing import Dict, List, Optional, Any, Literal
 from datetime import datetime
@@ -27,7 +28,7 @@ async def search_github_repositories(
     sort: Optional[Literal["stars", "forks", "help-wanted-issues", "updated"]] = None,
     order: Literal["asc", "desc"] = "desc",
     per_page: int = 30,
-    page: int = 1
+    page: int = 1,
 ) -> Dict[str, Any]:
     """Search GitHub repositories.
 
@@ -56,28 +57,21 @@ async def search_github_repositories(
         except ImportError:
             return {
                 "status": "error",
-                "error": "aiohttp library required for GitHub Search. Install with: pip install aiohttp"
+                "error": "aiohttp library required for GitHub Search. Install with: pip install aiohttp",
             }
 
         # GitHub API endpoint
         url = "https://api.github.com/search/repositories"
-        
+
         # Prepare query parameters
-        params = {
-            "q": query,
-            "per_page": min(per_page, 100),
-            "page": page,
-            "order": order
-        }
-        
+        params = {"q": query, "per_page": min(per_page, 100), "page": page, "order": order}
+
         if sort:
             params["sort"] = sort
 
         # Set headers
-        headers = {
-            "Accept": "application/vnd.github.v3+json"
-        }
-        
+        headers = {"Accept": "application/vnd.github.v3+json"}
+
         if api_token:
             headers["Authorization"] = f"token {api_token}"
 
@@ -86,66 +80,67 @@ async def search_github_repositories(
             async with session.get(url, params=params, headers=headers, timeout=30) as response:
                 if response.status == 200:
                     data = await response.json()
-                    
+
                     # Extract repository results
                     results = []
                     items = data.get("items", [])
-                    
+
                     for item in items:
-                        results.append({
-                            "id": item.get("id"),
-                            "name": item.get("name", ""),
-                            "full_name": item.get("full_name", ""),
-                            "owner": item.get("owner", {}).get("login", ""),
-                            "description": item.get("description", ""),
-                            "url": item.get("html_url", ""),
-                            "clone_url": item.get("clone_url", ""),
-                            "stars": item.get("stargazers_count", 0),
-                            "forks": item.get("forks_count", 0),
-                            "watchers": item.get("watchers_count", 0),
-                            "open_issues": item.get("open_issues_count", 0),
-                            "language": item.get("language", ""),
-                            "topics": item.get("topics", []),
-                            "created_at": item.get("created_at", ""),
-                            "updated_at": item.get("updated_at", ""),
-                            "pushed_at": item.get("pushed_at", ""),
-                            "size": item.get("size", 0),
-                            "default_branch": item.get("default_branch", ""),
-                            "license": item.get("license", {}).get("name", "") if item.get("license") else ""
-                        })
-                    
+                        results.append(
+                            {
+                                "id": item.get("id"),
+                                "name": item.get("name", ""),
+                                "full_name": item.get("full_name", ""),
+                                "owner": item.get("owner", {}).get("login", ""),
+                                "description": item.get("description", ""),
+                                "url": item.get("html_url", ""),
+                                "clone_url": item.get("clone_url", ""),
+                                "stars": item.get("stargazers_count", 0),
+                                "forks": item.get("forks_count", 0),
+                                "watchers": item.get("watchers_count", 0),
+                                "open_issues": item.get("open_issues_count", 0),
+                                "language": item.get("language", ""),
+                                "topics": item.get("topics", []),
+                                "created_at": item.get("created_at", ""),
+                                "updated_at": item.get("updated_at", ""),
+                                "pushed_at": item.get("pushed_at", ""),
+                                "size": item.get("size", 0),
+                                "default_branch": item.get("default_branch", ""),
+                                "license": item.get("license", {}).get("name", "")
+                                if item.get("license")
+                                else "",
+                            }
+                        )
+
                     return {
                         "status": "success",
                         "results": results,
                         "total_count": data.get("total_count", 0),
                         "incomplete_results": data.get("incomplete_results", False),
                         "query": query,
-                        "search_timestamp": datetime.now().isoformat()
+                        "search_timestamp": datetime.now().isoformat(),
                     }
                 elif response.status == 403:
                     return {
                         "status": "error",
-                        "error": "GitHub API rate limit exceeded. Provide a token or wait for rate limit reset."
+                        "error": "GitHub API rate limit exceeded. Provide a token or wait for rate limit reset.",
                     }
                 elif response.status == 422:
                     error_data = await response.json()
                     return {
                         "status": "error",
-                        "error": f"Invalid search query: {error_data.get('message', 'Unknown error')}"
+                        "error": f"Invalid search query: {error_data.get('message', 'Unknown error')}",
                     }
                 else:
                     error_text = await response.text()
                     return {
                         "status": "error",
-                        "error": f"GitHub API error (status {response.status}): {error_text}"
+                        "error": f"GitHub API error (status {response.status}): {error_text}",
                     }
 
     except Exception as e:
         logger.error(f"Failed to search GitHub repositories: {e}")
-        return {
-            "status": "error",
-            "error": str(e)
-        }
+        return {"status": "error", "error": str(e)}
 
 
 async def search_github_code(
@@ -154,7 +149,7 @@ async def search_github_code(
     sort: Optional[Literal["indexed"]] = None,
     order: Literal["asc", "desc"] = "desc",
     per_page: int = 30,
-    page: int = 1
+    page: int = 1,
 ) -> Dict[str, Any]:
     """Search code on GitHub.
 
@@ -177,27 +172,17 @@ async def search_github_code(
         try:
             import aiohttp
         except ImportError:
-            return {
-                "status": "error",
-                "error": "aiohttp library required"
-            }
+            return {"status": "error", "error": "aiohttp library required"}
 
         url = "https://api.github.com/search/code"
-        
-        params = {
-            "q": query,
-            "per_page": min(per_page, 100),
-            "page": page,
-            "order": order
-        }
-        
+
+        params = {"q": query, "per_page": min(per_page, 100), "page": page, "order": order}
+
         if sort:
             params["sort"] = sort
 
-        headers = {
-            "Accept": "application/vnd.github.v3+json"
-        }
-        
+        headers = {"Accept": "application/vnd.github.v3+json"}
+
         if api_token:
             headers["Authorization"] = f"token {api_token}"
 
@@ -205,52 +190,53 @@ async def search_github_code(
             async with session.get(url, params=params, headers=headers, timeout=30) as response:
                 if response.status == 200:
                     data = await response.json()
-                    
+
                     results = []
                     items = data.get("items", [])
-                    
+
                     for item in items:
-                        results.append({
-                            "name": item.get("name", ""),
-                            "path": item.get("path", ""),
-                            "sha": item.get("sha", ""),
-                            "url": item.get("html_url", ""),
-                            "git_url": item.get("git_url", ""),
-                            "repository": {
-                                "id": item.get("repository", {}).get("id"),
-                                "name": item.get("repository", {}).get("name", ""),
-                                "full_name": item.get("repository", {}).get("full_name", ""),
-                                "owner": item.get("repository", {}).get("owner", {}).get("login", ""),
-                                "url": item.get("repository", {}).get("html_url", "")
+                        results.append(
+                            {
+                                "name": item.get("name", ""),
+                                "path": item.get("path", ""),
+                                "sha": item.get("sha", ""),
+                                "url": item.get("html_url", ""),
+                                "git_url": item.get("git_url", ""),
+                                "repository": {
+                                    "id": item.get("repository", {}).get("id"),
+                                    "name": item.get("repository", {}).get("name", ""),
+                                    "full_name": item.get("repository", {}).get("full_name", ""),
+                                    "owner": item.get("repository", {})
+                                    .get("owner", {})
+                                    .get("login", ""),
+                                    "url": item.get("repository", {}).get("html_url", ""),
+                                },
                             }
-                        })
-                    
+                        )
+
                     return {
                         "status": "success",
                         "results": results,
                         "total_count": data.get("total_count", 0),
                         "incomplete_results": data.get("incomplete_results", False),
                         "query": query,
-                        "search_timestamp": datetime.now().isoformat()
+                        "search_timestamp": datetime.now().isoformat(),
                     }
                 elif response.status == 403:
                     return {
                         "status": "error",
-                        "error": "GitHub API rate limit exceeded or authentication required for code search"
+                        "error": "GitHub API rate limit exceeded or authentication required for code search",
                     }
                 else:
                     error_text = await response.text()
                     return {
                         "status": "error",
-                        "error": f"GitHub Code Search error (status {response.status}): {error_text}"
+                        "error": f"GitHub Code Search error (status {response.status}): {error_text}",
                     }
 
     except Exception as e:
         logger.error(f"Failed to search GitHub code: {e}")
-        return {
-            "status": "error",
-            "error": str(e)
-        }
+        return {"status": "error", "error": str(e)}
 
 
 async def search_github_users(
@@ -259,7 +245,7 @@ async def search_github_users(
     sort: Optional[Literal["followers", "repositories", "joined"]] = None,
     order: Literal["asc", "desc"] = "desc",
     per_page: int = 30,
-    page: int = 1
+    page: int = 1,
 ) -> Dict[str, Any]:
     """Search GitHub users.
 
@@ -281,27 +267,17 @@ async def search_github_users(
         try:
             import aiohttp
         except ImportError:
-            return {
-                "status": "error",
-                "error": "aiohttp library required"
-            }
+            return {"status": "error", "error": "aiohttp library required"}
 
         url = "https://api.github.com/search/users"
-        
-        params = {
-            "q": query,
-            "per_page": min(per_page, 100),
-            "page": page,
-            "order": order
-        }
-        
+
+        params = {"q": query, "per_page": min(per_page, 100), "page": page, "order": order}
+
         if sort:
             params["sort"] = sort
 
-        headers = {
-            "Accept": "application/vnd.github.v3+json"
-        }
-        
+        headers = {"Accept": "application/vnd.github.v3+json"}
+
         if api_token:
             headers["Authorization"] = f"token {api_token}"
 
@@ -309,42 +285,41 @@ async def search_github_users(
             async with session.get(url, params=params, headers=headers, timeout=30) as response:
                 if response.status == 200:
                     data = await response.json()
-                    
+
                     results = []
                     items = data.get("items", [])
-                    
+
                     for item in items:
-                        results.append({
-                            "id": item.get("id"),
-                            "login": item.get("login", ""),
-                            "url": item.get("html_url", ""),
-                            "avatar_url": item.get("avatar_url", ""),
-                            "type": item.get("type", ""),
-                            "site_admin": item.get("site_admin", False),
-                            "score": item.get("score", 0)
-                        })
-                    
+                        results.append(
+                            {
+                                "id": item.get("id"),
+                                "login": item.get("login", ""),
+                                "url": item.get("html_url", ""),
+                                "avatar_url": item.get("avatar_url", ""),
+                                "type": item.get("type", ""),
+                                "site_admin": item.get("site_admin", False),
+                                "score": item.get("score", 0),
+                            }
+                        )
+
                     return {
                         "status": "success",
                         "results": results,
                         "total_count": data.get("total_count", 0),
                         "incomplete_results": data.get("incomplete_results", False),
                         "query": query,
-                        "search_timestamp": datetime.now().isoformat()
+                        "search_timestamp": datetime.now().isoformat(),
                     }
                 else:
                     error_text = await response.text()
                     return {
                         "status": "error",
-                        "error": f"GitHub User Search error (status {response.status}): {error_text}"
+                        "error": f"GitHub User Search error (status {response.status}): {error_text}",
                     }
 
     except Exception as e:
         logger.error(f"Failed to search GitHub users: {e}")
-        return {
-            "status": "error",
-            "error": str(e)
-        }
+        return {"status": "error", "error": str(e)}
 
 
 async def search_github_issues(
@@ -353,7 +328,7 @@ async def search_github_issues(
     sort: Optional[Literal["comments", "reactions", "created", "updated"]] = None,
     order: Literal["asc", "desc"] = "desc",
     per_page: int = 30,
-    page: int = 1
+    page: int = 1,
 ) -> Dict[str, Any]:
     """Search GitHub issues and pull requests.
 
@@ -375,27 +350,17 @@ async def search_github_issues(
         try:
             import aiohttp
         except ImportError:
-            return {
-                "status": "error",
-                "error": "aiohttp library required"
-            }
+            return {"status": "error", "error": "aiohttp library required"}
 
         url = "https://api.github.com/search/issues"
-        
-        params = {
-            "q": query,
-            "per_page": min(per_page, 100),
-            "page": page,
-            "order": order
-        }
-        
+
+        params = {"q": query, "per_page": min(per_page, 100), "page": page, "order": order}
+
         if sort:
             params["sort"] = sort
 
-        headers = {
-            "Accept": "application/vnd.github.v3+json"
-        }
-        
+        headers = {"Accept": "application/vnd.github.v3+json"}
+
         if api_token:
             headers["Authorization"] = f"token {api_token}"
 
@@ -403,49 +368,48 @@ async def search_github_issues(
             async with session.get(url, params=params, headers=headers, timeout=30) as response:
                 if response.status == 200:
                     data = await response.json()
-                    
+
                     results = []
                     items = data.get("items", [])
-                    
+
                     for item in items:
-                        results.append({
-                            "id": item.get("id"),
-                            "number": item.get("number"),
-                            "title": item.get("title", ""),
-                            "state": item.get("state", ""),
-                            "url": item.get("html_url", ""),
-                            "user": item.get("user", {}).get("login", ""),
-                            "labels": [label.get("name") for label in item.get("labels", [])],
-                            "created_at": item.get("created_at", ""),
-                            "updated_at": item.get("updated_at", ""),
-                            "closed_at": item.get("closed_at", ""),
-                            "comments": item.get("comments", 0),
-                            "pull_request": "pull_request" in item,
-                            "repository_url": item.get("repository_url", ""),
-                            "score": item.get("score", 0)
-                        })
-                    
+                        results.append(
+                            {
+                                "id": item.get("id"),
+                                "number": item.get("number"),
+                                "title": item.get("title", ""),
+                                "state": item.get("state", ""),
+                                "url": item.get("html_url", ""),
+                                "user": item.get("user", {}).get("login", ""),
+                                "labels": [label.get("name") for label in item.get("labels", [])],
+                                "created_at": item.get("created_at", ""),
+                                "updated_at": item.get("updated_at", ""),
+                                "closed_at": item.get("closed_at", ""),
+                                "comments": item.get("comments", 0),
+                                "pull_request": "pull_request" in item,
+                                "repository_url": item.get("repository_url", ""),
+                                "score": item.get("score", 0),
+                            }
+                        )
+
                     return {
                         "status": "success",
                         "results": results,
                         "total_count": data.get("total_count", 0),
                         "incomplete_results": data.get("incomplete_results", False),
                         "query": query,
-                        "search_timestamp": datetime.now().isoformat()
+                        "search_timestamp": datetime.now().isoformat(),
                     }
                 else:
                     error_text = await response.text()
                     return {
                         "status": "error",
-                        "error": f"GitHub Issue Search error (status {response.status}): {error_text}"
+                        "error": f"GitHub Issue Search error (status {response.status}): {error_text}",
                     }
 
     except Exception as e:
         logger.error(f"Failed to search GitHub issues: {e}")
-        return {
-            "status": "error",
-            "error": str(e)
-        }
+        return {"status": "error", "error": str(e)}
 
 
 async def batch_search_github(
@@ -453,7 +417,7 @@ async def batch_search_github(
     search_type: Literal["repositories", "code", "users", "issues"] = "repositories",
     api_token: Optional[str] = None,
     per_page: int = 30,
-    delay_seconds: float = 2.0
+    delay_seconds: float = 2.0,
 ) -> Dict[str, Any]:
     """Batch search GitHub with multiple queries.
 
@@ -469,32 +433,32 @@ async def batch_search_github(
     """
     try:
         import anyio
-        
+
         # Select the appropriate search function
         search_func = {
             "repositories": search_github_repositories,
             "code": search_github_code,
             "users": search_github_users,
-            "issues": search_github_issues
+            "issues": search_github_issues,
         }.get(search_type, search_github_repositories)
-        
+
         results = {}
         success_count = 0
         error_count = 0
-        
+
         for query in queries:
             result = await search_func(query=query, api_token=api_token, per_page=per_page)
             results[query] = result
-            
-            if result['status'] == 'success':
+
+            if result["status"] == "success":
                 success_count += 1
             else:
                 error_count += 1
-            
+
             # Add delay between requests to respect rate limits
             if query != queries[-1]:
                 await anyio.sleep(delay_seconds)
-        
+
         return {
             "status": "success",
             "results": results,
@@ -502,12 +466,9 @@ async def batch_search_github(
             "total_queries": len(queries),
             "success_count": success_count,
             "error_count": error_count,
-            "batch_completed_at": datetime.now().isoformat()
+            "batch_completed_at": datetime.now().isoformat(),
         }
-        
+
     except Exception as e:
         logger.error(f"Failed batch GitHub search: {e}")
-        return {
-            "status": "error",
-            "error": str(e)
-        }
+        return {"status": "error", "error": str(e)}

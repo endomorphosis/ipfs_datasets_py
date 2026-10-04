@@ -18,7 +18,7 @@ from tests._test_utils import (
     raise_on_bad_callable_code_quality,
     get_ast_tree,
     BadDocumentationError,
-    BadSignatureError
+    BadSignatureError,
 )
 
 repo_root = Path(__file__).resolve().parents[5]
@@ -26,8 +26,12 @@ file_path = str(repo_root / "ipfs_datasets_py" / "pdf_processing" / "pdf_process
 md_path = str(repo_root / "ipfs_datasets_py" / "pdf_processing" / "pdf_processor_stubs.md")
 
 # Make sure the input file and documentation file exist.
-assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
-assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+assert os.path.exists(file_path), (
+    f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
+)
+assert os.path.exists(md_path), (
+    f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+)
 
 from ipfs_datasets_py.pdf_processing.pdf_processor import PDFProcessor
 
@@ -81,6 +85,7 @@ except Exception:
 from ipfs_datasets_py.ipld import IPLDStorage
 from ipfs_datasets_py.audit import AuditLogger
 from ipfs_datasets_py.monitoring import MonitoringSystem
+
 try:
     from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMOptimizer
 except Exception:
@@ -91,6 +96,7 @@ try:
 except Exception:
     GraphRAGIntegrator = object
 from ipfs_datasets_py.monitoring import MonitoringConfig, MetricsConfig
+
 try:
     from ipfs_datasets_py.pdf_processing.ocr_engine import MultiEngineOCR
 except Exception:
@@ -108,8 +114,7 @@ except Exception:
     QueryEngine = object
 
 
-
-from typing import  Tuple, Generator
+from typing import Tuple, Generator
 from pathlib import Path
 import tempfile
 from enum import Enum
@@ -145,6 +150,7 @@ class _FallbackFaker:
     def name(self) -> str:
         return "Test Author"
 
+
 try:
     from tests.unit_tests.pdf_processing_.graphrag_integrator_.conftest import (
         real_integrator,
@@ -155,6 +161,7 @@ except Exception:
     @pytest.fixture
     def real_integrator():
         return MagicMock(name="real_integrator")
+
 
 from contextlib import contextmanager
 
@@ -171,6 +178,7 @@ except Exception:
 
 
 SEED = 420
+
 
 @pytest.fixture(autouse=True)
 def faker_fixed_seed():
@@ -193,14 +201,12 @@ def test_constants(tmp_path, faker_fixed_seed):
             "author": faker_fixed_seed.name(),
             "title": "Test PDF Document",
             "subject": "PDF Processing Unit Tests",
-            "keywords": "pdf, test, unit test"
+            "keywords": "pdf, test, unit test",
         },
         "sample_image_path": tmp_path / "test_image.png",
         "sample_pdf_path": tmp_path / "test_document.pdf",
         "page_size": letter,
-        "image_paths": {
-            "png": tmp_path / "test_image.png"
-        },
+        "image_paths": {"png": tmp_path / "test_image.png"},
         "pdf_paths": {
             "valid": tmp_path / "valid.pdf",
             "invalid": tmp_path / "invalid.pdf",
@@ -215,9 +221,10 @@ def test_constants(tmp_path, faker_fixed_seed):
             "zero_pages": tmp_path / "zero_pages.pdf",
             "fake": tmp_path / "fake.pdf",
             "locked": tmp_path / "locked.pdf",
-            "not_a_pdf": tmp_path / "not_a_pdf.txt"
+            "not_a_pdf": tmp_path / "not_a_pdf.txt",
         },
     }
+
 
 CUSTOM_METADATA = {
     "user_id": "user_12345",
@@ -228,6 +235,7 @@ CUSTOM_METADATA = {
     "reviewed": False,
     "page_count": 10,
 }
+
 
 @pytest.fixture
 def custom_metadata():
@@ -247,6 +255,7 @@ def large_pdf_path(tmp_path, pagesize, expected_text) -> Path:
             c.showPage()
     return path
 
+
 INVALID_PATHS = {
     "non_existent": Path("/path/to/non_existent_file.pdf"),
     "directory_instead_of_file": Path("/path/to/directory/"),
@@ -256,10 +265,12 @@ INVALID_PATHS = {
     "whitespace_path": Path("   "),
 }
 
+
 @pytest.fixture
 def invalid_paths():
     """Fixture providing various invalid file paths."""
     return INVALID_PATHS
+
 
 # ==========================================
 # TEXT CONTENT FIXTURES
@@ -278,7 +289,7 @@ def text_with_entities_in_image():
     lines = (
         "Barack Obama was the 44th President of the United States.",
         "Michelle Obama was the First Lady.",
-        "They have two daughters, Malia and Sasha."
+        "They have two daughters, Malia and Sasha.",
     )
     return lines
 
@@ -286,11 +297,7 @@ def text_with_entities_in_image():
 @pytest.fixture
 def expected_text() -> tuple[str, ...]:
     """Expected text content for standard PDF documents."""
-    lines = (
-        "Hello my baby!",
-        "Hello my honey!",
-        "Hello my rag-time gal!"
-    )
+    lines = ("Hello my baby!", "Hello my honey!", "Hello my rag-time gal!")
     return lines
 
 
@@ -323,7 +330,7 @@ def expected_text_with_two_entities() -> tuple[str, ...]:
         "Socrates is a man.",
         "John Madden is a man.",
         "All men are mortal.",
-        "Therefore, Socrates and John Madden are mortal."
+        "Therefore, Socrates and John Madden are mortal.",
     )
     return lines
 
@@ -334,7 +341,7 @@ def expected_text_with_two_entities_with_close_connection() -> tuple[str, ...]:
     lines = (
         "Franklin Delano Roosevelt was president.",
         "Theodore Roosevelt was a relative of Franklin Delano Roosevelt.",
-        "Therefore, Theodore Roosevelt is related to a president."
+        "Therefore, Theodore Roosevelt is related to a president.",
     )
     return lines
 
@@ -345,7 +352,7 @@ def expected_text_with_two_entities_with_weak_connection() -> tuple[str, ...]:
     lines = (
         "Big Floppa is a cat.",
         "The Andromeda galaxy is vast.",
-        "Therefore, they are unrelated."
+        "Therefore, they are unrelated.",
     )
     return lines
 
@@ -359,7 +366,7 @@ def text_fixtures_dict(
     expected_text_with_one_entity,
     expected_text_with_two_entities,
     expected_text_with_two_entities_with_close_connection,
-    expected_text_with_two_entities_with_weak_connection
+    expected_text_with_two_entities_with_weak_connection,
 ):
     """Dictionary containing all text fixtures."""
     return {
@@ -370,7 +377,7 @@ def text_fixtures_dict(
         "expected_text_with_one_entity": expected_text_with_one_entity,
         "expected_text_with_two_entities": expected_text_with_two_entities,
         "expected_text_with_two_entities_with_close_connection": expected_text_with_two_entities_with_close_connection,
-        "expected_text_with_two_entities_with_weak_connection": expected_text_with_two_entities_with_weak_connection
+        "expected_text_with_two_entities_with_weak_connection": expected_text_with_two_entities_with_weak_connection,
     }
 
 
@@ -407,17 +414,21 @@ def _make_canvas(path: Path, page_size: Tuple[int, int]) -> Generator[canvas.Can
 
 ## Basic Valid PDF files.
 
+
 @pytest.fixture
 def sample_metadata(test_constants):
     return test_constants["sample_metadata"]
 
+
 @pytest.fixture
 def paths(test_constants):
-    return test_constants['pdf_paths']
+    return test_constants["pdf_paths"]
+
 
 @pytest.fixture
 def pagesize(test_constants):
     return test_constants["page_size"]
+
 
 @pytest.fixture
 def pdf_elements(test_constants, sample_metadata):
@@ -431,12 +442,14 @@ def pdf_elements(test_constants, sample_metadata):
     ]
 
 
-
 def make_pdf_elements(name: str):
     """Fixture factory to create PDF elements based on test constants."""
+
     @pytest.fixture
     def _pdf_elements(test_constants):
-        assert len(test_constants[name]) == 3, "Test constant must have exactly three lines of text."
+        assert len(test_constants[name]) == 3, (
+            "Test constant must have exactly three lines of text."
+        )
         x = 100
         first, second, third = test_constants[name]
         return [
@@ -444,35 +457,38 @@ def make_pdf_elements(name: str):
             (x, 650, second),
             (x, 600, third),
         ]
+
     return _pdf_elements
 
 
 pdf_file_with_zero_entities = make_pdf_elements("expected_text_zero_entities")
 pdf_file_with_one_entity = make_pdf_elements("expected_text_with_one_entity")
 pdf_file_with_two_entities = make_pdf_elements("expected_text_with_two_entities")
-pdf_file_with_two_entities_with_close_connection = make_pdf_elements("expected_text_with_two_entities_with_close_connection")
-pdf_file_with_two_entities_with_weak_connection = make_pdf_elements("expected_text_with_two_entities_with_weak_connection")
+pdf_file_with_two_entities_with_close_connection = make_pdf_elements(
+    "expected_text_with_two_entities_with_close_connection"
+)
+pdf_file_with_two_entities_with_weak_connection = make_pdf_elements(
+    "expected_text_with_two_entities_with_weak_connection"
+)
 pdf_file_with_image = make_pdf_elements("text_in_the_image")
 pdf_file_with_entities_in_image = make_pdf_elements("text_with_entities_in_image")
-large_pdf_file = make_pdf_elements("expected_text")  # Reuse expected_text for large PDF base content
-
+large_pdf_file = make_pdf_elements(
+    "expected_text"
+)  # Reuse expected_text for large PDF base content
 
 
 @pytest.fixture
 def image_elements(paths):
     return {
         "draw_string": (100, 750, "Sample Text with Image"),
-        "draw_image": {
-            "args": (paths["image"], 100, 500),
-            "kwargs": {"width": 200, "height": 150}
-        }
+        "draw_image": {"args": (paths["image"], 100, 500), "kwargs": {"width": 200, "height": 150}},
     }
 
 
 @pytest.fixture
 def mock_pdf_file(paths, pagesize, pdf_elements) -> Path:
     """Create a mock PDF file for testing purposes."""
-    path = paths['valid']
+    path = paths["valid"]
     with _make_canvas(path, pagesize) as c:
         _ = _make_mock_pdf(c, pdf_elements)
 
@@ -482,13 +498,11 @@ def mock_pdf_file(paths, pagesize, pdf_elements) -> Path:
 @pytest.fixture
 def valid_pdf_file(paths, pagesize, pdf_elements) -> Path:
     """Create a valid PDF file for testing purposes."""
-    path = paths['valid']
+    path = paths["valid"]
     with _make_canvas(path, pagesize) as c:
         _ = _make_mock_pdf(c, pdf_elements)
 
     return path
-
-
 
 
 @pytest.fixture
@@ -498,7 +512,11 @@ def mock_pdf_file_with_image(pdf_elements, image_elements, paths, pagesize) -> P
     path = paths["image"]
 
     # PDF image elements
-    args = image_elements["draw_string"], image_elements["draw_image"]["args"], image_elements["draw_image"]["kwargs"]
+    args = (
+        image_elements["draw_string"],
+        image_elements["draw_image"]["args"],
+        image_elements["draw_image"]["kwargs"],
+    )
 
     with _make_canvas(path, pagesize) as c:
         c = _make_mock_pdf(c, pdf_elements)
@@ -510,7 +528,7 @@ def mock_pdf_file_with_image(pdf_elements, image_elements, paths, pagesize) -> P
 @pytest.fixture
 def not_a_pdf_file(paths) -> str:
     """Create a text file."""
-    fake_pdf = paths['not_a_pdf']
+    fake_pdf = paths["not_a_pdf"]
     fake_pdf.write_text("This is not a PDF file, just plain text.")
     return str(fake_pdf)
 
@@ -518,7 +536,7 @@ def not_a_pdf_file(paths) -> str:
 @pytest.fixture
 def fake_pdf_file(paths) -> str:
     """Create text file with PDF extension."""
-    fake_pdf = paths['fake']
+    fake_pdf = paths["fake"]
     fake_pdf.write_text("This is not a PDF file, just plain text with a PDF extension.")
     return str(fake_pdf)
 
@@ -526,7 +544,7 @@ def fake_pdf_file(paths) -> str:
 @pytest.fixture
 def no_read_permissions_pdf_file(mock_pdf_file, pdf_elements, paths, pagesize) -> Path:
     """Create a PDF file with no read permissions."""
-    path = paths['no_read_perms']
+    path = paths["no_read_perms"]
     with _make_canvas(path, pagesize) as c:
         _ = _make_mock_pdf(c, pdf_elements)
 
@@ -546,7 +564,7 @@ def locked_pdf_file(paths, pagesize, pdf_elements):
         lock to observe it. This fixture acquires an exclusive lock so that the
         PDF processor's lock probe can detect it.
     """
-    path = paths['locked']
+    path = paths["locked"]
     with _make_canvas(path, pagesize) as c:
         _ = _make_mock_pdf(c, pdf_elements)
 
@@ -555,7 +573,7 @@ def locked_pdf_file(paths, pagesize, pdf_elements):
     print(f"Locked file path: {path}, size: {os.path.getsize(path)} bytes")
     file_handle = None
     try:
-        file_handle = open(path, 'r+b')
+        file_handle = open(path, "r+b")
 
         if os.name == "posix":
             import fcntl
@@ -589,16 +607,15 @@ def locked_pdf_file(paths, pagesize, pdf_elements):
             file_handle.close()
 
 
-
 @pytest.fixture
 def corrupted_pdf_file(paths, pagesize, pdf_elements) -> Path:
     """Create a corrupted PDF file for testing purposes."""
-    path = paths['corrupted']
+    path = paths["corrupted"]
     with _make_canvas(path, pagesize) as c:
         _ = _make_mock_pdf(c, pdf_elements)
 
     # Corrupt the PDF by truncating its content
-    with open(path, 'r+b') as f:
+    with open(path, "r+b") as f:
         f.truncate(10)  # Truncate to 10 bytes to corrupt
 
     return path
@@ -626,7 +643,7 @@ def encrypted_pdf_file(paths, pagesize, pdf_elements) -> Path:
 
     with _pymupdf_open(path) as doc:
         # Create a temporary path for the encrypted version
-        encrypted_path = path.with_suffix('.encrypted.pdf')
+        encrypted_path = path.with_suffix(".encrypted.pdf")
 
         # Encrypt with standard security - save to a different file first
         doc.save(
@@ -634,7 +651,7 @@ def encrypted_pdf_file(paths, pagesize, pdf_elements) -> Path:
             encryption=pymupdf.PDF_ENCRYPT_AES_256,
             user_pw="user123",  # Set user password (for opening)
             owner_pw="owner456",  # Set owner password (for permissions)
-            permissions=pymupdf.PDF_PERM_PRINT | pymupdf.PDF_PERM_COPY
+            permissions=pymupdf.PDF_PERM_PRINT | pymupdf.PDF_PERM_COPY,
         )
 
     # Move the encrypted file to the expected location
@@ -647,14 +664,14 @@ def encrypted_pdf_file(paths, pagesize, pdf_elements) -> Path:
 def unsupported_version_pdf_file(paths, pagesize, pdf_elements) -> Path:
     """Create a PDF file with an unsupported PDF version for testing purposes."""
     path = paths["unsupported_version"]
-    current_version = b'%PDF-1.3'
-    unsupported_version = b'%PDF-9.0'  # Intentionally invalid version
+    current_version = b"%PDF-1.3"
+    unsupported_version = b"%PDF-9.0"  # Intentionally invalid version
 
     with _make_canvas(path, pagesize) as c:
         _ = _make_mock_pdf(c, pdf_elements)
 
     # Modify the PDF header to simulate an unsupported version
-    with open(path, 'r+b') as f:
+    with open(path, "r+b") as f:
         content = f.read()
         # Replace PDF header with unsupported version
         modified_content = content.replace(current_version, unsupported_version, 1)
@@ -667,7 +684,7 @@ def unsupported_version_pdf_file(paths, pagesize, pdf_elements) -> Path:
 @pytest.fixture
 def empty_pdf_file(paths) -> str:
     """Create empty PDF file."""
-    empty_pdf = paths['empty']
+    empty_pdf = paths["empty"]
     c = canvas.Canvas(str(empty_pdf))
     c.showPage()
     c.save()
@@ -677,7 +694,7 @@ def empty_pdf_file(paths) -> str:
 @pytest.fixture
 def zero_pages_pdf_file(paths) -> str:
     """Create PDF with zero pages."""
-    zero_pages_pdf = paths['zero_pages']
+    zero_pages_pdf = paths["zero_pages"]
 
     # Create a PDF document but don't add any pages
     c = canvas.Canvas(str(zero_pages_pdf))
@@ -697,7 +714,6 @@ def flat_pdf_file(valid_pdf_file, paths) -> Path:
     doc = pymupdf.open(str(valid_pdf_file))
 
     with _pymupdf_open(valid_pdf_file) as doc:
-
         # Create new PDF
         new_doc = pymupdf.open()
 
@@ -720,7 +736,7 @@ def flat_pdf_file(valid_pdf_file, paths) -> Path:
 @pytest.fixture
 def no_read_permissions_file(paths, pagesize, pdf_elements) -> str:
     """Create file with no read permissions."""
-    path = paths['no_read_perms']
+    path = paths["no_read_perms"]
 
     with _make_canvas(path, pagesize) as c:
         _ = _make_mock_pdf(c, pdf_elements)
@@ -733,7 +749,7 @@ def no_read_permissions_file(paths, pagesize, pdf_elements) -> str:
 
 
 # Error message constants for PDF validation
-EXPECTED_PYMUPDF_ERROR_MESSAGE = "pymupdf could not open PDF file" 
+EXPECTED_PYMUPDF_ERROR_MESSAGE = "pymupdf could not open PDF file"
 # NOTE Pymupdf doesn't have very specific error messages, so we use a general one instead.
 EXPECTED_UNSUPPORTED_VERSION_MESSAGE = "PDF File is an unsupported version"
 EXPECTED_INVALID_PDF_MESSAGE = "PDF file does not have a '.pdf' extension"
@@ -745,44 +761,30 @@ EXPECTED_NO_READ_PERMISSIONS_MESSAGE = "Insufficient permissions to read PDF fil
 
 
 BAD_PDF_FILES = {
-    "no_read_permissions_pdf_file": {
-        "msg": EXPECTED_NO_READ_PERMISSIONS_MESSAGE
-    },
-    "corrupted_pdf_file": {
-        "msg": EXPECTED_CORRUPTED_PDF_MESSAGE
-    },
-    "encrypted_pdf_file": {
-        "msg": EXPECTED_ENCRYPTED_PDF_MESSAGE
-    },
-    "empty_pdf_file": {
-        "msg": EXPECTED_EMPTY_PDF_MESSAGE
-    },
-    "unsupported_version_pdf_file": {
-        "msg": EXPECTED_UNSUPPORTED_VERSION_MESSAGE
-    },
-    "not_a_pdf_file": {
-        "msg": EXPECTED_INVALID_PDF_MESSAGE
-    },
-    "zero_pages_pdf_file": {
-        "msg": EXPECTED_ZERO_PAGES_MESSAGE
-    },
+    "no_read_permissions_pdf_file": {"msg": EXPECTED_NO_READ_PERMISSIONS_MESSAGE},
+    "corrupted_pdf_file": {"msg": EXPECTED_CORRUPTED_PDF_MESSAGE},
+    "encrypted_pdf_file": {"msg": EXPECTED_ENCRYPTED_PDF_MESSAGE},
+    "empty_pdf_file": {"msg": EXPECTED_EMPTY_PDF_MESSAGE},
+    "unsupported_version_pdf_file": {"msg": EXPECTED_UNSUPPORTED_VERSION_MESSAGE},
+    "not_a_pdf_file": {"msg": EXPECTED_INVALID_PDF_MESSAGE},
+    "zero_pages_pdf_file": {"msg": EXPECTED_ZERO_PAGES_MESSAGE},
 }
 
+
 def get_error_messages():
-    return {
-        key: value['msg'] for key, value in BAD_PDF_FILES.items()
-    }
+    return {key: value["msg"] for key, value in BAD_PDF_FILES.items()}
+
 
 @pytest.fixture
 def bad_pdf_files(
-        no_read_permissions_pdf_file,
-        corrupted_pdf_file,
-        encrypted_pdf_file,
-        empty_pdf_file,
-        unsupported_version_pdf_file,
-        not_a_pdf_file,
-        request
-        ):
+    no_read_permissions_pdf_file,
+    corrupted_pdf_file,
+    encrypted_pdf_file,
+    empty_pdf_file,
+    unsupported_version_pdf_file,
+    not_a_pdf_file,
+    request,
+):
     """Create various bad PDF files for testing purposes."""
     _bad_pdf_files = {}
     for key in BAD_PDF_FILES.keys():
@@ -790,28 +792,18 @@ def bad_pdf_files(
             fixture = request.getfixturevalue(key)
         except Exception as e:
             raise RuntimeError(f"Failed to get fixture '{key}': {e}") from e
-        _bad_pdf_files[key] = {'file': fixture}
+        _bad_pdf_files[key] = {"file": fixture}
     return _bad_pdf_files
 
 
-
 def get_error_messages():
-    return {
-        key: value['msg'] for key, value in BAD_PDF_FILES.items()
-    }
-
-
-
-
-
-
+    return {key: value["msg"] for key, value in BAD_PDF_FILES.items()}
 
 
 @pytest.fixture
 def expected_messages():
     """Fixture providing expected error messages for various invalid PDF scenarios."""
     return get_error_messages()
- 
 
 
 @pytest.fixture
@@ -851,9 +843,9 @@ def valid_pdf_document(valid_pdf_document_path, expected_page_count, expected_te
 
     # Create the specified number of pages
     for page_num in range(expected_page_count):
-        y = start_at  
+        y = start_at
         for line in expected_text:
-            c.drawString(x, y, line)  
+            c.drawString(x, y, line)
             y -= move_down
         c.showPage()  # Create new page
 
@@ -870,10 +862,12 @@ def real_init_params_for_pdf_processor():
         "logger": logging.getLogger("pdf_processor_test_logger"),
     }
 
+
 @pytest.fixture
 def real_pdf_processor_defaults():
     """Fixture to provide a real PDFProcessor instance."""
     return PDFProcessor()
+
 
 @pytest.fixture
 def real_pdf_processor_init_params(real_init_params_for_pdf_processor):
@@ -889,13 +883,16 @@ def real_pdf_processor(real_pdf_processor_init_params) -> PDFProcessor:
     """
     return real_pdf_processor_init_params
 
+
 @pytest.fixture
 def mock_ipld_storage():
     return MagicMock(spec=IPLDStorage)
 
+
 @pytest.fixture
 def real_ipld_storage():
     return IPLDStorage()
+
 
 @pytest.fixture
 def mock_init_params_for_pdf_processor():
@@ -907,19 +904,23 @@ def mock_init_params_for_pdf_processor():
         "logger": MagicMock(spec=logging.Logger),
     }
 
+
 @pytest.fixture
 def mock_pdf_processor(mock_init_params_for_pdf_processor):
     return PDFProcessor(**mock_init_params_for_pdf_processor)
 
+
 @pytest.fixture
 def default_pdf_processor() -> PDFProcessor:
     return PDFProcessor()
+
 
 @pytest.fixture
 def mock_logger():
     mock_logger = MagicMock(spec=logging.Logger)
     mock_logger.level = logging.DEBUG
     return mock_logger
+
 
 @pytest.fixture
 def real_logger():
@@ -934,47 +935,39 @@ def mock_pdf_processor(
     mock_graphrag_integrator,
     mock_ocr_engine,
     mock_llm_optimizer,
-    mock_query_engine
+    mock_query_engine,
 ):
     """PDF processor with all dependencies mocked for testing."""
     mock_dict = {
-        'storage': mock_ipld_storage,
-        'audit_logger': mock_audit_logger,
-        'monitoring': mock_monitoring_system,
-        'integrator': mock_graphrag_integrator,
-        'ocr_engine': mock_ocr_engine,
-        'optimizer': mock_llm_optimizer,
-        'query_engine': mock_query_engine
+        "storage": mock_ipld_storage,
+        "audit_logger": mock_audit_logger,
+        "monitoring": mock_monitoring_system,
+        "integrator": mock_graphrag_integrator,
+        "ocr_engine": mock_ocr_engine,
+        "optimizer": mock_llm_optimizer,
+        "query_engine": mock_query_engine,
     }
 
-    return PDFProcessor(
-        enable_monitoring=False,
-        enable_audit=False,
-        mock_dict=mock_dict
-    )
-
-
-
+    return PDFProcessor(enable_monitoring=False, enable_audit=False, mock_dict=mock_dict)
 
 
 # ==========================================
 # CONSTANTS AND TEST DATA
 # ==========================================
 
-VALID_METADATA = {
-    "source": "test",
-    "priority": "high",
-    "category": "document"
-}
+VALID_METADATA = {"source": "test", "priority": "high", "category": "document"}
+
 
 # Helper functions for metadata (not fixtures)
 def get_valid_metadata_keys():
     """Helper function to get metadata keys."""
     return list(VALID_METADATA.keys())
 
+
 def get_valid_metadata_values():
     """Helper function to get metadata values."""
     return list(VALID_METADATA.values())
+
 
 def get_valid_metadata_keys_values():
     """Helper function to get metadata key-value pairs."""
@@ -985,14 +978,15 @@ def get_valid_metadata_keys_values():
 # BASIC TEST FIXTURES
 # ==========================================
 
+
 @pytest.fixture
 def additional_test_constants():
     """Provide additional test constants following example template pattern."""
     return {
-        'NONE_VALUE': None,
-        'PROCESSING_STATS_KEY_COUNT': 4,
-        'TEST_KEY': 'test_key',
-        'TEST_VALUE': 'test_value',
+        "NONE_VALUE": None,
+        "PROCESSING_STATS_KEY_COUNT": 4,
+        "TEST_KEY": "test_key",
+        "TEST_VALUE": "test_value",
     }
 
 
@@ -1005,12 +999,7 @@ def valid_metadata():
 @pytest.fixture
 def expected_processing_stats_values():
     """Expected default values for processing_stats dictionary."""
-    return {
-        "start_time": None,
-        "end_time": None,
-        "pages_processed": 0,
-        "entities_extracted": 0
-    }
+    return {"start_time": None, "end_time": None, "pages_processed": 0, "entities_extracted": 0}
 
 
 # ==========================================
@@ -1028,7 +1017,7 @@ def mock_monitoring_system():
     mock_monitoring.record_histogram = Mock()
     mock_monitoring.start_timer = Mock()
     mock_monitoring.stop_timer = Mock()
-    
+
     return mock_monitoring
 
 
@@ -1038,33 +1027,39 @@ def mock_graphrag_integrator():
 
     mock_integrator = MagicMock(spec=GraphRAGIntegrator)
     # Mock public async methods from the stubs
-    mock_integrator.integrate_document = AsyncMock(return_value={
-        'graph_id': 'test_graph_123',
-        'document_id': 'test_doc_456',
-        'entities': [],
-        'relationships': [],
-        'chunks': [],
-        'metadata': {},
-        'creation_timestamp': '2024-01-01T00:00:00Z',
-        'ipld_cid': 'test_cid_789'
-    })
-    mock_integrator.query_graph = AsyncMock(return_value={
-        'query': 'test_query',
-        'entities': [],
-        'relationships': [],
-        'total_matches': 0,
-        'extracted_entities': [],
-        'timestamp': '2024-01-01T00:00:00Z'
-    })
-    mock_integrator.get_entity_neighborhood = AsyncMock(return_value={
-        'center_entity_id': 'test_entity',
-        'depth': 2,
-        'nodes': [],
-        'edges': [],
-        'node_count': 0,
-        'edge_count': 0
-    })
-    
+    mock_integrator.integrate_document = AsyncMock(
+        return_value={
+            "graph_id": "test_graph_123",
+            "document_id": "test_doc_456",
+            "entities": [],
+            "relationships": [],
+            "chunks": [],
+            "metadata": {},
+            "creation_timestamp": "2024-01-01T00:00:00Z",
+            "ipld_cid": "test_cid_789",
+        }
+    )
+    mock_integrator.query_graph = AsyncMock(
+        return_value={
+            "query": "test_query",
+            "entities": [],
+            "relationships": [],
+            "total_matches": 0,
+            "extracted_entities": [],
+            "timestamp": "2024-01-01T00:00:00Z",
+        }
+    )
+    mock_integrator.get_entity_neighborhood = AsyncMock(
+        return_value={
+            "center_entity_id": "test_entity",
+            "depth": 2,
+            "nodes": [],
+            "edges": [],
+            "node_count": 0,
+            "edge_count": 0,
+        }
+    )
+
     return mock_integrator
 
 
@@ -1072,16 +1067,18 @@ def mock_graphrag_integrator():
 def mock_ocr_engine():
     """Mock OCR engine with public method mocks."""
     mock_ocr = Mock(spec=MultiEngineOCR)
-    mock_ocr.process_image = AsyncMock(return_value={
-        'text': 'extracted text',
-        'confidence': 0.95,
-        'coordinates': [],
-        'metadata': {}
-    })
+    mock_ocr.process_image = AsyncMock(
+        return_value={
+            "text": "extracted text",
+            "confidence": 0.95,
+            "coordinates": [],
+            "metadata": {},
+        }
+    )
     mock_ocr.process_images = AsyncMock(return_value=[])
-    mock_ocr.get_supported_formats = Mock(return_value=['png', 'jpg', 'pdf'])
+    mock_ocr.get_supported_formats = Mock(return_value=["png", "jpg", "pdf"])
     mock_ocr.set_language = Mock()
-    mock_ocr.get_engine_status = Mock(return_value={'status': 'ready'})
+    mock_ocr.get_engine_status = Mock(return_value={"status": "ready"})
 
     return mock_ocr
 
@@ -1090,8 +1087,10 @@ def mock_ocr_engine():
 def mock_llm_optimizer():
     """Mock LLM optimizer with public method mocks."""
     from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_document.llm_document_factory import (
-        LLMDocument, LLMDocumentTestDataFactory as Factory
+        LLMDocument,
+        LLMDocumentTestDataFactory as Factory,
     )
+
     mock_optimizer = MagicMock(spec=LLMOptimizer)
     mock_llm_document = Factory.create_document_instance()
 
@@ -1118,24 +1117,20 @@ def mock_pdf_processor(
     mock_graphrag_integrator,
     mock_ocr_engine,
     mock_llm_optimizer,
-    mock_query_engine
+    mock_query_engine,
 ):
     """PDF processor with all dependencies mocked for testing."""
     mock_dict = {
-        'storage': mock_ipld_storage,
-        'audit_logger': mock_audit_logger,
-        'monitoring': mock_monitoring_system,
-        'integrator': mock_graphrag_integrator,
-        'ocr_engine': mock_ocr_engine,
-        'optimizer': mock_llm_optimizer,
-        'query_engine': mock_query_engine
+        "storage": mock_ipld_storage,
+        "audit_logger": mock_audit_logger,
+        "monitoring": mock_monitoring_system,
+        "integrator": mock_graphrag_integrator,
+        "ocr_engine": mock_ocr_engine,
+        "optimizer": mock_llm_optimizer,
+        "query_engine": mock_query_engine,
     }
-    
-    return PDFProcessor(
-        enable_monitoring=False,
-        enable_audit=False,
-        mock_dict=mock_dict
-    )
+
+    return PDFProcessor(enable_monitoring=False, enable_audit=False, mock_dict=mock_dict)
 
 
 # ==========================================
@@ -1146,31 +1141,20 @@ def mock_pdf_processor(
 # Dictionary fixtures
 @pytest.fixture
 def processor_dict(
-        default_pdf_processor,
-        real_pdf_processor_init_params,
-        mock_pdf_processor,
-        ):
+    default_pdf_processor,
+    real_pdf_processor_init_params,
+    mock_pdf_processor,
+):
     return {
-        'default': default_pdf_processor,
-        'real_init': real_pdf_processor_init_params,
-        'mocked': mock_pdf_processor
+        "default": default_pdf_processor,
+        "real_init": real_pdf_processor_init_params,
+        "mocked": mock_pdf_processor,
     }
 
-def logger_dict(
-        mock_logger,
-        real_logger
-        ):
-    return {
-        'mock': mock_logger,
-        'real': real_logger
-    }
 
-def ipld_storage_dict(
-        mock_ipld_storage,
-        real_ipld_storage
-        ):
-    return {
-        'mock': mock_ipld_storage,
-        'real': real_ipld_storage
-    }
+def logger_dict(mock_logger, real_logger):
+    return {"mock": mock_logger, "real": real_logger}
 
+
+def ipld_storage_dict(mock_ipld_storage, real_ipld_storage):
+    return {"mock": mock_ipld_storage, "real": real_ipld_storage}

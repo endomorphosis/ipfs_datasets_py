@@ -23,11 +23,11 @@ from ipfs_datasets_py.processors.llm_optimizer import (
 )
 
 __all__ = [
-    'LLMOptimizer',
-    'LLMChunk',
-    'LLMDocument',
-    'LLMChunkMetadata',
-    'LLMDocumentProcessingMetadata',
+    "LLMOptimizer",
+    "LLMChunk",
+    "LLMDocument",
+    "LLMChunkMetadata",
+    "LLMDocumentProcessingMetadata",
 ]
 
 # Type annotations for static analysis

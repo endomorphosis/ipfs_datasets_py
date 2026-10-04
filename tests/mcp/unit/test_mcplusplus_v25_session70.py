@@ -34,6 +34,7 @@ class TestDelegationManagerMergeAuditTrail(unittest.TestCase):
 
     def _make_delegation(self, cid: str):
         from ipfs_datasets_py.mcp_server.ucan_delegation import Delegation, Capability
+
         cap = Capability(resource="resource:test", ability="action/test")
         return Delegation(
             cid=cid,
@@ -45,6 +46,7 @@ class TestDelegationManagerMergeAuditTrail(unittest.TestCase):
     def test_no_audit_log_default(self):
         """merge() with no audit_log param works as before."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         mgr1 = DelegationManager()
         mgr2 = DelegationManager()
         mgr2.add(self._make_delegation("bafyAudit001"))
@@ -54,6 +56,7 @@ class TestDelegationManagerMergeAuditTrail(unittest.TestCase):
     def test_audit_log_records_merge_add(self):
         """Each newly-added delegation emits a merge_add audit entry."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         mgr1 = DelegationManager()
         mgr2 = DelegationManager()
         mgr2.add(self._make_delegation("bafyAudit002"))
@@ -69,6 +72,7 @@ class TestDelegationManagerMergeAuditTrail(unittest.TestCase):
     def test_audit_event_has_cid_field(self):
         """Each audit entry contains event and cid fields."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         mgr1 = DelegationManager()
         mgr2 = DelegationManager()
         mgr2.add(self._make_delegation("bafyAudit004"))
@@ -79,6 +83,7 @@ class TestDelegationManagerMergeAuditTrail(unittest.TestCase):
     def test_audit_log_not_called_when_already_present(self):
         """No audit entry for CIDs already in self._store."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         mgr1 = DelegationManager()
         mgr2 = DelegationManager()
         d = self._make_delegation("bafyAuditDup")
@@ -92,6 +97,7 @@ class TestDelegationManagerMergeAuditTrail(unittest.TestCase):
     def test_audit_log_not_called_for_revoked_conflicts(self):
         """Revoked-conflict skips don't produce merge_add entries."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         mgr1 = DelegationManager()
         mgr2 = DelegationManager()
         d = self._make_delegation("bafyAuditRevoked")
@@ -123,6 +129,7 @@ class TestDelegationManagerMergeAuditTrail(unittest.TestCase):
     def test_dry_run_does_not_record_audit(self):
         """dry_run=True returns MergePlan without auditing."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager, MergePlan
+
         mgr1 = DelegationManager()
         mgr2 = DelegationManager()
         mgr2.add(self._make_delegation("bafyAuditDry"))
@@ -135,6 +142,7 @@ class TestDelegationManagerMergeAuditTrail(unittest.TestCase):
     def test_revocation_copy_audit_still_works(self):
         """copy_revocations audit entries are separate from merge_add entries."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         mgr1 = DelegationManager()
         mgr2 = DelegationManager()
         mgr2.add(self._make_delegation("bafyAuditBoth"))
@@ -154,6 +162,7 @@ class TestIPFSReloadResultTotalFailed(unittest.TestCase):
 
     def _make_result(self, pins):
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import IPFSReloadResult
+
         return IPFSReloadResult(count=len(pins), pin_results=pins)
 
     def test_all_success(self):
@@ -195,30 +204,43 @@ class TestPubSubBusSubscribePriority(unittest.TestCase):
 
     def _bus(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus
+
         return PubSubBus()
 
     def test_default_priority_zero(self):
         bus = self._bus()
-        def handler(t, p): pass
+
+        def handler(t, p):
+            pass
+
         bus.subscribe("topic", handler)
         self.assertEqual(getattr(handler, "__mcp_priority__", 0), 0)
 
     def test_explicit_priority_stored(self):
         bus = self._bus()
-        def handler(t, p): pass
+
+        def handler(t, p):
+            pass
+
         bus.subscribe("topic", handler, priority=7)
         self.assertEqual(handler.__mcp_priority__, 7)
 
     def test_negative_priority_stored(self):
         bus = self._bus()
-        def handler(t, p): pass
+
+        def handler(t, p):
+            pass
+
         bus.subscribe("topic", handler, priority=-3)
         self.assertEqual(handler.__mcp_priority__, -3)
 
     def test_highest_priority_wins(self):
         """Second subscribe with higher priority upgrades the attribute."""
         bus = self._bus()
-        def handler(t, p): pass
+
+        def handler(t, p):
+            pass
+
         bus.subscribe("topic1", handler, priority=2)
         bus.subscribe("topic2", handler, priority=9)
         self.assertEqual(handler.__mcp_priority__, 9)
@@ -226,7 +248,10 @@ class TestPubSubBusSubscribePriority(unittest.TestCase):
     def test_lower_priority_does_not_overwrite(self):
         """Second subscribe with lower priority does not downgrade."""
         bus = self._bus()
-        def handler(t, p): pass
+
+        def handler(t, p):
+            pass
+
         bus.subscribe("topic", handler, priority=5)
         bus.subscribe("topic2", handler, priority=1)
         self.assertEqual(handler.__mcp_priority__, 5)
@@ -235,8 +260,13 @@ class TestPubSubBusSubscribePriority(unittest.TestCase):
         """sync publish calls handlers in registration order (priority only for async)."""
         bus = self._bus()
         call_order = []
-        def h_low(t, p): call_order.append("low")
-        def h_high(t, p): call_order.append("high")
+
+        def h_low(t, p):
+            call_order.append("low")
+
+        def h_high(t, p):
+            call_order.append("high")
+
         bus.subscribe("t", h_low, priority=1)
         bus.subscribe("t", h_high, priority=10)
         bus.publish("t", {})
@@ -247,7 +277,10 @@ class TestPubSubBusSubscribePriority(unittest.TestCase):
     def test_subscribe_same_handler_twice_no_duplicate(self):
         """Subscribing the same handler twice on the same topic is idempotent."""
         bus = self._bus()
-        def handler(t, p): pass
+
+        def handler(t, p):
+            pass
+
         bus.subscribe("t", handler, priority=3)
         bus.subscribe("t", handler, priority=3)
         count = bus.publish("t", {})
@@ -262,10 +295,12 @@ class TestComplianceCheckerBakPath(unittest.TestCase):
 
     def _checker(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         return ComplianceChecker()
 
     def test_basic(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         self.assertEqual(ComplianceChecker.bak_path("/data/rules.enc"), "/data/rules.enc.bak")
 
     def test_instance_callable(self):
@@ -274,16 +309,19 @@ class TestComplianceCheckerBakPath(unittest.TestCase):
 
     def test_empty_string(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         self.assertEqual(ComplianceChecker.bak_path(""), ".bak")
 
     def test_already_has_bak_suffix(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         # bak_path is a pure string operation — no dedup
         self.assertEqual(ComplianceChecker.bak_path("rules.enc.bak"), "rules.enc.bak.bak")
 
     def test_bak_path_consistent_with_bak_exists(self):
         """bak_path returns the same path that bak_exists checks."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.TemporaryDirectory() as td:
             base = os.path.join(td, "rules.enc")
             bp = ComplianceChecker.bak_path(base)
@@ -295,10 +333,12 @@ class TestComplianceCheckerBakPath(unittest.TestCase):
 
     def test_relative_path(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         self.assertEqual(ComplianceChecker.bak_path("relative.enc"), "relative.enc.bak")
 
     def test_no_extension(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         self.assertEqual(ComplianceChecker.bak_path("noext"), "noext.bak")
 
 
@@ -310,6 +350,7 @@ class TestE2ESession70(unittest.TestCase):
 
     def _make_delegation(self, cid: str):
         from ipfs_datasets_py.mcp_server.ucan_delegation import Delegation, Capability
+
         cap = Capability(resource="resource:e2e", ability="invoke")
         return Delegation(
             cid=cid,
@@ -343,8 +384,13 @@ class TestE2ESession70(unittest.TestCase):
 
         bus = PubSubBus()
         results = []
-        def h1(t, p): results.append("h1")
-        def h2(t, p): results.append("h2")
+
+        def h1(t, p):
+            results.append("h1")
+
+        def h2(t, p):
+            results.append("h2")
+
         bus.subscribe("e2e", h1, priority=5)
         bus.subscribe("e2e", h2, priority=10)
         bus.publish("e2e", {"msg": "hello"})
@@ -358,6 +404,7 @@ class TestE2ESession70(unittest.TestCase):
     def test_merge_audit_with_revocation_copy(self):
         """merge with copy_revocations produces both merge_add and revocation_copied entries."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         mgr1 = DelegationManager()
         mgr2 = DelegationManager()
         mgr2.add(self._make_delegation("bafyE2EBoth"))
@@ -371,6 +418,7 @@ class TestE2ESession70(unittest.TestCase):
     def test_total_failed_zero_for_all_pins_succeeded(self):
         """total_failed == 0 when every policy was pinned."""
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import IPFSReloadResult
+
         r = IPFSReloadResult(
             count=3,
             pin_results={"a": "Qm1", "b": "Qm2", "c": "Qm3"},
@@ -380,6 +428,7 @@ class TestE2ESession70(unittest.TestCase):
     def test_bak_path_consistent_across_all_bak_helpers(self):
         """bak_path + bak_exists + restore_from_bak form a coherent set."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.TemporaryDirectory() as td:
             base = os.path.join(td, "rules.enc")
             bp = ComplianceChecker.bak_path(base)

@@ -29,7 +29,6 @@ from ipfs_datasets_py import (
     FinancialTheoremLibrary,
     GraphRAGNewsAnalyzer,
     VectorEmbeddingAnalyzer,
-    
     # MCP tool functions
     fetch_stock_data,
     fetch_financial_news,
@@ -46,7 +45,7 @@ result = analyzer.test_hypothesis(
     attribute_name="gender",
     group_a_value="female",
     group_b_value="male",
-    metric="return_percentage"
+    metric="return_percentage",
 )
 ```
 
@@ -59,7 +58,7 @@ from ipfs_datasets_py.mcp_server.tools.finance_data_tools import (
     news_scrapers,
     finance_theorems,
     graphrag_news_analyzer,
-    embedding_correlation
+    embedding_correlation,
 )
 
 # Use classes and functions
@@ -576,6 +575,7 @@ initMCP().then(() => {
 **Check availability:**
 ```python
 import ipfs_datasets_py
+
 print(f"Finance tools available: {ipfs_datasets_py.HAVE_FINANCE_TOOLS}")
 ```
 

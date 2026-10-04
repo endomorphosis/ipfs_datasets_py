@@ -181,7 +181,9 @@ OPTIMIZER_MIN_PERFORMANCE_IMPROVEMENT=10
 ### Basic Optimization
 ```python
 from ipfs_datasets_py.optimizers.agentic import (
-    TestDrivenOptimizer, OptimizationTask, ChangeControlMethod
+    TestDrivenOptimizer,
+    OptimizationTask,
+    ChangeControlMethod,
 )
 
 optimizer = TestDrivenOptimizer(

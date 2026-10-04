@@ -20,7 +20,9 @@ def test_generate_text_can_disable_local_fallback(monkeypatch):
 
     local_provider = _LocalProvider()
 
-    monkeypatch.setattr(llm_router, "get_llm_provider", lambda provider=None, deps=None: _FailingProvider())
+    monkeypatch.setattr(
+        llm_router, "get_llm_provider", lambda provider=None, deps=None: _FailingProvider()
+    )
     monkeypatch.setattr(llm_router, "_iter_unpinned_optional_providers", lambda: [])
     monkeypatch.setattr(llm_router, "_get_local_hf_provider", lambda deps=None: local_provider)
 
@@ -59,7 +61,9 @@ def test_generate_text_auto_falls_back_to_remote_provider_before_local(monkeypat
     remote_provider = _RemoteProvider()
     local_provider = _LocalProvider()
 
-    monkeypatch.setattr(llm_router, "get_llm_provider", lambda provider=None, deps=None: _FailingProvider())
+    monkeypatch.setattr(
+        llm_router, "get_llm_provider", lambda provider=None, deps=None: _FailingProvider()
+    )
     monkeypatch.setattr(
         llm_router,
         "_iter_unpinned_optional_providers",
@@ -103,7 +107,9 @@ def test_generate_text_auto_falls_back_to_hf_with_model_retry(monkeypatch):
     hf_provider = _FakeHFProvider()
     local_provider = _LocalProvider()
 
-    monkeypatch.setattr(llm_router, "get_llm_provider", lambda provider=None, deps=None: _FailingProvider())
+    monkeypatch.setattr(
+        llm_router, "get_llm_provider", lambda provider=None, deps=None: _FailingProvider()
+    )
     monkeypatch.setattr(
         llm_router,
         "_iter_unpinned_optional_providers",
@@ -148,7 +154,9 @@ def test_local_hf_provider_truncates_prompt_to_model_context(monkeypatch):
             assert model == "gpt2"
             return fake_pipeline
 
-    monkeypatch.setattr(llm_router, "_resolve_transformers_module", lambda deps=None: _FakeTransformers())
+    monkeypatch.setattr(
+        llm_router, "_resolve_transformers_module", lambda deps=None: _FakeTransformers()
+    )
 
     provider = llm_router._get_local_hf_provider()
     assert provider is not None
@@ -194,7 +202,9 @@ def test_local_hf_provider_retries_with_smaller_prompt_after_context_error(monke
             assert model == "gpt2"
             return fake_pipeline
 
-    monkeypatch.setattr(llm_router, "_resolve_transformers_module", lambda deps=None: _FakeTransformers())
+    monkeypatch.setattr(
+        llm_router, "_resolve_transformers_module", lambda deps=None: _FakeTransformers()
+    )
 
     provider = llm_router._get_local_hf_provider()
     assert provider is not None

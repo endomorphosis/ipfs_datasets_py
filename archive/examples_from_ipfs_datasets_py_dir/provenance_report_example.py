@@ -27,7 +27,7 @@ from ipfs_datasets_py.security import (
     SecurityConfig,
     DataProvenance,
     DataLineage,
-    ProcessStep
+    ProcessStep,
 )
 
 
@@ -36,7 +36,7 @@ def setup_security():
     config = SecurityConfig(
         security_dir=os.path.expanduser("~/.ipfs_datasets/security"),
         track_provenance=True,
-        log_all_access=True
+        log_all_access=True,
     )
     security_manager = SecurityManager.initialize(config)
     return security_manager
@@ -74,9 +74,9 @@ def create_sample_dataset(security_manager: SecurityManager) -> str:
             "source_system": "example_system",
             "source_type": "database",
             "extraction_method": "sql_query",
-            "extraction_time": datetime.datetime.now().isoformat()
+            "extraction_time": datetime.datetime.now().isoformat(),
         },
-        tags=["example", "sample", "demo"]
+        tags=["example", "sample", "demo"],
     )
 
     print(f"Created sample dataset with ID: {data_id}")
@@ -106,7 +106,7 @@ def transform_data(security_manager: SecurityManager, source_data_id: str) -> st
         parameters={"condition": "value > 50"},
         inputs=[source_data_id],
         outputs=[transformed_data_id],
-        metrics={"execution_time_ms": 150, "filtered_rows": 30}
+        metrics={"execution_time_ms": 150, "filtered_rows": 30},
     )
 
     # Simulate processing time
@@ -118,7 +118,7 @@ def transform_data(security_manager: SecurityManager, source_data_id: str) -> st
         step_id=step_id,
         status="completed",
         outputs=[transformed_data_id],
-        metrics={"execution_time_ms": 150, "filtered_rows": 30}
+        metrics={"execution_time_ms": 150, "filtered_rows": 30},
     )
 
     # Record provenance for the transformed dataset
@@ -141,9 +141,9 @@ def transform_data(security_manager: SecurityManager, source_data_id: str) -> st
             "source_type": "transformation",
             "extraction_method": "filter_operation",
             "extraction_time": datetime.datetime.now().isoformat(),
-            "upstream_datasets": [source_data_id]
+            "upstream_datasets": [source_data_id],
         },
-        tags=["filtered", "example", "demo"]
+        tags=["filtered", "example", "demo"],
     )
 
     print(f"Created transformed dataset with ID: {transformed_data_id}")
@@ -173,7 +173,7 @@ def aggregate_data(security_manager: SecurityManager, source_data_id: str) -> st
         parameters={"group_by": "name", "aggregate": "sum(value)"},
         inputs=[source_data_id],
         outputs=[aggregated_data_id],
-        metrics={"execution_time_ms": 200}
+        metrics={"execution_time_ms": 200},
     )
 
     # Simulate processing time
@@ -185,7 +185,7 @@ def aggregate_data(security_manager: SecurityManager, source_data_id: str) -> st
         step_id=step_id,
         status="completed",
         outputs=[aggregated_data_id],
-        metrics={"execution_time_ms": 200, "groups": 10}
+        metrics={"execution_time_ms": 200, "groups": 10},
     )
 
     # Record provenance for the aggregated dataset
@@ -208,9 +208,9 @@ def aggregate_data(security_manager: SecurityManager, source_data_id: str) -> st
             "source_type": "transformation",
             "extraction_method": "aggregate_operation",
             "extraction_time": datetime.datetime.now().isoformat(),
-            "upstream_datasets": [source_data_id]
+            "upstream_datasets": [source_data_id],
         },
-        tags=["aggregated", "example", "demo"]
+        tags=["aggregated", "example", "demo"],
     )
 
     print(f"Created aggregated dataset with ID: {aggregated_data_id}")
@@ -241,7 +241,7 @@ def merge_data(security_manager: SecurityManager, data_id1: str, data_id2: str) 
         parameters={"join_column": "name"},
         inputs=[data_id1, data_id2],
         outputs=[merged_data_id],
-        metrics={"execution_time_ms": 250}
+        metrics={"execution_time_ms": 250},
     )
 
     # Record the same step for the second dataset
@@ -253,7 +253,7 @@ def merge_data(security_manager: SecurityManager, data_id1: str, data_id2: str) 
         parameters={"join_column": "name"},
         inputs=[data_id1, data_id2],
         outputs=[merged_data_id],
-        metrics={"execution_time_ms": 250}
+        metrics={"execution_time_ms": 250},
     )
 
     # Simulate processing time
@@ -265,7 +265,7 @@ def merge_data(security_manager: SecurityManager, data_id1: str, data_id2: str) 
         step_id=step_id1,
         status="completed",
         outputs=[merged_data_id],
-        metrics={"execution_time_ms": 250, "merged_rows": 80}
+        metrics={"execution_time_ms": 250, "merged_rows": 80},
     )
 
     security_manager.complete_transformation_step(
@@ -273,7 +273,7 @@ def merge_data(security_manager: SecurityManager, data_id1: str, data_id2: str) 
         step_id=step_id2,
         status="completed",
         outputs=[merged_data_id],
-        metrics={"execution_time_ms": 250, "merged_rows": 80}
+        metrics={"execution_time_ms": 250, "merged_rows": 80},
     )
 
     # Record provenance for the merged dataset
@@ -284,7 +284,7 @@ def merge_data(security_manager: SecurityManager, data_id1: str, data_id2: str) 
         creation_time=datetime.datetime.now().isoformat(),
         process_steps=[
             {"step_id": step_id1, "operation": "merge"},
-            {"step_id": step_id2, "operation": "merge"}
+            {"step_id": step_id2, "operation": "merge"},
         ],
         parent_ids=[data_id1, data_id2],
         checksum="0xfedcba987654321",
@@ -299,9 +299,9 @@ def merge_data(security_manager: SecurityManager, data_id1: str, data_id2: str) 
             "source_type": "transformation",
             "extraction_method": "merge_operation",
             "extraction_time": datetime.datetime.now().isoformat(),
-            "upstream_datasets": [data_id1, data_id2]
+            "upstream_datasets": [data_id1, data_id2],
         },
-        tags=["merged", "example", "demo"]
+        tags=["merged", "example", "demo"],
     )
 
     print(f"Created merged dataset with ID: {merged_data_id}")
@@ -327,10 +327,7 @@ def record_data_accesses(security_manager: SecurityManager, data_ids: List[str])
             security_manager.record_data_access(
                 data_id=data_id,
                 operation=operation,
-                details={
-                    "reason": f"Example {operation} access",
-                    "system": "example_system"
-                }
+                details={"reason": f"Example {operation} access", "system": "example_system"},
             )
 
             # Simulate time passing between accesses
@@ -361,7 +358,7 @@ def generate_and_save_reports(security_manager: SecurityManager, data_id: str, o
                 report_type=report_type,
                 format=format_type,
                 include_lineage=True,
-                include_access_history=True
+                include_access_history=True,
             )
 
             # Determine file extension
@@ -389,7 +386,9 @@ def generate_and_save_reports(security_manager: SecurityManager, data_id: str, o
     print(f"Generated and saved reports for dataset {data_id} in directory: {output_dir}")
 
 
-def generate_and_save_visualizations(security_manager: SecurityManager, data_id: str, output_dir: str):
+def generate_and_save_visualizations(
+    security_manager: SecurityManager, data_id: str, output_dir: str
+):
     """
     Generate lineage visualizations in different formats and save to files.
 
@@ -409,7 +408,7 @@ def generate_and_save_visualizations(security_manager: SecurityManager, data_id:
             format=format_type,
             max_depth=3,
             direction="both",
-            include_attributes=True
+            include_attributes=True,
         )
 
         # Determine file extension and content
@@ -452,12 +451,10 @@ def main():
 
     # Record some data accesses
     print("\n2. Recording sample data accesses...")
-    record_data_accesses(security_manager, [
-        original_data_id,
-        transformed_data_id,
-        aggregated_data_id,
-        merged_data_id
-    ])
+    record_data_accesses(
+        security_manager,
+        [original_data_id, transformed_data_id, aggregated_data_id, merged_data_id],
+    )
 
     # Generate provenance reports
     print("\n3. Generating provenance reports...")

@@ -5,6 +5,7 @@ Business logic has been extracted to the canonical package module:
 
 This file is now a thin re-export shim so existing imports continue to work.
 """
+
 from typing import Any, Dict
 
 try:
@@ -17,6 +18,7 @@ try:
         _archive_to_wayback_direct,
     )
 except (ImportError, ModuleNotFoundError):
+
     async def search_wayback_machine(*args: Any, **kwargs: Any) -> Dict[str, Any]:
         return {"error": "Wayback engine unavailable", "results": []}
 

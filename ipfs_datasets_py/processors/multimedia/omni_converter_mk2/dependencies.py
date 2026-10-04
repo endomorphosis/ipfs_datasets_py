@@ -3,10 +3,14 @@ Lazy loading of dependencies to optimize performance and reduce initial load tim
 
 Modules can access these dependencies via the `dependencies` object.
 """
+
 # NOTE Make imports private to enforce singleton pattern.
 from types import ModuleType as _ModuleType
-from importlib import import_module as _import_module # NOTE We import this outside the class to avoid circular imports.
+from importlib import (
+    import_module as _import_module,
+)  # NOTE We import this outside the class to avoid circular imports.
 import threading as _threading
+
 
 class _Dependencies:
     """
@@ -14,9 +18,7 @@ class _Dependencies:
     This optimizes performance, allows for dynamic error checking, and reduce initial load time.
     """
 
-    _CRITICAL_DEPENDENCIES: list[str] = [
-        "tqdm",  "yaml", "psutil", "pydantic", "magic"
-    ]
+    _CRITICAL_DEPENDENCIES: list[str] = ["tqdm", "yaml", "psutil", "pydantic", "magic"]
 
     def __init__(self) -> None:
         self._cache: dict[str, _ModuleType | None] = {
@@ -26,7 +28,7 @@ class _Dependencies:
             "cv2": None,
             "docx": None,
             "duckdb": None,
-            "llama_cpp": None, # TODO Confirm library name.
+            "llama_cpp": None,  # TODO Confirm library name.
             "jinja2": None,
             "markitdown": None,  # Other multi-format-to-text conversion program. (optional)
             "multiformats": None,
@@ -37,12 +39,12 @@ class _Dependencies:
             "PIL": None,  # Pillow for image processing NOTE Capitalization is important here.
             "playsound3": None,  # Playsound for audio playback
             "psutil": None,
-            "pydantic": None, # TODO FIgure out how to get types from pydantic without importing it.
+            "pydantic": None,  # TODO FIgure out how to get types from pydantic without importing it.
             "pydub": None,
             "pymediainfo": None,
             "PyPDF2": None,
             "pytesseract": None,
-            "pydocx": None, # TODO Confirm libraries existence.
+            "pydocx": None,  # TODO Confirm libraries existence.
             "pymediainfo": None,
             "rouge": None,
             "tiktoken": None,
@@ -64,13 +66,13 @@ class _Dependencies:
             "aiohttp": None,  # Optional for asynchronous HTTP requests.
             "aiohttp_cache": None,  # Optional for caching asynchronous HTTP requests.
             "selenium": None,  # Optional for web scraping.
-            "magic": None # python-magic
+            "magic": None,  # python-magic
         }
 
     def check_critical_dependencies(self) -> None:
         """
         Check if all critical dependencies are available.
-        
+
         Raises:
             ImportError: If any critical dependency is not available.
         """
@@ -78,12 +80,14 @@ class _Dependencies:
             try:
                 self._load_module(dep)
             except Exception as e:
-                raise ImportError(f"Critical dependency '{dep}' is not available. Please install it to run the application.") from e
+                raise ImportError(
+                    f"Critical dependency '{dep}' is not available. Please install it to run the application."
+                ) from e
 
     def load_all_modules(self) -> None:
         """
         Load all modules and cache them.
-        
+
         This is called at the start of the program to check which dependencies are available.
         """
         for module_name in self._cache.keys():
@@ -91,7 +95,7 @@ class _Dependencies:
                 self._load_module(module_name)
             except Exception as e:
                 print(f"✗ Dependency '{module_name}' is not available.")
-                pass # Ignore errors for non-critical dependencies.
+                pass  # Ignore errors for non-critical dependencies.
             finally:
                 self.clear_module(module_name)
 
@@ -109,8 +113,9 @@ class _Dependencies:
     def __str__(self) -> str:
         return "_Dependencies"
 
-    def startswith(self, prefix: str) -> bool: # TODO Remove this debug code later.
+    def startswith(self, prefix: str) -> bool:  # TODO Remove this debug code later.
         import traceback
+
         print(f"startswith called with prefix: {prefix}")
         print("Call stack:")
         traceback.print_stack()
@@ -139,7 +144,7 @@ class _Dependencies:
         else:
             raise KeyError(f"Module '{module_name}' not found in dependencies.")
 
-    def is_available(self, module_name: str) -> bool: # TODO Test this method.
+    def is_available(self, module_name: str) -> bool:  # TODO Test this method.
         """
         Check if a specific module is available.
 
@@ -153,100 +158,100 @@ class _Dependencies:
 
     @property
     def anthropic(self) -> _ModuleType | None:
-        return self._load_module('anthropic')
+        return self._load_module("anthropic")
 
     @property
     def bs4(self) -> _ModuleType | None:
-        return self._load_module('bs4')
+        return self._load_module("bs4")
 
     @property
     def duckdb(self) -> _ModuleType | None:
-        return self._load_module('duckdb')
+        return self._load_module("duckdb")
 
     @property
     def multiformats(self) -> _ModuleType | None:
-        return self._load_module('multiformats')
+        return self._load_module("multiformats")
 
     @property
     def numpy(self) -> _ModuleType | None:
-        return self._load_module('numpy')
+        return self._load_module("numpy")
 
     @property
     def openai(self) -> _ModuleType | None:
-        return self._load_module('openai')
+        return self._load_module("openai")
 
     @property
     def pandas(self) -> _ModuleType | None:
-        return self._load_module('pandas')
+        return self._load_module("pandas")
 
     @property
     def pil(self) -> _ModuleType | None:
-        return self._load_module('PIL')
+        return self._load_module("PIL")
 
     @property
     def playsound(self) -> _ModuleType | None:
-        return self._load_module('playsound3')
-    
+        return self._load_module("playsound3")
+
     @property
     def python_docx(self) -> _ModuleType | None:
-        return self._load_module('docx')
+        return self._load_module("docx")
 
     @property
     def pydantic(self) -> _ModuleType | None:
-        return self._load_module('pydantic')
+        return self._load_module("pydantic")
 
     @property
     def tiktoken(self) -> _ModuleType | None:
-        return self._load_module('tiktoken')
+        return self._load_module("tiktoken")
 
     @property
     def torch(self) -> _ModuleType | None:
-        return self._load_module('torch')
+        return self._load_module("torch")
 
     @property
     def tqdm(self) -> _ModuleType | None:
-        return self._load_module('tqdm')
+        return self._load_module("tqdm")
 
     @property
     def pytesseract(self) -> _ModuleType | None:
-        return self._load_module('pytesseract')
+        return self._load_module("pytesseract")
 
     @property
     def pymediainfo(self) -> _ModuleType | None:
-        return self._load_module('pymediainfo')
+        return self._load_module("pymediainfo")
 
     @property
     def cv2(self) -> _ModuleType | None:
         """Load the cv2 module."""
-        return self._load_module('cv2')
+        return self._load_module("cv2")
 
     @property
     def pydub(self) -> _ModuleType | None:
         """Load the pydub module."""
-        return self._load_module('pydub')
-    
+        return self._load_module("pydub")
+
     @property
     def openpyxl(self) -> _ModuleType | None:
         """Load the openpyxl module."""
-        return self._load_module('openpyxl')
+        return self._load_module("openpyxl")
 
     @property
     def whisper(self) -> _ModuleType | None:
         """Load the whisper module."""
-        return self._load_module('whisper')
+        return self._load_module("whisper")
 
     @property
     def chardet(self) -> _ModuleType | None:
         """Load the chardet module."""
-        return self._load_module('chardet')
-    
+        return self._load_module("chardet")
+
     @property
     def magic(self) -> _ModuleType | None:
-        return self._load_module('magic')
+        return self._load_module("magic")
 
     def keys(self) -> list[str]:
         """Get a list of all dependency names.
-        
+
         Returns:
             A list of dependency names.
         """
@@ -254,7 +259,7 @@ class _Dependencies:
 
     def values(self) -> list[_ModuleType | None]:
         """Get a list of all loaded modules.
-        
+
         Returns:
             A list of loaded modules, with None for unloaded modules.
         """
@@ -262,7 +267,7 @@ class _Dependencies:
 
     def items(self) -> list[tuple[str, _ModuleType | None]]:
         """Get a list of all dependencies as (name, module) tuples.
-        
+
         Returns:
             A list of tuples containing dependency names and their corresponding modules.
         """
@@ -282,13 +287,16 @@ class _Dependencies:
         """Get a specific module by name."""
         return self._load_module(item)
 
+
 try:
     dependencies = _Dependencies()
     dependencies.check_critical_dependencies()
 except ImportError as e:
     # Prevent the application from starting if critical dependencies are missing.
     import sys
+
     sys.exit(1)
+
 
 def _test_for_non_critical_dependencies() -> None:
     """
@@ -309,6 +317,7 @@ def _test_for_non_critical_dependencies() -> None:
         to start without waiting for all dependencies to be fully loaded.
     """
     import gc
+
     # Make a separate _Dependencies instance to avoid deadlocks.
     dependencies = _Dependencies()
     try:
@@ -318,6 +327,7 @@ def _test_for_non_critical_dependencies() -> None:
         dependencies.clear_cache()
         del dependencies
         gc.collect()
+
 
 _load_thread = _threading.Thread(target=_test_for_non_critical_dependencies, daemon=True)
 _load_thread.start()

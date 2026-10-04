@@ -128,7 +128,9 @@ def _summarize_by_run_id(records: List[Dict[str, Any]], top_errors: int) -> Dict
 
 def main() -> None:
     """CLI entrypoint."""
-    parser = argparse.ArgumentParser(description="Summarize JSONL run logs for caselaw chunk lookup")
+    parser = argparse.ArgumentParser(
+        description="Summarize JSONL run logs for caselaw chunk lookup"
+    )
     parser.add_argument(
         "--input",
         default="outputs/cid_lookup_runs.jsonl",

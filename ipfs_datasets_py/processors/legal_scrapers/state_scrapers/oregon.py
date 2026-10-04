@@ -51,9 +51,13 @@ COURT_RULES_LIST_API_URL = (
 LOCAL_RULES_INDEX_URL = "https://www.courts.oregon.gov/rules/Pages/slr.aspx"
 ORCP_PRIMARY_URL = "https://www.oregonlegislature.gov/bills_laws/Pages/orcp.aspx"
 ORCP_EXPANDED_URL = "https://www.oregonlegislature.gov/bills_laws/SiteAssets/ORCP.html"
-LOCAL_RULE_LINK_RE = re.compile(r"/courts/.+/Pages/(?:rules|Rules|CourtRules|Court-Rules)\.aspx", re.IGNORECASE)
+LOCAL_RULE_LINK_RE = re.compile(
+    r"/courts/.+/Pages/(?:rules|Rules|CourtRules|Court-Rules)\.aspx", re.IGNORECASE
+)
 ORCP_RULE_HEADING_RE = re.compile(r"\bRule\s+([0-9]{1,3}[A-Za-z]?)\s*[-:]\s*(.+)", re.IGNORECASE)
-LOCAL_RULE_DOC_PATH_RE = re.compile(r"\.(?:pdf|doc|docx)(?:$|[?#])|/documents/|/documentlibrary/", re.IGNORECASE)
+LOCAL_RULE_DOC_PATH_RE = re.compile(
+    r"\.(?:pdf|doc|docx)(?:$|[?#])|/documents/|/documentlibrary/", re.IGNORECASE
+)
 LOCAL_RULE_TEXT_RE = re.compile(r"\brules?\b|\bslr\b|supplementary local", re.IGNORECASE)
 
 
@@ -134,7 +138,9 @@ def _extract_edition_year(lines: Sequence[str]) -> Optional[int]:
 
 
 def _section_start_regex(chapter_display: str) -> re.Pattern[str]:
-    return re.compile(rf"^\s*({re.escape(chapter_display)}\.\d{{3}}[a-z]?)\b\s*(.*)$", re.IGNORECASE)
+    return re.compile(
+        rf"^\s*({re.escape(chapter_display)}\.\d{{3}}[a-z]?)\b\s*(.*)$", re.IGNORECASE
+    )
 
 
 def _section_sort_key(section_id: str) -> Tuple[int, str]:
@@ -143,13 +149,14 @@ def _section_sort_key(section_id: str) -> Tuple[int, str]:
         return (10**9, str(section_id or ""))
     return (int(match.group(2)), (match.group(3) or "").lower())
 
+
 class OregonScraper(BaseStateScraper):
     """Scraper for Oregon state laws from https://www.oregonlegislature.gov"""
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for Oregon's legislative website."""
         return "https://www.oregonlegislature.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Oregon."""
         return [
@@ -187,10 +194,14 @@ class OregonScraper(BaseStateScraper):
         expected_terms: Sequence[str],
         timeout_seconds: int = 90,
     ) -> str:
-        payload = await self._fetch_page_content_with_archival_fallback(url, timeout_seconds=timeout_seconds)
+        payload = await self._fetch_page_content_with_archival_fallback(
+            url, timeout_seconds=timeout_seconds
+        )
         html = payload.decode("utf-8", errors="replace") if payload else ""
         lowered_html = html.lower()
-        normalized_terms = [str(term or "").strip().lower() for term in expected_terms if str(term or "").strip()]
+        normalized_terms = [
+            str(term or "").strip().lower() for term in expected_terms if str(term or "").strip()
+        ]
         if lowered_html and all(term in lowered_html for term in normalized_terms):
             return html
 
@@ -209,13 +220,17 @@ class OregonScraper(BaseStateScraper):
             return html
 
         if response.status_code != 200 or not response.text:
-            self._record_fetch_event(provider="direct", success=False, error=f"http {response.status_code}")
+            self._record_fetch_event(
+                provider="direct", success=False, error=f"http {response.status_code}"
+            )
             return html
 
         direct_html = response.text
         direct_lowered = direct_html.lower()
         if normalized_terms and not all(term in direct_lowered for term in normalized_terms):
-            self._record_fetch_event(provider="direct", success=False, error="missing_expected_terms")
+            self._record_fetch_event(
+                provider="direct", success=False, error="missing_expected_terms"
+            )
             return html
 
         self._record_fetch_event(provider="direct", success=True)
@@ -226,11 +241,15 @@ class OregonScraper(BaseStateScraper):
         )
         return direct_html
 
-    async def _discover_other_rules_entries(self, title_terms: Sequence[str]) -> List[Dict[str, str]]:
+    async def _discover_other_rules_entries(
+        self, title_terms: Sequence[str]
+    ) -> List[Dict[str, str]]:
         if not title_terms:
             return []
 
-        payload = await self._fetch_page_content_with_archival_fallback(COURT_RULES_LIST_API_URL, timeout_seconds=45)
+        payload = await self._fetch_page_content_with_archival_fallback(
+            COURT_RULES_LIST_API_URL, timeout_seconds=45
+        )
         if not payload:
             return []
 
@@ -275,7 +294,11 @@ class OregonScraper(BaseStateScraper):
         for statute in statutes:
             section_number = _norm_space(str(statute.section_number or ""))
             section_name = _norm_space(str(statute.section_name or statute.short_title or ""))
-            key = (str(statute.source_url or "").lower(), section_number.lower(), section_name.lower())
+            key = (
+                str(statute.source_url or "").lower(),
+                section_number.lower(),
+                section_name.lower(),
+            )
             if key in seen:
                 continue
             seen.add(key)
@@ -352,7 +375,9 @@ class OregonScraper(BaseStateScraper):
         )
         return statute
 
-    def _extract_orcp_rules_from_html(self, html: str, source_url: str, code_name: str) -> List[NormalizedStatute]:
+    def _extract_orcp_rules_from_html(
+        self, html: str, source_url: str, code_name: str
+    ) -> List[NormalizedStatute]:
         statutes: List[NormalizedStatute] = []
         seen = set()
         for line in _lineify(html):
@@ -398,7 +423,11 @@ class OregonScraper(BaseStateScraper):
         statutes: List[NormalizedStatute] = []
         county_path_hint = ""
         try:
-            county_path_hint = "/" + str(urlparse(county_url).path or "").strip("/").split("/Pages/")[0].lower() + "/"
+            county_path_hint = (
+                "/"
+                + str(urlparse(county_url).path or "").strip("/").split("/Pages/")[0].lower()
+                + "/"
+            )
         except Exception:
             county_path_hint = ""
 
@@ -418,7 +447,9 @@ class OregonScraper(BaseStateScraper):
             if county_path_hint and county_path_hint not in lower_abs:
                 continue
 
-            looks_like_rule_doc = bool(LOCAL_RULE_DOC_PATH_RE.search(lower_abs) or LOCAL_RULE_TEXT_RE.search(lower_text))
+            looks_like_rule_doc = bool(
+                LOCAL_RULE_DOC_PATH_RE.search(lower_abs) or LOCAL_RULE_TEXT_RE.search(lower_text)
+            )
             if not looks_like_rule_doc:
                 continue
 
@@ -443,7 +474,9 @@ class OregonScraper(BaseStateScraper):
 
         return statutes
 
-    async def _scrape_civil_procedure_rules(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+    async def _scrape_civil_procedure_rules(
+        self, code_name: str, code_url: str
+    ) -> List[NormalizedStatute]:
         statutes: List[NormalizedStatute] = []
         primary_candidates = _dedupe_keep_order([code_url, ORCP_PRIMARY_URL, ORCP_EXPANDED_URL])
         for candidate in primary_candidates:
@@ -467,7 +500,9 @@ class OregonScraper(BaseStateScraper):
                             provider="direct",
                         )
                     else:
-                        self._record_fetch_event(provider="direct", success=False, error=f"http {response.status_code}")
+                        self._record_fetch_event(
+                            provider="direct", success=False, error=f"http {response.status_code}"
+                        )
 
             if not html:
                 html = await self._fetch_rule_page_html_with_direct_fallback(
@@ -550,7 +585,9 @@ class OregonScraper(BaseStateScraper):
 
     async def _scrape_criminal_procedure_rules(self, code_name: str) -> List[NormalizedStatute]:
         # Prefer court-rules entries when available, then fall back to ORS criminal-procedure chapters.
-        discovered = await self._discover_other_rules_entries(["criminal procedure", "orcrp", "rules of procedure"])
+        discovered = await self._discover_other_rules_entries(
+            ["criminal procedure", "orcrp", "rules of procedure"]
+        )
         statutes: List[NormalizedStatute] = []
 
         for row in discovered:
@@ -565,7 +602,9 @@ class OregonScraper(BaseStateScraper):
         if not statutes:
             for chapter in self._parse_chapter_selection():
                 chapter_url = f"{self.get_base_url()}/bills_laws/ors/ors{chapter}.html"
-                chapter_bytes = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=90)
+                chapter_bytes = await self._fetch_page_content_with_archival_fallback(
+                    chapter_url, timeout_seconds=90
+                )
                 if not chapter_bytes:
                     continue
                 chapter_html = chapter_bytes.decode("utf-8", errors="replace")
@@ -590,7 +629,9 @@ class OregonScraper(BaseStateScraper):
         if not REQUESTS_AVAILABLE:
             return []
 
-        payload = await self._fetch_page_content_with_archival_fallback(index_url, timeout_seconds=60)
+        payload = await self._fetch_page_content_with_archival_fallback(
+            index_url, timeout_seconds=60
+        )
         if not payload:
             return []
 
@@ -633,7 +674,9 @@ class OregonScraper(BaseStateScraper):
             deduped.append((county_name, county_url))
         return deduped
 
-    async def _scrape_local_court_rules(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+    async def _scrape_local_court_rules(
+        self, code_name: str, code_url: str
+    ) -> List[NormalizedStatute]:
         targets = await self._discover_local_court_rule_targets(code_url)
         statutes: List[NormalizedStatute] = []
 
@@ -645,7 +688,9 @@ class OregonScraper(BaseStateScraper):
                 "OR Local Rule",
                 max_sections=(self._effective_scrape_limit(None, default=240) or 1000000),
             )
-            page_bytes = await self._fetch_page_content_with_archival_fallback(county_url, timeout_seconds=90)
+            page_bytes = await self._fetch_page_content_with_archival_fallback(
+                county_url, timeout_seconds=90
+            )
             if page_bytes:
                 county_html = page_bytes.decode("utf-8", errors="replace")
                 parsed.extend(
@@ -686,7 +731,9 @@ class OregonScraper(BaseStateScraper):
 
     async def _discover_chapter_urls(self, seed_url: str) -> List[str]:
         try:
-            seed_bytes = await self._fetch_page_content_with_archival_fallback(seed_url, timeout_seconds=60)
+            seed_bytes = await self._fetch_page_content_with_archival_fallback(
+                seed_url, timeout_seconds=60
+            )
             if not seed_bytes:
                 self.logger.warning(f"Oregon seed request failed (no content): {seed_url}")
                 return [seed_url]
@@ -706,7 +753,9 @@ class OregonScraper(BaseStateScraper):
         if seed_url not in chapter_urls and ORS_LINK_RE.search(seed_url):
             chapter_urls.append(seed_url)
 
-        return sorted(chapter_urls, key=lambda url: _chapter_sort_key(_chapter_slug_from_url(url) or ""))
+        return sorted(
+            chapter_urls, key=lambda url: _chapter_sort_key(_chapter_slug_from_url(url) or "")
+        )
 
     def _parse_chapter_html(
         self,
@@ -742,7 +791,9 @@ class OregonScraper(BaseStateScraper):
 
             full_text = _norm_space("\n".join(buffer))
             parsed_history = self._extract_legislative_history(full_text)
-            clean_text = self._normalize_legal_text(str(parsed_history.get("cleaned_text") or full_text))
+            clean_text = self._normalize_legal_text(
+                str(parsed_history.get("cleaned_text") or full_text)
+            )
             preamble = self._extract_preamble(clean_text, max_chars=600)
             subsections = self._parse_subsections(clean_text)
             parser_warnings = self._validate_subsection_tree(subsections)
@@ -809,7 +860,11 @@ class OregonScraper(BaseStateScraper):
             history_citations = row.get("legislative_history", {}).get("history_citations") or []
             metadata = StatuteMetadata(
                 enacted_year=str(row.get("year")) if row.get("year") is not None else None,
-                history=[str(item) for item in row.get("legislative_history", {}).get("enactment_citation_blocks") or []],
+                history=[
+                    str(item)
+                    for item in row.get("legislative_history", {}).get("enactment_citation_blocks")
+                    or []
+                ],
             )
 
             structured_data = {
@@ -858,7 +913,7 @@ class OregonScraper(BaseStateScraper):
             statutes.append(statute)
 
         return statutes
-    
+
     async def scrape_code(
         self,
         code_name: str,
@@ -866,11 +921,11 @@ class OregonScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from Oregon's legislative website.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
@@ -881,12 +936,20 @@ class OregonScraper(BaseStateScraper):
 
         if "local court rules" in lower_name or "/rules/pages/slr.aspx" in lower_url:
             self.logger.info("Oregon: using dedicated local-court-rules scraper path")
-            statutes = await self._scrape_local_court_rules(code_name, code_url or LOCAL_RULES_INDEX_URL)
+            statutes = await self._scrape_local_court_rules(
+                code_name, code_url or LOCAL_RULES_INDEX_URL
+            )
             return statutes[:max_sections]
 
-        if "civil procedure" in lower_name or lower_url.endswith("/pages/orcp.aspx") or lower_url.endswith("/siteassets/orcp.html"):
+        if (
+            "civil procedure" in lower_name
+            or lower_url.endswith("/pages/orcp.aspx")
+            or lower_url.endswith("/siteassets/orcp.html")
+        ):
             self.logger.info("Oregon: using dedicated ORCP scraper path")
-            statutes = await self._scrape_civil_procedure_rules(code_name, code_url or ORCP_PRIMARY_URL)
+            statutes = await self._scrape_civil_procedure_rules(
+                code_name, code_url or ORCP_PRIMARY_URL
+            )
             return statutes[:max_sections]
 
         if "criminal procedure" in lower_name:
@@ -901,12 +964,16 @@ class OregonScraper(BaseStateScraper):
             if oar_statutes:
                 self.logger.info(f"Oregon OAR: parsed {len(oar_statutes)} rules")
                 return oar_statutes[:max_sections]
-            self.logger.warning("Oregon OAR scraper produced no rules; falling back to generic parser")
+            self.logger.warning(
+                "Oregon OAR scraper produced no rules; falling back to generic parser"
+            )
             return await self._generic_scrape(code_name, code_url, "OAR", max_sections=max_sections)
 
         citation_format = "Or. Rev. Stat."
         if not REQUESTS_AVAILABLE:
-            self.logger.warning("requests/bs4 unavailable for Oregon parser; falling back to Playwright link scrape")
+            self.logger.warning(
+                "requests/bs4 unavailable for Oregon parser; falling back to Playwright link scrape"
+            )
             return await self._playwright_scrape(
                 code_name,
                 code_url,
@@ -922,7 +989,9 @@ class OregonScraper(BaseStateScraper):
         try:
             chapter_urls: List[str] = []
 
-            seed_bytes = await self._fetch_page_content_with_archival_fallback(code_url, timeout_seconds=90)
+            seed_bytes = await self._fetch_page_content_with_archival_fallback(
+                code_url, timeout_seconds=90
+            )
             if seed_bytes:
                 try:
                     soup = BeautifulSoup(seed_bytes, "html.parser")
@@ -945,9 +1014,13 @@ class OregonScraper(BaseStateScraper):
                 if len(statutes) >= max_sections:
                     break
                 try:
-                    chapter_bytes = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=90)
+                    chapter_bytes = await self._fetch_page_content_with_archival_fallback(
+                        chapter_url, timeout_seconds=90
+                    )
                     if not chapter_bytes:
-                        self.logger.warning(f"Oregon chapter fetch failed (no content): {chapter_url}")
+                        self.logger.warning(
+                            f"Oregon chapter fetch failed (no content): {chapter_url}"
+                        )
                         continue
 
                     chapter_html = chapter_bytes.decode("utf-8", errors="replace")
@@ -961,7 +1034,9 @@ class OregonScraper(BaseStateScraper):
                         )
                     )
                 except Exception as chapter_exc:
-                    self.logger.warning(f"Oregon chapter parse error for {chapter_url}: {chapter_exc}")
+                    self.logger.warning(
+                        f"Oregon chapter parse error for {chapter_url}: {chapter_exc}"
+                    )
                     continue
         except Exception as exc:
             self.logger.error(f"Oregon scrape failed: {exc}")
@@ -970,7 +1045,9 @@ class OregonScraper(BaseStateScraper):
             self.logger.info(f"Oregon: parsed {len(statutes)} structured ORS sections")
             return statutes[:max_sections]
 
-        self.logger.warning("Oregon parser produced no structured sections; using Playwright fallback")
+        self.logger.warning(
+            "Oregon parser produced no structured sections; using Playwright fallback"
+        )
         return await self._playwright_scrape(
             code_name,
             code_url,

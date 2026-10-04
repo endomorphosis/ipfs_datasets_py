@@ -36,6 +36,7 @@ MCP_ROOT = pathlib.Path(__file__).parents[3] / "ipfs_datasets_py" / "mcp_server"
 # 1 — simple_server.py: deprecation warnings
 # ===========================================================================
 
+
 class TestSimpleServerDeprecation:
     """simple_server.py emits DeprecationWarning on class/function use."""
 
@@ -54,8 +55,10 @@ class TestSimpleServerDeprecation:
         # the Flask() call itself (we only care about the warning).
         fake_flask_app = MagicMock()
         fake_flask_cls = MagicMock(return_value=fake_flask_app)
-        with patch.object(mod, "Flask", fake_flask_cls, create=True), \
-             patch.object(mod, "FLASK_AVAILABLE", True, create=True):
+        with (
+            patch.object(mod, "Flask", fake_flask_cls, create=True),
+            patch.object(mod, "FLASK_AVAILABLE", True, create=True),
+        ):
             with warnings.catch_warnings(record=True) as caught:
                 warnings.simplefilter("always")
                 # Suppress the register_routes call so we don't need full Flask
@@ -66,10 +69,12 @@ class TestSimpleServerDeprecation:
 
         deprecations = [w for w in caught if issubclass(w.category, DeprecationWarning)]
         assert deprecations, "Expected at least one DeprecationWarning"
-        assert any("SimpleIPFSDatasetsMCPServer" in str(w.message) or
-                   "Flask" in str(w.message) or
-                   "deprecated" in str(w.message).lower()
-                   for w in deprecations)
+        assert any(
+            "SimpleIPFSDatasetsMCPServer" in str(w.message)
+            or "Flask" in str(w.message)
+            or "deprecated" in str(w.message).lower()
+            for w in deprecations
+        )
 
     def test_start_simple_server_emits_deprecation_warning(self):
         """start_simple_server() emits DeprecationWarning."""
@@ -78,8 +83,10 @@ class TestSimpleServerDeprecation:
         fake_server = MagicMock()
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
-            with patch.object(mod, "load_config_from_yaml", return_value=MagicMock(), create=True), \
-                 patch.object(mod, "SimpleIPFSDatasetsMCPServer", return_value=fake_server):
+            with (
+                patch.object(mod, "load_config_from_yaml", return_value=MagicMock(), create=True),
+                patch.object(mod, "SimpleIPFSDatasetsMCPServer", return_value=fake_server),
+            ):
                 try:
                     mod.start_simple_server()
                 except Exception:
@@ -110,6 +117,7 @@ class TestSimpleServerDeprecation:
 # 2 — standalone_server.py: deprecation warnings
 # ===========================================================================
 
+
 class TestStandaloneServerDeprecation:
     """standalone_server.py emits DeprecationWarning on class/function use."""
 
@@ -137,9 +145,10 @@ class TestStandaloneServerDeprecation:
                 pass
         deprecations = [w for w in caught if issubclass(w.category, DeprecationWarning)]
         assert deprecations, "Expected DeprecationWarning from MinimalMCPServer()"
-        assert any("MinimalMCPServer" in str(w.message) or
-                   "deprecated" in str(w.message).lower()
-                   for w in deprecations)
+        assert any(
+            "MinimalMCPServer" in str(w.message) or "deprecated" in str(w.message).lower()
+            for w in deprecations
+        )
 
     def test_minimal_mcp_dashboard_emits_deprecation(self):
         """MinimalMCPDashboard.__init__ emits DeprecationWarning."""
@@ -158,10 +167,12 @@ class TestStandaloneServerDeprecation:
         mod = self._import_standalone()
         fake_server = MagicMock()
         fake_dashboard = MagicMock()
-        with warnings.catch_warnings(record=True) as caught, \
-             patch.object(mod, "MinimalMCPServer", return_value=fake_server), \
-             patch.object(mod, "MinimalMCPDashboard", return_value=fake_dashboard), \
-             patch("sys.argv", ["standalone_server.py", "--server-only"]):
+        with (
+            warnings.catch_warnings(record=True) as caught,
+            patch.object(mod, "MinimalMCPServer", return_value=fake_server),
+            patch.object(mod, "MinimalMCPDashboard", return_value=fake_dashboard),
+            patch("sys.argv", ["standalone_server.py", "--server-only"]),
+        ):
             warnings.simplefilter("always")
             # Prevent the inner MinimalMCPServer() from blocking via run()
             fake_server.run.side_effect = lambda: None
@@ -177,6 +188,7 @@ class TestStandaloneServerDeprecation:
 # 3 — __main__.py: Flask fallback removed, --http emits DeprecationWarning
 # ===========================================================================
 
+
 class TestMainModuleHttpDeprecation:
     """__main__.py --http mode emits DeprecationWarning; no Flask fallback."""
 
@@ -190,11 +202,13 @@ class TestMainModuleHttpDeprecation:
 
         # Patch sys.argv to simulate --http
         fake_start_server = MagicMock(side_effect=RuntimeError("stop after warning"))
-        with warnings.catch_warnings(record=True) as caught, \
-             patch("sys.argv", ["ipfs_datasets_py.mcp_server", "--http"]), \
-             patch("ipfs_datasets_py.mcp_server.start_server", fake_start_server, create=True), \
-             patch("ipfs_datasets_py.mcp_server.start_stdio_server", MagicMock(), create=True), \
-             patch("ipfs_datasets_py.mcp_server.configs", MagicMock(), create=True):
+        with (
+            warnings.catch_warnings(record=True) as caught,
+            patch("sys.argv", ["ipfs_datasets_py.mcp_server", "--http"]),
+            patch("ipfs_datasets_py.mcp_server.start_server", fake_start_server, create=True),
+            patch("ipfs_datasets_py.mcp_server.start_stdio_server", MagicMock(), create=True),
+            patch("ipfs_datasets_py.mcp_server.configs", MagicMock(), create=True),
+        ):
             warnings.simplefilter("always")
             try:
                 main_mod.main()
@@ -220,6 +234,7 @@ class TestMainModuleHttpDeprecation:
 # ===========================================================================
 # 4 — executor.py: no misleading "asyncio" comments; anyio used
 # ===========================================================================
+
 
 class TestExecutorAnyioComments:
     """executor.py uses anyio language throughout (no misleading 'asyncio' comments)."""
@@ -260,6 +275,7 @@ class TestExecutorAnyioComments:
 # 5 — Documentation: README.md / DUAL_RUNTIME_ARCHITECTURE.md
 # ===========================================================================
 
+
 class TestDocumentationAnyio:
     """Key documentation files use anyio in code examples, not asyncio."""
 
@@ -274,16 +290,12 @@ class TestDocumentationAnyio:
                 in_block = not in_block
             elif in_block and "asyncio.run(" in line:
                 violations.append(f"line {i}: {line.strip()}")
-        assert not violations, (
-            f"README.md still has asyncio.run() in code blocks: {violations}"
-        )
+        assert not violations, f"README.md still has asyncio.run() in code blocks: {violations}"
 
     def test_readme_has_anyio_run(self):
         """README.md code examples should use anyio.run(."""
         readme = (MCP_ROOT / "README.md").read_text()
-        assert "anyio.run(" in readme, (
-            "README.md should use anyio.run() in code examples"
-        )
+        assert "anyio.run(" in readme, "README.md should use anyio.run() in code examples"
 
     def test_dual_runtime_arch_no_asyncio_get_event_loop(self):
         """DUAL_RUNTIME_ARCHITECTURE.md must not use asyncio.get_event_loop()."""

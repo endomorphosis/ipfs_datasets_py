@@ -35,13 +35,13 @@ class TestRoundMetricsDataclass:
             score_before=0.7,
             score_after=0.75,
             score_delta=0.05,
-            actions_applied=['add_entity', 'normalize_names'],
+            actions_applied=["add_entity", "normalize_names"],
         )
-        
+
         assert metrics.round_number == 1
         assert metrics.entities_delta == 2
         assert metrics.score_delta == 0.05
-        assert 'add_entity' in metrics.actions_applied
+        assert "add_entity" in metrics.actions_applied
 
     def test_round_metrics_to_dict(self):
         """
@@ -53,15 +53,15 @@ class TestRoundMetricsDataclass:
             round_number=2,
             entities_delta=1,
             score_delta=0.02,
-            actions_applied=['prune_orphans'],
+            actions_applied=["prune_orphans"],
         )
-        
+
         result = metrics.to_dict()
-        
+
         assert isinstance(result, dict)
-        assert result['round_number'] == 2
-        assert result['entities_delta'] == 1
-        assert result['score_delta'] == 0.02
+        assert result["round_number"] == 2
+        assert result["entities_delta"] == 1
+        assert result["score_delta"] == 0.02
 
     def test_round_metrics_repr(self):
         """
@@ -74,11 +74,11 @@ class TestRoundMetricsDataclass:
             entities_delta=2,
             relationships_delta=1,
             score_delta=0.05,
-            actions_applied=['add_entity'],
+            actions_applied=["add_entity"],
         )
-        
+
         repr_str = repr(metrics)
-        
+
         assert "r1" in repr_str
         assert "+2" in repr_str  # entities_delta
         assert "+1" in repr_str  # relationships_delta
@@ -97,10 +97,11 @@ class TestComputeOntologyDelta:
             "entities": [{"id": "e1", "type": "Person"}],
             "relationships": [{"source": "e1", "target": "e2", "type": "knows"}],
         }
-        
-        added, removed, modified, rel_added, rel_removed, rel_modified = \
-            compute_ontology_delta(onto, onto)
-        
+
+        added, removed, modified, rel_added, rel_removed, rel_modified = compute_ontology_delta(
+            onto, onto
+        )
+
         assert added == 0
         assert removed == 0
         assert modified == 0
@@ -124,9 +125,9 @@ class TestComputeOntologyDelta:
             ],
             "relationships": [],
         }
-        
+
         added, removed, modified, _, _, _ = compute_ontology_delta(before, after)
-        
+
         assert added == 1
         assert removed == 0
         assert modified == 0
@@ -148,9 +149,9 @@ class TestComputeOntologyDelta:
             "entities": [{"id": "e1", "type": "Person"}],
             "relationships": [],
         }
-        
+
         added, removed, modified, _, _, _ = compute_ontology_delta(before, after)
-        
+
         assert added == 0
         assert removed == 1
         assert modified == 0
@@ -169,9 +170,9 @@ class TestComputeOntologyDelta:
             "entities": [{"id": "e1", "type": "Person", "confidence": 0.95}],
             "relationships": [],
         }
-        
+
         added, removed, modified, _, _, _ = compute_ontology_delta(before, after)
-        
+
         assert added == 0
         assert removed == 0
         assert modified == 1
@@ -203,10 +204,9 @@ class TestComputeOntologyDelta:
                 {"source": "e2", "target": "e3", "type": "knows"},
             ],
         }
-        
-        _, _, _, rel_added, rel_removed, rel_modified = \
-            compute_ontology_delta(before, after)
-        
+
+        _, _, _, rel_added, rel_removed, rel_modified = compute_ontology_delta(before, after)
+
         assert rel_added == 1
         assert rel_removed == 0
 
@@ -218,9 +218,9 @@ class TestComputeOntologyDelta:
         """
         before = {"entities": [], "relationships": []}
         after = {"entities": [], "relationships": []}
-        
+
         result = compute_ontology_delta(before, after)
-        
+
         assert result == (0, 0, 0, 0, 0, 0)
 
 
@@ -241,17 +241,17 @@ class TestCreateRoundMetrics:
             "entities": [{"id": "e1"}, {"id": "e2"}],
             "relationships": [{"source": "e1", "target": "e2", "type": "knows"}],
         }
-        
+
         metrics = create_round_metrics(
             round_number=1,
             ontology_before=before,
             ontology_after=after,
             score_before=0.7,
             score_after=0.75,
-            actions_applied=['add_entity'],
+            actions_applied=["add_entity"],
             execution_time_ms=150.5,
         )
-        
+
         assert metrics.round_number == 1
         assert metrics.entities_count_before == 1
         assert metrics.entities_count_after == 2
@@ -259,7 +259,7 @@ class TestCreateRoundMetrics:
         assert metrics.entities_added == 1
         assert metrics.score_delta == 0.05
         assert metrics.execution_time_ms == 150.5
-        assert 'add_entity' in metrics.actions_applied
+        assert "add_entity" in metrics.actions_applied
 
     def test_create_metrics_no_improvement(self):
         """
@@ -268,7 +268,7 @@ class TestCreateRoundMetrics:
         THEN: score_delta is 0 or negative
         """
         onto = {"entities": [], "relationships": []}
-        
+
         metrics = create_round_metrics(
             round_number=1,
             ontology_before=onto,
@@ -276,7 +276,7 @@ class TestCreateRoundMetrics:
             score_before=0.75,
             score_after=0.73,
         )
-        
+
         assert metrics.score_delta == -0.02
 
 
@@ -290,7 +290,7 @@ class TestRoundMetricsCollector:
         THEN: Has empty rounds list
         """
         collector = RoundMetricsCollector()
-        
+
         assert collector.rounds == []
         assert collector.total_score_delta() == 0.0
 
@@ -301,13 +301,13 @@ class TestRoundMetricsCollector:
         THEN: Can retrieve all rounds
         """
         collector = RoundMetricsCollector()
-        
+
         metrics1 = RoundMetrics(round_number=1, score_delta=0.05)
         metrics2 = RoundMetrics(round_number=2, score_delta=0.03)
-        
+
         collector.record_round(metrics1)
         collector.record_round(metrics2)
-        
+
         assert len(collector.rounds) == 2
         assert collector.rounds[0].round_number == 1
 
@@ -318,15 +318,15 @@ class TestRoundMetricsCollector:
         THEN: Returns sum of all entities_delta
         """
         collector = RoundMetricsCollector()
-        
+
         metrics1 = RoundMetrics(round_number=1, entities_delta=2)
         metrics2 = RoundMetrics(round_number=2, entities_delta=1)
         metrics3 = RoundMetrics(round_number=3, entities_delta=-1)
-        
+
         collector.record_round(metrics1)
         collector.record_round(metrics2)
         collector.record_round(metrics3)
-        
+
         assert collector.total_entity_delta() == 2  # 2 + 1 - 1
 
     def test_total_score_delta(self):
@@ -336,7 +336,7 @@ class TestRoundMetricsCollector:
         THEN: Returns final_score - initial_score
         """
         collector = RoundMetricsCollector()
-        
+
         metrics1 = RoundMetrics(
             round_number=1,
             score_before=0.7,
@@ -349,10 +349,10 @@ class TestRoundMetricsCollector:
             score_after=0.76,
             score_delta=0.04,
         )
-        
+
         collector.record_round(metrics1)
         collector.record_round(metrics2)
-        
+
         # Total should be 0.76 - 0.7 = 0.06
         assert collector.total_score_delta() == pytest.approx(0.06, abs=0.001)
 
@@ -363,7 +363,7 @@ class TestRoundMetricsCollector:
         THEN: Returns total_delta / num_rounds
         """
         collector = RoundMetricsCollector()
-        
+
         # Set score_before/after to calculate total improvement correctly
         metrics1 = RoundMetrics(
             round_number=1,
@@ -377,10 +377,10 @@ class TestRoundMetricsCollector:
             score_after=0.76,
             score_delta=0.02,
         )
-        
+
         collector.record_round(metrics1)
         collector.record_round(metrics2)
-        
+
         # Average: total (0.76 - 0.70 = 0.06) / 2 rounds = 0.03
         assert collector.average_round_improvement() == pytest.approx(0.03, abs=0.001)
 
@@ -391,13 +391,13 @@ class TestRoundMetricsCollector:
         THEN: Returns round where improvement drops below threshold
         """
         collector = RoundMetricsCollector()
-        
+
         collector.record_round(RoundMetrics(round_number=1, score_delta=0.05))
         collector.record_round(RoundMetrics(round_number=2, score_delta=0.03))
         collector.record_round(RoundMetrics(round_number=3, score_delta=0.0005))  # Below threshold
-        
+
         convergence_round = collector.rounds_to_convergence(threshold=0.001)
-        
+
         assert convergence_round == 3
 
     def test_most_effective_actions(self):
@@ -407,32 +407,38 @@ class TestRoundMetricsCollector:
         THEN: Returns actions sorted by average improvement
         """
         collector = RoundMetricsCollector()
-        
+
         # Round 1: two actions applied, 0.05 improvement shared
-        collector.record_round(RoundMetrics(
-            round_number=1,
-            score_delta=0.05,
-            actions_applied=['add_entity', 'normalize_names'],
-        ))
+        collector.record_round(
+            RoundMetrics(
+                round_number=1,
+                score_delta=0.05,
+                actions_applied=["add_entity", "normalize_names"],
+            )
+        )
         # Round 2: one action, 0.01 improvement
-        collector.record_round(RoundMetrics(
-            round_number=2,
-            score_delta=0.01,
-            actions_applied=['prune_orphans'],
-        ))
+        collector.record_round(
+            RoundMetrics(
+                round_number=2,
+                score_delta=0.01,
+                actions_applied=["prune_orphans"],
+            )
+        )
         # Round 3: add_entity again, 0.03 improvement
-        collector.record_round(RoundMetrics(
-            round_number=3,
-            score_delta=0.03,
-            actions_applied=['add_entity'],
-        ))
-        
+        collector.record_round(
+            RoundMetrics(
+                round_number=3,
+                score_delta=0.03,
+                actions_applied=["add_entity"],
+            )
+        )
+
         top_actions = collector.most_effective_actions(top_n=3)
-        
+
         # add_entity appears twice with (0.05 + 0.03) / 2 = 0.04 avg
         # Should be first or tied
         assert len(top_actions) > 0
-        assert top_actions[0][0] in ['add_entity', 'normalize_names', 'prune_orphans']
+        assert top_actions[0][0] in ["add_entity", "normalize_names", "prune_orphans"]
 
     def test_to_dict_export(self):
         """
@@ -441,22 +447,24 @@ class TestRoundMetricsCollector:
         THEN: Returns complete dict representation
         """
         collector = RoundMetricsCollector()
-        
-        collector.record_round(RoundMetrics(
-            round_number=1,
-            entities_delta=2,
-            score_before=0.7,
-            score_after=0.75,
-            score_delta=0.05,
-        ))
-        
+
+        collector.record_round(
+            RoundMetrics(
+                round_number=1,
+                entities_delta=2,
+                score_before=0.7,
+                score_after=0.75,
+                score_delta=0.05,
+            )
+        )
+
         result = collector.to_dict()
-        
+
         assert isinstance(result, dict)
-        assert result['total_rounds'] == 1
-        assert result['total_entity_delta'] == 2
-        assert result['total_score_delta'] == pytest.approx(0.05, abs=0.001)
-        assert len(result['rounds']) == 1
+        assert result["total_rounds"] == 1
+        assert result["total_entity_delta"] == 2
+        assert result["total_score_delta"] == pytest.approx(0.05, abs=0.001)
+        assert len(result["rounds"]) == 1
 
     def test_repr(self):
         """
@@ -465,16 +473,18 @@ class TestRoundMetricsCollector:
         THEN: Returns concise string
         """
         collector = RoundMetricsCollector()
-        
-        collector.record_round(RoundMetrics(
-            round_number=1,
-            entities_delta=2,
-            relationships_delta=1,
-            score_delta=0.05,
-        ))
-        
+
+        collector.record_round(
+            RoundMetrics(
+                round_number=1,
+                entities_delta=2,
+                relationships_delta=1,
+                score_delta=0.05,
+            )
+        )
+
         repr_str = repr(collector)
-        
+
         assert "1 rounds" in repr_str or "1 round" in repr_str
         assert "+2" in repr_str  # entities
         assert "+1" in repr_str  # relationships

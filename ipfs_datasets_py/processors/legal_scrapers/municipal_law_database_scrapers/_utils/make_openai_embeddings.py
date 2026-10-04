@@ -41,9 +41,12 @@ except Exception:  # pragma: no cover
     try:
         from ipfs_datasets_py.processors.ipfs.formats.ipfs_multiformats import get_cid
     except Exception:  # pragma: no cover
+
         def get_cid(file_data):
             data = file_data if isinstance(file_data, bytes) else str(file_data).encode("utf-8")
             return f"sha256-{hashlib.sha256(data).hexdigest()}"
+
+
 from ipfs_datasets_py import embeddings_router
 from .configs import configs
 
@@ -58,9 +61,9 @@ def _configure_logging() -> None:
     setattr(_configure_logging, "_configured", True)
 
     logger.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
-    file_handler = logging.FileHandler('embedding.log')
+    file_handler = logging.FileHandler("embedding.log")
     file_handler.setFormatter(formatter)
 
     console_handler = logging.StreamHandler()
@@ -73,10 +76,10 @@ def _configure_logging() -> None:
 def get_gnis_from_file_name(filename: str, ending: Optional[str] = None) -> str:
     """
     Extract the GNIS identifier from a filename.
-    
+
     Args:
         filename (str): The filename to extract GNIS from
-        
+
     Returns:
         str: The extracted GNIS identifier, or empty string if not found
     """
@@ -217,11 +220,11 @@ class RouterEmbedding:
     def _prepare_html_for_embedding(html_title: str, html: str) -> str:
         """
         Prepare HTML content for embedding by extracting text and removing tags.
-        
+
         Args:
             html_title (str): The title of the HTML content.
             html (str): The HTML content to process.
-            
+
         Returns:
             str: The text content extracted from the HTML.
         """
@@ -253,9 +256,9 @@ class RouterEmbedding:
         # Clean the text by removing extra spaces and newlines
 
         # Remove newlines
-        text = raw_text.replace('\n', ' ')
+        text = raw_text.replace("\n", " ")
         # Remove extra spaces
-        text = re.sub(r'\s+', ' ', text)
+        text = re.sub(r"\s+", " ", text)
         # Strip leading and trailing spaces
         text = text.strip()
 
@@ -386,11 +389,15 @@ class RouterEmbedding:
         max_rows: Optional[int] = None,
     ) -> None:
         if pd is None:
-            raise RuntimeError("pandas is required for parquet embedding. Install pandas/pyarrow first.")
+            raise RuntimeError(
+                "pandas is required for parquet embedding. Install pandas/pyarrow first."
+            )
 
         gnis = str(html_parquet_path.stem.split("_")[0])
         if not gnis.isdigit():
-            logger.warning(f"GNIS '{gnis}' does not contain only numeric values; proceeding with best-effort row IDs.")
+            logger.warning(
+                f"GNIS '{gnis}' does not contain only numeric values; proceeding with best-effort row IDs."
+            )
 
         df = pd.read_parquet(html_parquet_path)
 
@@ -410,7 +417,9 @@ class RouterEmbedding:
                 provider=self.provider,
             )
             if len(embeddings) != len(pending_records):
-                raise RuntimeError(f"Embedding count mismatch: {len(embeddings)} != {len(pending_records)}")
+                raise RuntimeError(
+                    f"Embedding count mismatch: {len(embeddings)} != {len(pending_records)}"
+                )
 
             for (gnis_val, cid_val, chunk_order, _), vec in zip(pending_records, embeddings):
                 embedding_cid = get_cid(f"{json.dumps(vec)}{cid_val}")
@@ -464,7 +473,9 @@ class RouterEmbedding:
             f"(provider={self.provider or 'default'}, model={self.model}, device={self.device})"
         )
 
-        out_df = pd.DataFrame(out_rows, columns=["embedding_cid", "gnis", "cid", "text_chunk_order", "embedding"])
+        out_df = pd.DataFrame(
+            out_rows, columns=["embedding_cid", "gnis", "cid", "text_chunk_order", "embedding"]
+        )
         out_df.to_parquet(output_parquet_path, compression="gzip")
         logger.info(f"Wrote embeddings parquet: {output_parquet_path}")
 
@@ -472,6 +483,7 @@ class RouterEmbedding:
 # Backwards-compatible alias: older utilities import `OpenAIEmbedding`.
 # The implementation is now router-backed and does not depend on the OpenAI SDK.
 OpenAIEmbedding = RouterEmbedding
+
 
 async def main(input_files: Optional[list[Path]] = None) -> int:
     return await run_embedding_pipeline(input_files=input_files)
@@ -503,7 +515,7 @@ async def run_embedding_pipeline(
         resolved_input_dir = Path.cwd()
 
     logger.info(f"Looking for files in: {resolved_input_dir}")
-    
+
     # Check if directory exists
     if not resolved_input_dir.exists():
         logger.error(f"Directory does not exist: {resolved_input_dir}")
@@ -519,7 +531,9 @@ async def run_embedding_pipeline(
             html_files = [
                 p
                 for p in globber("*.parquet")
-                if p.is_file() and not p.stem.endswith("_embedding") and not p.stem.endswith("_embeddings")
+                if p.is_file()
+                and not p.stem.endswith("_embedding")
+                and not p.stem.endswith("_embeddings")
             ]
     else:
         html_files = input_files
@@ -537,7 +551,7 @@ async def run_embedding_pipeline(
         max_tokens_per_chunk=max_tokens_per_chunk,
     )
     logger.info("Starting embedding generation via embeddings_router.")
-    
+
     try:
         processed_count = 0
         error_count = 0
@@ -562,7 +576,9 @@ async def run_embedding_pipeline(
                 logger.error(f"Error processing {html_parquet_path}: {e}")
                 error_count += 1
                 continue
-        logger.info(f"Embedding process completed. Processed: {processed_count}, Errors: {error_count}")
+        logger.info(
+            f"Embedding process completed. Processed: {processed_count}, Errors: {error_count}"
+        )
 
     except Exception as e:
         logger.error(f"Error in main processing loop: {e}")
@@ -573,7 +589,9 @@ async def run_embedding_pipeline(
 
 
 def _parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Generate parquet embeddings via embeddings_router")
+    parser = argparse.ArgumentParser(
+        description="Generate parquet embeddings via embeddings_router"
+    )
     parser.add_argument(
         "--input-dir",
         help="Input parquet directory (supports local paths and fish://user@host/path URIs)",
@@ -583,7 +601,9 @@ def _parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         default="*_html.parquet",
         help="Glob pattern for input parquet files (default: *_html.parquet)",
     )
-    parser.add_argument("--recursive", action="store_true", help="Recursively search for parquet files")
+    parser.add_argument(
+        "--recursive", action="store_true", help="Recursively search for parquet files"
+    )
     parser.add_argument(
         "--model",
         default="thenlper/gte-small",
@@ -640,6 +660,7 @@ async def _run_from_cli(args: argparse.Namespace) -> int:
         max_rows=args.max_rows,
         max_tokens_per_chunk=int(args.max_tokens_per_chunk),
     )
+
 
 if __name__ == "__main__":
     cli_args = _parse_args()

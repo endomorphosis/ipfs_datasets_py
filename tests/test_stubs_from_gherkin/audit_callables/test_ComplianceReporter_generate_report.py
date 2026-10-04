@@ -7,7 +7,11 @@ This callable generates a compliance report from audit events for a specific sta
 
 import pytest
 
-from ipfs_datasets_py.audit.compliance import ComplianceReporter, ComplianceStandard, ComplianceRequirement
+from ipfs_datasets_py.audit.compliance import (
+    ComplianceReporter,
+    ComplianceStandard,
+    ComplianceRequirement,
+)
 from ipfs_datasets_py.audit.audit_logger import AuditEvent, AuditLevel, AuditCategory
 from ..conftest import FixtureError
 
@@ -20,19 +24,28 @@ def a_compliancereporter_for_gdpr_standard_is_initiali():
     """
     try:
         reporter = ComplianceReporter(standard=ComplianceStandard.GDPR)
-        
+
         if reporter is None:
-            raise FixtureError("Failed to create fixture a_compliancereporter_for_gdpr_standard_is_initiali: Reporter instance is None") from None
-        
-        if not hasattr(reporter, 'standard'):
-            raise FixtureError("Failed to create fixture a_compliancereporter_for_gdpr_standard_is_initiali: Reporter missing 'standard' attribute") from None
-        
+            raise FixtureError(
+                "Failed to create fixture a_compliancereporter_for_gdpr_standard_is_initiali: Reporter instance is None"
+            ) from None
+
+        if not hasattr(reporter, "standard"):
+            raise FixtureError(
+                "Failed to create fixture a_compliancereporter_for_gdpr_standard_is_initiali: Reporter missing 'standard' attribute"
+            ) from None
+
         if reporter.standard != ComplianceStandard.GDPR:
-            raise FixtureError(f"Failed to create fixture a_compliancereporter_for_gdpr_standard_is_initiali: Reporter standard is {reporter.standard}, expected GDPR") from None
-        
+            raise FixtureError(
+                f"Failed to create fixture a_compliancereporter_for_gdpr_standard_is_initiali: Reporter standard is {reporter.standard}, expected GDPR"
+            ) from None
+
         return reporter
     except Exception as e:
-        raise FixtureError(f"Failed to create fixture a_compliancereporter_for_gdpr_standard_is_initiali: {e}") from e
+        raise FixtureError(
+            f"Failed to create fixture a_compliancereporter_for_gdpr_standard_is_initiali: {e}"
+        ) from e
+
 
 @pytest.fixture
 def compliance_requirements_are_configured(a_compliancereporter_for_gdpr_standard_is_initiali):
@@ -41,25 +54,42 @@ def compliance_requirements_are_configured(a_compliancereporter_for_gdpr_standar
     """
     try:
         reporter = a_compliancereporter_for_gdpr_standard_is_initiali
-        
+
         # Add 5 test requirements
         requirements = [
-            ComplianceRequirement(id="REQ-1", description="Requirement 1", categories=[AuditCategory.DATA_ACCESS]),
-            ComplianceRequirement(id="REQ-2", description="Requirement 2", categories=[AuditCategory.AUTHENTICATION]),
-            ComplianceRequirement(id="REQ-3", description="Requirement 3", categories=[AuditCategory.AUTHORIZATION]),
-            ComplianceRequirement(id="REQ-4", description="Requirement 4", categories=[AuditCategory.DATA_MODIFICATION]),
-            ComplianceRequirement(id="REQ-5", description="Requirement 5", categories=[AuditCategory.SECURITY]),
+            ComplianceRequirement(
+                id="REQ-1", description="Requirement 1", categories=[AuditCategory.DATA_ACCESS]
+            ),
+            ComplianceRequirement(
+                id="REQ-2", description="Requirement 2", categories=[AuditCategory.AUTHENTICATION]
+            ),
+            ComplianceRequirement(
+                id="REQ-3", description="Requirement 3", categories=[AuditCategory.AUTHORIZATION]
+            ),
+            ComplianceRequirement(
+                id="REQ-4",
+                description="Requirement 4",
+                categories=[AuditCategory.DATA_MODIFICATION],
+            ),
+            ComplianceRequirement(
+                id="REQ-5", description="Requirement 5", categories=[AuditCategory.SECURITY]
+            ),
         ]
-        
+
         reporter.requirements = requirements
-        
+
         # Verify requirements were added
         if len(reporter.requirements) != 5:
-            raise FixtureError(f"Failed to create fixture compliance_requirements_are_configured: Reporter has {len(reporter.requirements)} requirements, expected 5") from None
-        
+            raise FixtureError(
+                f"Failed to create fixture compliance_requirements_are_configured: Reporter has {len(reporter.requirements)} requirements, expected 5"
+            ) from None
+
         return reporter
     except Exception as e:
-        raise FixtureError(f"Failed to create fixture compliance_requirements_are_configured: {e}") from e
+        raise FixtureError(
+            f"Failed to create fixture compliance_requirements_are_configured: {e}"
+        ) from e
+
 
 @pytest.fixture
 def audit_events_exist_in_the_system(compliance_requirements_are_configured):
@@ -68,7 +98,7 @@ def audit_events_exist_in_the_system(compliance_requirements_are_configured):
     """
     try:
         reporter = compliance_requirements_are_configured
-        
+
         # Create 100 test audit events
         events = []
         for i in range(100):
@@ -76,23 +106,29 @@ def audit_events_exist_in_the_system(compliance_requirements_are_configured):
                 level=AuditLevel.INFO,
                 category=AuditCategory.DATA_ACCESS,
                 action=f"test_action_{i}",
-                user=f"user_{i % 10}"
+                user=f"user_{i % 10}",
             )
             events.append(event)
-        
+
         # Verify events were created
         if len(events) != 100:
-            raise FixtureError(f"Failed to create fixture audit_events_exist_in_the_system: Created {len(events)} events, expected 100") from None
-        
+            raise FixtureError(
+                f"Failed to create fixture audit_events_exist_in_the_system: Created {len(events)} events, expected 100"
+            ) from None
+
         # Store events on reporter for test access
         reporter._test_events = events
-        
+
         return reporter
     except Exception as e:
         raise FixtureError(f"Failed to create fixture audit_events_exist_in_the_system: {e}") from e
 
 
-def test_generate_report_returns_compliancereport_instance(a_compliancereporter_for_gdpr_standard_is_initiali, compliance_requirements_are_configured, audit_events_exist_in_the_system):
+def test_generate_report_returns_compliancereport_instance(
+    a_compliancereporter_for_gdpr_standard_is_initiali,
+    compliance_requirements_are_configured,
+    audit_events_exist_in_the_system,
+):
     """
     Scenario: Generate report returns ComplianceReport instance
 
@@ -106,7 +142,11 @@ def test_generate_report_returns_compliancereport_instance(a_compliancereporter_
     pass
 
 
-def test_generate_report_sets_report_id_with_unique_value(a_compliancereporter_for_gdpr_standard_is_initiali, compliance_requirements_are_configured, audit_events_exist_in_the_system):
+def test_generate_report_sets_report_id_with_unique_value(
+    a_compliancereporter_for_gdpr_standard_is_initiali,
+    compliance_requirements_are_configured,
+    audit_events_exist_in_the_system,
+):
     """
     Scenario: Generate report sets report_id with unique value
 
@@ -120,7 +160,11 @@ def test_generate_report_sets_report_id_with_unique_value(a_compliancereporter_f
     pass
 
 
-def test_generate_report_sets_report_id_with_correct_format(a_compliancereporter_for_gdpr_standard_is_initiali, compliance_requirements_are_configured, audit_events_exist_in_the_system):
+def test_generate_report_sets_report_id_with_correct_format(
+    a_compliancereporter_for_gdpr_standard_is_initiali,
+    compliance_requirements_are_configured,
+    audit_events_exist_in_the_system,
+):
     """
     Scenario: Generate report sets report_id with correct format
 
@@ -134,7 +178,11 @@ def test_generate_report_sets_report_id_with_correct_format(a_compliancereporter
     pass
 
 
-def test_generate_report_sets_standard(a_compliancereporter_for_gdpr_standard_is_initiali, compliance_requirements_are_configured, audit_events_exist_in_the_system):
+def test_generate_report_sets_standard(
+    a_compliancereporter_for_gdpr_standard_is_initiali,
+    compliance_requirements_are_configured,
+    audit_events_exist_in_the_system,
+):
     """
     Scenario: Generate report sets standard
 
@@ -148,7 +196,11 @@ def test_generate_report_sets_standard(a_compliancereporter_for_gdpr_standard_is
     pass
 
 
-def test_generate_report_sets_time_period_start_from_parameters(a_compliancereporter_for_gdpr_standard_is_initiali, compliance_requirements_are_configured, audit_events_exist_in_the_system):
+def test_generate_report_sets_time_period_start_from_parameters(
+    a_compliancereporter_for_gdpr_standard_is_initiali,
+    compliance_requirements_are_configured,
+    audit_events_exist_in_the_system,
+):
     """
     Scenario: Generate report sets time period start from parameters
 
@@ -162,7 +214,11 @@ def test_generate_report_sets_time_period_start_from_parameters(a_compliancerepo
     pass
 
 
-def test_generate_report_sets_time_period_end_from_parameters(a_compliancereporter_for_gdpr_standard_is_initiali, compliance_requirements_are_configured, audit_events_exist_in_the_system):
+def test_generate_report_sets_time_period_end_from_parameters(
+    a_compliancereporter_for_gdpr_standard_is_initiali,
+    compliance_requirements_are_configured,
+    audit_events_exist_in_the_system,
+):
     """
     Scenario: Generate report sets time period end from parameters
 
@@ -176,7 +232,11 @@ def test_generate_report_sets_time_period_end_from_parameters(a_compliancereport
     pass
 
 
-def test_generate_report_uses_default_30_day_period_when_not_specified(a_compliancereporter_for_gdpr_standard_is_initiali, compliance_requirements_are_configured, audit_events_exist_in_the_system):
+def test_generate_report_uses_default_30_day_period_when_not_specified(
+    a_compliancereporter_for_gdpr_standard_is_initiali,
+    compliance_requirements_are_configured,
+    audit_events_exist_in_the_system,
+):
     """
     Scenario: Generate report uses default 30 day period when not specified
 
@@ -190,7 +250,11 @@ def test_generate_report_uses_default_30_day_period_when_not_specified(a_complia
     pass
 
 
-def test_generate_report_filters_events_by_time_period(a_compliancereporter_for_gdpr_standard_is_initiali, compliance_requirements_are_configured, audit_events_exist_in_the_system):
+def test_generate_report_filters_events_by_time_period(
+    a_compliancereporter_for_gdpr_standard_is_initiali,
+    compliance_requirements_are_configured,
+    audit_events_exist_in_the_system,
+):
     """
     Scenario: Generate report filters events by time period
 
@@ -207,7 +271,11 @@ def test_generate_report_filters_events_by_time_period(a_compliancereporter_for_
     pass
 
 
-def test_generate_report_checks_all_requirements(a_compliancereporter_for_gdpr_standard_is_initiali, compliance_requirements_are_configured, audit_events_exist_in_the_system):
+def test_generate_report_checks_all_requirements(
+    a_compliancereporter_for_gdpr_standard_is_initiali,
+    compliance_requirements_are_configured,
+    audit_events_exist_in_the_system,
+):
     """
     Scenario: Generate report checks all requirements
 
@@ -224,7 +292,11 @@ def test_generate_report_checks_all_requirements(a_compliancereporter_for_gdpr_s
     pass
 
 
-def test_generate_report_marks_requirement_as_compliant_when_met(a_compliancereporter_for_gdpr_standard_is_initiali, compliance_requirements_are_configured, audit_events_exist_in_the_system):
+def test_generate_report_marks_requirement_as_compliant_when_met(
+    a_compliancereporter_for_gdpr_standard_is_initiali,
+    compliance_requirements_are_configured,
+    audit_events_exist_in_the_system,
+):
     """
     Scenario: Generate report marks requirement as Compliant when met
 
@@ -241,7 +313,11 @@ def test_generate_report_marks_requirement_as_compliant_when_met(a_compliancerep
     pass
 
 
-def test_generate_report_marks_requirement_as_non_compliant_when_not_met(a_compliancereporter_for_gdpr_standard_is_initiali, compliance_requirements_are_configured, audit_events_exist_in_the_system):
+def test_generate_report_marks_requirement_as_non_compliant_when_not_met(
+    a_compliancereporter_for_gdpr_standard_is_initiali,
+    compliance_requirements_are_configured,
+    audit_events_exist_in_the_system,
+):
     """
     Scenario: Generate report marks requirement as Non-Compliant when not met
 
@@ -258,7 +334,11 @@ def test_generate_report_marks_requirement_as_non_compliant_when_not_met(a_compl
     pass
 
 
-def test_generate_report_includes_evidence_count_for_each_requirement(a_compliancereporter_for_gdpr_standard_is_initiali, compliance_requirements_are_configured, audit_events_exist_in_the_system):
+def test_generate_report_includes_evidence_count_for_each_requirement(
+    a_compliancereporter_for_gdpr_standard_is_initiali,
+    compliance_requirements_are_configured,
+    audit_events_exist_in_the_system,
+):
     """
     Scenario: Generate report includes evidence count for each requirement
 
@@ -275,7 +355,11 @@ def test_generate_report_includes_evidence_count_for_each_requirement(a_complian
     pass
 
 
-def test_generate_report_calculates_compliance_summary_compliant_count(a_compliancereporter_for_gdpr_standard_is_initiali, compliance_requirements_are_configured, audit_events_exist_in_the_system):
+def test_generate_report_calculates_compliance_summary_compliant_count(
+    a_compliancereporter_for_gdpr_standard_is_initiali,
+    compliance_requirements_are_configured,
+    audit_events_exist_in_the_system,
+):
     """
     Scenario: Generate report calculates compliance summary compliant_count
 
@@ -293,7 +377,11 @@ def test_generate_report_calculates_compliance_summary_compliant_count(a_complia
     pass
 
 
-def test_generate_report_calculates_compliance_summary_non_compliant_count(a_compliancereporter_for_gdpr_standard_is_initiali, compliance_requirements_are_configured, audit_events_exist_in_the_system):
+def test_generate_report_calculates_compliance_summary_non_compliant_count(
+    a_compliancereporter_for_gdpr_standard_is_initiali,
+    compliance_requirements_are_configured,
+    audit_events_exist_in_the_system,
+):
     """
     Scenario: Generate report calculates compliance summary non_compliant_count
 
@@ -311,7 +399,11 @@ def test_generate_report_calculates_compliance_summary_non_compliant_count(a_com
     pass
 
 
-def test_generate_report_calculates_compliance_summary_total_requirements(a_compliancereporter_for_gdpr_standard_is_initiali, compliance_requirements_are_configured, audit_events_exist_in_the_system):
+def test_generate_report_calculates_compliance_summary_total_requirements(
+    a_compliancereporter_for_gdpr_standard_is_initiali,
+    compliance_requirements_are_configured,
+    audit_events_exist_in_the_system,
+):
     """
     Scenario: Generate report calculates compliance summary total_requirements
 
@@ -329,7 +421,11 @@ def test_generate_report_calculates_compliance_summary_total_requirements(a_comp
     pass
 
 
-def test_generate_report_calculates_compliance_rate_percentage(a_compliancereporter_for_gdpr_standard_is_initiali, compliance_requirements_are_configured, audit_events_exist_in_the_system):
+def test_generate_report_calculates_compliance_rate_percentage(
+    a_compliancereporter_for_gdpr_standard_is_initiali,
+    compliance_requirements_are_configured,
+    audit_events_exist_in_the_system,
+):
     """
     Scenario: Generate report calculates compliance_rate percentage
 
@@ -346,7 +442,11 @@ def test_generate_report_calculates_compliance_rate_percentage(a_compliancerepor
     pass
 
 
-def test_generate_report_sets_compliant_to_false_when_any_requirement_fails(a_compliancereporter_for_gdpr_standard_is_initiali, compliance_requirements_are_configured, audit_events_exist_in_the_system):
+def test_generate_report_sets_compliant_to_false_when_any_requirement_fails(
+    a_compliancereporter_for_gdpr_standard_is_initiali,
+    compliance_requirements_are_configured,
+    audit_events_exist_in_the_system,
+):
     """
     Scenario: Generate report sets compliant to False when any requirement fails
 
@@ -363,7 +463,11 @@ def test_generate_report_sets_compliant_to_false_when_any_requirement_fails(a_co
     pass
 
 
-def test_generate_report_sets_compliant_to_true_when_all_requirements_pass(a_compliancereporter_for_gdpr_standard_is_initiali, compliance_requirements_are_configured, audit_events_exist_in_the_system):
+def test_generate_report_sets_compliant_to_true_when_all_requirements_pass(
+    a_compliancereporter_for_gdpr_standard_is_initiali,
+    compliance_requirements_are_configured,
+    audit_events_exist_in_the_system,
+):
     """
     Scenario: Generate report sets compliant to True when all requirements pass
 
@@ -380,7 +484,11 @@ def test_generate_report_sets_compliant_to_true_when_all_requirements_pass(a_com
     pass
 
 
-def test_generate_report_generates_remediation_suggestions_contains_entries(a_compliancereporter_for_gdpr_standard_is_initiali, compliance_requirements_are_configured, audit_events_exist_in_the_system):
+def test_generate_report_generates_remediation_suggestions_contains_entries(
+    a_compliancereporter_for_gdpr_standard_is_initiali,
+    compliance_requirements_are_configured,
+    audit_events_exist_in_the_system,
+):
     """
     Scenario: Generate report generates remediation suggestions contains entries
 
@@ -397,7 +505,11 @@ def test_generate_report_generates_remediation_suggestions_contains_entries(a_co
     pass
 
 
-def test_generate_report_generates_remediation_suggestions_with_suggestion_lists(a_compliancereporter_for_gdpr_standard_is_initiali, compliance_requirements_are_configured, audit_events_exist_in_the_system):
+def test_generate_report_generates_remediation_suggestions_with_suggestion_lists(
+    a_compliancereporter_for_gdpr_standard_is_initiali,
+    compliance_requirements_are_configured,
+    audit_events_exist_in_the_system,
+):
     """
     Scenario: Generate report generates remediation suggestions with suggestion lists
 
@@ -414,7 +526,11 @@ def test_generate_report_generates_remediation_suggestions_with_suggestion_lists
     pass
 
 
-def test_generate_report_uses_custom_verification_function_when_provided(a_compliancereporter_for_gdpr_standard_is_initiali, compliance_requirements_are_configured, audit_events_exist_in_the_system):
+def test_generate_report_uses_custom_verification_function_when_provided(
+    a_compliancereporter_for_gdpr_standard_is_initiali,
+    compliance_requirements_are_configured,
+    audit_events_exist_in_the_system,
+):
     """
     Scenario: Generate report uses custom verification function when provided
 
@@ -431,7 +547,11 @@ def test_generate_report_uses_custom_verification_function_when_provided(a_compl
     pass
 
 
-def test_generate_report_handles_verification_function_errors_sets_status(a_compliancereporter_for_gdpr_standard_is_initiali, compliance_requirements_are_configured, audit_events_exist_in_the_system):
+def test_generate_report_handles_verification_function_errors_sets_status(
+    a_compliancereporter_for_gdpr_standard_is_initiali,
+    compliance_requirements_are_configured,
+    audit_events_exist_in_the_system,
+):
     """
     Scenario: Generate report handles verification function errors sets status
 
@@ -448,7 +568,11 @@ def test_generate_report_handles_verification_function_errors_sets_status(a_comp
     pass
 
 
-def test_generate_report_handles_verification_function_errors_completes_without_error(a_compliancereporter_for_gdpr_standard_is_initiali, compliance_requirements_are_configured, audit_events_exist_in_the_system):
+def test_generate_report_handles_verification_function_errors_completes_without_error(
+    a_compliancereporter_for_gdpr_standard_is_initiali,
+    compliance_requirements_are_configured,
+    audit_events_exist_in_the_system,
+):
     """
     Scenario: Generate report handles verification function errors completes without error
 
@@ -465,7 +589,11 @@ def test_generate_report_handles_verification_function_errors_completes_without_
     pass
 
 
-def test_generate_report_with_empty_events_list(a_compliancereporter_for_gdpr_standard_is_initiali, compliance_requirements_are_configured, audit_events_exist_in_the_system):
+def test_generate_report_with_empty_events_list(
+    a_compliancereporter_for_gdpr_standard_is_initiali,
+    compliance_requirements_are_configured,
+    audit_events_exist_in_the_system,
+):
     """
     Scenario: Generate report with empty events list
 
@@ -482,7 +610,11 @@ def test_generate_report_with_empty_events_list(a_compliancereporter_for_gdpr_st
     pass
 
 
-def test_generate_report_sets_generated_at_timestamp_in_iso_format(a_compliancereporter_for_gdpr_standard_is_initiali, compliance_requirements_are_configured, audit_events_exist_in_the_system):
+def test_generate_report_sets_generated_at_timestamp_in_iso_format(
+    a_compliancereporter_for_gdpr_standard_is_initiali,
+    compliance_requirements_are_configured,
+    audit_events_exist_in_the_system,
+):
     """
     Scenario: Generate report sets generated_at timestamp in ISO format
 
@@ -496,7 +628,11 @@ def test_generate_report_sets_generated_at_timestamp_in_iso_format(a_compliancer
     pass
 
 
-def test_generate_report_sets_generated_at_timestamp_to_current_time(a_compliancereporter_for_gdpr_standard_is_initiali, compliance_requirements_are_configured, audit_events_exist_in_the_system):
+def test_generate_report_sets_generated_at_timestamp_to_current_time(
+    a_compliancereporter_for_gdpr_standard_is_initiali,
+    compliance_requirements_are_configured,
+    audit_events_exist_in_the_system,
+):
     """
     Scenario: Generate report sets generated_at timestamp to current time
 
@@ -508,4 +644,3 @@ def test_generate_report_sets_generated_at_timestamp_to_current_time(a_complianc
     """
     # TODO: Implement test
     pass
-

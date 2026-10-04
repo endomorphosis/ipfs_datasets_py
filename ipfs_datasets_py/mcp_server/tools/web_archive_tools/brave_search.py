@@ -5,6 +5,7 @@ Business logic has been extracted to the canonical package module:
 
 This file is now a thin re-export shim so existing imports continue to work.
 """
+
 from typing import Any, Dict
 
 try:

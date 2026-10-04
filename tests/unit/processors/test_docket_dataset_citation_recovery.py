@@ -32,7 +32,10 @@ def test_docket_dataset_collects_citation_recovery_candidates():
 
     assert linked_authorities["unmatched_linked_authority_count"] == 1
     assert linked_authorities["citation_recovery_candidate_count"] == 1
-    assert payload["documents"][0]["metadata"]["citation_recovery_candidates"][0]["corpus_key"] == "state_laws"
+    assert (
+        payload["documents"][0]["metadata"]["citation_recovery_candidates"][0]["corpus_key"]
+        == "state_laws"
+    )
 
     candidates = docket_dataset_module.collect_docket_dataset_citation_recovery_candidates(dataset)
     assert candidates["source"] == "docket_dataset_citation_recovery_candidates"
@@ -203,16 +206,29 @@ async def test_packaged_docket_can_plan_missing_authority_follow_up(monkeypatch,
     assert report["work_item_count"] == 1
     assert report["work_items"][0]["job_kind"] == "legal_citation_recovery_follow_up"
     assert report["work_items"][0]["hf_dataset_id"] == "justicedao/ipfs_state_laws"
-    assert report["work_items"][0]["target_parquet_path"] == "state_laws_parquet_cid/STATE-MN.parquet"
-    assert report["work_items"][0]["promotion_preview"]["promotion_output_dir"].endswith("canonical_promotion")
-    assert report["work_items"][0]["promotion_preview"]["promotion_parquet_path"].endswith("promotion_rows.parquet")
+    assert (
+        report["work_items"][0]["target_parquet_path"] == "state_laws_parquet_cid/STATE-MN.parquet"
+    )
+    assert report["work_items"][0]["promotion_preview"]["promotion_output_dir"].endswith(
+        "canonical_promotion"
+    )
+    assert report["work_items"][0]["promotion_preview"]["promotion_parquet_path"].endswith(
+        "promotion_rows.parquet"
+    )
     assert report["work_items"][0]["release_plan_preview"]["status"] == "planned"
-    assert report["work_items"][0]["release_plan_preview"]["commands"][0]["stage"] == "promote_bundle"
+    assert (
+        report["work_items"][0]["release_plan_preview"]["commands"][0]["stage"] == "promote_bundle"
+    )
     assert report["work_items"][0]["release_plan_preview"]["commands"][1]["status"] == "ready"
-    assert "merge_recovery_manifest_into_canonical_dataset" in report["work_items"][0]["release_plan_preview"]["commands"][1]["command"]
+    assert (
+        "merge_recovery_manifest_into_canonical_dataset"
+        in report["work_items"][0]["release_plan_preview"]["commands"][1]["command"]
+    )
     assert report["work_items"][0]["stages"][1]["status"] == "ready"
     assert report["work_items"][0]["stages"][2]["status"] == "ready"
-    assert report["work_items"][0]["stages"][3]["publish_command"].startswith("python scripts/repair/publish_parquet_to_hf.py")
+    assert report["work_items"][0]["stages"][3]["publish_command"].startswith(
+        "python scripts/repair/publish_parquet_to_hf.py"
+    )
 
 
 @pytest.mark.anyio
@@ -273,7 +289,13 @@ async def test_packaged_docket_can_execute_missing_authority_follow_up(monkeypat
             ],
         }
 
-    def _fake_merge(manifest_path, *, output_dir=None, target_local_parquet_path=None, write_promotion_parquet=True):
+    def _fake_merge(
+        manifest_path,
+        *,
+        output_dir=None,
+        target_local_parquet_path=None,
+        write_promotion_parquet=True,
+    ):
         captured["merge_manifest_path"] = manifest_path
         captured["merge_output_dir"] = output_dir
         captured["merge_target_local_parquet_path"] = target_local_parquet_path

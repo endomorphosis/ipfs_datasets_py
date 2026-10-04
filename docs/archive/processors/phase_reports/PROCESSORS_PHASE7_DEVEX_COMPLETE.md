@@ -68,23 +68,24 @@ from ipfs_datasets_py.processors.debug_tools import ProcessorDebugger
 
 debugger = ProcessorDebugger()
 
+
 async def main():
     # Explain why a processor was chosen
     decision = await debugger.explain_routing("document.pdf")
     print(decision.to_json())
-    
+
     # Diagnose a processing context
     from ipfs_datasets_py.processors.core import ProcessingContext, InputType
+
     context = ProcessingContext(
-        input_type=InputType.FILE,
-        source="document.pdf",
-        metadata={'format': 'pdf'}
+        input_type=InputType.FILE, source="document.pdf", metadata={"format": "pdf"}
     )
     diagnostics = debugger.diagnose_context(context)
     print(diagnostics)
-    
+
     # Enable trace logging
     debugger.trace_logging(enable=True)
+
 
 anyio.run(main)
 ```
@@ -124,28 +125,28 @@ from ipfs_datasets_py.processors.core import UniversalProcessor
 profiler = ProcessorProfiler()
 processor = UniversalProcessor()
 
+
 async def main():
     # Profile a single operation
     async with profiler.profile("pdf_processing") as metrics:
         result = await processor.process("document.pdf")
-        metrics.custom_metrics['success'] = result.success
-        metrics.custom_metrics['entities'] = len(result.knowledge_graph.get('entities', []))
-    
+        metrics.custom_metrics["success"] = result.success
+        metrics.custom_metrics["entities"] = len(result.knowledge_graph.get("entities", []))
+
     print(metrics.summary())
-    
+
     # Profile batch processing
     async with profiler.profile("batch_processing") as metrics:
-        results = await processor.process_batch([
-            "doc1.pdf", "doc2.pdf", "doc3.pdf"
-        ], parallel=True)
-        metrics.custom_metrics['total_files'] = len(results)
-    
+        results = await processor.process_batch(["doc1.pdf", "doc2.pdf", "doc3.pdf"], parallel=True)
+        metrics.custom_metrics["total_files"] = len(results)
+
     # Get average metrics across all operations
     avg_metrics = profiler.get_average_metrics()
     print(f"Average duration: {avg_metrics['avg_duration_seconds']:.3f}s")
-    
+
     # Export metrics to file
     profiler.export_metrics("performance_metrics.json")
+
 
 anyio.run(main)
 ```
@@ -154,13 +155,14 @@ anyio.run(main)
 ```python
 from ipfs_datasets_py.processors.profiling import profile_processing
 
+
 async def process_files():
     processor = UniversalProcessor()
-    
+
     async with profile_processing("batch_job") as metrics:
         results = await processor.process_batch(files, parallel=True)
-        metrics.custom_metrics['success_count'] = sum(1 for r in results if r.success)
-    
+        metrics.custom_metrics["success_count"] = sum(1 for r in results if r.success)
+
     print(metrics.summary())
 ```
 
@@ -191,12 +193,13 @@ result = await processor.process("document.pdf")
 
 # Extract knowledge graph
 kg = result.knowledge_graph
-entities = kg.get('entities', [])
-relationships = kg.get('relationships', [])
+entities = kg.get("entities", [])
+relationships = kg.get("relationships", [])
 
 # Export for visualization
 import json
-with open('graph_data.json', 'w') as f:
+
+with open("graph_data.json", "w") as f:
     json.dump(kg, f, indent=2)
 
 # Can be imported into:
@@ -298,29 +301,31 @@ register_all_adapters()
 processor = UniversalProcessor()
 debugger = ProcessorDebugger()
 
+
 async def main():
     # 1. Debug routing decision
     decision = await debugger.explain_routing("document.pdf")
     print(f"Selected processor: {decision.selected_processor}")
     print(f"Reason: {decision.selection_reason}")
-    
+
     # 2. Profile processing with detailed metrics
     async with profile_processing("pdf_analysis") as metrics:
         result = await processor.process("document.pdf")
-        
+
         # Add custom metrics
         if result.success:
-            metrics.custom_metrics['entities'] = result.get_entity_count()
-            metrics.custom_metrics['relationships'] = len(
-                result.knowledge_graph.get('relationships', [])
+            metrics.custom_metrics["entities"] = result.get_entity_count()
+            metrics.custom_metrics["relationships"] = len(
+                result.knowledge_graph.get("relationships", [])
             )
-    
+
     # 3. Print performance summary
     print("\n" + metrics.summary())
-    
+
     # 4. Diagnose result
     diagnostics = debugger.diagnose_result(result)
     print(f"\nResult diagnostics: {diagnostics}")
+
 
 anyio.run(main)
 ```

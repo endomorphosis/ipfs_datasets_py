@@ -4,6 +4,7 @@ Covers data ingestion, entity analysis, relationship timeline, and
 geospatial analysis tools.  All tools degrade gracefully without external
 dependencies, returning dicts with status/error keys.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -44,23 +45,28 @@ def _run(coro):
 # Data ingestion
 # ---------------------------------------------------------------------------
 
+
 class TestIngestNewsArticle:
     def test_returns_dict(self):
         result = _run(ingest_news_article(url="https://example.com/article"))
         assert isinstance(result, dict)
 
     def test_source_type_param_accepted(self):
-        result = _run(ingest_news_article(
-            url="https://example.com",
-            source_type="news",
-        ))
+        result = _run(
+            ingest_news_article(
+                url="https://example.com",
+                source_type="news",
+            )
+        )
         assert isinstance(result, dict)
 
     def test_analysis_type_param_accepted(self):
-        result = _run(ingest_news_article(
-            url="https://example.com",
-            analysis_type="summary",
-        ))
+        result = _run(
+            ingest_news_article(
+                url="https://example.com",
+                analysis_type="summary",
+            )
+        )
         assert isinstance(result, dict)
 
 
@@ -70,10 +76,12 @@ class TestIngestNewsFeed:
         assert isinstance(result, dict)
 
     def test_max_articles_accepted(self):
-        result = _run(ingest_news_feed(
-            feed_url="https://example.com/rss",
-            max_articles=5,
-        ))
+        result = _run(
+            ingest_news_feed(
+                feed_url="https://example.com/rss",
+                max_articles=5,
+            )
+        )
         assert isinstance(result, dict)
 
 
@@ -93,39 +101,47 @@ class TestIngestDocumentCollection:
 # Entity analysis
 # ---------------------------------------------------------------------------
 
+
 class TestAnalyzeEntities:
     def test_returns_dict(self):
         result = _run(analyze_entities(corpus_data='{"documents": ["Alice works at Acme."]}'))
         assert isinstance(result, dict)
 
     def test_entity_types_accepted(self):
-        result = _run(analyze_entities(
-            corpus_data='{"documents": ["Bob lives in Paris."]}',
-            entity_types=["PERSON", "LOCATION"],
-        ))
+        result = _run(
+            analyze_entities(
+                corpus_data='{"documents": ["Bob lives in Paris."]}',
+                entity_types=["PERSON", "LOCATION"],
+            )
+        )
         assert isinstance(result, dict)
 
 
 class TestExploreEntity:
     def test_returns_dict(self):
-        result = _run(explore_entity(
-            entity_id="alice",
-            corpus_data='{"documents": []}',
-        ))
+        result = _run(
+            explore_entity(
+                entity_id="alice",
+                corpus_data='{"documents": []}',
+            )
+        )
         assert isinstance(result, dict)
 
     def test_include_relationships_param_accepted(self):
-        result = _run(explore_entity(
-            entity_id="alice",
-            corpus_data='{"documents": []}',
-            include_relationships=False,
-        ))
+        result = _run(
+            explore_entity(
+                entity_id="alice",
+                corpus_data='{"documents": []}',
+                include_relationships=False,
+            )
+        )
         assert isinstance(result, dict)
 
 
 # ---------------------------------------------------------------------------
 # Relationship / timeline tools
 # ---------------------------------------------------------------------------
+
 
 class TestMapRelationships:
     def test_returns_dict(self):
@@ -135,34 +151,42 @@ class TestMapRelationships:
 
 class TestAnalyzeEntityTimeline:
     def test_returns_dict(self):
-        result = _run(analyze_entity_timeline(
-            corpus_data='{"documents": []}',
-            entity_id="alice",
-        ))
+        result = _run(
+            analyze_entity_timeline(
+                corpus_data='{"documents": []}',
+                entity_id="alice",
+            )
+        )
         assert isinstance(result, dict)
 
 
 class TestDetectPatterns:
     def test_returns_dict(self):
-        result = _run(detect_patterns(
-            corpus_data='{"documents": []}',
-            pattern_types=["temporal"],
-        ))
+        result = _run(
+            detect_patterns(
+                corpus_data='{"documents": []}',
+                pattern_types=["temporal"],
+            )
+        )
         assert isinstance(result, dict)
 
 
 class TestTrackProvenance:
     def test_returns_dict(self):
-        result = _run(track_provenance(
-            corpus_data='{"documents": []}',
-            entity_id="entity_1",
-        ))
+        result = _run(
+            track_provenance(
+                corpus_data='{"documents": []}',
+                entity_id="entity_1",
+            )
+        )
         assert isinstance(result, dict)
 
     def test_include_citations_param_accepted(self):
-        result = _run(track_provenance(
-            corpus_data='{"documents": []}',
-            entity_id="entity_2",
-            include_citations=True,
-        ))
+        result = _run(
+            track_provenance(
+                corpus_data='{"documents": []}',
+                entity_id="entity_2",
+                include_citations=True,
+            )
+        )
         assert isinstance(result, dict)

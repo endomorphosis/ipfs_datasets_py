@@ -300,23 +300,19 @@ from ipfs_datasets_py.processors.legal_scrapers import (
     QueryIntent,
     SearchTermGenerator,
     SearchTerm,
-    
     # Query Enhancement
     QueryExpander,
     ExpandedQuery,
     expand_query,
-    
     # Web Archive
     LegalWebArchiveSearch,
     CommonCrawlIndexLoader,
-    
     # HuggingFace Integration (Enhancement 11)
     HuggingFaceAPISearch,
     ParallelWebArchiver,
     ArchiveResult,
     ArchiveProgress,
     archive_urls,
-    
     # Feature Flags
     HAVE_WEB_ARCHIVE_SEARCH,
     HAVE_CC_INDEX_LOADER,
@@ -331,7 +327,7 @@ from ipfs_datasets_py.processors.legal_scrapers import (
 from ipfs_datasets_py.processors.legal_scrapers import (
     BraveLegalSearch,
     QueryExpander,
-    ParallelWebArchiver
+    ParallelWebArchiver,
 )
 
 # 1. Expand query with LLM
@@ -343,7 +339,7 @@ searcher = BraveLegalSearch()
 all_urls = []
 for query in expanded.all_variations():
     results = searcher.search(query)
-    all_urls.extend([r['url'] for r in results])
+    all_urls.extend([r["url"] for r in results])
 
 # 3. Archive results in parallel (10-25x faster)
 archiver = ParallelWebArchiver(max_concurrent=10)
@@ -452,7 +448,7 @@ export OPENROUTER_API_KEY="your_key"
 from ipfs_datasets_py.processors.legal_scrapers import (
     BraveLegalSearch,
     LegalWebArchiveSearch,
-    ParallelWebArchiver
+    ParallelWebArchiver,
 )
 
 # Basic search
@@ -460,10 +456,7 @@ searcher = BraveLegalSearch()
 results = searcher.search("EPA water regulations")
 
 # Archive search
-archive = LegalWebArchiveSearch(
-    index_local_dir="/data/indexes",
-    use_hf_indexes=True
-)
+archive = LegalWebArchiveSearch(index_local_dir="/data/indexes", use_hf_indexes=True)
 results = archive.search_with_indexes("housing laws")
 
 # Parallel archiving

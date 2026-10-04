@@ -5,7 +5,9 @@ Quick import test for tools that were previously failing.
 
 import sys
 import traceback
-sys.path.insert(0, '.')
+
+sys.path.insert(0, ".")
+
 
 def test_import(module_path, function_name):
     """Test importing a specific function from a module."""
@@ -19,6 +21,7 @@ def test_import(module_path, function_name):
         print(f"✗ Failed to import {function_name}: {e}")
         print(f"  Traceback: {traceback.format_exc()}")
         return False
+
 
 if __name__ == "__main__":
     imports_to_test = [

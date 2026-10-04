@@ -151,38 +151,53 @@ This updated refactoring plan addresses the current state of TDFOL after **Phase
 ```python
 class TDFOLError(Exception):
     """Base exception for all TDFOL errors."""
+
     pass
+
 
 class ParseError(TDFOLError):
     """Raised when parsing fails."""
+
     def __init__(self, message: str, position: int, line: int, column: int):
         self.position = position
         self.line = line
         self.column = column
         super().__init__(f"{message} at line {line}, column {column}")
 
+
 class ProofError(TDFOLError):
     """Raised when proof fails."""
+
     pass
+
 
 class ProofTimeoutError(ProofError):
     """Raised when proof exceeds timeout."""
+
     pass
+
 
 class ConversionError(TDFOLError):
     """Raised when format conversion fails."""
+
     pass
+
 
 class InferenceError(TDFOLError):
     """Raised when inference rule application fails."""
+
     pass
+
 
 class NLProcessingError(TDFOLError):
     """Raised when NL processing fails."""
+
     pass
+
 
 class PatternMatchError(NLProcessingError):
     """Raised when pattern matching fails."""
+
     pass
 ```
 
@@ -264,50 +279,50 @@ def _traverse_formula(
     formula: Formula,
     predicate: Callable[[Formula], bool],
     depth: int = 0,
-    max_depth: Optional[int] = None
+    max_depth: Optional[int] = None,
 ) -> bool:
     """
     Generic formula tree traversal with predicate.
-    
+
     Args:
         formula: Formula to traverse
         predicate: Function that returns True if condition met
         depth: Current recursion depth
         max_depth: Maximum depth to traverse (None = unlimited)
-    
+
     Returns:
         True if predicate returns True for any node
     """
     if max_depth is not None and depth > max_depth:
         return False
-    
+
     if predicate(formula):
         return True
-    
+
     # Traverse children based on formula type
     if isinstance(formula, UnaryFormula):
         return _traverse_formula(formula.formula, predicate, depth + 1, max_depth)
     elif isinstance(formula, BinaryFormula):
-        return (_traverse_formula(formula.left, predicate, depth + 1, max_depth) or
-                _traverse_formula(formula.right, predicate, depth + 1, max_depth))
+        return _traverse_formula(
+            formula.left, predicate, depth + 1, max_depth
+        ) or _traverse_formula(formula.right, predicate, depth + 1, max_depth)
     # ... (handle all formula types)
-    
+
     return False
+
 
 # REPLACE the 3 methods with:
 def _has_deontic_operators(self, formula: Formula) -> bool:
     """Check if formula contains deontic operators."""
-    return self._traverse_formula(
-        formula,
-        lambda f: isinstance(f, DeonticFormula)
-    )
+    return self._traverse_formula(formula, lambda f: isinstance(f, DeonticFormula))
+
 
 def _has_temporal_operators(self, formula: Formula) -> bool:
     """Check if formula contains temporal operators."""
     return self._traverse_formula(
-        formula,
-        lambda f: isinstance(f, (TemporalFormula, BinaryTemporalFormula))
+        formula, lambda f: isinstance(f, (TemporalFormula, BinaryTemporalFormula))
     )
+
 
 def _has_nested_temporal(self, formula: Formula, depth: int = 0) -> bool:
     """Check if formula has nested temporal operators."""
@@ -315,7 +330,7 @@ def _has_nested_temporal(self, formula: Formula, depth: int = 0) -> bool:
         formula,
         lambda f: isinstance(f, (TemporalFormula, BinaryTemporalFormula)),
         depth=depth,
-        max_depth=2  # Check for nesting
+        max_depth=2,  # Check for nesting
     )
 ```
 
@@ -337,24 +352,26 @@ logger = logging.getLogger(__name__)
 _nlp: Optional[Any] = None
 _spacy_available: bool = False
 
+
 def get_spacy_nlp(model: str = "en_core_web_sm") -> Optional[Any]:
     """
     Get spaCy NLP pipeline, lazy loading and caching.
-    
+
     Args:
         model: spaCy model name
-    
+
     Returns:
         spaCy NLP object or None if unavailable
     """
     global _nlp, _spacy_available
-    
+
     if _nlp is not None:
         return _nlp
-    
+
     if not _spacy_available:
         try:
             import spacy
+
             _nlp = spacy.load(model)
             _spacy_available = True
             logger.info(f"Loaded spaCy model: {model}")
@@ -362,8 +379,9 @@ def get_spacy_nlp(model: str = "en_core_web_sm") -> Optional[Any]:
             logger.warning(f"spaCy unavailable: {e}")
             _spacy_available = False
             _nlp = None
-    
+
     return _nlp
+
 
 def is_spacy_available() -> bool:
     """Check if spaCy is available."""
@@ -408,9 +426,9 @@ def is_spacy_available() -> bool:
 3. **Add type hints to all function signatures**
    ```python
    # BEFORE:
-   def parse_tdfol(text):
-       ...
-   
+   def parse_tdfol(text): ...
+
+
    # AFTER:
    def parse_tdfol(text: str) -> Formula:
        """Parse TDFOL formula from string."""
@@ -865,35 +883,33 @@ class IndexedKnowledgeBase(TDFOLKnowledgeBase):
 **Forward Chaining Optimization:**
 ```python
 def _optimized_forward_chaining(
-    self,
-    goal: Formula,
-    max_iterations: int = 100
+    self, goal: Formula, max_iterations: int = 100
 ) -> Optional[ProofResult]:
     """Optimized forward chaining with indexing."""
     derived: Set[Formula] = set()
     queue: List[Formula] = list(self.kb.axioms)  # Work queue
-    
+
     for iteration in range(max_iterations):
         if not queue:
             break
-        
+
         # Process one formula from queue
         current = queue.pop(0)
-        
+
         if self._formulas_equal(current, goal):
             return self._create_proof_result(...)
-        
+
         # Only try applicable rules (indexed by pattern)
         applicable_rules = self._get_applicable_rules(current)
-        
+
         for rule in applicable_rules:
             if rule.can_apply(current, self.kb):
                 new_formula = rule.apply(current, self.kb)
-                
+
                 if new_formula not in derived:
                     derived.add(new_formula)
                     queue.append(new_formula)  # Add to work queue
-    
+
     return None
 ```
 
@@ -906,11 +922,12 @@ def _optimized_forward_chaining(
 ```python
 class ProofStrategy(Enum):
     """Proof search strategies."""
-    AUTO = "auto"                    # Automatic selection
-    FORWARD_CHAINING = "forward"    # Forward chaining
+
+    AUTO = "auto"  # Automatic selection
+    FORWARD_CHAINING = "forward"  # Forward chaining
     BACKWARD_CHAINING = "backward"  # Backward chaining (goal-directed)
-    BIDIRECTIONAL = "bidirectional" # Both directions
-    TABLEAUX = "tableaux"           # Modal tableaux
+    BIDIRECTIONAL = "bidirectional"  # Both directions
+    TABLEAUX = "tableaux"  # Modal tableaux
 ```
 
 **Strategy Selector:**
@@ -949,33 +966,27 @@ def _select_strategy(self, goal: Formula, kb: TDFOLKnowledgeBase) -> ProofStrate
 
 **New Method:**
 ```python
-def prove_parallel(
-    self,
-    goal: Formula,
-    num_workers: int = 4,
-    timeout: float = 60.0
-) -> ProofResult:
+def prove_parallel(self, goal: Formula, num_workers: int = 4, timeout: float = 60.0) -> ProofResult:
     """
     Prove goal using parallel proof search.
-    
+
     Args:
         goal: Formula to prove
         num_workers: Number of parallel workers
         timeout: Total timeout in seconds
-    
+
     Returns:
         ProofResult with parallel search info
     """
     with multiprocessing.Pool(num_workers) as pool:
         # Distribute rules across workers
         rule_chunks = self._split_rules(num_workers)
-        
+
         # Parallel rule application
         results = pool.starmap(
-            self._apply_rules_chunk,
-            [(goal, chunk, timeout/num_workers) for chunk in rule_chunks]
+            self._apply_rules_chunk, [(goal, chunk, timeout / num_workers) for chunk in rule_chunks]
         )
-        
+
         # Merge results
         return self._merge_proof_results(results)
 ```
@@ -990,42 +1001,38 @@ def prove_parallel(
 
 **New Method:**
 ```python
-def _astar_prove(
-    self,
-    goal: Formula,
-    timeout: float = 60.0
-) -> Optional[ProofResult]:
+def _astar_prove(self, goal: Formula, timeout: float = 60.0) -> Optional[ProofResult]:
     """
     A* heuristic search for proof.
-    
+
     Heuristic: h(formula) = structural_distance(formula, goal)
     """
     import heapq
-    
+
     # Priority queue: (priority, formula, path)
     queue: List[Tuple[float, Formula, List[str]]] = []
     heapq.heappush(queue, (0.0, goal, []))
-    
+
     visited: Set[Formula] = set()
-    
+
     while queue and time.time() - start_time < timeout:
         priority, current, path = heapq.heappop(queue)
-        
+
         if current in visited:
             continue
         visited.add(current)
-        
+
         # Check if proved
         if current in self.kb.axioms:
             return self._create_proof_result(path)
-        
+
         # Expand: apply all rules
         for rule in self.rules:
             if rule.can_apply(current, self.kb):
                 new_formula = rule.apply(current, self.kb)
                 h_score = self._heuristic_distance(new_formula, goal)
                 heapq.heappush(queue, (h_score, new_formula, path + [rule.name]))
-    
+
     return None
 ```
 
@@ -1469,10 +1476,10 @@ prover = TDFOLProver(kb)
 # NEW (with optimizations):
 prover = TDFOLProver(
     kb,
-    enable_cache=True,           # Default: True
-    enable_indexing=True,         # Default: True
-    enable_parallel=False,        # Default: False
-    num_workers=4,               # Default: 4
+    enable_cache=True,  # Default: True
+    enable_indexing=True,  # Default: True
+    enable_parallel=False,  # Default: False
+    num_workers=4,  # Default: 4
 )
 ```
 

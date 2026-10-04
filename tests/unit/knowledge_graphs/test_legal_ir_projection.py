@@ -186,10 +186,7 @@ def test_legal_ir_projection_structural_us_code_facts_add_neo4j_target_view() ->
         triples = augment_legal_ir_projection_triples(
             [{"subject": subject, "predicate": "sample_text", "object": text}]
         )
-        values = {
-            (triple["predicate"], triple["object"])
-            for triple in triples
-        }
+        values = {(triple["predicate"], triple["object"]) for triple in triples}
 
         assert ("usc_hierarchy_projection", "true") in values
         assert ("status_keyword", "repealed") in values

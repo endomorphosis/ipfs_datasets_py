@@ -69,16 +69,20 @@ The tool returns a dictionary with the following structure:
 ### Example 1: Scrape a Single Jurisdiction
 
 ```python
-from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.legal_dataset_mcp_tools import ScrapeMunicipalCodesTool
+from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.legal_dataset_mcp_tools import (
+    ScrapeMunicipalCodesTool,
+)
 
 tool = ScrapeMunicipalCodesTool()
 
-result = await tool.execute({
-    "jurisdiction": "Seattle, WA",
-    "provider": "municode",
-    "output_format": "json",
-    "include_metadata": True
-})
+result = await tool.execute(
+    {
+        "jurisdiction": "Seattle, WA",
+        "provider": "municode",
+        "output_format": "json",
+        "include_metadata": True,
+    }
+)
 
 print(f"Job ID: {result['job_id']}")
 print(f"Status: {result['status']}")
@@ -87,17 +91,14 @@ print(f"Status: {result['status']}")
 ### Example 2: Scrape Multiple Jurisdictions
 
 ```python
-result = await tool.execute({
-    "jurisdictions": [
-        "New York, NY",
-        "Los Angeles, CA", 
-        "Chicago, IL",
-        "Houston, TX"
-    ],
-    "provider": "auto",
-    "output_format": "parquet",
-    "rate_limit_delay": 3.0
-})
+result = await tool.execute(
+    {
+        "jurisdictions": ["New York, NY", "Los Angeles, CA", "Chicago, IL", "Houston, TX"],
+        "provider": "auto",
+        "output_format": "parquet",
+        "rate_limit_delay": 3.0,
+    }
+)
 
 print(f"Scraping {result['metadata']['jurisdictions_count']} jurisdictions")
 ```
@@ -106,50 +107,54 @@ print(f"Scraping {result['metadata']['jurisdictions_count']} jurisdictions")
 
 ```python
 # Start a job
-result1 = await tool.execute({
-    "jurisdictions": ["Boston, MA", "Portland, OR"],
-    "job_id": "my_custom_job",
-    "output_format": "sql"
-})
+result1 = await tool.execute(
+    {
+        "jurisdictions": ["Boston, MA", "Portland, OR"],
+        "job_id": "my_custom_job",
+        "output_format": "sql",
+    }
+)
 
 # Later, resume the same job
-result2 = await tool.execute({
-    "jurisdictions": ["Boston, MA", "Portland, OR"],
-    "job_id": "my_custom_job",
-    "resume": True
-})
+result2 = await tool.execute(
+    {"jurisdictions": ["Boston, MA", "Portland, OR"], "job_id": "my_custom_job", "resume": True}
+)
 ```
 
 ### Example 4: Use with Custom Scraper Settings
 
 ```python
-result = await tool.execute({
-    "jurisdiction": "Austin, TX",
-    "provider": "general_code",
-    "scraper_type": "selenium",
-    "rate_limit_delay": 5.0,
-    "max_sections": 1000,
-    "include_text": True,
-    "include_metadata": True
-})
+result = await tool.execute(
+    {
+        "jurisdiction": "Austin, TX",
+        "provider": "general_code",
+        "scraper_type": "selenium",
+        "rate_limit_delay": 5.0,
+        "max_sections": 1000,
+        "include_text": True,
+        "include_metadata": True,
+    }
+)
 ```
 
 ### Example 5: Use with Custom Fallback Methods
 
 ```python
 # Specify custom fallback order - prioritize archives
-result = await tool.execute({
-    "jurisdictions": ["Miami, FL", "Phoenix, AZ"],
-    "enable_fallbacks": True,
-    "fallback_methods": [
-        "wayback_machine",  # Try Internet Archive first
-        "archive_is",        # Then Archive.is
-        "common_crawl",      # Then Common Crawl
-        "ipwb",             # Then IPWB
-        "playwright"        # Direct scraping last
-    ],
-    "output_format": "json"
-})
+result = await tool.execute(
+    {
+        "jurisdictions": ["Miami, FL", "Phoenix, AZ"],
+        "enable_fallbacks": True,
+        "fallback_methods": [
+            "wayback_machine",  # Try Internet Archive first
+            "archive_is",  # Then Archive.is
+            "common_crawl",  # Then Common Crawl
+            "ipwb",  # Then IPWB
+            "playwright",  # Direct scraping last
+        ],
+        "output_format": "json",
+    }
+)
 
 # Check which method succeeded
 if result["status"] == "success":
@@ -161,11 +166,13 @@ if result["status"] == "success":
 
 ```python
 # Only try primary scraping, no fallbacks
-result = await tool.execute({
-    "jurisdiction": "Tampa, FL",
-    "provider": "municode",
-    "enable_fallbacks": False  # Fail immediately if primary fails
-})
+result = await tool.execute(
+    {
+        "jurisdiction": "Tampa, FL",
+        "provider": "municode",
+        "enable_fallbacks": False,  # Fail immediately if primary fails
+    }
+)
 ```
 
 ## Integration with scrape_the_law_mk3

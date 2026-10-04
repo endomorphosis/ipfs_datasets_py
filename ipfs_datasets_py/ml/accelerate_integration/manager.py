@@ -81,11 +81,13 @@ _ENV_DEFAULTS: Dict[str, str] = {
     "IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE": "1",
 }
 
+
 def _apply_env_defaults() -> None:
     """Apply baked-in defaults for any env var that is not already set."""
     for key, value in _ENV_DEFAULTS.items():
         if not os.environ.get(key):
             os.environ[key] = value
+
 
 _apply_env_defaults()
 
@@ -93,16 +95,27 @@ _apply_env_defaults()
 # than ``text-generation``.  Workers use their local credentials (copilot, codex,
 # etc.) to fulfil these tasks, so the model_name should be the LLM model string
 # (e.g. "gpt-4o-mini"), not the provider name.
-_LLM_PROVIDER_NAMES: frozenset = frozenset({
-    "copilot_cli", "copilot_sdk", "codex_cli", "codex",
-    "openai", "claude_code", "claude_py", "gemini_cli", "gemini_py",
-    "hf_inference_api", "openrouter",
-})
+_LLM_PROVIDER_NAMES: frozenset = frozenset(
+    {
+        "copilot_cli",
+        "copilot_sdk",
+        "codex_cli",
+        "codex",
+        "openai",
+        "claude_code",
+        "claude_py",
+        "gemini_cli",
+        "gemini_py",
+        "hf_inference_api",
+        "openrouter",
+    }
+)
 
 
 # ---------------------------------------------------------------------------
 # ipfs_accelerate_py import
 # ---------------------------------------------------------------------------
+
 
 def _ensure_ipfs_accelerate_py_on_syspath() -> None:
     """Best-effort: walk up from this file and add the first ``ipfs_accelerate_py``
@@ -122,6 +135,7 @@ def _ensure_ipfs_accelerate_py_on_syspath() -> None:
 try:
     _ensure_ipfs_accelerate_py_on_syspath()
     from ipfs_accelerate_py import llm_router as _accel_llm_router  # type: ignore[import]
+
     ACCELERATE_AVAILABLE = True
     ACCELERATE_IMPORT_ERROR: Optional[str] = None
 except Exception as _exc:
@@ -134,6 +148,7 @@ except Exception as _exc:
 # ---------------------------------------------------------------------------
 # P2P peer discovery helpers
 # ---------------------------------------------------------------------------
+
 
 def _p2p_timeout() -> float:
     raw = (
@@ -186,9 +201,8 @@ def _read_task_p2p_announce() -> Optional[Dict[str, Any]]:
     4. ``~/.cache/ipfs_accelerate_py/task_p2p_announce.json``
     5. ``~/.cache/ipfs_datasets_py/task_p2p_announce.json``
     """
-    raw = (
-        os.environ.get("IPFS_ACCELERATE_PY_TASK_P2P_ANNOUNCE_FILE")
-        or os.environ.get("IPFS_DATASETS_PY_TASK_P2P_ANNOUNCE_FILE")
+    raw = os.environ.get("IPFS_ACCELERATE_PY_TASK_P2P_ANNOUNCE_FILE") or os.environ.get(
+        "IPFS_DATASETS_PY_TASK_P2P_ANNOUNCE_FILE"
     )
     if raw is not None and str(raw).strip().lower() in {"0", "false", "no", "off"}:
         return None
@@ -359,6 +373,7 @@ class AccelerateManager:
         available_providers: List[str] = []
         try:
             from ipfs_datasets_py import llm_router as _lr
+
             for name in getattr(_lr, "_UNPINNED_OPTIONAL_PROVIDER_ORDER", []):
                 try:
                     if _lr._builtin_provider_by_name(name) is not None:
@@ -422,6 +437,7 @@ class AccelerateManager:
                     RemoteQueue,
                     get_capabilities_sync,
                 )
+
                 caps = get_capabilities_sync(
                     remote=RemoteQueue(peer_id=peer_id, multiaddr=multiaddr),
                     timeout_s=timeout,
@@ -431,6 +447,7 @@ class AccelerateManager:
                 py = self._find_p2p_venv_python()
                 if py:
                     import subprocess as _sp
+
                     script = f"""
 import sys, json, logging
 logging.disable(logging.WARNING)
@@ -443,7 +460,9 @@ except Exception as e:
     print(json.dumps({{"error": str(e)}}))
 """
                     try:
-                        proc = _sp.run([py, "-c", script], capture_output=True, text=True, timeout=timeout + 5)
+                        proc = _sp.run(
+                            [py, "-c", script], capture_output=True, text=True, timeout=timeout + 5
+                        )
                         for line in reversed(proc.stdout.strip().splitlines()):
                             if line.strip().startswith("{"):
                                 data = json.loads(line.strip())
@@ -485,30 +504,42 @@ except Exception as e:
             ok = False
             for probe in ("/health", "/api/tags", "/api/version", "/"):
                 url = base_url + probe
-                req = urllib.request.Request(url, method="GET",
-                                             headers={"Accept": "application/json"})
+                req = urllib.request.Request(
+                    url, method="GET", headers={"Accept": "application/json"}
+                )
                 try:
                     with urllib.request.urlopen(req, timeout=timeout) as resp:
                         resp.read()
-                    peer_results.append({"url": base_url, "status": "ok",
-                                         "detail": f"responded at {probe}"})
+                    peer_results.append(
+                        {"url": base_url, "status": "ok", "detail": f"responded at {probe}"}
+                    )
                     ok = True
                     break
                 except urllib.error.HTTPError as exc:
                     if exc.code < 500:
-                        peer_results.append({"url": base_url, "status": "ok",
-                                             "detail": f"HTTP {exc.code} at {probe}"})
+                        peer_results.append(
+                            {
+                                "url": base_url,
+                                "status": "ok",
+                                "detail": f"HTTP {exc.code} at {probe}",
+                            }
+                        )
                         ok = True
                         break
                 except Exception:
                     continue
             if not ok:
-                peer_results.append({"url": base_url, "status": "error",
-                                     "detail": "no probe path responded"})
-        report["http_peers"] = peer_results if http_peers else {
-            "status": "unavailable",
-            "detail": "none configured (set IPFS_DATASETS_PY_LLM_P2P_ENDPOINTS)",
-        }
+                peer_results.append(
+                    {"url": base_url, "status": "error", "detail": "no probe path responded"}
+                )
+        report["http_peers"] = (
+            peer_results
+            if http_peers
+            else {
+                "status": "unavailable",
+                "detail": "none configured (set IPFS_DATASETS_PY_LLM_P2P_ENDPOINTS)",
+            }
+        )
 
         # --- llm_router providers -----------------------------------------
         # Each entry may have:
@@ -528,7 +559,12 @@ except Exception as e:
                 "cmd": os.getenv("IPFS_DATASETS_PY_CODEX_CLI_BIN", "codex"),
                 "version_arg": "--version",
                 # codex stores its own auth in ~/.codex/auth.json; falls back to OPENAI_API_KEY
-                "required_env": ["OPENAI_API_KEY", "OPENAI_KEY", "OPENAI_TOKEN", "IPFS_DATASETS_PY_OPENAI_API_KEY"],
+                "required_env": [
+                    "OPENAI_API_KEY",
+                    "OPENAI_KEY",
+                    "OPENAI_TOKEN",
+                    "IPFS_DATASETS_PY_OPENAI_API_KEY",
+                ],
                 "credential_files": [os.path.join(_home, ".codex", "auth.json")],
             },
             "copilot_cli": {
@@ -544,8 +580,14 @@ except Exception as e:
             },
             "openai": {
                 "type": "key",
-                "env": ["OPENAI_API_KEY", "OPENAI_KEY", "OPENAI_TOKEN", "IPFS_DATASETS_PY_OPENAI_API_KEY"],
-                "ping": os.getenv("IPFS_DATASETS_PY_OPENAI_BASE_URL", "https://api.openai.com/v1") + "/models",
+                "env": [
+                    "OPENAI_API_KEY",
+                    "OPENAI_KEY",
+                    "OPENAI_TOKEN",
+                    "IPFS_DATASETS_PY_OPENAI_API_KEY",
+                ],
+                "ping": os.getenv("IPFS_DATASETS_PY_OPENAI_BASE_URL", "https://api.openai.com/v1")
+                + "/models",
                 "auth_header": "Authorization",
                 "auth_prefix": "Bearer ",
             },
@@ -568,7 +610,11 @@ except Exception as e:
                 "pkg": "@google/gemini-cli",
                 "version_arg": "--version",
                 # gemini-cli requires a Google API key or OAuth via ~/.gemini/
-                "required_env": ["GEMINI_API_KEY", "GOOGLE_API_KEY", "IPFS_DATASETS_PY_GEMINI_API_KEY"],
+                "required_env": [
+                    "GEMINI_API_KEY",
+                    "GOOGLE_API_KEY",
+                    "IPFS_DATASETS_PY_GEMINI_API_KEY",
+                ],
                 "credential_files": [
                     os.path.join(_home, ".gemini", "credentials.json"),
                     os.path.join(_home, ".gemini", "oauth_creds.json"),
@@ -595,7 +641,12 @@ except Exception as e:
             },
             "copilot_sdk": {
                 "type": "key",
-                "env": ["GITHUB_TOKEN", "GH_TOKEN", "COPILOT_TOKEN", "IPFS_DATASETS_PY_GITHUB_TOKEN"],
+                "env": [
+                    "GITHUB_TOKEN",
+                    "GH_TOKEN",
+                    "COPILOT_TOKEN",
+                    "IPFS_DATASETS_PY_GITHUB_TOKEN",
+                ],
                 "credential_files": [
                     os.path.join(_home, ".config", "gh", "hosts.yml"),
                 ],
@@ -624,7 +675,10 @@ except Exception as e:
         provider_report: Dict[str, Dict[str, Any]] = {}
         try:
             from ipfs_datasets_py import llm_router as _lr
-            provider_order = getattr(_lr, "_UNPINNED_OPTIONAL_PROVIDER_ORDER", list(_PROVIDER_CHECKS))
+
+            provider_order = getattr(
+                _lr, "_UNPINNED_OPTIONAL_PROVIDER_ORDER", list(_PROVIDER_CHECKS)
+            )
         except Exception:
             provider_order = list(_PROVIDER_CHECKS)
 
@@ -636,7 +690,10 @@ except Exception as e:
                 cmd = str(check.get("cmd", name))
                 binary = shutil.which(cmd)
                 if not binary:
-                    provider_report[name] = {"status": "unavailable", "detail": f"{cmd!r} not on PATH"}
+                    provider_report[name] = {
+                        "status": "unavailable",
+                        "detail": f"{cmd!r} not on PATH",
+                    }
                     continue
                 cred_ok, cred_detail = _has_credentials(check)
                 if not cred_ok:
@@ -646,7 +703,10 @@ except Exception as e:
                     version_arg = str(check.get("version_arg", "--version"))
                     proc = subprocess.run(
                         [binary, version_arg],
-                        capture_output=True, text=True, timeout=timeout, check=False,
+                        capture_output=True,
+                        text=True,
+                        timeout=timeout,
+                        check=False,
                     )
                     version = (proc.stdout or proc.stderr or "").strip().splitlines()[0]
                     detail = version or "responded to --version"
@@ -654,7 +714,9 @@ except Exception as e:
                         detail += f"; {cred_detail}"
                     provider_report[name] = {"status": "ok", "detail": detail}
                 except Exception as exc:
-                    detail = f"binary found; {cred_detail}" if cred_detail else f"binary found ({exc})"
+                    detail = (
+                        f"binary found; {cred_detail}" if cred_detail else f"binary found ({exc})"
+                    )
                     provider_report[name] = {"status": "ok", "detail": detail}
 
             elif kind == "npx":
@@ -667,7 +729,10 @@ except Exception as e:
                 try:
                     proc = subprocess.run(
                         ["npx", "--yes", pkg, version_arg],
-                        capture_output=True, text=True, timeout=timeout, check=False,
+                        capture_output=True,
+                        text=True,
+                        timeout=timeout,
+                        check=False,
                     )
                     version = (proc.stdout or proc.stderr or "").strip().splitlines()[0]
                     if proc.returncode == 0 or version:
@@ -676,7 +741,10 @@ except Exception as e:
                             detail += f"; {cred_detail}"
                         provider_report[name] = {"status": "ok", "detail": detail}
                     else:
-                        provider_report[name] = {"status": "error", "detail": f"npx {pkg} exit {proc.returncode}"}
+                        provider_report[name] = {
+                            "status": "error",
+                            "detail": f"npx {pkg} exit {proc.returncode}",
+                        }
                 except Exception as exc:
                     provider_report[name] = {"status": "error", "detail": str(exc)}
 
@@ -684,38 +752,63 @@ except Exception as e:
                 envs: List[str] = check.get("env", [])
                 cred_files: List[str] = check.get("credential_files", [])
                 api_key = next((os.environ.get(e) for e in envs if os.environ.get(e)), None)
-                cred_file = next((f for f in cred_files if os.path.isfile(f)), None) if not api_key else None
+                cred_file = (
+                    next((f for f in cred_files if os.path.isfile(f)), None)
+                    if not api_key
+                    else None
+                )
                 if not api_key and not cred_file:
                     env_names = ", ".join(envs)
-                    provider_report[name] = {"status": "unavailable",
-                                             "detail": f"no API key ({env_names})"}
+                    provider_report[name] = {
+                        "status": "unavailable",
+                        "detail": f"no API key ({env_names})",
+                    }
                     continue
-                cred_source = f"credentials via {next(e for e in envs if os.environ.get(e))}" if api_key else f"credentials at {os.path.basename(cred_file)}"  # type: ignore[arg-type]
+                cred_source = (
+                    f"credentials via {next(e for e in envs if os.environ.get(e))}"
+                    if api_key
+                    else f"credentials at {os.path.basename(cred_file)}"
+                )  # type: ignore[arg-type]
                 ping = str(check.get("ping", ""))
                 if ping and api_key:
                     auth_header = str(check.get("auth_header", "Authorization"))
                     auth_prefix = str(check.get("auth_prefix", "Bearer "))
-                    req = urllib.request.Request(ping, method="GET",
-                                                 headers={auth_header: auth_prefix + api_key,
-                                                          "Accept": "application/json"})
+                    req = urllib.request.Request(
+                        ping,
+                        method="GET",
+                        headers={auth_header: auth_prefix + api_key, "Accept": "application/json"},
+                    )
                     try:
                         with urllib.request.urlopen(req, timeout=timeout) as resp:
                             body = json.loads(resp.read().decode())
                         # Surface useful info from whoami / models endpoints
-                        detail = (str(body.get("name") or body.get("id") or cred_source)
-                                  if isinstance(body, dict) else cred_source)
+                        detail = (
+                            str(body.get("name") or body.get("id") or cred_source)
+                            if isinstance(body, dict)
+                            else cred_source
+                        )
                         provider_report[name] = {"status": "ok", "detail": detail}
                     except urllib.error.HTTPError as exc:
                         if exc.code == 401:
-                            provider_report[name] = {"status": "error", "detail": "API key rejected (401)"}
+                            provider_report[name] = {
+                                "status": "error",
+                                "detail": "API key rejected (401)",
+                            }
                         elif exc.code == 403:
-                            provider_report[name] = {"status": "error", "detail": "API key forbidden (403)"}
+                            provider_report[name] = {
+                                "status": "error",
+                                "detail": "API key forbidden (403)",
+                            }
                         else:
-                            provider_report[name] = {"status": "ok",
-                                                     "detail": f"{cred_source}; ping returned HTTP {exc.code}"}
+                            provider_report[name] = {
+                                "status": "ok",
+                                "detail": f"{cred_source}; ping returned HTTP {exc.code}",
+                            }
                     except Exception as exc:
-                        provider_report[name] = {"status": "ok",
-                                                 "detail": f"{cred_source}; ping failed ({exc})"}
+                        provider_report[name] = {
+                            "status": "ok",
+                            "detail": f"{cred_source}; ping failed ({exc})",
+                        }
                 else:
                     provider_report[name] = {"status": "ok", "detail": cred_source}
 
@@ -723,11 +816,18 @@ except Exception as e:
                 # Fallback: just check if llm_router returns a provider object
                 try:
                     from ipfs_datasets_py import llm_router as _lr
+
                     p = _lr._builtin_provider_by_name(name)
                     if p is not None:
-                        provider_report[name] = {"status": "ok", "detail": "provider object available"}
+                        provider_report[name] = {
+                            "status": "ok",
+                            "detail": "provider object available",
+                        }
                     else:
-                        provider_report[name] = {"status": "unavailable", "detail": "not configured"}
+                        provider_report[name] = {
+                            "status": "unavailable",
+                            "detail": "not configured",
+                        }
                 except Exception as exc:
                     provider_report[name] = {"status": "error", "detail": str(exc)}
 
@@ -737,7 +837,10 @@ except Exception as e:
         healthy: List[str] = []
         if report["ipfs_accelerate_py"]["status"] == "ok":
             healthy.append("ipfs_accelerate_py")
-        if isinstance(report.get("p2p_task_queue"), dict) and report["p2p_task_queue"].get("status") == "ok":
+        if (
+            isinstance(report.get("p2p_task_queue"), dict)
+            and report["p2p_task_queue"].get("status") == "ok"
+        ):
             healthy.append("p2p_task_queue")
         for p in peer_results:
             if p.get("status") == "ok":
@@ -746,7 +849,9 @@ except Exception as e:
             if pinfo.get("status") == "ok":
                 healthy.append(pname)
 
-        summary = f"Available backends: {', '.join(healthy)}" if healthy else "No backends available"
+        summary = (
+            f"Available backends: {', '.join(healthy)}" if healthy else "No backends available"
+        )
         report["summary"] = summary
         report["any_available"] = bool(healthy)
 
@@ -785,10 +890,21 @@ except Exception as e:
         normalized_task = (task_type or "").strip().lower()
 
         _GENERATION_TASKS = {
-            "text-generation", "text_generation", "generation", "generate", "completion",
-            "llm.generate", "llm_generate", "chat", "chat-completion",
-            "multimodal-generation", "multimodal_generation", "multimodal.generate",
-            "multimodal_generate", "vision", "vision-language",
+            "text-generation",
+            "text_generation",
+            "generation",
+            "generate",
+            "completion",
+            "llm.generate",
+            "llm_generate",
+            "chat",
+            "chat-completion",
+            "multimodal-generation",
+            "multimodal_generation",
+            "multimodal.generate",
+            "multimodal_generate",
+            "vision",
+            "vision-language",
         }
         # For known LLM provider names, default to text-generation task type.
         if not normalized_task and model_name.lower() in _LLM_PROVIDER_NAMES:
@@ -801,8 +917,12 @@ except Exception as e:
 
         payload_data: Dict[str, Any] = dict(input_data) if isinstance(input_data, dict) else {}
         is_multimodal_task = normalized_task in {
-            "multimodal-generation", "multimodal_generation", "multimodal.generate",
-            "multimodal_generate", "vision", "vision-language",
+            "multimodal-generation",
+            "multimodal_generation",
+            "multimodal.generate",
+            "multimodal_generate",
+            "vision",
+            "vision-language",
         }
 
         if payload_data and "prompt" in payload_data:
@@ -879,7 +999,12 @@ except Exception as e:
         )
         if not text or not str(text).strip():
             raise RuntimeError(f"ipfs_accelerate_py returned empty text for {model_name!r}")
-        return {"status": "success", "backend": "ipfs_accelerate_py", "model": model_name, "text": str(text)}
+        return {
+            "status": "success",
+            "backend": "ipfs_accelerate_py",
+            "model": model_name,
+            "text": str(text),
+        }
 
     # ------------------------------------------------------------------
     # Backend: libp2p p2p_task_queue
@@ -923,7 +1048,9 @@ except Exception as e:
         try:
             result = subprocess.run(
                 ["ps", "aux"],
-                capture_output=True, text=True, timeout=3,
+                capture_output=True,
+                text=True,
+                timeout=3,
             )
             for line in result.stdout.splitlines():
                 if "p2p_tasks.worker" in line or "p2p_tasks" in line:
@@ -947,14 +1074,22 @@ except Exception as e:
                 logger.debug(
                     "_find_p2p_venv_python: using non-canonical HACC venv (%s). "
                     "Consider creating ~/ipfs_accelerate_py/.venv and setting "
-                    "IPFS_ACCELERATE_PY_VENV_PYTHON to override.", py
+                    "IPFS_ACCELERATE_PY_VENV_PYTHON to override.",
+                    py,
                 )
                 return py
 
         return None
 
     def _try_p2p_task_queue_subprocess(
-        self, model_name: str, prompt: str, multiaddr: str, peer_id: str, timeout: float, max_new_tokens: int, extra_kwargs: Optional[Dict[str, Any]] = None
+        self,
+        model_name: str,
+        prompt: str,
+        multiaddr: str,
+        peer_id: str,
+        timeout: float,
+        max_new_tokens: int,
+        extra_kwargs: Optional[Dict[str, Any]] = None,
     ) -> Optional[str]:
         """Submit a p2p task via subprocess using a venv that has ipfs_accelerate_py.p2p_tasks."""
         import subprocess
@@ -965,7 +1100,11 @@ except Exception as e:
 
         extra = extra_kwargs or {}
         is_llm_provider = model_name.lower() in _LLM_PROVIDER_NAMES
-        multimodal_payload = extra.get("_multimodal_payload") if isinstance(extra.get("_multimodal_payload"), dict) else None
+        multimodal_payload = (
+            extra.get("_multimodal_payload")
+            if isinstance(extra.get("_multimodal_payload"), dict)
+            else None
+        )
         if multimodal_payload is not None:
             p2p_task_type = "multimodal-generation"
             p2p_model_name = str((extra.get("llm_model") or "") if is_llm_provider else model_name)
@@ -1093,12 +1232,14 @@ print(json.dumps({{"result": result}}))
         p2p_in_process = False
         try:
             import importlib as _il
+
             _il.import_module("ipfs_accelerate_py.p2p_tasks.client")
             from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import (
                 RemoteQueue,
                 submit_task_with_info,
                 wait_task,
             )
+
             p2p_in_process = True
         except (ImportError, AttributeError):
             pass
@@ -1106,10 +1247,16 @@ print(json.dumps({{"result": result}}))
         if p2p_in_process:
             remote = RemoteQueue(peer_id=peer_id, multiaddr=multiaddr)
             is_llm_provider = model_name.lower() in _LLM_PROVIDER_NAMES
-            multimodal_payload = kwargs.get("_multimodal_payload") if isinstance(kwargs.get("_multimodal_payload"), dict) else None
+            multimodal_payload = (
+                kwargs.get("_multimodal_payload")
+                if isinstance(kwargs.get("_multimodal_payload"), dict)
+                else None
+            )
             if multimodal_payload is not None:
                 p2p_task_type = "multimodal-generation"
-                p2p_model_name = str((kwargs.get("llm_model") or "") if is_llm_provider else model_name)
+                p2p_model_name = str(
+                    (kwargs.get("llm_model") or "") if is_llm_provider else model_name
+                )
                 payload = dict(multimodal_payload)
                 payload.setdefault("prompt", prompt)
                 if is_llm_provider:
@@ -1130,6 +1277,7 @@ print(json.dumps({{"result": result}}))
 
             async def _run() -> Optional[str]:
                 import time as _time
+
                 info = await submit_task_with_info(
                     remote=remote,
                     task_type=p2p_task_type,
@@ -1170,7 +1318,9 @@ print(json.dumps({{"result": result}}))
                     if status in ("running", "pending", "queued"):
                         logger.debug(
                             "p2p task %s still %s, %.0fs remaining; polling again",
-                            task_id, status, deadline - _time.monotonic(),
+                            task_id,
+                            status,
+                            deadline - _time.monotonic(),
                         )
                         continue
                     # Unknown status — try extracting text directly
@@ -1183,16 +1333,25 @@ print(json.dumps({{"result": result}}))
             # Use trio.run() directly — libp2p internals use trio nurseries
             try:
                 import trio as _trio
+
                 text: Optional[str] = _trio.run(_run)
             except ImportError:
                 import anyio as _anyio
+
                 text = _anyio.run(_run, backend="trio")
         else:
             # Fallback: subprocess using a venv that has ipfs_accelerate_py.p2p_tasks
             logger.debug("p2p_tasks not importable in current Python; trying subprocess fallback")
             text = self._try_p2p_task_queue_subprocess(
-                model_name, prompt, multiaddr, peer_id, timeout, max_new_tokens,
-                extra_kwargs={k: v for k, v in kwargs.items() if k not in ("max_new_tokens", "max_tokens")},
+                model_name,
+                prompt,
+                multiaddr,
+                peer_id,
+                timeout,
+                max_new_tokens,
+                extra_kwargs={
+                    k: v for k, v in kwargs.items() if k not in ("max_new_tokens", "max_tokens")
+                },
             )
 
         if not text:
@@ -1201,7 +1360,13 @@ print(json.dumps({{"result": result}}))
                 "Delegating to llm_router fallback chain."
             )
         logger.info("AccelerateManager: p2p_task_queue served %s via %s", model_name, multiaddr)
-        return {"status": "success", "backend": "p2p_task_queue", "model": model_name, "text": text, "peer": multiaddr}
+        return {
+            "status": "success",
+            "backend": "p2p_task_queue",
+            "model": model_name,
+            "text": text,
+            "peer": multiaddr,
+        }
 
     # ------------------------------------------------------------------
     # Backend: HTTP peer endpoints
@@ -1222,7 +1387,11 @@ print(json.dumps({{"result": result}}))
 
         timeout = _p2p_timeout()
         max_new_tokens = int(kwargs.get("max_new_tokens") or kwargs.get("max_tokens") or 512)
-        multimodal_payload = kwargs.get("_multimodal_payload") if isinstance(kwargs.get("_multimodal_payload"), dict) else None
+        multimodal_payload = (
+            kwargs.get("_multimodal_payload")
+            if isinstance(kwargs.get("_multimodal_payload"), dict)
+            else None
+        )
         body: Dict[str, Any] = {
             "model": model_name,
             "prompt": prompt,
@@ -1231,20 +1400,22 @@ print(json.dumps({{"result": result}}))
             "parameters": {"max_new_tokens": max_new_tokens},
         }
         if multimodal_payload is not None:
-            body.update({
-                key: value
-                for key, value in multimodal_payload.items()
-                if key
-                in {
-                    "image_urls",
-                    "image_data_urls",
-                    "system_prompt",
-                    "additional_text_blocks",
-                    "messages",
-                    "provider",
-                    "image_detail",
+            body.update(
+                {
+                    key: value
+                    for key, value in multimodal_payload.items()
+                    if key
+                    in {
+                        "image_urls",
+                        "image_data_urls",
+                        "system_prompt",
+                        "additional_text_blocks",
+                        "messages",
+                        "provider",
+                        "image_detail",
+                    }
                 }
-            })
+            )
             body["task_type"] = "multimodal-generation"
         for k in ("temperature", "top_p", "top_k"):
             if k in kwargs:
@@ -1269,7 +1440,9 @@ print(json.dumps({{"result": result}}))
                     obj = json.loads(raw.decode())
                     text = _extract_text(obj)
                     if text:
-                        logger.info("AccelerateManager: HTTP peer %s served %s", base_url, model_name)
+                        logger.info(
+                            "AccelerateManager: HTTP peer %s served %s", base_url, model_name
+                        )
                         return {
                             "status": "success",
                             "backend": "http_peer",
@@ -1301,6 +1474,7 @@ print(json.dumps({{"result": result}}))
         hardware = ["cpu"]
         try:
             import torch
+
             if torch.cuda.is_available():
                 hardware.append("cuda")
         except ImportError:

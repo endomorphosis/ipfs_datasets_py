@@ -15,21 +15,21 @@ if TYPE_CHECKING:
     from .xaman_runtime_trace_ingestor import XamanRuntimeTraceIngestor
 
 __all__ = [
-    'SecurityIRFeatureLoopProjector',
-    'LogTraceExtractor',
-    'OpenAPIExtractor',
-    'PythonASTExtractor',
-    'SourceCodeExtractor',
-    'TypeScriptSchemaEmitter',
-    'UCANPolicyExtractor',
-    'XamanRuntimeTraceIngestor',
-    'XamanSourceExtractor',
+    "SecurityIRFeatureLoopProjector",
+    "LogTraceExtractor",
+    "OpenAPIExtractor",
+    "PythonASTExtractor",
+    "SourceCodeExtractor",
+    "TypeScriptSchemaEmitter",
+    "UCANPolicyExtractor",
+    "XamanRuntimeTraceIngestor",
+    "XamanSourceExtractor",
 ]
 
 
 def __getattr__(name: str):
-    if name == 'XamanRuntimeTraceIngestor':
+    if name == "XamanRuntimeTraceIngestor":
         from .xaman_runtime_trace_ingestor import XamanRuntimeTraceIngestor
 
         return XamanRuntimeTraceIngestor
-    raise AttributeError(f'module {__name__!r} has no attribute {name!r}')
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

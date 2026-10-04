@@ -66,10 +66,7 @@ class LegalIRDocument:
             "source": self.source,
             "source_text": self.source_text,
             "version": self.version,
-            "views": {
-                name: view.to_dict()
-                for name, view in sorted(self.views.items())
-            },
+            "views": {name: view.to_dict() for name, view in sorted(self.views.items())},
         }
 
     def to_json(self) -> str:
@@ -138,10 +135,7 @@ class RoundTripMetrics:
     ) -> float:
         """Return a compact scalar for optimizer prioritization."""
 
-        extra_losses = [
-            max(0.0, _coerce_float(value))
-            for value in self.extra_losses.values()
-        ]
+        extra_losses = [max(0.0, _coerce_float(value)) for value in self.extra_losses.values()]
         return (
             max(0.0, 1.0 - self.cosine_similarity)
             + max(0.0, self.cross_entropy_loss)
@@ -375,9 +369,7 @@ def _graph_data_has_neo4j_shape(graph_data: Any) -> bool:
         return False
 
     node_ids = {
-        str(getattr(node, "id", "") or "")
-        for node in nodes
-        if str(getattr(node, "id", "") or "")
+        str(getattr(node, "id", "") or "") for node in nodes if str(getattr(node, "id", "") or "")
     }
     if len(node_ids) != len(nodes):
         return False

@@ -8,6 +8,7 @@ Tests for:
 4. ComplianceChecker.migrate_encrypted()
 5. Session 66 E2E regression
 """
+
 from __future__ import annotations
 
 import json
@@ -29,6 +30,7 @@ _REPO_ROOT = Path(__file__).resolve().parents[3]
 
 def _make_delegation(cid: str, issuer: str = "did:key:issuer", audience: str = "did:key:audience"):
     from ipfs_datasets_py.mcp_server.ucan_delegation import Delegation, Capability
+
     return Delegation(
         cid=cid,
         issuer=issuer,
@@ -41,11 +43,13 @@ def _make_delegation(cid: str, issuer: str = "did:key:issuer", audience: str = "
 # Section 1: DelegationManager.merge(skip_revocations=...)
 # ---------------------------------------------------------------------------
 
+
 class TestDelegationManagerMergeSkipRevocations:
     """Item 1: merge(skip_revocations=...) kwarg."""
 
     def setup_method(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         self.src = DelegationManager()
         self.dst = DelegationManager()
 
@@ -106,6 +110,7 @@ class TestDelegationManagerMergeSkipRevocations:
     def test_skip_revocations_is_keyword_only(self):
         """skip_revocations must be a keyword argument."""
         import inspect
+
         sig = inspect.signature(self.src.merge)
         params = sig.parameters
         assert "skip_revocations" in params
@@ -122,12 +127,14 @@ class TestDelegationManagerMergeSkipRevocations:
 # Section 2: IPFSPolicyStore.save() → Dict[str, Optional[str]]
 # ---------------------------------------------------------------------------
 
+
 class TestIPFSPolicyStoreSaveBatchPin:
     """Item 2: IPFSPolicyStore.save() returns Dict[str, Optional[str]]."""
 
     def test_save_returns_dict(self):
         """save() must return a dict (even when empty)."""
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import IPFSPolicyStore, PolicyRegistry
+
         with tempfile.TemporaryDirectory() as td:
             path = os.path.join(td, "store.json")
             registry = PolicyRegistry()
@@ -138,6 +145,7 @@ class TestIPFSPolicyStoreSaveBatchPin:
     def test_save_empty_registry_returns_empty_dict(self):
         """No policies → empty dict."""
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import IPFSPolicyStore, PolicyRegistry
+
         with tempfile.TemporaryDirectory() as td:
             path = os.path.join(td, "store.json")
             store = IPFSPolicyStore(path=path, registry=PolicyRegistry())
@@ -147,9 +155,12 @@ class TestIPFSPolicyStoreSaveBatchPin:
     def test_save_with_policies_returns_name_keyed_dict(self):
         """Dict keys are policy names."""
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import (
-            IPFSPolicyStore, PolicyRegistry, CompiledUCANPolicy,
+            IPFSPolicyStore,
+            PolicyRegistry,
+            CompiledUCANPolicy,
         )
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import NLPolicySource
+
         with tempfile.TemporaryDirectory() as td:
             path = os.path.join(td, "store.json")
             registry = PolicyRegistry()
@@ -174,6 +185,7 @@ class TestIPFSPolicyStoreSaveBatchPin:
     def test_save_none_value_when_pin_fails(self):
         """Pin failure → dict value is None, file still saved."""
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import IPFSPolicyStore, PolicyRegistry
+
         with tempfile.TemporaryDirectory() as td:
             path = os.path.join(td, "store.json")
             registry = PolicyRegistry()
@@ -190,6 +202,7 @@ class TestIPFSPolicyStoreSaveBatchPin:
     def test_save_cid_value_when_pin_succeeds(self):
         """Successful pin → dict value is a CID string."""
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import IPFSPolicyStore, PolicyRegistry
+
         with tempfile.TemporaryDirectory() as td:
             path = os.path.join(td, "store.json")
             registry = PolicyRegistry()
@@ -201,6 +214,7 @@ class TestIPFSPolicyStoreSaveBatchPin:
         """Type annotation must be Dict[str, Optional[str]]."""
         import inspect
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import IPFSPolicyStore
+
         sig = inspect.signature(IPFSPolicyStore.save)
         ann = sig.return_annotation
         ann_str = str(ann)
@@ -209,6 +223,7 @@ class TestIPFSPolicyStoreSaveBatchPin:
     def test_old_save_no_exception(self):
         """save() must not raise even with no IPFS client configured."""
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import IPFSPolicyStore, PolicyRegistry
+
         with tempfile.TemporaryDirectory() as td:
             path = os.path.join(td, "store.json")
             store = IPFSPolicyStore(path=path, registry=PolicyRegistry())
@@ -223,6 +238,7 @@ class TestIPFSPolicyStoreSaveBatchPin:
 # Section 3: PubSubBus.publish_async(timeout_seconds=...)
 # ---------------------------------------------------------------------------
 
+
 class TestPubSubBusPublishAsyncTimeout:
     """Item 3: publish_async(timeout_seconds=...) kwarg."""
 
@@ -230,6 +246,7 @@ class TestPubSubBusPublishAsyncTimeout:
         """publish_async must accept timeout_seconds keyword."""
         import inspect
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus
+
         sig = inspect.signature(PubSubBus.publish_async)
         assert "timeout_seconds" in sig.parameters
         p = sig.parameters["timeout_seconds"]
@@ -240,6 +257,7 @@ class TestPubSubBusPublishAsyncTimeout:
         """Default timeout must be 5.0 seconds."""
         import inspect
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus
+
         sig = inspect.signature(PubSubBus.publish_async)
         assert sig.parameters["timeout_seconds"].default == 5.0
 
@@ -247,6 +265,7 @@ class TestPubSubBusPublishAsyncTimeout:
         """timeout_seconds=0 means no timeout — handler runs freely."""
         import inspect
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus
+
         # Just verify the codepath exists for timeout_seconds=0 branch
         sig = inspect.signature(PubSubBus.publish_async)
         assert "timeout_seconds" in sig.parameters
@@ -255,6 +274,7 @@ class TestPubSubBusPublishAsyncTimeout:
         """Implementation must use anyio.move_on_after for timeout logic."""
         import inspect
         from ipfs_datasets_py.mcp_server import mcp_p2p_transport
+
         src = inspect.getsource(mcp_p2p_transport)
         assert "move_on_after" in src, "anyio.move_on_after not found in source"
 
@@ -262,6 +282,7 @@ class TestPubSubBusPublishAsyncTimeout:
         """timeout_seconds must be referenced in the function body."""
         import inspect
         from ipfs_datasets_py.mcp_server import mcp_p2p_transport
+
         src = inspect.getsource(mcp_p2p_transport.PubSubBus.publish_async)
         assert "timeout_seconds" in src
 
@@ -269,6 +290,7 @@ class TestPubSubBusPublishAsyncTimeout:
         """When anyio is absent the sync fallback is used (source check)."""
         import inspect
         from ipfs_datasets_py.mcp_server import mcp_p2p_transport
+
         src = inspect.getsource(mcp_p2p_transport.PubSubBus.publish_async)
         assert "anyio is not installed" in src or "falling back to synchronous" in src
 
@@ -276,6 +298,7 @@ class TestPubSubBusPublishAsyncTimeout:
         """Source must have a timeout_seconds > 0 conditional branch."""
         import inspect
         from ipfs_datasets_py.mcp_server import mcp_p2p_transport
+
         src = inspect.getsource(mcp_p2p_transport.PubSubBus.publish_async)
         assert "timeout_seconds > 0" in src
 
@@ -284,22 +307,26 @@ class TestPubSubBusPublishAsyncTimeout:
 # Section 4: ComplianceChecker.migrate_encrypted()
 # ---------------------------------------------------------------------------
 
+
 class TestComplianceCheckerMigrateEncrypted:
     """Item 4: migrate_encrypted(path, old_password, new_password)."""
 
     def _checker(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import make_default_compliance_checker
+
         return make_default_compliance_checker()
 
     def test_migrate_encrypted_method_exists(self):
         """ComplianceChecker must have migrate_encrypted method."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         assert hasattr(ComplianceChecker, "migrate_encrypted")
 
     def test_migrate_encrypted_signature(self):
         """Signature: migrate_encrypted(path, old_password, new_password) -> bool."""
         import inspect
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         sig = inspect.signature(ComplianceChecker.migrate_encrypted)
         params = list(sig.parameters)
         assert "path" in params
@@ -382,8 +409,10 @@ class TestComplianceCheckerMigrateEncrypted:
             pytest.skip("cryptography not installed")
 
         from ipfs_datasets_py.mcp_server.compliance_checker import (
-            ComplianceChecker, _COMPLIANCE_RULE_VERSION,
+            ComplianceChecker,
+            _COMPLIANCE_RULE_VERSION,
         )
+
         checker = ComplianceChecker()
         with tempfile.TemporaryDirectory() as td:
             path = os.path.join(td, "r.enc")
@@ -418,6 +447,7 @@ class TestComplianceCheckerMigrateEncrypted:
                 fh.write(b"\x00" * 50)
             import sys
             import importlib
+
             real_cryptography = sys.modules.get("cryptography")
             # Temporarily block import
             sys.modules["cryptography"] = None  # type: ignore[assignment]
@@ -426,6 +456,7 @@ class TestComplianceCheckerMigrateEncrypted:
             sys.modules["cryptography.hazmat.primitives.ciphers"] = None  # type: ignore[assignment]
             sys.modules["cryptography.hazmat.primitives.ciphers.aead"] = None  # type: ignore[assignment]
             import warnings
+
             try:
                 with warnings.catch_warnings(record=True):
                     # When cryptography is blocked, result should be False or just not raise
@@ -438,9 +469,12 @@ class TestComplianceCheckerMigrateEncrypted:
                 # Restore
                 if real_cryptography is not None:
                     sys.modules["cryptography"] = real_cryptography
-                for mod in ["cryptography.hazmat", "cryptography.hazmat.primitives",
-                            "cryptography.hazmat.primitives.ciphers",
-                            "cryptography.hazmat.primitives.ciphers.aead"]:
+                for mod in [
+                    "cryptography.hazmat",
+                    "cryptography.hazmat.primitives",
+                    "cryptography.hazmat.primitives.ciphers",
+                    "cryptography.hazmat.primitives.ciphers.aead",
+                ]:
                     if mod in sys.modules:
                         del sys.modules[mod]
 
@@ -449,12 +483,14 @@ class TestComplianceCheckerMigrateEncrypted:
 # Section 5: Session 66 E2E regression
 # ---------------------------------------------------------------------------
 
+
 class TestE2ESession66:
     """Full E2E covering all four session 66 items together."""
 
     def test_delegation_merge_skip_and_copy(self):
         """Merge with selective skip_revocations + delegation copy."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         src = DelegationManager()
         dst = DelegationManager()
 
@@ -475,6 +511,7 @@ class TestE2ESession66:
     def test_ipfs_store_save_returns_dict(self):
         """IPFSPolicyStore.save() returns a dict."""
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import IPFSPolicyStore, PolicyRegistry
+
         with tempfile.TemporaryDirectory() as td:
             store = IPFSPolicyStore(path=os.path.join(td, "s.json"), registry=PolicyRegistry())
             result = store.save()
@@ -484,6 +521,7 @@ class TestE2ESession66:
         """publish_async has timeout_seconds kwarg."""
         import inspect
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus
+
         sig = inspect.signature(PubSubBus.publish_async)
         assert "timeout_seconds" in sig.parameters
         assert sig.parameters["timeout_seconds"].default == 5.0
@@ -496,6 +534,7 @@ class TestE2ESession66:
             pytest.skip("cryptography not installed")
 
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         c = ComplianceChecker()
         with tempfile.TemporaryDirectory() as td:
             path = os.path.join(td, "c.enc")
@@ -509,6 +548,7 @@ class TestE2ESession66:
     def test_skip_revocations_type_is_set(self):
         """skip_revocations accepts a set of strings."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         src = DelegationManager()
         dst = DelegationManager()
         src._revocation.revoke("cid-1")
@@ -524,6 +564,7 @@ class TestE2ESession66:
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
 
         import inspect
+
         assert "skip_revocations" in inspect.signature(DelegationManager.merge).parameters
         # IPFSPolicyStore.save returns dict
         ann = str(inspect.signature(IPFSPolicyStore.save).return_annotation)
@@ -534,6 +575,7 @@ class TestE2ESession66:
     def test_migrate_encrypted_false_on_missing_file(self):
         """migrate_encrypted returns False for a non-existent path."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         c = ComplianceChecker()
         result = c.migrate_encrypted("/no/such/file.enc", "a", "b")
         assert result is False
@@ -541,6 +583,7 @@ class TestE2ESession66:
     def test_delegation_merge_no_skip_copies_all_revocations(self):
         """copy_revocations=True and skip_revocations=None copies everything."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         src = DelegationManager()
         dst = DelegationManager()
         for i in range(3):
@@ -552,6 +595,7 @@ class TestE2ESession66:
     def test_session65_regression_ipfs_store_reload(self):
         """Session 65 regression: IPFSPolicyStore.reload() still callable."""
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import IPFSPolicyStore, PolicyRegistry
+
         with tempfile.TemporaryDirectory() as td:
             store = IPFSPolicyStore(path=os.path.join(td, "s.json"), registry=PolicyRegistry())
             store.save()
@@ -561,6 +605,7 @@ class TestE2ESession66:
     def test_session65_regression_delegation_merge_copy_revocations(self):
         """Session 65 regression: merge(copy_revocations=True) still works."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         src = DelegationManager()
         dst = DelegationManager()
         src._revocation.revoke("cid-99")

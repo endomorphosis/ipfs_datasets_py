@@ -27,9 +27,7 @@ Scrapes and analyzes GitHub repositories including metadata, PRs, issues, workfl
 **Example:**
 ```python
 result = scrape_github_repository(
-    repository_url="https://github.com/pytorch/pytorch",
-    include_prs=True,
-    max_items=100
+    repository_url="https://github.com/pytorch/pytorch", include_prs=True, max_items=100
 )
 print(f"Repository: {result['repository']['name']}")
 print(f"Stars: {result['repository']['stars']}")
@@ -46,10 +44,7 @@ Analyzes GitHub Actions workflows, runs, and logs for CI/CD insights.
 
 **Example:**
 ```python
-analysis = analyze_github_actions(
-    repository_url="https://github.com/pytorch/pytorch",
-    max_runs=100
-)
+analysis = analyze_github_actions(repository_url="https://github.com/pytorch/pytorch", max_runs=100)
 print(f"Success rate: {analysis['success_rate']}%")
 print(f"Average duration: {analysis['average_duration']}s")
 ```
@@ -64,10 +59,7 @@ Parses and analyzes systemd journal logs for service health monitoring.
 
 **Example:**
 ```python
-logs = parse_systemd_logs(
-    log_content=journal_output,
-    service_filter="nginx"
-)
+logs = parse_systemd_logs(log_content=journal_output, service_filter="nginx")
 health = analyze_service_health(logs, "nginx")
 print(f"Health score: {health['health_score']}")
 ```
@@ -82,10 +74,7 @@ Parses and analyzes Kubernetes cluster logs for pod and deployment monitoring.
 
 **Example:**
 ```python
-logs = parse_kubernetes_logs(
-    log_content=kubectl_logs,
-    namespace_filter="production"
-)
+logs = parse_kubernetes_logs(log_content=kubectl_logs, namespace_filter="production")
 health = analyze_pod_health(logs, "my-app-pod")
 print(f"Pod health: {health['health_status']}")
 ```
@@ -118,7 +107,7 @@ Creates and analyzes DAG-based workflows with speculative execution planning.
 ```python
 tasks = [
     {"id": "build", "dependencies": [], "estimated_duration": 300},
-    {"id": "test", "dependencies": ["build"], "estimated_duration": 600}
+    {"id": "test", "dependencies": ["build"], "estimated_duration": 600},
 ]
 dag = create_workflow_dag(tasks)
 plan = plan_speculative_execution(dag, {"cpu": 16, "gpu": 4})
@@ -136,9 +125,7 @@ Predicts GPU resource needs based on workflow history and call stack analysis.
 **Example:**
 ```python
 prediction = predict_gpu_needs(
-    workflow_history=past_runs,
-    current_call_stack=["preprocess", "train"],
-    look_ahead_steps=5
+    workflow_history=past_runs, current_call_stack=["preprocess", "train"], look_ahead_steps=5
 )
 print(f"Predicted GPUs: {prediction['predicted_gpu_count']}")
 ```
@@ -154,8 +141,8 @@ Detects common error patterns in logs and suggests fixes.
 **Example:**
 ```python
 patterns = detect_error_patterns(error_logs)
-for pattern in patterns['most_common']:
-    fixes = suggest_fixes(pattern['pattern'])
+for pattern in patterns["most_common"]:
+    fixes = suggest_fixes(pattern["pattern"])
     print(f"{pattern['pattern']}: {fixes['fixes'][0]['action']}")
 ```
 
@@ -200,7 +187,7 @@ Defines and validates software engineering rules using temporal deontic logic.
 theorems = list_software_theorems(domain_filter="devops")
 context = {"ci_failed_count": 5, "notification_sent": False}
 validation = validate_against_theorem("ci_failure_notification", context)
-if validation['theorem_applies']:
+if validation["theorem_applies"]:
     print(f"Actions: {validation['recommended_actions']}")
 ```
 

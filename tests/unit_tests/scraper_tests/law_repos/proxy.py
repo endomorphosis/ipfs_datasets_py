@@ -6,6 +6,7 @@ Proxy callable for web scraping.
 This module provides proxy functionality to rotate IP addresses and headers
 to prevent blocking when scraping websites such as municode, american_legal, and ecode360.
 """
+
 from __future__ import annotations
 
 import time
@@ -51,15 +52,15 @@ class MockResponse:
 class proxy:
     """
     Create proxy manager for web scraping with rotation and retry capabilities.
-    
+
     Provides a proxy-aware HTTP client compatible with municode, american_legal, and
     ecode360 scrapers. Supports HTTP/HTTPS/SOCKS5 proxies with rotation, authentication,
     retry logic with backoff, connection pooling, session management, rate limiting,
     and health monitoring to prevent IP blocking.
-    
+
     Can be used as a context manager (with statement) or as a drop-in replacement
     for aiohttp.ClientSession with proxy support.
-    
+
     Args:
         proxy_url (str, optional): Single proxy URL (e.g., "http://proxy1.example.com:8080").
         proxy_urls (list, optional): List of proxy URLs for rotation.
@@ -75,7 +76,7 @@ class proxy:
         health_check (bool, optional): Enable proxy health monitoring. Defaults to False.
         health_check_cooldown (float, optional): Cooldown period for unhealthy proxies in seconds. Defaults to 60.0.
         user_agents (list, optional): List of User-Agent strings to rotate.
-    
+
     Returns:
         proxy: Proxy manager instance with methods:
             - get(url, **kwargs): Execute GET request through proxy
@@ -83,14 +84,14 @@ class proxy:
             - request(method, url, **kwargs): Execute request with specified method
             - __aenter__/__aexit__: Async context manager support
             - get_statistics(): Get proxy usage statistics
-    
+
     Raises:
         ValueError: If proxy_url and proxy_urls are both None or both provided, if proxy URL format is invalid, or if unsupported protocol.
         TypeError: If invalid types provided for arguments.
-    
+
     Example:
         >>> import anyio
-        >>> 
+        >>>
         >>> async def scrape_with_proxy():
         ...     # Configure proxy with rotation and retry
         ...     proxy_manager = proxy(
@@ -103,7 +104,7 @@ class proxy:
         ...         rate_limit_delay=1.0,
         ...         user_agents=["Mozilla/5.0", "Chrome/90.0"]
         ...     )
-        ...     
+        ...
         ...     # Use as context manager like aiohttp.ClientSession
         ...     async with proxy_manager as session:
         ...         async with session.get("https://library.municode.com") as response:
@@ -111,7 +112,7 @@ class proxy:
         ...             print(f"Status: {response.status}")
         ...             print(f"Proxy used: {session.current_proxy}")
         ...             print(f"Response length: {len(html)} characters")
-        ...     
+        ...
         ...     # Get statistics
         ...     stats = proxy_manager.get_statistics()
         ...     print(f"Total requests: {stats['total_requests']}")
@@ -119,7 +120,7 @@ class proxy:
         ...     print(f"Failed requests: {stats['failed_requests']}")
         ...     print(f"Success rate: {stats['success_rate']}%")
         ...     print(f"Average response time: {stats['avg_response_time']:.2f}s")
-        >>> 
+        >>>
         >>> anyio.run(scrape_with_proxy())
         Status: 200
         Proxy used: http://proxy1.example.com:8080
@@ -130,7 +131,7 @@ class proxy:
         Success rate: 100.0%
         Average response time: 0.15s
     """
-    
+
     def __init__(
         self,
         proxy_url: Optional[str] = None,
@@ -146,7 +147,7 @@ class proxy:
         rate_limit_delay: float = 0.0,
         health_check: bool = False,
         health_check_cooldown: float = 60.0,
-        user_agents: Optional[List[str]] = None
+        user_agents: Optional[List[str]] = None,
     ):
         """Initialize proxy manager."""
         if proxy_url and proxy_urls:
@@ -163,7 +164,9 @@ class proxy:
                 raise ValueError("proxy_urls must be a non-empty list")
             urls = list(proxy_urls)
 
-        self._proxy_urls: List[str] = [self._normalize_proxy_url(u, username, password) for u in urls]
+        self._proxy_urls: List[str] = [
+            self._normalize_proxy_url(u, username, password) for u in urls
+        ]
         self._proxy_index: int = 0
         self._unhealthy_proxies: List[str] = []
         self._unhealthy_since: Dict[str, float] = {}
@@ -192,62 +195,72 @@ class proxy:
         self._total_requests: int = 0
         self._successful_requests: int = 0
         self._failed_requests: int = 0
-        self._per_proxy_stats: Dict[str, Dict[str, int]] = {u: {"requests": 0} for u in self._proxy_urls}
+        self._per_proxy_stats: Dict[str, Dict[str, int]] = {
+            u: {"requests": 0} for u in self._proxy_urls
+        }
 
         # Tracking flags used by tests (default values)
         self._backoff_times: List[float] = []
         self._pool_reused: bool = False
         self._new_connection_created: bool = False
-    
-    async def get(self, url: str, headers: Optional[Dict[str, str]] = None, **kwargs) -> MockResponse:
+
+    async def get(
+        self, url: str, headers: Optional[Dict[str, str]] = None, **kwargs
+    ) -> MockResponse:
         """
         Execute GET request through proxy.
-        
+
         Args:
             url (str): Target URL to request.
             headers (dict, optional): Custom headers to include in request.
             **kwargs: Additional arguments passed to request.
-        
+
         Returns:
             MockResponse: Response object with status, body, headers, and metadata.
-        
+
         Raises:
             TimeoutError: If request times out.
             ConnectionError: If connection fails.
         """
         return await self.request("GET", url, headers=headers, **kwargs)
-    
-    async def post(self, url: str, data: Optional[Any] = None, headers: Optional[Dict[str, str]] = None, **kwargs) -> MockResponse:
+
+    async def post(
+        self,
+        url: str,
+        data: Optional[Any] = None,
+        headers: Optional[Dict[str, str]] = None,
+        **kwargs,
+    ) -> MockResponse:
         """
         Execute POST request through proxy.
-        
+
         Args:
             url (str): Target URL to request.
             data (Any, optional): Data to send in POST request body.
             headers (dict, optional): Custom headers to include in request.
             **kwargs: Additional arguments passed to request.
-        
+
         Returns:
             MockResponse: Response object with status, body, headers, and metadata.
-        
+
         Raises:
             TimeoutError: If request times out.
             ConnectionError: If connection fails.
         """
         return await self.request("POST", url, data=data, headers=headers, **kwargs)
-    
+
     async def request(self, method: str, url: str, **kwargs) -> MockResponse:
         """
         Execute request with specified HTTP method through proxy.
-        
+
         Args:
             method (str): HTTP method (GET, POST, PUT, DELETE, etc.).
             url (str): Target URL to request.
             **kwargs: Additional arguments passed to request.
-        
+
         Returns:
             MockResponse: Response object with status, body, headers, and metadata.
-        
+
         Raises:
             TimeoutError: If request times out.
             ConnectionError: If connection fails.
@@ -320,12 +333,14 @@ class proxy:
                 return last_response
 
         # Fallback
-        return last_response or MockResponse(status=500, proxy_used=self._proxy_urls[0], retry_count=retry_count)
-    
+        return last_response or MockResponse(
+            status=500, proxy_used=self._proxy_urls[0], retry_count=retry_count
+        )
+
     def get_statistics(self) -> Dict[str, Any]:
         """
         Get proxy usage statistics.
-        
+
         Returns:
             dict: Statistics containing:
                 - total_requests (int): Total number of requests made
@@ -347,11 +362,11 @@ class proxy:
             "avg_response_time": 0.0,
             "per_proxy_stats": self._per_proxy_stats,
         }
-    
+
     async def __aenter__(self):
         """Enter async context manager."""
         return self
-    
+
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Exit async context manager."""
         # Nothing to close for this test double
@@ -365,7 +380,9 @@ class proxy:
     def current_proxy(self) -> str:
         return self._proxy_urls[self._proxy_index % len(self._proxy_urls)]
 
-    def _normalize_proxy_url(self, proxy_url: str, username: Optional[str], password: Optional[str]) -> str:
+    def _normalize_proxy_url(
+        self, proxy_url: str, username: Optional[str], password: Optional[str]
+    ) -> str:
         parsed = urlparse(proxy_url)
         if not parsed.scheme or not parsed.netloc:
             raise ValueError("Invalid proxy URL format")
@@ -398,7 +415,9 @@ class proxy:
             if unhealthy_since is None:
                 return candidate
 
-            if (time.monotonic() - unhealthy_since) + cooldown_tolerance >= self._health_check_cooldown:
+            if (
+                time.monotonic() - unhealthy_since
+            ) + cooldown_tolerance >= self._health_check_cooldown:
                 # Cooldown expired
                 self._unhealthy_since.pop(candidate, None)
                 if candidate in self._unhealthy_proxies:
@@ -487,7 +506,10 @@ class proxy:
         if getattr(self, "_track_pool_reuse", False) and self._total_requests >= 2:
             self._pool_reused = True
 
-        if getattr(self, "_track_new_connections", False) and self._total_requests > self._pool_size:
+        if (
+            getattr(self, "_track_new_connections", False)
+            and self._total_requests > self._pool_size
+        ):
             self._new_connection_created = True
 
     async def _mark_success_or_failure(self, proxy_used: str, status: int) -> None:

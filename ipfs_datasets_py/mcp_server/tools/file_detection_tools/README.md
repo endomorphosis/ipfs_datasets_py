@@ -15,21 +15,20 @@ extension mapping, and combined analysis.
 
 ```python
 from ipfs_datasets_py.mcp_server.tools.file_detection_tools import (
-    detect_file_type, batch_detect_file_types
+    detect_file_type,
+    batch_detect_file_types,
 )
 
 # Detect a single file
 result = await detect_file_type(
     file_path="/data/unknown_file",
-    strategy="combined"    # "magic" | "extension" | "mime" | "combined"
+    strategy="combined",  # "magic" | "extension" | "mime" | "combined"
 )
 # Returns: {"mime_type": "application/pdf", "extension": ".pdf", "confidence": 0.99}
 
 # Batch detect
 results = await batch_detect_file_types(
-    directory="/data/uploads/",
-    recursive=True,
-    output_format="json"
+    directory="/data/uploads/", recursive=True, output_format="json"
 )
 ```
 

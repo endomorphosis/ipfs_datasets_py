@@ -106,7 +106,7 @@ Total: 43,165 LOC
 # TDFOL style
 formula = BinaryFormula(left, LogicOperator.AND, right)
 
-# CEC style  
+# CEC style
 formula = AndFormula([left, right])
 
 # FOL style
@@ -456,17 +456,18 @@ def parse_dcec(text: str):
     """Parse DCEC string - NO VALIDATION."""
     return parser.parse(text)  # Could cause DoS with malicious input
 
+
 # SECURE CODE (needed):
 def parse_dcec(text: str, max_length=10000, max_depth=100):
     """Parse DCEC string with limits."""
     if len(text) > max_length:
         raise ValueError(f"Input too long: {len(text)} > {max_length}")
-    
+
     formula = parser.parse(text, max_depth=max_depth)
-    
+
     if get_formula_complexity(formula) > 1000:
         raise ValueError("Formula too complex")
-    
+
     return formula
 ```
 
@@ -474,6 +475,7 @@ def parse_dcec(text: str, max_length=10000, max_depth=100):
 ```python
 # Needed: Per-user rate limiting
 from ratelimit import limits, sleep_and_retry
+
 
 class SecureNeurosymbolicReasoner:
     @sleep_and_retry
@@ -486,14 +488,16 @@ class SecureNeurosymbolicReasoner:
 3. **Audit Logging:**
 ```python
 # Log all proof attempts for security audit
-audit_logger.info({
-    'event': 'proof_attempt',
-    'user_id': get_current_user(),
-    'formula': str(formula)[:100],  # Truncate
-    'prover': prover_name,
-    'success': result.is_proved(),
-    'timestamp': datetime.utcnow()
-})
+audit_logger.info(
+    {
+        "event": "proof_attempt",
+        "user_id": get_current_user(),
+        "formula": str(formula)[:100],  # Truncate
+        "prover": prover_name,
+        "success": result.is_proved(),
+        "timestamp": datetime.utcnow(),
+    }
+)
 ```
 
 4. **API Key Security:**
@@ -520,17 +524,18 @@ from opentelemetry.exporter.otlp.proto.grpc import trace_exporter
 
 tracer = trace.get_tracer(__name__)
 
+
 class TracedProver:
     def prove(self, formula):
         with tracer.start_as_current_span("prove") as span:
             span.set_attribute("formula.type", type(formula).__name__)
             span.set_attribute("formula.complexity", get_complexity(formula))
-            
+
             result = self._prove_impl(formula)
-            
+
             span.set_attribute("result.proved", result.is_proved())
             span.set_attribute("prover.used", result.prover_used)
-            
+
             return result
 ```
 
@@ -540,18 +545,15 @@ import structlog
 
 logger = structlog.get_logger()
 
-logger.info("proof_started", 
-    formula_type=type(formula).__name__,
-    prover="z3",
-    cached=False
-)
+logger.info("proof_started", formula_type=type(formula).__name__, prover="z3", cached=False)
 
-logger.info("proof_completed",
+logger.info(
+    "proof_completed",
     formula_type=type(formula).__name__,
     prover="z3",
     success=True,
     latency_ms=12.34,
-    cached=False
+    cached=False,
 )
 ```
 
@@ -588,32 +590,38 @@ alerts:
 ```python
 # Option 1: TDFOL direct
 from ipfs_datasets_py.logic.TDFOL import parse_tdfol, TDFOLProver
+
 formula = parse_tdfol("P -> Q")
 prover = TDFOLProver()
 result = prover.prove(formula)
 
 # Option 2: NeurosymbolicReasoner
 from ipfs_datasets_py.logic.integration import NeurosymbolicReasoner
+
 reasoner = NeurosymbolicReasoner()
 result = reasoner.prove("P -> Q")
 
 # Option 3: External prover direct
 from ipfs_datasets_py.logic.external_provers import Z3ProverBridge
+
 prover = Z3ProverBridge()
 result = prover.prove(formula)
 
 # Option 4: Prover router
 from ipfs_datasets_py.logic.external_provers import ProverRouter
+
 router = ProverRouter()
 result = router.prove(formula)
 
 # Option 5: CEC wrapper
 from ipfs_datasets_py.logic.CEC import DCECContainer
+
 container = DCECContainer()
 result = container.prove(dcec_formula)
 
 # Option 6: SymbolicFOLBridge
 from ipfs_datasets_py.logic.integration import SymbolicFOLBridge
+
 bridge = SymbolicFOLBridge()
 result = bridge.text_to_logic("If P then Q")
 ```
@@ -640,9 +648,11 @@ All other APIs are considered internal or deprecated.
 from typing import Union, List, Optional, Dict, Any
 from dataclasses import dataclass
 
+
 @dataclass
 class LogicConfig:
     """Configuration for logic system."""
+
     enable_native: bool = True
     enable_z3: bool = True
     enable_symbolicai: bool = False  # Requires API key
@@ -650,132 +660,126 @@ class LogicConfig:
     timeout: float = 5.0
     max_complexity: int = 1000
 
+
 class Logic:
     """
     Unified logic system interface.
-    
+
     This is the ONLY recommended API for using the logic system.
     All functionality is accessible through this class.
-    
+
     Examples:
         >>> logic = Logic()
         >>> result = logic.prove("P -> P")
         >>> print(result.success)
         True
-        
+
         >>> result = logic.prove("P", axioms=["P -> Q"], goal="Q")
         >>> print(result.success)
         True
     """
-    
+
     def __init__(self, config: Optional[LogicConfig] = None):
         """Initialize with optional configuration."""
         self.config = config or LogicConfig()
         self._init_components()
-    
+
     def prove(
-        self, 
+        self,
         formula: Union[str, Any],
         axioms: Optional[List[Union[str, Any]]] = None,
-        format: str = 'auto',
-        prover: str = 'auto',
-        **kwargs
-    ) -> 'ProofResult':
+        format: str = "auto",
+        prover: str = "auto",
+        **kwargs,
+    ) -> "ProofResult":
         """
         Prove a formula.
-        
+
         Args:
             formula: Formula to prove (string or formula object)
             axioms: Optional list of axioms
             format: Input format ('auto', 'tdfol', 'dcec', 'nl')
             prover: Prover to use ('auto', 'native', 'z3', 'symbolicai')
-            
+
         Returns:
             ProofResult with success status and details
         """
         # Parse formula
         parsed_formula = self._parse(formula, format)
         parsed_axioms = [self._parse(a, format) for a in (axioms or [])]
-        
+
         # Select prover
         selected_prover = self._select_prover(parsed_formula, prover)
-        
+
         # Prove
         return selected_prover.prove(parsed_formula, axioms=parsed_axioms, **kwargs)
-    
-    def parse(
-        self, 
-        text: str, 
-        format: str = 'auto'
-    ) -> Any:
+
+    def parse(self, text: str, format: str = "auto") -> Any:
         """
         Parse text to formula.
-        
+
         Args:
             text: Text to parse
             format: Input format ('auto', 'tdfol', 'dcec', 'nl')
-            
+
         Returns:
             Parsed formula object
         """
-        if format == 'auto':
+        if format == "auto":
             format = self._detect_format(text)
-        
+
         return self._parsers[format].parse(text)
-    
-    def explain(
-        self, 
-        formula: Union[str, Any],
-        style: str = 'casual'
-    ) -> str:
+
+    def explain(self, formula: Union[str, Any], style: str = "casual") -> str:
         """
         Explain formula in natural language.
-        
+
         Args:
             formula: Formula to explain
             style: Explanation style ('formal', 'casual', 'technical')
-            
+
         Returns:
             Natural language explanation
         """
-        parsed = self._parse(formula, 'auto')
+        parsed = self._parse(formula, "auto")
         return self._explainer.explain(parsed, style)
-    
-    def check_consistency(
-        self, 
-        formulas: List[Union[str, Any]]
-    ) -> 'ConsistencyResult':
+
+    def check_consistency(self, formulas: List[Union[str, Any]]) -> "ConsistencyResult":
         """
         Check if set of formulas is consistent.
-        
+
         Args:
             formulas: List of formulas to check
-            
+
         Returns:
             ConsistencyResult with status and conflicts if any
         """
-        parsed = [self._parse(f, 'auto') for f in formulas]
+        parsed = [self._parse(f, "auto") for f in formulas]
         return self._consistency_checker.check(parsed)
-    
+
     def get_stats(self) -> Dict[str, Any]:
         """Get system statistics."""
         return {
-            'cache': self._cache.get_stats(),
-            'provers': self._monitor.get_stats(),
-            'config': self.config.__dict__
+            "cache": self._cache.get_stats(),
+            "provers": self._monitor.get_stats(),
+            "config": self.config.__dict__,
         }
+
 
 # Singleton instance for convenience
 logic = Logic()
+
 
 # Convenience functions
 def prove(formula, **kwargs):
     """Convenience function for proving."""
     return logic.prove(formula, **kwargs)
 
-def parse(text, format='auto'):
+
+def parse(text, format="auto"):
     """Convenience function for parsing."""
     return logic.parse(text, format)
+
 
 def explain(formula, **kwargs):
     """Convenience function for explanation."""
@@ -793,11 +797,7 @@ print(result.success)  # True
 # With configuration
 from ipfs_datasets_py.logic import Logic, LogicConfig
 
-config = LogicConfig(
-    enable_z3=True,
-    enable_symbolicai=True,
-    timeout=10.0
-)
+config = LogicConfig(enable_z3=True, enable_symbolicai=True, timeout=10.0)
 logic = Logic(config)
 result = logic.prove("forall x. P(x) -> Q(x)")
 ```
@@ -822,13 +822,13 @@ result = logic.prove("forall x. P(x) -> Q(x)")
 ```python
 class LogicAwareEntityExtractor:
     """Extract entities with logical type annotations."""
-    
+
     def extract(self, text: str) -> List[LogicEntity]:
         """
         Extract entities with logical types.
-        
+
         Example:
-            "All users must verify their age" 
+            "All users must verify their age"
             → [
                 Entity("users", type="universal_quantifier"),
                 Entity("verify_age", type="obligation"),
@@ -842,19 +842,21 @@ class LogicAwareEntityExtractor:
 ```python
 class TheoremAugmentedKnowledgeGraph:
     """Knowledge graph with proven theorems."""
-    
+
     def add_theorem(self, formula: str, proof: ProofResult):
         """Add proven theorem to graph."""
-        node = self.add_node({
-            'type': 'theorem',
-            'formula': formula,
-            'proof': proof.to_dict(),
-            'confidence': 1.0  # Proven
-        })
-        
+        node = self.add_node(
+            {
+                "type": "theorem",
+                "formula": formula,
+                "proof": proof.to_dict(),
+                "confidence": 1.0,  # Proven
+            }
+        )
+
         # Link to related concepts
         for concept in extract_concepts(formula):
-            self.add_edge(node, concept, relation='proves')
+            self.add_edge(node, concept, relation="proves")
 ```
 
 3. **Logical Consistency Checking:**

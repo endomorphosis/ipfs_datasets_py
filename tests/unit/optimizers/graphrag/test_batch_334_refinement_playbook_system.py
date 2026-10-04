@@ -44,7 +44,9 @@ def test_register_playbook_rejects_unknown_actions(mediator: OntologyMediator) -
 
 def test_run_refinement_playbook_rejects_unknown_name(mediator: OntologyMediator) -> None:
     with pytest.raises(KeyError, match="unknown playbook"):
-        mediator.run_refinement_playbook("missing", ontology={"entities": [], "relationships": []}, context=None)
+        mediator.run_refinement_playbook(
+            "missing", ontology={"entities": [], "relationships": []}, context=None
+        )
 
 
 def test_run_refinement_playbook_applies_clarity_first_sequence(mediator: OntologyMediator) -> None:

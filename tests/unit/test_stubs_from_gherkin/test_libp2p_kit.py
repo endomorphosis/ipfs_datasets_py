@@ -4,11 +4,13 @@ Test stubs for libp2p_kit module.
 Feature: LibP2P Networking
   Peer-to-peer networking using LibP2P protocol
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def a_multiaddress_to_listen_on():
@@ -83,6 +85,7 @@ def the_node_is_listening():
 
 
 # Test scenarios
+
 
 def test_initialize_libp2p_node():
     """
@@ -196,6 +199,7 @@ def test_generate_peer_identity():
 
 
 # Step definitions
+
 
 # Given steps
 @given("a multiaddress to listen on")

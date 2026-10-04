@@ -20,9 +20,9 @@ from .tdfol_grammar_bridge import TDFOLGrammarBridge
 from .tdfol_shadowprover_bridge import TDFOLShadowProverBridge
 
 __all__ = [
-    'BaseProverBridge',
-    'SymbolicFOLBridge',
-    'TDFOLCECBridge',
-    'TDFOLGrammarBridge',
-    'TDFOLShadowProverBridge',
+    "BaseProverBridge",
+    "SymbolicFOLBridge",
+    "TDFOLCECBridge",
+    "TDFOLGrammarBridge",
+    "TDFOLShadowProverBridge",
 ]

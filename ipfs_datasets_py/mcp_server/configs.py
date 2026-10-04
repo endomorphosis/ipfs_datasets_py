@@ -2,6 +2,7 @@
 """
 Configuration settings for the IPFS Datasets MCP server.
 """
+
 from dataclasses import dataclass, field
 from functools import cached_property
 import logging
@@ -39,40 +40,70 @@ class Configs:
         PROJECT_NAME: The name of the project
         CONFIG_DIR: The directory containing configuration files
     """
+
     verbose: bool = field(default=True, metadata={"description": "Enable verbose output"})
-    log_level: int = field(default=logging.INFO, metadata={"description": "The log level for the server and logger"})
+    log_level: int = field(
+        default=logging.INFO, metadata={"description": "The log level for the server and logger"}
+    )
     host: str = field(default="127.0.0.1", metadata={"description": "Host for the server"})
     port: int = field(default=5000, metadata={"description": "Port for the server"})
     reload: bool = field(default=True, metadata={"description": "Enable auto-reload"})
-    tool_timeout: int = field(default=60, metadata={"description": "Timeout for tool execution in seconds"})
+    tool_timeout: int = field(
+        default=60, metadata={"description": "Timeout for tool execution in seconds"}
+    )
     enabled_tool_categories: List[str] = field(
         default_factory=lambda: [
-            "dataset", "ipfs", "vector", "graph", "audit", "security", "provenance"
+            "dataset",
+            "ipfs",
+            "vector",
+            "graph",
+            "audit",
+            "security",
+            "provenance",
         ],
-        metadata={"description": "List of enabled tool categories"}
+        metadata={"description": "List of enabled tool categories"},
     )
-    transport: str = field(default="stdio", metadata={"description": "Transport protocol for the MCP server"})
+    transport: str = field(
+        default="stdio", metadata={"description": "Transport protocol for the MCP server"}
+    )
     tool_configs: Dict[str, Any] = field(
-        default_factory=dict,
-        metadata={"description": "Configuration for specific tools"}
+        default_factory=dict, metadata={"description": "Configuration for specific tools"}
     )
-    ipfs_kit_integration: str = field(default="direct", metadata={"description": "Integration method for ipfs_kit_py ('direct' or 'mcp')"})
-    ipfs_kit_mcp_url: Optional[str] = field(default=None, metadata={"description": "URL of the ipfs_kit_py MCP server (if using 'mcp' integration)"})
+    ipfs_kit_integration: str = field(
+        default="direct",
+        metadata={"description": "Integration method for ipfs_kit_py ('direct' or 'mcp')"},
+    )
+    ipfs_kit_mcp_url: Optional[str] = field(
+        default=None,
+        metadata={"description": "URL of the ipfs_kit_py MCP server (if using 'mcp' integration)"},
+    )
 
     # MCP++ / libp2p TaskQueue integration
-    p2p_enabled: bool = field(default=False, metadata={"description": "Enable in-process libp2p TaskQueue service"})
-    p2p_listen_port: Optional[int] = field(default=None, metadata={"description": "Optional listen port for P2P service"})
+    p2p_enabled: bool = field(
+        default=False, metadata={"description": "Enable in-process libp2p TaskQueue service"}
+    )
+    p2p_listen_port: Optional[int] = field(
+        default=None, metadata={"description": "Optional listen port for P2P service"}
+    )
     p2p_queue_path: str = field(
-        default_factory=lambda: os.path.join(os.path.expanduser("~"), ".cache", "ipfs_datasets_py", "task_queue.duckdb"),
+        default_factory=lambda: os.path.join(
+            os.path.expanduser("~"), ".cache", "ipfs_datasets_py", "task_queue.duckdb"
+        ),
         metadata={"description": "DuckDB path for TaskQueue persistence"},
     )
-    p2p_enable_tools: bool = field(default=True, metadata={"description": "Enable remote tool calls over P2P"})
-    p2p_enable_cache: bool = field(default=True, metadata={"description": "Enable shared TTL cache over P2P"})
+    p2p_enable_tools: bool = field(
+        default=True, metadata={"description": "Enable remote tool calls over P2P"}
+    )
+    p2p_enable_cache: bool = field(
+        default=True, metadata={"description": "Enable shared TTL cache over P2P"}
+    )
     p2p_auth_mode: str = field(
         default="mcp_token",
         metadata={"description": "Auth mode for P2P messages: 'shared_token' or 'mcp_token'"},
     )
-    p2p_startup_timeout_s: float = field(default=2.0, metadata={"description": "Startup wait timeout for P2P service"})
+    p2p_startup_timeout_s: float = field(
+        default=2.0, metadata={"description": "Startup wait timeout for P2P service"}
+    )
 
     @property
     def ROOT_DIR(self) -> Path:
@@ -138,7 +169,15 @@ def load_config_from_yaml(config_path: Optional[str] = None) -> Configs:
         # Tool-specific configurations
         if "tools" in yaml_config:
             tool_configs = {}
-            for category in ["dataset", "ipfs", "vector", "graph", "audit", "security", "provenance"]:
+            for category in [
+                "dataset",
+                "ipfs",
+                "vector",
+                "graph",
+                "audit",
+                "security",
+                "provenance",
+            ]:
                 if category in yaml_config["tools"]:
                     tool_configs[category] = yaml_config["tools"][category]
             config_dict["tool_configs"] = tool_configs

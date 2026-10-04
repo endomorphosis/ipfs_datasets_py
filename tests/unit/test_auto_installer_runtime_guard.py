@@ -209,7 +209,9 @@ def test_setup_installer_uses_existing_ipfs_accelerate_checkout(monkeypatch, tmp
     monkeypatch.setattr(module, "_repo_root", lambda: tmp_path / "repo")
     monkeypatch.setenv("IPFS_ACCELERATE_PY_ROOT", str(checkout))
     monkeypatch.setattr(module, "_ipfs_accelerate_service_active", lambda: True)
-    monkeypatch.setattr(module.subprocess, "run", lambda *args, **kwargs: calls.append(args) or None)
+    monkeypatch.setattr(
+        module.subprocess, "run", lambda *args, **kwargs: calls.append(args) or None
+    )
     sys.modules.pop("ipfs_accelerate_py", None)
     sys.modules.pop("ipfs_accelerate_py.p2p_tasks", None)
 

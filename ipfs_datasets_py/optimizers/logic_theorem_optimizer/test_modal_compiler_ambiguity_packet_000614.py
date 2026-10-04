@@ -217,9 +217,7 @@ def test_compiler_preserves_packet_000614_compiler_ambiguity_policy_margins(
     priority: float,
     runner_up_family: str,
 ) -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="regex")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="regex"))
     monkeypatch.setattr(
         modal_compiler_module,
         "ranked_modal_families",
@@ -252,9 +250,7 @@ def test_compiler_preserves_packet_000614_compiler_ambiguity_policy_margins(
     )
 
     margin_direction = "contested" if family_margin > 0.0 else "outvoted"
-    expected_type = (
-        f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
-    )
+    expected_type = f"adaptive_{predicted_family}_{target_family}_{margin_direction}_margin_low"
     expected_severity = "review" if margin_direction == "contested" else "requires_rule"
     assert ambiguity is not None, sample_id
     assert ambiguity.ambiguity_type == expected_type
@@ -262,11 +258,6 @@ def test_compiler_preserves_packet_000614_compiler_ambiguity_policy_margins(
     assert ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
     assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
     assert ambiguity.metadata.get("explicit_ambiguity_type") == expected_type
-    assert (
-        abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin)
-        <= 1e-12
-    )
+    assert abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin) <= 1e-12
     assert abs(float(ambiguity.metadata.get("priority", 0.0)) - priority) <= 1e-12
-    assert abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - priority) <= (
-        1e-12
-    )
+    assert abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - priority) <= (1e-12)

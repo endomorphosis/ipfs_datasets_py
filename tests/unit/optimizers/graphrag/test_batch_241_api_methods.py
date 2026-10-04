@@ -66,7 +66,7 @@ def test_batch_suggest_strategies_mismatch_raises():
     ctx = _basic_context()
 
     with pytest.raises(ValueError):
-        mediator.batch_suggest_strategies([{ "entities": [] }], [], ctx)
+        mediator.batch_suggest_strategies([{"entities": []}], [], ctx)
 
 
 def test_compare_strategies_ranks_best():

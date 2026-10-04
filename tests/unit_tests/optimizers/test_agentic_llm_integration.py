@@ -22,12 +22,7 @@ def test_extract_code_and_description():
     router = OptimizerLLMRouter(preferred_provider=LLMProvider.COPILOT, enable_caching=False)
 
     response = (
-        "Here is the fix:\n\n"
-        "```python\n"
-        "def add(a, b):\n"
-        "    return a + b\n"
-        "```\n"
-        "Extra notes.\n"
+        "Here is the fix:\n\n```python\ndef add(a, b):\n    return a + b\n```\nExtra notes.\n"
     )
 
     code = router.extract_code(response)

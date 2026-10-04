@@ -10,6 +10,7 @@ Terminology:
 - impossible_size_target: A target file size that cannot be achieved with acceptable quality
 - conflicting_compression_parameters: Compression settings that contradict each other
 """
+
 import pytest
 import anyio
 from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
@@ -18,12 +19,14 @@ from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpe
 class TestFFmpegWrapperCompressMediaEdgeCases:
     """
     Edge case scenarios for FFmpegWrapper.compress_media method.
-    
+
     Tests the compress_media method with edge cases including
     highly compressed content, conflicting parameters, and challenging scenarios.
     """
 
-    async def test_when_media_is_already_highly_compressed_then_returns_success_response_with_minimal_reduction(self):
+    async def test_when_media_is_already_highly_compressed_then_returns_success_response_with_minimal_reduction(
+        self,
+    ):
         """
         GIVEN input media file already compressed to near-optimal levels
         WHEN compress_media is called with already highly compressed media
@@ -31,15 +34,15 @@ class TestFFmpegWrapperCompressMediaEdgeCases:
         """
         # NOTE: compress_media is not yet implemented in FFmpegWrapper - this is a legitimate development gap
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         try:
             result = await wrapper.compress_media(
                 input_path="highly_compressed.mp4",
                 output_path="output.mp4",
                 quality_level="high",
-                size_target="90%"  # Minimal compression target
+                size_target="90%",  # Minimal compression target
             )
             # This will not execute until compress_media is implemented
             assert result["status"] == "success"
@@ -48,7 +51,9 @@ class TestFFmpegWrapperCompressMediaEdgeCases:
             # Expected - compress_media method is documented but not implemented
             assert True
 
-    async def test_when_size_target_is_impossibly_small_then_returns_error_response_with_target_unreachable_message(self):
+    async def test_when_size_target_is_impossibly_small_then_returns_error_response_with_target_unreachable_message(
+        self,
+    ):
         """
         GIVEN size_target parameter specifying file size smaller than achievable with acceptable quality
         WHEN compress_media is called with impossible size target
@@ -56,14 +61,14 @@ class TestFFmpegWrapperCompressMediaEdgeCases:
         """
         # NOTE: compress_media is not yet implemented in FFmpegWrapper - this is a legitimate development gap
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         try:
             result = await wrapper.compress_media(
                 input_path="large_video.mp4",
                 output_path="output.mp4",
-                size_target="1KB"  # Impossibly small target
+                size_target="1KB",  # Impossibly small target
             )
             # This will not execute until compress_media is implemented
             assert result["status"] == "error"
@@ -72,7 +77,9 @@ class TestFFmpegWrapperCompressMediaEdgeCases:
             # Expected - compress_media method is documented but not implemented
             assert True
 
-    async def test_when_quality_level_conflicts_with_size_target_then_prioritizes_size_target_over_quality(self):
+    async def test_when_quality_level_conflicts_with_size_target_then_prioritizes_size_target_over_quality(
+        self,
+    ):
         """
         GIVEN quality_level parameter as 'high' and size_target requiring aggressive compression
         WHEN compress_media is called with conflicting quality and size requirements
@@ -80,15 +87,15 @@ class TestFFmpegWrapperCompressMediaEdgeCases:
         """
         # NOTE: compress_media is not yet implemented in FFmpegWrapper - this is a legitimate development gap
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         try:
             result = await wrapper.compress_media(
                 input_path="high_quality_video.mp4",
                 output_path="output.mp4",
                 quality_level="high",
-                size_target="10MB"  # Aggressive size target conflicting with high quality
+                size_target="10MB",  # Aggressive size target conflicting with high quality
             )
             # This will not execute until compress_media is implemented
             assert result["status"] == "success"
@@ -97,7 +104,9 @@ class TestFFmpegWrapperCompressMediaEdgeCases:
             # Expected - compress_media method is documented but not implemented
             assert True
 
-    async def test_when_input_file_is_extremely_large_then_handles_compression_within_memory_limits(self):
+    async def test_when_input_file_is_extremely_large_then_handles_compression_within_memory_limits(
+        self,
+    ):
         """
         GIVEN input media file with extremely large file size
         WHEN compress_media is called with very large input file
@@ -105,15 +114,15 @@ class TestFFmpegWrapperCompressMediaEdgeCases:
         """
         # NOTE: compress_media is not yet implemented in FFmpegWrapper - this is a legitimate development gap
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         try:
             result = await wrapper.compress_media(
                 input_path="extremely_large_file.mp4",  # Simulated large file
                 output_path="output.mp4",
                 compression_target="web",
-                two_pass=False  # Avoid memory-intensive two-pass for large files
+                two_pass=False,  # Avoid memory-intensive two-pass for large files
             )
             # This will not execute until compress_media is implemented
             assert result["status"] in ["success", "error"]
@@ -131,15 +140,15 @@ class TestFFmpegWrapperCompressMediaEdgeCases:
         """
         # NOTE: compress_media is not yet implemented in FFmpegWrapper - this is a legitimate development gap
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         try:
             result = await wrapper.compress_media(
                 input_path="test_video.mp4",
                 output_path="output.mp4",
                 codec_preference="av1",  # May not be available in all installations
-                quality_level="medium"
+                quality_level="medium",
             )
             # This will not execute until compress_media is implemented
             assert result["status"] == "success"
@@ -148,7 +157,9 @@ class TestFFmpegWrapperCompressMediaEdgeCases:
             # Expected - compress_media method is documented but not implemented
             assert True
 
-    async def test_when_two_pass_encoding_requested_but_insufficient_disk_space_then_falls_back_to_single_pass(self):
+    async def test_when_two_pass_encoding_requested_but_insufficient_disk_space_then_falls_back_to_single_pass(
+        self,
+    ):
         """
         GIVEN two_pass parameter set to True and insufficient disk space for temporary files
         WHEN compress_media is called with two-pass encoding but limited disk space
@@ -156,15 +167,15 @@ class TestFFmpegWrapperCompressMediaEdgeCases:
         """
         # NOTE: compress_media is not yet implemented in FFmpegWrapper - this is a legitimate development gap
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         try:
             result = await wrapper.compress_media(
                 input_path="test_video.mp4",
                 output_path="output.mp4",
                 two_pass=True,
-                quality_level="high"
+                quality_level="high",
             )
             # This will not execute until compress_media is implemented
             assert result["status"] == "success"
@@ -183,14 +194,14 @@ class TestFFmpegWrapperCompressMediaEdgeCases:
         """
         # NOTE: compress_media is not yet implemented in FFmpegWrapper - this is a legitimate development gap
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         try:
             result = await wrapper.compress_media(
                 input_path="test_video.mp4",
                 output_path="existing_output.mp4",  # File that already exists
-                quality_level="medium"
+                quality_level="medium",
             )
             # This will not execute until compress_media is implemented
             assert result["status"] == "success"

@@ -14,7 +14,10 @@ import datetime
 from ipfs_datasets_py.audit.audit_visualization import AuditMetricsAggregator
 from ipfs_datasets_py.audit.audit_logger import AuditLogger, AuditEvent, AuditLevel, AuditCategory
 from ipfs_datasets_py.analytics.data_provenance import ProvenanceManager
-from ipfs_datasets_py.audit.audit_provenance_integration import setup_audit_provenance_dashboard, AuditProvenanceDashboard
+from ipfs_datasets_py.audit.audit_provenance_integration import (
+    setup_audit_provenance_dashboard,
+    AuditProvenanceDashboard,
+)
 
 
 def generate_sample_provenance_data(provenance_manager):
@@ -28,7 +31,7 @@ def generate_sample_provenance_data(provenance_manager):
         source_uri="file:///data/sample1.csv",
         description="Sample source data 1",
         parameters={"rows": 1000, "format": "csv"},
-        metadata={"author": "Alice", "department": "Research"}
+        metadata={"author": "Alice", "department": "Research"},
     )
 
     source2_id = "source_data_2"
@@ -37,7 +40,7 @@ def generate_sample_provenance_data(provenance_manager):
         source_uri="file:///data/sample2.json",
         description="Sample source data 2",
         parameters={"documents": 500, "format": "json"},
-        metadata={"author": "Bob", "department": "Engineering"}
+        metadata={"author": "Bob", "department": "Engineering"},
     )
 
     # Create a transformation
@@ -48,7 +51,7 @@ def generate_sample_provenance_data(provenance_manager):
         description="Merge and clean two datasets",
         parameters={"join_key": "id", "clean_fields": ["name", "address"]},
         metadata={"transformation_type": "data_cleaning"},
-        duration_ms=random.randint(800, 1500)
+        duration_ms=random.randint(800, 1500),
     )
 
     # Create a query operation
@@ -60,7 +63,7 @@ def generate_sample_provenance_data(provenance_manager):
         description="Filter for important records",
         parameters={"filter_by": "category", "value": "important"},
         metadata={"user": "Charlie", "purpose": "Analysis"},
-        duration_ms=random.randint(200, 600)
+        duration_ms=random.randint(200, 600),
     )
 
     # Create an export
@@ -70,7 +73,7 @@ def generate_sample_provenance_data(provenance_manager):
         input_entity_ids=[query_id],
         description="Export filtered data to Parquet",
         parameters={"format": "parquet", "compression": "snappy"},
-        metadata={"destination": "file:///exports/important_data.parquet"}
+        metadata={"destination": "file:///exports/important_data.parquet"},
     )
 
     # Add more operations with timestamps spread across time
@@ -78,14 +81,14 @@ def generate_sample_provenance_data(provenance_manager):
         # Create some time gap
         time.sleep(0.5)
 
-        derived_id = f"derived_data_{i+1}"
+        derived_id = f"derived_data_{i + 1}"
         provenance_manager.record_transformation(
             entity_id=derived_id,
             input_entity_ids=[export_id],
-            description=f"Additional processing step {i+1}",
-            parameters={"operation": f"process_{i}", "iterations": i+1},
-            metadata={"step": i+1},
-            duration_ms=random.randint(300, 800)
+            description=f"Additional processing step {i + 1}",
+            parameters={"operation": f"process_{i}", "iterations": i + 1},
+            metadata={"step": i + 1},
+            duration_ms=random.randint(300, 800),
         )
 
     print("Sample provenance data generated.")
@@ -109,12 +112,20 @@ def generate_sample_audit_events(audit_logger, data_ids):
 
     for i in range(50):
         # Choose random attributes for this event
-        category = random.choice([AuditCategory.DATA_ACCESS, AuditCategory.AUTHENTICATION,
-                                AuditCategory.ADMINISTRATION, AuditCategory.DATA_MODIFICATION])
+        category = random.choice(
+            [
+                AuditCategory.DATA_ACCESS,
+                AuditCategory.AUTHENTICATION,
+                AuditCategory.ADMINISTRATION,
+                AuditCategory.DATA_MODIFICATION,
+            ]
+        )
 
         if category == AuditCategory.DATA_ACCESS or category == AuditCategory.DATA_MODIFICATION:
             action = random.choice(data_actions)
-            resource_id = random.choice(data_ids) if data_ids else f"resource_{random.randint(1, 10)}"
+            resource_id = (
+                random.choice(data_ids) if data_ids else f"resource_{random.randint(1, 10)}"
+            )
             resource_type = "dataset"
         elif category == AuditCategory.AUTHENTICATION:
             action = random.choice(auth_actions)
@@ -125,8 +136,15 @@ def generate_sample_audit_events(audit_logger, data_ids):
             resource_id = f"user_{random.randint(1, 5)}" if "user" in action else None
             resource_type = "admin_console"
 
-        level = random.choice([AuditLevel.INFO, AuditLevel.INFO, AuditLevel.INFO,
-                             AuditLevel.WARNING, AuditLevel.ERROR])
+        level = random.choice(
+            [
+                AuditLevel.INFO,
+                AuditLevel.INFO,
+                AuditLevel.INFO,
+                AuditLevel.WARNING,
+                AuditLevel.ERROR,
+            ]
+        )
 
         user = random.choice(users)
         status = "success" if random.random() > 0.1 else "failure"
@@ -150,7 +168,9 @@ def generate_sample_audit_events(audit_logger, data_ids):
             if category == AuditCategory.AUTHENTICATION:
                 details["error"] = "Invalid credentials" if action == "login" else "Session expired"
             else:
-                details["error"] = random.choice(["Permission denied", "Resource not found", "Validation error"])
+                details["error"] = random.choice(
+                    ["Permission denied", "Resource not found", "Validation error"]
+                )
 
         # Create the event
         event = AuditEvent(
@@ -163,7 +183,7 @@ def generate_sample_audit_events(audit_logger, data_ids):
             resource_id=resource_id,
             resource_type=resource_type,
             client_ip=client_ip,
-            details=details
+            details=details,
         )
 
         # Log the event
@@ -195,17 +215,14 @@ def main():
 
     print("Creating integrated dashboard...")
     dashboard = setup_audit_provenance_dashboard(
-        audit_logger=audit_logger,
-        provenance_manager=provenance_manager
+        audit_logger=audit_logger, provenance_manager=provenance_manager
     )
 
     # Create a timeline visualization showing both audit and provenance events
     print("Creating integrated timeline visualization...")
     timeline_path = os.path.join(output_dir, "integrated_timeline.png")
     dashboard.create_provenance_audit_timeline(
-        data_ids=data_ids,
-        hours=1,
-        output_file=timeline_path
+        data_ids=data_ids, hours=1, output_file=timeline_path
     )
     print(f"Integrated timeline created at: {timeline_path}")
 
@@ -213,17 +230,14 @@ def main():
     print("Creating metrics comparison visualization...")
     comparison_path = os.path.join(output_dir, "metrics_comparison.png")
     dashboard.create_provenance_metrics_comparison(
-        metrics_type='overview',
-        output_file=comparison_path
+        metrics_type="overview", output_file=comparison_path
     )
     print(f"Metrics comparison created at: {comparison_path}")
 
     # Create complete dashboard with all visualizations
     print("Creating full integrated dashboard...")
     dashboard_path = dashboard.create_integrated_dashboard(
-        output_dir=output_dir,
-        data_ids=data_ids,
-        dashboard_name="integrated_dashboard.html"
+        output_dir=output_dir, data_ids=data_ids, dashboard_name="integrated_dashboard.html"
     )
     print(f"Full dashboard created at: {dashboard_path}")
 
@@ -238,7 +252,7 @@ def main():
         format="html",
         include_lineage_graph=True,
         include_audit_events=True,
-        output_file=report_path
+        output_file=report_path,
     )
     print(f"Entity report created at: {report_path}")
 

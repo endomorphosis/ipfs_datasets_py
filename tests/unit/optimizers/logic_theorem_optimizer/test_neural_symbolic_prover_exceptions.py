@@ -41,7 +41,9 @@ def test_run_neural_prover_handles_typed_runtime_error(monkeypatch: pytest.Monke
     assert result.error_message == "neural fail"
 
 
-def test_run_neural_prover_does_not_swallow_keyboard_interrupt(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_run_neural_prover_does_not_swallow_keyboard_interrupt(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     prover = _build_prover(monkeypatch)
 
     class BrokenNeural:

@@ -16,9 +16,9 @@ from ipfs_datasets_py.mcp_server.tools.analysis_tools import analyze_data
 
 result = await analyze_data(
     data_source="my_dataset",
-    analysis_type="statistics",   # "statistics" | "patterns" | "comparison"
+    analysis_type="statistics",  # "statistics" | "patterns" | "comparison"
     columns=["age", "income"],
-    output_format="json"
+    output_format="json",
 )
 # Returns: {"mean": {...}, "std": {...}, "percentiles": {...}}
 ```

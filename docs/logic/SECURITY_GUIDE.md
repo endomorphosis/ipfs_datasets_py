@@ -93,10 +93,10 @@ User Input → Validation → Sanitization → Rate Limiting → Processing
 from ipfs_datasets_py.logic.security import InputValidator
 
 validator = InputValidator(
-    max_length=10000,        # Max 10KB input
-    max_depth=100,           # Max 100 levels nesting
-    max_quantifiers=20,      # Max 20 quantifiers
-    forbid_patterns=[        # Blocked patterns
+    max_length=10000,  # Max 10KB input
+    max_depth=100,  # Max 100 levels nesting
+    max_quantifiers=20,  # Max 20 quantifiers
+    forbid_patterns=[  # Blocked patterns
         r"<script",
         r"javascript:",
         r"eval\(",
@@ -117,9 +117,7 @@ except ValidationError as e:
 ```python
 # Reject inputs over 10KB (configurable)
 if len(text) > 10000:
-    raise InputTooLargeError(
-        f"Input {len(text)} bytes exceeds maximum 10000 bytes"
-    )
+    raise InputTooLargeError(f"Input {len(text)} bytes exceeds maximum 10000 bytes")
 ```
 
 **Formula Depth:**
@@ -131,6 +129,7 @@ def check_depth(formula, max_depth=100):
             raise ValidationError(f"Formula depth {current} exceeds maximum {max_depth}")
         for child in node.children:
             depth(child, current + 1)
+
     depth(formula.root)
 ```
 
@@ -139,27 +138,23 @@ def check_depth(formula, max_depth=100):
 # Reject formulas with too many quantifiers
 quantifiers = count_quantifiers(formula)
 if quantifiers > 20:
-    raise ValidationError(
-        f"Formula has {quantifiers} quantifiers, maximum is 20"
-    )
+    raise ValidationError(f"Formula has {quantifiers} quantifiers, maximum is 20")
 ```
 
 **Suspicious Patterns:**
 ```python
 # Detect injection attempts
 SUSPICIOUS_PATTERNS = [
-    r"<script",           # XSS attempt
-    r"javascript:",       # JavaScript injection
-    r"eval\(",           # Code execution
-    r"\$\{",             # Template injection
-    r"__import__",       # Python injection
+    r"<script",  # XSS attempt
+    r"javascript:",  # JavaScript injection
+    r"eval\(",  # Code execution
+    r"\$\{",  # Template injection
+    r"__import__",  # Python injection
 ]
 
 for pattern in SUSPICIOUS_PATTERNS:
     if re.search(pattern, user_input, re.IGNORECASE):
-        raise SuspiciousPatternError(
-            f"Input contains suspicious pattern: {pattern}"
-        )
+        raise SuspiciousPatternError(f"Input contains suspicious pattern: {pattern}")
 ```
 
 ### Custom Validation
@@ -197,15 +192,16 @@ from ipfs_datasets_py.logic.security import RateLimiter
 
 # Configure rate limiter
 limiter = RateLimiter(
-    calls=100,            # Allow 100 calls
-    period=60,            # Per 60 seconds
-    storage="memory",     # or "redis" for distributed
+    calls=100,  # Allow 100 calls
+    period=60,  # Per 60 seconds
+    storage="memory",  # or "redis" for distributed
 )
+
 
 # Apply to API endpoint
 def convert_endpoint(request):
     user_id = request.user.id
-    
+
     try:
         limiter.check_rate_limit(user_id)
     except RateLimitExceeded as e:
@@ -213,7 +209,7 @@ def convert_endpoint(request):
             "error": "Rate limit exceeded",
             "retry_after": e.retry_after_seconds,
         }, 429
-    
+
     result = converter.convert(request.body)
     return {"result": result}
 ```
@@ -267,10 +263,11 @@ class AdaptiveRateLimiter:
 ```python
 # Different limits for different endpoints
 limiters = {
-    "convert": RateLimiter(calls=100, period=60),     # 100/min for conversions
-    "prove": RateLimiter(calls=20, period=60),        # 20/min for proofs (expensive)
-    "batch": RateLimiter(calls=5, period=60),         # 5/min for batch operations
+    "convert": RateLimiter(calls=100, period=60),  # 100/min for conversions
+    "prove": RateLimiter(calls=20, period=60),  # 20/min for proofs (expensive)
+    "batch": RateLimiter(calls=5, period=60),  # 5/min for batch operations
 }
+
 
 def handle_request(endpoint, user_id, request):
     limiter = limiters[endpoint]
@@ -300,8 +297,10 @@ resource.setrlimit(resource.RLIMIT_AS, (500 * 1024 * 1024, hard))
 from ipfs_datasets_py.logic.integration import prove_formula
 import signal
 
+
 def timeout_handler(signum, frame):
     raise TimeoutError("Operation timed out")
+
 
 # Set timeout
 signal.signal(signal.SIGALRM, timeout_handler)
@@ -319,18 +318,21 @@ finally:
 from concurrent.futures import ProcessPoolExecutor
 import multiprocessing
 
+
 def isolated_prove(formula):
     """Prove in isolated process with resource limits."""
+
     def worker(formula):
         # Set resource limits in worker process
         import resource
+
         resource.setrlimit(
             resource.RLIMIT_AS,
-            (500 * 1024 * 1024, 500 * 1024 * 1024)  # 500MB limit
+            (500 * 1024 * 1024, 500 * 1024 * 1024),  # 500MB limit
         )
-        
+
         return prove_formula(formula, timeout=30)
-    
+
     with ProcessPoolExecutor(max_workers=1) as executor:
         future = executor.submit(worker, formula)
         try:
@@ -347,9 +349,9 @@ def safe_prove(formula, max_states=1000):
     """Prove with bounded state space."""
     prover = Prover()
     prover.max_states = max_states  # Limit explored states
-    prover.max_depth = 10           # Limit search depth
-    prover.max_time = 30            # Limit time
-    
+    prover.max_depth = 10  # Limit search depth
+    prover.max_time = 30  # Limit time
+
     try:
         return prover.prove(formula)
     except ResourceExhaustedError:
@@ -368,13 +370,13 @@ from ipfs_datasets_py.logic.config import LogicConfig
 
 # Secure defaults
 config = LogicConfig(
-    max_input_size=10000,           # 10KB max input
-    max_formula_depth=100,          # 100 levels max
-    max_proof_time=30,              # 30s timeout
-    enable_cache=True,              # Enable caching
-    cache_max_size=1000,            # Limit cache size
-    rate_limit_enabled=True,        # Enable rate limiting
-    rate_limit_calls=100,           # 100 calls/min
+    max_input_size=10000,  # 10KB max input
+    max_formula_depth=100,  # 100 levels max
+    max_proof_time=30,  # 30s timeout
+    enable_cache=True,  # Enable caching
+    cache_max_size=1000,  # Limit cache size
+    rate_limit_enabled=True,  # Enable rate limiting
+    rate_limit_calls=100,  # 100 calls/min
     suspicious_pattern_check=True,  # Check for suspicious patterns
 )
 
@@ -393,18 +395,18 @@ import os
 # Development: Relaxed limits
 if os.getenv("ENV") == "development":
     config = LogicConfig(
-        max_input_size=100000,       # 100KB
-        max_proof_time=300,          # 5 min
-        rate_limit_enabled=False,    # No rate limiting
+        max_input_size=100000,  # 100KB
+        max_proof_time=300,  # 5 min
+        rate_limit_enabled=False,  # No rate limiting
     )
 
 # Production: Strict limits
 elif os.getenv("ENV") == "production":
     config = LogicConfig(
-        max_input_size=10000,        # 10KB
-        max_proof_time=30,           # 30s
-        rate_limit_enabled=True,     # Rate limiting on
-        rate_limit_calls=50,         # Stricter limits
+        max_input_size=10000,  # 10KB
+        max_proof_time=30,  # 30s
+        rate_limit_enabled=True,  # Rate limiting on
+        rate_limit_calls=50,  # Stricter limits
     )
 ```
 
@@ -412,20 +414,15 @@ elif os.getenv("ENV") == "production":
 
 ```python
 # DON'T: Hardcode credentials
-config = LogicConfig(
-    redis_url="redis://password@localhost:6379/0"
-)
+config = LogicConfig(redis_url="redis://password@localhost:6379/0")
 
 # DO: Use environment variables
-config = LogicConfig(
-    redis_url=os.getenv("REDIS_URL")
-)
+config = LogicConfig(redis_url=os.getenv("REDIS_URL"))
 
 # DO: Use secrets manager
 from secrets_manager import get_secret
-config = LogicConfig(
-    redis_url=get_secret("logic/redis_url")
-)
+
+config = LogicConfig(redis_url=get_secret("logic/redis_url"))
 ```
 
 ---
@@ -568,35 +565,33 @@ from flask_limiter import Limiter
 app = Flask(__name__)
 
 # Rate limiting
-limiter = Limiter(
-    app,
-    key_func=lambda: request.remote_addr,
-    default_limits=["100 per minute"]
-)
+limiter = Limiter(app, key_func=lambda: request.remote_addr, default_limits=["100 per minute"])
+
 
 # Security headers
 @app.after_request
 def add_security_headers(response):
-    response.headers['X-Content-Type-Options'] = 'nosniff'
-    response.headers['X-Frame-Options'] = 'DENY'
-    response.headers['X-XSS-Protection'] = '1; mode=block'
-    response.headers['Content-Security-Policy'] = "default-src 'self'"
-    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Content-Security-Policy"] = "default-src 'self'"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     return response
 
+
 # Endpoint with validation
-@app.route('/convert', methods=['POST'])
+@app.route("/convert", methods=["POST"])
 @limiter.limit("50 per minute")
 def convert():
     # Validate input
     data = request.get_json()
-    if not data or 'text' not in data:
+    if not data or "text" not in data:
         return jsonify({"error": "Missing text"}), 400
-    
-    text = data['text']
+
+    text = data["text"]
     if len(text) > 10000:
         return jsonify({"error": "Input too large"}), 400
-    
+
     # Process
     try:
         validator = InputValidator()
@@ -656,6 +651,7 @@ def convert():
 import hypothesis
 from hypothesis import strategies as st
 
+
 @hypothesis.given(st.text(min_size=0, max_size=100000))
 def test_fuzz_converter(text):
     """Fuzz test converter with random input."""
@@ -677,23 +673,25 @@ def test_fuzz_converter(text):
 def test_dos_large_input():
     """Test DoS via large input."""
     large_input = "a" * 1_000_000  # 1MB
-    
+
     with pytest.raises(InputTooLargeError):
         validator.validate_text(large_input)
+
 
 def test_dos_deep_nesting():
     """Test DoS via deep nesting."""
     formula = "P"
     for _ in range(200):  # 200 levels deep
         formula = f"¬({formula})"
-    
+
     with pytest.raises(ValidationError, match="depth"):
         validator.validate_formula(formula)
+
 
 def test_injection_attempt():
     """Test code injection attempt."""
     malicious = "__import__('os').system('rm -rf /')"
-    
+
     with pytest.raises(SuspiciousPatternError):
         validator.validate_text(malicious)
 ```

@@ -72,6 +72,7 @@ def create_app():
         ) from exc
 
     from fastapi import FastAPI
+
     app = FastAPI(
         title="Logic Module API (DEPRECATED)",
         description="DEPRECATED: use MCP tools in mcp_server/tools/logic_tools/ instead.",
@@ -84,6 +85,7 @@ def create_app():
         from ipfs_datasets_py.mcp_server.tools.logic_tools.logic_capabilities_tool import (
             LogicHealthTool,
         )
+
         return await LogicHealthTool().execute({})
 
     @app.get("/capabilities")
@@ -92,6 +94,7 @@ def create_app():
         from ipfs_datasets_py.mcp_server.tools.logic_tools.logic_capabilities_tool import (
             LogicCapabilitiesTool,
         )
+
         return await LogicCapabilitiesTool().execute({})
 
     return app

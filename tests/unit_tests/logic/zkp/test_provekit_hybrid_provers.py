@@ -50,10 +50,12 @@ from __future__ import annotations
 import sys
 import types as _types
 
+
 def _stub_module(name: str) -> _types.ModuleType:
     mod = _types.ModuleType(name)
     sys.modules[name] = mod
     return mod
+
 
 for _name in (
     "ipfs_datasets_py.caching",
@@ -314,9 +316,7 @@ class TestZKPTDFOLProverProofEnvelopes:
         assert proof.metadata.get("backend") == "provekit"
         assert proof.metadata.get("proof_system") == "ProveKit-WHIR"
 
-    def test_zkp_proof_envelope_theorem_hash_deterministic(
-        self, tdfol_kb, patched_provekit
-    ):
+    def test_zkp_proof_envelope_theorem_hash_deterministic(self, tdfol_kb, patched_provekit):
         """``theorem_hash`` in the envelope matches ``theorem_hash_hex``."""
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
@@ -334,9 +334,7 @@ class TestZKPTDFOLProverProofEnvelopes:
         expected_hash = theorem_hash_hex(pi["theorem"])
         assert pi["theorem_hash"] == expected_hash
 
-    def test_zkp_proof_envelope_passes_verifier_structure(
-        self, tdfol_kb, patched_provekit
-    ):
+    def test_zkp_proof_envelope_passes_verifier_structure(self, tdfol_kb, patched_provekit):
         """The generated envelope satisfies ``ZKPVerifier._validate_proof_structure``."""
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
@@ -355,9 +353,7 @@ class TestZKPTDFOLProverProofEnvelopes:
             verifier = ZKPVerifier(backend="simulated")
         assert verifier._validate_proof_structure(proof) is True
 
-    def test_zkp_proof_envelope_required_public_input_keys(
-        self, tdfol_kb, patched_provekit
-    ):
+    def test_zkp_proof_envelope_required_public_input_keys(self, tdfol_kb, patched_provekit):
         """Public inputs contain the required canonical keys."""
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
@@ -384,9 +380,7 @@ class TestZKPTDFOLProverProofEnvelopes:
         missing = required - pi.keys()
         assert not missing, f"Public inputs missing keys: {missing}"
 
-    def test_zkp_proof_private_result_hides_axiom_text(
-        self, tdfol_kb, patched_provekit
-    ):
+    def test_zkp_proof_private_result_hides_axiom_text(self, tdfol_kb, patched_provekit):
         """With is_private=True no raw axiom text leaks into the unified result."""
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
@@ -496,9 +490,7 @@ class TestZKPCECProverProofEnvelopes:
                 zkp_fallback="standard",
             )
         goal = parse_dcec_string("q")
-        result = prover.prove_theorem(
-            goal, cec_axioms, prefer_zkp=True, private_axioms=True
-        )
+        result = prover.prove_theorem(goal, cec_axioms, prefer_zkp=True, private_axioms=True)
 
         assert result.is_proved
         proof = result.zkp_proof
@@ -506,9 +498,7 @@ class TestZKPCECProverProofEnvelopes:
         assert proof.metadata.get("backend") == "provekit"
         assert proof.metadata.get("proof_system") == "ProveKit-WHIR"
 
-    def test_zkp_proof_envelope_theorem_hash_deterministic(
-        self, cec_axioms, patched_provekit
-    ):
+    def test_zkp_proof_envelope_theorem_hash_deterministic(self, cec_axioms, patched_provekit):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
             prover = _cec_prover(
@@ -517,16 +507,12 @@ class TestZKPCECProverProofEnvelopes:
                 zkp_fallback="standard",
             )
         goal = parse_dcec_string("q")
-        result = prover.prove_theorem(
-            goal, cec_axioms, prefer_zkp=True, private_axioms=True
-        )
+        result = prover.prove_theorem(goal, cec_axioms, prefer_zkp=True, private_axioms=True)
         pi = result.zkp_proof.public_inputs
         expected = theorem_hash_hex(pi["theorem"])
         assert pi["theorem_hash"] == expected
 
-    def test_zkp_proof_envelope_passes_verifier_structure(
-        self, cec_axioms, patched_provekit
-    ):
+    def test_zkp_proof_envelope_passes_verifier_structure(self, cec_axioms, patched_provekit):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
             prover = _cec_prover(
@@ -535,17 +521,13 @@ class TestZKPCECProverProofEnvelopes:
                 zkp_fallback="standard",
             )
         goal = parse_dcec_string("q")
-        result = prover.prove_theorem(
-            goal, cec_axioms, prefer_zkp=True, private_axioms=True
-        )
+        result = prover.prove_theorem(goal, cec_axioms, prefer_zkp=True, private_axioms=True)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
             verifier = ZKPVerifier(backend="simulated")
         assert verifier._validate_proof_structure(result.zkp_proof) is True
 
-    def test_zkp_proof_private_result_hides_axioms(
-        self, cec_axioms, patched_provekit
-    ):
+    def test_zkp_proof_private_result_hides_axioms(self, cec_axioms, patched_provekit):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
             prover = _cec_prover(
@@ -554,9 +536,7 @@ class TestZKPCECProverProofEnvelopes:
                 zkp_fallback="standard",
             )
         goal = parse_dcec_string("q")
-        result = prover.prove_theorem(
-            goal, cec_axioms, prefer_zkp=True, private_axioms=True
-        )
+        result = prover.prove_theorem(goal, cec_axioms, prefer_zkp=True, private_axioms=True)
         assert result.is_private is True
         # Axiom list should be empty when private
         assert result.axioms == []
@@ -655,9 +635,7 @@ class TestZKPFLogicProverProofEnvelopes:
         assert proof.metadata.get("backend") == "provekit"
         assert proof.metadata.get("proof_system") == "ProveKit-WHIR"
 
-    def test_zkp_proof_envelope_theorem_hash_deterministic(
-        self, patched_provekit
-    ):
+    def test_zkp_proof_envelope_theorem_hash_deterministic(self, patched_provekit):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
             prover = ZKPFLogicProver(
@@ -671,9 +649,7 @@ class TestZKPFLogicProverProofEnvelopes:
         expected = theorem_hash_hex(pi["theorem"])
         assert pi["theorem_hash"] == expected
 
-    def test_zkp_proof_envelope_passes_verifier_structure(
-        self, patched_provekit
-    ):
+    def test_zkp_proof_envelope_passes_verifier_structure(self, patched_provekit):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
             prover = ZKPFLogicProver(
@@ -688,9 +664,7 @@ class TestZKPFLogicProverProofEnvelopes:
             verifier = ZKPVerifier(backend="simulated")
         assert verifier._validate_proof_structure(result.zkp_proof) is True
 
-    def test_zkp_proof_private_ontology_hides_contents(
-        self, patched_provekit
-    ):
+    def test_zkp_proof_private_ontology_hides_contents(self, patched_provekit):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
             prover = ZKPFLogicProver(
@@ -700,9 +674,7 @@ class TestZKPFLogicProverProofEnvelopes:
         prover.add_class(FLogicClass("Dog", superclasses=["Animal"]))
         prover.add_frame(FLogicFrame("rex", isa="Dog"))
 
-        result = prover.query(
-            "?X : Dog", prefer_zkp=True, private_ontology=True
-        )
+        result = prover.query("?X : Dog", prefer_zkp=True, private_ontology=True)
         assert result.is_private is True
 
 
@@ -783,8 +755,7 @@ class TestProveKitEnvelopeConsistency:
         for name, proof in results:
             assert proof is not None, f"{name} produced no proof"
             assert proof.metadata.get("backend") == "provekit", (
-                f"{name}: expected backend='provekit', got "
-                f"{proof.metadata.get('backend')!r}"
+                f"{name}: expected backend='provekit', got {proof.metadata.get('backend')!r}"
             )
             assert proof.metadata.get("proof_system") == "ProveKit-WHIR", (
                 f"{name}: expected proof_system='ProveKit-WHIR', got "

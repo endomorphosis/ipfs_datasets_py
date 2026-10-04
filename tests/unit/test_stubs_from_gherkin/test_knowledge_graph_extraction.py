@@ -4,11 +4,13 @@ Test stubs for knowledge_graph_extraction module.
 Feature: Knowledge Graph Extraction
   Extract and construct knowledge graphs from text
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def a_constructed_knowledge_graph():
@@ -83,6 +85,7 @@ def text_with_temporal_expressions():
 
 
 # Test scenarios
+
 
 def test_extract_entities_from_text():
     """
@@ -195,6 +198,7 @@ def test_export_knowledge_graph():
 
 
 # Step definitions
+
 
 # Given steps
 @given("a constructed knowledge graph")
@@ -393,4 +397,3 @@ def the_graph_is_serialized_to_the_format():
     """Step: Then the graph is serialized to the format"""
     # TODO: Implement step
     pass
-

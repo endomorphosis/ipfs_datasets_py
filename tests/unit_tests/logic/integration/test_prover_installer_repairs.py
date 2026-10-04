@@ -43,10 +43,7 @@ def test_packaged_pip_install_retries_user_install_after_system_failure(monkeypa
 
 def test_setup_installer_accepts_symbolicai_flag(monkeypatch) -> None:
     installer_path = (
-        Path(__file__).resolve().parents[4]
-        / "scripts"
-        / "setup"
-        / "ipfs_prover_installer.py"
+        Path(__file__).resolve().parents[4] / "scripts" / "setup" / "ipfs_prover_installer.py"
     )
     spec = importlib.util.spec_from_file_location("ipfs_prover_installer_test", installer_path)
     assert spec is not None and spec.loader is not None

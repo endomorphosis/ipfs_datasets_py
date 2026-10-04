@@ -51,21 +51,26 @@ class ResolutionRule(InferenceRule):
 
     def _is_negation_of(self, f1: Formula, f2: Formula) -> bool:
         """Check if f1 is the negation of f2."""
-        if (isinstance(f1, ConnectiveFormula) and
-                f1.connective == LogicalConnective.NOT and
-                len(f1.formulas) == 1):
+        if (
+            isinstance(f1, ConnectiveFormula)
+            and f1.connective == LogicalConnective.NOT
+            and len(f1.formulas) == 1
+        ):
             return f1.formulas[0] == f2
         return False
 
     def can_apply(self, formulas: List[Formula]) -> bool:
         """Check if resolution can be applied to any pair of clauses."""
-        clauses = [f for f in formulas if isinstance(f, ConnectiveFormula)
-                   and f.connective == LogicalConnective.OR]
+        clauses = [
+            f
+            for f in formulas
+            if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.OR
+        ]
         if len(clauses) < 2:
             return False
         for i, c1 in enumerate(clauses):
             d1 = self._get_disjuncts(c1) or []
-            for c2 in clauses[i + 1:]:
+            for c2 in clauses[i + 1 :]:
                 d2 = self._get_disjuncts(c2) or []
                 for lit1 in d1:
                     for lit2 in d2:
@@ -76,27 +81,29 @@ class ResolutionRule(InferenceRule):
     def apply(self, formulas: List[Formula]) -> List[Formula]:
         """Apply resolution to produce resolvent clauses."""
         results: List[Formula] = []
-        clauses = [f for f in formulas if isinstance(f, ConnectiveFormula)
-                   and f.connective == LogicalConnective.OR]
+        clauses = [
+            f
+            for f in formulas
+            if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.OR
+        ]
         for i, c1 in enumerate(clauses):
             d1 = self._get_disjuncts(c1) or []
-            for c2 in clauses[i + 1:]:
+            for c2 in clauses[i + 1 :]:
                 d2 = self._get_disjuncts(c2) or []
                 for j, lit1 in enumerate(d1):
                     for k, lit2 in enumerate(d2):
                         if self._is_negation_of(lit1, lit2) or self._is_negation_of(lit2, lit1):
                             # Create resolvent: (d1 - lit1) ∨ (d2 - lit2)
-                            remaining = ([f for idx, f in enumerate(d1) if idx != j] +
-                                         [f for idx, f in enumerate(d2) if idx != k])
+                            remaining = [f for idx, f in enumerate(d1) if idx != j] + [
+                                f for idx, f in enumerate(d2) if idx != k
+                            ]
                             if len(remaining) == 0:
                                 # Empty clause — contradiction found
                                 pass
                             elif len(remaining) == 1:
                                 results.append(remaining[0])
                             else:
-                                results.append(
-                                    ConnectiveFormula(LogicalConnective.OR, remaining)
-                                )
+                                results.append(ConnectiveFormula(LogicalConnective.OR, remaining))
         return results
 
 
@@ -123,33 +130,43 @@ class UnitResolutionRule(InferenceRule):
             if isinstance(unit, ConnectiveFormula) and unit.connective == LogicalConnective.OR:
                 continue  # Not a unit literal
             for clause in formulas:
-                if (isinstance(clause, ConnectiveFormula) and
-                        clause.connective == LogicalConnective.OR):
+                if (
+                    isinstance(clause, ConnectiveFormula)
+                    and clause.connective == LogicalConnective.OR
+                ):
                     for lit in clause.formulas:
-                        if (isinstance(lit, ConnectiveFormula) and
-                                lit.connective == LogicalConnective.NOT and
-                                len(lit.formulas) == 1 and
-                                lit.formulas[0] == unit):
+                        if (
+                            isinstance(lit, ConnectiveFormula)
+                            and lit.connective == LogicalConnective.NOT
+                            and len(lit.formulas) == 1
+                            and lit.formulas[0] == unit
+                        ):
                             return True
         return False
 
     def apply(self, formulas: List[Formula]) -> List[Formula]:
         """Apply unit resolution."""
         results: List[Formula] = []
-        units = [f for f in formulas
-                 if not (isinstance(f, ConnectiveFormula) and
-                         f.connective == LogicalConnective.OR)]
+        units = [
+            f
+            for f in formulas
+            if not (isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.OR)
+        ]
         for unit in units:
             for clause in formulas:
-                if (isinstance(clause, ConnectiveFormula) and
-                        clause.connective == LogicalConnective.OR):
+                if (
+                    isinstance(clause, ConnectiveFormula)
+                    and clause.connective == LogicalConnective.OR
+                ):
                     remaining = []
                     resolved = False
                     for lit in clause.formulas:
-                        if (isinstance(lit, ConnectiveFormula) and
-                                lit.connective == LogicalConnective.NOT and
-                                len(lit.formulas) == 1 and
-                                lit.formulas[0] == unit):
+                        if (
+                            isinstance(lit, ConnectiveFormula)
+                            and lit.connective == LogicalConnective.NOT
+                            and len(lit.formulas) == 1
+                            and lit.formulas[0] == unit
+                        ):
                             resolved = True
                         else:
                             remaining.append(lit)
@@ -157,9 +174,7 @@ class UnitResolutionRule(InferenceRule):
                         if len(remaining) == 1:
                             results.append(remaining[0])
                         elif len(remaining) > 1:
-                            results.append(
-                                ConnectiveFormula(LogicalConnective.OR, remaining)
-                            )
+                            results.append(ConnectiveFormula(LogicalConnective.OR, remaining))
         return results
 
 
@@ -181,8 +196,10 @@ class FactoringRule(InferenceRule):
     def can_apply(self, formulas: List[Formula]) -> bool:
         """Check if any clause has duplicate literals."""
         for formula in formulas:
-            if (isinstance(formula, ConnectiveFormula) and
-                    formula.connective == LogicalConnective.OR):
+            if (
+                isinstance(formula, ConnectiveFormula)
+                and formula.connective == LogicalConnective.OR
+            ):
                 seen = []
                 for lit in formula.formulas:
                     if lit in seen:
@@ -194,8 +211,10 @@ class FactoringRule(InferenceRule):
         """Apply factoring to remove duplicate literals."""
         results: List[Formula] = []
         for formula in formulas:
-            if (isinstance(formula, ConnectiveFormula) and
-                    formula.connective == LogicalConnective.OR):
+            if (
+                isinstance(formula, ConnectiveFormula)
+                and formula.connective == LogicalConnective.OR
+            ):
                 seen: List[Formula] = []
                 changed = False
                 for lit in formula.formulas:
@@ -232,17 +251,23 @@ class SubsumptionRule(InferenceRule):
         """Check if c1 subsumes c2 (c1 ⊆ c2 as literal sets)."""
         if c1 == c2:
             return False  # Same clause, no simplification
-        d1 = (list(c1.formulas) if isinstance(c1, ConnectiveFormula) and
-              c1.connective == LogicalConnective.OR else [c1])
-        d2 = (list(c2.formulas) if isinstance(c2, ConnectiveFormula) and
-              c2.connective == LogicalConnective.OR else [c2])
+        d1 = (
+            list(c1.formulas)
+            if isinstance(c1, ConnectiveFormula) and c1.connective == LogicalConnective.OR
+            else [c1]
+        )
+        d2 = (
+            list(c2.formulas)
+            if isinstance(c2, ConnectiveFormula) and c2.connective == LogicalConnective.OR
+            else [c2]
+        )
         # c1 subsumes c2 if every literal in c1 appears in c2
         return all(any(l1 == l2 for l2 in d2) for l1 in d1) and len(d1) < len(d2)
 
     def can_apply(self, formulas: List[Formula]) -> bool:
         """Check if any clause is subsumed by another."""
         for i, c1 in enumerate(formulas):
-            for c2 in formulas[i + 1:]:
+            for c2 in formulas[i + 1 :]:
                 if self._clause_subsumes(c1, c2) or self._clause_subsumes(c2, c1):
                     return True
         return False
@@ -281,23 +306,26 @@ class CaseAnalysisRule(InferenceRule):
     def name(self) -> str:
         return "CaseAnalysis"
 
-    def _find_implication(self, formulas: List[Formula],
-                          antecedent: Formula) -> Optional[Formula]:
+    def _find_implication(self, formulas: List[Formula], antecedent: Formula) -> Optional[Formula]:
         """Find P→R in formulas where antecedent matches P."""
         for f in formulas:
-            if (isinstance(f, ConnectiveFormula) and
-                    f.connective == LogicalConnective.IMPLIES and
-                    len(f.formulas) == 2 and
-                    f.formulas[0] == antecedent):
+            if (
+                isinstance(f, ConnectiveFormula)
+                and f.connective == LogicalConnective.IMPLIES
+                and len(f.formulas) == 2
+                and f.formulas[0] == antecedent
+            ):
                 return f.formulas[1]
         return None
 
     def can_apply(self, formulas: List[Formula]) -> bool:
         """Check for P∨Q, P→R, Q→R pattern."""
         for f in formulas:
-            if (isinstance(f, ConnectiveFormula) and
-                    f.connective == LogicalConnective.OR and
-                    len(f.formulas) >= 2):
+            if (
+                isinstance(f, ConnectiveFormula)
+                and f.connective == LogicalConnective.OR
+                and len(f.formulas) >= 2
+            ):
                 p = f.formulas[0]
                 q = f.formulas[1]
                 r1 = self._find_implication(formulas, p)
@@ -310,9 +338,11 @@ class CaseAnalysisRule(InferenceRule):
         """Apply case analysis to derive R from P∨Q, P→R, Q→R."""
         results: List[Formula] = []
         for f in formulas:
-            if (isinstance(f, ConnectiveFormula) and
-                    f.connective == LogicalConnective.OR and
-                    len(f.formulas) >= 2):
+            if (
+                isinstance(f, ConnectiveFormula)
+                and f.connective == LogicalConnective.OR
+                and len(f.formulas) >= 2
+            ):
                 p = f.formulas[0]
                 q = f.formulas[1]
                 r1 = self._find_implication(formulas, p)
@@ -340,21 +370,23 @@ class ProofByContradictionRule(InferenceRule):
     def name(self) -> str:
         return "ProofByContradiction"
 
-    def _find_contradicting_formulas(
-        self, formulas: List[Formula]
-    ) -> Optional[Formula]:
+    def _find_contradicting_formulas(self, formulas: List[Formula]) -> Optional[Formula]:
         """Find a formula and its negation."""
         for i, f1 in enumerate(formulas):
-            for f2 in formulas[i + 1:]:
-                if (isinstance(f2, ConnectiveFormula) and
-                        f2.connective == LogicalConnective.NOT and
-                        len(f2.formulas) == 1 and
-                        f2.formulas[0] == f1):
+            for f2 in formulas[i + 1 :]:
+                if (
+                    isinstance(f2, ConnectiveFormula)
+                    and f2.connective == LogicalConnective.NOT
+                    and len(f2.formulas) == 1
+                    and f2.formulas[0] == f1
+                ):
                     return f1
-                if (isinstance(f1, ConnectiveFormula) and
-                        f1.connective == LogicalConnective.NOT and
-                        len(f1.formulas) == 1 and
-                        f1.formulas[0] == f2):
+                if (
+                    isinstance(f1, ConnectiveFormula)
+                    and f1.connective == LogicalConnective.NOT
+                    and len(f1.formulas) == 1
+                    and f1.formulas[0] == f2
+                ):
                     return f2
         return None
 
@@ -371,10 +403,10 @@ class ProofByContradictionRule(InferenceRule):
 
 
 __all__ = [
-    'ResolutionRule',
-    'UnitResolutionRule',
-    'FactoringRule',
-    'SubsumptionRule',
-    'CaseAnalysisRule',
-    'ProofByContradictionRule',
+    "ResolutionRule",
+    "UnitResolutionRule",
+    "FactoringRule",
+    "SubsumptionRule",
+    "CaseAnalysisRule",
+    "ProofByContradictionRule",
 ]

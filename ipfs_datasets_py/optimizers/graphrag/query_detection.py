@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class QueryDetector:
     """
     Analyzes query parameters to detect graph types and query patterns.
-    
+
     Provides fast heuristic-based detection for graph types (Wikipedia, IPLD, mixed, general),
     query intent classification (fact verification vs. exploratory), entity type detection,
     and complexity estimation.
@@ -121,7 +121,9 @@ class QueryDetector:
             if any(kw in query_text for kw in ["wikipedia", "wikidata", "dbpedia"]):
                 return "wikipedia"
             # Check for IPLD markers
-            elif any(kw in query_text for kw in ["ipld", "content-addressed", "cid", "dag", "ipfs"]):
+            elif any(
+                kw in query_text for kw in ["ipld", "content-addressed", "cid", "dag", "ipfs"]
+            ):
                 return "ipld"
 
         # Fallback: check entity_ids format
@@ -151,16 +153,32 @@ class QueryDetector:
         query_str = str(query).lower()
 
         # Check for explicit fact verification signals
-        if any(term in query_str for term in ["verify", "fact-check", "fact check", "is it true", "confirm"]):
+        if any(
+            term in query_str
+            for term in ["verify", "fact-check", "fact check", "is it true", "confirm"]
+        ):
             return True
 
         # Check query text for fact verification language
         if "query_text" in query:
             query_text = str(query["query_text"]).lower()
             fact_patterns = [
-                "is ", "does ", "did ", "has ", "can ", "will ", "should ",
-                "is it true", "is it correct", "verify", "confirm",
-                "check if", "find if", "determine", "was ", "were ",
+                "is ",
+                "does ",
+                "did ",
+                "has ",
+                "can ",
+                "will ",
+                "should ",
+                "is it true",
+                "is it correct",
+                "verify",
+                "confirm",
+                "check if",
+                "find if",
+                "determine",
+                "was ",
+                "were ",
             ]
 
             if any(pattern in query_text for pattern in fact_patterns):
@@ -201,16 +219,34 @@ class QueryDetector:
         if "query_text" in query:
             query_text = str(query["query_text"]).lower()
             exploratory_patterns = [
-                "what are", "tell me about", "explain", "describe", "overview of",
-                "introduction to", "discover", "explore", "information about",
-                "learn about", "show me", "examples of",
-                "types of", "kinds of", "ways to", "methods of", "approaches to",
+                "what are",
+                "tell me about",
+                "explain",
+                "describe",
+                "overview of",
+                "introduction to",
+                "discover",
+                "explore",
+                "information about",
+                "learn about",
+                "show me",
+                "examples of",
+                "types of",
+                "kinds of",
+                "ways to",
+                "methods of",
+                "approaches to",
             ]
 
             # Check for exploratory patterns but not entity-specific searches
-            has_entity_reference = any(phrase in query_text for phrase in ["find entity", "get entity", "search for entity"])
-            
-            if not has_entity_reference and any(pattern in query_text for pattern in exploratory_patterns):
+            has_entity_reference = any(
+                phrase in query_text
+                for phrase in ["find entity", "get entity", "search for entity"]
+            )
+
+            if not has_entity_reference and any(
+                pattern in query_text for pattern in exploratory_patterns
+            ):
                 return True
 
             # Check for broad topic indicators (open-ended questions starting with what/how/why)
@@ -224,7 +260,7 @@ class QueryDetector:
             max_depth = query["traversal"].get("max_depth", 0)
             has_specific_target = "target_entity" in query and query.get("target_entity")
             has_entity_ids = "entity_ids" in query and query.get("entity_ids")
-            
+
             if max_depth > 3 and not has_specific_target and not has_entity_ids:
                 # Deep traversal without specific target constraints often indicates exploration
                 return True
@@ -239,7 +275,9 @@ class QueryDetector:
         return False
 
     @staticmethod
-    def detect_entity_types(query_text: str, predefined_types: Optional[List[str]] = None) -> List[str]:
+    def detect_entity_types(
+        query_text: str, predefined_types: Optional[List[str]] = None
+    ) -> List[str]:
         """
         Detect likely entity types from query text.
 
@@ -267,45 +305,142 @@ class QueryDetector:
 
         # Person detection patterns
         person_patterns = [
-            "who", "person", "people", "author", "writer", "creator", "founder",
-            "born", "died", "age", "biography", "invented", "discovered",
-            "president", "king", "queen", "actor", "actress", "director",
-            "scientist", "artist", "musician", "politician", "athlete",
+            "who",
+            "person",
+            "people",
+            "author",
+            "writer",
+            "creator",
+            "founder",
+            "born",
+            "died",
+            "age",
+            "biography",
+            "invented",
+            "discovered",
+            "president",
+            "king",
+            "queen",
+            "actor",
+            "actress",
+            "director",
+            "scientist",
+            "artist",
+            "musician",
+            "politician",
+            "athlete",
         ]
 
         # Organization detection patterns
         organization_patterns = [
-            "company", "organization", "corporation", "business", "firm", "agency",
-            "university", "school", "college", "institution", "government", "team",
-            "founded", "headquarters", "ceo", "employees", "products", "services",
+            "company",
+            "organization",
+            "corporation",
+            "business",
+            "firm",
+            "agency",
+            "university",
+            "school",
+            "college",
+            "institution",
+            "government",
+            "team",
+            "founded",
+            "headquarters",
+            "ceo",
+            "employees",
+            "products",
+            "services",
         ]
 
         # Location detection patterns
         location_patterns = [
-            "where", "place", "location", "country", "city", "state", "region",
-            "continent", "area", "located", "capital", "geography", "landmark",
-            "mountain", "river", "ocean", "lake", "island", "territory", "border",
+            "where",
+            "place",
+            "location",
+            "country",
+            "city",
+            "state",
+            "region",
+            "continent",
+            "area",
+            "located",
+            "capital",
+            "geography",
+            "landmark",
+            "mountain",
+            "river",
+            "ocean",
+            "lake",
+            "island",
+            "territory",
+            "border",
         ]
 
         # Concept detection patterns
         concept_patterns = [
-            "what", "concept", "theory", "idea", "principle", "definition",
-            "meaning", "philosophy", "method", "system", "field", "discipline",
-            "explain", "describe", "define", "understand", "how does", "how is",
+            "what",
+            "concept",
+            "theory",
+            "idea",
+            "principle",
+            "definition",
+            "meaning",
+            "philosophy",
+            "method",
+            "system",
+            "field",
+            "discipline",
+            "explain",
+            "describe",
+            "define",
+            "understand",
+            "how does",
+            "how is",
         ]
 
         # Event detection patterns
         event_patterns = [
-            "when", "event", "happened", "occurred", "took place", "date",
-            "history", "war", "battle", "conference", "meeting", "election",
-            "ceremony", "festival", "disaster", "revolution", "movement",
+            "when",
+            "event",
+            "happened",
+            "occurred",
+            "took place",
+            "date",
+            "history",
+            "war",
+            "battle",
+            "conference",
+            "meeting",
+            "election",
+            "ceremony",
+            "festival",
+            "disaster",
+            "revolution",
+            "movement",
         ]
 
         # Product detection patterns
         product_patterns = [
-            "product", "device", "technology", "tool", "software", "hardware",
-            "machine", "vehicle", "book", "album", "movie", "film", "game",
-            "service", "brand", "model", "version", "release", "launched",
+            "product",
+            "device",
+            "technology",
+            "tool",
+            "software",
+            "hardware",
+            "machine",
+            "vehicle",
+            "book",
+            "album",
+            "movie",
+            "film",
+            "game",
+            "service",
+            "brand",
+            "model",
+            "version",
+            "release",
+            "launched",
         ]
 
         # Check for patterns in query

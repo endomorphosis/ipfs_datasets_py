@@ -65,22 +65,24 @@ In the "State Laws Dataset" tab:
 import asyncio
 from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import scrape_recap_archive
 
+
 async def scrape_9th_circuit():
     result = await scrape_recap_archive(
-        courts=['ca9'],              # 9th Circuit Court of Appeals
-        document_types=['opinion'],   # Only opinions
-        filed_after='2024-01-01',    # Last year
-        filed_before='2024-12-31',
-        include_text=True,            # Include full text
-        max_documents=50,             # Limit for testing
-        job_id='test_9th_circuit'    # For resume capability
+        courts=["ca9"],  # 9th Circuit Court of Appeals
+        document_types=["opinion"],  # Only opinions
+        filed_after="2024-01-01",  # Last year
+        filed_before="2024-12-31",
+        include_text=True,  # Include full text
+        max_documents=50,  # Limit for testing
+        job_id="test_9th_circuit",  # For resume capability
     )
-    
+
     print(f"Status: {result['status']}")
     print(f"Documents: {result['metadata']['documents_count']}")
     print(f"Job ID: {result['job_id']}")
-    
+
     return result
+
 
 # Run it
 result = asyncio.run(scrape_9th_circuit())
@@ -92,21 +94,19 @@ result = asyncio.run(scrape_9th_circuit())
 import asyncio
 from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import search_recap_documents
 
+
 async def search_copyright_cases():
     result = await search_recap_documents(
-        query='copyright',
-        court='ca9',
-        document_type='opinion',
-        filed_after='2023-01-01',
-        limit=10
+        query="copyright", court="ca9", document_type="opinion", filed_after="2023-01-01", limit=10
     )
-    
+
     print(f"Found {result['count']} documents")
-    
-    for doc in result['documents']:
+
+    for doc in result["documents"]:
         print(f"- {doc['case_name']} ({doc['date_filed']})")
-    
+
     return result
+
 
 result = asyncio.run(search_copyright_cases())
 ```
@@ -117,18 +117,17 @@ result = asyncio.run(search_copyright_cases())
 import asyncio
 from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import scrape_state_laws
 
+
 async def scrape_california_laws():
     result = await scrape_state_laws(
-        states=['CA'],
-        legal_areas=['criminal', 'civil'],
-        output_format='json',
-        max_statutes=100
+        states=["CA"], legal_areas=["criminal", "civil"], output_format="json", max_statutes=100
     )
-    
+
     print(f"Status: {result['status']}")
     print(f"Statutes: {result['metadata']['statutes_count']}")
-    
+
     return result
+
 
 result = asyncio.run(scrape_california_laws())
 ```
@@ -139,30 +138,31 @@ result = asyncio.run(scrape_california_laws())
 import asyncio
 from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import scrape_recap_archive
 
+
 async def resume_large_job():
     # First run (gets interrupted)
     try:
         result = await scrape_recap_archive(
-            courts=['ca9', 'ca2', 'cadc'],
-            document_types=['opinion'],
+            courts=["ca9", "ca2", "cadc"],
+            document_types=["opinion"],
             max_documents=1000,
-            job_id='large_federal_dataset',  # Important for resume!
-            resume=False
+            job_id="large_federal_dataset",  # Important for resume!
+            resume=False,
         )
     except KeyboardInterrupt:
         print("Job interrupted! Can resume later...")
-    
+
     # Resume later
     result = await scrape_recap_archive(
-        courts=['ca9', 'ca2', 'cadc'],
-        document_types=['opinion'],
+        courts=["ca9", "ca2", "cadc"],
+        document_types=["opinion"],
         max_documents=1000,
-        job_id='large_federal_dataset',  # Same job_id
-        resume=True                       # Resume from saved state
+        job_id="large_federal_dataset",  # Same job_id
+        resume=True,  # Resume from saved state
     )
-    
+
     print(f"Completed: {result['metadata']['documents_count']} documents")
-    
+
     return result
 ```
 
@@ -353,7 +353,7 @@ for job in jobs:
 ```python
 from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.state_manager import ScrapingState
 
-state = ScrapingState('my_job_id')
+state = ScrapingState("my_job_id")
 if state.load():
     metadata = state.get_metadata()
     print(f"Status: {metadata['status']}")
@@ -422,7 +422,8 @@ ls -la ~/.ipfs_datasets/scraping_state/
 Load state manually:
 ```python
 from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.state_manager import ScrapingState
-state = ScrapingState('your_job_id')
+
+state = ScrapingState("your_job_id")
 success = state.load()
 print(f"Loaded: {success}")
 if success:
@@ -451,13 +452,26 @@ if success:
 ```python
 # Scrape all Circuit Courts for the last 6 months
 result = await scrape_recap_archive(
-    courts=['ca1', 'ca2', 'ca3', 'ca4', 'ca5', 'ca6', 
-            'ca7', 'ca8', 'ca9', 'ca10', 'ca11', 'cadc', 'cafc'],
-    document_types=['opinion'],
-    filed_after='2023-07-01',
-    filed_before='2024-01-01',
+    courts=[
+        "ca1",
+        "ca2",
+        "ca3",
+        "ca4",
+        "ca5",
+        "ca6",
+        "ca7",
+        "ca8",
+        "ca9",
+        "ca10",
+        "ca11",
+        "cadc",
+        "cafc",
+    ],
+    document_types=["opinion"],
+    filed_after="2023-07-01",
+    filed_before="2024-01-01",
     include_text=True,
-    job_id='federal_circuits_6mo'
+    job_id="federal_circuits_6mo",
 )
 ```
 
@@ -476,37 +490,27 @@ python -m ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.state_laws_cron 
 ```python
 # Scrape Federal Circuit (patent appeals)
 recap_result = await scrape_recap_archive(
-    courts=['cafc'],  # Federal Circuit
-    document_types=['opinion'],
-    filed_after='2020-01-01',
+    courts=["cafc"],  # Federal Circuit
+    document_types=["opinion"],
+    filed_after="2020-01-01",
     include_text=True,
-    job_id='patent_appeals'
+    job_id="patent_appeals",
 )
 
 # Scrape US Code Title 35 (Patents)
-usc_result = await scrape_us_code(
-    titles=[35],
-    include_metadata=True
-)
+usc_result = await scrape_us_code(titles=[35], include_metadata=True)
 ```
 
 ### Use Case 4: Research Specific Case
 
 ```python
 # Search for a case
-result = await search_recap_documents(
-    case_name='Smith v. Jones',
-    court='ca9',
-    limit=10
-)
+result = await search_recap_documents(case_name="Smith v. Jones", court="ca9", limit=10)
 
 # Get full document
-if result['documents']:
-    doc_id = result['documents'][0]['id']
-    doc = await get_recap_document(
-        document_id=str(doc_id),
-        include_text=True
-    )
+if result["documents"]:
+    doc_id = result["documents"][0]["id"]
+    doc = await get_recap_document(document_id=str(doc_id), include_text=True)
 ```
 
 That's it! The RECAP Archive and State Laws dataset builder is now fully functional and ready to use.

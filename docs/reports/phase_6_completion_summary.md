@@ -75,14 +75,14 @@ After Phase 6:     62% [█████████████████░�
 from ipfs_datasets_py.processors.file_converter import ArchiveHandler, extract_archive
 
 # Simple extraction
-result = await extract_archive('documents.zip')
+result = await extract_archive("documents.zip")
 for file in result.extracted_files:
     # Process each file...
     pass
 
 # Advanced usage
 handler = ArchiveHandler(max_depth=3, max_size_mb=1000)
-result = await handler.extract('nested.tar.gz', recursive=True)
+result = await handler.extract("nested.tar.gz", recursive=True)
 ```
 
 ### Phase 6.2: Additional Office Formats
@@ -108,14 +108,14 @@ result = await handler.extract('nested.tar.gz', recursive=True)
 ```python
 from ipfs_datasets_py.processors.file_converter import FileConverter
 
-converter = FileConverter(backend='native')
+converter = FileConverter(backend="native")
 
 # PowerPoint
-result = await converter.convert('presentation.pptx')
+result = await converter.convert("presentation.pptx")
 print(f"Slides: {result.metadata.get('slides')}")
 
 # EPUB
-result = await converter.convert('book.epub')
+result = await converter.convert("book.epub")
 print(f"Chapters: {result.metadata.get('chapters')}")
 ```
 
@@ -142,18 +142,18 @@ print(f"Chapters: {result.metadata.get('chapters')}")
 from ipfs_datasets_py.processors.file_converter import URLHandler, download_from_url
 
 # Simple download
-result = await download_from_url('https://example.com/doc.pdf')
+result = await download_from_url("https://example.com/doc.pdf")
 
 # Advanced usage
 handler = URLHandler(timeout=30, max_size_mb=100)
-result = await handler.download('https://example.com/file.pdf')
+result = await handler.download("https://example.com/file.pdf")
 if result.success:
     print(f"Downloaded: {result.local_path}")
     print(f"Content-type: {result.content_type}")
 
 # FileConverter integration
-converter = FileConverter(backend='native')
-result = await converter.convert('https://example.com/paper.pdf')
+converter = FileConverter(backend="native")
+result = await converter.convert("https://example.com/paper.pdf")
 ```
 
 ### Phase 6.4: CLI Interface
@@ -352,37 +352,37 @@ from ipfs_datasets_py.processors.file_converter import (
     FileConverter,
     UniversalKnowledgeGraphPipeline,
     TextSummarizationPipeline,
-    VectorEmbeddingPipeline
+    VectorEmbeddingPipeline,
 )
 
 # Initialize pipelines
-converter = FileConverter(backend='native')
+converter = FileConverter(backend="native")
 kg_pipeline = UniversalKnowledgeGraphPipeline(enable_ipfs=True)
 summary_pipeline = TextSummarizationPipeline()
 vector_pipeline = VectorEmbeddingPipeline(enable_ipfs=True, enable_acceleration=True)
 
 # Works with files, archives, URLs
 sources = [
-    'document.pdf',                    # File
-    'presentation.pptx',               # Office format
-    'data.xlsx',                       # Spreadsheet
-    'archive.zip',                     # Archive
-    'https://example.com/paper.pdf'   # URL
+    "document.pdf",  # File
+    "presentation.pptx",  # Office format
+    "data.xlsx",  # Spreadsheet
+    "archive.zip",  # Archive
+    "https://example.com/paper.pdf",  # URL
 ]
 
 # Process all sources
 for source in sources:
     # Text extraction
     text = await converter.convert(source, extract_archives=True)
-    
+
     # Knowledge graph
     kg = await kg_pipeline.process(source)
     print(f"Entities: {len(kg.entities)}, Relations: {len(kg.relationships)}")
-    
+
     # Summary
     summary = await summary_pipeline.summarize(source)
     print(f"Summary: {summary.summary[:100]}...")
-    
+
     # Embeddings
     embeddings = await vector_pipeline.process(source)
     print(f"Embeddings: {len(embeddings.embeddings)}")

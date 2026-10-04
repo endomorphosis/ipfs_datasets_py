@@ -40,7 +40,14 @@ async def test_get_recap_document_uses_api_token_from_environment(monkeypatch):
         )
 
     monkeypatch.setenv("COURTLISTENER_API_TOKEN", "token-from-env")
-    monkeypatch.setitem(sys.modules, "requests", SimpleNamespace(get=_fake_get, exceptions=SimpleNamespace(Timeout=RuntimeError, RequestException=RuntimeError)))
+    monkeypatch.setitem(
+        sys.modules,
+        "requests",
+        SimpleNamespace(
+            get=_fake_get,
+            exceptions=SimpleNamespace(Timeout=RuntimeError, RequestException=RuntimeError),
+        ),
+    )
 
     result = await recap_mod.get_recap_document("123")
 
@@ -55,7 +62,7 @@ async def test_get_recap_document_backfills_case_and_court_from_docket(monkeypat
 
     def _fake_get(url, headers=None, timeout=30):  # noqa: ANN001
         calls.append((url, dict(headers or {})))
-        if url.endswith('/recap-documents/11099071/'):
+        if url.endswith("/recap-documents/11099071/"):
             return _MockResponse(
                 {
                     "docket": None,
@@ -72,7 +79,7 @@ async def test_get_recap_document_backfills_case_and_court_from_docket(monkeypat
                     "pacer_doc_id": "126012781351",
                 }
             )
-        if url.endswith('/dockets/4521892/'):
+        if url.endswith("/dockets/4521892/"):
             return _MockResponse(
                 {
                     "id": 4521892,
@@ -84,7 +91,7 @@ async def test_get_recap_document_backfills_case_and_court_from_docket(monkeypat
                     "absolute_url": "/docket/4521892/old-carco-llc-fka-chrysler-llc/",
                 }
             )
-        if url.endswith('/courts/nysb/'):
+        if url.endswith("/courts/nysb/"):
             return _MockResponse(
                 {
                     "id": "nysb",
@@ -95,7 +102,14 @@ async def test_get_recap_document_backfills_case_and_court_from_docket(monkeypat
         raise AssertionError(f"Unexpected URL: {url}")
 
     monkeypatch.setenv("COURTLISTENER_API_TOKEN", "token-from-env")
-    monkeypatch.setitem(sys.modules, "requests", SimpleNamespace(get=_fake_get, exceptions=SimpleNamespace(Timeout=RuntimeError, RequestException=RuntimeError)))
+    monkeypatch.setitem(
+        sys.modules,
+        "requests",
+        SimpleNamespace(
+            get=_fake_get,
+            exceptions=SimpleNamespace(Timeout=RuntimeError, RequestException=RuntimeError),
+        ),
+    )
 
     result = await recap_mod.get_recap_document("11099071")
 
@@ -131,7 +145,9 @@ async def test_scrape_recap_archive_threads_api_token_and_uses_package_scraping_
             "count": 1,
         }
 
-    async def _fake_get_recap_document(document_id, include_text=True, include_metadata=True, api_token=None):
+    async def _fake_get_recap_document(
+        document_id, include_text=True, include_metadata=True, api_token=None
+    ):
         detail_calls.append(
             {
                 "document_id": document_id,

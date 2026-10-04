@@ -29,6 +29,7 @@ from unittest.mock import MagicMock, patch, PropertyMock
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_mock_formula(str_rep: str = "P(a)") -> MagicMock:
     """Create a mock Formula object with a string representation."""
     f = MagicMock()
@@ -50,6 +51,7 @@ def _make_proof_result(proved: bool = True) -> MagicMock:
 # symbolic/__init__.py  — lines 15-16, 25-26  (ImportError branches)
 # ===========================================================================
 
+
 class TestSymbolicInitImportError:
     """GIVEN ImportError on optional imports, WHEN loading symbolic/__init__,
     THEN NeurosymbolicGraphRAG is set to None gracefully."""
@@ -57,6 +59,7 @@ class TestSymbolicInitImportError:
     def test_logic_primitives_import_fallback(self):
         """GIVEN LogicPrimitives unavailable, WHEN __init__ loaded, THEN attribute is None."""
         import importlib, types
+
         # Force import error for neurosymbolic_graphrag
         fake_mod = types.ModuleType("fake_symbolic")
         fake_mod.LogicPrimitives = None
@@ -64,13 +67,15 @@ class TestSymbolicInitImportError:
         fake_mod.NeurosymbolicGraphRAG = None
         # __init__ is already loaded; just verify None fallback attribute exists
         from ipfs_datasets_py.logic.integration import symbolic as sym_pkg
+
         # NeurosymbolicGraphRAG may be None when the optional import fails
-        assert hasattr(sym_pkg, 'NeurosymbolicGraphRAG')  # attribute exists
+        assert hasattr(sym_pkg, "NeurosymbolicGraphRAG")  # attribute exists
 
 
 # ===========================================================================
 # symbolic/neurosymbolic/embedding_prover.py  — lines 64-65, 68-69
 # ===========================================================================
+
 
 class TestEmbeddingProverInitBranches:
     """GIVEN sentence_transformers raises Exception, WHEN EmbeddingEnhancedProver inits,
@@ -82,7 +87,8 @@ class TestEmbeddingProverInitBranches:
         from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.embedding_prover import (
             EmbeddingEnhancedProver,
         )
-        with patch.dict(sys.modules, {'sentence_transformers': None}):
+
+        with patch.dict(sys.modules, {"sentence_transformers": None}):
             ep = EmbeddingEnhancedProver()
         # THEN
         assert ep.model is None
@@ -92,9 +98,10 @@ class TestEmbeddingProverInitBranches:
         from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.embedding_prover import (
             EmbeddingEnhancedProver,
         )
+
         mock_st = MagicMock()
         mock_st.SentenceTransformer = MagicMock(side_effect=Exception("model load failed"))
-        with patch.dict(sys.modules, {'sentence_transformers': mock_st}):
+        with patch.dict(sys.modules, {"sentence_transformers": mock_st}):
             ep = EmbeddingEnhancedProver()
         # THEN — model remains None; line 64-65 executed
         assert ep.model is None
@@ -105,6 +112,7 @@ class TestEmbeddingProverInitBranches:
         from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.embedding_prover import (
             EmbeddingEnhancedProver,
         )
+
         ep = EmbeddingEnhancedProver()
         # Inject a mock model whose encode() returns a numpy array (so .tolist() works)
         mock_model = MagicMock()
@@ -125,6 +133,7 @@ class TestEmbeddingProverInitBranches:
         from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.embedding_prover import (
             EmbeddingEnhancedProver,
         )
+
         ep = EmbeddingEnhancedProver()
         mock_model = MagicMock()
         mock_model.encode = MagicMock(return_value=np.array([0.5, 0.5]))
@@ -144,6 +153,7 @@ class TestEmbeddingProverInitBranches:
         from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.embedding_prover import (
             EmbeddingEnhancedProver,
         )
+
         ep = EmbeddingEnhancedProver()
         mock_model = MagicMock()
         mock_model.encode = MagicMock(return_value=np.array([0.1, 0.2, 0.3]))
@@ -160,6 +170,7 @@ class TestEmbeddingProverInitBranches:
 # symbolic/neurosymbolic/hybrid_confidence.py  — lines 203, 205, 213, 250-252, 257-258, 267, 325
 # ===========================================================================
 
+
 class TestHybridConfidenceUncoveredBranches:
     """GIVEN various formula depths and operator counts,
     WHEN _compute_structural_confidence, THEN correct base_confidence."""
@@ -168,6 +179,7 @@ class TestHybridConfidenceUncoveredBranches:
         from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.hybrid_confidence import (
             HybridConfidenceScorer,
         )
+
         return HybridConfidenceScorer(**kwargs)
 
     def test_structural_confidence_very_deep_formula(self):
@@ -270,7 +282,7 @@ class TestHybridConfidenceUncoveredBranches:
         # Line 325
         scorer = self._make_scorer()
         # Add 1001 entries
-        scorer.historical_data = [{'symbolic': 0.9, 'neural': None, 'structural': None}] * 1001
+        scorer.historical_data = [{"symbolic": 0.9, "neural": None, "structural": None}] * 1001
         # Trigger a compute_confidence to exercise pruning
         scorer.compute_confidence()
         # THEN history is pruned to ≤ 1000+1
@@ -282,12 +294,13 @@ class TestHybridConfidenceUncoveredBranches:
         f = _make_mock_formula("P(a)")
         weights = scorer._compute_weights(None, None, f)
         # only structural
-        assert weights.get('structural', 0) > 0.9
+        assert weights.get("structural", 0) > 0.9
 
 
 # ===========================================================================
 # symbolic/neurosymbolic/reasoning_coordinator.py  — lines 133-135, 212, 218
 # ===========================================================================
+
 
 class TestReasoningCoordinatorWithEmbeddings:
     """GIVEN use_embeddings=True, WHEN NeuralSymbolicCoordinator created,
@@ -297,6 +310,7 @@ class TestReasoningCoordinatorWithEmbeddings:
         from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.reasoning_coordinator import (
             NeuralSymbolicCoordinator,
         )
+
         return NeuralSymbolicCoordinator(use_embeddings=use_embeddings)
 
     def test_init_with_embeddings_creates_prover(self):
@@ -311,8 +325,11 @@ class TestReasoningCoordinatorWithEmbeddings:
         from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.reasoning_coordinator import (
             NeuralSymbolicCoordinator,
         )
+
         # Temporarily remove embedding_prover from sys.modules to force ImportError
-        ep_module_name = "ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.embedding_prover"
+        ep_module_name = (
+            "ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.embedding_prover"
+        )
         saved = sys.modules.pop(ep_module_name, None)
         try:
             # Also set it to None to force ImportError on `from .embedding_prover import ...`
@@ -333,6 +350,7 @@ class TestReasoningCoordinatorWithEmbeddings:
         from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.reasoning_coordinator import (
             ReasoningStrategy,
         )
+
         coord = self._make_coordinator(use_embeddings=True)
         # Create a formula whose str() has > 10 chars for high complexity
         complex_f = _make_mock_formula("A->B->C->D->E->F->G->H->I->J->K->L")
@@ -345,6 +363,7 @@ class TestReasoningCoordinatorWithEmbeddings:
         from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.reasoning_coordinator import (
             ReasoningStrategy,
         )
+
         coord = self._make_coordinator(use_embeddings=True)
         # Medium: 3 <= complexity <= 10
         medium_f = _make_mock_formula("A->B->C->D->E")
@@ -356,10 +375,13 @@ class TestReasoningCoordinatorWithEmbeddings:
 # symbolic/neurosymbolic_api.py  — lines 121-122, 131-132, 179-181, 275, 277, 291, 300, 365-366
 # ===========================================================================
 
-class TestNeurosymbolicAPIUncoveredPaths:
 
+class TestNeurosymbolicAPIUncoveredPaths:
     def _make_reasoner(self) -> Any:
-        from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_api import NeurosymbolicReasoner
+        from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_api import (
+            NeurosymbolicReasoner,
+        )
+
         return NeurosymbolicReasoner(use_cec=True, use_modal=True)
 
     def test_detect_capabilities_with_cec_bridge(self):
@@ -405,6 +427,7 @@ class TestNeurosymbolicAPIUncoveredPaths:
         """GIVEN get_reasoner called twice, WHEN same call, THEN same instance returned."""
         # Lines 365-366
         from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_api import get_reasoner
+
         r1 = get_reasoner()
         r2 = get_reasoner()
         assert r1 is r2
@@ -414,12 +437,13 @@ class TestNeurosymbolicAPIUncoveredPaths:
 # symbolic/neurosymbolic_graphrag.py  — lines 29, 122, 128-144, 195, 244-245, 271-277, 282-283, 348
 # ===========================================================================
 
-class TestNeurosymbolicGraphRAGUncoveredPaths:
 
+class TestNeurosymbolicGraphRAGUncoveredPaths:
     def _make_graphrag(self, use_neural: bool = False, enable_proof_caching: bool = False):
         from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_graphrag import (
             NeurosymbolicGraphRAG,
         )
+
         return NeurosymbolicGraphRAG(
             use_neural=use_neural,
             enable_proof_caching=enable_proof_caching,
@@ -435,7 +459,10 @@ class TestNeurosymbolicGraphRAGUncoveredPaths:
         """GIVEN use_neural=True but HAS_NEUROSYMBOLIC=False, WHEN init, THEN _neural_available=False."""
         # Lines 128-144 conditional — HAS_NEUROSYMBOLIC is False in test env
         grag = self._make_graphrag(use_neural=True)
-        from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_graphrag import HAS_NEUROSYMBOLIC
+        from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_graphrag import (
+            HAS_NEUROSYMBOLIC,
+        )
+
         assert grag._neural_available == (True and HAS_NEUROSYMBOLIC)
 
     def test_process_document_with_auto_prove_adds_theorems(self):
@@ -447,7 +474,7 @@ class TestNeurosymbolicGraphRAGUncoveredPaths:
             doc_id="test_doc_1",
             auto_prove=True,
         )
-        assert hasattr(result, 'proven_theorems') or isinstance(result, object)
+        assert hasattr(result, "proven_theorems") or isinstance(result, object)
 
     def test_extract_formulas_parse_error_skipped(self):
         """GIVEN text that produces invalid formula strings, WHEN _extract_formulas, THEN no crash."""
@@ -463,6 +490,7 @@ class TestNeurosymbolicGraphRAGUncoveredPaths:
         grag = self._make_graphrag()
         grag.reasoning_coordinator = None
         from ipfs_datasets_py.logic.TDFOL.tdfol_core import Predicate, Constant
+
         formula = Predicate("O", [Constant("alice")])
         proven = grag._prove_theorems([formula], "doc_1")
         assert isinstance(proven, list)
@@ -472,8 +500,8 @@ class TestNeurosymbolicGraphRAGUncoveredPaths:
         # Line 348
         grag = self._make_graphrag()
         stats = grag.get_pipeline_stats()
-        assert 'documents_processed' in stats
-        assert 'use_neural' in stats
+        assert "documents_processed" in stats
+        assert "use_neural" in stats
 
     def test_process_document_no_prove(self):
         """GIVEN auto_prove=False, WHEN process_document, THEN no proving step."""
@@ -490,18 +518,20 @@ class TestNeurosymbolicGraphRAGUncoveredPaths:
 # reasoning/deontological_reasoning.py  — lines 128-129, 154, 172-173, 194, 198, 216-217, 333-335, 381-383
 # ===========================================================================
 
-class TestDeontologicalReasoningUncoveredPaths:
 
+class TestDeontologicalReasoningUncoveredPaths:
     def _make_extractor(self):
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import (
             DeonticExtractor,
         )
+
         return DeonticExtractor()
 
     def _make_engine(self):
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import (
             DeontologicalReasoningEngine,
         )
+
         return DeontologicalReasoningEngine()
 
     def test_conditional_permission_extracted(self):
@@ -510,10 +540,19 @@ class TestDeontologicalReasoningUncoveredPaths:
         extractor = self._make_extractor()
         text = "If the contract is signed, the employee may leave early."
         stmts = extractor.extract_statements(text, "doc1")
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import DeonticModality
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
+            DeonticModality,
+        )
+
         permissions = [s for s in stmts if s.modality == DeonticModality.PERMISSION]
         # may/can → PERMISSION conditional
-        assert any(s.modality in (DeonticModality.PERMISSION, DeonticModality.OBLIGATION) for s in stmts) or len(stmts) == 0
+        assert (
+            any(
+                s.modality in (DeonticModality.PERMISSION, DeonticModality.OBLIGATION)
+                for s in stmts
+            )
+            or len(stmts) == 0
+        )
 
     def test_conditional_prohibition_extracted(self):
         """GIVEN text with 'if ... cannot ...' pattern, WHEN extract_statements, THEN PROHIBITION found."""
@@ -521,7 +560,10 @@ class TestDeontologicalReasoningUncoveredPaths:
         extractor = self._make_extractor()
         text = "If the deadline passes, the vendor cannot request extensions."
         stmts = extractor.extract_statements(text, "doc2")
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import DeonticModality
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
+            DeonticModality,
+        )
+
         assert isinstance(stmts, list)
 
     def test_exception_permission_extracted(self):
@@ -544,6 +586,7 @@ class TestDeontologicalReasoningUncoveredPaths:
         """GIVEN corpus where one doc raises error, WHEN analyze, THEN extraction_errors incremented."""
         # Lines 333-335
         import asyncio
+
         engine = self._make_engine()
         # Corpus with a bad doc (content is None → triggers error in extractor)
         corpus = [
@@ -558,28 +601,32 @@ class TestDeontologicalReasoningUncoveredPaths:
         """GIVEN analyze_corpus called with None (non-iterable), WHEN run, THEN error dict returned."""
         # Lines 381-383
         import asyncio
+
         engine = self._make_engine()
         # Trigger outer exception by passing None (causes TypeError on iteration)
         result = asyncio.run(engine.analyze_corpus_for_deontic_conflicts(None))
-        assert 'error' in result or isinstance(result, dict)
+        assert "error" in result or isinstance(result, dict)
 
 
 # ===========================================================================
 # reasoning/_deontic_conflict_mixin.py  — lines 101-104, 136, 146, 153, 157-164
 # ===========================================================================
 
-class TestDeonticConflictMixinUncoveredPaths:
 
+class TestDeonticConflictMixinUncoveredPaths:
     def _make_detector(self):
         from ipfs_datasets_py.logic.integration.reasoning._deontic_conflict_mixin import (
             ConflictDetector,
         )
+
         return ConflictDetector()
 
     def _make_stmt(self, entity, action, modality, source_doc="doc1", conditions=None):
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
-            DeonticStatement, DeonticModality,
+            DeonticStatement,
+            DeonticModality,
         )
+
         stmt = DeonticStatement(
             id=f"stmt_{entity}_{action}",
             entity=entity,
@@ -597,13 +644,22 @@ class TestDeonticConflictMixinUncoveredPaths:
         THEN JURISDICTIONAL conflict found (PROHIBITION as stmt1, OBLIGATION as stmt2)."""
         # Lines 101-104 — JURISDICTIONAL requires: NOT first two elif conditions, different docs,
         # and _modalities_conflict() True. Use (PROHIBITION, OBLIGATION) from different docs.
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import DeonticModality
-        from ipfs_datasets_py.logic.integration.reasoning._deontic_conflict_mixin import ConflictType
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
+            DeonticModality,
+        )
+        from ipfs_datasets_py.logic.integration.reasoning._deontic_conflict_mixin import (
+            ConflictType,
+        )
+
         detector = self._make_detector()
         # stmt1 = PROHIBITION, stmt2 = OBLIGATION → not caught by (OBLIGATION,PROHIBITION) elif
         # nor by (PERMISSION,PROHIBITION) elif → falls through to source_document check
-        stmt1 = self._make_stmt("employer", "pay overtime", DeonticModality.PROHIBITION, source_doc="doc_a")
-        stmt2 = self._make_stmt("employer", "pay overtime", DeonticModality.OBLIGATION, source_doc="doc_b")
+        stmt1 = self._make_stmt(
+            "employer", "pay overtime", DeonticModality.PROHIBITION, source_doc="doc_a"
+        )
+        stmt2 = self._make_stmt(
+            "employer", "pay overtime", DeonticModality.OBLIGATION, source_doc="doc_b"
+        )
         conflicts = detector.detect_conflicts([stmt1, stmt2])
         jurisdictional = [c for c in conflicts if c.conflict_type == ConflictType.JURISDICTIONAL]
         assert len(jurisdictional) >= 1
@@ -614,6 +670,7 @@ class TestDeonticConflictMixinUncoveredPaths:
         from ipfs_datasets_py.logic.integration.reasoning._deontic_conflict_mixin import (
             ConflictDetector,
         )
+
         detector = ConflictDetector()
         # "pay the fee" and "pay the fee now" share 3/4 words → Jaccard > 0.7
         result = detector._actions_are_related("pay the fee", "pay the fee")
@@ -625,10 +682,13 @@ class TestDeonticConflictMixinUncoveredPaths:
         from ipfs_datasets_py.logic.integration.reasoning._deontic_conflict_mixin import (
             ConflictDetector,
         )
+
         detector = ConflictDetector()
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
-            DeonticStatement, DeonticModality
+            DeonticStatement,
+            DeonticModality,
         )
+
         stmt1 = self._make_stmt("A", "pay", DeonticModality.OBLIGATION, conditions=[])
         stmt2 = self._make_stmt("A", "pay", DeonticModality.OBLIGATION, conditions=[])
         result = detector._conditional_conflict_exists(stmt1, stmt2)
@@ -640,6 +700,7 @@ class TestDeonticConflictMixinUncoveredPaths:
         from ipfs_datasets_py.logic.integration.reasoning._deontic_conflict_mixin import (
             ConflictDetector,
         )
+
         detector = ConflictDetector()
         stmt1 = self._make_stmt("A", "pay", MagicMock(), conditions=["when the contract is active"])
         stmt2 = self._make_stmt("A", "pay", MagicMock(), conditions=["when the contract is active"])
@@ -649,46 +710,81 @@ class TestDeonticConflictMixinUncoveredPaths:
     def test_modalities_conflict_obligation_prohibition(self):
         """GIVEN OBLIGATION and PROHIBITION, WHEN _modalities_conflict, THEN True."""
         # Lines 157-164
-        from ipfs_datasets_py.logic.integration.reasoning._deontic_conflict_mixin import ConflictDetector
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import DeonticModality
+        from ipfs_datasets_py.logic.integration.reasoning._deontic_conflict_mixin import (
+            ConflictDetector,
+        )
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
+            DeonticModality,
+        )
+
         detector = ConflictDetector()
-        assert detector._modalities_conflict(DeonticModality.OBLIGATION, DeonticModality.PROHIBITION) is True
+        assert (
+            detector._modalities_conflict(DeonticModality.OBLIGATION, DeonticModality.PROHIBITION)
+            is True
+        )
 
     def test_modalities_conflict_permission_permission(self):
         """GIVEN PERMISSION and PERMISSION, WHEN _modalities_conflict, THEN False."""
-        from ipfs_datasets_py.logic.integration.reasoning._deontic_conflict_mixin import ConflictDetector
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import DeonticModality
+        from ipfs_datasets_py.logic.integration.reasoning._deontic_conflict_mixin import (
+            ConflictDetector,
+        )
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
+            DeonticModality,
+        )
+
         detector = ConflictDetector()
-        assert detector._modalities_conflict(DeonticModality.PERMISSION, DeonticModality.PERMISSION) is False
+        assert (
+            detector._modalities_conflict(DeonticModality.PERMISSION, DeonticModality.PERMISSION)
+            is False
+        )
 
     def test_modalities_conflict_prohibition_permission(self):
         """GIVEN PROHIBITION and PERMISSION, WHEN _modalities_conflict, THEN True."""
-        from ipfs_datasets_py.logic.integration.reasoning._deontic_conflict_mixin import ConflictDetector
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import DeonticModality
+        from ipfs_datasets_py.logic.integration.reasoning._deontic_conflict_mixin import (
+            ConflictDetector,
+        )
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
+            DeonticModality,
+        )
+
         detector = ConflictDetector()
-        assert detector._modalities_conflict(DeonticModality.PROHIBITION, DeonticModality.PERMISSION) is True
+        assert (
+            detector._modalities_conflict(DeonticModality.PROHIBITION, DeonticModality.PERMISSION)
+            is True
+        )
 
     def test_modalities_conflict_prohibition_obligation(self):
         """GIVEN PROHIBITION and OBLIGATION, WHEN _modalities_conflict, THEN True."""
-        from ipfs_datasets_py.logic.integration.reasoning._deontic_conflict_mixin import ConflictDetector
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import DeonticModality
+        from ipfs_datasets_py.logic.integration.reasoning._deontic_conflict_mixin import (
+            ConflictDetector,
+        )
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
+            DeonticModality,
+        )
+
         detector = ConflictDetector()
-        assert detector._modalities_conflict(DeonticModality.PROHIBITION, DeonticModality.OBLIGATION) is True
+        assert (
+            detector._modalities_conflict(DeonticModality.PROHIBITION, DeonticModality.OBLIGATION)
+            is True
+        )
 
 
 # ===========================================================================
 # reasoning/proof_execution_engine.py  — lines 146, 175-177, 184, 196-200, 219, 331, 340-344
 # ===========================================================================
 
-class TestProofExecutionEngineUncoveredPaths:
 
+class TestProofExecutionEngineUncoveredPaths:
     def _make_engine(self, **kwargs):
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine import (
             ProofExecutionEngine,
         )
+
         # Patch out the slow/network operations during __init__
-        with patch.object(ProofExecutionEngine, '_detect_available_provers', return_value={}), \
-             patch.object(ProofExecutionEngine, '_maybe_auto_install_provers', return_value=None):
+        with (
+            patch.object(ProofExecutionEngine, "_detect_available_provers", return_value={}),
+            patch.object(ProofExecutionEngine, "_maybe_auto_install_provers", return_value=None),
+        ):
             engine = ProofExecutionEngine(**kwargs)
         # Set available_provers to a known state
         engine.available_provers = {"z3": False, "cvc5": False, "lean": False, "coq": False}
@@ -699,11 +795,14 @@ class TestProofExecutionEngineUncoveredPaths:
         # Line 146 (args appended)
         engine = self._make_engine()
         engine.available_provers = {"z3": False, "cvc5": False}
-        with patch.dict(os.environ, {
-            "IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS": "1",
-            "IPFS_DATASETS_PY_AUTO_INSTALL_Z3": "1",
-            "IPFS_DATASETS_PY_AUTO_INSTALL_CVC5": "1",
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS": "1",
+                "IPFS_DATASETS_PY_AUTO_INSTALL_Z3": "1",
+                "IPFS_DATASETS_PY_AUTO_INSTALL_CVC5": "1",
+            },
+        ):
             with patch("subprocess.run") as mock_run:
                 mock_run.return_value = MagicMock(returncode=0)
                 engine._maybe_auto_install_provers()
@@ -747,8 +846,10 @@ class TestProofExecutionEngineUncoveredPaths:
         """GIVEN unsupported prover and caching enabled, WHEN prove_deontic_formula, THEN result cached."""
         # Lines 340-344
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator,
+            DeonticFormula,
+            DeonticOperator,
         )
+
         engine = self._make_engine(enable_caching=True)
         engine.available_provers = {"unknown_prover": True}
         formula = DeonticFormula(
@@ -756,5 +857,8 @@ class TestProofExecutionEngineUncoveredPaths:
             proposition="Alice shall pay",
         )
         result = engine.prove_deontic_formula(formula, prover="unknown_prover", use_cache=True)
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus,
+        )
+
         assert result.status == ProofStatus.UNSUPPORTED

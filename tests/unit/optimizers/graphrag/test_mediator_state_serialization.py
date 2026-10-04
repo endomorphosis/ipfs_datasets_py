@@ -118,21 +118,22 @@ def test_mediator_state_roundtrip_dict(sample_ontology, sample_critic_score):
         current_ontology=sample_ontology,
         total_time_ms=9999.0,
     )
-    
+
     # Add multiple refinement rounds
     original.add_round(
         ontology=sample_ontology,
         score=sample_critic_score,
         refinement_action="prune_orphans",
     )
-    
+
     modified_ontology = {**sample_ontology, "entities": sample_ontology["entities"][:1]}
     score2 = CriticScore(
         completeness=0.70,
         consistency=0.95,
         clarity=0.80,
         granularity=0.85,
-        relationship_coherence=0.90, domain_alignment=0.90,
+        relationship_coherence=0.90,
+        domain_alignment=0.90,
         strengths=["consistent"],
         weaknesses=["incomplete"],
         recommendations=["add more entities"],
@@ -154,15 +155,15 @@ def test_mediator_state_roundtrip_dict(sample_ontology, sample_critic_score):
     assert restored.convergence_threshold == original.convergence_threshold
     assert restored.total_time_ms == original.total_time_ms
     assert restored.current_ontology == original.current_ontology
-    
+
     # Verify refinement history length
     assert len(restored.refinement_history) == len(original.refinement_history)
     assert len(restored.critic_scores) == len(original.critic_scores)
-    
+
     # Verify first round data
     assert restored.refinement_history[0]["round"] == 1
     assert restored.refinement_history[0]["action"] == "prune_orphans"
-    
+
     # Verify second round data
     assert restored.refinement_history[1]["round"] == 2
     assert restored.refinement_history[1]["action"] == "merge_duplicates"
@@ -227,7 +228,7 @@ def test_mediator_state_roundtrip_json(sample_ontology, sample_critic_score):
         current_ontology=sample_ontology,
         total_time_ms=5555.5,
     )
-    
+
     # Add refinement rounds
     for i in range(3):
         score = CriticScore(
@@ -235,7 +236,8 @@ def test_mediator_state_roundtrip_json(sample_ontology, sample_critic_score):
             consistency=0.80 + i * 0.05,
             clarity=0.75 + i * 0.05,
             granularity=0.85,
-            relationship_coherence=0.90, domain_alignment=0.90,
+            relationship_coherence=0.90,
+            domain_alignment=0.90,
             strengths=[f"strength_{i}"],
             weaknesses=[f"weakness_{i}"],
             recommendations=[f"rec_{i}"],
@@ -256,11 +258,11 @@ def test_mediator_state_roundtrip_json(sample_ontology, sample_critic_score):
     assert restored.target_score == original.target_score
     assert restored.convergence_threshold == original.convergence_threshold
     assert restored.total_time_ms == original.total_time_ms
-    
+
     # Verify history
     assert len(restored.refinement_history) == 3
     assert len(restored.critic_scores) == 3
-    
+
     # Verify actions in order
     for i in range(3):
         assert restored.refinement_history[i]["action"] == f"action_{i}"
@@ -273,16 +275,17 @@ def test_mediator_state_roundtrip_preserves_score_details(sample_ontology):
         consistency=0.91,
         clarity=0.73,
         granularity=0.79,
-        relationship_coherence=0.86, domain_alignment=0.86,
+        relationship_coherence=0.86,
+        domain_alignment=0.86,
         strengths=["high consistency", "good structure"],
         weaknesses=["low clarity", "missing metadata"],
         recommendations=["improve naming", "add descriptions", "validate types"],
         metadata={"evaluated_at": "2026-02-20", "evaluator": "test"},
     )
-    
+
     state = MediatorState(current_ontology=sample_ontology)
     state.add_round(ontology=sample_ontology, score=score, refinement_action="test")
-    
+
     # Round-trip via dict
     dict_restored = MediatorState.from_dict(state.to_dict())
     assert len(dict_restored.critic_scores) == 1
@@ -295,7 +298,7 @@ def test_mediator_state_roundtrip_preserves_score_details(sample_ontology):
     assert "low clarity" in score_dict["weaknesses"]
     assert "recommendations" in score_dict
     assert len(score_dict["recommendations"]) == 3
-    
+
     # Round-trip via JSON
     json_restored = MediatorState.from_json(state.to_json())
     score_dict_json = json_restored.refinement_history[0]["score"]
@@ -315,7 +318,7 @@ def test_mediator_state_roundtrip_empty_state():
         domain="general",
         max_rounds=5,
     )
-    
+
     # Dict round-trip
     dict_restored = MediatorState.from_dict(original.to_dict())
     assert dict_restored.session_id == "empty-state-004"
@@ -323,7 +326,7 @@ def test_mediator_state_roundtrip_empty_state():
     assert dict_restored.max_rounds == 5
     assert len(dict_restored.refinement_history) == 0
     assert len(dict_restored.critic_scores) == 0
-    
+
     # JSON round-trip
     json_restored = MediatorState.from_json(original.to_json())
     assert json_restored.session_id == "empty-state-004"
@@ -333,7 +336,7 @@ def test_mediator_state_roundtrip_empty_state():
 def test_mediator_state_roundtrip_preserves_current_round(sample_ontology, sample_critic_score):
     """Round-trip preserves current_round from BaseSession."""
     state = MediatorState(current_ontology=sample_ontology)
-    
+
     # Add 3 rounds
     for i in range(3):
         state.add_round(
@@ -341,23 +344,25 @@ def test_mediator_state_roundtrip_preserves_current_round(sample_ontology, sampl
             score=sample_critic_score,
             refinement_action=f"action_{i}",
         )
-    
+
     original_round = state.current_round
     assert original_round == 3
-    
+
     # Round-trip and check
     restored = MediatorState.from_dict(state.to_dict())
     assert restored.current_round == original_round
 
 
-def test_mediator_state_roundtrip_preserves_base_session_metrics(sample_ontology, sample_critic_score):
+def test_mediator_state_roundtrip_preserves_base_session_metrics(
+    sample_ontology, sample_critic_score
+):
     """Round-trip preserves BaseSession metrics like rounds, scores, trend."""
     state = MediatorState(
         current_ontology=sample_ontology,
         target_score=0.90,
         convergence_threshold=0.01,
     )
-    
+
     # Add rounds with improving scores
     scores = [0.70, 0.80, 0.85, 0.88]
     for i, score_val in enumerate(scores):
@@ -366,22 +371,23 @@ def test_mediator_state_roundtrip_preserves_base_session_metrics(sample_ontology
             consistency=score_val,
             clarity=score_val,
             granularity=score_val,
-            relationship_coherence=score_val, domain_alignment=score_val,
+            relationship_coherence=score_val,
+            domain_alignment=score_val,
         )
         state.add_round(
             ontology=sample_ontology,
             score=score,
             refinement_action=f"improve_{i}",
         )
-    
+
     # Capture original metrics
     original_rounds = state.rounds
     original_best = state.best_score
     original_trend = state.trend
-    
+
     # Round-trip
     restored = MediatorState.from_dict(state.to_dict())
-    
+
     # Verify BaseSession metrics preserved
     assert len(restored.rounds) == len(original_rounds)
     assert restored.best_score == pytest.approx(original_best, abs=0.01)

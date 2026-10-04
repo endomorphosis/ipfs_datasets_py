@@ -95,8 +95,10 @@ _SYMMETRIC_REL_TYPES: Set[str] = {
 # Public enums and dataclasses
 # ---------------------------------------------------------------------------
 
+
 class CompletionReason(str, enum.Enum):
     """Structural reason for a completion suggestion."""
+
     TRIADIC_CLOSURE = "triadic_closure"
     COMMON_NEIGHBOR = "common_neighbor"
     SYMMETRIC_RELATION = "symmetric_relation"
@@ -117,6 +119,7 @@ class CompletionSuggestion:
         reason: Structural pattern that produced this suggestion.
         evidence: Human-readable evidence string.
     """
+
     source_id: str
     target_id: str
     rel_type: str
@@ -139,6 +142,7 @@ class CompletionSuggestion:
 # ---------------------------------------------------------------------------
 # Main completer class
 # ---------------------------------------------------------------------------
+
 
 class KnowledgeGraphCompleter:
     """Suggests missing relationships using structural graph-analysis patterns.
@@ -208,9 +212,7 @@ class KnowledgeGraphCompleter:
         raw.sort(key=lambda x: x.score, reverse=True)
         return raw[:max_suggestions]
 
-    def compute_completion_score(
-        self, source_id: str, target_id: str, rel_type: str
-    ) -> float:
+    def compute_completion_score(self, source_id: str, target_id: str, rel_type: str) -> float:
         """Return a [0,1] score for a specific (source, rel_type, target) triple.
 
         Aggregates evidence across all patterns and caps at 1.0.
@@ -256,8 +258,7 @@ class KnowledgeGraphCompleter:
     def _existing_triples(self) -> Set[Tuple[str, str, str]]:
         """Return the set of all (source_id, rel_type, target_id) triples."""
         return {
-            (r.source_id, r.relationship_type, r.target_id)
-            for r in self._kg.relationships.values()
+            (r.source_id, r.relationship_type, r.target_id) for r in self._kg.relationships.values()
         }
 
     def _adjacency(self) -> Dict[str, Set[str]]:
@@ -320,7 +321,7 @@ class KnowledgeGraphCompleter:
         results: List[CompletionSuggestion] = []
         entity_ids = list(self._kg.entities.keys())
         for i, a_id in enumerate(entity_ids):
-            for b_id in entity_ids[i + 1:]:
+            for b_id in entity_ids[i + 1 :]:
                 if a_id == b_id:
                     continue
                 na = adj.get(a_id, set())
@@ -411,9 +412,7 @@ class KnowledgeGraphCompleter:
             if not inv_type:
                 continue
             if (r.target_id, inv_type, r.source_id) not in existing:
-                evidence = (
-                    f"'{inv_type}' is the inverse of '{r.relationship_type}'"
-                )
+                evidence = f"'{inv_type}' is the inverse of '{r.relationship_type}'"
                 results.append(
                     CompletionSuggestion(
                         source_id=r.target_id,
@@ -442,7 +441,7 @@ class KnowledgeGraphCompleter:
             if len(eids) < 2:
                 continue
             for i, a_id in enumerate(eids):
-                for b_id in eids[i + 1:]:
+                for b_id in eids[i + 1 :]:
                     a_map = typed_adj.get(a_id, {})
                     b_map = typed_adj.get(b_id, {})
                     all_rtypes = set(a_map) | set(b_map)

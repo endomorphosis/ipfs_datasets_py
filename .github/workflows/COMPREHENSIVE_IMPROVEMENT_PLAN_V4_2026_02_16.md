@@ -184,16 +184,17 @@ This document provides a comprehensive improvement plan for all GitHub Actions w
    ```python
    # restore_workflow_triggers.py
    import re
-   
+
+
    def restore_trigger(workflow_file, trigger_config):
        """Replace 'true:' with proper 'on:' configuration"""
-       with open(workflow_file, 'r') as f:
+       with open(workflow_file, "r") as f:
            content = f.read()
-       
+
        # Replace 'true:' with 'on:'
-       content = re.sub(r'^true:', 'on:', content, flags=re.MULTILINE)
-       
-       with open(workflow_file, 'w') as f:
+       content = re.sub(r"^true:", "on:", content, flags=re.MULTILINE)
+
+       with open(workflow_file, "w") as f:
            f.write(content)
    ```
 
@@ -289,8 +290,8 @@ permissions:
    ```python
    # add_timeouts.py
    def add_timeout_to_job(job_config, timeout_minutes):
-       if 'timeout-minutes' not in job_config:
-           job_config['timeout-minutes'] = timeout_minutes
+       if "timeout-minutes" not in job_config:
+           job_config["timeout-minutes"] = timeout_minutes
    ```
 
 3. **Retry Logic for Flaky Tests:**

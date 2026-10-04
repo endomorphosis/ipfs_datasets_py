@@ -348,7 +348,7 @@ from ipfs_datasets_py.logic.zkp.backends.groth16_ffi import Groth16FFIBackend
 
 backend = Groth16FFIBackend()
 proof = backend.generate_proof(witness_json)  # Uses real binary!
-is_valid = backend.verify_proof(proof_json)   # Uses real binary!
+is_valid = backend.verify_proof(proof_json)  # Uses real binary!
 ```
 
 ### Test Suite ✅

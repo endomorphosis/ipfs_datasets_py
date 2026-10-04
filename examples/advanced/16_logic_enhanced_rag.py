@@ -19,14 +19,14 @@ import asyncio
 
 async def demo_constraint_based_retrieval():
     """Retrieve documents with logical constraints."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 1: Constraint-Based Retrieval")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n🔒 Constraint-Based Retrieval")
     print("   Apply logical constraints to narrow search results")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.search import LogicEnhancedRAG
 
 rag = LogicEnhancedRAG(
@@ -55,21 +55,21 @@ for result in results:
     print(f"  {result.text}")
     print(f"  Satisfied constraints: {result.satisfied_constraints}")
     print(f"  Confidence: {result.confidence:.2f}")
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_verification_rag():
     """Verify retrieved information with logic."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 2: Verification RAG")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n✓ Verification RAG")
     print("   Verify consistency of retrieved information")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.search import VerificationRAG
 
 vrag = VerificationRAG(
@@ -104,21 +104,21 @@ print("\\nSources used:")
 for source in sources:
     print(f"  {source.document_id}: {source.snippet}")
     print(f"  Confidence: {source.confidence:.2f}")
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_rule_based_filtering():
     """Filter results with business rules."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 3: Rule-Based Filtering")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n📋 Rule-Based Filtering")
     print("   Apply domain-specific rules to results")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.search import RuleBasedRAG
 
 # Define business rules
@@ -159,21 +159,21 @@ for result in results.rejected:
     print(f"  {result.text}")
     print(f"  Violated: {result.violated_rules}")
     print(f"  Reason: {result.violation_reason}")
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_temporal_reasoning_rag():
     """RAG with temporal logic reasoning."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 4: Temporal Reasoning RAG")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n⏰ Temporal Reasoning")
     print("   Reason about time-based information")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.search import TemporalRAG
 
 trag = TemporalRAG(
@@ -207,21 +207,21 @@ for query in queries:
     for rel in result.temporal_relations:
         print(f"  {rel.event1} {rel.relation} {rel.event2}")
         # Relations: BEFORE, AFTER, DURING, OVERLAPS, etc.
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_explainable_rag():
     """Generate explanations for RAG results."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 5: Explainable RAG")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n💡 Explainable RAG")
     print("   Generate logical explanations for results")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.search import ExplainableRAG
 
 xrag = ExplainableRAG(
@@ -260,21 +260,21 @@ if result.explanation.counterarguments:
     for counter in result.explanation.counterarguments:
         print(f"  {counter.argument}")
         print(f"  Strength: {counter.strength:.2f}")
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_policy_compliance_rag():
     """Check policy compliance with RAG."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 6: Policy Compliance RAG")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n⚖️  Policy Compliance")
     print("   Ensure results comply with policies")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.search import PolicyComplianceRAG
 
 # Define policies (deontic logic)
@@ -311,20 +311,20 @@ for check in result.compliance_checks:
     print(f"  Policy: {check.policy_name}")
     print(f"  Result: {'PASS' if check.passed else 'FAIL'}")
     print(f"  Evidence: {check.evidence}")
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_hybrid_neuro_symbolic():
     """Combine neural RAG with symbolic reasoning."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 7: Hybrid Neuro-Symbolic RAG")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n🧠+🔬 Neuro-Symbolic RAG")
     print("   Best of both neural and symbolic approaches")
-    
+
     example_code = '''
 from ipfs_datasets_py.search import NeuroSymbolicRAG
 
@@ -371,63 +371,63 @@ print("\\nExplanation:")
 print(f"Neural: {result.neural_explanation}")
 print(f"Symbolic: {result.symbolic_explanation}")
     '''
-    
+
     print(example_code)
 
 
 def show_tips():
     """Show tips for logic-enhanced RAG."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("TIPS FOR LOGIC-ENHANCED RAG")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n1. When to Use Logic Enhancement:")
     print("   - Need to enforce hard constraints")
     print("   - Require explainable results")
     print("   - Working in regulated domains")
     print("   - Need consistency guarantees")
-    
+
     print("\n2. Choosing Logic Systems:")
     print("   - FOL: General-purpose, most flexible")
     print("   - Temporal: Time-based reasoning")
     print("   - Deontic: Policy and compliance")
     print("   - Modal: Necessity and possibility")
-    
+
     print("\n3. Performance Considerations:")
     print("   - Logic reasoning is computationally expensive")
     print("   - Apply constraints after initial retrieval")
     print("   - Cache verification results")
     print("   - Use approximate reasoning for scale")
-    
+
     print("\n4. Integration Strategies:")
     print("   - Cascaded: Filter neural results with logic")
     print("   - Parallel: Run both, combine results")
     print("   - Hybrid: Tight integration at each step")
-    
+
     print("\n5. Explainability:")
     print("   - Generate logical proof traces")
     print("   - Show which rules were applied")
     print("   - Provide counterexamples")
     print("   - Natural language explanations")
-    
+
     print("\n6. Verification:")
     print("   - Check consistency across sources")
     print("   - Validate against ground truth")
     print("   - Use theorem provers for complex logic")
     print("   - Implement contradiction detection")
-    
+
     print("\n7. Policy Compliance:")
     print("   - Define policies in formal logic")
     print("   - Implement enforcement modes (strict/warn/log)")
     print("   - Maintain audit trails")
     print("   - Regular policy reviews")
-    
+
     print("\n8. Production Deployment:")
     print("   - Test logic rules thoroughly")
     print("   - Monitor rule violations")
     print("   - Version control for rules")
     print("   - Implement rule update mechanism")
-    
+
     print("\n9. Next Steps:")
     print("   - See 13_logic_reasoning.py for logic fundamentals")
     print("   - See 18_neural_symbolic_integration.py for advanced integration")
@@ -435,10 +435,10 @@ def show_tips():
 
 async def main():
     """Run all logic-enhanced RAG demonstrations."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("IPFS DATASETS PYTHON - LOGIC-ENHANCED RAG")
-    print("="*70)
-    
+    print("=" * 70)
+
     await demo_constraint_based_retrieval()
     await demo_verification_rag()
     await demo_rule_based_filtering()
@@ -446,12 +446,12 @@ async def main():
     await demo_explainable_rag()
     await demo_policy_compliance_rag()
     await demo_hybrid_neuro_symbolic()
-    
+
     show_tips()
-    
-    print("\n" + "="*70)
+
+    print("\n" + "=" * 70)
     print("✅ LOGIC-ENHANCED RAG EXAMPLES COMPLETE")
-    print("="*70)
+    print("=" * 70)
 
 
 if __name__ == "__main__":

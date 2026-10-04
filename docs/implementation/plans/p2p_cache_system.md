@@ -98,7 +98,7 @@ cache = GitHubAPICache(
     enable_p2p=True,
     enable_peer_discovery=True,
     github_repo="owner/repo",
-    max_cache_size=5000
+    max_cache_size=5000,
 )
 
 # Use the cache
@@ -128,16 +128,14 @@ if response is None:
 from ipfs_datasets_py.p2p_networking.p2p_peer_registry import P2PPeerRegistry
 
 registry = P2PPeerRegistry(
-    repo="owner/repo",          # GitHub repository
-    peer_ttl_minutes=30,        # Peer TTL (30 minutes)
-    cache_version="v1"          # Cache version
+    repo="owner/repo",  # GitHub repository
+    peer_ttl_minutes=30,  # Peer TTL (30 minutes)
+    cache_version="v1",  # Cache version
 )
 
 # Register this runner as a peer
 registry.register_peer(
-    peer_id="12D3KooW...",
-    listen_port=9000,
-    multiaddr="/ip4/1.2.3.4/tcp/9000/p2p/12D3KooW..."
+    peer_id="12D3KooW...", listen_port=9000, multiaddr="/ip4/1.2.3.4/tcp/9000/p2p/12D3KooW..."
 )
 
 # Discover other peers
@@ -291,7 +289,7 @@ cache = GitHubAPICache(
     p2p_bootstrap_peers=[
         "/ip4/10.0.0.1/tcp/9000/p2p/12D3KooWABC...",
         "/ip4/10.0.0.2/tcp/9000/p2p/12D3KooWDEF...",
-    ]
+    ],
 )
 ```
 

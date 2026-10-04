@@ -21,17 +21,21 @@ import pytest
 # Section 1: converters/deontic_logic_core.py
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestDeonticLogicCoreHelpers:
     """GIVEN create_obligation/create_permission/create_prohibition WHEN called THEN correct."""
 
     def _make_agent(self, role="contractor"):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import LegalAgent
+
         return LegalAgent(f"{role}_001", f"ABC {role}", "organization")
 
     def test_create_obligation(self):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            create_obligation, DeonticOperator,
+            create_obligation,
+            DeonticOperator,
         )
+
         agent = self._make_agent()
         obl = create_obligation(
             "complete_work_by_deadline",
@@ -45,8 +49,10 @@ class TestDeonticLogicCoreHelpers:
 
     def test_create_obligation_no_conditions(self):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            create_obligation, DeonticOperator,
+            create_obligation,
+            DeonticOperator,
         )
+
         agent = self._make_agent()
         obl = create_obligation("pay", agent)
         assert obl.operator == DeonticOperator.OBLIGATION
@@ -54,24 +60,31 @@ class TestDeonticLogicCoreHelpers:
 
     def test_create_permission(self):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            create_permission, DeonticOperator,
+            create_permission,
+            DeonticOperator,
         )
+
         agent = self._make_agent("client")
         perm = create_permission("inspect_work", agent, conditions=["24_hour_notice"])
         assert perm.operator == DeonticOperator.PERMISSION
 
     def test_create_prohibition(self):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            create_prohibition, DeonticOperator,
+            create_prohibition,
+            DeonticOperator,
         )
+
         agent = self._make_agent()
         proh = create_prohibition("use_substandard_materials", agent)
         assert proh.operator == DeonticOperator.PROHIBITION
 
     def test_create_right(self):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator, LegalAgent,
+            DeonticFormula,
+            DeonticOperator,
+            LegalAgent,
         )
+
         agent = LegalAgent("emp", "Employee", "person")
         f = DeonticFormula(
             operator=DeonticOperator.RIGHT,
@@ -88,8 +101,11 @@ class TestDeonticLogicValidator:
 
     def _make_formula(self, op="OBLIGATION", prop="pay"):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator, LegalAgent,
+            DeonticFormula,
+            DeonticOperator,
+            LegalAgent,
         )
+
         agent = LegalAgent("a", "A", "person")
         return DeonticFormula(
             operator=DeonticOperator[op],
@@ -100,15 +116,22 @@ class TestDeonticLogicValidator:
         )
 
     def test_validate_valid_formula(self):
-        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticLogicValidator
+        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
+            DeonticLogicValidator,
+        )
+
         f = self._make_formula()
         errors = DeonticLogicValidator.validate_formula(f)
         assert errors == []
 
     def test_validate_invalid_confidence(self):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator, LegalAgent, DeonticLogicValidator,
+            DeonticFormula,
+            DeonticOperator,
+            LegalAgent,
+            DeonticLogicValidator,
         )
+
         agent = LegalAgent("a", "A", "person")
         f = DeonticFormula(
             operator=DeonticOperator.OBLIGATION,
@@ -122,9 +145,14 @@ class TestDeonticLogicValidator:
 
     def test_validate_temporal_conditions_invalid_format(self):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator, LegalAgent, DeonticLogicValidator,
-            TemporalCondition, TemporalOperator,
+            DeonticFormula,
+            DeonticOperator,
+            LegalAgent,
+            DeonticLogicValidator,
+            TemporalCondition,
+            TemporalOperator,
         )
+
         agent = LegalAgent("a", "A", "person")
         tc = TemporalCondition(
             operator=TemporalOperator.ALWAYS,
@@ -145,9 +173,14 @@ class TestDeonticLogicValidator:
 
     def test_validate_temporal_conditions_start_after_end(self):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator, LegalAgent, DeonticLogicValidator,
-            TemporalCondition, TemporalOperator,
+            DeonticFormula,
+            DeonticOperator,
+            LegalAgent,
+            DeonticLogicValidator,
+            TemporalCondition,
+            TemporalOperator,
         )
+
         agent = LegalAgent("a", "A", "person")
         tc = TemporalCondition(
             operator=TemporalOperator.UNTIL,
@@ -168,8 +201,12 @@ class TestDeonticLogicValidator:
 
     def test_validate_quantifiers_invalid(self):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator, LegalAgent, DeonticLogicValidator,
+            DeonticFormula,
+            DeonticOperator,
+            LegalAgent,
+            DeonticLogicValidator,
         )
+
         agent = LegalAgent("a", "A", "person")
         f = DeonticFormula(
             operator=DeonticOperator.OBLIGATION,
@@ -184,8 +221,10 @@ class TestDeonticLogicValidator:
 
     def test_validate_rule_set_valid(self):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticLogicValidator, DeonticRuleSet,
+            DeonticLogicValidator,
+            DeonticRuleSet,
         )
+
         f = self._make_formula()
         rs = DeonticRuleSet(name="Test", formulas=[f])
         errors = DeonticLogicValidator.validate_rule_set(rs)
@@ -194,8 +233,13 @@ class TestDeonticLogicValidator:
     def test_validate_rule_set_with_conflicts(self):
         """Validates that check_consistency is called on rule set."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticLogicValidator, DeonticRuleSet, DeonticFormula, DeonticOperator, LegalAgent,
+            DeonticLogicValidator,
+            DeonticRuleSet,
+            DeonticFormula,
+            DeonticOperator,
+            LegalAgent,
         )
+
         agent = LegalAgent("a", "A", "person")
         # Create obligation and prohibition for same proposition/agent - potential conflict
         f1 = DeonticFormula(
@@ -223,8 +267,10 @@ class TestDemonstrateDeonticLogic:
 
     def test_demonstrate(self):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            demonstrate_deontic_logic, DeonticRuleSet,
+            demonstrate_deontic_logic,
+            DeonticRuleSet,
         )
+
         result = demonstrate_deontic_logic()
         assert isinstance(result, DeonticRuleSet)
         assert len(result.formulas) >= 3
@@ -236,8 +282,12 @@ class TestDeonticRuleSetAdditional:
 
     def _make_rs(self):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticRuleSet, DeonticFormula, DeonticOperator, LegalAgent,
+            DeonticRuleSet,
+            DeonticFormula,
+            DeonticOperator,
+            LegalAgent,
         )
+
         agent = LegalAgent("a", "A", "person")
         f = DeonticFormula(
             operator=DeonticOperator.OBLIGATION,
@@ -251,8 +301,11 @@ class TestDeonticRuleSetAdditional:
     def test_remove_formula(self):
         rs = self._make_rs()
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator, LegalAgent,
+            DeonticFormula,
+            DeonticOperator,
+            LegalAgent,
         )
+
         agent = LegalAgent("b", "B", "person")
         f2 = DeonticFormula(
             operator=DeonticOperator.PERMISSION,
@@ -268,8 +321,12 @@ class TestDeonticRuleSetAdditional:
 
     def test_find_formulas_by_agent(self):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticRuleSet, DeonticFormula, DeonticOperator, LegalAgent,
+            DeonticRuleSet,
+            DeonticFormula,
+            DeonticOperator,
+            LegalAgent,
         )
+
         agent_a = LegalAgent("a", "A", "person")
         agent_b = LegalAgent("b", "B", "org")
         f1 = DeonticFormula(DeonticOperator.OBLIGATION, "pay", agent_a, 0.9, "pay")
@@ -283,18 +340,21 @@ class TestDeonticRuleSetAdditional:
 # Section 2: integration/__init__.py
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestIntegrationInit:
     """GIVEN integration __init__.py WHEN called THEN correct behavior."""
 
     def test_enable_symbolicai_returns_false(self):
         """Since symai is not installed, should return False."""
         from ipfs_datasets_py.logic.integration import enable_symbolicai
+
         result = enable_symbolicai()
         assert result is False
 
     def test_enable_symbolicai_already_available(self):
         """If SYMBOLIC_AI_AVAILABLE is True, should return True immediately."""
         import ipfs_datasets_py.logic.integration as m
+
         original = m.SYMBOLIC_AI_AVAILABLE
         try:
             m.SYMBOLIC_AI_AVAILABLE = True
@@ -306,12 +366,14 @@ class TestIntegrationInit:
     def test_enable_symbolicai_autoconfigure_false(self):
         """With autoconfigure_env=False, should still return False (symai not installed)."""
         from ipfs_datasets_py.logic.integration import enable_symbolicai
+
         result = enable_symbolicai(autoconfigure_env=False)
         assert result is False
 
     def test_getattr_lazy_export(self):
         """__getattr__ should lazily load symbols from submodules."""
         import ipfs_datasets_py.logic.integration as m
+
         # DeonticFormula should be accessible via lazy export
         val = m.DeonticFormula
         assert val is not None
@@ -319,18 +381,21 @@ class TestIntegrationInit:
     def test_getattr_availability_flag(self):
         """__getattr__ for availability flags returns bool."""
         import ipfs_datasets_py.logic.integration as m
+
         result = m.TDFOL_GRAMMAR_AVAILABLE
         assert isinstance(result, bool)
 
     def test_getattr_unknown_raises(self):
         """__getattr__ for unknown name should raise AttributeError."""
         import ipfs_datasets_py.logic.integration as m
+
         with pytest.raises(AttributeError):
             _ = m.this_does_not_exist_xyz
 
     def test_dir_contains_symbols(self):
         """__dir__ should include known exports."""
         import ipfs_datasets_py.logic.integration as m
+
         names = dir(m)
         assert "DeonticFormula" in names
         assert "enable_symbolicai" in names
@@ -338,19 +403,22 @@ class TestIntegrationInit:
     def test_symbolicai_not_available_class(self):
         """_SymbolicAINotAvailable raises ImportError on use."""
         import ipfs_datasets_py.logic.integration as m
+
         with pytest.raises(ImportError):
             m.InteractiveFOLConstructor()
 
     def test_symbolicai_not_available_func(self):
         """Placeholder functions raise ImportError."""
         import ipfs_datasets_py.logic.integration as m
+
         with pytest.raises(ImportError):
             m.create_interactive_session()
 
     def test_default_config(self):
         """DEFAULT_CONFIG should be accessible."""
         import ipfs_datasets_py.logic.integration as m
-        assert hasattr(m, 'DEFAULT_CONFIG')
+
+        assert hasattr(m, "DEFAULT_CONFIG")
         assert isinstance(m.DEFAULT_CONFIG, dict)
 
 
@@ -358,11 +426,13 @@ class TestIntegrationInit:
 # Section 3: caching/ipfs_proof_cache.py - pin/unpin
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestIPFSProofCachePinUnpinFull:
     """GIVEN pin_proof/unpin_proof WHEN called with mock IPFS THEN correct."""
 
     def _make_cache_with_mock(self):
         from ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache import IPFSProofCache
+
         cache = IPFSProofCache(enable_ipfs=False)
         mock_client = MagicMock()
         mock_client.add_json.return_value = "QmTest123"
@@ -381,7 +451,11 @@ class TestIPFSProofCachePinUnpinFull:
         assert cache.pinned_count >= 1
 
     def test_pin_proof_with_existing_ipfs_cid(self):
-        from ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache import IPFSProofCache, IPFSCachedProof
+        from ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache import (
+            IPFSProofCache,
+            IPFSCachedProof,
+        )
+
         cache = IPFSProofCache(enable_ipfs=False)
         mock_client = MagicMock()
         mock_client.pin.add.return_value = True
@@ -390,11 +464,15 @@ class TestIPFSProofCachePinUnpinFull:
         # Manually insert an IPFSCachedProof with existing CID
         key = "formula1::default"
         p = IPFSCachedProof(
-            result={"ok": True}, cid="hash1", prover_name="default",
-            formula_str="formula1", timestamp=time.time(), ipfs_cid="QmX123"
+            result={"ok": True},
+            cid="hash1",
+            prover_name="default",
+            formula_str="formula1",
+            timestamp=time.time(),
+            ipfs_cid="QmX123",
         )
         cache._cache[key] = p
-        with patch.object(type(cache), 'get', return_value={"ok": True}):
+        with patch.object(type(cache), "get", return_value={"ok": True}):
             result = cache.pin_proof("formula1", "default")
         assert result is True
         mock_client.pin.add.assert_called_with("QmX123")
@@ -408,7 +486,11 @@ class TestIPFSProofCachePinUnpinFull:
         assert cache.ipfs_errors >= 0  # error handling executed
 
     def test_unpin_proof_with_ipfs_cached_proof(self):
-        from ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache import IPFSProofCache, IPFSCachedProof
+        from ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache import (
+            IPFSProofCache,
+            IPFSCachedProof,
+        )
+
         cache = IPFSProofCache(enable_ipfs=False)
         mock_client = MagicMock()
         mock_client.pin.rm.return_value = True
@@ -418,8 +500,13 @@ class TestIPFSProofCachePinUnpinFull:
         # Insert IPFSCachedProof with cid
         key = "formula1::default"
         p = IPFSCachedProof(
-            result={"ok": True}, cid="hash1", prover_name="default",
-            formula_str="formula1", timestamp=time.time(), ipfs_cid="QmX456", pinned=True
+            result={"ok": True},
+            cid="hash1",
+            prover_name="default",
+            formula_str="formula1",
+            timestamp=time.time(),
+            ipfs_cid="QmX456",
+            pinned=True,
         )
         cache._cache[key] = p
         result = cache.unpin_proof("formula1", "default")
@@ -429,7 +516,11 @@ class TestIPFSProofCachePinUnpinFull:
         assert cache.pinned_count == 1
 
     def test_unpin_proof_error_handling(self):
-        from ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache import IPFSProofCache, IPFSCachedProof
+        from ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache import (
+            IPFSProofCache,
+            IPFSCachedProof,
+        )
+
         cache = IPFSProofCache(enable_ipfs=False)
         mock_client = MagicMock()
         mock_client.pin.rm.side_effect = RuntimeError("unpin error")
@@ -437,8 +528,12 @@ class TestIPFSProofCachePinUnpinFull:
         cache.ipfs_client = mock_client
         key = "formula1::default"
         p = IPFSCachedProof(
-            result={"ok": True}, cid="hash1", prover_name="default",
-            formula_str="formula1", timestamp=time.time(), ipfs_cid="QmX789"
+            result={"ok": True},
+            cid="hash1",
+            prover_name="default",
+            formula_str="formula1",
+            timestamp=time.time(),
+            ipfs_cid="QmX789",
         )
         cache._cache[key] = p
         result = cache.unpin_proof("formula1", "default")
@@ -459,6 +554,7 @@ class TestIPFSProofCachePinUnpinFull:
 
     def test_upload_to_ipfs_no_client(self):
         from ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache import IPFSProofCache
+
         cache = IPFSProofCache(enable_ipfs=False)
         cid = cache._upload_to_ipfs("p(a)", {"proved": True})
         assert cid is None
@@ -475,12 +571,14 @@ class TestIPFSProofCachePinUnpinFull:
 # Section 4: bridges/prover_installer.py
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestProverInstaller:
     """GIVEN prover_installer WHEN called THEN correct behavior."""
 
     def test_ensure_coq_no_yes_flag(self):
         """ensure_coq with yes=False returns False (coqc not installed)."""
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import ensure_coq, _which
+
         if _which("coqc"):
             pytest.skip("coqc is installed on this system")
         result = ensure_coq(yes=False, strict=False)
@@ -489,6 +587,7 @@ class TestProverInstaller:
     def test_ensure_lean_no_yes_flag(self):
         """ensure_lean with yes=False returns success only if lean installed."""
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import ensure_lean, _which
+
         if _which("lean"):
             pytest.skip("lean is already installed")
         result = ensure_lean(yes=False, strict=False)
@@ -496,11 +595,13 @@ class TestProverInstaller:
 
     def test_which_nonexistent(self):
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import _which
+
         assert _which("this_tool_does_not_exist_xyz") is None
 
     def test_main_no_args_calls_both(self):
         """main() with no specific flags should call both install functions."""
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import main
+
         # Without --yes, should print messages but not hang
         try:
             result = main(["--lean", "--coq"])
@@ -515,16 +616,19 @@ class TestProverInstaller:
 # Section 5: bridges/tdfol_cec_bridge.py additional uncovered lines
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestTDFOLCECBridgeLines:
     """GIVEN tdfol_cec_bridge WHEN edge cases exercised THEN coverage improves."""
 
     def _make_bridge(self):
         from ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge import TDFOLCECBridge
+
         return TDFOLCECBridge()
 
     def test_prove_with_axioms(self):
         from ipfs_datasets_py.logic.TDFOL.tdfol_core import Predicate, Constant
         from ipfs_datasets_py.logic.TDFOL.tdfol_prover import ProofResult
+
         bridge = self._make_bridge()
         goal = Predicate("P", (Constant("a"),))
         axiom = Predicate("Q", (Constant("b"),))
@@ -535,13 +639,10 @@ class TestTDFOLCECBridgeLines:
     def test_from_target_format_with_timeout(self):
         """Simulate a timeout result conversion."""
         from ipfs_datasets_py.logic.TDFOL.tdfol_prover import ProofResult, ProofStatus
+
         bridge = self._make_bridge()
         f = ProofResult(
-            status=ProofStatus.TIMEOUT,
-            formula=None,
-            time_ms=5000,
-            method="cec",
-            message="timeout"
+            status=ProofStatus.TIMEOUT, formula=None, time_ms=5000, method="cec", message="timeout"
         )
         result = bridge.from_target_format(f)
         assert result.status == ProofStatus.TIMEOUT
@@ -549,7 +650,8 @@ class TestTDFOLCECBridgeLines:
     def test_enhanced_tdfol_prover_init(self):
         """Cover EnhancedTDFOLProver if available."""
         import ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge as m
-        cls = getattr(m, 'EnhancedTDFOLProver', None)
+
+        cls = getattr(m, "EnhancedTDFOLProver", None)
         if cls is None:
             pytest.skip("EnhancedTDFOLProver not available")
         prover = cls()
@@ -560,33 +662,41 @@ class TestTDFOLCECBridgeLines:
 # Section 6: More symbolic_contracts coverage (FOLInput pydantic-stub validators)
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestFOLInputPydanticStub:
     """GIVEN FOLInput pydantic-stub WHEN fields set THEN validators behave correctly."""
 
     def test_input_with_many_predicates(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import FOLInput
+
         inp = FOLInput(
             text="All employees must comply with policy",
             domain_predicates=["Employee", "Policy", "123invalid!", "Valid123"],
         )
-        assert hasattr(inp, 'domain_predicates')
+        assert hasattr(inp, "domain_predicates")
 
     def test_fol_output_validation_results(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import FOLOutput
+
         out = FOLOutput(
             fol_formula="∀x Employee(x) → Comply(x)",
             confidence=0.85,
-            logical_components={"quantifiers": ["∀"], "predicates": ["Employee", "Comply"], "entities": []},
+            logical_components={
+                "quantifiers": ["∀"],
+                "predicates": ["Employee", "Comply"],
+                "entities": [],
+            },
             reasoning_steps=["step1", "step2"],
             warnings=["potential issue"],
             metadata={"quality": "high"},
-            validation_results={"valid": True, "errors": []}
+            validation_results={"valid": True, "errors": []},
         )
         assert out.confidence == 0.85
         assert out.validation_results.get("valid") is True
 
     def test_fol_output_complexity_score(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import FOLOutput
+
         out = FOLOutput(
             fol_formula="P(x)",
             confidence=0.5,
@@ -600,8 +710,10 @@ class TestFOLInputPydanticStub:
     def test_converted_formula_output(self):
         """Full conversion test via ContractedFOLConverter."""
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import (
-            ContractedFOLConverter, FOLInput,
+            ContractedFOLConverter,
+            FOLInput,
         )
+
         conv = ContractedFOLConverter()
         for text, should_contain in [
             ("All cats are animals", "∀"),

@@ -66,10 +66,14 @@ class NetherlandsDiscoveryProvider:
     def import_catalog(self, **kwargs: Any) -> Mapping[str, Any]:
         from . import operations
 
-        discovery_jsonl_path = kwargs.pop("discovery_jsonl_path", kwargs.pop("discovery_jsonl", None))
+        discovery_jsonl_path = kwargs.pop(
+            "discovery_jsonl_path", kwargs.pop("discovery_jsonl", None)
+        )
         if discovery_jsonl_path is None:
             raise ValueError("Netherlands discovery import requires discovery_jsonl_path.")
-        return operations.import_discovery_catalog(discovery_jsonl_path=Path(discovery_jsonl_path), **kwargs)
+        return operations.import_discovery_catalog(
+            discovery_jsonl_path=Path(discovery_jsonl_path), **kwargs
+        )
 
     def queue(self, **kwargs: Any) -> Mapping[str, Any]:
         from . import operations
@@ -85,10 +89,16 @@ class NetherlandsDiscoveryProvider:
 class NetherlandsFetchProvider:
     """Official wetten.overheid.nl fetching adapter."""
 
-    async def fetch(self, record: DiscoveryRecord | Mapping[str, Any], **kwargs: Any) -> Mapping[str, Any]:
+    async def fetch(
+        self, record: DiscoveryRecord | Mapping[str, Any], **kwargs: Any
+    ) -> Mapping[str, Any]:
         from .api import scrape
 
-        document_url = record.document_url if isinstance(record, DiscoveryRecord) else str(record.get("document_url") or record.get("source_url") or "")
+        document_url = (
+            record.document_url
+            if isinstance(record, DiscoveryRecord)
+            else str(record.get("document_url") or record.get("source_url") or "")
+        )
         if not document_url:
             raise ValueError("Netherlands fetch requires a document_url or source_url.")
         output_dir = Path(kwargs.pop("output_dir", PACKAGE_RAW_OUTPUT_DIR))
@@ -124,11 +134,17 @@ class NetherlandsFetchProvider:
 class NetherlandsParser:
     """Parser adapter for Netherlands law documents."""
 
-    def parse_document(self, document: FetchedDocument | Mapping[str, Any] | str, **kwargs: Any) -> ParsedLawRecord:
+    def parse_document(
+        self, document: FetchedDocument | Mapping[str, Any] | str, **kwargs: Any
+    ) -> ParsedLawRecord:
         from ipfs_datasets_py.processors.legal_scrapers import netherlands_laws_scraper as scraper
 
         if isinstance(document, FetchedDocument):
-            html = document.body.decode("utf-8", errors="replace") if isinstance(document.body, bytes) else str(document.body)
+            html = (
+                document.body.decode("utf-8", errors="replace")
+                if isinstance(document.body, bytes)
+                else str(document.body)
+            )
         elif isinstance(document, Mapping):
             body = document.get("body") or document.get("html") or document.get("text") or ""
             html = body.decode("utf-8", errors="replace") if isinstance(body, bytes) else str(body)
@@ -155,7 +171,9 @@ class NetherlandsParser:
 class NetherlandsHierarchyExtractor:
     """Hierarchy adapter for BWBR law rows."""
 
-    def extract_hierarchy(self, parsed_law: ParsedLawRecord | Mapping[str, Any], **kwargs: Any) -> Sequence[HierarchyNode]:
+    def extract_hierarchy(
+        self, parsed_law: ParsedLawRecord | Mapping[str, Any], **kwargs: Any
+    ) -> Sequence[HierarchyNode]:
         fields = parsed_law.fields if isinstance(parsed_law, ParsedLawRecord) else parsed_law
         nodes: list[HierarchyNode] = []
         for part in fields.get("parts") or fields.get("chapters") or []:
@@ -172,20 +190,30 @@ class NetherlandsHierarchyExtractor:
                     label=str(part.get("label") or ""),
                     number=str(part.get("number") or ""),
                     parent_path=path,
-                    source_identifier=str(fields.get("law_identifier") or fields.get("identifier") or ""),
+                    source_identifier=str(
+                        fields.get("law_identifier") or fields.get("identifier") or ""
+                    ),
                     metadata=dict(part),
                 )
             )
         return nodes
 
-    def validate_hierarchy(self, rows: Iterable[Mapping[str, Any]], **kwargs: Any) -> Mapping[str, Any]:
+    def validate_hierarchy(
+        self, rows: Iterable[Mapping[str, Any]], **kwargs: Any
+    ) -> Mapping[str, Any]:
         checked = 0
         missing_article_paths: list[str] = []
         for row in rows:
             checked += 1
             if str(row.get("record_type") or "") == "article" and not row.get("hierarchy_path"):
-                missing_article_paths.append(str(row.get("article_identifier") or row.get("citation") or ""))
-        return {"ok": not missing_article_paths, "checked": checked, "missing_article_paths": missing_article_paths}
+                missing_article_paths.append(
+                    str(row.get("article_identifier") or row.get("citation") or "")
+                )
+        return {
+            "ok": not missing_article_paths,
+            "checked": checked,
+            "missing_article_paths": missing_article_paths,
+        }
 
 
 class NetherlandsStatusClassifier:
@@ -195,10 +223,16 @@ class NetherlandsStatusClassifier:
         from ipfs_datasets_py.processors.legal_scrapers import netherlands_laws_scraper as scraper
 
         if isinstance(law, str):
-            return _status_metadata_from_row(scraper._extract_status_metadata(law, source_url=str(kwargs.get("source_url") or "")))
+            return _status_metadata_from_row(
+                scraper._extract_status_metadata(
+                    law, source_url=str(kwargs.get("source_url") or "")
+                )
+            )
         return _status_metadata_from_row(scraper._ensure_status_fields(dict(law)))
 
-    def inherit_article_status(self, law: Mapping[str, Any], article: Mapping[str, Any]) -> dict[str, Any]:
+    def inherit_article_status(
+        self, law: Mapping[str, Any], article: Mapping[str, Any]
+    ) -> dict[str, Any]:
         inherited = dict(article)
         for field in STATUS_FIELD_NAMES:
             if field in law:
@@ -209,7 +243,9 @@ class NetherlandsStatusClassifier:
 class NetherlandsCIDGenerator:
     """CID generation adapter for Netherlands package rows."""
 
-    def assign_record_cids(self, rows: Iterable[Mapping[str, Any]], **kwargs: Any) -> Iterable[dict[str, Any]]:
+    def assign_record_cids(
+        self, rows: Iterable[Mapping[str, Any]], **kwargs: Any
+    ) -> Iterable[dict[str, Any]]:
         for row in rows:
             payload = dict(row)
             cid = cid_for_obj(payload)
@@ -265,12 +301,16 @@ class NetherlandsJsonLdGraphBuilder:
 
 
 class NetherlandsHuggingFacePublisher:
-    def upload(self, targets: Iterable[str] | None = None, **kwargs: Any) -> Sequence[Mapping[str, Any]]:
+    def upload(
+        self, targets: Iterable[str] | None = None, **kwargs: Any
+    ) -> Sequence[Mapping[str, Any]]:
         from .upload import upload_datasets
 
         return upload_datasets(targets, **kwargs)
 
-    def verify(self, targets: Iterable[str] | None = None, **kwargs: Any) -> Sequence[Mapping[str, Any]]:
+    def verify(
+        self, targets: Iterable[str] | None = None, **kwargs: Any
+    ) -> Sequence[Mapping[str, Any]]:
         from .upload import verify_remote_datasets
 
         return verify_remote_datasets(targets, **kwargs)

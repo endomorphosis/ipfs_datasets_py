@@ -1,6 +1,6 @@
-
 import hashlib
 from pathlib import Path
+
 
 # Calculate MD-5 checksum of a file
 def md5_checksum(file_path: Path) -> str:

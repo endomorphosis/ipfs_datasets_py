@@ -98,10 +98,10 @@ def _get_hierarchical_tools(self) -> dict[str, dict[str, Callable]]:
 async def _discover_categories(self) -> List[str]:
     """
     Discover available tool categories.
-    
+
     Returns:
         List of category names (e.g., ["dataset_tools", "ipfs_tools"])
-    
+
     Raises:
         ToolDiscoveryError: If category discovery fails
     """
@@ -110,17 +110,17 @@ async def _discover_categories(self) -> List[str]:
         if tool_manager is None:
             logger.warning("Tool manager not available, using empty category list")
             return []
-        
+
         # Get categories from tool manager
-        if hasattr(tool_manager, 'get_categories'):
+        if hasattr(tool_manager, "get_categories"):
             categories = await tool_manager.get_categories()
         else:
             # Fallback: scan tools directory
             categories = await self._scan_tool_directories()
-        
+
         logger.info(f"Discovered {len(categories)} tool categories")
         return categories
-    
+
     except (ImportError, AttributeError) as e:
         logger.error(f"Failed to discover categories: {e}", exc_info=True)
         raise ToolDiscoveryError(f"Category discovery failed: {e}") from e
@@ -131,13 +131,13 @@ async def _discover_categories(self) -> List[str]:
 async def _load_category_tools(self, category: str) -> Dict[str, Callable]:
     """
     Load all tools from a specific category.
-    
+
     Args:
         category: Category name (e.g., "dataset_tools")
-    
+
     Returns:
         Dictionary mapping tool names to callables
-    
+
     Raises:
         ToolLoadError: If category loading fails
     """
@@ -145,21 +145,21 @@ async def _load_category_tools(self, category: str) -> Dict[str, Callable]:
         tool_manager = self._get_tool_manager()
         if tool_manager is None:
             return {}
-        
+
         # Load tools from category
-        if hasattr(tool_manager, 'get_category_tools'):
+        if hasattr(tool_manager, "get_category_tools"):
             tools = await tool_manager.get_category_tools(category)
         else:
             # Fallback: import category module
             tools = await self._import_category_module(category)
-        
+
         logger.debug(f"Loaded {len(tools)} tools from category '{category}'")
         return tools
-    
+
     except ImportError as e:
         logger.warning(f"Category '{category}' not available: {e}")
         return {}  # Graceful degradation
-    
+
     except Exception as e:
         logger.error(f"Failed to load category '{category}': {e}", exc_info=True)
         raise ToolLoadError(f"Failed to load category '{category}': {e}") from e
@@ -167,35 +167,30 @@ async def _load_category_tools(self, category: str) -> Dict[str, Callable]:
 
 #### New Function 3: _create_tool_wrapper (25 lines)
 ```python
-def _create_tool_wrapper(
-    self, 
-    category: str, 
-    tool_name: str, 
-    tool_func: Callable
-) -> Callable:
+def _create_tool_wrapper(self, category: str, tool_name: str, tool_func: Callable) -> Callable:
     """
     Create an MCP tool wrapper for a category tool.
-    
+
     Args:
         category: Category name
         tool_name: Tool name within category
         tool_func: The actual tool function
-    
+
     Returns:
         MCP-compatible tool wrapper
-    
+
     Note:
         Uses explicit parameter binding to avoid closure capture bugs.
     """
     from functools import wraps, partial
-    
+
     # Fix closure bug: Use partial for explicit binding
     wrapper = partial(self._execute_tool, category, tool_name, tool_func)
-    
+
     # Preserve function metadata
     wrapper.__name__ = f"{category}_{tool_name}"
     wrapper.__doc__ = tool_func.__doc__ or f"Execute {tool_name} from {category}"
-    
+
     return wrapper
 ```
 
@@ -204,22 +199,22 @@ def _create_tool_wrapper(
 def _validate_tool(self, tool_name: str, tool_func: Callable) -> bool:
     """
     Validate that a tool function meets MCP requirements.
-    
+
     Args:
         tool_name: Name of the tool
         tool_func: Tool function to validate
-    
+
     Returns:
         True if tool is valid, False otherwise
     """
     if not callable(tool_func):
         logger.warning(f"Tool '{tool_name}' is not callable")
         return False
-    
-    if not hasattr(tool_func, '__name__'):
+
+    if not hasattr(tool_func, "__name__"):
         logger.warning(f"Tool '{tool_name}' missing __name__ attribute")
         return False
-    
+
     # Additional validation checks can be added here
     return True
 ```
@@ -229,40 +224,41 @@ def _validate_tool(self, tool_name: str, tool_func: Callable) -> bool:
 async def _get_hierarchical_tools(self) -> Dict[str, Dict[str, Callable]]:
     """
     Get hierarchical tool structure from HierarchicalToolManager.
-    
+
     Returns:
         Nested dictionary: {category: {tool_name: wrapper_func}}
-    
+
     Raises:
         ToolDiscoveryError: If tool discovery fails critically
     """
     result: Dict[str, Dict[str, Callable]] = {}
-    
+
     try:
         # Step 1: Discover categories
         categories = await self._discover_categories()
-        
+
         # Step 2: Load tools from each category
         for category in categories:
             try:
                 tools = await self._load_category_tools(category)
-                
+
                 # Step 3: Create wrappers for valid tools
                 result[category] = {}
                 for tool_name, tool_func in tools.items():
                     if self._validate_tool(tool_name, tool_func):
                         wrapper = self._create_tool_wrapper(category, tool_name, tool_func)
                         result[category][tool_name] = wrapper
-                
+
             except ToolLoadError as e:
                 # Log but continue with other categories
                 logger.error(f"Failed to load category '{category}': {e}")
                 continue
-        
-        logger.info(f"Loaded {sum(len(t) for t in result.values())} tools from "
-                   f"{len(result)} categories")
+
+        logger.info(
+            f"Loaded {sum(len(t) for t in result.values())} tools from {len(result)} categories"
+        )
         return result
-    
+
     except ToolDiscoveryError:
         raise  # Re-raise critical errors
     except Exception as e:
@@ -335,22 +331,31 @@ except Exception as e:
 # Define domain-specific exception hierarchy
 class MCPServerError(Exception):
     """Base exception for MCP server errors."""
+
     pass
+
 
 class ToolExecutionError(MCPServerError):
     """Error during tool execution."""
+
     pass
+
 
 class ToolRegistrationError(MCPServerError):
     """Error during tool registration."""
+
     pass
+
 
 class ValidationError(MCPServerError):
     """Error during parameter validation."""
+
     pass
+
 
 class ConfigurationError(MCPServerError):
     """Error in configuration."""
+
     pass
 ```
 
@@ -361,7 +366,7 @@ class ConfigurationError(MCPServerError):
 import errno
 
 try:
-    with open(file_path, 'r') as f:
+    with open(file_path, "r") as f:
         content = f.read()
 except FileNotFoundError as e:
     logger.error(f"File not found: {file_path}", exc_info=True)
@@ -400,6 +405,7 @@ try:
     from optional_dependency import feature
 except ImportError as e:
     logger.info(f"Optional dependency not available: {e}")
+
     # Graceful degradation
     def feature(*args, **kwargs):
         raise ToolExecutionError(
@@ -429,6 +435,7 @@ def validate_parameters(params: dict) -> dict:
 #### Pattern 5: Resource Cleanup
 ```python
 from contextlib import contextmanager
+
 
 @contextmanager
 def managed_resource():
@@ -465,10 +472,12 @@ def test_file_not_found_error():
     with pytest.raises(ToolExecutionError, match="Required file not found"):
         tool.process_file("/nonexistent/file.txt")
 
+
 def test_network_timeout_error():
     """Test network timeout is handled properly."""
     with pytest.raises(ToolExecutionError, match="Request timed out"):
         tool.fetch_url("http://slow-server.com")
+
 
 def test_validation_error():
     """Test validation errors are caught."""
@@ -507,17 +516,19 @@ async def generate_embeddings_api(request: EmbeddingRequest):
 # At module level: Try import with fallback
 try:
     from .mcp_server.tools.embedding_tools.embedding_generation import generate_embeddings
+
     EMBEDDINGS_AVAILABLE = True
 except ImportError as e:
     logger.warning(f"Embeddings tool not available: {e}")
     EMBEDDINGS_AVAILABLE = False
     generate_embeddings = None
 
+
 @app.post("/embeddings/generate")
 async def generate_embeddings_api(request: EmbeddingRequest):
     """
     Generate embeddings for input texts.
-    
+
     Requires: sentence-transformers, torch
     """
     if not EMBEDDINGS_AVAILABLE:
@@ -526,18 +537,16 @@ async def generate_embeddings_api(request: EmbeddingRequest):
             detail={
                 "error": "Embeddings feature not available",
                 "reason": "Missing required dependencies",
-                "install": "pip install sentence-transformers torch"
-            }
+                "install": "pip install sentence-transformers torch",
+            },
         )
-    
+
     try:
         embeddings = await generate_embeddings(
-            request.texts,
-            batch_size=request.batch_size,
-            model=request.model
+            request.texts, batch_size=request.batch_size, model=request.model
         )
         return {"embeddings": embeddings, "model": request.model}
-    
+
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"Invalid parameters: {e}")
     except RuntimeError as e:
@@ -577,9 +586,11 @@ Inconsistent type hints break static type checking and IDE autocomplete:
 def my_func(param: str = None) -> str:  # mypy error!
     pass
 
+
 # BAD: Unnecessary Any
 def process(data: Any) -> Any:  # What does this do?
     pass
+
 
 # BAD: Missing return type
 def calculate(x, y):  # No type info
@@ -593,32 +604,40 @@ def calculate(x, y):  # No type info
 ```python
 from typing import Optional, Union, List, Dict, Any, TypeVar, Generic
 
+
 # GOOD: Explicit Optional
 def my_func(param: Optional[str] = None) -> Optional[str]:
     if param is None:
         return None
     return param.upper()
 
+
 # GOOD: Specific types instead of Any
 def process_data(data: List[Dict[str, Union[str, int]]]) -> List[str]:
     return [str(item) for item in data]
 
+
 # GOOD: Generic types with TypeVar
-T = TypeVar('T')
+T = TypeVar("T")
+
 
 def first_or_none(items: List[T]) -> Optional[T]:
     return items[0] if items else None
+
 
 # GOOD: Type: ignore with justification
 def dynamic_import(module_name: str) -> Any:  # type: ignore[return]
     # Justification: Dynamic imports can't be typed statically
     return importlib.import_module(module_name)
 
+
 # GOOD: Protocol for duck typing
 from typing import Protocol
 
+
 class Closeable(Protocol):
     def close(self) -> None: ...
+
 
 def close_resource(resource: Closeable) -> None:
     resource.close()
@@ -671,9 +690,11 @@ Loop variables captured in closures reference the last value, causing all tool w
 ```python
 for cat in categories:
     for name, func in tools.items():
+
         def wrapper(*args, **kwargs):
             # BUG: 'cat' and 'name' reference final loop values
             return self._execute_tool(cat, name, func, *args, **kwargs)
+
         result[cat][name] = wrapper
 ```
 
@@ -682,8 +703,10 @@ for cat in categories:
 # Simplified example
 functions = []
 for i in range(3):
+
     def f():
         return i  # Captures 'i' from enclosing scope
+
     functions.append(f)
 
 # All functions return 2 (last value)!
@@ -699,6 +722,7 @@ for cat in categories:
         # Fix: Use default arguments for explicit binding
         def wrapper(*args, cat=cat, name=name, func=func, **kwargs):
             return self._execute_tool(cat, name, func, *args, **kwargs)
+
         result[cat][name] = wrapper
 ```
 
@@ -719,11 +743,14 @@ for cat in categories:
 ```python
 def make_wrapper(self, cat: str, name: str, func: Callable) -> Callable:
     """Factory function creates closure with explicit captures."""
+
     def wrapper(*args, **kwargs):
         return self._execute_tool(cat, name, func, *args, **kwargs)
+
     wrapper.__name__ = f"{cat}_{name}"
     wrapper.__doc__ = func.__doc__
     return wrapper
+
 
 for cat in categories:
     for name, func in tools.items():
@@ -746,14 +773,15 @@ def test_closure_capture_fix():
     """Test that wrappers capture correct category/name."""
     adapter = P2PMCPRegistryAdapter()
     tools = adapter._get_hierarchical_tools()
-    
+
     # Execute tools from different categories
     result1 = tools["dataset_tools"]["load"]()
     result2 = tools["ipfs_tools"]["add"]()
-    
+
     # Verify correct category was used
     assert "dataset" in result1["category"]
     assert "ipfs" in result2["category"]
+
 
 def test_multiple_wrappers_distinct():
     """Test that multiple wrappers are independent."""
@@ -761,7 +789,7 @@ def test_multiple_wrappers_distinct():
     for i in range(3):
         wrapper = create_wrapper(category=f"cat{i}", name=f"tool{i}")
         wrappers.append(wrapper)
-    
+
     results = [w() for w in wrappers]
     assert results == ["cat0_tool0", "cat1_tool1", "cat2_tool2"]
 ```
@@ -784,16 +812,16 @@ def load_dataset(
     source: str,
     split: Optional[str] = None,
     cache_dir: Optional[str] = None,
-    trust_remote_code: bool = False
+    trust_remote_code: bool = False,
 ) -> Dict[str, Any]:
     """
     Load a dataset from HuggingFace Hub or local filesystem.
-    
+
     This function provides a unified interface for loading datasets from various
     sources. It supports both remote datasets (HuggingFace Hub) and local files
     (CSV, JSON, Parquet, etc.). The function handles caching automatically and
     can load specific dataset splits.
-    
+
     Args:
         source: Dataset identifier or local file path.
             For HuggingFace Hub: use format "username/dataset" (e.g., "squad")
@@ -807,7 +835,7 @@ def load_dataset(
             If None, uses default HuggingFace cache directory (~/.cache/huggingface)
         trust_remote_code: Whether to trust and execute remote code from dataset
             scripts. Default False for security. Only enable for trusted sources.
-    
+
     Returns:
         Dictionary containing dataset information:
         {
@@ -820,36 +848,36 @@ def load_dataset(
                 "size_bytes": int          # Approximate size in bytes
             }
         }
-    
+
     Raises:
         FileNotFoundError: If local file path does not exist
         ValueError: If source format is invalid or dataset not found on Hub
         ImportError: If required dependency (datasets library) is not installed
         RuntimeError: If dataset loading fails due to corruption or format issues
-    
+
     Example:
         >>> # Load HuggingFace dataset
         >>> data = load_dataset("squad", split="train")
         >>> print(f"Loaded {data['metadata']['num_rows']} examples")
         Loaded 87599 examples
-        
+
         >>> # Load local CSV file
         >>> data = load_dataset("./data/my_data.csv")
         >>> print(list(data['splits'].keys()))
         ['train']
-        
+
         >>> # Load with custom cache directory
         >>> data = load_dataset(
         ...     "glue",
         ...     split="validation",
         ...     cache_dir="/tmp/datasets"
         ... )
-    
+
     See Also:
         - save_dataset: Save dataset to various formats
         - list_datasets: List available HuggingFace datasets
         - DatasetInfo: Get detailed dataset information
-    
+
     Notes:
         - Large datasets are streamed by default to save memory
         - Local file format is auto-detected from extension

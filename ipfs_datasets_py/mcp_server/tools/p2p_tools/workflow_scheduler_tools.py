@@ -97,7 +97,9 @@ def _serialize_task(task: Any) -> Dict[str, Any]:
     }
 
 
-def p2p_scheduler_init(peer_id: str, bootstrap_peers: Optional[List[str]] = None, force: bool = False) -> Dict[str, Any]:
+def p2p_scheduler_init(
+    peer_id: str, bootstrap_peers: Optional[List[str]] = None, force: bool = False
+) -> Dict[str, Any]:
     """Initialize an in-process P2P workflow scheduler.
 
     Args:
@@ -115,7 +117,9 @@ def p2p_scheduler_init(peer_id: str, bootstrap_peers: Optional[List[str]] = None
         return {"ok": True, "already_initialized": True, "status": _SCHEDULER.get_status()}
 
     P2PWorkflowScheduler, _, _ = _load_scheduler_types()
-    _SCHEDULER = P2PWorkflowScheduler(peer_id=str(peer_id), bootstrap_peers=list(bootstrap_peers or []))
+    _SCHEDULER = P2PWorkflowScheduler(
+        peer_id=str(peer_id), bootstrap_peers=list(bootstrap_peers or [])
+    )
     return {"ok": True, "already_initialized": False, "status": _SCHEDULER.get_status()}
 
 

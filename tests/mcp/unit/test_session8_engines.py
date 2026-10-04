@@ -18,6 +18,7 @@ import pytest
 
 # ── EmbeddingAnalysisEngine ────────────────────────────────────────────────
 
+
 class TestVectorEmbeddingAnalyzerUnavailable:
     """Tests that run without numpy / ML libraries installed (graceful degradation)."""
 
@@ -25,6 +26,7 @@ class TestVectorEmbeddingAnalyzerUnavailable:
         from ipfs_datasets_py.mcp_server.tools.finance_data_tools.embedding_analysis_engine import (
             VectorEmbeddingAnalyzer,
         )
+
         self.VEA = VectorEmbeddingAnalyzer
 
     def test_init_without_ml_libraries(self):
@@ -43,6 +45,7 @@ class TestVectorEmbeddingAnalyzerUnavailable:
     def test_embed_document_stores_result(self):
         """GIVEN an article dict; WHEN embed_document; THEN stored in analyzer.embeddings."""
         from datetime import datetime
+
         analyzer = self.VEA()
         article = {
             "article_id": "art001",
@@ -59,6 +62,7 @@ class TestVectorEmbeddingAnalyzerUnavailable:
     def test_correlate_with_market(self):
         """GIVEN embedded doc and stock data; WHEN correlate; THEN correlation added."""
         from datetime import datetime
+
         analyzer = self.VEA()
         article = {
             "article_id": "art002",
@@ -84,6 +88,7 @@ class TestVectorEmbeddingAnalyzerUnavailable:
     def test_cluster_embeddings_returns_dict(self):
         """GIVEN multiple embeddings; WHEN cluster; THEN returns dict of clusters."""
         from datetime import datetime
+
         analyzer = self.VEA()
         for i in range(5):
             article = {
@@ -101,6 +106,7 @@ class TestVectorEmbeddingAnalyzerUnavailable:
     def test_to_dict_serialisable(self):
         """GIVEN a MarketEmbeddingCorrelation; WHEN to_dict; THEN JSON-serialisable."""
         from datetime import datetime
+
         analyzer = self.VEA()
         article = {
             "article_id": "art003",
@@ -126,16 +132,19 @@ class TestEmbeddingCorrelationMCPTools:
         from ipfs_datasets_py.mcp_server.tools.finance_data_tools.embedding_correlation import (
             analyze_embedding_market_correlation,
         )
-        articles = json.dumps([
-            {
-                "article_id": "a1",
-                "title": "Market news",
-                "content": "Stocks up",
-                "source": "ap",
-                "url": "http://example.com",
-                "published_date": datetime.now().isoformat(),
-            }
-        ])
+
+        articles = json.dumps(
+            [
+                {
+                    "article_id": "a1",
+                    "title": "Market news",
+                    "content": "Stocks up",
+                    "source": "ap",
+                    "url": "http://example.com",
+                    "published_date": datetime.now().isoformat(),
+                }
+            ]
+        )
         stocks = json.dumps([{"symbol": "AAPL", "price_before": 100, "price_after": 102}])
         result_str = analyze_embedding_market_correlation(articles, stocks)
         result = json.loads(result_str)
@@ -146,6 +155,7 @@ class TestEmbeddingCorrelationMCPTools:
         from ipfs_datasets_py.mcp_server.tools.finance_data_tools.embedding_correlation import (
             find_predictive_embedding_patterns,
         )
+
         result_str = find_predictive_embedding_patterns("{}", 0.6, 30)
         result = json.loads(result_str)
         assert result["success"] is True
@@ -153,21 +163,28 @@ class TestEmbeddingCorrelationMCPTools:
     def test_backward_compat_reexport(self):
         """GIVEN old import path; THEN engine types still importable."""
         from ipfs_datasets_py.mcp_server.tools.finance_data_tools.embedding_correlation import (
-            DocumentEmbedding, MarketEmbeddingCorrelation, VectorEmbeddingAnalyzer,
+            DocumentEmbedding,
+            MarketEmbeddingCorrelation,
+            VectorEmbeddingAnalyzer,
         )
+
         assert DocumentEmbedding is not None
         assert VectorEmbeddingAnalyzer is not None
 
 
 # ── BiomoleculeEngine ──────────────────────────────────────────────────────
 
+
 class TestBiomoleculeEngineBasic:
     """Basic tests for BiomoleculeDiscoveryEngine."""
 
     def setup_method(self):
         from ipfs_datasets_py.mcp_server.tools.medical_research_scrapers.biomolecule_engine import (
-            BiomoleculeDiscoveryEngine, BiomoleculeType, InteractionType,
+            BiomoleculeDiscoveryEngine,
+            BiomoleculeType,
+            InteractionType,
         )
+
         self.Engine = BiomoleculeDiscoveryEngine
         self.BioType = BiomoleculeType
         self.IntType = InteractionType
@@ -201,7 +218,10 @@ class TestBiomoleculeEngineBasic:
 
     def test_classify_biomolecule_antibody(self):
         """GIVEN antibody context; WHEN classifying; THEN returns ANTIBODY type."""
-        from ipfs_datasets_py.mcp_server.tools.medical_research_scrapers.biomolecule_engine import BiomoleculeType
+        from ipfs_datasets_py.mcp_server.tools.medical_research_scrapers.biomolecule_engine import (
+            BiomoleculeType,
+        )
+
         engine = self.Engine()
         result = engine._classify_biomolecule("PD-L1mAb", "antibody therapy anti-cancer")
         assert result == BiomoleculeType.ANTIBODY
@@ -215,6 +235,7 @@ class TestDiscoverBiomoleculesWrapper:
         from ipfs_datasets_py.mcp_server.tools.medical_research_scrapers.biomolecule_discovery import (
             discover_biomolecules_for_target,
         )
+
         results = discover_biomolecules_for_target("HER2", discovery_type="binders", max_results=3)
         assert isinstance(results, list)
 
@@ -223,27 +244,34 @@ class TestDiscoverBiomoleculesWrapper:
         from ipfs_datasets_py.mcp_server.tools.medical_research_scrapers.biomolecule_discovery import (
             discover_biomolecules_for_target,
         )
+
         with pytest.raises(ValueError, match="Unknown discovery_type"):
             discover_biomolecules_for_target("target", discovery_type="invalid")
 
     def test_backward_compat_reexport(self):
         """GIVEN import from wrapper; THEN engine types still available."""
         from ipfs_datasets_py.mcp_server.tools.medical_research_scrapers.biomolecule_discovery import (
-            BiomoleculeDiscoveryEngine, BiomoleculeType, InteractionType,
+            BiomoleculeDiscoveryEngine,
+            BiomoleculeType,
+            InteractionType,
         )
+
         assert BiomoleculeDiscoveryEngine is not None
         assert BiomoleculeType is not None
 
 
 # ── BackgroundTaskEngine ───────────────────────────────────────────────────
 
+
 class TestMockBackgroundTask:
     """Tests for the MockBackgroundTask dataclass."""
 
     def setup_method(self):
         from ipfs_datasets_py.mcp_server.tools.background_task_tools.background_task_engine import (
-            MockBackgroundTask, TaskStatus,
+            MockBackgroundTask,
+            TaskStatus,
         )
+
         self.Task = MockBackgroundTask
         self.Status = TaskStatus
 
@@ -286,8 +314,11 @@ class TestMockTaskManager:
 
     def setup_method(self):
         from ipfs_datasets_py.mcp_server.tools.background_task_tools.background_task_engine import (
-            MockTaskManager, TaskStatus, TaskType,
+            MockTaskManager,
+            TaskStatus,
+            TaskType,
         )
+
         self.Manager = MockTaskManager
         self.Status = TaskStatus
         self.TaskType = TaskType
@@ -301,18 +332,14 @@ class TestMockTaskManager:
     def test_create_task(self):
         """GIVEN manager; WHEN creating task; THEN task_id returned and stored."""
         mgr = self.Manager()
-        task_id = asyncio.run(
-            mgr.create_task("create_embeddings")
-        )
+        task_id = asyncio.run(mgr.create_task("create_embeddings"))
         assert isinstance(task_id, str)
         assert task_id in mgr.tasks
 
     def test_get_task(self):
         """GIVEN created task; WHEN get_task; THEN returns task object."""
         mgr = self.Manager()
-        task_id = asyncio.run(
-            mgr.create_task("data_processing")
-        )
+        task_id = asyncio.run(mgr.create_task("data_processing"))
         task = asyncio.run(mgr.get_task(task_id))
         assert task is not None
         assert task.task_id == task_id
@@ -321,9 +348,7 @@ class TestMockTaskManager:
         """GIVEN pending task; WHEN cancel; THEN returns True."""
         mgr = self.Manager()
         mgr.max_concurrent_tasks = 0  # Keep tasks pending
-        task_id = asyncio.run(
-            mgr.create_task("backup")
-        )
+        task_id = asyncio.run(mgr.create_task("backup"))
         result = asyncio.run(mgr.cancel_task(task_id))
         assert result is True
 
@@ -338,8 +363,12 @@ class TestMockTaskManager:
     def test_backward_compat_import_from_engine(self):
         """GIVEN import from background_task_engine; THEN all types available."""
         from ipfs_datasets_py.mcp_server.tools.background_task_tools.background_task_engine import (
-            MockBackgroundTask, MockTaskManager, TaskStatus, TaskType,
+            MockBackgroundTask,
+            MockTaskManager,
+            TaskStatus,
+            TaskType,
         )
+
         assert MockBackgroundTask is not None
         assert MockTaskManager is not None
         assert TaskStatus is not None
@@ -348,13 +377,16 @@ class TestMockTaskManager:
 
 # ── Phase 7: Lazy Loading ─────────────────────────────────────────────────
 
+
 class TestHierarchicalToolManagerLazyLoading:
     """Tests for the Phase-7 lazy-loading feature."""
 
     def setup_method(self):
         from ipfs_datasets_py.mcp_server.hierarchical_tool_manager import (
-            HierarchicalToolManager, ToolCategory,
+            HierarchicalToolManager,
+            ToolCategory,
         )
+
         self.HTM = HierarchicalToolManager
         self.TC = ToolCategory
 
@@ -362,16 +394,20 @@ class TestHierarchicalToolManagerLazyLoading:
         """GIVEN registered lazy category; THEN loader NOT called at registration."""
         mgr = self.HTM()
         calls = []
-        mgr.lazy_register_category("lazy_cat", lambda: calls.append(1) or self.TC("lazy_cat", Path("/tmp")))
+        mgr.lazy_register_category(
+            "lazy_cat", lambda: calls.append(1) or self.TC("lazy_cat", Path("/tmp"))
+        )
         assert len(calls) == 0
 
     def test_get_category_triggers_lazy_load(self):
         """GIVEN lazy category; WHEN get_category; THEN loader IS called."""
         mgr = self.HTM()
         calls = []
+
         def loader():
             calls.append(1)
             return self.TC("on_demand", Path("/tmp"), "On demand tools")
+
         mgr.lazy_register_category("on_demand", loader)
         cat = mgr.get_category("on_demand")
         assert cat is not None
@@ -381,9 +417,11 @@ class TestHierarchicalToolManagerLazyLoading:
         """GIVEN lazy category; WHEN get_category called twice; THEN loader called once."""
         mgr = self.HTM()
         calls = []
+
         def loader():
             calls.append(1)
             return self.TC("once", Path("/tmp"), "loaded once")
+
         mgr.lazy_register_category("once", loader)
         mgr.get_category("once")
         mgr.get_category("once")

@@ -51,7 +51,7 @@ warnings.warn(
     "Use ipfs_datasets_py.processors.graphrag.unified_graphrag.UnifiedGraphRAGProcessor instead. "
     "The unified processor provides all features from this implementation plus additional capabilities.",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 ```
 
@@ -64,7 +64,7 @@ warnings.warn(
 from .processors.graphrag.unified_graphrag import (
     UnifiedGraphRAGProcessor,
     GraphRAGConfiguration,
-    GraphRAGResult
+    GraphRAGResult,
 )
 ```
 
@@ -75,13 +75,15 @@ from .processors.graphrag.unified_graphrag import (
 
 3. **Updated `__all__` exports:**
 ```python
-__all__.extend([
-    'UnifiedGraphRAGProcessor',  # Recommended unified implementation
-    'GraphRAGConfiguration',
-    'GraphRAGResult',
-    'GraphRAGProcessor',  # Legacy (deprecated)
-    'MockGraphRAGProcessor'  # Legacy (deprecated)
-])
+__all__.extend(
+    [
+        "UnifiedGraphRAGProcessor",  # Recommended unified implementation
+        "GraphRAGConfiguration",
+        "GraphRAGResult",
+        "GraphRAGProcessor",  # Legacy (deprecated)
+        "MockGraphRAGProcessor",  # Legacy (deprecated)
+    ]
+)
 ```
 
 4. **Verified imports work:**
@@ -109,14 +111,19 @@ from ipfs_datasets_py.processors.graphrag_processor import GraphRAGProcessor, Mo
 try:
     from ipfs_datasets_py.processors.graphrag.unified_graphrag import (
         UnifiedGraphRAGProcessor,
-        GraphRAGConfiguration
+        GraphRAGConfiguration,
     )
+
     # Use unified processor
     config = GraphRAGConfiguration(processing_mode="fast")
     processor = UnifiedGraphRAGProcessor(config=config)
 except ImportError:
     # Fallback to legacy processor (deprecated but still supported)
-    from ipfs_datasets_py.processors.graphrag_processor import GraphRAGProcessor, MockGraphRAGProcessor
+    from ipfs_datasets_py.processors.graphrag_processor import (
+        GraphRAGProcessor,
+        MockGraphRAGProcessor,
+    )
+
     processor = GraphRAGProcessor()
 ```
 
@@ -126,8 +133,14 @@ except ImportError:
 
 **Before:**
 ```python
-from ipfs_datasets_py.processors.website_graphrag_processor import WebsiteGraphRAGProcessor, WebsiteProcessingConfig
-from ipfs_datasets_py.processors.graphrag.website_system import WebsiteGraphRAGSystem, WebsiteGraphRAGResult
+from ipfs_datasets_py.processors.website_graphrag_processor import (
+    WebsiteGraphRAGProcessor,
+    WebsiteProcessingConfig,
+)
+from ipfs_datasets_py.processors.graphrag.website_system import (
+    WebsiteGraphRAGSystem,
+    WebsiteGraphRAGResult,
+)
 ```
 
 **After:**
@@ -136,16 +149,23 @@ from ipfs_datasets_py.processors.graphrag.website_system import WebsiteGraphRAGS
 from ipfs_datasets_py.processors.graphrag.unified_graphrag import (
     UnifiedGraphRAGProcessor,
     GraphRAGConfiguration,
-    GraphRAGResult
+    GraphRAGResult,
 )
+
 # Legacy imports for backward compatibility if needed
 try:
-    from ipfs_datasets_py.processors.website_graphrag_processor import WebsiteGraphRAGProcessor, WebsiteProcessingConfig
+    from ipfs_datasets_py.processors.website_graphrag_processor import (
+        WebsiteGraphRAGProcessor,
+        WebsiteProcessingConfig,
+    )
 except ImportError:
     WebsiteGraphRAGProcessor = None
     WebsiteProcessingConfig = None
-    
-from ipfs_datasets_py.processors.graphrag.website_system import WebsiteGraphRAGSystem, WebsiteGraphRAGResult
+
+from ipfs_datasets_py.processors.graphrag.website_system import (
+    WebsiteGraphRAGSystem,
+    WebsiteGraphRAGResult,
+)
 ```
 
 **Impact:** Enhanced integration layer now uses unified processor with backward compatibility.
@@ -247,7 +267,7 @@ processor = UnifiedGraphRAGProcessor(config=config)
 from ipfs_datasets_py.processors.graphrag.unified_graphrag import (
     UnifiedGraphRAGProcessor,
     GraphRAGConfiguration,
-    GraphRAGResult
+    GraphRAGResult,
 )
 ```
 
@@ -255,6 +275,7 @@ from ipfs_datasets_py.processors.graphrag.unified_graphrag import (
 ```python
 # Still works but shows DeprecationWarning
 from ipfs_datasets_py.processors.graphrag_processor import GraphRAGProcessor
+
 processor = GraphRAGProcessor()  # ⚠️ Warning emitted here
 ```
 
@@ -280,7 +301,9 @@ processor = GraphRAGProcessor()  # ⚠️ Warning emitted here
 # These all work with DeprecationWarning
 from ipfs_datasets_py.processors.graphrag_processor import GraphRAGProcessor
 from ipfs_datasets_py.processors.website_graphrag_processor import WebsiteGraphRAGProcessor
-from ipfs_datasets_py.processors.advanced_graphrag_website_processor import AdvancedGraphRAGWebsiteProcessor
+from ipfs_datasets_py.processors.advanced_graphrag_website_processor import (
+    AdvancedGraphRAGWebsiteProcessor,
+)
 ```
 
 2. **All legacy APIs work:**

@@ -29,42 +29,42 @@ Components:
 Usage:
     from ipfs_datasets_py.knowledge_graphs.storage import IPLDBackend, create_backend
     from ipfs_datasets_py.router_deps import RouterDeps
-    
+
     # Create storage backend with router deps
     deps = RouterDeps()
     storage = IPLDBackend(deps=deps)
-    
+
     # Or use convenience function
     storage = create_backend()
-    
+
     # Store data (uses ipfs_backend_router automatically)
     cid = storage.store({"hello": "world"}, pin=True)
-    
+
     # Retrieve data
     data = storage.retrieve_json(cid)
-    
+
     # Store complete graph
     graph_cid = storage.store_graph(
         nodes=[{"id": "1", "name": "Alice"}],
         relationships=[{"type": "KNOWS", "start": "1", "end": "2"}]
     )
-    
+
     # Export to CAR file
     car_bytes = storage.export_car(graph_cid)
 
 Integration Pattern:
     All IPFS operations go through ipfs_backend_router for compatibility:
-    
+
     from ipfs_datasets_py.ipfs_backend_router import get_ipfs_backend
-    
+
     class IPLDBackend:
         def __init__(self, deps: RouterDeps = None):
             self.deps = deps or RouterDeps()
             self.backend = get_ipfs_backend(deps=self.deps)
-        
+
         def store(self, data: bytes) -> str:
             return self.backend.add_bytes(data, pin=True)
-        
+
         def retrieve(self, cid: str) -> bytes:
             return self.backend.cat(cid)
 

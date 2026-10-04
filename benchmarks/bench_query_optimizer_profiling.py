@@ -26,12 +26,15 @@ from dataclasses import dataclass
 # Add workspace to path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from ipfs_datasets_py.optimizers.graphrag.query_unified_optimizer import UnifiedGraphRAGQueryOptimizer  # noqa: E402
+from ipfs_datasets_py.optimizers.graphrag.query_unified_optimizer import (
+    UnifiedGraphRAGQueryOptimizer,
+)  # noqa: E402
 
 
 @dataclass
 class ProfilingResult:
     """Results from a profiling measurement."""
+
     test_name: str
     iterations: int
     total_ms: float
@@ -41,7 +44,7 @@ class ProfilingResult:
     max_ms: float
     std_dev_ms: float
     throughput_per_sec: float
-    
+
     def __str__(self) -> str:
         return (
             f"{self.test_name:50s} | "
@@ -56,12 +59,12 @@ class ProfilingResult:
 
 class QueryOptimizerProfiler:
     """Profiling harness for query optimizer performance analysis."""
-    
+
     def __init__(self):
         """Initialize profiler with optimizer instance."""
         self.optimizer = UnifiedGraphRAGQueryOptimizer()
         self.results: List[ProfilingResult] = []
-    
+
     def create_test_query(self, complexity: str = "simple") -> Dict[str, Any]:
         """Create a test query of given complexity level."""
         base_query = {
@@ -70,13 +73,13 @@ class QueryOptimizerProfiler:
             "session_id": "prof_test_123",
             "timestamp": 1708684800,
         }
-        
+
         if complexity == "simple":
             return {
                 **base_query,
                 "query_text": "What is entity A?",
             }
-        
+
         elif complexity == "moderate":
             return {
                 **base_query,
@@ -92,7 +95,7 @@ class QueryOptimizerProfiler:
                 },
                 "max_vector_results": 20,
             }
-        
+
         elif complexity == "complex":
             return {
                 **base_query,
@@ -109,7 +112,7 @@ class QueryOptimizerProfiler:
                 "max_vector_results": 100,
                 "entity_importance_threshold": 0.4,
             }
-        
+
         elif complexity == "heavy":
             # Large query with many parameters
             edge_types = ["related_to", "part_of", "influences", "contains", "causes", "affects"]
@@ -130,9 +133,9 @@ class QueryOptimizerProfiler:
                 "include_explanations": True,
                 "reasoning_depth": 4,
             }
-        
+
         return base_query
-    
+
     def profile_operation(
         self,
         test_name: str,
@@ -141,13 +144,13 @@ class QueryOptimizerProfiler:
     ) -> ProfilingResult:
         """Profile a single operation across multiple iterations."""
         times_ms = []
-        
+
         for _ in range(iterations):
             start = time.perf_counter()
             test_func()
             elapsed = time.perf_counter() - start
             times_ms.append(elapsed * 1000)
-        
+
         total_ms = sum(times_ms)
         mean_ms = statistics.mean(times_ms)
         median_ms = statistics.median(times_ms)
@@ -155,7 +158,7 @@ class QueryOptimizerProfiler:
         max_ms = max(times_ms)
         std_dev_ms = statistics.stdev(times_ms) if len(times_ms) > 1 else 0
         throughput_per_sec = (iterations / total_ms) * 1000 if total_ms > 0 else 0
-        
+
         result = ProfilingResult(
             test_name=test_name,
             iterations=iterations,
@@ -167,16 +170,16 @@ class QueryOptimizerProfiler:
             std_dev_ms=std_dev_ms,
             throughput_per_sec=throughput_per_sec,
         )
-        
+
         self.results.append(result)
         return result
-    
+
     def run_all_benchmarks(self) -> None:
         """Run comprehensive profiling suite."""
-        print("\n" + "="*120)
+        print("\n" + "=" * 120)
         print("UnifiedGraphRAGQueryOptimizer Profiling Results")
-        print("="*120 + "\n")
-        
+        print("=" * 120 + "\n")
+
         # Warmup
         print("Warming up...")
         for _ in range(5):
@@ -186,7 +189,7 @@ class QueryOptimizerProfiler:
             except:
                 pass
         print("Warmup complete.\n")
-        
+
         # 1. Simple query optimization baseline
         print("Testing simple queries...")
         query = self.create_test_query("simple")
@@ -196,7 +199,7 @@ class QueryOptimizerProfiler:
             iterations=100,
         )
         print(result)
-        
+
         # 2. Moderate complexity queries (typical use case)
         print("Testing moderate queries...")
         query = self.create_test_query("moderate")
@@ -206,7 +209,7 @@ class QueryOptimizerProfiler:
             iterations=50,
         )
         print(result)
-        
+
         # 3. Complex queries (rare but important)
         print("Testing complex queries...")
         query = self.create_test_query("complex")
@@ -216,7 +219,7 @@ class QueryOptimizerProfiler:
             iterations=30,
         )
         print(result)
-        
+
         # 4. Heavy queries (stress test)
         print("Testing heavy queries...")
         query = self.create_test_query("heavy")
@@ -226,7 +229,7 @@ class QueryOptimizerProfiler:
             iterations=20,
         )
         print(result)
-        
+
         # 5. Batch operations (multiple queries in sequence)
         print("Testing batch operations...")
         queries = [
@@ -234,21 +237,21 @@ class QueryOptimizerProfiler:
             self.create_test_query("moderate"),
             self.create_test_query("complex"),
         ]
-        
+
         def batch_optimize():
             for q in queries:
                 try:
                     self.optimizer.optimize_query(q)
                 except:
                     pass
-        
+
         result = self.profile_operation(
             "Batch optimization (3 queries mixed complexity)",
             batch_optimize,
             iterations=30,
         )
         print(result)
-        
+
         # 6. Repeated optimization of same query (cache path)
         print("Testing repeated optimization...")
         query = self.create_test_query("moderate")
@@ -258,56 +261,58 @@ class QueryOptimizerProfiler:
             iterations=75,
         )
         print(result)
-        
+
         # Summary
         self._print_summary()
-    
+
     def _print_summary(self) -> None:
         """Print profiling summary."""
         if not self.results:
             return
-        
-        print("\n" + "="*120)
+
+        print("\n" + "=" * 120)
         print("Summary Statistics")
-        print("="*120 + "\n")
-        
+        print("=" * 120 + "\n")
+
         # Sort by mean latency
         sorted_results = sorted(self.results, key=lambda r: r.mean_ms)
-        
+
         print("Ranked by latency (fastest to slowest):")
         print("-" * 120)
         for i, result in enumerate(sorted_results, 1):
             marker = "🚀" if i == 1 else "⚠️ " if i == len(sorted_results) else "  "
             print(f"{marker} {result}")
-        
+
         # Overall statistics
         print("\n" + "-" * 120)
         overall_mean = statistics.mean(r.mean_ms for r in self.results)
         min_latency = min(r.mean_ms for r in self.results)
         max_latency = max(r.mean_ms for r in self.results)
-        
+
         print(f"\nOverall Statistics:")
         print(f"  Fastest operation:  {min_latency:8.3f}ms")
         print(f"  Slowest operation:  {max_latency:8.3f}ms")
         print(f"  Average latency:    {overall_mean:8.3f}ms")
-        print(f"  Variation range:    {(max_latency/min_latency):8.1f}x")
-        
+        print(f"  Variation range:    {(max_latency / min_latency):8.1f}x")
+
         # Identify slowest operations
         print(f"\nPerformance observations:")
         slowest = max(self.results, key=lambda r: r.mean_ms)
         fastest = min(self.results, key=lambda r: r.mean_ms)
-        
+
         if slowest.mean_ms > fastest.mean_ms * 2:
-            print(f"  ⚠️  {slowest.test_name} is {slowest.mean_ms/fastest.mean_ms:.1f}x slower than {fastest.test_name}")
-        
+            print(
+                f"  ⚠️  {slowest.test_name} is {slowest.mean_ms / fastest.mean_ms:.1f}x slower than {fastest.test_name}"
+            )
+
         # Identify high variance operations
         high_variance = [r for r in self.results if r.std_dev_ms > r.mean_ms * 0.5]
         if high_variance:
             print(f"  ⚠️  High variance operations (σ > 50% mean):")
             for r in high_variance:
                 print(f"      - {r.test_name}: σ={r.std_dev_ms:.3f}ms")
-        
-        print("\n" + "="*120 + "\n")
+
+        print("\n" + "=" * 120 + "\n")
 
 
 def main():

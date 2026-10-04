@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from ipfs_datasets_py.core_operations.logic_processor import LogicProcessor
+
     _PROCESSOR = LogicProcessor()
     _AVAILABLE = True
 except Exception as _e:
@@ -63,6 +64,7 @@ __all__ = ["logic_capabilities", "logic_health", "LogicHealthTool", "LogicCapabi
 
 class LogicHealthTool:
     """OOP wrapper for the logic_health MCP tool."""
+
     name = "logic_health"
     category = "logic_tools"
     tags = ["logic", "health", "monitoring"]
@@ -73,6 +75,7 @@ class LogicHealthTool:
 
 class LogicCapabilitiesTool:
     """OOP wrapper for the logic_capabilities MCP tool."""
+
     name = "logic_capabilities"
     category = "logic_tools"
     tags = ["logic", "capabilities", "info"]

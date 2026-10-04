@@ -4,6 +4,7 @@ Resolves which policy pack applies for a given (jurisdiction, date, query)
 in a fully deterministic, replay-stable manner.
 Schema version: 1.0
 """
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -76,14 +77,15 @@ def resolve_policy_pack(
 
     # Step 1: filter by jurisdiction
     jurisdiction_matches = [
-        (idx, p) for idx, p in enumerate(packs)
-        if p.get("jurisdiction") == jurisdiction
+        (idx, p) for idx, p in enumerate(packs) if p.get("jurisdiction") == jurisdiction
     ]
-    trace.append({
-        "step": "jurisdiction_filter",
-        "jurisdiction": jurisdiction,
-        "matched_indices": [idx for idx, _ in jurisdiction_matches],
-    })
+    trace.append(
+        {
+            "step": "jurisdiction_filter",
+            "jurisdiction": jurisdiction,
+            "matched_indices": [idx for idx, _ in jurisdiction_matches],
+        }
+    )
 
     # Step 2: filter by effective_date <= query date
     date_matches = []
@@ -92,20 +94,24 @@ def resolve_policy_pack(
         try:
             eff_dt = _parse_date(eff_date_str)
         except PolicyResolutionError:
-            trace.append({
-                "step": "date_filter_skip",
-                "index": idx,
-                "reason": f"unparseable effective_date '{eff_date_str}'",
-            })
+            trace.append(
+                {
+                    "step": "date_filter_skip",
+                    "index": idx,
+                    "reason": f"unparseable effective_date '{eff_date_str}'",
+                }
+            )
             continue
         if eff_dt <= query_dt:
             date_matches.append((idx, p, eff_dt))
 
-    trace.append({
-        "step": "date_filter",
-        "query_date": date,
-        "matched_indices": [idx for idx, _, _ in date_matches],
-    })
+    trace.append(
+        {
+            "step": "date_filter",
+            "query_date": date,
+            "matched_indices": [idx for idx, _, _ in date_matches],
+        }
+    )
 
     if not date_matches:
         raise PolicyResolutionError(
@@ -118,18 +124,18 @@ def resolve_policy_pack(
     candidates = [(idx, p) for idx, p, eff_dt in date_matches if eff_dt == max_eff_dt]
 
     tie_break_applied = len(candidates) > 1
-    trace.append({
-        "step": "most_recent_filter",
-        "most_recent_effective_date": max_eff_dt.strftime("%Y-%m-%d"),
-        "candidate_indices": [idx for idx, _ in candidates],
-        "tie_break_applied": tie_break_applied,
-    })
+    trace.append(
+        {
+            "step": "most_recent_filter",
+            "most_recent_effective_date": max_eff_dt.strftime("%Y-%m-%d"),
+            "candidate_indices": [idx for idx, _ in candidates],
+            "tie_break_applied": tie_break_applied,
+        }
+    )
 
     # Step 4: deterministic tie-break
     if tie_break_applied:
-        all_have_pack_id = all(
-            p.get("pack_id") not in (None, "") for _, p in candidates
-        )
+        all_have_pack_id = all(p.get("pack_id") not in (None, "") for _, p in candidates)
         if all_have_pack_id:
             # Lexicographic ascending by pack_id
             candidates.sort(key=lambda t: t[1]["pack_id"])
@@ -142,11 +148,13 @@ def resolve_policy_pack(
     selected_index, selected_pack = candidates[0]
     selected_pack_id = selected_pack.get("pack_id") or f"pack_index_{selected_index}"
 
-    trace.append({
-        "step": "selected",
-        "selected_index": selected_index,
-        "selected_pack_id": selected_pack_id,
-    })
+    trace.append(
+        {
+            "step": "selected",
+            "selected_index": selected_index,
+            "selected_pack_id": selected_pack_id,
+        }
+    )
 
     return {
         "schema_version": RESOLVER_SCHEMA_VERSION,

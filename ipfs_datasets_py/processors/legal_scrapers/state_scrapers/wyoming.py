@@ -14,6 +14,7 @@ from ...playwright_limiter import acquire_playwright_slot
 
 try:
     from playwright.async_api import async_playwright
+
     PLAYWRIGHT_AVAILABLE = True
 except ImportError:
     PLAYWRIGHT_AVAILABLE = False
@@ -25,19 +26,21 @@ class WyomingScraper(BaseStateScraper):
     _SECTION_HEADER_RE = re.compile(
         r"(?m)^\s*(\d{1,2}-\d{1,2}-\d{2,4}(?:\.[0-9A-Za-z]+)?)\.\s+(.+)$"
     )
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for Wyoming's legislative website."""
         return "https://www.wyoleg.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Wyoming."""
-        return [{
-            "name": "Wyoming Statutes",
-            "url": f"{self.get_base_url()}/stateStatutes/StatutesDownload",
-            "type": "Code"
-        }]
-    
+        return [
+            {
+                "name": "Wyoming Statutes",
+                "url": f"{self.get_base_url()}/stateStatutes/StatutesDownload",
+                "type": "Code",
+            }
+        ]
+
     async def scrape_code(
         self,
         code_name: str,
@@ -45,11 +48,11 @@ class WyomingScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from Wyoming's legislative website.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
@@ -79,7 +82,7 @@ class WyomingScraper(BaseStateScraper):
                     return result[:max_sections_value]
             except Exception as e:
                 self.logger.warning(f"Wyoming Playwright failed: {e}, falling back")
-        
+
         result = await self._custom_scrape_wyoming(
             code_name,
             code_url,
@@ -87,13 +90,9 @@ class WyomingScraper(BaseStateScraper):
             max_sections=max_sections_value,
         )
         return result[:max_sections_value]
-    
+
     async def _scrape_with_playwright(
-        self,
-        code_name: str,
-        code_url: str,
-        citation_format: str,
-        max_sections: int = 60
+        self, code_name: str, code_url: str, citation_format: str, max_sections: int = 60
     ) -> List[NormalizedStatute]:
         """Scrape Wyoming using Playwright for JavaScript rendering."""
         try:
@@ -101,21 +100,21 @@ class WyomingScraper(BaseStateScraper):
             from urllib.parse import urljoin
         except ImportError:
             return []
-        
+
         statutes = []
-        
+
         async with acquire_playwright_slot():
             async with async_playwright() as p:
                 browser = await p.chromium.launch(headless=True)
                 page = await browser.new_page()
 
                 try:
-                    await page.goto(code_url, wait_until='networkidle', timeout=60000)
-                    await page.wait_for_selector('a', timeout=10000)
+                    await page.goto(code_url, wait_until="networkidle", timeout=60000)
+                    await page.wait_for_selector("a", timeout=10000)
 
                     content = await page.content()
-                    soup = BeautifulSoup(content, 'html.parser')
-                    links = soup.find_all('a', href=True)
+                    soup = BeautifulSoup(content, "html.parser")
+                    links = soup.find_all("a", href=True)
 
                     section_count = 0
                     seen_urls = set()
@@ -124,20 +123,25 @@ class WyomingScraper(BaseStateScraper):
                             break
 
                         link_text = link.get_text(strip=True)
-                        link_href = link.get('href', '')
+                        link_href = link.get("href", "")
 
                         if len(link_text) < 5:
                             continue
                         full_url = urljoin(code_url, link_href)
                         full_url_l = full_url.lower()
                         # Focus on authoritative downloadable title PDFs instead of nav links.
-                        if not (full_url_l.endswith('.pdf') and '/statutes/compress/title' in full_url_l):
+                        if not (
+                            full_url_l.endswith(".pdf") and "/statutes/compress/title" in full_url_l
+                        ):
                             continue
                         if full_url in seen_urls:
                             continue
                         seen_urls.add(full_url)
 
-                        section_number = self._extract_section_number(link_text) or f"Section-{section_count + 1}"
+                        section_number = (
+                            self._extract_section_number(link_text)
+                            or f"Section-{section_count + 1}"
+                        )
                         m = re.search(r"\btitle\s+(\d+(?:\.\d+)?)", link_text, re.IGNORECASE)
                         if m:
                             section_number = m.group(1)
@@ -160,7 +164,7 @@ class WyomingScraper(BaseStateScraper):
                             legal_area=self._identify_legal_area(link_text),
                             source_url=full_url,
                             official_cite=f"{citation_format} § {section_number}",
-                            metadata=StatuteMetadata()
+                            metadata=StatuteMetadata(),
                         )
 
                         statutes.append(statute)
@@ -173,7 +177,7 @@ class WyomingScraper(BaseStateScraper):
                         await page.close()
                     finally:
                         await browser.close()
-        
+
         return statutes
 
     async def _extract_pdf_text_summary(self, pdf_url: str, max_chars: Optional[int] = None) -> str:
@@ -292,8 +296,12 @@ class WyomingScraper(BaseStateScraper):
                 continue
             seen_sections.add(section_number)
             section_name = re.sub(r"\s+", " ", str(match.group(2) or "").strip()).strip(" .")
-            end = body_matches[index + 1].start() if index + 1 < len(body_matches) else len(title_text)
-            raw_block = title_text[match.start():end]
+            end = (
+                body_matches[index + 1].start()
+                if index + 1 < len(body_matches)
+                else len(title_text)
+            )
+            raw_block = title_text[match.start() : end]
             normalized = self._normalize_legal_text(raw_block)
             if len(normalized) < 40:
                 continue
@@ -329,7 +337,9 @@ class WyomingScraper(BaseStateScraper):
         max_sections: int,
     ) -> List[NormalizedStatute]:
         statutes: List[NormalizedStatute] = []
-        for section_number, section_name, full_url in self._build_deterministic_title_catalog()[:max_sections]:
+        for section_number, section_name, full_url in self._build_deterministic_title_catalog()[
+            :max_sections
+        ]:
             # Avoid the constitution pseudo-title for bounded health checks; the
             # full corpus run still includes it after statutory titles.
             if not self._full_corpus_enabled() and section_number in {"97", "99"}:
@@ -383,16 +393,12 @@ class WyomingScraper(BaseStateScraper):
                 len(statutes),
             )
         return statutes
-    
+
     async def _custom_scrape_wyoming(
-        self,
-        code_name: str,
-        code_url: str,
-        citation_format: str,
-        max_sections: int = 100
+        self, code_name: str, code_url: str, citation_format: str, max_sections: int = 100
     ) -> List[NormalizedStatute]:
         """Custom scraper for Wyoming's legislative website.
-        
+
         Wyoming's website is a JavaScript SPA (Single Page Application).
         For better results, consider:
         1. Using Playwright to render JavaScript
@@ -405,7 +411,7 @@ class WyomingScraper(BaseStateScraper):
         except ImportError as e:
             self.logger.error(f"Required library not available: {e}")
             return []
-        
+
         statutes = []
 
         # Wyoming's statutes download page is JS-rendered, but title PDFs are
@@ -417,38 +423,52 @@ class WyomingScraper(BaseStateScraper):
         )
         if deterministic_catalog:
             return deterministic_catalog
-        
+
         try:
             page_bytes = await self._fetch_page_content_with_archival_fallback(
                 code_url,
                 timeout_seconds=30,
             )
             if not page_bytes:
-                return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
+                return await self._generic_scrape(
+                    code_name, code_url, citation_format, max_sections
+                )
 
-            soup = BeautifulSoup(page_bytes, 'html.parser')
-            links = soup.find_all('a', href=True)
-            
+            soup = BeautifulSoup(page_bytes, "html.parser")
+            links = soup.find_all("a", href=True)
+
             section_count = 0
             for link in links:
                 if section_count >= max_sections:
                     break
-                
+
                 link_text = link.get_text(strip=True)
-                link_href = link.get('href', '')
-                
+                link_href = link.get("href", "")
+
                 if not link_text or len(link_text) < 5:
                     continue
-                
+
                 # Wyoming patterns - relaxed matching
-                keywords_wy = ['title', 'chapter', '§', 'section', 'part', 'code', 'statute', 'article', 'wyo.']
+                keywords_wy = [
+                    "title",
+                    "chapter",
+                    "§",
+                    "section",
+                    "part",
+                    "code",
+                    "statute",
+                    "article",
+                    "wyo.",
+                ]
                 if not any(keyword in link_text.lower() for keyword in keywords_wy):
                     continue
-                
+
                 full_url = urljoin(code_url, link_href)
-                section_number = self._extract_section_number(link_text) or f"Section-{section_count + 1}"
+                section_number = (
+                    self._extract_section_number(link_text) or f"Section-{section_count + 1}"
+                )
                 legal_area = self._identify_legal_area(link_text)
-                
+
                 statute = NormalizedStatute(
                     state_code=self.state_code,
                     state_name=self.state_name,
@@ -460,19 +480,21 @@ class WyomingScraper(BaseStateScraper):
                     legal_area=legal_area,
                     source_url=full_url,
                     official_cite=f"{citation_format} § {section_number}",
-                    metadata=StatuteMetadata()
+                    metadata=StatuteMetadata(),
                 )
-                
+
                 statutes.append(statute)
                 section_count += 1
-            
+
             self.logger.info(f"Wyoming custom scraper: Scraped {len(statutes)} sections")
-            
+
             # Fallback to generic scraper if no data found
             if not statutes:
                 self.logger.warning("Wyoming custom scraper found no data - site uses JavaScript")
                 if PLAYWRIGHT_AVAILABLE:
-                    self.logger.info("Wyoming custom scraper retrying with Playwright StatutesDownload page")
+                    self.logger.info(
+                        "Wyoming custom scraper retrying with Playwright StatutesDownload page"
+                    )
                     pw_statutes = await self._scrape_with_playwright(
                         code_name,
                         f"{self.get_base_url()}/stateStatutes/StatutesDownload",
@@ -485,13 +507,15 @@ class WyomingScraper(BaseStateScraper):
                 self.logger.info("  1. Playwright for JavaScript rendering")
                 self.logger.info("  2. Alternative URL: https://wyoleg.gov/statutes/compress/")
                 self.logger.info("  3. Internet Archive snapshots")
-                return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
-            
+                return await self._generic_scrape(
+                    code_name, code_url, citation_format, max_sections
+                )
+
         except Exception as e:
             self.logger.error(f"Wyoming custom scraper failed: {e}")
             self.logger.info("Note: Wyoming's site requires JavaScript. Consider using Playwright.")
             return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
-        
+
         return statutes
 
     def _build_deterministic_title_catalog(self) -> List[tuple[str, str, str]]:
@@ -505,8 +529,12 @@ class WyomingScraper(BaseStateScraper):
             catalog.append((section_number, section_name, pdf_url))
 
         # Extra Wyoming title IDs exposed by the official download page.
-        catalog.append(("34.1", "Title 34.1", f"{self.get_base_url()}/statutes/compress/title34.1.pdf"))
-        catalog.append(("97", "Wyoming Constitution", f"{self.get_base_url()}/statutes/compress/title97.pdf"))
+        catalog.append(
+            ("34.1", "Title 34.1", f"{self.get_base_url()}/statutes/compress/title34.1.pdf")
+        )
+        catalog.append(
+            ("97", "Wyoming Constitution", f"{self.get_base_url()}/statutes/compress/title97.pdf")
+        )
         catalog.append(("99", "Title 99", f"{self.get_base_url()}/statutes/compress/title99.pdf"))
         return catalog
 

@@ -14,7 +14,12 @@ class _DenseRelDataset:
         # Documents
         for i in range(doc_count):
             doc_id = f"doc{i}"
-            self._nodes[doc_id] = {"id": doc_id, "type": "document", "title": doc_id, "content": doc_id}
+            self._nodes[doc_id] = {
+                "id": doc_id,
+                "type": "document",
+                "title": doc_id,
+                "content": doc_id,
+            }
 
         # Entities (same entity connected to every doc so it is a connector)
         self._nodes["ent"] = {"id": "ent", "type": "concept", "name": "ent"}

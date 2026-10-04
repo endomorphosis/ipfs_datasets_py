@@ -17,7 +17,7 @@ from tests._test_utils import (
     raise_on_bad_callable_code_quality,
     get_ast_tree,
     BadDocumentationError,
-    BadSignatureError
+    BadSignatureError,
 )
 
 work_dir = os.path.abspath(os.path.dirname(__file__))
@@ -30,17 +30,23 @@ file_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/llm_optimize
 md_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/llm_optimizer_stubs.md")
 
 # Make sure the input file and documentation file exist.
-assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
-assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+assert os.path.exists(file_path), (
+    f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
+)
+assert os.path.exists(md_path), (
+    f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+)
 
 from ipfs_datasets_py.pdf_processing.llm_optimizer import (
     ChunkOptimizer,
     LLMOptimizer,
     TextProcessor,
     LLMChunk,
-    LLMDocument
+    LLMDocument,
 )
-from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk.llm_chunk_factory import LLMChunkTestDataFactory
+from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk.llm_chunk_factory import (
+    LLMChunkTestDataFactory,
+)
 
 
 # Check if each classes methods are accessible:
@@ -77,8 +83,6 @@ except ImportError as e:
     raise ImportError(f"Failed to import necessary modules: {e}")
 
 
-
-
 class TestLLMChunkInstantiation:
     """Test LLMChunk instantiation with various parameter combinations."""
 
@@ -92,17 +96,15 @@ class TestLLMChunkInstantiation:
             - No errors or exceptions raised
         """
         import numpy as np
-        
+
         # Given - factory handles all the boilerplate
         embedding = np.array([0.1, 0.2, 0.3])
-        
+
         # When
         chunk = LLMChunkTestDataFactory.create_chunk_instance(
-            content="Test content here",
-            chunk_id="chunk_0001",
-            embedding=embedding
+            content="Test content here", chunk_id="chunk_0001", embedding=embedding
         )
-        
+
         # Then - only test the overridden values
         assert chunk.content == "Test content here"
         assert chunk.chunk_id == "chunk_0001"
@@ -119,7 +121,7 @@ class TestLLMChunkInstantiation:
         """
         # When - factory handles all minimal setup
         chunk = LLMChunkTestDataFactory.create_minimal_chunk_instance()
-        
+
         # Then - just verify the minimal instance works
         assert chunk.content == ""
         assert chunk.chunk_id == "chunk_0000"
@@ -132,12 +134,12 @@ class TestLLMChunkInstantiation:
         THEN expect ValidationError to be raised for missing required parameters
         """
         from pydantic import ValidationError
-        
+
         # When/Then - missing content
         with pytest.raises(ValueError):
             data = LLMChunkTestDataFactory.create_data_missing_field("content")
             LLMChunk(**data)
-        
+
         # When/Then - missing multiple fields
         with pytest.raises(ValueError):
             LLMChunk(content="Test content")
@@ -153,7 +155,7 @@ class TestLLMChunkInstantiation:
         """
         # When - factory handles the setup, we just override embedding
         chunk = LLMChunkTestDataFactory.create_chunk_instance(embedding=None)
-        
+
         # Then
         assert chunk.embedding is None
 
@@ -167,13 +169,13 @@ class TestLLMChunkInstantiation:
             - Array shape and dtype preserved
         """
         import numpy as np
-        
+
         # Given
         embedding = np.array([1.0, 2.0, 3.0, 4.0])
-        
+
         # When - factory handles everything except the embedding we want to test
         chunk = LLMChunkTestDataFactory.create_chunk_instance(embedding=embedding)
-        
+
         # Then
         assert isinstance(chunk.embedding, np.ndarray)
         assert np.array_equal(chunk.embedding, embedding)
@@ -190,10 +192,10 @@ class TestLLMChunkInstantiation:
             - List type maintained
         """
         from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk
-        
+
         # When
         chunk = LLMChunkTestDataFactory.create_chunk_instance(relationships=[])
-        
+
         # Then
         assert isinstance(chunk.relationships, list)
         assert len(chunk.relationships) == 0
@@ -209,13 +211,13 @@ class TestLLMChunkInstantiation:
             - List order preserved
         """
         from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk
-        
+
         # Given
         relationships = ["chunk_0000", "chunk_0002", "chunk_0003"]
-        
+
         # When
         chunk = LLMChunkTestDataFactory.create_chunk_instance(relationships=relationships)
-        
+
         # Then
         assert isinstance(chunk.relationships, list)
         assert len(chunk.relationships) == 3

@@ -3,6 +3,7 @@ Storage Engine
 
 Business logic for storage operations: enums, dataclasses, and MockStorageManager.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -35,6 +36,7 @@ class CompressionType(Enum):
 @dataclass
 class StorageItem:
     """Represents an item stored in the storage system."""
+
     id: str
     path: str
     size_bytes: int
@@ -50,6 +52,7 @@ class StorageItem:
 @dataclass
 class Collection:
     """Represents a collection of stored items."""
+
     name: str
     description: str
     items: List[str]
@@ -128,7 +131,9 @@ class MockStorageManager:
         )
         self.items[item_id] = item
         if collection_name not in self.collections:
-            self._create_collection(collection_name, f"Auto-created collection for {collection_name}")
+            self._create_collection(
+                collection_name, f"Auto-created collection for {collection_name}"
+            )
         if item_id not in self.collections[collection_name].items:
             self.collections[collection_name].items.append(item_id)
             self.collections[collection_name].updated_at = now
@@ -183,7 +188,7 @@ class MockStorageManager:
         if tags:
             items = [item for item in items if any(tag in item.tags for tag in tags)]
         items.sort(key=lambda x: x.created_at, reverse=True)
-        items = items[offset: offset + limit]
+        items = items[offset : offset + limit]
         return [
             {
                 "id": item.id,
@@ -250,9 +255,7 @@ class MockStorageManager:
             return None
         collection = self.collections[name]
         total_size = sum(
-            self.items[iid].size_bytes
-            for iid in collection.items
-            if iid in self.items
+            self.items[iid].size_bytes for iid in collection.items if iid in self.items
         )
         storage_breakdown: Dict[str, int] = {}
         for iid in collection.items:

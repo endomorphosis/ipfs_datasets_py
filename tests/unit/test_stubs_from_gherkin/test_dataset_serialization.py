@@ -4,11 +4,13 @@ Test stubs for dataset_serialization module.
 Feature: Dataset Serialization
   Serialize and deserialize datasets in various formats
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def a_json_dataset_representation():
@@ -92,6 +94,7 @@ def serialized_dataset_data():
 
 
 # Test scenarios
+
 
 def test_serialize_dataset_to_json():
     """
@@ -204,6 +207,7 @@ def test_handle_serialization_errors():
 
 
 # Step definitions
+
 
 # Given steps
 @given("a JSON dataset representation")
@@ -388,4 +392,3 @@ def the_schema_is_preserved():
     """Step: Then the schema is preserved"""
     # TODO: Implement step
     pass
-

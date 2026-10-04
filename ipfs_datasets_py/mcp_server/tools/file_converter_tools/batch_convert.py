@@ -10,9 +10,9 @@ from typing import List
 
 async def batch_convert_tool(
     input_paths: List[str],
-    backend: str = 'native',
+    backend: str = "native",
     extract_archives: bool = False,
-    max_concurrent: int = 5
+    max_concurrent: int = 5,
 ) -> dict:
     """
     Batch convert multiple files or URLs to text.

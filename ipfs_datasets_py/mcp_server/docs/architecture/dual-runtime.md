@@ -199,10 +199,8 @@ class RuntimeRouter:
     def __init__(self):
         self.fastapi_runtime = FastAPIRuntime()
         self.trio_runtime = TrioRuntime() if HAVE_TRIO else None
-        self.p2p_tools = {
-            'submit_workflow', 'get_workflow_status', ...
-        }
-    
+        self.p2p_tools = {"submit_workflow", "get_workflow_status", ...}
+
     async def route(self, tool_name: str, args: dict) -> Any:
         if tool_name in self.p2p_tools and self.trio_runtime:
             return await self.trio_runtime.execute(tool_name, args)
@@ -235,6 +233,7 @@ try:
         P2PTaskQueue,
         PeerRegistry,
     )
+
     HAVE_MCPLUSPLUS = True
 except ImportError:
     HAVE_MCPLUSPLUS = False
@@ -267,8 +266,9 @@ except ImportError:
    async def start_peer_registry(self):
        if not HAVE_MCPLUSPLUS:
            return
-       
+
        from .mcplusplus.peer_registry import create_registry
+
        self._peer_registry = create_registry(...)
        await self._peer_registry.start()
    ```
@@ -295,13 +295,13 @@ except ImportError:
 class UnifiedToolRegistry:
     def __init__(self):
         self.tools: Dict[str, ToolDescriptor] = {}
-    
+
     def register(
-        self, 
-        name: str, 
+        self,
+        name: str,
         func: Callable,
         runtime: Literal["fastapi", "trio"] = "fastapi",
-        category: str = "general"
+        category: str = "general",
     ):
         self.tools[name] = ToolDescriptor(
             name=name,
@@ -310,20 +310,19 @@ class UnifiedToolRegistry:
             category=category,
             schema=extract_schema(func),
         )
-    
+
     def register_p2p_tools(self):
         """Register MCP++ P2P tools for Trio runtime."""
         if not HAVE_MCPLUSPLUS:
             return
-        
+
         from .mcplusplus.tools import (
             submit_workflow,
             get_workflow_status,
             # ... 18 more
         )
-        
-        self.register("submit_workflow", submit_workflow, 
-                     runtime="trio", category="p2p_workflow")
+
+        self.register("submit_workflow", submit_workflow, runtime="trio", category="p2p_workflow")
         # ... register others
 ```
 
@@ -386,15 +385,15 @@ class UnifiedMonitoring:
                 "tool": tool_name,
                 "runtime": runtime,
                 "status": "success" if success else "error",
-            }
+            },
         ).inc()
-        
+
         self.metrics.histogram(
             "tool_execution_duration_ms",
             tags={
                 "tool": tool_name,
                 "runtime": runtime,
-            }
+            },
         ).observe(duration_ms)
 ```
 
@@ -408,20 +407,23 @@ class UnifiedMonitoring:
 # In exceptions.py
 class MCPServerError(Exception):
     """Base exception for MCP server."""
+
     pass
+
 
 class ToolExecutionError(MCPServerError):
     """Tool execution failed."""
+
     def __init__(self, tool_name: str, runtime: str, cause: Exception):
         self.tool_name = tool_name
         self.runtime = runtime
         self.cause = cause
-        super().__init__(
-            f"Tool {tool_name} failed on {runtime} runtime: {cause}"
-        )
+        super().__init__(f"Tool {tool_name} failed on {runtime} runtime: {cause}")
+
 
 class RuntimeUnavailableError(MCPServerError):
     """Requested runtime is unavailable."""
+
     pass
 ```
 
@@ -799,23 +801,20 @@ async def test_p2p_workflow_execution():
     """Test end-to-end P2P workflow execution."""
     # GIVEN: MCP server with dual runtime
     server = create_test_server(enable_mcplusplus=True)
-    
+
     # WHEN: Submit workflow via P2P tool
     result = await server.execute_tool(
         "submit_workflow",
-        {
-            "workflow_name": "test-workflow",
-            "tasks": [{"task": "inference", "model": "gpt2"}]
-        }
+        {"workflow_name": "test-workflow", "tasks": [{"task": "inference", "model": "gpt2"}]},
     )
-    
+
     # THEN: Workflow submitted successfully
     assert result["status"] == "success"
     assert "workflow_id" in result
-    
+
     # AND: Executed on Trio runtime (not FastAPI)
     assert result["_runtime"] == "trio"
-    
+
     # AND: Latency is reduced
     assert result["_duration_ms"] < 100
 ```
@@ -890,13 +889,14 @@ from opentelemetry import trace
 
 tracer = trace.get_tracer(__name__)
 
+
 async def execute_tool(tool_name: str, args: dict):
     with tracer.start_as_current_span("execute_tool") as span:
         span.set_attribute("tool.name", tool_name)
         span.set_attribute("runtime", detect_runtime(tool_name))
-        
+
         result = await _execute_tool_impl(tool_name, args)
-        
+
         span.set_attribute("status", result["status"])
         return result
 ```

@@ -137,12 +137,7 @@ def normalize_prover_name(prover_name: str) -> str:
     """Return the canonical lazy-installer name for a prover."""
 
     normalized = (
-        str(prover_name or "")
-        .strip()
-        .lower()
-        .replace("-", "_")
-        .replace(".", "_")
-        .replace(" ", "_")
+        str(prover_name or "").strip().lower().replace("-", "_").replace(".", "_").replace(" ", "_")
     )
     return _ALIASES.get(normalized, normalized)
 
@@ -293,7 +288,9 @@ def lazy_install_prover(
     try:
         from ipfs_datasets_py.logic.integration.bridges import prover_installer
 
-        ensure_name = "ensure_cvc5_cli" if prover == "cvc5" and allow_automatic else f"ensure_{prover}"
+        ensure_name = (
+            "ensure_cvc5_cli" if prover == "cvc5" and allow_automatic else f"ensure_{prover}"
+        )
         ensure = getattr(prover_installer, ensure_name, None)
         if ensure is None:
             logger.debug("No lazy installer is registered for prover %s", prover)
@@ -310,12 +307,25 @@ def lazy_install_prover(
             )
 
         if progress is not None and prover in {
-            "z3", "cvc5", "lean", "coq", "apalache", "tamarin", "maude", "proverif", "symbolicai", "ergoai"
+            "z3",
+            "cvc5",
+            "lean",
+            "coq",
+            "apalache",
+            "tamarin",
+            "maude",
+            "proverif",
+            "symbolicai",
+            "ergoai",
         }:
+
             def forward_progress(phase: str, message: str) -> None:
-                normalized_phase = phase if phase in {
-                    "checking", "available", "installing", "installed", "blocked", "failed"
-                } else "installing"
+                normalized_phase = (
+                    phase
+                    if phase
+                    in {"checking", "available", "installing", "installed", "blocked", "failed"}
+                    else "installing"
+                )
                 event = ProverInstallEvent(prover, normalized_phase, message)
                 logger.info("%s: %s", prover, message)
                 if progress is not None:
@@ -338,7 +348,9 @@ def lazy_install_prover(
             ProverInstallEvent(
                 prover,
                 "installed" if ok else "failed",
-                "installation completed" if ok else "installation did not make the prover available",
+                "installation completed"
+                if ok
+                else "installation did not make the prover available",
             ),
             progress,
         )
@@ -398,12 +410,18 @@ def ensure_prover_executable(
         if explicit_ergoai:
             path = Path(explicit_ergoai).expanduser()
             if path.is_file() and os.access(str(path), os.X_OK):
-                _emit(ProverInstallEvent(prover, "installed", f"using installed executable {path}"), progress)
+                _emit(
+                    ProverInstallEvent(prover, "installed", f"using installed executable {path}"),
+                    progress,
+                )
                 return str(path)
     for candidate in candidates:
         executable = find_executable(candidate)
         if executable:
-            _emit(ProverInstallEvent(prover, "installed", f"using installed executable {executable}"), progress)
+            _emit(
+                ProverInstallEvent(prover, "installed", f"using installed executable {executable}"),
+                progress,
+            )
             return executable
     return None
 

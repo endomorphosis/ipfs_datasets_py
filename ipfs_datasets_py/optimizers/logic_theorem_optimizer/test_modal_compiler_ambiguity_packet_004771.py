@@ -149,9 +149,7 @@ def test_compiler_preserves_packet_004771_adaptive_ambiguity_policy_margins(
     expected_type: str,
     expected_severity: str,
 ) -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="regex")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="regex"))
     monkeypatch.setattr(
         modal_compiler_module,
         "ranked_modal_families",
@@ -188,11 +186,6 @@ def test_compiler_preserves_packet_004771_adaptive_ambiguity_policy_margins(
     assert ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
     assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
     assert ambiguity.metadata.get("explicit_ambiguity_type") == expected_type
-    assert (
-        abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin)
-        <= 1e-12
-    )
+    assert abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin) <= 1e-12
     assert abs(float(ambiguity.metadata.get("priority", 0.0)) - priority) <= 1e-12
-    assert abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - priority) <= (
-        1e-12
-    )
+    assert abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - priority) <= (1e-12)

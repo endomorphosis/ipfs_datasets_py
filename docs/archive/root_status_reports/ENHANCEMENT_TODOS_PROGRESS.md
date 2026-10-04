@@ -106,11 +106,7 @@ print(f"Recommended: {analysis.recommended_provers}")
 1. **Use Grammar Engine API**:
    ```python
    # Replace template replacement with:
-   grammar_result = self.grammar_engine.generate_nl(
-       dcec_formula, 
-       style=style,
-       use_lexicon=True
-   )
+   grammar_result = self.grammar_engine.generate_nl(dcec_formula, style=style, use_lexicon=True)
    ```
 
 2. **Leverage DCECEnglishGrammar**:
@@ -149,11 +145,7 @@ print(f"Recommended: {analysis.recommended_provers}")
    ```python
    # Use prover_core directly
    cec_prover = prover_core.Prover()
-   cec_result = cec_prover.prove(
-       goal_dcec,
-       axioms=axioms_dcec,
-       timeout_ms=timeout_ms
-   )
+   cec_result = cec_prover.prove(goal_dcec, axioms=axioms_dcec, timeout_ms=timeout_ms)
    ```
 
 2. **Handle CEC Results**:
@@ -253,19 +245,20 @@ def _modal_tableaux_prove(self, goal: Formula, timeout_ms: int) -> ProofResult:
     has_modal = self._has_modal_operators(goal)
     has_temporal = self._has_temporal_operators(goal)
     has_deontic = self._has_deontic_operators(goal)
-    
+
     if not (has_modal or has_temporal or has_deontic):
         return ProofResult(
             status=ProofStatus.UNKNOWN,
             formula=goal,
             method="modal_tableaux",
-            message="No modal operators detected"
+            message="No modal operators detected",
         )
-    
+
     # Use ShadowProver bridge
     from ..integration.tdfol_shadowprover_bridge import TDFOLShadowProverBridge
+
     bridge = TDFOLShadowProverBridge()
-    
+
     # Select logic system
     if has_deontic:
         logic_type = ModalLogicType.D
@@ -273,7 +266,7 @@ def _modal_tableaux_prove(self, goal: Formula, timeout_ms: int) -> ProofResult:
         logic_type = ModalLogicType.S4
     else:
         logic_type = ModalLogicType.K
-    
+
     # Attempt proof
     return bridge.prove_with_shadowprover(goal, logic_type, timeout_ms)
 ```
@@ -305,13 +298,10 @@ def _modal_tableaux_prove(self, goal: Formula, timeout_ms: int) -> ProofResult:
 if use_shadow_prover and self.shadow_prover_wrapper:
     # Convert to TPTP format
     tptp_formula = self._to_tptp_format(dcec_formula)
-    
+
     # Call ShadowProver
-    shadow_result = self.shadow_prover_wrapper.prove_tptp(
-        tptp_formula,
-        timeout_ms=timeout_ms
-    )
-    
+    shadow_result = self.shadow_prover_wrapper.prove_tptp(tptp_formula, timeout_ms=timeout_ms)
+
     # Parse and integrate result
     if shadow_result.is_proved():
         attempt.proof_found = True

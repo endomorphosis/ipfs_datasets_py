@@ -29,8 +29,7 @@ from ipfs_datasets_py.utils.copilot_cli import CopilotCLI
 
 copilot = CopilotCLI()
 result = copilot.create_agent_task(
-    task_description="Fix failing tests in test_utils.py",
-    base_branch="feature-branch"
+    task_description="Fix failing tests in test_utils.py", base_branch="feature-branch"
 )
 ```
 

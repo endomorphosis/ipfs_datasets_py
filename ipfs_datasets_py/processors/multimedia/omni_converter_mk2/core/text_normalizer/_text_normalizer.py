@@ -3,25 +3,17 @@ Text normalizer module for the Omni-Converter.
 
 This module provides the TextNormalizer class for normalizing text content.
 """
-from types_ import (
-    Callable,
-    Configs,
-    Content,
-    Logger,
-    ModuleType,
-    NormalizedContent,
-    Optional,
-    Path
-)
+
+from types_ import Callable, Configs, Content, Logger, ModuleType, NormalizedContent, Optional, Path
 from protocols import NormalizerFunction
 
 
 class TextNormalizer:
     """
     Text normalizer for the Omni-Converter.
-    
+
     Normalizes text from content objects by applying various normalization functions.
-    
+
     Attributes:
         resources (dict[str, Callable]): Dictionary of callable objects and dependencies.
         configs (Configs): Configuration settings containing paths and other config data.
@@ -35,10 +27,8 @@ class TextNormalizer:
         register_normalizer: Register a new normalizer function.
         register_normalizers_from: Register normalizers from a specified folder.
     """
-    def __init__(self, 
-                 resources: dict[str, Callable] = None, 
-                 configs: Configs = None
-                 ):
+
+    def __init__(self, resources: dict[str, Callable] = None, configs: Configs = None):
         """Initialize a text normalizer instance.
 
         Creates a TextNormalizer that can apply various text normalization functions
@@ -46,13 +36,13 @@ class TextNormalizer:
         normalization functions from the configured directories during initialization.
 
         Args:
-            resources (dict[str, Callable]): A dictionary containing callable 
+            resources (dict[str, Callable]): A dictionary containing callable
             objects and dependencies required by the normalizer, including:
             - 'importlib_util': Module for dynamic imports
             - 'normalized_content': Factory for creating NormalizedContent objects
             - 'logger': Logger instance for operation logging
             Defaults to None.
-            configs (Configs): A pydantic model containing configuration 
+            configs (Configs): A pydantic model containing configuration
             Must include paths.NORMALIZER_FUNCTIONS_DIR and paths.PLUGINS_DIR.
             Defaults to None.
 
@@ -66,11 +56,11 @@ class TextNormalizer:
         self.configs = configs
 
         self._default_normalizers_folder: Path = self.configs.paths.NORMALIZER_FUNCTIONS_DIR
-        self._plugins_folder:             Path = self.configs.paths.PLUGINS_DIR
+        self._plugins_folder: Path = self.configs.paths.PLUGINS_DIR
 
-        self._importlib_util:     ModuleType = self.resources['importlib_util']
+        self._importlib_util: ModuleType = self.resources["importlib_util"]
         self._normalized_content: NormalizedContent = self.resources["normalized_content"]
-        self._logger:             Logger = self.resources["logger"]
+        self._logger: Logger = self.resources["logger"]
 
         self._logger.isEnabledFor(10)
 
@@ -105,13 +95,19 @@ class TextNormalizer:
         self._logger.info(f"Registering normalizers from folder: {folder}")
         count = 0
         if folder is None or not folder.exists() or not folder.is_dir():
-            self._logger.error(f"Folder '{folder}' does not exist or is None. Skipping registration.")
+            self._logger.error(
+                f"Folder '{folder}' does not exist or is None. Skipping registration."
+            )
             return
 
-        for file in folder.rglob('*.py'):
+        for file in folder.rglob("*.py"):
             if file.is_file():
                 # Skip the __init__.py file, private modules, or modules that do not contain 'normalizer' in their name
-                if file.name == '__init__.py' or file.name.startswith('_') or 'normalize' not in file.stem.lower():
+                if (
+                    file.name == "__init__.py"
+                    or file.name.startswith("_")
+                    or "normalize" not in file.stem.lower()
+                ):
                     continue
 
                 self._logger.debug(f"Loading normalizer module from {file}")
@@ -123,11 +119,15 @@ class TextNormalizer:
                     module = self._importlib_util.module_from_spec(spec)
                     spec.loader.exec_module(module)
                 except Exception as e:
-                    self._logger.error(f"Failed to import module from {file}: {e}\nSkipping this file.")
+                    self._logger.error(
+                        f"Failed to import module from {file}: {e}\nSkipping this file."
+                    )
                     continue
 
                 if module is None:
-                    self._logger.error(f"Module from {file} could not be loaded. Skipping this file.")
+                    self._logger.error(
+                        f"Module from {file} could not be loaded. Skipping this file."
+                    )
                     continue
 
                 # Register all normalizers in the module
@@ -139,17 +139,17 @@ class TextNormalizer:
                         except Exception as e:
                             self._logger.warning(f"Failed to register normalizer '{name}': {e}")
                     else:
-                        self._logger.debug(f"Normalizer '{name}' in module {file} does not implement NormalizerFunction protocol. Skipping.")
+                        self._logger.debug(
+                            f"Normalizer '{name}' in module {file} does not implement NormalizerFunction protocol. Skipping."
+                        )
 
         self._logger.info(f"Registered {count} normalizers from folder: {folder}")
 
-    def normalize_text(self, 
-                       content: 'Content', 
-                       normalizers: Optional[list[str]] = None, 
-                       skip: bool = False
-                       ) -> 'NormalizedContent':
+    def normalize_text(
+        self, content: "Content", normalizers: Optional[list[str]] = None, skip: bool = False
+    ) -> "NormalizedContent":
         """Normalize text content using specified or all available normalizer functions.
-        
+
         This method processes the text content from a Content object by applying a sequence
         of normalization functions. Each normalizer transforms the text in a specific way,
         such as cleaning whitespace, standardizing line endings, or normalizing Unicode
@@ -158,7 +158,7 @@ class TextNormalizer:
 
         Args:
             content (Content): The content object containing the text to be normalized.
-            normalizers (Optional[list[str]]): A list of normalizer function names to apply in the specified order. 
+            normalizers (Optional[list[str]]): A list of normalizer function names to apply in the specified order.
                 If None or not provided, all registered normalizers will be applied.
                 Unknown normalizer names will be skipped with a warning logged.
             skip (bool): If True, skips the normalization process entirely.
@@ -184,11 +184,10 @@ class TextNormalizer:
 
         if skip:
             self._logger.info(f"Skipping normalization for '{content.source_path}'.")
-            return self._normalized_content(
-                content=content,
-                normalized_by=[]
-            )
-        self._logger.debug(f"Normalizing text from {content.source_path}", {'format': content.source_format})
+            return self._normalized_content(content=content, normalized_by=[])
+        self._logger.debug(
+            f"Normalizing text from {content.source_path}", {"format": content.source_format}
+        )
 
         # If no normalizers are specified, use all of them
         normalizers = list(self._normalizers.keys()) if normalizers is None else normalizers
@@ -196,7 +195,9 @@ class TextNormalizer:
         # Check for unknown normalizers
         unknown_normalizers = [n for n in normalizers if n not in self._normalizers]
         if unknown_normalizers:
-            self._logger.warning(f"Unknown normalizers specified: '{unknown_normalizers}'. They will be skipped.")
+            self._logger.warning(
+                f"Unknown normalizers specified: '{unknown_normalizers}'. They will be skipped."
+            )
 
         # Apply each normalizer in sequence
         normalized_text = content.text
@@ -218,20 +219,17 @@ class TextNormalizer:
         content.text = normalized_text if normalized_text is not None else content.text
 
         # Create normalized content
-        return self._normalized_content(
-            content=content,
-            normalized_by=applied_normalizers
-        )
+        return self._normalized_content(content=content, normalized_by=applied_normalizers)
 
     def register_normalizer(self, name: str, normalizer: NormalizerFunction) -> None:
         """Register a normalizer function with the text normalizer.
-        
+
         This method adds a new normalizer function to the internal registry, allowing it
         to be used during text normalization operations. The normalizer must conform to
         the NormalizerFunction protocol, which requires it to accept a single string
-        argument and return a normalized string. If a normalizer with the same name already exists, 
+        argument and return a normalized string. If a normalizer with the same name already exists,
         it will be overwritten and a warning will be logged.
-        
+
         Args:
             name (str): A unique identifier for the normalizer function. This name will
                    be used to reference the normalizer in normalization operations.
@@ -243,8 +241,10 @@ class TextNormalizer:
             Warning: Logs a warning if the normalizer doesn't implement NormalizerFunction
                 protocol or if a normalizer with the same name already exists.
         """
-        if not callable(normalizer) or not hasattr(normalizer, '__annotations__'):
-            self._logger.warning(f"Normalizer '{name}' must be a class or function whose only argument is a string and returns a string. Skipping.")
+        if not callable(normalizer) or not hasattr(normalizer, "__annotations__"):
+            self._logger.warning(
+                f"Normalizer '{name}' must be a class or function whose only argument is a string and returns a string. Skipping."
+            )
             return
 
         if name in self._normalizers:
@@ -256,7 +256,7 @@ class TextNormalizer:
     @property
     def normalizers(self) -> dict[str, NormalizerFunction]:
         """Get the dictionary of registered normalizers.
-        
+
         Returns:
             dict: A dictionary where keys are normalizer names and values are the corresponding
                   normalizer functions.
@@ -266,7 +266,7 @@ class TextNormalizer:
     @property
     def applied_normalizers(self) -> list[str]:
         """Get the names of all registered normalizers.
-        
+
         Returns:
             list of normalizer names.
         """

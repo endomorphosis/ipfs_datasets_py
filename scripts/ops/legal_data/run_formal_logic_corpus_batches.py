@@ -338,32 +338,38 @@ def run_profile(args: argparse.Namespace, profile: BatchProfile) -> Dict[str, ob
             cmd.append("--enable-focused-retry-optimizer")
         if args.enable_encoder_quality_retry:
             retry_profiles = {
-                x.strip()
-                for x in str(args.encoder_quality_retry_profiles).split(",")
-                if x.strip()
+                x.strip() for x in str(args.encoder_quality_retry_profiles).split(",") if x.strip()
             }
             if profile.name in retry_profiles:
                 cmd.append("--enable-encoder-quality-retry")
-                cmd.extend(["--encoder-context-window-prior", str(args.encoder_context_window_prior)])
+                cmd.extend(
+                    ["--encoder-context-window-prior", str(args.encoder_context_window_prior)]
+                )
                 cmd.extend(["--encoder-retry-max-attempts", str(args.encoder_retry_max_attempts)])
         if args.enable_fragment_merging:
             cmd.append("--enable-fragment-merging")
             merge_depth = int(args.fragment_merge_max_prior)
-            profile_override = int(
-                getattr(args, f"{profile.name}_fragment_merge_max_prior", -1)
-            )
+            profile_override = int(getattr(args, f"{profile.name}_fragment_merge_max_prior", -1))
             if profile_override >= 0:
                 merge_depth = profile_override
             cmd.extend(["--fragment-merge-max-prior", str(merge_depth)])
         if args.enable_roundtrip_optimizer:
             cmd.append("--enable-roundtrip-optimizer")
             cmd.extend(["--roundtrip-optimizer-min-uses", str(args.roundtrip_optimizer_min_uses)])
-            cmd.extend(["--roundtrip-optimizer-exploration-rate", str(float(getattr(args, "roundtrip_optimizer_exploration_rate", 0.0)))])
+            cmd.extend(
+                [
+                    "--roundtrip-optimizer-exploration-rate",
+                    str(float(getattr(args, "roundtrip_optimizer_exploration_rate", 0.0))),
+                ]
+            )
             if args.allow_source_conditioned_roundtrip:
                 cmd.append("--allow-source-conditioned-roundtrip")
             if args.roundtrip_optimizer_export:
                 export_base = Path(args.roundtrip_optimizer_export)
-                export_path = export_base.parent / f"{export_base.stem}_{profile.name}{export_base.suffix or '.json'}"
+                export_path = (
+                    export_base.parent
+                    / f"{export_base.stem}_{profile.name}{export_base.suffix or '.json'}"
+                )
                 cmd.extend(["--roundtrip-optimizer-export", str(export_path)])
         cmd.extend(["--semantic-threshold-deontic", str(thresholds["deontic"])])
         cmd.extend(["--semantic-threshold-fol", str(thresholds["fol"])])
@@ -373,7 +379,9 @@ def run_profile(args: argparse.Namespace, profile: BatchProfile) -> Dict[str, ob
         cmd.extend(["--semantic-floor-deontic", str(args.semantic_floor_deontic)])
         cmd.extend(["--semantic-floor-fol", str(args.semantic_floor_fol)])
         cmd.extend(["--semantic-floor-cec-compile", str(args.semantic_floor_cec_compile)])
-        cmd.extend(["--allow-missing-semantic-modalities", str(args.allow_missing_semantic_modalities)])
+        cmd.extend(
+            ["--allow-missing-semantic-modalities", str(args.allow_missing_semantic_modalities)]
+        )
 
     subprocess.run(cmd, check=True)
 
@@ -416,11 +424,17 @@ def main() -> None:
         "totals": {
             "input_file_count": sum(int(p.get("input_file_count", 0)) for p in results),
             "segment_count": sum(int(p.get("segment_count", 0)) for p in results),
-            "theorem_candidate_count": sum(int(p.get("theorem_candidate_count", 0)) for p in results),
-            "theorems_ingested_count": sum(int(p.get("theorems_ingested_count", 0)) for p in results),
+            "theorem_candidate_count": sum(
+                int(p.get("theorem_candidate_count", 0)) for p in results
+            ),
+            "theorems_ingested_count": sum(
+                int(p.get("theorems_ingested_count", 0)) for p in results
+            ),
         },
     }
-    manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    manifest_path.write_text(
+        json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
 
     if args.update_drift_dashboard:
         subprocess.run(

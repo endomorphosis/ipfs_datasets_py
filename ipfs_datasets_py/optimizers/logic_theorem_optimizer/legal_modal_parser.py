@@ -1219,9 +1219,7 @@ class LegalModalParser:
         if cue.lower() != "with respect to":
             return False
         leading = normalized_text[max(0, start_char - 220) : start_char].lower()
-        trailing = normalized_text[
-            end_char : min(len(normalized_text), end_char + 96)
-        ].lower()
+        trailing = normalized_text[end_char : min(len(normalized_text), end_char + 96)].lower()
         if not _USCODE_PURPOSE_RESIDUAL_HINT_RE.search(leading):
             return False
         if not (
@@ -1268,10 +1266,9 @@ class LegalModalParser:
         trailing = normalized_text[end_char : end_char + 80]
         if re.match(r"^\s+(?:\$+\s*\d|\$?\d[\d,]*\.\d+\b)", trailing):
             return False
-        if (
-            re.match(r"^\s+(?:pub\.?\s*l\.?|public\s+law)\b", trailing, re.IGNORECASE)
-            and _MONTH_DAY_RE.search(trailing)
-        ):
+        if re.match(
+            r"^\s+(?:pub\.?\s*l\.?|public\s+law)\b", trailing, re.IGNORECASE
+        ) and _MONTH_DAY_RE.search(trailing):
             leading = normalized_text[max(0, start_char - 120) : start_char]
             if re.search(
                 r"\b(?:amendment|amendments|effective\s+date)\b",
@@ -1293,10 +1290,7 @@ class LegalModalParser:
         second = lookahead[1] if len(lookahead) > 1 else ""
         if first in _NON_TEMPORAL_BY_CONTEXT_TOKENS:
             return False
-        if (
-            first in _NON_TEMPORAL_BY_PREFIX_TOKENS
-            and second in _NON_TEMPORAL_BY_CONTEXT_TOKENS
-        ):
+        if first in _NON_TEMPORAL_BY_PREFIX_TOKENS and second in _NON_TEMPORAL_BY_CONTEXT_TOKENS:
             return False
         for index, token in enumerate(lookahead):
             if token in _NON_TEMPORAL_BY_CONTEXT_TOKENS:
@@ -1397,9 +1391,7 @@ class LegalModalParser:
         for index, cue in enumerate(cues, start=1):
             segment = self._segment_for_cue(segments, cue)
             predicate = self._predicate_from_segment(segment.text, cue.cue)
-            conditions, exceptions = self._conditions_and_exceptions_from_segment(
-                segment.text
-            )
+            conditions, exceptions = self._conditions_and_exceptions_from_segment(segment.text)
             formulas.append(
                 ModalIRFormula(
                     formula_id=f"{resolved_document_id}:f{index:04d}",
@@ -1407,7 +1399,9 @@ class LegalModalParser:
                         family=cue.family.value,
                         system=cue.profile.system.value,
                         symbol=cue.operator.symbol,
-                        label=cue.operator.aliases[0] if cue.operator.aliases else cue.operator.symbol,
+                        label=cue.operator.aliases[0]
+                        if cue.operator.aliases
+                        else cue.operator.symbol,
                     ),
                     predicate=ModalIRPredicate(
                         name=predicate,
@@ -1789,9 +1783,7 @@ class LegalModalParser:
         if not profile.operators:
             return []
         operator = profile.operators[0]
-        candidate_segments = (
-            list(self.segment(normalized)) if segments is None else list(segments)
-        )
+        candidate_segments = list(self.segment(normalized)) if segments is None else list(segments)
         candidate_segments = self._coalesce_short_residual_segments(
             candidate_segments,
             normalized_text=normalized,
@@ -2013,9 +2005,7 @@ class LegalModalParser:
         if not profile.operators:
             return []
         operator = profile.operators[0]
-        candidate_segments = (
-            list(self.segment(normalized)) if segments is None else list(segments)
-        )
+        candidate_segments = list(self.segment(normalized)) if segments is None else list(segments)
         candidate_cues = list(self.extract_cues(normalized) if cues is None else cues)
         formulas: List[ModalIRFormula] = []
         next_index = max(1, int(start_index))
@@ -2132,34 +2122,24 @@ class LegalModalParser:
             return True
         if self._is_uscode_compact_frame_residual_candidate(normalized, tokens):
             return True
-        is_short_heading_candidate = self._is_short_residual_heading_coverage_candidate(
-            tokens
-        )
+        is_short_heading_candidate = self._is_short_residual_heading_coverage_candidate(tokens)
         if (
             token_count < _USCODE_RESIDUAL_SPAN_MIN_TOKENS
             or token_count > _USCODE_RESIDUAL_SPAN_MAX_TOKENS
         ):
             if not is_short_heading_candidate:
                 return False
-        if (
-            self._looks_like_heading_without_section_reference(normalized)
-            and not (
-                is_short_heading_candidate
-                or self._is_long_residual_heading_coverage_candidate(tokens)
-            )
+        if self._looks_like_heading_without_section_reference(normalized) and not (
+            is_short_heading_candidate or self._is_long_residual_heading_coverage_candidate(tokens)
         ):
             return False
-        if (
-            _USCODE_CODIFICATION_HINT_RE.search(lowered)
-            or _USCODE_DECLARATIVE_STATEMENT_HINT_RE.search(lowered)
-        ):
+        if _USCODE_CODIFICATION_HINT_RE.search(
+            lowered
+        ) or _USCODE_DECLARATIVE_STATEMENT_HINT_RE.search(lowered):
             return False
-        if (
-            _USCODE_EDITORIAL_STATUS_HINT_RE.search(lowered)
-            and (
-                token_count <= _USCODE_HEADING_ONLY_EXTENDED_MAX_TOKENS
-                or self._looks_like_heading_without_section_reference(normalized)
-            )
+        if _USCODE_EDITORIAL_STATUS_HINT_RE.search(lowered) and (
+            token_count <= _USCODE_HEADING_ONLY_EXTENDED_MAX_TOKENS
+            or self._looks_like_heading_without_section_reference(normalized)
         ):
             return False
         return True
@@ -2194,9 +2174,7 @@ class LegalModalParser:
             or token_count > _USCODE_SHORT_RESIDUAL_HEADING_MAX_TOKENS
         ):
             return False
-        return bool(
-            set(tokens) & _USCODE_SHORT_RESIDUAL_HEADING_SIGNAL_TOKENS
-        )
+        return bool(set(tokens) & _USCODE_SHORT_RESIDUAL_HEADING_SIGNAL_TOKENS)
 
     def _is_long_residual_heading_coverage_candidate(
         self,
@@ -2419,9 +2397,7 @@ class LegalModalParser:
         cues: Sequence[ModalCueSpan],
     ) -> Optional[LegalSegment]:
         segment_cues = [
-            cue
-            for cue in cues
-            if segment.start_char < cue.start_char < segment.end_char
+            cue for cue in cues if segment.start_char < cue.start_char < segment.end_char
         ]
         if not segment_cues:
             return None
@@ -2548,10 +2524,7 @@ class LegalModalParser:
                 next_tokens = len(_TOKEN_RE.findall(next_segment.text.lower()))
                 if next_tokens > _USCODE_RESIDUAL_COALESCE_SEGMENT_MAX_TOKENS:
                     break
-                if (
-                    total_tokens + next_tokens
-                    > _USCODE_RESIDUAL_SPAN_MAX_TOKENS
-                ):
+                if total_tokens + next_tokens > _USCODE_RESIDUAL_SPAN_MAX_TOKENS:
                     break
                 if (
                     total_tokens > _USCODE_RESIDUAL_COALESCE_SEGMENT_MAX_TOKENS
@@ -2596,10 +2569,7 @@ class LegalModalParser:
             return True
         if token_count < _USCODE_RESIDUAL_SHORT_HEADER_MIN_TOKENS:
             return False
-        if (
-            "government publishing office" in lowered
-            or "www.gpo.gov" in lowered
-        ):
+        if "government publishing office" in lowered or "www.gpo.gov" in lowered:
             return True
         return "u.s.c." in lowered or "united states code" in lowered
 
@@ -2627,10 +2597,7 @@ class LegalModalParser:
     ) -> bool:
         """Recover compact U.S.C. editorial-note headings without operative cues."""
         token_count = len(tokens)
-        if (
-            token_count < 2
-            or token_count > _USCODE_EDITORIAL_NOTE_HEADING_RESIDUAL_MAX_TOKENS
-        ):
+        if token_count < 2 or token_count > _USCODE_EDITORIAL_NOTE_HEADING_RESIDUAL_MAX_TOKENS:
             return False
         lowered = normalized_segment_text.lower()
         if (
@@ -2639,11 +2606,7 @@ class LegalModalParser:
             or _USCODE_HEADING_ONLY_VERB_HINT_RE.search(lowered)
         ):
             return False
-        return bool(
-            _USCODE_EDITORIAL_NOTE_HEADING_RESIDUAL_RE.fullmatch(
-                normalized_segment_text
-            )
-        )
+        return bool(_USCODE_EDITORIAL_NOTE_HEADING_RESIDUAL_RE.fullmatch(normalized_segment_text))
 
     def _is_uscode_administrative_procedure_residual_candidate(
         self,
@@ -2665,9 +2628,7 @@ class LegalModalParser:
             return False
         if _USCODE_ADMINISTRATIVE_PROCEDURE_PHRASE_RE.search(lowered):
             return True
-        signal_count = len(
-            set(tokens) & _USCODE_ADMINISTRATIVE_PROCEDURE_SIGNAL_TOKENS
-        )
+        signal_count = len(set(tokens) & _USCODE_ADMINISTRATIVE_PROCEDURE_SIGNAL_TOKENS)
         return signal_count >= 2 and bool(
             set(tokens)
             & {
@@ -2710,9 +2671,9 @@ class LegalModalParser:
         ):
             return False
         token_set = set(tokens)
-        return bool(
-            token_set & _USCODE_ADMINISTRATIVE_FRAME_CONTEXT_TOKENS
-        ) and bool(token_set & _USCODE_ADMINISTRATIVE_FRAME_PROCESS_TOKENS)
+        return bool(token_set & _USCODE_ADMINISTRATIVE_FRAME_CONTEXT_TOKENS) and bool(
+            token_set & _USCODE_ADMINISTRATIVE_FRAME_PROCESS_TOKENS
+        )
 
     def _is_uscode_enforcement_residual_candidate(
         self,
@@ -2770,9 +2731,8 @@ class LegalModalParser:
         if token_count < 4 or token_count > _USCODE_RESIDUAL_SPAN_MAX_TOKENS:
             return False
         lowered = normalized_segment_text.lower()
-        if (
-            _USCODE_CODIFICATION_HINT_RE.search(lowered)
-            or _USCODE_EDITORIAL_STATUS_HINT_RE.search(lowered)
+        if _USCODE_CODIFICATION_HINT_RE.search(lowered) or _USCODE_EDITORIAL_STATUS_HINT_RE.search(
+            lowered
         ):
             return False
         if not _USCODE_PURPOSE_RESIDUAL_HINT_RE.search(lowered):
@@ -2825,16 +2785,12 @@ class LegalModalParser:
     ) -> bool:
         """Recover statutory transfer-of-functions notes without modal cues."""
         token_count = len(tokens)
-        if (
-            token_count < 8
-            or token_count > _USCODE_TRANSFER_FUNCTIONS_RESIDUAL_MAX_TOKENS
-        ):
+        if token_count < 8 or token_count > _USCODE_TRANSFER_FUNCTIONS_RESIDUAL_MAX_TOKENS:
             return False
         lowered = normalized_segment_text.lower()
-        if (
-            _USCODE_EDITORIAL_STATUS_HINT_RE.search(lowered)
-            or _USCODE_DECLARATIVE_STATEMENT_HINT_RE.search(lowered)
-        ):
+        if _USCODE_EDITORIAL_STATUS_HINT_RE.search(
+            lowered
+        ) or _USCODE_DECLARATIVE_STATEMENT_HINT_RE.search(lowered):
             return False
         return bool(_USCODE_TRANSFER_FUNCTIONS_RESIDUAL_RE.search(lowered))
 
@@ -2869,18 +2825,11 @@ class LegalModalParser:
     ) -> bool:
         """Recover compact editorial-note heading spans without treating them as time."""
         token_count = len(tokens)
-        if (
-            token_count < 2
-            or token_count > _USCODE_EDITORIAL_NOTE_HEADING_RESIDUAL_MAX_TOKENS
-        ):
+        if token_count < 2 or token_count > _USCODE_EDITORIAL_NOTE_HEADING_RESIDUAL_MAX_TOKENS:
             return False
         if any(character.isdigit() for character in normalized_segment_text):
             return False
-        return bool(
-            _USCODE_EDITORIAL_NOTE_HEADING_RESIDUAL_RE.search(
-                normalized_segment_text
-            )
-        )
+        return bool(_USCODE_EDITORIAL_NOTE_HEADING_RESIDUAL_RE.search(normalized_segment_text))
 
     def _is_uscode_legislative_history_residual_candidate(
         self,
@@ -3657,9 +3606,7 @@ class LegalModalParser:
                 fallback_rule_override = "uscode_section_heading_coarse_v1"
         if candidate_segment is None:
             return None
-        candidate_segment = self._trim_uscode_gpo_source_boilerplate(
-            candidate_segment
-        )
+        candidate_segment = self._trim_uscode_gpo_source_boilerplate(candidate_segment)
         candidate_segment = self._expanded_uscode_leading_citation_heading_segment(
             candidate_segment=candidate_segment,
             normalized_text=normalized_text,
@@ -3724,9 +3671,7 @@ class LegalModalParser:
         match = _USCODE_GPO_SOURCE_BOILERPLATE_RE.search(candidate_segment.text)
         if match is None or match.start() <= 0:
             return candidate_segment
-        trimmed_text = candidate_segment.text[: match.start()].rstrip(
-            " \u2012\u2013\u2014\u2015-"
-        )
+        trimmed_text = candidate_segment.text[: match.start()].rstrip(" \u2012\u2013\u2014\u2015-")
         if not trimmed_text.strip():
             return candidate_segment
         leading_offset = len(trimmed_text) - len(trimmed_text.lstrip())
@@ -3774,9 +3719,9 @@ class LegalModalParser:
         expanded_text = normalized_text[expanded_start : candidate_segment.end_char].strip()
         if not expanded_text:
             return candidate_segment
-        leading_offset = len(
-            normalized_text[expanded_start : candidate_segment.end_char]
-        ) - len(normalized_text[expanded_start : candidate_segment.end_char].lstrip())
+        leading_offset = len(normalized_text[expanded_start : candidate_segment.end_char]) - len(
+            normalized_text[expanded_start : candidate_segment.end_char].lstrip()
+        )
         return LegalSegment(
             text=expanded_text,
             start_char=expanded_start + leading_offset,
@@ -3831,11 +3776,7 @@ class LegalModalParser:
                 continue
             candidate_segment = segment
             procedural_keyword = next(
-                (
-                    keyword
-                    for keyword in keyword_matches
-                    if keyword != "administrative"
-                ),
+                (keyword for keyword in keyword_matches if keyword != "administrative"),
                 keyword_matches[0],
             )
             break
@@ -3918,7 +3859,11 @@ class LegalModalParser:
             return True
         if self._starts_with_citation_section_reference(normalized, citation_section):
             return True
-        if normalized.startswith("repealed") or normalized.startswith("omitted") or normalized.startswith("reserved"):
+        if (
+            normalized.startswith("repealed")
+            or normalized.startswith("omitted")
+            or normalized.startswith("reserved")
+        ):
             previous = self.normalize_text(previous_segment_text).lower()
             if self._contains_citation_section_reference(previous, citation_section):
                 return True
@@ -4026,7 +3971,10 @@ class LegalModalParser:
         token_count = len(tokens)
         if token_count < _USCODE_HEADING_ONLY_MIN_TOKENS:
             return False
-        if token_count > _USCODE_HEADING_ONLY_MAX_TOKENS and not self._looks_like_extended_heading_without_section_reference(tokens):
+        if (
+            token_count > _USCODE_HEADING_ONLY_MAX_TOKENS
+            and not self._looks_like_extended_heading_without_section_reference(tokens)
+        ):
             return False
         if _USCODE_HEADING_ONLY_VERB_HINT_RE.search(lowered):
             return False
@@ -4079,7 +4027,10 @@ class LegalModalParser:
             return True
         if token_count > _USCODE_HEADING_ONLY_EXTENDED_MAX_TOKENS:
             return False
-        if tokens[0] in _USCODE_HEADING_ONLY_LEADING_STOPWORDS and not self._looks_like_article_prefixed_heading(tokens):
+        if (
+            tokens[0] in _USCODE_HEADING_ONLY_LEADING_STOPWORDS
+            and not self._looks_like_article_prefixed_heading(tokens)
+        ):
             return False
         signal_count = len(set(tokens) & _USCODE_HEADING_ONLY_EXTENDED_NOUN_HINTS)
         return signal_count >= _USCODE_HEADING_ONLY_EXTENDED_MIN_SIGNAL_TOKENS
@@ -4183,12 +4134,8 @@ class LegalModalParser:
                     candidate_text.lower()
                 )
             }
-            has_procedural_heading_signature = (
-                len(procedural_heading_keywords) >= 2
-                and bool(
-                    {"appeal", "appeals", "hearing", "notice", "review"}
-                    & procedural_heading_keywords
-                )
+            has_procedural_heading_signature = len(procedural_heading_keywords) >= 2 and bool(
+                {"appeal", "appeals", "hearing", "notice", "review"} & procedural_heading_keywords
             )
             if not has_procedural_heading_signature:
                 return None

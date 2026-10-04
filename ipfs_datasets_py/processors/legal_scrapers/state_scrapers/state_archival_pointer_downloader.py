@@ -95,7 +95,9 @@ class ArchivalFetchClient:
 
         req = Request(target_url, headers=request_headers)
         try:
-            with urlopen(req, timeout=max(1, int(timeout or self.request_timeout_seconds))) as response:
+            with urlopen(
+                req, timeout=max(1, int(timeout or self.request_timeout_seconds))
+            ) as response:
                 status_code = int(getattr(response, "status", 200) or 200)
                 content = bytes(response.read() or b"")
                 return _HttpResponse(status_code=status_code, content=content)
@@ -334,7 +336,9 @@ class ArchivalFetchClient:
         for capture in captures:
             timestamp = capture.get("timestamp")
             try:
-                content_result = await get_wayback_content(url=url, timestamp=timestamp, closest=True)
+                content_result = await get_wayback_content(
+                    url=url, timestamp=timestamp, closest=True
+                )
                 if content_result.get("status") != "success":
                     continue
 
@@ -398,7 +402,9 @@ class ArchivalFetchClient:
 
         try:
             submit_result = await archive_to_archive_is(url, wait_for_completion=False)
-            archive_url = submit_result.get("archive_url") if isinstance(submit_result, dict) else None
+            archive_url = (
+                submit_result.get("archive_url") if isinstance(submit_result, dict) else None
+            )
             if not archive_url:
                 return None
 
@@ -576,7 +582,9 @@ def _load_urls_from_parquet(paths: Sequence[Path], url_filters_sql: Sequence[str
     return [str(row[0]) for row in rows if row and row[0]]
 
 
-def _build_url_list(urls: Iterable[str], slug_regex: re.Pattern[str], url_template: str) -> List[str]:
+def _build_url_list(
+    urls: Iterable[str], slug_regex: re.Pattern[str], url_template: str
+) -> List[str]:
     slugs = sorted({s for url in urls for s in [_normalize_slug(url, slug_regex)] if s})
     return [url_template.format(slug=slug) for slug in slugs]
 
@@ -636,12 +644,16 @@ def _parse_parquet_map(entries: Optional[Sequence[str]]) -> Dict[str, Path]:
         if not entry:
             continue
         if "=" not in entry:
-            raise ValueError(f"Invalid parquet map entry: {entry!r}. Expected STATE=/path/to/pointers.parquet")
+            raise ValueError(
+                f"Invalid parquet map entry: {entry!r}. Expected STATE=/path/to/pointers.parquet"
+            )
         state_code, path_text = entry.split("=", 1)
         state_code = state_code.strip().upper()
         path_text = path_text.strip()
         if not state_code or not path_text:
-            raise ValueError(f"Invalid parquet map entry: {entry!r}. Expected STATE=/path/to/pointers.parquet")
+            raise ValueError(
+                f"Invalid parquet map entry: {entry!r}. Expected STATE=/path/to/pointers.parquet"
+            )
         mapping[state_code] = Path(path_text)
     return mapping
 

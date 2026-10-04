@@ -1,4 +1,5 @@
 """CLI tests for graphrag-optimizer generate command on a fixture text file."""
+
 from __future__ import annotations
 
 import json
@@ -32,47 +33,72 @@ class TestCmdGenerate:
         return p
 
     def test_generate_returns_zero_on_success(self, cli, input_file, capsys):
-        code = cli.run([
-            "generate",
-            "--input", str(input_file),
-            "--domain", "general",
-            "--strategy", "rule_based",
-            "--format", "json",
-        ])
+        code = cli.run(
+            [
+                "generate",
+                "--input",
+                str(input_file),
+                "--domain",
+                "general",
+                "--strategy",
+                "rule_based",
+                "--format",
+                "json",
+            ]
+        )
         assert code == 0
 
     def test_generate_prints_entity_count(self, cli, input_file, capsys):
-        cli.run([
-            "generate",
-            "--input", str(input_file),
-            "--domain", "general",
-            "--strategy", "rule_based",
-            "--format", "json",
-        ])
+        cli.run(
+            [
+                "generate",
+                "--input",
+                str(input_file),
+                "--domain",
+                "general",
+                "--strategy",
+                "rule_based",
+                "--format",
+                "json",
+            ]
+        )
         out = capsys.readouterr().out
         assert "Entities:" in out
 
     def test_generate_prints_relationship_count(self, cli, input_file, capsys):
-        cli.run([
-            "generate",
-            "--input", str(input_file),
-            "--domain", "general",
-            "--strategy", "rule_based",
-            "--format", "json",
-        ])
+        cli.run(
+            [
+                "generate",
+                "--input",
+                str(input_file),
+                "--domain",
+                "general",
+                "--strategy",
+                "rule_based",
+                "--format",
+                "json",
+            ]
+        )
         out = capsys.readouterr().out
         assert "Relationships:" in out
 
     def test_generate_with_output_writes_file(self, cli, input_file, tmp_path):
         out_path = tmp_path / "output.json"
-        code = cli.run([
-            "generate",
-            "--input", str(input_file),
-            "--domain", "general",
-            "--strategy", "rule_based",
-            "--format", "json",
-            "--output", str(out_path),
-        ])
+        code = cli.run(
+            [
+                "generate",
+                "--input",
+                str(input_file),
+                "--domain",
+                "general",
+                "--strategy",
+                "rule_based",
+                "--format",
+                "json",
+                "--output",
+                str(out_path),
+            ]
+        )
         assert code == 0
         assert out_path.exists()
         payload = json.loads(out_path.read_text())
@@ -81,34 +107,53 @@ class TestCmdGenerate:
 
     def test_generate_output_has_quality_score(self, cli, input_file, tmp_path):
         out_path = tmp_path / "output.json"
-        cli.run([
-            "generate",
-            "--input", str(input_file),
-            "--domain", "general",
-            "--strategy", "rule_based",
-            "--format", "json",
-            "--output", str(out_path),
-        ])
+        cli.run(
+            [
+                "generate",
+                "--input",
+                str(input_file),
+                "--domain",
+                "general",
+                "--strategy",
+                "rule_based",
+                "--format",
+                "json",
+                "--output",
+                str(out_path),
+            ]
+        )
         payload = json.loads(out_path.read_text())
         assert "quality_score" in payload
         assert 0.0 <= payload["quality_score"] <= 1.0
 
     def test_generate_missing_input_returns_nonzero(self, cli, tmp_path):
-        code = cli.run([
-            "generate",
-            "--input", str(tmp_path / "nonexistent.txt"),
-            "--domain", "general",
-            "--strategy", "rule_based",
-            "--format", "json",
-        ])
+        code = cli.run(
+            [
+                "generate",
+                "--input",
+                str(tmp_path / "nonexistent.txt"),
+                "--domain",
+                "general",
+                "--strategy",
+                "rule_based",
+                "--format",
+                "json",
+            ]
+        )
         assert code != 0
 
     def test_generate_hybrid_strategy(self, cli, input_file):
-        code = cli.run([
-            "generate",
-            "--input", str(input_file),
-            "--domain", "general",
-            "--strategy", "hybrid",
-            "--format", "json",
-        ])
+        code = cli.run(
+            [
+                "generate",
+                "--input",
+                str(input_file),
+                "--domain",
+                "general",
+                "--strategy",
+                "hybrid",
+                "--format",
+                "json",
+            ]
+        )
         assert code == 0
