@@ -14,7 +14,7 @@ import re
 
 from . import autoencoder_federated as federation
 from . import autoencoder_projection_features as features
-from . import codebase_runtime_8d as runtimes
+from . import autoencoder_runtime_registry as runtimes
 from .autoencoder_modality_contracts import ModalityContract
 
 

@@ -2,6 +2,7 @@
 import hashlib
 import importlib
 import json
+import sys
 from types import SimpleNamespace
 
 import pytest
@@ -58,14 +59,13 @@ def test_manifest_cannot_escape_release_directory(tmp_path, name):
 
 
 def test_hub_cache_request_is_pinned_and_offline_flag_preserved(tmp_path, monkeypatch):
-    import huggingface_hub
     directory, _, digest = package(tmp_path)
     calls = []
     def download(**kwargs):
         calls.append(kwargs)
         return str(directory / kwargs["filename"].rsplit("/", 1)[-1])
     marker = SimpleNamespace(describe=lambda: {"loaded": True}, infer=lambda rows: rows)
-    monkeypatch.setattr(huggingface_hub, "hf_hub_download", download)
+    monkeypatch.setitem(sys.modules, "huggingface_hub", SimpleNamespace(hf_hub_download=download))
     monkeypatch.setattr(hub, "_instantiate", lambda manifest, paths: marker)
     selection = {**descriptor(), "manifest_sha256": digest}
     loaded = hub.open_autoencoder("intent_ir", descriptor=selection, local_files_only=True)
@@ -80,7 +80,10 @@ def test_ir_public_entrypoint_dispatches_its_own_domain(domain, monkeypatch):
     monkeypatch.setattr(hub, "open_autoencoder", lambda domain, **options: calls.append((domain, options)))
     module = importlib.import_module("ipfs_datasets_py.logic." + domain)
     module.open_autoencoder(local_files_only=True)
-    assert calls == [(domain, {"local_files_only": True})]
+    options = {"local_files_only": True}
+    if domain == "legal_ir":
+        options["optimized"] = True
+    assert calls == [(domain, options)]
 
 
 @pytest.mark.parametrize("domain", hub.DOMAINS)

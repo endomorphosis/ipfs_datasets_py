@@ -1,17 +1,16 @@
-"""Opt-in legal_ir inference from the pinned shared 384D development release."""
+"""Legal inference from the pinned release, optimized by default."""
 from __future__ import annotations
 
 
-def open_autoencoder(*, optimized=False, **options):
-    """Load this domain's actual checkpoint; cold imports remain offline."""
+def open_autoencoder(*, optimized=True, **options):
+    """Load the pinned checkpoint; use optimized=False for original inference.
+
+    Reuse the returned runtime across calls. Cold imports remain offline.
+    """
     if type(optimized) is not bool:
         raise ValueError("optimized must be a boolean")
     from ..formalization.autoencoder.checkpoint_hub import open_autoencoder as open_domain
-    runtime = open_domain("legal_ir", **options)
-    if optimized:
-        from ..formalization.autoencoder.legal_inference_session import optimize_autoencoder
-        runtime = optimize_autoencoder(runtime)
-    return runtime
+    return open_domain("legal_ir", optimized=optimized, **options)
 
 
 def formalize_with_autoencoder(source_text, *, autoencoder=None, **load_options):

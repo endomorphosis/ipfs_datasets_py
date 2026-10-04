@@ -24,13 +24,13 @@ import time
 from typing import Any
 
 from .content import cid_for_bytes, cid_for_structured
-from ..backends.codebase_process import BoundedToolRunner, ToolRunLimits, run_bounded_stdin_tool
+from ..backends.process import BoundedToolRunner, ToolRunLimits, run_bounded_stdin_tool
 from ..backends.smt.compiler import (
     INT_SORT, SmtCompilation, SmtQueryMode, SmtTerm, SmtTermKind,
     SoftwareVerificationSMTCompiler, smt_sanitize, term_eq, term_int, term_symbol,
 )
 from ..backends.smt.differential import normalize_smtlib_for_solver, parse_smt_solver_stdout
-from ..software_verification.codebase_pipeline import (
+from ..software_verification.pipeline import (
     ContractSpec, PipelineStatus, SourceToVerificationPipeline, SourceToVerificationResult,
 )
 from ..software_verification.vc import VCRuleKind
@@ -190,7 +190,9 @@ class CompiledIntegerOffset:
         return cid_for_structured(self.to_dict())
 
 
-def compile_integer_offset(source: bytes, contract: IntegerOffsetContract, *, revision: str) -> CompiledIntegerOffset:
+def compile_integer_offset(source: bytes, contract: IntegerOffsetContract, *, revision: str, mirror: bool = True) -> CompiledIntegerOffset:
+    if type(mirror) is not bool:
+        raise IntegerProfileError("compiler metadata mirroring must be an exact boolean")
     if type(contract) is not IntegerOffsetContract:
         raise IntegerProfileError("contract must be an exact IntegerOffsetContract")
     if (type(revision) is not str or not revision or len(revision.encode("utf-8")) > 1024
@@ -201,7 +203,7 @@ def compile_integer_offset(source: bytes, contract: IntegerOffsetContract, *, re
                                  postconditions=(f"result == {contract.parameter} + ({contract.offset})",))
     pipeline = SourceToVerificationPipeline(execute_solvers=False).run(
         source.decode("ascii"), path=contract.path, language="python", revision=revision,
-        contracts=(specification,),
+        contracts=(specification,), mirror=mirror,
     )
     if (pipeline.status is not PipelineStatus.SUCCESS or pipeline.unsupported_constructs or pipeline.diagnostics
             or pipeline.bindings is None or pipeline.program is None or pipeline.adapter is None
@@ -290,8 +292,8 @@ def _native_executable(discovered: str) -> tuple[str, str]:
 
 
 def _implementation_identity() -> dict[str, Any]:
-    from ..software_verification import codebase_pipeline as pipeline, codebase_source_adapters as source_adapters, vc
-    from ..backends import codebase_process as process
+    from ..software_verification import pipeline, source_adapters, vc
+    from ..backends import process
     from ..backends.smt import compiler, differential
     modules = (sys.modules[__name__], pipeline, source_adapters, vc, process, compiler, differential)
     return {"python": sys.version, "implementation": sys.implementation.name,

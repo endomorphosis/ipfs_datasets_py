@@ -75,14 +75,6 @@ _PRODUCERS = frozenset({
 })
 
 
-# Exact reviewed source migration for read-only historical @1 replay.
-# Original bytes, authority and process observations remain historical.
-_REVIEWED_READ_ONLY_MIGRATION = {
-    'ipfs_datasets_py.logic.software_contracts.codebase_integer_profile': '361aa7884b2d625709b22429ef96c562ab7f32264c937ee7a5b57d09165b21ee',
-    'ipfs_datasets_py.logic.software_verification.pipeline': '60d98314dab4bd28c4b9337cd4db85886c57935c43ad8e826895d082cf299043',
-    'ipfs_datasets_py.logic.software_verification.source_adapters': 'aef42730598f74d35e232f460637560be71b55ddc459d555df9105d17fcfc003',
-}
-
 def validate_legacy_module_pins(recorded: Any, current: Any, *, applicability: bool = False) -> None:
     """Reject unreviewed @1 inventories or changed semantic dependency bytes.
 
@@ -101,8 +93,7 @@ def validate_legacy_module_pins(recorded: Any, current: Any, *, applicability: b
     if current_names != expected_names or any(set(row) != {"module", "sha256"} for row in current):
         raise ValueError("legacy replay module inventory differs; explicit migration required")
     current_map = {row["module"]: row["sha256"] for row in current}
-    if any(current_map[name] != _REVIEWED_READ_ONLY_MIGRATION.get(name, digest)
-           for name, digest in legacy if name not in _PRODUCERS):
+    if any(current_map[name] != digest for name, digest in legacy if name not in _PRODUCERS):
         raise ValueError("legacy semantic dependency changed; explicit migration required")
 
 

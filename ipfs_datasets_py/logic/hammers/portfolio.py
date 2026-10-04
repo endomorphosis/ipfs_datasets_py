@@ -648,20 +648,6 @@ class SolverPortfolio:
             budget = replace(budget, memory_mb=min(1024, capacity))
         return budget
 
-    def _execution_budget(self, solver_name: str) -> SolverBudget:
-        """Apply a bounded SMT/ATP default without constraining ITP fallbacks."""
-        budget = self.policy.budget_for(solver_name)
-        config = self.resource_scheduler.config
-        if config.proof_safety_enabled and budget.memory_mb is None:
-            capacity = config.total_memory_mb - config.reserved_memory_mb - sum(
-                item.memory_mb for lane, item in config.reservations().items()
-                if lane != self.resource_lane
-            )
-            if capacity <= 0:
-                raise PolicyError("no memory capacity remains for solver execution")
-            budget = replace(budget, memory_mb=min(1024, capacity))
-        return budget
-
     def resolve_attempts(
         self, attempts: Sequence[PortfolioAttemptSpec]
     ) -> Tuple[List[_ResolvedAttempt], List[Dict[str, str]]]:

@@ -80,7 +80,9 @@ def test_original_inventory_first_records_exact_keys_and_wrapped_checks_are_reta
         "checked_record_count": len(after), "removed_duplicate_record_count": 6,
         "original_distinct_key_count": len(after), "checked_distinct_key_count": len(after),
         "first_record_preserved": True, "original_inventory_identity_checked": True,
-        "expected_counts_keys_and_order_checked": True, "wrapped_binding_inventory_deduplicated": False,
+        "expected_counts_keys_and_order_checked": True,
+        "keyset_and_order_admission_scope": "initial_exact_keys_then_fresh_immutable_inventory_identity_and_counts",
+        "wrapped_binding_inventory_deduplicated": False,
         "freshness_success_cached": False}
 
 
@@ -154,10 +156,8 @@ def test_every_removed_duplicate_still_refuses_live_method_replacement(checkpoin
             assert counts["restores"] == 0 and scheduler.active_leases() == []
         return
     texts, vectors = support.inputs(checkpoint, 1)
-    with monkeypatch.context() as patch:
-        cancel = support.Mutation(None, texts, vectors, phase="after_forward",
-                                  action=lambda event: patch.setattr(owner, attribute, foreign))
-        session = open_cpu(checkpoint, scheduler, patch, optimized=optimized, cancel_event=cancel)
+    cancel = support.Mutation(None, texts, vectors, phase="after_forward", action=lambda event: None)
+    session = open_cpu(checkpoint, scheduler, monkeypatch, optimized=optimized, cancel_event=cancel)
     try:
         cancel.owner = session
         with monkeypatch.context() as patch:
@@ -213,7 +213,7 @@ def test_code_defaults_closures_wrappers_namespace_and_resolution_remain_fresh(c
         owner.describe()
 
 
-@pytest.mark.parametrize("name", ["_BASE_METHODS", "_BASE_METHODS_BEFORE_DEDUP", "_BASE_METHOD_KEYS_BEFORE_DEDUP", "_BASE_METHOD_KEYS", "_BASE_METHOD_KEYSET", "_BASE_METHOD_COUNTS"])
+@pytest.mark.parametrize("name", ["_BASE_METHODS", "_BASE_METHODS_BEFORE_DEDUP", "_BASE_METHOD_KEYS_BEFORE_DEDUP", "_BASE_METHOD_KEYS", "_BASE_METHOD_KEYSET", "_BASE_METHOD_COUNTS", "_BASE_FUNCTIONS", "_BASE_CLASSES"])
 def test_inventory_alias_substitution_even_equal_values_refuses_before_restore(checkpoint, scheduler, monkeypatch, name):
     value = getattr(subject, name)
     replacement = frozenset(list(value)) if type(value) is frozenset else tuple(list(value))

@@ -25,7 +25,7 @@ import math
 import threading
 import time
 from collections import OrderedDict
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import StrEnum
@@ -56,12 +56,6 @@ ASTS_CATALOG_NAME: Final = "asts"
 MAX_STORED_PAYLOAD_BYTES: Final = 16 * 1024 * 1024
 MAX_BATCH_PAYLOAD_BYTES: Final = 64 * 1024 * 1024
 MAX_QUERY_ROWS: Final = 100_000
-MAX_ACTIVE_READ_AST_CIDS: Final = 32
-# Bound SQL planning and additional argument residency independently of the
-# already validated projection payload. One valid oversized row is preserved
-# as a singleton, rather than tightening the existing payload contract.
-_INSERT_BATCH_ROWS: Final = 128
-_INSERT_BATCH_PARAMETER_BYTES: Final = 256 * 1024
 
 # Closed catalog table family declared by the control-plane plan (DQK-G600).
 ASTS_CATALOG_TABLES: Final[tuple[str, ...]] = (
@@ -366,10 +360,6 @@ class DuckDBASTStoreError(ValueError):
 
 class DuckDBASTStoreIntegrityError(DuckDBASTStoreError):
     """Raised when a stored projection fails identity rehash."""
-
-
-class DuckDBASTBatchReadLimitError(DuckDBASTStoreError):
-    """Split a multi-projection read whose aggregate input bounds are exceeded."""
 
 
 # ---------------------------------------------------------------------------
@@ -1654,15 +1644,6 @@ class DuckDBASTStoreProtocol(Protocol):
 
     def get_by_ast_cid(self, ast_cid: str) -> ASTCatalogProjection | None: ...
 
-    def get_many_by_ast_cid(
-        self, ast_cids: Sequence[str], *, checkpoint: Callable[[], None] | None = None,
-    ) -> tuple[ASTCatalogProjection | None, ...]: ...
-
-    def require_active_identities(
-        self, projections: Sequence[ASTCatalogProjection], *,
-        checkpoint: Callable[[], None] | None = None,
-    ) -> None: ...
-
     def query_parse_failures(
         self, *, revision_id: str | None = None, path: str | None = None
     ) -> tuple[DiagnosticRow, ...]: ...
@@ -1677,10 +1658,6 @@ class DuckDBASTStoreProtocol(Protocol):
         actor_id: str = "system",
         detail: str = "",
     ) -> InvalidationRow: ...
-
-
-class _BatchReadOverflow(Exception):
-    """An internal combined-input bound was exceeded before reconstruction."""
 
 
 class DuckDBASTStore:
@@ -1756,7 +1733,6 @@ class DuckDBASTStore:
         parameters: Sequence[Any] = (),
         *,
         columns: str = "*",
-        _batch: bool = False,
     ) -> list[dict[str, Any]]:
         assert self._connection is not None
         if table not in ASTS_CATALOG_TABLES:
@@ -1770,7 +1746,7 @@ class DuckDBASTStore:
         names = [column[0] for column in cursor.description]
         raw = cursor.fetchall()
         if len(raw) > MAX_QUERY_ROWS:
-            raise (_BatchReadOverflow if _batch else DuckDBASTStoreError)(
+            raise DuckDBASTStoreError(
                 "query row bound exceeded; narrow by revision or blob"
             )
         return [dict(zip(names, row)) for row in raw]
@@ -1911,43 +1887,7 @@ class DuckDBASTStore:
             if blob["parse_status"] == ParseStatus.FAILED.value
             else []
         )
-        return self._verify_loaded_rows(blob, revision, source_file, diagnostics, intrinsic,
-            lambda table: self._rows(table, "blob_id=?", [blob_id]))
-
-    def _verify_loaded_rows(self, blob, revision, source_file, diagnostics, intrinsic, read_related):
-        """One canonical verification path for scalar and batched SQL reads."""
         expected = self._rebuild(blob, revision, diagnostics, intrinsic)
-        self._require_identity_rows(expected, blob, revision, source_file)
-        for table, attribute in (
-            ("ast_nodes", "nodes"),
-            ("scopes", "scopes"),
-            ("symbols", "symbols"),
-            ("imports", "imports"),
-            ("references", "references"),
-            ("calls", "calls"),
-            ("effects", "effects"),
-            ("interfaces", "interfaces"),
-            ("diagnostics", "diagnostics"),
-            ("invalidations", "invalidations"),
-        ):
-            actual = (
-                diagnostics
-                if table == "diagnostics"
-                else (
-                    intrinsic
-                    if table == "invalidations"
-                    else read_related(table)
-                )
-            )
-            wanted = [row.to_dict() for row in getattr(expected, attribute)]
-            if sorted(map(_json_dumps, actual)) != sorted(map(_json_dumps, wanted)):
-                raise DuckDBASTStoreIntegrityError(
-                    f"stored {table} rows differ from canonical AST payload"
-                )
-        return expected
-
-    @staticmethod
-    def _require_identity_rows(expected, blob, revision, source_file):
         if (
             expected.ast_blob.to_dict() != blob
             or expected.source_file.to_dict() != source_file
@@ -1967,6 +1907,33 @@ class DuckDBASTStore:
             revision["created_at"]
         ):
             raise DuckDBASTStoreIntegrityError("invalid revision timestamp")
+        for table, attribute in (
+            ("ast_nodes", "nodes"),
+            ("scopes", "scopes"),
+            ("symbols", "symbols"),
+            ("imports", "imports"),
+            ("references", "references"),
+            ("calls", "calls"),
+            ("effects", "effects"),
+            ("interfaces", "interfaces"),
+            ("diagnostics", "diagnostics"),
+            ("invalidations", "invalidations"),
+        ):
+            actual = (
+                diagnostics
+                if table == "diagnostics"
+                else (
+                    intrinsic
+                    if table == "invalidations"
+                    else self._rows(table, "blob_id=?", [blob_id])
+                )
+            )
+            wanted = [row.to_dict() for row in getattr(expected, attribute)]
+            if sorted(map(_json_dumps, actual)) != sorted(map(_json_dumps, wanted)):
+                raise DuckDBASTStoreIntegrityError(
+                    f"stored {table} rows differ from canonical AST payload"
+                )
+        return expected
 
     def stats(self) -> dict[str, int]:
         with self._lock:
@@ -2152,194 +2119,6 @@ class DuckDBASTStore:
 
     def get_by_ast_cid(self, ast_cid: str) -> ASTCatalogProjection | None:
         return self._lookup("ast_cid", _text(ast_cid, "ast_cid"))
-
-    @staticmethod
-    def _read_checkpoint(checkpoint):
-        if checkpoint is not None and not callable(checkpoint):
-            raise DuckDBASTStoreError("read checkpoint must be callable")
-        return checkpoint if checkpoint is not None else lambda: None
-
-    @staticmethod
-    def _read_keys(ast_cids):
-        if isinstance(ast_cids, (str, bytes)) or not isinstance(ast_cids, Sequence):
-            raise DuckDBASTStoreError("AST read keys must be a bounded sequence")
-        if len(ast_cids) > MAX_ACTIVE_READ_AST_CIDS:
-            raise DuckDBASTStoreError("active AST read exceeds 32 requested keys")
-        return tuple(_text(cid, "ast_cid") for cid in ast_cids)
-
-    @staticmethod
-    def _group_rows(rows, key):
-        grouped = {}
-        for row in rows:
-            grouped.setdefault(row[key], []).append(row)
-        return grouped
-
-    @staticmethod
-    def _require_memory_read_budget(projections, checkpoint):
-        # Existing memory-mode projections remain owner-resident. Match durable
-        # batching decisions without copying their graphs or counting repeated
-        # references more than once. This bounds encoded input, not Python RSS.
-        unique = {row.ast_cid: row for row in projections if row is not None}
-        if len(unique) <= 1:
-            return
-        total = 0
-        for row in unique.values():
-            checkpoint()
-            total += len(row.ast_blob.payload_json.encode("utf-8"))
-            if total > MAX_BATCH_PAYLOAD_BYTES:
-                raise DuckDBASTBatchReadLimitError("split active AST batch to fit aggregate input bounds")
-
-    def _batch_rows(self, table, column, keys, checkpoint, *, columns="*"):
-        checkpoint()
-        keys = tuple(dict.fromkeys(keys))
-        if not keys:
-            return []
-        return self._rows(table, column + " IN (" + ",".join("?" for _ in keys) + ")",
-                          keys, columns=columns, _batch=True)
-
-    def _active_identity_rows(self, keys, checkpoint):
-        """Read bounded identities from the caller's current SQL snapshot."""
-        sizes = self._batch_rows("ast_blobs", "ast_cid", keys, checkpoint,
-            columns="ast_cid, octet_length(encode(payload_json)) AS payload_bytes")
-        if (any(type(row["payload_bytes"]) is not int for row in sizes)
-                or sum(row["payload_bytes"] for row in sizes) > MAX_BATCH_PAYLOAD_BYTES):
-            raise _BatchReadOverflow
-        blobs = self._batch_rows("ast_blobs", "ast_cid", keys, checkpoint)
-        revisions = self._batch_rows("source_revisions", "revision_id",
-            [row["revision_id"] for row in blobs], checkpoint)
-        files = self._batch_rows("source_files", "file_id",
-            [row["file_id"] for row in blobs], checkpoint)
-        return (self._group_rows(blobs, "ast_cid"), self._group_rows(revisions, "revision_id"),
-                self._group_rows(files, "file_id"))
-
-    def _load_many(self, keys, checkpoint):
-        blobs, revisions, files = self._active_identity_rows(keys, checkpoint)
-        selected = {cid: self._one(rows, "lookup blob") for cid, rows in blobs.items()}
-        blob_ids = [row["blob_id"] for row in selected.values()]
-        tables = {}
-        for table in ("ast_nodes", "scopes", "symbols", "imports", "references",
-                      "calls", "effects", "interfaces", "diagnostics"):
-            tables[table] = self._group_rows(
-                self._batch_rows(table, "blob_id", blob_ids, checkpoint), "blob_id")
-        failure_ids = [_row_id(blob["blob_id"], "invalidation", "parse_failure")
-                       for blob in selected.values() if blob["parse_status"] == ParseStatus.FAILED.value]
-        invalidations = self._group_rows(self._batch_rows("invalidations", "invalidation_id",
-            failure_ids, checkpoint), "invalidation_id")
-        loaded = {}
-        for cid, blob in selected.items():
-            checkpoint()
-            blob_id = blob["blob_id"]
-            loaded[cid] = self._verify_loaded_rows(blob,
-                self._one(revisions.get(blob["revision_id"], []), "revision"),
-                self._one(files.get(blob["file_id"], []), "source file"),
-                tables["diagnostics"].get(blob_id, []),
-                invalidations.get(_row_id(blob_id, "invalidation", "parse_failure"), [])
-                    if blob["parse_status"] == ParseStatus.FAILED.value else [],
-                lambda table: tables[table].get(blob_id, []))
-        return tuple(loaded.get(cid) for cid in keys)
-
-    def get_many_by_ast_cid(
-        self, ast_cids: Sequence[str], *, checkpoint: Callable[[], None] | None = None,
-    ) -> tuple[ASTCatalogProjection | None, ...]:
-        """Fully verify at most 32 active projections in one fresh read snapshot.
-
-        Preserve request order, duplicates and scalar missing-result semantics.
-        Every call fetches live SQL rows and reprojects canonical AST payloads.
-        No projection survives in an owner cache. Combined SQL-row or encoded
-        payload overflow raises DuckDBASTBatchReadLimitError, so callers can
-        release the failed frame and split requests before retaining projections.
-        One distinct CID preserves the scalar per-projection bounds. Encoded
-        input bounds do not constitute a hard Python/SQL RSS cap. A later
-        identity fence can detect invalidation during caller-owned CAS/source work.
-        """
-        keys, check = self._read_keys(ast_cids), self._read_checkpoint(checkpoint)
-        check()
-        if not keys:
-            return ()
-        with self._lock, self._transaction():
-            self._stats["lookups"] += len(keys)
-            if self._connection is None:
-                found = tuple(self._by_blob.get(self._by_ast_cid.get(cid)) for cid in keys)
-                self._require_memory_read_budget(found, check)
-            else:
-                try:
-                    found = self._load_many(keys, check)
-                except _BatchReadOverflow:
-                    # Release the failed batch frame before scalar reconstruction.
-                    found = None
-                if found is None:
-                    # Raise outside the except frame: retained exceptions must
-                    # not keep failed aggregate row lists alive while callers
-                    # split. Never reconstruct an oversized scalar tuple here.
-                    if len(set(keys)) > 1:
-                        raise DuckDBASTBatchReadLimitError("split active AST batch to fit aggregate input bounds")
-                    check()
-                    rows = self._rows("ast_blobs", "ast_cid=?", [keys[0]], columns="blob_id")
-                    single = self._load(self._one(rows, "lookup blob")["blob_id"]) if rows else None
-                    found = (single,) * len(keys)
-            self._stats["misses"] += sum(row is None for row in found)
-            check()
-        check()
-        return found
-
-    def require_active_identities(
-        self, projections: Sequence[ASTCatalogProjection], *,
-        checkpoint: Callable[[], None] | None = None,
-    ) -> None:
-        """Fresh active blob/file/revision fence after a verified batch read.
-
-        This checks membership and exact identity/payload rows, including the
-        shared revision timestamp contract. It does not replace full relational
-        reconstruction by get_many_by_ast_cid or the caller's CAS/source/head
-        checks. Multi-CID identity payload overflow raises the same explicit
-        batch-limit error; an earlier bounded read does not authorize larger
-        later identities. No proof or completion authority follows from this fence.
-        """
-        if (not isinstance(projections, Sequence) or len(projections) > MAX_ACTIVE_READ_AST_CIDS
-                or any(type(row) is not ASTCatalogProjection for row in projections)):
-            raise DuckDBASTStoreError("active identity fence requires at most 32 exact projections")
-        check = self._read_checkpoint(checkpoint)
-        check()
-        if not projections:
-            return
-        with self._lock, self._transaction():
-            if self._connection is None:
-                self._require_memory_read_budget(projections, check)
-                for expected in projections:
-                    check()
-                    current = self._by_blob.get(self._by_ast_cid.get(expected.ast_cid))
-                    if current is None:
-                        raise DuckDBASTStoreIntegrityError("AST projection is no longer active")
-                    self._require_identity_rows(expected, current.ast_blob.to_dict(),
-                        current.source_revision.to_dict(), current.source_file.to_dict())
-            else:
-                try:
-                    identities = self._active_identity_rows([row.ast_cid for row in projections], check)
-                except _BatchReadOverflow:
-                    identities = None
-                if identities is None and len({row.ast_cid for row in projections}) > 1:
-                    raise DuckDBASTBatchReadLimitError("split active AST identity fence to fit aggregate input bounds")
-                for expected in projections:
-                    check()
-                    if identities is None:
-                        blobs = self._rows("ast_blobs", "ast_cid=?", [expected.ast_cid])
-                        if not blobs:
-                            raise DuckDBASTStoreIntegrityError("AST projection is no longer active")
-                        blob = self._one(blobs, "lookup blob")
-                        revision = self._one(self._rows("source_revisions", "revision_id=?",
-                            [blob["revision_id"]]), "revision")
-                        source_file = self._one(self._rows("source_files", "file_id=?",
-                            [blob["file_id"]]), "source file")
-                    else:
-                        blobs, revisions, files = identities
-                        if expected.ast_cid not in blobs:
-                            raise DuckDBASTStoreIntegrityError("AST projection is no longer active")
-                        blob = self._one(blobs[expected.ast_cid], "lookup blob")
-                        revision = self._one(revisions.get(blob["revision_id"], []), "revision")
-                        source_file = self._one(files.get(blob["file_id"], []), "source file")
-                    self._require_identity_rows(expected, blob, revision, source_file)
-            check()
-        check()
 
     def get_by_file_id(self, file_id: str) -> ASTCatalogProjection | None:
         return self._lookup("file_id", _text(file_id, "file_id"))
@@ -2576,38 +2355,6 @@ class DuckDBASTStore:
 
     # -- DuckDB persistence (caller holds the transaction) ------------------
 
-    def _insert_rows(self, statement: str, rows: Iterable[Sequence[Any]]) -> None:
-        """Stream canonical fact rows into bounded parameterized INSERTs.
-
-        Statements and column order are the fixed literals below. Only VALUES
-        placeholders are repeated; source-derived text is always a parameter.
-        The caller's existing transaction owns every chunk, rollback and hooks.
-        """
-        prefix, _, placeholders = statement.partition("VALUES")
-        width = placeholders.count("?")
-        batch: list[Any] = []
-        count = size = 0
-
-        def flush() -> None:
-            self._connection.execute(
-                prefix + "VALUES " + ",".join([placeholders.strip()] * count), batch
-            )
-
-        for row in rows:
-            if len(row) != width:
-                raise DuckDBASTStoreError("fact row differs from INSERT column layout")
-            row_bytes = sum(len(value.encode("utf-8")) if type(value) is str else 8
-                            for value in row)
-            if count and (count >= _INSERT_BATCH_ROWS
-                          or size + row_bytes > _INSERT_BATCH_PARAMETER_BYTES):
-                flush()
-                batch, count, size = [], 0, 0
-            batch.extend(row)
-            count += 1
-            size += row_bytes
-        if count:
-            flush()
-
     def _persist_projection(self, projection: ASTCatalogProjection) -> None:
         connection = self._connection
         if connection is None:
@@ -2681,13 +2428,13 @@ class DuckDBASTStore:
                 blob.created_at,
             ],
         )
-        self._insert_rows(
-            """
-            INSERT INTO ast_nodes VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-            )
-            """,
-            (
+        for node in projection.nodes:
+            connection.execute(
+                """
+                INSERT INTO ast_nodes VALUES (
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                )
+                """,
                 [
                     node.node_id,
                     node.blob_id,
@@ -2704,17 +2451,15 @@ class DuckDBASTStore:
                     node.span.end_column,
                     node.label,
                     node.payload_json,
-                ]
-                for node in projection.nodes
-            ),
-        )
-        self._insert_rows(
-            """
-            INSERT INTO scopes VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                ],
             )
-            """,
-            (
+        for item in projection.scopes:
+            connection.execute(
+                """
+                INSERT INTO scopes VALUES (
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                )
+                """,
                 [
                     item.scope_row_id,
                     item.blob_id,
@@ -2728,17 +2473,15 @@ class DuckDBASTStore:
                     item.span.start_column,
                     item.span.end_line,
                     item.span.end_column,
-                ]
-                for item in projection.scopes
-            ),
-        )
-        self._insert_rows(
-            """
-            INSERT INTO symbols VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                ],
             )
-            """,
-            (
+        for item in projection.symbols:
+            connection.execute(
+                """
+                INSERT INTO symbols VALUES (
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                )
+                """,
                 [
                     item.symbol_row_id,
                     item.blob_id,
@@ -2758,17 +2501,15 @@ class DuckDBASTStore:
                     item.span.start_column,
                     item.span.end_line,
                     item.span.end_column,
-                ]
-                for item in projection.symbols
-            ),
-        )
-        self._insert_rows(
-            """
-            INSERT INTO imports VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                ],
             )
-            """,
-            (
+        for item in projection.imports:
+            connection.execute(
+                """
+                INSERT INTO imports VALUES (
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                )
+                """,
                 [
                     item.import_row_id,
                     item.blob_id,
@@ -2785,17 +2526,15 @@ class DuckDBASTStore:
                     item.span.start_column,
                     item.span.end_line,
                     item.span.end_column,
-                ]
-                for item in projection.imports
-            ),
-        )
-        self._insert_rows(
-            """
-            INSERT INTO "references" VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                ],
             )
-            """,
-            (
+        for item in projection.references:
+            connection.execute(
+                """
+                INSERT INTO "references" VALUES (
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                )
+                """,
                 [
                     item.reference_row_id,
                     item.blob_id,
@@ -2810,17 +2549,15 @@ class DuckDBASTStore:
                     item.span.start_column,
                     item.span.end_line,
                     item.span.end_column,
-                ]
-                for item in projection.references
-            ),
-        )
-        self._insert_rows(
-            """
-            INSERT INTO calls VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                ],
             )
-            """,
-            (
+        for item in projection.calls:
+            connection.execute(
+                """
+                INSERT INTO calls VALUES (
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                )
+                """,
                 [
                     item.call_row_id,
                     item.blob_id,
@@ -2838,17 +2575,15 @@ class DuckDBASTStore:
                     item.span.start_column,
                     item.span.end_line,
                     item.span.end_column,
-                ]
-                for item in projection.calls
-            ),
-        )
-        self._insert_rows(
-            """
-            INSERT INTO effects VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                ],
             )
-            """,
-            (
+        for item in projection.effects:
+            connection.execute(
+                """
+                INSERT INTO effects VALUES (
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                )
+                """,
                 [
                     item.effect_row_id,
                     item.blob_id,
@@ -2863,17 +2598,15 @@ class DuckDBASTStore:
                     item.span.start_column,
                     item.span.end_line,
                     item.span.end_column,
-                ]
-                for item in projection.effects
-            ),
-        )
-        self._insert_rows(
-            """
-            INSERT INTO interfaces VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                ],
             )
-            """,
-            (
+        for item in projection.interfaces:
+            connection.execute(
+                """
+                INSERT INTO interfaces VALUES (
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                )
+                """,
                 [
                     item.interface_row_id,
                     item.blob_id,
@@ -2889,17 +2622,15 @@ class DuckDBASTStore:
                     item.span.start_column,
                     item.span.end_line,
                     item.span.end_column,
-                ]
-                for item in projection.interfaces
-            ),
-        )
-        self._insert_rows(
-            """
-            INSERT INTO diagnostics VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                ],
             )
-            """,
-            (
+        for item in projection.diagnostics:
+            connection.execute(
+                """
+                INSERT INTO diagnostics VALUES (
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                )
+                """,
                 [
                     item.diagnostic_row_id,
                     item.blob_id,
@@ -2916,10 +2647,8 @@ class DuckDBASTStore:
                     item.span.end_line,
                     item.span.end_column,
                     item.created_at,
-                ]
-                for item in projection.diagnostics
-            ),
-        )
+                ],
+            )
         for item in projection.invalidations:
             self._persist_invalidation(item)
 
@@ -2990,7 +2719,6 @@ __all__ = [
     "DuckDBASTStore",
     "DuckDBASTStoreError",
     "DuckDBASTStoreIntegrityError",
-    "DuckDBASTBatchReadLimitError",
     "DuckDBASTStoreProtocol",
     "EffectRow",
     "INTERFACE_KINDS",

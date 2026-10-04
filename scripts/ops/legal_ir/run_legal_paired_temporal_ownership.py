@@ -69,6 +69,7 @@ def producer_pins():
     from ipfs_datasets_py.logic.autoformal import legal_paired_temporal_ownership_corpus as schema
     result = runtime.producer_pins()
     for module in (previous_runner, corpus, schema): result[str(Path(module.__file__).resolve())] = reference(module.__file__)['sha256']
+    for pin in (*schema.producers(), *schema.old.producer_refs()): result[pin['path']] = pin['sha256']
     result[str(Path(__file__).resolve())] = reference(__file__)['sha256']
     return result
 

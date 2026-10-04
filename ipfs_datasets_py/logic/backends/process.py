@@ -113,6 +113,12 @@ class ToolRunLimits:
     max_file_bytes overrides the per-file RLIMIT_FSIZE cap when file-size
     enforcement is enabled. None preserves the max_workspace_bytes fallback;
     an explicit cap does not change the private workspace aggregate bound.
+
+    Private workspace logical bytes, entries and depth are inspected about
+    every 100 ms and after execution, even when RLIMIT_FSIZE is disabled. Sampling
+    may overshoot and does not cover external paths or unlinked open files;
+    use filesystem quotas for a hard disk ceiling. Entries include directories
+    and symlinks; symlink targets and non-regular file bodies are never read.
     """
 
     timeout_seconds: float = 30.0
@@ -130,6 +136,8 @@ class ToolRunLimits:
     enforce_file_size_limit: bool = True
     resident_memory_bytes: int | None = None
     max_file_bytes: int | None = None
+    max_workspace_entries: int = 16_384
+    max_workspace_depth: int = 64
 
     def __post_init__(self) -> None:
         for name in ("timeout_seconds", "termination_grace_seconds"):
@@ -179,6 +187,11 @@ class ToolRunLimits:
             raise ToolProcessError(
                 "enforce_file_size_limit must be a boolean"
             )
+        for name, maximum in (("max_workspace_entries", 1_000_000),
+                              ("max_workspace_depth", 256)):
+            value = getattr(self, name)
+            if type(value) is not int or not 0 < value <= maximum:
+                raise ToolProcessError(f"{name} must be an integer between 1 and {maximum}")
 
 
 @dataclass(frozen=True, slots=True)
@@ -257,6 +270,7 @@ class RawProcessResult:
     process_tree_terminated: bool = False
     resource_exhausted: bool = False
     error: str = ""
+    workspace_limit_exceeded: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -882,6 +896,31 @@ class SubprocessExecutor:
                 error="cancelled before process start",
             )
 
+        deadline = started + invocation.limits.timeout_seconds
+        timed_out = cancelled = False
+
+        def stop_workspace_scan() -> bool:
+            nonlocal timed_out, cancelled
+            if timed_out or cancelled:
+                return True
+            if _is_cancelled(cancellation):
+                cancelled = True
+            elif self._clock() >= deadline:
+                timed_out = True
+            return timed_out or cancelled
+
+        initial_workspace = _inspect_workspace(
+            invocation.cwd, invocation.limits, stop_requested=stop_workspace_scan)
+        if initial_workspace.limit_exceeded or initial_workspace.error or initial_workspace.interrupted:
+            return RawProcessResult(
+                returncode=None, elapsed_seconds=max(0.0, self._clock() - started),
+                timed_out=timed_out, cancelled=cancelled,
+                resource_exhausted=initial_workspace.limit_exceeded or bool(initial_workspace.error),
+                workspace_limit_exceeded=initial_workspace.limit_exceeded,
+                error=initial_workspace.error or ("workspace limit exceeded before process start"
+                    if initial_workspace.limit_exceeded else "operation stopped during workspace inspection"),
+            )
+
         creation_flags = 0
         if os.name == "nt":  # pragma: no cover - exercised on Windows CI.
             creation_flags = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
@@ -898,6 +937,12 @@ class SubprocessExecutor:
         descendants = None
         workers = []
         try:
+            if stop_workspace_scan():
+                return RawProcessResult(
+                    returncode=None, elapsed_seconds=max(0.0, self._clock() - started),
+                    timed_out=timed_out, cancelled=cancelled,
+                    error="operation stopped before process start",
+                )
             process = self._popen(
                 argv,
                 cwd=str(invocation.cwd),
@@ -946,12 +991,12 @@ class SubprocessExecutor:
                 workers.append((writer, process.stdin))
                 writer.start()
 
-            deadline = started + invocation.limits.timeout_seconds
             next_ancestry_sample = started
             resident_exhausted = False
             next_memory_sample = started
-            timed_out = False
-            cancelled = False
+            next_workspace_sample = self._clock() + 0.1
+            workspace_exceeded = False
+            workspace_error = ""
             tree_terminated = False
             while True:
                 if self._clock() >= next_ancestry_sample:
@@ -990,6 +1035,17 @@ class SubprocessExecutor:
                         descendants=descendants,
                     )
                     break
+                if self._clock() >= next_workspace_sample:
+                    usage = _inspect_workspace(invocation.cwd, invocation.limits,
+                                               stop_requested=stop_workspace_scan)
+                    next_workspace_sample = self._clock() + 0.1
+                    workspace_exceeded = usage.limit_exceeded
+                    workspace_error = usage.error
+                    if workspace_exceeded or workspace_error or usage.interrupted:
+                        tree_terminated = _terminate_process_tree(
+                            process, grace_seconds=invocation.limits.termination_grace_seconds,
+                            descendants=descendants)
+                        break
                 time.sleep(self._poll_interval_seconds)
 
             try:
@@ -1014,14 +1070,14 @@ class SubprocessExecutor:
             terminated_descendants, surviving_descendants = descendants.drain(
                 invocation.limits.termination_grace_seconds)
             tree_terminated = tree_terminated or terminated_descendants
-            cleanup_error = descendants.error
+            cleanup_error = "; ".join(filter(None, (descendants.error, workspace_error)))
             if surviving_descendants:
                 tree_terminated = False
                 cleanup_error = "tracked descendants survived bounded cleanup: " + ",".join(map(str, surviving_descendants))
             descendants.close()
             for reader in readers:
                 reader.join(timeout=max(0.1, invocation.limits.termination_grace_seconds))
-            resource_exhausted = bool(cleanup_error) or resident_exhausted or (
+            resource_exhausted = bool(cleanup_error) or resident_exhausted or workspace_exceeded or (
                 not timed_out
                 and not cancelled
                 and returncode is not None
@@ -1044,6 +1100,7 @@ class SubprocessExecutor:
                 process_tree_terminated=tree_terminated,
                 resource_exhausted=resource_exhausted,
                 error=cleanup_error,
+                workspace_limit_exceeded=workspace_exceeded,
             )
         except BaseException as error:
             if process is None:
@@ -1110,20 +1167,127 @@ def _redact_command(argv: Sequence[str], secrets: Sequence[str]) -> tuple[str, .
     return tuple(redacted)
 
 
-def _workspace_size(root: Path, limit: int) -> tuple[int, bool]:
-    total = 0
-    for directory, names, filenames in os.walk(root, followlinks=False):
-        for name in (*names, *filenames):
-            path = Path(directory) / name
+@dataclass(frozen=True, slots=True)
+class _WorkspaceInspection:
+    bytes_used: int = 0
+    entries: int = 0
+    limit_exceeded: bool = False
+    error: str = ""
+    interrupted: bool = False
+
+
+def _inspect_workspace(
+    root: Path,
+    limits: ToolRunLimits,
+    *,
+    stop_requested: Callable[[], bool] | None = None,
+) -> _WorkspaceInspection:
+    """Inspect metadata with bounded work and no file-body reads.
+
+    POSIX traversal pins each directory with O_NOFOLLOW descriptors. The
+    portable path fallback checks identities but is not a hostile-race security
+    boundary. A disappearing child is a normal concurrent deletion; other
+    inspection failures refuse the run instead of reporting zero usage.
+    Sparse files count logical length and hard links count per directory entry.
+    Filesystem calls themselves are not forcibly interruptible.
+    """
+    total = entries = 0
+    stack: list[tuple[Any, int | Path, int, tuple[int, int]]] = []
+    descriptors = os.name == "posix" and hasattr(os, "O_NOFOLLOW")
+
+    def identity(info: os.stat_result) -> tuple[int, int]:
+        return info.st_dev, info.st_ino
+
+    def open_directory(path: str | Path, depth: int, parent: int | None = None,
+                       expected: os.stat_result | None = None) -> None:
+        if descriptors:
+            flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
+            fd = os.open(path, flags, dir_fd=parent)
             try:
-                info = path.lstat()
-            except OSError:
+                info = os.fstat(fd)
+                if expected is not None and identity(info) != identity(expected):
+                    raise OSError("workspace directory changed during inspection")
+                iterator = os.scandir(fd)
+            except BaseException:
+                os.close(fd)
+                raise
+            stack.append((iterator, fd, depth, identity(info)))
+        else:  # Portable metadata scan; live native qualification is on Linux.
+            directory = Path(path)
+            info = directory.lstat()
+            if (not stat.S_ISDIR(info.st_mode)
+                    or (expected is not None and identity(info) != identity(expected))):
+                raise OSError("workspace directory changed during inspection")
+            stack.append((os.scandir(directory), directory, depth, identity(info)))
+
+    def close_directory() -> None:
+        iterator, handle, _, _ = stack.pop()
+        try:
+            iterator.close()
+        finally:
+            if descriptors:
+                os.close(handle)
+
+    def inspect() -> _WorkspaceInspection:
+        nonlocal total, entries
+        if stop_requested is not None and stop_requested():
+            return _WorkspaceInspection(interrupted=True)
+        open_directory(root, 0)
+        while stack:
+            if stop_requested is not None and stop_requested():
+                return _WorkspaceInspection(total, entries, interrupted=True)
+            iterator, handle, depth, expected_identity = stack[-1]
+            try:
+                entry = next(iterator)
+            except StopIteration:
+                if not descriptors and identity(handle.lstat()) != expected_identity:
+                    raise OSError("workspace directory changed during inspection")
+                close_directory()
                 continue
-            if stat.S_ISREG(info.st_mode):
-                total += info.st_size
-                if total > limit:
-                    return total, True
-    return total, False
+            entries += 1
+            if entries > limits.max_workspace_entries:
+                return _WorkspaceInspection(total, entries, limit_exceeded=True)
+            try:
+                info = entry.stat(follow_symlinks=False)
+                if stat.S_ISREG(info.st_mode):
+                    total += info.st_size
+                    if total > limits.max_workspace_bytes:
+                        return _WorkspaceInspection(total, entries, limit_exceeded=True)
+                elif stat.S_ISDIR(info.st_mode):
+                    if depth + 1 > limits.max_workspace_depth:
+                        return _WorkspaceInspection(total, entries, limit_exceeded=True)
+                    open_directory(entry.name if descriptors else Path(entry.path), depth + 1,
+                                   parent=handle if descriptors else None, expected=info)
+            except FileNotFoundError:
+                # A child may disappear while the tool is running. Root and
+                # iterator failures still take the conservative error path.
+                continue
+        return _WorkspaceInspection(total, entries)
+
+    cleanup_error = ""
+    try:
+        usage = inspect()
+    except OSError as error:
+        usage = _WorkspaceInspection(total, entries,
+            error="workspace inspection failed: " + type(error).__name__)
+    finally:
+        while stack:
+            try:
+                close_directory()
+            except OSError as error:
+                # Try every ancestor even if one descriptor/iterator fails to
+                # close. Never mask KeyboardInterrupt or another active error.
+                cleanup_error = cleanup_error or "workspace inspection cleanup failed: " + type(error).__name__
+    if cleanup_error:
+        usage = replace(usage, error="; ".join(filter(None, (usage.error, cleanup_error))))
+    return usage
+
+
+def _workspace_size(root: Path, limit: int) -> tuple[int, bool]:
+    """Compatibility helper; unreadable or over-complex trees are refused."""
+    limits = ToolRunLimits(max_input_bytes=min(limit, 1_048_576), max_workspace_bytes=limit)
+    usage = _inspect_workspace(root, limits)
+    return usage.bytes_used, usage.limit_exceeded or bool(usage.error)
 
 
 def tool_limits_from_milliseconds(
@@ -1455,24 +1619,48 @@ class BoundedToolRunner:
                 ),
                 limits=request.limits,
             )
+            execution_started = time.monotonic()
+            executor_failed = False
             try:
                 raw = self._execute(invocation, cancellation)
             except OSError as error:
+                executor_failed = True
                 raw = RawProcessResult(returncode=None, error=_execution_exception_text(error))
             except Exception as error:
+                executor_failed = True
                 raw = RawProcessResult(
                     returncode=None,
                     error=f"executor failure: {type(error).__name__}: {_execution_exception_text(error)}",
                 )
             outputs, files_truncated = self._read_outputs(workspace, request)
-            _, workspace_exceeded = _workspace_size(
-                workspace, request.limits.max_workspace_bytes
-            )
-            if files_truncated or workspace_exceeded:
+            final_cancelled, final_timed_out = raw.cancelled, raw.timed_out
+
+            def stop_final_scan() -> bool:
+                nonlocal final_cancelled, final_timed_out
+                if executor_failed:
+                    # The original exception (possibly a failed cancellation
+                    # callback) already prevents success. Do not call it again
+                    # and replace the preserved execution/cleanup diagnostic.
+                    return True
+                if not (final_cancelled or final_timed_out):
+                    if _is_cancelled(cancellation):
+                        final_cancelled = True
+                    elif time.monotonic() >= execution_started + request.limits.timeout_seconds:
+                        final_timed_out = True
+                return final_cancelled or final_timed_out
+
+            usage = _inspect_workspace(workspace, request.limits, stop_requested=stop_final_scan)
+            stop_final_scan()
+            if final_cancelled or final_timed_out:
+                raw = replace(raw, cancelled=final_cancelled, timed_out=final_timed_out)
+            workspace_exceeded = raw.workspace_limit_exceeded or usage.limit_exceeded
+            if files_truncated or workspace_exceeded or usage.error:
                 raw = replace(
                     raw,
                     output_truncated=raw.output_truncated or files_truncated,
-                    resource_exhausted=raw.resource_exhausted or workspace_exceeded,
+                    resource_exhausted=raw.resource_exhausted or workspace_exceeded or bool(usage.error),
+                    workspace_limit_exceeded=workspace_exceeded,
+                    error="; ".join(filter(None, (raw.error, usage.error))),
                 )
             result = self._result(
                 request,
@@ -1665,6 +1853,7 @@ class BoundedToolRunner:
         unavailable: bool = False,
         workspace_limit_exceeded: bool = False,
     ) -> ToolRunResult:
+        workspace_limit_exceeded = workspace_limit_exceeded or raw.workspace_limit_exceeded
         stdout, stdout_truncated = _bounded_redacted_text(
             raw.stdout, secrets, request.limits.max_output_bytes
         )
@@ -1718,7 +1907,7 @@ class BoundedToolRunner:
             ),
             workspace_limit_exceeded=workspace_limit_exceeded,
             process_tree_terminated=raw.process_tree_terminated,
-            resource_exhausted=raw.resource_exhausted,
+            resource_exhausted=raw.resource_exhausted or workspace_limit_exceeded,
             workspace_cleaned=workspace_cleaned,
             termination_reason=reason,
             error=error,

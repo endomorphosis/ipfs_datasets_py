@@ -393,6 +393,96 @@ def test_session_batches_with_matching_results_and_no_owner_decoder_swap(checkpo
     assert joint._core_binding(model) == binding
 
 
+def _versioned_runtime(checkpointed, **options):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_runtime_registry import open_runtime
+    namespace, state, checkpoint, _ = checkpointed
+    return open_runtime("legal_ir", namespace.__name__.rsplit(".", 1)[-1],
+                        state=namespace.TrainingState.from_dict(copy.deepcopy(state)),
+                        formula_checkpoint=checkpoint, compute_device="cpu", **options)
+
+
+def test_versioned_runtime_optimizes_by_default_and_reuses_session(checkpointed):
+    runtime = _versioned_runtime(checkpointed)
+    rows = checkpointed[3]
+    owner = runtime.model._joint_formula_decoder
+    expected = joint.infer(runtime.model, rows)
+    report = runtime.infer(rows)
+    session = runtime._inference_session
+    assert isinstance(session, fast.JointInferenceSession)
+    assert report.pop("inference_implementation")["view_candidates"]["scope"] == "one_inference_request"
+    _assert_float32_parity(report, expected)
+    decoded = runtime.decode_formal_logic(rows)
+    decoded.pop("inference_implementation")
+    _assert_float32_parity(decoded, expected)
+    assert runtime._inference_session is session
+    assert runtime.model._joint_formula_decoder is owner
+
+
+def test_versioned_runtime_opt_out_preserves_original_inference(checkpointed, monkeypatch):
+    runtime = _versioned_runtime(checkpointed, optimized=False)
+    def unexpected(*args, **options):
+        raise AssertionError("opt-out must use original decoder")
+    monkeypatch.setattr(fast, "JointInferenceSession", unexpected)
+    expected = joint.infer(runtime.model, checkpointed[3])
+    assert runtime.infer(checkpointed[3]) == expected
+    assert runtime.decode_formal_logic(checkpointed[3], mode="learned_latent") == expected
+    assert runtime._inference_session is None
+
+
+@pytest.mark.parametrize("changed", ["sidecar", "owner_parameters", "core"])
+def test_default_versioned_runtime_rejects_mutation_after_warming(checkpointed, changed):
+    runtime = _versioned_runtime(checkpointed)
+    runtime.infer(checkpointed[3])
+    if changed == "sidecar":
+        runtime.model._joint_formula_checkpoint["model_state"]["projection_up.bias"][0] += .25
+    elif changed == "owner_parameters":
+        next(runtime.model._joint_formula_decoder.model.parameters()).data.add_(.25)
+    else:
+        runtime.model.state.family_embedding_weights["deontic"][0] += .25
+    with pytest.raises(ValueError, match="changed|differ"):
+        runtime.infer(checkpointed[3])
+
+
+def test_default_versioned_runtime_rebuilds_session_after_explicit_reattachment(checkpointed):
+    runtime = _versioned_runtime(checkpointed)
+    before = runtime.infer(checkpointed[3])
+    session = runtime._inference_session
+    runtime.model.attach_formula_checkpoint(checkpointed[2])
+    assert runtime.infer(checkpointed[3]) == before
+    assert runtime._inference_session is not session
+
+
+def test_default_versioned_runtime_observes_replaced_model_even_with_same_decoder(checkpointed):
+    runtime = _versioned_runtime(checkpointed)
+    runtime.infer(checkpointed[3])
+    decoder = runtime.model._joint_formula_decoder
+    runtime.model = _owner(checkpointed)
+    runtime.model._joint_formula_decoder = decoder
+    runtime.model._legal_ir_view_target_cache["teacher"] = {"unexpected": True}
+    with pytest.raises(ValueError, match="cached teacher"):
+        runtime.infer(checkpointed[3])
+    assert runtime._inference_session._model is runtime.model
+
+
+def test_versioned_training_discards_session_even_when_training_fails(checkpointed, monkeypatch):
+    runtime = _versioned_runtime(checkpointed)
+    runtime.infer(checkpointed[3])
+    def fail(*args, **options):
+        raise ValueError("fixture training failure")
+    monkeypatch.setattr(runtime.model, "train_generalizable_projection", fail)
+    with pytest.raises(ValueError, match="fixture training failure"):
+        runtime.train(checkpointed[3])
+    assert runtime._inference_session is None
+    assert runtime._inference_decoder is None
+
+
+@pytest.mark.parametrize("optimized", [None, 1, "yes"])
+def test_versioned_runtime_rejects_nonboolean_optimization_before_model_loading(optimized):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_runtime_registry import open_runtime
+    with pytest.raises(ValueError, match="optimized must be a boolean"):
+        open_runtime("legal_ir", "current_v2", checkpoint="/unused", optimized=optimized)
+
+
 @pytest.mark.parametrize("changed", ("core", "configuration", "sidecar", "owner_parameters",
                                       "private_parameters", "joint_source", "fast_source", "guard_source"))
 def test_session_rejects_mutated_owner_private_decoder_and_sources(checkpointed, monkeypatch, changed):
@@ -446,7 +536,7 @@ def test_session_retains_cached_profile_after_dictionary_reordering_and_caller_e
     assert session.infer(checkpointed[3])["joint_profile"] == expected
 
 
-def test_session_reuses_only_immutable_core_bound_candidates_and_keeps_sample_observations_fresh(checkpointed, monkeypatch):
+def test_session_rebuilds_candidates_and_sample_observations_for_each_request(checkpointed, monkeypatch):
     model = _owner(checkpointed)
     session = fast.JointInferenceSession(model)
     builds = 0
@@ -459,65 +549,144 @@ def test_session_reuses_only_immutable_core_bound_candidates_and_keeps_sample_ob
     monkeypatch.setattr(fast, "_view_family_candidates", candidates)
     first = session.infer(checkpointed[3])
     assert builds == 1
-    assert first["inference_implementation"]["view_candidates"]["cache_hit"] is False
-    owned = session._view_candidates
-    assert type(owned) is tuple and all(type(name) is str for name in owned)
+    assert first["inference_implementation"]["view_candidates"] == {
+        "scope": "one_inference_request", "retained_after_request": 0}
     rows = copy.deepcopy(checkpointed[3])
     rows[0].embedding_vector[0] += 0.25
     expected = joint.infer(model, rows)
     actual = session.infer(rows)
-    assert builds == 1
-    assert session._view_candidates is owned
-    assert actual["inference_implementation"]["view_candidates"]["cache_hit"] is True
+    assert builds == 2
     actual.pop("inference_implementation")
     _assert_float32_parity(actual, expected)
     assert model._sample_feature_cache == {}
+    assert not hasattr(session, "_view_candidates")
     model.state.legal_ir_view_embedding_weights["new.view"] = [0.1] * model.DIMENSION
     with pytest.raises(ValueError, match="core changed"):
         session.infer(rows)
-    assert builds == 1
+    assert builds == 2
 
 
-def test_session_rejects_replaced_private_candidates_and_does_not_publish_failed_extraction(checkpointed, monkeypatch):
+def test_session_rebuilds_candidates_after_failed_inference(checkpointed, monkeypatch):
     model = _owner(checkpointed)
     session = fast.JointInferenceSession(model)
+    builds = 0
+    candidates_for = fast._view_family_candidates
+    def candidates(worker):
+        nonlocal builds
+        if worker._legal_ir_view_family_candidates_cache is None:
+            builds += 1
+        return candidates_for(worker)
+    monkeypatch.setattr(fast, "_view_family_candidates", candidates)
     original = session._decoder.infer_with_projection
     def fail(rows):
         raise RuntimeError("request failed")
     monkeypatch.setattr(session._decoder, "infer_with_projection", fail)
     with pytest.raises(RuntimeError, match="request failed"):
         session.infer(checkpointed[3])
-    assert session._view_candidates is None
-    assert session._view_candidates_sha256 is None
+    assert builds == 1
     monkeypatch.setattr(session._decoder, "infer_with_projection", original)
     session.infer(checkpointed[3])
-    session._view_candidates = (*session._view_candidates, "caller-edited.view")
-    with pytest.raises(ValueError, match="cached view candidates changed"):
-        session.infer(checkpointed[3])
+    assert builds == 2
+    assert model._sample_feature_cache == {}
+    assert not hasattr(session, "_view_candidates")
 
 
-def test_session_does_not_publish_empty_candidates_when_no_lookup_was_needed(checkpointed, monkeypatch):
+def test_session_first_request_without_candidates_does_not_affect_later_lookup(checkpointed, monkeypatch):
     model = _owner(checkpointed)
     session = fast.JointInferenceSession(model)
     original_project = fast._project_sample
-    # Simulate an extraction path that never asks for view candidates. Its
-    # output still uses an independently checked original projection.
+    # Exercise a valid extraction path that never asks for view candidates.
     def no_candidate_lookup(worker, row, **options):
         return joint.raw_projection(model, row)
     monkeypatch.setattr(fast, "_project_sample", no_candidate_lookup)
-    first = session.infer(checkpointed[3])
-    assert session._view_candidates is None
-    assert session._view_candidates_sha256 is None
-    assert first["inference_implementation"]["view_candidates"]["cache_hit"] is False
+    session.infer(checkpointed[3])
     monkeypatch.setattr(fast, "_project_sample", original_project)
+    builds = 0
+    candidates_for = fast._view_family_candidates
+    def candidates(worker):
+        nonlocal builds
+        if worker._legal_ir_view_family_candidates_cache is None:
+            builds += 1
+        return candidates_for(worker)
+    monkeypatch.setattr(fast, "_view_family_candidates", candidates)
     second = session.infer(checkpointed[3])
-    assert session._view_candidates
-    assert second["inference_implementation"]["view_candidates"]["cache_hit"] is False
     third = session.infer(checkpointed[3])
-    assert third["inference_implementation"]["view_candidates"]["cache_hit"] is True
+    assert builds == 2
     second.pop("inference_implementation")
     third.pop("inference_implementation")
     assert second == third
+
+
+def test_session_recomputes_candidate_order_after_base_dictionary_reordering(checkpointed, monkeypatch):
+    model = _owner(checkpointed)
+    session = fast.JointInferenceSession(model)
+    observed = []
+    original = fast._view_family_candidates
+    def candidates(worker):
+        uncomputed = worker._legal_ir_view_family_candidates_cache is None
+        result = original(worker)
+        if uncomputed:
+            observed.append(result)
+        return result
+    monkeypatch.setattr(fast, "_view_family_candidates", candidates)
+    first = session.infer(checkpointed[3])
+    assert len(observed) == 1
+    binding = joint._core_binding(model)
+    revision = model.state.state_revision
+    primary = model.state.legal_ir_view_embedding_weights
+    key = next(iter(primary))
+    vector = dict.pop(primary, key)
+    dict.__setitem__(primary, key, vector)
+    assert model.state.state_revision == revision
+    assert joint._core_binding(model) == binding
+    actual = session.infer(checkpointed[3])
+    assert len(observed) == 2
+    assert observed[1] != observed[0]
+    expected = fast.infer(model, checkpointed[3], session._decoder)
+    assert observed[2] == observed[1]
+    actual.pop("inference_implementation")
+    expected.pop("inference_implementation")
+    assert actual == expected
+    assert first["joint_profile"] == actual["joint_profile"]
+
+
+def test_session_recomputes_derived_string_key_aliases_with_unchanged_binding(checkpointed, monkeypatch):
+    class KeyAlias(str):
+        def __str__(self):
+            return "new.view"
+    model = _owner(checkpointed)
+    model.state.feature_legal_ir_view_logits["alias-row"] = {"deontic.ir": 0.5}
+    checkpoint = copy.deepcopy(model._joint_formula_checkpoint)
+    checkpoint["binding"] = joint._core_binding(model)
+    model.attach_formula_checkpoint(checkpoint)
+    session = fast.JointInferenceSession(model)
+    observed = []
+    original = fast._view_family_candidates
+    def candidates(worker):
+        uncomputed = worker._legal_ir_view_family_candidates_cache is None
+        result = original(worker)
+        if uncomputed:
+            observed.append(result)
+        return result
+    monkeypatch.setattr(fast, "_view_family_candidates", candidates)
+    session.infer(checkpointed[3])
+    assert len(observed) == 1
+    assert "new.view" not in observed[0]
+    binding = joint._core_binding(model)
+    revision = model.state.state_revision
+    row = model.state.feature_legal_ir_view_logits["alias-row"]
+    value = dict.pop(row, "deontic.ir")
+    dict.__setitem__(row, KeyAlias("deontic.ir"), value)
+    assert model.state.state_revision == revision
+    assert joint._core_binding(model) == binding
+    actual = session.infer(checkpointed[3])
+    assert len(observed) == 2
+    assert "new.view" in observed[1]
+    expected = fast.infer(model, checkpointed[3], session._decoder)
+    assert observed[2] == observed[1]
+    actual.pop("inference_implementation")
+    expected.pop("inference_implementation")
+    assert actual == expected
 
 
 @pytest.mark.parametrize("changed", ("sidecar", "owner_parameters"))

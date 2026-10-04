@@ -100,7 +100,7 @@ REQUIRED_LANE_IDS = (
 # linearized branch observations sound for proof. The straight-line negative
 # still produces an actual solver counterexample.
 BRANCHING_RESOURCE_POSITIVE = """\
-def resource_counter(n, budget):
+def resource_counter(n: int, budget: int) -> int:
     if n < 0:
         return budget
     if budget < 1:

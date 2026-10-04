@@ -1,4 +1,4 @@
-"""Existing packages retain identities and checks under explicit acceleration."""
+"""Existing packages retain identities and checks under default acceleration."""
 import copy
 import importlib.util
 from pathlib import Path
@@ -107,19 +107,74 @@ def test_source_text_entrypoint_uses_cached_embedding_api(packaged, monkeypatch)
     assert result["provider_calls"] == result["training_steps"] == 0
 
 
-def test_explicit_open_option_wraps_verified_legal_runtime(packaged, monkeypatch):
+@pytest.mark.parametrize("options", [{}, {"optimized": True}, {"optimized": False}])
+def test_legal_open_defaults_to_optimization_and_forwards_opt_out(packaged, monkeypatch, options):
     ordinary, _, _ = open_pair(packaged)
     from ipfs_datasets_py.logic.legal_ir.autoencoder import open_autoencoder
     from ipfs_datasets_py.logic.formalization.autoencoder import checkpoint_hub
     calls = []
     def load(domain, **options):
         calls.append((domain, options))
-        return ordinary
+        return checkpoint_hub._loaded_autoencoder(domain, ordinary.runtime, {}, None,
+                                                 optimized=options["optimized"])
     monkeypatch.setattr(checkpoint_hub, "open_autoencoder", load)
-    assert open_autoencoder(optimized=True, local_files_only=True).runtime is not ordinary.runtime
-    assert calls == [("legal_ir", {"local_files_only": True})]
+    loaded = open_autoencoder(local_files_only=True, **options)
+    optimized = options.get("optimized", True)
+    assert (loaded.runtime is ordinary.runtime) is (not optimized)
+    assert calls == [("legal_ir", {"local_files_only": True, "optimized": optimized})]
     with pytest.raises(ValueError, match="boolean"):
         open_autoencoder(optimized="yes")
+
+
+@pytest.mark.parametrize("optimized", [True, False])
+@pytest.mark.parametrize("local", [True, False])
+def test_hub_legal_loaders_select_acceleration_and_preserve_release(packaged, tmp_path, monkeypatch,
+                                                                  optimized, local):
+    import hashlib
+    from ipfs_datasets_py.logic.formalization.autoencoder import checkpoint_hub as hub
+    from ipfs_datasets_py.logic.formalization.autoencoder.legal_inference_session import OptimizedRuntime
+    receipt, rows = packaged
+    directory = tmp_path / "hub-release"
+    hub.build_package("legal_ir", receipt["path"], directory,
+                      provenance={"scope": "fixture"}, validation={"scope": "fixture"})
+    digest = hashlib.sha256((directory / "manifest.json").read_bytes()).hexdigest()
+    # Omit the option for True to exercise the public defaults directly.
+    options = {} if optimized else {"optimized": False}
+    if local:
+        loaded = hub.open_local_autoencoder("legal_ir", directory, manifest_sha256=digest, **options)
+    else:
+        selection = {"schema": hub.DESCRIPTOR_SCHEMA, "domain_id": "legal_ir",
+                     "repository_id": "Publicus/legal-ir-autoencoder", "revision": "a" * 40,
+                     "release_prefix": "releases/fixture", "manifest_sha256": digest}
+        calls = []
+        def download(**options):
+            calls.append(options)
+            return str(directory / options["filename"].rsplit("/", 1)[-1])
+        monkeypatch.setitem(sys.modules, "huggingface_hub", SimpleNamespace(hf_hub_download=download))
+        loaded = hub.open_autoencoder("legal_ir", descriptor=selection, local_files_only=True, **options)
+        assert loaded.descriptor == selection
+        assert all(call["local_files_only"] and call["revision"] == selection["revision"] for call in calls)
+    assert isinstance(loaded.runtime, OptimizedRuntime) is optimized
+    result = loaded.infer(rows)
+    assert result["checkpoint_sha256"] == receipt["sha256"]
+    assert ("inference_implementation" in result) is optimized
+    ordinary = hub.open_local_autoencoder("legal_ir", directory, manifest_sha256=digest, optimized=False)
+    assert without_inference_evidence(result) == ordinary.infer(rows)
+
+
+@pytest.mark.parametrize("local", [True, False])
+@pytest.mark.parametrize("optimized", [None, 1, "yes"])
+def test_hub_rejects_invalid_optimization_flag_before_loading(monkeypatch, local, optimized):
+    from ipfs_datasets_py.logic.formalization.autoencoder import checkpoint_hub as hub
+    def unexpected(*args, **options):
+        raise AssertionError("invalid option must fail before file or network access")
+    monkeypatch.setattr(hub, "verify_package", unexpected)
+    monkeypatch.setattr(hub, "default_descriptor", unexpected)
+    with pytest.raises(ValueError, match="optimized must be a boolean"):
+        if local:
+            hub.open_local_autoencoder("legal_ir", "/unused", manifest_sha256="unused", optimized=optimized)
+        else:
+            hub.open_autoencoder("legal_ir", optimized=optimized)
 
 
 def test_blas_limits_restore_caller_settings_on_success_and_failure(monkeypatch):

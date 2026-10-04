@@ -11,7 +11,7 @@ import pytest
 import torch
 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_device_inference as subject
-from .test_legal_span_device_inference import checkpoint, scheduler, one_thread, open_cpu
+from test_legal_span_device_inference import checkpoint, scheduler, one_thread, open_cpu
 
 
 CUDNN_FIELDS = ("enabled", "benchmark", "benchmark_limit", "deterministic", "allow_tf32")

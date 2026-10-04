@@ -84,7 +84,7 @@ def test_threshold_equality_refuses_with_the_actual_single_sample(
     samples = Samples(sample)
     native = scheduler(tmp_path, samples)
     error = refused(native, request_id="threshold-equality")
-    observation = error.proof_refusal_observation
+    observation = error.admission_observation
     assert samples.calls == 1
     assert observation["sample"][field] == threshold
     assert observation["thresholds"][field] == threshold
@@ -106,8 +106,8 @@ def test_existing_gate_reason_precedence_is_preserved(tmp_path, gate, reason, ca
     all_stalled = replace(HEALTHY, memory_stall_percent=2, cpu_stall_percent=50, io_stall_percent=10)
     samples = Samples(all_stalled) if calls == 1 else Samples(HEALTHY, all_stalled)
     error = refused(scheduler(tmp_path, samples))
-    assert error.proof_refusal_observation["gate"] == gate
-    assert error.proof_refusal_observation["reason"] == reason
+    assert error.admission_observation["gate"] == gate
+    assert error.admission_observation["reason"] == reason
     assert samples.calls == calls
 
 
@@ -119,7 +119,7 @@ def test_second_gate_records_its_own_refusing_sample_for_roots_and_children(tmp_
     parent = native.acquire("hammer", cpu_slots=2, memory_mb=300, timeout=0) if child else None
     try:
         error = refused(native, parent=parent, request_id="second-gate")
-        observation = error.proof_refusal_observation
+        observation = error.admission_observation
         assert samples.calls == (4 if child else 2)
         assert observation["gate"] == "request_pressure"
         assert observation["sample"]["memory_stall_percent"] == 3.25
@@ -140,7 +140,7 @@ def test_telemetry_exceptions_keep_sample_unknown_and_make_no_reprobe(tmp_path, 
     samples = Samples(HEALTHY, OSError("unavailable")) if second else Samples(OSError("unavailable"))
     native = scheduler(tmp_path, samples)
     error = refused(native)
-    observation = error.proof_refusal_observation
+    observation = error.admission_observation
     assert observation["reason"] == "proof_resource_telemetry_unknown"
     assert observation["sample"] is None
     assert observation["error_type"] == "OSError"
@@ -156,7 +156,7 @@ def test_telemetry_exceptions_keep_sample_unknown_and_make_no_reprobe(tmp_path, 
 def test_refusal_retains_native_memory_and_pid_demand(tmp_path, sample, reason, demand_field, required):
     samples = Samples(sample)
     error = refused(scheduler(tmp_path, samples), child_process_slots=1)
-    observation = error.proof_refusal_observation
+    observation = error.admission_observation
     assert samples.calls == 1
     assert observation["reason"] == reason
     assert observation["proof_memory_headroom_mb"] == 200
@@ -172,8 +172,8 @@ def test_shared_backoff_does_not_sample_or_attribute_a_rivals_observation(tmp_pa
     ))
     samples = Samples(replace(HEALTHY, memory_stall_percent=2.5))
     native = scheduler(tmp_path, samples)
-    first = refused(native, request_id="first" * 100).proof_refusal_observation
-    second = refused(native, request_id="different-waiter").proof_refusal_observation
+    first = refused(native, request_id="first" * 100).admission_observation
+    second = refused(native, request_id="different-waiter").admission_observation
     assert samples.calls == 1
     assert second is None
     state = closed_state(native)
@@ -194,7 +194,7 @@ def test_later_safe_admission_retains_closed_history_without_using_it_as_authori
     error = refused(native, request_id="old-refusal")
     retained = closed_state(native)["last_proof_refusal"]
     # Caller mutation of copied evidence cannot alter persisted history.
-    error.proof_refusal_observation["sample"]["memory_stall_percent"] = 99
+    error.admission_observation["sample"]["memory_stall_percent"] = 99
     wall[0] = 1003.0
     with native.acquire("hammer", cpu_slots=1, memory_mb=100, timeout=0):
         assert native.snapshot()["last_proof_refusal"] == retained
@@ -240,7 +240,7 @@ def test_timeout_keeps_its_own_refusal_when_fairness_examines_an_older_waiter(tm
         with pytest.raises(LeaseTimeoutError) as caught:
             native.acquire("hammer", cpu_slots=1, memory_mb=100,
                 timeout=0.04, request_id="current")
-        own = caught.value.proof_refusal_observation
+        own = caught.value.admission_observation
         assert own["request_id"] == "current"
         assert own["sample"]["memory_stall_percent"] == 2.5
         assert current_calls[0] >= 5  # own two gates plus older fairness gates

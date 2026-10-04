@@ -25,9 +25,9 @@ from typing import Any
 
 from ipfs_datasets_py.duckdb_control.autoencoder_registry import AutoencoderRegistry
 from ipfs_datasets_py.duckdb_control.codebase_catalog import CodebaseHead
-from ipfs_datasets_py.logic.backends.codebase_process import BoundedToolRunner, ToolRunLimits, run_bounded_stdin_tool
+from ipfs_datasets_py.logic.backends.process import BoundedToolRunner, ToolRunLimits, run_bounded_stdin_tool
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_projection_features as features
-from ipfs_datasets_py.optimizers.logic_theorem_optimizer import codebase_runtime_8d as runtimes
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_runtime_registry as runtimes
 from .codebase_ir import RepositoryCodebaseIndex, StaleCodebaseError
 from .codebase_resources import acquire_codebase_resources
 from .content import canonical_dag_json_bytes, cid_for_bytes, cid_for_structured
@@ -75,7 +75,7 @@ class CodebaseTrainingSelection:
     contracts: tuple = ()
 
     def __post_init__(self):
-        from ipfs_datasets_py.logic.software_verification.codebase_pipeline import ContractSpec
+        from ipfs_datasets_py.logic.software_verification.pipeline import ContractSpec
         _text(self.path, "path", 1024)
         path = PurePosixPath(self.path)
         _require(not path.is_absolute() and path.as_posix() == self.path
@@ -94,7 +94,7 @@ class CodebaseTrainingSelection:
 
     @classmethod
     def from_dict(cls, value):
-        from ipfs_datasets_py.logic.software_verification.codebase_pipeline import ContractSpec
+        from ipfs_datasets_py.logic.software_verification.pipeline import ContractSpec
         _require(type(value) is dict and set(value) == {"path", "role", "contracts"}, "closed selection required")
         result = cls(value["path"], value["role"], tuple(ContractSpec(**row) for row in value["contracts"]))
         _require(result.to_dict() == value, "noncanonical selection")
@@ -229,7 +229,7 @@ def _request(provenance, configuration):
         "implementation": provenance["implementation"]}
 
 
-def _diagnostic(value, targets, state, contract_sha, space, *, batch_targets=None, batch_start=0):
+def _diagnostic(value, targets, state, contract_sha, space):
     expected = {"source_digests", "mean_squared_errors", "mean_squared_error", "coverage",
                 "inference", "used_for_selection", "semantic_or_property_evaluation"}
     _require(type(value) is dict and set(value) == expected and value["used_for_selection"] is False
@@ -264,30 +264,6 @@ def _diagnostic(value, targets, state, contract_sha, space, *, batch_targets=Non
         losses.append(sum((left - right) ** 2 for left, right in zip(vector, decoded)) / len(vector))
     _require(value["mean_squared_errors"] == losses and value["mean_squared_error"] == sum(losses) / len(losses),
              "recorded diagnostic losses differ from recorded feature rows")
-    # Replay the exact numerical decoder, not just self-consistent saved
-    # metrics. These small structural feature vectors come from the native
-    # captured-source adapter; this is inference, never fitting or a proof.
-    replay_contract = features.build_native_feature_contract(space,
-        ir_schema=runtimes.CODEBASE_SOURCE_FEATURE_SCHEMA,
-        adapter_sha256=hashlib.sha256(Path(_targets_adapter().__file__).read_bytes()).hexdigest(),
-        latent_width=state["latent_width"])
-    _require(replay_contract.sha256 == contract_sha, "diagnostic native contract differs")
-    # Float64 GEMM can round differently for a role alone versus that same
-    # role inside a joined batch. Replay the owner's complete ordered batch,
-    # then select its exact target slice; never waive numerical equality.
-    if batch_targets is None:
-        _require(type(batch_start) is int and batch_start == 0, "standalone diagnostic batch offset differs")
-        replayed = features.infer_projection_features(replay_contract, space, state, targets)
-    else:
-        _require(type(batch_targets) in {list, tuple} and 1 <= len(batch_targets) <= 2048
-            and type(batch_start) is int and 0 <= batch_start
-            and batch_start + len(targets) <= len(batch_targets), "bounded diagnostic batch slice required")
-        end = batch_start + len(targets)
-        _require([item.to_dict() for item in batch_targets[batch_start:end]]
-                 == [item.to_dict() for item in targets], "diagnostic batch slice target binding differs")
-        complete = features.infer_projection_features(replay_contract, space, state, batch_targets)
-        replayed = {**complete, "rows": complete["rows"][batch_start:end], "coverage": coverage}
-    _require(replayed == inference, "independently replayed numerical feature diagnostic differs")
 
 
 def _lineage(index, registry, version_id, limits):

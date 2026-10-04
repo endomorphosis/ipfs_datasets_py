@@ -6,8 +6,7 @@ one sample snapshot lets helpers share an observation cache without repeatedly
 fingerprinting the embedding. Identical view readouts are reused within the
 owned sample, and view candidates only within one checked inference request.
 Private caches are discarded on return, including when inference raises.
-Reusable sessions retain one immutable candidate tuple under their fully
-checked core binding; no sample observations or predictions survive a call.
+No candidate names, sample observations or predictions survive a call.
 """
 from __future__ import annotations
 
@@ -41,7 +40,7 @@ def inference_implementation():
     joint._require(_source_sha256() == _SOURCE_AT_IMPORT,
                    "joint inference implementation changed since import")
     return {"schema": "modal-joint-formula-inference-implementation/v1",
-            "projection": "private-state-view-bound-candidates-validated-empty-heads/v5",
+            "projection": "private-state-view-request-candidates-validated-empty-heads/v6",
             "source_sha256": _SOURCE_AT_IMPORT,
             "original_checkpoint_source_binding_preserved": True,
             "checkpoint_conversion_performed": False}
@@ -236,23 +235,18 @@ def raw_projection(model, sample, *, _validated_package_sample=False):
         _release_worker(worker)
 
 
-def _rows(model, samples, *, _candidate_scope=None, _validated_package_samples=False):
+def _rows(model, samples, *, _validated_package_samples=False):
     """Project samples already checked by the original source/identity boundary."""
     joint._require(not model._legal_ir_view_target_cache and not model._legal_ir_loss_target_cache,
                    "joint formula input cannot use cached teacher bridge targets")
     joint._require(type(_validated_package_samples) is bool,
                    "validated package samples flag must be boolean")
     worker = _worker(model)
-    if _candidate_scope is not None:
-        worker._legal_ir_view_family_candidates_cache = _candidate_scope["candidates"]
     try:
-        rows = [{"id": sample.sample_id, "source_text": sample.text,
+        return [{"id": sample.sample_id, "source_text": sample.text,
                  "latent": _project_sample(worker, sample,
                                            _validated_package_sample=_validated_package_samples)}
                 for sample in samples]
-        if _candidate_scope is not None:
-            _candidate_scope["observed"] = worker._legal_ir_view_family_candidates_cache
-        return rows
     finally:
         _release_worker(worker)
 
@@ -276,7 +270,7 @@ def _attached_checkpoint(model, guard):
 
 
 def infer(model, samples, decoder=None, *, _checkpoint_guard=None, _joint_profile=None,
-          _candidate_scope=None, _validated_package_samples=False):
+          _validated_package_samples=False):
     """Preserve joint results and integrity checks with an optional owned decoder.
 
     A separately restored fast decoder must describe the exact attached
@@ -289,17 +283,13 @@ def infer(model, samples, decoder=None, *, _checkpoint_guard=None, _joint_profil
     checkpoint = _attached_checkpoint(model, _checkpoint_guard)
     binding = joint._core_binding(model)
     joint._require(checkpoint["binding"] == binding, "core changed after decoder attachment")
-    if _candidate_scope is not None:
-        joint._require(_candidate_scope["binding"] == binding,
-                       "cached view candidates belong to another core")
     if decoder is None:
         decoder = model._joint_formula_decoder
     joint._require(decoder.checkpoint_sha256 == model._joint_formula_decoder.checkpoint_sha256,
                    "inference decoder differs from attached checkpoint")
     samples = joint._samples(model, samples)
     joint._require(len(samples) <= 128, "joint formula inference requires at most 128 samples")
-    rows = _rows(model, samples, _candidate_scope=_candidate_scope,
-                 _validated_package_samples=_validated_package_samples)
+    rows = _rows(model, samples, _validated_package_samples=_validated_package_samples)
     if hasattr(decoder, "infer_with_projection"):
         result, vectors = decoder.infer_with_projection(rows)
     else:
@@ -311,9 +301,6 @@ def infer(model, samples, decoder=None, *, _checkpoint_guard=None, _joint_profil
         / model.DIMENSION for sample, vector in zip(samples, vectors)) / len(samples)
     result["reconstruction_scope"] = "learned_projection_before_target_safety_or_sample_memory"
     joint._require(joint._core_binding(model) == binding, "core changed during formula inference")
-    if _candidate_scope is not None:
-        joint._require(_candidate_scope["binding"] == binding,
-                       "cached view candidate binding changed during formula inference")
     _attached_checkpoint(model, _checkpoint_guard)
     inference_implementation()
     result["joint_profile"] = (joint.describe(model) if _joint_profile is None
@@ -337,8 +324,6 @@ class JointInferenceSession:
         self._checkpoint_guard = CheckpointContentGuard(
             checkpoint, expected_sha256=self._decoder.checkpoint_sha256)
         self._joint_profile = joint.describe(model)
-        self._view_candidates = None
-        self._view_candidates_sha256 = None
 
     @property
     def binding(self):
@@ -346,36 +331,16 @@ class JointInferenceSession:
         return copy.deepcopy(self._binding)
 
     def infer(self, samples, *, _validated_package_samples=False):
-        self._check_view_candidates()
-        cached_candidates = self._view_candidates is not None
-        scope = {"binding": self._binding, "candidates": self._view_candidates}
         result = infer(self._model, samples, self._decoder,
                        _checkpoint_guard=self._checkpoint_guard, _joint_profile=self._joint_profile,
-                       _candidate_scope=scope, _validated_package_samples=_validated_package_samples)
-        self._check_view_candidates()
-        if self._view_candidates is None and scope["observed"] is not None:
-            # Publish the immutable tuple only after the request's full core,
-            # checkpoint, decoder and source checks have all succeeded.
-            self._view_candidates = scope["observed"]
-            self._view_candidates_sha256 = hashlib.sha256(joint._raw(self._view_candidates)).hexdigest()
+                       _validated_package_samples=_validated_package_samples)
         result["inference_implementation"] = {
             "joint_projection": inference_implementation(),
             "formula_decoder": result.get("inference_implementation"),
             "checkpoint_content_guard": self._checkpoint_guard.inference_implementation,
-            "view_candidates": {"scope": "one_fully_bound_session",
-                                "retained_name_count": len(self._view_candidates or ()),
-                                "cache_hit": cached_candidates},
+            "view_candidates": {"scope": "one_inference_request",
+                                "retained_after_request": 0},
         }
         return result
-
-    def _check_view_candidates(self):
-        if self._view_candidates is None:
-            joint._require(self._view_candidates_sha256 is None, "cached view candidates changed")
-            return
-        joint._require(type(self._view_candidates) is tuple
-                       and all(type(name) is str for name in self._view_candidates)
-                       and hashlib.sha256(joint._raw(self._view_candidates)).hexdigest()
-                       == self._view_candidates_sha256, "cached view candidates changed")
-
 
 __all__ = ["JointInferenceSession", "infer", "raw_projection", "inference_implementation"]

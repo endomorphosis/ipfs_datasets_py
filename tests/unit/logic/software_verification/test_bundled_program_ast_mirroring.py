@@ -22,7 +22,7 @@ from ipfs_datasets_py.logic.backends.smt import operation_budget
 
 
 ROOT = Path(__file__).resolve().parents[4]
-PROVIDER_PATH = (ROOT / "ipfs_accelerate_py/ipfs_accelerate_py/agent_supervisor/analysis/program_ast_adapters.py").resolve()
+PROVIDER_PATH = ROOT / "ipfs_accelerate_py/ipfs_accelerate_py/agent_supervisor/analysis/program_ast_adapters.py"
 PROVIDER_NAME = "ipfs_accelerate_py.agent_supervisor.analysis.program_ast_adapters"
 SINK_NAME = "ipfs_accelerate_py.agent_supervisor.runtime.supervisor_meta_index"
 SOURCE = "# exact source: λ\ndef successor(x: int) -> int:\n    return x + 1\n"
