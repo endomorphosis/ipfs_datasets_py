@@ -1,0 +1,147 @@
+{
+  "schema": "ast-text-printability-paired-summary@1",
+  "labels": [
+    "before-01",
+    "after-01",
+    "after-02",
+    "before-02",
+    "before-03",
+    "after-03"
+  ],
+  "fresh_processes": 6,
+  "samples_per_mode": 3,
+  "exact_payload_and_ast_cid_parity": true,
+  "source_pins_unchanged": true,
+  "diagnostic_only": true,
+  "scope": "Single public Bottle AST construction/persistence/read; no model/native-container/full-task/throughput or RSS claim",
+  "stages": {
+    "extract": {
+      "cpu_seconds": {
+        "before": [
+          0.249497424,
+          0.258685728,
+          0.24991283199999997
+        ],
+        "after": [
+          0.24084662399999998,
+          0.22832411199999997,
+          0.221825072
+        ],
+        "median_before": 0.24991283199999997,
+        "median_after": 0.22832411199999997,
+        "median_reduction_percent": 8.638500003073075
+      },
+      "wall_seconds": {
+        "before": [
+          0.24950164099573158,
+          0.2593379810132319,
+          0.25105678199906833
+        ],
+        "after": [
+          0.24085157799709123,
+          0.22921094699995592,
+          0.22184107500652317
+        ],
+        "median_before": 0.25105678199906833,
+        "median_after": 0.22921094699995592,
+        "median_reduction_percent": 8.701551427992685
+      }
+    },
+    "from_dict": {
+      "cpu_seconds": {
+        "before": [
+          0.17861372800000003,
+          0.17180310399999993,
+          0.17064456
+        ],
+        "after": [
+          0.15057254400000003,
+          0.14702595200000002,
+          0.149860624
+        ],
+        "median_before": 0.17180310399999993,
+        "median_after": 0.149860624,
+        "median_reduction_percent": 12.771876345144461
+      },
+      "wall_seconds": {
+        "before": [
+          0.1685158269974636,
+          0.16592645899800118,
+          0.16668162200949155
+        ],
+        "after": [
+          0.14436791100888513,
+          0.1421092700038571,
+          0.14124209299916402
+        ],
+        "median_before": 0.16668162200949155,
+        "median_after": 0.1421092700038571,
+        "median_reduction_percent": 14.742088365467913
+      }
+    },
+    "persist": {
+      "cpu_seconds": {
+        "before": [
+          2.3228098879999997,
+          2.1096333919999997,
+          2.225285216
+        ],
+        "after": [
+          2.2517790719999997,
+          2.225018608,
+          2.248487984
+        ],
+        "median_before": 2.225285216,
+        "median_after": 2.248487984,
+        "median_reduction_percent": -1.0426873747765006
+      },
+      "wall_seconds": {
+        "before": [
+          2.336760467995191,
+          2.1132794139994076,
+          2.2281834809982684
+        ],
+        "after": [
+          2.2571595949993934,
+          2.228173166004126,
+          2.254210744999
+        ],
+        "median_before": 2.2281834809982684,
+        "median_after": 2.254210744999,
+        "median_reduction_percent": -1.1680933918902772
+      }
+    },
+    "reopened_store_read": {
+      "cpu_seconds": {
+        "before": [
+          0.769129248,
+          0.7276596479999999,
+          0.7691348320000002
+        ],
+        "after": [
+          0.7539462239999999,
+          0.7509520639999998,
+          0.741091392
+        ],
+        "median_before": 0.769129248,
+        "median_after": 0.7509520639999998,
+        "median_reduction_percent": 2.363345828710474
+      },
+      "wall_seconds": {
+        "before": [
+          0.7691738419962348,
+          0.7276840950071346,
+          0.7692533990048105
+        ],
+        "after": [
+          0.7540067950030789,
+          0.7514021250099177,
+          0.7411025100009283
+        ],
+        "median_before": 0.7691738419962348,
+        "median_after": 0.7514021250099177,
+        "median_reduction_percent": 2.310494197279811
+      }
+    }
+  }
+}

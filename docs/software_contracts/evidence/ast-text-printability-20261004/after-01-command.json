@@ -1,0 +1,21 @@
+{
+  "argv": [
+    "/home/barberb/.local/bin/python",
+    "-B",
+    "/home/barberb/lift_coding/artifacts/ast-text-printability-20261004/measure_ast.py",
+    "after-01",
+    "current"
+  ],
+  "cwd": "/home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004",
+  "environment_overrides": {
+    "PYTHONPATH": "/home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004",
+    "AST_DIAGNOSTIC_DATASETS_ROOT": "/home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1"
+  },
+  "timeout_seconds": 90,
+  "script_sha256": "4360a76c457f22c82ac98e84f28bb67a9f2d732537d3e13a682e27a06310b8f6",
+  "controller_sha256": "7a05dc81ec88c3a49aeadbb07cfbdbe46eb6388a73ed651732bbad005b6b851b"
+}
