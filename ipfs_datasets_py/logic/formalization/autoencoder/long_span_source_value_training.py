@@ -299,8 +299,7 @@ def train(student, training_rows, validation_rows, *, training_references, valid
           generated_source_margin_replay=False, auxiliary_source_modality_bank=None,
           auxiliary_source_modality_weight=0., generated_boundary_retry_on_mismatch=False,
           auxiliary_source_modality_sampler="independent", auxiliary_source_object_bank=None,
-          auxiliary_source_object_weight=0., source_gradient_preconditioning=None,
-          source_training_mixture=None, training_deadline=None):
+          auxiliary_source_object_weight=0., source_gradient_preconditioning=None):
     """Fresh reference-supervised fit; source fidelity gates experimental selection.
 
     The last complete attempt is retained as an explicitly unselected diagnostic.
@@ -334,20 +333,10 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     non-action projection gradient before the unchanged global clip and AdamW.
     Its fixed matrix uses unique TRAIN source features only. The None default
     performs no preparation/import/gradient arithmetic for this experiment.
-    Explicit contextual TRAIN mixtures retain original normalization/count/aux
-    ownership while substituting authenticated source/target rows in the normal
-    decoder losses. The None default does not import or prepare that helper.
-    An optional absolute monotonic deadline caps the entire existing fit budget.
     """
     started = time.monotonic()
     core._require(config is None or type(config) is dict, "configuration must be a mapping")
     options = core._config({"alpha": 0., **(config or {})})
-    core._require(training_deadline is None or type(training_deadline) in (int, float)
-        and math.isfinite(training_deadline), "finite absolute training deadline required")
-    core._require(source_training_mixture is None or type(source_training_mixture) is dict,
-        "explicit source training mixture must be a mapping")
-    if training_deadline is not None and time.monotonic() >= training_deadline:
-        raise TimeoutError("absolute training deadline expired before preparation")
     core._require(source_gradient_preconditioning is None or type(source_gradient_preconditioning) is str
         and source_gradient_preconditioning in ("identity", "train_covariance_inverse"),
         "unknown explicit source-gradient preconditioning policy")
@@ -437,14 +426,6 @@ def train(student, training_rows, validation_rows, *, training_references, valid
             "ordered-clause-recurrent-source-decoder-development/v1", _ISOLATED_OBJECT_SCHEMA),
         "positive action-contrastive weight requires action-factorized clause model")
     core._require(contextual == (source_contexts is not None), "clause source model and explicit contexts must be paired")
-    core._require(source_training_mixture is None or contextual and student.dimension in (384, 768)
-        and head_specification.get("schema") == "ordered-clause-recurrent-source-decoder-development/v1"
-        and count_exposure == "balanced_all" and options["batch_size"] <= 8
-        and options["max_target_tokens"] == 512 and len(codec["target_vocabulary"]) == 32
-        and source_gradient_preconditioning is None and order_augmentation is None
-        and not (use_auxiliary_object or use_source_margin or use_joint_generated_replay)
-        and generated_field_weight == 0. and generated_source_margin_replay is False,
-        "mixture requires the explicit384/768 original-loss contextual path")
     core._require(source_gradient_preconditioning is None or contextual and student.dimension == 8
         and head_specification.get("schema") == "ordered-clause-recurrent-source-decoder-development/v1"
         and not (use_auxiliary_modality or use_auxiliary_object or use_source_margin or use_joint_generated_replay)
@@ -495,8 +476,6 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     count_labels = _count_labels(training_references)
     _count_labels(validation_references)
     deadline = started + options["max_seconds"]
-    if training_deadline is not None:
-        deadline = min(deadline, training_deadline)
     torch = core._torch()
     core._model(student, torch)
     core._validate(codec, input_transform, lineage, student.dimension)
@@ -526,16 +505,6 @@ def train(student, training_rows, validation_rows, *, training_references, valid
         order_selector = order_training_augmentation.prepare(training_rows, validation_rows,
             training_references=training_references, codec=codec, **order_augmentation)
         effective_rows, effective_references = order_selector.effective_rows, order_selector.effective_references
-    mixture_selector = mixture_initial = None
-    if source_training_mixture is not None:
-        from . import contextual_training_mixture
-        mixture_selector = contextual_training_mixture.prepare(training_rows, validation_rows,
-            training_references=training_references, validation_references=validation_references,
-            source_contexts=source_contexts, codec=codec, validate_rule=validate_rule,
-            mixture=source_training_mixture, deadline=deadline)
-        effective_rows, effective_references = mixture_selector.effective_rows, mixture_selector.effective_references
-        training_contexts = mixture_selector.effective_contexts
-        mixture_initial = mixture_selector.snapshot()
     order_initial = None if order_selector is None else order_selector.snapshot()
     weights = reference_weights(effective_rows, effective_references, codec, strategy=strategy, validate_rule=validate_rule)
     reference_weights(validation_rows, validation_references, codec, strategy="reference_ce", validate_rule=validate_rule)
@@ -546,7 +515,7 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     action_owner = action_inventory = None
     if action_contrastive_weight:
         from . import action_contrastive_decoder_training as action_owner
-        action_inventory = action_owner.prepare_training_inventory(effective_rows, effective_references,
+        action_inventory = action_owner.prepare_training_inventory(training_rows, training_references,
             contexts=training_contexts, codec=codec, validate_rule=validate_rule)
     field_owner = field_inventory = None
     if use_joint_generated_replay:
@@ -617,11 +586,6 @@ def train(student, training_rows, validation_rows, *, training_references, valid
         estimate += 128*len(validation_rows)*values.MAX_RULES*len(values.SOURCE_FIELDS)*len(codec["target_vocabulary"])
     if order_selector is not None:
         estimate += 32*len(effective_rows)*(student.dimension+options["max_target_tokens"])
-    if mixture_selector is not None:
-        # Bound retained Python inventories, copied source batches and compact
-        # draw/commit receipts separately from the existing tensor estimate.
-        estimate += 4*len(core._raw(dict(rows=effective_rows, references=effective_references, contexts=training_contexts)))
-        estimate += (options["max_optimizer_steps"]+1)*options["batch_size"]*2048
     if generated_boundary_weight:
         # Retained generated prefixes/labels and a differentiable replay, in
         # addition to the unchanged reference loss. This is not an RSS quota.
@@ -684,11 +648,7 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     initial_selector = None if count_selector is None else count_selector.snapshot()
     before = core.tensor_digest(student)
     modes = {name: m.training for name, m in student.named_modules()}
-    if (mixture_selector is not None or training_deadline is not None) and time.monotonic() >= deadline:
-        raise TimeoutError("training deadline expired before private model copy")
     working = deepcopy(student)
-    if (mixture_selector is not None or training_deadline is not None) and time.monotonic() >= deadline:
-        raise TimeoutError("training deadline expired during private model copy")
     trainable = [p for p in working.parameters() if p.requires_grad]
     core._require(trainable, "no trainable decoder parameters")
     margin_parameters = ([] if margin_owner is None else margin_owner.recurrent_auxiliary_parameters(working))
@@ -797,12 +757,6 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                     break
                 parents = [current[index] for index in order[offset:offset+options["batch_size"]]]
                 part = parents if order_selector is None else order_selector.select(parents)
-                if mixture_selector is not None:
-                    try:
-                        part = mixture_selector.select(parents, deadline=deadline)
-                    except TimeoutError:
-                        stopped, complete = "deadline_during_training_mixture_selection", False
-                        break
                 data, labels = core._batch(torch, part, input_transform)
                 token_weights = torch.tensor([weights[row["id"]] + [0.]*(labels.shape[1]-len(weights[row["id"]]))
                     for row in part], dtype=torch.float32)[:, 1:]
@@ -1000,9 +954,6 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                     token_ce=float(plain.detach()), weighted_token_ce=float(weighted.detach()),
                     count_ce=float(count_loss.detach()), source_value_ce=float(source_loss.detach()),
                     raw_reconstruction_mse=float(mse.detach()), objective=float(objective.detach())))
-                if mixture_selector is not None:
-                    committed_updates[-1]["source_training_mixture"] = mixture_selector.record_commit(steps-1)
-                    committed_updates[-1]["decoder_parent_row_ids"] = [row["id"] for row in parents]
                 if precondition_step is not None:
                     committed_updates[-1]["source_gradient_preconditioning"] = precondition_step
                 if modality_result is not None:
@@ -1304,17 +1255,6 @@ def train(student, training_rows, validation_rows, *, training_references, valid
             auxiliary_source_object_objective="ordinary_objective_plus_weight_times_full_vocabulary_object_CE",
             source_value_training_row_policy="primary scalar labels use decoder batch; auxiliary object bank adds supervised sources",
             source_context_training_policy="unique_source_clause_normalization; original_paragraph_supervision; plus explicit auxiliary source object bank")
-    if mixture_selector is not None:
-        report.update(source_training_mixture=dict(initial=mixture_initial, final=mixture_selector.snapshot()),
-            source_context_training_policy="original preprocessing and auxiliary bank; authenticated effective TRAIN decoder contexts",
-            source_value_training_row_policy="authenticated effective decoder rows; original count stream and optional original113 modality auxiliary",
-            source_training_mixture_used_for_selection=False,
-            source_training_mixture_preprocessing_refitted=False,
-            source_training_mixture_effective_rows_sha256=core.digest(effective_rows),
-            source_training_mixture_effective_references_sha256=core.digest(effective_references),
-            source_training_mixture_effective_contexts_sha256=core.digest(training_contexts))
-    if training_deadline is not None:
-        report["absolute_training_deadline_supplied"] = True
     return dict(state_dict=best_state, report=report,
         last_complete_attempt_state_dict=diagnostic_state,
         predictions=[] if selected is None else deepcopy(selected["predictions"]),
