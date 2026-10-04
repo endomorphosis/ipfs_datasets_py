@@ -10642,7 +10642,7 @@ class AdaptiveModalAutoencoder:
             f"legal-ir:text-token-count-bin:{_count_bucket(len(tokens))}",
         ]
         if sample.title:
-            keys.append(f"legal-ir:title:{sample.title}")
+            keys.append(f"legal-ir:title:{_feature_atom(sample.title)}")
         if section_prefix:
             keys.append(f"legal-ir:section-prefix:{section_prefix}")
         if sample.selected_frame:
@@ -10677,7 +10677,7 @@ class AdaptiveModalAutoencoder:
                 keys.append(f"legal-ir:frame-family:{sample.selected_frame}:{family}")
             cue = formula.metadata.get("cue") if formula.metadata else None
             if cue:
-                cue_name = str(cue).lower()
+                cue_name = _feature_atom(cue)
                 keys.append(f"legal-ir:modal-cue:{cue_name}")
                 keys.append(f"legal-ir:cue-family:{cue_name}:{family}")
 
@@ -22075,7 +22075,7 @@ class AdaptiveModalAutoencoder:
         add(f"formula-count:{_count_bucket(len(sample.modal_ir.formulas))}")
         add(f"text-token-count:{_count_bucket(len(tokens))}")
         if sample.title:
-            add(f"title:{sample.title}")
+            add(f"title:{_feature_atom(sample.title)}")
         if section_prefix:
             add(f"section-prefix:{section_prefix}")
         if sample.selected_frame:
@@ -24964,7 +24964,7 @@ class AdaptiveModalAutoencoder:
             f"text-token-count-bin:{_count_bucket(len(tokens))}",
         ]
         if sample.title:
-            keys.append(f"title:{sample.title}")
+            keys.append(f"title:{_feature_atom(sample.title)}")
         if section_prefix:
             keys.append(f"section-prefix:{section_prefix}")
         if sample.selected_frame:
@@ -24993,7 +24993,7 @@ class AdaptiveModalAutoencoder:
                 keys.append(f"frame-family:{sample.selected_frame}:{family}")
             cue = formula.metadata.get("cue") if formula.metadata else None
             if cue:
-                cue_name = str(cue).lower()
+                cue_name = _feature_atom(cue)
                 keys.append(f"modal-cue:{cue_name}")
                 keys.append(f"cue-family:{cue_name}:{family}")
 
