@@ -106,8 +106,8 @@ The final cold catalog revision and exact database pin are in the JSON handoff.
 
 The driver explicitly selected the existing absolute Accelerate store.
 ModelManager otherwise defaults to MODEL_MANAGER_DB_PATH when set, or to
-./model_manager.duckdb relative to the caller's working directory. The selected
-path matches the default only when run from the Accelerate package directory;
+./model_manager.duckdb relative to the caller's working directory. With MODEL_MANAGER_DB_PATH unset, this path is the default when run from
+the Accelerate package directory;
 this phase does not verify alternate stores or a running supervisor's configuration.
 
 The supplemental driver completed all 641 imports and its cold checks, then
