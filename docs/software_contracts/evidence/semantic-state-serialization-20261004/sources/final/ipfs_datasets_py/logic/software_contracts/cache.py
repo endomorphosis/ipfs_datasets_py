@@ -1,0 +1,1757 @@
+"""Immutable content-addressed cache for software-contract analysis.
+
+Reusable shard identities bind the source and its dependency closure to every
+analysis input that can change the result.  They intentionally do not bind the
+global repository-tree CID.  Aggregate snapshot receipts provide that separate
+binding without destroying cross-snapshot shard reuse.
+
+The immutable store is fail closed:
+
+* structured objects and source blobs use the CID profile from ``content``;
+* publication is write/fsync/link (never replacement of an existing object);
+* every read parses, validates, canonicalizes, and recomputes the claimed CID;
+* replaceable index records are conveniences and carry no independent trust.
+
+This module is the cache authority for DSCON-G100.  Older proof caches may be
+adapted to this interface, but their permissive keying and serialization rules
+are not authoritative for contract-analysis results.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import tempfile
+import threading
+import time
+import sys
+from types import BuiltinMethodType, FunctionType, ModuleType
+from contextlib import contextmanager
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Callable, Final, Iterator, Mapping, Sequence
+
+from ipfs_datasets_py.logic.software_contracts.content import (
+    ContentIdentityError,
+    SOURCE_CODEC,
+    STRUCTURED_CODEC,
+    canonical_dag_json_bytes,
+    cid_for_bytes,
+    cid_for_structured,
+    decode_and_recompute_source,
+    decode_and_recompute_structured,
+    validate_cid,
+)
+from ipfs_datasets_py.logic.software_contracts import content as _structured_content
+
+try:  # pragma: no cover - exercised on POSIX, optional elsewhere
+    import fcntl
+except ImportError:  # pragma: no cover
+    fcntl = None  # type: ignore[assignment]
+
+
+GOAL_ID: Final[str] = "DSCON-G100"
+PROFILE_SCHEMA: Final[str] = (
+    "ipfs-datasets.software-contract-analysis-cache-profile.v1"
+)
+KEY_SCHEMA: Final[str] = (
+    "ipfs-datasets.software-contract-analysis-cache-key.v1"
+)
+RECEIPT_SCHEMA: Final[str] = (
+    "ipfs-datasets.software-contract-analysis-cache-receipt.v1"
+)
+SNAPSHOT_SCHEMA: Final[str] = (
+    "ipfs-datasets.software-contract-analysis-snapshot-receipt.v1"
+)
+INDEX_SCHEMA: Final[str] = (
+    "ipfs-datasets.software-contract-analysis-cache-index.v1"
+)
+
+OUTCOME_PROVED: Final[str] = "PROVED_WITHIN_MODEL"
+OUTCOME_VIOLATED: Final[str] = "VIOLATED_WITH_COUNTEREXAMPLE"
+OUTCOME_NEGATIVE: Final[str] = "NEGATIVE"
+OUTCOME_UNKNOWN: Final[str] = "UNKNOWN"
+OUTCOME_UNSUPPORTED: Final[str] = "UNSUPPORTED"
+OUTCOME_INCOMPLETE: Final[str] = "INCOMPLETE_SCAN"
+OUTCOME_STALE: Final[str] = "STALE"
+OUTCOME_ERROR: Final[str] = "ERROR"
+ALL_OUTCOMES: Final[frozenset[str]] = frozenset(
+    {
+        OUTCOME_PROVED,
+        OUTCOME_VIOLATED,
+        OUTCOME_NEGATIVE,
+        OUTCOME_UNKNOWN,
+        OUTCOME_UNSUPPORTED,
+        OUTCOME_INCOMPLETE,
+        OUTCOME_STALE,
+        OUTCOME_ERROR,
+    }
+)
+LEASED_OUTCOMES: Final[frozenset[str]] = ALL_OUTCOMES - {OUTCOME_PROVED}
+
+DEFAULT_MAX_LEASE_SECONDS: Final[int] = 60 * 60
+DEFAULT_MAX_OBJECT_BYTES: Final[int] = 16 * 1024 * 1024
+MAX_INDEX_RECORD_BYTES: Final[int] = 64 * 1024
+
+_KEY_FIELDS: Final[frozenset[str]] = frozenset(
+    {
+        "schema",
+        "source_cid",
+        "dependency_cids",
+        "analyzer_cid",
+        "configuration_cid",
+        "semantics_cid",
+        "policy_cid",
+        "solver_cid",
+        "toolchain_cid",
+        "result_schema",
+    }
+)
+_RECEIPT_FIELDS: Final[frozenset[str]] = frozenset(
+    {
+        "schema",
+        "key",
+        "key_cid",
+        "result_cid",
+        "result_schema",
+        "outcome",
+        "created_at",
+        "lease_expires_at",
+    }
+)
+_SNAPSHOT_FIELDS: Final[frozenset[str]] = frozenset(
+    {
+        "schema",
+        "repository_tree_cid",
+        "shard_receipt_cids",
+        "created_at",
+    }
+)
+
+
+class AnalysisCacheError(RuntimeError):
+    """Base class for cache failures."""
+
+
+class CacheIntegrityError(AnalysisCacheError, ValueError):
+    """Stored content, identity, membership, or schema is invalid."""
+
+
+class CacheKeyError(AnalysisCacheError, ValueError):
+    """A reusable shard key is incomplete or unsafe."""
+
+
+class CacheLeaseError(AnalysisCacheError, ValueError):
+    """A non-completion result has an absent or unbounded lease."""
+
+
+def _nonempty(value: Any, name: str) -> str:
+    if type(value) is not str or not value.strip():
+        raise CacheKeyError(f"{name} must be a non-empty string")
+    if value != value.strip():
+        raise CacheKeyError(f"{name} must not have surrounding whitespace")
+    return value
+
+
+def _source_cid(value: Any, name: str) -> str:
+    try:
+        return validate_cid(value, codecs={SOURCE_CODEC})
+    except (ContentIdentityError, TypeError, ValueError) as exc:
+        raise CacheKeyError(f"{name} must be a raw source CID") from exc
+
+
+def _structured_cid(value: Any, name: str) -> str:
+    try:
+        return validate_cid(value, codecs={STRUCTURED_CODEC})
+    except (ContentIdentityError, TypeError, ValueError) as exc:
+        raise CacheKeyError(f"{name} must be a dag-json structured CID") from exc
+
+
+def _closed_fields(
+    value: Mapping[str, Any],
+    expected: frozenset[str],
+    name: str,
+) -> None:
+    if any(type(field) is not str for field in value):
+        raise CacheIntegrityError(f"{name} fields must be strings")
+    fields = set(value)
+    missing = sorted(expected - fields)
+    extra = sorted(fields - expected)
+    if missing or extra:
+        raise CacheIntegrityError(
+            f"{name} fields are closed (missing={missing}, extra={extra})"
+        )
+
+
+def _integer(value: Any, name: str, *, minimum: int = 0) -> int:
+    if type(value) is not int or value < minimum:
+        raise CacheIntegrityError(f"{name} must be an integer >= {minimum}")
+    return value
+
+
+def cache_profile_descriptor() -> dict[str, Any]:
+    """Return the stable machine-readable DSCON-G100 cache profile."""
+
+    return {
+        "schema": PROFILE_SCHEMA,
+        "goal_id": GOAL_ID,
+        "key_schema": KEY_SCHEMA,
+        "receipt_schema": RECEIPT_SCHEMA,
+        "snapshot_schema": SNAPSHOT_SCHEMA,
+        "index_schema": INDEX_SCHEMA,
+        "global_tree_in_reusable_key": False,
+        "global_tree_in_snapshot_receipt": True,
+        "read_integrity": "decode-and-recompute",
+        "immutable_publication": "fsync-then-link-no-replace",
+        "completion_outcome": OUTCOME_PROVED,
+        "leased_outcomes": sorted(LEASED_OUTCOMES),
+    }
+
+
+@dataclass(frozen=True)
+class AnalysisCacheKey:
+    """Identity of one reusable analysis shard.
+
+    ``dependency_cids`` is the complete transitive source dependency closure,
+    sorted and deduplicated.  The repository-tree CID is deliberately absent.
+    """
+
+    source_cid: str
+    dependency_cids: tuple[str, ...]
+    analyzer_cid: str
+    configuration_cid: str
+    semantics_cid: str
+    policy_cid: str
+    solver_cid: str
+    toolchain_cid: str
+    result_schema: str
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "source_cid",
+            _source_cid(self.source_cid, "source_cid"),
+        )
+        if isinstance(self.dependency_cids, (str, bytes, bytearray)):
+            raise CacheKeyError("dependency_cids must be a sequence of CIDs")
+        dependencies = tuple(
+            _source_cid(item, f"dependency_cids[{index}]")
+            for index, item in enumerate(self.dependency_cids)
+        )
+        if self.source_cid in dependencies:
+            raise CacheKeyError("dependency_cids must not repeat source_cid")
+        if len(set(dependencies)) != len(dependencies):
+            raise CacheKeyError("dependency_cids must be unique")
+        object.__setattr__(self, "dependency_cids", tuple(sorted(dependencies)))
+        for name in (
+            "analyzer_cid",
+            "configuration_cid",
+            "semantics_cid",
+            "policy_cid",
+            "solver_cid",
+            "toolchain_cid",
+        ):
+            object.__setattr__(self, name, _structured_cid(getattr(self, name), name))
+        object.__setattr__(
+            self, "result_schema", _nonempty(self.result_schema, "result_schema")
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema": KEY_SCHEMA,
+            "source_cid": self.source_cid,
+            "dependency_cids": list(self.dependency_cids),
+            "analyzer_cid": self.analyzer_cid,
+            "configuration_cid": self.configuration_cid,
+            "semantics_cid": self.semantics_cid,
+            "policy_cid": self.policy_cid,
+            "solver_cid": self.solver_cid,
+            "toolchain_cid": self.toolchain_cid,
+            "result_schema": self.result_schema,
+        }
+
+    @property
+    def cid(self) -> str:
+        return cid_for_structured(self.to_dict())
+
+    @property
+    def key_cid(self) -> str:
+        return self.cid
+
+    @property
+    def source_closure(self) -> tuple[str, ...]:
+        return (self.source_cid, *self.dependency_cids)
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> "AnalysisCacheKey":
+        if not isinstance(value, Mapping):
+            raise CacheIntegrityError("cache key must be an object")
+        _closed_fields(value, _KEY_FIELDS, "cache key")
+        if value.get("schema") != KEY_SCHEMA:
+            raise CacheIntegrityError("unsupported cache-key schema")
+        dependencies = value.get("dependency_cids")
+        if not isinstance(dependencies, list):
+            raise CacheIntegrityError("dependency_cids must be an array")
+        try:
+            return cls(
+                source_cid=value["source_cid"],
+                dependency_cids=tuple(dependencies),
+                analyzer_cid=value["analyzer_cid"],
+                configuration_cid=value["configuration_cid"],
+                semantics_cid=value["semantics_cid"],
+                policy_cid=value["policy_cid"],
+                solver_cid=value["solver_cid"],
+                toolchain_cid=value["toolchain_cid"],
+                result_schema=value["result_schema"],
+            )
+        except (KeyError, CacheKeyError) as exc:
+            raise CacheIntegrityError("invalid cache key") from exc
+
+
+@dataclass(frozen=True)
+class CacheReceipt:
+    """Immutable binding from a complete shard key to one result CID."""
+
+    key: AnalysisCacheKey
+    result_cid: str
+    outcome: str
+    created_at: int
+    lease_expires_at: int | None = None
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.key, AnalysisCacheKey):
+            raise CacheIntegrityError("receipt key must be AnalysisCacheKey")
+        object.__setattr__(
+            self, "result_cid", _structured_cid(self.result_cid, "result_cid")
+        )
+        if self.outcome not in ALL_OUTCOMES:
+            raise CacheIntegrityError(f"unsupported cache outcome {self.outcome!r}")
+        _integer(self.created_at, "created_at")
+        if self.outcome in LEASED_OUTCOMES:
+            if self.lease_expires_at is None:
+                raise CacheLeaseError(f"{self.outcome} requires a bounded lease")
+            expires = _integer(
+                self.lease_expires_at, "lease_expires_at", minimum=self.created_at + 1
+            )
+            object.__setattr__(self, "lease_expires_at", expires)
+        elif self.lease_expires_at is not None:
+            raise CacheLeaseError("proved results must not carry a lease")
+
+    @property
+    def key_cid(self) -> str:
+        return self.key.cid
+
+    @property
+    def result_schema(self) -> str:
+        return self.key.result_schema
+
+    @property
+    def cid(self) -> str:
+        return cid_for_structured(self.to_dict())
+
+    def is_fresh(self, now: int) -> bool:
+        _integer(now, "now")
+        return self.lease_expires_at is None or now < self.lease_expires_at
+
+    def satisfies_completion(self, now: int) -> bool:
+        return self.outcome == OUTCOME_PROVED and self.is_fresh(now)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema": RECEIPT_SCHEMA,
+            "key": self.key.to_dict(),
+            "key_cid": self.key_cid,
+            "result_cid": self.result_cid,
+            "result_schema": self.result_schema,
+            "outcome": self.outcome,
+            "created_at": self.created_at,
+            "lease_expires_at": self.lease_expires_at,
+        }
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> "CacheReceipt":
+        if not isinstance(value, Mapping):
+            raise CacheIntegrityError("cache receipt must be an object")
+        _closed_fields(value, _RECEIPT_FIELDS, "cache receipt")
+        if value.get("schema") != RECEIPT_SCHEMA:
+            raise CacheIntegrityError("unsupported cache-receipt schema")
+        key = AnalysisCacheKey.from_dict(value["key"])
+        if value.get("key_cid") != key.cid:
+            raise CacheIntegrityError("cache receipt key CID does not recompute")
+        if value.get("result_schema") != key.result_schema:
+            raise CacheIntegrityError("cache receipt result schema disagrees with key")
+        return cls(
+            key=key,
+            result_cid=value["result_cid"],
+            outcome=value["outcome"],
+            created_at=value["created_at"],
+            lease_expires_at=value["lease_expires_at"],
+        )
+
+
+@dataclass(frozen=True)
+class AggregateSnapshotReceipt:
+    """Bind reusable shard receipts to one exact repository-tree identity."""
+
+    repository_tree_cid: str
+    shard_receipt_cids: tuple[str, ...]
+    created_at: int
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "repository_tree_cid",
+            _structured_cid(self.repository_tree_cid, "repository_tree_cid"),
+        )
+        if isinstance(self.shard_receipt_cids, (str, bytes, bytearray)):
+            raise CacheIntegrityError("shard_receipt_cids must be an array")
+        receipts = tuple(
+            _structured_cid(item, f"shard_receipt_cids[{index}]")
+            for index, item in enumerate(self.shard_receipt_cids)
+        )
+        if not receipts or len(set(receipts)) != len(receipts):
+            raise CacheIntegrityError(
+                "shard_receipt_cids must be non-empty and unique"
+            )
+        object.__setattr__(self, "shard_receipt_cids", tuple(sorted(receipts)))
+        _integer(self.created_at, "created_at")
+
+    @property
+    def cid(self) -> str:
+        return cid_for_structured(self.to_dict())
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema": SNAPSHOT_SCHEMA,
+            "repository_tree_cid": self.repository_tree_cid,
+            "shard_receipt_cids": list(self.shard_receipt_cids),
+            "created_at": self.created_at,
+        }
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> "AggregateSnapshotReceipt":
+        if not isinstance(value, Mapping):
+            raise CacheIntegrityError("snapshot receipt must be an object")
+        _closed_fields(value, _SNAPSHOT_FIELDS, "snapshot receipt")
+        if value.get("schema") != SNAPSHOT_SCHEMA:
+            raise CacheIntegrityError("unsupported snapshot-receipt schema")
+        receipts = value.get("shard_receipt_cids")
+        if not isinstance(receipts, list):
+            raise CacheIntegrityError("shard_receipt_cids must be an array")
+        return cls(
+            repository_tree_cid=value["repository_tree_cid"],
+            shard_receipt_cids=tuple(receipts),
+            created_at=value["created_at"],
+        )
+
+
+class ImmutableCAS:
+    """Filesystem CAS with immutable atomic publication and verified reads."""
+
+    def __init__(
+        self,
+        root: Path | str,
+        *,
+        max_object_bytes: int = DEFAULT_MAX_OBJECT_BYTES,
+    ) -> None:
+        self.root = Path(root)
+        if type(max_object_bytes) is not int or max_object_bytes <= 0:
+            raise ValueError("max_object_bytes must be a positive integer")
+        self.max_object_bytes = max_object_bytes
+        self.structured_root = self.root / "structured"
+        self.source_root = self.root / "source"
+        self.structured_root.mkdir(parents=True, exist_ok=True)
+        self.source_root.mkdir(parents=True, exist_ok=True)
+
+    def path_for(self, cid: str, *, source: bool = False) -> Path:
+        canonical = validate_cid(
+            cid, codecs={SOURCE_CODEC if source else STRUCTURED_CODEC}
+        )
+        base = self.source_root if source else self.structured_root
+        return base / canonical[:4] / canonical
+
+    @staticmethod
+    def _fsync_directory(path: Path) -> None:
+        try:
+            descriptor = os.open(path, os.O_RDONLY | os.O_DIRECTORY)
+        except (AttributeError, OSError):
+            return
+        try:
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+
+    def _publish(self, target: Path, payload: bytes) -> None:
+        if len(payload) > self.max_object_bytes:
+            raise AnalysisCacheError("CAS object exceeds max_object_bytes")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        temporary: Path | None = None
+        try:
+            with tempfile.NamedTemporaryFile(
+                mode="wb",
+                dir=target.parent,
+                prefix=".publish-",
+                delete=False,
+            ) as stream:
+                temporary = Path(stream.name)
+                stream.write(payload)
+                stream.flush()
+                os.fsync(stream.fileno())
+            try:
+                # Hard-link publication is atomic and fails if target exists.
+                os.link(temporary, target)
+                self._fsync_directory(target.parent)
+            except FileExistsError:
+                # An identical concurrent writer is benign; callers verify it.
+                pass
+        finally:
+            if temporary is not None:
+                temporary.unlink(missing_ok=True)
+
+    def put(self, value: Any) -> str:
+        payload = canonical_dag_json_bytes(value)
+        cid = cid_for_structured(value)
+        target = self.path_for(cid)
+        self._publish(target, payload)
+        self.get(cid)
+        return cid
+
+    put_structured = put
+
+    def _read_structured_payload(self, cid: str) -> bytes:
+        """Bounded raw read; this alone grants no canonical/schema authority."""
+        target = self.path_for(cid)
+        try:
+            with target.open("rb") as stream:
+                payload = stream.read(self.max_object_bytes + 1)
+        except FileNotFoundError:
+            raise
+        except OSError as exc:
+            raise CacheIntegrityError(f"cannot read CAS object {cid}") from exc
+        if len(payload) > self.max_object_bytes:
+            raise CacheIntegrityError("stored CAS object exceeds max_object_bytes")
+        return payload
+
+    @staticmethod
+    def _decode_structured_payload(cid: str, payload: bytes, *, expected_schema: str | None = None) -> Any:
+        """The original structured read validation, with unchanged failures."""
+        try:
+            value = json.loads(payload.decode("utf-8"))
+            canonical = canonical_dag_json_bytes(value)
+        except (UnicodeDecodeError, json.JSONDecodeError, TypeError, ValueError) as exc:
+            raise CacheIntegrityError("stored structured object is invalid") from exc
+        if payload != canonical:
+            raise CacheIntegrityError("stored structured object is not canonical")
+        try:
+            decode_and_recompute_structured(cid, value)
+        except (ContentIdentityError, TypeError, ValueError) as exc:
+            raise CacheIntegrityError("stored structured object CID mismatch") from exc
+        if expected_schema is not None:
+            if not isinstance(value, dict) or value.get("schema") != expected_schema:
+                raise CacheIntegrityError(
+                    f"stored object schema is not {expected_schema!r}"
+                )
+        return value
+
+    def get(self, cid: str, *, expected_schema: str | None = None) -> Any:
+        payload = self._read_structured_payload(cid)
+        return self._decode_structured_payload(cid, payload, expected_schema=expected_schema)
+
+    read = get
+    get_structured = get
+
+    def put_bytes(self, payload: bytes) -> str:
+        if type(payload) is not bytes:
+            raise TypeError("payload must be exact bytes")
+        cid = cid_for_bytes(payload)
+        target = self.path_for(cid, source=True)
+        self._publish(target, payload)
+        self.get_bytes(cid)
+        return cid
+
+    def get_bytes(self, cid: str) -> bytes:
+        target = self.path_for(cid, source=True)
+        try:
+            with target.open("rb") as stream:
+                payload = stream.read(self.max_object_bytes + 1)
+        except FileNotFoundError:
+            raise
+        except OSError as exc:
+            raise CacheIntegrityError(f"cannot read source CAS object {cid}") from exc
+        if len(payload) > self.max_object_bytes:
+            raise CacheIntegrityError("stored source object exceeds max_object_bytes")
+        try:
+            decode_and_recompute_source(cid, payload)
+        except (ContentIdentityError, TypeError, ValueError) as exc:
+            raise CacheIntegrityError("stored source object CID mismatch") from exc
+        return payload
+
+
+def _structured_callable_binding(function):
+    # Native reader/JSON defaults are scalars, types or immutable callables.
+    # Capture values inside the mutable kwdefaults dictionary, not its id.
+    return (function, function.__code__,
+            tuple((type(value), id(value)) for value in (function.__defaults__ or ())),
+            tuple((name, type(value), id(value)) for name, value in sorted((function.__kwdefaults__ or {}).items())))
+
+
+def _structured_reader_bindings():
+    bindings = [ImmutableCAS, json]
+    for function in (canonical_dag_json_bytes, cid_for_structured,
+                     decode_and_recompute_structured, validate_cid):
+        bindings.append(_structured_callable_binding(function))
+    for cls in (ImmutableCAS, json.JSONDecoder, json.JSONEncoder):
+        bindings.append(cls)
+        for name, value in sorted(vars(cls).items()):
+            if isinstance(value, (classmethod, staticmethod)):
+                value = value.__func__
+            if type(value) is FunctionType:
+                bindings.append((cls, name, _structured_callable_binding(value)))
+            else:
+                bindings.append((cls, name, type(value), id(value)))
+    for module in (json, json.decoder, json.encoder, json.scanner, _structured_content):
+        bindings.append(module)
+        for name, value in sorted(vars(module).items()):
+            if type(value) is ModuleType:
+                bindings.append((module.__name__, name, type(value), id(value)))
+            elif type(value) is FunctionType:
+                bindings.append((module.__name__, name, _structured_callable_binding(value)))
+            elif name in {"c_make_encoder", "c_make_scanner", "scanstring",
+                          "encode_basestring", "encode_basestring_ascii"}:
+                bindings.append((module.__name__, name, type(value), id(value)))
+    for name in ("_default_decoder", "_default_encoder"):
+        value = getattr(json, name)
+        bindings.append((name, type(value), id(value),
+                         tuple((key, type(item), id(item)) for key, item in sorted(vars(value).items()))))
+    return tuple(bindings)
+
+
+def _structured_json_provenance():
+    """Conservative stdlib eligibility, never a substitute JSON validator.
+
+    Wrappers installed before this module imports must keep the ordinary get
+    path too. Unsupported interpreter/layouts merely lose private byte replay.
+    """
+    try:
+        modules = (json, json.decoder, json.encoder, json.scanner)
+        for module in modules:
+            if type(module) is not ModuleType or sys.modules.get(module.__name__) is not module:
+                return False
+            for value in vars(module).values():
+                if type(value) is FunctionType:
+                    if not value.__module__.startswith("json"):
+                        return False
+                    source = sys.modules.get(value.__module__)
+                    if source not in modules or value.__code__.co_filename != source.__file__:
+                        return False
+        for function in (json.loads, json.dumps):
+            if (type(function) is not FunctionType or function.__module__ != "json"
+                    or function.__code__.co_filename != json.__file__ or function.__defaults__ is not None):
+                return False
+        expected = ((json.loads, dict(cls=None, object_hook=None, parse_float=None, parse_int=None,
+                                     parse_constant=None, object_pairs_hook=None)),
+                    (json.dumps, dict(skipkeys=False, ensure_ascii=True, check_circular=True,
+                                     allow_nan=True, cls=None, indent=None, separators=None,
+                                     default=None, sort_keys=False)))
+        for function, defaults in expected:
+            actual = function.__kwdefaults__
+            if type(actual) is not dict or set(actual) != set(defaults) or any(
+                    actual[key] is not value for key, value in defaults.items()):
+                return False
+        for cls, module in ((json.JSONDecoder, json.decoder), (json.JSONEncoder, json.encoder)):
+            if cls.__module__ != module.__name__:
+                return False
+            for value in vars(cls).values():
+                if type(value) is FunctionType and (value.__module__ != module.__name__
+                        or value.__code__.co_filename != module.__file__):
+                    return False
+        defaults = json.JSONDecoder.decode.__defaults__
+        if type(defaults) is not tuple or len(defaults) != 1:
+            return False
+        whitespace = defaults[0]
+        if (not isinstance(whitespace, BuiltinMethodType)
+                or whitespace.__self__ is not json.decoder.WHITESPACE
+                or whitespace.__name__ != "match"
+                or json.decoder.WHITESPACE.pattern != r"[ \t\n\r]*"
+                or json.decoder.WHITESPACE.flags != 120):
+            return False
+        decoder, encoder = json._default_decoder, json._default_encoder
+        if type(decoder) is not json.JSONDecoder or type(encoder) is not json.JSONEncoder:
+            return False
+        native_encoder = dict(skipkeys=False, ensure_ascii=True, check_circular=True,
+                              allow_nan=True, sort_keys=False, indent=None)
+        if set(vars(encoder)) != set(native_encoder) or any(
+                vars(encoder)[key] is not value for key, value in native_encoder.items()):
+            return False
+        native_decoder = dict(object_hook=None, object_pairs_hook=None, parse_float=float,
+                              parse_int=int, strict=True, parse_object=json.decoder.JSONObject,
+                              parse_array=json.decoder.JSONArray, parse_string=json.decoder.scanstring)
+        if set(vars(decoder)) != set(native_decoder) | {"parse_constant", "memo", "scan_once"}:
+            return False
+        if any(vars(decoder)[key] is not value for key, value in native_decoder.items()):
+            return False
+        if type(decoder.memo) is not dict or decoder.memo:
+            return False
+        scanner = decoder.scan_once
+        if (type(scanner) is not json.scanner.c_make_scanner
+                or type(scanner).__module__ != "_json"):
+            return False
+        for name in ("strict", "object_hook", "object_pairs_hook", "parse_float", "parse_int"):
+            if getattr(scanner, name) is not native_decoder[name]:
+                return False
+        for function in (decoder.parse_constant, scanner.parse_constant):
+            if (not isinstance(function, BuiltinMethodType)
+                    or function.__self__ is not json.decoder._CONSTANTS
+                    or function.__name__ != "__getitem__"):
+                return False
+        if _structured_content.json is not json:
+            return False
+        for function in (canonical_dag_json_bytes, cid_for_structured,
+                         decode_and_recompute_structured, validate_cid):
+            if (type(function) is not FunctionType
+                    or function.__module__ != _structured_content.__name__
+                    or function.__code__.co_filename != _structured_content.__file__):
+                return False
+        return True
+    except (AttributeError, TypeError, ValueError):
+        return False
+
+
+def _structured_reader_is_native():
+    try:
+        return _native_structured_json and _structured_reader_bindings() == _native_structured_bindings
+    except (AttributeError, TypeError, ValueError):
+        return False
+
+
+# Cache-owned anchors precede any later import of the manifest consumer. They
+# cannot bless a reader installed between importing cache and codebase_ir.
+_native_structured_json = _structured_json_provenance()
+_native_structured_bindings = _structured_reader_bindings() if _native_structured_json else None
+
+
+@dataclass(frozen=True)
+class CacheLookup:
+    """Result of a cache lookup; misses never carry completion authority."""
+
+    hit: bool
+    reason: str
+    result: Any | None = None
+    receipt: CacheReceipt | None = None
+
+    @property
+    def satisfies_completion(self) -> bool:
+        return bool(
+            self.hit
+            and self.receipt is not None
+            and self.receipt.outcome == OUTCOME_PROVED
+        )
+
+
+class AnalysisCache:
+    """Immutable result/receipt CAS plus replaceable exact-key indexes."""
+
+    def __init__(
+        self,
+        root: Path | str,
+        *,
+        clock: Callable[[], int | float] = time.time,
+        max_lease_seconds: int = DEFAULT_MAX_LEASE_SECONDS,
+        max_object_bytes: int = DEFAULT_MAX_OBJECT_BYTES,
+    ) -> None:
+        self.root = Path(root)
+        self.cas = ImmutableCAS(
+            self.root / "cas", max_object_bytes=max_object_bytes
+        )
+        self.index_root = self.root / "index"
+        self.index_root.mkdir(parents=True, exist_ok=True)
+        self.lock_path = self.root / ".index.lock"
+        self.clock = clock
+        if type(max_lease_seconds) is not int or max_lease_seconds <= 0:
+            raise ValueError("max_lease_seconds must be a positive integer")
+        self.max_lease_seconds = max_lease_seconds
+        self._thread_lock = threading.RLock()
+
+    def _now(self) -> int:
+        value = self.clock()
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise AnalysisCacheError("clock must return a numeric epoch")
+        if value < 0 or value != value or value in (float("inf"), float("-inf")):
+            raise AnalysisCacheError("clock must return a finite non-negative epoch")
+        return int(value)
+
+    @contextmanager
+    def _locked(self) -> Iterator[None]:
+        with self._thread_lock:
+            self.lock_path.parent.mkdir(parents=True, exist_ok=True)
+            with self.lock_path.open("a+b") as stream:
+                if fcntl is not None:
+                    fcntl.flock(stream.fileno(), fcntl.LOCK_EX)
+                try:
+                    yield
+                finally:
+                    if fcntl is not None:
+                        fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
+
+    def _index_path(self, key_cid: str) -> Path:
+        validate_cid(key_cid, codecs={STRUCTURED_CODEC})
+        return self.index_root / key_cid[:4] / f"{key_cid}.json"
+
+    @staticmethod
+    def _replace_atomic(path: Path, payload: bytes) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temporary: Path | None = None
+        try:
+            with tempfile.NamedTemporaryFile(
+                mode="wb", dir=path.parent, prefix=".index-", delete=False
+            ) as stream:
+                temporary = Path(stream.name)
+                stream.write(payload)
+                stream.flush()
+                os.fsync(stream.fileno())
+            os.replace(temporary, path)
+            temporary = None
+            ImmutableCAS._fsync_directory(path.parent)
+        finally:
+            if temporary is not None:
+                temporary.unlink(missing_ok=True)
+
+    def _write_index(self, key_cid: str, receipt_cid: str) -> None:
+        record = {
+            "schema": INDEX_SCHEMA,
+            "key_cid": key_cid,
+            "receipt_cid": receipt_cid,
+        }
+        self._replace_atomic(
+            self._index_path(key_cid), canonical_dag_json_bytes(record)
+        )
+
+    def _read_index(self, key_cid: str) -> str | None:
+        path = self._index_path(key_cid)
+        try:
+            with path.open("rb") as stream:
+                payload = stream.read(MAX_INDEX_RECORD_BYTES + 1)
+        except FileNotFoundError:
+            return None
+        except OSError as exc:
+            raise CacheIntegrityError("cannot read cache index record") from exc
+        if len(payload) > MAX_INDEX_RECORD_BYTES:
+            raise CacheIntegrityError("cache index record exceeds byte bound")
+        try:
+            record = json.loads(payload.decode("utf-8"))
+            if payload != canonical_dag_json_bytes(record):
+                raise CacheIntegrityError("cache index record is not canonical")
+        except (UnicodeDecodeError, json.JSONDecodeError, TypeError, ValueError) as exc:
+            raise CacheIntegrityError("cache index record is invalid") from exc
+        if (
+            not isinstance(record, dict)
+            or set(record) != {"schema", "key_cid", "receipt_cid"}
+            or record.get("schema") != INDEX_SCHEMA
+            or record.get("key_cid") != key_cid
+        ):
+            raise CacheIntegrityError("cache index membership is invalid")
+        try:
+            return validate_cid(
+                record.get("receipt_cid"), codecs={STRUCTURED_CODEC}
+            )
+        except (ContentIdentityError, TypeError, ValueError) as exc:
+            raise CacheIntegrityError("cache index receipt CID is invalid") from exc
+
+    def _read_receipt(
+        self,
+        receipt_cid: str,
+        *,
+        verify_result: bool = True,
+    ) -> CacheReceipt:
+        """Read one immutable receipt and, by default, its bound result.
+
+        Receipt validity alone is insufficient for reuse or aggregate
+        membership: a receipt whose result was removed, truncated, poisoned,
+        or changed to a different schema must fail closed too.
+        """
+
+        raw = self.cas.get(receipt_cid, expected_schema=RECEIPT_SCHEMA)
+        receipt = CacheReceipt.from_dict(raw)
+        if verify_result:
+            self.cas.get(
+                receipt.result_cid,
+                expected_schema=receipt.result_schema,
+            )
+        return receipt
+
+    def put(
+        self,
+        key: AnalysisCacheKey,
+        result: Mapping[str, Any],
+        *,
+        outcome: str = OUTCOME_PROVED,
+        lease_seconds: int | None = None,
+    ) -> CacheReceipt:
+        if not isinstance(key, AnalysisCacheKey):
+            raise TypeError("key must be AnalysisCacheKey")
+        if not isinstance(result, Mapping) or result.get("schema") != key.result_schema:
+            raise CacheIntegrityError(
+                f"result must be an object with schema {key.result_schema!r}"
+            )
+        now = self._now()
+        expires: int | None = None
+        if outcome in LEASED_OUTCOMES:
+            if (
+                type(lease_seconds) is not int
+                or lease_seconds <= 0
+                or lease_seconds > self.max_lease_seconds
+            ):
+                raise CacheLeaseError(
+                    "non-completion results require lease_seconds within "
+                    f"1..{self.max_lease_seconds}"
+                )
+            expires = now + lease_seconds
+        elif outcome == OUTCOME_PROVED:
+            if lease_seconds is not None:
+                raise CacheLeaseError("proved results do not use a lease")
+        else:
+            raise CacheIntegrityError(f"unsupported cache outcome {outcome!r}")
+
+        result_cid = self.cas.put(dict(result))
+        receipt = CacheReceipt(
+            key=key,
+            result_cid=result_cid,
+            outcome=outcome,
+            created_at=now,
+            lease_expires_at=expires,
+        )
+        receipt_cid = self.cas.put(receipt.to_dict())
+        with self._locked():
+            self._write_index(key.cid, receipt_cid)
+        return receipt
+
+    store = put
+
+    def lookup(self, key: AnalysisCacheKey) -> CacheLookup:
+        if not isinstance(key, AnalysisCacheKey):
+            raise TypeError("key must be AnalysisCacheKey")
+        receipt_cid = self._read_index(key.cid)
+        if receipt_cid is None:
+            return CacheLookup(hit=False, reason="miss")
+        receipt = self._read_receipt(receipt_cid, verify_result=False)
+        if receipt.key_cid != key.cid or receipt.key != key:
+            raise CacheIntegrityError("cache index points to the wrong shard key")
+        now = self._now()
+        if not receipt.is_fresh(now):
+            with self._locked():
+                self._index_path(key.cid).unlink(missing_ok=True)
+            return CacheLookup(hit=False, reason="expired")
+        result = self.cas.get(
+            receipt.result_cid, expected_schema=key.result_schema
+        )
+        return CacheLookup(
+            hit=True, reason="hit", result=result, receipt=receipt
+        )
+
+    def get(self, key: AnalysisCacheKey) -> Any | None:
+        return self.lookup(key).result
+
+    def invalidate_source_closure(
+        self, changed_cids: str | Sequence[str]
+    ) -> tuple[str, ...]:
+        """Drop only indexes whose source closure intersects ``changed_cids``.
+
+        Immutable CAS objects are retained.  Keys must already contain their
+        transitive dependency closure, so no global tree identity is required.
+        """
+
+        if isinstance(changed_cids, str):
+            changed = {_source_cid(changed_cids, "changed_cids")}
+        else:
+            changed = {
+                _source_cid(item, f"changed_cids[{index}]")
+                for index, item in enumerate(changed_cids)
+            }
+        invalidated: list[str] = []
+        with self._locked():
+            for path in sorted(self.index_root.glob("*/*.json")):
+                key_cid = path.stem
+                try:
+                    receipt_cid = self._read_index(key_cid)
+                    if receipt_cid is None:
+                        continue
+                    raw = self.cas.get(
+                        receipt_cid, expected_schema=RECEIPT_SCHEMA
+                    )
+                    receipt = CacheReceipt.from_dict(raw)
+                except (AnalysisCacheError, ContentIdentityError, ValueError):
+                    # Corrupt indexes cannot safely remain reusable.
+                    path.unlink(missing_ok=True)
+                    invalidated.append(key_cid)
+                    continue
+                if changed.intersection(receipt.key.source_closure):
+                    path.unlink(missing_ok=True)
+                    invalidated.append(key_cid)
+        return tuple(sorted(invalidated))
+
+    invalidate_dependencies = invalidate_source_closure
+
+    def rebuild_indexes(self) -> tuple[str, ...]:
+        """Rebuild replaceable exact-key indexes from immutable CAS receipts.
+
+        All structured CAS objects are integrity checked while scanning.
+        Expired leased receipts are omitted.  If multiple immutable receipts
+        exist for one key, the greatest ``(created_at, receipt_cid)`` pair wins,
+        which makes reconstruction deterministic even when timestamps tie.
+        Existing indexes that have no reconstructable receipt are removed.
+        No immutable object is changed or deleted.
+        """
+
+        candidates: dict[str, tuple[int, str]] = {}
+        now = self._now()
+        for path in sorted(self.cas.structured_root.glob("*/*")):
+            if not path.is_file():
+                raise CacheIntegrityError(
+                    f"structured CAS entry is not a regular file: {path.name}"
+                )
+            value = self.cas.get(path.name)
+            if not isinstance(value, dict) or value.get("schema") != RECEIPT_SCHEMA:
+                continue
+            receipt = CacheReceipt.from_dict(value)
+            self.cas.get(
+                receipt.result_cid,
+                expected_schema=receipt.result_schema,
+            )
+            if not receipt.is_fresh(now):
+                continue
+            candidate = (receipt.created_at, path.name)
+            if candidate > candidates.get(receipt.key_cid, (-1, "")):
+                candidates[receipt.key_cid] = candidate
+
+        with self._locked():
+            expected_paths: set[Path] = set()
+            for key_cid, (_, receipt_cid) in sorted(candidates.items()):
+                expected_paths.add(self._index_path(key_cid))
+                self._write_index(key_cid, receipt_cid)
+            for path in sorted(self.index_root.glob("*/*.json")):
+                if path not in expected_paths:
+                    path.unlink(missing_ok=True)
+        return tuple(sorted(candidates))
+
+    def create_snapshot_receipt(
+        self,
+        repository_tree_cid: str,
+        shard_receipts: Sequence[CacheReceipt | str],
+    ) -> AggregateSnapshotReceipt:
+        if isinstance(shard_receipts, (str, bytes, bytearray)):
+            raise CacheIntegrityError("shard_receipts must be an array")
+        receipt_cids: list[str] = []
+        key_cids: set[str] = set()
+        for index, item in enumerate(shard_receipts):
+            cid = item.cid if isinstance(item, CacheReceipt) else item
+            cid = _structured_cid(cid, f"shard_receipts[{index}]")
+            receipt = self._read_receipt(cid)
+            if receipt.key_cid in key_cids:
+                raise CacheIntegrityError(
+                    "snapshot must contain exactly one receipt per shard key"
+                )
+            key_cids.add(receipt.key_cid)
+            receipt_cids.append(cid)
+        snapshot = AggregateSnapshotReceipt(
+            repository_tree_cid=repository_tree_cid,
+            shard_receipt_cids=tuple(receipt_cids),
+            created_at=self._now(),
+        )
+        self.cas.put(snapshot.to_dict())
+        return snapshot
+
+    def read_snapshot_receipt(
+        self,
+        snapshot_cid: str,
+        *,
+        expected_repository_tree_cid: str | None = None,
+        expected_key_cids: Sequence[str] | None = None,
+    ) -> AggregateSnapshotReceipt:
+        raw = self.cas.get(snapshot_cid, expected_schema=SNAPSHOT_SCHEMA)
+        snapshot = AggregateSnapshotReceipt.from_dict(raw)
+        if (
+            expected_repository_tree_cid is not None
+            and snapshot.repository_tree_cid
+            != _structured_cid(
+                expected_repository_tree_cid, "expected_repository_tree_cid"
+            )
+        ):
+            raise CacheIntegrityError("snapshot repository-tree membership mismatch")
+        actual_keys: list[str] = []
+        for receipt_cid in snapshot.shard_receipt_cids:
+            receipt = self._read_receipt(receipt_cid)
+            actual_keys.append(receipt.key_cid)
+        if len(set(actual_keys)) != len(actual_keys):
+            raise CacheIntegrityError(
+                "snapshot contains duplicate shard-key membership"
+            )
+        if expected_key_cids is not None:
+            if isinstance(expected_key_cids, (str, bytes, bytearray)):
+                raise CacheIntegrityError("expected_key_cids must be an array")
+            expected = tuple(
+                _structured_cid(item, f"expected_key_cids[{index}]")
+                for index, item in enumerate(expected_key_cids)
+            )
+            if len(set(expected)) != len(expected):
+                raise CacheIntegrityError(
+                    "expected_key_cids must contain unique shard keys"
+                )
+            if tuple(sorted(actual_keys)) != tuple(sorted(expected)):
+                raise CacheIntegrityError("snapshot shard membership mismatch")
+        return snapshot
+
+
+class FormalVerificationCache(AnalysisCache):
+    """Contract-analysis cache spelling used by supervisor proof integration."""
+
+
+ProofCache = FormalVerificationCache
+
+
+# ---------------------------------------------------------------------------
+# DQK-068: software-contract cache → AST authority shadow
+# ---------------------------------------------------------------------------
+
+AST_CACHE_RESULT_SCHEMA: Final[str] = (
+    "ipfs-datasets.software-contract-ast-cache-result.v1"
+)
+AST_CACHE_SHADOW_SCHEMA: Final[str] = (
+    "ipfs-datasets.software-contract-ast-cache-shadow.v1"
+)
+
+
+def _sanitize_for_structured_cid(value: Any) -> Any:
+    """Coerce floats to ints for software-contract structured CID profiles.
+
+    Catalog projections carry ``created_at`` as float epoch seconds.  The
+    analysis-cache CAS rejects floats, so cache receipts store integer epochs
+    while the authority-port dual document retains the original floats.
+    """
+
+    if isinstance(value, float):
+        if value != value or value in (float("inf"), float("-inf")):
+            raise CacheIntegrityError("non-finite float in AST cache payload")
+        if value == int(value):
+            return int(value)
+        # Preserve sub-second precision as a decimal string when needed.
+        return format(value, ".6f").rstrip("0").rstrip(".")
+    if isinstance(value, dict):
+        return {
+            str(key): _sanitize_for_structured_cid(item)
+            for key, item in value.items()
+        }
+    if isinstance(value, (list, tuple)):
+        return [_sanitize_for_structured_cid(item) for item in value]
+    return value
+
+
+class ASTShadowAnalysisCache:
+    """Analysis cache that mirrors AST projections through the authority port.
+
+    The immutable CAS + receipt path remains the legacy authority for analysis
+    results.  When a shadow writer is bound, each successful AST put also
+    projects normalized blobs / symbols / imports / calls / effects /
+    diagnostics through the domain-neutral authority port (JSON bundle
+    authority, DuckDB shadow).
+    """
+
+    def __init__(
+        self,
+        cache: AnalysisCache | None = None,
+        *,
+        root: Path | str | None = None,
+        shadow_writer: Any | None = None,
+        authority_port: Any | None = None,
+    ) -> None:
+        if cache is not None:
+            self._cache = cache
+        elif root is not None:
+            self._cache = AnalysisCache(root)
+        else:
+            raise CacheKeyError(
+                "ASTShadowAnalysisCache requires cache= or root="
+            )
+        if shadow_writer is not None:
+            self._writer = shadow_writer
+        elif authority_port is not None:
+            from ipfs_datasets_py.logic.software_contracts.repository import (
+                build_ast_authority_shadow_writer,
+            )
+
+            self._writer = build_ast_authority_shadow_writer(authority_port)
+        else:
+            self._writer = None
+        self._shadow_receipts: list[dict[str, Any]] = []
+
+    @property
+    def cache(self) -> AnalysisCache:
+        return self._cache
+
+    @property
+    def shadow_writer(self) -> Any | None:
+        return self._writer
+
+    def bind_shadow_writer(self, writer: Any) -> None:
+        self._writer = writer
+
+    def put(
+        self,
+        key: AnalysisCacheKey,
+        result: Mapping[str, Any],
+        *,
+        outcome: str = OUTCOME_PROVED,
+        lease_seconds: int | None = None,
+    ) -> CacheReceipt:
+        """Store an analysis result in the cache (legacy authority)."""
+
+        return self._cache.put(
+            key, result, outcome=outcome, lease_seconds=lease_seconds
+        )
+
+    def put_ast_record(
+        self,
+        key: AnalysisCacheKey,
+        record: Any,
+        *,
+        outcome: str = OUTCOME_PROVED,
+        lease_seconds: int | None = None,
+        operation_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Cache an ASTRecord and shadow-write its catalog projection."""
+
+        from ipfs_datasets_py.logic.software_contracts.ast_ir import ASTRecord
+        from ipfs_datasets_py.logic.software_contracts.duckdb_ast_store import (
+            project_ast_record,
+        )
+
+        if type(record) is not ASTRecord:
+            raise CacheIntegrityError("put_ast_record requires an exact ASTRecord")
+        if key.result_schema != AST_CACHE_RESULT_SCHEMA:
+            raise CacheIntegrityError(
+                f"AST cache keys must use result_schema={AST_CACHE_RESULT_SCHEMA!r}"
+            )
+        projection = project_ast_record(record)
+        return self.put_ast_projection(
+            key,
+            projection,
+            outcome=outcome,
+            lease_seconds=lease_seconds,
+            operation_id=operation_id,
+        )
+
+    def put_ast_projection(
+        self,
+        key: AnalysisCacheKey,
+        projection: Any,
+        *,
+        outcome: str = OUTCOME_PROVED,
+        lease_seconds: int | None = None,
+        operation_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Cache a catalog projection and mirror it through the authority port."""
+
+        from ipfs_datasets_py.logic.software_contracts.duckdb_ast_store import (
+            ASTCatalogProjection,
+        )
+        from ipfs_datasets_py.logic.software_contracts.repository import (
+            json_bundle_from_projection,
+            projection_to_authority_payload,
+        )
+
+        if type(projection) is not ASTCatalogProjection:
+            raise CacheIntegrityError(
+                "put_ast_projection requires an exact ASTCatalogProjection"
+            )
+        if key.result_schema != AST_CACHE_RESULT_SCHEMA:
+            raise CacheIntegrityError(
+                f"AST cache keys must use result_schema={AST_CACHE_RESULT_SCHEMA!r}"
+            )
+        payload = projection_to_authority_payload(projection)
+        # Software-contract CAS rejects floats; coerce created_at epochs to int
+        # so receipts remain content-addressed without losing identity fields.
+        cache_payload = _sanitize_for_structured_cid(payload)
+        cache_bundle = _sanitize_for_structured_cid(
+            json_bundle_from_projection(projection)
+        )
+        result = {
+            "schema": AST_CACHE_RESULT_SCHEMA,
+            "kind": "ast_catalog_projection",
+            "identity": dict(payload["identity"]),
+            "projection": cache_payload,
+            "json_bundle": cache_bundle,
+            "source_cid": projection.source_cid,
+            "ast_cid": projection.ast_cid,
+            "path": projection.source_file.path,
+        }
+        receipt = self._cache.put(
+            key, result, outcome=outcome, lease_seconds=lease_seconds
+        )
+        shadow: dict[str, Any] | None = None
+        parity: dict[str, Any] | None = None
+        if self._writer is not None:
+            shadow = self._writer.write_projection(
+                projection, operation_id=operation_id
+            )
+            parity = self._writer.emit_parity(shadow["authority_key"])
+            self._shadow_receipts.append(
+                {
+                    "schema": AST_CACHE_SHADOW_SCHEMA,
+                    "cache_receipt_cid": receipt.cid,
+                    "authority_key": shadow["authority_key"],
+                    "parity": parity,
+                    "identity": dict(payload["identity"]),
+                }
+            )
+        return {
+            "ok": True,
+            "cache_receipt": receipt,
+            "cache_receipt_cid": receipt.cid,
+            "result": result,
+            "shadow": shadow,
+            "parity": parity,
+            "identity": dict(payload["identity"]),
+        }
+
+    def put_parse_failure(
+        self,
+        key: AnalysisCacheKey,
+        *,
+        provenance: Any,
+        language: str,
+        message: str,
+        outcome: str = OUTCOME_ERROR,
+        lease_seconds: int = 3600,
+        operation_id: str | None = None,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        """Cache a durable parse-failure projection and shadow-write it."""
+
+        from ipfs_datasets_py.logic.software_contracts.duckdb_ast_store import (
+            project_parse_failure,
+        )
+
+        projection = project_parse_failure(
+            provenance=provenance,
+            language=language,
+            message=message,
+            **kwargs,
+        )
+        if outcome not in LEASED_OUTCOMES:
+            outcome = OUTCOME_ERROR
+        return self.put_ast_projection(
+            key,
+            projection,
+            outcome=outcome,
+            lease_seconds=lease_seconds,
+            operation_id=operation_id,
+        )
+
+    def lookup(self, key: AnalysisCacheKey) -> CacheLookup:
+        return self._cache.lookup(key)
+
+    def get(self, key: AnalysisCacheKey) -> Any | None:
+        return self._cache.get(key)
+
+    def shadow_receipts(self) -> tuple[dict[str, Any], ...]:
+        return tuple(self._shadow_receipts)
+
+
+def build_ast_shadow_analysis_cache(
+    root: Path | str,
+    *,
+    authority_port: Any | None = None,
+    shadow_writer: Any | None = None,
+) -> ASTShadowAnalysisCache:
+    """Construct a cache + optional AST authority shadow binding."""
+
+    return ASTShadowAnalysisCache(
+        root=root,
+        authority_port=authority_port,
+        shadow_writer=shadow_writer,
+    )
+
+
+def ast_cache_key_for_source(
+    *,
+    source_cid: str,
+    analyzer_cid: str,
+    configuration_cid: str,
+    semantics_cid: str,
+    policy_cid: str,
+    solver_cid: str,
+    toolchain_cid: str,
+    dependency_cids: Sequence[str] = (),
+) -> AnalysisCacheKey:
+    """Build a closed AST analysis cache key for one source shard."""
+
+    return AnalysisCacheKey(
+        source_cid=source_cid,
+        dependency_cids=tuple(dependency_cids),
+        analyzer_cid=analyzer_cid,
+        configuration_cid=configuration_cid,
+        semantics_cid=semantics_cid,
+        policy_cid=policy_cid,
+        solver_cid=solver_cid,
+        toolchain_cid=toolchain_cid,
+        result_schema=AST_CACHE_RESULT_SCHEMA,
+    )
+
+
+# ---------------------------------------------------------------------------
+# DQK-069: dual-write AST analysis cache (DuckDB default consumer source)
+# ---------------------------------------------------------------------------
+
+AST_CACHE_AUTHORITY_SCHEMA: Final[str] = (
+    "ipfs-datasets.software-contract-ast-cache-authority.v1"
+)
+AST_CACHE_AUTHORITY_OWNER_TASK: Final[str] = "DQK-069"
+
+
+class ASTAuthorityAnalysisCache:
+    """Analysis cache that dual-writes AST projections with DuckDB authority.
+
+    The immutable CAS + receipt path remains available for analysis results.
+    When an authority repository is bound, each successful AST put also
+    dual-writes through the AST authority repository so conflict, dependency,
+    impact, validation-selection, and code-evidence consumers read DuckDB by
+    default.  JSON bundles are deterministic outbox exports only.
+    """
+
+    def __init__(
+        self,
+        cache: AnalysisCache | None = None,
+        *,
+        root: Path | str | None = None,
+        authority_repository: Any | None = None,
+        authority_port: Any | None = None,
+    ) -> None:
+        if cache is not None:
+            self._cache = cache
+        elif root is not None:
+            self._cache = AnalysisCache(root)
+        else:
+            raise CacheKeyError(
+                "ASTAuthorityAnalysisCache requires cache= or root="
+            )
+        if authority_repository is not None:
+            self._repo = authority_repository
+        elif authority_port is not None:
+            from ipfs_datasets_py.logic.software_contracts.repository import (
+                build_ast_authority_repository,
+            )
+
+            self._repo = build_ast_authority_repository(authority_port)
+        else:
+            self._repo = None
+        self._authority_receipts: list[dict[str, Any]] = []
+        # Map source_cid -> authority_key for invalidation without stale hits.
+        self._source_authority_keys: dict[str, str] = {}
+        self._source_blob_ids: dict[str, str] = {}
+
+    @property
+    def cache(self) -> AnalysisCache:
+        return self._cache
+
+    @property
+    def authority_repository(self) -> Any | None:
+        return self._repo
+
+    @property
+    def default_source(self) -> str:
+        if self._repo is not None:
+            return getattr(self._repo, "default_source", "duckdb")
+        return "duckdb"
+
+    def bind_authority_repository(self, repository: Any) -> None:
+        self._repo = repository
+
+    def put(
+        self,
+        key: AnalysisCacheKey,
+        result: Mapping[str, Any],
+        *,
+        outcome: str = OUTCOME_PROVED,
+        lease_seconds: int | None = None,
+    ) -> CacheReceipt:
+        """Store an analysis result in the cache (CAS path)."""
+
+        return self._cache.put(
+            key, result, outcome=outcome, lease_seconds=lease_seconds
+        )
+
+    def put_ast_record(
+        self,
+        key: AnalysisCacheKey,
+        record: Any,
+        *,
+        outcome: str = OUTCOME_PROVED,
+        lease_seconds: int | None = None,
+        operation_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Cache an ASTRecord and dual-write its catalog projection."""
+
+        from ipfs_datasets_py.logic.software_contracts.ast_ir import ASTRecord
+        from ipfs_datasets_py.logic.software_contracts.duckdb_ast_store import (
+            project_ast_record,
+        )
+
+        if type(record) is not ASTRecord:
+            raise CacheIntegrityError("put_ast_record requires an exact ASTRecord")
+        if key.result_schema != AST_CACHE_RESULT_SCHEMA:
+            raise CacheIntegrityError(
+                f"AST cache keys must use result_schema={AST_CACHE_RESULT_SCHEMA!r}"
+            )
+        projection = project_ast_record(record)
+        return self.put_ast_projection(
+            key,
+            projection,
+            outcome=outcome,
+            lease_seconds=lease_seconds,
+            operation_id=operation_id,
+        )
+
+    def put_ast_projection(
+        self,
+        key: AnalysisCacheKey,
+        projection: Any,
+        *,
+        outcome: str = OUTCOME_PROVED,
+        lease_seconds: int | None = None,
+        operation_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Cache a catalog projection and dual-write through DuckDB authority."""
+
+        from ipfs_datasets_py.logic.software_contracts.duckdb_ast_store import (
+            ASTCatalogProjection,
+        )
+        from ipfs_datasets_py.logic.software_contracts.repository import (
+            deterministic_json_bundle_export,
+            projection_to_authority_payload,
+        )
+
+        if type(projection) is not ASTCatalogProjection:
+            raise CacheIntegrityError(
+                "put_ast_projection requires an exact ASTCatalogProjection"
+            )
+        if key.result_schema != AST_CACHE_RESULT_SCHEMA:
+            raise CacheIntegrityError(
+                f"AST cache keys must use result_schema={AST_CACHE_RESULT_SCHEMA!r}"
+            )
+        payload = projection_to_authority_payload(projection)
+        cache_payload = _sanitize_for_structured_cid(payload)
+        cache_export = _sanitize_for_structured_cid(
+            deterministic_json_bundle_export(projection)
+        )
+        result = {
+            "schema": AST_CACHE_RESULT_SCHEMA,
+            "kind": "ast_catalog_projection",
+            "identity": dict(payload["identity"]),
+            "projection": cache_payload,
+            "json_bundle": cache_export,
+            "source_cid": projection.source_cid,
+            "ast_cid": projection.ast_cid,
+            "path": projection.source_file.path,
+            "default_source": "duckdb",
+            "operational_authority": "duckdb",
+        }
+        receipt = self._cache.put(
+            key, result, outcome=outcome, lease_seconds=lease_seconds
+        )
+        authority: dict[str, Any] | None = None
+        parity: dict[str, Any] | None = None
+        if self._repo is not None:
+            authority = self._repo.write_projection(
+                projection, operation_id=operation_id
+            )
+            parity = self._repo.emit_parity(authority["authority_key"])
+            self._source_authority_keys[projection.source_cid] = authority[
+                "authority_key"
+            ]
+            self._source_blob_ids[projection.source_cid] = projection.blob_id
+            self._authority_receipts.append(
+                {
+                    "schema": AST_CACHE_AUTHORITY_SCHEMA,
+                    "owner_task_id": AST_CACHE_AUTHORITY_OWNER_TASK,
+                    "cache_receipt_cid": receipt.cid,
+                    "authority_key": authority["authority_key"],
+                    "parity": parity,
+                    "identity": dict(payload["identity"]),
+                    "default_source": "duckdb",
+                }
+            )
+        return {
+            "ok": True,
+            "cache_receipt": receipt,
+            "cache_receipt_cid": receipt.cid,
+            "result": result,
+            "authority": authority,
+            "shadow": authority,  # alias for dual-write consumers
+            "parity": parity,
+            "identity": dict(payload["identity"]),
+            "default_source": "duckdb",
+        }
+
+    def put_parse_failure(
+        self,
+        key: AnalysisCacheKey,
+        *,
+        provenance: Any,
+        language: str,
+        message: str,
+        outcome: str = OUTCOME_ERROR,
+        lease_seconds: int = 3600,
+        operation_id: str | None = None,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        """Cache a durable parse-failure projection and dual-write it."""
+
+        from ipfs_datasets_py.logic.software_contracts.duckdb_ast_store import (
+            project_parse_failure,
+        )
+
+        projection = project_parse_failure(
+            provenance=provenance,
+            language=language,
+            message=message,
+            **kwargs,
+        )
+        if outcome not in LEASED_OUTCOMES:
+            outcome = OUTCOME_ERROR
+        return self.put_ast_projection(
+            key,
+            projection,
+            outcome=outcome,
+            lease_seconds=lease_seconds,
+            operation_id=operation_id,
+        )
+
+    def invalidate_source(
+        self,
+        *,
+        source_cid: str | None = None,
+        path: str | None = None,
+        blob_id: str | None = None,
+        reason: str = "source_changed",
+    ) -> dict[str, Any]:
+        """Invalidate DuckDB authority so cache consumers see no stale facts."""
+
+        if self._repo is None:
+            raise CacheIntegrityError(
+                "invalidate_source requires a bound authority repository"
+            )
+        target_blob = blob_id
+        if target_blob is None and source_cid is not None:
+            target_blob = self._source_blob_ids.get(source_cid)
+        result = self._repo.invalidate_source(
+            path=path,
+            blob_id=target_blob,
+            reason=reason,
+            detail=f"cache invalidation source_cid={source_cid!r}",
+            actor_id="ast-authority-cache",
+        )
+        if source_cid is not None:
+            self._source_authority_keys.pop(source_cid, None)
+            self._source_blob_ids.pop(source_cid, None)
+        return result
+
+    def restart(self) -> dict[str, Any]:
+        """Recover dual-write outbox and clear stale authority indexes."""
+
+        if self._repo is None:
+            return {"ok": True, "authority_restart": None}
+        return self._repo.restart()
+
+    def consumer_decision(
+        self,
+        family: str,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        """Route consumer queries to the DuckDB authority repository."""
+
+        if self._repo is None:
+            raise CacheIntegrityError(
+                "consumer_decision requires a bound authority repository"
+            )
+        if family == "conflict":
+            return self._repo.conflict_query(**kwargs)
+        if family == "dependency":
+            return self._repo.dependency_query(**kwargs)
+        if family == "impact":
+            return self._repo.impact_query(**kwargs)
+        if family == "validation_selection":
+            return self._repo.validation_selection_query(**kwargs)
+        if family == "code_evidence":
+            return self._repo.code_evidence_query(**kwargs)
+        raise CacheKeyError(f"unknown consumer family {family!r}")
+
+    def lookup(self, key: AnalysisCacheKey) -> CacheLookup:
+        return self._cache.lookup(key)
+
+    def get(self, key: AnalysisCacheKey) -> Any | None:
+        return self._cache.get(key)
+
+    def authority_receipts(self) -> tuple[dict[str, Any], ...]:
+        return tuple(self._authority_receipts)
+
+    def shadow_receipts(self) -> tuple[dict[str, Any], ...]:
+        """Alias retained for dual-write callers migrating from shadow cache."""
+
+        return self.authority_receipts()
+
+
+def build_ast_authority_analysis_cache(
+    root: Path | str,
+    *,
+    authority_port: Any | None = None,
+    authority_repository: Any | None = None,
+) -> ASTAuthorityAnalysisCache:
+    """Construct a cache + dual-write DuckDB AST authority binding."""
+
+    return ASTAuthorityAnalysisCache(
+        root=root,
+        authority_port=authority_port,
+        authority_repository=authority_repository,
+    )
+
+
+__all__ = [
+    "ALL_OUTCOMES",
+    "ASTAuthorityAnalysisCache",
+    "ASTShadowAnalysisCache",
+    "AST_CACHE_AUTHORITY_OWNER_TASK",
+    "AST_CACHE_AUTHORITY_SCHEMA",
+    "AST_CACHE_RESULT_SCHEMA",
+    "AST_CACHE_SHADOW_SCHEMA",
+    "AggregateSnapshotReceipt",
+    "AnalysisCache",
+    "AnalysisCacheError",
+    "AnalysisCacheKey",
+    "CacheIntegrityError",
+    "CacheKeyError",
+    "CacheLeaseError",
+    "CacheLookup",
+    "CacheReceipt",
+    "DEFAULT_MAX_LEASE_SECONDS",
+    "FormalVerificationCache",
+    "GOAL_ID",
+    "INDEX_SCHEMA",
+    "ImmutableCAS",
+    "KEY_SCHEMA",
+    "LEASED_OUTCOMES",
+    "OUTCOME_ERROR",
+    "OUTCOME_INCOMPLETE",
+    "OUTCOME_NEGATIVE",
+    "OUTCOME_PROVED",
+    "OUTCOME_STALE",
+    "OUTCOME_UNKNOWN",
+    "OUTCOME_UNSUPPORTED",
+    "OUTCOME_VIOLATED",
+    "PROFILE_SCHEMA",
+    "ProofCache",
+    "RECEIPT_SCHEMA",
+    "SNAPSHOT_SCHEMA",
+    "ast_cache_key_for_source",
+    "build_ast_authority_analysis_cache",
+    "build_ast_shadow_analysis_cache",
+    "cache_profile_descriptor",
+]

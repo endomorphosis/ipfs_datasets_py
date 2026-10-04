@@ -1,0 +1,49 @@
+{
+  "diagnostic_only": true,
+  "observations": 4,
+  "outputs_equal": true,
+  "native_producers": true,
+  "fresh_manifest_misses": 4,
+  "bypasses": 0,
+  "private_leases_after": 0,
+  "measurements": {
+    "original": {
+      "cpu_seconds": [
+        15.662058448000002,
+        15.579666815999998
+      ],
+      "wall_seconds": [
+        15.759383966011228,
+        15.683419648004929
+      ]
+    },
+    "current": {
+      "cpu_seconds": [
+        14.36817384,
+        14.936868832
+      ],
+      "wall_seconds": [
+        14.450082903000293,
+        15.025513407003018
+      ]
+    }
+  },
+  "medians": {
+    "original": {
+      "cpu_seconds": 15.620862632,
+      "wall_seconds": 15.721401807008078
+    },
+    "current": {
+      "cpu_seconds": 14.652521336,
+      "wall_seconds": 14.737798155001656
+    }
+  },
+  "reductions_percent": {
+    "cpu_seconds": 6.19902574404766,
+    "wall_seconds": 6.256462776544291
+  },
+  "limitations": [
+    "Two samples per mode on one public source file; not a statistical benchmark.",
+    "No model, native container, full Terminal-Bench or RSS/admission recovery claim."
+  ]
+}

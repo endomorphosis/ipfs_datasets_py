@@ -1,0 +1,126 @@
+{
+  "diagnostic_only": true,
+  "scope": "Single public Bottle cold index publication; isolated native file-backed stores and synthetic resource admission; no model, Docker or verifier",
+  "source_bytes": 175565,
+  "source_sha256": "761756ce31753e526c48d28ccbca13a5d2493b16fe37aff3e1e4d2efaf3a2bba",
+  "source_pins_before": {
+    "ipfs_datasets_py/duckdb_control/codebase_catalog.py": "91986bf58356b2917483884661237c49448c0f91f3dc40d4cd3d79fa4811afdf",
+    "ipfs_datasets_py/logic/software_contracts/codebase_ir.py": "67b879102d056aa03f2bed3faaccd0fe02ac763eb7a9c4005a0b59e6c31320f0",
+    "ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py": "2432a160769b9beba678ea646f0204a29229bb9d4ec8111dc0ac23f8fd8da51e",
+    "ipfs_datasets_py/logic/software_contracts/ast_ir.py": "1461edb7c39f2adc89a70e54decfa291ccceafc50ed23011fbdeea5acb4c8b91",
+    "ipfs_datasets_py/logic/software_contracts/cache.py": "a0b1711a5fa1f5b39b92d43748548c8802f632d1131ad9a64dd7f49df51bdd8c"
+  },
+  "events": [
+    {
+      "stage": "CodebaseCatalog._read_artifact",
+      "caller": "_validate_candidate",
+      "status": "returned",
+      "cpu_seconds": 0.1854759520000009,
+      "wall_seconds": 0.18548621899390128
+    },
+    {
+      "stage": "ipfs_datasets_py.duckdb_control.codebase_catalog._reconstruct_manifest",
+      "caller": "_validate_candidate",
+      "status": "returned",
+      "cpu_seconds": 8.255784207999998,
+      "wall_seconds": 8.261134133994346
+    },
+    {
+      "stage": "ipfs_datasets_py.duckdb_control.codebase_catalog._manifest_native_equal",
+      "caller": "_validate_candidate",
+      "status": "returned",
+      "cpu_seconds": 0.1638309119999981,
+      "wall_seconds": 0.163840707988129
+    },
+    {
+      "stage": "ASTRecord.from_dict",
+      "caller": "from_json",
+      "status": "returned",
+      "cpu_seconds": 0.1832315520000023,
+      "wall_seconds": 0.18323500599944964
+    },
+    {
+      "stage": "DuckDBASTStore._validate_projection",
+      "caller": "_validate_candidate",
+      "status": "returned",
+      "cpu_seconds": 0.6479303040000026,
+      "wall_seconds": 0.6479566540074302
+    },
+    {
+      "stage": "CodebaseCatalog._read_artifact",
+      "caller": "_validate_candidate",
+      "status": "returned",
+      "cpu_seconds": 0.0002589280000009353,
+      "wall_seconds": 0.00025912300043273717
+    },
+    {
+      "stage": "CodebaseCatalog._read_artifact",
+      "caller": "_validate_candidate",
+      "status": "returned",
+      "cpu_seconds": 0.11134172799999931,
+      "wall_seconds": 0.11137723800493404
+    },
+    {
+      "stage": "ASTRecord.from_dict",
+      "caller": "_validate_candidate",
+      "status": "returned",
+      "cpu_seconds": 0.18527036800000118,
+      "wall_seconds": 0.18528244200570043
+    },
+    {
+      "stage": "CodebaseCatalog._validate_candidate",
+      "caller": "publish",
+      "status": "returned",
+      "cpu_seconds": 10.349538735999998,
+      "wall_seconds": 10.355053498002235
+    },
+    {
+      "stage": "ASTRecord.from_dict",
+      "caller": "from_json",
+      "status": "returned",
+      "cpu_seconds": 0.18023779199999979,
+      "wall_seconds": 0.18024150999553967
+    },
+    {
+      "stage": "DuckDBASTStore._validate_projection",
+      "caller": "apply_batch",
+      "status": "returned",
+      "cpu_seconds": 0.576503744,
+      "wall_seconds": 0.5766270699969027
+    },
+    {
+      "stage": "DuckDBASTStore._persist_projection",
+      "caller": "apply_batch",
+      "status": "returned",
+      "cpu_seconds": 1.5045269280000007,
+      "wall_seconds": 1.5048450250033056
+    },
+    {
+      "stage": "DuckDBASTStore.apply_batch",
+      "caller": "publish",
+      "status": "returned",
+      "cpu_seconds": 2.1333561440000004,
+      "wall_seconds": 2.1400038889987627
+    }
+  ],
+  "status": "returned",
+  "cpu_seconds": 21.729009024,
+  "wall_seconds": 22.042731449997518,
+  "manifest_cid": "baguqeeravlenmqwops7y2movjvhxvhgt7sp3ldsr6ob2qskjesrxvuh2mr2q",
+  "snapshot_cid": "baguqeerako34x2hzwfbe2mgpi4jlzkwodaeiz25apsk45e5nqweldnk7enhq",
+  "ast_payload_bytes": [
+    3590554
+  ],
+  "leases_after": {
+    "active": 0,
+    "waiting": 0
+  },
+  "source_pins_after": {
+    "ipfs_datasets_py/duckdb_control/codebase_catalog.py": "91986bf58356b2917483884661237c49448c0f91f3dc40d4cd3d79fa4811afdf",
+    "ipfs_datasets_py/logic/software_contracts/codebase_ir.py": "67b879102d056aa03f2bed3faaccd0fe02ac763eb7a9c4005a0b59e6c31320f0",
+    "ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py": "2432a160769b9beba678ea646f0204a29229bb9d4ec8111dc0ac23f8fd8da51e",
+    "ipfs_datasets_py/logic/software_contracts/ast_ir.py": "1461edb7c39f2adc89a70e54decfa291ccceafc50ed23011fbdeea5acb4c8b91",
+    "ipfs_datasets_py/logic/software_contracts/cache.py": "a0b1711a5fa1f5b39b92d43748548c8802f632d1131ad9a64dd7f49df51bdd8c"
+  },
+  "source_pins_unchanged": true
+}

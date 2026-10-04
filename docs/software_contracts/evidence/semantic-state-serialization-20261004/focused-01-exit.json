@@ -1,0 +1,20 @@
+{
+  "returncode": 0,
+  "seconds": 32.63401874799456,
+  "source_pins_after": {
+    "ipfs_datasets_py/logic/software_contracts/semantic_index/models.py": "b8f92371322ac941edf9e625f9fc7f94efa5facafd7020b805338790561adc9d",
+    "ipfs_datasets_py/logic/software_contracts/content.py": "1e8c9bb9019bb593d6812ac6d1d1fa46e882be291d5f41bbb4894fb171056b43",
+    "ipfs_datasets_py/logic/software_contracts/semantic_index/identity.py": "373f6f4e99923b58487256b956ebdfd66248485713a91483eca4e6783b59e102",
+    "ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py": "5135e623a0a3f970252da63dce049be167e8bb73db5355f6c3116316b70aafa6",
+    "ipfs_datasets_py/logic/software_contracts/semantic_index/scanner.py": "002957f910a0bc1ff29de1ed72aca9c2464218ac5f65478be34a7c8f04e166a1",
+    "ipfs_datasets_py/logic/software_contracts/codebase_ir.py": "67b879102d056aa03f2bed3faaccd0fe02ac763eb7a9c4005a0b59e6c31320f0",
+    "ipfs_datasets_py/duckdb_control/codebase_catalog.py": "91986bf58356b2917483884661237c49448c0f91f3dc40d4cd3d79fa4811afdf",
+    "tests/unit/logic/software_contracts/semantic_index/test_state_serialization_reuse.py": "3978ebc502a32b9434567627f0f97c72148a2455e9583911bf49b03de2c35186",
+    "tests/unit/logic/software_contracts/semantic_index/test_models.py": "e4d94ab959d7f8016eb7d6087f39c21f13f4ce284e5f91bd30e9b97462973e7f",
+    "tests/unit/logic/software_contracts/semantic_index/test_identity_contract.py": "50759074933a7df9adb810ee3aa39b5e329fc97d28e517915ae8e27ef5bbd03a",
+    "tests/unit/logic/software_contracts/test_content_memo.py": "38b7b1c4055dd6ad1018dd4c3e484c1924e5149adcd175dfe943361f5d670599",
+    "tests/unit/logic/software_contracts/test_codebase_manifest_memo.py": "c654f9abb7d793afed03084b214cec299aa6999cc7aa7b6b26d290aac988033b",
+    "tests/unit/duckdb_control/test_codebase_catalog.py": "567eeab7afcd419da9a862f8a26a620b354d4d52513d2c5a1a4f8b9fd8136702"
+  },
+  "source_pins_unchanged": true
+}

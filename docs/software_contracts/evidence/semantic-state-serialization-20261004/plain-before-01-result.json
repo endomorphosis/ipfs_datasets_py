@@ -1,0 +1,51 @@
+{
+  "diagnostic_only": true,
+  "scope": "Single public Bottle cold index publication; isolated native file-backed stores and synthetic resource admission; no model, Docker or verifier",
+  "source_bytes": 175565,
+  "source_sha256": "761756ce31753e526c48d28ccbca13a5d2493b16fe37aff3e1e4d2efaf3a2bba",
+  "source_pins_before": {
+    "ipfs_datasets_py/duckdb_control/codebase_catalog.py": "91986bf58356b2917483884661237c49448c0f91f3dc40d4cd3d79fa4811afdf",
+    "ipfs_datasets_py/logic/software_contracts/codebase_ir.py": "67b879102d056aa03f2bed3faaccd0fe02ac763eb7a9c4005a0b59e6c31320f0",
+    "ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py": "2432a160769b9beba678ea646f0204a29229bb9d4ec8111dc0ac23f8fd8da51e",
+    "ipfs_datasets_py/logic/software_contracts/ast_ir.py": "1461edb7c39f2adc89a70e54decfa291ccceafc50ed23011fbdeea5acb4c8b91",
+    "ipfs_datasets_py/logic/software_contracts/cache.py": "a0b1711a5fa1f5b39b92d43748548c8802f632d1131ad9a64dd7f49df51bdd8c",
+    "ipfs_datasets_py/logic/software_contracts/semantic_index/models.py": "4b061c97838929a4cdc055998ce71aa854234c7e75d3fbee12595fa1bafa8a75"
+  },
+  "events": [],
+  "plain": true,
+  "manifest_producer_native_before": true,
+  "manifest_memo_before": {
+    "hits": 0,
+    "misses": 0,
+    "evictions": 0,
+    "bypasses": 0
+  },
+  "status": "returned",
+  "cpu_seconds": 15.325535248000001,
+  "wall_seconds": 15.411425767000765,
+  "manifest_cid": "baguqeerauf5oq5klqjtukscofesqcowyj2oth3pirjh3auloqdfovy44cn5a",
+  "snapshot_cid": "baguqeera26b6nqsqvvqb6ytyoc65kqhbvgmyq6zbredp2glovu2s3fqvt3eq",
+  "ast_payload_bytes": [
+    3590554
+  ],
+  "leases_after": {
+    "active": 0,
+    "waiting": 0
+  },
+  "manifest_producer_native_after": true,
+  "manifest_memo_after": {
+    "hits": 0,
+    "misses": 1,
+    "evictions": 0,
+    "bypasses": 0
+  },
+  "source_pins_after": {
+    "ipfs_datasets_py/duckdb_control/codebase_catalog.py": "91986bf58356b2917483884661237c49448c0f91f3dc40d4cd3d79fa4811afdf",
+    "ipfs_datasets_py/logic/software_contracts/codebase_ir.py": "67b879102d056aa03f2bed3faaccd0fe02ac763eb7a9c4005a0b59e6c31320f0",
+    "ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py": "2432a160769b9beba678ea646f0204a29229bb9d4ec8111dc0ac23f8fd8da51e",
+    "ipfs_datasets_py/logic/software_contracts/ast_ir.py": "1461edb7c39f2adc89a70e54decfa291ccceafc50ed23011fbdeea5acb4c8b91",
+    "ipfs_datasets_py/logic/software_contracts/cache.py": "a0b1711a5fa1f5b39b92d43748548c8802f632d1131ad9a64dd7f49df51bdd8c",
+    "ipfs_datasets_py/logic/software_contracts/semantic_index/models.py": "4b061c97838929a4cdc055998ce71aa854234c7e75d3fbee12595fa1bafa8a75"
+  },
+  "source_pins_unchanged": true
+}
