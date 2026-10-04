@@ -1,0 +1,47 @@
+{
+  "complete_suite_green": false,
+  "passing_focused_checks": {
+    "root_core": {
+      "passed": 56
+    },
+    "root_paper_boards_and_owners": {
+      "passed": 65,
+      "subtests_passed": 41
+    },
+    "datasets_scheduler": {
+      "passed": 144
+    },
+    "datasets_checkout_layout": {
+      "passed": 93
+    },
+    "accelerator_current_context": {
+      "passed": 40,
+      "skipped": 51
+    },
+    "ipfs_kit_semantic_world_store": {
+      "passed": 115
+    }
+  },
+  "remaining_limits": [
+    {
+      "scope": "historical inventory lineage/reuse profiles",
+      "reason": "Exact reviewed producer hashes differ from the current merged producers; qualification guards remain fail-closed."
+    },
+    {
+      "scope": "historical paper mutation/migration workflows",
+      "reason": "The current closed Quack writer protocol refuses older generic mutation templates; permissions were not widened."
+    },
+    {
+      "scope": "live native proof suites",
+      "reason": "Actual memory stall reached 14.26% against a 2% admission limit; a shared live scheduler configuration also conflicted. Native positive-path qualification is incomplete."
+    }
+  ],
+  "broad_run_receipts": [
+    "datasets-source-validation-test-receipt.json",
+    "datasets-remaining-source-validation-test-receipt.json",
+    "datasets-final-optimizer-test-receipt.json",
+    "accelerator-source-validation-test-receipt.json",
+    "accelerator-final-remaining-test-receipt.json",
+    "root-working-source-final-test-receipt.json"
+  ]
+}

@@ -25,7 +25,7 @@ import traceback
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-ACCELERATE = ROOT.parent / "ipfs_accelerate"
+ACCELERATE = (ROOT.parent / "ipfs_accelerate").resolve()
 SCHEMA = "codebase-evidence-query-benchmark@1"
 VIEW = "repository:conditional-query-benchmark"
 DB_CONFIG = {"threads": 1, "memory_limit": "64MB"}

@@ -1,0 +1,44 @@
+[
+  {
+    "repo": ".",
+    "published_main": "88440bfe56bc7bd54b1fb3973b9f26a845697263",
+    "captured_refs_checked": 7302,
+    "missing": []
+  },
+  {
+    "repo": "external/ipfs_datasets",
+    "published_main": "7800abcdf13c0a5d5aab1b5067a7c1b3d2add2e3",
+    "captured_refs_checked": 4941,
+    "missing": []
+  },
+  {
+    "repo": "external/ipfs_accelerate",
+    "published_main": "9e41265736d92acc33fa37d78b7364b823cb9fa8",
+    "captured_refs_checked": 9077,
+    "missing": []
+  },
+  {
+    "repo": "external/ipfs_kit",
+    "published_main": "31dc1273134d4bd6b358220030f197dd6b456ef6",
+    "captured_refs_checked": 6710,
+    "missing": []
+  },
+  {
+    "repo": "Mcp-Plus-Plus",
+    "published_main": "fd955a707b9d759072fea6e7717c0c5d2674af53",
+    "captured_refs_checked": 21,
+    "missing": []
+  },
+  {
+    "repo": "hallucinate_app",
+    "published_main": "e951cafa8569ef3b6b29adf4ac9bbb61f4d00621",
+    "captured_refs_checked": 37,
+    "missing": []
+  },
+  {
+    "repo": "swissknife",
+    "published_main": "14027d43818ca424b37e463d3a854ffeea6d0eb6",
+    "captured_refs_checked": 3687,
+    "missing": []
+  }
+]

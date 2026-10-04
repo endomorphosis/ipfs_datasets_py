@@ -1,0 +1,10 @@
+{
+  "repository_id": "Publicus/autoencoder-decoder-checkpoints",
+  "revision": "4757bb7483e330afe90769b935975301c7df4fe7",
+  "distinct_checkpoint_objects_verified": 682,
+  "all_remote_sha256_and_sizes_verified": true,
+  "original_manifest_source_paths": 741,
+  "current_refresh_additional_or_changed_paths": 194,
+  "previous_refresh_revision": "1cf78fdd9508b761f4efdb837013540d71768292",
+  "private": true
+}
