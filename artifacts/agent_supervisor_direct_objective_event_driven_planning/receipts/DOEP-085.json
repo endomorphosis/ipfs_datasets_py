@@ -1,0 +1,127 @@
+{
+  "schema": "ipfs_accelerate_py/agent-supervisor/doep-task-receipt@1",
+  "task_id": "DOEP-085",
+  "task_cid": "sha256:4b2636c5ee51acabc74b04148b4ca01418a5fb1a884a2b37639519ba39e8ce45",
+  "title": "Add equivalent-task and equivalent-plan elimination",
+  "plan_revision": "DOEP-PLAN-V5",
+  "plan_cid": "sha256:6c197a4b92682b3b813656123e09956846dc4f5abadf417f37fb7cc0133ddba4",
+  "plan_epoch": 1,
+  "board_namespace": "agent-supervisor-direct-objective-and-event-driven-planning-v1",
+  "goal_id": "DOEP-G090.S3",
+  "parent_goal_id": "DOEP-G090",
+  "root_goal_id": "DOEP-G000",
+  "candidate_status": "implemented",
+  "completion_authoritative": false,
+  "worker_completion_insufficient": true,
+  "no_competing_subsystem_created": true,
+  "base_repositories": {
+    "ipfs_accelerate_py": {
+      "commit": "87715e9295626e7918f7fc8a7b1a1531ab04208f",
+      "tree": "1c9a399cc7a599d5904e5be2ae58c6be3650cff7"
+    },
+    "ipfs_datasets_py": {
+      "commit": "3668b8857a9aa7b1a3c847be12725b5cd057d2e7",
+      "tree": "456e09b51d6a07a3a5873436df24054768195320"
+    },
+    "ipfs_kit_py": {
+      "commit": "b6c65ba732733d7e33852713ba18aa3b12235668",
+      "tree": "14da7d92e130b7ba3523d0d6741a3ef7ef1e1bc2"
+    },
+    "lift_coding": {
+      "commit": "bb8869ed72eb7002434345d9969efee729c4f7f6",
+      "tree": "99e85bfe584b7688ffbeff86da1e612dd6893a42"
+    }
+  },
+  "expected_outputs": [
+    "ipfs_datasets_py/logic/external_work_plan_obligations.py",
+    "tests/doep/test_doep_085_add_equivalent_task_and_equivalent_plan_elimination.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-085.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-085.json"
+  ],
+  "changed_paths": [
+    "ipfs_datasets_py/logic/external_work_plan_obligations.py",
+    "tests/doep/test_doep_085_add_equivalent_task_and_equivalent_plan_elimination.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-085.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-085.json"
+  ],
+  "write_scope": [
+    "ipfs_datasets_py/logic/external_work_plan_obligations.py",
+    "tests/doep/test_doep_085_add_equivalent_task_and_equivalent_plan_elimination.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-085.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-085.json"
+  ],
+  "outputs_present": {
+    "ipfs_datasets_py/logic/external_work_plan_obligations.py": true,
+    "tests/doep/test_doep_085_add_equivalent_task_and_equivalent_plan_elimination.py": true,
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-085.json": true,
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-085.json": true
+  },
+  "path_digests": {
+    "ipfs_datasets_py/logic/external_work_plan_obligations.py": "sha256:b2339c8ffbf161c73f1524d18dfe1a62dda162dc298c9f132a5139f90fc2354d",
+    "tests/doep/test_doep_085_add_equivalent_task_and_equivalent_plan_elimination.py": "sha256:e7e99be3362ea0d97fa4cf309a7357bb09ef85563bcb8cbeaa511e3ae9dffda6",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-085.json": "sha256:ea30be364324b9d7920ec3237c1b3d19058b939adc76f1c0dc5e9810ecc3da3b"
+  },
+  "required_evidence": {
+    "source_commit_tree_gitlinks": {
+      "ipfs_accelerate_py": {
+        "commit": "87715e9295626e7918f7fc8a7b1a1531ab04208f",
+        "tree": "1c9a399cc7a599d5904e5be2ae58c6be3650cff7"
+      },
+      "ipfs_datasets_py": {
+        "commit": "3668b8857a9aa7b1a3c847be12725b5cd057d2e7",
+        "tree": "456e09b51d6a07a3a5873436df24054768195320"
+      },
+      "ipfs_kit_py": {
+        "commit": "b6c65ba732733d7e33852713ba18aa3b12235668",
+        "tree": "14da7d92e130b7ba3523d0d6741a3ef7ef1e1bc2"
+      },
+      "lift_coding": {
+        "commit": "bb8869ed72eb7002434345d9969efee729c4f7f6",
+        "tree": "99e85bfe584b7688ffbeff86da1e612dd6893a42"
+      }
+    },
+    "test_proof_results": {
+      "validation_command": [
+        "python3",
+        "-m",
+        "pytest",
+        "tests/doep/test_doep_085_add_equivalent_task_and_equivalent_plan_elimination.py",
+        "-q"
+      ],
+      "proof_selection": "verified_empty",
+      "proof_reason": "The contract is exercised by independent pytest over PlanEquivalenceElimination; no formal prover was selected."
+    },
+    "receipt_cid": {
+      "status": "unavailable",
+      "reason": "No IPFS CLI was used; SHA-256 is not substituted for a CID."
+    },
+    "verifier_admission": "pending_independent_fenced_supervisor",
+    "limitations": [
+      "Candidate receipt only; independent fenced supervisor admission is required.",
+      "PlanEquivalenceElimination does not grant operational admission, history rewrite, or completion authority.",
+      "Accelerate owns operational equivalence-elimination admission; this contract only names retained representatives and eliminated equivalents.",
+      "Elimination requires current admitted equivalence evidence; worker or model assertion is insufficient.",
+      "History is preserved: eliminated identities remain named and are not rewritten.",
+      "Worker or model assertion alone is insufficient."
+    ]
+  },
+  "validation": {
+    "commands": [
+      {
+        "argv": [
+          "python3",
+          "-m",
+          "pytest",
+          "tests/doep/test_doep_085_add_equivalent_task_and_equivalent_plan_elimination.py",
+          "-q"
+        ],
+        "cwd": "external/ipfs_datasets",
+        "status": "candidate_local"
+      }
+    ]
+  },
+  "supervisor_acceptance": {
+    "state": "pending_independent_fenced_supervisor",
+    "completion_authoritative": false
+  }
+}

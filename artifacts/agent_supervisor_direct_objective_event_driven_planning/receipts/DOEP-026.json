@@ -10,41 +10,43 @@
   "candidate_status": "implemented",
   "changed_paths": [
     "ipfs_datasets_py/logic/intent_ir/schema.py",
-    "tests/doep/test_doep_011_define_objectivematerializationreceipt_contract.py",
-    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-011.json",
-    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-011.json"
+    "tests/doep/test_doep_026_add_logic_constrained_residual_interpretation.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-026.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-026.json"
   ],
   "completion_authoritative": false,
   "expected_outputs": [
     "ipfs_datasets_py/logic/intent_ir/schema.py",
-    "tests/doep/test_doep_011_define_objectivematerializationreceipt_contract.py",
-    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-011.json",
-    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-011.json"
+    "tests/doep/test_doep_026_add_logic_constrained_residual_interpretation.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-026.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-026.json"
   ],
-  "goal_id": "DOEP-G020.S1",
+  "goal_id": "DOEP-G030.S2",
   "no_competing_subsystem_created": true,
   "observed_at": "2026-09-09T00:00:00Z",
   "outputs_present": {
-    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-011.json": true,
-    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-011.json": true,
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-026.json": true,
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-026.json": true,
     "ipfs_datasets_py/logic/intent_ir/schema.py": true,
-    "tests/doep/test_doep_011_define_objectivematerializationreceipt_contract.py": true
+    "tests/doep/test_doep_026_add_logic_constrained_residual_interpretation.py": true
   },
-  "parent_goal_id": "DOEP-G020",
+  "parent_goal_id": "DOEP-G030",
   "path_digests": {
-    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-011.json": "sha256:6d5f6086056c3182485950f1df063998fbb5f44ecd402c58ac33eae8dfac7b89",
-    "ipfs_datasets_py/logic/intent_ir/schema.py": "sha256:f22d352ee053d96da88212801b134934b1a94c37e7552195b25c87d4e08e8dee",
-    "tests/doep/test_doep_011_define_objectivematerializationreceipt_contract.py": "sha256:6883fb2498ef6fba4e623036a30a2df8f3b3dce2d7a088180043dbfbda8613a0"
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-026.json": "sha256:be4b3025f711564167bc053f66f0fdc69bbee76288132935785904cd53c3ff03",
+    "ipfs_datasets_py/logic/intent_ir/schema.py": "sha256:89f25b2f7e2ed5faf2c01a42cbbea0e94c2f70e7e30ac95988b1b62c4f07af71",
+    "tests/doep/test_doep_026_add_logic_constrained_residual_interpretation.py": "sha256:f9d76fc81d9107eaee75b8ebba4c224805232117862144599f1808aa05bc8d83"
   },
   "plan_cid": "sha256:6c197a4b92682b3b813656123e09956846dc4f5abadf417f37fb7cc0133ddba4",
   "plan_epoch": 1,
   "plan_revision": "DOEP-PLAN-V5",
   "required_evidence": {
-    "changed_path_digest": "sha256:68d6fcbfb4395f307cb00ee6429ca46bd691248dc8f6dc873219d3988650d712",
+    "changed_path_digest": "sha256:8f4c9331eee7cb59cd13ea9cfe8122988cb0a96d093656dd1447420b9303bf2f",
     "limitations": [
-      "Candidate ObjectiveMaterializationReceipt contract receipt only; independent fenced supervisor admission is required.",
+      "Candidate LogicConstrainedResidualInterpretation receipt only; independent fenced supervisor admission is required.",
       "Worker or model assertion alone is insufficient for task completion.",
-      "This is semantic materialization evidence only; operational admission and execution remain with ipfs_accelerate_py.",
+      "Residual interpretation is semantic-only; it does not dispatch specialists, execute tools, or grant completion authority.",
+      "Typed residual answers are closed string enums constrained by each unresolved question and cannot execute tools.",
+      "Operational admission and execution remain with ipfs_accelerate_py.",
       "Exact bytes, CID persistence, and recovery remain with ipfs_kit_py.",
       "Digests bind the exact declared non-receipt outputs at observation time.",
       "No competing Intent IR or objective subsystem was created; IntentIRDocument remains the skill-corpus contract."
@@ -72,13 +74,13 @@
       }
     },
     "test_proof_results": {
-      "proof_reason": "Contract-definition task; semantic fail-closed validation is exercised by pytest; no formal prover selected.",
+      "proof_reason": "Logic-constrained residual interpretation is exercised by pytest; no formal prover selected.",
       "proof_selection": "verified_empty",
       "validation_command": [
         "python3",
         "-m",
         "pytest",
-        "tests/doep/test_doep_011_define_objectivematerializationreceipt_contract.py",
+        "tests/doep/test_doep_026_add_logic_constrained_residual_interpretation.py",
         "-q"
       ]
     },
@@ -86,7 +88,7 @@
   },
   "rollback": {
     "destructive_effects": false,
-    "procedure": "Revert the four declared DOEP-011 outputs and invalidate consumers of ObjectiveMaterializationReceipt; do not alter IntentIRDocument skill-corpus semantics, protected plan documents, or dependency-contract pyproject files."
+    "procedure": "Revert the four declared DOEP-026 outputs and invalidate consumers of LogicConstrainedResidualInterpretation; do not alter IntentIRDocument skill-corpus semantics, DeterministicObjectiveNormalization, RuleDrivenObjectiveDecomposition, UnresolvedQuestionCapture, protected plan documents, or dependency-contract pyproject files."
   },
   "root_goal_id": "DOEP-G000",
   "schema": "ipfs_accelerate_py/agent-supervisor/doep-task-receipt@1",
@@ -94,9 +96,9 @@
     "completion_authoritative": false,
     "state": "pending_independent_fenced_supervisor"
   },
-  "task_cid": "sha256:b0c8a8584f596e06818fcaa1c625f117334b19930a5d8a620590eecd29f099c0",
-  "task_id": "DOEP-011",
-  "title": "Define ObjectiveMaterializationReceipt contract",
+  "task_cid": "sha256:4ab35f3d7e16a40e9c3ca9447929d149d79c54daf9f62ff955a45b37cea2c3fc",
+  "task_id": "DOEP-026",
+  "title": "Add logic-constrained residual interpretation",
   "validation": {
     "commands": [
       {
@@ -104,7 +106,7 @@
           "python3",
           "-m",
           "pytest",
-          "tests/doep/test_doep_011_define_objectivematerializationreceipt_contract.py",
+          "tests/doep/test_doep_026_add_logic_constrained_residual_interpretation.py",
           "-q"
         ],
         "cwd": "external/ipfs_datasets",
@@ -115,8 +117,8 @@
   "worker_completion_insufficient": true,
   "write_scope": [
     "ipfs_datasets_py/logic/intent_ir/schema.py",
-    "tests/doep/test_doep_011_define_objectivematerializationreceipt_contract.py",
-    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-011.json",
-    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-011.json"
+    "tests/doep/test_doep_026_add_logic_constrained_residual_interpretation.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-026.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-026.json"
   ]
 }

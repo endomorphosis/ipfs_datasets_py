@@ -10,41 +10,42 @@
   "candidate_status": "implemented",
   "changed_paths": [
     "ipfs_datasets_py/logic/intent_ir/schema.py",
-    "tests/doep/test_doep_011_define_objectivematerializationreceipt_contract.py",
-    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-011.json",
-    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-011.json"
+    "tests/doep/test_doep_021_add_deterministic_normalization.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-021.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-021.json"
   ],
   "completion_authoritative": false,
   "expected_outputs": [
     "ipfs_datasets_py/logic/intent_ir/schema.py",
-    "tests/doep/test_doep_011_define_objectivematerializationreceipt_contract.py",
-    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-011.json",
-    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-011.json"
+    "tests/doep/test_doep_021_add_deterministic_normalization.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-021.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-021.json"
   ],
-  "goal_id": "DOEP-G020.S1",
+  "goal_id": "DOEP-G030.S1",
   "no_competing_subsystem_created": true,
   "observed_at": "2026-09-09T00:00:00Z",
   "outputs_present": {
-    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-011.json": true,
-    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-011.json": true,
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-021.json": true,
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-021.json": true,
     "ipfs_datasets_py/logic/intent_ir/schema.py": true,
-    "tests/doep/test_doep_011_define_objectivematerializationreceipt_contract.py": true
+    "tests/doep/test_doep_021_add_deterministic_normalization.py": true
   },
-  "parent_goal_id": "DOEP-G020",
+  "parent_goal_id": "DOEP-G030",
   "path_digests": {
-    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-011.json": "sha256:6d5f6086056c3182485950f1df063998fbb5f44ecd402c58ac33eae8dfac7b89",
-    "ipfs_datasets_py/logic/intent_ir/schema.py": "sha256:f22d352ee053d96da88212801b134934b1a94c37e7552195b25c87d4e08e8dee",
-    "tests/doep/test_doep_011_define_objectivematerializationreceipt_contract.py": "sha256:6883fb2498ef6fba4e623036a30a2df8f3b3dce2d7a088180043dbfbda8613a0"
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-021.json": "sha256:a3ddd8d47ccf06a4710bdbb24379c78ebd731245f4561322b3ac99a9eaae17e5",
+    "ipfs_datasets_py/logic/intent_ir/schema.py": "sha256:f8617ff3707eae4e228d5e8580ec10086f468f2fdb3458cb5e2d809a16cc27ff",
+    "tests/doep/test_doep_021_add_deterministic_normalization.py": "sha256:6655ade3e5c60100ef73a074daba6496991d5f8bac2c3d7ed770cb8b30b2fdc5"
   },
   "plan_cid": "sha256:6c197a4b92682b3b813656123e09956846dc4f5abadf417f37fb7cc0133ddba4",
   "plan_epoch": 1,
   "plan_revision": "DOEP-PLAN-V5",
   "required_evidence": {
-    "changed_path_digest": "sha256:68d6fcbfb4395f307cb00ee6429ca46bd691248dc8f6dc873219d3988650d712",
+    "changed_path_digest": "sha256:cb249527b40f6d766637b6488cf125264a0e3b54512bf2f41a2e83a028812f47",
     "limitations": [
-      "Candidate ObjectiveMaterializationReceipt contract receipt only; independent fenced supervisor admission is required.",
+      "Candidate DeterministicObjectiveNormalization receipt only; independent fenced supervisor admission is required.",
       "Worker or model assertion alone is insufficient for task completion.",
-      "This is semantic materialization evidence only; operational admission and execution remain with ipfs_accelerate_py.",
+      "Normalization is semantic-only; proposed budget/risk/policy bindings are not admission authority.",
+      "Operational admission and execution remain with ipfs_accelerate_py.",
       "Exact bytes, CID persistence, and recovery remain with ipfs_kit_py.",
       "Digests bind the exact declared non-receipt outputs at observation time.",
       "No competing Intent IR or objective subsystem was created; IntentIRDocument remains the skill-corpus contract."
@@ -72,13 +73,13 @@
       }
     },
     "test_proof_results": {
-      "proof_reason": "Contract-definition task; semantic fail-closed validation is exercised by pytest; no formal prover selected.",
+      "proof_reason": "Deterministic normalization is exercised by pytest; no formal prover selected.",
       "proof_selection": "verified_empty",
       "validation_command": [
         "python3",
         "-m",
         "pytest",
-        "tests/doep/test_doep_011_define_objectivematerializationreceipt_contract.py",
+        "tests/doep/test_doep_021_add_deterministic_normalization.py",
         "-q"
       ]
     },
@@ -86,7 +87,7 @@
   },
   "rollback": {
     "destructive_effects": false,
-    "procedure": "Revert the four declared DOEP-011 outputs and invalidate consumers of ObjectiveMaterializationReceipt; do not alter IntentIRDocument skill-corpus semantics, protected plan documents, or dependency-contract pyproject files."
+    "procedure": "Revert the four declared DOEP-021 outputs and invalidate consumers of DeterministicObjectiveNormalization; do not alter IntentIRDocument skill-corpus semantics, protected plan documents, or dependency-contract pyproject files."
   },
   "root_goal_id": "DOEP-G000",
   "schema": "ipfs_accelerate_py/agent-supervisor/doep-task-receipt@1",
@@ -94,9 +95,9 @@
     "completion_authoritative": false,
     "state": "pending_independent_fenced_supervisor"
   },
-  "task_cid": "sha256:b0c8a8584f596e06818fcaa1c625f117334b19930a5d8a620590eecd29f099c0",
-  "task_id": "DOEP-011",
-  "title": "Define ObjectiveMaterializationReceipt contract",
+  "task_cid": "sha256:6fc54343c8d305bbdb16f4d61f369c37e46aab5d464638e45dcdefb7673d026c",
+  "task_id": "DOEP-021",
+  "title": "Add deterministic normalization",
   "validation": {
     "commands": [
       {
@@ -104,7 +105,7 @@
           "python3",
           "-m",
           "pytest",
-          "tests/doep/test_doep_011_define_objectivematerializationreceipt_contract.py",
+          "tests/doep/test_doep_021_add_deterministic_normalization.py",
           "-q"
         ],
         "cwd": "external/ipfs_datasets",
@@ -115,8 +116,8 @@
   "worker_completion_insufficient": true,
   "write_scope": [
     "ipfs_datasets_py/logic/intent_ir/schema.py",
-    "tests/doep/test_doep_011_define_objectivematerializationreceipt_contract.py",
-    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-011.json",
-    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-011.json"
+    "tests/doep/test_doep_021_add_deterministic_normalization.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-021.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-021.json"
   ]
 }
