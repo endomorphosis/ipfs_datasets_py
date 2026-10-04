@@ -1250,3 +1250,751 @@ the dependency graph.
 CodebaseIR producer inventories remain 27 verification and 29 applicability
 modules. This increment adds no proof-cache replay, learned representation,
 DuckLake indexing or planner authority.
+
+## Tamarin default admission and lifecycle integrity — 2026-10-04
+
+The canonical Tamarin backend now uses resource admission by default, including
+registry, protocol V2 and helper calls. This completes the implementation of the
+Tamarin default-runner migration described in the preceding increment; successful
+native execution of the new profile remains unqualified.
+
+The default runner requests two CPU slots and eight process slots to account for
+one Haskell capability, overlapping Maude handles and launcher helpers. It passes
+`+RTS -N1 -M<max(1, floor(requested bytes / 2))> -RTS` and selects Maude explicitly
+with `--with-maude`. The Maude path must be a shell-safe ASCII token because
+Tamarin also uses it in a shell command. The default environment excludes
+`GHCRTS` and `DEBUG_MAUDE`. Constructor, discovery and default metadata probes
+remain inert; explicitly supplied runners, including falsey objects, remain
+caller-owned and retain their previous arguments and memory limits.
+Use a name available on `PATH` or an absolute Maude path; relative paths resolve
+inside the private workspace.
+
+Memory admission and sampled Linux process-tree RSS use the requested memory
+bound. The separate per-process address-space limit is `max(2 GiB, 4 × requested
+memory)`. At the standard 512-MiB request this gives a 256-MiB Haskell heap limit
+and 2-GiB address-space limit. Matching GHC 9.6.7 source adapts its virtual
+reservation to finite `RLIMIT_AS`; newer GHC's `-xr` option is unsupported here and
+is not passed. Runtime startup sufficiency still needs native qualification.
+These reservations are estimates, RSS sampling can overshoot, and neither this
+profile nor the Haskell heap limit provides hard aggregate OOM/PID containment.
+Custom oracle processes remain outside the ordinary-stock process estimate.
+
+Result parsing now requires a clean lifecycle, an exact integer zero exit status
+and combined stdout/stderr UTF-8 bytes within the requested output bound.
+Cancellation, timeout, resource/workspace exhaustion, reported errors and forced
+process-tree termination cannot produce accepted protocol evidence. Every runner
+result carries lifecycle metadata and stream digests; early unsupported or missing
+tool results retain their previous shape. Claim matching and structural attack
+trace parsing are unchanged and remain separate semantic qualification gaps.
+
+Validation passed **2,771 joined tests**, retaining all
+2,702 previous cases and adding **69 cases**.
+The **647 focused tests** overlap with the joined population.
+Fifteen legacy native cases remain deselected. Controlled private schedulers cover
+pressure backoff, recovery, cancellation, deadline exhaustion, default routes,
+caller-owned injection and complete cleanup without adding host load.
+
+The end-to-end benchmark exercised actual production admission against the saved
+pool. Its four process slots cannot fit the eight-slot reservation, so both cases
+returned unaccepted capacity errors with **zero native launches and zero input
+workspaces**. This qualifies refusal behavior, not successful native Tamarin
+proving, native stress tolerance or many-core speedup. The benchmark took
+**0.355 seconds** inside the driver and
+**0.716 seconds** including the wrapper.
+Pool policy and the real sampler configuration remained unchanged; owned leases
+and waiters drained. Capacity refusal does not establish pressure sampling during
+that acquisition. All 2,648 artifact bodies from 26 prior qualifications remain
+unchanged.
+
+Next work is native qualification under a separately reviewed adequate capacity
+policy, complete Tamarin claim-set/source binding, semantic attack reconstruction
+and the remaining Hyper default-runner migration. No pool widening, tool downloads
+or installer changes were performed. CodebaseIR producer inventories remain
+27 verification and 29 applicability modules; this increment adds no cache replay,
+DuckLake indexing, learned representation or planner authority.
+
+Evidence: `workspace/tamarin-default-admission-qualification-20261004/REPORT.md`
+and its `qualification.json` in the datasets repository.
+
+## Tamarin source and lemma binding — 2026-10-04
+
+The canonical Tamarin backend now binds results to a nonempty, unique and complete
+claim/lemma mapping derived from the actual compiled source. It ignores quoted and
+commented pseudo-declarations, rejects duplicate/unsupported declarations and checks
+trace quantifiers. Identical verdicts deduplicate; conflicting, unknown, missing or
+malformed results remain quarantined. Diagnostic IDs cannot impersonate declared
+claims, and quarantine IDs remain unique. Source text, request bounds and digest
+bindings remain intact.
+
+Native parsing reads the last summary per stream with complete result rows and a
+closed metadata format. Echoed source cannot supply missing results; malformed rows,
+unexpected summary text and wellformedness warnings block acceptance. Every parsed
+falsified result now carries no attack trace, including existential failures that
+report no trace found. Rule/marker text therefore cannot produce automatic attack
+replay authority through the canonical backend or V2. The separately called legacy
+trace utility remains structural only.
+
+The binding scanner supports ordinary ASCII lemma names, `(modulo E)`, the
+`sources`, `reuse`, `use_induction` attributes and universal/existential trace modes.
+Preprocessing and other syntax conservatively refuse binding. This scanner does
+not replace native syntax or semantic validation. Expected names `analyzed` or
+`output` may conservatively conflict with summary metadata. Direct parser calls
+without source retain map-only compatibility; complete legacy rows remain supported
+when neither a native summary nor a theory echo is detected. These compatibility
+paths do not attest native output authenticity.
+
+Validation passed **2,858 joined tests**, retaining all 2,771
+previous cases and adding **87 new cases**.
+The **734 focused passes** overlap the joined population;
+15 legacy native cases remain deselected. Four retained fixture files now assert
+UNKNOWN/no replay for unvalidated falsification, preserving resource and identity
+checks.
+
+All **15 controlled E2E cases** passed across direct, registry and standalone V2
+routes. Synthetic availability, solver output and healthy pressure used an isolated
+scheduler, while the default runner, compiler, parser, workspace lifecycle and
+evidence projections executed unchanged. Native launches and shared-pool access
+were zero; workspaces and leases drained. The benchmark took
+**0.556 seconds** in the driver and
+**0.916 seconds** including the wrapper.
+
+The benchmark also recorded **36 serial parser timing samples** across 10, 100 and
+1,000 lemmas with complete, unknown, conflicting and missing outputs. The complete
+1,000-lemma case had a median of **7.251 ms**. Timings include source/claim
+binding and output parsing, excluding classification and serialization. They do
+not establish native proving speed, native stress tolerance or many-core scaling.
+The full table and raw samples are retained in the qualification.
+
+All **2,764 artifact bodies from 27 earlier qualifications** remain unchanged.
+The shared pool was not accessed or resized. Successful native Tamarin startup and
+summary qualification under an adequate reviewed policy remain open, alongside
+broader syntax/compiler coverage, semantic attack reconstruction and the Hyper
+default-runner migration. The previous four-slot saved pool still cannot fit the
+eight-slot Tamarin estimate. CodebaseIR producer inventories remain 27 verification
+and 29 applicability modules; this increment adds no learned representation,
+index/cache replay or planner authority.
+
+Evidence: `workspace/tamarin-claim-binding-qualification-20261004/REPORT.md` and
+`qualification.json` in the datasets repository.
+
+## Hyper engine default admission and V2 bounds — 2026-10-04
+
+HyperLTL, AutoHyper and MCHyper now use lazy shared admission for their owned
+default runners: two CPU slots, four process slots, and the caller's requested
+memory as the reservation and sampled process-tree RSS ceiling. Admission waits
+consume the same native invocation deadline, and ambient proof-operation stops
+remain effective. Discovery creates no scheduler state or native processes.
+Standalone V2 now forwards caller bounds to `check`, aligning actual limits with
+its evidence. Default version access is inert; declared identity versions remain
+available without an extra `--version` subprocess.
+
+Owned profiles set finite CPU and per-process address-space limits. Address space
+is `max(2 GiB, 4 × requested RSS)`, or `max(4 GiB, 4 × requested RSS)` for AutoHyper.
+AutoHyper uses `DOTNET_PROCESSOR_COUNT=1`, `DOTNET_gcServer=0` and a hexadecimal
+`DOTNET_GCHeapHardLimit` equal to half the requested memory (minimum one byte).
+Conflicting GC aliases/per-heap overrides are removed; required runtime paths are
+preserved. CPU/process reservations are estimates, GC heap is not total memory,
+and RSS sampling can overshoot. Native startup under these profiles is unqualified.
+AutoHyper retains its documented `RLIMIT_FSIZE` compatibility exception: workspace
+size is checked after execution, with no live disk-write ceiling.
+
+Unsafe resource, cancellation, timeout, cleanup, process-tree, error, output-limit
+or malformed-stream conditions block verdict/witness interpretation. Conclusive
+verdicts require an exact integer zero exit status. A clean unsupported-fragment
+exit remains nonconclusive `UNSUPPORTED`. Results retain lifecycle metadata and
+stream digests. NUL-containing output is rejected and sanitized in receipt text;
+metadata and byte usage retain the original stream binding. Explicit plain,
+falsey and admitted runners retain caller-owned resource/environment profiles;
+an explicit admitted runner must supply finite limits itself. Safe explicit-runner
+version probes remain a separate three-second metadata call. Custom backend
+`check` overrides must accept the new `bounds` keyword for V2.
+
+Validation passed **2,993 joined tests**, retaining all 2,858 previous
+cases and adding **80 new admission cases** plus 55 existing Hyper
+integration cases. The **469 focused passes** overlap that population;
+15 legacy native cases remain deselected. The retained initial focused attempt
+found the exit-2 compatibility regression, which was corrected before final runs.
+
+All **26 controlled end-to-end cases** passed: direct and V2 execution for every
+engine, the actual HyperLTL registry delegate, resource-failure rejection,
+impossible-capacity refusal and nine pressure/recovery samples. Each uses an
+isolated private scheduler, synthetic engine output/discovery and synthetic host
+pressure. Actual admission queues backed off before any workspace/executor work,
+then recovered after pressure release; owned leases, waiters and workspaces drained.
+Median controlled admission waits: hyperltl **20.71 ms**, autohyper **20.72 ms**, mchyper **20.85 ms**. These timings include an intentional
+20-ms fixture backoff and do not measure native proving or many-core scaling.
+Driver time was **1.970 seconds**, or **2.418 seconds**
+including the wrapper. Native launches and shared-pool accesses were zero.
+
+All **2,883 artifact bodies from 28 previous qualifications** remain unchanged.
+CodebaseIR producer inventories remain 27 verification and 29 applicability
+modules, with no additional cache/index, learned-IR or planner authority.
+
+Remaining gaps: registry AutoHyper/MCHyper aliases currently select HyperLTL;
+standalone V2 whole-operation budgeting/cancellation; explicit-runner version
+budgeting; native Hyper startup/stress/scaling; hard aggregate containment and
+AutoHyper live disk bounds; semantic witness qualification. Tamarin native startup,
+broader syntax and semantic attack reconstruction also remain open.
+
+Evidence: `workspace/hyper-default-admission-qualification-20261004/REPORT.md`
+and `qualification.json` in the datasets repository.
+
+## Independent Hyper engine registry routing — 2026-10-04
+
+`hyperltl`, `autohyper` and `mchyper` now select their own lazily constructed,
+independently cached backends through the default registry. Previously those IDs
+were aliases for the combined family and all selected HyperLTL. Each engine keeps
+default resource admission, caller bounds, request identity and typed engine
+evidence. Generic bounded results remain UNKNOWN and confer no theorem authority.
+
+The legacy `hyperltl_autohyper_mchyper` ID still executes HyperLTL, and implicit
+provider ordering is preserved. To select an engine, set its canonical ID in the
+request, or leave the request ID empty and pass that engine as the explicit
+selector. If both are present they must agree. A legacy-family request paired
+with an individual-engine selector is now a conflict, rejected before delegate
+construction. Missing engines do not silently select a peer.
+
+The provider catalog, conformance axes, alignment PATH probes and source audit now
+agree on 18 executable provider IDs (20 including advisory entries). Three current
+generated JSON catalogs were refreshed with retained before/after bytes. These
+declarations and source observations do not establish installed native capability.
+
+Validation: **3,195 joined tests passed**, retaining all 2,993 previous cases and
+adding **41 new routing cases** plus 161 existing catalog/API checks. The final
+selection deselects 19 native cases. Earlier focused validation passed 519 tests;
+518 overlap the final joined population, so counts are not added. The first
+attempt's two fixture errors and stale generated audit were corrected and retained.
+
+All **29 controlled E2E benchmark cases** passed. With three concurrent engines
+and a private pool sized for two jobs, the scheduler observed two active leases
+and one waiting request, then drained all leases, waiters and workspaces. The pool
+had four CPU slots, 256 MiB and eight process slots; each request reserved two CPU
+slots, 128 MiB and four process slots. The driver took **0.694 seconds**
+(**1.166 seconds** including its wrapper). Discovery, engine output
+and pressure samples were synthetic; the registry, admission, workspace and result
+binding paths executed. This measures controlled routing, not native proof speed.
+
+Validation scope: earlier focused attempts inadvertently included uninstrumented
+legacy API tests capable of native/portfolio execution. Their native and shared-pool
+activity is **unmeasured**. All four such API cases are excluded from the final
+joined selection. Zero native launches/shared-pool accesses applies only to the
+guarded new routing fixtures and controlled benchmark, not the entire turn.
+
+All **3,014 artifact bodies from 29 prior qualifications** remain unchanged.
+CodebaseIR producer inventories remain 27 verification and 29 applicability modules;
+this increment adds no learned representation, cache/index replay or planner authority.
+Remaining gaps include standalone Hyper V2 whole-operation budgets/cancellation,
+explicit-runner version budgets, native startup/stress/many-core scaling, aggregate
+containment, AutoHyper live disk limits and semantic witness qualification. Tamarin
+native startup, broader syntax and semantic attack reconstruction also remain open.
+
+Evidence: `workspace/hyper-registry-routing-qualification-20261004/REPORT.md`
+and `qualification.json` in the datasets repository.
+
+## Hyper whole-operation budgets and cancellation — 2026-10-04
+
+Standalone Hyper V2 execution now establishes a cooperative operation deadline by
+default from the request timeout. The engine constructor, `execute`,
+`execute_split_capabilities` and convenience helpers accept `operation_timeout_ms`
+and `cancellation`. A per-call timeout overrides the constructor default, capped by
+the declared request timeout; a tighter enclosing operation still wins. Constructor,
+call and enclosing cancellation signals combine, and observed stops remain latched.
+
+One budget covers normalization, capability callbacks, translation, admission,
+native execution, metadata, witness handling and evidence construction. A split
+shares that budget across all three engines; interruption raises
+`ProofOperationTimeout` or `ProofOperationCancelled` without returning a partial
+mapping or late evidence. Python callbacks are checked at boundaries and cannot be
+forcibly preempted. Cleanup may extend beyond the deadline.
+
+Native and explicit-runner version invocations use the remaining enclosing budget.
+Requests, declared bounds and receipt timeouts retain their original values;
+effective invocation limits are recorded separately. Default admission and memory
+profiles remain in place. Falsey injected backends/engines retain ownership, and
+legacy callback signatures are called once without retry. Direct adapter checks
+and standalone capability probes do not create a new operation scope themselves;
+they observe an existing enclosing scope.
+
+Validation passed **3,290 joined tests**, including **95 new cases** and all
+3,195 previously retained cases. The **594 focused passes** overlap this population;
+19 native cases remain deselected. The first full run passed, but an external
+scheduler edit occurred during it. That edit only adds timeout diagnostics; both
+generations were retained and reviewed, and the complete suite was rerun with
+stable source hashes. A subsequent diagnostic-only edit bounds the timeout lane
+text; the benchmark used that later stable generation. The full suite ran against
+the preceding generation. Owned Hyper code was identical in both runs, and the
+exact dependency hashes and review of both deltas are retained.
+
+All **19 controlled E2E benchmark cases** passed, including six queued stops,
+three external-pressure recovery fixtures, successful splits and two interrupted
+splits. All eight stopped calls returned no result. Private leases, waiters and
+workspaces drained. Driver time was **3.153 seconds**, or
+**3.672 seconds** including its wrapper. Discovery, solver
+output and pressure were synthetic; native launches and shared-pool accesses were
+zero in this benchmark. These measurements do not establish native preemption,
+real host-pressure resilience, proof throughput or many-core speedup.
+
+All **3,150 artifact bodies from 30 earlier qualifications** remain unchanged.
+CodebaseIR inventories remain 27 verification and 29 applicability modules; no new
+learned representation, cache/index replay or planner authority is established.
+Remaining work includes native Hyper startup/stress/scaling, hard aggregate
+containment, AutoHyper live disk limits and semantic witness validation. Explicit
+runner metadata outside an enclosing scope still uses its separate three-second
+limit. Tamarin native startup, broader syntax and semantic attack reconstruction
+also remain open.
+
+Evidence: `workspace/hyper-operation-control-qualification-20261004/REPORT.md`
+and `qualification.json` in the datasets repository.
+
+## Hyper counterexample structural validation — 2026-10-04
+
+Native Hyper witness parsing now requires exact declared trace labels and complete,
+unique approved assignments. It rejects ambiguous fields, inconsistent DIFF rows,
+malformed Unicode/control records and inputs exceeding finite byte/line/field/trace
+limits. Differences and digests are recomputed; no missing difference is fabricated.
+Context-bound validation requires exactly two forall traces, equal low-input and
+subject projections, and a genuine approved observation difference. Native bundles
+require explicit `observation_map`, `quantifier_order` and `formula_id`; manual replay
+also requires expected `formula_id`. V2 rechecks the actual request, including
+reconstructed positive witness claims. Incomplete legacy witness fixtures must be
+updated to include every approved public, observation and subject field.
+
+Validation: **3390 selected tests passed**, retaining all **3290** previous
+cases and adding **100**; **694** focused tests passed. The same
+19 native-capable legacy cases remain deselected. **36 controlled end-to-end cases**
+cover three engines, three routes and valid/malformed/equal-observation/unequal-low
+witnesses, using default managed runners and a private 2-CPU / 128-MiB / 4-child-slot
+pool. All leases and workspaces were released; guarded native launches and shared
+pool accesses were zero. Timings measure synthetic-executor orchestration and
+structural validation; they do not establish native throughput or many-core speedup.
+
+Engine-reported `VIOLATED` remains separate from witness validation; generic registry
+results retain `UNKNOWN` and no theorem authority. The legacy `replayed` flag means
+only structural projection validation. Native reachability, temporal semantics,
+high-input variation and output authenticity remain unvalidated. The bounded
+self-composition evaluator retains its separate non-authoritative bundle path.
+Canonical witness raw text retains approved assignments only; original receipt
+stdout/stderr are still captured separately. Earlier qualifications and 27 verification
+/ 29 applicability producer inventories are preserved. Native startup/profile,
+real external-pressure stress, aggregate containment and scaling gaps remain open.
+
+Evidence: `workspace/hyper-counterexample-validation-qualification-20261004/REPORT.md`.
+
+## Default live workspace guard — 2026-10-04
+
+The shared bounded subprocess runner now inspects private workspace logical bytes,
+entry count and directory depth before launch, about every 100 ms between completed
+samples, and after execution. This is enabled by default, including AutoHyper's
+explicit per-file-limit opt-out. Entry/depth defaults are 16,384/64, with configurable
+hard ceilings of 1,000,000/256. POSIX traversal uses no-follow directory descriptors;
+symlinks and special files count as entries without reading their targets or bodies.
+Non-transient inspection errors fail conservatively. Cancellation/deadlines are
+checked between scan steps and immediately before launch. A normalized executor
+exception is preserved without calling a failed cancellation callback again.
+
+Observed workspace overruns terminate through the existing process-tree cleanup
+and remain latched even when a SIGTERM handler removes files and exits zero. Final
+checks cover injected executors too; stopped or failed runs can interrupt that scan.
+The admission lease remains held through process/workspace cleanup. Per-file limits,
+AutoHyper runtime settings and scheduler capacities are unchanged. A previous test
+expecting an over-budget process to exit zero now permits earlier termination while
+still requiring resource/workspace failure.
+
+Validation: **3522 selected tests passed**, retaining all **3390** previous
+cases, adding **56** new guard tests and selecting **76** existing
+process tests. **477** focused tests passed; the same 19 native-capable
+legacy cases remain deselected. The retained first focused attempt exposed three
+callback-error cleanup regressions, which were fixed before the accepted runs.
+**12 real Python-process benchmark cases** passed in **2.397s**,
+with one owned child and two waves of two concurrent jobs. The private pool had capacity
+2 CPU / 256 MiB / 4 child slots; each job reserved 1 CPU / 128 MiB / 2 child slots,
+with finite wall/CPU/AS/RSS/output limits and an 8-KiB workspace budget. Scheduled writes totalled 242,688 bytes across all cases.
+Healthy/exact-budget runs succeeded; all eight overruns and the cancellation were
+refused, including two delete-on-shutdown cases. Processes, workspaces and leases
+drained; shared scheduler access was zero. These are real process-lifecycle tests
+with synthetic healthy resource samples, not installed solver or pressure tests.
+
+This is sampled logical-size protection, not a disk quota. Between-sample overshoot,
+external-path writes and open-unlinked files are outside the guarantee; hard links
+are conservatively counted per entry and sparse files by logical size. Filesystem
+calls/cleanup are not forcibly preemptible. The portable path-based fallback is not
+a hostile-race security boundary; native qualification here is Linux only. Native
+solver startup, real-pressure stress, hard aggregate containment, temporal witness
+replay and many-core scaling remain open. A separate Hyper follow-up is immutable
+evidence plus complete request-ID/digest/bounds binding during reconstruction.
+
+All **3440 artifact bodies from 32 prior qualifications** remain unchanged. Current
+CodebaseIR producer inventories still contain 27 verification / 29 applicability
+modules; only the process module hash changes. Historical records retain their
+original pins, and strict current-generation cache checks are not relaxed. This
+increment adds no proof-cache migration, learned representation or planner authority.
+
+Evidence: `workspace/process-workspace-guard-qualification-20261004/REPORT.md`.
+
+## Hyper V2 evidence integrity — 2026-10-04
+
+Hyper V2 request/evidence payloads and attached translation mappings now freeze
+nested containers, and public JSON exports return detached values. Supplied
+evidence content digests are checked against the existing digest preimage; the
+schema and digest algorithm are unchanged. Reconstructing a result checks its
+request ID/digest/source references, document/formula/system, declared execution
+bounds, typed backend result, translation and receipt links. Structural witness
+validation remains bound to the actual request; a path declaring no evidence
+cannot carry a counterexample or witness bundle. Each payload copy is limited to
+16 MiB of UTF-8 string content, 65,536 nodes and depth 64, with cooperative
+operation checkpoints.
+Existing UTF-8 and ASCII digest encodings are preserved. Receipt identity checks
+restore the declared timeout float from the request bounds before hashing.
+Attached translations must match the canonical engine renderer, projection maps
+and auxiliary files for the retained request; internally consistent custom
+translations that differ from those canonical bindings are rejected. Callers
+editing payloads must use detached public `to_dict()` values to rebuild records.
+No existing test files changed.
+
+Validation: **3652 selected tests passed**, retaining all **3522** previous
+cases and adding **130**; **608** focused tests passed. The
+same 19 native-capable legacy cases remain deselected. **12 controlled end-to-end
+cases** passed in **0.445s**: three engines with satisfied
+and violated outputs, three capability probes, mock/fallback-payload rejection,
+and bounded evaluator fallback through an explicitly unavailable discovery
+fixture. Six production managed-runner paths executed against private
+2-CPU / 128-MiB / 4-child-slot pools with synthetic outputs and healthy host samples.
+All **108 binding mutations** and **93 nested mutation attempts** were
+rejected; all 12 records retained stable public wire projections and digests.
+Workspaces and leases drained; guarded native launches and shared pool access
+were zero. Timings measure these mixed controlled paths, not native throughput.
+
+Reconstruction retains the typed request/source/model: the existing request wire
+contains digests and trace counts, not complete raw documents, models or private
+trace contents. This adds no standalone full-result JSON decoder or private-trace
+content binding. Public `to_dict()` exports are the supported detached snapshots;
+no `deepcopy(MappingProxyType)` contract is added. Consistent records and valid
+digests do not establish solver authenticity, signatures, model membership or
+temporal witness replay. Mock, supplied fallback and capability-only paths retain
+no proof or theorem authority. Bounded evaluator fallback remains separate from
+native structural replay. Real external-pressure stress, hard containment and
+many-core scaling remain open.
+
+All **3523 artifact bodies from 33 prior qualifications** remain unchanged,
+including every retained earlier attempt. The 27 verification / 29 applicability
+producer inventories are unchanged. No cache authority, learned CodebaseIR or
+planner authority is added by this increment.
+
+Evidence: `workspace/hyper-evidence-integrity-qualification-20261004/REPORT.md`.
+
+## Hyper bounded fallback applicability — 2026-10-04
+
+V2 fallback result construction now re-evaluates the retained traces with the
+canonical bounded evaluator and checks the resulting disposition, redacted
+counterexample, witness bundle and successful evaluator reason suffix. A same-count trace substitution can no longer
+retain a violation witness that the supplied traces do not support. Equivalent
+private-value renaming and trace permutation remain accepted when these public
+outcomes agree. This establishes outcome applicability, not private-trace identity.
+The V2 wire format and digest algorithms remain unchanged; the request descriptor
+still binds trace count rather than private contents, and no public private-input
+hash is added. Generic `BackendRequest` payload redaction is unchanged.
+The generic registry retains its availability veto: a missing tool stops before
+the fallback delegate runs. Missing-tool registry fallback remains an integration
+gap; the actual fallback qualification here covers the direct/V2 paths.
+
+Trace normalization has finite limits of 16,384 records, 262,144 nodes, 16 MiB of
+UTF-8 string content, depth 32 and 4,096-bit integers. Normalization, bounded
+selection, pair evaluation and witness publication have cooperative checkpoints.
+Direct backend normalization and fallback use separate bounded operation scopes,
+with discovery between them; this is not a single aggregate deadline for the
+whole direct run. V2 reconstruction uses bounded operation control, and nested
+validation inherits a tighter parent deadline and cancellation.
+These limits bound input traversal/copy work, not process RSS or opaque callback
+execution. They do not establish hard preemption or aggregate memory containment.
+
+Validation: **3738 selected tests passed**, retaining all **3652** previous
+cases, adding **70** new tests and selecting **16** existing
+core evaluator tests; **694** focused tests passed. The
+same 19 native-capable legacy cases remain deselected. **15 controlled end-to-end
+cases** passed in **0.730s**: all three providers exercise
+violated, clean and limited fallback evaluations, followed by three managed
+engine paths with synthetic SAT output and three typed cooperative stops.
+The nine fallback cases invoke the actual evaluator and canonical revalidation.
+**21 changed outcomes were rejected**, **18 equivalent outcomes were accepted**,
+and all **three interrupted operations withheld results**. The interruption
+fixture sets cancellation or consumes the deadline at entry to the actual
+evaluator, including a second-evaluation stop during result validation.
+
+The managed paths retain private 2-CPU / 128-MiB / 4-child-slot pools. Discovery,
+native-shaped output and healthy host samples are synthetic. Three synthetic
+executor calls ran; actual native launches and shared pool accesses were zero.
+Workspaces and owned leases drained. Private fixture sentinels were absent from
+recorded results and errors. Mixed-path timings include an intentional deadline
+delay and are not a native proof-throughput or parallel-scaling measurement.
+
+Clean and limited fallback results remain UNKNOWN; fallback violations remain
+bounded and do not establish external-engine or theorem authority. Successful
+evaluations require the canonical reason suffix; the unsupported branch does not
+claim exact canonical reason binding. Exact private values remain unbound. Broader
+declassification behavior, missing-field semantics, whole-private-map comparison
+and `max_steps` disclosure semantics are unchanged. Native authenticity,
+model membership, general temporal replay, real external-pressure stress and
+many-core scaling remain open.
+
+All **3695 artifact bodies from 34 prior qualifications** remain unchanged,
+including every retained earlier attempt. The 27 verification / 29 applicability
+producer inventories are unchanged. No existing test files changed. No cache,
+learned CodebaseIR or planner authority is added by this increment.
+
+Evidence: `workspace/hyper-fallback-validation-qualification-20261004/REPORT.md`.
+
+## Request-scoped Hyper registry fallback — 2026-10-04
+
+The default registry can now use bounded local fallback when the selected Hyper
+tool is missing, the request opts in with exact boolean `allow_fallback=True`,
+and nonempty traces are supplied. Eligibility is checked for that request and
+the matching canonical HyperLTL, AutoHyper, MCHyper or legacy-family delegate.
+Public native availability remains false. Caller-defined availability contracts
+remain in force; their refusals, probe failures and explicit vetoes do not acquire
+the missing-tool exception. The delegate rechecks discovery. With default
+adapters, a newly available tool uses the ordinary resource-admitted native
+runner; caller-provided runners keep their existing contract.
+
+This closes the narrow missing-tool registry fallback gap recorded in the prior
+qualification. The six existing gate tests now expect the opted-in behavior;
+their original bodies and case IDs are retained as historical evidence. Prior
+qualification reports and artifacts remain unchanged.
+
+Validation: **3809 selected tests passed**, retaining all **3738** previous
+cases and adding **71**; **989** focused tests passed. The
+same 19 native-capable legacy cases remain deselected. **20 controlled results**
+passed in **0.535s**: the four selectors each cover
+violated, clean and limited fallback; paired negatives cover disabled opt-in,
+empty traces, an explicit availability veto and a discovery failure. Two stops
+produce bound CANCELLED/TIMED_OUT attempts with generic UNKNOWN results. Two
+overlapping calls on one registry demonstrate that an opted-in fallback does not
+enable a concurrent request lacking opt-in.
+
+The actual bounded evaluator produced **13 fallback outcomes**, with **five
+unavailable refusals** and **two normalized stops**. The registry preserves typed
+redacted outcomes while every generic result remains UNKNOWN. Private fixture
+sentinels are absent from recorded outcomes and errors. Full generic requests
+are not persisted by this benchmark: their existing payload format contains
+trace inputs, so artifacts store only safe descriptors, trace counts and request
+digests. This artifact policy does not change generic request redaction or remove
+the existing request digest's commitment to its payload.
+
+Discovery is synthetic; availability is never forced true and evaluator results
+are not injected. Actual native launches, transports and scheduler accesses were
+zero. Pure Python fallback does not acquire scheduler leases or provide host
+pressure backoff. It retains finite input/evaluation bounds and cooperative
+operation cancellation, without hard RSS containment or opaque callback
+preemption. Timings include controlled deadline and rendezvous delays and do not
+measure native proving throughput or many-core scaling. V2 outcome applicability,
+private-trace identity limitations and broader evaluator semantics are unchanged.
+
+All **3856 artifact bodies from 35 prior qualifications** remain unchanged,
+including retained earlier attempts. The 27 verification / 29 applicability
+producer inventories are unchanged. This increment changes two production files
+and the six expectations in one existing test file. It adds no theorem, cache,
+learned CodebaseIR or planner authority.
+
+Evidence: `workspace/hyper-registry-fallback-qualification-20261004/REPORT.md`.
+
+
+## Hyper installer hardening and Python admission — 2026-10-04
+
+Hyper fallback and V2 applicability reevaluation now use default scheduler
+admission: one CPU, the requested finite memory reservation, and zero process
+slots. Admission waits under external pressure and honors cancellation and the
+aggregate deadline. This supersedes the earlier note that Python fallback has
+no scheduler admission. Already admitted Python work is not paused by subsequent
+host pressure, and reservations do not impose a hard Python RSS ceiling.
+
+The Hyper installer now streams digest-checked downloads into unique temporary
+files; limits compressed/expanded bytes, archive structure and hashing; rejects
+unsafe members and redirects; serializes same-tool installations; and retains
+the previous tree and launcher through identity audit and publication. Build
+and probe subprocesses acquire scheduler capacity by default. Their CPU, memory,
+output, workspace and time controls also apply during cancellation and cleanup.
+AutoHyper output and its temporary package cache stay inside the guarded source
+workspace. Lazy setup supports reviewed dependency roots and retry after an
+interrupted attempt. Missing dependencies remain explicit blockers.
+
+Validation: **4,060 selected tests passed**, including all 3,809 prior cases,
+177 new cases and 74 newly selected existing setup tests; **1,163 focused tests
+passed**. The same 19 legacy native cases remain deselected. Nine controlled
+installer benchmark groups passed in **1.035 s**, using eight actual small
+Python subprocesses, with concurrent requests, rollback, pressure recovery and
+cancellation. Eight Python admission cases passed in **0.454 s**, including
+three queued cancellations and two overlapping reservations. All owned leases,
+waiters and subprocesses drained. Pressure was injected through private sampler
+fixtures; these timings are not many-core proving throughput measurements.
+
+Fresh official pinned EAHyper, AutoHyper and MCHyper main-source archives all
+passed actual download, digest and extraction checks (19,723,238 compressed
+bytes total). Full fresh upstream compilation and native Hyper proving remain
+unqualified; required toolchains are not on this host's PATH. Automatic
+provisioning of those dependencies and real many-core proving benchmarks remain
+follow-up work. Sampled process limits can overshoot; no hard aggregate memory
+or disk guarantee is claimed. Import/discovery does not initiate installation.
+No proof-cache, learned CodebaseIR, or planner authority is added.
+
+Evidence: `workspace/hyper-installer-resource-qualification-20261004/REPORT.md`.
+All 3,975 artifact bodies from 36 earlier qualifications and the 27/29 producer
+inventories are preserved. Earlier failed attempts remain in the new report.
+
+
+## Native Hyper setup validation — 2026-10-04
+
+The native Hyper gap is now narrower: EAHyper, AutoHyper and MCHyper were built
+from fresh pinned main-source downloads into an isolated prefix, using the
+existing managed compiler/runtime dependencies outside PATH. The actual shared
+scheduler and default installer limits governed all 42 top-level build/probe
+launches. All three installations passed identity audits and cached reuse
+without additional native commands. The complete build run took **43.867 s**
+(EAHyper 11.817 s, AutoHyper 11.191 s, MCHyper 20.805 s).
+
+Five native smoke checks passed through the default admitted adapters in
+**6.316 s**: EAHyper satisfiability, plus holding and violating models for
+AutoHyper and MCHyper. Each check reserved two CPUs, 512 MiB and four process
+slots, with a 30-second operation budget. Owned leases, processes and workspaces
+were released, and vendor identities were unchanged. This supersedes the prior
+absence of fresh native build/check evidence; these small cases do not establish
+many-core speedup or a complete semantic certification.
+
+New setup utilities provide an inert dependency plan and explicitly authorized
+repair of MCHyper's three pinned provenance archives. The actual missing AIGER,
+ABC and Python source archives were downloaded into a separate cache and
+checksum-verified. Filesystem candidates remain unvalidated until normal
+installer probes and audits pass. Invalid explicit executable roots now fail
+before probes instead of silently selecting a PATH tool; explicit archive
+paths remain authoritative during repair.
+
+**4,137 selected tests passed**, preserving all 4,060 previous cases and adding
+77 (42 resolver and 35 setup cases); **1,063 focused tests passed**. The same
+19 legacy native cases remain deselected; this increment's five native checks
+ran separately. All **4,561 artifact bodies from 37 prior qualifications** and
+the 27/29 producer inventories remain preserved.
+
+Remaining work includes reviewed compiler/runtime provisioning on a clean
+machine, larger mixed-solver parallel workloads, and pressure-response/scaling
+qualification. The native builds reused existing compiler installations; the
+setup utility repairs provenance archives and does not bootstrap those
+compilers. Reservations and sampled process guards remain estimates rather
+than hard aggregate memory/disk limits. This adds no learned CodebaseIR,
+proof-cache or symbolic-planner authority.
+
+Evidence: `workspace/hyper-native-setup-qualification-20261004/REPORT.md`.
+
+
+## Hyper setup integrity and bounded parallel validation — 2026-10-04
+
+MCHyper preparation now rejects conflicting archive destinations before any
+transfer, rehashes the final archive set under the original operation budget,
+and refuses a verified result if files change during validation. Explicit GHCup
+aliases also retain precedence over automatically discovered managed roots.
+Three fresh official provenance archives passed actual download, final hashing
+and cache-reuse checks in **4.366 s**. Verification records observed bytes; it
+does not lock the cache against later writers or provision missing compilers.
+
+The native benchmark ran the same ten EAHyper/AutoHyper/MCHyper fixtures serially
+and with two workers through unchanged default admitted adapters and the actual
+shared scheduler/host sampler. The serial phase took **1.812 s** and the parallel
+phase **0.896 s**, with sampled live native-root peaks of one and two. All twenty
+native cases passed, and owned processes, workspaces and leases drained. The
+**2.022** elapsed ratio is one sequential-then-parallel trial on small repeated
+fixtures, not evidence of general many-core scaling or CPU utilization.
+
+A separate scheduler-only check filled a 4-CPU/1-GiB/eight-process parent
+envelope with two children, observed its uniquely identified third child wait,
+and released capacity. Admission resumed in **0.058 s**; all four leases and
+the owned waiter drained. This exercises parent-capacity contention, without
+manufacturing host pressure or reserving the whole shared pool.
+
+The first native attempt encountered actual kernel memory-stall pressure
+(**20.89%** at the retained refusal, above the default **2%** threshold).
+Default admission launched no solver, and the request timed out after its
+30-second budget with no leaked waiter or reservation. After three unmodified
+sampler readings below the stall thresholds, a separate retry completed the
+native benchmark. This establishes an observed natural-pressure refusal and a
+later successful retry; it does not establish the cause of that pressure or
+recovery of the original timed-out request. No safety threshold was relaxed.
+
+**4,215 selected tests passed**, retaining all 4,137 previous case IDs and adding
+78 (29 setup-integrity and 49 benchmark cases). **1,141 focused tests passed**;
+the same 19 legacy native cases remain deselected. Both native attempts and the
+superseded focused test generation remain recorded. All **4,796 artifact bodies
+from 38 earlier qualifications** and the 27/29 producer inventories are intact.
+
+Next work is to pin compiler/runtime distributions per supported platform,
+provide bounded runtime-specific extraction and installation recipes, and
+qualify a clean-machine bootstrap. Larger mixed-solver trials need repeated
+measurements and a safely isolated pressure environment. Existing reservations
+and sampled guards remain estimates; no hard aggregate containment, semantic
+witness certification or additional proof/planner authority is introduced.
+
+Evidence: `workspace/hyper-parallel-setup-qualification-20261004/REPORT.md`.
+
+
+## Bounded .NET SDK bootstrap for AutoHyper — 2026-10-04
+
+The separate `plan_dotnet_sdk_setup` / `ensure_dotnet_sdk` API provisions the
+fixed .NET SDK 8.0.300 distribution used by the current AutoHyper vendor recipe,
+with runtime 8.0.5 and reviewed Linux glibc ARM64/x64 archive pins. Planning and
+`yes=False` remain inert. Provisioning requires `yes=True`; this API is not yet
+connected to automatic lazy dependency installation. The fixed version is a
+vendor compatibility target, not a recommendation to use it for other workloads.
+
+The SDK archive is authenticated with its pinned SHA-512 before extraction.
+Finite byte, member, path and depth limits constrain acquisition and extraction;
+publication is transactional, and cache reuse derives a fresh archive inventory
+and audits the installed tree. Staged and published version probes use owned
+first-use directories and an isolated environment. The receipt identifies a
+support dependency and grants no proof authority. Verification observes current
+bytes; it does not make a writable installation immutable.
+
+The default operation budget is 30 minutes. Native install commands retain the
+existing one-CPU, 1-GiB sampled RSS, four-process admission request and finite
+8-GiB address-space limit. These controls inherit cancellation and parent
+deadlines; sampled guards and reservations do not guarantee aggregate process
+containment. SDK acquisition reuses the host OS loader/libraries, and the
+AutoHyper recipe still requires an existing reviewed Spot installation. OCaml,
+GHC and other compiler provisioning remain separate work.
+
+The cold-bootstrap driver uses fresh SDK/cache/engine destinations, then performs
+AutoHyper build, cache reuse and two default-runner native smoke checks under one
+operation. Large live trees stay outside the qualification artifact directory.
+“Cold” describes fresh filesystem destinations, not cold OS or network caches;
+these checks do not establish clean-machine portability, semantic witness
+certification, many-core scaling or new proof-index/planner authority.
+
+
+Current qualification is **blocked by host pressure**. All **4,393 selected
+tests passed**, retaining all 4,215 previous case IDs and adding 178 cases
+(SDK 40, archive 77, command controls 17, benchmark 44). **1,299 focused tests
+passed**; the existing 19 native deselections remain. This establishes the
+regression checks, not completion of the full fresh native pipeline.
+
+The final fresh attempt authenticated and extracted the 217,385,231-byte SDK
+archive and completed one staged native version probe. Its published-version
+probe could not obtain admission: the observer retained 15 actual matching
+memory-stall refusals against the unchanged 2% threshold, with the last sample
+at 20.71%. The operation stopped after **49.637 seconds**; the transaction
+removed the published SDK and staging payload, leaving only coordination-lock
+metadata. No AutoHyper build or native solver ran in that final attempt.
+Healthy preflight samples had preceded this attempt; they did not guarantee
+continued headroom. These observations establish refusal and rollback, not
+recovery of a timed-out request or the source of the host pressure.
+
+Earlier attempts are retained. Two exposed an extra empty SDK metadata directory
+created by the CLI restore/build route, correctly rejected by cache validation.
+The recipe now uses direct MSBuild Restore/Build targets, owned caches and
+explicit workload/signature controls. An earlier generation completed all seven
+SDK/build commands and both authenticated cache checks, then timed out before
+launching a native smoke solver. Its matching historical refusal record is not
+uniquely bound to that smoke waiter. The final signature-control generation has
+not completed the whole native pipeline. The first attempt's deciding admission
+cause was not captured and is not inferred from later samples.
+
+Full final-generation SDK bootstrap, AutoHyper build/reuse and two native smoke
+checks remain pending a sufficiently healthy host. No safety threshold was
+relaxed and no failed attempt is presented as complete end-to-end qualification.
+
+Current status and retained evidence:
+`workspace/hyper-dotnet-bootstrap-qualification-20261004/STATUS.md`.

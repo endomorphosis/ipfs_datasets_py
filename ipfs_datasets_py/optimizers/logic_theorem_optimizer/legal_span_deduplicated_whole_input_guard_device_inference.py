@@ -133,7 +133,8 @@ _INPUT_METHODS = tuple((owner, name, _fingerprint(value)) for _, owner in _INPUT
 
 def _check_method_inventory(*, _before=_BASE_METHODS_BEFORE_DEDUP, _after=_BASE_METHODS,
                             _before_keys=_BASE_METHOD_KEYS_BEFORE_DEDUP, _after_keys=_BASE_METHOD_KEYS,
-                            _keyset=_BASE_METHOD_KEYSET, _counts=_BASE_METHOD_COUNTS):
+                            _keyset=_BASE_METHOD_KEYSET, _counts=_BASE_METHOD_COUNTS,
+                            _base_functions=_BASE_FUNCTIONS, _base_classes=_BASE_CLASSES):
     """Fresh custody of immutable inventories whose exact keys were admitted once.
 
     Tuple/frozenset membership cannot mutate. Captured identities therefore
@@ -142,7 +143,8 @@ def _check_method_inventory(*, _before=_BASE_METHODS_BEFORE_DEDUP, _after=_BASE_
     """
     _require(_BASE_METHODS_BEFORE_DEDUP is _before and _BASE_METHODS is _after
              and _BASE_METHOD_KEYS_BEFORE_DEDUP is _before_keys and _BASE_METHOD_KEYS is _after_keys
-             and _BASE_METHOD_KEYSET is _keyset and _BASE_METHOD_COUNTS is _counts,
+             and _BASE_METHOD_KEYSET is _keyset and _BASE_METHOD_COUNTS is _counts
+             and _BASE_FUNCTIONS is _base_functions and _BASE_CLASSES is _base_classes,
              "deduplicated inherited method inventory identity changed")
     _require((len(_before), len(_after), len(_keyset)) == _counts
              and len(_before_keys) == _counts[0] and len(_after_keys) == _counts[1] == _counts[2],
@@ -365,6 +367,7 @@ def inference_implementation():
             "checked_distinct_key_count": len(_BASE_METHOD_KEYS),
             "first_record_preserved": True, "original_inventory_identity_checked": True,
             "expected_counts_keys_and_order_checked": True,
+            "keyset_and_order_admission_scope": "initial_exact_keys_then_fresh_immutable_inventory_identity_and_counts",
             "wrapped_binding_inventory_deduplicated": False, "freshness_success_cached": False},
         "profiles": {"768": PROFILE_768, "4096": PROFILE_4096},
         "input_guard_implementation": _INPUT_IMPLEMENTATION(),
@@ -492,8 +495,6 @@ _OWN_ALIASES = tuple((name, _fingerprint(globals()[name])) for name in ("input_g
     "_HASH", "_READ", "_SOURCE_PATH", "_SOURCE_PINS", "_SOURCE_AT_IMPORT", "_BASE_MODULES",
     "_COMPILED_BINDINGS", "_ADAPTATIONS", "_OWN_CLASSES", "_RESOLVED_METHODS", "_METHOD_NAMES",
     "_OWN_WRAPPED_METHODS", "_BASE_WRAPPED_METHODS",
-    "_BASE_FUNCTIONS", "_BASE_CLASSES", "_BASE_METHODS", "_BASE_METHODS_BEFORE_DEDUP",
-    "_BASE_METHOD_KEYS_BEFORE_DEDUP", "_BASE_METHOD_KEYS", "_BASE_METHOD_KEYSET", "_BASE_METHOD_COUNTS",
     "_RESIDENT_WHOLE_INPUT", "_DECODE_768", "_DECODE_4096", "PROFILE_768", "PROFILE_4096", "SCHEMA",
     "ast", "deepcopy", "inspect", "Path", "wraps"))
 

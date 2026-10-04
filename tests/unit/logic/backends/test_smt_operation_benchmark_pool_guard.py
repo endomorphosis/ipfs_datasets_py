@@ -63,7 +63,7 @@ def test_exact_saved_policy_round_trips_with_real_sampler_and_foreign_fields(tmp
     assert json.loads(path.read_text())["leases"] == state["leases"]
     assert json.loads(path.read_text())["waiters"] == state["waiters"]
     assert metadata["production_recovery_policy_imported"] is False
-    assert metadata["mode"] == ("reviewed_disabled_recovery_metadata" if set(benchmark._DISABLED_RECOVERY_FIELDS) <= set(state["config"]) else "native_config")
+    assert metadata["mode"] == ("reviewed_disabled_recovery_metadata" if extras else "native_config")
     # Caller changes after construction cannot change owned config or its pin.
     state["config"]["total_cpu_slots"] = 1000
     assert config.total_cpu_slots == 4 and owner.snapshot()["active_lease_count"] == 1

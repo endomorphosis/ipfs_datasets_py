@@ -4,6 +4,7 @@ These controls deliberately fail the learned-formula capability gate: numerical
 feature reconstruction and native source lowering are not a learned decoder.
 """
 import ast
+from dataclasses import replace
 import hashlib
 import json
 from pathlib import Path
@@ -32,6 +33,16 @@ def _compile_authored_postcondition(postcondition):
     derived = derive_code_program(code_unit=code_unit, source_bytes=raw)
     assert derived["status"] == "derived"
     program = ProgramIR.from_dict(derived["projection"]["targets"][0]["native_document"])
+    # This control explicitly selects the recorded mathematical-int input
+    # assumption. The deterministic source projection retains `any`; neither
+    # that projection nor the autoencoder verifies Python runtime input types.
+    parameters = {sid for function in program.functions for sid in function.parameter_symbol_ids}
+    assert all(symbol.type_ref == "any" for symbol in program.symbols if symbol.symbol_id in parameters)
+    assert derived["assumptions"]["modeled_argument_type"].startswith("exact built-in Python int")
+    program = replace(program, symbols=tuple(
+        replace(symbol, type_ref="int") if symbol.symbol_id in parameters else symbol
+        for symbol in program.symbols
+    ), program_id="")
     # The specification is independently authored here, never inferred from a
     # classifier label or claimed as a decoded autoencoder output.
     program, contracts = attach_contract_specs(program, [ContractSpec(function_name="increment",

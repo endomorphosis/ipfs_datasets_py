@@ -926,6 +926,12 @@ class ProofBackendRegistry(Mapping[str, ProofBackend]):
                     "no registered backend supports "
                     f"{request.logic_family}/{request.query_kind.value}"
                 )
+            # Independent Hyper engines are explicitly selectable. Retain the
+            # historical choice for unspecified requests when the compatibility
+            # family participates, including ordering against other providers.
+            if "hyperltl_autohyper_mchyper" in candidates:
+                candidates = tuple(candidate for candidate in candidates
+                    if candidate not in {"hyperltl", "autohyper", "mchyper"})
             selected_id = candidates[0]
         backend = self[selected_id]
         return _run_scoped_operation(backend, request,
@@ -1275,8 +1281,32 @@ EXECUTABLE_PROVIDER_MATRIX: Final[tuple[ProviderMatrixEntry, ...]] = (
             "software_verification",
         ),
         query_kinds=("theorem_proof", "satisfiability"),
-        aliases=("hyperltl", "autohyper", "mchyper"),
         factory_key="hyperltl_autohyper_mchyper",
+        notes="Compatibility entry using HyperLTL; select an independent engine ID for AutoHyper or MCHyper.",
+    ),
+    _matrix_entry(
+        "hyperltl",
+        PROVIDER_MATRIX_FAMILY_HYPERPROPERTY,
+        logic_families=("hyperproperty", "hyperltl", "noninterference", "software_verification"),
+        query_kinds=("theorem_proof", "satisfiability"),
+        factory_key="hyperltl",
+        notes="Independent HyperLTL execution; generic results remain non-conclusive.",
+    ),
+    _matrix_entry(
+        "autohyper",
+        PROVIDER_MATRIX_FAMILY_HYPERPROPERTY,
+        logic_families=("hyperproperty", "hyperltl", "autohyper", "noninterference", "software_verification"),
+        query_kinds=("theorem_proof", "satisfiability"),
+        factory_key="autohyper",
+        notes="Independent AutoHyper execution; no fallback to another engine.",
+    ),
+    _matrix_entry(
+        "mchyper",
+        PROVIDER_MATRIX_FAMILY_HYPERPROPERTY,
+        logic_families=("hyperproperty", "hyperltl", "mchyper", "noninterference", "software_verification"),
+        query_kinds=("theorem_proof", "satisfiability"),
+        factory_key="mchyper",
+        notes="Independent MCHyper execution requiring an explicit AIGER system model.",
     ),
     _matrix_entry(
         "vampire",
@@ -1424,6 +1454,16 @@ def _factory_constructors() -> dict[str, Callable[[], Any]]:
 
         return HyperLTLBackend()
 
+    def autohyper():
+        from .hyperproperties.adapters import AutoHyperBackend
+
+        return AutoHyperBackend()
+
+    def mchyper():
+        from .hyperproperties.adapters import MCHyperBackend
+
+        return MCHyperBackend()
+
     def vampire():
         from .atp.adapters import VampireBackend
 
@@ -1467,6 +1507,9 @@ def _factory_constructors() -> dict[str, Callable[[], Any]]:
         "proverif": proverif,
         "tamarin": tamarin,
         "hyperltl_autohyper_mchyper": hyperltl,
+        "hyperltl": hyperltl,
+        "autohyper": autohyper,
+        "mchyper": mchyper,
         "vampire": vampire,
         "eprover": eprover,
         "hammer": hammer,
@@ -1483,7 +1526,8 @@ class LazyMatrixProofBackend:
     Construction stores only the inert :class:`ProviderMatrixEntry`.  The
     underlying adapter is imported on first ``is_available`` / ``run`` call.
     Protocol-mismatched adapters are normalized into bound attempt/result
-    pairs; unavailable tools report ``UNAVAILABLE`` rather than succeeding.
+    pairs. Missing native Hyper tools may use explicitly requested bounded
+    self-composition; public availability still describes the native tool.
     """
 
     def __init__(
@@ -1592,6 +1636,65 @@ class LazyMatrixProofBackend:
         except Exception:
             return False
 
+    def _is_available_for_request(self, request: BackendRequest) -> bool:
+        """Allow local Hyper fallback only after canonical missing-tool discovery.
+
+        A caller veto, a failed probe, or an opaque delegate is not evidence of
+        a missing native executable. Eligibility belongs to this request only;
+        it neither changes public availability nor persists on the delegate.
+        """
+        traces = request.payload.get("traces")
+        if (
+            self._availability_probe is not None
+            or getattr(self.is_available, "__func__", None) is not _CANONICAL_MATRIX_AVAILABILITY
+            or request.payload.get("allow_fallback") is not True
+            or not isinstance(traces, (tuple, list)) or not traces
+            or self._entry.family != PROVIDER_MATRIX_FAMILY_HYPERPROPERTY
+            or self.backend_id not in {"hyperltl_autohyper_mchyper", "hyperltl", "autohyper", "mchyper"}
+            or self._entry.factory_key != self.backend_id
+        ):
+            return _operation_call("backend availability", self.is_available)
+
+        # Import only on execution of an eligible request; catalog discovery
+        # and registration remain inert. Exact types keep custom adapters on
+        # their original availability contract.
+        from .hyperproperties.adapters import (
+            AutoHyperBackend, HyperEngine, HyperEngineCapability, HyperLTLBackend, MCHyperBackend,
+            _CANONICAL_NATIVE_AVAILABILITY, _CANONICAL_NATIVE_PROBE,
+        )
+        from .smt.operation_budget import ProofOperationInterrupted
+
+        expected_type, engine = {
+            "hyperltl_autohyper_mchyper": (HyperLTLBackend, HyperEngine.HYPERLTL),
+            "hyperltl": (HyperLTLBackend, HyperEngine.HYPERLTL),
+            "autohyper": (AutoHyperBackend, HyperEngine.AUTOHYPER),
+            "mchyper": (MCHyperBackend, HyperEngine.MCHYPER),
+        }[self.backend_id]
+        delegate = _operation_call("lazy delegate access", self._load_delegate)
+        if delegate is None:
+            return False
+        if (
+            type(delegate) is not expected_type
+            or delegate.engine is not engine
+            or not isinstance(delegate.capability, HyperEngineCapability)
+            or delegate.capability.engine is not engine
+            or delegate.capability.supports_self_composition_fallback is not True
+            or getattr(delegate.is_available, "__func__", None) is not _CANONICAL_NATIVE_AVAILABILITY
+            or getattr(delegate.probe, "__func__", None) is not _CANONICAL_NATIVE_PROBE
+        ):
+            return _operation_call("backend availability", self.is_available)
+        try:
+            available = _operation_call("Hyper native availability", delegate.is_available)
+        except ProofOperationInterrupted:
+            raise
+        except Exception:
+            return False
+        # Canonical discovery returns a bool. A normal False permits the
+        # selected adapter to evaluate supplied traces under the same scope.
+        # It rechecks discovery itself; a newly appearing binary still uses
+        # the ordinary admitted native runner rather than a forced fallback.
+        return available is True or available is False
+
     def _terminal(
         self,
         request: BackendRequest,
@@ -1646,7 +1749,7 @@ class LazyMatrixProofBackend:
         if self._entry.factory_key == "runtime_mtl":
             return _operation_call("runtime MTL normalization", self._run_runtime_mtl, request)
 
-        if not _operation_call("backend availability", self.is_available):
+        if not _operation_call("request availability", self._is_available_for_request, request):
             detail = self._delegate_error or f"{self.backend_id} is not available"
             return self._terminal(
                 request,
@@ -1953,6 +2056,9 @@ class LazyMatrixProofBackend:
             diagnostics=diagnostics,
             payload=payload,
         )
+
+
+_CANONICAL_MATRIX_AVAILABILITY: Final = LazyMatrixProofBackend.is_available
 
 
 def default_backend_registry() -> ProofBackendRegistry:

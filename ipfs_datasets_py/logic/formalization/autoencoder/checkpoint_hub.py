@@ -145,11 +145,21 @@ def _instantiate(manifest, paths):
     return load_checkpoint(paths[checkpoint].resolve(strict=True), expected_domain=manifest["domain_id"], **kwargs)
 
 
-def open_local_autoencoder(domain, directory, *, manifest_sha256):
-    """Load every weight from an integrity-checked, complete local package."""
+def _loaded_autoencoder(domain, runtime, manifest, descriptor, *, optimized):
+    loaded = HubAutoencoder(domain, runtime, manifest, descriptor)
+    if domain == "legal_ir" and optimized:
+        from .legal_inference_session import optimize_autoencoder
+        loaded = optimize_autoencoder(loaded)
+    return loaded
+
+
+def open_local_autoencoder(domain, directory, *, manifest_sha256, optimized=True):
+    """Load verified weights; Legal inference uses optimizations by default."""
+    _require(type(optimized) is bool, "optimized must be a boolean")
     manifest = verify_package(directory, domain=domain, manifest_sha256=manifest_sha256)
     paths = {name: Path(directory) / name for name in manifest["files"]}
-    return HubAutoencoder(domain, _instantiate(manifest, paths), manifest, None)
+    return _loaded_autoencoder(domain, _instantiate(manifest, paths), manifest, None,
+                               optimized=optimized)
 
 
 def default_descriptor(domain):
@@ -158,8 +168,10 @@ def default_descriptor(domain):
     return validate_descriptor(PUBLISHED_384_CHECKPOINTS[domain], domain=domain)
 
 
-def open_autoencoder(domain, *, descriptor=None, cache_dir=None, local_files_only=False):
-    """Load the registered immutable release, optionally entirely from HF cache."""
+def open_autoencoder(domain, *, descriptor=None, cache_dir=None, local_files_only=False,
+                     optimized=True):
+    """Load the pinned release; optimized=False opts out of Legal acceleration."""
+    _require(type(optimized) is bool, "optimized must be a boolean")
     selection = validate_descriptor(descriptor if descriptor is not None else default_descriptor(domain), domain=domain)
     from huggingface_hub import hf_hub_download
     def fetch(name):
@@ -172,7 +184,8 @@ def open_autoencoder(domain, *, descriptor=None, cache_dir=None, local_files_onl
         path = fetch(name)
         _require(len(_read(path, entry["sha256"])) == entry["bytes"], "package byte size mismatch")
         paths[name] = path
-    return HubAutoencoder(domain, _instantiate(manifest, paths), manifest, selection)
+    return _loaded_autoencoder(domain, _instantiate(manifest, paths), manifest, selection,
+                               optimized=optimized)
 
 
 class HubAutoencoder:

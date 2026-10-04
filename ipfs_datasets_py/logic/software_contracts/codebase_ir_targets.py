@@ -24,9 +24,9 @@ from .semantic_index.snapshot import SnapshotEntry
 from ..formalization.autoencoder.domain_targets import DomainTargetEnvelope, build_target_envelope
 from ..security_ir.code_logic_projection import describe_code_logic_projection_profile
 from ..software_verification.contracts import ProgramContract
-from ..software_verification.codebase_pipeline import ContractSpec, PipelineError, attach_contract_specs
+from ..software_verification.pipeline import ContractSpec, PipelineError, attach_contract_specs
 from ..software_verification.program import ProgramIR
-from ..software_verification.codebase_source_adapters import SourceAdapterStatus, adapt_source_to_software_verification
+from ..software_verification.source_adapters import SourceAdapterStatus, adapt_source_to_software_verification
 from ..software_verification.syntax_bridge import SoftwareVerificationSyntaxBridge, SoftwareVerificationBridgeError
 
 CODEBASE_TARGET_SCHEMA = "codebase-ir-source-bound-feature-targets@1"

@@ -1,7 +1,7 @@
 """Tamarin admission and result integrity with private synthetic execution.
 
 The resource envelope is an admission estimate, not hard aggregate containment.
-Fixture rule traces exercise existing structural tokens, not semantic replay.
+Falsified fixture output remains unvalidated and never establishes attack replay.
 """
 from dataclasses import replace
 import subprocess
@@ -27,6 +27,7 @@ SOURCE = 'theory Admission\nbegin\nlemma secrecy:\n "All x #i. Secret(x) @ i ==>
 SECURE = 'lemma secrecy: verified (all-traces)\n'
 ATTACK = 'lemma secrecy: falsified - found trace\nrule Reveal(secret)\n'
 VERDICTS = [(SECURE, ResultStatus.SECURE), (ATTACK, ResultStatus.ATTACK_FOUND)]
+# Preserve historical parameter IDs; the falsified input now expects UNKNOWN.
 
 
 def request(*, timeout_ms=2000, memory=128*MIB):
@@ -112,13 +113,15 @@ def host(tmp_path, monkeypatch):
 
 
 def assert_bound(outcome, req, status):
-    assert outcome.result.status is status and outcome.result.authority is ResultAuthority.PROTOCOL
-    assert outcome.result.translation_ceiling is EvidenceAuthority.BOUNDED
+    expected = ResultStatus.UNKNOWN if status is ResultStatus.ATTACK_FOUND else status
+    assert outcome.result.status is expected and outcome.result.authority is ResultAuthority.PROTOCOL
+    assert outcome.result.translation_ceiling is (EvidenceAuthority.BOUNDED if expected is ResultStatus.SECURE else EvidenceAuthority.NONE)
     assert outcome.receipt.accepted is (status is ResultStatus.SECURE)
     assert outcome.request_digest == outcome.source_binding.request_digest == req.digest
     assert outcome.result.bounds == req.bounds and outcome.source_binding.source_digest == tm.content_digest(SOURCE)
     assert outcome.receipt.compile_digest == outcome.compile_result.source_digest
     assert [item.claim_id for item in outcome.receipt.claim_outcomes] == ['secrecy']
+    assert all(item.attack_trace is None for item in outcome.receipt.claim_outcomes)
     assert outcome.result.metadata['process']['workspace_cleaned']
 
 
@@ -127,19 +130,22 @@ def assert_bound(outcome, req, status):
 def test_default_routes_reserve_one_finite_profile_and_preserve_authority(host, stdout, status, route):
     host.action[0] = lambda invocation, signal: process.RawProcessResult(returncode=0, stdout=stdout)
     req = request(); before = req.to_dict()
+    expected = ResultStatus.UNKNOWN if status is ResultStatus.ATTACK_FOUND else status
     if route == 'direct':
         assert_bound(tm.TamarinBackend().run(req), req, status)
     elif route == 'registry':
         attempt, result = registry.default_backend_registry().run(req, backend_id='tamarin')
         assert attempt.status.value == 'succeeded' and result.status.value == 'unknown'
-        assert result.payload['result_status'] == status.value and not result.is_theorem_proof
+        assert result.payload['result_status'] == expected.value and not result.is_theorem_proof
         assert result.request_digest == attempt.request_digest == req.digest
         assert result.attempt_digest == attempt.digest and result.bounds == req.bounds
     else:
         result = (v2.ProtocolExecutionEngineV2().execute(typed_request()) if route == 'v2' else
                   v2.execute_tamarin(source=SOURCE, bounds=req.bounds))
-        assert result.evidence.result_status is status and result.protocol_established
-        assert not result.is_theorem_authority and result.evidence.translation_ceiling is EvidenceAuthority.BOUNDED
+        assert result.evidence.result_status is expected and result.protocol_established is (expected is ResultStatus.SECURE)
+        assert not result.is_theorem_authority
+        assert result.evidence.translation_ceiling is (EvidenceAuthority.BOUNDED if expected is ResultStatus.SECURE else EvidenceAuthority.NONE)
+        assert not result.evidence.attack.replayed and not result.evidence.attack.attack_traces
         assert result.backend_outcome['result']['metadata']['process']['returncode'] == 0
     assert req.to_dict() == before
     assert len(host.calls) == len(host.acquired) == len(host.prepared) == len(host.resolutions) == 1

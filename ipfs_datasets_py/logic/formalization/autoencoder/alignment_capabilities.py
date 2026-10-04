@@ -29,7 +29,10 @@ _COMMANDS = {
     "rocq": ("rocq", "coqc"), "isabelle": ("isabelle",),
     "tla_tlc": ("tlc",), "apalache": ("apalache-mc",),
     "proverif": ("proverif",), "tamarin": ("tamarin-prover",),
-    "hyperltl_autohyper_mchyper": ("autohyper", "mchyper"),
+    "hyperltl_autohyper_mchyper": ("hyperltl", "hyperltl-sat"),
+    "hyperltl": ("hyperltl", "hyperltl-sat"),
+    "autohyper": ("AutoHyper", "autohyper"),
+    "mchyper": ("mchyper", "MCHyper"),
 }
 
 

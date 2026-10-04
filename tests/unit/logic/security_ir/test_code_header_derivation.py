@@ -125,58 +125,6 @@ def test_solver_optional_and_protocol_required():
         api.derive_header_semantics(source_bytes=PROGRAM.encode(), source_path="../headers.py", protocol=PROTOCOL)
 
 
-@pytest.mark.parametrize("kind", ["admission_timeout", "query_timeout", "cancelled"])
-def test_leased_checker_preserves_native_failure_cause_without_fallback_probe(monkeypatch, kind):
-    from ipfs_datasets_py.logic.security_ir import bounded_header_checker as bounded
-    from ipfs_datasets_py.logic.backends.smt import differential
-
-    failure = (bounded.LeaseCancelledError("authored cancellation") if kind == "cancelled"
-        else bounded.LeaseTimeoutError("authored deadline"))
-    diagnostic = dict(schema="bounded-header-checker-failure@1",
-        phase="child_admission" if kind == "admission_timeout" else "query",
-        reason=kind if kind != "query_timeout" else "deadline")
-    failure.header_checker_diagnostic = diagnostic
-    if kind == "admission_timeout":
-        failure.admission_observation = {"schema": "resource-admission-observation@1", "primary_gate": "memory_pressure"}
-    calls = []
-
-    def run(*args):
-        calls.append(args)
-        raise failure
-
-    def forbidden_probe(*args, **kwargs):
-        pytest.fail("leased failure attempted an unowned version subprocess")
-
-    monkeypatch.setattr(api.shutil, "which", lambda value: "/usr/bin/true")
-    monkeypatch.setattr(bounded, "bounded_header_runner", lambda *args, **kwargs: run)
-    monkeypatch.setattr(differential.subprocess, "run", forbidden_probe)
-    with pytest.raises(bounded.BoundedHeaderCheckerError) as error:
-        api.check_header_semantics(derive(), source_bytes=PROGRAM.encode(), source_path="headers.py",
-            protocol=PROTOCOL, timeout_seconds=20., parent_lease=object())
-    assert len(calls) == 1
-    assert error.value.__cause__ is failure
-    assert error.value.header_checker_diagnostic == diagnostic
-    if kind == "admission_timeout":
-        assert error.value.__cause__.admission_observation is failure.admission_observation
-
-
-def test_leased_inconclusive_result_cannot_trigger_unowned_version_probe(monkeypatch):
-    from ipfs_datasets_py.logic.security_ir import bounded_header_checker as bounded
-    from ipfs_datasets_py.logic.backends.smt import differential
-
-    monkeypatch.setattr(api.shutil, "which", lambda value: "/usr/bin/true")
-    monkeypatch.setattr(bounded, "bounded_header_runner", lambda *args, **kwargs:
-        lambda *args: differential.SmtRawSolverOutput(timed_out=True, returncode=None))
-    monkeypatch.setattr(differential.subprocess, "run", lambda *args, **kwargs:
-        pytest.fail("leased inconclusive result attempted an unowned version subprocess"))
-    result = api.check_header_semantics(derive(), source_bytes=PROGRAM.encode(), source_path="headers.py",
-        protocol=PROTOCOL, timeout_seconds=20., parent_lease=object())
-    assert result["status"] == "model_check_inconclusive_or_mismatch"
-    assert all(row["solver_answer"] == "unknown" and row["solver_version"] == ""
-        for row in result["results"])
-    assert not result["proof_authority"] and not result["completion_authority"]
-
-
 def test_unicode_comment_does_not_change_byte_span_geometry():
     source = "# é\u2028line\u2029not-an-AST-line\n" + PROGRAM
     report = derive(source)

@@ -418,6 +418,107 @@ def test_completed_rule_cache_observes_replaced_validator(monkeypatch):
     assert result["detail"] == "new validator rejected generated rule"
 
 
+@pytest.mark.parametrize("latent", [
+    [0., -0., 1, -1, 1e8, -1e8, 0., 1.],
+    [True] + [0.] * 7,
+    [float("nan")] + [0.] * 7,
+    [float("inf")] + [0.] * 7,
+    [1e8 + 1.] + [0.] * 7,
+    [-1e8 - 1.] + [0.] * 7,
+    [10 ** 1000] + [0.] * 7,
+    [1e9, 10 ** 1000] + [0.] * 6,
+    ["number"] + [0.] * 7,
+    [type("FloatSubclass", (float,), {})(1.)] + [0.] * 7,
+    [0.] * 7,
+    tuple([0.] * 8),
+    type("LatentSubclass", (list,), {})([0.] * 8),
+])
+def test_fast_vector_validation_retains_original_types_limits_and_error_order(latent):
+    if type(latent) is list:
+        latent = latent + [0.] * (384 - 8)
+    row = {"id": "validation", "source_text": "A bounded authored source.", "latent": latent}
+    batch = [dict(row, id=str(index)) for index in range(32)]
+    def result(function):
+        try:
+            return ("valid", function(batch, 384))
+        except (ValueError, OverflowError) as error:
+            return (type(error), str(error))
+    assert result(optimized._validated_rows) == result(
+        lambda rows, dimension: learning._rows(rows, dimension, training=False))
+
+
+def test_fast_vector_validation_observes_replaced_original_dependency(monkeypatch):
+    _, authored = samples(384)
+    batch = [dict(inputs(authored)[index % 2], id=str(index)) for index in range(32)]
+    def replaced(value, dimension, label):
+        raise ValueError("replacement vector validator observed")
+    monkeypatch.setattr(learning, "_vector", replaced)
+    with pytest.raises(ValueError, match="replacement vector validator observed"):
+        optimized._validated_rows(batch, 384)
+
+
+def test_fast_vector_validation_observes_replaced_effective_builtin(monkeypatch):
+    _, authored = samples(384)
+    batch = [dict(inputs(authored)[index % 2], id=str(index)) for index in range(32)]
+    calls = []
+    original = abs
+    def absolute(number):
+        calls.append(number)
+        return original(number)
+    def forbidden_fast_scan(*args):
+        raise AssertionError("changed builtin must use original validator")
+    with monkeypatch.context() as replacements:
+        replacements.setattr(optimized, "_inference_vector", forbidden_fast_scan)
+        replacements.setitem(learning._vector.__builtins__, "abs", absolute)
+        result = optimized._validated_rows(batch, 384)
+    assert result == batch
+    assert calls
+
+
+@pytest.mark.parametrize("dependency", ["_require", "abs", "math.isfinite"])
+def test_fast_vector_validation_uses_original_path_for_changed_scalar_dependencies(dependency, monkeypatch):
+    _, authored = samples(384)
+    batch = [dict(inputs(authored)[index % 2], id=str(index)) for index in range(32)]
+    calls = []
+    def forbidden_fast_scan(*args):
+        raise AssertionError("changed validation dependency must use original validator")
+    monkeypatch.setattr(optimized, "_inference_vector", forbidden_fast_scan)
+    if dependency == "_require":
+        original = learning._require
+        def require(condition, message):
+            calls.append(message)
+            return original(condition, message)
+        monkeypatch.setattr(learning, "_require", require)
+    elif dependency == "abs":
+        def absolute(number):
+            calls.append(number)
+            return abs(number)
+        monkeypatch.setattr(learning, "abs", absolute, raising=False)
+    else:
+        original = learning.math.isfinite
+        def finite(number):
+            calls.append(number)
+            return original(number)
+        monkeypatch.setattr(learning.math, "isfinite", finite)
+    assert optimized._validated_rows(batch, 384) == batch
+    assert calls
+
+
+@pytest.mark.parametrize("dimension", [8, 384])
+@pytest.mark.parametrize("count", [1, 4, 16, 32, 128])
+def test_fast_vector_scan_is_reserved_for_larger_384d_requests(dimension, count, monkeypatch):
+    _, authored = samples(dimension)
+    batch = [dict(inputs(authored)[index % 2], id=str(index)) for index in range(count)]
+    calls = []
+    original = optimized._inference_vector
+    def scanned(value, width, label):
+        calls.append(width)
+        return original(value, width, label)
+    monkeypatch.setattr(optimized, "_inference_vector", scanned)
+    assert optimized._validated_rows(batch, dimension) == batch
+    assert len(calls) == (count if dimension == 384 and count > 16 else 0)
+
+
 @pytest.mark.parametrize("count", [1, 32])
 @pytest.mark.parametrize("fail", [False, True])
 def test_numerical_stages_use_inference_mode_and_restore_caller_state(count, fail, monkeypatch):

@@ -488,7 +488,12 @@ def test_successful_controls_preserve_complete_evidence_wire(fixture_engine, pro
     baseline = fixture.engine.execute(req).to_dict()
     controlled = fixture.engine.execute(req, operation_timeout_ms=500, cancellation=threading.Event()).to_dict()
     assert controlled == baseline
-    assert controlled['backend_result']['status'] == ('attack_found' if attack else 'secure')
+    expected = 'unknown' if provider == 'tamarin' and attack else ('attack_found' if attack else 'secure')
+    assert controlled['backend_result']['status'] == expected
+    if provider == 'tamarin' and attack:
+        assert not controlled['evidence']['protocol_established']
+        assert not controlled['evidence']['attack']['replayed']
+        assert not controlled['evidence']['attack']['attack_traces']
     assert controlled['is_theorem_authority'] is False
 
 

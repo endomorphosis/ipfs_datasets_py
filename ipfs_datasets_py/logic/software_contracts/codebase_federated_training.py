@@ -17,7 +17,7 @@ import uuid
 
 from ipfs_datasets_py.duckdb_control.autoencoder_federated import create_federated_run, complete_federated_run
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_projection_features as features
-from ipfs_datasets_py.optimizers.logic_theorem_optimizer import codebase_runtime_8d as runtimes
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_runtime_registry as runtimes
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_federated import (
     FederatedRound, ParameterSpec, ClientSpec, aggregate_round,
 )
@@ -305,13 +305,9 @@ def _evaluation(value, base, state, limits=None):
     for name, numerical in (("baseline", base["saved"]["state"]), ("aggregate", state)):
         _require(type(value[name]) is dict and set(value[name]) == {"canary", "replay", "worker_receipt"},
                  "closed aggregate comparison required")
-        batch = [*base["canary"], *base["replay"]]
-        offset = 0
         for role in ("canary", "replay"):
             source._diagnostic(value[name][role], base[role], numerical,
-                               numerical["contract_sha256"], base["saved"]["feature_space"],
-                               batch_targets=batch, batch_start=offset)
-            offset += len(base[role])
+                               numerical["contract_sha256"], base["saved"]["feature_space"])
         _worker_receipt(value[name]["worker_receipt"], limits)
 
 
@@ -357,7 +353,7 @@ def _record(index, registry, version_id, limits):
 
 
 def load_codebase_federated_training(index, registry, version_id, *, limits=None):
-    """Replay binary updates, numerical diagnostics and history; no fitting/writes."""
+    """Replay committed binary updates, exact reduction and native history; no work or writes."""
     limits = source.CodebaseFeatureTrainingLimits() if limits is None else limits
     _require(type(limits) is source.CodebaseFeatureTrainingLimits, "native federation bounds required")
     record = _record(index, registry, version_id, limits)

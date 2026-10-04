@@ -1,14 +1,13 @@
 """Tiny native successor selection and receiving controls.
 
 The module fixture explicitly trains one root and one direct child, one epoch
-each. Coordinator/receiver scopes prohibit fitting and page inference. Exact
-saved diagnostic replay remains required by the reviewed current producer. These are tiny native owners
+each. Coordinator/receiver scopes prohibit fitting and forward inference. Only
+the ordinary page test runs numerical inference. These are tiny native owners
 and test scheduler resources, not a large-repository or execution attestation.
 """
 from contextlib import contextmanager
 from copy import deepcopy
 import hashlib
-import sys
 from types import SimpleNamespace
 
 import pytest
@@ -33,15 +32,10 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler impo
 def no_numerical_work():
     def forbidden(*args, **kwargs):
         pytest.fail("successor selection/receiving attempted fitting or forward inference")
-    infer = scan.features.infer_projection_features
-    def diagnostic_replay_only(*args, **kwargs):
-        if sys._getframe(1).f_code is not training._diagnostic.__code__:
-            pytest.fail("successor selection/receiving attempted non-diagnostic forward inference")
-        return infer(*args, **kwargs)
     with pytest.MonkeyPatch.context() as patch:
-        patch.setattr(scan.features, "infer_projection_features", diagnostic_replay_only)
         for owner, name in ((training, "train_current_codebase_features"), (training, "_worker"),
                 (scan, "_worker"), (scan.features, "train_projection_features"),
+                (scan.features, "infer_projection_features"),
                 (runtimes.SourceBoundCodebaseFeatureRuntime, "train"),
                 (runtimes.SourceBoundCodebaseFeatureRuntime, "infer")):
             patch.setattr(owner, name, forbidden)
@@ -181,7 +175,7 @@ def test_native_new_root_runs_ordinary_pages_and_complete_receiving_without_more
     assert_idle(n)
 
 
-def test_native_same_process_cold_owner_reopen_receives_without_fitting_page_inference_or_cas_writes(native):
+def test_native_same_process_cold_owner_reopen_receives_without_fitting_inference_or_cas_writes(native):
     n = native
     index, generation = n.index, n.registry.owner_generation
     n.registry.close()

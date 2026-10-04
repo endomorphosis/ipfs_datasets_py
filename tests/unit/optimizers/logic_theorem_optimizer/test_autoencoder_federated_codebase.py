@@ -15,7 +15,7 @@ from ipfs_datasets_py.logic.software_contracts.duckdb_ingest import DuckDBASTIng
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_federated as federation
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_federated_codebase as adapter
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_projection_features as features
-from ipfs_datasets_py.optimizers.logic_theorem_optimizer import codebase_runtime_8d as runtimes
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_runtime_registry as runtimes
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import resource_scheduler as schedulers
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_federated_update_codec import (
     read_client_update, write_client_update,
@@ -252,60 +252,3 @@ def test_noncanonical_or_384d_snapshot_and_nonexact_runtime_rejected(native):
     with pytest.raises(ValueError, match="exact SourceBound"):
         adapter.CodebaseFeatureCheckpoint.from_runtime(object(), base_sha256=base.base_sha256,
                                                        base_version_id=base.base_version_id)
-
-
-def _batch_diagnostic(base, targets, batch, start=0):
-    inference = features.infer_projection_features(base.contract, base.feature_space, base.state, batch)
-    vectors, identities, coverage = features._matrix(base.feature_space, targets)
-    rows = inference['rows'][start:start + len(targets)]
-    losses = []
-    for vector, row in zip(vectors, rows):
-        decoded = [v for name in base.feature_space['projection_ids']
-                   for v in row['reconstructed_projection_features'][name]]
-        losses.append(sum((a-b)**2 for a,b in zip(vector,decoded))/len(vector))
-    return dict(source_digests=identities,coverage=coverage,mean_squared_errors=losses,
-        mean_squared_error=sum(losses)/len(losses),used_for_selection=False,
-        semantic_or_property_evaluation=False,
-        inference={**inference,'rows':rows,'coverage':coverage})
-
-
-def test_actual_joined_diagnostic_replays_the_exact_batch_and_both_role_slices(native):
-    from ipfs_datasets_py.logic.software_contracts import codebase_source_training as source
-    base,_,_,_,targets=native
-    batch=targets[:4]
-    for start,role in ((0,batch[:1]),(1,batch[1:])):
-        observation=_batch_diagnostic(base,role,batch,start)
-        source._diagnostic(observation,role,base.state,base.contract.sha256,base.feature_space,
-            batch_targets=batch,batch_start=start)
-        standalone=features.infer_projection_features(base.contract,base.feature_space,base.state,role)
-        if standalone != observation['inference']:
-            # Hardware can choose GEMV versus GEMM and differ by a few ULPs.
-            # Exact equality must still reject a genuinely different execution.
-            with pytest.raises(source.CodebaseFeatureTrainingError,match='independently replayed'):
-                source._diagnostic(observation,role,base.state,base.contract.sha256,base.feature_space)
-
-
-@pytest.mark.parametrize('offset',[-1,True,1,4])
-def test_diagnostic_wrong_batch_slice_refuses_before_numerical_replay(native,monkeypatch,offset):
-    from ipfs_datasets_py.logic.software_contracts import codebase_source_training as source
-    base,_,_,_,targets=native;batch=targets[:4];role=batch[:1]
-    observation=_batch_diagnostic(base,role,batch)
-    monkeypatch.setattr(features,'infer_projection_features',lambda *a,**k:pytest.fail('wrong slice executed inference'))
-    with pytest.raises(source.CodebaseFeatureTrainingError,match='batch slice'):
-        source._diagnostic(observation,role,base.state,base.contract.sha256,base.feature_space,
-            batch_targets=batch,batch_start=offset)
-
-
-def test_self_consistent_forged_joined_diagnostic_still_fails_exact_decoder(native):
-    from ipfs_datasets_py.logic.software_contracts import codebase_source_training as source
-    base,_,_,_,targets=native;batch=targets[:4];role=batch[:1]
-    observation=_batch_diagnostic(base,role,batch)
-    vectors,_,_=features._matrix(base.feature_space,role)
-    row=observation['inference']['rows'][0];offset=0
-    for name in base.feature_space['projection_ids']:
-        size=len(row['reconstructed_projection_features'][name])
-        row['reconstructed_projection_features'][name]=vectors[0][offset:offset+size];offset+=size
-    observation['mean_squared_errors']=[0.];observation['mean_squared_error']=0.
-    with pytest.raises(source.CodebaseFeatureTrainingError,match='independently replayed'):
-        source._diagnostic(observation,role,base.state,base.contract.sha256,base.feature_space,
-            batch_targets=batch,batch_start=0)

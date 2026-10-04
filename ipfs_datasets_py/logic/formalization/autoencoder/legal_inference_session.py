@@ -1,4 +1,4 @@
-"""Opt-in Legal inference acceleration without changing checkpoint identities."""
+"""Legal inference acceleration without changing checkpoint identities."""
 from __future__ import annotations
 
 import hashlib
@@ -62,8 +62,9 @@ class OptimizedRuntime:
 
     Original core/source/weight checks still run at request boundaries. The
     package and its formula head retain their original bytes and identities.
-    Batched float32 recurrence can slightly change decision margins; callers
-    explicitly select this implementation rather than silently replacing it.
+    Batched float32 recurrence can slightly change decision margins. Public
+    Legal loaders select this implementation by default; optimized=False
+    selects the original runtime.
     """
     @_cpu_inference
     def __init__(self, runtime):

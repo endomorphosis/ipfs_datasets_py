@@ -106,8 +106,9 @@ def test_checked_run_builds_fresh_attempts_and_preserves_policy_scheduler(monkey
         def __init__(self, policy, **kwargs):
             observed.append((policy, kwargs))
 
-        def run(self, request_id, attempts):
+        def run(self, request_id, attempts, **kwargs):
             observed.append((request_id, attempts))
+            assert kwargs == {"parent_lease": None, "cancel_event": None}
             return "unchanged-result"
 
     monkeypatch.setattr(routing.portfolio, "SolverPortfolio", FakePortfolio)

@@ -45,16 +45,15 @@ def _evaluate(features, runtime, targets):
 
 def execute(request):
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_projection_features as features
-    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import codebase_runtime_8d as runtimes
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_runtime_registry as runtimes
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_modality_contracts import ModalityContract
+    import torch
+
     expected = {"schema", "action", "contract", "feature_space", "base_state", "training_targets",
                 "tuning_targets", "canary_targets", "replay_targets", "epochs",
                 "learning_rate", "seed", "max_seconds"}
     if type(request) is not dict or set(request) != expected or request["schema"] != SCHEMA:
         raise ValueError("closed CodebaseIR numerical worker request required")
-    if type(request["action"]) is not str or request["action"] not in {"train", "infer"}:
-        raise ValueError("unknown native worker action")
-    import torch
     # One reserved CPU slot. BLAS environment bounds also precede this import.
     torch.set_num_threads(1)
     torch.set_num_interop_threads(1)

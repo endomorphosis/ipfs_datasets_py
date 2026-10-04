@@ -1,4 +1,4 @@
-# GTE migration preparation tools and first audit
+# GTE migration preparation tools and audits
 
 The first preparation stage for the [384D to 768D migration](gte_multilingual_migration_plan.md) now has runnable local tools. They inventory checkpoint tensors and audit source/target/vector joins before a training experiment. The tools use only the Python standard library and do not import a model runtime.
 
@@ -6,26 +6,28 @@ The initial run inspected nine archived checkpoints and 2,640 authored diagnosti
 
 ## Run the preparation
 
-Use [prepare_gte_migration.py](../../scripts/ops/autoencoder/prepare_gte_migration.py) with the [pinned local configuration](../../configs/autoencoders/gte_migration_preparation_v1.json) from the enclosing workspace. The configuration names exact local paths and SHA256 values. Use a fresh output directory each time:
+Use [prepare_gte_migration.py](../../scripts/ops/autoencoder/prepare_gte_migration.py) with the [current pinned local configuration](../../configs/autoencoders/gte_migration_preparation_20261001_repin.json) from the enclosing workspace. The configuration names exact local paths and SHA256 values. Use a fresh output directory each time:
 
 ```bash
 cd /home/barberb/lift_coding
 python3 external/ipfs_datasets/scripts/ops/autoencoder/prepare_gte_migration.py prepare \
-  --config external/ipfs_datasets/configs/autoencoders/gte_migration_preparation_v1.json \
+  --config external/ipfs_datasets/configs/autoencoders/gte_migration_preparation_20261001_repin.json \
   --output-directory artifacts/gte-migration-preparation-20261001/new-run
 ```
 
 Preparation prints a completion manifest SHA256. Keep that value outside the run directory and pass it explicitly when verifying. Verification checks the five output files, checkpoint/data inputs, and listed implementation/evidence bytes against the recorded bindings. Missing completion manifests and changed inputs fail; an existing output directory is never overwritten.
 
-The retained first run has manifest SHA256 `611b6394e2f538ce2c3f43ff1c3d4b5a5ff92a7ab8e7040ae8810ff9d56f251e`:
+The current retained run has manifest SHA256 `1268cc515b46993d8f033471a1c34de90d5bbfb1a46942db87f7b8084c83352d`:
 
 ```bash
 python3 external/ipfs_datasets/scripts/ops/autoencoder/prepare_gte_migration.py verify \
-  --output-directory artifacts/gte-migration-preparation-20261001/run-01 \
-  --expected-manifest-sha256 611b6394e2f538ce2c3f43ff1c3d4b5a5ff92a7ab8e7040ae8810ff9d56f251e
+  --output-directory artifacts/gte-migration-preparation-20261001/run-02 \
+  --expected-manifest-sha256 1268cc515b46993d8f033471a1c34de90d5bbfb1a46942db87f7b8084c83352d
 ```
 
 Supply `--workspace-root` when relocating the exact relative input tree. Active source edits may invalidate the configuration or verification; preserve the original run and produce a new pinned configuration/run for changed inputs. This binding covers listed files, not the full repository or transitive runtime dependencies.
+
+The first run and its [original configuration](../../configs/autoencoders/gte_migration_preparation_v1.json) are preserved. Its historical manifest SHA256 is `611b6394e2f538ce2c3f43ff1c3d4b5a5ff92a7ab8e7040ae8810ff9d56f251e`. Later shared-checkout edits changed `checkpoint_hub.py` and `autoencoder_runtime_registry.py`, so the old manifest now rejects the current source tree. The [source drift receipt](../../../../artifacts/gte-migration-preparation-20261001/source-drift-run-02.json) records both old and current hashes. Run 02 pins those current sources, passed explicit verification, and reproduces the same inventory/corpus counts without changing any partitions.
 
 ## Checkpoint capability inventory
 
@@ -74,6 +76,6 @@ The [first run directory](../../../../artifacts/gte-migration-preparation-202610
 - [Corpus audit](../../../../artifacts/gte-migration-preparation-20261001/run-01/corpus-audit.json), including all 2,640 bindings and quarantine decisions.
 - [Completion manifest](../../../../artifacts/gte-migration-preparation-20261001/run-01/manifest.json), binding 25 input files, 25 source/evidence files, and five output files.
 
-The three focused suites passed **77 tests**. They cover strict JSON and tensor shapes, incorrect dimensions, unknown schemas, filesystem boundaries, source/vector collisions, contradictory targets, connected quarantine, duplicate numeric identities, missing coverage, metadata payload exclusion, exposure declarations, and changed inputs/outputs/implementation. The retained run's explicit manifest verification also passed.
+The three focused suites passed **77 tests**. They cover strict JSON and tensor shapes, incorrect dimensions, unknown schemas, filesystem boundaries, source/vector collisions, contradictory targets, connected quarantine, duplicate numeric identities, missing coverage, metadata payload exclusion, exposure declarations, and changed inputs/outputs/implementation. Both retained runs passed explicit verification against the source bytes present when they were produced; current-source verification uses run 02.
 
-WP01 and WP03 are **in progress**. The inventory and reusable audit are implemented, but selected teacher replay, native target validation, provenance verification, original-document/context contracts, and fresh sealed evaluation cohorts remain outstanding. The next independent work is WP04's versioned 768D producer. Teacher-logit exports and distillation still depend on WP02's source-fidelity gate.
+WP01 and WP03 are **in progress**. The inventory and reusable audit are implemented, but broader runtime replay, native target validation, external provenance verification, original-document/context contracts, and fresh sealed evaluation cohorts remain outstanding. A separate [CPU model-worker smoke](gte_parallel_model_workers.md) completed a three-source Legal384D replay concurrently with a trained linguistic8D model. The next independent work is WP04's versioned 768D producer. Teacher-logit exports and distillation still depend on WP02's source-fidelity gate. The [parallel lane contract](parallel_lineage_execution.md) keeps 8D and 384D work active during that development and requires immutable donor snapshots for transfer.

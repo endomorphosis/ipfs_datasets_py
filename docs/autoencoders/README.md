@@ -23,7 +23,20 @@ belong to their named backend; they are not interchangeable across backends.
 | Transfer screened teacher evidence into separately embedded 384D formula training | [Teacher-to-student preparation and smoke](teacher_student_transfer.md) |
 | Detect actor shortcuts and compare balanced formula training data | [Actor composition and free-running evaluation](actor_composition_evaluation.md) |
 | Improve 8D feature updates and compare 384D reconstruction profiles | [Separate reconstruction-training paths](reconstruction_training.md) |
-| Plan transfer from GTE-small to 768D multilingual GTE with longer context | [384D to 768D logic IR migration plan](gte_multilingual_migration_plan.md) |
+| Keep 8D and 384D running while developing 768D multilingual GTE | [Parallel logic IR paths and transfer plan](gte_multilingual_migration_plan.md) |
+| Dispatch independent 8D, 384D and 768D workers together | [Parallel lane execution](parallel_lineage_execution.md) |
+| Run pinned local 8D and 384D models in private CPU workers | [Parallel model inference workers](gte_parallel_model_workers.md) |
+| Prepare source-only 768D tasks and inspect pinned multilingual assets | [Multilingual embedding preparation](gte_multilingual_preparation.md) |
+| Reuse existing model assets and vectors before generating missing embeddings | [Existing assets and embedding cache reuse](gte_embedding_reuse.md) |
+| Prepare 768→384 pairs and verify frozen-teacher adapter gradients | [Affine bridge preparation](gte_affine_bridge_preparation.md) |
+| Initialize the 768D decoder from learned 8D and 384D heads before fitting | [Decoder reuse and distillation sequence](gte_decoder_reuse.md) |
+| Verify inherited decoder knowledge and export original-input teacher distributions | [Decoder knowledge transfer and replay](gte_decoder_knowledge_transfer.md) |
+| Join original decoder targets to cached native inputs and check reference gradients | [Native decoder inputs and reference objective](gte_decoder_native_inputs.md) |
+| Fit only the new input connections with both learned decoder bodies frozen | [Bounded decoder interface training](gte_decoder_interface_training.md) |
+| Continue reference training from the authenticated fitted input boundary | [Aligned-start interface training](gte_aligned_interface_training.md) |
+| Compare original donors and saved 768D generations without reference prefixes | [Source-only decoder evaluation](gte_decoder_source_evaluation.md) |
+| Prepare or fit the new input connection from same-source vector pairs | [Train-only affine alignment](gte_affine_alignment.md) |
+| Load a completed fit into the inherited 768D student without changing donors | [Aligned decoder handoff and private reload](gte_aligned_decoder.md) |
 | Inventory pinned checkpoints and audit transfer corpus partitions | [GTE migration preparation tools and first audit](gte_migration_preparation.md) |
 | Train the current latent projection and formula decoder together | [Joint formula training](modal_joint_formula_training.md) |
 | Recover historical 8D training optimizations | [Legacy speed history and selective ports](legacy_speed_history.md) |
@@ -153,11 +166,3 @@ When APIs change, update the guide, argument table, and runnable example. Check
 links and Python/shell syntax, and execute only relevant bounded examples.
 Documentation validation must not become an unattended corpus run, checkpoint
 overwrite, Hub upload, or model download.
-
-## Published structured 384D development profiles
-
-The [experimental checkpoint catalog](experimental_structured_checkpoints.md) records
-five append-only Hub artifacts, immutable revision/hash pins, and the supervisor
-consumption path. The canonical Legal package now retains the original trained
-head and source binding matching the released runtime; all 32 training and 8 tuning
-inputs were replayed before publication. No Legal weights were overwritten.

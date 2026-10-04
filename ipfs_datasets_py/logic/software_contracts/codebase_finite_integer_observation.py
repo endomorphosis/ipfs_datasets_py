@@ -19,7 +19,7 @@ from .codebase_integer_profile import (
 from .codebase_ir import RepositoryCodebaseIndex
 from .codebase_resources import acquire_codebase_resources
 from .content import canonical_dag_json_bytes, cid_for_bytes, cid_for_structured
-from ..backends.codebase_process import BoundedToolRunner, ToolRunLimits
+from ..backends.process import BoundedToolRunner, ToolRunLimits
 from ...optimizers.logic_theorem_optimizer.resource_scheduler import (
     LeaseCancelledError, LeaseTimeoutError, ResourceLane,
 )

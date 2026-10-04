@@ -9,9 +9,12 @@ to each row independently. No inference result grants semantic admission.
 """
 from __future__ import annotations
 
+import builtins
 import copy
 import hashlib
+import math
 from pathlib import Path
+from types import FunctionType
 
 from . import modal_latent_formula as learning
 
@@ -22,6 +25,68 @@ _require = learning._require
 _rows = learning._rows
 _display = learning._display
 checkpoint_digest = learning.checkpoint_digest
+_ORIGINAL_ROWS = _rows
+_ORIGINAL_ROWS_CODE = _rows.__code__
+_ORIGINAL_VECTOR = learning._vector
+_ORIGINAL_VECTOR_CODE = learning._vector.__code__
+_ORIGINAL_REQUIRE = learning._require
+_ISFINITE = math.isfinite
+_NUMBER_TYPES = frozenset((int, float))
+_VECTOR_BUILTINS = {name: getattr(builtins, name) for name in
+                    ("type", "list", "len", "all", "int", "float", "abs")}
+_TYPE, _LIST, _TUPLE, _LEN, _ALL, _ANY, _MAP = type, list, tuple, len, all, any, map
+_MIN, _MAX = min, max
+_MISSING = object()
+
+
+def _effective_dependency(implementation, name):
+    current = implementation.__globals__.get(name, _MISSING)
+    if current is not _MISSING:
+        return current
+    # A function retains its effective builtins table at construction, even
+    # if its module's __builtins__ global later points to a different object.
+    scope = implementation.__builtins__
+    return scope.get(name, _MISSING) if _TYPE(scope) is dict else getattr(scope, name, _MISSING)
+
+
+def _inference_vector(value, dimension, label):
+    # Built-in iterators keep the full strict type/finite/bounds checks in C.
+    # Invalid input always returns to the original validator, including its
+    # short-circuit order (a large integer can overflow math.isfinite).
+    if (_TYPE(value) is _LIST and value and _LEN(value) == dimension and
+            _ALL(_MAP(_NUMBER_TYPES.__contains__, _MAP(_TYPE, value)))):
+        try:
+            valid = _ALL(_MAP(_ISFINITE, value)) and _MIN(value) >= -1e8 and _MAX(value) <= 1e8
+        except OverflowError:
+            valid = False
+        if valid:
+            return _ORIGINAL_REQUIRE(True, label + " requires bounded finite values with exact lineage width")
+    return _ORIGINAL_VECTOR(value, dimension, label)
+
+
+def _validated_rows(rows, dimension):
+    # The scalar scan pays off on larger 384D requests. Preserve the original
+    # direct call for smaller requests and the shorter 8D lineage.
+    if (dimension != 384 or _TYPE(rows) not in (_LIST, _TUPLE) or _LEN(rows) <= 16):
+        return _rows(rows, dimension, training=False)
+    # Preserve the signed row validator and its fresh original globals. Use
+    # the faster scalar scan only while every dependency it replaces is the
+    # exact original implementation; diagnostic replacements use the original
+    # path. No caller or shared module globals are changed.
+    vector_globals = _ORIGINAL_VECTOR.__globals__
+    if (_rows is not _ORIGINAL_ROWS or _rows.__code__ is not _ORIGINAL_ROWS_CODE or
+            vector_globals.get("_vector") is not _ORIGINAL_VECTOR or
+            _ORIGINAL_VECTOR.__code__ is not _ORIGINAL_VECTOR_CODE or
+            vector_globals.get("_require") is not _ORIGINAL_REQUIRE or
+            vector_globals.get("math") is not math or math.isfinite is not _ISFINITE or
+            _ANY(_effective_dependency(_ORIGINAL_VECTOR, name) is not original
+                for name, original in _VECTOR_BUILTINS.items())):
+        return _rows(rows, dimension, training=False)
+    implementation = FunctionType(_rows.__code__, {**_rows.__globals__, "__builtins__": _rows.__builtins__,
+                                                  "_vector": _inference_vector},
+                                  _rows.__name__, _rows.__defaults__, _rows.__closure__)
+    implementation.__kwdefaults__ = _rows.__kwdefaults__
+    return implementation(rows, dimension, training=False)
 
 
 def _source_sha256():
@@ -41,6 +106,7 @@ def inference_implementation():
             "batching_policy": "singleton_recurrence_through_sixteen_rows_batched_above_sixteen",
             "grammar_cache_scope": "one_inference_request",
             "completed_rule_cache_scope": "one_inference_request_codec_content_and_tokens",
+            "latent_validation": "strict_builtin_scalar_scan_above_sixteen_384d_rows_with_original_fallback",
             "autograd_policy": "inference_mode"}
 
 
@@ -268,7 +334,7 @@ class BatchedLatentFormulaDecoder(learning.LatentFormulaDecoder):
         self._check()
         _require(type(projection_id) is str and 0 < len(projection_id) <= 256, "bounded projection id required")
         _require(type(rows) in (list, tuple) and 1 <= len(rows) <= 128, "one to 128 inference rows required")
-        validated = _rows(rows, self._checkpoint["binding"]["dimension"], training=False)
+        validated = _validated_rows(rows, self._checkpoint["binding"]["dimension"])
         # Small GRU batches have more CPU overhead than singleton steps on
         # the released head. Retain the original scalar path for them.
         execution = "scalar" if len(validated) <= 16 else "batched"

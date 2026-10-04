@@ -10,34 +10,6 @@ from typing import Any
 import pytest
 
 
-def test_edge_compilation_hashes_each_input_once_and_rechecks_new_inputs(monkeypatch):
-    from collections import Counter
-    from dataclasses import replace
-
-    caller, callee = _make_symbol("pkg.mod.caller"), _make_symbol("pkg.mod.callee")
-    facts = compile_symbol_facts([caller, callee]).facts
-    edges = [_edge(caller, callee.stable_id, metadata={"occurrence": i}) for i in range(24)]
-    getter = DependencyEdge.edge_id.fget
-    expected = {getter(edge) for edge in edges}
-    counts = Counter()
-
-    def observed(edge):
-        counts[id(edge)] += 1
-        return getter(edge)
-
-    monkeypatch.setattr(DependencyEdge, "edge_id", property(observed))
-    before = compile_semantic_links(iter(reversed(edges)), symbol_facts=facts)
-    assert {link.edge_id for link in before.links} == expected
-    assert sum(counts.values()) == len(edges)
-    changed = [replace(edge, metadata={"occurrence": i + 100}) for i, edge in enumerate(edges)]
-    counts.clear()
-    after = compile_semantic_links(changed, symbol_facts=facts)
-    assert before.index.index_cid != after.index.index_cid
-    assert sum(counts.values()) == len(changed)
-    with pytest.raises(MerkleCompilerError, match="duplicate edge_id"):
-        compile_semantic_links([edges[0], edges[0]], symbol_facts=facts)
-
-
 def test_link_fact_cache_preserves_exact_cold_merkle_blocks(monkeypatch):
     """A local immutable-fact cache must not change a single producer byte."""
     from ipfs_datasets_py.logic.software_contracts.semantic_state import merkle

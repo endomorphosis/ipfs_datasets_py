@@ -194,7 +194,6 @@ class CodebaseFederatedArtifactWorker:
         self.limits = source.CodebaseFeatureTrainingLimits() if limits is None else limits
         _require(type(self.limits) is source.CodebaseFeatureTrainingLimits, "native worker limits required")
         self._context = ContextVar("codebase-artifact-worker-context", default=None)
-        self._counter_lock = threading.Lock()
         self.numerical_invocations = 0
 
     @contextmanager
@@ -277,8 +276,7 @@ class CodebaseFederatedArtifactWorker:
                         _require(not inherited[1].is_set(), "artifact receipt replay cancelled")
                     return result
                 with self._resources(dispatch) as (lease, signal, remaining, memory_mb, bounds):
-                    with self._counter_lock:
-                        self.numerical_invocations += 1
+                    self.numerical_invocations += 1
                     output, receipt = source._worker(federation._runtime(base), train, tune, canary, replay,
                         action="train", **local["configuration"], remaining=remaining, memory_mb=memory_mb,
                         limits=bounds, signal=signal, lease=lease)

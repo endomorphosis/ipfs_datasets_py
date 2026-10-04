@@ -11,6 +11,8 @@ load_training_inputs=corpus.load_training_inputs
 validate_target=corpus.validate_target
 validate_units=corpus.validate_units
 validate_source_query=corpus.validate_source_query
+validate_query_inventory=corpus.validate_query_inventory
+candidate_coordinate_inputs=corpus.candidate_coordinate_inputs
 propose_time_spans=corpus.propose_time_spans
 SEALED=corpus.SEALED
 

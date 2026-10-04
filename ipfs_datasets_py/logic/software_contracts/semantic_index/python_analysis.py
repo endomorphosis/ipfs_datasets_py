@@ -955,9 +955,8 @@ class PythonSemanticAnalyzer:
             return PythonSemanticAnalysis(path, source_cid, (), ("python.parse_error",))
 
         module = _module_name(path)
-        # A captured script or its first directory may begin with a dot. Keep
-        # that source identity intact; splitting it as an import name yields an
-        # empty first component, which cannot be a semantic namespace.
+        # Hidden script paths have an empty first dotted component. Keep their
+        # complete module name as the namespace without changing ordinary IDs.
         namespace = self.namespace or module.split(".")[0] or module
         parents = {
             child: parent

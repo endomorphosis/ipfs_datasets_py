@@ -112,7 +112,7 @@ def _record(compatible, policy_cid):
 
 def load_parallel_dispatched_codebase_round(index, registry, version_id, *, dispatcher=None,
         queue=None, artifacts=None, artifact_cid=None, limits=None):
-    """Replay policy, numerical diagnostics and model/task history; no fitting."""
+    """Replay exact parallel policy and compatible model/task history; no work."""
     limits = owner._limits(limits)
     policy_cid, policy = _retained_policy(index, registry, version_id, limits)
     existing = None if artifact_cid is None else index.artifacts.get(artifact_cid, expected_schema=SCHEMA)
