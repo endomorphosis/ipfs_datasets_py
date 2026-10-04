@@ -523,9 +523,13 @@ unsat
 TRACE pi1:
   public.user_id = alice
   obs.status = ok
+  obs.public_token = tok
+  subject.task_id = task:1
 TRACE pi2:
   public.user_id = alice
   obs.status = leak
+  obs.public_token = tok
+  subject.task_id = task:1
 DIFF field=status left=ok right=leak
 """
     engine = HyperExecutionEngineV2(

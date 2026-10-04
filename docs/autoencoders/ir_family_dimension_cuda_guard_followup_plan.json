@@ -1,0 +1,82 @@
+{
+  "schema": "ir-family-dimension-cuda-guard-followup-plan/v1",
+  "created_utc": "2026-10-04",
+  "status": "additive_qualification_and_rollout_plan",
+  "previous_plan": "ir_family_dimension_head_followup_plan.json",
+  "historical_plan_changed": false,
+  "dimensions": [8, 384, 768, 4096],
+  "ir_family_ids": ["codebase_ir", "security_ir", "legal_ir", "intent_ir"],
+  "qualification_is_per_family_task_profile": true,
+  "dimension_role": "source_input_representation_width",
+  "report": "../../../ipfs_accelerate/docs/agent_supervisor/codebase_4096_cuda_bitwise_qualification.md",
+  "inference_policy": {
+    "optimization_default": true,
+    "optimized_false_selects_cpu_reference": true,
+    "selected_existing_profiles_unchanged": true,
+    "bitwise_v2_is_separate_candidate_api": true,
+    "successful_verification_cached": false,
+    "tensor_reference_boundary_checks_removed": 0
+  },
+  "qualified_additions": {
+    "native4096_untrained_architecture_cpu_cuda_replay": true,
+    "native4096_input_adapter_shape": [4, 4096],
+    "native4096_adapter_output_initialized_to_zero": true,
+    "latent_conditioning_trained": false,
+    "complete_call_timing_includes_source_checkpoint_tensor_anchor_checks": true,
+    "bitwise_float32_guard_primitive_numeric_controls": true,
+    "bitwise_v1_complete_call_speedup_demonstrated": false,
+    "bitwise_v2_observed_cuda_medians_improved": true,
+    "bitwise_v2_repeatable_performance_established": false,
+    "bitwise_v2_cpu_calls_improved": false,
+    "closed_reader_schema_and_report_consistency": true,
+    "new_controls": {"bitwise_guard": 87, "bitwise_v1_session": 27, "bitwise_v2_session": 27, "owner_diagnostic": 30, "closed_reader": 73},
+    "new_control_total": 244,
+    "previous_head_guard_controls": 199,
+    "new_training_fits": 0,
+    "optimizer_constructions": 0,
+    "optimizer_steps": 0,
+    "actual_leanstral_embeddings_qualified": false,
+    "positive_step_native4096_training_admitted": false,
+    "production_model_selected": false
+  },
+  "milestones": [
+    {
+      "id": "CG1",
+      "status": "completed_bounded_fixture",
+      "scope": "actual synthetic4096 CUDA replay and externally pinned closed result audits",
+      "acceptance": ["complete canonical decisions match CPU singleton reference", "all four logit outputs within absolute 5e-5", "signed-zero subnormal NaN infinity and paired-reference mutation refusals", "unchanged checkpoint Adam sources and precision policy", "owned allocations and child/root leases close"]
+    },
+    {
+      "id": "CG2",
+      "status": "pending",
+      "scope": "qualify separate bitwise profiles on trained heads and varied source lengths across 8D 384D and 768D",
+      "acceptance": ["independent immutable checkpoint-reference anchors", "admit contiguous float32 values and retain non-float32 buffer checks", "preserve source callback and boundary schedules", "paired full-call timing with sufficient repetitions and uncertainty estimates", "current independently checked artifact source and cleanup joins", "select default only for qualified family task and execution profile"]
+    },
+    {
+      "id": "CG3",
+      "status": "pending_native_owner",
+      "scope": "Leanstral native4096 embedding owner without changing the existing foreign generation service",
+      "acceptance": ["admitted complete model-content verification", "native embedding mode and last-pooling width observations", "complete untruncated native4096 numerical outputs", "tokenizer normalization actual device and native entry/closing callbacks", "single-client resource admission cancellation and cleanup", "receipt-bound positive-step same-profile training and ablation evaluation"]
+    },
+    {
+      "id": "CG4",
+      "status": "pending_per_family_producers",
+      "scope": "CodebaseIR IntentIR SecurityIR and LegalIR scans and symbolic planning",
+      "acceptance": ["independent source-correspondence task codecs and trained checkpoint identities", "full repository dispositions and resumable successor scans", "signed worker dispatch joined to current source model checker and repository roots", "DuckDB/DuckLake proof-index custody and formal checker evidence independent of neural proposals"]
+    },
+    {
+      "id": "CG5",
+      "status": "pending_training_qualification",
+      "scope": "one federated model per compatible lineage with future gradient synchronization hooks",
+      "acceptance": ["tensor checkpoint storage equivalence and immutable content addressing", "same-width same-task same-encoder same-profile aggregation", "no cross-width or cross-lineage averaging", "future integration with ipfs_accelerate_py and mcp-plus-plus"]
+    }
+  ],
+  "existing_foreign_service_changed": false,
+  "runtime_databases_created": false,
+  "remote_repositories_created": false,
+  "ipfs_publication_performed": false,
+  "production_acceptance_rows_closed": 0,
+  "proof_authority": false,
+  "execution_attestation": false,
+  "kernel_resource_enforcement": false
+}

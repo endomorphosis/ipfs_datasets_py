@@ -112,6 +112,7 @@ def test_larger_file_cap_does_not_weaken_private_workspace_aggregate_bound(tmp_p
         "pathlib.Path('second').write_bytes(b'b' * 3072)",
         max_file_bytes=8192,
     )
-    assert result.returncode == 0
+    # A live aggregate scan may terminate the writer before its normal exit.
+    assert result.returncode is not None
     assert not result.ok
     assert result.workspace_limit_exceeded and result.resource_exhausted

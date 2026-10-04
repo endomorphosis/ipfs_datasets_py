@@ -237,6 +237,14 @@ _PROVIDER_INSTALLER_OPTIONS: dict[str, frozenset[str]] = {
     "apalache": frozenset({"java_executable"}),
     "tlc": frozenset({"java_executable"}),
     "zkp-circuit": frozenset({"deployment_lock_path"}),
+    "hyperltl": frozenset({"dependency_roots"}),
+    "autohyper": frozenset({"dependency_roots"}),
+    "mchyper": frozenset({"dependency_roots"}),
+}
+_HYPER_DEPENDENCY_ROOT_KEYS = {
+    "hyperltl": frozenset({"make", "ocamlc", "ocamlbuild", "ocamlfind", "menhir", "dune", "g++", "zlib", "pkg-config", "opam", "opam-switch", "ocaml"}),
+    "autohyper": frozenset({"dotnet", "dotnet-sdk", "autfilt", "ltl2tgba", "spot"}),
+    "mchyper": frozenset({"ghc", "ghc-pkg", "cabal", "ghcup", "ghcup-bin", "ghc-package-db", "haskell-package-db", "python2.7", "python", "python-root", "abc", "abc-root", "aigtoaig", "aiger", "aiger-root", "aiger-source", "aiger-source-root", "aiger-archive", "aiger-source-archive", "abc-source", "abc-source-root", "abc-archive", "abc-source-archive", "python-source", "python-source-root", "python-archive", "python-source-archive"}),
 }
 _FORBIDDEN_PUBLIC_KEYS = frozenset(
     {
@@ -357,6 +365,14 @@ def _cross_process_install_lock(provider: str) -> Iterator[dict[str, Any]]:
     dead or hung peer cannot block an API request indefinitely.
     """
 
+    def checkpoint() -> None:
+        if provider in _HYPER_DEPENDENCY_ROOT_KEYS:
+            from ipfs_datasets_py.logic.backends.smt.operation_budget import current_proof_operation
+            operation = current_proof_operation()
+            if operation is not None:
+                operation.checkpoint("Hyper facade filesystem ownership")
+
+    checkpoint()
     root = _configured_user_install_root()
     lock_dir = root / ".locks"
     root.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -379,12 +395,18 @@ def _cross_process_install_lock(provider: str) -> Iterator[dict[str, Any]]:
         raise ValueError("lazy installer lease must be a regular file")
     handle = os.fdopen(descriptor, "a+b")
     deadline = time.monotonic() + _PROCESS_LOCK_TIMEOUT_SECONDS
+    if provider in _HYPER_DEPENDENCY_ROOT_KEYS:
+        from ipfs_datasets_py.logic.backends.smt.operation_budget import current_proof_operation
+        operation = current_proof_operation()
+        if operation is not None:
+            deadline = operation.deadline
     acquired = False
     try:
         if os.name == "nt":
             import msvcrt  # pragma: no cover - Windows-only
 
             while time.monotonic() < deadline:
+                checkpoint()
                 try:
                     handle.seek(0)
                     if handle.tell() == 0:
@@ -400,6 +422,7 @@ def _cross_process_install_lock(provider: str) -> Iterator[dict[str, Any]]:
             import fcntl
 
             while time.monotonic() < deadline:
+                checkpoint()
                 try:
                     fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
                     acquired = True
@@ -407,7 +430,9 @@ def _cross_process_install_lock(provider: str) -> Iterator[dict[str, Any]]:
                 except BlockingIOError:
                     time.sleep(0.05)
         if not acquired:
+            checkpoint()
             raise TimeoutError(f"timed out acquiring installer lease for {provider}")
+        checkpoint()
         yield {
             "cross_process": True,
             "lock_name": path.name,
@@ -449,6 +474,36 @@ def _normalize_installer_options(
     for key, value in raw.items():
         if not isinstance(key, str):
             raise ValueError("installer option keys must be strings")
+        if key == "dependency_roots" and provider in _HYPER_DEPENDENCY_ROOT_KEYS:
+            if not isinstance(value, dict) or len(value) > 32:
+                raise ValueError("dependency_roots must be a dictionary of at most 32 reviewed paths")
+            roots, descriptors = {}, {}
+            for name, item in value.items():
+                if not isinstance(name, str) or name not in _HYPER_DEPENDENCY_ROOT_KEYS[provider]:
+                    raise ValueError("unreviewed Hyper dependency root name")
+                if not isinstance(item, (str, Path)):
+                    raise ValueError("Hyper dependency root must be a path string")
+                text = str(item)
+                if not text or len(text.encode("utf-8")) > 4096 or text != text.strip() or "\x00" in text:
+                    raise ValueError("Hyper dependency root must be a bounded trimmed path")
+                supplied = Path(text).expanduser()
+                if not supplied.is_absolute():
+                    raise ValueError("Hyper dependency root must be absolute")
+                try:
+                    path = supplied.resolve(strict=True)
+                except OSError as exc:
+                    raise ValueError("Hyper dependency root does not exist") from exc
+                if path != supplied or supplied.is_symlink() or not (path.is_dir() or path.is_file()):
+                    raise ValueError("Hyper dependency root must be a regular file or directory without symlink components")
+                roots[name] = str(path)
+                descriptors[name] = {
+                    "basename": path.name,
+                    "kind": "directory" if path.is_dir() else "file",
+                    "path_binding_sha256": hashlib.sha256(str(path).encode("utf-8")).hexdigest(),
+                    "content_verified": False,
+                }
+            actual[key], public[key] = roots, descriptors
+            continue
         if key not in {"deployment_lock_path", "java_executable"}:
             raise ValueError(f"installer option {key!r} has no reviewed translation")
         if not isinstance(value, (str, Path)):
@@ -660,6 +715,35 @@ def execute_reviewed_install(
     strict: bool = False,
     installer_options: dict[str, Any] | None = None,
     progress: ProgressCallback | None = None,
+    operation_timeout_ms: int | None = None,
+    cancellation: object | None = None,
+) -> dict[str, Any]:
+    """Execute a reviewed install; Hyper work includes a cooperative budget."""
+    provider = normalize_prover_name(provider_id)
+    kwargs = dict(allow_install=allow_install, dry_run=dry_run, offline=offline,
+                  force=force, strict=strict, installer_options=installer_options, progress=progress)
+    if provider not in _HYPER_DEPENDENCY_ROOT_KEYS:
+        if operation_timeout_ms is not None or cancellation is not None:
+            raise ValueError("installation operation controls currently apply only to Hyper tools")
+        return _execute_reviewed_install_in_operation(provider, **kwargs)
+    # Planning/refusal stays inert, including avoiding the runtime helper import.
+    if allow_install is not True or dry_run is not False or offline is not False:
+        return _execute_reviewed_install_in_operation(provider, **kwargs)
+    from ipfs_datasets_py.logic.backends.installers.install_control import installation_scope
+    with installation_scope(operation_timeout_ms=operation_timeout_ms, cancellation=cancellation):
+        return _execute_reviewed_install_in_operation(provider, **kwargs)
+
+
+def _execute_reviewed_install_in_operation(
+    provider_id: str,
+    *,
+    allow_install: bool = False,
+    dry_run: bool = False,
+    offline: bool = False,
+    force: bool = False,
+    strict: bool = False,
+    installer_options: dict[str, Any] | None = None,
+    progress: ProgressCallback | None = None,
 ) -> dict[str, Any]:
     """Execute one explicit registry-selected install behind a fail-closed gate.
 
@@ -848,7 +932,7 @@ def execute_reviewed_install(
         # Serialize publication for the selected provider only.  Independent
         # providers remain parallel.  The filesystem lease closes the
         # cross-process race between CLI, MCP, and supervisor workers.
-        with _install_lock(provider):
+        with _provider_install_lock(provider):
             with _cross_process_install_lock(provider) as lease_evidence:
                 process_lock_evidence = dict(lease_evidence)
                 plugin_invoked = True
@@ -958,6 +1042,10 @@ def execute_reviewed_install(
             "plugin_receipt": payload,
         }
     except Exception as exc:
+        if provider in _HYPER_DEPENDENCY_ROOT_KEYS:
+            from ipfs_datasets_py.logic.backends.smt.operation_budget import ProofOperationInterrupted
+            if isinstance(exc, ProofOperationInterrupted):
+                raise
         logger.exception("Reviewed install transaction failed for %s", provider)
         return {
             **base,
@@ -1421,7 +1509,13 @@ def _lazy_install_prover_once(
                 kwargs["hermetic_shim"] = False
 
         if progress is not None:
-            def forward_progress(phase: str, message: str) -> None:
+            def forward_progress(*args: object) -> None:
+                if len(args) == 1:
+                    phase, message = "installing", str(args[0])
+                elif len(args) == 2:
+                    phase, message = str(args[0]), str(args[1])
+                else:
+                    raise TypeError("installer progress accepts message or phase/message")
                 normalized_phase = phase if phase in {
                     "checking", "available", "installing", "installed", "blocked", "failed"
                 } else "installing"
@@ -1459,6 +1553,10 @@ def _lazy_install_prover_once(
         )
         return ok
     except Exception as exc:
+        if prover in _HYPER_DEPENDENCY_ROOT_KEYS:
+            from ipfs_datasets_py.logic.backends.smt.operation_budget import ProofOperationInterrupted
+            if isinstance(exc, ProofOperationInterrupted):
+                raise
         logger.exception("Lazy install failed for prover %s", prover)
         _emit(ProverInstallEvent(prover, "failed", f"installation failed: {exc}"), progress)
         if strict:
@@ -1477,6 +1575,26 @@ def _install_lock(prover: str) -> threading.Lock:
         return lock
 
 
+@contextmanager
+def _provider_install_lock(provider: str, *, operation_timeout_ms=None, cancellation=None):
+    lock = _install_lock(provider)
+    if provider not in _HYPER_DEPENDENCY_ROOT_KEYS:
+        with lock:
+            yield
+        return
+    from ipfs_datasets_py.logic.backends.installers.install_control import installation_scope, installation_checkpoint
+    with installation_scope(operation_timeout_ms=operation_timeout_ms, cancellation=cancellation):
+        while True:
+            remaining = installation_checkpoint("Hyper facade in-process ownership")
+            if lock.acquire(timeout=min(.05, max(0.0, remaining))):
+                break
+        try:
+            installation_checkpoint("Hyper facade ownership acquired")
+            yield
+        finally:
+            lock.release()
+
+
 def lazy_install_prover(
     prover_name: str,
     *,
@@ -1486,10 +1604,14 @@ def lazy_install_prover(
     progress: ProgressCallback | None = None,
     allow_automatic: bool = False,
     java_executable: str | Path | None = None,
+    operation_timeout_ms: int | None = None,
+    cancellation: object | None = None,
 ) -> bool:
     """Install a prover at most once per process, safely under parallel use."""
 
     prover = normalize_prover_name(prover_name)
+    if prover not in _HYPER_DEPENDENCY_ROOT_KEYS and (operation_timeout_ms is not None or cancellation is not None):
+        raise ValueError("installation operation controls currently apply only to Hyper tools")
     allowed = prover_lazy_install_enabled(prover) or (
         allow_automatic
         and not _explicitly_disabled()
@@ -1506,7 +1628,7 @@ def lazy_install_prover(
             java_executable=java_executable,
         )
 
-    with _install_lock(prover):
+    with _provider_install_lock(prover, operation_timeout_ms=operation_timeout_ms, cancellation=cancellation):
         attempt_key = (
             f"{prover}|java={Path(java_executable).expanduser().resolve()}"
             if java_executable is not None and prover in {"tlc", "apalache"}
@@ -1525,7 +1647,16 @@ def lazy_install_prover(
                 allow_automatic=allow_automatic,
                 java_executable=java_executable,
             )
-        except Exception:
+            if prover in _HYPER_DEPENDENCY_ROOT_KEYS:
+                from ipfs_datasets_py.logic.backends.installers.install_control import installation_checkpoint
+                installation_checkpoint("before caching Hyper installer result")
+        except Exception as exc:
+            if prover in _HYPER_DEPENDENCY_ROOT_KEYS:
+                from ipfs_datasets_py.logic.backends.smt.operation_budget import ProofOperationInterrupted
+                if isinstance(exc, ProofOperationInterrupted):
+                    _ATTEMPTED.discard(attempt_key)
+                    _INSTALL_RESULTS.pop(attempt_key, None)
+                    raise
             _INSTALL_RESULTS[attempt_key] = False
             raise
         _INSTALL_RESULTS[attempt_key] = bool(installed)

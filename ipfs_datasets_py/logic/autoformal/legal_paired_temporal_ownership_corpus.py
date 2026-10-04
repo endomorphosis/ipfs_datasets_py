@@ -6,7 +6,6 @@ only and must never become an inference candidate inventory or model feature.
 """
 from collections import Counter, defaultdict
 from copy import deepcopy
-import itertools
 from pathlib import Path
 import random
 import re
@@ -127,7 +126,9 @@ def render_source(split,unit,source):
  for index,block in enumerate(sequence):
   if index:writer.add(', ' if sequence[index-1]!='norm' or block=='norm' else ' ')
   norm_block() if block=='norm' else qualifier_block(block)
+ body_span=writer.span(heading['char_end'],len(writer.text))
  writer.add('.')
+ for item in records:item['scope_span']=deepcopy(block_spans[item['owner_type']])
  require(set(queries)==set(range(len(labels))),'every authored query inserted')
  proposed=propose_time_spans(writer.text)
  require([(p['char_start'],p['char_end']) for p in proposed]==sorted((s['char_start'],s['char_end']) for s in queries.values()),'all lexical time occurrences must be accounted')
@@ -143,12 +144,16 @@ def render_source(split,unit,source):
    selected=norm_owners+[target] if label=='ambiguous' else [target]
    countermodels=old.ambiguity_countermodels(target['owner_type']) if label=='ambiguous' else None
   candidates=[{key:deepcopy(item[key]) for key in ('owner_type','owner_occurrence_id','anchor_span','scope_span')} for item in selected]
+  if label=='ambiguous':
+   for candidate in candidates:
+    if candidate['owner_type']=='norm':candidate['scope_span']=deepcopy(body_span)
   annotations={'schema':ANNOTATION_SCHEMA,'split':split,'unit_index':unit,'source_index':source,'unit_id':unit_id,
    'cardinality':len(labels),'unit_pattern':pattern,'label_rotation':rotation,'layout_family':layout,
    'time_form':form,'modality':modality,'heading_span':heading,'time_span':queries[slot],
    'time_cue_span':writer.span(queries[slot]['char_start'],queries[slot]['char_start']+len(time_text.split()[0])),
    'source_role_spans':deepcopy(roles),'block_spans':deepcopy(block_spans),
    'owner_candidates':candidates,'attachment_cue_spans':[{'owner_occurrence_id':item['owner_occurrence_id'],'span':deepcopy(item['cue_span'])} for item in selected],
+   'candidate_scope_semantics':'structural_enclosing_extent_not_semantic_closure',
    'gold_filtered_owner_candidates':True,'candidate_inventory_usage':'reference_only_not_inference_inputs',
    'unique_owner_type_asserted':label!='ambiguous','unique_owner_occurrence_asserted':label!='ambiguous',
    'countermodels':countermodels,'annotation_authority':AUTHORITY,'independently_reviewed':False,
@@ -156,6 +161,13 @@ def render_source(split,unit,source):
   q=query(writer.text,{key:queries[slot][key] for key in ('char_start','char_end')})
   outputs.append({**q,'label':label,'group_id':source_group,'annotation':annotations})
  return deepcopy(outputs)
+
+
+def candidate_coordinate_inputs(row):
+ """Project REFERENCE-ONLY candidates for coordinate validation, never inference."""
+ a=row['annotation'];cues={item['owner_occurrence_id']:item['span'] for item in a['attachment_cue_spans']}
+ return [{key:deepcopy(item[key]) for key in ('owner_type','anchor_span','scope_span')} |
+  {'cue_span':deepcopy(cues[item['owner_occurrence_id']])} for item in a['owner_candidates']]
 
 
 def make_panel(split):

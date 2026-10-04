@@ -32,7 +32,7 @@ import uuid
 
 from .resource_scheduler import ResourceLane, ResourceLease, ResourceLeaseToken, get_global_resource_scheduler
 
-# Campaign cap increased to 145 GB with operator authorization on 2026-10-04. Existing
+# Campaign cap increased to 145 GB under prior storage authorization on 2026-10-04. Existing
 # ledgers require an explicit, lock-held limit migration; _read never upgrades
 # historical ledgers or releases their retained reservations implicitly.
 MAX_STORAGE_BYTES = 145_000_000_000

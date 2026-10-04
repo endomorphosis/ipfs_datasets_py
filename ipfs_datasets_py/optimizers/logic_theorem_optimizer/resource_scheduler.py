@@ -109,11 +109,14 @@ class LeaseTimeoutError(ResourceSchedulerError, TimeoutError):
 
     def __init__(
         self, *args: object, admission_observation: Optional[Mapping[str, Any]] = None,
+        timeout_decision: Optional[Mapping[str, Any]] = None,
     ) -> None:
         super().__init__(*args)
         # Diagnostic evidence belongs to this waiter, not the latest unrelated
         # request examined by fairness. It never authorizes an admission.
         self.admission_observation = deepcopy(admission_observation)
+        # Final branch evidence is separate from historical pressure refusals.
+        self.timeout_decision = deepcopy(timeout_decision)
 
 
 class LeaseCancelledError(ResourceSchedulerError):
@@ -1721,6 +1724,7 @@ class GlobalResourceScheduler:
         deadline = None if timeout is None else started_mono + float(timeout)
         terminal: Optional[str] = None
         proof_refusal_observation: Optional[Mapping[str, Any]] = None
+        timeout_decision: Optional[Mapping[str, Any]] = None
         granted_record: Optional[Dict[str, Any]] = None
         admission_observation: Dict[str, Any] = dict(
             schema="resource-admission-observation@1", scope="proof_primary_gate",
@@ -1809,6 +1813,28 @@ class GlobalResourceScheduler:
                     terminal = "cancelled"
                 elif timed_out and not can_grant_now:
                     proof_refusal_observation = deepcopy(waiter.get("last_proof_refusal"))
+                    timeout_decision = {
+                        "schema": "resource-lease-timeout-decision@1",
+                        "decision_scope": "actual_terminal_timeout_branch",
+                        "cycle_wall_time": now_wall,
+                        "cycle_monotonic_time": now_mono,
+                        "deadline_monotonic": deadline,
+                        "elapsed_seconds": now_mono - started_mono,
+                        "clock_scope": "acquire_process_local_monotonic_clock",
+                        "waiter_id": waiter["waiter_id"],
+                        "sequence": waiter["sequence"],
+                        "request_id": waiter["request_id"],
+                        "lane": waiter["lane"][:128],
+                        "lane_truncated": len(waiter["lane"]) > 128,
+                        "parent_lease_id": waiter["parent_lease_id"],
+                        "timed_out": timed_out,
+                        "can_grant_now": can_grant_now,
+                        "externally_cancelled": externally_cancelled,
+                        "parent_cancelled": parent_cancelled,
+                        "proof_safety_enabled": self.config.proof_safety_enabled,
+                        "exact_blocking_predicate": None,
+                        "exact_blocking_cause": None,
+                    }
                     state["waiters"].pop(waiter_id, None)
                     wait_seconds = now_mono - started_mono
                     self._record_wait(state, lane_value, wait_seconds)
@@ -1870,7 +1896,8 @@ class GlobalResourceScheduler:
             error.proof_refusal_observation = deepcopy(proof_refusal_observation)
             raise error
         if terminal == "timeout":
-            error = LeaseTimeoutError("timed out waiting for a resource lease")
+            error = LeaseTimeoutError("timed out waiting for a resource lease",
+                                      timeout_decision=timeout_decision)
             error.admission_observation = deepcopy(dict(admission_observation, terminal=terminal))
             error.proof_refusal_observation = deepcopy(proof_refusal_observation)
             raise error

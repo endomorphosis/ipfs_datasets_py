@@ -1,403 +1,239 @@
 {
-  "schema": "codebase-ir-repository-pipeline-plan/v1",
-  "status": "declarative_implementation_plan",
-  "created_at_utc": "2026-10-02T08:41:40.716082+00:00",
-  "guide": "codebase_ir_repository_pipeline_improvement_plan.md",
-  "comprehensive_guide": "codebase_ir_proof_index_improvement_plan.md",
-  "work_items": "codebase_ir_proof_index_work_items.json",
-  "cell_directory": "ir_family_dimension_inventory_plan.json",
-  "inspection_record": "../../../../artifacts/codebase-ir-repository-pipeline-plan-20261002/inspection.json",
-  "cell_policy": {
-    "ir_family_ids": [
-      "codebase_ir",
-      "security_ir",
-      "legal_ir",
-      "intent_ir"
-    ],
-    "dimensions": [
-      8,
-      384,
-      768
-    ],
-    "cell_count": 12,
-    "existing_cell_manifests_modified": false,
-    "required_cells_only": true,
-    "repository_adaptation_is_variant_in_owning_cell": true,
-    "native_schema_redefined_per_repository": false,
-    "source_capture_shared_by_reference": true,
-    "wider_cell_readiness_blocks8d_384d": false,
-    "runtime_stores_and_hub_repositories": "Use existing twelve proposed routes; no creation during planning."
-  },
-  "stages": [
+  "acceptance_fixtures": [
     {
-      "stage_id": "R00",
-      "title": "Register repository and select authenticated cells",
-      "depends_on": [],
-      "work_items": [
-        "C00",
-        "C01",
-        "C12",
-        "C15"
-      ],
-      "owner": "repository/source and cell owners",
-      "inputs": [
-        "registered repository profile",
-        "authenticated family/task/checkpoint selectors",
-        "source policy and environment"
-      ],
-      "outputs": [
-        "registration receipt",
-        "required cell/profile set"
-      ],
-      "admission": "Reject ambiguous repository identity or undeclared source mode. Register explicit unavailable model lanes; require compatible inherited weights only when admitting model-dependent execution or inherited training.",
-      "implementation_state": "planned",
-      "model_unavailability_blocks_repository_registration": false
-    },
-    {
-      "stage_id": "R01",
-      "title": "Capture complete declared inventory",
-      "depends_on": [
-        "R00"
-      ],
-      "work_items": [
-        "C02"
-      ],
-      "owner": "RepositoryCodebaseIndex and CodebaseCatalog",
-      "inputs": [
-        "registration receipt",
-        "expected repository head",
-        "capture policy"
-      ],
-      "outputs": [
-        "captured source manifest",
-        "coverage/disposition ledger",
-        "exact observed head"
-      ],
-      "admission": "All nonexcluded entries reconcile within frozen bounds; selections cannot narrow inventory; replay needs fresh applicability.",
+      "case": "achievable currently-false repair",
+      "expected": "Preserve current false claim; plan an admitted transition to a distinct post-state subject.",
+      "fixture_id": "F01",
       "implementation_state": "planned"
     },
     {
-      "stage_id": "R02",
-      "title": "Derive native Codebase IR and dependency graph",
-      "depends_on": [
-        "R01"
-      ],
-      "work_items": [
-        "C02",
-        "C04"
-      ],
-      "owner": "native Codebase/AST/semantic owners",
-      "inputs": [
-        "captured source manifest",
-        "frontend and native schema"
-      ],
-      "outputs": [
-        "source-bound native units",
-        "symbol/dependency map",
-        "unsupported/unresolved ledger"
-      ],
-      "admission": "Native structural observations retain exact spans/versions; unknown semantics remain explicit.",
+      "case": "contradictory current facts",
+      "expected": "Block matching current-state TRUE/FALSE contradiction.",
+      "fixture_id": "F02",
       "implementation_state": "planned"
     },
     {
-      "stage_id": "R03",
-      "title": "Admit model and vector inputs",
-      "depends_on": [
-        "R02"
-      ],
-      "work_items": [
-        "C03",
-        "C13"
-      ],
-      "owner": "owning cell registry/input-admission adapter",
-      "inputs": [
-        "native unit/span/context refs",
-        "checkpoint/profile selectors",
-        "old vector references"
-      ],
-      "outputs": [
-        "authenticated input receipts",
-        "explicit model-input unavailable states"
-      ],
-      "admission": "Reuse only exact input/profile matches; unavailable model lanes retain a deterministic native path.",
-      "implementation_state": "planned",
-      "missing_model_inputs_block_deterministic_path": false
-    },
-    {
-      "stage_id": "R04",
-      "title": "Autoformalize typed obligations",
-      "depends_on": [
-        "R02",
-        "R03"
-      ],
-      "work_items": [
-        "C04",
-        "C13"
-      ],
-      "owner": "native/logic projection and decoder owners",
-      "inputs": [
-        "native subjects",
-        "optional authenticated candidate inputs",
-        "logic/translator/source mapping profile"
-      ],
-      "outputs": [
-        "typed obligation inventory",
-        "model candidates",
-        "source correspondence and unresolved facets"
-      ],
-      "admission": "Models propose; expected obligation and unsupported coverage are accounted for independently.",
+      "case": "false mandatory policy or missing producer",
+      "expected": "Block effects and report unsatisfied preconditions.",
+      "fixture_id": "F03",
       "implementation_state": "planned"
     },
     {
-      "stage_id": "R05",
-      "title": "Check and index exact evidence",
-      "depends_on": [
-        "R04"
-      ],
-      "work_items": [
-        "C05",
-        "C06"
-      ],
-      "owner": "trusted checker and cell evidence-index owners",
-      "inputs": [
-        "typed obligations",
-        "canonical key/dependency bindings",
-        "checker/environment/resource profile"
-      ],
-      "outputs": [
-        "trusted outcome receipts",
-        "historical proof-index records",
-        "current evidence eligibility view"
-      ],
-      "admission": "Historical cache hits do not skip fresh native checks under the existing profile; preserve conditional/kernel/test authority distinctions.",
+      "case": "unknown or unsupported semantic facts",
+      "expected": "Use a separate admitted observation/review request and recompile.",
+      "fixture_id": "F04",
       "implementation_state": "planned"
     },
     {
-      "stage_id": "R06",
-      "title": "Ground versioned intent against observed code",
-      "depends_on": [
-        "R02",
-        "R05"
-      ],
-      "work_items": [
-        "C07",
-        "C17"
-      ],
-      "owner": "Intent/codebase grounding and typed federation adapters",
-      "inputs": [
-        "IntentIR source/version",
-        "exact current symbol versions",
-        "eligible facts and source/applicability roots"
-      ],
-      "outputs": [
-        "grounding receipt",
-        "state-qualified transition goals",
-        "unresolved intent requirements"
-      ],
-      "admission": "Preserve current false facts and separate planned-post subjects; ambiguity/unknowns cannot become true.",
+      "case": "stale proof or wrong typed root or unmapped subject",
+      "expected": "Reject post-state satisfaction.",
+      "fixture_id": "F05",
       "implementation_state": "planned"
     },
     {
-      "stage_id": "R07",
-      "title": "Compile admitted symbolic plan",
-      "depends_on": [
-        "R06"
-      ],
-      "work_items": [
-        "C07",
-        "C10"
-      ],
-      "owner": "IntentConstraintAdapter and formal/symbolic planner owners",
-      "inputs": [
-        "verified Intent/Formalization artifacts",
-        "grounded state/transition bindings",
-        "reviewed producer/task catalog"
-      ],
-      "outputs": [
-        "compiled validated task graph",
-        "exact runners/checks/effect scope",
-        "plan admission receipt"
-      ],
-      "admission": "No fallback marker substitutes for an actual check; review graphs route to a separate approved observation request.",
+      "case": "incomplete or oversized or truncated coverage",
+      "expected": "Reject admission or report explicit incomplete scope.",
+      "fixture_id": "F06",
       "implementation_state": "planned"
     },
     {
-      "stage_id": "R08",
-      "title": "Execute measure verify and refresh",
-      "depends_on": [
-        "R07"
-      ],
-      "work_items": [
-        "C06",
-        "C10"
-      ],
-      "owner": "DecisionRuntime isolated worker and trusted live observers",
-      "inputs": [
-        "admitted plan",
-        "fresh source/policy/lease observation",
-        "exact runner/environment bindings"
-      ],
-      "outputs": [
-        "measured diff/post-tree",
-        "fresh check receipts",
-        "planned-to-actual subject map",
-        "successor source/index heads"
-      ],
-      "admission": "Observe before dispatch and around checks; derive satisfaction from actual post-state evidence.",
+      "case": "warm process cold restart and operation replay",
+      "expected": "Report cache classes separately; reobserve source after receipt replay.",
+      "fixture_id": "F07",
       "implementation_state": "planned"
     },
     {
-      "stage_id": "R09",
-      "title": "Freeze eligible training and evaluation corpus",
-      "depends_on": [
-        "R02"
-      ],
-      "work_items": [
-        "C08",
-        "C09"
-      ],
-      "owner": "native target and private model-corpus owners",
-      "inputs": [
-        "admitted source-bound targets",
-        "compatible inherited lineage",
-        "coverage/exposure/split policy"
-      ],
-      "outputs": [
-        "frozen cohort/replay/split roots",
-        "unknown-feature coverage report",
-        "preregistered evaluation contract"
-      ],
-      "admission": "Training labels are independently established; missing compatible parent or unknown critical atoms require migration/unavailable.",
+      "case": "missing parent or new unknown feature atoms or changed eval units",
+      "expected": "Return unavailable/migration without silent random initialization.",
+      "fixture_id": "F08",
       "implementation_state": "planned"
     },
     {
-      "stage_id": "R10",
-      "title": "Adapt private repository candidate",
-      "depends_on": [
-        "R03",
-        "R09"
-      ],
-      "work_items": [
-        "C08"
-      ],
-      "owner": "cell registry and admitted numerical trainer",
-      "inputs": [
-        "exact compatible parent",
-        "frozen corpus/replay",
-        "update-policy/resource/operation bindings"
-      ],
-      "outputs": [
-        "immutable candidate",
-        "numerical execution/provenance receipts",
-        "client/queue acknowledgment state"
-      ],
-      "admission": "Inherited mode forbids absent-parent random bootstrap; update algorithms and their replay/optimizer semantics remain explicit.",
+      "case": "completed fit interrupted before queue/provenance acknowledgment",
+      "expected": "Recover exact candidate without another optimizer invocation.",
+      "fixture_id": "F09",
       "implementation_state": "planned"
     },
     {
-      "stage_id": "R11",
-      "title": "Evaluate and promote scoped candidate",
-      "depends_on": [
-        "R10"
-      ],
-      "work_items": [
-        "C08",
-        "C09",
-        "C14"
-      ],
-      "owner": "independent evaluator and owner promotion validator",
-      "inputs": [
-        "candidate and original parent",
-        "independent/retention cohorts",
-        "fresh source/model heads"
-      ],
-      "outputs": [
-        "evaluated candidate receipt",
-        "task-profile promotion or rejection",
-        "rollback receipt"
-      ],
-      "admission": "Absolute task fidelity, coverage, retention and authority gates precede compare-and-swap; no loss-only or proof-closing promotion.",
+      "case": "cancellation budgets or stale promotion heads",
+      "expected": "Keep serving parent selected.",
+      "fixture_id": "F10",
       "implementation_state": "planned"
     },
     {
-      "stage_id": "R12",
-      "title": "Deliver immutable history and recover",
-      "depends_on": [
-        "R00"
-      ],
-      "work_items": [
-        "C11",
-        "C16"
-      ],
-      "owner": "per-owner outbox lake/Hub delivery and recovery owners",
-      "inputs": [
-        "durable stage/model/evidence receipts as they become available",
-        "required delivery mapping"
-      ],
-      "outputs": [
-        "pending/complete delivery receipts",
-        "recovery journal",
-        "independent history references"
-      ],
-      "admission": "Streaming side branch; preserve local completion versus optional delivery; recover artifacts/acknowledgments without rerunning training.",
-      "implementation_state": "planned",
-      "streaming_side_branch": true,
-      "not_required_for_local_model_promotion": true
+      "case": "lower loss with fidelity or retention regression",
+      "expected": "Reject promotion.",
+      "fixture_id": "F11",
+      "implementation_state": "planned"
+    },
+    {
+      "case": "wrong family task codec span or evidence authority",
+      "expected": "Reject incompatible decoding and evidence admission.",
+      "fixture_id": "F12",
+      "implementation_state": "planned"
     }
   ],
-  "repository_registration": {
-    "required": [
-      "stable repository identity with worktree/source-mode instance distinction",
-      "exact commit/tree and captured overlay/index/untracked dispositions when admitted",
-      "declared exclusions and full inventory population",
-      "nested-root/symlink boundaries",
-      "frontend/dependency/build/environment profiles",
-      "expected durable head and live observation",
-      "cell/task/span/checkpoint selectors"
-    ],
-    "pilot_source_mode": "proposed strict-clean gate over existing committed Git-root capture policy",
-    "existing_policy_admitted_modes": [
-      "git-clean",
-      "git-working"
-    ],
-    "selection_paths_filter_capture_inventory": false,
-    "capture_inventory": "all nonexcluded entries",
-    "current_pilot_max_entries": 256,
-    "current_pilot_max_file_bytes": 65536,
-    "larger_scope_requires_new_sealed_paged_profile": true,
-    "point_in_time_observation_is_filesystem_lock": false,
-    "policy_currentness_includes_ignore_inputs": true
+  "actions_performed": {
+    "distillation": false,
+    "embedding_regeneration": false,
+    "git_merge_or_push": false,
+    "model_download": false,
+    "model_inference": false,
+    "model_training": false,
+    "remote_repositories_created": false,
+    "repository_scan_executed": false,
+    "runtime_code_changed": false,
+    "runtime_databases_created": false,
+    "runtime_promotion": false,
+    "supervisor_effect_execution": false
   },
-  "coverage_contract": {
-    "denominators": [
-      "inventory entries",
-      "parsed AST units",
-      "supported native units",
-      "supported decoder units",
-      "expected/emitted formal obligations",
-      "checked outcomes",
-      "currently eligible source-correspondent claims"
+  "apalache_execution_admission_increment": {
+    "accepted_native_phases": 60,
+    "aggregate_root_reservation_added": false,
+    "benchmark_effective_workers": [
+      1,
+      1,
+      1
     ],
-    "unsupported_omitted_and_unresolved_accounted": true,
-    "only_emitted_successes_define_coverage": false,
-    "aggregate_requires_single_consistent_source_root": true
+    "benchmark_requested_workers": [
+      1,
+      2,
+      4
+    ],
+    "child_process_slots": 3,
+    "cpu_slots": 1,
+    "default_admission_enabled": true,
+    "generic_registry_result_normalization_fixed": false,
+    "hard_aggregate_containment_added": false,
+    "heap_fraction_of_requested_rss": 0.5,
+    "heap_rounding": "floor_whole_MiB",
+    "many_core_scaling_established": false,
+    "max_file_mib": 64,
+    "max_workspace_mib": 128,
+    "minimum_requested_rss_mib": 256,
+    "native_apalache_trace_parsing": false,
+    "native_counterexample_legacy_replayed_flag_is_not_replay_evidence": true,
+    "native_full_seconds": 23.417965499000275,
+    "native_qualified_routes": [
+      "v2_engine",
+      "v2_helper"
+    ],
+    "native_smt": "in_process_z3_jni",
+    "new_admission_tests": 47,
+    "production_tasks_closed": [],
+    "profile_scope": "reviewed_stock_launcher_default_environment",
+    "qualification": "../../workspace/apalache-execution-admission-qualification-20261003/REPORT.md",
+    "raw_counterexample_retained": true,
+    "requested_rss_raised": false,
+    "runtime_config_isolated": true,
+    "selected_regression_tests_passed": 1708,
+    "status": "implemented_partial_acceptance",
+    "whole_install_budget_added": false
+  },
+  "atp_default_admission_increment": {
+    "additionally_selected_existing_atp_tests": 41,
+    "all_attempts_preserved": true,
+    "canonical_defaults_admitted": true,
+    "combined_output_byte_bound_enforced": true,
+    "deselected_legacy_native_tests": 15,
+    "e_satisfiable_exit_normalization_fixed": false,
+    "explicit_runner_behavior_preserved": true,
+    "focused_tests": 370,
+    "hard_aggregate_containment": false,
+    "hermetic_mode_requires_injection": true,
+    "many_core_scaling_established": false,
+    "native_atp_cancellation_tested": false,
+    "native_atp_cases": 4,
+    "native_candidate_results": 3,
+    "native_existing_e_exit_error_cases": 1,
+    "native_memory_mb": 128,
+    "native_request_timeout_seconds": 5,
+    "native_seconds": 0.34354265699221287,
+    "native_v2_execution": false,
+    "native_wrapper_seconds": 0.6650756519957213,
+    "new_admission_tests": 53,
+    "original_lifecycle_flags_retained": true,
+    "owned_work_drained": true,
+    "prior_artifacts_preserved": 1902,
+    "prior_qualifications_preserved": 21,
+    "production_tasks_closed": [],
+    "qualification": "../../workspace/atp-default-admission-qualification-20261003/REPORT.md",
+    "raw_solver_success_promoted_to_theorem": false,
+    "registry_alias_valued_request_bindings_fixed": false,
+    "retained_previous_tests": 2314,
+    "selected_tests": 2408,
+    "standalone_v2_aggregate_budget": false,
+    "status": "qualified_partial_scope",
+    "test_counts_summed": false,
+    "unsafe_lifecycle_output_rejected_before_reconstruction": true,
+    "v2_live_fallback_admitted": true,
+    "vampire_separate_option_values_corrected": true,
+    "vampire_szs_and_tptp_proof_flags_corrected": true
+  },
+  "bounded_conditional_execution_increment": {
+    "active_native_cancellation": true,
+    "aggregate_kernel_memory_limit": false,
+    "deadline_includes_admission": true,
+    "default_native_memory_bytes": 134217728,
+    "default_per_logical_call_timeout_ms": 5000,
+    "fresh_admission_each_phase": true,
+    "historical_execution_attested": false,
+    "legacy_artifacts_rewritten": false,
+    "legacy_replay": "explicit exact reviewed @1 producer inventory and unchanged semantic dependencies",
+    "new_proof_or_runtime_behavior_authority": false,
+    "output_capture": "per_stream_bounded_with_combined_retention_check",
+    "owners": [
+      "codebase_verification",
+      "codebase_applicability"
+    ],
+    "parent_python_rss_limit": false,
+    "per_process_address_space_enforced": true,
+    "process_owner": "existing BoundedToolRunner under actual producer child leases",
+    "protocol": [
+      "version",
+      "verdict",
+      "applicable_model_or_unsat_core"
+    ],
+    "qualification": "../../workspace/codebase-smt-execution-qualification-20261002/REPORT.md",
+    "remaining": [
+      "aggregate_cgroups",
+      "hostile_daemon_containment",
+      "generic_backend_admission",
+      "large_scale_index_queries",
+      "DuckLake_delivery",
+      "broader_source_semantics"
+    ],
+    "status": "implemented_default_v2_partial_acceptance",
+    "tree_rss_guard": "sampled"
+  },
+  "bundled_program_ast_provider_deployment_increment": {
+    "all_adapter_return_paths_covered": true,
+    "bundled_provider_mirror_false_supported": true,
+    "conditional_receipts_replayed_without_solvers": true,
+    "default_mirroring_enabled": true,
+    "external_provider_installed_or_upgraded": false,
+    "historical_hash_aliases_added": false,
+    "native_producer_source_generation_changed": false,
+    "new_native_solver_phases": 0,
+    "old_artifacts_mutated": false,
+    "production_tasks_closed": [],
+    "provider_import_selection_changed": false,
+    "qualification": "../../workspace/bundled-program-ast-provider-qualification-20261003/REPORT.md",
+    "remaining": [
+      "external_provider_deployment",
+      "whole_install_budgets",
+      "setup_compile_check_v2_ownership",
+      "Apalache_execution",
+      "aggregate_cgroups",
+      "supervisor_scheduler_owner",
+      "authenticated_index_scaling",
+      "DuckLake_delivery",
+      "learned_semantic_IR",
+      "production_planner_admission"
+    ],
+    "status": "implemented_partial_acceptance"
   },
   "cache_policy": {
-    "classes": [
-      "source_ast_native",
-      "vectors",
-      "model_candidates",
-      "checked_evidence"
-    ],
-    "source_reuse": "Exact source/parser/path/module/frontend/configuration/implementation/schema context.",
-    "vector_reuse": "Exact input/span/context and encoder/tokenizer/code/pooling/normalization/precision/dimension role.",
-    "candidate_reuse": "Exact vector plus decoder/checkpoint/task/codec/generation/output budget.",
-    "proof_reuse": "Existing canonical16-field key and independently validated current applicability.",
-    "warm_ast_cache_is_process_local": true,
-    "semantic_preparation_rescans": true,
-    "cold_restart_durable_invalidation_available": true,
-    "durable_shard_hydration": "proposed C02 performance adapter",
-    "current_historical_hit_skips_fresh_native_checker": false,
     "cache_counters": [
       "warm_ast_hit",
       "cold_artifact_load",
@@ -408,54 +244,466 @@
       "fresh_checker_execution",
       "certificate_rechecked"
     ],
+    "candidate_reuse": "Exact vector plus decoder/checkpoint/task/codec/generation/output budget.",
+    "classes": [
+      "source_ast_native",
+      "vectors",
+      "model_candidates",
+      "checked_evidence"
+    ],
+    "cold_restart_durable_invalidation_available": true,
+    "current_historical_hit_skips_fresh_native_checker": false,
+    "durable_shard_hydration": "proposed C02 performance adapter",
     "portable_certificate_profile": "future separately reviewed adapter; not current historical-cache authority",
-    "similarity_result_is_exact_proof_hit": false
+    "proof_reuse": "Existing canonical16-field key and independently validated current applicability.",
+    "semantic_preparation_rescans": true,
+    "similarity_result_is_exact_proof_hit": false,
+    "source_reuse": "Exact source/parser/path/module/frontend/configuration/implementation/schema context.",
+    "vector_reuse": "Exact input/span/context and encoder/tokenizer/code/pooling/normalization/precision/dimension role.",
+    "warm_ast_cache_is_process_local": true
   },
-  "state_transition_binding": {
-    "status": "proposed_closed_adapter",
-    "phases": [
-      "current",
-      "planned_post",
-      "observed_post"
+  "cell_directory": "ir_family_dimension_inventory_plan.json",
+  "cell_policy": {
+    "cell_count": 12,
+    "dimensions": [
+      8,
+      384,
+      768
     ],
-    "required": [
-      "intent root/node/constraint",
-      "typed store/family/source/applicability bindings",
-      "exact source/semantic/current subject version",
-      "environment/policy",
-      "state phase and distinct semantic subject",
-      "reviewed producer/template",
-      "preconditions/effects/dependencies/paths/runner/args/checks/budgets",
-      "planned-to-actual subject map",
-      "measured observed post-tree/semantic roots",
-      "eligible actual post-state evidence"
+    "existing_cell_manifests_modified": false,
+    "ir_family_ids": [
+      "codebase_ir",
+      "security_ir",
+      "legal_ir",
+      "intent_ir"
     ],
-    "current_false_fact_preserved": true,
-    "predicate_id_alone_separates_semantic_states": false,
-    "planned_post_subject_is_observed_tree": false,
-    "false_mandatory_policy_precondition_blocks": true,
-    "unknown_resolution": "Separate admitted observation/context-resolution request, then re-ground and recompile.",
-    "unknown_automatically_converted_to_task_by_current_compiler": false,
-    "satisfaction_ids_derived_by_trusted_evidence_owner": true
+    "native_schema_redefined_per_repository": false,
+    "repository_adaptation_is_variant_in_owning_cell": true,
+    "required_cells_only": true,
+    "runtime_stores_and_hub_repositories": "Use existing twelve proposed routes; no creation during planning.",
+    "source_capture_shared_by_reference": true,
+    "wider_cell_readiness_blocks8d_384d": false
   },
-  "planner_handoffs": {
-    "verified_intent_and_formalization_artifacts_required": true,
-    "codebase_native_registry_slot_currently_exists": false,
-    "codebase_to_formalization_bridge": "reviewed typed registration preserving upstream canonical types",
-    "reviewed_producer_task_catalog_required": true,
-    "actual_runner_arguments_effects_leases_checks_required": true,
-    "fallback_validation_marker_is_executable_check": false,
-    "trusted_live_observer_before_dispatch_and_around_checks_required": true,
-    "copied_plan_values_are_live_observations": false,
-    "worker_model_ids_are_implementation_evidence": false
+  "comprehensive_guide": "codebase_ir_proof_index_improvement_plan.md",
+  "coverage_contract": {
+    "aggregate_requires_single_consistent_source_root": true,
+    "denominators": [
+      "inventory entries",
+      "parsed AST units",
+      "supported native units",
+      "supported decoder units",
+      "expected/emitted formal obligations",
+      "checked outcomes",
+      "currently eligible source-correspondent claims"
+    ],
+    "only_emitted_successes_define_coverage": false,
+    "unsupported_omitted_and_unresolved_accounted": true
+  },
+  "created_at_utc": "2026-10-02T08:41:40.716082+00:00",
+  "current_conditional_index_status_admission": {
+    "accepted": [
+      "proved",
+      "refuted"
+    ],
+    "historical_record_is_authoritative_supervisor_proof": false,
+    "nonterminal": "separate proposed attempt journal or reviewed owner extension"
+  },
+  "delivery_policy": {
+    "aggregate_may_reference_missing_required_receipts": false,
+    "global_atomic_transaction_claimed": false,
+    "optional_history_or_hub_delivery_blocks_valid_local_head": false,
+    "recovery_reexecutes_model_training_or_solver_work": false,
+    "registry_and_index_separate_owners": true,
+    "writer_process_per_database": "serialized owner, workers return immutable artifacts"
+  },
+  "eprover_satisfiable_exit_increment": {
+    "accepted_nonzero_status_parsed_once": true,
+    "default_candidate_authority_preserved": true,
+    "deselected_legacy_native_tests": 15,
+    "e_integer_exit_one_allowed_statuses": [
+      "Satisfiable",
+      "CounterSatisfiable"
+    ],
+    "explicit_validator_contract_preserved": true,
+    "focused_tests": 420,
+    "hard_aggregate_containment": false,
+    "lifecycle_and_combined_output_gates_precede_parsing": true,
+    "malformed_or_disallowed_nonzero_status_is_error": true,
+    "many_core_scaling_established": false,
+    "native_atp_cancellation_tested": false,
+    "native_atp_cases": 6,
+    "native_atp_stress_tested": false,
+    "native_candidate_results": 6,
+    "native_e_exit_one_candidate_cases": 2,
+    "native_generic_unknown_results": 6,
+    "native_memory_mb": 128,
+    "native_request_timeout_seconds": 5,
+    "native_seconds": 0.47366133199830074,
+    "native_source_count": 98,
+    "native_v2_execution": false,
+    "native_wrapper_seconds": 0.8160540480021155,
+    "new_exit_status_tests": 50,
+    "next_runner_migration": "ProVerif with lifecycle/output gates and managed-launcher review",
+    "other_backends_nonzero_policy_changed": false,
+    "owned_work_drained": true,
+    "prior_artifacts_preserved": 2109,
+    "prior_qualifications_preserved": 22,
+    "production_tasks_closed": [],
+    "qualification": "../../workspace/eprover-satisfiable-exit-qualification-20261003/REPORT.md",
+    "raw_exit_and_termination_metadata_preserved": true,
+    "real_resource_sampler_preserved": true,
+    "registry_alias_valued_request_bindings_fixed": false,
+    "retained_previous_tests": 2408,
+    "saved_pool_configuration_unchanged": true,
+    "selected_source_count": 185,
+    "selected_tests": 2458,
+    "standalone_v2_aggregate_budget": false,
+    "status": "qualified_partial_scope",
+    "test_counts_summed": false
+  },
+  "existing_transition_owner_reuse": {
+    "canonical_types": "ProgramTransitionQuery/Candidate/Prediction/Observation/Admission and PatchSketchIR/RepairOperator",
+    "native_identity_and_full_record_transport_identity_separate": true,
+    "native_transition_admission_grants_effect_or_completion_authority": false,
+    "observation_subject_remains_query_subject": true,
+    "outer_state_adapter": "proposed; existing native payloads unchanged",
+    "repair_query_requires_current_graph": true
+  },
+  "generic_prover_admission_increment": {
+    "actual_parent_child_ownership": true,
+    "aggregate_kernel_memory_limit_added": false,
+    "deadline_scope": "admission, workspace preparation and execution per invocation",
+    "default_execution_adapters": [
+      "LeanKernelBackend",
+      "RocqKernelBackend",
+      "IsabelleKernelBackend",
+      "TLCBackend"
+    ],
+    "historical_artifacts_rewritten": false,
+    "lean_default_profile": {
+      "address_space_floor_bytes": 4294967296,
+      "child_process_slots": 1,
+      "cpu_slots": 1,
+      "resident_memory_budget": "request bounds",
+      "stack_kb": 65536
+    },
+    "memory_admission": "explicit RSS before explicit address space; ceil MiB; no silent resizing",
+    "new_proof_or_runtime_behavior_authority": false,
+    "plain_injected_runners": "caller-owned admission unchanged",
+    "pressure_backoff": "existing shared scheduler; new launches pause",
+    "production_tasks_closed": [],
+    "qualification": "../../workspace/generic-prover-admission-qualification-20261003/REPORT.md",
+    "remaining": [
+      "aggregate_cgroups",
+      "generic_SMT_and_Apalache_admission",
+      "whole_operation_setup_deadlines",
+      "supervisor_owner_integration",
+      "sublinear_authenticated_queries",
+      "DuckLake_delivery",
+      "learned_semantic_IR",
+      "production_planner_admission"
+    ],
+    "runner": "ResourceAdmittedToolRunner",
+    "status": "implemented_partial_acceptance"
+  },
+  "generic_smt_admission_increment": {
+    "actual_parent_child_ownership": true,
+    "aggregate_kernel_memory_limit_added": false,
+    "deadline_scope": "per solver: compilation checkpoint, verdict, applicable artifact replay, version collection including admission/workspace/execution",
+    "default_cpu_and_process_slots": 1,
+    "default_execution_entry_points": [
+      "logic.backends.z3 public adapters",
+      "logic.backends.cvc5 public adapters",
+      "standard backend registry factories",
+      "SmtExecutionEngineV2"
+    ],
+    "exact_max_steps_enforced": false,
+    "historical_artifacts_rewritten": false,
+    "legacy_compiler_and_differential_sources_unchanged": true,
+    "memory_profile": "requested finite address-space and sampled RSS limits",
+    "native_protocol": "bounded single-check; only applicable model/core; matching clean replay verdict",
+    "new_proof_or_runtime_behavior_authority": false,
+    "output_scope": "combined native phases; failures withhold conclusive output",
+    "pressure_backoff": "existing shared scheduler; new admissions pause",
+    "production_tasks_closed": [],
+    "qualification": "../../workspace/generic-smt-admission-qualification-20261003/REPORT.md",
+    "remaining": [
+      "legacy_SMT_consumers_and_Apalache_admission",
+      "whole_differential_and_setup_deadlines",
+      "aggregate_cgroups",
+      "supervisor_owner_integration",
+      "sublinear_authenticated_queries",
+      "DuckLake_delivery",
+      "learned_semantic_IR",
+      "production_planner_admission"
+    ],
+    "runner": "ResourceAdmittedToolRunner",
+    "status": "implemented_partial_acceptance"
+  },
+  "grounding_pilot_pack": {
+    "adapter_contracts": "pilots/intent_codebase_grounding/adapter_contracts.json",
+    "closed_specification_schema": "pilots/intent_codebase_grounding/pilot_spec.schema.json",
+    "guide": "pilots/intent_codebase_grounding/README.md",
+    "specification": "pilots/intent_codebase_grounding/pilot_spec.json",
+    "status": "authored_planning_pack_not_executed"
+  },
+  "guide": "codebase_ir_repository_pipeline_improvement_plan.md",
+  "hyper_default_admission_increment": {
+    "additional_preexisting_hyper_tests": 55,
+    "benchmark_seconds": 1.9695108489977429,
+    "benchmark_wrapper_seconds": 2.4181553319940576,
+    "controlled_e2e_cases": 26,
+    "default_resource_admission": true,
+    "deselected_legacy_native_tests": 15,
+    "focused_tests": 469,
+    "hard_aggregate_containment": false,
+    "initial_failure": "clean rc2 nonzero_exit unsupported diagnostic regressed to ERROR; corrected and regression tested",
+    "many_core_scaling_established": false,
+    "native_launches": 0,
+    "new_cache_replay": false,
+    "new_codebase_smt_execution": false,
+    "new_hyper_admission_tests": 80,
+    "preservation": {
+      "prior_artifact_bodies": 2883,
+      "prior_qualifications": 28
+    },
+    "pressure_recovery_samples": 9,
+    "production_tasks_closed": [],
+    "profile": {
+      "address_space_bytes": "max(2GiB,4*RSS), AutoHyper max(4GiB,4*RSS)",
+      "autohyper_file_size_limit": false,
+      "autohyper_processor_count": 1,
+      "child_process_slots": 4,
+      "cpu_slots": 2,
+      "rss_bytes": "requested"
+    },
+    "recorded_at_utc": "2026-10-04T03:32:47.918316+00:00",
+    "recovery_benchmarks": [
+      {
+        "engine": "hyperltl",
+        "max_wait_seconds": 0.0209771770023508,
+        "median_wait_seconds": 0.02070755700697191,
+        "min_wait_seconds": 0.020706627998151816,
+        "samples": [
+          {
+            "admission_wait_seconds": 0.020706627998151816,
+            "case": "hyperltl:direct:pressure_recovery:0",
+            "elapsed_seconds": 0.09255768501316197
+          },
+          {
+            "admission_wait_seconds": 0.02070755700697191,
+            "case": "hyperltl:direct:pressure_recovery:1",
+            "elapsed_seconds": 0.09090330799517687
+          },
+          {
+            "admission_wait_seconds": 0.0209771770023508,
+            "case": "hyperltl:direct:pressure_recovery:2",
+            "elapsed_seconds": 0.09389562500291504
+          }
+        ],
+        "scope": "Private scheduler with controlled pressure release; no native solving"
+      },
+      {
+        "engine": "autohyper",
+        "max_wait_seconds": 0.02111572200374212,
+        "median_wait_seconds": 0.020724853995488957,
+        "min_wait_seconds": 0.02069307600322645,
+        "samples": [
+          {
+            "admission_wait_seconds": 0.02069307600322645,
+            "case": "autohyper:direct:pressure_recovery:0",
+            "elapsed_seconds": 0.08608035500219557
+          },
+          {
+            "admission_wait_seconds": 0.020724853995488957,
+            "case": "autohyper:direct:pressure_recovery:1",
+            "elapsed_seconds": 0.0877000920008868
+          },
+          {
+            "admission_wait_seconds": 0.02111572200374212,
+            "case": "autohyper:direct:pressure_recovery:2",
+            "elapsed_seconds": 0.07862226100405678
+          }
+        ],
+        "scope": "Private scheduler with controlled pressure release; no native solving"
+      },
+      {
+        "engine": "mchyper",
+        "max_wait_seconds": 0.020974440994905308,
+        "median_wait_seconds": 0.02085245499620214,
+        "min_wait_seconds": 0.020751813004608266,
+        "samples": [
+          {
+            "admission_wait_seconds": 0.02085245499620214,
+            "case": "mchyper:direct:pressure_recovery:0",
+            "elapsed_seconds": 0.0792503019911237
+          },
+          {
+            "admission_wait_seconds": 0.020751813004608266,
+            "case": "mchyper:direct:pressure_recovery:1",
+            "elapsed_seconds": 0.09139477199641988
+          },
+          {
+            "admission_wait_seconds": 0.020974440994905308,
+            "case": "mchyper:direct:pressure_recovery:2",
+            "elapsed_seconds": 0.08297933400899637
+          }
+        ],
+        "scope": "Private scheduler with controlled pressure release; no native solving"
+      }
+    ],
+    "registry_multi_engine_routing_fixed": false,
+    "report": "workspace/hyper-default-admission-qualification-20261004/REPORT.md",
+    "retained_previous_test_cases": 2858,
+    "schema": "hyper-default-admission-qualification@1",
+    "selected_tests": 2993,
+    "semantic_witness_replay_qualified": false,
+    "shared_pool_accesses": 0,
+    "status": "qualified_controlled",
+    "successful_native_profile_qualified": false,
+    "test_counts_summed": false,
+    "v2_aggregate_operation_scope": false,
+    "v2_bounds_forwarded": true
+  },
+  "inspection_record": "../../../../artifacts/codebase-ir-repository-pipeline-plan-20261002/inspection.json",
+  "jvm_probe_admission_increment": {
+    "ambient_operation_budget_inherited": true,
+    "constructor_and_later_proof_owner_unified": false,
+    "default_routes": [
+      "read_java_version_banner",
+      "probe_java_runtime",
+      "TLC constructor Java identity",
+      "Apalache constructor Java identity",
+      "registry TLC factory Java identity"
+    ],
+    "historical_semantic_producers_changed": false,
+    "installer_or_later_tool_probe_migrated": false,
+    "local_probe_failure_revokes_live_ambient_operation": false,
+    "local_timeout_default_seconds": 10,
+    "native_model_check_executed": false,
+    "optional_controls": [
+      "scheduler",
+      "parent_lease",
+      "cancellation"
+    ],
+    "production_tasks_closed": [],
+    "profile": {
+      "address_space_mb": 4096,
+      "child_process_slots": 1,
+      "cpu_slots": 1,
+      "max_heap_mb": 128,
+      "max_output_bytes": 65536,
+      "resident_memory_mb": 256
+    },
+    "qualification": "../../workspace/jvm-probe-admission-qualification-20261003/REPORT.md",
+    "remaining": [
+      "setup_to_proof_parent_and_deadline",
+      "installer_and_tool_specific_probes",
+      "legacy_header_operation_migration",
+      "Apalache_execution",
+      "aggregate_cgroups",
+      "supervisor_owner_integration",
+      "production_scheduler_schema_negotiation",
+      "sublinear_authenticated_queries",
+      "DuckLake_delivery",
+      "learned_semantic_IR",
+      "production_planner_admission"
+    ],
+    "status": "implemented_partial_acceptance"
+  },
+  "native_operation_inheritance_increment": {
+    "additionally_selected_existing_kernel_tests": 41,
+    "admission_and_workspace_time_consumes_budget": true,
+    "all_native_adapters_migrated": false,
+    "ambient_cancellation_polled_by_native_executor": true,
+    "benchmark_sibling_import_order_corrected": true,
+    "cancellation_control_seconds": 0.18727217000559904,
+    "deadline_control_seconds": 1.0279356590035604,
+    "default_admitted_runner_inherits_ambient_budget": true,
+    "deselected_legacy_native_tests": 15,
+    "existing_clock_fixtures_corrected": 3,
+    "focused_tests": 818,
+    "hard_aggregate_containment": false,
+    "initial_failed_test_run_preserved": true,
+    "initial_native_import_guard_failure_preserved": true,
+    "many_core_scaling_established": false,
+    "native_isabelle_execution": false,
+    "native_kernel_cases": 4,
+    "native_phases": 6,
+    "native_qualification_providers": [
+      "lean",
+      "rocq"
+    ],
+    "native_seconds": 2.269656820993987,
+    "native_transport_controls": 2,
+    "new_inheritance_tests": 58,
+    "original_failure_flags_preserved": true,
+    "post_release_check_uses_caller_and_operation_signals": true,
+    "prior_artifacts_preserved": 1708,
+    "prior_qualifications_preserved": 20,
+    "production_tasks_closed": [],
+    "python_transport_controls_are_solver_cancellation_proofs": false,
+    "qualification": "../../workspace/native-operation-inheritance-qualification-20261003/REPORT.md",
+    "request_identity_changed": false,
+    "retained_previous_tests": 2215,
+    "selected_tests": 2314,
+    "status": "qualified_partial_scope",
+    "test_counts_summed": false,
+    "whole_installer_cancellation": false
+  },
+  "normalized_conditional_query_increment": {
+    "cursor_binding": [
+      "complete_structural_head",
+      "exact_selector",
+      "sealed_inventory",
+      "monotonic_evidence_epoch",
+      "starting_entry"
+    ],
+    "hard_process_rss_limit": false,
+    "historical_record_is_authoritative_supervisor_proof": false,
+    "legacy_records_require_explicit_admitted_rebuild": true,
+    "lookup_uses_normalized_projection_by_default": true,
+    "owner": "CodebaseVerificationCatalog",
+    "qualification": "../../workspace/codebase-evidence-query-qualification-20261002/REPORT.md",
+    "query_inventory_integrity": "complete_bounded_scan_before_exact_selection",
+    "remaining": [
+      "sublinear_and_many_core_query_scaling",
+      "retention_and_gc",
+      "DuckLake_delivery",
+      "broader_source_semantics",
+      "learned_semantic_decoding",
+      "production_planner_admission"
+    ],
+    "runtime_requirements_remain_residual": true,
+    "status": "implemented_bounded_local_increment_production_exits_open",
+    "supervisor_initial_page_size": 2
   },
   "online_adaptation": {
-    "execution": "independent durable shadow queue outside active planner request",
+    "absent_parent_random_bootstrap_in_reuse_mode": false,
     "allowed_triggers": [
       "admitted source successor",
       "reviewed counterexample",
       "measured failure in supported reconstruction/retrieval task"
     ],
+    "bounds_exhaustion": "Stop and declare anchor/migration work preserving old ancestry, exposure and replay; no silent limit raise/pruning.",
+    "cohort_basis_or_eval_expansion_requires_reviewed_migration": true,
+    "completed_producer_run_is_resumable_same_run": false,
+    "execution": "independent durable shadow queue outside active planner request",
+    "inherited_mode_requires_parent": true,
+    "lifecycle_states": [
+      "queued",
+      "admitted",
+      "client_receipt_durable",
+      "queue_acknowledged",
+      "producer_run_completed",
+      "candidate_durable",
+      "provenance_delivery_pending_or_complete",
+      "candidate_evaluated",
+      "serving_promoted_or_rejected"
+    ],
+    "loss_reduction_suffices_for_promotion": false,
+    "model_promotion_owner_validator_and_fresh_head_cas_required": true,
+    "next_round_requires_new_operation_id_and_exact_parent": true,
     "preregister": [
       "minimum eligible cohort",
       "trigger thresholds",
@@ -471,401 +719,470 @@
       "parent checkpoint",
       "update policy digest"
     ],
-    "inherited_mode_requires_parent": true,
-    "absent_parent_random_bootstrap_in_reuse_mode": false,
+    "retry_completed_fit_executes_optimizer_again": false,
+    "rollback": "Task/profile-scoped previous selector plus new fencing receipt; proof applicability remains separately observed.",
+    "serving_parent_mutated_in_place": false,
+    "training_completion_discharges_proof_or_intent": false,
     "unchecked_predictions_are_ground_truth": false,
     "unknown_feature_coverage_gate_required": true,
-    "cohort_basis_or_eval_expansion_requires_reviewed_migration": true,
-    "loss_reduction_suffices_for_promotion": false,
-    "training_completion_discharges_proof_or_intent": false,
-    "serving_parent_mutated_in_place": false,
-    "model_promotion_owner_validator_and_fresh_head_cas_required": true,
-    "bounds_exhaustion": "Stop and declare anchor/migration work preserving old ancestry, exposure and replay; no silent limit raise/pruning.",
     "update_policies": [
       {
-        "policy_id": "source8_exact_adam_continuation",
-        "scope": "structural source8, frozen basis/cohort/contract/split roles",
-        "parent_required": true,
-        "optimizer": "compatible saved Adam moments/progress/settings",
         "inference": "exact registered current head and cohort paths",
+        "intermediate_ancestral_rows": "Exposure ledger retained; not automatically replayed in this current fitting policy.",
+        "optimizer": "compatible saved Adam moments/progress/settings",
         "original_root_replay_in_fit": true,
-        "intermediate_ancestral_rows": "Exposure ledger retained; not automatically replayed in this current fitting policy."
+        "parent_required": true,
+        "policy_id": "source8_exact_adam_continuation",
+        "scope": "structural source8, frozen basis/cohort/contract/split roles"
       },
       {
-        "policy_id": "source8_federated_aggregate",
-        "scope": "current inherited training path partition",
-        "parent_required": true,
-        "replay": "diagnostic; separate retention gate required",
-        "optimizer": "aggregate_fresh_adam_zero_moments_and_progress@1",
         "lineage_reader": "federated provenance adapter",
-        "synchronized_gradient_execution_available": false,
-        "original_root_replay_in_fit": false
-      },
-      {
-        "policy_id": "source384_ridge_readout",
-        "scope": "actual narrow Security-payload Codebase wrapper",
+        "optimizer": "aggregate_fresh_adam_zero_moments_and_progress@1",
+        "original_root_replay_in_fit": false,
         "parent_required": true,
-        "retention_inputs": "authenticated old rows/vectors or sufficient statistics",
-        "old_weights_are_sufficient_statistics": false
+        "policy_id": "source8_federated_aggregate",
+        "replay": "diagnostic; separate retention gate required",
+        "scope": "current inherited training path partition",
+        "synchronized_gradient_execution_available": false
       },
       {
-        "policy_id": "native768_compatible_transfer",
-        "scope": "future authenticated Codebase codec/head/representation alignment",
-        "native_training_ready_asserted": false,
+        "old_weights_are_sufficient_statistics": false,
+        "parent_required": true,
+        "policy_id": "source384_ridge_readout",
+        "retention_inputs": "authenticated old rows/vectors or sufficient statistics",
+        "scope": "actual narrow Security-payload Codebase wrapper"
+      },
+      {
         "cross_cell_donors_are_native_resume_parents": false,
-        "legal768_initializer_is_codebase_head": false
+        "legal768_initializer_is_codebase_head": false,
+        "native_training_ready_asserted": false,
+        "policy_id": "native768_compatible_transfer",
+        "scope": "future authenticated Codebase codec/head/representation alignment"
       }
-    ],
-    "lifecycle_states": [
-      "queued",
-      "admitted",
-      "client_receipt_durable",
-      "queue_acknowledged",
-      "producer_run_completed",
-      "candidate_durable",
-      "provenance_delivery_pending_or_complete",
-      "candidate_evaluated",
-      "serving_promoted_or_rejected"
-    ],
-    "retry_completed_fit_executes_optimizer_again": false,
-    "completed_producer_run_is_resumable_same_run": false,
-    "next_round_requires_new_operation_id_and_exact_parent": true,
-    "rollback": "Task/profile-scoped previous selector plus new fencing receipt; proof applicability remains separately observed."
-  },
-  "delivery_policy": {
-    "registry_and_index_separate_owners": true,
-    "writer_process_per_database": "serialized owner, workers return immutable artifacts",
-    "optional_history_or_hub_delivery_blocks_valid_local_head": false,
-    "aggregate_may_reference_missing_required_receipts": false,
-    "global_atomic_transaction_claimed": false,
-    "recovery_reexecutes_model_training_or_solver_work": false
-  },
-  "acceptance_fixtures": [
-    {
-      "fixture_id": "F01",
-      "case": "achievable currently-false repair",
-      "expected": "Preserve current false claim; plan an admitted transition to a distinct post-state subject.",
-      "implementation_state": "planned"
-    },
-    {
-      "fixture_id": "F02",
-      "case": "contradictory current facts",
-      "expected": "Block matching current-state TRUE/FALSE contradiction.",
-      "implementation_state": "planned"
-    },
-    {
-      "fixture_id": "F03",
-      "case": "false mandatory policy or missing producer",
-      "expected": "Block effects and report unsatisfied preconditions.",
-      "implementation_state": "planned"
-    },
-    {
-      "fixture_id": "F04",
-      "case": "unknown or unsupported semantic facts",
-      "expected": "Use a separate admitted observation/review request and recompile.",
-      "implementation_state": "planned"
-    },
-    {
-      "fixture_id": "F05",
-      "case": "stale proof or wrong typed root or unmapped subject",
-      "expected": "Reject post-state satisfaction.",
-      "implementation_state": "planned"
-    },
-    {
-      "fixture_id": "F06",
-      "case": "incomplete or oversized or truncated coverage",
-      "expected": "Reject admission or report explicit incomplete scope.",
-      "implementation_state": "planned"
-    },
-    {
-      "fixture_id": "F07",
-      "case": "warm process cold restart and operation replay",
-      "expected": "Report cache classes separately; reobserve source after receipt replay.",
-      "implementation_state": "planned"
-    },
-    {
-      "fixture_id": "F08",
-      "case": "missing parent or new unknown feature atoms or changed eval units",
-      "expected": "Return unavailable/migration without silent random initialization.",
-      "implementation_state": "planned"
-    },
-    {
-      "fixture_id": "F09",
-      "case": "completed fit interrupted before queue/provenance acknowledgment",
-      "expected": "Recover exact candidate without another optimizer invocation.",
-      "implementation_state": "planned"
-    },
-    {
-      "fixture_id": "F10",
-      "case": "cancellation budgets or stale promotion heads",
-      "expected": "Keep serving parent selected.",
-      "implementation_state": "planned"
-    },
-    {
-      "fixture_id": "F11",
-      "case": "lower loss with fidelity or retention regression",
-      "expected": "Reject promotion.",
-      "implementation_state": "planned"
-    },
-    {
-      "fixture_id": "F12",
-      "case": "wrong family task codec span or evidence authority",
-      "expected": "Reject incompatible decoding and evidence admission.",
-      "implementation_state": "planned"
-    }
-  ],
-  "worked_pilot": {
-    "current_source": "declared integer-offset function returning x+1",
-    "intent": "post-change function returns x+2 under declared assumptions",
-    "state_binding": "H0 exact current subject; distinct planned-post subject; H1 measured function version",
-    "current_refuted_offset2_retained": true,
-    "pre_tree_receipt_closes_post_goal": false,
-    "training_eligibility_independent_of_verified_edit": true,
-    "new_literal8d_basis_migration_may_be_required": true,
-    "source384_two_operand_cohort_eligibility_inferred": false
-  },
-  "actions_performed": {
-    "runtime_code_changed": false,
-    "repository_scan_executed": false,
-    "model_training": false,
-    "distillation": false,
-    "embedding_regeneration": false,
-    "model_inference": false,
-    "model_download": false,
-    "runtime_databases_created": false,
-    "remote_repositories_created": false,
-    "git_merge_or_push": false,
-    "runtime_promotion": false,
-    "supervisor_effect_execution": false
-  },
-  "grounding_pilot_pack": {
-    "guide": "pilots/intent_codebase_grounding/README.md",
-    "specification": "pilots/intent_codebase_grounding/pilot_spec.json",
-    "closed_specification_schema": "pilots/intent_codebase_grounding/pilot_spec.schema.json",
-    "adapter_contracts": "pilots/intent_codebase_grounding/adapter_contracts.json",
-    "status": "authored_planning_pack_not_executed"
-  },
-  "existing_transition_owner_reuse": {
-    "canonical_types": "ProgramTransitionQuery/Candidate/Prediction/Observation/Admission and PatchSketchIR/RepairOperator",
-    "outer_state_adapter": "proposed; existing native payloads unchanged",
-    "repair_query_requires_current_graph": true,
-    "observation_subject_remains_query_subject": true,
-    "native_identity_and_full_record_transport_identity_separate": true,
-    "native_transition_admission_grants_effect_or_completion_authority": false
-  },
-  "current_conditional_index_status_admission": {
-    "accepted": [
-      "proved",
-      "refuted"
-    ],
-    "nonterminal": "separate proposed attempt journal or reviewed owner extension",
-    "historical_record_is_authoritative_supervisor_proof": false
-  },
-  "saved_source8_unknown_coverage": {
-    "scope": "authenticated parent/child source-training qualification fixture; no inference",
-    "input_width": 53,
-    "latent_width": 8,
-    "unknown_program_atoms_parent_tuning": 1,
-    "unknown_program_atoms_child_changed_train": 1,
-    "unknown_program_atoms_tuning_and_canary": 1,
-    "root_training_replay_unknown_program_atoms": 0,
-    "counter_py_in_registered_cohort": false,
-    "pilot_model_outcome": "migration_required",
-    "historical_canary_is_independent_holdout": false
-  },
-  "normalized_conditional_query_increment": {
-    "status": "implemented_bounded_local_increment_production_exits_open",
-    "qualification": "../../workspace/codebase-evidence-query-qualification-20261002/REPORT.md",
-    "owner": "CodebaseVerificationCatalog",
-    "lookup_uses_normalized_projection_by_default": true,
-    "legacy_records_require_explicit_admitted_rebuild": true,
-    "query_inventory_integrity": "complete_bounded_scan_before_exact_selection",
-    "cursor_binding": [
-      "complete_structural_head",
-      "exact_selector",
-      "sealed_inventory",
-      "monotonic_evidence_epoch",
-      "starting_entry"
-    ],
-    "supervisor_initial_page_size": 2,
-    "runtime_requirements_remain_residual": true,
-    "historical_record_is_authoritative_supervisor_proof": false,
-    "hard_process_rss_limit": false,
-    "remaining": [
-      "sublinear_and_many_core_query_scaling",
-      "retention_and_gc",
-      "DuckLake_delivery",
-      "broader_source_semantics",
-      "learned_semantic_decoding",
-      "production_planner_admission"
     ]
   },
-  "bounded_conditional_execution_increment": {
-    "status": "implemented_default_v2_partial_acceptance",
-    "qualification": "../../workspace/codebase-smt-execution-qualification-20261002/REPORT.md",
-    "owners": [
-      "codebase_verification",
-      "codebase_applicability"
+  "planner_handoffs": {
+    "actual_runner_arguments_effects_leases_checks_required": true,
+    "codebase_native_registry_slot_currently_exists": false,
+    "codebase_to_formalization_bridge": "reviewed typed registration preserving upstream canonical types",
+    "copied_plan_values_are_live_observations": false,
+    "fallback_validation_marker_is_executable_check": false,
+    "reviewed_producer_task_catalog_required": true,
+    "trusted_live_observer_before_dispatch_and_around_checks_required": true,
+    "verified_intent_and_formalization_artifacts_required": true,
+    "worker_model_ids_are_implementation_evidence": false
+  },
+  "program_ast_provider_capability_increment": {
+    "capability_diagnostic_is_semantic_attestation": false,
+    "default_mirroring_enabled": true,
+    "disabled_mirroring_checked_before_provider_callbacks": true,
+    "explicit_keyword_capability_required": true,
+    "fresh_evidence_authority": "conditional_only",
+    "historical_hash_aliases_added": false,
+    "old_artifacts_mutated": false,
+    "production_tasks_closed": [],
+    "provider_import_selection_changed": false,
+    "provider_replaced_or_installed": false,
+    "qualification": "../../workspace/program-ast-provider-qualification-20261003/REPORT.md",
+    "remaining": [
+      "compatible_provider_deployment_selection",
+      "whole_install_budgets",
+      "setup_compile_check_v2_ownership",
+      "Apalache_execution",
+      "aggregate_cgroups",
+      "supervisor_scheduler_owner",
+      "authenticated_index_scaling",
+      "DuckLake_delivery",
+      "learned_semantic_IR",
+      "production_planner_admission"
     ],
-    "process_owner": "existing BoundedToolRunner under actual producer child leases",
-    "protocol": [
-      "version",
-      "verdict",
-      "applicable_model_or_unsat_core"
+    "result_wire_schema_changed": false,
+    "signature_probe_invokes_provider": false,
+    "status": "implemented_partial_acceptance"
+  },
+  "protocol_v2_operation_budget_increment": {
+    "constructor_and_call_signals_combined": true,
+    "default_timeout_ms_when_bounds_omitted": 1000,
+    "deselected_legacy_native_tests": 15,
+    "enabled_by_default": true,
+    "existing_test_files_changed": 1,
+    "external_dependency_generations_changed": 0,
+    "focused_tests": 578,
+    "hard_aggregate_containment": false,
+    "initial_failed_attempt_preserved": true,
+    "late_evidence_withheld": true,
+    "legacy_callbacks_exactly_once": true,
+    "many_core_scaling_established": false,
+    "native_cancellation_qualified": false,
+    "native_engine_scope_observed": true,
+    "native_memory_mb": 128,
+    "native_phase_observations_per_case": 14,
+    "native_protocol_v2_execution": true,
+    "native_proverif_cases": 3,
+    "native_registry_execution": false,
+    "native_request_timeout_seconds": 5,
+    "native_seconds": 0.41369363899866585,
+    "native_source_count": 111,
+    "native_split_provider_execution": false,
+    "native_stress_qualified": false,
+    "native_tamarin_execution": false,
+    "native_typed_results": [
+      "secure",
+      "unknown",
+      "unknown"
     ],
-    "default_per_logical_call_timeout_ms": 5000,
-    "default_native_memory_bytes": 134217728,
-    "per_process_address_space_enforced": true,
-    "tree_rss_guard": "sampled",
-    "aggregate_kernel_memory_limit": false,
-    "parent_python_rss_limit": false,
-    "output_capture": "per_stream_bounded_with_combined_retention_check",
-    "fresh_admission_each_phase": true,
-    "deadline_includes_admission": true,
-    "active_native_cancellation": true,
-    "legacy_replay": "explicit exact reviewed @1 producer inventory and unchanged semantic dependencies",
-    "legacy_artifacts_rewritten": false,
-    "historical_execution_attested": false,
+    "native_v2_dispositions": [
+      "secure",
+      "quarantined",
+      "quarantined"
+    ],
+    "native_wrapper_seconds": 0.7657438640017062,
+    "new_operation_control_tests": 90,
+    "next_tamarin_requirements": [
+      "complete lifecycle/output gates",
+      "bounded Haskell capabilities",
+      "explicit Maude selection",
+      "reviewed descendant process reservation",
+      "finite native profile"
+    ],
+    "observed_cancellation_latched": true,
+    "opaque_python_callbacks_preempted": false,
+    "owned_work_drained": true,
+    "prior_artifacts_preserved": 2519,
+    "prior_qualifications_preserved": 25,
+    "production_tasks_closed": [],
+    "qualification": "../../workspace/protocol-operation-budget-qualification-20261004/REPORT.md",
+    "real_resource_sampler_preserved": true,
+    "remaining_default_runner_migrations": [
+      "Tamarin",
+      "Hyper"
+    ],
+    "request_and_parent_deadlines_only_tighten": true,
+    "retained_previous_tests": 2612,
+    "retained_signal_expectation_updated": true,
+    "saved_pool_configuration_unchanged": true,
+    "selected_source_count": 198,
+    "selected_tests": 2702,
+    "semantic_attack_replay": false,
+    "split_partial_results_withheld": true,
+    "standalone_protocol_v2_aggregate_budget": true,
+    "status": "qualified_partial_scope",
+    "test_counts_summed": false,
+    "verified_toolchain_identity": false,
+    "wire_identities_unchanged": true
+  },
+  "proverif_default_admission_increment": {
+    "additionally_selected_existing_protocol_tests": 39,
+    "canonical_default_admitted": true,
+    "combined_output_utf8_bound_enforced": true,
+    "controlled_pressure_recovery_and_queue_interruption_tested": true,
+    "deselected_legacy_native_tests": 15,
+    "discovery_inert": true,
+    "existing_test_files_changed": 0,
+    "explicit_runner_behavior_preserved": true,
+    "falsey_runner_preserved": true,
+    "focused_tests": 374,
+    "hard_aggregate_containment": false,
+    "initial_failed_launches": 1,
+    "initial_native_parse_error_preserved": true,
+    "initial_native_returncode": 2,
+    "managed_launcher_native_execution": false,
+    "many_core_scaling_established": false,
+    "native_cancellation_tested": false,
+    "native_fixture_reserved_identifier_corrected": true,
+    "native_memory_mb": 128,
+    "native_output_requires_clean_lifecycle_and_integer_zero_exit": true,
+    "native_protocol_v2_execution": false,
+    "native_proverif_cases": 2,
+    "native_query_normalization_fixed": false,
+    "native_raw_verdicts": [
+      "true",
+      "false"
+    ],
+    "native_request_timeout_seconds": 5,
+    "native_results_quarantined": true,
+    "native_seconds": 0.19213317800313234,
+    "native_source_count": 107,
+    "native_stress_tested": false,
+    "native_typed_results": [
+      "unknown",
+      "unknown"
+    ],
+    "native_wrapper_seconds": 0.565334074999555,
+    "new_admission_tests": 59,
+    "next_semantic_gap": "Bind native query spelling/polarity to explicit source claim identity; reject foreign/ambiguous claims.",
+    "owned_work_drained": true,
+    "prior_artifacts_preserved": 2209,
+    "prior_qualifications_preserved": 23,
+    "process_metadata_retained": true,
+    "production_tasks_closed": [],
+    "protocol_v2_default_admitted": true,
+    "qualification": "../../workspace/proverif-default-admission-qualification-20261004/REPORT.md",
+    "real_resource_sampler_preserved": true,
+    "registry_default_admitted": true,
+    "remaining_default_runner_migrations": [
+      "Tamarin with Haskell/Maude profile",
+      "Hyper with finite budgets and guarded probes"
+    ],
+    "retained_previous_tests": 2458,
+    "saved_pool_configuration_unchanged": true,
+    "selected_source_count": 194,
+    "selected_tests": 2556,
+    "semantic_attack_replay": false,
+    "standalone_protocol_v2_aggregate_budget": false,
+    "status": "qualified_partial_scope",
+    "test_counts_summed": false,
+    "verified_toolchain_identity": false
+  },
+  "proverif_query_binding_increment": {
+    "case_sensitive_identifiers": true,
+    "complete_unique_source_claim_population_required": true,
+    "conflicting_verdicts_quarantined": true,
+    "deselected_legacy_native_tests": 15,
+    "duplicate_verdicts_deduplicated": true,
+    "existing_test_files_changed": 1,
+    "external_scheduler_generation_separately_reviewed": true,
+    "external_scheduler_historical_bodies_recovered": false,
+    "external_scheduler_sha256": "9cb9f263c5a72cd1b1fa2dd9dcd070a549e11bd5483937d35508c6a86d929166",
+    "focused_tests": 430,
+    "foreign_ambiguous_results_quarantined": true,
+    "hard_aggregate_containment": false,
+    "initial_failed_attempt_preserved": true,
+    "legacy_exact_trace_semantics_changed": false,
+    "many_core_scaling_established": false,
+    "native_cancellation_tested": false,
+    "native_generic_results": [
+      "unknown",
+      "unknown",
+      "unknown"
+    ],
+    "native_inconclusive_grammar_supported": true,
+    "native_memory_mb": 128,
+    "native_protocol_v2_execution": false,
+    "native_proverif_cases": 3,
+    "native_request_timeout_seconds": 5,
+    "native_seconds": 0.27456637599971145,
+    "native_source_count": 109,
+    "native_stress_tested": false,
+    "native_typed_results": [
+      "secure",
+      "unknown",
+      "unknown"
+    ],
+    "native_verdict_inversion": false,
+    "native_wrapper_seconds": 0.6152203009987716,
+    "new_native_false_attack_trace": false,
+    "new_query_binding_tests": 56,
+    "owned_work_drained": true,
+    "prior_artifacts_preserved": 2394,
+    "prior_qualifications_preserved": 24,
+    "production_tasks_closed": [],
+    "qualification": "../../workspace/proverif-query-binding-qualification-20261004/REPORT.md",
+    "real_resource_sampler_preserved": true,
+    "remaining_default_runner_migrations": [
+      "Tamarin",
+      "Hyper"
+    ],
+    "remaining_semantic_gaps": [
+      "broader query and compiler coverage",
+      "semantic attack reconstruction",
+      "verified toolchain identity"
+    ],
+    "retained_previous_tests": 2556,
+    "saved_pool_configuration_unchanged": true,
+    "selected_source_count": 196,
+    "selected_tests": 2612,
+    "semantic_attack_replay": false,
+    "source_capture_refusal_preserved": true,
+    "source_qualified_ground_free_secrecy_binding": true,
+    "standalone_protocol_v2_aggregate_budget": false,
+    "status": "qualified_partial_scope",
+    "synthetic_disagreement_fixture_corrected": true,
+    "test_counts_summed": false,
+    "verified_toolchain_identity": false
+  },
+  "query_many_increment": {
+    "catalog_api": "CodebaseVerificationCatalog.query_many_current",
+    "complete_inventory_validation_per_operation": true,
+    "default_max_receipt_bytes": 67108864,
+    "default_max_request_bytes": 1048576,
+    "default_max_requested_entries": 1024,
+    "default_max_requests": 32,
+    "default_max_retained_evidence_bytes": 67108864,
+    "historical_artifacts_rewritten": false,
     "new_proof_or_runtime_behavior_authority": false,
+    "page_and_cursor_schemas_changed": false,
+    "production_tasks_closed": [],
+    "projection_reuse": "operation-local only",
+    "public_preparation_activated": false,
+    "qualification": "../../workspace/codebase-query-many-qualification-20261003/REPORT.md",
     "remaining": [
       "aggregate_cgroups",
-      "hostile_daemon_containment",
-      "generic_backend_admission",
-      "large_scale_index_queries",
+      "sublinear_authenticated_queries",
       "DuckLake_delivery",
-      "broader_source_semantics"
-    ]
+      "learned_semantic_IR",
+      "production_planner_admission"
+    ],
+    "source_entry_exit_observations": true,
+    "status": "implemented_partial_acceptance",
+    "supervisor_api": "conditional_codebase_batch.match_conditional_codebase_requirements",
+    "supervisor_max_prepared_request_bytes": 4194304,
+    "supervisor_max_raw_request_bytes": 4194304,
+    "supervisor_max_result_bytes": 8388608,
+    "whole_batch_withheld_on_failure": true
+  },
+  "registry_foreign_outcome_increment": {
+    "accepted_native_cases": 2,
+    "accepted_native_phases": 6,
+    "authority_promotion": false,
+    "focused_tests": 363,
+    "foreign_callbacks_hard_bounded": false,
+    "generic_foreign_conclusion": "unknown",
+    "many_core_scaling_established": false,
+    "native_qualification_compile_steps": 64,
+    "native_qualification_outer_budget": "explicit_benchmark_owned",
+    "native_seconds": 3.5439060329954373,
+    "new_foreign_tests": 82,
+    "prior_artifact_bodies_preserved": 1341,
+    "prior_qualifications_preserved": 16,
+    "production_aggregate_setup_budget_added": false,
+    "production_tasks_closed": [],
+    "proof_cache_producer_changes": false,
+    "protocol_pair_path_changed": false,
+    "qualification": "../../workspace/registry-foreign-outcome-qualification-20261003/REPORT.md",
+    "selected_tests": 1914,
+    "serialized_tla_artifact_round_trip_fixed": false,
+    "status": "passed_partial_scope",
+    "total_native_phases_across_attempts": 9,
+    "typed_result_retained_as": "descriptive_payload"
+  },
+  "registry_operation_budget_increment": {
+    "all_native_adapters_propagate_deadline": false,
+    "benchmark_owned_outer_scope": false,
+    "concurrent_lazy_wait_cancellable": true,
+    "cooperative_python_boundaries": true,
+    "default_enabled": true,
+    "deselected_legacy_native_tests": 15,
+    "focused_tests": 747,
+    "hard_aggregate_containment": false,
+    "interrupted_lazy_initialization_retryable": true,
+    "many_core_scaling_established": false,
+    "native_cases": 2,
+    "native_phases": 6,
+    "native_qualification_provider": "apalache",
+    "native_seconds": 3.9174893340095878,
+    "new_operation_budget_tests": 126,
+    "operation_timeout_override_can_extend_request": false,
+    "prior_artifact_bodies_preserved": 1618,
+    "prior_qualifications_preserved": 19,
+    "production_registry_aggregate_setup_budget_added": true,
+    "production_tasks_closed": [],
+    "qualification": "../../workspace/registry-operation-budget-qualification-20261003/REPORT.md",
+    "request_identity_changed": false,
+    "selected_tests": 2215,
+    "status": "validated_partial_scope",
+    "whole_installer_cancellation": false
+  },
+  "repository_registration": {
+    "capture_inventory": "all nonexcluded entries",
+    "current_pilot_max_entries": 256,
+    "current_pilot_max_file_bytes": 65536,
+    "existing_policy_admitted_modes": [
+      "git-clean",
+      "git-working"
+    ],
+    "larger_scope_requires_new_sealed_paged_profile": true,
+    "pilot_source_mode": "proposed strict-clean gate over existing committed Git-root capture policy",
+    "point_in_time_observation_is_filesystem_lock": false,
+    "policy_currentness_includes_ignore_inputs": true,
+    "required": [
+      "stable repository identity with worktree/source-mode instance distinction",
+      "exact commit/tree and captured overlay/index/untracked dispositions when admitted",
+      "declared exclusions and full inventory population",
+      "nested-root/symlink boundaries",
+      "frontend/dependency/build/environment profiles",
+      "expected durable head and live observation",
+      "cell/task/span/checkpoint selectors"
+    ],
+    "selection_paths_filter_capture_inventory": false
   },
   "restart_safety_increment": {
-    "status": "implemented_partial_acceptance",
-    "qualification": "../../workspace/codebase-restart-safety-qualification-20261002/REPORT.md",
+    "aggregate_kernel_memory_limit_added": false,
+    "conditional_producer_schema_changed": false,
+    "configuration_change_requires_drained_owners": true,
+    "historical_artifacts_rewritten": false,
+    "known_cgroup_v2_memory_counter_failure": "existing unknown-telemetry admission backoff",
+    "new_lease_and_waiter_boot_identity": true,
+    "new_proof_or_runtime_behavior_authority": false,
+    "next_index_increment": "bounded operation-scoped batch queries with complete inventory validation and no cross-call integrity cache",
     "owners": [
       "resource_scheduler",
       "proof_resource_safety"
     ],
-    "new_lease_and_waiter_boot_identity": true,
-    "unknown_or_legacy_boot_identity": "conservative existing PID and birth-marker liveness",
-    "configuration_change_requires_drained_owners": true,
-    "stale_facade_configuration_drift": "refuse before mutation; explicit idle constructor or reconfiguration required",
-    "known_cgroup_v2_memory_counter_failure": "existing unknown-telemetry admission backoff",
-    "saved_pool_capacity_widened": false,
-    "conditional_producer_schema_changed": false,
-    "historical_artifacts_rewritten": false,
-    "aggregate_kernel_memory_limit_added": false,
-    "new_proof_or_runtime_behavior_authority": false,
-    "next_index_increment": "bounded operation-scoped batch queries with complete inventory validation and no cross-call integrity cache",
+    "qualification": "../../workspace/codebase-restart-safety-qualification-20261002/REPORT.md",
     "remaining": [
       "aggregate_cgroups",
       "cgroup_v1_sampling",
       "optional_CPU_PSI_strictness",
       "generic_backend_admission",
       "sublinear_authenticated_queries"
-    ]
-  },
-  "query_many_increment": {
-    "status": "implemented_partial_acceptance",
-    "qualification": "../../workspace/codebase-query-many-qualification-20261003/REPORT.md",
-    "catalog_api": "CodebaseVerificationCatalog.query_many_current",
-    "supervisor_api": "conditional_codebase_batch.match_conditional_codebase_requirements",
-    "default_max_requests": 32,
-    "default_max_requested_entries": 1024,
-    "default_max_request_bytes": 1048576,
-    "default_max_receipt_bytes": 67108864,
-    "default_max_retained_evidence_bytes": 67108864,
-    "supervisor_max_raw_request_bytes": 4194304,
-    "supervisor_max_prepared_request_bytes": 4194304,
-    "supervisor_max_result_bytes": 8388608,
-    "complete_inventory_validation_per_operation": true,
-    "projection_reuse": "operation-local only",
-    "source_entry_exit_observations": true,
-    "whole_batch_withheld_on_failure": true,
-    "page_and_cursor_schemas_changed": false,
-    "historical_artifacts_rewritten": false,
-    "public_preparation_activated": false,
-    "new_proof_or_runtime_behavior_authority": false,
-    "production_tasks_closed": [],
-    "remaining": [
-      "aggregate_cgroups",
-      "sublinear_authenticated_queries",
-      "DuckLake_delivery",
-      "learned_semantic_IR",
-      "production_planner_admission"
-    ]
-  },
-  "generic_prover_admission_increment": {
-    "status": "implemented_partial_acceptance",
-    "qualification": "../../workspace/generic-prover-admission-qualification-20261003/REPORT.md",
-    "default_execution_adapters": [
-      "LeanKernelBackend",
-      "RocqKernelBackend",
-      "IsabelleKernelBackend",
-      "TLCBackend"
     ],
-    "runner": "ResourceAdmittedToolRunner",
-    "actual_parent_child_ownership": true,
-    "pressure_backoff": "existing shared scheduler; new launches pause",
-    "deadline_scope": "admission, workspace preparation and execution per invocation",
-    "memory_admission": "explicit RSS before explicit address space; ceil MiB; no silent resizing",
-    "plain_injected_runners": "caller-owned admission unchanged",
-    "lean_default_profile": {
-      "cpu_slots": 1,
-      "child_process_slots": 1,
-      "stack_kb": 65536,
-      "address_space_floor_bytes": 4294967296,
-      "resident_memory_budget": "request bounds"
-    },
-    "aggregate_kernel_memory_limit_added": false,
-    "historical_artifacts_rewritten": false,
-    "new_proof_or_runtime_behavior_authority": false,
-    "production_tasks_closed": [],
-    "remaining": [
-      "aggregate_cgroups",
-      "generic_SMT_and_Apalache_admission",
-      "whole_operation_setup_deadlines",
-      "supervisor_owner_integration",
-      "sublinear_authenticated_queries",
-      "DuckLake_delivery",
-      "learned_semantic_IR",
-      "production_planner_admission"
-    ]
-  },
-  "generic_smt_admission_increment": {
+    "saved_pool_capacity_widened": false,
+    "stale_facade_configuration_drift": "refuse before mutation; explicit idle constructor or reconfiguration required",
     "status": "implemented_partial_acceptance",
-    "qualification": "../../workspace/generic-smt-admission-qualification-20261003/REPORT.md",
-    "default_execution_entry_points": [
-      "logic.backends.z3 public adapters",
-      "logic.backends.cvc5 public adapters",
-      "standard backend registry factories",
-      "SmtExecutionEngineV2"
+    "unknown_or_legacy_boot_identity": "conservative existing PID and birth-marker liveness"
+  },
+  "saved_source8_unknown_coverage": {
+    "counter_py_in_registered_cohort": false,
+    "historical_canary_is_independent_holdout": false,
+    "input_width": 53,
+    "latent_width": 8,
+    "pilot_model_outcome": "migration_required",
+    "root_training_replay_unknown_program_atoms": 0,
+    "scope": "authenticated parent/child source-training qualification fixture; no inference",
+    "unknown_program_atoms_child_changed_train": 1,
+    "unknown_program_atoms_parent_tuning": 1,
+    "unknown_program_atoms_tuning_and_canary": 1
+  },
+  "schema": "codebase-ir-repository-pipeline-plan/v1",
+  "smt_aggregate_operation_increment": {
+    "aggregate_output_or_memory_budget_added": false,
+    "cancellation_keyword": "cancellation",
+    "completed_follow_up": "smt_v2_operation_increment",
+    "default_scope": [
+      "public differential helpers and default verifier",
+      "public source pipeline",
+      "canonical verification API differential operation including validation"
     ],
-    "runner": "ResourceAdmittedToolRunner",
-    "actual_parent_child_ownership": true,
-    "pressure_backoff": "existing shared scheduler; new admissions pause",
-    "deadline_scope": "per solver: compilation checkpoint, verdict, applicable artifact replay, version collection including admission/workspace/execution",
-    "output_scope": "combined native phases; failures withhold conclusive output",
-    "native_protocol": "bounded single-check; only applicable model/core; matching clean replay verdict",
-    "default_cpu_and_process_slots": 1,
-    "memory_profile": "requested finite address-space and sampled RSS limits",
-    "exact_max_steps_enforced": false,
-    "legacy_compiler_and_differential_sources_unchanged": true,
+    "default_timeout": "effective bounds.timeout_ms",
+    "explicit_timeout_keyword": "operation_timeout_ms",
     "historical_artifacts_rewritten": false,
-    "aggregate_kernel_memory_limit_added": false,
+    "historical_semantic_producers_unchanged": true,
+    "late_or_partial_conclusions": "typed operation exception; no returned report",
+    "native_interruption": "shared remaining deadline/cancellation through admission, process execution and cleanup",
+    "nested_scope": "minimum deadline and inherited cancellation; observed interruption latches",
     "new_proof_or_runtime_behavior_authority": false,
+    "per_solver_receipt_bounds_unchanged": true,
     "production_tasks_closed": [],
+    "python_callbacks": "cooperative checkpoints; cannot be forcibly preempted",
+    "qualification": "../../workspace/smt-operation-control-qualification-20261003/REPORT.md",
     "remaining": [
-      "legacy_SMT_consumers_and_Apalache_admission",
-      "whole_differential_and_setup_deadlines",
+      "legacy_header_setup_operation_migration",
+      "Apalache_admission",
       "aggregate_cgroups",
       "supervisor_owner_integration",
       "sublinear_authenticated_queries",
       "DuckLake_delivery",
       "learned_semantic_IR",
       "production_planner_admission"
-    ]
+    ],
+    "runtime_source_evolution": "explicit before snapshots and after hashes in qualification",
+    "status": "implemented_partial_acceptance"
   },
   "smt_consumer_admission_increment": {
-    "status": "implemented_partial_acceptance",
-    "qualification": "../../workspace/smt-consumer-admission-qualification-20261003/REPORT.md",
+    "aggregate_kernel_memory_limit_added": false,
+    "budget_scope": "per solver operation, not aggregate differential/pipeline",
+    "compile_only": "no default solver backend construction",
     "default_execution_entry_points": [
       "logic.verification_api.run_z3_cvc5_differential",
       "ClassicalBackendAdapter SMT routes",
@@ -874,14 +1191,12 @@
     ],
     "existing_semantic_owners_unchanged": true,
     "explicit_injected_backends": "caller-owned execution contract preserved",
-    "compile_only": "no default solver backend construction",
-    "pressure_backoff": "existing shared scheduler; new native admissions pause",
-    "budget_scope": "per solver operation, not aggregate differential/pipeline",
-    "intra_pair_parallel_execution_added": false,
     "historical_artifacts_rewritten": false,
-    "aggregate_kernel_memory_limit_added": false,
+    "intra_pair_parallel_execution_added": false,
     "new_proof_or_runtime_behavior_authority": false,
+    "pressure_backoff": "existing shared scheduler; new native admissions pause",
     "production_tasks_closed": [],
+    "qualification": "../../workspace/smt-consumer-admission-qualification-20261003/REPORT.md",
     "remaining": [
       "direct_legacy_compiler_differential_pipeline_migration",
       "self_hashed_header_checker_migration",
@@ -893,66 +1208,26 @@
       "DuckLake_delivery",
       "learned_semantic_IR",
       "production_planner_admission"
-    ]
-  },
-  "smt_aggregate_operation_increment": {
-    "status": "implemented_partial_acceptance",
-    "qualification": "../../workspace/smt-operation-control-qualification-20261003/REPORT.md",
-    "default_scope": [
-      "public differential helpers and default verifier",
-      "public source pipeline",
-      "canonical verification API differential operation including validation"
     ],
-    "default_timeout": "effective bounds.timeout_ms",
-    "explicit_timeout_keyword": "operation_timeout_ms",
-    "cancellation_keyword": "cancellation",
-    "nested_scope": "minimum deadline and inherited cancellation; observed interruption latches",
-    "per_solver_receipt_bounds_unchanged": true,
-    "late_or_partial_conclusions": "typed operation exception; no returned report",
-    "native_interruption": "shared remaining deadline/cancellation through admission, process execution and cleanup",
-    "python_callbacks": "cooperative checkpoints; cannot be forcibly preempted",
-    "aggregate_output_or_memory_budget_added": false,
-    "historical_semantic_producers_unchanged": true,
-    "historical_artifacts_rewritten": false,
-    "runtime_source_evolution": "explicit before snapshots and after hashes in qualification",
-    "new_proof_or_runtime_behavior_authority": false,
-    "production_tasks_closed": [],
-    "remaining": [
-      "legacy_header_setup_operation_migration",
-      "Apalache_admission",
-      "aggregate_cgroups",
-      "supervisor_owner_integration",
-      "sublinear_authenticated_queries",
-      "DuckLake_delivery",
-      "learned_semantic_IR",
-      "production_planner_admission"
-    ],
-    "completed_follow_up": "smt_v2_operation_increment"
+    "status": "implemented_partial_acceptance"
   },
   "smt_v2_operation_increment": {
-    "status": "implemented_partial_acceptance",
-    "qualification": "../../workspace/smt-v2-operation-control-qualification-20261003/REPORT.md",
+    "aggregate_output_or_memory_budget_added": false,
+    "constructor_and_call_signals_combine": true,
     "default_scope": [
       "V2 execute and convenience helpers",
       "differential participants and immediate primary replay",
       "explicit replay including final comparison and receipt"
     ],
     "default_timeout": "effective request bounds.timeout_ms",
-    "runtime_controls": [
-      "operation_timeout_ms",
-      "cancellation"
-    ],
-    "constructor_and_call_signals_combine": true,
-    "nested_deadline_cannot_extend_parent": true,
-    "serialized_request_and_evidence_schemas_changed": false,
-    "late_conclusive_results_or_matched_replay_receipts": "withheld via typed operation exceptions",
-    "minimal_bounds_and_control_coercion_precedes_scope": true,
-    "python_callbacks": "cooperative; no hard preemption",
-    "runtime_source_evolution": "execution_v2.py exact before/after source records",
     "historical_codebase_semantic_producers_changed": false,
     "historical_qualification_artifacts_rewritten": false,
-    "aggregate_output_or_memory_budget_added": false,
+    "late_conclusive_results_or_matched_replay_receipts": "withheld via typed operation exceptions",
+    "minimal_bounds_and_control_coercion_precedes_scope": true,
+    "nested_deadline_cannot_extend_parent": true,
     "production_tasks_closed": [],
+    "python_callbacks": "cooperative; no hard preemption",
+    "qualification": "../../workspace/smt-v2-operation-control-qualification-20261003/REPORT.md",
     "remaining": [
       "legacy_header_setup_operation_migration",
       "Apalache_admission",
@@ -963,86 +1238,401 @@
       "DuckLake_delivery",
       "learned_semantic_IR",
       "production_planner_admission"
-    ]
-  },
-  "jvm_probe_admission_increment": {
-    "status": "implemented_partial_acceptance",
-    "qualification": "../../workspace/jvm-probe-admission-qualification-20261003/REPORT.md",
-    "default_routes": [
-      "read_java_version_banner",
-      "probe_java_runtime",
-      "TLC constructor Java identity",
-      "Apalache constructor Java identity",
-      "registry TLC factory Java identity"
     ],
-    "profile": {
-      "cpu_slots": 1,
-      "child_process_slots": 1,
-      "resident_memory_mb": 256,
-      "address_space_mb": 4096,
-      "max_heap_mb": 128,
-      "max_output_bytes": 65536
-    },
-    "optional_controls": [
-      "scheduler",
-      "parent_lease",
+    "runtime_controls": [
+      "operation_timeout_ms",
       "cancellation"
     ],
-    "local_timeout_default_seconds": 10,
-    "ambient_operation_budget_inherited": true,
-    "local_probe_failure_revokes_live_ambient_operation": false,
-    "constructor_and_later_proof_owner_unified": false,
-    "native_model_check_executed": false,
-    "installer_or_later_tool_probe_migrated": false,
-    "historical_semantic_producers_changed": false,
+    "runtime_source_evolution": "execution_v2.py exact before/after source records",
+    "serialized_request_and_evidence_schemas_changed": false,
+    "status": "implemented_partial_acceptance"
+  },
+  "source_mirroring_compatibility_increment": {
+    "compatibility_tables_changed": false,
+    "default_mirroring_enabled": true,
+    "exact_boolean_required": true,
+    "fresh_evidence_authority": "conditional_only",
+    "fresh_receipts_bind_actual_current_module_inventory": true,
+    "historical_hash_aliases_added": false,
+    "historical_source_bytes_preserved_as_current": false,
+    "integer_profile_added_to_explicit_source_inventory": true,
+    "legacy_optional_provider_disabled_mirroring_fails_closed": true,
+    "old_artifacts_mutated": false,
+    "positive_parser_fixture_provider_explicitly_selected": true,
+    "production_optional_provider_import_selection_changed": false,
     "production_tasks_closed": [],
+    "public_routes_support_per_call_mirror_false": true,
+    "qualification": "../../workspace/source-mirroring-compatibility-qualification-20261003/REPORT.md",
     "remaining": [
-      "setup_to_proof_parent_and_deadline",
-      "installer_and_tool_specific_probes",
-      "legacy_header_operation_migration",
+      "optional_supervisor_provider_version_negotiation",
+      "whole_install_budgets",
+      "setup_compile_check_v2_ownership",
       "Apalache_execution",
       "aggregate_cgroups",
-      "supervisor_owner_integration",
+      "supervisor_scheduler_owner",
       "production_scheduler_schema_negotiation",
-      "sublinear_authenticated_queries",
+      "authenticated_index_scaling",
       "DuckLake_delivery",
       "learned_semantic_IR",
       "production_planner_admission"
-    ]
-  },
-  "state_model_probe_admission_increment": {
+    ],
     "status": "implemented_partial_acceptance",
-    "qualification": "../../workspace/state-model-probe-admission-qualification-20261003/REPORT.md",
+    "unsupported_disabled_mirroring_retries_without_control": false
+  },
+  "stages": [
+    {
+      "admission": "Reject ambiguous repository identity or undeclared source mode. Register explicit unavailable model lanes; require compatible inherited weights only when admitting model-dependent execution or inherited training.",
+      "depends_on": [],
+      "implementation_state": "planned",
+      "inputs": [
+        "registered repository profile",
+        "authenticated family/task/checkpoint selectors",
+        "source policy and environment"
+      ],
+      "model_unavailability_blocks_repository_registration": false,
+      "outputs": [
+        "registration receipt",
+        "required cell/profile set"
+      ],
+      "owner": "repository/source and cell owners",
+      "stage_id": "R00",
+      "title": "Register repository and select authenticated cells",
+      "work_items": [
+        "C00",
+        "C01",
+        "C12",
+        "C15"
+      ]
+    },
+    {
+      "admission": "All nonexcluded entries reconcile within frozen bounds; selections cannot narrow inventory; replay needs fresh applicability.",
+      "depends_on": [
+        "R00"
+      ],
+      "implementation_state": "planned",
+      "inputs": [
+        "registration receipt",
+        "expected repository head",
+        "capture policy"
+      ],
+      "outputs": [
+        "captured source manifest",
+        "coverage/disposition ledger",
+        "exact observed head"
+      ],
+      "owner": "RepositoryCodebaseIndex and CodebaseCatalog",
+      "stage_id": "R01",
+      "title": "Capture complete declared inventory",
+      "work_items": [
+        "C02"
+      ]
+    },
+    {
+      "admission": "Native structural observations retain exact spans/versions; unknown semantics remain explicit.",
+      "depends_on": [
+        "R01"
+      ],
+      "implementation_state": "planned",
+      "inputs": [
+        "captured source manifest",
+        "frontend and native schema"
+      ],
+      "outputs": [
+        "source-bound native units",
+        "symbol/dependency map",
+        "unsupported/unresolved ledger"
+      ],
+      "owner": "native Codebase/AST/semantic owners",
+      "stage_id": "R02",
+      "title": "Derive native Codebase IR and dependency graph",
+      "work_items": [
+        "C02",
+        "C04"
+      ]
+    },
+    {
+      "admission": "Reuse only exact input/profile matches; unavailable model lanes retain a deterministic native path.",
+      "depends_on": [
+        "R02"
+      ],
+      "implementation_state": "planned",
+      "inputs": [
+        "native unit/span/context refs",
+        "checkpoint/profile selectors",
+        "old vector references"
+      ],
+      "missing_model_inputs_block_deterministic_path": false,
+      "outputs": [
+        "authenticated input receipts",
+        "explicit model-input unavailable states"
+      ],
+      "owner": "owning cell registry/input-admission adapter",
+      "stage_id": "R03",
+      "title": "Admit model and vector inputs",
+      "work_items": [
+        "C03",
+        "C13"
+      ]
+    },
+    {
+      "admission": "Models propose; expected obligation and unsupported coverage are accounted for independently.",
+      "depends_on": [
+        "R02",
+        "R03"
+      ],
+      "implementation_state": "planned",
+      "inputs": [
+        "native subjects",
+        "optional authenticated candidate inputs",
+        "logic/translator/source mapping profile"
+      ],
+      "outputs": [
+        "typed obligation inventory",
+        "model candidates",
+        "source correspondence and unresolved facets"
+      ],
+      "owner": "native/logic projection and decoder owners",
+      "stage_id": "R04",
+      "title": "Autoformalize typed obligations",
+      "work_items": [
+        "C04",
+        "C13"
+      ]
+    },
+    {
+      "admission": "Historical cache hits do not skip fresh native checks under the existing profile; preserve conditional/kernel/test authority distinctions.",
+      "depends_on": [
+        "R04"
+      ],
+      "implementation_state": "planned",
+      "inputs": [
+        "typed obligations",
+        "canonical key/dependency bindings",
+        "checker/environment/resource profile"
+      ],
+      "outputs": [
+        "trusted outcome receipts",
+        "historical proof-index records",
+        "current evidence eligibility view"
+      ],
+      "owner": "trusted checker and cell evidence-index owners",
+      "stage_id": "R05",
+      "title": "Check and index exact evidence",
+      "work_items": [
+        "C05",
+        "C06"
+      ]
+    },
+    {
+      "admission": "Preserve current false facts and separate planned-post subjects; ambiguity/unknowns cannot become true.",
+      "depends_on": [
+        "R02",
+        "R05"
+      ],
+      "implementation_state": "planned",
+      "inputs": [
+        "IntentIR source/version",
+        "exact current symbol versions",
+        "eligible facts and source/applicability roots"
+      ],
+      "outputs": [
+        "grounding receipt",
+        "state-qualified transition goals",
+        "unresolved intent requirements"
+      ],
+      "owner": "Intent/codebase grounding and typed federation adapters",
+      "stage_id": "R06",
+      "title": "Ground versioned intent against observed code",
+      "work_items": [
+        "C07",
+        "C17"
+      ]
+    },
+    {
+      "admission": "No fallback marker substitutes for an actual check; review graphs route to a separate approved observation request.",
+      "depends_on": [
+        "R06"
+      ],
+      "implementation_state": "planned",
+      "inputs": [
+        "verified Intent/Formalization artifacts",
+        "grounded state/transition bindings",
+        "reviewed producer/task catalog"
+      ],
+      "outputs": [
+        "compiled validated task graph",
+        "exact runners/checks/effect scope",
+        "plan admission receipt"
+      ],
+      "owner": "IntentConstraintAdapter and formal/symbolic planner owners",
+      "stage_id": "R07",
+      "title": "Compile admitted symbolic plan",
+      "work_items": [
+        "C07",
+        "C10"
+      ]
+    },
+    {
+      "admission": "Observe before dispatch and around checks; derive satisfaction from actual post-state evidence.",
+      "depends_on": [
+        "R07"
+      ],
+      "implementation_state": "planned",
+      "inputs": [
+        "admitted plan",
+        "fresh source/policy/lease observation",
+        "exact runner/environment bindings"
+      ],
+      "outputs": [
+        "measured diff/post-tree",
+        "fresh check receipts",
+        "planned-to-actual subject map",
+        "successor source/index heads"
+      ],
+      "owner": "DecisionRuntime isolated worker and trusted live observers",
+      "stage_id": "R08",
+      "title": "Execute measure verify and refresh",
+      "work_items": [
+        "C06",
+        "C10"
+      ]
+    },
+    {
+      "admission": "Training labels are independently established; missing compatible parent or unknown critical atoms require migration/unavailable.",
+      "depends_on": [
+        "R02"
+      ],
+      "implementation_state": "planned",
+      "inputs": [
+        "admitted source-bound targets",
+        "compatible inherited lineage",
+        "coverage/exposure/split policy"
+      ],
+      "outputs": [
+        "frozen cohort/replay/split roots",
+        "unknown-feature coverage report",
+        "preregistered evaluation contract"
+      ],
+      "owner": "native target and private model-corpus owners",
+      "stage_id": "R09",
+      "title": "Freeze eligible training and evaluation corpus",
+      "work_items": [
+        "C08",
+        "C09"
+      ]
+    },
+    {
+      "admission": "Inherited mode forbids absent-parent random bootstrap; update algorithms and their replay/optimizer semantics remain explicit.",
+      "depends_on": [
+        "R03",
+        "R09"
+      ],
+      "implementation_state": "planned",
+      "inputs": [
+        "exact compatible parent",
+        "frozen corpus/replay",
+        "update-policy/resource/operation bindings"
+      ],
+      "outputs": [
+        "immutable candidate",
+        "numerical execution/provenance receipts",
+        "client/queue acknowledgment state"
+      ],
+      "owner": "cell registry and admitted numerical trainer",
+      "stage_id": "R10",
+      "title": "Adapt private repository candidate",
+      "work_items": [
+        "C08"
+      ]
+    },
+    {
+      "admission": "Absolute task fidelity, coverage, retention and authority gates precede compare-and-swap; no loss-only or proof-closing promotion.",
+      "depends_on": [
+        "R10"
+      ],
+      "implementation_state": "planned",
+      "inputs": [
+        "candidate and original parent",
+        "independent/retention cohorts",
+        "fresh source/model heads"
+      ],
+      "outputs": [
+        "evaluated candidate receipt",
+        "task-profile promotion or rejection",
+        "rollback receipt"
+      ],
+      "owner": "independent evaluator and owner promotion validator",
+      "stage_id": "R11",
+      "title": "Evaluate and promote scoped candidate",
+      "work_items": [
+        "C08",
+        "C09",
+        "C14"
+      ]
+    },
+    {
+      "admission": "Streaming side branch; preserve local completion versus optional delivery; recover artifacts/acknowledgments without rerunning training.",
+      "depends_on": [
+        "R00"
+      ],
+      "implementation_state": "planned",
+      "inputs": [
+        "durable stage/model/evidence receipts as they become available",
+        "required delivery mapping"
+      ],
+      "not_required_for_local_model_promotion": true,
+      "outputs": [
+        "pending/complete delivery receipts",
+        "recovery journal",
+        "independent history references"
+      ],
+      "owner": "per-owner outbox lake/Hub delivery and recovery owners",
+      "stage_id": "R12",
+      "streaming_side_branch": true,
+      "title": "Deliver immutable history and recover",
+      "work_items": [
+        "C11",
+        "C16"
+      ]
+    }
+  ],
+  "state_model_probe_admission_increment": {
+    "ambient_proof_operation_budget_inherited": true,
+    "clean_tlc_help_exit_one_accepted": true,
     "default_routes": [
       "probe_tlc_runtime",
       "probe_apalache_runtime",
       "read_tlc_version_banner",
       "read_apalache_version_banner"
     ],
-    "profile": {
-      "cpu_slots": 1,
-      "resident_memory_mb": 512,
-      "address_space_mb": 4096,
-      "max_heap_mb": 256,
-      "max_combined_accepted_output_bytes": 65536,
-      "direct_tlc_child_process_slots": 1,
-      "launcher_child_process_slots": 3
-    },
+    "historical_semantic_producers_changed": false,
+    "incomplete_native_execution_permits_fallback": false,
+    "incomplete_native_output_establishes_usability": false,
+    "jvm_flags_apply_to": [
+      "constructed_direct_TLC_commands",
+      "reviewed_Apalache_script_consuming_owned_JVM_ARGS"
+    ],
+    "managed_launcher_bytes_changed": false,
+    "managed_tlc_probe_expansion_changes_executed_command": true,
+    "missing_executable_before_native_launch_permits_fallback": true,
+    "native_model_check_executed": false,
+    "one_local_deadline_includes_fallback_and_normalization": true,
     "optional_controls": [
       "scheduler",
       "parent_lease",
       "cancellation"
     ],
-    "one_local_deadline_includes_fallback_and_normalization": true,
-    "ambient_proof_operation_budget_inherited": true,
-    "managed_launcher_bytes_changed": false,
-    "managed_tlc_probe_expansion_changes_executed_command": true,
-    "clean_tlc_help_exit_one_accepted": true,
-    "incomplete_native_output_establishes_usability": false,
-    "whole_install_operation_control": false,
-    "native_model_check_executed": false,
-    "historical_semantic_producers_changed": false,
     "production_tasks_closed": [],
+    "profile": {
+      "address_space_mb": 4096,
+      "cpu_slots": 1,
+      "direct_tlc_child_process_slots": 1,
+      "launcher_child_process_slots": 3,
+      "max_combined_accepted_output_bytes": 65536,
+      "max_heap_mb": 256,
+      "resident_memory_mb": 512
+    },
+    "qualification": "../../workspace/state-model-probe-admission-qualification-20261003/REPORT.md",
     "remaining": [
       "whole_install_lock_download_extraction_budgets",
       "setup_to_proof_parent_and_deadline",
@@ -1058,32 +1648,219 @@
       "learned_semantic_IR",
       "production_planner_admission"
     ],
-    "jvm_flags_apply_to": [
-      "constructed_direct_TLC_commands",
-      "reviewed_Apalache_script_consuming_owned_JVM_ARGS"
-    ],
+    "status": "implemented_partial_acceptance",
     "unrecognized_launcher_heap_options_enforced": false,
-    "incomplete_native_execution_permits_fallback": false,
-    "missing_executable_before_native_launch_permits_fallback": true
+    "whole_install_operation_control": false
+  },
+  "state_transition_binding": {
+    "current_false_fact_preserved": true,
+    "false_mandatory_policy_precondition_blocks": true,
+    "phases": [
+      "current",
+      "planned_post",
+      "observed_post"
+    ],
+    "planned_post_subject_is_observed_tree": false,
+    "predicate_id_alone_separates_semantic_states": false,
+    "required": [
+      "intent root/node/constraint",
+      "typed store/family/source/applicability bindings",
+      "exact source/semantic/current subject version",
+      "environment/policy",
+      "state phase and distinct semantic subject",
+      "reviewed producer/template",
+      "preconditions/effects/dependencies/paths/runner/args/checks/budgets",
+      "planned-to-actual subject map",
+      "measured observed post-tree/semantic roots",
+      "eligible actual post-state evidence"
+    ],
+    "satisfaction_ids_derived_by_trusted_evidence_owner": true,
+    "status": "proposed_closed_adapter",
+    "unknown_automatically_converted_to_task_by_current_compiler": false,
+    "unknown_resolution": "Separate admitted observation/context-resolution request, then re-ground and recompile."
+  },
+  "status": "declarative_implementation_plan",
+  "tamarin_claim_binding_increment": {
+    "automatic_falsified_attack_promotion": false,
+    "benchmark_seconds": 0.5562814770091791,
+    "benchmark_wrapper_seconds": 0.9155531819997123,
+    "complete_unique_source_binding": true,
+    "controlled_e2e_cases": 15,
+    "focused_tests": 734,
+    "hard_aggregate_containment": false,
+    "many_core_scaling_established": false,
+    "native_summary_execution_qualified": false,
+    "native_summary_scanning_implemented": true,
+    "native_tamarin_execution": false,
+    "new_tamarin_claim_binding_tests": 87,
+    "parser_complete_1000_median_ms": 7.251332004670985,
+    "prior_artifacts_preserved": 2764,
+    "prior_qualifications_preserved": 27,
+    "production_tasks_closed": [],
+    "remaining_default_runner_migrations": [
+      "Hyper"
+    ],
+    "remaining_tamarin_qualification": [
+      "successful finite native profile and real summary",
+      "broader source/compiler coverage",
+      "semantic attack reconstruction",
+      "native stress and many-core scaling"
+    ],
+    "report": "workspace/tamarin-claim-binding-qualification-20261004/REPORT.md",
+    "selected_tests": 2858,
+    "semantic_attack_replay": false,
+    "shared_pool_accesses": 0,
+    "status": "qualified_controlled",
+    "successful_native_profile_qualified": false,
+    "synthetic_executor_and_pressure": true,
+    "timed_parser_calls": 36
+  },
+  "tamarin_default_admission_increment": {
+    "benchmark_seconds": 0.3550364999973681,
+    "benchmark_wrapper_seconds": 0.7159447169979103,
+    "default_resource_admission": true,
+    "focused_tests": 647,
+    "hard_aggregate_containment": false,
+    "many_core_scaling_established": false,
+    "native_launches": 0,
+    "native_tamarin_execution": false,
+    "new_tamarin_admission_tests": 69,
+    "prior_artifacts_preserved": 2648,
+    "prior_qualifications_preserved": 26,
+    "production_tasks_closed": [],
+    "profile": {
+      "address_space_bound": "max(2GiB,4*requested)",
+      "child_process_slots": 8,
+      "cpu_slots": 2,
+      "haskell_capabilities": 1,
+      "rss_bound": "requested"
+    },
+    "real_pool_cases": 2,
+    "real_resource_sampler_preserved": true,
+    "remaining_default_runner_migrations": [
+      "Hyper"
+    ],
+    "remaining_tamarin_qualification": [
+      "successful finite native profile",
+      "complete source/claim-set binding",
+      "semantic attack reconstruction",
+      "native stress and many-core scaling"
+    ],
+    "report": "workspace/tamarin-default-admission-qualification-20261004/REPORT.md",
+    "saved_pool_configuration_unchanged": true,
+    "saved_pool_process_slots": 4,
+    "selected_tests": 2771,
+    "semantic_attack_replay": false,
+    "status": "qualified_capacity_refusal_only",
+    "successful_native_profile_qualified": false
+  },
+  "tla_aggregate_operation_increment": {
+    "aggregate_root_reservation_added": false,
+    "cancellation_inherited": true,
+    "default_aggregate_timeout": "request_bounds_or_30000_ms",
+    "explicit_override": "operation_timeout_ms",
+    "native_apalache_qualified": false,
+    "native_phase_admission": "existing_per_phase_reservations",
+    "prior_artifacts_mutated": false,
+    "production_tasks_closed": [],
+    "qualification": "../../workspace/tla-operation-control-qualification-20261003/REPORT.md",
+    "remaining": [
+      "whole_install_budgets",
+      "setup_parent_lease_ownership",
+      "standalone_constructor_facade_operation",
+      "Apalache_execution_admission",
+      "aggregate_cgroups",
+      "supervisor_scheduler_owner",
+      "authenticated_index_scaling",
+      "DuckLake_delivery",
+      "learned_semantic_IR",
+      "production_planner_admission"
+    ],
+    "result_schema_changed": false,
+    "standalone_constructor_migrated": false,
+    "status": "implemented_partial_acceptance",
+    "v2_default_provider_construction": "lazy_selected_provider",
+    "v2_tool_version_summary": "complete_bounded_banner_or_unknown_preserving_raw_receipt",
+    "whole_install_preemptive_budget": false
+  },
+  "tla_artifact_payload_increment": {
+    "accepted_native_cases": 2,
+    "accepted_native_phases": 6,
+    "authority_promotion": false,
+    "canonical_artifact_round_trip": true,
+    "focused_tests": 531,
+    "many_core_scaling_established": false,
+    "native_qualification_compile_steps": 3,
+    "native_qualification_outer_budget": "explicit_benchmark_owned",
+    "native_seconds": 3.4703292560006958,
+    "native_v2_execution": false,
+    "new_artifact_tests": 101,
+    "prior_artifact_bodies_preserved": 1420,
+    "prior_qualifications_preserved": 17,
+    "production_aggregate_setup_budget_added": false,
+    "production_tasks_closed": [],
+    "proof_cache_producer_changes": false,
+    "qualification": "../../workspace/tla-artifact-payload-qualification-20261003/REPORT.md",
+    "request_identity_schema_changed": false,
+    "selected_tests": 2015,
+    "source_metadata_retained": true,
+    "source_semantics_independently_verified": false,
+    "status": "passed_partial_scope",
+    "test_counts_summed": false,
+    "typed_and_v2_share_decoder": true
+  },
+  "tla_counterexample_replay_increment": {
+    "apalache_state_operator_format_supported": true,
+    "authority_promotion": false,
+    "deselected_legacy_native_tests": 15,
+    "focused_tests": 605,
+    "initial_failed_attempt_retained": true,
+    "invariant_rechecked": false,
+    "many_core_scaling_established": false,
+    "native_cases": 2,
+    "native_phases": 6,
+    "native_qualification_compile_steps": 3,
+    "native_seconds": 4.2299266760092,
+    "native_v2_execution": false,
+    "new_counterexample_tests": 74,
+    "parser_max_characters": 262144,
+    "parser_max_nesting": 128,
+    "parser_max_states": 512,
+    "prior_artifact_bodies_preserved": 1509,
+    "prior_qualifications_preserved": 18,
+    "production_registry_aggregate_setup_budget_added": false,
+    "production_tasks_closed": [],
+    "proof_cache_producer_changes": false,
+    "qualification": "../../workspace/tla-counterexample-replay-qualification-20261003/REPORT.md",
+    "raw_only_trace_promoted_to_replayed": false,
+    "raw_trace_retained": true,
+    "replay_scope": "structural_source_symbol_validation_only",
+    "selected_tests": 2089,
+    "semantic_transition_replay": false,
+    "status": "validated_partial_scope"
   },
   "tla_outcome_integrity_increment": {
-    "status": "implemented_tla_scope_with_unresolved_source_drift",
-    "qualification": "../../workspace/tla-outcome-integrity-qualification-20261003/REPORT.md",
+    "accepted_combined_utf8_output_bounded": true,
+    "clean_tlc_counterexample_exit_12_preserved": true,
+    "clean_tlc_help_exit_1_preserved": true,
+    "constructor_compile_check_v2_aggregate_control": false,
     "default_routes": [
       "TLCBackend.check",
       "ApalacheBackend.check"
     ],
-    "lifecycle_checks_precede_success_and_counterexample_markers": true,
-    "unsafe_model_launches_followup_version": false,
-    "unsafe_version_revokes_local_conclusion": true,
+    "historical_semantic_producers_changed_by_this_increment": false,
+    "historical_source_preservation_verified": false,
     "late_stop_clears_receipt_counterexample_and_result_witness": true,
-    "clean_tlc_counterexample_exit_12_preserved": true,
-    "clean_tlc_help_exit_1_preserved": true,
-    "wire_schemas_changed": false,
-    "native_tlc_model_check_executed": true,
+    "lifecycle_checks_precede_success_and_counterexample_markers": true,
     "native_apalache_model_check_executed": false,
-    "constructor_compile_check_v2_aggregate_control": false,
+    "native_tlc_model_check_executed": true,
+    "observed_independent_source_changes": [
+      "software_verification/pipeline.py",
+      "software_verification/source_adapters.py"
+    ],
+    "prior_qualification_and_proof_cache_artifacts_unchanged": true,
     "production_tasks_closed": [],
+    "qualification": "../../workspace/tla-outcome-integrity-qualification-20261003/REPORT.md",
     "remaining": [
       "resolve_independent_mirroring_control_source_drift_and_historical_compatibility",
       "constructor_compile_check_v2_operation_ownership",
@@ -1100,606 +1877,1043 @@
       "learned_semantic_IR",
       "production_planner_admission"
     ],
-    "accepted_combined_utf8_output_bounded": true,
-    "historical_semantic_producers_changed_by_this_increment": false,
-    "historical_source_preservation_verified": false,
-    "observed_independent_source_changes": [
-      "software_verification/pipeline.py",
-      "software_verification/source_adapters.py"
-    ],
-    "prior_qualification_and_proof_cache_artifacts_unchanged": true
+    "status": "implemented_tla_scope_with_unresolved_source_drift",
+    "unsafe_model_launches_followup_version": false,
+    "unsafe_version_revokes_local_conclusion": true,
+    "wire_schemas_changed": false
   },
-  "source_mirroring_compatibility_increment": {
-    "status": "implemented_partial_acceptance",
-    "qualification": "../../workspace/source-mirroring-compatibility-qualification-20261003/REPORT.md",
-    "default_mirroring_enabled": true,
-    "public_routes_support_per_call_mirror_false": true,
-    "exact_boolean_required": true,
-    "unsupported_disabled_mirroring_retries_without_control": false,
-    "historical_source_bytes_preserved_as_current": false,
-    "historical_hash_aliases_added": false,
-    "compatibility_tables_changed": false,
-    "fresh_receipts_bind_actual_current_module_inventory": true,
-    "integer_profile_added_to_explicit_source_inventory": true,
-    "old_artifacts_mutated": false,
-    "fresh_evidence_authority": "conditional_only",
-    "production_tasks_closed": [],
-    "remaining": [
-      "optional_supervisor_provider_version_negotiation",
-      "whole_install_budgets",
-      "setup_compile_check_v2_ownership",
-      "Apalache_execution",
-      "aggregate_cgroups",
-      "supervisor_scheduler_owner",
-      "production_scheduler_schema_negotiation",
-      "authenticated_index_scaling",
-      "DuckLake_delivery",
-      "learned_semantic_IR",
-      "production_planner_admission"
-    ],
-    "legacy_optional_provider_disabled_mirroring_fails_closed": true,
-    "positive_parser_fixture_provider_explicitly_selected": true,
-    "production_optional_provider_import_selection_changed": false
+  "work_items": "codebase_ir_proof_index_work_items.json",
+  "worked_pilot": {
+    "current_refuted_offset2_retained": true,
+    "current_source": "declared integer-offset function returning x+1",
+    "intent": "post-change function returns x+2 under declared assumptions",
+    "new_literal8d_basis_migration_may_be_required": true,
+    "pre_tree_receipt_closes_post_goal": false,
+    "source384_two_operand_cohort_eligibility_inferred": false,
+    "state_binding": "H0 exact current subject; distinct planned-post subject; H1 measured function version",
+    "training_eligibility_independent_of_verified_edit": true
   },
-  "program_ast_provider_capability_increment": {
-    "status": "implemented_partial_acceptance",
-    "qualification": "../../workspace/program-ast-provider-qualification-20261003/REPORT.md",
-    "default_mirroring_enabled": true,
-    "disabled_mirroring_checked_before_provider_callbacks": true,
-    "explicit_keyword_capability_required": true,
-    "signature_probe_invokes_provider": false,
-    "provider_import_selection_changed": false,
-    "provider_replaced_or_installed": false,
-    "capability_diagnostic_is_semantic_attestation": false,
-    "result_wire_schema_changed": false,
-    "historical_hash_aliases_added": false,
-    "old_artifacts_mutated": false,
-    "fresh_evidence_authority": "conditional_only",
-    "production_tasks_closed": [],
-    "remaining": [
-      "compatible_provider_deployment_selection",
-      "whole_install_budgets",
-      "setup_compile_check_v2_ownership",
-      "Apalache_execution",
-      "aggregate_cgroups",
-      "supervisor_scheduler_owner",
-      "authenticated_index_scaling",
-      "DuckLake_delivery",
-      "learned_semantic_IR",
-      "production_planner_admission"
-    ]
-  },
-  "bundled_program_ast_provider_deployment_increment": {
-    "status": "implemented_partial_acceptance",
-    "qualification": "../../workspace/bundled-program-ast-provider-qualification-20261003/REPORT.md",
-    "bundled_provider_mirror_false_supported": true,
-    "default_mirroring_enabled": true,
-    "all_adapter_return_paths_covered": true,
-    "provider_import_selection_changed": false,
-    "external_provider_installed_or_upgraded": false,
-    "native_producer_source_generation_changed": false,
-    "historical_hash_aliases_added": false,
-    "old_artifacts_mutated": false,
-    "new_native_solver_phases": 0,
-    "conditional_receipts_replayed_without_solvers": true,
-    "production_tasks_closed": [],
-    "remaining": [
-      "external_provider_deployment",
-      "whole_install_budgets",
-      "setup_compile_check_v2_ownership",
-      "Apalache_execution",
-      "aggregate_cgroups",
-      "supervisor_scheduler_owner",
-      "authenticated_index_scaling",
-      "DuckLake_delivery",
-      "learned_semantic_IR",
-      "production_planner_admission"
-    ]
-  },
-  "tla_aggregate_operation_increment": {
-    "status": "implemented_partial_acceptance",
-    "qualification": "../../workspace/tla-operation-control-qualification-20261003/REPORT.md",
-    "default_aggregate_timeout": "request_bounds_or_30000_ms",
-    "explicit_override": "operation_timeout_ms",
-    "cancellation_inherited": true,
-    "v2_default_provider_construction": "lazy_selected_provider",
-    "native_phase_admission": "existing_per_phase_reservations",
-    "aggregate_root_reservation_added": false,
-    "standalone_constructor_migrated": false,
-    "whole_install_preemptive_budget": false,
-    "native_apalache_qualified": false,
-    "result_schema_changed": false,
-    "prior_artifacts_mutated": false,
-    "production_tasks_closed": [],
-    "remaining": [
-      "whole_install_budgets",
-      "setup_parent_lease_ownership",
-      "standalone_constructor_facade_operation",
-      "Apalache_execution_admission",
-      "aggregate_cgroups",
-      "supervisor_scheduler_owner",
-      "authenticated_index_scaling",
-      "DuckLake_delivery",
-      "learned_semantic_IR",
-      "production_planner_admission"
-    ],
-    "v2_tool_version_summary": "complete_bounded_banner_or_unknown_preserving_raw_receipt"
-  },
-  "apalache_execution_admission_increment": {
-    "status": "implemented_partial_acceptance",
-    "qualification": "../../workspace/apalache-execution-admission-qualification-20261003/REPORT.md",
-    "default_admission_enabled": true,
-    "cpu_slots": 1,
-    "child_process_slots": 3,
-    "minimum_requested_rss_mib": 256,
-    "heap_fraction_of_requested_rss": 0.5,
-    "max_file_mib": 64,
-    "max_workspace_mib": 128,
-    "requested_rss_raised": false,
-    "native_smt": "in_process_z3_jni",
-    "runtime_config_isolated": true,
-    "raw_counterexample_retained": true,
-    "native_apalache_trace_parsing": false,
-    "whole_install_budget_added": false,
-    "aggregate_root_reservation_added": false,
-    "hard_aggregate_containment_added": false,
-    "production_tasks_closed": [],
-    "generic_registry_result_normalization_fixed": false,
-    "native_qualified_routes": [
-      "v2_engine",
-      "v2_helper"
-    ],
-    "heap_rounding": "floor_whole_MiB",
-    "profile_scope": "reviewed_stock_launcher_default_environment",
-    "native_counterexample_legacy_replayed_flag_is_not_replay_evidence": true,
-    "selected_regression_tests_passed": 1708,
-    "new_admission_tests": 47,
-    "accepted_native_phases": 60,
-    "native_full_seconds": 23.417965499000275,
-    "benchmark_requested_workers": [
-      1,
-      2,
-      4
-    ],
-    "benchmark_effective_workers": [
-      1,
-      1,
-      1
-    ],
-    "many_core_scaling_established": false
-  },
-  "registry_foreign_outcome_increment": {
-    "status": "passed_partial_scope",
-    "qualification": "../../workspace/registry-foreign-outcome-qualification-20261003/REPORT.md",
-    "generic_foreign_conclusion": "unknown",
-    "typed_result_retained_as": "descriptive_payload",
-    "authority_promotion": false,
-    "protocol_pair_path_changed": false,
-    "production_aggregate_setup_budget_added": false,
-    "native_qualification_outer_budget": "explicit_benchmark_owned",
-    "proof_cache_producer_changes": false,
-    "production_tasks_closed": [],
-    "serialized_tla_artifact_round_trip_fixed": false,
-    "native_qualification_compile_steps": 64,
-    "foreign_callbacks_hard_bounded": false,
-    "selected_tests": 1914,
-    "focused_tests": 363,
-    "new_foreign_tests": 82,
-    "accepted_native_cases": 2,
-    "accepted_native_phases": 6,
-    "total_native_phases_across_attempts": 9,
-    "native_seconds": 3.5439060329954373,
-    "prior_qualifications_preserved": 16,
-    "prior_artifact_bodies_preserved": 1341,
-    "many_core_scaling_established": false
-  },
-  "tla_artifact_payload_increment": {
-    "status": "passed_partial_scope",
-    "qualification": "../../workspace/tla-artifact-payload-qualification-20261003/REPORT.md",
-    "canonical_artifact_round_trip": true,
-    "typed_and_v2_share_decoder": true,
-    "native_qualification_compile_steps": 3,
-    "source_metadata_retained": true,
-    "source_semantics_independently_verified": false,
-    "request_identity_schema_changed": false,
-    "authority_promotion": false,
-    "production_aggregate_setup_budget_added": false,
-    "native_qualification_outer_budget": "explicit_benchmark_owned",
-    "proof_cache_producer_changes": false,
-    "production_tasks_closed": [],
-    "native_v2_execution": false,
-    "many_core_scaling_established": false,
-    "selected_tests": 2015,
-    "focused_tests": 531,
-    "new_artifact_tests": 101,
-    "accepted_native_cases": 2,
-    "accepted_native_phases": 6,
-    "native_seconds": 3.4703292560006958,
-    "prior_qualifications_preserved": 17,
-    "prior_artifact_bodies_preserved": 1420,
-    "test_counts_summed": false
-  },
-  "tla_counterexample_replay_increment": {
-    "status": "validated_partial_scope",
-    "qualification": "../../workspace/tla-counterexample-replay-qualification-20261003/REPORT.md",
-    "apalache_state_operator_format_supported": true,
-    "raw_trace_retained": true,
-    "replay_scope": "structural_source_symbol_validation_only",
-    "semantic_transition_replay": false,
-    "invariant_rechecked": false,
-    "raw_only_trace_promoted_to_replayed": false,
-    "native_qualification_compile_steps": 3,
-    "native_v2_execution": false,
-    "authority_promotion": false,
-    "proof_cache_producer_changes": false,
-    "production_tasks_closed": [],
-    "production_registry_aggregate_setup_budget_added": false,
-    "many_core_scaling_established": false,
-    "selected_tests": 2089,
-    "focused_tests": 605,
-    "new_counterexample_tests": 74,
-    "deselected_legacy_native_tests": 15,
-    "native_cases": 2,
-    "native_phases": 6,
-    "native_seconds": 4.2299266760092,
-    "prior_qualifications_preserved": 18,
-    "prior_artifact_bodies_preserved": 1509,
-    "initial_failed_attempt_retained": true,
-    "parser_max_states": 512,
-    "parser_max_characters": 262144,
-    "parser_max_nesting": 128
-  },
-  "registry_operation_budget_increment": {
-    "status": "validated_partial_scope",
-    "qualification": "../../workspace/registry-operation-budget-qualification-20261003/REPORT.md",
-    "default_enabled": true,
-    "operation_timeout_override_can_extend_request": false,
-    "request_identity_changed": false,
-    "cooperative_python_boundaries": true,
-    "native_qualification_provider": "apalache",
-    "benchmark_owned_outer_scope": false,
-    "all_native_adapters_propagate_deadline": false,
-    "hard_aggregate_containment": false,
-    "whole_installer_cancellation": false,
-    "many_core_scaling_established": false,
-    "production_tasks_closed": [],
-    "selected_tests": 2215,
-    "focused_tests": 747,
-    "new_operation_budget_tests": 126,
-    "deselected_legacy_native_tests": 15,
-    "native_cases": 2,
-    "native_phases": 6,
-    "native_seconds": 3.9174893340095878,
-    "prior_qualifications_preserved": 19,
-    "prior_artifact_bodies_preserved": 1618,
-    "production_registry_aggregate_setup_budget_added": true,
-    "interrupted_lazy_initialization_retryable": true,
-    "concurrent_lazy_wait_cancellable": true
-  },
-  "native_operation_inheritance_increment": {
-    "status": "qualified_partial_scope",
-    "qualification": "../../workspace/native-operation-inheritance-qualification-20261003/REPORT.md",
-    "default_admitted_runner_inherits_ambient_budget": true,
-    "request_identity_changed": false,
-    "admission_and_workspace_time_consumes_budget": true,
-    "ambient_cancellation_polled_by_native_executor": true,
-    "original_failure_flags_preserved": true,
-    "post_release_check_uses_caller_and_operation_signals": true,
-    "all_native_adapters_migrated": false,
-    "native_qualification_providers": [
-      "lean",
-      "rocq"
-    ],
-    "python_transport_controls_are_solver_cancellation_proofs": false,
-    "native_isabelle_execution": false,
-    "hard_aggregate_containment": false,
-    "whole_installer_cancellation": false,
-    "many_core_scaling_established": false,
-    "production_tasks_closed": [],
-    "selected_tests": 2314,
-    "focused_tests": 818,
-    "new_inheritance_tests": 58,
-    "additionally_selected_existing_kernel_tests": 41,
-    "retained_previous_tests": 2215,
-    "deselected_legacy_native_tests": 15,
+  "hyper_registry_routing_increment": {
+    "schema": "hyper-registry-routing-qualification@1",
+    "status": "qualified_controlled",
+    "recorded_at_utc": "2026-10-04T04:53:19.485367+00:00",
+    "selected_tests": 3195,
+    "focused_tests": 519,
+    "retained_previous_test_cases": 2993,
+    "new_hyper_registry_tests": 41,
+    "additional_preexisting_catalog_tests": 161,
+    "deselected_legacy_native_tests": 19,
     "test_counts_summed": false,
-    "native_kernel_cases": 4,
-    "native_transport_controls": 2,
-    "native_phases": 6,
-    "native_seconds": 2.269656820993987,
-    "deadline_control_seconds": 1.0279356590035604,
-    "cancellation_control_seconds": 0.18727217000559904,
-    "prior_qualifications_preserved": 20,
-    "prior_artifacts_preserved": 1708,
-    "initial_failed_test_run_preserved": true,
-    "existing_clock_fixtures_corrected": 3,
-    "initial_native_import_guard_failure_preserved": true,
-    "benchmark_sibling_import_order_corrected": true
-  },
-  "atp_default_admission_increment": {
-    "status": "qualified_partial_scope",
-    "qualification": "../../workspace/atp-default-admission-qualification-20261003/REPORT.md",
-    "canonical_defaults_admitted": true,
-    "v2_live_fallback_admitted": true,
-    "explicit_runner_behavior_preserved": true,
-    "hermetic_mode_requires_injection": true,
-    "native_v2_execution": false,
-    "raw_solver_success_promoted_to_theorem": false,
-    "e_satisfiable_exit_normalization_fixed": false,
+    "focused_cases_excluded_from_final_joined": [
+      "tests.integration.logic.test_verification_provider_matrix_api::test_portfolio_capabilities_reflect_matrix_families"
+    ],
+    "initial_failures": [
+      "implicit software-verification fixture expected the wrong first provider; corrected to Apalache",
+      "changed IR fixture retained stale document_id; corrected to regenerate it",
+      "current claim-runtime source audit had not been rematerialized; regenerated with retained preimage"
+    ],
+    "validation_scope_caveat": "focused-1 included four uninstrumented legacy API tests capable of native/portfolio execution; focused-2 still included test_portfolio_capabilities_reflect_matrix_families (execute=True). Native execution and shared-pool activity in those attempts are unmeasured. All four are excluded from joined-1; zero native/shared activity is established only for the guarded new routing fixtures and controlled benchmark, not the entire turn or joined suite.",
+    "whole_turn_native_launches": "unmeasured",
+    "whole_turn_shared_pool_accesses": "unmeasured",
+    "registry_multi_engine_routing_fixed": true,
+    "canonical_engine_ids": [
+      "hyperltl",
+      "autohyper",
+      "mchyper"
+    ],
+    "legacy_family_delegate": "hyperltl",
+    "default_resource_admission": true,
+    "implicit_provider_order_preserved": true,
+    "request_identity_rewritten": false,
+    "independent_cached_delegates": true,
+    "generic_hyper_result_remains_unknown": true,
+    "executable_provider_ids": 18,
+    "catalog_provider_ids_including_advisory": 20,
+    "reachable_conformance_cells": 237,
+    "current_catalogs_rematerialized": 3,
+    "controlled_e2e_cases": 29,
+    "synthetic_executor_calls": 23,
+    "benchmark_seconds": 0.693829119001748,
+    "benchmark_wrapper_seconds": 1.1661756870016688,
+    "concurrent_jobs": 3,
+    "observed_active_jobs": 2,
+    "observed_waiting_jobs": 1,
+    "controlled_concurrency_seconds": 0.09760425800050143,
+    "controlled_max_admission_wait_seconds": 0.034377167001366615,
+    "benchmark_native_launches": 0,
+    "benchmark_shared_pool_accesses": 0,
+    "successful_native_profile_qualified": false,
     "hard_aggregate_containment": false,
     "many_core_scaling_established": false,
+    "semantic_witness_replay_qualified": false,
+    "v2_aggregate_operation_scope": false,
+    "new_cache_replay": false,
+    "new_codebase_smt_execution": false,
+    "new_learned_codebase_ir": false,
+    "new_planner_authority": false,
     "production_tasks_closed": [],
-    "unsafe_lifecycle_output_rejected_before_reconstruction": true,
-    "combined_output_byte_bound_enforced": true,
-    "original_lifecycle_flags_retained": true,
-    "standalone_v2_aggregate_budget": false,
-    "vampire_szs_and_tptp_proof_flags_corrected": true,
-    "registry_alias_valued_request_bindings_fixed": false,
-    "vampire_separate_option_values_corrected": true,
-    "selected_tests": 2408,
-    "focused_tests": 370,
-    "new_admission_tests": 53,
-    "additionally_selected_existing_atp_tests": 41,
-    "retained_previous_tests": 2314,
-    "deselected_legacy_native_tests": 15,
-    "test_counts_summed": false,
-    "native_atp_cases": 4,
-    "native_seconds": 0.34354265699221287,
-    "native_wrapper_seconds": 0.6650756519957213,
-    "native_candidate_results": 3,
-    "native_existing_e_exit_error_cases": 1,
-    "native_memory_mb": 128,
-    "native_request_timeout_seconds": 5,
-    "prior_qualifications_preserved": 21,
-    "prior_artifacts_preserved": 1902,
-    "all_attempts_preserved": true,
-    "owned_work_drained": true,
-    "native_atp_cancellation_tested": false
+    "preservation": {
+      "prior_qualifications": 29,
+      "prior_artifact_bodies": 3014
+    },
+    "report": "workspace/hyper-registry-routing-qualification-20261004/REPORT.md"
   },
-  "eprover_satisfiable_exit_increment": {
-    "status": "qualified_partial_scope",
-    "qualification": "../../workspace/eprover-satisfiable-exit-qualification-20261003/REPORT.md",
-    "e_integer_exit_one_allowed_statuses": [
-      "Satisfiable",
-      "CounterSatisfiable"
+  "hyper_operation_control_increment": {
+    "schema": "hyper-operation-control-qualification@1",
+    "status": "qualified_controlled",
+    "recorded_at_utc": "2026-10-04T05:21:44.288647+00:00",
+    "selected_tests": 3290,
+    "focused_tests": 594,
+    "retained_previous_test_cases": 3195,
+    "new_hyper_operation_tests": 95,
+    "deselected_legacy_native_tests": 19,
+    "test_counts_summed": false,
+    "final_joined_attempt": "joined-2",
+    "superseded_attempt": "joined-1 passed 3290 tests but a concurrent external scheduler edit invalidated source stability; joined-2 repeated the complete selection with stable current hashes",
+    "external_scheduler_change": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py",
+      "detected_during": "joined-1",
+      "qualification_action": "retain unstable attempt; independently review and rerun against current source",
+      "ownership": "external concurrent change; source not edited by this increment",
+      "generations": [
+        {
+          "label": "before",
+          "sha256": "9cb9f263c5a72cd1b1fa2dd9dcd070a549e11bd5483937d35508c6a86d929166",
+          "snapshot": "external-scheduler-generations/9cb9f263c5a72cd1b1fa2dd9dcd070a549e11bd5483937d35508c6a86d929166/resource_scheduler.py"
+        },
+        {
+          "label": "after",
+          "sha256": "5a427512b65ffab320d6821d128341e2d24380a3785b3257cd230cbf2eeb19a5",
+          "snapshot": "external-scheduler-generations/5a427512b65ffab320d6821d128341e2d24380a3785b3257cd230cbf2eeb19a5/resource_scheduler.py"
+        }
+      ]
+    },
+    "external_scheduler_followup": {
+      "after": {
+        "sha256": "f156511991e33d3b4ba523c3c5080ea30d0a53ad8a4dbcccea0487432679a9aa",
+        "snapshot": "external-scheduler-generations/f156511991e33d3b4ba523c3c5080ea30d0a53ad8a4dbcccea0487432679a9aa/resource_scheduler.py"
+      },
+      "before": {
+        "sha256": "5a427512b65ffab320d6821d128341e2d24380a3785b3257cd230cbf2eeb19a5",
+        "snapshot": "external-scheduler-generations/5a427512b65ffab320d6821d128341e2d24380a3785b3257cd230cbf2eeb19a5/resource_scheduler.py"
+      },
+      "diff": "external-scheduler-followup.diff",
+      "diff_sha256": "6e966991630488142287b45b9264cc9e865a09456b24d6c56a35af54f0144b87",
+      "limitation": "Full regression suite and controlled benchmark ran on distinct stable scheduler generations; owned Hyper code was identical. The later delta only bounds diagnostic lane text.",
+      "ownership": "external concurrent edit; not authored by this increment",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py",
+      "tested_generations": {
+        "benchmark-1": "f156511991e33d3b4ba523c3c5080ea30d0a53ad8a4dbcccea0487432679a9aa",
+        "focused-1": "9cb9f263c5a72cd1b1fa2dd9dcd070a549e11bd5483937d35508c6a86d929166",
+        "joined-2": "5a427512b65ffab320d6821d128341e2d24380a3785b3257cd230cbf2eeb19a5"
+      }
+    },
+    "v2_aggregate_operation_scope": true,
+    "default_operation_budget": "requested bounds.timeout_ms, capped at MAX_OPERATION_TIMEOUT_MS",
+    "operation_controls": [
+      "operation_timeout_ms",
+      "cancellation"
     ],
-    "lifecycle_and_combined_output_gates_precede_parsing": true,
-    "accepted_nonzero_status_parsed_once": true,
-    "malformed_or_disallowed_nonzero_status_is_error": true,
-    "other_backends_nonzero_policy_changed": false,
-    "raw_exit_and_termination_metadata_preserved": true,
-    "default_candidate_authority_preserved": true,
-    "explicit_validator_contract_preserved": true,
-    "selected_tests": 2458,
-    "focused_tests": 420,
-    "new_exit_status_tests": 50,
-    "retained_previous_tests": 2408,
-    "deselected_legacy_native_tests": 15,
-    "test_counts_summed": false,
-    "native_atp_cases": 6,
-    "native_candidate_results": 6,
-    "native_generic_unknown_results": 6,
-    "native_e_exit_one_candidate_cases": 2,
-    "native_seconds": 0.47366133199830074,
-    "native_wrapper_seconds": 0.8160540480021155,
-    "native_memory_mb": 128,
-    "native_request_timeout_seconds": 5,
-    "native_source_count": 98,
-    "selected_source_count": 185,
-    "prior_qualifications_preserved": 22,
-    "prior_artifacts_preserved": 2109,
-    "owned_work_drained": true,
-    "saved_pool_configuration_unchanged": true,
-    "real_resource_sampler_preserved": true,
-    "native_v2_execution": false,
-    "native_atp_cancellation_tested": false,
-    "native_atp_stress_tested": false,
-    "many_core_scaling_established": false,
+    "split_scope": "one shared deadline across all three engines; no partial result on interruption",
+    "typed_interruption": true,
+    "opaque_callbacks_forcibly_preempted": false,
+    "request_identity_rewritten": false,
+    "declared_bounds_rewritten": false,
+    "default_resource_admission": true,
+    "ambient_native_and_metadata_limits_clipped": true,
+    "standalone_direct_adapter_scope_added": false,
+    "standalone_probe_scope_added": false,
+    "resource_profile_changed": false,
+    "controlled_e2e_cases": 19,
+    "synthetic_executor_calls": 19,
+    "controlled_stopped_calls_without_result": 8,
+    "controlled_pressure_recoveries": 3,
+    "benchmark_seconds": 3.152613685000688,
+    "benchmark_wrapper_seconds": 3.6722227849968476,
+    "controlled_latency_samples": [
+      {
+        "engine": "hyperltl",
+        "max_seconds": 0.04733231100544799,
+        "median_seconds": 0.044907966497703455,
+        "min_seconds": 0.04248362198995892,
+        "raw_samples_seconds": [
+          0.04733231100544799,
+          0.04248362198995892
+        ],
+        "scope": "Controlled synchronous API latency; synthetic executor; no speedup claim"
+      },
+      {
+        "engine": "autohyper",
+        "max_seconds": 0.0468798250076361,
+        "median_seconds": 0.04421824500604998,
+        "min_seconds": 0.041556665004463866,
+        "raw_samples_seconds": [
+          0.0468798250076361,
+          0.041556665004463866
+        ],
+        "scope": "Controlled synchronous API latency; synthetic executor; no speedup claim"
+      },
+      {
+        "engine": "mchyper",
+        "max_seconds": 0.04228697999496944,
+        "median_seconds": 0.04188662250089692,
+        "min_seconds": 0.0414862650068244,
+        "raw_samples_seconds": [
+          0.0414862650068244,
+          0.04228697999496944
+        ],
+        "scope": "Controlled synchronous API latency; synthetic executor; no speedup claim"
+      },
+      {
+        "engine": "split",
+        "max_seconds": 0.17191718801041134,
+        "median_seconds": 0.16460023400577484,
+        "min_seconds": 0.15728328000113834,
+        "raw_samples_seconds": [
+          0.17191718801041134,
+          0.15728328000113834
+        ],
+        "scope": "Controlled synchronous API latency; synthetic executor; no speedup claim"
+      }
+    ],
+    "benchmark_native_launches": 0,
+    "benchmark_shared_pool_accesses": 0,
+    "successful_native_profile_qualified": false,
+    "actual_external_host_load_tested": false,
     "hard_aggregate_containment": false,
-    "registry_alias_valued_request_bindings_fixed": false,
-    "standalone_v2_aggregate_budget": false,
-    "next_runner_migration": "ProVerif with lifecycle/output gates and managed-launcher review",
-    "production_tasks_closed": []
+    "many_core_scaling_established": false,
+    "semantic_witness_replay_qualified": false,
+    "new_cache_replay": false,
+    "new_codebase_smt_execution": false,
+    "new_learned_codebase_ir": false,
+    "new_planner_authority": false,
+    "production_tasks_closed": [],
+    "preservation": {
+      "prior_qualifications": 30,
+      "prior_artifact_bodies": 3150
+    },
+    "report": "workspace/hyper-operation-control-qualification-20261004/REPORT.md"
   },
-  "proverif_default_admission_increment": {
-    "status": "qualified_partial_scope",
-    "qualification": "../../workspace/proverif-default-admission-qualification-20261004/REPORT.md",
-    "canonical_default_admitted": true,
-    "registry_default_admitted": true,
-    "protocol_v2_default_admitted": true,
-    "explicit_runner_behavior_preserved": true,
-    "falsey_runner_preserved": true,
-    "discovery_inert": true,
-    "native_output_requires_clean_lifecycle_and_integer_zero_exit": true,
-    "combined_output_utf8_bound_enforced": true,
-    "process_metadata_retained": true,
-    "controlled_pressure_recovery_and_queue_interruption_tested": true,
-    "selected_tests": 2556,
-    "focused_tests": 374,
-    "new_admission_tests": 59,
-    "retained_previous_tests": 2458,
-    "additionally_selected_existing_protocol_tests": 39,
-    "deselected_legacy_native_tests": 15,
+  "hyper_counterexample_validation_increment": {
+    "schema": "hyper-counterexample-validation-qualification@1",
+    "status": "qualified_controlled",
+    "recorded_at_utc": "2026-10-04T05:46:10.639087+00:00",
+    "selected_tests": 3390,
+    "focused_tests": 694,
+    "retained_previous_test_cases": 3290,
+    "new_counterexample_validation_tests": 100,
+    "deselected_legacy_native_tests": 19,
     "test_counts_summed": false,
+    "accepted_attempts": {
+      "focused": "focused-1",
+      "joined": "joined-1",
+      "benchmark": "benchmark-1"
+    },
+    "controlled_e2e_cases": 36,
+    "synthetic_executor_calls": 36,
+    "controlled_routes": [
+      "direct",
+      "registry",
+      "standalone_v2"
+    ],
+    "controlled_engines": [
+      "hyperltl",
+      "autohyper",
+      "mchyper"
+    ],
+    "controlled_variants": [
+      "valid",
+      "malformed",
+      "equal_observations",
+      "unequal_low_inputs"
+    ],
+    "benchmark_seconds": 2.2155185589945177,
+    "benchmark_wrapper_seconds": 2.6195016279962147,
+    "semantic_latency_samples": [
+      {
+        "count": 114,
+        "max_seconds": 0.0016663920105202124,
+        "median_seconds": 0.0005674160056514665,
+        "min_seconds": 0.0003127559903077781,
+        "phase": "parse",
+        "samples_seconds": [
+          0.0016663920105202124,
+          0.000530999997863546,
+          0.0005258960009086877,
+          0.0005119279958307743,
+          0.0003127559903077781,
+          0.0005883599951630458,
+          0.000486759003251791,
+          0.0005909359897486866,
+          0.0006527139921672642,
+          0.0005159589927643538,
+          0.0006080090097384527,
+          0.0007048580009723082,
+          0.0006487450009444728,
+          0.0005684880015905946,
+          0.000567879993468523,
+          0.0003423890011617914,
+          0.0006723300029989332,
+          0.0005581199948210269,
+          0.0005430800083559006,
+          0.0007734830141998827,
+          0.0005712879938073456,
+          0.0005654959968524054,
+          0.0007775800040690228,
+          0.0005718000029446557,
+          0.0005670160026056692,
+          0.0005628409999189898,
+          0.0005706649972125888,
+          0.0005720079934690148,
+          0.0005569839995587245,
+          0.00035587800084613264,
+          0.0006945060013094917,
+          0.0005410479934653267,
+          0.0005367920093704015,
+          0.0005359760107239708,
+          0.0007569070003228262,
+          0.0005678160086972639,
+          0.0005601040029432625,
+          0.0005647289945045486,
+          0.0007015459996182472,
+          0.0005261359910946339,
+          0.0005229200032772496,
+          0.0005147749907337129,
+          0.0003150769916828722,
+          0.0006307129951892421,
+          0.0004869029944529757,
+          0.0004821350012207404,
+          0.0006857699918327853,
+          0.0005209189985180274,
+          0.0005196710117161274,
+          0.0007605869905091822,
+          0.0005702170019503683,
+          0.0005704079958377406,
+          0.0005583279998973012,
+          0.00033842099946923554,
+          0.0006865220057079569,
+          0.0005423919938039035,
+          0.0005438640073407441,
+          0.0007823479973012581,
+          0.0005679280002368614,
+          0.000712859007762745,
+          0.0007789719966240227,
+          0.0005721679917769507,
+          0.0005648399965139106,
+          0.000557079998543486,
+          0.000568249000934884,
+          0.0005739610060118139,
+          0.0005590490036411211,
+          0.0003447250055614859,
+          0.0006815939996158704,
+          0.0005444559938041493,
+          0.0005438000080175698,
+          0.0005383280076785013,
+          0.0007624749996466562,
+          0.0005767440015915781,
+          0.0005647130019497126,
+          0.000570440010051243,
+          0.0007155139901442453,
+          0.0005263280036160722,
+          0.0005206469941185787,
+          0.0005155589897185564,
+          0.000707418003003113,
+          0.0006552889972226694,
+          0.000515848005306907,
+          0.0004908709961455315,
+          0.0007402019982691854,
+          0.0005190309893805534,
+          0.0005132399965077639,
+          0.0007666349993087351,
+          0.0005753680015914142,
+          0.0006900580046931282,
+          0.0005665679927915335,
+          0.0007146499992813915,
+          0.0006480260053649545,
+          0.0005437359941424802,
+          0.0005345040117390454,
+          0.0007491619908250868,
+          0.0006687620043521747,
+          0.0005613200046354905,
+          0.0007540749938925728,
+          0.0005683600029442459,
+          0.000561416003620252,
+          0.0005565519968513399,
+          0.000569431998883374,
+          0.000568759991438128,
+          0.0005608240026049316,
+          0.0007103779935277998,
+          0.0006720579985994846,
+          0.0005432400066638365,
+          0.0005367910052882507,
+          0.0005355440080165863,
+          0.0007527779962401837,
+          0.0005700559995602816,
+          0.000563863999559544,
+          0.0005698330060113221
+        ],
+        "scope": "Observed tiny controlled fixtures across routes; mixed calls, not a scaling/throughput benchmark"
+      },
+      {
+        "count": 75,
+        "max_seconds": 0.00170085699937772,
+        "median_seconds": 0.001549591004732065,
+        "min_seconds": 0.0014590299979317933,
+        "phase": "replay",
+        "samples_seconds": [
+          0.0015685030084569007,
+          0.001513413997599855,
+          0.0014899899979354814,
+          0.001509206005721353,
+          0.0015679909993195906,
+          0.0015352859918493778,
+          0.0015842949942452833,
+          0.0016767280030762777,
+          0.0015439109993167222,
+          0.0015426780009875074,
+          0.0015952710091369227,
+          0.0015341499965870753,
+          0.0016191430040635169,
+          0.0015512070094700903,
+          0.0016222310077864677,
+          0.001553398004034534,
+          0.0015380060067400336,
+          0.001562279008794576,
+          0.0015307739959098399,
+          0.0015905669861240312,
+          0.0015159100003074855,
+          0.0015175900043686852,
+          0.0016099269996630028,
+          0.0015357020020019263,
+          0.0015410150081152096,
+          0.001572246997966431,
+          0.0015012860094429925,
+          0.001613462998648174,
+          0.0015233659942168742,
+          0.0014590299979317933,
+          0.0015628550027031451,
+          0.0015074140101205558,
+          0.0016193040064536035,
+          0.00167383199732285,
+          0.0015272220043698326,
+          0.0015990630054147914,
+          0.0015263269888237119,
+          0.0016143590037245303,
+          0.00170085699937772,
+          0.001624406999326311,
+          0.0015434149972861633,
+          0.0015347419976023957,
+          0.0015404869918711483,
+          0.0015390460030175745,
+          0.0016003589989850298,
+          0.001533974995254539,
+          0.0015179899928625673,
+          0.001624230993911624,
+          0.0016699280095053837,
+          0.0015582630003336817,
+          0.001565591010148637,
+          0.0015025019965833053,
+          0.0014976849925005808,
+          0.0015769989986438304,
+          0.0014831739972578362,
+          0.0015628219989594072,
+          0.0014921340043656528,
+          0.0016112390003399923,
+          0.0016796399868326262,
+          0.0015475420077564195,
+          0.0015660220087738708,
+          0.001514101997599937,
+          0.0016927769902395085,
+          0.0015365500003099442,
+          0.001601958996616304,
+          0.0015407260070787743,
+          0.0015245500107994303,
+          0.001549591004732065,
+          0.0015345499996328726,
+          0.0015824069996597245,
+          0.0015199420013232157,
+          0.001517910000984557,
+          0.0016077509935712442,
+          0.0016429200040875003,
+          0.0015523909969488159
+        ],
+        "scope": "Observed tiny controlled fixtures across routes; mixed calls, not a scaling/throughput benchmark"
+      },
+      {
+        "count": 9,
+        "max_seconds": 0.001670696001383476,
+        "median_seconds": 0.0015909350040601566,
+        "min_seconds": 0.0015421509888255969,
+        "phase": "bundle",
+        "samples_seconds": [
+          0.0015421509888255969,
+          0.0015948869986459613,
+          0.0015967759973136708,
+          0.001670696001383476,
+          0.001581798991537653,
+          0.0015909350040601566,
+          0.001553894006065093,
+          0.0015996869915397838,
+          0.0015785510040586814
+        ],
+        "scope": "Observed tiny controlled fixtures across routes; mixed calls, not a scaling/throughput benchmark"
+      }
+    ],
+    "benchmark_native_launches": 0,
+    "benchmark_shared_pool_accesses": 0,
+    "default_resource_admission": true,
+    "resource_profile_changed": false,
+    "native_witness_validation": "complete two-forall structural projection bound to request formula/policy; equal low-input/subject projections and genuine observation differences",
+    "retained_replayed_flag_meaning": "structural projection only; not native model membership, temporal replay, high-input variation or authenticity",
+    "parser_limits": {
+      "bytes": 2097152,
+      "lines": 4096,
+      "fields": 256,
+      "trace_variables": 8
+    },
+    "supported_positive_quantifier_signature": [
+      "forall",
+      "forall"
+    ],
+    "engine_verdict_kept_separate_from_witness_validation": true,
+    "generic_registry_theorem_authority": false,
+    "native_bundle_requires_actual_context": true,
+    "semantic_witness_replay_qualified": false,
+    "successful_native_profile_qualified": false,
+    "actual_external_host_load_tested": false,
+    "hard_aggregate_containment": false,
+    "many_core_scaling_established": false,
+    "new_cache_replay": false,
+    "new_codebase_smt_execution": false,
+    "new_learned_codebase_ir": false,
+    "new_planner_authority": false,
+    "production_tasks_closed": [],
+    "preservation": {
+      "prior_qualifications": 31,
+      "prior_artifact_bodies": 3277
+    },
+    "report": "workspace/hyper-counterexample-validation-qualification-20261004/REPORT.md"
+  },
+  "process_workspace_guard_increment": {
+    "schema": "process-workspace-guard-qualification@1",
+    "status": "qualified_bounded_real_processes",
+    "recorded_at_utc": "2026-10-04T06:15:24.353315+00:00",
+    "selected_tests": 3522,
+    "focused_tests": 477,
+    "retained_previous_test_cases": 3390,
+    "new_workspace_guard_tests": 56,
+    "newly_selected_existing_process_tests": 76,
+    "deselected_legacy_native_tests": 19,
+    "test_counts_summed": false,
+    "accepted_attempts": {
+      "benchmark": "benchmark-1",
+      "focused": "focused-2",
+      "joined": "joined-1"
+    },
+    "initial_failure": "Three inherited exceptional-callback cleanup tests exposed repolling of a failed callback by final inspection. The original execution exception is now preserved without repolling after normalized executor failure.",
+    "benchmark_real_process_cases": 12,
+    "benchmark_native_python_root_launches": 12,
+    "benchmark_owned_descendants_observed": 1,
+    "benchmark_max_concurrent_roots": 2,
+    "benchmark_overrun_cases": 8,
+    "benchmark_seconds": 2.3970462969882647,
+    "benchmark_wrapper_seconds": 2.819595280001522,
+    "per_case_seconds": {
+      "serial-healthy": 0.3244928529893514,
+      "serial-exact": 0.3199351530056447,
+      "serial-single_overrun": 0.14599805099715013,
+      "serial-aggregate_overrun": 0.12980613300169352,
+      "serial-sticky_delete": 0.1349516490008682,
+      "serial-descendant_writer": 0.1303801729955012,
+      "serial-cancel": 0.1557227699959185,
+      "serial-quick_overrun": 0.05488477500330191,
+      "wave0-exact": 0.5703027249983279,
+      "wave0-single_overrun": 0.37813439400633797,
+      "wave1-aggregate_overrun": 0.3885204660036834,
+      "wave1-sticky_delete": 0.3788277159910649
+    },
+    "maximum_sampled_logical_overshoot_bytes": 24576,
+    "benchmark_shared_scheduler_attempts": 0,
+    "default_live_workspace_guard": true,
+    "sample_interval_seconds": 0.1,
+    "workspace_complexity_defaults": {
+      "max_workspace_entries": 16384,
+      "max_workspace_depth": 64
+    },
+    "workspace_complexity_hard_ceilings": {
+      "max_workspace_entries": 1000000,
+      "max_workspace_depth": 256
+    },
+    "per_file_opt_out_preserved": true,
+    "workspace_failure_latched": true,
+    "private_workspaces_removed": true,
+    "process_tree_and_private_leases_drained": true,
+    "actual_host_pressure_tested": false,
+    "solver_execution_qualified": false,
+    "hard_disk_quota": false,
+    "hard_aggregate_containment": false,
+    "many_core_scaling_established": false,
+    "semantic_witness_replay_qualified": false,
+    "new_cache_replay": false,
+    "new_codebase_smt_execution": false,
+    "new_learned_codebase_ir": false,
+    "new_planner_authority": false,
+    "production_tasks_closed": [],
+    "producer_inventory_counts": {
+      "verification": 27,
+      "applicability": 29
+    },
+    "producer_inventory_changed_modules": [
+      "ipfs_datasets_py.logic.backends.process"
+    ],
+    "preservation": {
+      "prior_qualifications": 32,
+      "prior_artifact_bodies": 3440
+    },
+    "report": "workspace/process-workspace-guard-qualification-20261004/REPORT.md"
+  },
+  "hyper_evidence_integrity_increment": {
+    "schema": "hyper-evidence-integrity-qualification@1",
+    "status": "qualified_controlled",
+    "recorded_at_utc": "2026-10-04T06:50:29.195401+00:00",
+    "selected_tests": 3652,
+    "focused_tests": 608,
+    "retained_previous_test_cases": 3522,
+    "new_hyper_evidence_integrity_tests": 130,
+    "deselected_legacy_native_tests": 19,
+    "test_counts_summed": false,
+    "accepted_attempts": {
+      "benchmark": "benchmark-2",
+      "focused": "focused-2",
+      "joined": "joined-2"
+    },
+    "retained_unaccepted_attempts": [
+      "benchmark-1",
+      "focused-1",
+      "joined-1"
+    ],
+    "controlled_e2e_cases": 12,
+    "synthetic_executor_calls": 6,
+    "rejected_binding_mutations": 108,
+    "rejected_public_nested_mutations": 93,
+    "controlled_source_pins": 134,
+    "selected_source_pins": 236,
+    "benchmark_seconds": 0.4450810249982169,
+    "benchmark_wrapper_seconds": 0.8662408769887406,
+    "per_case_seconds": {
+      "hyperltl:satisfied": 0.04072678899683524,
+      "hyperltl:violated": 0.050712883996311575,
+      "hyperltl:capability": 0.009970365994377062,
+      "autohyper:satisfied": 0.03888247501163278,
+      "autohyper:violated": 0.05214087299827952,
+      "autohyper:capability": 0.010405620007077232,
+      "mchyper:satisfied": 0.037970830002450384,
+      "mchyper:violated": 0.05186805200355593,
+      "mchyper:capability": 0.010548261998337694,
+      "hyperltl:mock": 0.01079924200894311,
+      "autohyper:fallback_output": 0.010501957993255928,
+      "mchyper:evaluator_fallback": 0.015279418003046885
+    },
+    "existing_evidence_digest_algorithm_preserved": true,
+    "supplied_evidence_content_digest_checked": true,
+    "request_and_attachment_consistency_checked": true,
+    "nested_payloads_immutable": true,
+    "public_json_exports_detached": true,
+    "mappingproxy_deepcopy_contract_added": false,
+    "payload_copy_limits": {
+      "max_utf8_string_bytes": 16777216,
+      "max_nodes": 65536,
+      "max_depth": 64
+    },
+    "payload_copy_operation_checkpoints": true,
+    "existing_digest_encodings_preserved": true,
+    "receipt_digest_restores_declared_timeout_float": true,
+    "request_context_retained_for_reconstruction": true,
+    "standalone_full_result_json_decoder_added": false,
+    "request_digest_binds_trace_count_only": true,
+    "private_trace_content_digest_binding": false,
+    "native_authenticity_established": false,
+    "semantic_witness_replay_qualified": false,
+    "benchmark_native_launches": 0,
+    "benchmark_shared_pool_accesses": 0,
+    "actual_external_host_load_tested": false,
+    "hard_aggregate_containment": false,
+    "many_core_scaling_established": false,
+    "new_cache_replay": false,
+    "new_codebase_smt_execution": false,
+    "new_learned_codebase_ir": false,
+    "new_planner_authority": false,
+    "production_tasks_closed": [],
+    "task_production_files_changed": 2,
     "existing_test_files_changed": 0,
-    "native_proverif_cases": 2,
-    "native_seconds": 0.19213317800313234,
-    "native_wrapper_seconds": 0.565334074999555,
-    "native_memory_mb": 128,
-    "native_request_timeout_seconds": 5,
-    "native_raw_verdicts": [
-      "true",
-      "false"
-    ],
-    "native_typed_results": [
-      "unknown",
-      "unknown"
-    ],
-    "native_query_normalization_fixed": false,
-    "native_results_quarantined": true,
-    "semantic_attack_replay": false,
-    "verified_toolchain_identity": false,
-    "native_protocol_v2_execution": false,
-    "managed_launcher_native_execution": false,
-    "native_cancellation_tested": false,
-    "native_stress_tested": false,
-    "standalone_protocol_v2_aggregate_budget": false,
-    "many_core_scaling_established": false,
-    "hard_aggregate_containment": false,
-    "initial_native_parse_error_preserved": true,
-    "native_fixture_reserved_identifier_corrected": true,
-    "initial_failed_launches": 1,
-    "initial_native_returncode": 2,
-    "native_source_count": 107,
-    "selected_source_count": 194,
-    "prior_qualifications_preserved": 23,
-    "prior_artifacts_preserved": 2209,
-    "owned_work_drained": true,
-    "saved_pool_configuration_unchanged": true,
-    "real_resource_sampler_preserved": true,
-    "next_semantic_gap": "Bind native query spelling/polarity to explicit source claim identity; reject foreign/ambiguous claims.",
-    "remaining_default_runner_migrations": [
-      "Tamarin with Haskell/Maude profile",
-      "Hyper with finite budgets and guarded probes"
-    ],
-    "production_tasks_closed": []
+    "producer_inventory_counts": {
+      "verification": 27,
+      "applicability": 29
+    },
+    "producer_inventories_changed": false,
+    "preservation": {
+      "prior_qualifications": 33,
+      "prior_artifact_bodies": 3523
+    },
+    "report": "workspace/hyper-evidence-integrity-qualification-20261004/REPORT.md"
   },
-  "proverif_query_binding_increment": {
-    "status": "qualified_partial_scope",
-    "qualification": "../../workspace/proverif-query-binding-qualification-20261004/REPORT.md",
-    "source_qualified_ground_free_secrecy_binding": true,
-    "complete_unique_source_claim_population_required": true,
-    "case_sensitive_identifiers": true,
-    "native_verdict_inversion": false,
-    "native_inconclusive_grammar_supported": true,
-    "foreign_ambiguous_results_quarantined": true,
-    "duplicate_verdicts_deduplicated": true,
-    "conflicting_verdicts_quarantined": true,
-    "new_native_false_attack_trace": false,
-    "legacy_exact_trace_semantics_changed": false,
-    "selected_tests": 2612,
-    "focused_tests": 430,
-    "new_query_binding_tests": 56,
-    "retained_previous_tests": 2556,
-    "deselected_legacy_native_tests": 15,
+  "hyper_fallback_validation_increment": {
+    "schema": "hyper-fallback-validation-qualification@1",
+    "status": "qualified_controlled",
+    "recorded_at_utc": "2026-10-04T07:30:24.953802+00:00",
+    "selected_tests": 3738,
+    "focused_tests": 694,
+    "retained_previous_test_cases": 3652,
+    "new_hyper_fallback_validation_tests": 70,
+    "newly_selected_existing_hyper_tests": 16,
+    "deselected_legacy_native_tests": 19,
     "test_counts_summed": false,
-    "existing_test_files_changed": 1,
-    "synthetic_disagreement_fixture_corrected": true,
-    "initial_failed_attempt_preserved": true,
-    "native_proverif_cases": 3,
-    "native_seconds": 0.27456637599971145,
-    "native_wrapper_seconds": 0.6152203009987716,
-    "native_memory_mb": 128,
-    "native_request_timeout_seconds": 5,
-    "native_typed_results": [
-      "secure",
-      "unknown",
-      "unknown"
+    "accepted_attempts": {
+      "benchmark": "benchmark-1",
+      "focused": "focused-3",
+      "joined": "joined-2"
+    },
+    "retained_unaccepted_attempts": [
+      "focused-1",
+      "focused-2",
+      "joined-1"
     ],
-    "native_generic_results": [
-      "unknown",
-      "unknown",
-      "unknown"
-    ],
-    "semantic_attack_replay": false,
-    "verified_toolchain_identity": false,
-    "native_protocol_v2_execution": false,
-    "native_cancellation_tested": false,
-    "native_stress_tested": false,
-    "many_core_scaling_established": false,
+    "controlled_e2e_cases": 15,
+    "synthetic_executor_calls": 3,
+    "changed_evaluations_rejected": 21,
+    "equivalent_evaluations_accepted": 18,
+    "typed_stops_withheld_evidence": 3,
+    "controlled_source_pins": 136,
+    "selected_source_pins": 239,
+    "benchmark_seconds": 0.7302233369991882,
+    "benchmark_wrapper_seconds": 1.1659309649985516,
+    "per_case_seconds": {
+      "hyperltl:violated": 0.033842842996818945,
+      "hyperltl:clean": 0.020189392002066597,
+      "hyperltl:limited": 0.01915580801141914,
+      "hyperltl:managed_sat": 0.031823080993490294,
+      "autohyper:violated": 0.031148488997132517,
+      "autohyper:clean": 0.019595471996581182,
+      "autohyper:limited": 0.019210479003959335,
+      "autohyper:managed_sat": 0.030599160003475845,
+      "mchyper:violated": 0.03166220200364478,
+      "mchyper:clean": 0.019411839995882474,
+      "mchyper:limited": 0.019055775002925657,
+      "mchyper:managed_sat": 0.030697255991981365,
+      "hyperltl:cancel_evaluation": 0.008601655004895292,
+      "autohyper:timeout_evaluation": 0.26756958999612834,
+      "mchyper:cancel_revalidation": 0.013565819012001157
+    },
+    "normalization_limits": {
+      "max_records": 16384,
+      "max_nodes": 262144,
+      "max_utf8_string_bytes": 16777216,
+      "max_depth": 32,
+      "max_integer_bits": 4096
+    },
+    "canonical_fallback_outcome_applicability_checked": true,
+    "existing_wire_and_digest_algorithms_preserved": true,
+    "private_trace_identity_established": false,
+    "public_private_trace_hash_added": false,
+    "request_digest_binds_trace_count_only": true,
+    "generic_backend_request_payload_redaction_changed": false,
+    "generic_registry_missing_tool_fallback_qualified": false,
+    "native_authenticity_established": false,
+    "semantic_native_witness_replay_qualified": false,
+    "benchmark_native_launches": 0,
+    "benchmark_shared_pool_accesses": 0,
+    "actual_external_host_load_tested": false,
     "hard_aggregate_containment": false,
-    "native_source_count": 109,
-    "selected_source_count": 196,
-    "prior_qualifications_preserved": 24,
-    "prior_artifacts_preserved": 2394,
-    "external_scheduler_generation_separately_reviewed": true,
-    "external_scheduler_sha256": "9cb9f263c5a72cd1b1fa2dd9dcd070a549e11bd5483937d35508c6a86d929166",
-    "external_scheduler_historical_bodies_recovered": false,
-    "source_capture_refusal_preserved": true,
-    "owned_work_drained": true,
-    "saved_pool_configuration_unchanged": true,
-    "real_resource_sampler_preserved": true,
-    "remaining_semantic_gaps": [
-      "broader query and compiler coverage",
-      "semantic attack reconstruction",
-      "verified toolchain identity"
-    ],
-    "remaining_default_runner_migrations": [
-      "Tamarin",
-      "Hyper"
-    ],
-    "standalone_protocol_v2_aggregate_budget": false,
-    "production_tasks_closed": []
+    "many_core_scaling_established": false,
+    "normalization_is_process_rss_limit": false,
+    "opaque_callback_preemption": false,
+    "declassification_semantics_changed": false,
+    "missing_field_semantics_changed": false,
+    "whole_private_map_comparison_changed": false,
+    "max_steps_disclosure_semantics_changed": false,
+    "new_cache_replay": false,
+    "new_codebase_smt_execution": false,
+    "new_learned_codebase_ir": false,
+    "new_planner_authority": false,
+    "production_tasks_closed": [],
+    "task_production_files_changed": 3,
+    "existing_test_files_changed": 0,
+    "producer_inventory_counts": {
+      "verification": 27,
+      "applicability": 29
+    },
+    "producer_inventories_changed": false,
+    "preservation": {
+      "prior_qualifications": 34,
+      "prior_artifact_bodies": 3695
+    },
+    "report": "workspace/hyper-fallback-validation-qualification-20261004/REPORT.md"
   },
-  "protocol_v2_operation_budget_increment": {
-    "status": "qualified_partial_scope",
-    "qualification": "../../workspace/protocol-operation-budget-qualification-20261004/REPORT.md",
-    "standalone_protocol_v2_aggregate_budget": true,
-    "enabled_by_default": true,
-    "default_timeout_ms_when_bounds_omitted": 1000,
-    "request_and_parent_deadlines_only_tighten": true,
-    "constructor_and_call_signals_combined": true,
-    "observed_cancellation_latched": true,
-    "split_partial_results_withheld": true,
-    "late_evidence_withheld": true,
-    "legacy_callbacks_exactly_once": true,
-    "wire_identities_unchanged": true,
-    "opaque_python_callbacks_preempted": false,
-    "selected_tests": 2702,
-    "focused_tests": 578,
-    "new_operation_control_tests": 90,
-    "retained_previous_tests": 2612,
-    "deselected_legacy_native_tests": 15,
+  "hyper_registry_fallback_increment": {
+    "schema": "hyper-registry-fallback-qualification@1",
+    "status": "qualified_controlled",
+    "recorded_at_utc": "2026-10-04T08:15:38.021359+00:00",
+    "selected_tests": 3809,
+    "focused_tests": 989,
+    "retained_previous_test_cases": 3738,
+    "new_hyper_registry_fallback_tests": 71,
+    "deselected_legacy_native_tests": 19,
     "test_counts_summed": false,
-    "existing_test_files_changed": 1,
-    "retained_signal_expectation_updated": true,
-    "initial_failed_attempt_preserved": true,
-    "native_proverif_cases": 3,
-    "native_protocol_v2_execution": true,
-    "native_seconds": 0.41369363899866585,
-    "native_wrapper_seconds": 0.7657438640017062,
-    "native_memory_mb": 128,
-    "native_request_timeout_seconds": 5,
-    "native_engine_scope_observed": true,
-    "native_phase_observations_per_case": 14,
-    "native_v2_dispositions": [
-      "secure",
-      "quarantined",
-      "quarantined"
+    "accepted_attempts": {
+      "benchmark": "benchmark-1",
+      "focused": "focused-2",
+      "joined": "joined-1"
+    },
+    "retained_unaccepted_attempts": [
+      "focused-1"
     ],
-    "native_typed_results": [
-      "secure",
-      "unknown",
-      "unknown"
-    ],
-    "native_registry_execution": false,
-    "native_tamarin_execution": false,
-    "native_split_provider_execution": false,
-    "native_cancellation_qualified": false,
-    "native_stress_qualified": false,
-    "many_core_scaling_established": false,
+    "controlled_e2e_cases": 20,
+    "actual_bounded_fallback_outcomes": 13,
+    "refused_unavailable_outcomes": 5,
+    "normalized_stop_outcomes": 2,
+    "shared_registry_overlapping_calls": 2,
+    "public_native_availability_unchanged": true,
+    "controlled_source_pins": 138,
+    "selected_source_pins": 241,
+    "benchmark_seconds": 0.5353578060021391,
+    "benchmark_wrapper_seconds": 0.9154200780030806,
+    "per_case_seconds": {
+      "hyperltl:violated": 0.011043923994293436,
+      "hyperltl:clean": 0.007312578003620729,
+      "hyperltl:limited": 0.007492354998248629,
+      "autohyper:violated": 0.010704704996896908,
+      "autohyper:clean": 0.007292096997844055,
+      "autohyper:limited": 0.007657060996280052,
+      "mchyper:violated": 0.0106467360019451,
+      "mchyper:clean": 0.007263985986355692,
+      "mchyper:limited": 0.007519684004364535,
+      "hyperltl_autohyper_mchyper:violated": 0.010676592006348073,
+      "hyperltl_autohyper_mchyper:clean": 0.007281921993126161,
+      "hyperltl_autohyper_mchyper:limited": 0.00752920399827417,
+      "hyperltl:no_opt_in": 0.002447046004817821,
+      "autohyper:no_traces": 0.0021786599972983822,
+      "mchyper:availability_veto": 0.0023932540061650798,
+      "hyperltl_autohyper_mchyper:probe_failure": 0.0024955749977380037,
+      "hyperltl:cancel_evaluation": 0.009427701006643474,
+      "autohyper:timeout_evaluation": 0.2674621250043856,
+      "hyperltl:concurrent_fallback": 0.026530495000770316,
+      "hyperltl:concurrent_no_opt_in": 0.0050801739998860285
+    },
+    "generic_registry_missing_tool_fallback_qualified": true,
+    "fallback_requires_explicit_true_and_nonempty_traces": true,
+    "canonical_delegate_identity_required": true,
+    "explicit_availability_veto_preserved": true,
+    "generic_results_remain_unknown": true,
+    "raw_generic_request_payloads_persisted_by_benchmark": false,
+    "generic_backend_request_payload_redaction_changed": false,
+    "generic_request_digests_recorded": true,
+    "v2_private_outcome_applicability_contract_changed": false,
+    "private_trace_identity_established": false,
+    "benchmark_native_launches": 0,
+    "benchmark_shared_pool_accesses": 0,
+    "benchmark_transport_calls": 0,
+    "python_evaluator_scheduler_admission": false,
+    "python_evaluator_host_pressure_backoff": false,
+    "actual_external_host_load_tested": false,
     "hard_aggregate_containment": false,
-    "semantic_attack_replay": false,
-    "verified_toolchain_identity": false,
-    "native_source_count": 111,
-    "selected_source_count": 198,
-    "prior_qualifications_preserved": 25,
-    "prior_artifacts_preserved": 2519,
-    "external_dependency_generations_changed": 0,
-    "owned_work_drained": true,
-    "saved_pool_configuration_unchanged": true,
-    "real_resource_sampler_preserved": true,
-    "next_tamarin_requirements": [
-      "complete lifecycle/output gates",
-      "bounded Haskell capabilities",
-      "explicit Maude selection",
-      "reviewed descendant process reservation",
-      "finite native profile"
+    "many_core_scaling_established": false,
+    "native_authenticity_established": false,
+    "new_cache_replay": false,
+    "new_codebase_smt_execution": false,
+    "new_learned_codebase_ir": false,
+    "new_planner_authority": false,
+    "production_tasks_closed": [],
+    "task_production_files_changed": 2,
+    "existing_test_files_changed": 1,
+    "existing_test_case_ids_retained": true,
+    "producer_inventory_counts": {
+      "verification": 27,
+      "applicability": 29
+    },
+    "producer_inventories_changed": false,
+    "preservation": {
+      "prior_qualifications": 35,
+      "prior_artifact_bodies": 3856
+    },
+    "report": "workspace/hyper-registry-fallback-qualification-20261004/REPORT.md"
+  },
+  "hyper_installer_resource_increment": {
+    "status": "qualified_controlled_and_fresh_archives",
+    "recorded_at_utc": "2026-10-04",
+    "qualification": "workspace/hyper-installer-resource-qualification-20261004/REPORT.md",
+    "selected_tests_passed": 4060,
+    "focused_tests_passed": 1163,
+    "retained_previous_cases": 3809,
+    "new_tests": 177,
+    "newly_selected_existing_tests": 74,
+    "legacy_native_deselections": 19,
+    "default_python_scheduler_admission": true,
+    "default_installer_command_admission": true,
+    "installer_benchmark_groups": 9,
+    "actual_owned_python_launches": 8,
+    "python_admission_cases": 8,
+    "fresh_official_pinned_main_archives_verified": 3,
+    "prior_artifact_bodies_preserved": 3975,
+    "prior_qualifications_preserved": 36,
+    "hard_aggregate_containment": false,
+    "active_python_pressure_pause": false,
+    "upstream_hyper_compilation_qualified": false,
+    "many_core_scaling_established": false,
+    "new_proof_or_planner_authority": false,
+    "remaining": [
+      "Provision reviewed compiler/runtime dependencies for fresh upstream Hyper builds.",
+      "Qualify native Hyper proof workloads and many-core throughput under actual host pressure.",
+      "Keep learned CodebaseIR and proof-index/planner authority within existing verified boundaries."
+    ]
+  },
+  "hyper_native_setup_increment": {
+    "status": "qualified_fresh_builds_and_bounded_native_smoke",
+    "recorded_at_utc": "2026-10-04",
+    "qualification": "workspace/hyper-native-setup-qualification-20261004/REPORT.md",
+    "selected_tests_passed": 4137,
+    "focused_tests_passed": 1063,
+    "previous_cases_retained": 4060,
+    "new_tests": 77,
+    "legacy_native_deselections": 19,
+    "fresh_engine_builds": 3,
+    "build_probe_top_level_launches": 42,
+    "fresh_build_seconds": 43.86715876800008,
+    "native_smoke_cases": 5,
+    "native_smoke_seconds": 6.316492630023276,
+    "default_shared_scheduler_used": true,
+    "existing_compiler_toolchains_reused": true,
+    "fresh_pinned_provenance_archives": 3,
+    "inert_dependency_planning": true,
+    "explicit_root_fallback_refused": true,
+    "prior_artifacts_preserved": 4561,
+    "prior_qualifications_preserved": 37,
+    "full_cold_toolchain_provisioning": false,
+    "many_core_scaling_established": false,
+    "new_proof_or_planner_authority": false,
+    "remaining": [
+      "Provision and verify complete compiler/runtime chains on clean machines.",
+      "Benchmark larger mixed-solver workloads and actual pressure backoff on many cores.",
+      "Keep learned CodebaseIR, proof index and symbolic planner authority within verified evidence boundaries."
+    ]
+  },
+  "hyper_parallel_setup_increment": {
+    "evidence": "workspace/hyper-parallel-setup-qualification-20261004/REPORT.md",
+    "selected_tests": 4215,
+    "focused_tests": 1141,
+    "retained_previous_cases": 4137,
+    "new_tests": 78,
+    "new_test_counts": {
+      "setup_integrity": 29,
+      "parallel_benchmark": 49
+    },
+    "legacy_native_deselections": 19,
+    "fresh_pinned_archives": 3,
+    "dependency_setup_seconds": 4.366350459982641,
+    "native_cases": 20,
+    "parallel_workers": 2,
+    "sequential_seconds": 1.8124158419959713,
+    "parallel_seconds": 0.8964536970015615,
+    "single_trial_elapsed_ratio": 2.0217618021523025,
+    "sampled_live_root_peaks": {
+      "sequential": 1,
+      "parallel": 2
+    },
+    "contention": "separate small parent envelope; owned queued child recovered after release",
+    "contention_recovery_seconds": 0.058178981009405106,
+    "organic_pressure_refusal": {
+      "reason": "proof_memory_stall",
+      "observed_percent": 20.89,
+      "threshold_percent": 2.0,
+      "native_launches": 0,
+      "request_timed_out": true
+    },
+    "later_retry_passed": true,
+    "original_waiter_recovery_claim": false,
+    "manufactured_pressure": false,
+    "cold_compiler_bootstrap": false,
+    "many_core_scaling_claim": false,
+    "hard_aggregate_containment": false,
+    "prior_qualifications_preserved": 38,
+    "prior_artifact_bodies_preserved": 4796,
+    "remaining": [
+      "reviewed compiler/runtime distribution pins and bounded provisioning",
+      "clean-machine bootstrap qualification",
+      "larger repeated mixed-solver trials",
+      "isolated controlled pressure qualification"
+    ]
+  },
+  "hyper_dotnet_bootstrap_increment": {
+    "evidence": "workspace/hyper-dotnet-bootstrap-qualification-20261004/STATUS.md",
+    "qualification_status": "blocked_by_host_pressure",
+    "sdk_version": "8.0.300",
+    "runtime_version": "8.0.5",
+    "supported_platforms": [
+      "linux-aarch64",
+      "linux-x86_64"
     ],
-    "remaining_default_runner_migrations": [
-      "Tamarin",
-      "Hyper"
+    "separate_explicit_setup_api": true,
+    "automatic_lazy_sdk_installation": false,
+    "archive_authentication": "pinned SHA-512 before extraction",
+    "cached_tree_reaudited": true,
+    "support_only": true,
+    "authorizes_proof": false,
+    "default_operation_timeout_ms": 1800000,
+    "default_install_reservation": {
+      "cpu_slots": 1,
+      "memory_bytes": 1073741824,
+      "child_process_slots": 4
+    },
+    "default_install_address_space_bytes": 8589934592,
+    "fresh_filesystem_destinations": true,
+    "cold_os_or_network_cache_claim": false,
+    "existing_spot_and_os_prerequisites_reused": true,
+    "clean_machine_portability_qualified": false,
+    "hard_aggregate_containment": false,
+    "semantic_witness_certification": false,
+    "many_core_scaling_claim": false,
+    "remaining": [
+      "full final-generation fresh SDK/AutoHyper/native-smoke qualification on a healthy host",
+      "automatic lazy SDK integration",
+      "other compiler/runtime provisioning",
+      "clean-machine prerequisite qualification",
+      "larger repeated mixed-solver trials"
     ],
-    "production_tasks_closed": []
+    "pending_full_native": true,
+    "selected_tests": 4393,
+    "focused_tests": 1299,
+    "retained_previous_cases": 4215,
+    "new_tests": 178,
+    "new_test_counts": {
+      "sdk": 40,
+      "archive": 77,
+      "install_control": 17,
+      "benchmark": 44
+    },
+    "legacy_native_deselections": 19,
+    "final_native_attempt": {
+      "name": "native-bootstrap-5",
+      "status": "refused_after_staged_probe",
+      "elapsed_seconds": 49.63658609398408,
+      "sdk_archive_bytes": 217385231,
+      "native_sdk_probes_completed": 1,
+      "native_engine_builds": 0,
+      "native_solver_launches": 0,
+      "actual_matching_refusal_records": 15,
+      "last_memory_stall_percent": 20.71,
+      "memory_stall_threshold_percent": 2.0,
+      "published_sdk_and_staging_rolled_back": true,
+      "coordination_lock_metadata_retained": true
+    },
+    "earlier_generation_completed_sdk_build_and_cache": true,
+    "earlier_generation_qualifies_final_signature_controls": false,
+    "original_waiter_recovery_claim": false,
+    "host_pressure_origin_established": false,
+    "retained_attempts": [
+      "native-bootstrap-1",
+      "native-bootstrap-2",
+      "native-bootstrap-3",
+      "native-bootstrap-4",
+      "native-bootstrap-5"
+    ]
   }
 }

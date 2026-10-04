@@ -19,8 +19,10 @@ hyperproperty.
 from __future__ import annotations
 
 import hashlib
+import heapq
+import math
 import re
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any, ClassVar, Final
@@ -52,6 +54,15 @@ HYPERPROPERTY_EVALUATION_SCHEMA_VERSION: Final = "hyperproperty-evaluation/v1"
 
 DEFAULT_MAX_COMPOSITION_TRACES: Final = 32
 DEFAULT_MAX_COMPOSITION_PAIRS: Final = 256
+
+# Hard input ceilings are independent of the document's exploration bounds.
+# In particular, max_traces must not truncate ingestion before deterministic
+# selection by trace_id. These limits bound additional validation/copy work.
+MAX_EVALUATION_INPUT_TRACES: Final = 16_384
+MAX_EVALUATION_INPUT_NODES: Final = 262_144
+MAX_EVALUATION_INPUT_BYTES: Final = 16 * 1024 * 1024
+MAX_EVALUATION_INPUT_DEPTH: Final = 32
+MAX_EVALUATION_INTEGER_BITS: Final = 4_096
 
 _ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$")
 _FIELD_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$")
@@ -1830,6 +1841,118 @@ class ExecutionTrace:
         }
 
 
+class _TraceInputBudget:
+    """Copy finite trace JSON without putting private data into diagnostics."""
+
+    def __init__(self, checkpoint: Callable[[str], object] | None) -> None:
+        if checkpoint is not None and not callable(checkpoint):
+            raise HyperpropertyValidationError("trace checkpoint must be callable")
+        self.checkpoint = checkpoint
+        self.nodes = 0
+        self.bytes_left = MAX_EVALUATION_INPUT_BYTES
+        self.ancestors: set[int] = set()
+
+    def poll(self, phase: str) -> None:
+        if self.checkpoint is not None:
+            self.checkpoint(phase)
+
+    def node(self) -> None:
+        self.nodes += 1
+        if self.nodes > MAX_EVALUATION_INPUT_NODES:
+            raise HyperpropertyValidationError("trace inputs exceed the JSON node limit")
+        if self.nodes % 64 == 0:
+            self.poll("bounded trace input traversal")
+
+    def freeze(self, value: object, depth: int = 0) -> Any:
+        self.node()
+        if depth > MAX_EVALUATION_INPUT_DEPTH:
+            raise HyperpropertyValidationError("trace inputs exceed the JSON depth limit")
+        if value is None or type(value) is bool:
+            return value
+        if type(value) is int:
+            if value.bit_length() > MAX_EVALUATION_INTEGER_BITS:
+                raise HyperpropertyValidationError("trace input integer exceeds the bit limit")
+            return value
+        if type(value) is float and math.isfinite(value):
+            return value
+        if type(value) is str:
+            if len(value) > self.bytes_left:
+                raise HyperpropertyValidationError("trace inputs exceed the UTF-8 byte limit")
+            # Encode in small pieces, avoiding a large temporary byte string.
+            for offset in range(0, len(value), 4096):
+                self.poll("bounded trace text traversal")
+                try:
+                    self.bytes_left -= len(value[offset:offset + 4096].encode("utf-8"))
+                except UnicodeEncodeError:
+                    raise HyperpropertyValidationError("trace inputs contain invalid Unicode") from None
+                if self.bytes_left < 0:
+                    raise HyperpropertyValidationError("trace inputs exceed the UTF-8 byte limit")
+            return value
+        if id(value) in self.ancestors:
+            raise HyperpropertyValidationError("trace inputs contain cyclic JSON")
+        self.ancestors.add(id(value))
+        try:
+            if isinstance(value, Mapping):
+                copied = {}
+                for key, child in value.items():
+                    if type(key) is not str or not key or key.strip() != key:
+                        raise HyperpropertyValidationError("trace input keys must be non-empty trimmed strings")
+                    copied[self.freeze(key, depth + 1)] = self.freeze(child, depth + 1)
+                return FrozenMap(copied)
+            if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+                return tuple(self.freeze(child, depth + 1) for child in value)
+            raise HyperpropertyValidationError("trace inputs must contain finite JSON values")
+        finally:
+            self.ancestors.remove(id(value))
+
+
+def normalize_execution_traces(
+    traces: Sequence[ExecutionTrace] | Sequence[Mapping[str, Any]] | None,
+    *,
+    checkpoint: Callable[[str], object] | None = None,
+    allow_mappings: bool = False,
+    require_trace_ids: bool = False,
+) -> tuple[ExecutionTrace, ...]:
+    """Bound and detach trace inputs, keeping private values only in memory.
+
+    Limits apply across all records, including ones outside max_traces. Errors
+    describe the violated limit, never an input value or private-input digest.
+    Caller-owned iterators and callbacks are cooperative, not preemptible.
+    """
+    budget = _TraceInputBudget(checkpoint)
+    budget.poll("before bounded trace normalization")
+    if traces is None:
+        traces = ()
+    if isinstance(traces, (str, bytes, bytearray, Mapping)):
+        raise HyperpropertyValidationError("traces must be a sequence of trace records")
+    result = []
+    for index, item in enumerate(traces):
+        budget.poll("bounded trace ingestion")
+        if index >= MAX_EVALUATION_INPUT_TRACES:
+            raise HyperpropertyValidationError("trace inputs exceed the record limit")
+        budget.node()
+        if isinstance(item, ExecutionTrace):
+            trace_id = item.trace_id
+            fields = {name: getattr(item, name) for name in (
+                "public_inputs", "private_inputs", "observations", "subject")}
+        elif allow_mappings and isinstance(item, Mapping):
+            if require_trace_ids and "trace_id" not in item:
+                raise HyperpropertyValidationError("trace records require a trace_id")
+            trace_id = str(item.get("trace_id", f"trace:{index}"))
+            fields = {name: item.get(name) or {} for name in (
+                "public_inputs", "private_inputs", "observations", "subject")}
+        else:
+            raise HyperpropertyValidationError("traces must contain ExecutionTrace values")
+        trace_id = budget.freeze(trace_id)
+        for name, value in fields.items():
+            if not isinstance(value, Mapping):
+                raise HyperpropertyValidationError("trace fields must be mappings")
+            fields[name] = budget.freeze(value)
+        result.append(ExecutionTrace(trace_id=trace_id, **fields))
+    budget.poll("after bounded trace normalization")
+    return tuple(result)
+
+
 @dataclass(frozen=True, slots=True)
 class HyperpropertyIR:
     """Immutable hyperproperty document implementing ``HyperpropertyIR@1``.
@@ -1960,6 +2083,8 @@ class HyperpropertyIR:
     def evaluate_bounded_noninterference(
         self,
         traces: Sequence[ExecutionTrace],
+        *,
+        checkpoint: Callable[[str], object] | None = None,
     ) -> HyperpropertyEvaluation:
         """Run bounded self-composition for a two-trace noninterference formula.
 
@@ -1968,17 +2093,25 @@ class HyperpropertyIR:
         ``authorizes_universal_proof=False``.
         """
 
+        def poll(phase: str) -> None:
+            if checkpoint is not None:
+                checkpoint(phase)
+
+        poll("before bounded noninterference evaluation")
         if self.formula.kind is not HyperpropertyKind.NONINTERFERENCE:
             raise HyperpropertyValidationError(
                 "evaluate_bounded_noninterference requires a noninterference formula"
             )
-        values = tuple(traces)
-        if any(not isinstance(item, ExecutionTrace) for item in values):
-            raise HyperpropertyValidationError("traces must contain ExecutionTrace values")
+        values = normalize_execution_traces(traces, checkpoint=checkpoint)
 
         bound = self.self_composition_bound
         policy = self.information_flow_policy
-        selected = tuple(sorted(values, key=lambda item: item.trace_id))[: bound.max_traces]
+        def selection_key(item: ExecutionTrace) -> str:
+            poll("bounded trace selection")
+            return item.trace_id
+
+        selected = tuple(heapq.nsmallest(bound.max_traces, values, key=selection_key))
+        poll("after bounded trace selection")
         pairs = 0
         eligible_pairs = 0
         possible_pairs = len(selected) * max(0, len(selected) - 1) // 2
@@ -1989,11 +2122,13 @@ class HyperpropertyIR:
         )
 
         for left_index, left in enumerate(selected):
-            for right in selected[left_index + 1 :]:
+            for right_index in range(left_index + 1, len(selected)):
+                poll("bounded noninterference pair")
                 if pairs >= bound.max_pairs:
                     bound_hit = True
                     break
                 pairs += 1
+                right = selected[right_index]
                 if policy.subject_fields and left.subject_projection(
                     policy.subject_fields
                 ) != right.subject_projection(policy.subject_fields):
@@ -2006,22 +2141,22 @@ class HyperpropertyIR:
                     # No high variation: pair does not stress noninterference.
                     continue
                 eligible_pairs += 1
-                differences = tuple(
-                    ObservationDifference(
+                differences = []
+                for field_name in policy.observation_fields:
+                    poll("bounded noninterference observation")
+                    left_value = _path_value(dict(left.observations), field_name)
+                    right_value = _path_value(dict(right.observations), field_name)
+                    if left_value == right_value:
+                        continue
+                    differences.append(ObservationDifference(
                         field=field_name,
-                        left_digest=_digest(
-                            _path_value(dict(left.observations), field_name)
-                        ),
-                        right_digest=_digest(
-                            _path_value(dict(right.observations), field_name)
-                        ),
-                    )
-                    for field_name in policy.observation_fields
-                    if _path_value(dict(left.observations), field_name)
-                    != _path_value(dict(right.observations), field_name)
-                )
+                        left_digest=_digest(left_value),
+                        right_digest=_digest(right_value),
+                    ))
+                    # Existing public witnesses disclose the first difference.
+                    break
                 if differences:
-                    differences = differences[:1]
+                    poll("before bounded violation witness")
                     bundle = WitnessTraceBundle(
                         bundle_id=f"bundle:violation-{left.trace_id}-{right.trace_id}",
                         role=WitnessRole.COUNTEREXAMPLE,
@@ -2038,7 +2173,7 @@ class HyperpropertyIR:
                         observed_fields=policy.observation_fields,
                         description="Bounded self-composition counterexample",
                     )
-                    return HyperpropertyEvaluation(
+                    evaluation = HyperpropertyEvaluation(
                         verdict=HyperpropertyVerdict.VIOLATED,
                         evidence_kind=HyperpropertyEvidenceKind.BOUNDED_SELF_COMPOSITION,
                         authority_ceiling=EvidenceAuthorityCeiling.BOUNDED,
@@ -2056,6 +2191,8 @@ class HyperpropertyIR:
                         bound_hit=bound_hit,
                         witness_bundle=bundle,
                     )
+                    poll("before bounded evaluation publication")
+                    return evaluation
             if pairs >= bound.max_pairs:
                 break
 
@@ -2076,6 +2213,7 @@ class HyperpropertyIR:
 
         sample_bundle: WitnessTraceBundle | None = None
         if selected and verdict is HyperpropertyVerdict.HOLDS:
+            poll("before bounded sample witness")
             sample_traces = tuple(
                 item.to_witness(
                     self.formula.variables[min(index, 1)].variable_id,
@@ -2093,7 +2231,7 @@ class HyperpropertyIR:
                     description="Clean bounded sample; not a universal proof",
                 )
 
-        return HyperpropertyEvaluation(
+        evaluation = HyperpropertyEvaluation(
             verdict=verdict,
             evidence_kind=evidence,
             authority_ceiling=EvidenceAuthorityCeiling.BOUNDED,
@@ -2108,6 +2246,8 @@ class HyperpropertyIR:
             bound_hit=bound_hit,
             witness_bundle=sample_bundle,
         )
+        poll("before bounded evaluation publication")
+        return evaluation
 
     @classmethod
     def noninterference_document(
@@ -2209,6 +2349,11 @@ def refuse_universal_proof(evaluation: HyperpropertyEvaluation) -> None:
 __all__ = [
     "DEFAULT_MAX_COMPOSITION_PAIRS",
     "DEFAULT_MAX_COMPOSITION_TRACES",
+    "MAX_EVALUATION_INPUT_TRACES",
+    "MAX_EVALUATION_INPUT_NODES",
+    "MAX_EVALUATION_INPUT_BYTES",
+    "MAX_EVALUATION_INPUT_DEPTH",
+    "MAX_EVALUATION_INTEGER_BITS",
     "HYPERPROPERTY_IR_IDENTITY_DOMAIN",
     "HYPERPROPERTY_IR_INTERFACE",
     "HYPERPROPERTY_IR_SCHEMA_VERSION",
@@ -2240,6 +2385,7 @@ __all__ = [
     "WitnessRole",
     "WitnessTrace",
     "WitnessTraceBundle",
+    "normalize_execution_traces",
     "quantifier_order_is_canonical",
     "refuse_universal_proof",
 ]

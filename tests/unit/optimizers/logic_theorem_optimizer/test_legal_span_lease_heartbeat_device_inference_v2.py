@@ -1,0 +1,521 @@
+"""Portable CPU controls for separate authenticated 768D/4096D span polls.
+
+All models and schedulers are test-owned. The 768D fixture authors synthetic
+parent progress/moments without fitting; its child has zero updates. The 4096D
+fixture is explicitly synthetic and untrained. No encoder, training, optimizer
+step or CUDA execution is qualified. Root exclusively executes these controls.
+"""
+from contextlib import contextmanager
+from copy import deepcopy
+import hashlib
+from pathlib import Path
+import sys
+import threading
+import time
+
+import pytest
+import torch
+
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_lease_heartbeat_device_inference as subject
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_formula as span
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_dimensions as dims
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_4096 as head
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_device_inference as resident
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_device_bitwise_inference as baseline768
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_4096_bitwise_device_inference_v2 as baseline4096
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import authenticated_lease_heartbeat as heartbeat
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import resource_scheduler as resources
+
+# Retain observer code identities before tests deliberately replace the live
+# helper class. Observing a refusal must not dispatch through the mutated alias.
+_PRISTINE_HEARTBEAT_CHECK_CODE = heartbeat.AuthenticatedLeaseHeartbeat.check.__code__
+_PRISTINE_HEARTBEAT_READ_CODE = heartbeat.AuthenticatedLeaseHeartbeat._read_current.__code__
+
+
+@pytest.fixture(scope="module", autouse=True)
+def one_thread():
+    previous = torch.get_num_threads()
+    torch.set_num_threads(1)
+    yield
+    torch.set_num_threads(previous)
+
+
+def authored_moments(state):
+    return {"schema": "adam-default-betas-eps/v1", "parameters": {
+        name: {"step": 1, "exp_avg": torch.zeros_like(torch.tensor(value)).tolist(),
+               "exp_avg_sq": torch.zeros_like(torch.tensor(value)).tolist()} for name, value in state.items()}}
+
+
+@pytest.fixture(scope="module", params=[768, 4096])
+def checkpoint(request):
+    dimension = request.param
+    if dimension == 4096:
+        examples = [{"id": "authored-zero-fit-cadence4096", "source_text": "Lark must retain books.",
+            "latent": [.1] * 4096, "canonical_ir": {"rules": [{"actor": "Lark", "modality": "O",
+                "action": "retain", "object": "books", "conditions": [], "exceptions": [], "temporal": []}]}}]
+        context = {"dimension": 4096, "representation_id": "synthetic-cadence4096-zero-fit-control",
+                   "producer_sha256": "a" * 64, "training_index_sha256": "b" * 64}
+        return head.build_synthetic_fixture(examples, context_contract=context, hidden_size=8,
+            embedding_dim=4, projection_width=4, batch_size=1, seed=1729)
+    base_config = span._config(latent_dimension=0, latent_enabled=False, learning_rate=.003,
+        batch_size=1, seed=1729, hidden_size=8, embedding_dim=4, projection_width=4, residual_scale=.25)
+    base = resident._fresh_model(torch, base_config)
+    base_state = {name: value.detach().tolist() for name, value in base.state_dict().items()}
+    parent = {"schema": span.SCHEMA, "lineage_id": span.LINEAGE_ID, "config": base_config,
+        "implementation": span._implementation(), "training_manifest_sha256": "a" * 64,
+        "training_count": 1, "tuning_manifest_sha256": "b" * 64, "tuning_count": 0,
+        "model_state": base_state, "optimizer_state": authored_moments(base_state),
+        "progress": {"epochs_completed": 1, "row_cursor": 0, "optimizer_steps": 1},
+        "parent_checkpoint_sha256": "c" * 64, **span.FALSE}
+    config = dims._config(latent_dimension=768, latent_enabled=True, learning_rate=.003,
+        batch_size=1, seed=1729, hidden_size=8, embedding_dim=4, projection_width=4, residual_scale=.25)
+    model = resident._fresh_model(torch, config)
+    state = {name: value.detach().tolist() for name, value in model.state_dict().items()}
+    state.update(deepcopy(base_state))
+    context = {"dimension": 768, "representation_id": "synthetic-cadence768-zero-fit-control",
+               "producer_sha256": "d" * 64, "training_index_sha256": "e" * 64}
+    return {"schema": dims.SCHEMA, "lineage_id": dims.LINEAGE_ID,
+        "implementation": dims._implementation(), "initialization": deepcopy(dims._INITIALIZATION),
+        "config": config, "context_contract": context, "context_contract_sha256": span.checkpoint_digest(context),
+        "source_parent_checkpoint": parent, "source_parent_checkpoint_sha256": span.checkpoint_digest(parent),
+        "source_parent_optimizer_steps": 1, "initial_source_model_sha256": span.checkpoint_digest(dims._source_state(state)),
+        "initial_model_state_sha256": span.checkpoint_digest(state), "training_manifest_sha256": "f" * 64,
+        "training_count": 1, "tuning_manifest_sha256": "a" * 64, "tuning_count": 0, "model_state": state,
+        "optimizer_state": {"schema": "adam-default-betas-eps/v1", "parameters": {}},
+        "progress": {"epochs_completed": 0, "row_cursor": 0, "optimizer_steps": 0},
+        "parent_checkpoint_sha256": None, **span.FALSE}
+
+
+@pytest.fixture
+def scheduler(tmp_path):
+    return resources.GlobalResourceScheduler(resources.ResourceSchedulerConfig(state_path=tmp_path / "state.json",
+        total_cpu_slots=3, total_memory_mb=8192, total_gpu_memory_mb=2048, total_unified_memory_mb=8192,
+        lane_reservations={}, auto_renew_leases=False,
+        resource_pressure_sampler=lambda: {"gpu_telemetry_available": True, "cuda_available": False,
+            "gpu_device_count": 0, "gpu_memory_percent": 0.}))
+
+
+def dimension(checkpoint):
+    return checkpoint["config"]["latent_dimension"]
+
+
+def api(checkpoint, *, baseline=False):
+    if dimension(checkpoint) == 768:
+        return baseline768.DeviceBitwiseDimensionalSpanSession if baseline else subject.DeviceBitwiseDimensionalSpanSession
+    return baseline4096.BitwiseDeviceLeanstral4096SpanSession if baseline else subject.BitwiseDeviceLeanstral4096SpanSession
+
+
+def open_cpu(checkpoint, scheduler, monkeypatch, *, optimized=True, baseline=False, **kwargs):
+    if optimized:
+        monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
+    options = {"synthetic_unreceipted": True} if dimension(checkpoint) == 4096 else {}
+    return api(checkpoint, baseline=baseline)(checkpoint, expected_checkpoint_sha256=span.checkpoint_digest(checkpoint),
+        scheduler=scheduler, optimized=optimized, **options, **kwargs)
+
+
+def inputs(checkpoint, count=2):
+    return (["Lark must retain the café records."] * count,
+            [[.1 + index / 100] * dimension(checkpoint) for index in range(count)])
+
+
+@contextmanager
+def observe_calls(session=None):
+    previous = sys.getprofile()
+    counters = {"poll": 0, "helper_check": 0, "helper_read": 0, "nondue": 0, "renewed": 0,
+                "forward": 0, "fsync": 0, "replace": 0, "restores": 0}
+    poll_codes = (subject._LeaseHeartbeatMixin._poll.__code__, resident.DeviceDimensionalSpanSession._poll.__code__,
+                  baseline4096.inherited.DeviceLeanstral4096SpanSession._poll.__code__)
+    forward_code = session._model.forward.__func__.__code__ if session is not None else None
+    restore_codes = (resident._restore.__code__, baseline4096.inherited._RESTORE_AT_IMPORT.__code__)
+    check_code, read_code = _PRISTINE_HEARTBEAT_CHECK_CODE, _PRISTINE_HEARTBEAT_READ_CODE
+    def observe(frame, event, arg):
+        if event == "call":
+            if any(frame.f_code is code for code in poll_codes):
+                counters["poll"] += 1
+            if any(frame.f_code is code for code in restore_codes):
+                counters["restores"] += 1
+            if frame.f_code is check_code:
+                counters["helper_check"] += 1
+            if frame.f_code is read_code:
+                counters["helper_read"] += 1
+            if frame.f_code is forward_code:
+                counters["forward"] += 1
+        elif event == "return" and frame.f_code is check_code:
+            if arg is False:
+                counters["nondue"] += 1
+            elif arg is True:
+                counters["renewed"] += 1
+        elif event == "c_call":
+            if arg is resources.os.fsync:
+                counters["fsync"] += 1
+            elif arg is resources.os.replace:
+                counters["replace"] += 1
+        if previous is not None:
+            previous(frame, event, arg)
+    try:
+        sys.setprofile(observe)
+        yield counters
+    finally:
+        sys.setprofile(previous)
+
+
+@pytest.mark.parametrize("optimized", [False, True])
+@pytest.mark.parametrize("ablation", ["none", "zero", "rotate", "disabled"])
+def test_full_cpu_decisions_checkpoint_inputs_rng_and_parent_profile_are_preserved(checkpoint, scheduler, monkeypatch, optimized, ablation):
+    texts, vectors = inputs(checkpoint)
+    before, rng = span._raw(checkpoint), torch.get_rng_state().clone()
+    with open_cpu(checkpoint, scheduler, monkeypatch, optimized=optimized, baseline=True) as baseline:
+        expected = baseline.infer(texts, vectors, latent_ablation=ablation)
+    with open_cpu(checkpoint, scheduler, monkeypatch, optimized=optimized) as session:
+        actual = session.infer(texts, vectors, latent_ablation=ablation)
+        assert actual["rows"] == expected["rows"]
+        assert actual["actual_forward_batches"] == expected["actual_forward_batches"]
+        assert actual["input_receipts"] == expected["input_receipts"]
+        assert actual["schema"] == expected["schema"] and actual["input_dimension"] == dimension(checkpoint)
+        assert actual["checkpoint_sha256"] == span.checkpoint_digest(checkpoint)
+        assert all(actual[name] is False for name in span.FALSE) and not actual["cuda_executed"]
+        profile = actual["execution_profile"]
+        candidate = subject.PROFILE_768 if dimension(checkpoint) == 768 else subject.PROFILE_4096
+        assert profile["lease_heartbeat_profile_id"] == profile["session_profile_id"] == candidate
+        assert profile["lease_heartbeat_inherited_profile_id"] == expected["execution_profile"]["profile_id"]
+        assert profile["profile_id"] == (candidate if optimized else expected["execution_profile"]["profile_id"])
+        assert profile["lease_currentness"]["authenticated_read_completed_at_last_poll"] is True
+        assert profile["lease_currentness"]["renewed_at_last_completed_poll"] is False
+        assert profile["owned_tensor_currentness"] == expected["execution_profile"]["owned_tensor_currentness"]
+        assert session.checkpoint == checkpoint and torch.equal(rng, torch.get_rng_state())
+        assert session._reference_anchor.payload == bytes(session._reference_anchor.payload)
+    assert span._raw(checkpoint) == before and scheduler.active_leases() == []
+
+
+@pytest.mark.parametrize("optimized", [False, True])
+@pytest.mark.parametrize("count", [1, 2, 16])
+def test_every_existing_boundary_and_row_poll_authenticates_without_nondue_durable_writes(checkpoint, scheduler, monkeypatch, optimized, count):
+    texts, vectors = inputs(checkpoint, count)
+    with open_cpu(checkpoint, scheduler, monkeypatch, optimized=optimized, baseline=True) as baseline:
+        with observe_calls(baseline) as old:
+            baseline.infer(texts, vectors)
+    with open_cpu(checkpoint, scheduler, monkeypatch, optimized=optimized) as session:
+        raw = scheduler.state_path.read_bytes()
+        for _ in range(2):
+            with observe_calls(session) as current:
+                session.infer(texts, vectors)
+            assert current["poll"] == old["poll"] == (4 + 2 * count if optimized else 2 + 2 * count)
+            assert current["helper_check"] == current["helper_read"] == current["nondue"] == current["poll"]
+            assert current["forward"] == old["forward"] == (1 if optimized else count)
+            assert current["renewed"] == current["fsync"] == current["replace"] == current["restores"] == 0
+            assert scheduler.state_path.read_bytes() == raw
+    assert old["helper_check"] == old["fsync"] == old["replace"] == 0
+
+
+def test_opt_out_never_queries_cuda_and_no_optimizer_or_fit_is_constructed(checkpoint, scheduler, monkeypatch):
+    def forbidden(*args, **kwargs):
+        raise AssertionError("CPU inference touched CUDA, optimizer construction or training")
+    monkeypatch.setattr(torch.cuda, "is_available", forbidden)
+    monkeypatch.setattr(torch.cuda, "current_device", forbidden)
+    monkeypatch.setattr(torch.optim, "Adam", forbidden)
+    monkeypatch.setattr(span, "train_decoder", forbidden)
+    monkeypatch.setattr(dims, "train_decoder", forbidden)
+    with open_cpu(checkpoint, scheduler, monkeypatch, optimized=False) as session:
+        assert session.infer(*inputs(checkpoint))["training_executed"] is False
+
+
+@pytest.mark.parametrize("field", subject._HEARTBEAT_FIELDS)
+@pytest.mark.parametrize("when", ["entry", "after_forward"])
+def test_each_helper_snapshot_field_replacement_refuses_before_return(checkpoint, scheduler, monkeypatch, field, when):
+    class Mutating:
+        session, changed = None, False
+        def mutate(self):
+            helper = self.session._heartbeat_owner
+            value = getattr(helper, field)
+            replacement = tuple(list(value)) if type(value) is tuple else value + 1 if type(value) in (int, float) else object()
+            assert replacement is not value
+            object.__setattr__(helper, field, replacement)
+            self.changed = True
+        def is_set(self):
+            if when == "after_forward" and self.session is not None and self.session._observations and not self.changed:
+                self.mutate()
+            return False
+    cancel = Mutating()
+    with open_cpu(checkpoint, scheduler, monkeypatch, cancel_event=cancel) as session:
+        cancel.session = session
+        helper, before = session._heartbeat_owner, getattr(session._heartbeat_owner, field)
+        try:
+            if when == "entry":
+                cancel.mutate()
+            with pytest.raises(ValueError, match="helper object or immutable snapshot changed"):
+                session.infer(*inputs(checkpoint))
+            assert cancel.changed and not session._active and not session._observations
+        finally:
+            object.__setattr__(helper, field, before)
+        session.describe()
+
+
+@pytest.mark.parametrize("fault", ["helper", "snapshot", "identity", "all_none"])
+@pytest.mark.parametrize("when", ["entry", "after_forward"])
+def test_helper_marker_replacement_or_reset_never_reopens_constructor_bootstrap(checkpoint, scheduler, monkeypatch, fault, when):
+    class Mutating:
+        session, changed = None, False
+        def mutate(self):
+            session = self.session
+            if fault == "helper":
+                session._heartbeat_owner = heartbeat.AuthenticatedLeaseHeartbeat(session._lease)
+            elif fault == "snapshot":
+                session._heartbeat_snapshot = tuple(list(session._heartbeat_snapshot))
+            elif fault == "identity":
+                session._heartbeat_snapshot_identity = tuple(list(session._heartbeat_snapshot))
+            else:
+                session._heartbeat_owner = session._heartbeat_snapshot = session._heartbeat_snapshot_identity = None
+            self.changed = True
+        def is_set(self):
+            if when == "after_forward" and self.session is not None and self.session._observations and not self.changed:
+                self.mutate()
+            return False
+    cancel = Mutating()
+    with open_cpu(checkpoint, scheduler, monkeypatch, cancel_event=cancel) as session:
+        cancel.session = session
+        old = session._heartbeat_owner, session._heartbeat_snapshot, session._heartbeat_snapshot_identity
+        try:
+            if when == "entry":
+                cancel.mutate()
+            with pytest.raises(ValueError, match="snapshot changed|bootstrap outside inherited constructor"):
+                session.infer(*inputs(checkpoint))
+        finally:
+            session._heartbeat_owner, session._heartbeat_snapshot, session._heartbeat_snapshot_identity = old
+        session.describe()
+
+
+def test_after_forward_paired_helper_and_both_markers_replacement_uses_independent_local_anchor(checkpoint, scheduler, monkeypatch):
+    class Mutating:
+        session, changed = None, False
+        def is_set(self):
+            session = self.session
+            if session is not None and session._observations and not self.changed:
+                helper = heartbeat.AuthenticatedLeaseHeartbeat(session._lease)
+                snapshot = (helper, *(getattr(helper, name) for name in subject._HEARTBEAT_FIELDS))
+                session._heartbeat_owner = helper
+                session._heartbeat_snapshot = session._heartbeat_snapshot_identity = snapshot
+                self.changed = True
+            return False
+    cancel = Mutating()
+    with open_cpu(checkpoint, scheduler, monkeypatch, cancel_event=cancel) as session:
+        cancel.session = session
+        old = session._heartbeat_owner, session._heartbeat_snapshot, session._heartbeat_snapshot_identity
+        try:
+            with observe_calls(session) as counts:
+                with pytest.raises(ValueError, match="helper object or immutable snapshot changed"):
+                    session.infer(*inputs(checkpoint))
+            assert cancel.changed and counts["forward"] == 1 and not session._active and not session._observations
+        finally:
+            session._heartbeat_owner, session._heartbeat_snapshot, session._heartbeat_snapshot_identity = old
+        session.describe()
+
+
+@pytest.mark.parametrize("fault", ["own_source", "helper_class", "helper_check", "helper_defaults", "base_constructor",
+    "base_pure_check", "base_decode", "owner_alias", "frame", "clock", "profile", "private_poll", "private_decision"])
+@pytest.mark.parametrize("when", ["constructor", "after_forward"])
+def test_source_class_method_default_and_alias_bindings_refuse_before_dispatch(checkpoint, scheduler, monkeypatch, fault, when):
+    def mutate(session=None):
+        foreign = lambda *args, **kwargs: None
+        base = subject._BASE_768 if dimension(checkpoint) == 768 else subject._BASE_4096
+        if fault == "own_source":
+            monkeypatch.setattr(subject, "_source_sha256", lambda: "0" * 64)
+        elif fault == "helper_class":
+            monkeypatch.setattr(heartbeat, "AuthenticatedLeaseHeartbeat", object)
+        elif fault == "helper_check":
+            monkeypatch.setattr(heartbeat.AuthenticatedLeaseHeartbeat, "check", foreign)
+        elif fault == "helper_defaults":
+            monkeypatch.setattr(heartbeat.AuthenticatedLeaseHeartbeat.__init__, "__kwdefaults__", {"renewal_fraction": .5})
+        elif fault == "base_constructor":
+            monkeypatch.setattr(base, "__init__", foreign)
+        elif fault == "base_pure_check":
+            monkeypatch.setattr(base, "_pure_check", foreign)
+        elif fault == "base_decode":
+            monkeypatch.setattr(base, "decode_formal_logic", foreign)
+        elif fault == "owner_alias":
+            monkeypatch.setattr(subject, "_HEARTBEAT", foreign)
+        elif fault == "frame":
+            monkeypatch.setattr(subject, "_GETFRAME", foreign)
+        elif fault == "clock":
+            monkeypatch.setattr(subject, "_MONOTONIC", lambda: 0.)
+        elif fault == "profile":
+            monkeypatch.setattr(subject, "PROFILE_768", "changed/v1")
+        elif session is None:
+            monkeypatch.setattr(api(checkpoint), "_poll" if fault == "private_poll" else "_decision", foreign)
+        else:
+            monkeypatch.setattr(session, "_poll" if fault == "private_poll" else "_decision", foreign)
+    if when == "constructor":
+        mutate()
+        with observe_calls() as counts:
+            with pytest.raises(ValueError, match="changed"):
+                open_cpu(checkpoint, scheduler, monkeypatch)
+        assert counts["restores"] == 0 and scheduler.active_leases() == []
+        return
+    class Mutating:
+        session, changed = None, False
+        def is_set(self):
+            if self.session is not None and self.session._observations and not self.changed:
+                mutate(self.session)
+                self.changed = True
+            return False
+    cancel = Mutating()
+    with open_cpu(checkpoint, scheduler, monkeypatch, cancel_event=cancel) as session:
+        cancel.session = session
+        with pytest.raises(ValueError, match="changed"):
+            session.infer(*inputs(checkpoint))
+        assert cancel.changed and not session._active and not session._observations
+
+
+@pytest.mark.parametrize("fault", ["paired_finite", "paired_signed_zero", "anchor", "checkpoint", "mode", "gradient", "hook"])
+def test_inherited_full_numeric_checkpoint_and_reference_refusals_remain_intact(checkpoint, scheduler, monkeypatch, fault):
+    with open_cpu(checkpoint, scheduler, monkeypatch) as session:
+        parameter, reference = session._model.latent_up.bias, session._reference["latent_up.bias"]
+        saved, retained = parameter.detach().clone(), reference.clone()
+        checkpoint_before, anchor, handle = deepcopy(session._checkpoint), session._reference_anchor, None
+        try:
+            if fault in ("paired_finite", "paired_signed_zero"):
+                bits = 1065353216 if fault == "paired_finite" else -2147483648
+                parameter.data.view(torch.int32)[0] = reference.data.view(torch.int32)[0] = bits
+            elif fault == "anchor":
+                session._reference_payload_identity = bytes(bytearray(anchor.payload))
+            elif fault == "checkpoint":
+                session._checkpoint["context_contract"]["representation_id"] += "-changed"
+            elif fault == "mode":
+                session._model.train()
+            elif fault == "gradient":
+                parameter.grad = torch.zeros_like(parameter)
+            else:
+                handle = session._model.register_forward_hook(lambda *args: None)
+            with pytest.raises(ValueError):
+                session.infer(*inputs(checkpoint))
+            assert not session._active and not session._observations
+        finally:
+            parameter.data.copy_(saved)
+            reference.data.copy_(retained)
+            session._reference_payload_identity = anchor.payload
+            session._checkpoint.clear()
+            session._checkpoint.update(checkpoint_before)
+            session._model.eval()
+            parameter.grad = None
+            if handle is not None:
+                handle.remove()
+
+
+@pytest.mark.parametrize("fault", ["own_key", "own_cancel", "own_expiry", "parent_cancel", "parent_expiry", "missing_parent"])
+def test_fresh_shared_key_and_ancestry_refusals_keep_parent_cleanup_owned(checkpoint, scheduler, monkeypatch, fault):
+    with scheduler.acquire("snapshot_evaluation", cpu_slots=2, memory_mb=4096) as parent:
+        with open_cpu(checkpoint, scheduler, monkeypatch, parent_lease=parent) as session:
+            with scheduler._locked_state(persist=False) as state:
+                before = deepcopy(state)
+            try:
+                with scheduler._locked_state() as state:
+                    own, ancestor = state["leases"][session._lease.lease_id], state["leases"][parent.lease_id]
+                    if fault == "own_key":
+                        own["lease_key"] = "foreign-authority"
+                    elif fault == "own_cancel":
+                        own["cancelled"] = True
+                    elif fault == "own_expiry":
+                        own["expires_at"] = time.time() - 1
+                    elif fault == "parent_cancel":
+                        ancestor["cancelled"] = True
+                    elif fault == "parent_expiry":
+                        ancestor["expires_at"] = time.time() - 1
+                    else:
+                        del state["leases"][parent.lease_id]
+                with observe_calls(session) as counts:
+                    with pytest.raises((RuntimeError, ValueError)):
+                        session.infer(*inputs(checkpoint))
+                assert counts["forward"] == 0 and not session._active
+            finally:
+                with scheduler._locked_state() as state:
+                    state.clear()
+                    state.update(before)
+            session.describe()
+        assert not parent.released and len(scheduler.active_leases()) == 1
+
+
+@pytest.mark.parametrize("outcome", ["false", "true", "raises"])
+@pytest.mark.parametrize("when", ["constructor", "after_forward"])
+def test_callback_lease_substitution_cannot_transfer_cleanup_to_another_owner(checkpoint, scheduler, monkeypatch, outcome, when):
+    class Injecting:
+        changed = False
+        def is_set(self):
+            frame = sys._getframe(1)
+            try:
+                if frame.f_code is subject._LeaseHeartbeatMixin._poll.__code__:
+                    session = frame.f_locals["self"]
+                    ready = session._lease is None if when == "constructor" else bool(session._observations)
+                    if ready and not self.changed:
+                        session._lease = separate
+                        self.changed = True
+                        if outcome == "raises":
+                            raise RuntimeError("authored callback error")
+                        return outcome == "true"
+            finally:
+                del frame
+            return False
+    with scheduler.acquire("snapshot_evaluation", cpu_slots=1, memory_mb=128) as separate:
+        cancel = Injecting()
+        if when == "constructor":
+            with observe_calls() as counts:
+                with pytest.raises(ValueError, match="callback lease changed"):
+                    open_cpu(checkpoint, scheduler, monkeypatch, cancel_event=cancel)
+            assert counts["restores"] == 0
+        else:
+            with open_cpu(checkpoint, scheduler, monkeypatch, cancel_event=cancel) as session:
+                child = session._lease
+                with pytest.raises(ValueError, match="callback lease changed"):
+                    session.infer(*inputs(checkpoint))
+                assert session._lease is child and not separate.released
+            assert child.released
+        assert cancel.changed and not separate.released
+        assert {lease["lease_id"] for lease in scheduler.active_leases()} == {separate.lease_id}
+
+
+@pytest.mark.parametrize("source", ["external", "child", "deadline"])
+def test_cancel_and_cooperative_deadline_keep_own_close_available(checkpoint, scheduler, monkeypatch, source):
+    cancel = threading.Event()
+    with open_cpu(checkpoint, scheduler, monkeypatch, cancel_event=cancel) as session:
+        if source == "external":
+            cancel.set()
+        elif source == "child":
+            session._lease.cancel()
+        else:
+            session._deadline = time.monotonic() - 1
+        with pytest.raises((RuntimeError, TimeoutError)):
+            session.infer(*inputs(checkpoint))
+        assert not session._active
+    assert scheduler.active_leases() == []
+
+
+def test_descriptor_never_claims_baseline_write_elimination_or_live_execution():
+    metadata = subject.inference_implementation()
+    assert metadata["schema"] == subject.SCHEMA
+    assert metadata["baseline_poll_scope"] == "readonly_cancelled_checks_no_inline_renewal"
+    assert metadata["authenticated_lease_heartbeat_implementation"] == heartbeat.inference_implementation()
+    assert "lease_currentness" not in metadata
+    assert metadata["inherited_owner_source_sha256"] == {
+        "768": hashlib.sha256(Path(baseline768.__file__).read_bytes()).hexdigest(),
+        "4096": hashlib.sha256(Path(baseline4096.__file__).read_bytes()).hexdigest()}
+    for name in ("source_verification_success_cached", "boundary_consolidation_performed", "cached_input_substitution_performed",
+                 "existing_scheduler_or_auto_heartbeat_modified", "existing_selected_route_changed", "performance_qualified",
+                 "native_leanstral_outputs_qualified", "trained4096_qualification_established", "production_qualified",
+                 "proof_authority", "execution_attestation"):
+        assert metadata[name] is False
+
+
+def test_numerical_and_cached_row_methods_are_exact_held_parent_functions():
+    for cls, base in ((subject.DeviceBitwiseDimensionalSpanSession, baseline768.DeviceBitwiseDimensionalSpanSession),
+                      (subject.BitwiseDeviceLeanstral4096SpanSession, baseline4096.BitwiseDeviceLeanstral4096SpanSession)):
+        for name in ("_check", "_pure_check", "_decision", "_reference_byte_plan", "_reference_state_bytes", "_check_reference_anchor",
+                     "_admit_batch_memory", "decode_formal_logic", "infer", "_operation", "_synchronize", "close"):
+            assert getattr(cls, name) is getattr(base, name)
+
+
+def test_owned_description_metadata_is_isolated_from_later_receipts(checkpoint, scheduler, monkeypatch):
+    with open_cpu(checkpoint, scheduler, monkeypatch) as session:
+        first = session.describe()
+        first["lease_heartbeat_implementation"]["authenticated_lease_heartbeat_implementation"]["source_sha256"] = "0" * 64
+        first["lease_currentness"]["authenticated_read_completed_at_last_poll"] = False
+        second = session.describe()
+        assert second["lease_heartbeat_implementation"] == subject.inference_implementation()
+        assert second["lease_currentness"]["authenticated_read_completed_at_last_poll"] is True
