@@ -23,26 +23,35 @@ def an_audithandler_subclass_instance_exists():
             def __init__(self):
                 super().__init__(name="test_handler")
                 self.events_processed = []
-            
+
             def _handle_event(self, event):
                 """Process event by storing it"""
                 self.events_processed.append(event)
                 return True
-        
+
         handler = TestAuditHandler()
-        
+
         if handler is None:
-            raise FixtureError("Failed to create fixture an_audithandler_subclass_instance_exists: Handler instance is None") from None
-        
-        if not hasattr(handler, 'handle'):
-            raise FixtureError("Failed to create fixture an_audithandler_subclass_instance_exists: Handler missing 'handle' method") from None
-        
-        if not hasattr(handler, 'enabled'):
-            raise FixtureError("Failed to create fixture an_audithandler_subclass_instance_exists: Handler missing 'enabled' attribute") from None
-        
+            raise FixtureError(
+                "Failed to create fixture an_audithandler_subclass_instance_exists: Handler instance is None"
+            ) from None
+
+        if not hasattr(handler, "handle"):
+            raise FixtureError(
+                "Failed to create fixture an_audithandler_subclass_instance_exists: Handler missing 'handle' method"
+            ) from None
+
+        if not hasattr(handler, "enabled"):
+            raise FixtureError(
+                "Failed to create fixture an_audithandler_subclass_instance_exists: Handler missing 'enabled' attribute"
+            ) from None
+
         return handler
     except Exception as e:
-        raise FixtureError(f"Failed to create fixture an_audithandler_subclass_instance_exists: {e}") from e
+        raise FixtureError(
+            f"Failed to create fixture an_audithandler_subclass_instance_exists: {e}"
+        ) from e
+
 
 @pytest.fixture
 def the_handler_is_enabled(an_audithandler_subclass_instance_exists):
@@ -51,17 +60,20 @@ def the_handler_is_enabled(an_audithandler_subclass_instance_exists):
     """
     try:
         handler = an_audithandler_subclass_instance_exists
-        
+
         # Enable the handler
         handler.enabled = True
-        
+
         # Verify handler is enabled
         if not handler.enabled:
-            raise FixtureError("Failed to create fixture the_handler_is_enabled: Handler is not enabled after setting enabled=True") from None
-        
+            raise FixtureError(
+                "Failed to create fixture the_handler_is_enabled: Handler is not enabled after setting enabled=True"
+            ) from None
+
         return handler
     except Exception as e:
         raise FixtureError(f"Failed to create fixture the_handler_is_enabled: {e}") from e
+
 
 @pytest.fixture
 def the_handler_min_level_is_info(the_handler_is_enabled):
@@ -70,20 +82,24 @@ def the_handler_min_level_is_info(the_handler_is_enabled):
     """
     try:
         handler = the_handler_is_enabled
-        
+
         # Set min_level to INFO
         handler.min_level = AuditLevel.INFO
-        
+
         # Verify min_level is set
         if handler.min_level != AuditLevel.INFO:
-            raise FixtureError(f"Failed to create fixture the_handler_min_level_is_info: Handler min_level is {handler.min_level}, expected INFO") from None
-        
+            raise FixtureError(
+                f"Failed to create fixture the_handler_min_level_is_info: Handler min_level is {handler.min_level}, expected INFO"
+            ) from None
+
         return handler
     except Exception as e:
         raise FixtureError(f"Failed to create fixture the_handler_min_level_is_info: {e}") from e
 
 
-def test_handle_method_returns_true_when_event_processed(an_audithandler_subclass_instance_exists, the_handler_is_enabled, the_handler_min_level_is_info):
+def test_handle_method_returns_true_when_event_processed(
+    an_audithandler_subclass_instance_exists, the_handler_is_enabled, the_handler_min_level_is_info
+):
     """
     Scenario: Handle method returns True when event processed
 
@@ -100,7 +116,9 @@ def test_handle_method_returns_true_when_event_processed(an_audithandler_subclas
     pass
 
 
-def test_handle_method_returns_false_when_handler_disabled(an_audithandler_subclass_instance_exists, the_handler_is_enabled, the_handler_min_level_is_info):
+def test_handle_method_returns_false_when_handler_disabled(
+    an_audithandler_subclass_instance_exists, the_handler_is_enabled, the_handler_min_level_is_info
+):
     """
     Scenario: Handle method returns False when handler disabled
 
@@ -117,7 +135,9 @@ def test_handle_method_returns_false_when_handler_disabled(an_audithandler_subcl
     pass
 
 
-def test_handle_method_returns_false_when_event_level_below_min_level(an_audithandler_subclass_instance_exists, the_handler_is_enabled, the_handler_min_level_is_info):
+def test_handle_method_returns_false_when_event_level_below_min_level(
+    an_audithandler_subclass_instance_exists, the_handler_is_enabled, the_handler_min_level_is_info
+):
     """
     Scenario: Handle method returns False when event level below min_level
 
@@ -134,7 +154,9 @@ def test_handle_method_returns_false_when_event_level_below_min_level(an_auditha
     pass
 
 
-def test_handle_method_calls__handle_event_when_conditions_met(an_audithandler_subclass_instance_exists, the_handler_is_enabled, the_handler_min_level_is_info):
+def test_handle_method_calls__handle_event_when_conditions_met(
+    an_audithandler_subclass_instance_exists, the_handler_is_enabled, the_handler_min_level_is_info
+):
     """
     Scenario: Handle method calls _handle_event when conditions met
 
@@ -151,7 +173,9 @@ def test_handle_method_calls__handle_event_when_conditions_met(an_audithandler_s
     pass
 
 
-def test_handle_method_does_not_call__handle_event_when_handler_disabled(an_audithandler_subclass_instance_exists, the_handler_is_enabled, the_handler_min_level_is_info):
+def test_handle_method_does_not_call__handle_event_when_handler_disabled(
+    an_audithandler_subclass_instance_exists, the_handler_is_enabled, the_handler_min_level_is_info
+):
     """
     Scenario: Handle method does not call _handle_event when handler disabled
 
@@ -168,7 +192,9 @@ def test_handle_method_does_not_call__handle_event_when_handler_disabled(an_audi
     pass
 
 
-def test_handle_method_does_not_call__handle_event_when_level_too_low(an_audithandler_subclass_instance_exists, the_handler_is_enabled, the_handler_min_level_is_info):
+def test_handle_method_does_not_call__handle_event_when_level_too_low(
+    an_audithandler_subclass_instance_exists, the_handler_is_enabled, the_handler_min_level_is_info
+):
     """
     Scenario: Handle method does not call _handle_event when level too low
 
@@ -185,7 +211,9 @@ def test_handle_method_does_not_call__handle_event_when_level_too_low(an_auditha
     pass
 
 
-def test_handle_method_passes_event_unchanged_to__handle_event(an_audithandler_subclass_instance_exists, the_handler_is_enabled, the_handler_min_level_is_info):
+def test_handle_method_passes_event_unchanged_to__handle_event(
+    an_audithandler_subclass_instance_exists, the_handler_is_enabled, the_handler_min_level_is_info
+):
     """
     Scenario: Handle method passes event unchanged to _handle_event
 
@@ -202,7 +230,9 @@ def test_handle_method_passes_event_unchanged_to__handle_event(an_audithandler_s
     pass
 
 
-def test_handle_method_accepts_event_with_any_level(an_audithandler_subclass_instance_exists, the_handler_is_enabled, the_handler_min_level_is_info):
+def test_handle_method_accepts_event_with_any_level(
+    an_audithandler_subclass_instance_exists, the_handler_is_enabled, the_handler_min_level_is_info
+):
     """
     Scenario: Handle method accepts event with any level
 
@@ -219,7 +249,9 @@ def test_handle_method_accepts_event_with_any_level(an_audithandler_subclass_ins
     pass
 
 
-def test_handle_method_returns_value_from__handle_event(an_audithandler_subclass_instance_exists, the_handler_is_enabled, the_handler_min_level_is_info):
+def test_handle_method_returns_value_from__handle_event(
+    an_audithandler_subclass_instance_exists, the_handler_is_enabled, the_handler_min_level_is_info
+):
     """
     Scenario: Handle method returns value from _handle_event
 
@@ -236,7 +268,9 @@ def test_handle_method_returns_value_from__handle_event(an_audithandler_subclass
     pass
 
 
-def test_handle_method_with_event_at_exact_min_level_calls_handler(an_audithandler_subclass_instance_exists, the_handler_is_enabled, the_handler_min_level_is_info):
+def test_handle_method_with_event_at_exact_min_level_calls_handler(
+    an_audithandler_subclass_instance_exists, the_handler_is_enabled, the_handler_min_level_is_info
+):
     """
     Scenario: Handle method with event at exact min_level calls handler
 
@@ -254,7 +288,9 @@ def test_handle_method_with_event_at_exact_min_level_calls_handler(an_audithandl
     pass
 
 
-def test_handle_method_with_event_at_exact_min_level_returns_true(an_audithandler_subclass_instance_exists, the_handler_is_enabled, the_handler_min_level_is_info):
+def test_handle_method_with_event_at_exact_min_level_returns_true(
+    an_audithandler_subclass_instance_exists, the_handler_is_enabled, the_handler_min_level_is_info
+):
     """
     Scenario: Handle method with event at exact min_level returns True
 
@@ -272,7 +308,9 @@ def test_handle_method_with_event_at_exact_min_level_returns_true(an_audithandle
     pass
 
 
-def test_handle_method_with_event_above_min_level_calls_handler(an_audithandler_subclass_instance_exists, the_handler_is_enabled, the_handler_min_level_is_info):
+def test_handle_method_with_event_above_min_level_calls_handler(
+    an_audithandler_subclass_instance_exists, the_handler_is_enabled, the_handler_min_level_is_info
+):
     """
     Scenario: Handle method with event above min_level calls handler
 
@@ -290,7 +328,9 @@ def test_handle_method_with_event_above_min_level_calls_handler(an_audithandler_
     pass
 
 
-def test_handle_method_with_event_above_min_level_returns_true(an_audithandler_subclass_instance_exists, the_handler_is_enabled, the_handler_min_level_is_info):
+def test_handle_method_with_event_above_min_level_returns_true(
+    an_audithandler_subclass_instance_exists, the_handler_is_enabled, the_handler_min_level_is_info
+):
     """
     Scenario: Handle method with event above min_level returns True
 
@@ -306,4 +346,3 @@ def test_handle_method_with_event_above_min_level_returns_true(an_audithandler_s
     """
     # TODO: Implement test
     pass
-

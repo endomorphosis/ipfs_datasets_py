@@ -94,16 +94,12 @@ class LazyDependencyProxy:
         critical_dependencies: Iterable[str] = DEFAULT_CRITICAL_DEPENDENCIES,
     ) -> None:
         names = tuple(dict.fromkeys(str(name) for name in module_names))
-        self._cache: dict[str, ModuleType | None | object] = {
-            name: _UNLOADED for name in names
-        }
+        self._cache: dict[str, ModuleType | None | object] = {name: _UNLOADED for name in names}
         self._aliases = dict(DEFAULT_ATTRIBUTE_ALIASES)
         if aliases:
             self._aliases.update(aliases)
         self._critical_dependencies = tuple(critical_dependencies)
-        self._locks: dict[str, threading.Lock] = {
-            name: threading.Lock() for name in names
-        }
+        self._locks: dict[str, threading.Lock] = {name: threading.Lock() for name in names}
 
     def _canonical_module_name(self, name: str) -> str:
         module_name = self._aliases.get(name, name)
@@ -165,8 +161,7 @@ class LazyDependencyProxy:
 
     def values(self) -> list[ModuleType | None]:
         return [
-            module if isinstance(module, ModuleType) else None
-            for module in self._cache.values()
+            module if isinstance(module, ModuleType) else None for module in self._cache.values()
         ]
 
     def items(self) -> list[tuple[str, ModuleType | None]]:
@@ -192,8 +187,7 @@ class LazyDependencyProxy:
         """Explicitly resolve every registered module and return availability."""
 
         return {
-            module_name: self._load_module(module_name) is not None
-            for module_name in self._cache
+            module_name: self._load_module(module_name) is not None for module_name in self._cache
         }
 
     def check_critical_dependencies(self) -> None:

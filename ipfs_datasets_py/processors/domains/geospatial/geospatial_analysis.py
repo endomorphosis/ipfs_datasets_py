@@ -79,7 +79,9 @@ class GeospatialAnalysisTools:
             documents = corpus if isinstance(corpus, list) else [corpus]
 
             for doc_idx, document in enumerate(documents):
-                content = (document.get("content", "") or "") + " " + (document.get("title", "") or "")
+                content = (
+                    (document.get("content", "") or "") + " " + (document.get("title", "") or "")
+                )
                 locations = self._extract_locations_from_text(content)
 
                 for location in locations:
@@ -131,7 +133,9 @@ class GeospatialAnalysisTools:
                 "mappable_entities": mappable_entities,
                 "geographic_coverage": {
                     "regions": list(regions),
-                    "coverage_percentage": (mappable_entities / len(entities_list) * 100) if entities_list else 0,
+                    "coverage_percentage": (mappable_entities / len(entities_list) * 100)
+                    if entities_list
+                    else 0,
                 },
                 "entities": entities_list,
                 "extraction_metadata": {
@@ -176,7 +180,9 @@ class GeospatialAnalysisTools:
             documents = corpus if isinstance(corpus, list) else [corpus]
 
             for doc_idx, document in enumerate(documents):
-                content = (document.get("content", "") or "") + " " + (document.get("title", "") or "")
+                content = (
+                    (document.get("content", "") or "") + " " + (document.get("title", "") or "")
+                )
                 doc_date = document.get("date", datetime.now().isoformat())
 
                 locations = self._extract_locations_from_text(content)
@@ -203,8 +209,12 @@ class GeospatialAnalysisTools:
 
                         if time_range:
                             event_time = datetime.fromisoformat(doc_date.replace("Z", "+00:00"))
-                            start_time = datetime.fromisoformat(time_range["start"].replace("Z", "+00:00"))
-                            end_time = datetime.fromisoformat(time_range["end"].replace("Z", "+00:00"))
+                            start_time = datetime.fromisoformat(
+                                time_range["start"].replace("Z", "+00:00")
+                            )
+                            end_time = datetime.fromisoformat(
+                                time_range["end"].replace("Z", "+00:00")
+                            )
                             if not (start_time <= event_time <= end_time):
                                 continue
 
@@ -220,7 +230,9 @@ class GeospatialAnalysisTools:
                         )
                         event["temporal_cluster"] = temporal_cluster
 
-            cluster_stats = {cluster_name: len(points) for cluster_name, points in spatial_clusters.items()}
+            cluster_stats = {
+                cluster_name: len(points) for cluster_name, points in spatial_clusters.items()
+            }
 
             result = {
                 "total_events": len(events),
@@ -277,7 +289,9 @@ class GeospatialAnalysisTools:
             documents = corpus if isinstance(corpus, list) else [corpus]
 
             for doc_idx, document in enumerate(documents):
-                content = (document.get("content", "") or "") + " " + (document.get("title", "") or "")
+                content = (
+                    (document.get("content", "") or "") + " " + (document.get("title", "") or "")
+                )
 
                 relevance_score = self._calculate_query_relevance(query_terms, content)
                 if relevance_score <= 0.1:
@@ -307,7 +321,9 @@ class GeospatialAnalysisTools:
                     }
 
                     if include_related_entities:
-                        result_entry["related_entities"] = self._find_related_entities(location, content)
+                        result_entry["related_entities"] = self._find_related_entities(
+                            location, content
+                        )
 
                     if temporal_context:
                         result_entry["temporal_context"] = {

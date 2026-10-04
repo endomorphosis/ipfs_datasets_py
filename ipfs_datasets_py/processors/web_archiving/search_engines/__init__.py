@@ -25,13 +25,13 @@ Usage:
         MultiEngineOrchestrator,
         OrchestratorConfig
     )
-    
+
     config = OrchestratorConfig(
         engines=["brave", "duckduckgo", "google_cse"],
         parallel_enabled=True,
         fallback_enabled=True
     )
-    
+
     orchestrator = MultiEngineOrchestrator(config)
     results = orchestrator.search("EPA water regulations California")
 """

@@ -53,45 +53,41 @@ result = await search_brave(query="test", api_key="your_api_key")
 ```python
 import asyncio
 from ipfs_datasets_py.mcp_server.tools.web_archive_tools.brave_search import (
-    search_brave, search_brave_news, search_brave_images, batch_search_brave
+    search_brave,
+    search_brave_news,
+    search_brave_images,
+    batch_search_brave,
 )
+
 
 async def brave_search_example():
     # Basic web search
-    result = await search_brave(
-        query="machine learning datasets",
-        count=10,
-        safesearch="moderate"
-    )
-    
-    if result['status'] == 'success':
-        for item in result['results']:
+    result = await search_brave(query="machine learning datasets", count=10, safesearch="moderate")
+
+    if result["status"] == "success":
+        for item in result["results"]:
             print(f"Title: {item['title']}")
             print(f"URL: {item['url']}")
             print(f"Description: {item['description']}")
             print()
-    
+
     # News search
     news_result = await search_brave_news(
         query="artificial intelligence",
         count=5,
-        freshness="pw"  # past week
+        freshness="pw",  # past week
     )
-    
+
     # Image search
-    image_result = await search_brave_images(
-        query="neural networks diagram",
-        count=10
-    )
-    
+    image_result = await search_brave_images(query="neural networks diagram", count=10)
+
     # Batch search multiple queries
     batch_result = await batch_search_brave(
-        queries=["deep learning", "computer vision", "NLP"],
-        count=5,
-        delay_seconds=1.0
+        queries=["deep learning", "computer vision", "NLP"], count=5, delay_seconds=1.0
     )
-    
+
     print(f"Batch results: {batch_result['success_count']} successful")
+
 
 asyncio.run(brave_search_example())
 ```
@@ -101,44 +97,37 @@ asyncio.run(brave_search_example())
 ```python
 import asyncio
 from ipfs_datasets_py.mcp_server.tools.web_archive_tools.google_search import (
-    search_google, search_google_images, batch_search_google
+    search_google,
+    search_google_images,
+    batch_search_google,
 )
+
 
 async def google_search_example():
     # Basic web search
-    result = await search_google(
-        query="python data science libraries",
-        num=10,
-        safe="medium"
-    )
-    
-    if result['status'] == 'success':
+    result = await search_google(query="python data science libraries", num=10, safe="medium")
+
+    if result["status"] == "success":
         print(f"Total results: {result['total_results']}")
-        for item in result['results']:
+        for item in result["results"]:
             print(f"Title: {item['title']}")
             print(f"URL: {item['url']}")
             print(f"Snippet: {item['snippet']}")
             print()
-    
+
     # Search with filters
-    pdf_result = await search_google(
-        query="machine learning research",
-        file_type="pdf",
-        num=5
-    )
-    
+    pdf_result = await search_google(query="machine learning research", file_type="pdf", num=5)
+
     # Image search
     image_result = await search_google_images(
-        query="data visualization examples",
-        num=10,
-        img_size="large"
+        query="data visualization examples", num=10, img_size="large"
     )
-    
+
     # Batch search
     batch_result = await batch_search_google(
-        queries=["pandas dataframe", "numpy arrays", "scikit-learn"],
-        num=5
+        queries=["pandas dataframe", "numpy arrays", "scikit-learn"], num=5
     )
+
 
 asyncio.run(google_search_example())
 ```
@@ -152,8 +141,9 @@ from ipfs_datasets_py.mcp_server.tools.web_archive_tools.github_search import (
     search_github_code,
     search_github_users,
     search_github_issues,
-    batch_search_github
+    batch_search_github,
 )
+
 
 async def github_search_example():
     # Search repositories
@@ -161,44 +151,37 @@ async def github_search_example():
         query="language:python stars:>1000 topic:machine-learning",
         sort="stars",
         order="desc",
-        per_page=10
+        per_page=10,
     )
-    
-    if repo_result['status'] == 'success':
-        for repo in repo_result['results']:
+
+    if repo_result["status"] == "success":
+        for repo in repo_result["results"]:
             print(f"Repository: {repo['full_name']}")
             print(f"Stars: {repo['stars']}, Forks: {repo['forks']}")
             print(f"Description: {repo['description']}")
             print(f"URL: {repo['url']}")
             print()
-    
+
     # Search code
-    code_result = await search_github_code(
-        query="import tensorflow language:python",
-        per_page=5
-    )
-    
+    code_result = await search_github_code(query="import tensorflow language:python", per_page=5)
+
     # Search users
     user_result = await search_github_users(
-        query="location:\"San Francisco\" followers:>100",
-        per_page=10
+        query='location:"San Francisco" followers:>100', per_page=10
     )
-    
+
     # Search issues/PRs
     issue_result = await search_github_issues(
-        query="is:issue is:open label:bug repo:pytorch/pytorch",
-        per_page=10
+        query="is:issue is:open label:bug repo:pytorch/pytorch", per_page=10
     )
-    
+
     # Batch search different types
     batch_result = await batch_search_github(
-        queries=[
-            "language:python stars:>5000",
-            "language:javascript stars:>10000"
-        ],
+        queries=["language:python stars:>5000", "language:javascript stars:>10000"],
         search_type="repositories",
-        per_page=5
+        per_page=5,
     )
+
 
 asyncio.run(github_search_example())
 ```
@@ -212,8 +195,9 @@ from ipfs_datasets_py.mcp_server.tools.web_archive_tools.huggingface_search impo
     search_huggingface_datasets,
     search_huggingface_spaces,
     get_huggingface_model_info,
-    batch_search_huggingface
+    batch_search_huggingface,
 )
+
 
 async def huggingface_search_example():
     # Search models
@@ -222,52 +206,47 @@ async def huggingface_search_example():
         filter_task="text-classification",
         filter_library="transformers",
         sort="downloads",
-        limit=10
+        limit=10,
     )
-    
-    if model_result['status'] == 'success':
-        for model in model_result['results']:
+
+    if model_result["status"] == "success":
+        for model in model_result["results"]:
             print(f"Model: {model['model_id']}")
             print(f"Author: {model['author']}")
             print(f"Downloads: {model['downloads']}")
             print(f"Tags: {', '.join(model['tags'])}")
             print(f"URL: {model['model_url']}")
             print()
-    
+
     # Search datasets
     dataset_result = await search_huggingface_datasets(
         query="sentiment",
         filter_task="text-classification",
         filter_language="en",
         sort="downloads",
-        limit=10
+        limit=10,
     )
-    
+
     # Search spaces (demo applications)
     space_result = await search_huggingface_spaces(
-        query="image generation",
-        filter_sdk="gradio",
-        limit=5
+        query="image generation", filter_sdk="gradio", limit=5
     )
-    
+
     # Get detailed model information
-    model_info = await get_huggingface_model_info(
-        model_id="bert-base-uncased"
-    )
-    
-    if model_info['status'] == 'success':
-        info = model_info['model_info']
+    model_info = await get_huggingface_model_info(model_id="bert-base-uncased")
+
+    if model_info["status"] == "success":
+        info = model_info["model_info"]
         print(f"Model: {info['id']}")
         print(f"Pipeline: {info['pipeline_tag']}")
         print(f"Library: {info['library_name']}")
         print(f"Downloads: {info['downloads']}")
-    
+
     # Batch search
     batch_result = await batch_search_huggingface(
-        queries=["gpt", "bert", "t5"],
-        search_type="models",
-        limit=5
+        queries=["gpt", "bert", "t5"], search_type="models", limit=5
     )
+
 
 asyncio.run(huggingface_search_example())
 ```
@@ -280,49 +259,53 @@ Here's an example of creating a dataset from search results:
 import asyncio
 import json
 from ipfs_datasets_py.mcp_server.tools.web_archive_tools.github_search import (
-    search_github_repositories
+    search_github_repositories,
 )
+
 
 async def create_ml_repos_dataset():
     """Create a dataset of popular ML repositories."""
-    
+
     # Search for ML repositories
     result = await search_github_repositories(
         query="machine-learning stars:>5000 language:python",
         sort="stars",
         order="desc",
-        per_page=100
+        per_page=100,
     )
-    
-    if result['status'] != 'success':
+
+    if result["status"] != "success":
         print(f"Error: {result['error']}")
         return
-    
+
     # Extract relevant data
     dataset = []
-    for repo in result['results']:
-        dataset.append({
-            'name': repo['name'],
-            'full_name': repo['full_name'],
-            'owner': repo['owner'],
-            'description': repo['description'],
-            'url': repo['url'],
-            'clone_url': repo['clone_url'],
-            'stars': repo['stars'],
-            'forks': repo['forks'],
-            'language': repo['language'],
-            'topics': repo['topics'],
-            'created_at': repo['created_at'],
-            'updated_at': repo['updated_at'],
-            'license': repo['license']
-        })
-    
+    for repo in result["results"]:
+        dataset.append(
+            {
+                "name": repo["name"],
+                "full_name": repo["full_name"],
+                "owner": repo["owner"],
+                "description": repo["description"],
+                "url": repo["url"],
+                "clone_url": repo["clone_url"],
+                "stars": repo["stars"],
+                "forks": repo["forks"],
+                "language": repo["language"],
+                "topics": repo["topics"],
+                "created_at": repo["created_at"],
+                "updated_at": repo["updated_at"],
+                "license": repo["license"],
+            }
+        )
+
     # Save to JSON
-    with open('ml_repositories_dataset.json', 'w') as f:
+    with open("ml_repositories_dataset.json", "w") as f:
         json.dump(dataset, f, indent=2)
-    
+
     print(f"Created dataset with {len(dataset)} repositories")
     print(f"Saved to ml_repositories_dataset.json")
+
 
 asyncio.run(create_ml_repos_dataset())
 ```
@@ -333,22 +316,13 @@ All batch search functions include rate limiting:
 
 ```python
 # Brave Search - 1 second delay between requests
-batch_result = await batch_search_brave(
-    queries=["query1", "query2", "query3"],
-    delay_seconds=1.0
-)
+batch_result = await batch_search_brave(queries=["query1", "query2", "query3"], delay_seconds=1.0)
 
 # Google Search - 0.5 second delay
-batch_result = await batch_search_google(
-    queries=["query1", "query2", "query3"],
-    delay_seconds=0.5
-)
+batch_result = await batch_search_google(queries=["query1", "query2", "query3"], delay_seconds=0.5)
 
 # GitHub Search - 2 second delay (recommended to avoid rate limits)
-batch_result = await batch_search_github(
-    queries=["query1", "query2"],
-    delay_seconds=2.0
-)
+batch_result = await batch_search_github(queries=["query1", "query2"], delay_seconds=2.0)
 ```
 
 ## Error Handling
@@ -358,8 +332,8 @@ All functions return a consistent response format:
 ```python
 {
     "status": "success",  # or "error"
-    "results": [...],      # search results (if successful)
-    "error": "...",        # error message (if failed)
+    "results": [...],  # search results (if successful)
+    "error": "...",  # error message (if failed)
     # ... additional metadata
 }
 ```
@@ -369,17 +343,17 @@ Example error handling:
 ```python
 result = await search_brave(query="test")
 
-if result['status'] == 'error':
-    if 'API key' in result['error']:
+if result["status"] == "error":
+    if "API key" in result["error"]:
         print("Please set BRAVE_API_KEY environment variable")
-    elif 'rate limit' in result['error'].lower():
+    elif "rate limit" in result["error"].lower():
         print("Rate limit exceeded, please wait")
     else:
         print(f"Error: {result['error']}")
 else:
     # Process results
-    for item in result['results']:
-        print(item['title'])
+    for item in result["results"]:
+        print(item["title"])
 ```
 
 ## Advanced Usage
@@ -389,26 +363,24 @@ else:
 ```python
 import asyncio
 from ipfs_datasets_py.mcp_server.tools.web_archive_tools import (
-    brave_search, github_search, huggingface_search
+    brave_search,
+    github_search,
+    huggingface_search,
 )
+
 
 async def multi_source_search(query):
     """Search across multiple platforms."""
-    
+
     # Run searches in parallel
     web_task = brave_search.search_brave(query)
     github_task = github_search.search_github_repositories(query)
     hf_task = huggingface_search.search_huggingface_models(query)
-    
-    web_result, github_result, hf_result = await asyncio.gather(
-        web_task, github_task, hf_task
-    )
-    
-    return {
-        'web': web_result,
-        'github': github_result,
-        'huggingface': hf_result
-    }
+
+    web_result, github_result, hf_result = await asyncio.gather(web_task, github_task, hf_task)
+
+    return {"web": web_result, "github": github_result, "huggingface": hf_result}
+
 
 # Example usage
 results = asyncio.run(multi_source_search("transformer models"))

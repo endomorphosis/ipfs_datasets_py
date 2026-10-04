@@ -25,9 +25,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec impor
 
 
 def test_compiler_treats_after_application_cross_reference_as_non_temporal_scope() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     result = compiler.compile(
         (
@@ -45,9 +43,7 @@ def test_compiler_treats_after_application_cross_reference_as_non_temporal_scope
 
 
 def test_compiler_preserves_temporal_after_date_sequence_cue() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     result = compiler.compile(
         "After June 1, 2030, the Secretary shall issue guidance.",
@@ -60,9 +56,7 @@ def test_compiler_preserves_temporal_after_date_sequence_cue() -> None:
 
 
 def test_compiler_reinforces_deontic_against_generic_frame_statutory_scope() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     result = compiler.compile(
         (
@@ -100,9 +94,7 @@ def test_packet_002051_refined_family_pairs_are_registered() -> None:
 
 
 def test_compiler_preserves_deontic_authorized_and_directed_scope() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     result = compiler.compile(
         (
@@ -121,9 +113,7 @@ def test_compiler_preserves_deontic_authorized_and_directed_scope() -> None:
 
 
 def test_compiler_backfills_frame_share_for_statutory_temporal_scope_clause() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     result = compiler.compile(
         (
@@ -147,9 +137,7 @@ def test_compiler_backfills_frame_share_for_statutory_temporal_scope_clause() ->
 
 
 def test_compiler_reinforces_temporal_conditional_statutory_competition() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     result = compiler.compile(
         (
@@ -163,14 +151,14 @@ def test_compiler_reinforces_temporal_conditional_statutory_competition() -> Non
     ranking = ranked_modal_families(result.encoding)
     assert ranking
     shares = {entry["family"]: float(entry["share_raw"]) for entry in ranking}
-    assert shares[ModalLogicFamily.CONDITIONAL_NORMATIVE.value] > shares[ModalLogicFamily.FRAME.value]
+    assert (
+        shares[ModalLogicFamily.CONDITIONAL_NORMATIVE.value] > shares[ModalLogicFamily.FRAME.value]
+    )
     assert shares[ModalLogicFamily.CONDITIONAL_NORMATIVE.value] >= 0.30
 
 
 def test_compiler_reinforces_temporal_deontic_statutory_competition() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     result = compiler.compile(
         (
@@ -189,9 +177,7 @@ def test_compiler_reinforces_temporal_deontic_statutory_competition() -> None:
 
 
 def test_compiler_backfills_alethic_scope_in_frame_heavy_statutory_clauses() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     result = compiler.compile(
         (

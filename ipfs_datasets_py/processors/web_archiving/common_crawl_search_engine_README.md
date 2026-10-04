@@ -62,8 +62,7 @@ Connect to a standalone MCP server on another machine (useful for large indexes)
 
 ```python
 engine = CommonCrawlSearchEngine(
-    mode="remote",
-    mcp_endpoint="http://ccindex-server.example.com:8787"
+    mode="remote", mcp_endpoint="http://ccindex-server.example.com:8787"
 )
 ```
 

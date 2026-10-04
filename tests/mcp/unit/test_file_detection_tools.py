@@ -4,6 +4,7 @@ Phase B2 unit tests — file_detection_tools category.
 Tests: detect_file_type, batch_detect_file_types, analyze_detection_accuracy
 All 3 functions are sync (not async).  magika is optional; tests work without it.
 """
+
 from __future__ import annotations
 
 import os
@@ -14,6 +15,7 @@ import pytest
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_txt_file() -> str:
     """Create a temporary .txt file and return its path."""
@@ -33,11 +35,13 @@ def _make_png_file() -> str:
 # detect_file_type
 # ---------------------------------------------------------------------------
 
+
 class TestDetectFileType:
     """Tests for detect_file_type()."""
 
     def setup_method(self) -> None:
         from ipfs_datasets_py.mcp_server.tools.file_detection_tools import detect_file_type
+
         self.fn = detect_file_type
 
     def test_returns_dict(self) -> None:
@@ -83,11 +87,13 @@ class TestDetectFileType:
 # batch_detect_file_types
 # ---------------------------------------------------------------------------
 
+
 class TestBatchDetectFileTypes:
     """Tests for batch_detect_file_types()."""
 
     def setup_method(self) -> None:
         from ipfs_datasets_py.mcp_server.tools.file_detection_tools import batch_detect_file_types
+
         self.fn = batch_detect_file_types
 
     def test_returns_dict(self) -> None:
@@ -130,11 +136,15 @@ class TestBatchDetectFileTypes:
 # analyze_detection_accuracy
 # ---------------------------------------------------------------------------
 
+
 class TestAnalyzeDetectionAccuracy:
     """Tests for analyze_detection_accuracy()."""
 
     def setup_method(self) -> None:
-        from ipfs_datasets_py.mcp_server.tools.file_detection_tools import analyze_detection_accuracy
+        from ipfs_datasets_py.mcp_server.tools.file_detection_tools import (
+            analyze_detection_accuracy,
+        )
+
         self.fn = analyze_detection_accuracy
 
     def test_returns_dict(self) -> None:

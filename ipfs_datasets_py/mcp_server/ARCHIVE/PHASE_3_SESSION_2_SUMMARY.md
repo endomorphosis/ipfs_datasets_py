@@ -94,34 +94,31 @@ engine.register_function("process", process_func)
 engine.register_function("store", store_func)
 
 # Create workflow
-workflow = engine.create_workflow(
-    workflow_id="etl_workflow",
-    name="ETL Pipeline"
-)
+workflow = engine.create_workflow(workflow_id="etl_workflow", name="ETL Pipeline")
 
 # Add tasks with dependencies
-workflow.add_task(Task(
-    task_id="fetch",
-    name="Fetch Data",
-    function="fetch_data",
-    dependencies=[],
-    timeout=60.0
-))
+workflow.add_task(
+    Task(task_id="fetch", name="Fetch Data", function="fetch_data", dependencies=[], timeout=60.0)
+)
 
-workflow.add_task(Task(
-    task_id="process",
-    name="Process Data",
-    function="process",
-    dependencies=["fetch"],  # Waits for fetch
-    max_retries=3
-))
+workflow.add_task(
+    Task(
+        task_id="process",
+        name="Process Data",
+        function="process",
+        dependencies=["fetch"],  # Waits for fetch
+        max_retries=3,
+    )
+)
 
-workflow.add_task(Task(
-    task_id="store",
-    name="Store Results",
-    function="store",
-    dependencies=["process"]  # Waits for process
-))
+workflow.add_task(
+    Task(
+        task_id="store",
+        name="Store Results",
+        function="store",
+        dependencies=["process"],  # Waits for process
+    )
+)
 
 # Execute workflow
 result = await engine.execute_workflow("etl_workflow")
@@ -239,16 +236,10 @@ class BootstrapSystem:
 bootstrap = get_bootstrap_system()
 
 # Add custom bootstrap server (higher priority than default)
-bootstrap.add_custom_server(
-    multiaddr="/ip4/192.168.1.100/tcp/4001/p2p/QmCustomNode...",
-    priority=1
-)
+bootstrap.add_custom_server(multiaddr="/ip4/192.168.1.100/tcp/4001/p2p/QmCustomNode...", priority=1)
 
 # Perform bootstrap
-result = await bootstrap.bootstrap(
-    max_nodes=5,
-    timeout=30.0
-)
+result = await bootstrap.bootstrap(max_nodes=5, timeout=30.0)
 
 print(f"Success: {result['success']}")
 print(f"Public IP: {result['public_ip']}")
@@ -420,7 +411,8 @@ class Task:
     task_id: str
     ...
 
-@dataclass  
+
+@dataclass
 class BootstrapNode:
     multiaddr: str
     ...

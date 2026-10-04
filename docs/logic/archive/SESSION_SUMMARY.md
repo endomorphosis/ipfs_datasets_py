@@ -94,7 +94,7 @@ Implemented **complete privacy-preserving theorem proving system** for the logic
 # Private theorem proving
 proof = prover.generate_proof(
     theorem="Q",
-    private_axioms=["P", "P -> Q"]  # Kept private!
+    private_axioms=["P", "P -> Q"],  # Kept private!
 )
 
 # Fast verification

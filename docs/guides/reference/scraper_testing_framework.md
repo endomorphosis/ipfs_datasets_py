@@ -295,10 +295,10 @@ async def test_my_new_scraper(self, test_runner):
         scraper_func=my_scraper_function,
         scraper_name="my_new_scraper",
         domain=ScraperDomain.CASELAW,
-        test_args={'param': 'value'}
+        test_args={"param": "value"},
     )
-    
-    assert result.status == 'success'
+
+    assert result.status == "success"
     assert result.data_quality_score >= 70
 ```
 

@@ -85,7 +85,7 @@ bridge = TDFOLGrammarBridge()
 formal = bridge._dcec_to_natural_language("(O (agent1 act))", style="formal")
 # Output: "agent1 is obligated to act"
 
-# Casual style  
+# Casual style
 casual = bridge._dcec_to_natural_language("(O (agent1 act))", style="casual")
 # Output: "agent1 must act"
 ```
@@ -127,7 +127,7 @@ for cec_step in cec_result.proof_tree.steps:
     step = ProofStep(
         rule_name=cec_step.rule,
         premises=cec_step.premises,
-        justification=f"CEC rule: {cec_step.rule}"
+        justification=f"CEC rule: {cec_step.rule}",
     )
 ```
 
@@ -162,16 +162,11 @@ bridge = TDFOLShadowProverBridge()
 
 # Method 1: Direct prover with specific logic
 result = bridge.prove_with_shadowprover(
-    formula=temporal_formula,
-    logic_type=ModalLogicType.S4,
-    timeout_ms=10000
+    formula=temporal_formula, logic_type=ModalLogicType.S4, timeout_ms=10000
 )
 
 # Method 2: Tableau method (auto-selects logic)
-result = bridge.prove_with_tableaux(
-    formula=modal_formula,
-    timeout_ms=10000
-)
+result = bridge.prove_with_tableaux(formula=modal_formula, timeout_ms=10000)
 ```
 
 **Benefits:**
@@ -252,7 +247,7 @@ shadow_task = ProofTask(
     name=f"theorem_{hash(conjecture) % 10000}",
     formula=tptp_formula,
     assumptions=tptp_axioms,
-    logic=logic_type
+    logic=logic_type,
 )
 
 # Submit and poll
@@ -612,6 +607,7 @@ result = prover.prove(formula)
 
 # New way - automatic intelligent selection
 from ipfs_datasets_py.logic.external_provers import ProverRouter
+
 router = ProverRouter()
 result = router.prove(formula)  # Automatically selects best prover
 ```

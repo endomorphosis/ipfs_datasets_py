@@ -31,8 +31,9 @@ def _make_entity(eid: str, conf: float = 0.8) -> Entity:
 
 
 def _make_rel(source: str, target: str, rtype: str = "RELATED") -> Relationship:
-    return Relationship(id=f"{source}-{target}", source_id=source, target_id=target,
-                        type=rtype, confidence=0.8)
+    return Relationship(
+        id=f"{source}-{target}", source_id=source, target_id=target, type=rtype, confidence=0.8
+    )
 
 
 def _make_result(entities=None, rels=None) -> EntityExtractionResult:
@@ -135,14 +136,18 @@ class TestRelationshipTypes:
         assert _make_result().relationship_types() == []
 
     def test_returns_sorted(self):
-        r = _make_result([_make_entity("1"), _make_entity("2")],
-                         [_make_rel("1", "2", "Z_TYPE"), _make_rel("2", "1", "A_TYPE")])
+        r = _make_result(
+            [_make_entity("1"), _make_entity("2")],
+            [_make_rel("1", "2", "Z_TYPE"), _make_rel("2", "1", "A_TYPE")],
+        )
         types = r.relationship_types()
         assert types == ["A_TYPE", "Z_TYPE"]
 
     def test_dedup(self):
-        r = _make_result([_make_entity("1"), _make_entity("2")],
-                         [_make_rel("1", "2", "SAME"), _make_rel("2", "1", "SAME")])
+        r = _make_result(
+            [_make_entity("1"), _make_entity("2")],
+            [_make_rel("1", "2", "SAME"), _make_rel("2", "1", "SAME")],
+        )
         assert r.relationship_types() == ["SAME"]
 
     def test_returns_list(self):

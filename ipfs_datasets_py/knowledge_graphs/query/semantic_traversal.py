@@ -57,11 +57,7 @@ def cosine_similarity(left: Optional[Vector], right: Optional[Vector]) -> float:
     """Compute cosine similarity without imposing a NumPy dependency."""
     left_vector = _finite_vector(left)
     right_vector = _finite_vector(right)
-    if (
-        left_vector is None
-        or right_vector is None
-        or len(left_vector) != len(right_vector)
-    ):
+    if left_vector is None or right_vector is None or len(left_vector) != len(right_vector):
         return 0.0
 
     dot = sum(a * b for a, b in zip(left_vector, right_vector))
@@ -75,11 +71,7 @@ def cosine_similarity(left: Optional[Vector], right: Optional[Vector]) -> float:
 def _difference(left: Vector, right: Vector) -> Optional[Tuple[float, ...]]:
     left_vector = _finite_vector(left)
     right_vector = _finite_vector(right)
-    if (
-        left_vector is None
-        or right_vector is None
-        or len(left_vector) != len(right_vector)
-    ):
+    if left_vector is None or right_vector is None or len(left_vector) != len(right_vector):
         return None
     return tuple(a - b for a, b in zip(left_vector, right_vector))
 
@@ -271,8 +263,7 @@ class SemanticTraversalResult:
             "ranked_node_ids": self.ranked_node_ids,
             "hop_distances": dict(self.hop_distances),
             "candidates": {
-                node_id: candidate.to_dict()
-                for node_id, candidate in self.candidates.items()
+                node_id: candidate.to_dict() for node_id, candidate in self.candidates.items()
             },
             "paths": [path.to_dict() for path in self.paths],
             "diagnostics": self.diagnostics.to_dict(),
@@ -710,15 +701,9 @@ class EmbeddingGuidedTraversal:
             elif edge_budget_hit:
                 diagnostics.stop_reason = "max_edges"
 
-            target_ids = list(
-                dict.fromkeys(edge.target_id for _, edge in raw_candidates)
-            )
-            missing_ids = [
-                node_id for node_id in target_ids if node_id not in embedding_cache
-            ]
-            embedding_cache.update(
-                self._get_embeddings(missing_ids, diagnostics, active)
-            )
+            target_ids = list(dict.fromkeys(edge.target_id for _, edge in raw_candidates))
+            missing_ids = [node_id for node_id in target_ids if node_id not in embedding_cache]
+            embedding_cache.update(self._get_embeddings(missing_ids, diagnostics, active))
 
             best_by_node: Dict[str, TraversalCandidate] = {}
             for parent, edge in raw_candidates:
@@ -733,10 +718,7 @@ class EmbeddingGuidedTraversal:
                     target_vector=target_vector,
                     config=active,
                 )
-                if (
-                    active.minimum_score is not None
-                    and candidate.score < active.minimum_score
-                ):
+                if active.minimum_score is not None and candidate.score < active.minimum_score:
                     diagnostics.score_pruned += 1
                     continue
                 incumbent = best_by_node.get(candidate.node_id)
@@ -783,8 +765,7 @@ class EmbeddingGuidedTraversal:
             or diagnostics.beam_pruned
             or diagnostics.score_pruned
             or diagnostics.provider_errors
-            or diagnostics.stop_reason
-            in {"max_nodes", "max_edges", "max_backend_calls"}
+            or diagnostics.stop_reason in {"max_nodes", "max_edges", "max_backend_calls"}
         )
         return SemanticTraversalResult(
             candidates=candidates,
@@ -809,9 +790,7 @@ class EmbeddingGuidedTraversal:
         except Exception as error:  # Provider errors are optionally recoverable.
             if config.fail_fast:
                 raise
-            diagnostics.provider_errors.append(
-                f"embeddings:{type(error).__name__}:{error}"
-            )
+            diagnostics.provider_errors.append(f"embeddings:{type(error).__name__}:{error}")
             diagnostics.embeddings_missing += len(node_ids)
             return {}
 
@@ -836,9 +815,7 @@ class EmbeddingGuidedTraversal:
         config: SemanticTraversalConfig,
     ) -> TraversalCandidate:
         has_embedding = target_vector is not None
-        proximity = (
-            cosine_similarity(target_vector, query_vector) if has_embedding else 0.0
-        )
+        proximity = cosine_similarity(target_vector, query_vector) if has_embedding else 0.0
         progress = 0.0
         direction = 0.0
         if target_vector is not None and parent_vector is not None:

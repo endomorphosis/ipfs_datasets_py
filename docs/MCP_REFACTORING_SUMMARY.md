@@ -149,7 +149,7 @@ from .hierarchical_tool_manager import (
     tools_list_categories,
     tools_list_tools,
     tools_get_schema,
-    tools_dispatch
+    tools_dispatch,
 )
 
 # Register only 4 tools instead of 347
@@ -165,6 +165,7 @@ Ensure CLI uses same core modules:
 ```python
 # ipfs_datasets_cli.py
 from ipfs_datasets_py.datasets import DatasetLoader
+
 
 async def load_dataset_command(source, **options):
     loader = DatasetLoader()

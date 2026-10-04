@@ -51,12 +51,8 @@ REPLACEMENT_REPORT = (
     / "2026-07-27_semantic_roundtrip_composition_replacement.json"
 )
 
-GUIDED_ARM = (
-    "typed_deontic__guided__no_repair__not_applicable__deterministic"
-)
-RETRY_ARM = (
-    "typed_deontic__no_guidance__no_repair__not_applicable__leanstral_direct"
-)
+GUIDED_ARM = "typed_deontic__guided__no_repair__not_applicable__deterministic"
+RETRY_ARM = "typed_deontic__no_guidance__no_repair__not_applicable__leanstral_direct"
 BASELINE = DEFAULT_DETERMINISTIC_BASELINE_ARM_ID
 
 
@@ -96,8 +92,7 @@ def _retry_exhausted_record() -> dict[str, object]:
         "failure": {
             "reason": "retry_exhausted",
             "detail": (
-                "preregistered model-output recovery retry exhausted "
-                "after malformed_output"
+                "preregistered model-output recovery retry exhausted after malformed_output"
             ),
         },
         "losses": {"end_to_end": 1.0, "forward": 1.0, "cycle": 1.0},
@@ -167,7 +162,12 @@ def test_runtime_failed_retry_exhausted() -> None:
 
 
 def test_runtime_failed_provider_error() -> None:
-    for token in ("provider_error", "endpoint_error", FailureReason.TIMEOUT, FailureReason.EXCEPTION):
+    for token in (
+        "provider_error",
+        "endpoint_error",
+        FailureReason.TIMEOUT,
+        FailureReason.EXCEPTION,
+    ):
         record = classify_evaluation_status(
             status="failed",
             failure_reason=token,
@@ -214,30 +214,22 @@ def test_default_leaderboard_uses_only_semantic_scored() -> None:
     rows = [
         classify_coordinate_record(_success_record(BASELINE)),
         classify_coordinate_record(
-            _success_record(
-                "typed_deontic__no_guidance__selective__not_applicable__deterministic"
-            )
+            _success_record("typed_deontic__no_guidance__selective__not_applicable__deterministic")
         ),
         classify_coordinate_record(_guided_failure_record()),
         classify_coordinate_record(_retry_exhausted_record()),
     ]
     eligible = filter_leaderboard_classifications(rows)
     assert len(eligible) == 2
-    assert all(
-        item.status is EvaluationStatus.SEMANTIC_SCORED for item in eligible
-    )
-    assert not any(
-        item.arm_id in {GUIDED_ARM, RETRY_ARM} for item in eligible
-    )
+    assert all(item.status is EvaluationStatus.SEMANTIC_SCORED for item in eligible)
+    assert not any(item.arm_id in {GUIDED_ARM, RETRY_ARM} for item in eligible)
 
 
 def test_paired_baseline_comparisons_exclude_not_measured_and_runtime() -> None:
     rows = [
         classify_coordinate_record(_success_record(BASELINE)),
         classify_coordinate_record(
-            _success_record(
-                "modal_spacy__no_guidance__no_repair__not_applicable__deterministic"
-            )
+            _success_record("modal_spacy__no_guidance__no_repair__not_applicable__deterministic")
         ),
         classify_coordinate_record(_guided_failure_record()),
         classify_coordinate_record(_retry_exhausted_record()),
@@ -247,9 +239,7 @@ def test_paired_baseline_comparisons_exclude_not_measured_and_runtime() -> None:
         BASELINE,
         "modal_spacy__no_guidance__no_repair__not_applicable__deterministic",
     }
-    assert all(
-        item.status is EvaluationStatus.SEMANTIC_SCORED for item in paired
-    )
+    assert all(item.status is EvaluationStatus.SEMANTIC_SCORED for item in paired)
 
 
 def test_deterministic_baseline_identity() -> None:
@@ -334,10 +324,7 @@ def test_matrix_launch_fails_closed_without_causal_qualification() -> None:
         },
     )
     assert verdict.authorized is False
-    assert any(
-        item.get("preflight") == PREFLIGHT_CAUSAL_QUALIFICATION
-        for item in verdict.missing
-    )
+    assert any(item.get("preflight") == PREFLIGHT_CAUSAL_QUALIFICATION for item in verdict.missing)
     with pytest.raises(LaunchPreflightError, match="matrix launch blocked"):
         assert_matrix_launch_preflight(
             arms,
@@ -366,10 +353,7 @@ def test_matrix_launch_fails_closed_without_live_smoke() -> None:
         },
     )
     assert verdict.authorized is False
-    assert any(
-        item.get("preflight") == PREFLIGHT_LIVE_SMOKE
-        for item in verdict.missing
-    )
+    assert any(item.get("preflight") == PREFLIGHT_LIVE_SMOKE for item in verdict.missing)
 
 
 def test_matrix_launch_authorizes_when_preflights_present() -> None:
@@ -445,16 +429,11 @@ def test_replacement_report_2026_07_27_status_histogram() -> None:
             continue
         lane_records = bucket.get("records") or []
         if isinstance(lane_records, list):
-            records.extend(
-                item for item in lane_records if isinstance(item, dict)
-            )
+            records.extend(item for item in lane_records if isinstance(item, dict))
     assert len(records) == REPLACEMENT_2026_07_27_SCHEDULED_COUNT
 
     arm_qualifications: dict[str, dict[str, object]] = {}
-    plan_arms = (
-        ((report.get("preregistration") or {}).get("plan") or {}).get("arms")
-        or []
-    )
+    plan_arms = ((report.get("preregistration") or {}).get("plan") or {}).get("arms") or []
     for arm in plan_arms:
         if not isinstance(arm, dict):
             continue
@@ -480,18 +459,14 @@ def test_replacement_report_2026_07_27_status_histogram() -> None:
 
     assert (
         raw_failure_counts["post_schedule_capability_unavailable"]
-        == REPLACEMENT_2026_07_27_FAILURE_REASON_COUNTS[
-            "post_schedule_capability_unavailable"
-        ]
+        == REPLACEMENT_2026_07_27_FAILURE_REASON_COUNTS["post_schedule_capability_unavailable"]
     )
     assert (
         raw_failure_counts["retry_exhausted"]
         == REPLACEMENT_2026_07_27_FAILURE_REASON_COUNTS["retry_exhausted"]
     )
     success_count = sum(
-        1
-        for record in records
-        if isinstance(record, dict) and record.get("status") == "success"
+        1 for record in records if isinstance(record, dict) and record.get("status") == "success"
     )
     assert success_count == REPLACEMENT_2026_07_27_SUCCESS_COUNT
 
@@ -502,10 +477,7 @@ def test_replacement_report_2026_07_27_status_histogram() -> None:
     status_counts = count_statuses(classified)
     reason_counts = count_reasons(classified)
 
-    assert (
-        status_counts["not_measured"]
-        == REPLACEMENT_2026_07_27_GUIDED_COORDINATE_COUNT
-    )
+    assert status_counts["not_measured"] == REPLACEMENT_2026_07_27_GUIDED_COORDINATE_COUNT
     assert status_counts["runtime_failed"] == 210
     assert status_counts["semantic_scored"] == REPLACEMENT_2026_07_27_SUCCESS_COUNT
     assert reason_counts["success"] == REPLACEMENT_2026_07_27_SUCCESS_COUNT
@@ -516,42 +488,20 @@ def test_replacement_report_2026_07_27_status_histogram() -> None:
     assert reason_counts[RuntimeFailedReason.RETRY_EXHAUSTED.value] == 210
 
     guided_arms = {
-        item.arm_id
-        for item in classified
-        if item.status is EvaluationStatus.NOT_MEASURED
+        item.arm_id for item in classified if item.status is EvaluationStatus.NOT_MEASURED
     }
     assert len(guided_arms) == REPLACEMENT_2026_07_27_GUIDED_ARM_COUNT
 
-    guided_rows = [
-        item
-        for item in classified
-        if item.status is EvaluationStatus.NOT_MEASURED
-    ]
-    assert all(
-        item.reason == NotMeasuredReason.TERMINAL_UNSUPPORTED.value
-        for item in guided_rows
-    )
-    retry_rows = [
-        item
-        for item in classified
-        if item.status is EvaluationStatus.RUNTIME_FAILED
-    ]
+    guided_rows = [item for item in classified if item.status is EvaluationStatus.NOT_MEASURED]
+    assert all(item.reason == NotMeasuredReason.TERMINAL_UNSUPPORTED.value for item in guided_rows)
+    retry_rows = [item for item in classified if item.status is EvaluationStatus.RUNTIME_FAILED]
     assert len(retry_rows) == 210
-    assert all(
-        item.reason == RuntimeFailedReason.RETRY_EXHAUSTED.value
-        for item in retry_rows
-    )
+    assert all(item.reason == RuntimeFailedReason.RETRY_EXHAUSTED.value for item in retry_rows)
 
     leaderboard = filter_leaderboard_classifications(classified)
-    assert all(
-        item.status is EvaluationStatus.SEMANTIC_SCORED for item in leaderboard
-    )
-    assert not any(
-        item.status is EvaluationStatus.NOT_MEASURED for item in leaderboard
-    )
-    assert not any(
-        item.status is EvaluationStatus.RUNTIME_FAILED for item in leaderboard
-    )
+    assert all(item.status is EvaluationStatus.SEMANTIC_SCORED for item in leaderboard)
+    assert not any(item.status is EvaluationStatus.NOT_MEASURED for item in leaderboard)
+    assert not any(item.status is EvaluationStatus.RUNTIME_FAILED for item in leaderboard)
     assert any(item.arm_id == BASELINE for item in leaderboard)
     statistics = report.get("statistics") or {}
     baseline_arm_id = statistics.get("baseline_arm_id") or BASELINE
@@ -562,15 +512,11 @@ def test_launch_preflight_blocks_historical_guided_schedule_shape() -> None:
     """A schedule that still includes unsupported guided arms fails closed."""
     assert REPLACEMENT_REPORT.is_file()
     report = json.loads(REPLACEMENT_REPORT.read_bytes())
-    plan_arms = (
-        ((report.get("preregistration") or {}).get("plan") or {}).get("arms")
-        or []
-    )
+    plan_arms = ((report.get("preregistration") or {}).get("plan") or {}).get("arms") or []
     guided_plan_arms = [
         arm
         for arm in plan_arms
-        if isinstance(arm, dict)
-        and arm.get("qualification_status") == "terminal_unsupported"
+        if isinstance(arm, dict) and arm.get("qualification_status") == "terminal_unsupported"
     ]
     assert len(guided_plan_arms) == REPLACEMENT_2026_07_27_GUIDED_ARM_COUNT
 
@@ -591,7 +537,4 @@ def test_launch_preflight_blocks_historical_guided_schedule_shape() -> None:
         },
     )
     assert verdict.authorized is False
-    assert all(
-        item.get("preflight") == PREFLIGHT_CAUSAL_QUALIFICATION
-        for item in verdict.missing
-    )
+    assert all(item.get("preflight") == PREFLIGHT_CAUSAL_QUALIFICATION for item in verdict.missing)

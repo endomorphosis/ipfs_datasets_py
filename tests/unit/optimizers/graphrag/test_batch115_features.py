@@ -6,6 +6,7 @@ Methods under test:
   - OntologyPipeline.top_n_runs(n)
   - OntologyPipeline.score_momentum(window)
 """
+
 import pytest
 
 
@@ -13,18 +14,22 @@ import pytest
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_config(**kwargs):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
     return ExtractionConfig(**kwargs)
 
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
 def _push_run(pipeline, overall):
     from unittest.mock import MagicMock
+
     score = MagicMock()
     score.overall = overall
     run = MagicMock()
@@ -35,6 +40,7 @@ def _push_run(pipeline, overall):
 # ---------------------------------------------------------------------------
 # ExtractionConfig.relaxed
 # ---------------------------------------------------------------------------
+
 
 class TestRelaxed:
     def test_default_delta(self):
@@ -67,6 +73,7 @@ class TestRelaxed:
 # ExtractionConfig.tightened
 # ---------------------------------------------------------------------------
 
+
 class TestTightened:
     def test_default_delta(self):
         cfg = _make_config(confidence_threshold=0.5)
@@ -98,6 +105,7 @@ class TestTightened:
 # OntologyPipeline.top_n_runs
 # ---------------------------------------------------------------------------
 
+
 class TestTopNRuns:
     def test_empty(self):
         p = _make_pipeline()
@@ -128,6 +136,7 @@ class TestTopNRuns:
 # ---------------------------------------------------------------------------
 # OntologyPipeline.score_momentum
 # ---------------------------------------------------------------------------
+
 
 class TestScoreMomentum:
     def test_empty_returns_zero(self):

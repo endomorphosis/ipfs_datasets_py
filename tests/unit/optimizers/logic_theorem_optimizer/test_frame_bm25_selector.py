@@ -22,7 +22,9 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector imp
 def test_bm25_selector_ranks_housing_frame_for_voucher_text() -> None:
     selector = BM25FrameSelector(DEFAULT_LEGAL_FRAME_FIXTURE)
 
-    results = selector.rank("The tenant may request a housing voucher accommodation from the agency.")
+    results = selector.rank(
+        "The tenant may request a housing voucher accommodation from the agency."
+    )
 
     assert results[0].frame.frame_id == "housing_voucher_benefits"
     assert {"housing", "voucher", "agency"}.issubset(set(results[0].matched_terms))
@@ -392,7 +394,9 @@ def test_frame_ontology_terms_from_triples_support_predicate_alnum_segment_predi
     ]
 
 
-def test_frame_ontology_terms_from_triples_preserve_condition_stopword_segments_for_audits() -> None:
+def test_frame_ontology_terms_from_triples_preserve_condition_stopword_segments_for_audits() -> (
+    None
+):
     terms = frame_ontology_terms_from_triples(
         [
             {
@@ -495,15 +499,9 @@ def test_frame_ontology_terms_from_feature_keys_support_selected_candidate_alias
 
 
 def test_frame_ontology_feature_value_extracts_normalized_raw_values() -> None:
+    assert frame_ontology_feature_value("selected-frame-term:42 U.S.C. 6932.") == "42 U.S.C. 6932."
     assert (
-        frame_ontology_feature_value("selected-frame-term:42 U.S.C. 6932.")
-        == "42 U.S.C. 6932."
-    )
-    assert (
-        frame_ontology_feature_value(
-            "flogic:source_id:us-code-5-552-deadbeefdeadbeef"
-        )
-        == "5 552"
+        frame_ontology_feature_value("flogic:source_id:us-code-5-552-deadbeefdeadbeef") == "5 552"
     )
     assert (
         frame_ontology_feature_value(
@@ -514,16 +512,15 @@ def test_frame_ontology_feature_value_extracts_normalized_raw_values() -> None:
     assert frame_ontology_feature_value("token:agency") == ""
 
 
-def test_frame_ontology_terms_from_feature_keys_preserve_tail_frame_features_for_dense_inputs() -> None:
+def test_frame_ontology_terms_from_feature_keys_preserve_tail_frame_features_for_dense_inputs() -> (
+    None
+):
     labels = [
         f"{left}{right}"
         for left in "abcdefghijklmnopqrstuvwxyz"
         for right in "abcdefghijklmnopqrstuvwxyz"
     ]
-    dense_features = [
-        f"flogic:selected_ontology_term:term {label}"
-        for label in labels[:140]
-    ]
+    dense_features = [f"flogic:selected_ontology_term:term {label}" for label in labels[:140]]
     terms = frame_ontology_terms_from_feature_keys(
         dense_features
         + [
@@ -538,14 +535,14 @@ def test_frame_ontology_terms_from_feature_keys_preserve_tail_frame_features_for
     assert len(terms) > 64
 
 
-def test_frame_ontology_terms_from_feature_keys_prioritize_direct_terms_when_term_cap_is_exceeded() -> None:
+def test_frame_ontology_terms_from_feature_keys_prioritize_direct_terms_when_term_cap_is_exceeded() -> (
+    None
+):
     contextual_features = [
-        f"flogic:citation_section_component:{1000 + index}"
-        for index in range(12)
+        f"flogic:citation_section_component:{1000 + index}" for index in range(12)
     ]
     terms = frame_ontology_terms_from_feature_keys(
-        contextual_features
-        + ["selected-frame-term:final order"],
+        contextual_features + ["selected-frame-term:final order"],
         max_terms=4,
     )
 
@@ -557,10 +554,11 @@ def test_frame_ontology_terms_from_feature_keys_prioritize_direct_terms_when_ter
     ]
 
 
-def test_frame_ontology_terms_from_feature_keys_deprioritize_structural_contextual_terms_when_term_cap_is_exceeded() -> None:
+def test_frame_ontology_terms_from_feature_keys_deprioritize_structural_contextual_terms_when_term_cap_is_exceeded() -> (
+    None
+):
     structural_features = [
-        f"flogic:citation_section_component_count:{index}"
-        for index in range(12)
+        f"flogic:citation_section_component_count:{index}" for index in range(12)
     ]
     terms = frame_ontology_terms_from_feature_keys(
         structural_features
@@ -688,7 +686,9 @@ def test_frame_ontology_contextualized_terms_distinguish_prototype_views() -> No
     ]
 
 
-def test_frame_ontology_terms_from_feature_keys_extract_predicate_argument_role_shape_and_role_pairs() -> None:
+def test_frame_ontology_terms_from_feature_keys_extract_predicate_argument_role_shape_and_role_pairs() -> (
+    None
+):
     terms = frame_ontology_terms_from_feature_keys(
         [
             "predicate-argument:source-action-role:appropriations:clause",
@@ -912,7 +912,9 @@ def test_frame_ontology_terms_from_triples_support_modal_family_count_features()
     ]
 
 
-def test_frame_ontology_terms_from_feature_keys_support_selected_frame_modal_family_count_features() -> None:
+def test_frame_ontology_terms_from_feature_keys_support_selected_frame_modal_family_count_features() -> (
+    None
+):
     terms = frame_ontology_terms_from_feature_keys(
         [
             "flogic:selected_frame_modal_family:deontic",
@@ -933,7 +935,9 @@ def test_frame_ontology_terms_from_feature_keys_support_selected_frame_modal_fam
     ]
 
 
-def test_frame_ontology_terms_from_triples_support_selected_frame_modal_family_count_features() -> None:
+def test_frame_ontology_terms_from_triples_support_selected_frame_modal_family_count_features() -> (
+    None
+):
     terms = frame_ontology_terms_from_triples(
         [
             {
@@ -978,7 +982,9 @@ def test_frame_ontology_terms_from_triples_support_selected_frame_modal_family_c
     ]
 
 
-def test_frame_ontology_terms_from_triples_preserve_tail_contextual_terms_for_dense_inputs() -> None:
+def test_frame_ontology_terms_from_triples_preserve_tail_contextual_terms_for_dense_inputs() -> (
+    None
+):
     labels = [
         f"{left}{right}"
         for left in "abcdefghijklmnopqrstuvwxyz"
@@ -1007,7 +1013,9 @@ def test_frame_ontology_terms_from_triples_preserve_tail_contextual_terms_for_de
     assert len(terms) > 64
 
 
-def test_frame_ontology_terms_from_triples_prioritize_direct_terms_when_term_cap_is_exceeded() -> None:
+def test_frame_ontology_terms_from_triples_prioritize_direct_terms_when_term_cap_is_exceeded() -> (
+    None
+):
     contextual_triples = [
         {
             "subject": "doc-1",
@@ -1036,7 +1044,9 @@ def test_frame_ontology_terms_from_triples_prioritize_direct_terms_when_term_cap
     ]
 
 
-def test_frame_ontology_terms_from_triples_deprioritize_structural_contextual_terms_when_term_cap_is_exceeded() -> None:
+def test_frame_ontology_terms_from_triples_deprioritize_structural_contextual_terms_when_term_cap_is_exceeded() -> (
+    None
+):
     structural_triples = [
         {
             "subject": "doc-1",
@@ -1098,7 +1108,9 @@ def test_frame_ontology_terms_from_triples_support_source_id_citation_canonical_
     assert terms == ["50_2675"]
 
 
-def test_frame_ontology_terms_from_feature_keys_support_plain_contextual_flogic_predicates() -> None:
+def test_frame_ontology_terms_from_feature_keys_support_plain_contextual_flogic_predicates() -> (
+    None
+):
     terms = frame_ontology_terms_from_feature_keys(
         [
             "flogic:condition:unless written notice is provided",
@@ -1169,7 +1181,9 @@ def test_frame_ontology_terms_from_feature_keys_support_predicate_alnum_segment_
     ]
 
 
-def test_frame_ontology_terms_from_feature_keys_preserve_condition_stopword_segments_for_audits() -> None:
+def test_frame_ontology_terms_from_feature_keys_preserve_condition_stopword_segments_for_audits() -> (
+    None
+):
     terms = frame_ontology_terms_from_feature_keys(
         [
             "flogic:condition_alnum_segment:if",
@@ -1185,7 +1199,9 @@ def test_frame_ontology_terms_from_feature_keys_preserve_condition_stopword_segm
     ]
 
 
-def test_frame_ontology_terms_from_feature_keys_preserve_condition_scope_token_stopwords_for_audits() -> None:
+def test_frame_ontology_terms_from_feature_keys_preserve_condition_scope_token_stopwords_for_audits() -> (
+    None
+):
     terms = frame_ontology_terms_from_feature_keys(
         [
             "flogic:condition_token:is",
@@ -1226,7 +1242,9 @@ def test_frame_ontology_terms_from_triples_keep_single_letter_conditional_modal_
     ]
 
 
-def test_frame_ontology_terms_from_feature_keys_keep_single_letter_conditional_modal_operators() -> None:
+def test_frame_ontology_terms_from_feature_keys_keep_single_letter_conditional_modal_operators() -> (
+    None
+):
     terms = frame_ontology_terms_from_feature_keys(
         [
             "flogic:condition_modal_operator:P",
@@ -1240,7 +1258,9 @@ def test_frame_ontology_terms_from_feature_keys_keep_single_letter_conditional_m
     ]
 
 
-def test_frame_ontology_terms_from_feature_keys_preserve_conditional_normative_relation_terms() -> None:
+def test_frame_ontology_terms_from_feature_keys_preserve_conditional_normative_relation_terms() -> (
+    None
+):
     terms = frame_ontology_terms_from_feature_keys(
         [
             "flogic:condition_conditional_normative:O|:subject_to",
@@ -1252,7 +1272,9 @@ def test_frame_ontology_terms_from_feature_keys_preserve_conditional_normative_r
     ]
 
 
-def test_frame_ontology_contextualized_terms_explicitly_contextualize_distance_profile_and_terminal_bucket_values() -> None:
+def test_frame_ontology_contextualized_terms_explicitly_contextualize_distance_profile_and_terminal_bucket_values() -> (
+    None
+):
     terms = frame_ontology_contextualized_terms(
         feature_keys=[
             "flogic:citation_title_section_primary_number_distance_profile_token:1k",
@@ -1264,19 +1286,15 @@ def test_frame_ontology_contextualized_terms_explicitly_contextualize_distance_p
     )
 
     assert "citation_title_section_primary_number_distance_profile_token_1k" in terms
-    assert (
-        "citation_title_section_terminal_number_distance_profile_ascending_lt_1k"
-        in terms
-    )
-    assert (
-        "citation_title_section_terminal_number_distance_profile_stem_ascending_lt_1k"
-        in terms
-    )
+    assert "citation_title_section_terminal_number_distance_profile_ascending_lt_1k" in terms
+    assert "citation_title_section_terminal_number_distance_profile_stem_ascending_lt_1k" in terms
     assert "citation_section_terminal_number_digit_count_bucket_3_digit" in terms
     assert "condition_conditional_normative_subject_to" in terms
 
 
-def test_frame_ontology_contextualized_terms_contextualize_predicate_token_and_magnitude_bucket_values() -> None:
+def test_frame_ontology_contextualized_terms_contextualize_predicate_token_and_magnitude_bucket_values() -> (
+    None
+):
     terms = frame_ontology_contextualized_terms(
         feature_keys=[
             "flogic:predicate_alnum_segment:pub",
@@ -1312,7 +1330,9 @@ def test_frame_ontology_contextualized_terms_audit_zero_digit_predicates_by_cont
     assert "citation_section_primary_number_trailing_zero_count_100" in terms
 
 
-def test_frame_ontology_contextualized_terms_contextualize_modal_cues_and_low_signal_digit_signatures() -> None:
+def test_frame_ontology_contextualized_terms_contextualize_modal_cues_and_low_signal_digit_signatures() -> (
+    None
+):
     terms = frame_ontology_contextualized_terms(
         feature_keys=[
             "flogic:citation_section_number_parity_positioned:2:even",
@@ -1355,7 +1375,9 @@ def test_frame_ontology_terms_from_feature_keys_support_legacy_bare_contextual_p
     ]
 
 
-def test_frame_ontology_terms_from_feature_keys_support_source_id_citation_canonical_terms() -> None:
+def test_frame_ontology_terms_from_feature_keys_support_source_id_citation_canonical_terms() -> (
+    None
+):
     terms = frame_ontology_terms_from_feature_keys(
         [
             "flogic:source_id_citation_canonical:50 U.S.C. 2675",
@@ -1370,7 +1392,9 @@ def test_frame_ontology_terms_from_feature_keys_support_source_id_citation_canon
     ]
 
 
-def test_frame_ontology_terms_from_feature_keys_normalize_truncated_slot_canonical_pair_values() -> None:
+def test_frame_ontology_terms_from_feature_keys_normalize_truncated_slot_canonical_pair_values() -> (
+    None
+):
     terms = frame_ontology_terms_from_feature_keys(
         [
             "slot:citation_source_id_canonical_pair:49_u_s_c_1101_49_u_s",
@@ -1384,7 +1408,9 @@ def test_frame_ontology_terms_from_feature_keys_normalize_truncated_slot_canonic
     ]
 
 
-def test_frame_ontology_terms_from_feature_keys_canonicalize_usc_citations_for_direct_frame_terms() -> None:
+def test_frame_ontology_terms_from_feature_keys_canonicalize_usc_citations_for_direct_frame_terms() -> (
+    None
+):
     terms = frame_ontology_terms_from_feature_keys(
         [
             "selected-frame-term:42 U.S.C. 1437q.",
@@ -1449,7 +1475,9 @@ def test_frame_ontology_terms_from_feature_keys_support_belongs_to_document_sour
     ]
 
 
-def test_frame_ontology_terms_from_feature_keys_support_bare_usc_and_source_id_coordinates() -> None:
+def test_frame_ontology_terms_from_feature_keys_support_bare_usc_and_source_id_coordinates() -> (
+    None
+):
     terms = frame_ontology_terms_from_feature_keys(
         [
             "54 U.S.C. 308103.",
@@ -1537,7 +1565,9 @@ def test_frame_ontology_terms_from_triples_support_section_trailing_punctuation(
     ]
 
 
-def test_frame_ontology_terms_from_triples_canonicalize_usc_citations_for_direct_frame_terms() -> None:
+def test_frame_ontology_terms_from_triples_canonicalize_usc_citations_for_direct_frame_terms() -> (
+    None
+):
     terms = frame_ontology_terms_from_triples(
         [
             {
@@ -1591,7 +1621,9 @@ def test_frame_ontology_terms_from_feature_keys_support_fallback_surface_text_fe
     ]
 
 
-def test_frame_ontology_terms_from_feature_keys_support_typed_flogic_citation_and_scope_features() -> None:
+def test_frame_ontology_terms_from_feature_keys_support_typed_flogic_citation_and_scope_features() -> (
+    None
+):
     terms = frame_ontology_terms_from_feature_keys(
         [
             "flogic:citation_section_component:430f",
@@ -1861,39 +1893,40 @@ def test_is_frame_ontology_feature_key_distinguishes_frame_linked_signals() -> N
     assert is_frame_ontology_feature_key("slot:role:frame") is True
     assert is_frame_ontology_feature_key("slot:operator:obligatory") is False
     assert is_frame_ontology_feature_key("slot:role:clause") is False
-    assert is_frame_ontology_feature_key("slot:selected_frame_stem:administrative_notice_hearing") is True
-    assert is_frame_ontology_feature_key("slot:frame_candidate_ranked:1:criminal_penalty_enforcement") is True
-    assert is_frame_ontology_feature_key(
-        "slot:selected_ontology_term:final order"
-    ) is True
-    assert is_frame_ontology_feature_key(
-        "citation_section_component:430f"
-    ) is True
-    assert is_frame_ontology_feature_key(
-        "condition:unless written notice is provided"
-    ) is True
-    assert is_frame_ontology_feature_key(
-        "flogic:source_id_citation_canonical:50 U.S.C. 2675"
-    ) is True
-    assert is_frame_ontology_feature_key(
-        "slot:source_id_citation_canonical:16 U.S.C. 460ff-1"
-    ) is True
-    assert is_frame_ontology_feature_key(
-        "flogic:source_id_digest:8dbd5e2eb6c364c8"
-    ) is False
+    assert (
+        is_frame_ontology_feature_key("slot:selected_frame_stem:administrative_notice_hearing")
+        is True
+    )
+    assert (
+        is_frame_ontology_feature_key("slot:frame_candidate_ranked:1:criminal_penalty_enforcement")
+        is True
+    )
+    assert is_frame_ontology_feature_key("slot:selected_ontology_term:final order") is True
+    assert is_frame_ontology_feature_key("citation_section_component:430f") is True
+    assert is_frame_ontology_feature_key("condition:unless written notice is provided") is True
+    assert (
+        is_frame_ontology_feature_key("flogic:source_id_citation_canonical:50 U.S.C. 2675") is True
+    )
+    assert (
+        is_frame_ontology_feature_key("slot:source_id_citation_canonical:16 U.S.C. 460ff-1") is True
+    )
+    assert is_frame_ontology_feature_key("flogic:source_id_digest:8dbd5e2eb6c364c8") is False
     assert is_frame_ontology_feature_key("token:agency") is False
     assert is_frame_ontology_feature_key("cue:deontic:O:must") is False
-    assert is_frame_ontology_feature_key("flogic:condition:unless written notice is provided") is True
+    assert (
+        is_frame_ontology_feature_key("flogic:condition:unless written notice is provided") is True
+    )
     assert is_frame_ontology_feature_key("slot:source_id:us-code-5-552-deadbeefdeadbeef") is True
-    assert is_frame_ontology_feature_key(
-        "slot:source_id:us_code_5_552_deadbeefdeadbeef"
-    ) is True
+    assert is_frame_ontology_feature_key("slot:source_id:us_code_5_552_deadbeefdeadbeef") is True
     assert is_frame_ontology_feature_key("flogic:source_id:us-code-5-552-deadbeefdeadbeef") is True
     assert is_frame_ontology_feature_key("slot:source_id:us_code_44_1305") is True
     assert is_frame_ontology_feature_key("flogic:source_id:us-code-42-2624 to 2628.") is True
-    assert is_frame_ontology_feature_key(
-        "flogic:belongs_to_document:us-code-46-30525.-99a6422ab828fa0c"
-    ) is True
+    assert (
+        is_frame_ontology_feature_key(
+            "flogic:belongs_to_document:us-code-46-30525.-99a6422ab828fa0c"
+        )
+        is True
+    )
     assert is_frame_ontology_feature_key("54 U.S.C. 308103.") is True
     assert is_frame_ontology_feature_key("us-code-16-460l-2-d5a72237fcd0f550") is True
     assert is_frame_ontology_feature_key("slot:source_id:not-a-us-code-source-id") is False
@@ -1924,12 +1957,10 @@ def test_frame_ontology_feature_keys_filter_non_frame_and_preserve_order() -> No
 
 def test_frame_ontology_feature_keys_prioritize_direct_signals_when_key_cap_is_exceeded() -> None:
     contextual_features = [
-        f"flogic:citation_section_component:{1000 + index}"
-        for index in range(12)
+        f"flogic:citation_section_component:{1000 + index}" for index in range(12)
     ]
     keys = frame_ontology_feature_keys(
-        contextual_features
-        + ["selected-frame-term:final_order"],
+        contextual_features + ["selected-frame-term:final_order"],
         max_keys=4,
     )
 
@@ -2145,7 +2176,9 @@ def test_frame_ontology_feature_keys_from_values_audits_packet_view_family_featu
     ]
 
 
-def test_frame_ontology_feature_keys_from_values_audits_prototype_and_component_gap_features() -> None:
+def test_frame_ontology_feature_keys_from_values_audits_prototype_and_component_gap_features() -> (
+    None
+):
     keys = frame_ontology_feature_keys_from_values(
         {
             "legal_ir_component_gaps": {

@@ -292,6 +292,7 @@ from .dcec_core import Formula
 @dataclass
 class ProofStep:
     """Represents a single step in a proof."""
+
     formula: Formula
     rule: str
     premises: List[int] = field(default_factory=list)
@@ -301,6 +302,7 @@ class ProofStep:
 @dataclass
 class ProofTree:
     """Represents a complete proof tree."""
+
     goal: Formula
     axioms: List[Formula]
     steps: List[ProofStep]
@@ -310,16 +312,16 @@ class ProofTree:
 class BasicProver:
     """
     Core theorem prover using forward-chaining inference.
-    
+
     This prover maintains a set of known formulas and applies
     inference rules to derive new formulas until the goal is
     reached or no progress can be made.
     """
-    
+
     def __init__(self, max_steps: int = 1000, timeout: float = 30.0):
         self.max_steps = max_steps
         self.timeout = timeout
-        
+
         # Register all inference rules
         self.rules: List[InferenceRule] = []
         self.rules.extend(get_all_propositional_rules())
@@ -329,15 +331,15 @@ class BasicProver:
         self.rules.extend(get_all_modal_rules())
         self.rules.extend(get_all_cognitive_rules())
         self.rules.extend(get_all_specialized_rules())
-    
+
     def prove(self, goal: Formula, axioms: List[Formula]) -> ProofTree:
         """
         Attempt to prove goal from axioms.
-        
+
         Args:
             goal: Formula to prove
             axioms: Known true formulas
-            
+
         Returns:
             ProofTree with result and derivation steps
         """
@@ -478,28 +480,28 @@ from .core.formulas import (
 
 __all__ = [
     # Operators
-    'DeonticOperator',
-    'CognitiveOperator',
-    'LogicalConnective',
-    'TemporalOperator',
+    "DeonticOperator",
+    "CognitiveOperator",
+    "LogicalConnective",
+    "TemporalOperator",
     # Type system
-    'Sort',
-    'Variable',
-    'Function',
-    'Predicate',
+    "Sort",
+    "Variable",
+    "Function",
+    "Predicate",
     # Terms
-    'Term',
-    'VariableTerm',
-    'FunctionTerm',
-    'ConstantTerm',
+    "Term",
+    "VariableTerm",
+    "FunctionTerm",
+    "ConstantTerm",
     # Formulas
-    'Formula',
-    'AtomicFormula',
-    'ConnectiveFormula',
-    'DeonticFormula',
-    'CognitiveFormula',
-    'TemporalFormula',
-    'QuantifiedFormula',
+    "Formula",
+    "AtomicFormula",
+    "ConnectiveFormula",
+    "DeonticFormula",
+    "CognitiveFormula",
+    "TemporalFormula",
+    "QuantifiedFormula",
 ]
 ```
 
@@ -553,9 +555,11 @@ __all__ = [
 def _formulas_equal(self, f1: Formula, f2: Formula) -> bool:
     return f1.to_string() == f2.to_string()
 
+
 # Line 642 in DisjunctiveSyllogism
 def _formulas_equal(self, f1: Formula, f2: Formula) -> bool:
     return f1.to_string() == f2.to_string()
+
 
 # Line 702 in CutElimination
 def _formulas_equal(self, f1: Formula, f2: Formula) -> bool:
@@ -599,17 +603,17 @@ class Formula(ABC):
 ```python
 # In shadow_prover.py (line 145)
 self.statistics = {
-    'attempts': 0,
-    'succeeded': 0,
-    'failed': 0,
-    'avg_time': 0.0,
+    "attempts": 0,
+    "succeeded": 0,
+    "failed": 0,
+    "avg_time": 0.0,
 }
 
 # In prover_core.py (line 236)
 self.stats = {
-    'rules_applied': {},
-    'steps_taken': 0,
-    'time_elapsed': 0.0,
+    "rules_applied": {},
+    "steps_taken": 0,
+    "time_elapsed": 0.0,
 }
 
 # In cec_proof_cache.py (custom tracking)
@@ -622,11 +626,12 @@ self.stats = {
 from dataclasses import dataclass, field
 from typing import Dict
 
+
 @dataclass
 class ProofStatistics:
     """
     Unified statistics tracking for theorem proving.
-    
+
     Attributes:
         attempts: Total proof attempts
         succeeded: Successful proofs
@@ -636,6 +641,7 @@ class ProofStatistics:
         cache_hits: Number of cache hits (if caching enabled)
         rules_applied: Count of each rule application
     """
+
     attempts: int = 0
     succeeded: int = 0
     failed: int = 0
@@ -643,24 +649,24 @@ class ProofStatistics:
     avg_time: float = 0.0
     cache_hits: int = 0
     rules_applied: Dict[str, int] = field(default_factory=dict)
-    
+
     def record_success(self, steps: int, time: float) -> None:
         """Record a successful proof."""
         self.attempts += 1
         self.succeeded += 1
         self.steps_taken += steps
         self._update_avg_time(time)
-    
+
     def record_failure(self, time: float) -> None:
         """Record a failed proof."""
         self.attempts += 1
         self.failed += 1
         self._update_avg_time(time)
-    
+
     def record_rule(self, rule_name: str) -> None:
         """Record an inference rule application."""
         self.rules_applied[rule_name] = self.rules_applied.get(rule_name, 0) + 1
-    
+
     def _update_avg_time(self, time: float) -> None:
         """Update average time using incremental mean."""
         self.avg_time = (self.avg_time * (self.attempts - 1) + time) / self.attempts
@@ -696,45 +702,46 @@ from functools import wraps
 
 from .inference_rules import ProofResult
 
-T = TypeVar('T')
+T = TypeVar("T")
+
 
 def handle_proof_error(
-    logger: logging.Logger,
-    default_result: ProofResult = ProofResult.ERROR
+    logger: logging.Logger, default_result: ProofResult = ProofResult.ERROR
 ) -> Callable[[Callable[..., T]], Callable[..., T]]:
     """
     Decorator for consistent proof error handling.
-    
+
     Args:
         logger: Logger instance to use
         default_result: Result to return on error
-        
+
     Returns:
         Decorated function with error handling
-        
+
     Example:
         @handle_proof_error(logger)
         def prove_formula(self, formula):
             # Proving logic
             return result
     """
+
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> T:
             try:
                 return func(*args, **kwargs)
             except Exception as e:
-                logger.error(
-                    f"{func.__name__} failed: {e}",
-                    exc_info=True
-                )
+                logger.error(f"{func.__name__} failed: {e}", exc_info=True)
                 return default_result
+
         return wrapper
+
     return decorator
 
 
 # Usage in shadow_prover.py:
 from .error_handling import handle_proof_error
+
 
 class ShadowProver:
     @handle_proof_error(logger)
@@ -799,25 +806,32 @@ Several modules have incomplete type hints:
 from typing import Protocol, TypedDict, NamedTuple
 import re
 
+
 class TableauNode(NamedTuple):
     """Node in a tableau proof tree."""
+
     formulas: List[Formula]
     is_closed: bool
     rule_applied: str
-    parent: Optional['TableauNode'] = None
-    children: List['TableauNode'] = []
+    parent: Optional["TableauNode"] = None
+    children: List["TableauNode"] = []
+
 
 class ParseNode(Protocol):
     """Protocol for grammar parse tree nodes."""
+
     value: str
     rule_name: str
-    children: List['ParseNode']
+    children: List["ParseNode"]
     span: tuple[int, int]
+
 
 PatternType = re.Pattern[str]  # Type alias for compiled patterns
 
+
 class ProofResult(TypedDict):
     """Result of a proof attempt with metadata."""
+
     status: str
     steps: List[str]
     time: float
@@ -830,15 +844,18 @@ class ProofResult(TypedDict):
 # In shadow_prover.py
 from .types import ProofResult, TableauNode
 
+
 class ShadowProver:
     def prove(self, formula: Formula) -> ProofResult:  # Not Any
         ...
-    
+
     def _build_tableau(self, formula: Formula) -> TableauNode:  # Not Any
         ...
 
+
 # In nl_converter.py
 from .types import PatternType
+
 
 class NLConverter:
     def __init__(self):
@@ -921,39 +938,40 @@ from pathlib import Path
 from typing import Dict, List
 from dataclasses import dataclass
 
+
 @dataclass
 class GrammarRule:
     """Single grammar rule definition."""
+
     patterns: List[str]
     priority: int
     category: str
 
+
 class EnglishGrammar:
     """English grammar rules loaded from YAML."""
-    
+
     def __init__(self, grammar_file: str = "dcec_english.yaml"):
         self.rules: Dict[str, GrammarRule] = {}
         self._load_grammar(grammar_file)
-    
+
     def _load_grammar(self, filename: str) -> None:
         """Load grammar rules from YAML file."""
         grammar_path = Path(__file__).parent / "grammars" / filename
         with open(grammar_path) as f:
             data = yaml.safe_load(f)
-        
+
         # Parse operators
-        for op_type, operators in data['operators'].items():
+        for op_type, operators in data["operators"].items():
             for op_name, op_data in operators.items():
                 rule = GrammarRule(
-                    patterns=op_data['patterns'],
-                    priority=op_data['priority'],
-                    category=op_type
+                    patterns=op_data["patterns"], priority=op_data["priority"], category=op_type
                 )
                 self.rules[f"{op_type}.{op_name}"] = rule
-        
+
         # Parse temporal, connectives, etc.
         # ...
-    
+
     def get_patterns_for(self, category: str) -> List[str]:
         """Get all patterns for a given category."""
         return [
@@ -997,6 +1015,7 @@ def substitute(self, var: Variable, term: Term) -> Formula:
     # 100 lines of substitution logic
     pass
 
+
 # After (decomposed)
 def substitute(self, var: Variable, term: Term) -> Formula:
     """Substitute term for variable in formula."""
@@ -1007,15 +1026,18 @@ def substitute(self, var: Variable, term: Term) -> Formula:
     else:
         return self._substitute_compound(var, term)
 
+
 def _substitute_atomic(self, var: Variable, term: Term) -> Formula:
     """Handle substitution in atomic formulas."""
     # 15-20 LOC
     pass
 
+
 def _substitute_quantified(self, var: Variable, term: Term) -> Formula:
     """Handle substitution with bound variables."""
     # 30-40 LOC
     pass
+
 
 def _substitute_compound(self, var: Variable, term: Term) -> Formula:
     """Handle substitution in compound formulas."""

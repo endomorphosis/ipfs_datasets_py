@@ -79,17 +79,12 @@ def test_canonical_family_resolver_covers_contract_aliases() -> None:
     assert tuple(FAMILY_VIEWS) == LEGAL_IR_VIEW_FAMILIES
     for family, view in FAMILY_VIEWS.items():
         assert legal_ir_view_family_name(view) == family
-    assert legal_ir_view_family_name("legal-ir-view/external-provers/v1") == (
-        "external_provers"
-    )
+    assert legal_ir_view_family_name("legal-ir-view/external-provers/v1") == ("external_provers")
     assert legal_ir_view_family_name("legal-ir-view/decompiler/v1") == "decompiler"
 
 
 def test_hammer_metrics_report_each_family_without_cross_family_leakage() -> None:
-    artifacts = [
-        _artifact(family, index)
-        for index, family in enumerate(LEGAL_IR_VIEW_FAMILIES)
-    ]
+    artifacts = [_artifact(family, index) for index, family in enumerate(LEGAL_IR_VIEW_FAMILIES)]
 
     block = hammer_guidance_metric_block(artifacts)
 
@@ -108,17 +103,14 @@ def test_hammer_metrics_report_each_family_without_cross_family_leakage() -> Non
         assert block[f"{prefix}_source_copy_penalty"] == 1.0 - expected
 
     sparse = legal_ir_view_family_metric_block(hammer_guidance=[artifacts[0]])
-    assert "hammer_proof_success_rate" in sparse["view_family_metrics"]["deontic"][
-        "observed_metrics"
-    ]
+    assert (
+        "hammer_proof_success_rate" in sparse["view_family_metrics"]["deontic"]["observed_metrics"]
+    )
     assert sparse["view_family_metrics"]["kg"]["observed_metrics"] == []
 
 
 def test_validation_block_reports_and_scores_all_eight_metrics_per_family() -> None:
-    artifacts = [
-        _artifact(family, index)
-        for index, family in enumerate(LEGAL_IR_VIEW_FAMILIES)
-    ]
+    artifacts = [_artifact(family, index) for index, family in enumerate(LEGAL_IR_VIEW_FAMILIES)]
 
     block = legal_ir_view_family_metric_block(
         ir_metrics=_ir_metrics(),
@@ -132,16 +124,10 @@ def test_validation_block_reports_and_scores_all_eight_metrics_per_family() -> N
     assert 0.0 < block["macro_score"] < 1.0
     for index, family in enumerate(LEGAL_IR_VIEW_FAMILIES):
         metrics = block["view_family_metrics"][family]
-        assert set(metrics["observed_metrics"]) == set(
-            LEGAL_IR_VIEW_FAMILY_METRIC_NAMES
-        )
+        assert set(metrics["observed_metrics"]) == set(LEGAL_IR_VIEW_FAMILY_METRIC_NAMES)
         assert metrics["metric_coverage"] == 1.0
-        assert metrics["ir_cross_entropy_loss"] == pytest.approx(
-            0.10 + index * 0.01
-        )
-        assert metrics["autoencoder_cross_entropy_loss"] == pytest.approx(
-            0.20 + index * 0.01
-        )
+        assert metrics["ir_cross_entropy_loss"] == pytest.approx(0.10 + index * 0.01)
+        assert metrics["autoencoder_cross_entropy_loss"] == pytest.approx(0.20 + index * 0.01)
         assert 0.0 <= metrics["score"] <= 1.0
         for metric_name in LEGAL_IR_VIEW_FAMILY_METRIC_NAMES:
             flat_name = f"legal_ir_view_family_{family}_{metric_name}"
@@ -149,10 +135,7 @@ def test_validation_block_reports_and_scores_all_eight_metrics_per_family() -> N
 
 
 def test_runner_projects_family_metrics_into_validation_report() -> None:
-    artifacts = [
-        _artifact(family, index)
-        for index, family in enumerate(LEGAL_IR_VIEW_FAMILIES)
-    ]
+    artifacts = [_artifact(family, index) for index, family in enumerate(LEGAL_IR_VIEW_FAMILIES)]
 
     report = runner.legal_ir_validation_view_family_metric_block(
         compiler_ir_validation=_ir_metrics(),
@@ -164,9 +147,9 @@ def test_runner_projects_family_metrics_into_validation_report() -> None:
     assert report["view_family_metrics"]["external_provers"][
         "autoencoder_cosine_similarity"
     ] == pytest.approx(0.75)
-    assert report["view_family_metrics"]["decompiler"][
-        "ir_cosine_similarity"
-    ] == pytest.approx(0.84)
+    assert report["view_family_metrics"]["decompiler"]["ir_cosine_similarity"] == pytest.approx(
+        0.84
+    )
 
 
 def test_runner_attributes_bridge_adapter_metrics_to_canonical_families() -> None:
@@ -211,9 +194,7 @@ def test_runner_attributes_bridge_adapter_metrics_to_canonical_families() -> Non
 
 
 def test_family_guardrail_regression_increases_training_objective() -> None:
-    artifacts = [
-        _artifact(family, 0) for family in LEGAL_IR_VIEW_FAMILIES
-    ]
+    artifacts = [_artifact(family, 0) for family in LEGAL_IR_VIEW_FAMILIES]
     before = legal_ir_view_family_metric_block(
         ir_metrics=_ir_metrics(),
         autoencoder_metrics=_autoencoder_metrics(),
@@ -235,9 +216,10 @@ def test_family_guardrail_regression_increases_training_objective() -> None:
         hammer_guidance=regressed_artifacts,
     )
 
-    assert after["view_family_metrics"]["deontic"]["score"] < before[
-        "view_family_metrics"
-    ]["deontic"]["score"]
+    assert (
+        after["view_family_metrics"]["deontic"]["score"]
+        < before["view_family_metrics"]["deontic"]["score"]
+    )
     assert after["macro_score"] < before["macro_score"]
     assert _legal_ir_objective_component(after["flat_metrics"]) > (
         _legal_ir_objective_component(before["flat_metrics"])

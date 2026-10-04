@@ -159,11 +159,11 @@ class TestHexEncoding:
         h = theorem_hash_hex("Q")
         assert isinstance(h, str)
         assert len(h) == 64  # 32 bytes * 2 hex chars
-        assert all(c in '0123456789abcdef' for c in h)
+        assert all(c in "0123456789abcdef" for c in h)
 
     def test_axioms_commitment_hex(self):
         """Axiom commitment returns hex string."""
         c = axioms_commitment_hex(["P", "Q"])
         assert isinstance(c, str)
         assert len(c) == 64
-        assert all(c in '0123456789abcdef' for c in c)
+        assert all(c in "0123456789abcdef" for c in c)

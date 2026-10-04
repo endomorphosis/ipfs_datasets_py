@@ -10,6 +10,7 @@ Terminology:
 - invalid_export_format: An export format specification not supported by the method
 - invalid_boolean_parameter: A non-boolean value passed as boolean parameter
 """
+
 import pytest
 import anyio
 from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
@@ -18,7 +19,7 @@ from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpe
 class TestFFmpegWrapperAnalyzeMediaInvalidInputs:
     """
     Invalid input scenarios for FFmpegWrapper.analyze_media method.
-    
+
     Tests the analyze_media method with invalid parameters to ensure
     proper type checking and error handling.
     """
@@ -30,9 +31,9 @@ class TestFFmpegWrapperAnalyzeMediaInvalidInputs:
         THEN returns error response with appropriate message
         """
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         try:
             result = await wrapper.analyze_media(input_path=None)
             # analyze_media should handle None input gracefully and return error response
@@ -49,9 +50,9 @@ class TestFFmpegWrapperAnalyzeMediaInvalidInputs:
         THEN returns error response with appropriate message
         """
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         try:
             result = await wrapper.analyze_media(input_path=12345)
             # analyze_media should handle invalid input types gracefully
@@ -68,9 +69,9 @@ class TestFFmpegWrapperAnalyzeMediaInvalidInputs:
         THEN returns error response indicating input_path cannot be empty
         """
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         result = await wrapper.analyze_media(input_path="")
         # analyze_media should handle empty string input gracefully
         assert result["status"] == "error"
@@ -83,13 +84,10 @@ class TestFFmpegWrapperAnalyzeMediaInvalidInputs:
         THEN returns error response indicating unsupported analysis depth
         """
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
-        result = await wrapper.analyze_media(
-            input_path="video.mp4",
-            analysis_depth="invalid_depth"
-        )
+
+        result = await wrapper.analyze_media(input_path="video.mp4", analysis_depth="invalid_depth")
         # For implemented method, check if it gracefully handles invalid parameters
         # Current implementation may not validate analysis_depth, so we check if it at least runs
         assert "status" in result
@@ -101,13 +99,10 @@ class TestFFmpegWrapperAnalyzeMediaInvalidInputs:
         THEN returns error response indicating unsupported export format
         """
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
-        result = await wrapper.analyze_media(
-            input_path="video.mp4",
-            export_format="invalid_format"
-        )
+
+        result = await wrapper.analyze_media(input_path="video.mp4", export_format="invalid_format")
         # For implemented method, check if it gracefully handles invalid parameters
         # Current implementation may not validate export_format, so we check if it at least runs
         assert "status" in result
@@ -119,12 +114,11 @@ class TestFFmpegWrapperAnalyzeMediaInvalidInputs:
         THEN returns error response indicating quality_assessment must be boolean
         """
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         result = await wrapper.analyze_media(
-            input_path="video.mp4",
-            quality_assessment="not_boolean"
+            input_path="video.mp4", quality_assessment="not_boolean"
         )
         # For implemented method, check if it gracefully handles invalid parameters
         # Current implementation may not validate quality_assessment type, so we check if it at least runs
@@ -137,12 +131,13 @@ class TestFFmpegWrapperAnalyzeMediaInvalidInputs:
         THEN returns dict with status 'error' and FileNotFoundError message
         """
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
-        result = await wrapper.analyze_media(
-            input_path="nonexistent_video.mp4"
-        )
+
+        result = await wrapper.analyze_media(input_path="nonexistent_video.mp4")
         # analyze_media is now implemented and should handle nonexistent files
         assert result["status"] == "error"
-        assert "not found" in result.get("error", "").lower() or "exist" in result.get("error", "").lower()
+        assert (
+            "not found" in result.get("error", "").lower()
+            or "exist" in result.get("error", "").lower()
+        )

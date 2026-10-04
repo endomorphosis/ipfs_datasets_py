@@ -102,7 +102,7 @@ from ipfs_datasets_py.mcp_server.tools.web_archive_tools import brave_search
 result = await brave_search(
     query="IPFS distributed storage benchmarks",
     max_results=10,
-    search_type="web"   # "web" | "news" | "images"
+    search_type="web",  # "web" | "news" | "images"
 )
 # Returns: {"status": "success", "results": [{"url": "...", "title": "...", "snippet": "..."}]}
 ```
@@ -114,9 +114,9 @@ from ipfs_datasets_py.mcp_server.tools.web_archive_tools import common_crawl_sea
 
 result = await common_crawl_search(
     url_pattern="*.arxiv.org/abs/*",
-    crawl_id="CC-MAIN-2024-10",   # Optional: specific crawl
+    crawl_id="CC-MAIN-2024-10",  # Optional: specific crawl
     max_results=100,
-    output_format="json"
+    output_format="json",
 )
 ```
 
@@ -127,10 +127,7 @@ from ipfs_datasets_py.mcp_server.tools.web_archive_tools import wayback_search
 
 # Get snapshots of a URL
 result = await wayback_search(
-    url="https://example.com",
-    start_date="2020-01-01",
-    end_date="2024-12-31",
-    limit=50
+    url="https://example.com", start_date="2020-01-01", end_date="2024-12-31", limit=50
 )
 ```
 
@@ -140,10 +137,7 @@ result = await wayback_search(
 from ipfs_datasets_py.mcp_server.tools.web_archive_tools import github_search_repos
 
 result = await github_search_repos(
-    query="ipfs python dataset",
-    language="python",
-    min_stars=10,
-    max_results=30
+    query="ipfs python dataset", language="python", min_stars=10, max_results=30
 )
 ```
 
@@ -153,9 +147,7 @@ result = await github_search_repos(
 from ipfs_datasets_py.mcp_server.tools.web_archive_tools import huggingface_search_datasets
 
 result = await huggingface_search_datasets(
-    query="legal court documents",
-    task="text-classification",
-    max_results=20
+    query="legal court documents", task="text-classification", max_results=20
 )
 ```
 
@@ -163,13 +155,14 @@ result = await huggingface_search_datasets(
 
 ```python
 from ipfs_datasets_py.mcp_server.tools.web_archive_tools import (
-    create_warc, extract_text_from_warc, index_warc
+    create_warc,
+    extract_text_from_warc,
+    index_warc,
 )
 
 # 1. Create WARC from URLs
 warc = await create_warc(
-    urls=["https://example.com", "https://example.org"],
-    output_path="/data/archive.warc.gz"
+    urls=["https://example.com", "https://example.org"], output_path="/data/archive.warc.gz"
 )
 
 # 2. Index the WARC
@@ -177,8 +170,7 @@ index = await index_warc(warc_path="/data/archive.warc.gz")
 
 # 3. Extract text
 texts = await extract_text_from_warc(
-    warc_path="/data/archive.warc.gz",
-    content_type_filter="text/html"
+    warc_path="/data/archive.warc.gz", content_type_filter="text/html"
 )
 ```
 

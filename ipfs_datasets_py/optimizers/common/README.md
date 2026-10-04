@@ -34,15 +34,17 @@ from ipfs_datasets_py.optimizers.common import (
     OptimizationContext,
 )
 
+
 class MyOptimizer(BaseOptimizer):
     def generate(self, input_data, context):
         return artifact
-    
+
     def critique(self, artifact, context):
         return (score, feedback_list)
-    
+
     def optimize(self, artifact, score, feedback, context):
         return improved_artifact
+
 
 optimizer = MyOptimizer(config=OptimizerConfig())
 result = optimizer.run_session(input_data, context)
@@ -73,6 +75,7 @@ multi-dimensional breakdown, strengths, and weaknesses.
 ```python
 from ipfs_datasets_py.optimizers.common import BaseCritic, CriticResult
 
+
 class MyCritic(BaseCritic):
     def evaluate(self, artifact, context=None) -> CriticResult:
         return CriticResult(
@@ -84,12 +87,13 @@ class MyCritic(BaseCritic):
             metadata={"evaluator": "MyCritic", "domain": "legal"},
         )
 
+
 critic = MyCritic()
 result = critic.evaluate(my_artifact)
 print(result.score, result.feedback)
 
 # Convenience wrappers
-score = critic.score_only(my_artifact)        # float
+score = critic.score_only(my_artifact)  # float
 feedback = critic.feedback_only(my_artifact)  # list[str]
 ```
 
@@ -119,9 +123,9 @@ session.start_round()
 session.record_round(score=0.72, feedback=["add more props"])
 session.start_round()
 session.record_round(score=0.81, feedback=["nearly there"])
-print(session.best_score)   # 0.81
-print(session.trend)        # "improving"
-print(session.converged)    # False
+print(session.best_score)  # 0.81
+print(session.trend)  # "improving"
+print(session.converged)  # False
 report = session.to_dict()
 ```
 
@@ -135,6 +139,7 @@ Concrete harnesses implement `_generate()`, `_critique()`, `_optimize()`.
 ```python
 from ipfs_datasets_py.optimizers.common import BaseHarness, HarnessConfig
 
+
 class MyHarness(BaseHarness):
     def _generate(self, data, context):
         return self.generator.extract(data, context)
@@ -145,8 +150,11 @@ class MyHarness(BaseHarness):
     def _optimize(self, artifact, critique, context):
         return self.optimizer.refine(artifact, critique.feedback)
 
+
 harness = MyHarness(
-    generator=gen, critic=critic, optimizer=opt,
+    generator=gen,
+    critic=critic,
+    optimizer=opt,
     config=HarnessConfig(max_rounds=5, target_score=0.8),
 )
 session = harness.run(data, context)
@@ -197,7 +205,9 @@ OptimizerError
 
 ```python
 from ipfs_datasets_py.optimizers.common import (
-    ExtractionError, ValidationError, ProvingError,
+    ExtractionError,
+    ValidationError,
+    ProvingError,
 )
 
 try:
@@ -253,15 +263,16 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
     LogicCritic,
 )
 
+
 class UnifiedLogicOptimizer(BaseOptimizer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.extractor = LogicExtractor()
         self.critic = LogicCritic()
-    
+
     def generate(self, input_data, context):
         return self.extractor.extract(input_data)
-    
+
     def critique(self, artifact, context):
         score = self.critic.evaluate(artifact)
         feedback = self.critic.get_feedback()
@@ -277,15 +288,16 @@ from ipfs_datasets_py.optimizers.graphrag import (
     OntologyCritic,
 )
 
+
 class UnifiedGraphRAGOptimizer(BaseOptimizer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.generator = OntologyGenerator()
         self.critic = OntologyCritic()
-    
+
     def generate(self, input_data, context):
         return self.generator.generate_ontology(input_data)
-    
+
     def critique(self, artifact, context):
         score = self.critic.evaluate_ontology(artifact)
         feedback = score.feedback
@@ -301,12 +313,11 @@ from ipfs_datasets_py.logic.flogic_optimizer import (
     FLogicSemanticOptimizer,
 )
 
+
 class UnifiedFLogicOptimizer(BaseOptimizer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.flogic_optimizer = FLogicSemanticOptimizer(
-            config=FLogicOptimizerConfig()
-        )
+        self.flogic_optimizer = FLogicSemanticOptimizer(config=FLogicOptimizerConfig())
 ```
 
 Use `ipfs_datasets_py.logic.flogic_optimizer` for new code. The older
@@ -324,9 +335,7 @@ from ipfs_datasets_py.optimizers.graphrag import (
     DataType,
 )
 
-config = ExtractionConfig(
-    custom_rules=[(r"\b(?:Widget|Gadget)\b", "Product")]
-)
+config = ExtractionConfig(custom_rules=[(r"\b(?:Widget|Gadget)\b", "Product")])
 context = OntologyGenerationContext(
     data_source="unit-test",
     data_type=DataType.TEXT,
@@ -348,13 +357,13 @@ from ipfs_datasets_py.optimizers.common import OptimizerConfig, OptimizationStra
 
 config = OptimizerConfig(
     strategy=OptimizationStrategy.SGD,  # SGD, EVOLUTIONARY, REINFORCEMENT, HYBRID
-    max_iterations=10,                   # Maximum optimization iterations
-    target_score=0.85,                   # Target quality score (0-1)
-    learning_rate=0.1,                   # Learning rate for SGD
-    convergence_threshold=0.01,          # Min improvement to continue
-    early_stopping=True,                 # Enable early stopping
-    validation_enabled=True,             # Enable validation step
-    metrics_enabled=True,                # Collect performance metrics
+    max_iterations=10,  # Maximum optimization iterations
+    target_score=0.85,  # Target quality score (0-1)
+    learning_rate=0.1,  # Learning rate for SGD
+    convergence_threshold=0.01,  # Min improvement to continue
+    early_stopping=True,  # Enable early stopping
+    validation_enabled=True,  # Enable validation step
+    metrics_enabled=True,  # Collect performance metrics
 )
 ```
 
@@ -394,28 +403,29 @@ context = OptimizationContext(
 from ipfs_datasets_py.optimizers.common import BaseOptimizer, OptimizerConfig
 from typing import Any, List, Tuple
 
+
 class CustomOptimizer(BaseOptimizer):
     """My custom optimizer implementation."""
-    
+
     def generate(self, input_data: Any, context) -> Any:
         """Generate initial artifact."""
         # Your generation logic here
         artifact = self._create_initial_artifact(input_data)
         return artifact
-    
+
     def critique(self, artifact: Any, context) -> Tuple[float, List[str]]:
         """Evaluate artifact quality."""
         # Your evaluation logic here
         score = self._calculate_score(artifact)
         feedback = self._generate_feedback(artifact, score)
         return (score, feedback)
-    
+
     def optimize(self, artifact: Any, score: float, feedback: List[str], context) -> Any:
         """Improve artifact."""
         # Your optimization logic here
         improved = self._apply_improvements(artifact, feedback)
         return improved
-    
+
     def validate(self, artifact: Any, context) -> bool:
         """Validate artifact."""
         # Optional validation logic
@@ -440,31 +450,32 @@ The common base can be combined with the agentic framework:
 from ipfs_datasets_py.optimizers.common import BaseOptimizer
 from ipfs_datasets_py.optimizers.agentic import PatchManager, WorktreeManager
 
+
 class AgenticBaseOptimizer(BaseOptimizer):
     """Combines common base with agentic capabilities."""
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.patch_manager = PatchManager()
         self.worktree_manager = WorktreeManager()
-    
+
     def run_session(self, input_data, context):
         # Create isolated worktree
         worktree = self.worktree_manager.create_worktree(context.session_id)
-        
+
         # Run optimization
         result = super().run_session(input_data, context)
-        
+
         # Create patch
-        if result['valid']:
+        if result["valid"]:
             patch = self.patch_manager.create_patch(
                 agent_id=context.session_id,
                 task_id=context.session_id,
                 worktree_path=worktree,
                 description=f"Optimization result (score: {result['score']})",
             )
-            result['patch_path'] = self.patch_manager.save_patch(patch)
-        
+            result["patch_path"] = self.patch_manager.save_patch(patch)
+
         return result
 ```
 

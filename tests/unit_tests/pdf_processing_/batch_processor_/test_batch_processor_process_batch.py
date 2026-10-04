@@ -12,7 +12,7 @@ from tests._test_utils import (
     raise_on_bad_callable_code_quality,
     get_ast_tree,
     BadDocumentationError,
-    BadSignatureError
+    BadSignatureError,
 )
 
 work_dir = os.path.abspath(os.path.dirname(__file__))
@@ -25,8 +25,12 @@ file_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/batch_proces
 md_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/batch_processor_stubs.md")
 
 # Make sure the input file and documentation file exist.
-assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
-assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+assert os.path.exists(file_path), (
+    f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
+)
+assert os.path.exists(md_path), (
+    f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+)
 
 import pytest
 import json
@@ -47,13 +51,15 @@ from ipfs_datasets_py.pdf_processing.batch_processor import (
     BatchProcessor,
     ProcessingJob,
     BatchJobResult,
-    BatchStatus
+    BatchStatus,
 )
 
 import pytest
 from datetime import datetime
 from ipfs_datasets_py.pdf_processing.batch_processor import (
-    ProcessingJob, BatchJobResult, BatchStatus
+    ProcessingJob,
+    BatchJobResult,
+    BatchStatus,
 )
 
 
@@ -84,6 +90,7 @@ class TestBatchProcessorProcessBatch:
     def processor_with_mocked_workers(self, processor):
         """Create a processor with mocked worker management methods."""
         from unittest.mock import AsyncMock
+
         processor._start_workers = AsyncMock()
         processor._get_resource_usage = AsyncMock()
         return processor
@@ -100,7 +107,9 @@ class TestBatchProcessorProcessBatch:
             yield pdf_paths
 
     @pytest.mark.asyncio
-    async def test_process_batch_basic_functionality(self, processor_with_mocked_workers, sample_pdf_files):
+    async def test_process_batch_basic_functionality(
+        self, processor_with_mocked_workers, sample_pdf_files
+    ):
         """
         GIVEN a list of valid PDF file paths
         WHEN process_batch is called with default parameters
@@ -115,11 +124,11 @@ class TestBatchProcessorProcessBatch:
         """
         processor = processor_with_mocked_workers
         batch_id = await processor.process_batch(pdf_paths=sample_pdf_files)
-    
+
         # Verify batch ID format
-        assert batch_id.startswith('batch_')
+        assert batch_id.startswith("batch_")
         assert len(batch_id) == 14  # 'batch_' + 8 hex chars
-    
+
         # Verify batch was created in active_batches
         assert batch_id in processor.active_batches
         batch_status = processor.active_batches[batch_id]
@@ -128,15 +137,17 @@ class TestBatchProcessorProcessBatch:
         assert batch_status.completed_jobs == 0
         assert batch_status.failed_jobs == 0
         assert batch_status.pending_jobs == 3
-        
+
         # Verify workers were started
         processor._start_workers.assert_called_once()
-        
+
         # Verify jobs were queued
         assert processor.job_queue.qsize() == 3
 
     @pytest.mark.asyncio
-    async def test_process_batch_with_custom_metadata(self, processor_with_mocked_workers, sample_pdf_files):
+    async def test_process_batch_with_custom_metadata(
+        self, processor_with_mocked_workers, sample_pdf_files
+    ):
         """
         GIVEN PDF files and custom batch metadata
         WHEN process_batch is called with batch_metadata parameter
@@ -148,29 +159,28 @@ class TestBatchProcessorProcessBatch:
         """
         processor = processor_with_mocked_workers
         custom_metadata = {
-            'project_id': 'research_2024',
-            'user_id': 'scientist_123',
-            'description': 'Academic paper analysis',
-            'tags': ['research', 'analysis']
+            "project_id": "research_2024",
+            "user_id": "scientist_123",
+            "description": "Academic paper analysis",
+            "tags": ["research", "analysis"],
         }
-        
+
         batch_id = await processor.process_batch(
-            pdf_paths=sample_pdf_files,
-            batch_metadata=custom_metadata
+            pdf_paths=sample_pdf_files, batch_metadata=custom_metadata
         )
-        
+
         # Check that jobs were created with metadata
         jobs_created = []
         while not processor.job_queue.empty():
             job = processor.job_queue.get()
             jobs_created.append(job)
             processor.job_queue.task_done()
-        
+
         assert len(jobs_created) == 3
         for job in jobs_created:
             assert isinstance(job, ProcessingJob)
-            assert job.metadata['batch_id'] == batch_id
-            assert job.metadata['batch_metadata'] == custom_metadata
+            assert job.metadata["batch_id"] == batch_id
+            assert job.metadata["batch_metadata"] == custom_metadata
 
     @pytest.mark.asyncio
     async def test_process_batch_with_custom_priority(self, processor, sample_pdf_files):
@@ -183,18 +193,15 @@ class TestBatchProcessorProcessBatch:
          - Maintain priority throughout job lifecycle
          - Process higher priority jobs before lower priority ones
         """
-        batch_id = await processor.process_batch(
-            pdf_paths=sample_pdf_files,
-            priority=8
-        )
-        
+        batch_id = await processor.process_batch(pdf_paths=sample_pdf_files, priority=8)
+
         # Extract and verify job priorities
         jobs_created = []
         while not processor.job_queue.empty():
             job = processor.job_queue.get()
             jobs_created.append(job)
             processor.job_queue.task_done()
-        
+
         for job in jobs_created:
             assert job.priority == 8
 
@@ -210,16 +217,15 @@ class TestBatchProcessorProcessBatch:
          - Handle both sync and async callback functions
         """
         callback_called = False
-        
+
         def progress_callback(status):
             nonlocal callback_called
             callback_called = True
-        
+
         batch_id = await processor.process_batch(
-            pdf_paths=sample_pdf_files,
-            callback=progress_callback
+            pdf_paths=sample_pdf_files, callback=progress_callback
         )
-        
+
         # Verify monitoring was started
 
     @pytest.mark.asyncio
@@ -233,16 +239,14 @@ class TestBatchProcessorProcessBatch:
          - Not block batch processing on callback execution
         """
         callback_called = False
-        
+
         async def async_progress_callback(status):
             nonlocal callback_called
             callback_called = True
-        
+
         batch_id = await processor.process_batch(
-            pdf_paths=sample_pdf_files,
-            callback=async_progress_callback
+            pdf_paths=sample_pdf_files, callback=async_progress_callback
         )
-        
 
     @pytest.mark.asyncio
     async def test_process_batch_empty_pdf_list(self, processor):
@@ -257,7 +261,7 @@ class TestBatchProcessorProcessBatch:
         """
         with pytest.raises(ValueError) as exc_info:
             await processor.process_batch(pdf_paths=[])
-        
+
         assert "empty" in str(exc_info.value).lower() or "no files" in str(exc_info.value).lower()
         assert len(processor.active_batches) == 0
 
@@ -273,11 +277,14 @@ class TestBatchProcessorProcessBatch:
          - Not create partial batch with some valid files
         """
         nonexistent_files = ["/path/to/missing1.pdf", "/path/to/missing2.pdf"]
-        
+
         with pytest.raises(FileNotFoundError) as exc_info:
             await processor.process_batch(pdf_paths=nonexistent_files)
-        
-        assert "not found" in str(exc_info.value).lower() or "does not exist" in str(exc_info.value).lower()
+
+        assert (
+            "not found" in str(exc_info.value).lower()
+            or "does not exist" in str(exc_info.value).lower()
+        )
 
     @pytest.mark.asyncio
     async def test_process_batch_mixed_valid_invalid_files(self, processor, sample_pdf_files):
@@ -291,10 +298,10 @@ class TestBatchProcessorProcessBatch:
          - Fail fast to prevent partial batch processing
         """
         mixed_files = sample_pdf_files + ["/path/to/missing.pdf"]
-        
+
         with pytest.raises(FileNotFoundError) as exc_info:
             await processor.process_batch(pdf_paths=mixed_files)
-        
+
         assert len(processor.active_batches) == 0
 
     @pytest.mark.asyncio
@@ -309,7 +316,7 @@ class TestBatchProcessorProcessBatch:
         """
         with pytest.raises(ValueError) as exc_info:
             await processor.process_batch(pdf_paths=sample_pdf_files, priority=15)
-        
+
         assert "priority" in str(exc_info.value).lower()
         assert "1" in str(exc_info.value) and "10" in str(exc_info.value)
 
@@ -325,7 +332,7 @@ class TestBatchProcessorProcessBatch:
         """
         with pytest.raises(ValueError) as exc_info:
             await processor.process_batch(pdf_paths=sample_pdf_files, priority=0)
-        
+
         assert "priority" in str(exc_info.value).lower()
 
     @pytest.mark.asyncio
@@ -339,11 +346,13 @@ class TestBatchProcessorProcessBatch:
          - Not create jobs or start workers
         """
         invalid_callback = "not a function"
-        
+
         with pytest.raises(TypeError) as exc_info:
             await processor.process_batch(pdf_paths=sample_pdf_files, callback=invalid_callback)
-        
-        assert "callable" in str(exc_info.value).lower() or "function" in str(exc_info.value).lower()
+
+        assert (
+            "callable" in str(exc_info.value).lower() or "function" in str(exc_info.value).lower()
+        )
 
     @pytest.mark.asyncio
     async def test_process_batch_path_objects_support(self, processor):
@@ -362,10 +371,10 @@ class TestBatchProcessorProcessBatch:
                 pdf_path = Path(temp_dir) / f"doc_{i}.pdf"
                 pdf_path.write_text(f"content {i}")
                 path_objects.append(pdf_path)
-            
+
             batch_id = await processor.process_batch(pdf_paths=path_objects)
-            
-            assert batch_id.startswith('batch_')
+
+            assert batch_id.startswith("batch_")
             assert len(processor.active_batches) == 1
 
     @pytest.mark.asyncio
@@ -386,9 +395,9 @@ class TestBatchProcessorProcessBatch:
                 pdf_path = Path(temp_dir) / f"large_doc_{i}.pdf"
                 pdf_path.write_text(f"content {i}")
                 large_file_list.append(str(pdf_path))
-            
+
             batch_id = await processor.process_batch(pdf_paths=large_file_list)
-            
+
             batch_status = processor.active_batches[batch_id]
             assert batch_status.total_jobs == 150
             assert batch_status.pending_jobs == 150
@@ -407,15 +416,15 @@ class TestBatchProcessorProcessBatch:
          - Maintain correct job count including duplicates
         """
         duplicate_files = sample_pdf_files + [sample_pdf_files[0]]  # Add duplicate
-        
+
         batch_id = await processor.process_batch(pdf_paths=duplicate_files)
-        
+
         batch_status = processor.active_batches[batch_id]
         assert batch_status.total_jobs == 4  # 3 original + 1 duplicate
-        
+
         # Wait a brief moment for processing to complete
         await anyio.sleep(0.1)
-        
+
         # Check that all jobs were processed (queue should be empty or nearly empty)
         # Since workers process jobs immediately, we expect the queue to be processed
         assert batch_status.completed_jobs + batch_status.failed_jobs == 4
@@ -438,7 +447,7 @@ class TestBatchProcessorProcessBatch:
                 pdf_path = Path(temp_dir) / f"second_batch_{i}.pdf"
                 pdf_path.write_text(f"content {i}")
                 second_batch_files.append(str(pdf_path))
-            
+
             # Start both batches concurrently
             results = [None, None]
 
@@ -450,14 +459,13 @@ class TestBatchProcessorProcessBatch:
                 tg.start_soon(_run_one, 1, second_batch_files)
 
             batch1_id, batch2_id = results
-            
+
             # Verify both batches were created
             assert batch1_id != batch2_id
             assert batch1_id in processor.active_batches
             assert batch2_id in processor.active_batches
             assert processor.active_batches[batch1_id].total_jobs == 3
             assert processor.active_batches[batch2_id].total_jobs == 2
-
 
 
 if __name__ == "__main__":

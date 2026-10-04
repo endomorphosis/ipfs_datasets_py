@@ -256,7 +256,9 @@ from ipfs_datasets_py.data_transformation.ipld import IPLDKnowledgeGraph
 # ❌ OLD (Multiple implementations, will be deprecated)
 from ipfs_datasets_py.processors.graphrag_processor import GraphRAGProcessor
 from ipfs_datasets_py.processors.website_graphrag_processor import WebsiteGraphRAGProcessor
-from ipfs_datasets_py.processors.advanced_graphrag_website_processor import AdvancedGraphRAGWebsiteProcessor
+from ipfs_datasets_py.processors.advanced_graphrag_website_processor import (
+    AdvancedGraphRAGWebsiteProcessor,
+)
 from ipfs_datasets_py.processors.graphrag.complete_advanced_graphrag import CompleteAdvancedGraphRAG
 
 # ✅ NEW (Single unified implementation)

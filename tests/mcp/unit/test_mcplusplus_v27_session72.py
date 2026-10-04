@@ -32,6 +32,7 @@ class TestMergeResultRichComparison(unittest.TestCase):
 
     def _result(self, n: int):
         from ipfs_datasets_py.mcp_server.ucan_delegation import MergeResult
+
         return MergeResult(added_count=n)
 
     # --- comparisons against int ---
@@ -104,6 +105,7 @@ class TestIPFSReloadResultFailureDetails(unittest.TestCase):
 
     def _make(self, count, pin_results, pin_errors=None):
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import IPFSReloadResult
+
         return IPFSReloadResult(count=count, pin_results=pin_results, pin_errors=pin_errors)
 
     def test_no_failures_empty_dict(self):
@@ -141,6 +143,7 @@ class TestIPFSReloadResultFailureDetails(unittest.TestCase):
     def test_pin_errors_none_default(self):
         """Default pin_errors=None works (no KeyError)."""
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import IPFSReloadResult
+
         r = IPFSReloadResult(count=1, pin_results={"x": None})
         self.assertEqual(r.failure_details, {"x": "unknown error"})
 
@@ -172,6 +175,7 @@ class TestPubSubBusSubscriptionCount(unittest.TestCase):
 
     def setUp(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus
+
         self.bus = PubSubBus()
 
     def test_empty_bus_count_zero(self):
@@ -233,6 +237,7 @@ class TestComplianceCheckerListBakFiles(unittest.TestCase):
     def test_no_backups_empty_list(self):
         """Returns [] when no .bak files exist."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "rules.enc")
             self.assertEqual(ComplianceChecker.list_bak_files(path), [])
@@ -240,6 +245,7 @@ class TestComplianceCheckerListBakFiles(unittest.TestCase):
     def test_only_bak_exists(self):
         """Returns [<path>.bak] when only base backup exists."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "rules.enc")
             bak = path + ".bak"
@@ -250,6 +256,7 @@ class TestComplianceCheckerListBakFiles(unittest.TestCase):
     def test_bak_and_numbered_listed(self):
         """Returns .bak, .bak.1, .bak.2 when all exist."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "rules.enc")
             bak = path + ".bak"
@@ -263,6 +270,7 @@ class TestComplianceCheckerListBakFiles(unittest.TestCase):
     def test_stops_at_gap(self):
         """Stops listing when a numbered slot is missing (.bak.1 absent stops before .bak.2)."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "rules.enc")
             bak = path + ".bak"
@@ -276,6 +284,7 @@ class TestComplianceCheckerListBakFiles(unittest.TestCase):
     def test_after_rotate_bak(self):
         """list_bak_files reflects the state after rotate_bak."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "rules.enc")
             bak = path + ".bak"
@@ -296,6 +305,7 @@ class TestE2ESession72(unittest.TestCase):
 
     def _make_delegation(self, cid: str):
         from ipfs_datasets_py.mcp_server.ucan_delegation import Delegation, Capability
+
         cap = Capability(resource="resource:e2e72", ability="action/e2e72")
         return Delegation(
             cid=cid,
@@ -307,6 +317,7 @@ class TestE2ESession72(unittest.TestCase):
     def test_merge_result_ordering(self):
         """MergeResult rich comparison in a realistic merge scenario."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         src = DelegationManager()
         src.add(self._make_delegation("bafyE72a"))
         src.add(self._make_delegation("bafyE72b"))
@@ -319,6 +330,7 @@ class TestE2ESession72(unittest.TestCase):
     def test_failure_details_with_pin_errors(self):
         """failure_details exposes per-policy error reasons."""
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import IPFSReloadResult
+
         r = IPFSReloadResult(
             count=3,
             pin_results={"pol_a": "cid1", "pol_b": None, "pol_c": None},
@@ -333,6 +345,7 @@ class TestE2ESession72(unittest.TestCase):
     def test_subscription_count_across_topics(self):
         """subscription_count tracks handlers across subscribe/unsubscribe."""
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus
+
         bus = PubSubBus()
         sid1 = bus.subscribe("receipts", lambda t, p: None)
         sid2 = bus.subscribe("alerts", lambda t, p: None)
@@ -346,6 +359,7 @@ class TestE2ESession72(unittest.TestCase):
     def test_list_bak_files_and_rotate_combined(self):
         """list_bak_files reflects rotation history."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "combined.enc")
             # No backups yet

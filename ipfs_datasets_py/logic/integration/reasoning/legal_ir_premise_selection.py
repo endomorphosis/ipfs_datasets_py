@@ -152,8 +152,7 @@ class LegalIRPremiseScore:
     def to_dict(self) -> dict[str, Any]:
         return {
             "components": {
-                key: round(float(value), 6)
-                for key, value in sorted(self.components.items())
+                key: round(float(value), 6) for key, value in sorted(self.components.items())
             },
             "matched_contract_fields": list(self.matched_contract_fields),
             "matched_failure_reasons": list(self.matched_failure_reasons),
@@ -250,11 +249,7 @@ def _values(value: Any) -> set[str]:
                 result.add(normalized_key)
             result.update(_values(child))
         return result
-    return {
-        _identifier(item)
-        for item in _sequence(value)
-        if _identifier(item)
-    }
+    return {_identifier(item) for item in _sequence(value) if _identifier(item)}
 
 
 def _safe_metadata(value: Any) -> dict[str, Any]:
@@ -388,7 +383,9 @@ def _premise_kind(metadata: Mapping[str, Any]) -> LegalIRPremiseKind:
         )
     if source in {"legal_ir_document", "legal_ir_compiler"} or "compiler" in source:
         return LegalIRPremiseKind.COMPILER_FACT
-    if source in {"legal_ir_premise_library", "legal_ir_theorem_templates"} or metadata.get("template_id"):
+    if source in {"legal_ir_premise_library", "legal_ir_theorem_templates"} or metadata.get(
+        "template_id"
+    ):
         return LegalIRPremiseKind.THEOREM_TEMPLATE
     return LegalIRPremiseKind.SAMPLE_LOCAL_ASSUMPTION
 
@@ -444,9 +441,7 @@ def _context(
 ) -> _RankingContext:
     data = _goal_mapping(goal)
     embedded_telemetry = (
-        data.get("legal_ir_contract_telemetry")
-        or data.get("contract_telemetry")
-        or telemetry
+        data.get("legal_ir_contract_telemetry") or data.get("contract_telemetry") or telemetry
     )
     telemetry_data = _telemetry_mapping(embedded_telemetry)
 
@@ -463,9 +458,7 @@ def _context(
     # Contract telemetry is deterministic compiler output, so its reasons are
     # verified failure signals rather than free-form model labels.  Formula
     # failures are filtered to the current formula when both sides identify it.
-    verified_failures.update(
-        _collect_keyed_values(telemetry_data, _VERIFIED_FAILURE_KEYS)
-    )
+    verified_failures.update(_collect_keyed_values(telemetry_data, _VERIFIED_FAILURE_KEYS))
     goal_views = _canonical_views(views)
     for collection_name in (
         "cross_view_mismatches",
@@ -500,9 +493,7 @@ def _context(
             present = bool(count)
         if present and _atom(key):
             verified_failures.add(_atom(key))
-    for key, count in _mapping(
-        telemetry_data.get("legal_ir_contract_failure_counts")
-    ).items():
+    for key, count in _mapping(telemetry_data.get("legal_ir_contract_failure_counts")).items():
         try:
             present = int(count) > 0
         except (TypeError, ValueError):
@@ -519,7 +510,9 @@ def _context(
     # For a general family obligation all required fields are useful.  For a
     # field-specific obligation, the explicit field remains the sharper signal.
     if not fields:
-        fields.update(_atom(name) for contract in contracts for name in contract.required_field_names)
+        fields.update(
+            _atom(name) for contract in contracts for name in contract.required_field_names
+        )
     contract_ids.update(_atom(contract.contract_id) for contract in contracts)
 
     return _RankingContext(
@@ -637,9 +630,7 @@ class LegalIRPremiseSelector:
         matched_verified_failures = context.verified_failure_reasons & (
             premise_verified_failures | premise_failures
         )
-        matched_failures = context.failure_reasons & (
-            premise_verified_failures | premise_failures
-        )
+        matched_failures = context.failure_reasons & (premise_verified_failures | premise_failures)
         matched_hashes = context.hashes & premise_hashes
         matched_samples = context.sample_ids & premise_samples
         matched_formulas = context.formula_ids & premise_formulas
@@ -713,9 +704,7 @@ def score_legal_ir_premises(
 ) -> list[RankedLegalIRPremise]:
     """Return every premise with its score receipt in deterministic rank order."""
 
-    return LegalIRPremiseSelector(contract_telemetry=contract_telemetry).rank(
-        goal, premises
-    )
+    return LegalIRPremiseSelector(contract_telemetry=contract_telemetry).rank(goal, premises)
 
 
 select_legal_ir_premises = rank_legal_ir_premises

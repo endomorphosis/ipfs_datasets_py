@@ -17,9 +17,7 @@ import pytest
 from benchmarks.logic_pipeline import fixture_import
 
 
-FROZEN_MANIFEST_SHA256 = (
-    "93bc8297c84b85a018305edc311c42d0df345978af767e4b93b1e509d974a0fd"
-)
+FROZEN_MANIFEST_SHA256 = "93bc8297c84b85a018305edc311c42d0df345978af767e4b93b1e509d974a0fd"
 
 
 def _manifest_value(path: Path) -> dict[str, object]:
@@ -78,9 +76,7 @@ def _entry(
     imports = manifest["imports"]
     assert isinstance(imports, list)
     matches = [
-        item
-        for item in imports
-        if isinstance(item, dict) and item.get("import_id") == import_id
+        item for item in imports if isinstance(item, dict) and item.get("import_id") == import_id
     ]
     assert len(matches) == 1
     return matches[0]
@@ -92,17 +88,10 @@ def test_objective_evidence_and_frozen_manifest_identity_are_stable() -> None:
         == "provenance-preserving existing regression and ambiguity fixture imports"
     )
     assert fixture_import.FIXTURE_IMPORT_SCHEMA.endswith(".fixture-import.v1")
-    assert fixture_import.FIXTURE_IMPORT_MANIFEST_SCHEMA.endswith(
-        ".fixture-import-manifest.v1"
-    )
+    assert fixture_import.FIXTURE_IMPORT_MANIFEST_SCHEMA.endswith(".fixture-import-manifest.v1")
+    assert fixture_import.FROZEN_IMPORT_MANIFEST_SHA256 == FROZEN_MANIFEST_SHA256
     assert (
-        fixture_import.FROZEN_IMPORT_MANIFEST_SHA256
-        == FROZEN_MANIFEST_SHA256
-    )
-    assert (
-        hashlib.sha256(
-            fixture_import.DEFAULT_IMPORT_MANIFEST_PATH.read_bytes()
-        ).hexdigest()
+        hashlib.sha256(fixture_import.DEFAULT_IMPORT_MANIFEST_PATH.read_bytes()).hexdigest()
         == FROZEN_MANIFEST_SHA256
     )
 
@@ -209,21 +198,15 @@ def test_positive_negative_ambiguity_hammer_and_regression_roles_survive() -> No
     assert all("ambiguity" in spec.semantic_tags for spec in legal)
     assert {spec.coverage for spec in hammer} == set(fixture_import.Coverage)
     assert all("regression" in spec.semantic_tags for spec in leanstral)
-    assert all(
-        spec.coverage is fixture_import.Coverage.NEGATIVE for spec in leanstral
-    )
+    assert all(spec.coverage is fixture_import.Coverage.NEGATIVE for spec in leanstral)
 
 
 def test_imported_records_are_deeply_immutable_and_ordered() -> None:
     imported = fixture_import.load_fixture_imports()
     first = imported.fixtures[0]
 
-    assert tuple(spec.ordinal for spec in imported.manifest.imports) == tuple(
-        range(9)
-    )
-    assert tuple(imported.by_id) == tuple(
-        fixture.spec.import_id for fixture in imported.fixtures
-    )
+    assert tuple(spec.ordinal for spec in imported.manifest.imports) == tuple(range(9))
+    assert tuple(imported.by_id) == tuple(fixture.spec.import_id for fixture in imported.fixtures)
     with pytest.raises(FrozenInstanceError):
         first.spec.original_id = "changed"  # type: ignore[misc]
     with pytest.raises(TypeError):
@@ -280,19 +263,15 @@ def test_repeated_loads_are_deterministic() -> None:
     assert first.manifest == second.manifest
     assert first.fixtures == second.fixtures
     assert tuple(first.by_id) == tuple(second.by_id)
-    assert tuple(
-        fixture.spec.record_sha256 for fixture in first.fixtures
-    ) == tuple(fixture.spec.record_sha256 for fixture in second.fixtures)
+    assert tuple(fixture.spec.record_sha256 for fixture in first.fixtures) == tuple(
+        fixture.spec.record_sha256 for fixture in second.fixtures
+    )
     assert (
-        fixture_import.FixtureImportSpec.from_mapping(
-            first.manifest.imports[0].to_dict()
-        )
+        fixture_import.FixtureImportSpec.from_mapping(first.manifest.imports[0].to_dict())
         == first.manifest.imports[0]
     )
     assert (
-        fixture_import.FixtureImportManifest.from_mapping(
-            first.manifest.to_dict()
-        )
+        fixture_import.FixtureImportManifest.from_mapping(first.manifest.to_dict())
         == first.manifest
     )
     with pytest.raises(
@@ -347,11 +326,7 @@ def test_manifest_byte_tampering_fails_against_code_pin(tmp_path: Path) -> None:
 def test_source_byte_tampering_fails_before_record_use(tmp_path: Path) -> None:
     repository_root, manifest_path = _copy_import_tree(tmp_path)
     source_path = (
-        repository_root
-        / "tests"
-        / "reasoner"
-        / "fixtures"
-        / "tdfol_conformance_cases.json"
+        repository_root / "tests" / "reasoner" / "fixtures" / "tdfol_conformance_cases.json"
     )
     raw = source_path.read_bytes()
     source_path.write_bytes(raw.replace(b"Company A", b"Company B", 1))
@@ -382,9 +357,7 @@ def test_record_tampering_fails_even_with_rewritten_source_digest(
         _entry(manifest, "tdfol-obligation-window")["source_sha256"] = source_sha256
         _entry(manifest, "tdfol-prohibition")["source_sha256"] = source_sha256
 
-    reviewed_manifest_sha256 = _rewrite_manifest(
-        manifest_path, update_source_digest
-    )
+    reviewed_manifest_sha256 = _rewrite_manifest(manifest_path, update_source_digest)
     with pytest.raises(
         fixture_import.FixtureImportError,
         match="selected record digest mismatch",
@@ -419,13 +392,9 @@ def test_model_generated_expected_result_fails_even_with_rewritten_digests(
             "leanstral-remove-modal-cue",
         ):
             _entry(manifest, import_id)["source_sha256"] = source_sha256
-        _entry(manifest, "leanstral-invert-modality")[
-            "record_sha256"
-        ] = record_sha256
+        _entry(manifest, "leanstral-invert-modality")["record_sha256"] = record_sha256
 
-    reviewed_manifest_sha256 = _rewrite_manifest(
-        manifest_path, approve_all_outer_digests
-    )
+    reviewed_manifest_sha256 = _rewrite_manifest(manifest_path, approve_all_outer_digests)
     with pytest.raises(
         fixture_import.FixtureImportError,
         match="model-generated expected result",
@@ -451,9 +420,7 @@ def test_ambiguous_source_selector_fails_closed(tmp_path: Path) -> None:
         _entry(manifest, "tdfol-obligation-window")["source_sha256"] = source_sha256
         _entry(manifest, "tdfol-prohibition")["source_sha256"] = source_sha256
 
-    reviewed_manifest_sha256 = _rewrite_manifest(
-        manifest_path, update_source_digest
-    )
+    reviewed_manifest_sha256 = _rewrite_manifest(manifest_path, update_source_digest)
     with pytest.raises(
         fixture_import.FixtureImportError,
         match="exactly one record",
@@ -471,9 +438,7 @@ def test_manifest_rejects_model_attestation_path_traversal_and_unknown_fields(
     repository_root, manifest_path = _copy_import_tree(tmp_path)
 
     def enable_model_result(manifest: dict[str, object]) -> None:
-        _entry(manifest, "hammer-nat-add-comm")[
-            "model_generated_expected_result"
-        ] = True
+        _entry(manifest, "hammer-nat-add-comm")["model_generated_expected_result"] = True
 
     digest = _rewrite_manifest(manifest_path, enable_model_result)
     with pytest.raises(
@@ -491,9 +456,7 @@ def test_manifest_rejects_model_attestation_path_traversal_and_unknown_fields(
     def traverse(manifest: dict[str, object]) -> None:
         item = _entry(manifest, "hammer-nat-add-comm")
         item["source_path"] = "../outside.json"
-        item["source_reference"] = (
-            "../outside.json#theorem_id=Hammer.Nat.add_comm"
-        )
+        item["source_reference"] = "../outside.json#theorem_id=Hammer.Nat.add_comm"
 
     digest = _rewrite_manifest(manifest_path, traverse)
     with pytest.raises(fixture_import.FixtureImportError, match="source_path"):

@@ -223,11 +223,9 @@ config = SecurityConfig(
     sandbox_timeout=60,
     max_memory_mb=512,
     max_cpu_percent=80,
-    
     # Input validation
-    allowed_file_extensions=['.py', '.js', '.ts', '.java', '.go', '.rs'],
+    allowed_file_extensions=[".py", ".js", ".ts", ".java", ".go", ".rs"],
     max_file_size_mb=10,
-    
     # Token security
     mask_tokens_in_logs=True,
 )
@@ -527,7 +525,7 @@ logger.info(f"Optimization completed in {stats['elapsed_time']:.2f}s")
 logger.info(f"Peak memory usage: {stats['peak_memory_mb']:.1f}MB")
 
 # Alert on high resource usage
-if stats['peak_memory_mb'] > 1000:
+if stats["peak_memory_mb"] > 1000:
     logger.warning("High memory usage detected!")
 ```
 
@@ -594,19 +592,21 @@ from prometheus_client import Counter, Histogram, Gauge
 import prometheus_client
 
 # Define metrics
-optimization_count = Counter('optimizer_optimizations_total', 'Total optimizations')
-optimization_duration = Histogram('optimizer_duration_seconds', 'Optimization duration')
-memory_usage = Gauge('optimizer_memory_mb', 'Memory usage in MB')
+optimization_count = Counter("optimizer_optimizations_total", "Total optimizations")
+optimization_duration = Histogram("optimizer_duration_seconds", "Optimization duration")
+memory_usage = Gauge("optimizer_memory_mb", "Memory usage in MB")
 
 # Collect metrics
 router = OptimizerLLMRouter()
 stats = router.get_statistics()
 
-optimization_count.inc(stats['total_calls'])
-memory_usage.set(stats['peak_memory_mb'])
+optimization_count.inc(stats["total_calls"])
+memory_usage.set(stats["peak_memory_mb"])
 
 # Export metrics
-prometheus_client.write_to_textfile('/var/lib/prometheus/optimizer.prom', prometheus_client.REGISTRY)
+prometheus_client.write_to_textfile(
+    "/var/lib/prometheus/optimizer.prom", prometheus_client.REGISTRY
+)
 ```
 
 ---

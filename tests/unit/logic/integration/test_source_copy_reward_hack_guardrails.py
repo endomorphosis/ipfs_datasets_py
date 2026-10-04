@@ -60,14 +60,13 @@ def test_replay_fixture_is_hash_bound_and_covers_every_adversarial_clause() -> N
         source_span = record["source_span"]
         source_text = source_span["text"]
         assert record["schema_version"] == SCHEMA_VERSION
-        assert source_span["sha256"] == hashlib.sha256(
-            source_text.encode("utf-8")
-        ).hexdigest()
+        assert source_span["sha256"] == hashlib.sha256(source_text.encode("utf-8")).hexdigest()
         assert record["expected"]["accepted"] is False
         assert _contains_text(record["candidate"]["ir_payload"], source_text)
-        assert record["candidate"]["metrics"][
-            "compiler_ir_cosine_similarity"
-        ] > record["baseline"]["metrics"]["compiler_ir_cosine_similarity"]
+        assert (
+            record["candidate"]["metrics"]["compiler_ir_cosine_similarity"]
+            > record["baseline"]["metrics"]["compiler_ir_cosine_similarity"]
+        )
 
 
 @pytest.mark.parametrize("record", _records(), ids=lambda item: item["case_id"])
@@ -83,17 +82,13 @@ def test_copied_candidate_trips_copy_symbolic_and_hammer_guardrails(
         text_reconstruction_similarity=candidate[
             "source_decompiled_text_embedding_cosine_similarity"
         ],
-        structural_text_similarity=max(
-            0.0, 1.0 - candidate["structural_text_reconstruction_loss"]
-        ),
+        structural_text_similarity=max(0.0, 1.0 - candidate["structural_text_reconstruction_loss"]),
     )
     hammer_metrics = hammer_guidance_metric_block(record)
 
     assert computed_penalty > 0.35
     assert candidate["source_copy_reward_hack_penalty"] > 0.35
-    assert candidate["symbolic_validity_success_rate"] < baseline[
-        "symbolic_validity_success_rate"
-    ]
+    assert candidate["symbolic_validity_success_rate"] < baseline["symbolic_validity_success_rate"]
     assert artifact["source_copy_rejected"] is True
     assert artifact["trusted"] is False
     assert set(record["expected"]["failed_obligation_kinds"]) <= set(
@@ -129,9 +124,10 @@ def test_verifier_owned_decompiler_obligations_never_embed_the_copied_span(
         "decompiler_modality_retention",
         "decompiler_source_copy_guardrail",
     } <= set(decompiler_obligations)
-    assert decompiler_obligations[
-        "decompiler_source_copy_guardrail"
-    ].metadata["source_copy_policy"] == "hash_only"
+    assert (
+        decompiler_obligations["decompiler_source_copy_guardrail"].metadata["source_copy_policy"]
+        == "hash_only"
+    )
     for obligation in obligations:
         assert source_text not in obligation.statement
         assert obligation.metadata.get("source_span_sha256") != source_text

@@ -4,11 +4,13 @@ Test stubs for mcp_investigation_dashboard module.
 Feature: MCP Investigation Dashboard
   Model Context Protocol investigation interface
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def mcp_call_history():
@@ -83,6 +85,7 @@ def investigation_findings():
 
 
 # Test scenarios
+
 
 def test_display_mcp_call_traces():
     """
@@ -173,6 +176,7 @@ def test_generate_investigation_report():
 
 
 # Step definitions
+
 
 # Given steps
 @given("MCP call history")
@@ -343,4 +347,3 @@ def version_differences_are_displayed():
     """Step: Then version differences are displayed"""
     # TODO: Implement step
     pass
-

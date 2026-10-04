@@ -36,8 +36,12 @@ def _make_mediator():
 
 def _make_score(c=0.8, con=0.7, cl=0.6, g=0.5, da=0.9) -> CriticScore:
     return CriticScore(
-        completeness=c, consistency=con, clarity=cl, granularity=g, relationship_coherence=da
-    , domain_alignment=da
+        completeness=c,
+        consistency=con,
+        clarity=cl,
+        granularity=g,
+        relationship_coherence=da,
+        domain_alignment=da,
     )
 
 
@@ -78,6 +82,7 @@ class TestPipelineHistory:
 
     def test_history_entries_are_pipeline_results(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import PipelineResult
+
         p = OntologyPipeline()
         p.run("Alice at ACME.")
         assert isinstance(p.history[0], PipelineResult)
@@ -191,7 +196,14 @@ class TestTopDimension:
 
     def test_result_is_valid_dimension(self):
         score = _make_score()
-        valid_dims = {"completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"}
+        valid_dims = {
+            "completeness",
+            "consistency",
+            "clarity",
+            "granularity",
+            "relationship_coherence",
+            "domain_alignment",
+        }
         assert self.critic.top_dimension(score) in valid_dims
 
     def test_consistency_highest(self):

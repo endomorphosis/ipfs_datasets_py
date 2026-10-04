@@ -24,13 +24,14 @@ import matplotlib.pyplot as plt
 from typing import Dict, List, Optional
 
 # Add the parent directory to the path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Check for PyArrow
 try:
     import pyarrow as pa
     import pyarrow.parquet as pq
     import pyarrow.csv as csv
+
     HAVE_ARROW = True
 except ImportError:
     HAVE_ARROW = False
@@ -39,6 +40,7 @@ except ImportError:
 # Check for HuggingFace datasets
 try:
     from datasets import Dataset
+
     HAVE_DATASETS = True
 except ImportError:
     HAVE_DATASETS = False
@@ -53,7 +55,7 @@ from ipfs_datasets_py.search.streaming_data_loader import (
     create_memory_mapped_vectors,
     load_memory_mapped_vectors,
     ParquetStreamingLoader,
-    StreamingDataset
+    StreamingDataset,
 )
 
 
@@ -84,24 +86,18 @@ def generate_sample_parquet(output_path, num_rows=1000000):
             "id": pa.array(range(chunk_start, chunk_end)),
             "value_float": pa.array(np.random.rand(chunk_size).astype(np.float32)),
             "value_int": pa.array(np.random.randint(0, 100, size=chunk_size)),
-            "category": pa.array(
-                np.random.choice(["A", "B", "C", "D", "E"], size=chunk_size)
-            ),
+            "category": pa.array(np.random.choice(["A", "B", "C", "D", "E"], size=chunk_size)),
             "timestamp": pa.array(
-                np.datetime64("2023-01-01") +
-                np.random.randint(0, 365, size=chunk_size).astype("timedelta64[D]")
-            )
+                np.datetime64("2023-01-01")
+                + np.random.randint(0, 365, size=chunk_size).astype("timedelta64[D]")
+            ),
         }
 
         chunk_table = pa.Table.from_pydict(data)
 
         # Write to Parquet (append mode for subsequent chunks)
         if writer is None:
-            writer = pq.ParquetWriter(
-                output_path,
-                chunk_table.schema,
-                compression="snappy"
-            )
+            writer = pq.ParquetWriter(output_path, chunk_table.schema, compression="snappy")
 
         writer.write_table(chunk_table)
 
@@ -111,7 +107,7 @@ def generate_sample_parquet(output_path, num_rows=1000000):
         writer.close()
 
     print(f"Sample Parquet file generated at: {output_path}")
-    print(f"File size: {os.path.getsize(output_path) / (1024*1024):.2f} MB")
+    print(f"File size: {os.path.getsize(output_path) / (1024 * 1024):.2f} MB")
 
 
 def generate_sample_vectors(output_path, num_vectors=100000, dimension=128):
@@ -126,11 +122,7 @@ def generate_sample_vectors(output_path, num_vectors=100000, dimension=128):
     print(f"Generating sample vector file with {num_vectors} vectors of dimension {dimension}...")
 
     # Initialize memory-mapped vectors
-    vectors = create_memory_mapped_vectors(
-        file_path=output_path,
-        dimension=dimension,
-        mode='w+'
-    )
+    vectors = create_memory_mapped_vectors(file_path=output_path, dimension=dimension, mode="w+")
 
     # Generate and add vectors in batches
     batch_size = 10000
@@ -146,12 +138,12 @@ def generate_sample_vectors(output_path, num_vectors=100000, dimension=128):
     vectors.close()
 
     print(f"Sample vector file generated at: {output_path}")
-    print(f"File size: {os.path.getsize(output_path) / (1024*1024):.2f} MB")
+    print(f"File size: {os.path.getsize(output_path) / (1024 * 1024):.2f} MB")
 
 
-def benchmark_streaming_parquet(parquet_path, batch_sizes=[1000, 10000, 50000],
-                              prefetch_counts=[1, 2, 4, 8],
-                              use_caching=True):
+def benchmark_streaming_parquet(
+    parquet_path, batch_sizes=[1000, 10000, 50000], prefetch_counts=[1, 2, 4, 8], use_caching=True
+):
     """
     Benchmark streaming performance with different configurations.
 
@@ -186,7 +178,7 @@ def benchmark_streaming_parquet(parquet_path, batch_sizes=[1000, 10000, 50000],
                 batch_size=batch_size,
                 prefetch_batches=prefetch,
                 cache_enabled=use_caching,
-                collect_stats=True
+                collect_stats=True,
             )
 
             # Process the entire dataset
@@ -209,7 +201,7 @@ def benchmark_streaming_parquet(parquet_path, batch_sizes=[1000, 10000, 50000],
                 "batches_per_second": stats["throughput"]["batches_per_second"],
                 "total_rows": processed_rows,
                 "batch_size": batch_size,
-                "prefetch": prefetch
+                "prefetch": prefetch,
             }
 
             print(f"  Processed {processed_rows} rows in {elapsed:.2f} seconds")
@@ -239,7 +231,7 @@ def benchmark_memory_mapped_vectors(vector_path, batch_sizes=[100, 1000, 10000])
     vectors = load_memory_mapped_vectors(
         file_path=vector_path,
         dimension=128,  # Assume this is known
-        mode='r'
+        mode="r",
     )
 
     dimension = vectors.dimension
@@ -290,7 +282,7 @@ def benchmark_memory_mapped_vectors(vector_path, batch_sizes=[100, 1000, 10000])
             "sequential_vectors_per_second": num_vectors / seq_elapsed,
             "random_elapsed_seconds": random_elapsed,
             "random_vectors_per_second": total_accesses / random_elapsed,
-            "batch_size": batch_size
+            "batch_size": batch_size,
         }
 
         print(f"  Sequential: {num_vectors / seq_elapsed:.2f} vectors/second")
@@ -323,7 +315,7 @@ def plot_benchmark_results(results, title, ylabel):
 
     # Extract data
     for batch_key, batch_results in results.items():
-        batch_size = int(batch_key.split('=')[1])
+        batch_size = int(batch_key.split("=")[1])
         batch_sizes.append(batch_size)
 
         for config_key, config_results in batch_results.items():
@@ -344,7 +336,7 @@ def plot_benchmark_results(results, title, ylabel):
 
     # Plot data
     for i, config in enumerate(configs):
-        ax.plot(batch_sizes, data[i], marker='o', label=config)
+        ax.plot(batch_sizes, data[i], marker="o", label=config)
 
     ax.set_title(title)
     ax.set_xlabel("Batch Size")
@@ -372,11 +364,7 @@ def demonstrate_data_transforms(parquet_path):
     print("Demonstrating data transformations...")
 
     # Load the dataset
-    dataset = load_parquet(
-        parquet_path=parquet_path,
-        batch_size=10000,
-        prefetch_batches=2
-    )
+    dataset = load_parquet(parquet_path=parquet_path, batch_size=10000, prefetch_batches=2)
 
     # Define a transformation function
     def transform_batch(batch):
@@ -441,7 +429,7 @@ def demonstrate_memory_mapped_vectors(vector_path):
     vectors = load_memory_mapped_vectors(
         file_path=vector_path,
         dimension=128,  # Assume this is known
-        mode='r'
+        mode="r",
     )
 
     dimension = vectors.dimension
@@ -476,7 +464,7 @@ def demonstrate_memory_mapped_vectors(vector_path):
     # Simple linear search (for demonstration)
     start_time = time.time()
 
-    best_distance = float('inf')
+    best_distance = float("inf")
     best_idx = -1
 
     for i in range(0, num_vectors, batch_size):
@@ -509,77 +497,56 @@ def demonstrate_memory_mapped_vectors(vector_path):
 
 def main():
     """Main function."""
-    parser = argparse.ArgumentParser(
-        description="Streaming Data Loader Example"
+    parser = argparse.ArgumentParser(description="Streaming Data Loader Example")
+
+    parser.add_argument(
+        "--generate-parquet", action="store_true", help="Generate a sample Parquet file"
     )
 
     parser.add_argument(
-        "--generate-parquet",
-        action="store_true",
-        help="Generate a sample Parquet file"
+        "--generate-vectors", action="store_true", help="Generate a sample vector file"
     )
 
     parser.add_argument(
-        "--generate-vectors",
-        action="store_true",
-        help="Generate a sample vector file"
-    )
-
-    parser.add_argument(
-        "--benchmark-parquet",
-        action="store_true",
-        help="Benchmark Parquet streaming performance"
+        "--benchmark-parquet", action="store_true", help="Benchmark Parquet streaming performance"
     )
 
     parser.add_argument(
         "--benchmark-vectors",
         action="store_true",
-        help="Benchmark memory-mapped vector performance"
+        help="Benchmark memory-mapped vector performance",
     )
 
     parser.add_argument(
-        "--transform-demo",
-        action="store_true",
-        help="Demonstrate data transformations"
+        "--transform-demo", action="store_true", help="Demonstrate data transformations"
     )
 
     parser.add_argument(
-        "--vector-demo",
-        action="store_true",
-        help="Demonstrate memory-mapped vector operations"
+        "--vector-demo", action="store_true", help="Demonstrate memory-mapped vector operations"
     )
 
     parser.add_argument(
         "--parquet-file",
         default=None,
-        help="Path to Parquet file (default: generates a temporary file)"
+        help="Path to Parquet file (default: generates a temporary file)",
     )
 
     parser.add_argument(
         "--vector-file",
         default=None,
-        help="Path to vector file (default: generates a temporary file)"
+        help="Path to vector file (default: generates a temporary file)",
     )
 
     parser.add_argument(
-        "--num-rows",
-        type=int,
-        default=1000000,
-        help="Number of rows for sample Parquet file"
+        "--num-rows", type=int, default=1000000, help="Number of rows for sample Parquet file"
     )
 
     parser.add_argument(
-        "--num-vectors",
-        type=int,
-        default=100000,
-        help="Number of vectors for sample vector file"
+        "--num-vectors", type=int, default=100000, help="Number of vectors for sample vector file"
     )
 
     parser.add_argument(
-        "--dimension",
-        type=int,
-        default=128,
-        help="Vector dimension for sample vector file"
+        "--dimension", type=int, default=128, help="Vector dimension for sample vector file"
     )
 
     args = parser.parse_args()
@@ -601,35 +568,25 @@ def main():
 
     try:
         # Generate sample data if needed
-        if args.generate_parquet or (not args.parquet_file and (
-            args.benchmark_parquet or args.transform_demo
-        )):
+        if args.generate_parquet or (
+            not args.parquet_file and (args.benchmark_parquet or args.transform_demo)
+        ):
             generate_sample_parquet(parquet_path, args.num_rows)
 
-        if args.generate_vectors or (not args.vector_file and (
-            args.benchmark_vectors or args.vector_demo
-        )):
-            generate_sample_vectors(
-                vector_path,
-                args.num_vectors,
-                args.dimension
-            )
+        if args.generate_vectors or (
+            not args.vector_file and (args.benchmark_vectors or args.vector_demo)
+        ):
+            generate_sample_vectors(vector_path, args.num_vectors, args.dimension)
 
         # Run benchmarks
         if args.benchmark_parquet:
             results = benchmark_streaming_parquet(parquet_path)
-            plot_benchmark_results(
-                results,
-                "Parquet Streaming Performance",
-                "Rows per Second"
-            )
+            plot_benchmark_results(results, "Parquet Streaming Performance", "Rows per Second")
 
         if args.benchmark_vectors:
             results = benchmark_memory_mapped_vectors(vector_path)
             plot_benchmark_results(
-                results,
-                "Memory-Mapped Vector Performance",
-                "Vectors per Second"
+                results, "Memory-Mapped Vector Performance", "Vectors per Second"
             )
 
         # Run demonstrations
@@ -640,9 +597,14 @@ def main():
             demonstrate_memory_mapped_vectors(vector_path)
 
         # If no actions specified, show help
-        if not (args.generate_parquet or args.generate_vectors or
-                args.benchmark_parquet or args.benchmark_vectors or
-                args.transform_demo or args.vector_demo):
+        if not (
+            args.generate_parquet
+            or args.generate_vectors
+            or args.benchmark_parquet
+            or args.benchmark_vectors
+            or args.transform_demo
+            or args.vector_demo
+        ):
             parser.print_help()
 
     finally:

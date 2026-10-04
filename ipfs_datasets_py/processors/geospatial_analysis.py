@@ -17,7 +17,7 @@ warnings.warn(
     "Use processors.domains.geospatial.geospatial_analysis instead. "
     "See docs/PROCESSORS_REFACTORING_MIGRATION_GUIDE.md for migration guide.",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 # Import from new location for backward compatibility

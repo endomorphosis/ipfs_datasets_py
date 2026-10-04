@@ -34,6 +34,7 @@ def an_auditlogger_instance_is_initialized():
     # TODO: Implement fixture
     pass
 
+
 @pytest.fixture
 def the_audit_logger_is_enabled():
     """
@@ -56,7 +57,7 @@ Example:
 def test_log_method_creates_audit_event(
     an_auditlogger_instance_is_initialized,
     the_audit_logger_is_enabled,
-    at_least_one_audit_handler_is_attached
+    at_least_one_audit_handler_is_attached,
 ):
     """
     Scenario: Log method creates audit event
@@ -118,7 +119,7 @@ Here's an example of implementing a test stub:
 def test_log_method_creates_audit_event(
     an_auditlogger_instance_is_initialized,
     the_audit_logger_is_enabled,
-    at_least_one_audit_handler_is_attached
+    at_least_one_audit_handler_is_attached,
 ):
     """
     Scenario: Log method creates audit event
@@ -135,11 +136,7 @@ def test_log_method_creates_audit_event(
 
 **After:**
 ```python
-def test_log_method_creates_audit_event(
-    audit_logger,
-    enabled_logger,
-    attached_handler
-):
+def test_log_method_creates_audit_event(audit_logger, enabled_logger, attached_handler):
     """
     Scenario: Log method creates audit event
 
@@ -151,11 +148,9 @@ def test_log_method_creates_audit_event(
     """
     # When: log() is called
     event_id = audit_logger.log(
-        level=AuditLevel.INFO,
-        category=AuditCategory.AUTHENTICATION,
-        action="login"
+        level=AuditLevel.INFO, category=AuditCategory.AUTHENTICATION, action="login"
     )
-    
+
     # Then: an AuditEvent is created
     assert event_id is not None
     assert isinstance(event_id, str)

@@ -15,7 +15,9 @@ def _fixture_text(name: str) -> str:
 @pytest.mark.asyncio
 async def test_state_admin_rules_api_defaults_delegate_high_cap_values(monkeypatch):
     from ipfs_datasets_py.processors.legal_scrapers import legal_dataset_api
-    from ipfs_datasets_py.processors.legal_scrapers import state_admin_rules_scraper as scraper_module
+    from ipfs_datasets_py.processors.legal_scrapers import (
+        state_admin_rules_scraper as scraper_module,
+    )
 
     captured = {}
 
@@ -39,7 +41,9 @@ async def test_state_admin_rules_api_defaults_delegate_high_cap_values(monkeypat
 @pytest.mark.asyncio
 async def test_netherlands_laws_api_delegates_parameters(monkeypatch):
     from ipfs_datasets_py.processors.legal_scrapers import legal_dataset_api
-    from ipfs_datasets_py.processors.legal_scrapers import netherlands_laws_scraper as scraper_module
+    from ipfs_datasets_py.processors.legal_scrapers import (
+        netherlands_laws_scraper as scraper_module,
+    )
 
     captured = {}
 
@@ -247,7 +251,10 @@ async def test_recover_missing_legal_citation_source_api_delegates_parameters(mo
     assert result["operation"] == "recover_missing_legal_citation_source"
     assert result["tool_version"] == "5.0.0"
     assert result["candidate_files"][0]["fetch_success"] is True
-    assert result["scraper_patch"]["target_file"] == "ipfs_datasets_py/processors/legal_scrapers/state_laws_scraper.py"
+    assert (
+        result["scraper_patch"]["target_file"]
+        == "ipfs_datasets_py/processors/legal_scrapers/state_laws_scraper.py"
+    )
     assert captured["citation_text"] == "Minn. Stat. § 518.17"
     assert captured["normalized_citation"] == "Minn. Stat. § 518.17"
     assert captured["corpus_key"] == "state_laws"
@@ -258,6 +265,7 @@ async def test_recover_missing_legal_citation_source_api_delegates_parameters(mo
     assert captured["archive_top_k"] == 2
     assert captured["publish_to_hf"] is True
     assert captured["hf_token"] == "token-123"
+
 
 async def test_netherlands_search_prefers_current_versions(monkeypatch):
     from ipfs_datasets_py.processors.legal_scrapers import legal_dataset_api
@@ -317,8 +325,20 @@ async def test_netherlands_search_can_filter_to_current_versions_only(monkeypatc
             "operation": "search_cases",
             "tool_version": tool_version,
             "results": [
-                {"score": 0.9, "case": {"law_version_identifier": "BWBR0001854@2018-01-01", "is_current": False}},
-                {"score": 0.8, "case": {"law_version_identifier": "BWBR0001854@2024-01-01", "is_current": True}},
+                {
+                    "score": 0.9,
+                    "case": {
+                        "law_version_identifier": "BWBR0001854@2018-01-01",
+                        "is_current": False,
+                    },
+                },
+                {
+                    "score": 0.8,
+                    "case": {
+                        "law_version_identifier": "BWBR0001854@2024-01-01",
+                        "is_current": True,
+                    },
+                },
             ],
         }
 
@@ -404,8 +424,24 @@ async def test_netherlands_search_effective_date_can_select_specific_version(mon
             "operation": "search_cases",
             "tool_version": tool_version,
             "results": [
-                {"score": 0.9, "case": {"law_version_identifier": "BWBR0001854@2012-01-01", "version_start_date": "2012-01-01", "is_current": False, "citation": "Sr, Artikel 1"}},
-                {"score": 0.8, "case": {"law_version_identifier": "BWBR0001854@2024-01-01", "version_start_date": "2024-01-01", "is_current": True, "citation": "Sr, Artikel 1"}},
+                {
+                    "score": 0.9,
+                    "case": {
+                        "law_version_identifier": "BWBR0001854@2012-01-01",
+                        "version_start_date": "2012-01-01",
+                        "is_current": False,
+                        "citation": "Sr, Artikel 1",
+                    },
+                },
+                {
+                    "score": 0.8,
+                    "case": {
+                        "law_version_identifier": "BWBR0001854@2024-01-01",
+                        "version_start_date": "2024-01-01",
+                        "is_current": True,
+                        "citation": "Sr, Artikel 1",
+                    },
+                },
             ],
         }
 
@@ -660,7 +696,9 @@ async def test_netherlands_citation_query_formats_alias_based_answer(monkeypatch
                         "aliases": ["Sr"],
                         "article_number": "1",
                         "citation": "Sr, Artikel 1",
-                        "hierarchy_path": [{"kind": "artikel", "label": "Artikel 1", "number": "1"}],
+                        "hierarchy_path": [
+                            {"kind": "artikel", "label": "Artikel 1", "number": "1"}
+                        ],
                         "hierarchy_labels": ["Artikel 1"],
                         "effective_date": "2024-01-01",
                         "version_start_date": "2024-01-01",
@@ -715,7 +753,9 @@ async def test_netherlands_citation_query_range_returns_multiple_article_answers
                         "aliases": ["Sr"],
                         "article_number": "2",
                         "citation": "Sr, Artikel 2",
-                        "hierarchy_path": [{"kind": "artikel", "label": "Artikel 2", "number": "2"}],
+                        "hierarchy_path": [
+                            {"kind": "artikel", "label": "Artikel 2", "number": "2"}
+                        ],
                         "hierarchy_labels": ["Artikel 2"],
                         "text": "De Nederlandse strafwet is toepasselijk.",
                         "is_current": True,
@@ -730,7 +770,9 @@ async def test_netherlands_citation_query_range_returns_multiple_article_answers
                         "aliases": ["Sr"],
                         "article_number": "1",
                         "citation": "Sr, Artikel 1",
-                        "hierarchy_path": [{"kind": "artikel", "label": "Artikel 1", "number": "1"}],
+                        "hierarchy_path": [
+                            {"kind": "artikel", "label": "Artikel 1", "number": "1"}
+                        ],
                         "hierarchy_labels": ["Artikel 1"],
                         "text": "Geen feit is strafbaar dan uit kracht van wet.",
                         "is_current": True,
@@ -745,7 +787,9 @@ async def test_netherlands_citation_query_range_returns_multiple_article_answers
                         "aliases": ["Sr"],
                         "article_number": "4",
                         "citation": "Sr, Artikel 4",
-                        "hierarchy_path": [{"kind": "artikel", "label": "Artikel 4", "number": "4"}],
+                        "hierarchy_path": [
+                            {"kind": "artikel", "label": "Artikel 4", "number": "4"}
+                        ],
                         "hierarchy_labels": ["Artikel 4"],
                         "text": "Buiten bereik.",
                         "is_current": True,
@@ -991,7 +1035,9 @@ async def test_netherlands_answer_exact_mode_keeps_context_empty(monkeypatch):
                         "aliases": ["Sr"],
                         "article_number": "1",
                         "citation": "Sr, Artikel 1",
-                        "hierarchy_path": [{"kind": "artikel", "label": "Artikel 1", "number": "1"}],
+                        "hierarchy_path": [
+                            {"kind": "artikel", "label": "Artikel 1", "number": "1"}
+                        ],
                         "hierarchy_labels": ["Artikel 1"],
                         "text": "Zie artikel 2.",
                         "is_current": True,
@@ -1006,7 +1052,9 @@ async def test_netherlands_answer_exact_mode_keeps_context_empty(monkeypatch):
                         "aliases": ["Sr"],
                         "article_number": "2",
                         "citation": "Sr, Artikel 2",
-                        "hierarchy_path": [{"kind": "artikel", "label": "Artikel 2", "number": "2"}],
+                        "hierarchy_path": [
+                            {"kind": "artikel", "label": "Artikel 2", "number": "2"}
+                        ],
                         "hierarchy_labels": ["Artikel 2"],
                         "text": "Tweede bepaling.",
                         "is_current": True,

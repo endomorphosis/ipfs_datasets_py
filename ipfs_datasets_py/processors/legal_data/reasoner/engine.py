@@ -16,7 +16,11 @@ try:
     )
 except ImportError:
     from municipal_scrape_workspace.hybrid_legal_ir import (  # type: ignore[no-redef]
-        ActionFrame, DeonticOp, LegalIR, Norm, generate_cnl,
+        ActionFrame,
+        DeonticOp,
+        LegalIR,
+        Norm,
+        generate_cnl,
     )
 
 from .models import (
@@ -102,7 +106,9 @@ class HybridLawReasoner:
             "expected_proof_id": expected_proof_id,
             "proof_hash": proof.proof_hash,
             "expected_proof_hash": expected_hash,
-            "replay_match": bool(proof.proof_id == expected_proof_id and proof.proof_hash == expected_hash),
+            "replay_match": bool(
+                proof.proof_id == expected_proof_id and proof.proof_hash == expected_hash
+            ),
         }
 
     def check_compliance(
@@ -463,7 +469,9 @@ class HybridLawReasoner:
 
         return True
 
-    def _has_matching_event(self, norm: Norm, events: Iterable[Dict[str, Any]], time_context: Dict[str, Any]) -> bool:
+    def _has_matching_event(
+        self, norm: Norm, events: Iterable[Dict[str, Any]], time_context: Dict[str, Any]
+    ) -> bool:
         frame = self.kb.frames.get(norm.target_frame_ref)
         if not isinstance(frame, ActionFrame):
             return False
@@ -516,7 +524,9 @@ class HybridLawReasoner:
         if not refs:
             refs.append(IRReference(kind="derived", id=f"derived:{rule_id.lower()}"))
         if not prov:
-            prov.append(SourceProvenance(source_path="unknown", source_id="unknown", source_span=None))
+            prov.append(
+                SourceProvenance(source_path="unknown", source_id="unknown", source_span=None)
+            )
 
         step = ProofStep(
             step_id=step_id,
@@ -642,11 +652,7 @@ class HybridLawReasoner:
         assumptions = [str(step.conclusion) for step in steps]
 
         ref_pairs = sorted(
-            {
-                (ref.kind, ref.id)
-                for step in steps
-                for ref in step.ir_refs
-            },
+            {(ref.kind, ref.id) for step in steps for ref in step.ir_refs},
             key=lambda kv: (kv[0], kv[1]),
         )
         trace_refs = [IRReference(kind=kind, id=rid) for kind, rid in ref_pairs]
@@ -692,7 +698,9 @@ class HybridLawReasoner:
     def _fallback_provenance_for_frame(self, frame_id: str) -> SourceProvenance:
         frame = self.kb.frames.get(frame_id)
         if frame is None:
-            return SourceProvenance(source_path="unknown", source_id=frame_id or "unknown", source_span=None)
+            return SourceProvenance(
+                source_path="unknown", source_id=frame_id or "unknown", source_span=None
+            )
         attrs = getattr(frame, "attrs", {}) or {}
         source_path = str(attrs.get("source_path") or "kb://frame")
         source_id = str(attrs.get("source_id") or frame_id)
@@ -707,9 +715,7 @@ class HybridLawReasoner:
         lines: List[str] = []
         seen_norms = set()
 
-        lines.append(
-            f"Proof {proof.proof_id} concludes {proof.root_conclusion} ({proof.status})."
-        )
+        lines.append(f"Proof {proof.proof_id} concludes {proof.root_conclusion} ({proof.status}).")
 
         for idx, step in enumerate(proof.steps, start=1):
             lines.append(f"Step {idx}: {step.rule_id} infers {step.conclusion}.")

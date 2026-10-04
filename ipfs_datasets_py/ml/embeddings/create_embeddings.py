@@ -16,27 +16,39 @@ except Exception:  # pragma: no cover
 def _should_enable_ipfs_kit(resources: dict) -> bool:
     if str(os.getenv("IPFS_KIT_DISABLE", "")).strip().lower() in {"1", "true", "yes", "on"}:
         return False
-    if str(os.getenv("IPFS_DATASETS_PY_BENCHMARK", "")).strip().lower() in {"1", "true", "yes", "on"}:
+    if str(os.getenv("IPFS_DATASETS_PY_BENCHMARK", "")).strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }:
         return False
     # Explicit opt-in via resources or env.
     if bool(resources.get("enable_ipfs_kit")):
         return True
-    return str(os.getenv("IPFS_DATASETS_PY_ENABLE_IPFS_KIT", "")).strip().lower() in {"1", "true", "yes", "on"}
+    return str(os.getenv("IPFS_DATASETS_PY_ENABLE_IPFS_KIT", "")).strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
 
 
 def _lazy_load_ipfs_kit():
     try:
         from ipfs_kit_py.ipfs_kit import ipfs_kit
+
         return ipfs_kit
     except Exception:
         return None
+
 
 class create_embeddings:
     def __init__(self, resources, metadata):
         self.resources = resources
         self.metadata = metadata
         self.datasets = datasets
-        self.index =  {}
+        self.index = {}
         self.cid_list = []
         if len(list(metadata.keys())) > 0:
             for key in metadata.keys():
@@ -51,13 +63,13 @@ class create_embeddings:
                     self.ipfs_kit = ipfs_kit_factory(resources, metadata)
                 except Exception:
                     self.ipfs_kit = None
-            
+
         if "https_endpoints" in resources.keys() and self.ipfs_kit:
             for endpoint in resources["https_endpoints"]:
                 self.ipfs_kit.add_https_endpoint(endpoint[0], endpoint[1], endpoint[2])
         self.join_column = None
         self.tokenizer = {}
-        
+
         # Initialize accelerate manager if available and enabled
         self.accelerate_manager = None
         use_accelerate = resources.get("use_accelerate", True)
@@ -96,7 +108,7 @@ class create_embeddings:
                 # For now, fall through to ipfs_kit
             except Exception as e:
                 print(f"⚠ Accelerate inference failed, falling back to local: {e}")
-        
+
         # Fallback to ipfs_kit
         if self.ipfs_kit:
             return await self.ipfs_kit.index_dataset(dataset, split, column, dst_path, models)
@@ -111,7 +123,7 @@ class create_embeddings:
         else:
             print("Error: ipfs_kit not initialized. Cannot create embeddings.")
             return False
-           
+
     async def __call__(self, dataset, split, column, dst_path, models):
         if self.ipfs_kit:
             await self.ipfs_kit.index_dataset(dataset, split, column, dst_path, models)
@@ -129,23 +141,40 @@ class create_embeddings:
             # ["Alibaba-NLP/gte-Qwen2-1.5B-instruct", "http://127.0.0.1:8083/embed", 32768],
             # # ["Alibaba-NLP/gte-Qwen2-7B-instruct", "http://62.146.169.111:8081/embed-large", 32000],
             ["Alibaba-NLP/gte-large-en-v1.5", "http://62.146.169.111:8080/embed-small", 8192],
-            ["Alibaba-NLP/gte-Qwen2-1.5B-instruct", "http://62.146.169.111:8080/embed-medium", 32000],
+            [
+                "Alibaba-NLP/gte-Qwen2-1.5B-instruct",
+                "http://62.146.169.111:8080/embed-medium",
+                32000,
+            ],
             # ["Alibaba-NLP/gte-Qwen2-7B-instruct", "http://62.146.169.111:8080/embed-large", 32000],
             ["Alibaba-NLP/gte-large-en-v1.5", "http://62.146.169.111:8081/embed-small", 8192],
-            ["Alibaba-NLP/gte-Qwen2-1.5B-instruct", "http://62.146.169.111:8081/embed-medium", 32000],
+            [
+                "Alibaba-NLP/gte-Qwen2-1.5B-instruct",
+                "http://62.146.169.111:8081/embed-medium",
+                32000,
+            ],
             # ["Alibaba-NLP/gte-Qwen2-7B-instruct", "http://62.146.169.111:8081/embed-large", 32000],
             ["Alibaba-NLP/gte-large-en-v1.5", "http://62.146.169.111:8082/embed-small", 8192],
-            ["Alibaba-NLP/gte-Qwen2-1.5B-instruct", "http://62.146.169.111:8082/embed-medium", 32000],
+            [
+                "Alibaba-NLP/gte-Qwen2-1.5B-instruct",
+                "http://62.146.169.111:8082/embed-medium",
+                32000,
+            ],
             # ["Alibaba-NLP/gte-Qwen2-7B-instruct", "http://62.146.169.111:8082/embed-large", 32000],
             ["Alibaba-NLP/gte-large-en-v1.5", "http://62.146.169.111:8083/embed-small", 8192],
-            ["Alibaba-NLP/gte-Qwen2-1.5B-instruct", "http://62.146.169.111:8083/embed-medium", 32000],
+            [
+                "Alibaba-NLP/gte-Qwen2-1.5B-instruct",
+                "http://62.146.169.111:8083/embed-medium",
+                32000,
+            ],
             # ["Alibaba-NLP/gte-Qwen2-7B-instruct", "http://62.146.169.111:8083/embed-large", 32000],
         ]
         for endpoint in https_endpoints:
             self.add_https_endpoint(endpoint[0], endpoint[1], endpoint[2])
         await self.create_embeddings(dataset, split, column, dst_path, models)
         return True
-    
+
+
 # Alias for compatibility with other modules
 CreateEmbeddingsProcessor = create_embeddings
 
@@ -159,9 +188,16 @@ if __name__ == "__main__":
             "Alibaba-NLP/gte-Qwen2-1.5B-instruct",
             # "dunzhang/stella_en_1.5B-v5",
         ],
-        "dst_path": "/storage/teraflopai/tmp"
+        "dst_path": "/storage/teraflopai/tmp",
     }
-    resources = {
-    }
+    resources = {}
     create_embeddings_batch = create_embeddings(resources, metadata)
-    anyio.run(create_embeddings_batch.test(metadata["dataset"], metadata["split"], metadata["column"], metadata["dst_path"], metadata["models"]))
+    anyio.run(
+        create_embeddings_batch.test(
+            metadata["dataset"],
+            metadata["split"],
+            metadata["column"],
+            metadata["dst_path"],
+            metadata["models"],
+        )
+    )

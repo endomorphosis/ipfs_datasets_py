@@ -162,10 +162,11 @@ Enable backend selection without implementing real Groth16 yet. Focus on interfa
 from typing import Protocol, runtime_checkable
 from dataclasses import dataclass
 
+
 @runtime_checkable
 class ZKBackend(Protocol):
     """Abstract backend interface for ZKP operations."""
-    
+
     def generate_proof(
         self,
         theorem: str,
@@ -174,16 +175,16 @@ class ZKBackend(Protocol):
     ) -> "ZKPProof":
         """Generate a ZKP proof."""
         ...
-    
+
     def verify_proof(self, proof: "ZKPProof") -> bool:
         """Verify a ZKP proof."""
         ...
-    
+
     @property
     def backend_id(self) -> str:
         """Backend identifier (e.g., 'simulated', 'groth16')."""
         ...
-    
+
     @property
     def curve_id(self) -> str:
         """Curve identifier (e.g., 'bn254', 'bls12_381')."""
@@ -200,17 +201,20 @@ _backend_features = {
     "groth16": {"required": ["py_ecc"], "optional": ["ark-groth16", "snarkjs"]},
 }
 
+
 def get_backend(backend_id: str) -> ZKBackend:
     """Retrieve backend by ID with lazy loading."""
     if backend_id in _backends:
         return _backends[backend_id]
-    
+
     if backend_id == "simulated":
         from .simulated import SimulatedZKBackend
+
         backend = SimulatedZKBackend()
     elif backend_id == "groth16":
         try:
             from .groth16_ark import Groth16Backend
+
             backend = Groth16Backend()
         except ImportError:
             raise ZKPError(
@@ -219,7 +223,7 @@ def get_backend(backend_id: str) -> ZKBackend:
             )
     else:
         raise ZKPError(f"Unknown backend: {backend_id}")
-    
+
     _backends[backend_id] = backend
     return backend
 ```
@@ -238,17 +242,17 @@ class ZKPProver:
         """Initialize prover with selected backend."""
         if backend not in _SUPPORTED_BACKENDS:
             raise ZKPError(f"Unknown backend: {backend}")
-        
+
         self.backend = get_backend(backend)
         self.circuit_id = circuit_id
         self.version = version
-        
+
         if backend != "simulated" and not _deps_available(backend):
             raise ZKPError(
                 f"Backend '{backend}' unavailable. "
                 f"Install optional deps: pip install ipfs-datasets[{backend}]"
             )
-    
+
     def generate_proof(self, theorem: str, axioms: list[str]) -> ZKPProof:
         """Generate proof using configured backend."""
         return self.backend.generate_proof(
@@ -257,7 +261,7 @@ class ZKPProver:
             metadata={
                 "circuit_id": self.circuit_id,
                 "version": self.version,
-            }
+            },
         )
 ```
 
@@ -270,25 +274,30 @@ def test_default_backend_is_simulated():
     prover = ZKPProver()
     assert prover.backend.backend_id == "simulated"
 
+
 def test_simulated_backend_always_available():
     """Simulated backend must not require optional deps."""
     prover = ZKPProver(backend="simulated")
     # Should not raise
+
 
 def test_groth16_backend_selection_without_deps_raises():
     """Selecting groth16 without install should raise with actionable message."""
     with pytest.raises(ZKPError, match="groth16.*unavailable"):
         ZKPProver(backend="groth16")
 
+
 def test_unknown_backend_rejected():
     """Unknown backend names should be rejected."""
     with pytest.raises(ZKPError, match="Unknown backend"):
         ZKPProver(backend="unknown_backend")
 
+
 def test_import_quiet_with_backend_registry():
     """Backend registry must not trigger imports on module import."""
     # This test ensures that importing logic.zkp does not import py_ecc or rust libs
     import subprocess
+
     result = subprocess.run(
         ["python3", "-c", "import ipfs_datasets_py.logic.zkp; print('OK')"],
         capture_output=True,

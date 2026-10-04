@@ -6,12 +6,16 @@ Methods under test:
   - OntologyOptimizer.history_change_count()
   - LogicValidator.path_exists(ontology, source, target)
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
@@ -23,6 +27,7 @@ def _push_feedback(a, score):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
@@ -38,6 +43,7 @@ def _push_opt(o, avg):
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
@@ -48,6 +54,7 @@ def _ont(entities, rels):
 # ---------------------------------------------------------------------------
 # OntologyLearningAdapter.feedback_last_n
 # ---------------------------------------------------------------------------
+
 
 class TestFeedbackLastN:
     def test_empty(self):
@@ -86,6 +93,7 @@ class TestFeedbackLastN:
 # OntologyLearningAdapter.feedback_top_n
 # ---------------------------------------------------------------------------
 
+
 class TestFeedbackTopN:
     def test_empty(self):
         a = _make_adapter()
@@ -117,6 +125,7 @@ class TestFeedbackTopN:
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.history_change_count
 # ---------------------------------------------------------------------------
+
 
 class TestHistoryChangeCount:
     def test_empty_returns_zero(self):
@@ -151,6 +160,7 @@ class TestHistoryChangeCount:
 # ---------------------------------------------------------------------------
 # LogicValidator.path_exists
 # ---------------------------------------------------------------------------
+
 
 class TestPathExists:
     def test_same_source_and_target(self):

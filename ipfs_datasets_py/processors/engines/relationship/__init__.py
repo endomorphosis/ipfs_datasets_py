@@ -24,7 +24,7 @@ from ipfs_datasets_py.processors.relationship_analyzer import RelationshipAnalyz
 
 # Type exports
 __all__ = [
-    'RelationshipAnalyzer',
+    "RelationshipAnalyzer",
 ]
 
 # Type checking support

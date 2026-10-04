@@ -57,6 +57,7 @@ The `@monitor` decorator provides automatic tracking of processor performance an
 ```python
 from ipfs_datasets_py.processors.infrastructure.monitoring import monitor
 
+
 class MyProcessor:
     @monitor
     async def process_document(self, document):
@@ -90,7 +91,7 @@ The `@monitor` decorator automatically tracks:
 from ipfs_datasets_py.processors.infrastructure.monitoring import (
     get_processor_metrics,
     get_monitoring_summary,
-    reset_processor_metrics
+    reset_processor_metrics,
 )
 
 # Get metrics for a specific processor
@@ -159,13 +160,14 @@ PDFProcessor.process_pdf:
 ```python
 from ipfs_datasets_py.processors.infrastructure.monitoring import monitor
 
+
 class UnifiedGraphRAGProcessor:
     @monitor
     async def process_website(self, url: str, **options) -> Dict[str, Any]:
         """Process a website with automatic monitoring."""
         result = await self._extract_and_build_graph(url, **options)
         return result
-    
+
     @monitor
     async def process_multiple_websites(self, urls: List[str], **options) -> List[Dict]:
         """Process multiple websites with monitoring."""
@@ -181,21 +183,18 @@ class UnifiedGraphRAGProcessor:
 ```python
 from ipfs_datasets_py.processors.infrastructure.monitoring import monitor
 
+
 class PDFProcessor:
     @monitor
     def process_pdf(self, pdf_path: str, **options) -> Dict[str, Any]:
         """Process PDF with automatic monitoring."""
         # Extract text
         text = self._extract_text(pdf_path)
-        
+
         # Extract structure
         structure = self._extract_structure(pdf_path)
-        
-        return {
-            'text': text,
-            'structure': structure,
-            'metadata': self._extract_metadata(pdf_path)
-        }
+
+        return {"text": text, "structure": structure, "metadata": self._extract_metadata(pdf_path)}
 ```
 
 #### Multimodal Processor
@@ -203,15 +202,16 @@ class PDFProcessor:
 ```python
 from ipfs_datasets_py.processors.infrastructure.monitoring import monitor
 
+
 class MultimodalProcessor:
     @monitor
     async def process_multimodal(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """Process multimodal inputs with monitoring."""
         # Process each modality
-        text_result = await self._process_text(inputs.get('text'))
-        image_result = await self._process_images(inputs.get('images'))
-        audio_result = await self._process_audio(inputs.get('audio'))
-        
+        text_result = await self._process_text(inputs.get("text"))
+        image_result = await self._process_images(inputs.get("images"))
+        audio_result = await self._process_audio(inputs.get("audio"))
+
         # Fuse results
         return self._fuse_modalities(text_result, image_result, audio_result)
 ```
@@ -231,8 +231,9 @@ The `@cached` decorator provides automatic result caching for expensive operatio
 ```python
 from ipfs_datasets_py.processors.infrastructure.caching import cached
 
+
 class MyProcessor:
-    @cached(ttl=3600, key_func=lambda self, doc: doc['id'])
+    @cached(ttl=3600, key_func=lambda self, doc: doc["id"])
     @monitor
     async def process_document(self, document):
         """Cached and monitored processing."""
@@ -256,8 +257,9 @@ class MyProcessor:
 from ipfs_datasets_py.processors.infrastructure.error_handling import (
     handle_processor_error,
     ProcessorError,
-    RetryableError
+    RetryableError,
 )
+
 
 class MyProcessor:
     @monitor
@@ -285,6 +287,7 @@ class MyProcessor:
 async def process_website(self, url: str) -> Dict:
     """Public API method - always monitored."""
     return await self._internal_process(url)
+
 
 async def _internal_process(self, url: str) -> Dict:
     """Private method - monitoring optional."""
@@ -383,31 +386,31 @@ logger = logging.getLogger(__name__)
 
 class MyCustomProcessor:
     """Custom processor with comprehensive monitoring."""
-    
+
     def __init__(self):
         self.config = self._load_config()
-    
+
     @monitor
     async def process_single(self, item: Dict[str, Any]) -> Dict[str, Any]:
         """
         Process a single item with automatic monitoring.
-        
+
         Tracks: latency, success/failure, errors
         """
         # Validate input
         self._validate_item(item)
-        
+
         # Process
         result = await self._do_processing(item)
-        
+
         # Post-process
         return self._enhance_result(result)
-    
+
     @monitor
     async def process_batch(self, items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
         Process multiple items with monitoring.
-        
+
         Note: Each item is processed individually, so process_single
         metrics will also be tracked.
         """
@@ -420,37 +423,35 @@ class MyCustomProcessor:
                 logger.warning(f"Failed to process item {item.get('id')}: {e}")
                 # Continue with other items
                 continue
-        
+
         return results
-    
+
     @monitor
     def get_statistics(self) -> Dict[str, Any]:
         """Get processor statistics (also monitored)."""
-        from ipfs_datasets_py.processors.infrastructure.monitoring import (
-            get_processor_metrics
-        )
-        
+        from ipfs_datasets_py.processors.infrastructure.monitoring import get_processor_metrics
+
         return {
-            'single_metrics': get_processor_metrics('MyCustomProcessor.process_single'),
-            'batch_metrics': get_processor_metrics('MyCustomProcessor.process_batch'),
+            "single_metrics": get_processor_metrics("MyCustomProcessor.process_single"),
+            "batch_metrics": get_processor_metrics("MyCustomProcessor.process_batch"),
         }
-    
+
     # Private methods - not monitored
     def _validate_item(self, item: Dict) -> None:
         """Internal validation - no monitoring needed."""
-        if 'id' not in item:
+        if "id" not in item:
             raise ValueError("Item missing required 'id' field")
-    
+
     async def _do_processing(self, item: Dict) -> Dict:
         """Internal processing - no monitoring needed."""
         # Processing logic
-        return {'result': 'processed'}
-    
+        return {"result": "processed"}
+
     def _enhance_result(self, result: Dict) -> Dict:
         """Internal enhancement - no monitoring needed."""
-        result['enhanced'] = True
+        result["enhanced"] = True
         return result
-    
+
     def _load_config(self) -> Dict:
         """Internal configuration - no monitoring needed."""
         return {}
@@ -461,53 +462,53 @@ class MyCustomProcessor:
 ```python
 from ipfs_datasets_py.processors.infrastructure.monitoring import (
     get_processor_metrics,
-    get_monitoring_summary
+    get_monitoring_summary,
 )
 
 
 def check_processor_health(processor_name: str) -> bool:
     """Check if a processor is healthy."""
     metrics = get_processor_metrics(processor_name)
-    
+
     if not metrics:
         return True  # No data yet, assume healthy
-    
+
     # Health criteria
     success_rate_threshold = 95.0  # 95% success rate required
     latency_threshold = 10.0  # 10 seconds max avg latency
-    
+
     is_healthy = (
-        metrics['success_rate'] >= success_rate_threshold and
-        metrics['avg_time'] <= latency_threshold
+        metrics["success_rate"] >= success_rate_threshold
+        and metrics["avg_time"] <= latency_threshold
     )
-    
+
     if not is_healthy:
         print(f"⚠️ {processor_name} unhealthy:")
         print(f"  Success rate: {metrics['success_rate']:.1f}% (need {success_rate_threshold}%)")
         print(f"  Avg latency: {metrics['avg_time']:.2f}s (max {latency_threshold}s)")
-    
+
     return is_healthy
 
 
 def generate_health_report() -> Dict[str, Any]:
     """Generate health report for all processors."""
     summary = get_monitoring_summary()
-    
+
     healthy = []
     unhealthy = []
-    
+
     for name, metrics in summary.items():
         if check_processor_health(name):
             healthy.append(name)
         else:
             unhealthy.append(name)
-    
+
     return {
-        'total_processors': len(summary),
-        'healthy': len(healthy),
-        'unhealthy': len(unhealthy),
-        'unhealthy_list': unhealthy,
-        'summary': summary
+        "total_processors": len(summary),
+        "healthy": len(healthy),
+        "unhealthy": len(unhealthy),
+        "unhealthy_list": unhealthy,
+        "summary": summary,
     }
 ```
 
@@ -531,6 +532,7 @@ class MyProcessor:
     @monitor
     def process(self, data):  # ✅ Instance method
         pass
+
 
 # Incorrect
 @monitor
@@ -572,9 +574,9 @@ reset_processor_metrics()
 
 ```python
 # Correct order
-@monitor          # Outermost - tracks everything
-@cached           # Middle - caching
-@retry            # Innermost - retry logic
+@monitor  # Outermost - tracks everything
+@cached  # Middle - caching
+@retry  # Innermost - retry logic
 def process(self):
     pass
 ```

@@ -16,36 +16,43 @@ from ..runners.base import BaseSecurityRunner
 
 
 _EVENT_LOOKUP_KEYS: tuple[str, ...] = (
-    'withdrawal_id', 'deposit_id', 'txid', 'capability_id', 'wallet_id', 'account_id', 'asset_id', 'id',
+    "withdrawal_id",
+    "deposit_id",
+    "txid",
+    "capability_id",
+    "wallet_id",
+    "account_id",
+    "asset_id",
+    "id",
 )
 
 
 class Z3Runner(BaseSecurityRunner):
     """Evaluate supported claims with the Z3 Python bindings."""
 
-    prover_name = 'z3'
+    prover_name = "z3"
 
     def __init__(self, timeout_ms: int = 5_000) -> None:
         self.timeout_ms = timeout_ms
 
     @staticmethod
     def is_available() -> bool:
-        if importlib.util.find_spec('z3') is not None:
+        if importlib.util.find_spec("z3") is not None:
             return True
         from ipfs_datasets_py.logic.external_provers.lazy_installer import lazy_install_prover
 
         lazy_install_prover(
-            'z3',
-            reason='Z3 exchange-security proof execution',
+            "z3",
+            reason="Z3 exchange-security proof execution",
             allow_automatic=True,
         )
-        return importlib.util.find_spec('z3') is not None
+        return importlib.util.find_spec("z3") is not None
 
     def _solver(self) -> Any:
         import z3
 
         solver = z3.Solver()
-        solver.set('timeout', self.timeout_ms)
+        solver.set("timeout", self.timeout_ms)
         return solver
 
     @staticmethod
@@ -69,7 +76,9 @@ class Z3Runner(BaseSecurityRunner):
                     break
         return matches
 
-    def _source_facts(self, model: SecurityModelIR, compilation: Z3Compilation) -> list[dict[str, Any]]:
+    def _source_facts(
+        self, model: SecurityModelIR, compilation: Z3Compilation
+    ) -> list[dict[str, Any]]:
         """Extract concrete IR records that explain the violating counterexample scope."""
 
         artifact = compilation.compiler_artifact
@@ -79,58 +88,58 @@ class Z3Runner(BaseSecurityRunner):
                 model.events,
                 key_names=_EVENT_LOOKUP_KEYS,
                 values=[
-                    *[str(item) for item in artifact.get('violating_withdrawals', [])],
-                    *[str(item) for item in artifact.get('offending_ids', [])],
-                    *[str(item) for item in artifact.get('violations', [])],
-                    *[str(item) for item in artifact.get('violating_event_ids', [])],
-                    *[str(item) for item in artifact.get('withdrawal_ids', [])],
-                    *[str(item) for item in artifact.get('deposit_ids', [])],
-                    *[str(item) for item in artifact.get('txids', [])],
-                    *[str(item) for item in artifact.get('capability_ids', [])],
-                    *[str(item) for item in artifact.get('wallet_ids', [])],
-                    *[str(item) for item in artifact.get('account_ids', [])],
-                    *[str(item) for item in artifact.get('asset_ids', [])],
+                    *[str(item) for item in artifact.get("violating_withdrawals", [])],
+                    *[str(item) for item in artifact.get("offending_ids", [])],
+                    *[str(item) for item in artifact.get("violations", [])],
+                    *[str(item) for item in artifact.get("violating_event_ids", [])],
+                    *[str(item) for item in artifact.get("withdrawal_ids", [])],
+                    *[str(item) for item in artifact.get("deposit_ids", [])],
+                    *[str(item) for item in artifact.get("txids", [])],
+                    *[str(item) for item in artifact.get("capability_ids", [])],
+                    *[str(item) for item in artifact.get("wallet_ids", [])],
+                    *[str(item) for item in artifact.get("account_ids", [])],
+                    *[str(item) for item in artifact.get("asset_ids", [])],
                 ],
             )
         )
         source_facts.extend(
             self._matching_records(
                 model.capabilities,
-                key_names=('id',),
+                key_names=("id",),
                 values=[
-                    *[str(item) for item in artifact.get('violations', [])],
-                    *[str(item) for item in artifact.get('capability_ids', [])],
+                    *[str(item) for item in artifact.get("violations", [])],
+                    *[str(item) for item in artifact.get("capability_ids", [])],
                 ],
             )
         )
         source_facts.extend(
             self._matching_records(
                 model.accounts,
-                key_names=('id',),
+                key_names=("id",),
                 values=[
-                    *[str(item) for item in artifact.get('overdrawn_accounts', [])],
-                    *[str(item) for item in artifact.get('account_ids', [])],
+                    *[str(item) for item in artifact.get("overdrawn_accounts", [])],
+                    *[str(item) for item in artifact.get("account_ids", [])],
                 ],
             )
         )
         source_facts.extend(
             self._matching_records(
                 model.wallets,
-                key_names=('id',),
-                values=[str(item) for item in artifact.get('wallet_ids', [])],
+                key_names=("id",),
+                values=[str(item) for item in artifact.get("wallet_ids", [])],
             )
         )
         source_facts.extend(
             self._matching_records(
                 model.assets,
-                key_names=('id',),
-                values=[str(item) for item in artifact.get('asset_ids', [])],
+                key_names=("id",),
+                values=[str(item) for item in artifact.get("asset_ids", [])],
             )
         )
-        for violation in artifact.get('violations', []):
+        for violation in artifact.get("violations", []):
             if isinstance(violation, dict):
                 source_facts.append(dict(violation))
-                event = violation.get('event')
+                event = violation.get("event")
                 if isinstance(event, dict):
                     source_facts.append(dict(event))
         deduped: list[dict[str, Any]] = []
@@ -151,7 +160,7 @@ class Z3Runner(BaseSecurityRunner):
         solver_model: Any,
     ) -> CounterexampleReport:
         if solver_model is None:
-            raise ValueError(f'Z3 did not return a model for claim {claim.claim_id}')
+            raise ValueError(f"Z3 did not return a model for claim {claim.claim_id}")
         witness = {
             declaration.name(): str(solver_model[declaration])
             for declaration in solver_model.decls()
@@ -159,16 +168,28 @@ class Z3Runner(BaseSecurityRunner):
         artifact = compilation.compiler_artifact
         return CounterexampleReport(
             claim_id=claim.claim_id,
-            message='Z3 found a satisfying violation trace.',
+            message="Z3 found a satisfying violation trace.",
             witness=witness,
-            violating_event_ids=[str(item) for item in artifact.get('violating_event_ids', [])],
-            withdrawal_ids=[str(item) for item in artifact.get('withdrawal_ids', artifact.get('violating_withdrawals', []))],
-            deposit_ids=[str(item) for item in artifact.get('deposit_ids', [])],
-            txids=[str(item) for item in artifact.get('txids', [])],
-            capability_ids=[str(item) for item in artifact.get('capability_ids', artifact.get('violations', [])) if item is not None],
-            wallet_ids=[str(item) for item in artifact.get('wallet_ids', [])],
-            account_ids=[str(item) for item in artifact.get('account_ids', artifact.get('overdrawn_accounts', []))],
-            asset_ids=[str(item) for item in artifact.get('asset_ids', [])],
+            violating_event_ids=[str(item) for item in artifact.get("violating_event_ids", [])],
+            withdrawal_ids=[
+                str(item)
+                for item in artifact.get(
+                    "withdrawal_ids", artifact.get("violating_withdrawals", [])
+                )
+            ],
+            deposit_ids=[str(item) for item in artifact.get("deposit_ids", [])],
+            txids=[str(item) for item in artifact.get("txids", [])],
+            capability_ids=[
+                str(item)
+                for item in artifact.get("capability_ids", artifact.get("violations", []))
+                if item is not None
+            ],
+            wallet_ids=[str(item) for item in artifact.get("wallet_ids", [])],
+            account_ids=[
+                str(item)
+                for item in artifact.get("account_ids", artifact.get("overdrawn_accounts", []))
+            ],
+            asset_ids=[str(item) for item in artifact.get("asset_ids", [])],
             source_facts=self._source_facts(model, compilation),
             evidence_refs=list(compilation.evidence_refs),
             soundness_notes=list(compilation.soundness_notes),
@@ -191,8 +212,12 @@ class Z3Runner(BaseSecurityRunner):
         import z3
 
         soundness_notes = list(compilation.soundness_notes)
-        if claim.severity == 'blocking' and 'heuristic' in evidence_review_statuses(compilation.evidence_refs):
-            soundness_notes.append('Blocking proof depends on heuristic evidence and should not be treated as production-grade without review.')
+        if claim.severity == "blocking" and "heuristic" in evidence_review_statuses(
+            compilation.evidence_refs
+        ):
+            soundness_notes.append(
+                "Blocking proof depends on heuristic evidence and should not be treated as production-grade without review."
+            )
         return ProofReport(
             claim_id=claim.claim_id,
             claim_version=claim.claim_version,
@@ -201,7 +226,7 @@ class Z3Runner(BaseSecurityRunner):
             status=status,
             prover=self.prover_name,
             solver_name=self.prover_name,
-            solver_version=getattr(z3, 'get_full_version', lambda: 'unknown')(),
+            solver_version=getattr(z3, "get_full_version", lambda: "unknown")(),
             solver_result=solver_result,
             timeout_ms=self.timeout_ms,
             reason_unknown=reason_unknown,
@@ -218,7 +243,7 @@ class Z3Runner(BaseSecurityRunner):
 
     def run_claim(self, claim: SecurityClaim, model: SecurityModelIR) -> ProofReport:
         if not self.is_available():
-            return self.unknown_report(claim, model, 'Z3 is not installed')
+            return self.unknown_report(claim, model, "Z3 is not installed")
         compilation: Z3Compilation = claim.compile_to_z3(model)
         if not compilation.modeled:
             return ProofReport(
@@ -226,14 +251,14 @@ class Z3Runner(BaseSecurityRunner):
                 claim_version=claim.claim_version,
                 model_cid=calculate_model_cid(model),
                 model_schema_version=model.schema_version,
-                status='NOT_MODELED',
+                status="NOT_MODELED",
                 prover=self.prover_name,
                 solver_name=self.prover_name,
-                solver_result='not-modeled',
-                proof_or_trace_cid='',
+                solver_result="not-modeled",
+                proof_or_trace_cid="",
                 assumptions=list(claim.required_assumptions),
-                compiler_cid='',
-                counterexample={'reason': compilation.not_modeled_reason},
+                compiler_cid="",
+                counterexample={"reason": compilation.not_modeled_reason},
                 risk=claim.severity,
                 signatures=[],
                 evidence_refs=list(compilation.evidence_refs),
@@ -247,12 +272,14 @@ class Z3Runner(BaseSecurityRunner):
         violation_result = violation_solver.check()
         compiler_cid = ProofReport.content_cid(compilation.compiler_artifact)
         if violation_result == z3.sat:
-            counterexample = self._counterexample(claim, model, compilation, violation_solver.model())
+            counterexample = self._counterexample(
+                claim, model, compilation, violation_solver.model()
+            )
             return self._report(
                 claim,
                 model,
-                status='DISPROVED',
-                solver_result='sat',
+                status="DISPROVED",
+                solver_result="sat",
                 proof_or_trace_cid=counterexample.cid,
                 compiler_cid=compiler_cid,
                 counterexample=counterexample.to_dict(),
@@ -262,11 +289,11 @@ class Z3Runner(BaseSecurityRunner):
             return self._report(
                 claim,
                 model,
-                status='UNKNOWN',
-                solver_result='unknown',
-                proof_or_trace_cid='',
+                status="UNKNOWN",
+                solver_result="unknown",
+                proof_or_trace_cid="",
                 compiler_cid=compiler_cid,
-                counterexample={'reason': violation_solver.reason_unknown()},
+                counterexample={"reason": violation_solver.reason_unknown()},
                 compilation=compilation,
                 reason_unknown=violation_solver.reason_unknown(),
             )
@@ -276,15 +303,15 @@ class Z3Runner(BaseSecurityRunner):
         proof_result = proof_solver.check()
         if proof_result == z3.unsat:
             proof_payload = {
-                'claim_id': claim.claim_id,
-                'result': 'unsat-violation',
-                'prover': self.prover_name,
+                "claim_id": claim.claim_id,
+                "result": "unsat-violation",
+                "prover": self.prover_name,
             }
             return self._report(
                 claim,
                 model,
-                status='PROVED',
-                solver_result='unsat',
+                status="PROVED",
+                solver_result="unsat",
                 proof_or_trace_cid=ProofReport.content_cid(proof_payload),
                 compiler_cid=compiler_cid,
                 counterexample=None,
@@ -295,8 +322,8 @@ class Z3Runner(BaseSecurityRunner):
             return self._report(
                 claim,
                 model,
-                status='DISPROVED',
-                solver_result='sat',
+                status="DISPROVED",
+                solver_result="sat",
                 proof_or_trace_cid=counterexample.cid,
                 compiler_cid=compiler_cid,
                 counterexample=counterexample.to_dict(),
@@ -305,11 +332,11 @@ class Z3Runner(BaseSecurityRunner):
         return self._report(
             claim,
             model,
-            status='UNKNOWN',
-            solver_result='unknown',
-            proof_or_trace_cid='',
+            status="UNKNOWN",
+            solver_result="unknown",
+            proof_or_trace_cid="",
             compiler_cid=compiler_cid,
-            counterexample={'reason': proof_solver.reason_unknown()},
+            counterexample={"reason": proof_solver.reason_unknown()},
             compilation=compilation,
             reason_unknown=proof_solver.reason_unknown(),
         )

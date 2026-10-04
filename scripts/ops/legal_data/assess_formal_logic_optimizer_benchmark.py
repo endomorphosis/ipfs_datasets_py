@@ -5,7 +5,9 @@ import argparse
 import json
 from pathlib import Path
 
-from ipfs_datasets_py.processors.legal_data.reasoner.optimizer_policy import build_optimizer_onoff_benchmark
+from ipfs_datasets_py.processors.legal_data.reasoner.optimizer_policy import (
+    build_optimizer_onoff_benchmark,
+)
 
 
 def _load_json(path: str) -> dict:

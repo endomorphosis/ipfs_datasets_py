@@ -46,6 +46,7 @@ try:
     from opentelemetry import trace as otel_trace  # type: ignore[import]
     from opentelemetry.sdk.trace import TracerProvider  # type: ignore[import]
     from opentelemetry.sdk.trace.export import BatchSpanProcessor  # type: ignore[import]
+
     OTEL_AVAILABLE = True
 except ImportError:
     otel_trace = None  # type: ignore[assignment]
@@ -55,13 +56,17 @@ except ImportError:
 
 try:
     from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter  # type: ignore[import]
+
     OTLP_GRPC_AVAILABLE = True
 except ImportError:
     OTLPSpanExporter = None  # type: ignore[assignment]
     OTLP_GRPC_AVAILABLE = False
 
 try:
-    from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter as OTLPHTTPSpanExporter  # type: ignore[import]
+    from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+        OTLPSpanExporter as OTLPHTTPSpanExporter,
+    )  # type: ignore[import]
+
     OTLP_HTTP_AVAILABLE = True
 except ImportError:
     OTLPHTTPSpanExporter = None  # type: ignore[assignment]
@@ -150,7 +155,9 @@ def configure_tracing(
 
     otel_trace.set_tracer_provider(provider)
     _tracer_provider = provider
-    logger.info("OpenTelemetry tracing configured (service=%s, endpoint=%s)", service_name, otlp_endpoint)
+    logger.info(
+        "OpenTelemetry tracing configured (service=%s, endpoint=%s)", service_name, otlp_endpoint
+    )
     return True
 
 
@@ -263,18 +270,13 @@ class MCPTracer:
             async def load_dataset(category: str, tool: str, params: dict):
                 ...
         """
+
         @functools.wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> Any:
             # Try to extract category/tool from positional or keyword args.
-            category = (
-                args[0] if len(args) > 0 else kwargs.get("category", "unknown")
-            )
-            tool = (
-                args[1] if len(args) > 1 else kwargs.get("tool", "unknown")
-            )
-            params = (
-                args[2] if len(args) > 2 else kwargs.get("params", {})
-            )
+            category = args[0] if len(args) > 0 else kwargs.get("category", "unknown")
+            tool = args[1] if len(args) > 1 else kwargs.get("tool", "unknown")
+            params = args[2] if len(args) > 2 else kwargs.get("params", {})
             with self.start_dispatch_span(str(category), str(tool), params) as span:
                 result = await func(*args, **kwargs)
                 self.set_span_ok(span, result)

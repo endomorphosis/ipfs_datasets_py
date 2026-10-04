@@ -5,6 +5,7 @@ Methods under test:
   - OntologyCritic.average_overall(scores)
   - OntologyCritic.count_failing(scores, threshold)
 """
+
 import pytest
 
 
@@ -12,25 +13,30 @@ import pytest
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
 def _score(overall):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     return CriticScore(
         completeness=overall,
         consistency=overall,
         clarity=overall,
         granularity=overall,
-        relationship_coherence=overall, domain_alignment=overall,
+        relationship_coherence=overall,
+        domain_alignment=overall,
     )
 
 
 # ---------------------------------------------------------------------------
 # OntologyCritic.worst_score
 # ---------------------------------------------------------------------------
+
 
 class TestWorstScore:
     def test_empty_returns_none(self):
@@ -53,6 +59,7 @@ class TestWorstScore:
 # OntologyCritic.average_overall
 # ---------------------------------------------------------------------------
 
+
 class TestAverageOverall:
     def test_empty(self):
         c = _make_critic()
@@ -71,6 +78,7 @@ class TestAverageOverall:
 # ---------------------------------------------------------------------------
 # OntologyCritic.count_failing
 # ---------------------------------------------------------------------------
+
 
 class TestCountFailing:
     def test_empty(self):

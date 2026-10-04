@@ -5,7 +5,9 @@
     ``ipfs_datasets_py.knowledge_graphs.extraction.finance_graphrag``.
     Update your imports accordingly.
 """
+
 import warnings
+
 warnings.warn(
     "ipfs_datasets_py.knowledge_graphs.finance_graphrag is deprecated. "
     "Use ipfs_datasets_py.knowledge_graphs.extraction.finance_graphrag instead.",

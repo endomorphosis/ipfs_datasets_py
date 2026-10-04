@@ -204,9 +204,7 @@ def test_source_variants_repositories_generation_families_and_duplicates_group()
     ]
 
     first = build_intent_splits(samples, IntentSplitConfig(seed="grouping"))
-    second = build_intent_splits(
-        list(reversed(samples)), IntentSplitConfig(seed="grouping")
-    )
+    second = build_intent_splits(list(reversed(samples)), IntentSplitConfig(seed="grouping"))
 
     assert first.digest == second.digest
     assert first.assignments["source-v1"] == first.assignments["source-v2"]
@@ -252,10 +250,7 @@ def test_explicit_domain_and_time_revision_holdouts_apply_to_whole_groups() -> N
     assert manifest.assignments["domain-a"] == HELD_OUT_DOMAIN_PARTITION
     assert manifest.assignments["domain-variant"] == HELD_OUT_DOMAIN_PARTITION
     assert manifest.assignments["future-a"] == HELD_OUT_TIME_REVISION_PARTITION
-    assert (
-        manifest.assignments["future-old-variant"]
-        == HELD_OUT_TIME_REVISION_PARTITION
-    )
+    assert manifest.assignments["future-old-variant"] == HELD_OUT_TIME_REVISION_PARTITION
     assert manifest.assignments["revision-a"] == HELD_OUT_TIME_REVISION_PARTITION
 
 
@@ -326,9 +321,7 @@ def test_retrieval_fence_rejects_cross_partition_unknown_and_snapshot_candidates
         for sample_id in ("query", "same", "cross", "stale")
     )
     examples = tuple(
-        replace(item, graph_snapshot_id="graph:stale")
-        if item.sample_id == "stale"
-        else item
+        replace(item, graph_snapshot_id="graph:stale") if item.sample_id == "stale" else item
         for item in examples
     )
     manifest = IntentSplitManifest(
@@ -342,15 +335,11 @@ def test_retrieval_fence_rejects_cross_partition_unknown_and_snapshot_candidates
         config_digest="sha256:" + ("a" * 64),
     )
 
-    allowed = require_retrieval_partition_fence(
-        manifest, "query", ("same",)
-    )
+    allowed = require_retrieval_partition_fence(manifest, "query", ("same",))
     assert allowed.partition == TEST_PARTITION
     assert allowed.graph_snapshot_id == "graph:snapshot-1"
 
-    result = validate_retrieval_partition_fence(
-        manifest, "query", ("cross", "stale", "missing")
-    )
+    result = validate_retrieval_partition_fence(manifest, "query", ("cross", "stale", "missing"))
     assert result.passed is False
     assert {item.reason for item in result.violations} == {
         "candidate_not_in_manifest",
@@ -373,9 +362,7 @@ def test_retrieval_fence_rejects_cross_partition_unknown_and_snapshot_candidates
 
 def test_split_contracts_are_immutable_and_round_trip_canonically() -> None:
     manifest = build_intent_splits([_record("one"), _record("two")])
-    decoded = IntentSplitManifest.from_dict(
-        json.loads(manifest.to_json())
-    )
+    decoded = IntentSplitManifest.from_dict(json.loads(manifest.to_json()))
 
     assert decoded.digest == manifest.digest
     with pytest.raises(TypeError):

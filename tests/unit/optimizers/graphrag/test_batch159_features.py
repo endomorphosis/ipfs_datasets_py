@@ -6,17 +6,20 @@ Methods under test:
   - OntologyPipeline.all_runs_above(threshold)
   - OntologyGenerator.entity_type_ratio(result)
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 def _make_entity(eid, etype="Person"):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type=etype, text=eid)
 
 
 def _make_result(entities):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities,
         relationships=[],
@@ -28,11 +31,13 @@ def _make_result(entities):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
@@ -48,6 +53,7 @@ def _push_opt(o, avg):
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -60,6 +66,7 @@ def _push_run(p, score):
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.history_iqr
 # ---------------------------------------------------------------------------
+
 
 class TestHistoryIqr:
     def test_empty_returns_zero(self):
@@ -89,6 +96,7 @@ class TestHistoryIqr:
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.top_n_history
 # ---------------------------------------------------------------------------
+
 
 class TestTopNHistory:
     def test_empty_returns_empty(self):
@@ -127,6 +135,7 @@ class TestTopNHistory:
 # OntologyPipeline.all_runs_above
 # ---------------------------------------------------------------------------
 
+
 class TestAllRunsAbove:
     def test_empty_returns_false(self):
         p = _make_pipeline()
@@ -153,6 +162,7 @@ class TestAllRunsAbove:
 # ---------------------------------------------------------------------------
 # OntologyGenerator.entity_type_ratio
 # ---------------------------------------------------------------------------
+
 
 class TestEntityTypeRatio:
     def test_empty_result(self):

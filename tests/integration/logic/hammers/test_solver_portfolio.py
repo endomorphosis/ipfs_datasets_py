@@ -81,9 +81,7 @@ def _contradiction_translation(*, target: TranslationTarget, request_id: str):
     """``exists x. p(x) and not p(x)`` — trivially unsatisfiable."""
 
     p = _predicate("p")
-    goal = Exists(
-        "x", NAT, And(App(p, (Var("x", NAT),)), Not(App(p, (Var("x", NAT),))))
-    )
+    goal = Exists("x", NAT, And(App(p, (Var("x", NAT),)), Not(App(p, (Var("x", NAT),)))))
     ctx = TranslationContext(request_id=request_id)
     return ctx.translate(source_construct="contradiction_goal", term=goal, target=target)
 
@@ -120,9 +118,10 @@ class TestZ3RealInvocation:
         assert record.solver_version  # a real, non-empty version string
         evidence = result.evidence[record.attempt_id]
         assert evidence.command[0] == shutil.which("z3")
-        assert compute_content_digest(
-            {"stdout": evidence.raw_stdout, "stderr": evidence.raw_stderr}
-        ) == record.raw_output_digest
+        assert (
+            compute_content_digest({"stdout": evidence.raw_stdout, "stderr": evidence.raw_stderr})
+            == record.raw_output_digest
+        )
 
     def test_asserted_contradiction_is_unsatisfiable(self):
         translation = _contradiction_translation(
@@ -146,9 +145,7 @@ class TestZ3RealInvocation:
 @pytest.mark.skipif(not CVC5_AVAILABLE, reason="cvc5 executable not found on PATH")
 class TestCVC5RealInvocation:
     def test_asserted_tautology_is_satisfiable(self):
-        translation = _tautology_translation(
-            target=TranslationTarget.SMTLIB, request_id="cvc5-req"
-        )
+        translation = _tautology_translation(target=TranslationTarget.SMTLIB, request_id="cvc5-req")
         policy = _smt_policy("cvc5")
         portfolio = SolverPortfolio(policy)
         result = portfolio.run(
@@ -272,7 +269,9 @@ class TestEProverRealInvocation:
 # ---------------------------------------------------------------------------
 
 
-_SMT_SOLVERS_AVAILABLE = [name for name, ok in (("z3", Z3_AVAILABLE), ("cvc5", CVC5_AVAILABLE)) if ok]
+_SMT_SOLVERS_AVAILABLE = [
+    name for name, ok in (("z3", Z3_AVAILABLE), ("cvc5", CVC5_AVAILABLE)) if ok
+]
 
 
 @pytest.mark.skipif(

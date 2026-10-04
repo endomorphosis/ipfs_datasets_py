@@ -204,9 +204,7 @@ class DependentTypeRef:
     description: str
 
     def __post_init__(self) -> None:
-        _require_nonempty_str(
-            self.description, field_name="description", owner="DependentTypeRef"
-        )
+        _require_nonempty_str(self.description, field_name="description", owner="DependentTypeRef")
 
 
 TypeRef = Union[SortRef, TypeVarRef, FunctionTypeRef, DependentTypeRef]
@@ -290,9 +288,7 @@ class Const:
 
     def __post_init__(self) -> None:
         _require_nonempty_str(self.name, field_name="name", owner="Const")
-        if self.opaque and not (
-            isinstance(self.opaque_reason, str) and self.opaque_reason.strip()
-        ):
+        if self.opaque and not (isinstance(self.opaque_reason, str) and self.opaque_reason.strip()):
             raise ValueError("Const.opaque_reason must be set when opaque=True")
 
 
@@ -469,9 +465,7 @@ def infer_type(term: Term) -> TypeRef:
         return FunctionTypeRef(
             params=tuple(p.type for p in term.params), result=infer_type(term.body)
         )
-    if isinstance(term, (Forall, Exists, Not, Eq, BoolLit)) or isinstance(
-        term, _BIN_CONNECTIVES
-    ):
+    if isinstance(term, (Forall, Exists, Not, Eq, BoolLit)) or isinstance(term, _BIN_CONNECTIVES):
         return PROP_SORT
     if isinstance(term, Opaque):
         return term.type
@@ -504,9 +498,7 @@ def free_term_vars(term: Term, *, bound: FrozenSet[str] = frozenset()) -> Frozen
     if isinstance(term, Not):
         return free_term_vars(term.term, bound=bound)
     if isinstance(term, _BIN_CONNECTIVES) or isinstance(term, Eq):
-        return free_term_vars(term.left, bound=bound) | free_term_vars(
-            term.right, bound=bound
-        )
+        return free_term_vars(term.left, bound=bound) | free_term_vars(term.right, bound=bound)
     if isinstance(term, (BoolLit, Opaque)):
         return frozenset()
     raise MalformedTermError(f"cannot compute free variables of {term!r}")
@@ -582,8 +574,7 @@ def substitute_term(term: Term, name: str, replacement: Term) -> Term:
                 fresh = _fresh_name(p.name, avoid)
                 body = substitute_term(body, p.name, Var(fresh, p.type))
                 params = tuple(
-                    LambdaParam(fresh, pp.type) if pp.name == p.name else pp
-                    for pp in params
+                    LambdaParam(fresh, pp.type) if pp.name == p.name else pp for pp in params
                 )
         return Lambda(params=params, body=substitute_term(body, name, replacement))
     if isinstance(term, (Forall, Exists)):
@@ -666,9 +657,7 @@ def substitute_type_vars_in_term(term: Term, mapping: Dict[str, SortRef]) -> Ter
         )
     if isinstance(term, Lambda):
         return Lambda(
-            params=tuple(
-                LambdaParam(p.name, st(p.type)) for p in term.params
-            ),
+            params=tuple(LambdaParam(p.name, st(p.type)) for p in term.params),
             body=substitute_type_vars_in_term(term.body, mapping),
         )
     if isinstance(term, (Forall, Exists)):
@@ -1149,9 +1138,7 @@ class TranslationMap:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "TranslationMap":
-        return cls(
-            entries=[TranslationMapEntry.from_dict(e) for e in data.get("entries", [])]
-        )
+        return cls(entries=[TranslationMapEntry.from_dict(e) for e in data.get("entries", [])])
 
     def content_digest(self) -> str:
         return compute_content_digest(self.to_dict())
@@ -1338,9 +1325,7 @@ class TranslationContext:
         )
 
     @staticmethod
-    def _render(
-        term: Term, *, target: TranslationTarget
-    ) -> Tuple[str, Dict[str, Tuple[str, str]]]:
+    def _render(term: Term, *, target: TranslationTarget) -> Tuple[str, Dict[str, Tuple[str, str]]]:
         if target is TranslationTarget.TPTP:
             from . import tptp as tptp_module
 
@@ -1369,9 +1354,7 @@ class TranslationContext:
         )
         ctx = cls(request_id=data["request_id"])
         ctx.translation_map = TranslationMap.from_dict(data.get("translation_map", {}))
-        ctx.records = [
-            TranslationRecord.from_dict(r) for r in data.get("records", [])
-        ]
+        ctx.records = [TranslationRecord.from_dict(r) for r in data.get("records", [])]
         return ctx
 
     def save(self, path: str) -> None:

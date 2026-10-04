@@ -5,6 +5,7 @@ Check for available MCP tools in the ipfs_datasets_py library.
 This script enumerates all the available tools in the MCP server and
 creates a mapping from library features to MCP tools.
 """
+
 import os
 import sys
 import json
@@ -22,6 +23,7 @@ print(f"MCP server path: {MCP_SERVER_PATH}")
 TOOLS_PATH = MCP_SERVER_PATH / "tools"
 print(f"Tools path: {TOOLS_PATH}")
 print(f"Tools path exists: {TOOLS_PATH.exists()}")
+
 
 def check_mcp_tools():
     """Check for available MCP tools and create a mapping."""
@@ -72,7 +74,7 @@ def check_mcp_tools():
         "ipfs_knn_index.py": ["vector_tools"],
         "data_provenance.py": ["provenance_tools"],
         "security.py": ["security_tools"],
-        "knowledge_graph_extraction.py": ["graph_tools"]
+        "knowledge_graph_extraction.py": ["graph_tools"],
     }
 
     # Check each mapping
@@ -95,15 +97,20 @@ def check_mcp_tools():
     # Save mapping to file
     mapping_file = PROJECT_ROOT / "mcp_tools_mapping.json"
     with open(mapping_file, "w") as f:
-        json.dump({
-            "tool_categories": tool_categories,
-            "total_tools": total_tools,
-            "tools_by_category": tool_mapping,
-            "library_to_tool_mapping": feature_mappings
-        }, f, indent=2)
+        json.dump(
+            {
+                "tool_categories": tool_categories,
+                "total_tools": total_tools,
+                "tools_by_category": tool_mapping,
+                "library_to_tool_mapping": feature_mappings,
+            },
+            f,
+            indent=2,
+        )
 
     print(f"\nMapping saved to: {mapping_file}")
     return True
+
 
 if __name__ == "__main__":
     check_mcp_tools()

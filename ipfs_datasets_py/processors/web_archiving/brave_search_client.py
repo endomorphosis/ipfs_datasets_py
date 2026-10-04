@@ -63,9 +63,11 @@ def resolve_brave_search_api_key(api_key: Optional[str] = None) -> str:
             return token
     return ""
 
+
 # Try to import IPFS cache module
 try:
     from .brave_search_ipfs_cache import BraveSearchIPFSCache
+
     HAVE_IPFS_CACHE = True
 except ImportError:
     HAVE_IPFS_CACHE = False
@@ -85,10 +87,10 @@ def _brave_ipfs_cache_enabled() -> bool:
 
 def brave_web_search_max_count() -> int:
     """Return the maximum per-request result count supported by Brave web search.
-    
+
     Brave enforces a server-side limit (commonly 20 for web search). This can be
     overridden via the BRAVE_SEARCH_MAX_COUNT environment variable.
-    
+
     Returns:
         Maximum number of results per request (default: 20)
     """
@@ -124,11 +126,11 @@ def _clamp_brave_offset(offset: int) -> int:
 
 def _brave_cache_path() -> Path:
     """Get the path to the Brave Search cache file.
-    
+
     Priority:
     1. BRAVE_SEARCH_CACHE_PATH environment variable
     2. <state_dir>/brave_search_cache.json
-    
+
     Returns:
         Path to cache file
     """
@@ -136,7 +138,7 @@ def _brave_cache_path() -> Path:
     p = (os.environ.get("BRAVE_SEARCH_CACHE_PATH") or "").strip()
     if p:
         return Path(p).expanduser().resolve()
-    
+
     # Default to state directory
     state_dir = Path((os.environ.get("CCINDEX_STATE_DIR") or "state").strip() or "state")
     return state_dir / "brave_search_cache.json"
@@ -144,7 +146,7 @@ def _brave_cache_path() -> Path:
 
 def brave_search_cache_path() -> Path:
     """Return the on-disk Brave Search cache file path.
-    
+
     Returns:
         Path to cache file
     """
@@ -153,7 +155,7 @@ def brave_search_cache_path() -> Path:
 
 def brave_search_cache_stats() -> Dict[str, Any]:
     """Return best-effort stats about the Brave Search on-disk cache.
-    
+
     Returns:
         Dict containing:
             - path: Cache file path
@@ -168,11 +170,11 @@ def brave_search_cache_stats() -> Dict[str, Any]:
     path = _brave_cache_path()
     exists = path.exists() and path.is_file()
     size_bytes = int(path.stat().st_size) if exists else 0
-    
+
     entries = 0
     newest_ts = None
     oldest_ts = None
-    
+
     if exists:
         try:
             raw = path.read_text(encoding="utf-8").strip()
@@ -189,7 +191,7 @@ def brave_search_cache_stats() -> Dict[str, Any]:
                     oldest_ts = float(ts) if oldest_ts is None else min(float(ts), float(oldest_ts))
         except Exception:
             pass
-    
+
     return {
         "path": str(path),
         "exists": bool(exists),
@@ -205,7 +207,7 @@ def brave_search_cache_stats() -> Dict[str, Any]:
 
 def clear_brave_search_cache() -> Dict[str, Any]:
     """Delete the Brave Search cache file if present.
-    
+
     Returns:
         Dict containing:
             - deleted: Whether file was deleted
@@ -227,7 +229,12 @@ def clear_brave_search_cache() -> Dict[str, Any]:
                 # Fallback: truncate
                 try:
                     path.write_text("{}\n", encoding="utf-8")
-                    return {"deleted": False, "freed_bytes": freed, "path": str(path), "truncated": True}
+                    return {
+                        "deleted": False,
+                        "freed_bytes": freed,
+                        "path": str(path),
+                        "truncated": True,
+                    }
                 except Exception:
                     return {"deleted": False, "freed_bytes": 0, "path": str(path)}
         return {"deleted": False, "freed_bytes": 0, "path": str(path)}
@@ -237,14 +244,14 @@ def clear_brave_search_cache() -> Dict[str, Any]:
 
 def _brave_cache_key(*, q: str, count: int, offset: int, country: str, safesearch: str) -> str:
     """Generate a cache key for a Brave Search query.
-    
+
     Args:
         q: Query string
         count: Number of results
         offset: Pagination offset
         country: Country code
         safesearch: Safesearch level
-        
+
     Returns:
         SHA256 hash of the query parameters
     """
@@ -262,13 +269,13 @@ def _brave_cache_key(*, q: str, count: int, offset: int, country: str, safesearc
 @contextmanager
 def _locked_cache_file(path: Path):
     """Context manager for locked cache file access.
-    
+
     Uses fcntl file locking on Unix systems for concurrent access safety.
     Falls back to best-effort locking if fcntl is unavailable.
-    
+
     Args:
         path: Path to cache file
-        
+
     Yields:
         Open file handle
     """
@@ -277,6 +284,7 @@ def _locked_cache_file(path: Path):
     try:
         try:
             import fcntl
+
             fcntl.flock(f.fileno(), fcntl.LOCK_EX)
         except Exception:
             # Best-effort lock; if unavailable, proceed without locking
@@ -291,10 +299,10 @@ def _locked_cache_file(path: Path):
 
 def _load_cache_dict(f) -> Dict[str, dict]:
     """Load cache dictionary from file handle.
-    
+
     Args:
         f: Open file handle positioned at start
-        
+
     Returns:
         Cache dictionary
     """
@@ -311,7 +319,7 @@ def _load_cache_dict(f) -> Dict[str, dict]:
 
 def _save_cache_dict(f, data: Dict[str, dict]) -> None:
     """Save cache dictionary to file handle.
-    
+
     Args:
         f: Open file handle
         data: Cache dictionary to save
@@ -337,9 +345,9 @@ def brave_web_search(
     safesearch: str = "moderate",
 ) -> List[Dict[str, str]]:
     """Search the web using Brave Search API (synchronous version with caching).
-    
+
     This is the core synchronous search function with disk-based caching support.
-    
+
     Args:
         query: Search query string
         api_key: Brave Search API key. If omitted, resolves BRAVE_SEARCH_API_KEY
@@ -348,13 +356,13 @@ def brave_web_search(
         offset: Pagination offset (default 0)
         country: Country code for search results (default "us")
         safesearch: Safe search filter level (default "moderate")
-        
+
     Returns:
         List of dicts with keys: title, url, description
-        
+
     Raises:
         RuntimeError: If API key is missing or API request fails
-        
+
     Environment Variables:
         BRAVE_SEARCH_PAID_API_KEY/BRAVE_SEARCH_PRO_API_KEY: Preferred paid/pro API keys
         BRAVE_SEARCH_API_KEY: General Brave Search API key
@@ -370,22 +378,29 @@ def brave_web_search(
             "Missing BRAVE_SEARCH_API_KEY/BRAVE_API_KEY "
             "(set env var, ~/.config/ipfs_datasets_py/secrets.json, keyring, or pass api_key)"
         )
-    
+
     q = (query or "").strip()
     if not q:
         return []
-    
+
     count = _clamp_brave_count(int(count))
     offset = _clamp_brave_offset(int(offset))
-    
+
     # Check cache configuration
     cache_disable = (os.environ.get("BRAVE_SEARCH_CACHE_DISABLE") or "").strip().lower() in {
-        "1", "true", "yes", "on",
+        "1",
+        "true",
+        "yes",
+        "on",
     }
     ttl_s = int((os.environ.get("BRAVE_SEARCH_CACHE_TTL_S") or "86400").strip() or "86400")
-    max_entries = int((os.environ.get("BRAVE_SEARCH_CACHE_MAX_ENTRIES") or "1000").strip() or "1000")
-    cache_key = _brave_cache_key(q=q, count=int(count), offset=int(offset), country=str(country), safesearch=str(safesearch))
-    
+    max_entries = int(
+        (os.environ.get("BRAVE_SEARCH_CACHE_MAX_ENTRIES") or "1000").strip() or "1000"
+    )
+    cache_key = _brave_cache_key(
+        q=q, count=int(count), offset=int(offset), country=str(country), safesearch=str(safesearch)
+    )
+
     # IPFS cache configuration
     ipfs_cache_enabled = _brave_ipfs_cache_enabled()
     ipfs_cache = None
@@ -398,7 +413,7 @@ def brave_web_search(
         except Exception as e:
             logger.debug(f"Failed to initialize IPFS cache: {e}")
             ipfs_cache = None
-    
+
     # Try to retrieve from local cache first (fastest)
     if not cache_disable and ttl_s > 0:
         try:
@@ -415,27 +430,25 @@ def brave_web_search(
                             for it in items:
                                 if not isinstance(it, dict):
                                     continue
-                                out_cached.append({
-                                    "title": str(it.get("title") or ""),
-                                    "url": str(it.get("url") or ""),
-                                    "description": str(it.get("description") or ""),
-                                })
+                                out_cached.append(
+                                    {
+                                        "title": str(it.get("title") or ""),
+                                        "url": str(it.get("url") or ""),
+                                        "description": str(it.get("description") or ""),
+                                    }
+                                )
                             logger.debug(f"Brave Search cache hit for query: {q}")
                             return out_cached
         except Exception as e:
             # Cache is best-effort; fall back to live request
             logger.debug(f"Local cache retrieval failed: {e}")
             pass
-    
+
     # Try IPFS cache if local cache missed
     if ipfs_cache and not cache_disable:
         try:
             ipfs_result = ipfs_cache.retrieve(
-                query=q,
-                count=count,
-                offset=offset,
-                country=country,
-                safesearch=safesearch
+                query=q, count=count, offset=offset, country=country, safesearch=safesearch
             )
             if ipfs_result:
                 logger.info(f"Brave Search IPFS cache hit for query: {q}")
@@ -443,7 +456,7 @@ def brave_web_search(
         except Exception as e:
             logger.debug(f"IPFS cache retrieval failed: {e}")
             pass
-    
+
     # Make live API request
     try:
         import requests
@@ -451,7 +464,7 @@ def brave_web_search(
         raise RuntimeError(
             "requests is required for Brave Search. Install with: pip install requests"
         ) from e
-    
+
     url = "https://api.search.brave.com/res/v1/web/search"
     params = {
         "q": q,
@@ -464,28 +477,30 @@ def brave_web_search(
         "Accept": "application/json",
         "X-Subscription-Token": token,
     }
-    
+
     logger.debug(f"Making Brave Search API request for query: {q}")
     resp = requests.get(url, params=params, headers=headers, timeout=20)
     if resp.status_code != 200:
         raise RuntimeError(f"Brave Search HTTP {resp.status_code}: {resp.text[:500]}")
-    
+
     data = resp.json() if resp.content else {}
     web = data.get("web") if isinstance(data, dict) else None
     items = web.get("results") if isinstance(web, dict) else None
     if not isinstance(items, list):
         return []
-    
+
     out: List[Dict[str, str]] = []
     for it in items:
         if not isinstance(it, dict):
             continue
-        out.append({
-            "title": str(it.get("title") or ""),
-            "url": str(it.get("url") or ""),
-            "description": str(it.get("description") or ""),
-        })
-    
+        out.append(
+            {
+                "title": str(it.get("title") or ""),
+                "url": str(it.get("url") or ""),
+                "description": str(it.get("description") or ""),
+            }
+        )
+
     # Save to local cache
     if not cache_disable and ttl_s > 0:
         try:
@@ -493,24 +508,25 @@ def brave_web_search(
             with _locked_cache_file(cache_path) as f:
                 cache = _load_cache_dict(f)
                 cache[cache_key] = {"ts": time.time(), "items": out}
-                
+
                 # LRU eviction if cache is too large
                 if max_entries > 0 and len(cache) > max_entries:
+
                     def _ts(kv) -> float:
                         v = kv[1]
                         if isinstance(v, dict) and isinstance(v.get("ts"), (int, float)):
                             return float(v["ts"])
                         return 0.0
-                    
-                    keep = dict(sorted(cache.items(), key=_ts, reverse=True)[:int(max_entries)])
+
+                    keep = dict(sorted(cache.items(), key=_ts, reverse=True)[: int(max_entries)])
                     cache = keep
-                
+
                 _save_cache_dict(f, cache)
                 logger.debug(f"Cached Brave Search results for query: {q}")
         except Exception as e:
             logger.debug(f"Failed to cache results: {e}")
             pass
-    
+
     # Save to IPFS cache if enabled
     if ipfs_cache and not cache_disable:
         try:
@@ -520,14 +536,14 @@ def brave_web_search(
                 count=count,
                 offset=offset,
                 country=country,
-                safesearch=safesearch
+                safesearch=safesearch,
             )
             if cid:
                 logger.debug(f"Stored Brave Search results in IPFS: {cid}")
         except Exception as e:
             logger.debug(f"Failed to store in IPFS cache: {e}")
             pass
-    
+
     return out
 
 
@@ -541,9 +557,9 @@ def brave_web_search_page(
     safesearch: str = "moderate",
 ) -> Dict[str, Any]:
     """Brave web search that also returns pagination metadata.
-    
+
     This is useful for implementing pagination in UI or knowing total result counts.
-    
+
     Args:
         query: Search query string
         api_key: Brave Search API key
@@ -551,7 +567,7 @@ def brave_web_search_page(
         offset: Pagination offset
         country: Country code
         safesearch: Safe search filter level
-        
+
     Returns:
         Dict containing:
             - items: List of search results (same format as brave_web_search)
@@ -569,25 +585,38 @@ def brave_web_search_page(
             "Missing BRAVE_SEARCH_API_KEY/BRAVE_API_KEY "
             "(set env var, ~/.config/ipfs_datasets_py/secrets.json, keyring, or pass api_key)"
         )
-    
+
     q = (query or "").strip()
     if not q:
         return {
             "items": [],
-            "meta": {"count": 0, "offset": 0, "total": 0, "max_count": brave_web_search_max_count(), "cached": True},
+            "meta": {
+                "count": 0,
+                "offset": 0,
+                "total": 0,
+                "max_count": brave_web_search_max_count(),
+                "cached": True,
+            },
         }
-    
+
     count = _clamp_brave_count(int(count))
     offset = _clamp_brave_offset(int(offset))
-    
+
     # Cache configuration
     cache_disable = (os.environ.get("BRAVE_SEARCH_CACHE_DISABLE") or "").strip().lower() in {
-        "1", "true", "yes", "on",
+        "1",
+        "true",
+        "yes",
+        "on",
     }
     ttl_s = int((os.environ.get("BRAVE_SEARCH_CACHE_TTL_S") or "86400").strip() or "86400")
-    max_entries = int((os.environ.get("BRAVE_SEARCH_CACHE_MAX_ENTRIES") or "1000").strip() or "1000")
-    cache_key = _brave_cache_key(q=q, count=int(count), offset=int(offset), country=str(country), safesearch=str(safesearch))
-    
+    max_entries = int(
+        (os.environ.get("BRAVE_SEARCH_CACHE_MAX_ENTRIES") or "1000").strip() or "1000"
+    )
+    cache_key = _brave_cache_key(
+        q=q, count=int(count), offset=int(offset), country=str(country), safesearch=str(safesearch)
+    )
+
     # Try cache
     if not cache_disable and ttl_s > 0:
         try:
@@ -605,11 +634,13 @@ def brave_web_search_page(
                             for it in items:
                                 if not isinstance(it, dict):
                                     continue
-                                out_cached.append({
-                                    "title": str(it.get("title") or ""),
-                                    "url": str(it.get("url") or ""),
-                                    "description": str(it.get("description") or ""),
-                                })
+                                out_cached.append(
+                                    {
+                                        "title": str(it.get("title") or ""),
+                                        "url": str(it.get("url") or ""),
+                                        "description": str(it.get("description") or ""),
+                                    }
+                                )
                             out_meta = meta if isinstance(meta, dict) else {}
                             total = out_meta.get("total")
                             total_int = int(total) if isinstance(total, (int, float)) else None
@@ -627,7 +658,7 @@ def brave_web_search_page(
                             }
         except Exception:
             pass
-    
+
     # Make live API request
     try:
         import requests
@@ -635,7 +666,7 @@ def brave_web_search_page(
         raise RuntimeError(
             "requests is required for Brave Search. Install with: pip install requests"
         ) from e
-    
+
     url = "https://api.search.brave.com/res/v1/web/search"
     params = {
         "q": q,
@@ -648,14 +679,14 @@ def brave_web_search_page(
         "Accept": "application/json",
         "X-Subscription-Token": token,
     }
-    
+
     resp = requests.get(url, params=params, headers=headers, timeout=20)
     if resp.status_code != 200:
         raise RuntimeError(f"Brave Search HTTP {resp.status_code}: {resp.text[:500]}")
-    
+
     data = resp.json() if resp.content else {}
     web = data.get("web") if isinstance(data, dict) else None
-    
+
     # Extract total results if available
     total_int = None
     if isinstance(web, dict):
@@ -665,7 +696,7 @@ def brave_web_search_page(
             if isinstance(v, (int, float)):
                 total_int = int(v)
                 break
-    
+
     items = web.get("results") if isinstance(web, dict) else None
     if not isinstance(items, list):
         out_items: List[Dict[str, str]] = []
@@ -674,35 +705,42 @@ def brave_web_search_page(
         for it in items:
             if not isinstance(it, dict):
                 continue
-            out_items.append({
-                "title": str(it.get("title") or ""),
-                "url": str(it.get("url") or ""),
-                "description": str(it.get("description") or ""),
-            })
-    
+            out_items.append(
+                {
+                    "title": str(it.get("title") or ""),
+                    "url": str(it.get("url") or ""),
+                    "description": str(it.get("description") or ""),
+                }
+            )
+
     # Save to cache
     if not cache_disable and ttl_s > 0:
         try:
             cache_path = _brave_cache_path()
             with _locked_cache_file(cache_path) as f:
                 cache = _load_cache_dict(f)
-                cache[cache_key] = {"ts": time.time(), "items": out_items, "meta": {"total": total_int}}
-                
+                cache[cache_key] = {
+                    "ts": time.time(),
+                    "items": out_items,
+                    "meta": {"total": total_int},
+                }
+
                 # LRU eviction
                 if max_entries > 0 and len(cache) > max_entries:
+
                     def _ts(kv) -> float:
                         v = kv[1]
                         if isinstance(v, dict) and isinstance(v.get("ts"), (int, float)):
                             return float(v["ts"])
                         return 0.0
-                    
-                    keep = dict(sorted(cache.items(), key=_ts, reverse=True)[:int(max_entries)])
+
+                    keep = dict(sorted(cache.items(), key=_ts, reverse=True)[: int(max_entries)])
                     cache = keep
-                
+
                 _save_cache_dict(f, cache)
         except Exception:
             pass
-    
+
     return {
         "items": out_items,
         "meta": {
@@ -717,28 +755,28 @@ def brave_web_search_page(
 
 class BraveSearchClient:
     """High-level Brave Search client with configuration and state management.
-    
+
     This class provides a more object-oriented interface to Brave Search with:
     - Configuration management
     - API key handling
     - Cache management
     - Queue support for batch operations
-    
+
     Example:
         >>> client = BraveSearchClient(api_key="your-key")
         >>> results = client.search("python programming", count=20)
         >>> for result in results:
         ...     print(result['title'], result['url'])
-        
+
         >>> # With pagination metadata
         >>> page = client.search_page("data science", count=10, offset=20)
         >>> print(f"Total results: {page['meta']['total']}")
         >>> print(f"Showing results {page['meta']['offset']} to {page['meta']['offset'] + len(page['items'])}")
     """
-    
+
     def __init__(self, api_key: Optional[str] = None):
         """Initialize Brave Search client.
-        
+
         Args:
             api_key: Brave Search API key. If omitted, resolves BRAVE_SEARCH_API_KEY
                 or BRAVE_API_KEY from env, config secrets, vault, or keyring.
@@ -749,7 +787,7 @@ class BraveSearchClient:
             "safesearch": "moderate",
             "default_count": 10,
         }
-        
+
         # Initialize IPFS cache if enabled
         self.ipfs_cache = None
         if HAVE_IPFS_CACHE:
@@ -761,7 +799,7 @@ class BraveSearchClient:
                         self.ipfs_cache = None
                 except Exception:
                     self.ipfs_cache = None
-    
+
     def search(
         self,
         query: str,
@@ -771,14 +809,14 @@ class BraveSearchClient:
         safesearch: Optional[str] = None,
     ) -> List[Dict[str, str]]:
         """Search the web using Brave Search API.
-        
+
         Args:
             query: Search query string
             count: Number of results (defaults to configured default_count)
             offset: Pagination offset
             country: Country code (defaults to configured country)
             safesearch: Safesearch level (defaults to configured safesearch)
-            
+
         Returns:
             List of search results
         """
@@ -790,7 +828,7 @@ class BraveSearchClient:
             country=country or self.config["country"],
             safesearch=safesearch or self.config["safesearch"],
         )
-    
+
     def search_page(
         self,
         query: str,
@@ -800,14 +838,14 @@ class BraveSearchClient:
         safesearch: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Search with pagination metadata.
-        
+
         Args:
             query: Search query string
             count: Number of results
             offset: Pagination offset
             country: Country code
             safesearch: Safesearch level
-            
+
         Returns:
             Dict with 'items' and 'meta' keys
         """
@@ -819,13 +857,13 @@ class BraveSearchClient:
             country=country or self.config["country"],
             safesearch=safesearch or self.config["safesearch"],
         )
-    
+
     def configure(self, **kwargs) -> Dict[str, Any]:
         """Update client configuration.
-        
+
         Args:
             **kwargs: Configuration options (country, safesearch, default_count, api_key)
-            
+
         Returns:
             Current configuration
         """
@@ -835,32 +873,32 @@ class BraveSearchClient:
                 self.config[key] = value
             elif key == "api_key":
                 self.api_key = value
-        
+
         return {
             "status": "success",
             "configuration": self.config,
             "api_key_set": bool(self.api_key),
         }
-    
+
     def cache_stats(self) -> Dict[str, Any]:
         """Get cache statistics.
-        
+
         Returns:
             Cache statistics dict
         """
         return brave_search_cache_stats()
-    
+
     def clear_cache(self) -> Dict[str, Any]:
         """Clear the search cache.
-        
+
         Returns:
             Cache clearing result
         """
         return clear_brave_search_cache()
-    
+
     def ipfs_cache_stats(self) -> Dict[str, Any]:
         """Get IPFS cache statistics.
-        
+
         Returns:
             IPFS cache statistics dict
         """
@@ -869,84 +907,69 @@ class BraveSearchClient:
         else:
             return {
                 "available": False,
-                "message": "IPFS cache not enabled. Set BRAVE_SEARCH_IPFS_CACHE=1"
+                "message": "IPFS cache not enabled. Set BRAVE_SEARCH_IPFS_CACHE=1",
             }
-    
+
     def ipfs_cache_clear_index(self) -> Dict[str, Any]:
         """Clear IPFS cache CID index.
-        
+
         Returns:
             Clear result
         """
         if self.ipfs_cache:
             return self.ipfs_cache.clear_index()
         else:
-            return {
-                "status": "unavailable",
-                "message": "IPFS cache not enabled"
-            }
-    
+            return {"status": "unavailable", "message": "IPFS cache not enabled"}
+
     def ipfs_cache_gc(self) -> Dict[str, Any]:
         """Garbage collect IPFS cache.
-        
+
         Returns:
             GC result
         """
         if self.ipfs_cache:
             return self.ipfs_cache.gc()
         else:
-            return {
-                "status": "unavailable",
-                "message": "IPFS cache not enabled"
-            }
-    
+            return {"status": "unavailable", "message": "IPFS cache not enabled"}
+
     def ipfs_cache_pin(self, cid: str) -> Dict[str, Any]:
         """Pin an IPFS cache entry.
-        
+
         Args:
             cid: IPFS CID to pin
-            
+
         Returns:
             Pin result
         """
         if self.ipfs_cache:
             return self.ipfs_cache.pin_entry(cid)
         else:
-            return {
-                "status": "unavailable",
-                "message": "IPFS cache not enabled"
-            }
-    
+            return {"status": "unavailable", "message": "IPFS cache not enabled"}
+
     def ipfs_cache_unpin(self, cid: str) -> Dict[str, Any]:
         """Unpin an IPFS cache entry.
-        
+
         Args:
             cid: IPFS CID to unpin
-            
+
         Returns:
             Unpin result
         """
         if self.ipfs_cache:
             return self.ipfs_cache.unpin_entry(cid)
         else:
-            return {
-                "status": "unavailable",
-                "message": "IPFS cache not enabled"
-            }
-    
+            return {"status": "unavailable", "message": "IPFS cache not enabled"}
+
     def ipfs_cache_list_pins(self) -> Dict[str, Any]:
         """List pinned IPFS cache entries.
-        
+
         Returns:
             List of pinned CIDs
         """
         if self.ipfs_cache:
             return self.ipfs_cache.list_pins()
         else:
-            return {
-                "status": "unavailable",
-                "message": "IPFS cache not enabled"
-            }
+            return {"status": "unavailable", "message": "IPFS cache not enabled"}
 
 
 __all__ = [

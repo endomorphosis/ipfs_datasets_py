@@ -76,10 +76,7 @@ def _statement_body(statement: IntentStatement) -> dict[str, Any]:
 
 
 def _modal_operator(statement: IntentStatement) -> str:
-    if (
-        statement.kind is StatementKind.GOAL
-        and statement.modality is IntentModality.ASSERTED
-    ):
+    if statement.kind is StatementKind.GOAL and statement.modality is IntentModality.ASSERTED:
         return IntentModality.INTENDED.value
     return statement.modality.value
 
@@ -122,21 +119,15 @@ class IntentSemanticMutation:
                 else IntentSemanticMutationKind(self.kind)
             )
         except (TypeError, ValueError) as exc:
-            raise IntentDecompilerError(
-                f"unknown semantic mutation kind: {self.kind!r}"
-            ) from exc
+            raise IntentDecompilerError(f"unknown semantic mutation kind: {self.kind!r}") from exc
         object.__setattr__(self, "kind", kind)
         if not isinstance(self.semantic_id, str) or not self.semantic_id:
             raise IntentDecompilerError("mutation semantic_id must not be empty")
         object.__setattr__(self, "expected", freeze_json(self.expected))
         object.__setattr__(self, "actual", freeze_json(self.actual))
         refs = tuple(self.source_ref_ids)
-        if len(refs) != len(set(refs)) or not all(
-            isinstance(item, str) and item for item in refs
-        ):
-            raise IntentDecompilerError(
-                "mutation source_ref_ids must be unique non-empty strings"
-            )
+        if len(refs) != len(set(refs)) or not all(isinstance(item, str) and item for item in refs):
+            raise IntentDecompilerError("mutation source_ref_ids must be unique non-empty strings")
         object.__setattr__(self, "source_ref_ids", tuple(sorted(refs)))
         if not self.message:
             object.__setattr__(
@@ -157,9 +148,7 @@ class IntentSemanticMutation:
         }
 
     @classmethod
-    def from_dict(
-        cls, value: Mapping[str, Any]
-    ) -> "IntentSemanticMutation":
+    def from_dict(cls, value: Mapping[str, Any]) -> "IntentSemanticMutation":
         payload = _mapping(value)
         allowed = {
             "actual",
@@ -172,9 +161,7 @@ class IntentSemanticMutation:
         }
         unknown = sorted(set(payload) - allowed)
         if unknown:
-            raise IntentDecompilerError(
-                "unknown semantic mutation field(s): " + ", ".join(unknown)
-            )
+            raise IntentDecompilerError("unknown semantic mutation field(s): " + ", ".join(unknown))
         return cls(
             kind=payload.get("kind", ""),
             semantic_id=payload.get("semantic_id", ""),
@@ -205,13 +192,10 @@ class DecompiledIntentReview:
     def __post_init__(self) -> None:
         if not isinstance(self.declaration_id, str) or not self.declaration_id:
             raise IntentDecompilerError("declaration_id must not be empty")
-        if (
-            not isinstance(self.declaration_digest, str)
-            or not self.declaration_digest.startswith("sha256:")
+        if not isinstance(self.declaration_digest, str) or not self.declaration_digest.startswith(
+            "sha256:"
         ):
-            raise IntentDecompilerError(
-                "declaration_digest must be a sha256 digest"
-            )
+            raise IntentDecompilerError("declaration_digest must be a sha256 digest")
         for name in (
             "goals",
             "modalities",
@@ -229,14 +213,10 @@ class DecompiledIntentReview:
             )
         unsupported = tuple(sorted(self.unsupported_formula_ids))
         if len(unsupported) != len(set(unsupported)):
-            raise IntentDecompilerError(
-                "unsupported_formula_ids must be unique"
-            )
+            raise IntentDecompilerError("unsupported_formula_ids must be unique")
         object.__setattr__(self, "unsupported_formula_ids", unsupported)
         if self.schema_version != INTENT_DECOMPILER_VERSION:
-            raise IntentDecompilerError(
-                f"unsupported decompiler schema: {self.schema_version}"
-            )
+            raise IntentDecompilerError(f"unsupported decompiler schema: {self.schema_version}")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -263,9 +243,7 @@ class DecompiledIntentReview:
         ).encode("utf-8")
 
     @classmethod
-    def from_dict(
-        cls, value: Mapping[str, Any]
-    ) -> "DecompiledIntentReview":
+    def from_dict(cls, value: Mapping[str, Any]) -> "DecompiledIntentReview":
         payload = _mapping(value)
         allowed = {
             "action_order",
@@ -282,31 +260,19 @@ class DecompiledIntentReview:
         }
         unknown = sorted(set(payload) - allowed)
         if unknown:
-            raise IntentDecompilerError(
-                "unknown decompiled review field(s): " + ", ".join(unknown)
-            )
+            raise IntentDecompilerError("unknown decompiled review field(s): " + ", ".join(unknown))
         return cls(
             declaration_id=payload.get("declaration_id", ""),
             declaration_digest=payload.get("declaration_digest", ""),
             goals=FrozenMap(_mapping(payload.get("goals", {}))),
             modalities=FrozenMap(_mapping(payload.get("modalities", {}))),
-            action_order=FrozenMap(
-                _mapping(payload.get("action_order", {}))
-            ),
+            action_order=FrozenMap(_mapping(payload.get("action_order", {}))),
             guards=FrozenMap(_mapping(payload.get("guards", {}))),
             effects=FrozenMap(_mapping(payload.get("effects", {}))),
-            source_grounding=FrozenMap(
-                _mapping(payload.get("source_grounding", {}))
-            ),
-            formula_ids=FrozenMap(
-                _mapping(payload.get("formula_ids", {}))
-            ),
-            unsupported_formula_ids=tuple(
-                payload.get("unsupported_formula_ids", ())
-            ),
-            schema_version=payload.get(
-                "schema_version", INTENT_DECOMPILER_VERSION
-            ),
+            source_grounding=FrozenMap(_mapping(payload.get("source_grounding", {}))),
+            formula_ids=FrozenMap(_mapping(payload.get("formula_ids", {}))),
+            unsupported_formula_ids=tuple(payload.get("unsupported_formula_ids", ())),
+            schema_version=payload.get("schema_version", INTENT_DECOMPILER_VERSION),
         )
 
 
@@ -320,22 +286,20 @@ class IntentRoundTripReport:
 
     def __post_init__(self) -> None:
         if not isinstance(self.review, DecompiledIntentReview):
-            raise IntentDecompilerError(
-                "review must be a DecompiledIntentReview"
+            raise IntentDecompilerError("review must be a DecompiledIntentReview")
+        mutations = tuple(
+            sorted(
+                self.mutations,
+                key=lambda item: (
+                    item.kind.value,
+                    item.semantic_id,
+                    item.formula_id,
+                ),
             )
-        mutations = tuple(sorted(
-            self.mutations,
-            key=lambda item: (
-                item.kind.value,
-                item.semantic_id,
-                item.formula_id,
-            ),
-        ))
+        )
         object.__setattr__(self, "mutations", mutations)
         if self.schema_version != INTENT_DECOMPILER_VERSION:
-            raise IntentDecompilerError(
-                f"unsupported round-trip schema: {self.schema_version}"
-            )
+            raise IntentDecompilerError(f"unsupported round-trip schema: {self.schema_version}")
 
     @property
     def passed(self) -> bool:
@@ -345,9 +309,7 @@ class IntentRoundTripReport:
     def mutation_kinds(self) -> tuple[IntentSemanticMutationKind, ...]:
         return tuple(dict.fromkeys(item.kind for item in self.mutations))
 
-    def mutations_of(
-        self, kind: IntentSemanticMutationKind
-    ) -> tuple[IntentSemanticMutation, ...]:
+    def mutations_of(self, kind: IntentSemanticMutationKind) -> tuple[IntentSemanticMutation, ...]:
         normalized = IntentSemanticMutationKind(kind)
         return tuple(item for item in self.mutations if item.kind is normalized)
 
@@ -360,38 +322,22 @@ class IntentRoundTripReport:
         }
 
     @classmethod
-    def from_dict(
-        cls, value: Mapping[str, Any]
-    ) -> "IntentRoundTripReport":
+    def from_dict(cls, value: Mapping[str, Any]) -> "IntentRoundTripReport":
         payload = _mapping(value)
         allowed = {"mutations", "passed", "review", "schema_version"}
         unknown = sorted(set(payload) - allowed)
         if unknown:
-            raise IntentDecompilerError(
-                "unknown round-trip report field(s): " + ", ".join(unknown)
-            )
+            raise IntentDecompilerError("unknown round-trip report field(s): " + ", ".join(unknown))
         mutations = payload.get("mutations", ())
-        if (
-            isinstance(mutations, (str, bytes, bytearray))
-            or not isinstance(mutations, Sequence)
-        ):
+        if isinstance(mutations, (str, bytes, bytearray)) or not isinstance(mutations, Sequence):
             raise IntentDecompilerError("mutations must be a sequence")
         report = cls(
-            review=DecompiledIntentReview.from_dict(
-                _mapping(payload.get("review", {}))
-            ),
-            mutations=tuple(
-                IntentSemanticMutation.from_dict(_mapping(item))
-                for item in mutations
-            ),
-            schema_version=payload.get(
-                "schema_version", INTENT_DECOMPILER_VERSION
-            ),
+            review=DecompiledIntentReview.from_dict(_mapping(payload.get("review", {}))),
+            mutations=tuple(IntentSemanticMutation.from_dict(_mapping(item)) for item in mutations),
+            schema_version=payload.get("schema_version", INTENT_DECOMPILER_VERSION),
         )
         if "passed" in payload and payload["passed"] is not report.passed:
-            raise IntentDecompilerError(
-                "serialized passed flag disagrees with report mutations"
-            )
+            raise IntentDecompilerError("serialized passed flag disagrees with report mutations")
         return report
 
 
@@ -400,9 +346,7 @@ class IntentDecompiler:
 
     version: Final = INTENT_DECOMPILER_VERSION
 
-    def decompile(
-        self, artifact: FormalizationArtifact
-    ) -> DecompiledIntentReview:
+    def decompile(self, artifact: FormalizationArtifact) -> DecompiledIntentReview:
         """Extract the semantic fields carried by an Intent formalization."""
 
         self._validate_artifact(artifact)
@@ -434,17 +378,11 @@ class IntentDecompiler:
                 semantic_id = _node_id(formula, "action")
                 effects[semantic_id] = {
                     "action_effect_ids": list(
-                        _mapping(expression.get("action")).get(
-                            "effect_ids", ()
-                        )
+                        _mapping(expression.get("action")).get("effect_ids", ())
                     ),
-                    "effects": [
-                        _mapping(item)
-                        for item in expression.get("effects", ())
-                    ],
+                    "effects": [_mapping(item) for item in expression.get("effects", ())],
                     "postcondition": [
-                        _mapping(item)
-                        for item in expression.get("postcondition", ())
+                        _mapping(item) for item in expression.get("postcondition", ())
                     ],
                 }
             elif (
@@ -487,16 +425,13 @@ class IntentDecompiler:
     ) -> IntentRoundTripReport:
         """Compare protected semantic dimensions with the source declaration."""
 
-        if isinstance(document, FormalizationArtifact) and isinstance(
-            artifact, IntentIRDocument
-        ):
+        if isinstance(document, FormalizationArtifact) and isinstance(artifact, IntentIRDocument):
             document, artifact = artifact, document
         if not isinstance(document, IntentIRDocument) or not isinstance(
             artifact, FormalizationArtifact
         ):
             raise IntentDecompilerError(
-                "compare requires one IntentIRDocument and one "
-                "FormalizationArtifact"
+                "compare requires one IntentIRDocument and one FormalizationArtifact"
             )
         document = validate_intent_ir(document)
         self._validate_artifact(artifact)
@@ -507,9 +442,7 @@ class IntentDecompiler:
                 "artifact declaration_id does not match the Intent document"
             )
 
-        statements = {
-            item.statement_id: item for item in document.statements
-        }
+        statements = {item.statement_id: item for item in document.statements}
         actions = {item.action_id: item for item in document.actions}
         all_sources = tuple(sorted(item.ref_id for item in document.sources))
 
@@ -521,22 +454,13 @@ class IntentDecompiler:
         expected_modalities = {
             item.statement_id: _modal_operator(item)
             for item in document.statements
-            if (
-                item.kind is StatementKind.GOAL
-                or item.modality is not IntentModality.ASSERTED
-            )
+            if (item.kind is StatementKind.GOAL or item.modality is not IntentModality.ASSERTED)
         }
         expected_effects = {
             action.action_id: {
                 "action_effect_ids": sorted(set(action.effect_ids)),
-                "effects": [
-                    statements[item].to_dict()
-                    for item in action.effect_ids
-                ],
-                "postcondition": [
-                    statements[item].to_dict()
-                    for item in action.effect_ids
-                ],
+                "effects": [statements[item].to_dict() for item in action.effect_ids],
+                "postcondition": [statements[item].to_dict() for item in action.effect_ids],
             }
             for action in document.actions
         }
@@ -609,14 +533,9 @@ class IntentDecompiler:
                     statement = statements.get(statement_id)
                     if statement is None:
                         continue
-                    actual_body = {
-                        key: value
-                        for key, value in expression.items()
-                        if key != "kind"
-                    }
-                    if (
-                        statement.kind is StatementKind.GOAL
-                        and actual_body != _statement_body(statement)
+                    actual_body = {key: value for key, value in expression.items() if key != "kind"}
+                    if statement.kind is StatementKind.GOAL and actual_body != _statement_body(
+                        statement
                     ):
                         mutations.append(
                             IntentSemanticMutation(
@@ -626,10 +545,7 @@ class IntentDecompiler:
                                 actual=actual_body,
                                 formula_id=formula.formula_id,
                                 source_ref_ids=formula.source_ref_ids,
-                                message=(
-                                    f"typed fact goal semantics differ for "
-                                    f"{statement_id}"
-                                ),
+                                message=(f"typed fact goal semantics differ for {statement_id}"),
                             )
                         )
                     if expression.get("modality") != statement.modality.value:
@@ -641,43 +557,32 @@ class IntentDecompiler:
                                 actual=expression.get("modality"),
                                 formula_id=formula.formula_id,
                                 source_ref_ids=formula.source_ref_ids,
-                                message=(
-                                    f"typed fact modality differs for "
-                                    f"{statement_id}"
-                                ),
+                                message=(f"typed fact modality differs for {statement_id}"),
                             )
                         )
                 elif expression.get("kind") == "typed_action_fact":
                     action_id = _node_id(formula, "action")
                     action = actions.get(action_id)
                     actual_action = _mapping(expression.get("action"))
-                    if action is not None and list(
-                        actual_action.get("effect_ids", ())
-                    ) != sorted(set(action.effect_ids)):
+                    if action is not None and list(actual_action.get("effect_ids", ())) != sorted(
+                        set(action.effect_ids)
+                    ):
                         mutations.append(
                             IntentSemanticMutation(
                                 kind=IntentSemanticMutationKind.EFFECT,
                                 semantic_id=action_id,
                                 expected=sorted(set(action.effect_ids)),
-                                actual=list(
-                                    actual_action.get("effect_ids", ())
-                                ),
+                                actual=list(actual_action.get("effect_ids", ())),
                                 formula_id=formula.formula_id,
                                 source_ref_ids=formula.source_ref_ids,
-                                message=(
-                                    f"typed action effect references differ for "
-                                    f"{action_id}"
-                                ),
+                                message=(f"typed action effect references differ for {action_id}"),
                             )
                         )
             elif formula.view_id == INTENT_MODAL_VIEW_ID:
                 statement_id = _node_id(formula, "statement")
                 statement = statements.get(statement_id)
                 body = _mapping(expression.get("body"))
-                if (
-                    statement is not None
-                    and body.get("modality") != statement.modality.value
-                ):
+                if statement is not None and body.get("modality") != statement.modality.value:
                     mutations.append(
                         IntentSemanticMutation(
                             kind=IntentSemanticMutationKind.MODALITY,
@@ -686,15 +591,11 @@ class IntentDecompiler:
                             actual=body.get("modality"),
                             formula_id=formula.formula_id,
                             source_ref_ids=formula.source_ref_ids,
-                            message=(
-                                f"modal body modality differs for {statement_id}"
-                            ),
+                            message=(f"modal body modality differs for {statement_id}"),
                         )
                     )
 
-        bindings = {
-            item.subject_id: item for item in artifact.source_map.bindings
-        }
+        bindings = {item.subject_id: item for item in artifact.source_map.bindings}
         for formula in artifact.formulas:
             expression = _mapping(formula.expression)
             expected_refs = self._expected_sources(
@@ -719,9 +620,7 @@ class IntentDecompiler:
                     )
                 )
             binding = bindings.get(formula.formula_id)
-            if binding is not None and tuple(
-                sorted(binding.source_ref_ids)
-            ) != actual_refs:
+            if binding is not None and tuple(sorted(binding.source_ref_ids)) != actual_refs:
                 mutations.append(
                     IntentSemanticMutation(
                         kind=IntentSemanticMutationKind.SOURCE_GROUNDING,
@@ -730,18 +629,12 @@ class IntentDecompiler:
                         actual=list(sorted(binding.source_ref_ids)),
                         formula_id=formula.formula_id,
                         source_ref_ids=actual_refs,
-                        message=(
-                            f"formula/source-map grounding differs for "
-                            f"{formula.formula_id}"
-                        ),
+                        message=(f"formula/source-map grounding differs for {formula.formula_id}"),
                     )
                 )
 
         for formula_id in review.unsupported_formula_ids:
-            formula = next(
-                item for item in artifact.formulas
-                if item.formula_id == formula_id
-            )
+            formula = next(item for item in artifact.formulas if item.formula_id == formula_id)
             mutations.append(
                 IntentSemanticMutation(
                     kind=IntentSemanticMutationKind.UNSUPPORTED,
@@ -751,8 +644,7 @@ class IntentDecompiler:
                     formula_id=formula.formula_id,
                     source_ref_ids=formula.source_ref_ids,
                     message=(
-                        f"formal semantics for {_node_id(formula)} are opaque "
-                        "and require review"
+                        f"formal semantics for {_node_id(formula)} are opaque and require review"
                     ),
                 )
             )
@@ -764,13 +656,9 @@ class IntentDecompiler:
     @staticmethod
     def _validate_artifact(artifact: FormalizationArtifact) -> None:
         if not isinstance(artifact, FormalizationArtifact):
-            raise IntentDecompilerError(
-                "artifact must be a FormalizationArtifact"
-            )
+            raise IntentDecompilerError("artifact must be a FormalizationArtifact")
         if artifact.domain != "intent":
-            raise IntentDecompilerError(
-                "IntentDecompiler requires an intent artifact"
-            )
+            raise IntentDecompilerError("IntentDecompiler requires an intent artifact")
 
     @staticmethod
     def _compare_map(
@@ -835,9 +723,7 @@ class IntentDecompiler:
         if view_id == INTENT_WORKFLOW_VIEW_ID:
             if expression.get("kind") == "workflow_boundary":
                 return all_sources
-            edges = {
-                item.edge_id: item for item in document.control_edges
-            }
+            edges = {item.edge_id: item for item in document.control_edges}
             edge = edges.get(_node_id(formula, "control-edge"))
             if edge is None:
                 return None

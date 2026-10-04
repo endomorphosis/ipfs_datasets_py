@@ -16,7 +16,9 @@ def return_text_content(input: Any, result_str: str) -> TextContent:
     Returns:
         TextContent: A TextContent object with 'text' type and formatted text.
     """
-    return TextContent(type="text", text=f"{result_str}: {repr(input)}") # NOTE we use repr to ensure special characters are handled correctly
+    return TextContent(
+        type="text", text=f"{result_str}: {repr(input)}"
+    )  # NOTE we use repr to ensure special characters are handled correctly
 
 
 def return_tool_call_results(content: TextContent, error: bool = False) -> CallToolResult:

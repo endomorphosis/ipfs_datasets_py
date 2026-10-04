@@ -33,18 +33,14 @@ CHECKPOINT_MANIFEST_SCHEMA_VERSION: Final = "formalization-checkpoint-manifest/v
 
 def _digest(value: Any, field_name: str) -> str:
     if not isinstance(value, str) or not _DIGEST_RE.fullmatch(value):
-        raise FormalizationValidationError(
-            f"{field_name} must be a lowercase sha256:<hex> digest"
-        )
+        raise FormalizationValidationError(f"{field_name} must be a lowercase sha256:<hex> digest")
     return value
 
 
 def _domain_member(value: Any, *, domain: str, field_name: str) -> str:
     result = _identifier(value, field_name)
     if not result.startswith(f"{domain}:"):
-        raise FormalizationValidationError(
-            f"{field_name} must be namespaced under {domain!r}"
-        )
+        raise FormalizationValidationError(f"{field_name} must be namespaced under {domain!r}")
     return result
 
 
@@ -168,25 +164,14 @@ class CheckpointManifest:
 
         expected = {
             "domain": _identifier(domain, "domain"),
-            "ontology_identity": _digest(
-                ontology_identity, "ontology_identity"
-            ),
-            "view_registry_identity": _digest(
-                view_registry_identity, "view_registry_identity"
-            ),
-            "feature_schema_version": _identifier(
-                feature_schema_version, "feature_schema_version"
-            ),
+            "ontology_identity": _digest(ontology_identity, "ontology_identity"),
+            "view_registry_identity": _digest(view_registry_identity, "view_registry_identity"),
+            "feature_schema_version": _identifier(feature_schema_version, "feature_schema_version"),
         }
-        mismatches = [
-            name
-            for name, wanted in expected.items()
-            if getattr(self, name) != wanted
-        ]
+        mismatches = [name for name, wanted in expected.items() if getattr(self, name) != wanted]
         if mismatches:
             raise FormalizationValidationError(
-                "checkpoint is incompatible with "
-                + ", ".join(sorted(mismatches))
+                "checkpoint is incompatible with " + ", ".join(sorted(mismatches))
             )
         return self
 
@@ -250,21 +235,15 @@ class CheckpointManifest:
             view_registry_identity=value.get("view_registry_identity", ""),
             feature_schema_version=value.get("feature_schema_version", ""),
             metadata=FrozenMap(_mapping(value.get("metadata", {}), "metadata")),
-            schema_version=value.get(
-                "schema_version", CHECKPOINT_MANIFEST_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", CHECKPOINT_MANIFEST_SCHEMA_VERSION),
         )
 
     @classmethod
-    def from_json(
-        cls, value: str | bytes | bytearray
-    ) -> "CheckpointManifest":
+    def from_json(cls, value: str | bytes | bytearray) -> "CheckpointManifest":
         try:
             decoded = json.loads(value)
         except (TypeError, ValueError, UnicodeDecodeError) as exc:
-            raise FormalizationValidationError(
-                "checkpoint manifest must be valid JSON"
-            ) from exc
+            raise FormalizationValidationError("checkpoint manifest must be valid JSON") from exc
         return cls.from_dict(_mapping(decoded, "checkpoint manifest"))
 
 

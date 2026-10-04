@@ -125,11 +125,7 @@ class CorpusMention:
             _optional_clean_text(self.section_title, "mention section_title"),
         )
         try:
-            kind = (
-                self.kind
-                if isinstance(self.kind, CorpusNodeType)
-                else CorpusNodeType(self.kind)
-            )
+            kind = self.kind if isinstance(self.kind, CorpusNodeType) else CorpusNodeType(self.kind)
         except (TypeError, ValueError) as exc:
             raise CorpusProjectionError("unknown mention kind") from exc
         if kind not in {
@@ -138,8 +134,7 @@ class CorpusMention:
             CorpusNodeType.AUTHOR_PUBLISHER,
         }:
             raise CorpusProjectionError(
-                "mention kind must be tool_mention, entity_mention, "
-                "or author_publisher"
+                "mention kind must be tool_mention, entity_mention, or author_publisher"
             )
         object.__setattr__(self, "kind", kind)
         _validate_optional_span(self.start_byte, self.end_byte)
@@ -183,26 +178,17 @@ class CorpusNeighborObservation:
                 or not math.isfinite(float(self.score))
                 or float(self.score) < 0.0
             ):
-                raise CorpusProjectionError(
-                    "neighbor score must be a finite non-negative number"
-                )
+                raise CorpusProjectionError("neighbor score must be a finite non-negative number")
             object.__setattr__(self, "score", float(self.score))
         method = _optional_clean_text(
             self.retrieval_method,
             "neighbor retrieval_method",
         )
         if (self.score is not None or self.matched_terms) and not method:
-            raise CorpusProjectionError(
-                "scored or explained neighbors require a retrieval_method"
-            )
+            raise CorpusProjectionError("scored or explained neighbors require a retrieval_method")
         object.__setattr__(self, "retrieval_method", method)
         terms = tuple(
-            sorted(
-                {
-                    _clean_text(term, "neighbor matched term")
-                    for term in self.matched_terms
-                }
-            )
+            sorted({_clean_text(term, "neighbor matched term") for term in self.matched_terms})
         )
         if len(terms) > _MAX_EXPLICIT_ITEMS:
             raise CorpusProjectionError("too many neighbor matched terms")
@@ -237,9 +223,7 @@ class CorpusEvidenceRecord:
             raise TypeError("record must be a SkillCenterSkillRecord")
         if self.policy_decision is not None:
             if not isinstance(self.policy_decision, SkillSourcePolicyDecision):
-                raise TypeError(
-                    "policy_decision must be a SkillSourcePolicyDecision"
-                )
+                raise TypeError("policy_decision must be a SkillSourcePolicyDecision")
             if self.policy_decision.skill_id != self.record.skill_id:
                 raise CorpusProjectionError(
                     "policy_decision skill_id does not match its source record"
@@ -250,24 +234,15 @@ class CorpusEvidenceRecord:
             raise CorpusProjectionError("too many explicit mentions")
         if len(citations) > _MAX_EXPLICIT_ITEMS:
             raise CorpusProjectionError("too many explicit citations")
-        if (
-            len(self.neighbor_skill_ids) + len(self.neighbor_observations)
-            > _MAX_EXPLICIT_ITEMS
-        ):
+        if len(self.neighbor_skill_ids) + len(self.neighbor_observations) > _MAX_EXPLICIT_ITEMS:
             raise CorpusProjectionError("too many explicit neighbors")
         if any(not isinstance(item, CorpusMention) for item in mentions):
             raise TypeError("mentions must contain CorpusMention values")
         if any(not isinstance(item, CorpusCitation) for item in citations):
             raise TypeError("citations must contain CorpusCitation values")
         neighbor_observations = tuple(self.neighbor_observations)
-        if any(
-            not isinstance(item, CorpusNeighborObservation)
-            for item in neighbor_observations
-        ):
-            raise TypeError(
-                "neighbor_observations must contain "
-                "CorpusNeighborObservation values"
-            )
+        if any(not isinstance(item, CorpusNeighborObservation) for item in neighbor_observations):
+            raise TypeError("neighbor_observations must contain CorpusNeighborObservation values")
         object.__setattr__(self, "mentions", mentions)
         object.__setattr__(self, "citations", citations)
         neighbors = tuple(
@@ -279,13 +254,9 @@ class CorpusEvidenceRecord:
         if self.record.skill_id in observation_ids:
             raise CorpusProjectionError("a record cannot be its own neighbor")
         if len(set(observation_ids)) != len(observation_ids):
-            raise CorpusProjectionError(
-                "neighbor observations repeat a target skill"
-            )
+            raise CorpusProjectionError("neighbor observations repeat a target skill")
         if set(neighbors) & set(observation_ids):
-            raise CorpusProjectionError(
-                "neighbor_skill_ids and neighbor_observations overlap"
-            )
+            raise CorpusProjectionError("neighbor_skill_ids and neighbor_observations overlap")
         object.__setattr__(self, "neighbor_skill_ids", neighbors)
         object.__setattr__(
             self,
@@ -300,9 +271,7 @@ class CorpusEvidenceRecord:
         if self.embedding is not None:
             vector = tuple(float(item) for item in self.embedding)
             if not vector or any(not math.isfinite(item) for item in vector):
-                raise CorpusProjectionError(
-                    "embedding must be a non-empty finite numeric vector"
-                )
+                raise CorpusProjectionError("embedding must be a non-empty finite numeric vector")
             object.__setattr__(self, "embedding", vector)
             object.__setattr__(
                 self,
@@ -310,9 +279,7 @@ class CorpusEvidenceRecord:
                 _clean_text(self.embedding_model, "embedding_model"),
             )
         elif self.embedding_model:
-            raise CorpusProjectionError(
-                "embedding_model cannot be set without an embedding"
-            )
+            raise CorpusProjectionError("embedding_model cannot be set without an embedding")
 
 
 @dataclass(frozen=True, slots=True)
@@ -474,18 +441,14 @@ class CorpusProjector:
         if not evidence:
             raise CorpusProjectionError("at least one source record is required")
         if len(evidence) > self.max_records:
-            raise CorpusProjectionError(
-                f"projection exceeds max_records={self.max_records}"
-            )
+            raise CorpusProjectionError(f"projection exceeds max_records={self.max_records}")
 
         prepared = tuple(self._prepare(item) for item in evidence)
         body_storage_allowed: dict[str, bool] = {}
         for item, decision in prepared:
             digest = "sha256:" + item.record.content_sha256
             allowed = decision.allowed_use in _BODY_STORAGE_DECISIONS
-            body_storage_allowed[digest] = (
-                body_storage_allowed.get(digest, True) and allowed
-            )
+            body_storage_allowed[digest] = body_storage_allowed.get(digest, True) and allowed
         builder = _GraphBuilder()
         source_bodies: dict[str, AddressedArtifact] = {}
         embeddings: dict[str, AddressedArtifact] = {}
@@ -498,9 +461,7 @@ class CorpusProjector:
         for item, decision in prepared:
             record = item.record
             source_digest = f"sha256:{record.content_sha256}"
-            bundle_digest = _qualified_sha256(
-                record.bundle_sha256, "record.bundle_sha256"
-            )
+            bundle_digest = _qualified_sha256(record.bundle_sha256, "record.bundle_sha256")
             body = record.skill_md.encode("utf-8")
             # If identical bytes arrive under conflicting use decisions, the
             # most restrictive decision governs the shared content address.
@@ -569,9 +530,7 @@ class CorpusProjector:
             body_groups,
             CorpusEdgeType.DUPLICATE_OF,
         )
-        neighbor_edge_properties: dict[
-            tuple[str, str], dict[str, Any]
-        ] = {}
+        neighbor_edge_properties: dict[tuple[str, str], dict[str, Any]] = {}
         for item, _decision in prepared:
             source_id = skill_nodes[item.record.skill_id]
             source_digest = skill_source_digests[item.record.skill_id]
@@ -593,17 +552,12 @@ class CorpusProjector:
                 # Store one canonical undirected observation.
                 left, right = sorted((source_id, target_id))
                 edge_digest = (
-                    source_digest
-                    if left == source_id
-                    else skill_source_digests[target_skill_id]
+                    source_digest if left == source_id else skill_source_digests[target_skill_id]
                 )
                 properties = observation.edge_properties()
                 edge_key = (left, right)
                 existing_properties = neighbor_edge_properties.get(edge_key)
-                if (
-                    existing_properties is not None
-                    and existing_properties != properties
-                ):
+                if existing_properties is not None and existing_properties != properties:
                     raise CorpusProjectionError(
                         "conflicting neighbor observations for one skill pair"
                     )
@@ -638,9 +592,7 @@ class CorpusProjector:
             edges=edges,
             graph_digest=graph_digest,
             source_digests=source_digests,
-            source_bodies=tuple(
-                source_bodies[key] for key in sorted(source_bodies)
-            ),
+            source_bodies=tuple(source_bodies[key] for key in sorted(source_bodies)),
             embeddings=tuple(embeddings[key] for key in sorted(embeddings)),
         )
         # Validate the entire graph, including cross-record relationships,
@@ -707,9 +659,7 @@ class CorpusProjector:
         if isinstance(records, SkillCenterSkillRecord):
             return (CorpusEvidenceRecord(records),)
         if isinstance(records, (str, bytes, Mapping)):
-            raise TypeError(
-                "records must be SkillCenterSkillRecord values, not text/mappings"
-            )
+            raise TypeError("records must be SkillCenterSkillRecord values, not text/mappings")
         try:
             raw_items = tuple(records)
         except TypeError as exc:
@@ -972,18 +922,14 @@ class CorpusProjector:
                         kind=CorpusNodeType.AUTHOR_PUBLISHER,
                     )
                 )
-        tools = (
-            _metadata_scalar(record.metadata_yaml, "tools")
-            or _metadata_scalar(record.metadata_yaml, "tool")
+        tools = _metadata_scalar(record.metadata_yaml, "tools") or _metadata_scalar(
+            record.metadata_yaml, "tool"
         )
         for tool in _split_scalar_list(tools):
-            explicit_mentions.append(
-                CorpusMention(tool, kind=CorpusNodeType.TOOL_MENTION)
-            )
+            explicit_mentions.append(CorpusMention(tool, kind=CorpusNodeType.TOOL_MENTION))
         if len(explicit_mentions) > _MAX_EXPLICIT_ITEMS:
             raise CorpusProjectionError(
-                f"{record.skill_id}: extracted mentions exceed "
-                f"{_MAX_EXPLICIT_ITEMS}"
+                f"{record.skill_id}: extracted mentions exceed {_MAX_EXPLICIT_ITEMS}"
             )
         for mention in sorted(
             set(explicit_mentions),
@@ -1011,9 +957,7 @@ class CorpusProjector:
                     "value": mention.value,
                 },
             )
-            mention_source = section_nodes.get(
-                mention.section_title.casefold(), skill
-            )
+            mention_source = section_nodes.get(mention.section_title.casefold(), skill)
             builder.add_edge(
                 CorpusEdgeType.MENTIONS,
                 mention_source,
@@ -1046,9 +990,7 @@ class CorpusProjector:
                     "source_uri": citation.uri,
                 },
             )
-            citation_source = section_nodes.get(
-                citation.section_title.casefold(), skill
-            )
+            citation_source = section_nodes.get(citation.section_title.casefold(), skill)
             builder.add_edge(
                 CorpusEdgeType.CITES,
                 citation_source,
@@ -1126,22 +1068,13 @@ def _qualified_sha256(value: str, label: str) -> str:
     if candidate.startswith("sha256:"):
         candidate = candidate.removeprefix("sha256:")
     if not re.fullmatch(r"[0-9a-f]{64}", candidate):
-        raise CorpusProjectionError(
-            f"{label} must be 64 lowercase hexadecimal characters"
-        )
+        raise CorpusProjectionError(f"{label} must be 64 lowercase hexadecimal characters")
     return f"sha256:{candidate}"
 
 
 def _clean_text(value: Any, label: str) -> str:
-    if (
-        not isinstance(value, str)
-        or not value
-        or value.strip() != value
-        or "\x00" in value
-    ):
-        raise CorpusProjectionError(
-            f"{label} must be non-empty normalized text"
-        )
+    if not isinstance(value, str) or not value or value.strip() != value or "\x00" in value:
+        raise CorpusProjectionError(f"{label} must be non-empty normalized text")
     return value
 
 
@@ -1168,9 +1101,7 @@ def _validate_optional_span(start: int | None, end: int | None) -> None:
         or start < 0
         or end <= start
     ):
-        raise CorpusProjectionError(
-            "mention byte offsets must be a valid half-open span"
-        )
+        raise CorpusProjectionError("mention byte offsets must be a valid half-open span")
 
 
 def _whole_document_section(body: str, title: str) -> _Section:
@@ -1276,9 +1207,7 @@ def _repository_uri(source_uri: str) -> str:
     elif len(segments) > 1:
         segments = segments[:-1]
     path = "/" + "/".join(segments) if segments else "/"
-    return urlunsplit(
-        (parts.scheme.casefold(), parts.netloc.casefold(), path, "", "")
-    )
+    return urlunsplit((parts.scheme.casefold(), parts.netloc.casefold(), path, "", ""))
 
 
 __all__ = [

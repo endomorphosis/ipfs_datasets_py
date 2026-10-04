@@ -17,19 +17,19 @@ Key Features:
 
 Usage:
     >>> from optimizers.integrations.elasticsearch_indexer import ElasticsearchIndexer
-    >>> 
+    >>>
     >>> indexer = ElasticsearchIndexer(
     ...     hosts=["http://localhost:9200"],
     ...     index_prefix="ontology"
     ... )
-    >>> 
+    >>>
     >>> # Index extraction result
     >>> result_id = indexer.index_extraction_result(
     ...     ontology_id="doc_001",
     ...     result=extraction_result,
     ...     metadata={"domain": "legal", "source": "contract.pdf"}
     ... )
-    >>> 
+    >>>
     >>> # Search entities
     >>> hits = indexer.search_entities(query="contract", domain="legal")
 """
@@ -61,7 +61,7 @@ DEFAULT_ONTOLOGY_INDEX = "ontology-metadata"
 @dataclass
 class ElasticsearchConfig:
     """Configuration for Elasticsearch connection and indexing.
-    
+
     Attributes:
         hosts: List of Elasticsearch host URLs
         index_prefix: Prefix for index names
@@ -72,7 +72,7 @@ class ElasticsearchConfig:
         http_auth: HTTP authentication tuple (user, password)
         create_indices_on_init: Create indices on initialization
     """
-    
+
     hosts: List[str] = field(default_factory=lambda: ["http://localhost:9200"])
     index_prefix: str = "ontology"
     timeout: int = 30
@@ -138,13 +138,13 @@ ONTOLOGY_MAPPING = {
 
 class MockElasticsearchClient:
     """Mock Elasticsearch client for testing without elasticsearch-py dependency.
-    
+
     Simulates basic Elasticsearch operations for testing purposes.
     """
-    
+
     def __init__(self, hosts: List[str], **kwargs):
         """Initialize mock client.
-        
+
         Args:
             hosts: List of Elasticsearch host URLs
             **kwargs: Additional configuration parameters
@@ -153,63 +153,61 @@ class MockElasticsearchClient:
         self.indices_data: Dict[str, Dict[str, Any]] = {}
         self.documents: Dict[str, Dict[str, Any]] = {}
         logger.info(f"MockElasticsearchClient initialized with hosts: {hosts}")
-    
+
     def indices_exists(self, index: str) -> bool:
         """Check if index exists.
-        
+
         Args:
             index: Index name
-            
+
         Returns:
             True if exists, False otherwise
         """
         return index in self.indices_data
-    
+
     def indices_create(self, index: str, body: Dict[str, Any]) -> Dict[str, Any]:
         """Create index.
-        
+
         Args:
             index: Index name
             body: Index configuration
-            
+
         Returns:
             Creation response
         """
         self.indices_data[index] = body
         return {"acknowledged": True, "shards_acknowledged": True, "index": index}
-    
-    def index(
-        self, index: str, id: Optional[str], body: Dict[str, Any]
-    ) -> Dict[str, Any]:
+
+    def index(self, index: str, id: Optional[str], body: Dict[str, Any]) -> Dict[str, Any]:
         """Index a document.
-        
+
         Args:
             index: Index name
             id: Document ID (optional)
             body: Document body
-            
+
         Returns:
             Indexing response
         """
         if index not in self.documents:
             self.documents[index] = {}
-        
+
         doc_id = id or f"generated_{len(self.documents[index])}"
         self.documents[index][doc_id] = body
-        
+
         return {
             "_index": index,
             "_id": doc_id,
             "_version": 1,
             "result": "created",
         }
-    
+
     def bulk(self, body: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Bulk index documents.
-        
+
         Args:
             body: List of bulk operation directives
-            
+
         Returns:
             Bulk response
         """
@@ -217,38 +215,35 @@ class MockElasticsearchClient:
         for i in range(0, len(body), 2):
             action = body[i]
             doc = body[i + 1] if i + 1 < len(body) else {}
-            
+
             if "index" in action:
                 index_name = action["index"]["_index"]
                 doc_id = action["index"].get("_id", f"bulk_{i}")
-                
+
                 if index_name not in self.documents:
                     self.documents[index_name] = {}
-                
+
                 self.documents[index_name][doc_id] = doc
                 items.append({"index": {"_id": doc_id, "status": 201}})
-        
+
         return {"took": 10, "errors": False, "items": items}
-    
+
     def search(self, index: str, body: Dict[str, Any]) -> Dict[str, Any]:
         """Search documents.
-        
+
         Args:
             index: Index name
             body: Search query
-            
+
         Returns:
             Search results
         """
         if index not in self.documents:
             return {"hits": {"total": {"value": 0}, "hits": []}}
-        
+
         # Simple mock search - return all documents
-        hits = [
-            {"_id": doc_id, "_source": doc}
-            for doc_id, doc in self.documents[index].items()
-        ]
-        
+        hits = [{"_id": doc_id, "_source": doc} for doc_id, doc in self.documents[index].items()]
+
         return {
             "took": 5,
             "hits": {
@@ -266,20 +261,20 @@ class MockElasticsearchClient:
 
 class ElasticsearchIndexer:
     """Elasticsearch indexer for ontology extraction results.
-    
+
     Indexes entities, relationships, and ontology metadata into Elasticsearch
     for search, filtering, and analytics.
     """
-    
+
     def __init__(self, config: Optional[ElasticsearchConfig] = None, client=None):
         """Initialize Elasticsearch indexer.
-        
+
         Args:
             config: Elasticsearch configuration
             client: Pre-configured Elasticsearch client (for testing)
         """
         self.config = config or ElasticsearchConfig()
-        
+
         # Use provided client or create mock client
         if client is not None:
             self.client = client
@@ -293,14 +288,14 @@ class ElasticsearchIndexer:
                 verify_certs=self.config.verify_certs,
                 http_auth=self.config.http_auth,
             )
-        
+
         self.entity_index = f"{self.config.index_prefix}-entities"
         self.relationship_index = f"{self.config.index_prefix}-relationships"
         self.ontology_index = f"{self.config.index_prefix}-metadata"
-        
+
         if self.config.create_indices_on_init:
             self.create_indices()
-    
+
     def create_indices(self):
         """Create Elasticsearch indices with mappings."""
         indices = [
@@ -308,14 +303,12 @@ class ElasticsearchIndexer:
             (self.relationship_index, RELATIONSHIP_MAPPING),
             (self.ontology_index, ONTOLOGY_MAPPING),
         ]
-        
+
         for index_name, mapping in indices:
             if not self.client.indices_exists(index=index_name):
-                self.client.indices_create(
-                    index=index_name, body={"mappings": mapping}
-                )
+                self.client.indices_create(index=index_name, body={"mappings": mapping})
                 logger.info(f"Created index: {index_name}")
-    
+
     def index_entity(
         self,
         ontology_id: str,
@@ -323,12 +316,12 @@ class ElasticsearchIndexer:
         metadata: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Index a single entity.
-        
+
         Args:
             ontology_id: Ontology identifier
             entity: Entity dictionary with text, type, confidence
             metadata: Additional metadata
-            
+
         Returns:
             Document ID
         """
@@ -343,13 +336,11 @@ class ElasticsearchIndexer:
             "indexed_at": datetime.now().isoformat(),
             "metadata": metadata or {},
         }
-        
-        response = self.client.index(
-            index=self.entity_index, id=doc["entity_id"], body=doc
-        )
-        
+
+        response = self.client.index(index=self.entity_index, id=doc["entity_id"], body=doc)
+
         return response["_id"]
-    
+
     def index_relationship(
         self,
         ontology_id: str,
@@ -357,17 +348,17 @@ class ElasticsearchIndexer:
         metadata: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Index a single relationship.
-        
+
         Args:
             ontology_id: Ontology identifier
             relationship: Relationship dictionary with source, target, type
             metadata: Additional metadata
-            
+
         Returns:
             Document ID
         """
         rel_id = f"{relationship['source']}_{relationship['target']}"
-        
+
         doc = {
             "ontology_id": ontology_id,
             "relationship_id": rel_id,
@@ -380,13 +371,11 @@ class ElasticsearchIndexer:
             "indexed_at": datetime.now().isoformat(),
             "metadata": metadata or {},
         }
-        
-        response = self.client.index(
-            index=self.relationship_index, id=rel_id, body=doc
-        )
-        
+
+        response = self.client.index(index=self.relationship_index, id=rel_id, body=doc)
+
         return response["_id"]
-    
+
     def index_extraction_result(
         self,
         ontology_id: str,
@@ -394,30 +383,30 @@ class ElasticsearchIndexer:
         metadata: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Index complete extraction result (entities + relationships + metadata).
-        
+
         Args:
             ontology_id: Ontology identifier
             result: Extraction result with entities and relationships
             metadata: Additional metadata
-            
+
         Returns:
             Summary of indexed documents
         """
         entities = result.get("entities", [])
         relationships = result.get("relationships", [])
-        
+
         # Index entities
         entity_ids = []
         for entity in entities:
             entity_id = self.index_entity(ontology_id, entity, metadata)
             entity_ids.append(entity_id)
-        
+
         # Index relationships
         relationship_ids = []
         for relationship in relationships:
             rel_id = self.index_relationship(ontology_id, relationship, metadata)
             relationship_ids.append(rel_id)
-        
+
         # Index ontology metadata
         ontology_doc = {
             "ontology_id": ontology_id,
@@ -429,11 +418,9 @@ class ElasticsearchIndexer:
             "indexed_at": datetime.now().isoformat(),
             "metadata": metadata or {},
         }
-        
-        self.client.index(
-            index=self.ontology_index, id=ontology_id, body=ontology_doc
-        )
-        
+
+        self.client.index(index=self.ontology_index, id=ontology_id, body=ontology_doc)
+
         return {
             "ontology_id": ontology_id,
             "entities_indexed": len(entity_ids),
@@ -441,7 +428,7 @@ class ElasticsearchIndexer:
             "entity_ids": entity_ids,
             "relationship_ids": relationship_ids,
         }
-    
+
     def bulk_index_entities(
         self,
         ontology_id: str,
@@ -449,12 +436,12 @@ class ElasticsearchIndexer:
         metadata: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Bulk index multiple entities.
-        
+
         Args:
             ontology_id: Ontology identifier
             entities: List of entity dictionaries
             metadata: Additional metadata
-            
+
         Returns:
             Bulk indexing response
         """
@@ -472,17 +459,17 @@ class ElasticsearchIndexer:
                 "indexed_at": datetime.now().isoformat(),
                 "metadata": metadata or {},
             }
-            
+
             bulk_body.append({"index": {"_index": self.entity_index, "_id": entity_id}})
             bulk_body.append(doc)
-        
+
         response = self.client.bulk(body=bulk_body)
-        
+
         return {
             "indexed": len(entities),
             "errors": response.get("errors", False),
         }
-    
+
     def search_entities(
         self,
         query: str,
@@ -492,14 +479,14 @@ class ElasticsearchIndexer:
         size: int = 10,
     ) -> List[Dict[str, Any]]:
         """Search entities by text query and filters.
-        
+
         Args:
             query: Search query string
             domain: Filter by domain
             entity_type: Filter by entity type
             min_confidence: Minimum confidence threshold
             size: Maximum results to return
-            
+
         Returns:
             List of matching entities
         """
@@ -507,22 +494,22 @@ class ElasticsearchIndexer:
             {"match": {"text": query}},
             {"range": {"confidence": {"gte": min_confidence}}},
         ]
-        
+
         if domain:
             must_clauses.append({"term": {"domain": domain}})
-        
+
         if entity_type:
             must_clauses.append({"term": {"entity_type": entity_type}})
-        
+
         search_body = {
             "query": {"bool": {"must": must_clauses}},
             "size": size,
         }
-        
+
         response = self.client.search(index=self.entity_index, body=search_body)
-        
+
         return [hit["_source"] for hit in response["hits"]["hits"]]
-    
+
     def search_relationships(
         self,
         source: Optional[str] = None,
@@ -531,32 +518,32 @@ class ElasticsearchIndexer:
         size: int = 10,
     ) -> List[Dict[str, Any]]:
         """Search relationships by source, target, or type.
-        
+
         Args:
             source: Filter by source entity
             target: Filter by target entity
             relationship_type: Filter by relationship type
             size: Maximum results to return
-            
+
         Returns:
             List of matching relationships
         """
         must_clauses = []
-        
+
         if source:
             must_clauses.append({"term": {"source": source}})
-        
+
         if target:
             must_clauses.append({"term": {"target": target}})
-        
+
         if relationship_type:
             must_clauses.append({"term": {"relationship_type": relationship_type}})
-        
+
         search_body = {
             "query": {"bool": {"must": must_clauses}} if must_clauses else {"match_all": {}},
             "size": size,
         }
-        
+
         response = self.client.search(index=self.relationship_index, body=search_body)
-        
+
         return [hit["_source"] for hit in response["hits"]["hits"]]

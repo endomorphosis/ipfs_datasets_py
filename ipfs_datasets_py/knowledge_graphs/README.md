@@ -325,14 +325,10 @@ The `knowledge_graph_extraction.py` module is being deprecated. Use the `extract
 
 ```python
 # OLD (still works but deprecated)
-from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import (
-    KnowledgeGraphExtractor
-)
+from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import KnowledgeGraphExtractor
 
 # NEW (recommended)
-from ipfs_datasets_py.knowledge_graphs.extraction import (
-    KnowledgeGraphExtractor
-)
+from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraphExtractor
 ```
 
 **Note:** Full deprecation migration is planned for Phase 2 of the refactoring.

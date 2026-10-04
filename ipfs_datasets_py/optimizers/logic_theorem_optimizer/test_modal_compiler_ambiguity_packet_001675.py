@@ -120,9 +120,7 @@ def test_compiler_preserves_packet_001675_compiler_ambiguity_policy_evidence_mar
     ]
 
     for case in cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="spacy")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
         predicted_family = str(case["predicted_family"])
         target_family = str(case["target_family"])
         expected_margin = float(case["expected_margin"])
@@ -130,9 +128,7 @@ def test_compiler_preserves_packet_001675_compiler_ambiguity_policy_evidence_mar
 
         if predicted_family == target_family:
             predicted_share = (1.0 + expected_margin) / 2.0
-            runner_up_family = str(
-                case.get("runner_up_family", ModalLogicFamily.DEONTIC.value)
-            )
+            runner_up_family = str(case.get("runner_up_family", ModalLogicFamily.DEONTIC.value))
             if runner_up_family == predicted_family:
                 runner_up_family = ModalLogicFamily.FRAME.value
             runner_up_share = predicted_share - expected_margin
@@ -198,23 +194,10 @@ def test_compiler_preserves_packet_001675_compiler_ambiguity_policy_evidence_mar
         assert ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
         assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
         assert (
-            abs(
-                float(ambiguity.metadata.get("family_margin_raw", 0.0))
-                - expected_margin
-            )
-            <= 1e-12
+            abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - expected_margin) <= 1e-12
         )
+        assert abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority) <= 1e-12
         assert (
-            abs(
-                float(ambiguity.metadata.get("priority", 0.0))
-                - expected_priority
-            )
-            <= 1e-12
-        )
-        assert (
-            abs(
-                float(ambiguity.metadata.get("adaptive_priority", 0.0))
-                - expected_priority
-            )
+            abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - expected_priority)
             <= 1e-12
         )

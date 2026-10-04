@@ -241,9 +241,9 @@ def test_pass_declaring_protected_output_without_proof_or_diagnostic_is_invalid(
     )
 
     assert not result.valid
-    assert {
-        diagnostic.code for diagnostic in result.diagnostics
-    } == {"protected_output_requires_proof_or_diagnostic"}
+    assert {diagnostic.code for diagnostic in result.diagnostics} == {
+        "protected_output_requires_proof_or_diagnostic"
+    }
 
 
 def test_runtime_protected_field_mutation_requires_proof_or_explicit_diagnostic() -> None:

@@ -95,9 +95,7 @@ def _freeze_mapping(value: Mapping[str, Any], name: str) -> Mapping[str, Any]:
 def _freeze_records(
     values: Sequence[Mapping[str, Any]], name: str
 ) -> tuple[Mapping[str, Any], ...]:
-    if isinstance(values, (str, bytes, bytearray)) or not isinstance(
-        values, Sequence
-    ):
+    if isinstance(values, (str, bytes, bytearray)) or not isinstance(values, Sequence):
         raise LegacyAdapterError(f"{name} must be a sequence")
     result: list[Mapping[str, Any]] = []
     for index, value in enumerate(values):
@@ -123,9 +121,7 @@ class LegacyVerificationData:
 
     def __post_init__(self) -> None:
         for name in LEGACY_VERIFICATION_FIELDS:
-            object.__setattr__(
-                self, name, _freeze_records(getattr(self, name), name)
-            )
+            object.__setattr__(self, name, _freeze_records(getattr(self, name), name))
 
     def to_dict(self) -> dict[str, list[dict[str, Any]]]:
         return {
@@ -134,20 +130,13 @@ class LegacyVerificationData:
         }
 
     @classmethod
-    def from_dict(
-        cls, value: Mapping[str, Any]
-    ) -> "LegacyVerificationData":
+    def from_dict(cls, value: Mapping[str, Any]) -> "LegacyVerificationData":
         unknown = sorted(set(value) - set(LEGACY_VERIFICATION_FIELDS))
         if unknown:
             raise LegacyAdapterError(
                 f"unknown LegacyVerificationData field(s): {', '.join(unknown)}"
             )
-        return cls(
-            **{
-                name: tuple(value.get(name, ()))
-                for name in LEGACY_VERIFICATION_FIELDS
-            }
-        )
+        return cls(**{name: tuple(value.get(name, ())) for name in LEGACY_VERIFICATION_FIELDS})
 
 
 @dataclass(frozen=True, slots=True)
@@ -155,9 +144,7 @@ class LegacyAdapterResult:
     """A declaration, detached run data, and explicit conversion diagnostics."""
 
     declaration: SecurityIR
-    verification_data: LegacyVerificationData = field(
-        default_factory=LegacyVerificationData
-    )
+    verification_data: LegacyVerificationData = field(default_factory=LegacyVerificationData)
     diagnostics: tuple[Diagnostic, ...] = ()
     legacy_schema_version: str = "security-model-ir/v1"
     adapter_version: str = LEGACY_ADAPTER_VERSION
@@ -166,15 +153,11 @@ class LegacyAdapterResult:
         if not isinstance(self.declaration, SecurityIR):
             raise LegacyAdapterError("declaration must be a SecurityIR")
         if not isinstance(self.verification_data, LegacyVerificationData):
-            raise LegacyAdapterError(
-                "verification_data must be LegacyVerificationData"
-            )
+            raise LegacyAdapterError("verification_data must be LegacyVerificationData")
         diagnostics = tuple(self.diagnostics)
         for diagnostic in diagnostics:
             if not isinstance(diagnostic, Diagnostic):
-                raise LegacyAdapterError(
-                    "diagnostics must contain Diagnostic records"
-                )
+                raise LegacyAdapterError("diagnostics must contain Diagnostic records")
             diagnostic.validate()
         object.__setattr__(self, "diagnostics", diagnostics)
 
@@ -198,16 +181,12 @@ class LegacyAdapterResult:
 
     @property
     def has_loss(self) -> bool:
-        return any(
-            item.code.startswith("security.adapter.loss")
-            for item in self.diagnostics
-        )
+        return any(item.code.startswith("security.adapter.loss") for item in self.diagnostics)
 
     @property
     def has_unsupported(self) -> bool:
         return any(
-            item.code.startswith("security.adapter.unsupported")
-            for item in self.diagnostics
+            item.code.startswith("security.adapter.unsupported") for item in self.diagnostics
         )
 
     @property
@@ -246,15 +225,11 @@ class _SourceRegistry:
         self._sources: dict[str, SecuritySource] = {}
         self._diagnostics = diagnostics
 
-    def ids_for(
-        self, record: Mapping[str, Any], *, field_path: str
-    ) -> tuple[str, ...]:
+    def ids_for(self, record: Mapping[str, Any], *, field_path: str) -> tuple[str, ...]:
         raw = record.get("evidence_refs", ())
         if raw is None:
             return ()
-        if isinstance(raw, (str, bytes, bytearray)) or not isinstance(
-            raw, Sequence
-        ):
+        if isinstance(raw, (str, bytes, bytearray)) or not isinstance(raw, Sequence):
             self._diagnostics.append(
                 _diagnostic(
                     "security.adapter.loss.invalid_evidence_refs",
@@ -319,9 +294,7 @@ class _SourceRegistry:
         return tuple(self._sources.values())
 
 
-def _legacy_attributes(
-    collection: str, record: Mapping[str, Any]
-) -> Mapping[str, Any]:
+def _legacy_attributes(collection: str, record: Mapping[str, Any]) -> Mapping[str, Any]:
     return {
         "legacy_collection": collection,
         "legacy_record": record,
@@ -331,9 +304,7 @@ def _legacy_attributes(
 def _string_values(value: Any) -> tuple[str, ...]:
     if isinstance(value, str) and value:
         return (value,)
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return tuple(item for item in value if isinstance(item, str) and item)
     return ()
 
@@ -344,9 +315,7 @@ def _resource(
     source_ids: tuple[str, ...],
 ) -> Resource:
     owners = _string_values(
-        record.get("owner")
-        or record.get("principal")
-        or record.get("principal_id")
+        record.get("owner") or record.get("principal") or record.get("principal_id")
     )
     assets = _string_values(record.get("asset_id") or record.get("asset"))
     legacy_kind = record.get("kind")
@@ -384,12 +353,8 @@ def _state_machine(
                     source_state=source,
                     target_state=target,
                     event=event,
-                    guard=raw.get("guard", "")
-                    if isinstance(raw.get("guard", ""), str)
-                    else "",
-                    effect=raw.get("effect", "")
-                    if isinstance(raw.get("effect", ""), str)
-                    else "",
+                    guard=raw.get("guard", "") if isinstance(raw.get("guard", ""), str) else "",
+                    effect=raw.get("effect", "") if isinstance(raw.get("effect", ""), str) else "",
                     attributes={"legacy_record": raw},
                 )
             )
@@ -399,9 +364,7 @@ def _state_machine(
                     "security.adapter.unsupported.state_transition_shape",
                     "A legacy transition was preserved but lacks typed endpoints.",
                     severity=DiagnosticSeverity.WARNING,
-                    field_path=(
-                        f"/state_machines/{index}/transitions/{transition_index}"
-                    ),
+                    field_path=(f"/state_machines/{index}/transitions/{transition_index}"),
                 )
             )
     initial = record.get("initial", record.get("initial_state", record.get("current", "")))
@@ -434,9 +397,7 @@ def _copy_input(
     elif isinstance(legacy, Mapping):
         value = dict(legacy)
     else:
-        raise TypeError(
-            "legacy must be a SecurityModelIR or JSON-like mapping"
-        )
+        raise TypeError("legacy must be a SecurityModelIR or JSON-like mapping")
     if not isinstance(value, dict):
         raise LegacyAdapterError("legacy input must decode to a mapping")
     # Freezing and thawing rejects non-JSON objects while returning a completely
@@ -456,14 +417,10 @@ def adapt_legacy_security_ir(
     """
 
     payload = _copy_input(legacy)
-    known_payload = {
-        name: payload[name] for name in LEGACY_TOP_LEVEL_FIELDS if name in payload
-    }
+    known_payload = {name: payload[name] for name in LEGACY_TOP_LEVEL_FIELDS if name in payload}
     # Validate the complete recognized legacy contract before translating it.
     try:
-        legacy_model = SecurityModelIR.from_untrusted_dict(
-            known_payload, strict=True
-        )
+        legacy_model = SecurityModelIR.from_untrusted_dict(known_payload, strict=True)
         validate_legacy_ir(legacy_model)
     except (TypeError, ValueError) as exc:
         raise LegacyAdapterError(f"invalid legacy SecurityModelIR: {exc}") from exc
@@ -494,9 +451,7 @@ def adapt_legacy_security_ir(
                 asset_id=record["id"],
                 kind=record.get("kind", "unspecified"),
                 symbol=record.get("symbol", ""),
-                source_ids=sources.ids_for(
-                    record, field_path=f"/assets/{index}"
-                ),
+                source_ids=sources.ids_for(record, field_path=f"/assets/{index}"),
                 attributes=_legacy_attributes("assets", record),
             )
         )
@@ -508,9 +463,7 @@ def adapt_legacy_security_ir(
                 _resource(
                     record,
                     collection,
-                    sources.ids_for(
-                        record, field_path=f"/{collection}/{index}"
-                    ),
+                    sources.ids_for(record, field_path=f"/{collection}/{index}"),
                 )
             )
 
@@ -538,15 +491,9 @@ def adapt_legacy_security_ir(
                 principal_ids=_string_values(
                     record.get("principal_ids") or record.get("principals")
                 ),
-                resource_ids=_string_values(
-                    record.get("resource_ids") or record.get("resources")
-                ),
-                channel_ids=_string_values(
-                    record.get("channel_ids") or record.get("channels")
-                ),
-                source_ids=sources.ids_for(
-                    record, field_path=f"/policies/{index}"
-                ),
+                resource_ids=_string_values(record.get("resource_ids") or record.get("resources")),
+                channel_ids=_string_values(record.get("channel_ids") or record.get("channels")),
+                source_ids=sources.ids_for(record, field_path=f"/policies/{index}"),
                 attributes=_legacy_attributes("policies", record),
             )
         )
@@ -608,9 +555,7 @@ def adapt_legacy_security_ir(
                 severity=record.get("severity", "unspecified"),
                 assumption_ids=tuple(record.get("required_assumptions", ())),
                 policy_ids=tuple(record.get("policy_ids", ())),
-                source_ids=sources.ids_for(
-                    record, field_path=f"/claims/{index}"
-                ),
+                source_ids=sources.ids_for(record, field_path=f"/claims/{index}"),
                 attributes=_legacy_attributes("claims", record),
             )
         )
@@ -639,10 +584,7 @@ def adapt_legacy_security_ir(
         )
 
     verification = LegacyVerificationData(
-        **{
-            name: tuple(payload[name])
-            for name in LEGACY_VERIFICATION_FIELDS
-        }
+        **{name: tuple(payload[name]) for name in LEGACY_VERIFICATION_FIELDS}
     )
     if any(getattr(verification, name) for name in LEGACY_VERIFICATION_FIELDS):
         diagnostics.append(
@@ -677,9 +619,7 @@ def _legacy_record(record: Any) -> dict[str, Any]:
     attributes = record.attributes
     value = attributes.get("legacy_record")
     if not isinstance(value, Mapping):
-        raise LegacyAdapterError(
-            f"{type(record).__name__} lacks its lossless legacy record"
-        )
+        raise LegacyAdapterError(f"{type(record).__name__} lacks its lossless legacy record")
     return thaw_json(value)
 
 
@@ -697,11 +637,7 @@ def to_legacy_security_ir(
 
     if isinstance(adapted, LegacyAdapterResult):
         declaration = adapted.declaration
-        run_data = (
-            verification_data
-            if verification_data is not None
-            else adapted.verification_data
-        )
+        run_data = verification_data if verification_data is not None else adapted.verification_data
         legacy_schema_version = adapted.legacy_schema_version
     elif isinstance(adapted, SecurityIR):
         declaration = adapted
@@ -758,19 +694,13 @@ def to_legacy_security_ir(
     unknown_values: dict[str, Any] = {}
     for extension in declaration.extensions:
         if extension.vocabulary != "legacy.security-model-ir":
-            raise LegacyAdapterError(
-                f"extension {extension.extension_id!r} has no legacy adapter"
-            )
+            raise LegacyAdapterError(f"extension {extension.extension_id!r} has no legacy adapter")
         payload = thaw_json(extension.payload)
         if not isinstance(payload, Mapping):
-            raise LegacyAdapterError(
-                f"extension {extension.extension_id!r} payload is malformed"
-            )
+            raise LegacyAdapterError(f"extension {extension.extension_id!r} payload is malformed")
         field_name = payload.get("field_name")
         if not isinstance(field_name, str) or "value" not in payload:
-            raise LegacyAdapterError(
-                f"extension {extension.extension_id!r} payload is malformed"
-            )
+            raise LegacyAdapterError(f"extension {extension.extension_id!r} payload is malformed")
         if field_name.startswith("unsupported_"):
             unknown_values[field_name.removeprefix("unsupported_")] = payload["value"]
         else:
@@ -779,8 +709,7 @@ def to_legacy_security_ir(
     missing_extensions = sorted(set(_EXTENSION_FIELDS) - set(extension_values))
     if missing_extensions:
         raise LegacyAdapterError(
-            "declaration lacks lossless legacy extension(s): "
-            + ", ".join(missing_extensions)
+            "declaration lacks lossless legacy extension(s): " + ", ".join(missing_extensions)
         )
     for name in ("roles", "capabilities", "events", "invariants"):
         collections[name] = copy.deepcopy(extension_values[name])
@@ -824,13 +753,9 @@ class SecurityIRLegacyAdapter:
 
     def __post_init__(self) -> None:
         if self.version != LEGACY_ADAPTER_VERSION:
-            raise LegacyAdapterError(
-                f"unsupported legacy adapter version: {self.version!r}"
-            )
+            raise LegacyAdapterError(f"unsupported legacy adapter version: {self.version!r}")
 
-    def adapt(
-        self, legacy: SecurityModelIR | Mapping[str, Any]
-    ) -> LegacyAdapterResult:
+    def adapt(self, legacy: SecurityModelIR | Mapping[str, Any]) -> LegacyAdapterResult:
         return adapt_legacy_security_ir(legacy)
 
     def to_legacy(

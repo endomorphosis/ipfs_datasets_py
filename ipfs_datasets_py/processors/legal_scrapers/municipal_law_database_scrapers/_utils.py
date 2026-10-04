@@ -1,4 +1,3 @@
-
 from pydantic import BaseModel, Field
 from pydantic import BaseModel, ConfigDict
 from typing import Optional
@@ -14,7 +13,6 @@ import re
 
 
 from pydantic import AfterValidator as AV, BaseModel, field_validator
-
 
 
 class MunicodeDoc(BaseModel):
@@ -50,6 +48,7 @@ class MunicodeData(BaseModel):
             "ChunkGroupStartingId": null
         }
     """
+
     NodeKey: Optional[str] = None
     IsUpdated: bool
     IsAmended: bool
@@ -76,13 +75,14 @@ class MunicodeChild(BaseModel):
             }
         },
     """
-    Id: str # NOTE Id needed for API call
+
+    Id: str  # NOTE Id needed for API call
     Heading: str
     NodeDepth: int
     HasChildren: bool
     ParentId: str
     DocOrderId: int
-    Children: List['MunicodeChild'] = Field(default_factory=list)
+    Children: List["MunicodeChild"] = Field(default_factory=list)
     Data: MunicodeData
 
 
@@ -110,6 +110,7 @@ class MunicodeCodesToc(BaseModel):
             }
         }
     """
+
     Id: str
     Heading: str
     NodeDepth: int
@@ -118,6 +119,7 @@ class MunicodeCodesToc(BaseModel):
     DocOrderId: int
     Children: List[MunicodeChild]
     Data: MunicodeData
+
 
 MunicodeCodesToc.model_rebuild()  # This is needed for the recursive type reference
 
@@ -134,6 +136,7 @@ class MunicodeContentType(BaseModel):
             "IsSearchable": true
         },
     """
+
     Id: Optional[str]
     Name: Optional[str]
     DefaultOrder: Optional[int]
@@ -157,8 +160,9 @@ class MunicodeFeatures(BaseModel):
             "ShowGoogleTranslate": true
         },
     """
+
     CodeBank: Optional[bool] = None
-    NOW: Optional[bool] = None 
+    NOW: Optional[bool] = None
     OrdBank: Optional[bool] = None
     AutomatedOrdLink: Optional[bool] = None
     CodeBankCompare: Optional[bool] = None
@@ -179,6 +183,7 @@ class MunicodeState(BaseModel):
             "StateAbbreviation": "AZ"
         },
     """
+
     StateID: int
     StateName: str
     StateAbbreviation: str
@@ -211,17 +216,18 @@ class MunicodeClient(BaseModel):
             "Meetings": null
         },
     """
+
     PopRangeId: Optional[str] = None
     ClassificationId: Optional[str] = None
-    Phone: Optional[str] = None           
-    ClientID: int               # NOTE Necessary Field
-    ClientName: str             # NOTE Necessary Field
-    State: MunicodeState        # NOTE Necessary Field
-    Address: str                # NOTE Necessary Field
+    Phone: Optional[str] = None
+    ClientID: int  # NOTE Necessary Field
+    ClientName: str  # NOTE Necessary Field
+    State: MunicodeState  # NOTE Necessary Field
+    Address: str  # NOTE Necessary Field
     Address2: Optional[str] = None
-    City: str                   # NOTE Necessary Field
-    ZipCode: int                # NOTE Necessary Field
-    Website: str                # NOTE Necessary Field
+    City: str  # NOTE Necessary Field
+    ZipCode: int  # NOTE Necessary Field
+    Website: str  # NOTE Necessary Field
     ShowAdvanceSheet: Optional[bool] = None
     LibraryHomePageTemplateName: Optional[str] = None
     LibraryMobileHomePageTemplateName: Optional[str] = None
@@ -238,7 +244,7 @@ class MunicodeProduct(BaseModel):
                 ...
             },
             "Features": {
-                ...  
+                ...
             },
             "Client": {
                 ...
@@ -256,11 +262,12 @@ class MunicodeProduct(BaseModel):
             "SearchIntegrationBaseUrl": "cottonwoodaz.gov/"
         },
     """
+
     ContentType: MunicodeContentType
     Features: MunicodeFeatures
     Client: MunicodeClient
-    ProductID: int      # NOTE Necessary field
-    ProductName: str    # NOTE Necessary field
+    ProductID: int  # NOTE Necessary field
+    ProductName: str  # NOTE Necessary field
     HasNOW: Optional[bool] = None
     Disclaimer: Optional[str] = None
     WebIntro: Optional[str] = None
@@ -274,7 +281,7 @@ class MunicodeProduct(BaseModel):
 
 class MunicodeJob(BaseModel):
     """
-    This API call returns metadata about a specific job, 
+    This API call returns metadata about a specific job,
         which is Municode's term for the codes and other documents that this city/place has contracted them to store.
 
     Example API Call:
@@ -286,7 +293,7 @@ class MunicodeJob(BaseModel):
             "Name": "Supplement 24 Update 2",
             "ProductId": 16298,
             "Product": {
-                ...  
+                ...
             },
             "PublishDate": "2024-09-17T04:00:00",
             "MaxTrackingDate": "2024-11-15T11:36:59",
@@ -296,35 +303,43 @@ class MunicodeJob(BaseModel):
             "OnlineDate": "2024-11-15T11:36:59"
         }
     """
-    Id: int                     # NOTE Jobid needed for API call
+
+    Id: int  # NOTE Jobid needed for API call
     Name: str
-    ProductId: int              # NOTE productid needed for API call
+    ProductId: int  # NOTE productid needed for API call
     Product: MunicodeProduct
-    PublishDate: str            # NOTE Necessary Field
+    PublishDate: str  # NOTE Necessary Field
     MaxTrackingDate: Optional[str] = None
     OnlinePostDate: Optional[str] = None
     IsLatest: Optional[bool] = None
-    BannerText: str             # NOTE Necessary Field
+    BannerText: str  # NOTE Necessary Field
     OnlineDate: Optional[str] = None
 
 
 class ECodeDoc(BaseModel):
     """ECode360 Document Information"""
+
     id: int = Field(..., description="Unique identifier for the document")
     title: str = Field(..., description="The title of the document")
     content: str = Field(..., description="The content of the document")
 
+
 class Charter(BaseModel):
     """AM Legal Charter Information"""
+
     code_slug: str
     destinations: dict
 
+
 class CodeLookup(BaseModel):
     """AM Legal Code Lookup Information"""
+
     charter: Charter
+
 
 class AmLegalDoc(BaseModel):
     """AM Legal Document Information"""
+
     id: int
     doc_id: str
     orig_doc_id: str
@@ -344,8 +359,6 @@ def _compile_pattern(v: str) -> Pattern:
         raise ValueError(f"Invalid regex pattern: {v}. Error: {e}")
 
 
-
-
 class AmLegalUrlPatterns(BaseModel):
     """
     A class representing URL patterns for American Legal API endpoints.
@@ -356,7 +369,8 @@ class AmLegalUrlPatterns(BaseModel):
         JOBS (Pattern): Compiled regex pattern for the jobs endpoint.
 
     """
-    API_URL: LiteralString |Pattern = r"https://api\.amlegal\.com"
+
+    API_URL: LiteralString | Pattern = r"https://api\.amlegal\.com"
 
 
 class MunicodeUrlPatterns(BaseModel):
@@ -368,35 +382,40 @@ class MunicodeUrlPatterns(BaseModel):
         CODES_TOC (Pattern): Compiled regex pattern for the codes table of contents endpoint.
         JOBS (Pattern): Compiled regex pattern for the jobs endpoint.
     """
-    API_URL: LiteralString |Pattern = r"https://api\.municode\.com"
+
+    API_URL: LiteralString | Pattern = r"https://api\.municode\.com"
     CODES_TOC: LiteralString | Pattern = r"https://api\.municode\.com/codesToc\?"
-    JOBS: LiteralString | Pattern = r'https://api\.municode\.com/Jobs/latest'
+    JOBS: LiteralString | Pattern = r"https://api\.municode\.com/Jobs/latest"
 
 
 ########## Output Models ##########
+
 
 class MetaData(BaseModel):
     """
     A Pydantic model representing metadata for an API call.
     """
+
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     gnis: str
     job_id: str
     product_id: str
     json_filepath: Path
-    csv_filepath: Path 
+    csv_filepath: Path
+
 
 class MunicodeOutput(BaseModel):
     """
     A Pydantic model representing the output of a Municode API call.
-    
+
     Attributes:
         metadata (MetaData): Metadata associated with the output.
         api_url_dict (dict[str, Any]): A dictionary containing API URLs and related information.
         docs (list[MunicodeDoc]): A list of MunicodeDoc objects. Defaults to an empty list.
 
     """
+
     metadata: MetaData
     api_url_dict: dict[str, Any]
     docs: list[MunicodeDoc] = Field(default_factory=list)

@@ -17,15 +17,15 @@ from .sparse_embedding_tools import (
     manage_sparse_models,
     SparseModel,
     SparseEmbedding,
-    MockSparseEmbeddingService
+    MockSparseEmbeddingService,
 )
 
 __all__ = [
     "generate_sparse_embedding",
-    "index_sparse_collection", 
+    "index_sparse_collection",
     "sparse_search",
     "manage_sparse_models",
     "SparseModel",
     "SparseEmbedding",
-    "MockSparseEmbeddingService"
+    "MockSparseEmbeddingService",
 ]

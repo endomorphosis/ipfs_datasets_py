@@ -1,6 +1,7 @@
 """
 Phase B2 unit tests for p2p_tools/p2p_tools.py
 """
+
 from __future__ import annotations
 import sys
 import pytest
@@ -8,10 +9,9 @@ from unittest.mock import MagicMock, patch, AsyncMock
 
 # Ensure the submodule is importable by its full dotted path
 import importlib
+
 try:
-    _p2p_mod = importlib.import_module(
-        "ipfs_datasets_py.mcp_server.tools.p2p_tools.p2p_tools"
-    )
+    _p2p_mod = importlib.import_module("ipfs_datasets_py.mcp_server.tools.p2p_tools.p2p_tools")
     P2P_IMPORTABLE = True
 except Exception:
     P2P_IMPORTABLE = False
@@ -26,6 +26,7 @@ pytestmark = pytest.mark.skipif(
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _get_p2p():
     return importlib.import_module("ipfs_datasets_py.mcp_server.tools.p2p_tools.p2p_tools")
 
@@ -33,6 +34,7 @@ def _get_p2p():
 # ---------------------------------------------------------------------------
 # p2p_service_status
 # ---------------------------------------------------------------------------
+
 
 class TestP2pServiceStatus:
     """Tests for p2p_service_status."""
@@ -67,6 +69,7 @@ class TestP2pServiceStatus:
 # ---------------------------------------------------------------------------
 # p2p_cache operations
 # ---------------------------------------------------------------------------
+
 
 class TestP2pCache:
     """Tests for P2P cache operations — return dicts even in degraded mode."""
@@ -117,6 +120,7 @@ class TestP2pCache:
 # p2p_task_submit / p2p_task_get
 # ---------------------------------------------------------------------------
 
+
 class TestP2pTasks:
     """Tests for P2P task queue operations."""
 
@@ -152,6 +156,7 @@ class TestP2pTasks:
 # ---------------------------------------------------------------------------
 # p2p_remote_status (async)
 # ---------------------------------------------------------------------------
+
 
 class TestP2pRemoteStatus:
     """Tests for async remote P2P operations."""

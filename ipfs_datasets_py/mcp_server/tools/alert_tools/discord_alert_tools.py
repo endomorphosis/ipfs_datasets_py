@@ -30,8 +30,9 @@ try:
         DiscordEmbed,
         AlertManager,
         AlertRule,
-        RuleEngine
+        RuleEngine,
     )
+
     ALERTS_AVAILABLE = True
 except ImportError:
     logger.warning("Alert system not available")
@@ -46,10 +47,10 @@ _alert_manager: Optional[AlertManager] = None
 def _get_notifier(config_file: Optional[str] = None) -> DiscordNotifier:
     """Get or create Discord notifier instance."""
     global _notifier
-    
+
     if not ALERTS_AVAILABLE:
         raise ImportError("Alert system not available. Install discord.py and aiohttp.")
-    
+
     if _notifier is None:
         if config_file:
             _notifier = DiscordNotifier(config_file=Path(config_file))
@@ -61,35 +62,33 @@ def _get_notifier(config_file: Optional[str] = None) -> DiscordNotifier:
             else:
                 # Initialize from environment variables
                 _notifier = DiscordNotifier()
-    
+
     return _notifier
 
 
 def _get_alert_manager(
-    config_file: Optional[str] = None,
-    notifier: Optional[DiscordNotifier] = None
+    config_file: Optional[str] = None, notifier: Optional[DiscordNotifier] = None
 ) -> AlertManager:
     """Get or create alert manager instance."""
     global _alert_manager
-    
+
     if not ALERTS_AVAILABLE:
         raise ImportError("Alert system not available")
-    
+
     if _alert_manager is None:
         if notifier is None:
             notifier = _get_notifier()
-        
+
         # Load rules from config
         if config_file:
             rules_config = Path(config_file)
         else:
             rules_config = Path(__file__).parents[4] / "config" / "alert_rules.yml"
-        
+
         _alert_manager = AlertManager(
-            notifier=notifier,
-            config_file=rules_config if rules_config.exists() else None
+            notifier=notifier, config_file=rules_config if rules_config.exists() else None
         )
-    
+
     return _alert_manager
 
 
@@ -98,21 +97,21 @@ async def send_discord_message(
     role_names: Optional[List[str]] = None,
     channel_id: Optional[str] = None,
     thread_id: Optional[str] = None,
-    config_file: Optional[str] = None
+    config_file: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Send a plain text message to Discord.
-    
+
     Args:
         text: Message text to send
         role_names: List of role names to mention (optional)
         channel_id: Channel ID to send to (optional, uses default)
         thread_id: Thread ID to send to (optional)
         config_file: Path to discord.yml config file (optional)
-        
+
     Returns:
         Dictionary with status and message info
-        
+
     Example:
         result = await send_discord_message(
             text="Market alert: Price spike detected!",
@@ -121,22 +120,16 @@ async def send_discord_message(
     """
     try:
         notifier = _get_notifier(config_file)
-        
+
         result = await notifier.send_message(
-            text=text,
-            role_names=role_names,
-            channel_id=channel_id,
-            thread_id=thread_id
+            text=text, role_names=role_names, channel_id=channel_id, thread_id=thread_id
         )
-        
+
         return result
-    
+
     except Exception as e:
         logger.error(f"Error sending Discord message: {e}", exc_info=True)
-        return {
-            'status': 'error',
-            'error': str(e)
-        }
+        return {"status": "error", "error": str(e)}
 
 
 async def send_discord_embed(
@@ -148,11 +141,11 @@ async def send_discord_embed(
     role_names: Optional[List[str]] = None,
     channel_id: Optional[str] = None,
     thread_id: Optional[str] = None,
-    config_file: Optional[str] = None
+    config_file: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Send a rich embed message to Discord.
-    
+
     Args:
         title: Embed title
         description: Embed description (optional)
@@ -163,10 +156,10 @@ async def send_discord_embed(
         channel_id: Channel ID to send to (optional)
         thread_id: Thread ID to send to (optional)
         config_file: Path to discord.yml config file (optional)
-        
+
     Returns:
         Dictionary with status and message info
-        
+
     Example:
         result = await send_discord_embed(
             title="Price Alert",
@@ -181,54 +174,43 @@ async def send_discord_embed(
     """
     try:
         notifier = _get_notifier(config_file)
-        
+
         if not ALERTS_AVAILABLE:
-            return {
-                'status': 'error',
-                'error': 'Alert system not available'
-            }
-        
+            return {"status": "error", "error": "Alert system not available"}
+
         embed = DiscordEmbed(
             title=title,
             description=description,
-            color=color or 0x3498db,
+            color=color or 0x3498DB,
             fields=fields or [],
-            footer=footer
+            footer=footer,
         )
-        
+
         result = await notifier.send_message(
-            embed=embed,
-            role_names=role_names,
-            channel_id=channel_id,
-            thread_id=thread_id
+            embed=embed, role_names=role_names, channel_id=channel_id, thread_id=thread_id
         )
-        
+
         return result
-    
+
     except Exception as e:
         logger.error(f"Error sending Discord embed: {e}", exc_info=True)
-        return {
-            'status': 'error',
-            'error': str(e)
-        }
+        return {"status": "error", "error": str(e)}
 
 
 async def evaluate_alert_rules(
-    event: Dict[str, Any],
-    rule_ids: Optional[List[str]] = None,
-    config_file: Optional[str] = None
+    event: Dict[str, Any], rule_ids: Optional[List[str]] = None, config_file: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Evaluate an event against configured alert rules.
-    
+
     Args:
         event: Event data with variables for rule evaluation
         rule_ids: List of specific rule IDs to evaluate (optional, default all)
         config_file: Path to alert_rules.yml config file (optional)
-        
+
     Returns:
         Dictionary with evaluation results
-        
+
     Example:
         event = {
             "symbol": "AAPL",
@@ -240,37 +222,29 @@ async def evaluate_alert_rules(
     """
     try:
         manager = _get_alert_manager(config_file)
-        
+
         triggered = await manager.evaluate_event(event, rule_ids)
-        
-        return {
-            'status': 'success',
-            'triggered_rules': len(triggered),
-            'results': triggered
-        }
-    
+
+        return {"status": "success", "triggered_rules": len(triggered), "results": triggered}
+
     except Exception as e:
         logger.error(f"Error evaluating alert rules: {e}", exc_info=True)
-        return {
-            'status': 'error',
-            'error': str(e)
-        }
+        return {"status": "error", "error": str(e)}
 
 
 def list_alert_rules(
-    enabled_only: bool = False,
-    config_file: Optional[str] = None
+    enabled_only: bool = False, config_file: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     List configured alert rules.
-    
+
     Args:
         enabled_only: If True, only return enabled rules (optional)
         config_file: Path to alert_rules.yml config file (optional)
-        
+
     Returns:
         Dictionary with list of rules
-        
+
     Example:
         result = list_alert_rules(enabled_only=True)
         for rule in result['rules']:
@@ -278,37 +252,31 @@ def list_alert_rules(
     """
     try:
         manager = _get_alert_manager(config_file)
-        
+
         rules = manager.list_rules(enabled_only=enabled_only)
-        
+
         return {
-            'status': 'success',
-            'count': len(rules),
-            'rules': [rule.to_dict() for rule in rules]
+            "status": "success",
+            "count": len(rules),
+            "rules": [rule.to_dict() for rule in rules],
         }
-    
+
     except Exception as e:
         logger.error(f"Error listing alert rules: {e}", exc_info=True)
-        return {
-            'status': 'error',
-            'error': str(e)
-        }
+        return {"status": "error", "error": str(e)}
 
 
-def add_alert_rule(
-    rule_data: Dict[str, Any],
-    config_file: Optional[str] = None
-) -> Dict[str, Any]:
+def add_alert_rule(rule_data: Dict[str, Any], config_file: Optional[str] = None) -> Dict[str, Any]:
     """
     Add a new alert rule.
-    
+
     Args:
         rule_data: Rule configuration dictionary
         config_file: Path to alert_rules.yml config file (optional)
-        
+
     Returns:
         Dictionary with result status
-        
+
     Example:
         rule = {
             "rule_id": "my_alert",
@@ -322,127 +290,96 @@ def add_alert_rule(
     """
     try:
         if not ALERTS_AVAILABLE:
-            return {
-                'status': 'error',
-                'error': 'Alert system not available'
-            }
-        
+            return {"status": "error", "error": "Alert system not available"}
+
         manager = _get_alert_manager(config_file)
-        
+
         rule = AlertRule.from_dict(rule_data)
         manager.add_rule(rule)
-        
-        return {
-            'status': 'success',
-            'message': f'Added rule: {rule.name}',
-            'rule_id': rule.rule_id
-        }
-    
+
+        return {"status": "success", "message": f"Added rule: {rule.name}", "rule_id": rule.rule_id}
+
     except Exception as e:
         logger.error(f"Error adding alert rule: {e}", exc_info=True)
-        return {
-            'status': 'error',
-            'error': str(e)
-        }
+        return {"status": "error", "error": str(e)}
 
 
-def remove_alert_rule(
-    rule_id: str,
-    config_file: Optional[str] = None
-) -> Dict[str, Any]:
+def remove_alert_rule(rule_id: str, config_file: Optional[str] = None) -> Dict[str, Any]:
     """
     Remove an alert rule.
-    
+
     Args:
         rule_id: ID of the rule to remove
         config_file: Path to alert_rules.yml config file (optional)
-        
+
     Returns:
         Dictionary with result status
-        
+
     Example:
         result = remove_alert_rule("my_alert")
     """
     try:
         manager = _get_alert_manager(config_file)
-        
+
         success = manager.remove_rule(rule_id)
-        
+
         if success:
-            return {
-                'status': 'success',
-                'message': f'Removed rule: {rule_id}'
-            }
+            return {"status": "success", "message": f"Removed rule: {rule_id}"}
         else:
-            return {
-                'status': 'error',
-                'error': f'Rule not found: {rule_id}'
-            }
-    
+            return {"status": "error", "error": f"Rule not found: {rule_id}"}
+
     except Exception as e:
         logger.error(f"Error removing alert rule: {e}", exc_info=True)
-        return {
-            'status': 'error',
-            'error': str(e)
-        }
+        return {"status": "error", "error": str(e)}
 
 
 def reset_alert_suppression(
-    rule_id: Optional[str] = None,
-    config_file: Optional[str] = None
+    rule_id: Optional[str] = None, config_file: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Reset alert suppression state.
-    
+
     Args:
         rule_id: ID of specific rule to reset (optional, None = all rules)
         config_file: Path to alert_rules.yml config file (optional)
-        
+
     Returns:
         Dictionary with result status
-        
+
     Example:
         # Reset specific rule
         result = reset_alert_suppression("price_spike_alert")
-        
+
         # Reset all rules
         result = reset_alert_suppression()
     """
     try:
         manager = _get_alert_manager(config_file)
-        
+
         manager.reset_suppression(rule_id)
-        
+
         if rule_id:
-            message = f'Reset suppression for rule: {rule_id}'
+            message = f"Reset suppression for rule: {rule_id}"
         else:
-            message = 'Reset suppression for all rules'
-        
-        return {
-            'status': 'success',
-            'message': message
-        }
-    
+            message = "Reset suppression for all rules"
+
+        return {"status": "success", "message": message}
+
     except Exception as e:
         logger.error(f"Error resetting suppression: {e}", exc_info=True)
-        return {
-            'status': 'error',
-            'error': str(e)
-        }
+        return {"status": "error", "error": str(e)}
 
 
-def get_suppression_status(
-    config_file: Optional[str] = None
-) -> Dict[str, Any]:
+def get_suppression_status(config_file: Optional[str] = None) -> Dict[str, Any]:
     """
     Get suppression status for all rules.
-    
+
     Args:
         config_file: Path to alert_rules.yml config file (optional)
-        
+
     Returns:
         Dictionary with suppression status for each rule
-        
+
     Example:
         result = get_suppression_status()
         for rule_id, status in result['rules'].items():
@@ -451,19 +388,11 @@ def get_suppression_status(
     """
     try:
         manager = _get_alert_manager(config_file)
-        
+
         status = manager.get_suppression_status()
-        
-        return {
-            'status': 'success',
-            'rules': status
-        }
-    
+
+        return {"status": "success", "rules": status}
+
     except Exception as e:
         logger.error(f"Error getting suppression status: {e}", exc_info=True)
-        return {
-            'status': 'error',
-            'error': str(e)
-        }
-
-
+        return {"status": "error", "error": str(e)}

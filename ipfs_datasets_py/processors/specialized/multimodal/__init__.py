@@ -16,7 +16,7 @@ Main Classes:
 
 Example:
     from ipfs_datasets_py.processors.specialized.multimodal import EnhancedMultiModalProcessor
-    
+
     processor = EnhancedMultiModalProcessor()
     result = await processor.process_content(content)
 """
@@ -27,9 +27,11 @@ try:
         ContentQualityMetrics,
         ProcessingContext,
     )
+
     _enhanced_available = True
 except ImportError as e:
     import warnings
+
     warnings.warn(f"Enhanced multimodal processor unavailable: {e}", ImportWarning)
     EnhancedMultiModalProcessor = None
     ContentQualityMetrics = None
@@ -42,9 +44,11 @@ try:
         ProcessedContent,
         ProcessedContentBatch,
     )
+
     _basic_available = True
 except ImportError as e:
     import warnings
+
     warnings.warn(f"Basic multimodal processor unavailable: {e}", ImportWarning)
     MultiModalContentProcessor = None
     ProcessedContent = None
@@ -52,10 +56,10 @@ except ImportError as e:
     _basic_available = False
 
 __all__ = [
-    'EnhancedMultiModalProcessor',
-    'ContentQualityMetrics',
-    'ProcessingContext',
-    'MultiModalContentProcessor',
-    'ProcessedContent',
-    'ProcessedContentBatch',
+    "EnhancedMultiModalProcessor",
+    "ContentQualityMetrics",
+    "ProcessingContext",
+    "MultiModalContentProcessor",
+    "ProcessedContent",
+    "ProcessedContentBatch",
 ]

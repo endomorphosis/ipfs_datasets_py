@@ -2,8 +2,10 @@
 """
 List MCP server directory structure.
 """
+
 import os
 from pathlib import Path
+
 
 def list_directory(directory, indent=0):
     """List the contents of a directory with indentation."""
@@ -18,6 +20,7 @@ def list_directory(directory, indent=0):
             list_directory(path, indent + 1)
         elif os.path.isfile(path) and not item.startswith("__") and item.endswith(".py"):
             print("  " * indent + f"📄 {item}")
+
 
 # MCP server path
 mcp_server_path = Path(__file__).resolve().parent / "ipfs_datasets_py" / "mcp_server"
@@ -37,10 +40,13 @@ if os.path.exists(tools_path):
     for item in os.listdir(tools_path):
         category_path = os.path.join(tools_path, item)
         if os.path.isdir(category_path) and not item.startswith("__"):
-            tool_files = [f for f in os.listdir(category_path)
-                         if os.path.isfile(os.path.join(category_path, f))
-                         and f.endswith(".py")
-                         and not f.startswith("__")]
+            tool_files = [
+                f
+                for f in os.listdir(category_path)
+                if os.path.isfile(os.path.join(category_path, f))
+                and f.endswith(".py")
+                and not f.startswith("__")
+            ]
             print(f"📁 {item}/ ({len(tool_files)} tools)")
             for tool in tool_files:
                 print(f"  📄 {tool}")

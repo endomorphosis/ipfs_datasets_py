@@ -5,6 +5,7 @@ from __future__ import annotations
 #   ipfs_datasets_py.mcp_server.tools.legal_dataset_tools
 # See legacy_mcp_tools/MIGRATION_GUIDE.md for migration instructions.
 import warnings
+
 warnings.warn(
     "legacy_mcp_tools.legal_dataset_mcp_tools is deprecated. "
     "Use ipfs_datasets_py.mcp_server.tools.legal_dataset_tools instead.",
@@ -22,7 +23,9 @@ logger = logging.getLogger(__name__)
 class _LegacyFunctionToolAdapter:
     """Adapter exposing callable legacy tools via MCP-style attributes."""
 
-    def __init__(self, fn: Any, name: str, description: str, category: str = "legal_datasets") -> None:
+    def __init__(
+        self, fn: Any, name: str, description: str, category: str = "legal_datasets"
+    ) -> None:
         self._fn = fn
         self.name = name
         self.description = description
@@ -61,8 +64,7 @@ class ScrapeMunicipalCodesTool:
     def __init__(self) -> None:
         self.name = "scrape_municipal_codes"
         self.description = (
-            "Scrape municipal legal codes using scrape_the_law_mk3 with "
-            "fallback strategy support."
+            "Scrape municipal legal codes using scrape_the_law_mk3 with fallback strategy support."
         )
         self.category = "legal_datasets"
         self.tags = ["municipal", "codes", "scraping", "legacy"]
@@ -136,12 +138,20 @@ async def scrape_recap_archive(
     """Scrape federal court documents from RECAP Archive (courtlistener.com)."""
     try:
         from ...mcp_server.tools.legal_dataset_tools import scrape_recap_archive as _scrape
+
         return await _scrape(
-            courts=courts, document_types=document_types, filed_after=filed_after,
-            filed_before=filed_before, case_name_pattern=case_name_pattern,
-            output_format=output_format, include_text=include_text,
-            include_metadata=include_metadata, rate_limit_delay=rate_limit_delay,
-            max_documents=max_documents, job_id=job_id, resume=resume,
+            courts=courts,
+            document_types=document_types,
+            filed_after=filed_after,
+            filed_before=filed_before,
+            case_name_pattern=case_name_pattern,
+            output_format=output_format,
+            include_text=include_text,
+            include_metadata=include_metadata,
+            rate_limit_delay=rate_limit_delay,
+            max_documents=max_documents,
+            job_id=job_id,
+            resume=resume,
         )
     except Exception as e:
         logger.error(f"RECAP Archive scraping failed: {e}")
@@ -160,9 +170,15 @@ async def search_recap_documents(
     """Search RECAP Archive for specific documents."""
     try:
         from ...mcp_server.tools.legal_dataset_tools import search_recap_documents as _search
+
         return await _search(
-            query=query, court=court, case_name=case_name, filed_after=filed_after,
-            filed_before=filed_before, document_type=document_type, limit=limit,
+            query=query,
+            court=court,
+            case_name=case_name,
+            filed_after=filed_after,
+            filed_before=filed_before,
+            document_type=document_type,
+            limit=limit,
         )
     except Exception as e:
         logger.error(f"RECAP Archive search failed: {e}")
@@ -181,9 +197,13 @@ async def scrape_state_laws(
     """Scrape state legislation and statutes from official state sources."""
     try:
         from ...mcp_server.tools.legal_dataset_tools import scrape_state_laws as _scrape
+
         result = await _scrape(
-            states=states, legal_areas=legal_areas, output_format=output_format,
-            include_metadata=include_metadata, rate_limit_delay=rate_limit_delay,
+            states=states,
+            legal_areas=legal_areas,
+            output_format=output_format,
+            include_metadata=include_metadata,
+            rate_limit_delay=rate_limit_delay,
             max_statutes=max_statutes,
         )
         if job_id:
@@ -206,12 +226,18 @@ def list_scraping_jobs(
     """
     try:
         from ...mcp_server.tools.legal_dataset_tools import list_scraping_jobs as _list
+
         jobs = _list()
         if status_filter != "all":
             jobs = [j for j in jobs if j.get("status") == status_filter]
         if job_type != "all":
             jobs = [j for j in jobs if j.get("job_id", "").startswith(job_type)]
-        return {"status": "success", "jobs": jobs, "total_count": len(jobs), "filters": {"status": status_filter, "job_type": job_type}}
+        return {
+            "status": "success",
+            "jobs": jobs,
+            "total_count": len(jobs),
+            "filters": {"status": status_filter, "job_type": job_type},
+        }
     except Exception as e:
         logger.error(f"Failed to list scraping jobs: {e}")
         return {"status": "error", "error": str(e), "jobs": []}
@@ -226,9 +252,12 @@ async def scrape_us_code(
     """Scrape United States Code sections."""
     try:
         from ...mcp_server.tools.legal_dataset_tools import scrape_us_code as _scrape
+
         return await _scrape(
-            titles=titles, output_format=output_format,
-            include_metadata=include_metadata, rate_limit_delay=rate_limit_delay,
+            titles=titles,
+            output_format=output_format,
+            include_metadata=include_metadata,
+            rate_limit_delay=rate_limit_delay,
         )
     except Exception as e:
         logger.error(f"US Code scraping failed: {e}")
@@ -256,10 +285,22 @@ async def scrape_municipal_codes(
             target_jurisdictions.extend(jurisdictions)
 
         if not target_jurisdictions:
-            return {"status": "error", "error": "No jurisdictions specified.", "data": [], "metadata": {}}
+            return {
+                "status": "error",
+                "error": "No jurisdictions specified.",
+                "data": [],
+                "metadata": {},
+            }
 
         _job_id = job_id or f"municipal_codes_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        _fallback_methods = fallback_methods or ["wayback_machine", "archive_is", "common_crawl", "ipwb", "autoscraper", "playwright"]
+        _fallback_methods = fallback_methods or [
+            "wayback_machine",
+            "archive_is",
+            "common_crawl",
+            "ipwb",
+            "autoscraper",
+            "playwright",
+        ]
 
         return {
             "status": "success",
@@ -286,18 +327,33 @@ async def scrape_municipal_codes(
 # Import patent tools for backward compatibility
 try:
     from .patent_dataset_mcp_tools import PATENT_DATASET_MCP_TOOLS
+
     _patent_tools_available = True
 except ImportError:
     _patent_tools_available = False
     PATENT_DATASET_MCP_TOOLS = []
 
 LEGAL_DATASET_MCP_TOOLS = [
-    _annotate_legacy_tool(scrape_recap_archive, "scrape_recap_archive", "Scrape federal court documents from RECAP Archive."),
-    _annotate_legacy_tool(search_recap_documents, "search_recap_documents", "Search RECAP Archive documents."),
-    _annotate_legacy_tool(scrape_state_laws, "scrape_state_laws", "Scrape state statutes and legislation."),
-    _annotate_legacy_tool(list_scraping_jobs, "list_scraping_jobs", "List legal dataset scraping jobs."),
+    _annotate_legacy_tool(
+        scrape_recap_archive,
+        "scrape_recap_archive",
+        "Scrape federal court documents from RECAP Archive.",
+    ),
+    _annotate_legacy_tool(
+        search_recap_documents, "search_recap_documents", "Search RECAP Archive documents."
+    ),
+    _annotate_legacy_tool(
+        scrape_state_laws, "scrape_state_laws", "Scrape state statutes and legislation."
+    ),
+    _annotate_legacy_tool(
+        list_scraping_jobs, "list_scraping_jobs", "List legal dataset scraping jobs."
+    ),
     _annotate_legacy_tool(scrape_us_code, "scrape_us_code", "Scrape United States Code sections."),
-    _annotate_legacy_tool(scrape_municipal_codes, "scrape_municipal_codes", "Scrape municipal legal codes with fallback support."),
+    _annotate_legacy_tool(
+        scrape_municipal_codes,
+        "scrape_municipal_codes",
+        "Scrape municipal legal codes with fallback support.",
+    ),
 ]
 
 if _patent_tools_available:

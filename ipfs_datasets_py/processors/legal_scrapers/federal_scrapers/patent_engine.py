@@ -110,9 +110,7 @@ class USPTOPatentScraper:
         query_parts: List[Dict[str, Any]] = []
 
         if criteria.keywords:
-            keyword_queries = [
-                {"_text_any": {"patent_abstract": kw}} for kw in criteria.keywords
-            ]
+            keyword_queries = [{"_text_any": {"patent_abstract": kw}} for kw in criteria.keywords]
             if len(keyword_queries) > 1:
                 query_parts.append({"_or": keyword_queries})
             else:
@@ -136,9 +134,7 @@ class USPTOPatentScraper:
             query_parts.append({"patent_date": date_query})
 
         if criteria.cpc_classification:
-            cpc_queries = [
-                {"cpc_subgroup_id": cpc} for cpc in criteria.cpc_classification
-            ]
+            cpc_queries = [{"cpc_subgroup_id": cpc} for cpc in criteria.cpc_classification]
             if len(cpc_queries) > 1:
                 query_parts.append({"_or": cpc_queries})
             else:
@@ -387,9 +383,7 @@ def search_patents_by_inventor(
         List of :class:`Patent` objects.
     """
     scraper = USPTOPatentScraper(rate_limit_delay=rate_limit_delay)
-    return scraper.search_patents(
-        PatentSearchCriteria(inventor_name=inventor_name, limit=limit)
-    )
+    return scraper.search_patents(PatentSearchCriteria(inventor_name=inventor_name, limit=limit))
 
 
 def search_patents_by_assignee(
@@ -408,6 +402,4 @@ def search_patents_by_assignee(
         List of :class:`Patent` objects.
     """
     scraper = USPTOPatentScraper(rate_limit_delay=rate_limit_delay)
-    return scraper.search_patents(
-        PatentSearchCriteria(assignee_name=assignee_name, limit=limit)
-    )
+    return scraper.search_patents(PatentSearchCriteria(assignee_name=assignee_name, limit=limit))

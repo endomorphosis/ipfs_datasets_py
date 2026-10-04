@@ -59,6 +59,7 @@ from ipfs_datasets_py.logic.tools import convert_to_fol  # OLD
 
 # v2.0 (current)
 from ipfs_datasets_py.logic.fol import FOLConverter  # NEW
+
 converter = FOLConverter()
 result = converter.convert("All cats are animals")
 ```
@@ -186,12 +187,13 @@ The old API continues to work but emits a `DeprecationWarning`:
 ```python
 import warnings
 
+
 def convert_to_fol(text):  # OLD API
     warnings.warn(
         "convert_to_fol is deprecated, use FOLConverter.convert() instead. "
         "Will be removed in version 2.0.0",
         DeprecationWarning,
-        stacklevel=2
+        stacklevel=2,
     )
     return FOLConverter().convert(text)
 ```
@@ -222,10 +224,12 @@ def convert_to_fol(text):  # OLD API
 ```python
 # Before (v1.x)
 from ipfs_datasets_py.logic.tools import convert_to_fol
+
 result = convert_to_fol("All cats are animals")
 
 # After (v2.0+)
 from ipfs_datasets_py.logic.fol import FOLConverter
+
 converter = FOLConverter()
 result = converter.convert("All cats are animals")
 ```
@@ -237,6 +241,7 @@ For major APIs, we provide **compatibility shims** in `logic._compat`:
 ```python
 # logic/_compat/v1.py
 from ipfs_datasets_py.logic.fol import FOLConverter
+
 
 def convert_to_fol(text):
     """Compatibility shim for v1.x API."""
@@ -349,6 +354,7 @@ When v3.0 is released, a new migration guide will be provided.
 2. **Test with Warnings** enabled to catch deprecations early:
    ```python
    import warnings
+
    warnings.filterwarnings("error", category=DeprecationWarning)
    ```
 
@@ -411,10 +417,12 @@ When v3.0 is released, a new migration guide will be provided.
 
 ```python
 from ipfs_datasets_py import __version__
+
 print(f"Using ipfs_datasets_py version: {__version__}")
 
 # Check if version is compatible
 from packaging import version
+
 if version.parse(__version__) < version.parse("2.0.0"):
     raise RuntimeError("Requires version 2.0.0 or later")
 ```

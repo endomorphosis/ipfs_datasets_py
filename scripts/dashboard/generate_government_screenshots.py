@@ -5,42 +5,42 @@ Government Dashboard Screenshot Generator
 
 Creates screenshots of the government sources analysis dashboard
 """
+
 import os
 import sys
 from pathlib import Path
+
 
 def generate_screenshots():
     """Generate screenshots of the government dashboard."""
     print("📸 Generating Government Dashboard Screenshots")
     print("=" * 60)
-    
+
     # Create screenshots directory
     screenshots_dir = Path("government_screenshots")
     screenshots_dir.mkdir(exist_ok=True)
-    
+
     try:
         from html2image import Html2Image
-        
+
         # Initialize Html2Image
         hti = Html2Image(size=(1200, 800))
-        
+
         # Get the HTML file path
         html_file = Path("government_dashboard_preview.html").absolute()
-        
+
         if not html_file.exists():
             print(f"❌ HTML file not found: {html_file}")
             return False
-            
+
         print(f"📄 Using HTML file: {html_file}")
-        
+
         # Generate main dashboard screenshot
         print("📸 Generating main dashboard screenshot...")
         hti.screenshot(
-            html_file=str(html_file),
-            save_as="government_dashboard_main.png",
-            size=(1200, 800)
+            html_file=str(html_file), save_as="government_dashboard_main.png", size=(1200, 800)
         )
-        
+
         # Move to screenshots directory
         main_screenshot = Path("government_dashboard_main.png")
         if main_screenshot.exists():
@@ -48,43 +48,39 @@ def generate_screenshots():
             print(f"✅ Main screenshot saved: {screenshots_dir}/government_dashboard_main.png")
         else:
             print("⚠️  Main screenshot not created")
-        
+
         # Generate additional screenshots with different sizes
         screenshot_configs = [
             ("government_dashboard_wide.png", (1400, 900)),
-            ("government_dashboard_tablet.png", (1024, 768)), 
-            ("government_dashboard_mobile.png", (375, 667))
+            ("government_dashboard_tablet.png", (1024, 768)),
+            ("government_dashboard_mobile.png", (375, 667)),
         ]
-        
+
         for filename, size in screenshot_configs:
             print(f"📸 Generating {filename} ({size[0]}x{size[1]})...")
             try:
-                hti.screenshot(
-                    html_file=str(html_file),
-                    save_as=filename,
-                    size=size
-                )
-                
+                hti.screenshot(html_file=str(html_file), save_as=filename, size=size)
+
                 screenshot_path = Path(filename)
                 if screenshot_path.exists():
                     screenshot_path.rename(screenshots_dir / filename)
                     print(f"✅ {filename} saved successfully")
                 else:
                     print(f"⚠️  {filename} not created")
-                    
+
             except Exception as e:
                 print(f"❌ Error creating {filename}: {e}")
-        
+
         print(f"\n📁 All screenshots saved in: {screenshots_dir}")
         return True
-        
+
     except ImportError:
         print("❌ html2image not available, trying alternative method...")
-        
+
         # Create a simple HTML display alternative
         print("📄 Creating HTML preview instead...")
-        
-        # Copy the HTML file to screenshots directory  
+
+        # Copy the HTML file to screenshots directory
         html_source = Path("government_dashboard_preview.html")
         if html_source.exists():
             html_dest = screenshots_dir / "government_dashboard_preview.html"
@@ -95,7 +91,7 @@ def generate_screenshots():
         else:
             print("❌ HTML source file not found")
             return False
-    
+
     except Exception as e:
         print(f"❌ Error generating screenshots: {e}")
         return False
@@ -103,7 +99,7 @@ def generate_screenshots():
 
 def create_screenshot_documentation():
     """Create documentation describing what the screenshots show."""
-    
+
     doc_content = """# Government Sources Dashboard Screenshots
 
 ## Overview
@@ -184,7 +180,7 @@ All screenshots represent actual test results from processing mock government co
 
 The test validates the dashboard's capability to handle large-scale government document analysis with professional-grade workflows across multiple disciplines.
 """
-    
+
     screenshots_dir = Path("government_screenshots")
     doc_file = screenshots_dir / "README.md"
     doc_file.write_text(doc_content)
@@ -196,17 +192,19 @@ def main():
     print("🏛️  Government Dashboard Screenshot Generator")
     print("🇺🇸 Creating visual documentation for government sources test")
     print("=" * 70)
-    
+
     # Generate screenshots
     success = generate_screenshots()
-    
+
     # Create documentation
     create_screenshot_documentation()
-    
+
     if success:
         print(f"\n🎉 Government Dashboard Screenshots Generated Successfully!")
         print(f"📁 Files available in: government_screenshots/")
-        print(f"🌐 View interactive preview: government_screenshots/government_dashboard_preview.html")
+        print(
+            f"🌐 View interactive preview: government_screenshots/government_dashboard_preview.html"
+        )
         return 0
     else:
         print(f"\n⚠️  Screenshots generation had issues, but documentation is available")
@@ -223,5 +221,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n❌ Screenshot generation failed: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

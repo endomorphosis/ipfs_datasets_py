@@ -212,9 +212,7 @@ def _as_mapping(value: Any, label: str) -> Mapping[str, Any]:
 
 def _require_text(value: Any, field_name: str) -> str:
     if not isinstance(value, str) or not value.strip() or value != value.strip():
-        raise AttestedProofModelError(
-            f"{field_name} must be a non-empty trimmed string"
-        )
+        raise AttestedProofModelError(f"{field_name} must be a non-empty trimmed string")
     return value
 
 
@@ -229,9 +227,7 @@ def _require_digest(value: Any, field_name: str) -> str:
     if _BARE_DIGEST_RE.fullmatch(digest):
         digest = f"sha256:{digest}"
     if not _DIGEST_RE.fullmatch(digest):
-        raise AttestedProofModelError(
-            f"{field_name} must be a sha256:<hex> digest"
-        )
+        raise AttestedProofModelError(f"{field_name} must be a sha256:<hex> digest")
     return digest
 
 
@@ -244,9 +240,7 @@ def _optional_digest(value: Any, field_name: str) -> str:
 def _require_cid(value: Any, field_name: str) -> str:
     cid = _require_text(value, field_name)
     if not _CID_RE.fullmatch(cid):
-        raise AttestedProofModelError(
-            f"{field_name} must be a CIDv1 base32 string"
-        )
+        raise AttestedProofModelError(f"{field_name} must be a CIDv1 base32 string")
     return cid
 
 
@@ -259,9 +253,7 @@ def _optional_cid(value: Any, field_name: str) -> str:
 def _require_profile(value: Any, field_name: str = "security_profile") -> str:
     profile = _require_text(value, field_name)
     if not _PROFILE_RE.fullmatch(profile):
-        raise AttestedProofModelError(
-            f"{field_name} must be a lowercase hyphenated identifier"
-        )
+        raise AttestedProofModelError(f"{field_name} must be a lowercase hyphenated identifier")
     return profile
 
 
@@ -275,8 +267,7 @@ def _require_identifier(value: Any, field_name: str) -> str:
     text = _require_text(value, field_name)
     if not _IDENTIFIER_RE.fullmatch(text):
         raise AttestedProofModelError(
-            f"{field_name} must be a lowercase identifier "
-            "(letters, digits, underscore)"
+            f"{field_name} must be a lowercase identifier (letters, digits, underscore)"
         )
     return text
 
@@ -295,9 +286,7 @@ def _unique_cids(values: Any, field_name: str) -> tuple[str, ...]:
     try:
         items = tuple(_require_cid(item, field_name) for item in values)
     except TypeError as exc:
-        raise AttestedProofModelError(
-            f"{field_name} must be a sequence of CIDs"
-        ) from exc
+        raise AttestedProofModelError(f"{field_name} must be a sequence of CIDs") from exc
     if len(items) != len(set(items)):
         raise AttestedProofModelError(f"{field_name} values must be unique")
     return items
@@ -307,28 +296,20 @@ def _unique_texts(values: Any, field_name: str) -> tuple[str, ...]:
     if values in (None, ()):
         return ()
     if isinstance(values, (str, bytes, bytearray)):
-        raise AttestedProofModelError(
-            f"{field_name} must be a sequence of strings"
-        )
+        raise AttestedProofModelError(f"{field_name} must be a sequence of strings")
     try:
         items = tuple(_require_text(item, field_name) for item in values)
     except TypeError as exc:
-        raise AttestedProofModelError(
-            f"{field_name} must be a sequence of strings"
-        ) from exc
+        raise AttestedProofModelError(f"{field_name} must be a sequence of strings") from exc
     if len(items) != len(set(items)):
         raise AttestedProofModelError(f"{field_name} values must be unique")
     return items
 
 
-def _reject_unknown(
-    value: Mapping[str, Any], allowed: frozenset[str], record_name: str
-) -> None:
+def _reject_unknown(value: Mapping[str, Any], allowed: frozenset[str], record_name: str) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise AttestedProofModelError(
-            f"unknown {record_name} field(s): {', '.join(unknown)}"
-        )
+        raise AttestedProofModelError(f"unknown {record_name} field(s): {', '.join(unknown)}")
 
 
 def _parse_enum(value: Any, enum_cls: type[Enum], field_name: str) -> Enum:
@@ -338,9 +319,7 @@ def _parse_enum(value: Any, enum_cls: type[Enum], field_name: str) -> Enum:
         return enum_cls(value)
     except (TypeError, ValueError) as exc:
         allowed = ", ".join(item.value for item in enum_cls)
-        raise AttestedProofModelError(
-            f"{field_name} must be one of: {allowed}"
-        ) from exc
+        raise AttestedProofModelError(f"{field_name} must be one of: {allowed}") from exc
 
 
 def parse_attestation_kind(value: Any) -> AttestationKind:
@@ -370,9 +349,7 @@ def parse_result_authority(value: Any) -> AuthorityKind:
                 }
             )
         )
-        raise AttestedProofModelError(
-            f"result_authority must be one of: {allowed}"
-        ) from exc
+        raise AttestedProofModelError(f"result_authority must be one of: {allowed}") from exc
 
 
 def attestation_kind_is_theorem_authoritative(kind: AttestationKind | str) -> bool:
@@ -410,12 +387,8 @@ class TemporalWindow:
     schema_version: str = TEMPORAL_WINDOW_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "effective_at", _optional_text(self.effective_at, "effective_at")
-        )
-        object.__setattr__(
-            self, "expires_at", _optional_text(self.expires_at, "expires_at")
-        )
+        object.__setattr__(self, "effective_at", _optional_text(self.effective_at, "effective_at"))
+        object.__setattr__(self, "expires_at", _optional_text(self.expires_at, "expires_at"))
         object.__setattr__(
             self,
             "schema_version",
@@ -425,14 +398,8 @@ class TemporalWindow:
             raise AttestedProofModelError(
                 f"unsupported temporal window schema: {self.schema_version!r}"
             )
-        if (
-            self.effective_at
-            and self.expires_at
-            and self.expires_at < self.effective_at
-        ):
-            raise AttestedProofModelError(
-                "expires_at must not precede effective_at"
-            )
+        if self.effective_at and self.expires_at and self.expires_at < self.effective_at:
+            raise AttestedProofModelError("expires_at must not precede effective_at")
 
     def is_effective_at(self, instant: str) -> bool:
         """Return whether *instant* falls inside the effective window."""
@@ -464,9 +431,7 @@ class TemporalWindow:
         return cls(
             effective_at=payload.get("effective_at", ""),
             expires_at=payload.get("expires_at", ""),
-            schema_version=payload.get(
-                "schema_version", TEMPORAL_WINDOW_SCHEMA_VERSION
-            ),
+            schema_version=payload.get("schema_version", TEMPORAL_WINDOW_SCHEMA_VERSION),
         )
 
 
@@ -488,15 +453,9 @@ class ScopeBinding:
             jurisdiction = ""
         object.__setattr__(self, "jurisdiction", jurisdiction)
         object.__setattr__(self, "tenant", _optional_text(self.tenant, "tenant"))
-        object.__setattr__(
-            self, "subject_ids", _unique_texts(self.subject_ids, "subject_ids")
-        )
-        object.__setattr__(
-            self, "resource_ids", _unique_texts(self.resource_ids, "resource_ids")
-        )
-        object.__setattr__(
-            self, "purpose_ids", _unique_texts(self.purpose_ids, "purpose_ids")
-        )
+        object.__setattr__(self, "subject_ids", _unique_texts(self.subject_ids, "subject_ids"))
+        object.__setattr__(self, "resource_ids", _unique_texts(self.resource_ids, "resource_ids"))
+        object.__setattr__(self, "purpose_ids", _unique_texts(self.purpose_ids, "purpose_ids"))
         object.__setattr__(
             self,
             "schema_version",
@@ -542,9 +501,7 @@ class ScopeBinding:
             subject_ids=tuple(payload.get("subject_ids", ())),
             resource_ids=tuple(payload.get("resource_ids", ())),
             purpose_ids=tuple(payload.get("purpose_ids", ())),
-            schema_version=payload.get(
-                "schema_version", SCOPE_BINDING_SCHEMA_VERSION
-            ),
+            schema_version=payload.get("schema_version", SCOPE_BINDING_SCHEMA_VERSION),
         )
 
 
@@ -565,17 +522,11 @@ class CircuitBinding:
     schema_version: str = CIRCUIT_BINDING_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "circuit_id", _optional_text(self.circuit_id, "circuit_id")
-        )
-        if isinstance(self.circuit_version, bool) or not isinstance(
-            self.circuit_version, int
-        ):
+        object.__setattr__(self, "circuit_id", _optional_text(self.circuit_id, "circuit_id"))
+        if isinstance(self.circuit_version, bool) or not isinstance(self.circuit_version, int):
             raise AttestedProofModelError("circuit_version must be an int")
         if self.circuit_version < 0:
-            raise AttestedProofModelError(
-                "circuit_version must be a non-negative int"
-            )
+            raise AttestedProofModelError("circuit_version must be a non-negative int")
         object.__setattr__(
             self,
             "circuit_digest",
@@ -586,19 +537,11 @@ class CircuitBinding:
             raise AttestedProofModelError("vk_version must be an int")
         if self.vk_version < 0:
             raise AttestedProofModelError("vk_version must be a non-negative int")
-        object.__setattr__(
-            self, "vk_digest", _optional_digest(self.vk_digest, "vk_digest")
-        )
-        object.__setattr__(
-            self, "backend_id", _optional_text(self.backend_id, "backend_id")
-        )
-        object.__setattr__(
-            self, "proof_system", _optional_text(self.proof_system, "proof_system")
-        )
+        object.__setattr__(self, "vk_digest", _optional_digest(self.vk_digest, "vk_digest"))
+        object.__setattr__(self, "backend_id", _optional_text(self.backend_id, "backend_id"))
+        object.__setattr__(self, "proof_system", _optional_text(self.proof_system, "proof_system"))
         public_inputs = dict(_as_mapping(self.public_inputs, "public_inputs"))
-        object.__setattr__(
-            self, "public_inputs", MappingProxyType(_json_ready(public_inputs))
-        )
+        object.__setattr__(self, "public_inputs", MappingProxyType(_json_ready(public_inputs)))
         object.__setattr__(
             self,
             "security_profile",
@@ -674,9 +617,7 @@ class CircuitBinding:
             proof_system=payload.get("proof_system", ""),
             public_inputs=dict(payload.get("public_inputs", {}) or {}),
             security_profile=payload.get("security_profile", ""),
-            schema_version=payload.get(
-                "schema_version", CIRCUIT_BINDING_SCHEMA_VERSION
-            ),
+            schema_version=payload.get("schema_version", CIRCUIT_BINDING_SCHEMA_VERSION),
         )
 
 
@@ -707,9 +648,7 @@ class PipelineIdentity:
             "solver_id",
             "reconstruction_id",
         ):
-            object.__setattr__(
-                self, name, _optional_text(getattr(self, name), name)
-            )
+            object.__setattr__(self, name, _optional_text(getattr(self, name), name))
         object.__setattr__(
             self,
             "schema_version",
@@ -767,9 +706,7 @@ class PipelineIdentity:
             translation_id=payload.get("translation_id", ""),
             solver_id=payload.get("solver_id", ""),
             reconstruction_id=payload.get("reconstruction_id", ""),
-            schema_version=payload.get(
-                "schema_version", PIPELINE_IDENTITY_SCHEMA_VERSION
-            ),
+            schema_version=payload.get("schema_version", PIPELINE_IDENTITY_SCHEMA_VERSION),
         )
 
 
@@ -789,15 +726,11 @@ class CoverageDeclaration:
             "covered_selectors",
             _unique_texts(self.covered_selectors, "covered_selectors"),
         )
-        object.__setattr__(
-            self, "gap_kinds", _unique_texts(self.gap_kinds, "gap_kinds")
-        )
+        object.__setattr__(self, "gap_kinds", _unique_texts(self.gap_kinds, "gap_kinds"))
         if not isinstance(self.complete, bool):
             raise AttestedProofModelError("complete must be a bool")
         if self.complete and self.gap_kinds:
-            raise AttestedProofModelError(
-                "complete coverage cannot declare gap_kinds"
-            )
+            raise AttestedProofModelError("complete coverage cannot declare gap_kinds")
         object.__setattr__(self, "notes", _optional_text(self.notes, "notes"))
         object.__setattr__(
             self,
@@ -841,9 +774,7 @@ class CoverageDeclaration:
             gap_kinds=tuple(payload.get("gap_kinds", ())),
             complete=bool(payload.get("complete", False)),
             notes=payload.get("notes", ""),
-            schema_version=payload.get(
-                "schema_version", COVERAGE_DECLARATION_SCHEMA_VERSION
-            ),
+            schema_version=payload.get("schema_version", COVERAGE_DECLARATION_SCHEMA_VERSION),
         )
 
 
@@ -922,9 +853,7 @@ class AttestedProofEnvelope:
             "obligation_digest",
             _require_digest(self.obligation_digest, "obligation_digest"),
         )
-        object.__setattr__(
-            self, "domain", _require_identifier(self.domain, "domain")
-        )
+        object.__setattr__(self, "domain", _require_identifier(self.domain, "domain"))
         object.__setattr__(
             self,
             "logic_family",
@@ -983,9 +912,7 @@ class AttestedProofEnvelope:
             "backend_id",
             "producer_id",
         ):
-            object.__setattr__(
-                self, name, _optional_text(getattr(self, name), name)
-            )
+            object.__setattr__(self, name, _optional_text(getattr(self, name), name))
         object.__setattr__(
             self,
             "build_manifest_cid",
@@ -1002,9 +929,7 @@ class AttestedProofEnvelope:
             _optional_profile(self.security_profile, "security_profile"),
         )
         public_inputs = dict(_as_mapping(self.public_inputs, "public_inputs"))
-        object.__setattr__(
-            self, "public_inputs", MappingProxyType(_json_ready(public_inputs))
-        )
+        object.__setattr__(self, "public_inputs", MappingProxyType(_json_ready(public_inputs)))
 
         circuit = self.circuit
         if circuit is None:
@@ -1017,9 +942,7 @@ class AttestedProofEnvelope:
             circuit = CircuitBinding.from_dict(circuit)
         # Prefer explicit top-level security/backend when circuit omits them.
         if self.backend_id and not circuit.backend_id:
-            circuit = CircuitBinding.from_dict(
-                {**circuit.to_dict(), "backend_id": self.backend_id}
-            )
+            circuit = CircuitBinding.from_dict({**circuit.to_dict(), "backend_id": self.backend_id})
         if self.security_profile and not circuit.security_profile:
             circuit = CircuitBinding.from_dict(
                 {
@@ -1039,9 +962,7 @@ class AttestedProofEnvelope:
         if circuit.backend_id and not self.backend_id:
             object.__setattr__(self, "backend_id", circuit.backend_id)
         if circuit.security_profile and not self.security_profile:
-            object.__setattr__(
-                self, "security_profile", circuit.security_profile
-            )
+            object.__setattr__(self, "security_profile", circuit.security_profile)
 
         pipeline = self.pipeline
         if pipeline is None:
@@ -1092,9 +1013,7 @@ class AttestedProofEnvelope:
             coverage = CoverageDeclaration.from_dict(coverage)
         object.__setattr__(self, "coverage", coverage)
 
-        object.__setattr__(
-            self, "parent_cids", _unique_cids(self.parent_cids, "parent_cids")
-        )
+        object.__setattr__(self, "parent_cids", _unique_cids(self.parent_cids, "parent_cids"))
         object.__setattr__(
             self,
             "supersedes_cid",
@@ -1111,39 +1030,29 @@ class AttestedProofEnvelope:
             _optional_cid(self.revocation_cid, "revocation_cid"),
         )
         diagnostics = dict(_as_mapping(self.diagnostics, "diagnostics"))
-        object.__setattr__(
-            self, "diagnostics", MappingProxyType(_json_ready(diagnostics))
-        )
+        object.__setattr__(self, "diagnostics", MappingProxyType(_json_ready(diagnostics)))
 
         if self.signatures in (None, ()):
             signatures: tuple[Mapping[str, Any], ...] = ()
         else:
             if isinstance(self.signatures, (str, bytes, bytearray, Mapping)):
-                raise AttestedProofModelError(
-                    "signatures must be a sequence of mappings"
-                )
+                raise AttestedProofModelError("signatures must be a sequence of mappings")
             try:
                 signatures = tuple(
-                    MappingProxyType(
-                        _json_ready(dict(_as_mapping(item, "signature")))
-                    )
+                    MappingProxyType(_json_ready(dict(_as_mapping(item, "signature"))))
                     for item in self.signatures
                 )
             except TypeError as exc:
-                raise AttestedProofModelError(
-                    "signatures must be a sequence of mappings"
-                ) from exc
+                raise AttestedProofModelError("signatures must be a sequence of mappings") from exc
         object.__setattr__(self, "signatures", signatures)
 
         if self.schema_version != ATTESTED_PROOF_ENVELOPE_SCHEMA_VERSION:
             raise AttestedProofModelError(
-                f"unsupported attested proof envelope schema: "
-                f"{self.schema_version!r}"
+                f"unsupported attested proof envelope schema: {self.schema_version!r}"
             )
         if self.interface != ATTESTED_PROOF_ENVELOPE_INTERFACE:
             raise AttestedProofModelError(
-                f"unsupported attested proof envelope interface: "
-                f"{self.interface!r}"
+                f"unsupported attested proof envelope interface: {self.interface!r}"
             )
 
         # Simulation must never silently claim theorem authority via status.
@@ -1162,21 +1071,15 @@ class AttestedProofEnvelope:
         if self.content_digest:
             recorded = _require_digest(self.content_digest, "content_digest")
             if recorded != digest:
-                raise AttestedProofIntegrityError(
-                    "envelope content_digest does not match payload"
-                )
+                raise AttestedProofIntegrityError("envelope content_digest does not match payload")
         if self.content_cid:
             recorded_cid = _require_cid(self.content_cid, "content_cid")
             if recorded_cid != cid:
-                raise AttestedProofIntegrityError(
-                    "envelope content_cid does not match payload"
-                )
+                raise AttestedProofIntegrityError("envelope content_cid does not match payload")
         if self.envelope_cid:
             recorded_env = _require_cid(self.envelope_cid, "envelope_cid")
             if recorded_env != cid:
-                raise AttestedProofIntegrityError(
-                    "envelope_cid does not match payload"
-                )
+                raise AttestedProofIntegrityError("envelope_cid does not match payload")
         object.__setattr__(self, "content_digest", digest)
         object.__setattr__(self, "content_cid", cid)
         object.__setattr__(self, "envelope_cid", cid)
@@ -1197,9 +1100,7 @@ class AttestedProofEnvelope:
 
     @property
     def claims_direct_verification(self) -> bool:
-        return (
-            self.attestation_kind is AttestationKind.DIRECT_PROOF_VERIFICATION
-        )
+        return self.attestation_kind is AttestationKind.DIRECT_PROOF_VERIFICATION
 
     @property
     def claims_verifier_execution(self) -> bool:
@@ -1311,9 +1212,7 @@ class AttestedProofEnvelope:
         digest = _sha256_digest(_canonical_bytes(body))
         cid = cid_v1_from_digest(bytes.fromhex(digest.removeprefix("sha256:")))
         if digest != self.content_digest:
-            raise AttestedProofIntegrityError(
-                "content_digest does not match recomputed identity"
-            )
+            raise AttestedProofIntegrityError("content_digest does not match recomputed identity")
         if cid != self.content_cid or cid != self.envelope_cid:
             raise AttestedProofIntegrityError(
                 "content_cid/envelope_cid does not match recomputed identity"
@@ -1333,9 +1232,7 @@ class AttestedProofEnvelope:
             result_authority=payload.get("result_authority", ""),
             attestation_kind=payload.get("attestation_kind", ""),
             family=payload.get("family", ProofCorpusFamily.LEGAL.value),
-            result_status=payload.get(
-                "result_status", ProofResultStatus.UNKNOWN.value
-            ),
+            result_status=payload.get("result_status", ProofResultStatus.UNKNOWN.value),
             proof_artifact_cid=payload.get("proof_artifact_cid", ""),
             proof_bytes_digest=payload.get("proof_bytes_digest", ""),
             source_snapshot_cid=payload.get("source_snapshot_cid", ""),
@@ -1368,12 +1265,8 @@ class AttestedProofEnvelope:
             content_digest=payload.get("content_digest", ""),
             content_cid=payload.get("content_cid", ""),
             envelope_cid=payload.get("envelope_cid", ""),
-            schema_version=payload.get(
-                "schema_version", ATTESTED_PROOF_ENVELOPE_SCHEMA_VERSION
-            ),
-            interface=payload.get(
-                "interface", ATTESTED_PROOF_ENVELOPE_INTERFACE
-            ),
+            schema_version=payload.get("schema_version", ATTESTED_PROOF_ENVELOPE_SCHEMA_VERSION),
+            interface=payload.get("interface", ATTESTED_PROOF_ENVELOPE_INTERFACE),
         )
 
 

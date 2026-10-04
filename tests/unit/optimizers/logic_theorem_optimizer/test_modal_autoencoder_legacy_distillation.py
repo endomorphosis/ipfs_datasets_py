@@ -30,9 +30,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder_legac
 def _teacher() -> ModalAutoencoderTrainingState:
     return ModalAutoencoderTrainingState(
         decoded_embeddings={"source-sample-must-not-transfer": [99.0, 99.0]},
-        family_logits={
-            "source-sample-must-not-transfer": {"deontic": 99.0}
-        },
+        family_logits={"source-sample-must-not-transfer": {"deontic": 99.0}},
         feature_embedding_weights={
             "legacy-alpha": [3.0, 0.0, 0.0],
             "legacy-bravo": [0.0, 2.0, 0.0],
@@ -122,9 +120,7 @@ def test_default_zero_influence_is_exact_and_shadow_is_counterfactual() -> None:
     report = autoencoder.legacy_embedding_adapter_report()
     assert report["attached"] is True
     assert report["zero_influence"] is True
-    assert autoencoder.state.feature_embedding_weights == {
-        "shared": [0.1, 0.2, 0.3]
-    }
+    assert autoencoder.state.feature_embedding_weights == {"shared": [0.1, 0.2, 0.3]}
     assert autoencoder.detach_legacy_embedding_adapters() is result.bundle
     assert autoencoder.legacy_embedding_adapter_report()["adapter_count"] == 0
 
@@ -159,19 +155,14 @@ def test_promoted_adapter_influences_decode_without_hydrating_student_rows() -> 
         state=student,
         compute_device="cpu",
     )
-    baseline = autoencoder.decode(
-        autoencoder.encode(sample, use_sample_memory=False)
-    )
+    baseline = autoencoder.decode(autoencoder.encode(sample, use_sample_memory=False))
     feature = autoencoder._feature_keys_for(sample)[0]
     scale = autoencoder.feature_embedding_weight_scale
     teacher_vector = [
-        (target - current) / scale
-        for target, current in zip(sample.embedding_vector, baseline)
+        (target - current) / scale for target, current in zip(sample.embedding_vector, baseline)
     ]
     result = distill_legacy_embedding_tails(
-        ModalAutoencoderTrainingState(
-            feature_embedding_weights={feature: teacher_vector}
-        ),
+        ModalAutoencoderTrainingState(feature_embedding_weights={feature: teacher_vector}),
         student,
         config=LegacyDistillationConfig(
             rank=3,
@@ -191,9 +182,7 @@ def test_promoted_adapter_influences_decode_without_hydrating_student_rows() -> 
     )
     result.bundle.promote(promotion, influence=1.0)
     autoencoder.attach_legacy_embedding_adapters(result.bundle)
-    adapted = autoencoder.decode(
-        autoencoder.encode(sample, use_sample_memory=False)
-    )
+    adapted = autoencoder.decode(autoencoder.encode(sample, use_sample_memory=False))
 
     assert adapted != pytest.approx(baseline)
     assert mse_loss(sample.embedding_vector, adapted) < mse_loss(
@@ -260,12 +249,8 @@ def test_source_or_decoded_text_memory_keys_are_not_distilled_or_reported() -> N
         config=LegacyDistillationConfig(rank=2),
     )
 
-    assert result.bundle.adapters["feature_embedding_weights"].keys == (
-        "semantic-safe",
-    )
-    assert (
-        result.report["excluded_incompatible_or_text_memory_row_count"] == 2
-    )
+    assert result.bundle.adapters["feature_embedding_weights"].keys == ("semantic-safe",)
+    assert result.report["excluded_incompatible_or_text_memory_row_count"] == 2
     serialized_report = json.dumps(result.report, sort_keys=True)
     assert "private" not in serialized_report
     assert "raw source text" not in serialized_report
@@ -304,17 +289,10 @@ def test_adapter_gradients_and_optimizer_moments_are_isolated() -> None:
     assert report["trained_row_count"] == 1
     assert report["sibling_optimizer_state_unchanged"] is True
     assert (sibling.adapter_id, sibling.optimizer_state_id) == sibling_before
-    assert (
-        bundle.adapters["feature_embedding_weights"].optimizer_state_dict()[
-            "step"
-        ]
-        == 1
-    )
+    assert bundle.adapters["feature_embedding_weights"].optimizer_state_dict()["step"] == 1
     assert sibling.optimizer_state_dict()["step"] == 0
     # Adapter optimization never becomes a student optimizer update.
-    assert _student().feature_embedding_weights == {
-        "shared": [0.1, 0.2, 0.3]
-    }
+    assert _student().feature_embedding_weights == {"shared": [0.1, 0.2, 0.3]}
 
 
 def test_adapter_checkpoint_round_trip_binds_lineage_and_optimizer_state(
@@ -342,9 +320,7 @@ def test_adapter_checkpoint_round_trip_binds_lineage_and_optimizer_state(
     assert restored.to_dict() == payload
     assert loaded.to_dict() == payload
     assert restored.lineage.lineage_id == result.bundle.lineage.lineage_id
-    assert restored.adapters[
-        "feature_embedding_weights"
-    ].optimizer_state_dict()["step"] == 1
+    assert restored.adapters["feature_embedding_weights"].optimizer_state_dict()["step"] == 1
     assert payload["sample_memory_included"] is False
     assert "source-sample-must-not-transfer" not in json.dumps(payload)
     assert not list(tmp_path.glob(".legacy-adapters.json.tmp-*"))
@@ -414,9 +390,7 @@ def test_multi_seed_promotion_requires_improvement_and_every_guardrail() -> None
     assert report["promotion_allowed"] is True
     assert report["seed_count"] == 3
     assert report["aggregate_autoencoder_ce_improvement"] == pytest.approx(0.1)
-    assert report["aggregate_autoencoder_cosine_improvement"] == pytest.approx(
-        0.02
-    )
+    assert report["aggregate_autoencoder_cosine_improvement"] == pytest.approx(0.02)
     assert all(row["objective_passed"] for row in report["seed_reports"])
 
 
@@ -449,9 +423,7 @@ def test_promotion_fails_closed_on_regression_missing_seed_or_family() -> None:
 def test_promotion_requires_one_fixed_split_and_each_required_family() -> None:
     packets = [_promotion_packet(seed) for seed in (7, 11, 19)]
     packets[1]["split_id"] = "heldout-other"
-    packets[2]["per_family"] = {
-        "frame_logic": packets[2]["per_family"]["deontic"]
-    }
+    packets[2]["per_family"] = {"frame_logic": packets[2]["per_family"]["deontic"]}
 
     report = evaluate_legacy_distillation_promotion(
         packets,
@@ -481,7 +453,4 @@ def test_promotion_requires_semantic_evidence_for_every_family() -> None:
     )
 
     assert report["promotion_allowed"] is False
-    assert (
-        "seed_7:family_deontic_missing_semantic_guardrail"
-        in report["reasons"]
-    )
+    assert "seed_7:family_deontic_missing_semantic_guardrail" in report["reasons"]

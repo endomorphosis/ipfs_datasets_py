@@ -85,9 +85,7 @@ class _CandidateProvider:
     def __init__(self) -> None:
         self.requests: list[IntentCandidateRequest] = []
 
-    def generate_candidates(
-        self, request: IntentCandidateRequest
-    ) -> tuple[object, ...]:
+    def generate_candidates(self, request: IntentCandidateRequest) -> tuple[object, ...]:
         self.requests.append(request)
         elevated_sources = tuple(
             replace(
@@ -187,8 +185,7 @@ def _graph_fixture():
     records = (query, neighbor, same_family, adversarial)
     decisions = tuple(SkillSourcePolicy().evaluate(record) for record in records)
     assert all(
-        decision.allowed_use is AllowedUseDecision.ALLOW_TRAIN_AND_PUBLISH
-        for decision in decisions
+        decision.allowed_use is AllowedUseDecision.ALLOW_TRAIN_AND_PUBLISH for decision in decisions
     )
 
     store = _MemoryStore()
@@ -219,12 +216,8 @@ def _graph_fixture():
         neighbor_edges[other_id] = edge
     assignments = {
         nodes["query"].node_id: PartitionAssignment("evaluation", "family-query"),
-        nodes["neighbor"].node_id: PartitionAssignment(
-            "evaluation", "family-neighbor"
-        ),
-        nodes["same-family"].node_id: PartitionAssignment(
-            "evaluation", "family-query"
-        ),
+        nodes["neighbor"].node_id: PartitionAssignment("evaluation", "family-neighbor"),
+        nodes["same-family"].node_id: PartitionAssignment("evaluation", "family-query"),
         nodes["adversarial"].node_id: PartitionAssignment(
             "evaluation", "family-adversarial", adversarial=True
         ),
@@ -281,13 +274,8 @@ def test_offline_skillcenter_record_reaches_bound_proof_receipts() -> None:
     assert normalization.candidate_count == 2
     assert normalization.accepted_candidate_count == 1
     assert normalization.selected_candidate_index == 0
-    assert {
-        source.license_expression for source in document.sources
-    } == {"MIT"}
-    assert all(
-        source.review_status is ReviewStatus.UNREVIEWED
-        for source in document.sources
-    )
+    assert {source.license_expression for source in document.sources} == {"MIT"}
+    assert all(source.review_status is ReviewStatus.UNREVIEWED for source in document.sources)
 
     semantic = SemanticIntentGraphProjector(store).project(document, corpus)
     assert corpus.graph_cid in store.blocks
@@ -312,9 +300,7 @@ def test_offline_skillcenter_record_reaches_bound_proof_receipts() -> None:
     )
     retrieval = IntentGraphRetriever(corpus, assignments).retrieve(request)
     assert retrieval.status is RetrievalStatus.OK
-    assert [premise.node_id for premise in retrieval.premises] == [
-        nodes["neighbor"].node_id
-    ]
+    assert [premise.node_id for premise in retrieval.premises] == [nodes["neighbor"].node_id]
     assert all(premise.authority == "context_only" for premise in retrieval.premises)
     assert all(not premise.proof_authority for premise in retrieval.premises)
 
@@ -341,9 +327,7 @@ def test_offline_skillcenter_record_reaches_bound_proof_receipts() -> None:
         ProofBackendRegistry((_proof_backend(available=False),)),
     )
     assert not unavailable.passed
-    assert {
-        outcome.disposition for outcome in unavailable.outcomes
-    } <= {
+    assert {outcome.disposition for outcome in unavailable.outcomes} <= {
         IntentProofDisposition.UNAVAILABLE,
         IntentProofDisposition.UNSUPPORTED,
     }
@@ -364,15 +348,12 @@ def test_offline_skillcenter_record_reaches_bound_proof_receipts() -> None:
         ProofBackendRegistry((_proof_backend(),)),
     )
     assert not execution.passed
-    assert {
-        outcome.disposition for outcome in execution.outcomes
-    } <= {
+    assert {outcome.disposition for outcome in execution.outcomes} <= {
         IntentProofDisposition.POSITIVE,
         IntentProofDisposition.UNSUPPORTED,
     }
     assert any(
-        outcome.disposition is IntentProofDisposition.POSITIVE
-        for outcome in execution.outcomes
+        outcome.disposition is IntentProofDisposition.POSITIVE for outcome in execution.outcomes
     )
     receipts = tuple(
         ProofReceipt.issue(
@@ -389,16 +370,14 @@ def test_offline_skillcenter_record_reaches_bound_proof_receipts() -> None:
         and outcome.result is not None
     )
     assert len(receipts) == sum(
-        outcome.disposition is IntentProofDisposition.POSITIVE
-        for outcome in execution.outcomes
+        outcome.disposition is IntentProofDisposition.POSITIVE for outcome in execution.outcomes
     )
     assert receipts
     assert all(receipt.status is ResultStatus.PROVED for receipt in receipts)
     assert all(
         receipt.proof_authority is AuthorityKind.THEOREM_PROOF
         and receipt.claim_digest == packet.claim.digest
-        and receipt.request_digest
-        == packet.request_for(receipt.obligation_id).digest
+        and receipt.request_digest == packet.request_for(receipt.obligation_id).digest
         for receipt in receipts
     )
 
@@ -476,9 +455,7 @@ def test_offline_skillcenter_record_reaches_bound_proof_receipts() -> None:
     assert rebuilt.to_json() == manifest.to_json()
     assert rebuilt.output_identity == manifest.output_identity
     receipts_artifact = next(
-        item
-        for item in rebuilt.outputs
-        if item.artifact_id == "artifact:proof-receipts"
+        item for item in rebuilt.outputs if item.artifact_id == "artifact:proof-receipts"
     )
     assert receipts_artifact.parent_artifact_ids == ("artifact:proof-packet",)
 

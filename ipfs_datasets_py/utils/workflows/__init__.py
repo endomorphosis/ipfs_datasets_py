@@ -10,19 +10,19 @@ Public API:
 
 Example:
     >>> from ipfs_datasets_py.utils.workflows import WorkflowAnalyzer
-    >>> 
+    >>>
     >>> analyzer = WorkflowAnalyzer()
     >>> result = analyzer.analyze_failure(workflow_file, error_log)
     >>> print(result['root_cause'])
-    
+
     >>> from ipfs_datasets_py.utils.workflows import DashboardGenerator
-    >>> 
+    >>>
     >>> generator = DashboardGenerator(repo='owner/repo')
     >>> generator.load_all_metrics(metrics_dir=Path('/tmp'))
     >>> report = generator.generate_report(format='html')
-    
+
     >>> from ipfs_datasets_py.utils.workflows import WorkflowFixer
-    >>> 
+    >>>
     >>> fixer = WorkflowFixer(analysis, workflow_name='CI Tests')
     >>> proposal = fixer.generate_fix_proposal()
 """
@@ -32,7 +32,7 @@ from .dashboard import DashboardGenerator
 from .fixer import WorkflowFixer
 
 __all__ = [
-    'WorkflowAnalyzer',
-    'DashboardGenerator',
-    'WorkflowFixer',
+    "WorkflowAnalyzer",
+    "DashboardGenerator",
+    "WorkflowFixer",
 ]

@@ -62,18 +62,10 @@ from .skillcenter_embeddings import (
 from .skillcenter_bm25 import SkillCenterBM25Index
 
 
-SKILLCENTER_GRAPHRAG_INDEX_SCHEMA_VERSION: Final = (
-    "skillcenter-graphrag-index/v1"
-)
-SKILLCENTER_GRAPHRAG_METADATA_SCHEMA_VERSION: Final = (
-    "skillcenter-graphrag-vector-metadata/v1"
-)
-SKILLCENTER_GRAPHRAG_ASSIGNMENT_SCHEMA_VERSION: Final = (
-    "skillcenter-graphrag-partitions/v1"
-)
-SKILLCENTER_GRAPHRAG_NEIGHBOR_SCHEMA_VERSION: Final = (
-    "skillcenter-graphrag-neighbors/v1"
-)
+SKILLCENTER_GRAPHRAG_INDEX_SCHEMA_VERSION: Final = "skillcenter-graphrag-index/v1"
+SKILLCENTER_GRAPHRAG_METADATA_SCHEMA_VERSION: Final = "skillcenter-graphrag-vector-metadata/v1"
+SKILLCENTER_GRAPHRAG_ASSIGNMENT_SCHEMA_VERSION: Final = "skillcenter-graphrag-partitions/v1"
+SKILLCENTER_GRAPHRAG_NEIGHBOR_SCHEMA_VERSION: Final = "skillcenter-graphrag-neighbors/v1"
 DEFAULT_NEIGHBOR_K: Final = 8
 DEFAULT_PARTITION_SALT: Final = "intent-ir-skillcenter-partition/v1"
 DEFAULT_TRAINING_PERCENT: Final = 80
@@ -122,14 +114,10 @@ class SkillCenterGraphRAGConfig:
             or not isinstance(self.neighbor_k, int)
             or not 1 <= self.neighbor_k <= 256
         ):
-            raise SkillCenterGraphRAGError(
-                "neighbor_k must be between 1 and 256"
-            )
+            raise SkillCenterGraphRAGError("neighbor_k must be between 1 and 256")
         salt = str(self.partition_salt or "").strip()
         if not salt or "\x00" in salt:
-            raise SkillCenterGraphRAGError(
-                "partition_salt must be non-empty normalized text"
-            )
+            raise SkillCenterGraphRAGError("partition_salt must be non-empty normalized text")
         object.__setattr__(self, "partition_salt", salt)
         percentages = (
             self.training_percent,
@@ -137,19 +125,14 @@ class SkillCenterGraphRAGConfig:
             self.evaluation_percent,
         )
         if any(
-            isinstance(value, bool)
-            or not isinstance(value, int)
-            or value < 0
-            or value > 100
+            isinstance(value, bool) or not isinstance(value, int) or value < 0 or value > 100
             for value in percentages
         ):
             raise SkillCenterGraphRAGError(
                 "partition percentages must be integers between 0 and 100"
             )
         if sum(percentages) != 100 or any(value == 0 for value in percentages):
-            raise SkillCenterGraphRAGError(
-                "partition percentages must be positive and sum to 100"
-            )
+            raise SkillCenterGraphRAGError("partition percentages must be positive and sum to 100")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -219,15 +202,11 @@ class SkillCenterGraphRAGSearchHit:
             or not isinstance(self.row_index, int)
             or self.row_index < 0
         ):
-            raise SkillCenterGraphRAGError(
-                "search hit row_index must be non-negative"
-            )
+            raise SkillCenterGraphRAGError("search hit row_index must be non-negative")
         if not math.isfinite(float(self.score)):
             raise SkillCenterGraphRAGError("search hit score must be finite")
         if self.proof_authority is not False or self.authority != "context_only":
-            raise SkillCenterGraphRAGError(
-                "GraphRAG search hits are context-only"
-            )
+            raise SkillCenterGraphRAGError("GraphRAG search hits are context-only")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -246,9 +225,7 @@ class DirectoryContentAddressedStore:
         self.root = Path(root).resolve()
         self.root.mkdir(parents=True, exist_ok=True)
         if self.root.is_symlink() or not self.root.is_dir():
-            raise SkillCenterGraphRAGError(
-                "block store root must be a real directory"
-            )
+            raise SkillCenterGraphRAGError("block store root must be a real directory")
         self._entries: dict[str, dict[str, Any]] = {}
 
     def put_bytes(self, payload: bytes, *, media_type: str) -> str:
@@ -276,31 +253,20 @@ class DirectoryContentAddressedStore:
             {
                 "cid": block_cid,
                 "media_types": set(),
-                "relative_path": (
-                    PurePosixPath("blocks") / relative
-                ).as_posix(),
+                "relative_path": (PurePosixPath("blocks") / relative).as_posix(),
                 "sha256": digest,
                 "size_bytes": len(payload),
             },
         )
-        if (
-            entry["sha256"] != digest
-            or entry["size_bytes"] != len(payload)
-        ):
-            raise SkillCenterGraphRAGError(
-                "content address was assigned conflicting bytes"
-            )
+        if entry["sha256"] != digest or entry["size_bytes"] != len(payload):
+            raise SkillCenterGraphRAGError("content address was assigned conflicting bytes")
         entry["media_types"].add(media_type)
         return block_cid
 
     def inventory(self) -> list[dict[str, Any]]:
         return [
             {
-                **{
-                    key: value
-                    for key, value in self._entries[cid].items()
-                    if key != "media_types"
-                },
+                **{key: value for key, value in self._entries[cid].items() if key != "media_types"},
                 "media_types": sorted(self._entries[cid]["media_types"]),
             }
             for cid in sorted(self._entries)
@@ -367,22 +333,15 @@ class SkillCenterGraphRAGIndex:
         try:
             manifest = json.loads(manifest_bytes)
         except (UnicodeError, json.JSONDecodeError) as exc:
-            raise SkillCenterGraphRAGError(
-                "GraphRAG index manifest is malformed"
-            ) from exc
+            raise SkillCenterGraphRAGError("GraphRAG index manifest is malformed") from exc
         if (
             not isinstance(manifest, dict)
-            or manifest.get("schema_version")
-            != SKILLCENTER_GRAPHRAG_INDEX_SCHEMA_VERSION
+            or manifest.get("schema_version") != SKILLCENTER_GRAPHRAG_INDEX_SCHEMA_VERSION
         ):
-            raise SkillCenterGraphRAGError(
-                "unsupported GraphRAG index manifest"
-            )
+            raise SkillCenterGraphRAGError("unsupported GraphRAG index manifest")
         files = manifest.get("files")
         if not isinstance(files, Mapping):
-            raise SkillCenterGraphRAGError(
-                "GraphRAG index manifest files are missing"
-            )
+            raise SkillCenterGraphRAGError("GraphRAG index manifest files are missing")
         required_files = {
             "assignments",
             "block_inventory",
@@ -392,25 +351,18 @@ class SkillCenterGraphRAGIndex:
             "vector_index",
         }
         if set(files) != required_files:
-            raise SkillCenterGraphRAGError(
-                "GraphRAG index manifest has an unexpected file set"
-            )
+            raise SkillCenterGraphRAGError("GraphRAG index manifest has an unexpected file set")
         paths = {
-            key: _verify_file_descriptor(index_root, files[key])
-            for key in sorted(required_files)
+            key: _verify_file_descriptor(index_root, files[key]) for key in sorted(required_files)
         }
 
         graph_path = paths["graph"]
         if graph_path.stat().st_size > _MAX_GRAPH_BYTES:
-            raise SkillCenterGraphRAGError(
-                "GraphRAG graph artifact exceeds the safety bound"
-            )
+            raise SkillCenterGraphRAGError("GraphRAG graph artifact exceeds the safety bound")
         try:
             graph = _graph_from_payload(json.loads(graph_path.read_bytes()))
         except (UnicodeError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
-            raise SkillCenterGraphRAGError(
-                "GraphRAG graph artifact is invalid"
-            ) from exc
+            raise SkillCenterGraphRAGError("GraphRAG graph artifact is invalid") from exc
         graph_summary = manifest.get("graph")
         if (
             not isinstance(graph_summary, Mapping)
@@ -419,9 +371,7 @@ class SkillCenterGraphRAGIndex:
             or int(graph_summary.get("node_count", -1)) != len(graph.nodes)
             or int(graph_summary.get("edge_count", -1)) != len(graph.edges)
         ):
-            raise SkillCenterGraphRAGError(
-                "GraphRAG graph summary does not match graph.json"
-            )
+            raise SkillCenterGraphRAGError("GraphRAG graph summary does not match graph.json")
 
         _, parquet = _pyarrow()
         metadata_rows = parquet.read_table(paths["metadata"]).to_pylist()
@@ -432,17 +382,13 @@ class SkillCenterGraphRAGIndex:
             or len(assignment_rows) != int(manifest.get("source_records", -1))
             or len(neighbor_rows) != int(manifest.get("neighbor_edges", -1))
         ):
-            raise SkillCenterGraphRAGError(
-                "GraphRAG parquet row counts do not match the manifest"
-            )
+            raise SkillCenterGraphRAGError("GraphRAG parquet row counts do not match the manifest")
 
         faiss, np = _faiss_numpy()
         try:
             vector_index = faiss.read_index(str(paths["vector_index"]))
         except Exception as exc:
-            raise SkillCenterGraphRAGError(
-                "FAISS vector index cannot be loaded"
-            ) from exc
+            raise SkillCenterGraphRAGError("FAISS vector index cannot be loaded") from exc
         dimension = int(manifest.get("dimension", -1))
         vector_count = int(manifest.get("vector_count", -1))
         if (
@@ -511,9 +457,7 @@ class SkillCenterGraphRAGIndex:
         try:
             query = np.asarray(list(query_vector), dtype=np.float32)
         except (TypeError, ValueError) as exc:
-            raise SkillCenterGraphRAGError(
-                "query_vector must be numeric"
-            ) from exc
+            raise SkillCenterGraphRAGError("query_vector must be numeric") from exc
         dimension = int(self.manifest["dimension"])
         if (
             query.shape != (dimension,)
@@ -577,9 +521,7 @@ class SkillCenterGraphRAGIndex:
         if hasattr(value, "tolist") and callable(getattr(value, "tolist")):
             value = value.tolist()
         if not isinstance(value, (list, tuple)) or len(value) != 1:
-            raise SkillCenterGraphRAGError(
-                "query embedder must return exactly one vector"
-            )
+            raise SkillCenterGraphRAGError("query embedder must return exactly one vector")
         return self.search_vector(
             value[0],
             k=k,
@@ -608,8 +550,7 @@ class SkillCenterGraphRAGIndex:
         rows = [
             row
             for row in self.neighbor_rows
-            if row["source_node_id"] == query_node_id
-            or row["target_node_id"] == query_node_id
+            if row["source_node_id"] == query_node_id or row["target_node_id"] == query_node_id
         ]
         rows.sort(
             key=lambda row: (
@@ -670,12 +611,9 @@ def build_skillcenter_graphrag_index(
     active_policy = policy or SkillSourcePolicy()
     prepared_readers = tuple(readers)
     if not prepared_readers or any(
-        not isinstance(reader, SkillCenterBundleReader)
-        for reader in prepared_readers
+        not isinstance(reader, SkillCenterBundleReader) for reader in prepared_readers
     ):
-        raise TypeError(
-            "readers must contain at least one SkillCenterBundleReader"
-        )
+        raise TypeError("readers must contain at least one SkillCenterBundleReader")
     prepared_dirs = tuple(
         sorted(
             (Path(path).expanduser().resolve() for path in embedding_dirs),
@@ -683,44 +621,28 @@ def build_skillcenter_graphrag_index(
         )
     )
     if len(prepared_dirs) != len(prepared_readers):
-        raise SkillCenterGraphRAGError(
-            "embedding_dirs and readers must have the same bundle count"
-        )
-    embedding_manifests = tuple(
-        load_skillcenter_embedding_corpus(path) for path in prepared_dirs
-    )
+        raise SkillCenterGraphRAGError("embedding_dirs and readers must have the same bundle count")
+    embedding_manifests = tuple(load_skillcenter_embedding_corpus(path) for path in prepared_dirs)
     _validate_embedding_manifest_set(embedding_manifests)
     reader_by_file: dict[str, SkillCenterBundleReader] = {}
     for reader in prepared_readers:
         bundle = reader.inspect()
         if bundle.repository_file in reader_by_file:
-            raise SkillCenterGraphRAGError(
-                "duplicate reader repository_file"
-            )
+            raise SkillCenterGraphRAGError("duplicate reader repository_file")
         reader_by_file[bundle.repository_file] = reader
-    expected_files = {
-        str(manifest["repository_file"]) for manifest in embedding_manifests
-    }
+    expected_files = {str(manifest["repository_file"]) for manifest in embedding_manifests}
     if set(reader_by_file) != expected_files:
-        raise SkillCenterGraphRAGError(
-            "readers do not match embedding corpus repository files"
-        )
+        raise SkillCenterGraphRAGError("readers do not match embedding corpus repository files")
     for manifest in embedding_manifests:
         bundle = reader_by_file[str(manifest["repository_file"])].inspect()
         if bundle.to_dict() != manifest["bundle_manifest"]:
-            raise SkillCenterGraphRAGError(
-                "reader snapshot does not match its embedding corpus"
-            )
+            raise SkillCenterGraphRAGError("reader snapshot does not match its embedding corpus")
 
     inputs = [
         {
             "bundle_sha256": str(manifest["bundle_sha256"]),
-            "embedding_manifest_cid": cid_v1(
-                (path / "manifest.json").read_bytes()
-            ),
-            "embedding_manifest_sha256": _file_sha256(
-                path / "manifest.json"
-            ),
+            "embedding_manifest_cid": cid_v1((path / "manifest.json").read_bytes()),
+            "embedding_manifest_sha256": _file_sha256(path / "manifest.json"),
             "profile": str(manifest["profile"]),
             "repository_file": str(manifest["repository_file"]),
             "source_records": int(manifest["source_records_total"]),
@@ -742,22 +664,12 @@ def build_skillcenter_graphrag_index(
         )
         bm25_manifest_bytes = (bm25_root / "manifest.json").read_bytes()
         bm25_input = {
-            "build_identity_sha256": str(
-                bm25_index.manifest["build_identity_sha256"]
-            ),
-            "indexed_skills": int(
-                bm25_index.manifest["indexed_skills"]
-            ),
+            "build_identity_sha256": str(bm25_index.manifest["build_identity_sha256"]),
+            "indexed_skills": int(bm25_index.manifest["indexed_skills"]),
             "manifest_cid": cid_v1(bm25_manifest_bytes),
-            "manifest_sha256": hashlib.sha256(
-                bm25_manifest_bytes
-            ).hexdigest(),
-            "posting_count": int(
-                bm25_index.manifest["posting_count"]
-            ),
-            "vocabulary_size": int(
-                bm25_index.manifest["vocabulary_size"]
-            ),
+            "manifest_sha256": hashlib.sha256(bm25_manifest_bytes).hexdigest(),
+            "posting_count": int(bm25_index.manifest["posting_count"]),
+            "vocabulary_size": int(bm25_index.manifest["vocabulary_size"]),
         }
     build_identity_payload = {
         "bm25_input": bm25_input,
@@ -765,23 +677,16 @@ def build_skillcenter_graphrag_index(
         "inputs": inputs,
         "schema_version": SKILLCENTER_GRAPHRAG_INDEX_SCHEMA_VERSION,
     }
-    build_identity_sha256 = hashlib.sha256(
-        canonical_json_bytes(build_identity_payload)
-    ).hexdigest()
+    build_identity_sha256 = hashlib.sha256(canonical_json_bytes(build_identity_payload)).hexdigest()
 
     output = Path(output_dir).expanduser().resolve()
     output.parent.mkdir(parents=True, exist_ok=True)
     if output.is_symlink():
-        raise SkillCenterGraphRAGError(
-            "output_dir must not be a symlink"
-        )
+        raise SkillCenterGraphRAGError("output_dir must not be a symlink")
     with _build_lock(output):
         if output.exists():
             existing = SkillCenterGraphRAGIndex.load(output)
-            if (
-                existing.manifest.get("build_identity_sha256")
-                != build_identity_sha256
-            ):
+            if existing.manifest.get("build_identity_sha256") != build_identity_sha256:
                 raise SkillCenterGraphRAGError(
                     "existing index was built from different inputs or config"
                 )
@@ -840,11 +745,7 @@ def _build_into_directory(
     }
     vector_rows: list[dict[str, Any]] = []
     for repository_file in sorted(embedding_dir_by_file):
-        vector_rows.extend(
-            iter_skillcenter_embedding_rows(
-                embedding_dir_by_file[repository_file]
-            )
-        )
+        vector_rows.extend(iter_skillcenter_embedding_rows(embedding_dir_by_file[repository_file]))
     vector_rows.sort(
         key=lambda row: (
             str(row["repository_file"]),
@@ -854,9 +755,7 @@ def _build_into_directory(
         )
     )
     if not vector_rows:
-        raise SkillCenterGraphRAGError(
-            "at least one eligible embedding vector is required"
-        )
+        raise SkillCenterGraphRAGError("at least one eligible embedding vector is required")
     dimension = int(embedding_manifests[0]["dimension"])
     try:
         vectors = np.asarray(
@@ -864,21 +763,12 @@ def _build_into_directory(
             dtype=np.float32,
         )
     except (TypeError, ValueError) as exc:
-        raise SkillCenterGraphRAGError(
-            "embedding checkpoints contain malformed vectors"
-        ) from exc
-    if (
-        vectors.shape != (len(vector_rows), dimension)
-        or not np.isfinite(vectors).all()
-    ):
-        raise SkillCenterGraphRAGError(
-            "embedding checkpoint vector shape is inconsistent"
-        )
+        raise SkillCenterGraphRAGError("embedding checkpoints contain malformed vectors") from exc
+    if vectors.shape != (len(vector_rows), dimension) or not np.isfinite(vectors).all():
+        raise SkillCenterGraphRAGError("embedding checkpoint vector shape is inconsistent")
     norms = np.linalg.norm(vectors, axis=1, keepdims=True)
     if bool((norms == 0).any()):
-        raise SkillCenterGraphRAGError(
-            "embedding checkpoints contain a zero vector"
-        )
+        raise SkillCenterGraphRAGError("embedding checkpoints contain a zero vector")
     vectors = (vectors / norms).astype(np.float32)
 
     records: list[SkillCenterSkillRecord] = []
@@ -904,9 +794,7 @@ def _build_into_directory(
         key = (str(row["repository_file"]), str(row["skill_id"]))
         record = record_by_key.get(key)
         if record is None:
-            raise SkillCenterGraphRAGError(
-                "embedding row does not resolve to a source record"
-            )
+            raise SkillCenterGraphRAGError("embedding row does not resolve to a source record")
         decision = decisions[record.skill_id]
         if decision.allowed_use not in _EMBEDDING_ALLOWED_USES:
             raise SkillCenterGraphRAGError(
@@ -917,9 +805,7 @@ def _build_into_directory(
             or str(row["bundle_sha256"]) != record.bundle_sha256
             or str(row["allowed_use"]) != decision.allowed_use.value
         ):
-            raise SkillCenterGraphRAGError(
-                "embedding row provenance or policy binding is stale"
-            )
+            raise SkillCenterGraphRAGError("embedding row provenance or policy binding is stale")
         rows_by_skill[record.skill_id].append(row_index)
         embedded_keys.add(key)
     expected_embedded_keys = {
@@ -928,9 +814,7 @@ def _build_into_directory(
         if decisions[record.skill_id].allowed_use in _EMBEDDING_ALLOWED_USES
     }
     if embedded_keys != expected_embedded_keys:
-        raise SkillCenterGraphRAGError(
-            "embedding skill coverage does not match the current policy"
-        )
+        raise SkillCenterGraphRAGError("embedding skill coverage does not match the current policy")
 
     if bm25_index is not None:
         expected_embedded_skill_ids = {
@@ -956,12 +840,8 @@ def _build_into_directory(
             pooled = vectors[rows_by_skill[skill_id]].mean(axis=0)
             pooled_norm = float(np.linalg.norm(pooled))
             if not math.isfinite(pooled_norm) or pooled_norm == 0.0:
-                raise SkillCenterGraphRAGError(
-                    "pooled skill embedding is malformed"
-                )
-            pooled_vectors.append(
-                (pooled / pooled_norm).astype(np.float32)
-            )
+                raise SkillCenterGraphRAGError("pooled skill embedding is malformed")
+            pooled_vectors.append((pooled / pooled_norm).astype(np.float32))
         pooled_matrix = np.asarray(pooled_vectors, dtype=np.float32)
         neighbors, neighbor_pair_scores = _nearest_skill_neighbors(
             pooled_skill_ids,
@@ -976,9 +856,7 @@ def _build_into_directory(
             record,
             policy_decision=decisions[record.skill_id],
             neighbor_skill_ids=neighbors.get(record.skill_id, ()),
-            neighbor_observations=neighbor_observations.get(
-                record.skill_id, ()
-            ),
+            neighbor_observations=neighbor_observations.get(record.skill_id, ()),
         )
         for record in records
     )
@@ -996,18 +874,14 @@ def _build_into_directory(
         if node.node_type is CorpusNodeType.SKILL
     }
     if set(skill_node_by_id) != skill_ids:
-        raise SkillCenterGraphRAGError(
-            "projected graph skill nodes do not match source records"
-        )
+        raise SkillCenterGraphRAGError("projected graph skill nodes do not match source records")
     assignment_rows: list[dict[str, Any]] = []
     assignment_by_skill: dict[str, dict[str, Any]] = {}
     for record in records:
         decision = decisions[record.skill_id]
         source_family = _source_family(record)
         assignment = {
-            "adversarial": (
-                decision.allowed_use is AllowedUseDecision.EXCLUDED
-            ),
+            "adversarial": (decision.allowed_use is AllowedUseDecision.EXCLUDED),
             "allowed_use": decision.allowed_use.value,
             "graph_node_id": skill_node_by_id[record.skill_id],
             "partition": _partition(source_family, config),
@@ -1015,9 +889,7 @@ def _build_into_directory(
             "schema_version": SKILLCENTER_GRAPHRAG_ASSIGNMENT_SCHEMA_VERSION,
             "skill_id": record.skill_id,
             "source_family": source_family,
-            "source_ref_id": record.to_source_ref(
-                review_status=decision.review_status
-            ).ref_id,
+            "source_ref_id": record.to_source_ref(review_status=decision.review_status).ref_id,
         }
         assignment_rows.append(assignment)
         assignment_by_skill[record.skill_id] = assignment
@@ -1028,11 +900,7 @@ def _build_into_directory(
         assignment = assignment_by_skill[skill_id]
         metadata_rows.append(
             {
-                **{
-                    key: value
-                    for key, value in row.items()
-                    if key != "embedding"
-                },
+                **{key: value for key, value in row.items() if key != "embedding"},
                 "graph_digest": graph.graph_digest,
                 "graph_node_id": skill_node_by_id[skill_id],
                 "partition": assignment["partition"],
@@ -1048,21 +916,15 @@ def _build_into_directory(
         if edge.edge_type is CorpusEdgeType.NEIGHBOR_OF
     }
     neighbor_rows = []
-    for (left_skill, right_skill), score in sorted(
-        neighbor_pair_scores.items()
-    ):
+    for (left_skill, right_skill), score in sorted(neighbor_pair_scores.items()):
         left_node = skill_node_by_id[left_skill]
         right_node = skill_node_by_id[right_skill]
         edge = edge_by_nodes.get(frozenset((left_node, right_node)))
         if edge is None:
-            raise SkillCenterGraphRAGError(
-                "projected graph is missing a retrieval neighbor edge"
-            )
+            raise SkillCenterGraphRAGError("projected graph is missing a retrieval neighbor edge")
         source_node, target_node = sorted((left_node, right_node))
         source_skill, target_skill = (
-            (left_skill, right_skill)
-            if source_node == left_node
-            else (right_skill, left_skill)
+            (left_skill, right_skill) if source_node == left_node else (right_skill, left_skill)
         )
         neighbor_rows.append(
             {
@@ -1134,20 +996,12 @@ def _build_into_directory(
         "config": config.to_dict(),
         "config_sha256": config.digest,
         "dataset_id": str(embedding_manifests[0]["dataset_id"]),
-        "dataset_revision": str(
-            embedding_manifests[0]["dataset_revision"]
-        ),
+        "dataset_revision": str(embedding_manifests[0]["dataset_revision"]),
         "dimension": dimension,
         "embedded_skills": len(rows_by_skill),
-        "embedding_device": str(
-            embedding_manifests[0]["config"]["device"]
-        ),
-        "embedding_model": str(
-            embedding_manifests[0]["config"]["model_name"]
-        ),
-        "embedding_provider": str(
-            embedding_manifests[0]["config"]["provider"]
-        ),
+        "embedding_device": str(embedding_manifests[0]["config"]["device"]),
+        "embedding_model": str(embedding_manifests[0]["config"]["model_name"]),
+        "embedding_provider": str(embedding_manifests[0]["config"]["provider"]),
         "files": files,
         "graph": {
             "edge_count": len(graph.edges),
@@ -1172,9 +1026,7 @@ def _validate_embedding_manifest_set(
     manifests: Sequence[Mapping[str, Any]],
 ) -> None:
     if not manifests:
-        raise SkillCenterGraphRAGError(
-            "at least one embedding corpus is required"
-        )
+        raise SkillCenterGraphRAGError("at least one embedding corpus is required")
     scalar_fields = (
         "dataset_id",
         "dataset_revision",
@@ -1183,20 +1035,12 @@ def _validate_embedding_manifest_set(
     )
     for field in scalar_fields:
         if len({str(manifest[field]) for manifest in manifests}) != 1:
-            raise SkillCenterGraphRAGError(
-                f"embedding corpora disagree on {field}"
-            )
+            raise SkillCenterGraphRAGError(f"embedding corpora disagree on {field}")
     if int(manifests[0]["dimension"]) < 1:
-        raise SkillCenterGraphRAGError(
-            "embedding corpora must have a positive dimension"
-        )
-    repository_files = [
-        str(manifest["repository_file"]) for manifest in manifests
-    ]
+        raise SkillCenterGraphRAGError("embedding corpora must have a positive dimension")
+    repository_files = [str(manifest["repository_file"]) for manifest in manifests]
     if len(set(repository_files)) != len(repository_files):
-        raise SkillCenterGraphRAGError(
-            "embedding corpora repeat a repository file"
-        )
+        raise SkillCenterGraphRAGError("embedding corpora repeat a repository file")
 
 
 def _validate_bm25_input(
@@ -1205,14 +1049,10 @@ def _validate_bm25_input(
     embedding_manifests: Sequence[Mapping[str, Any]],
 ) -> None:
     if (
-        index.manifest.get("dataset_id")
-        != embedding_manifests[0]["dataset_id"]
-        or index.manifest.get("dataset_revision")
-        != embedding_manifests[0]["dataset_revision"]
+        index.manifest.get("dataset_id") != embedding_manifests[0]["dataset_id"]
+        or index.manifest.get("dataset_revision") != embedding_manifests[0]["dataset_revision"]
     ):
-        raise SkillCenterGraphRAGError(
-            "BM25 index does not match the embedding dataset revision"
-        )
+        raise SkillCenterGraphRAGError("BM25 index does not match the embedding dataset revision")
     expected_inputs = {
         (
             str(manifest["repository_file"]),
@@ -1231,9 +1071,7 @@ def _validate_bm25_input(
         if isinstance(item, Mapping)
     }
     if actual_inputs != expected_inputs:
-        raise SkillCenterGraphRAGError(
-            "BM25 source bundles do not match embedding source bundles"
-        )
+        raise SkillCenterGraphRAGError("BM25 source bundles do not match embedding source bundles")
 
 
 def _bm25_skill_neighbors(
@@ -1244,9 +1082,7 @@ def _bm25_skill_neighbors(
     dict[str, tuple[CorpusNeighborObservation, ...]],
     dict[tuple[str, str], float],
 ]:
-    pair_evidence: dict[
-        tuple[str, str], tuple[float, tuple[str, ...], str]
-    ] = {}
+    pair_evidence: dict[tuple[str, str], tuple[float, tuple[str, ...], str]] = {}
     for source_skill_id, hits in index.all_skill_neighbors(
         k=k,
         max_matched_terms=32,
@@ -1269,9 +1105,7 @@ def _bm25_skill_neighbors(
                 existing[2],
             ):
                 pair_evidence[pair] = candidate
-    observations: dict[str, list[CorpusNeighborObservation]] = defaultdict(
-        list
-    )
+    observations: dict[str, list[CorpusNeighborObservation]] = defaultdict(list)
     scores: dict[tuple[str, str], float] = {}
     for (left_skill_id, right_skill_id), (
         score,
@@ -1288,10 +1122,7 @@ def _bm25_skill_neighbors(
         )
         scores[(left_skill_id, right_skill_id)] = score
     return (
-        {
-            skill_id: tuple(values)
-            for skill_id, values in observations.items()
-        },
+        {skill_id: tuple(values) for skill_id, values in observations.items()},
         scores,
     )
 
@@ -1329,15 +1160,8 @@ def _nearest_skill_neighbors(
 
 
 def _source_family(record: SkillCenterSkillRecord) -> str:
-    material = (
-        record.primary_source_id
-        or record.source_id
-        or record.source_url
-        or record.skill_id
-    )
-    digest = hashlib.sha256(
-        f"{record.source_type}\0{material}".encode("utf-8")
-    ).hexdigest()
+    material = record.primary_source_id or record.source_id or record.source_url or record.skill_id
+    digest = hashlib.sha256(f"{record.source_type}\0{material}".encode("utf-8")).hexdigest()
     return f"skillcenter-family:sha256:{digest}"
 
 
@@ -1345,12 +1169,15 @@ def _partition(
     source_family: str,
     config: SkillCenterGraphRAGConfig,
 ) -> str:
-    bucket = int.from_bytes(
-        hashlib.sha256(
-            f"{config.partition_salt}\0{source_family}".encode("utf-8")
-        ).digest()[:8],
-        "big",
-    ) % 100
+    bucket = (
+        int.from_bytes(
+            hashlib.sha256(f"{config.partition_salt}\0{source_family}".encode("utf-8")).digest()[
+                :8
+            ],
+            "big",
+        )
+        % 100
+    )
     if bucket < config.training_percent:
         return "training"
     if bucket < config.training_percent + config.validation_percent:
@@ -1375,9 +1202,7 @@ def _prepare_filters(
         values = (value,) if isinstance(value, str) else tuple(value)
         normalized = frozenset(str(item) for item in values if str(item))
         if not normalized:
-            raise SkillCenterGraphRAGError(
-                f"search filter {key!r} must not be empty"
-            )
+            raise SkillCenterGraphRAGError(f"search filter {key!r} must not be empty")
         prepared[key] = normalized
     return prepared
 
@@ -1416,12 +1241,8 @@ def _graph_from_payload(payload: object) -> IntentCorpusGraph:
         )
         for item in payload["edges"]
     )
-    source_bodies = tuple(
-        AddressedArtifact(**dict(item)) for item in payload["source_bodies"]
-    )
-    embeddings = tuple(
-        AddressedArtifact(**dict(item)) for item in payload["embeddings"]
-    )
+    source_bodies = tuple(AddressedArtifact(**dict(item)) for item in payload["source_bodies"])
+    embeddings = tuple(AddressedArtifact(**dict(item)) for item in payload["embeddings"])
     return IntentCorpusGraph(
         nodes=nodes,
         edges=edges,
@@ -1442,77 +1263,49 @@ def _validate_loaded_rows(
     assignment_rows: Sequence[Mapping[str, Any]],
     neighbor_rows: Sequence[Mapping[str, Any]],
 ) -> None:
-    neighbor_backend = str(
-        manifest.get("neighbor_backend") or "embedding-cosine"
-    )
+    neighbor_backend = str(manifest.get("neighbor_backend") or "embedding-cosine")
     if neighbor_backend not in {"embedding-cosine", "bm25-okapi"}:
-        raise SkillCenterGraphRAGError(
-            "GraphRAG neighbor_backend is unsupported"
-        )
+        raise SkillCenterGraphRAGError("GraphRAG neighbor_backend is unsupported")
     skill_nodes = {
         node.node_id: str(node.properties["skill_id"])
         for node in graph.nodes
         if node.node_type is CorpusNodeType.SKILL
     }
     if len(skill_nodes) != int(manifest["source_records"]):
-        raise SkillCenterGraphRAGError(
-            "graph skill count does not match source_records"
-        )
-    if [int(row.get("row_index", -1)) for row in metadata_rows] != list(
-        range(len(metadata_rows))
-    ):
-        raise SkillCenterGraphRAGError(
-            "vector metadata row indexes are not contiguous"
-        )
+        raise SkillCenterGraphRAGError("graph skill count does not match source_records")
+    if [int(row.get("row_index", -1)) for row in metadata_rows] != list(range(len(metadata_rows))):
+        raise SkillCenterGraphRAGError("vector metadata row indexes are not contiguous")
     chunk_ids = [str(row.get("chunk_id", "")) for row in metadata_rows]
     if any(not item for item in chunk_ids) or len(set(chunk_ids)) != len(chunk_ids):
-        raise SkillCenterGraphRAGError(
-            "vector metadata chunk IDs must be non-empty and unique"
-        )
+        raise SkillCenterGraphRAGError("vector metadata chunk IDs must be non-empty and unique")
     for row in metadata_rows:
         node_id = str(row.get("graph_node_id", ""))
         if (
             node_id not in skill_nodes
             or skill_nodes[node_id] != str(row.get("skill_id", ""))
             or row.get("graph_digest") != graph.graph_digest
-            or row.get("schema_version")
-            != SKILLCENTER_GRAPHRAG_METADATA_SCHEMA_VERSION
+            or row.get("schema_version") != SKILLCENTER_GRAPHRAG_METADATA_SCHEMA_VERSION
         ):
-            raise SkillCenterGraphRAGError(
-                "vector metadata has a stale graph binding"
-            )
-    assignment_node_ids = [
-        str(row.get("graph_node_id", "")) for row in assignment_rows
-    ]
-    if (
-        set(assignment_node_ids) != set(skill_nodes)
-        or len(set(assignment_node_ids)) != len(assignment_node_ids)
+            raise SkillCenterGraphRAGError("vector metadata has a stale graph binding")
+    assignment_node_ids = [str(row.get("graph_node_id", "")) for row in assignment_rows]
+    if set(assignment_node_ids) != set(skill_nodes) or len(set(assignment_node_ids)) != len(
+        assignment_node_ids
     ):
         raise SkillCenterGraphRAGError(
             "partition assignments do not cover graph skills exactly once"
         )
     for row in assignment_rows:
         if (
-            row.get("schema_version")
-            != SKILLCENTER_GRAPHRAG_ASSIGNMENT_SCHEMA_VERSION
-            or str(row.get("partition", ""))
-            not in {"training", "validation", "evaluation"}
+            row.get("schema_version") != SKILLCENTER_GRAPHRAG_ASSIGNMENT_SCHEMA_VERSION
+            or str(row.get("partition", "")) not in {"training", "validation", "evaluation"}
             or not str(row.get("source_family", ""))
         ):
-            raise SkillCenterGraphRAGError(
-                "partition assignment is malformed"
-            )
+            raise SkillCenterGraphRAGError("partition assignment is malformed")
     edge_by_id = {
-        edge.edge_id: edge
-        for edge in graph.edges
-        if edge.edge_type is CorpusEdgeType.NEIGHBOR_OF
+        edge.edge_id: edge for edge in graph.edges if edge.edge_type is CorpusEdgeType.NEIGHBOR_OF
     }
-    if set(edge_by_id) != {
-        str(row.get("edge_id", "")) for row in neighbor_rows
-    }:
-        raise SkillCenterGraphRAGError(
-            "neighbor table does not cover graph neighbor edges"
-        )
+    if set(edge_by_id) != {str(row.get("edge_id", "")) for row in neighbor_rows}:
+        raise SkillCenterGraphRAGError("neighbor table does not cover graph neighbor edges")
     for row in neighbor_rows:
         edge = edge_by_id[str(row["edge_id"])]
         endpoints = {edge.source, edge.target}
@@ -1523,13 +1316,10 @@ def _validate_loaded_rows(
                 str(row.get("target_node_id", "")),
             }
             or row.get("graph_digest") != graph.graph_digest
-            or row.get("schema_version")
-            != SKILLCENTER_GRAPHRAG_NEIGHBOR_SCHEMA_VERSION
+            or row.get("schema_version") != SKILLCENTER_GRAPHRAG_NEIGHBOR_SCHEMA_VERSION
             or not math.isfinite(float(row.get("score", math.nan)))
         ):
-            raise SkillCenterGraphRAGError(
-                "neighbor table has a stale or malformed graph binding"
-            )
+            raise SkillCenterGraphRAGError("neighbor table has a stale or malformed graph binding")
         if neighbor_backend == "bm25-okapi" and (
             edge.properties.get("retrieval_method") != "bm25-okapi"
             or not math.isclose(
@@ -1540,9 +1330,7 @@ def _validate_loaded_rows(
             )
             or not edge.properties.get("matched_terms")
         ):
-            raise SkillCenterGraphRAGError(
-                "BM25 neighbor edge lacks lexical evidence"
-            )
+            raise SkillCenterGraphRAGError("BM25 neighbor edge lacks lexical evidence")
 
 
 def _verify_block_inventory(
@@ -1553,24 +1341,17 @@ def _verify_block_inventory(
     try:
         payload = json.loads(inventory_path.read_bytes())
     except (UnicodeError, json.JSONDecodeError) as exc:
-        raise SkillCenterGraphRAGError(
-            "block inventory is malformed"
-        ) from exc
+        raise SkillCenterGraphRAGError("block inventory is malformed") from exc
     if (
         not isinstance(payload, Mapping)
-        or payload.get("schema_version")
-        != "skillcenter-graphrag-block-inventory/v1"
+        or payload.get("schema_version") != "skillcenter-graphrag-block-inventory/v1"
         or not isinstance(payload.get("blocks"), list)
     ):
-        raise SkillCenterGraphRAGError(
-            "unsupported block inventory"
-        )
+        raise SkillCenterGraphRAGError("unsupported block inventory")
     declared: set[str] = set()
     for entry in payload["blocks"]:
         if not isinstance(entry, Mapping):
-            raise SkillCenterGraphRAGError(
-                "block inventory entry must be an object"
-            )
+            raise SkillCenterGraphRAGError("block inventory entry must be an object")
         path = _safe_relative_file(root, str(entry.get("relative_path", "")))
         expected_sha = str(entry.get("sha256", ""))
         expected_cid = str(entry.get("cid", ""))
@@ -1579,23 +1360,15 @@ def _verify_block_inventory(
             or _file_sha256(path) != expected_sha
             or cid_v1(path.read_bytes()) != expected_cid
         ):
-            raise SkillCenterGraphRAGError(
-                "content-addressed block failed integrity verification"
-            )
+            raise SkillCenterGraphRAGError("content-addressed block failed integrity verification")
         declared.add(expected_cid)
     required = {
         graph.graph_cid,
-        *(
-            item.cid
-            for item in graph.source_bodies
-            if item.stored
-        ),
+        *(item.cid for item in graph.source_bodies if item.stored),
         *(item.cid for item in graph.embeddings if item.stored),
     }
     if not required <= declared:
-        raise SkillCenterGraphRAGError(
-            "block inventory omits a stored graph artifact"
-        )
+        raise SkillCenterGraphRAGError("block inventory omits a stored graph artifact")
 
 
 def _write_metadata_parquet(
@@ -1703,21 +1476,16 @@ def _verify_file_descriptor(
     value: object,
 ) -> Path:
     if not isinstance(value, Mapping):
-        raise SkillCenterGraphRAGError(
-            "GraphRAG file descriptor must be an object"
-        )
+        raise SkillCenterGraphRAGError("GraphRAG file descriptor must be an object")
     path = _safe_relative_file(root, str(value.get("relative_path", "")))
     payload = path.read_bytes()
     if (
         len(payload) != int(value.get("size_bytes", -1))
-        or hashlib.sha256(payload).hexdigest()
-        != str(value.get("sha256", ""))
+        or hashlib.sha256(payload).hexdigest() != str(value.get("sha256", ""))
         or cid_v1(payload) != str(value.get("cid", ""))
         or not str(value.get("media_type", ""))
     ):
-        raise SkillCenterGraphRAGError(
-            "GraphRAG file descriptor failed verification"
-        )
+        raise SkillCenterGraphRAGError("GraphRAG file descriptor failed verification")
     return path
 
 
@@ -1725,27 +1493,17 @@ def _safe_relative_file(root: Path, relative_path: str) -> Path:
     try:
         relative = PurePosixPath(relative_path)
     except (TypeError, ValueError) as exc:
-        raise SkillCenterGraphRAGError(
-            "artifact path is invalid"
-        ) from exc
+        raise SkillCenterGraphRAGError("artifact path is invalid") from exc
     if (
         not relative_path
         or relative.is_absolute()
         or any(part in {"", ".", ".."} for part in relative.parts)
         or relative.as_posix() != relative_path
     ):
-        raise SkillCenterGraphRAGError(
-            "artifact path must be normalized and relative"
-        )
+        raise SkillCenterGraphRAGError("artifact path must be normalized and relative")
     path = root.joinpath(*relative.parts)
-    if (
-        path.is_symlink()
-        or not path.is_file()
-        or not path.resolve().is_relative_to(root)
-    ):
-        raise SkillCenterGraphRAGError(
-            "artifact path is missing, unsafe, or not a regular file"
-        )
+    if path.is_symlink() or not path.is_file() or not path.resolve().is_relative_to(root):
+        raise SkillCenterGraphRAGError("artifact path is missing, unsafe, or not a regular file")
     return path
 
 
@@ -1765,9 +1523,7 @@ def _summary_from_manifest(
         graph_nodes=int(graph["node_count"]),
         graph_edges=int(graph["edge_count"]),
         neighbor_edges=int(manifest["neighbor_edges"]),
-        neighbor_backend=str(
-            manifest.get("neighbor_backend") or "embedding-cosine"
-        ),
+        neighbor_backend=str(manifest.get("neighbor_backend") or "embedding-cosine"),
         graph_digest=str(graph["graph_digest"]),
         graph_cid=str(graph["graph_cid"]),
         manifest_sha256=_file_sha256(root / "manifest.json"),
@@ -1827,9 +1583,7 @@ def _faiss_numpy() -> tuple[Any, Any]:
 @contextmanager
 def _build_lock(output: Path) -> Iterator[None]:
     lock_path = output.parent / f".{output.name}.graphrag.lock"
-    if lock_path.is_symlink() or (
-        lock_path.exists() and not lock_path.is_file()
-    ):
+    if lock_path.is_symlink() or (lock_path.exists() and not lock_path.is_file()):
         raise SkillCenterGraphRAGError("GraphRAG build lock is invalid")
     with lock_path.open("a+b") as handle:
         try:

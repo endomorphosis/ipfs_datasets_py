@@ -328,9 +328,7 @@ def test_semantically_incomplete_or_lexically_implicit_cases_stay_unsupported(
     logic: str,
     target: str,
 ) -> None:
-    compiled, translation = _compile_translation(
-        _input(text, kind, logic, target)
-    )
+    compiled, translation = _compile_translation(_input(text, kind, logic, target))
 
     assert translation is None
     assert "translation:unsupported" in compiled.source_template
@@ -394,9 +392,7 @@ def test_translation_rejects_cross_sentence_binding_mismatches(
     logic: str,
     target: str,
 ) -> None:
-    compiled, translation = _compile_translation(
-        _input(text, kind, logic, target)
-    )
+    compiled, translation = _compile_translation(_input(text, kind, logic, target))
 
     assert translation is None
     assert "translation:unsupported" in compiled.source_template

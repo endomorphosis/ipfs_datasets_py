@@ -34,11 +34,11 @@ Process data in batches rather than individually:
 # ❌ Don't do this
 for item in dataset:
     result = process_single(item)
-    
+
 # ✅ Do this instead
 batch_size = 100
 for i in range(0, len(dataset), batch_size):
-    batch = dataset[i:i+batch_size]
+    batch = dataset[i : i + batch_size]
     results = process_batch(batch)
 ```
 
@@ -50,11 +50,7 @@ For large datasets, use memory mapping to avoid loading everything into RAM:
 from ipfs_datasets_py.streaming_data_loader import load_memory_mapped_vectors
 
 # Efficient access to large vector datasets
-vectors = load_memory_mapped_vectors(
-    file_path="embeddings.bin",
-    dimension=768,
-    mode='r'
-)
+vectors = load_memory_mapped_vectors(file_path="embeddings.bin", dimension=768, mode="r")
 ```
 
 ### Caching Strategies
@@ -63,6 +59,7 @@ Implement caching for frequently accessed data:
 
 ```python
 from functools import lru_cache
+
 
 @lru_cache(maxsize=1000)
 def expensive_operation(key):
@@ -91,7 +88,7 @@ Use environment variables or secret management systems:
 import os
 
 # ✅ Good - use environment variables
-api_key = os.environ.get('OPENAI_API_KEY')
+api_key = os.environ.get("OPENAI_API_KEY")
 
 # ❌ Bad - hardcoded secrets
 api_key = "sk-1234567890abcdef"  # Never do this!
@@ -106,12 +103,12 @@ def process_file(filepath: str):
     # Validate filepath
     if not os.path.exists(filepath):
         raise ValueError(f"File not found: {filepath}")
-    
+
     # Check file extension
-    allowed_extensions = ['.pdf', '.txt', '.docx']
+    allowed_extensions = [".pdf", ".txt", ".docx"]
     if not any(filepath.endswith(ext) for ext in allowed_extensions):
         raise ValueError(f"Unsupported file type: {filepath}")
-    
+
     # Process the file
     return process(filepath)
 ```
@@ -122,10 +119,10 @@ Always use HTTPS/TLS for network operations:
 
 ```python
 # ✅ Good - secure connection
-response = requests.get('https://api.example.com/data')
+response = requests.get("https://api.example.com/data")
 
 # ❌ Bad - insecure connection
-response = requests.get('http://api.example.com/data')
+response = requests.get("http://api.example.com/data")
 ```
 
 ### Implement Audit Logging
@@ -137,10 +134,7 @@ from ipfs_datasets_py.audit import AuditLogger
 
 audit = AuditLogger()
 audit.log_operation(
-    user="user@example.com",
-    operation="dataset_load",
-    resource="squad",
-    status="success"
+    user="user@example.com", operation="dataset_load", resource="squad", status="success"
 )
 ```
 
@@ -153,10 +147,9 @@ Type hints improve code quality and IDE support:
 ```python
 from typing import List, Dict, Optional
 
+
 def process_dataset(
-    dataset_name: str,
-    split: Optional[str] = None,
-    max_items: Optional[int] = None
+    dataset_name: str, split: Optional[str] = None, max_items: Optional[int] = None
 ) -> Dict[str, List[str]]:
     """Process a dataset with optional filtering."""
     # Implementation
@@ -183,7 +176,7 @@ Use Result types for explicit error handling:
 from ipfs_datasets_py.processors.file_converter import FileConverter
 
 converter = FileConverter()
-result = await converter.convert('document.pdf')
+result = await converter.convert("document.pdf")
 
 if result.is_success():
     print(f"Success: {result.text}")
@@ -221,8 +214,8 @@ from ipfs_datasets_py.config import config
 cfg = config()
 
 # Access settings
-database_url = cfg.baseConfig['database']['url']
-max_workers = cfg.baseConfig['processing']['max_workers']
+database_url = cfg.baseConfig["database"]["url"]
+max_workers = cfg.baseConfig["processing"]["max_workers"]
 ```
 
 ### Implement Health Checks
@@ -234,12 +227,10 @@ from ipfs_datasets_py.monitoring import HealthCheck
 
 health = HealthCheck()
 
+
 def health_check_endpoint():
     status = health.check_all()
-    return {
-        'status': 'healthy' if status.is_healthy() else 'unhealthy',
-        'checks': status.details
-    }
+    return {"status": "healthy" if status.is_healthy() else "unhealthy", "checks": status.details}
 ```
 
 ### Use Proper Logging
@@ -251,8 +242,7 @@ import logging
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
 logger = logging.getLogger(__name__)
@@ -286,11 +276,13 @@ Handle shutdown signals properly:
 import signal
 import sys
 
+
 def signal_handler(sig, frame):
     logger.info("Shutting down gracefully...")
     # Clean up resources
     cleanup_resources()
     sys.exit(0)
+
 
 signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)
@@ -306,21 +298,23 @@ Follow the testing pyramid:
 # Unit tests - Fast, isolated
 def test_conversion_success():
     converter = FileConverter()
-    result = converter.convert_sync('test.pdf')
+    result = converter.convert_sync("test.pdf")
     assert result.is_success()
+
 
 # Integration tests - Components working together
 def test_pdf_to_graphrag_pipeline():
     pdf = PDFProcessor()
     graph = GraphRAG()
-    content = pdf.process('document.pdf')
+    content = pdf.process("document.pdf")
     graph.add_document(content)
     assert graph.query("test") is not None
+
 
 # E2E tests - Full workflows
 def test_complete_pipeline():
     result = run_complete_pipeline()
-    assert result.status == 'success'
+    assert result.status == "success"
 ```
 
 ### Use Test Fixtures
@@ -330,10 +324,12 @@ Reuse test setup with fixtures:
 ```python
 import pytest
 
+
 @pytest.fixture
 def sample_dataset():
     """Provide a sample dataset for testing."""
     return load_test_dataset()
+
 
 def test_with_fixture(sample_dataset):
     result = process(sample_dataset)
@@ -347,12 +343,13 @@ Use mocks for external services:
 ```python
 from unittest.mock import Mock, patch
 
-@patch('ipfs_datasets_py.ipfs_datasets')
+
+@patch("ipfs_datasets_py.ipfs_datasets")
 def test_with_mock_ipfs(mock_ipfs):
-    mock_ipfs.add_file.return_value = 'QmTest123'
-    
-    result = upload_to_ipfs('test.json')
-    assert result == 'QmTest123'
+    mock_ipfs.add_file.return_value = "QmTest123"
+
+    result = upload_to_ipfs("test.json")
+    assert result == "QmTest123"
 ```
 
 ## ⚠️ Error Handling
@@ -386,10 +383,7 @@ Include context in error messages:
 
 ```python
 # ✅ Good - detailed error message
-raise ValueError(
-    f"Invalid dataset split '{split}'. "
-    f"Available splits: {available_splits}"
-)
+raise ValueError(f"Invalid dataset split '{split}'. Available splits: {available_splits}")
 
 # ❌ Bad - vague error message
 raise ValueError("Invalid split")
@@ -402,11 +396,15 @@ Create custom exceptions for domain-specific errors:
 ```python
 class DatasetNotFoundError(Exception):
     """Raised when a dataset cannot be found."""
+
     pass
+
 
 class ConversionError(Exception):
     """Raised when file conversion fails."""
+
     pass
+
 
 def load_dataset(name: str):
     if name not in available_datasets:
@@ -421,12 +419,12 @@ Always close files, connections, and other resources:
 
 ```python
 # ✅ Good - using context manager
-with open('data.txt', 'r') as f:
+with open("data.txt", "r") as f:
     content = f.read()
 
 # ✅ Good - explicit cleanup
 try:
-    f = open('data.txt', 'r')
+    f = open("data.txt", "r")
     content = f.read()
 finally:
     f.close()
@@ -451,6 +449,7 @@ Be aware of memory consumption:
 
 ```python
 import psutil
+
 
 def check_memory():
     memory = psutil.virtual_memory()
@@ -484,15 +483,15 @@ Validate data quality:
 def validate_dataset(dataset):
     """Validate dataset quality."""
     # Check for required fields
-    required_fields = ['id', 'text', 'label']
+    required_fields = ["id", "text", "label"]
     for field in required_fields:
         if field not in dataset.column_names:
             raise ValueError(f"Missing required field: {field}")
-    
+
     # Check for empty values
-    if dataset.filter(lambda x: not x['text']).num_rows > 0:
+    if dataset.filter(lambda x: not x["text"]).num_rows > 0:
         logger.warning("Dataset contains empty text fields")
-    
+
     return True
 ```
 
@@ -502,14 +501,14 @@ Track data versions for reproducibility:
 
 ```python
 metadata = {
-    'version': '1.0.0',
-    'created_at': datetime.now().isoformat(),
-    'source': 'squad',
-    'transformations': ['lowercase', 'tokenize'],
-    'ipfs_cid': cid
+    "version": "1.0.0",
+    "created_at": datetime.now().isoformat(),
+    "source": "squad",
+    "transformations": ["lowercase", "tokenize"],
+    "ipfs_cid": cid,
 }
 
-with open('dataset_metadata.json', 'w') as f:
+with open("dataset_metadata.json", "w") as f:
     json.dump(metadata, f)
 ```
 
@@ -521,21 +520,19 @@ Write clear docstrings:
 
 ```python
 def process_document(
-    filepath: str,
-    extract_tables: bool = True,
-    extract_images: bool = False
+    filepath: str, extract_tables: bool = True, extract_images: bool = False
 ) -> ProcessedDocument:
     """
     Process a document and extract content.
-    
+
     Args:
         filepath: Path to the document file
         extract_tables: Whether to extract tables
         extract_images: Whether to extract images
-        
+
     Returns:
         ProcessedDocument with extracted content
-        
+
     Raises:
         FileNotFoundError: If the file doesn't exist
         ConversionError: If conversion fails

@@ -18,8 +18,9 @@ from typing import Dict, List, Any
 from ipfs_datasets_py.data_provenance_enhanced import (
     EnhancedProvenanceManager,
     ProvenanceRecord,
-    ProvenanceCryptoVerifier
+    ProvenanceCryptoVerifier,
 )
+
 
 def main(args):
     # Create a temporary directory for storage
@@ -34,7 +35,7 @@ def main(args):
         default_agent_id="ipld-example-agent",
         tracking_level="detailed",
         enable_crypto_verification=True,
-        ipfs_api=args.ipfs_api
+        ipfs_api=args.ipfs_api,
     )
 
     # Step 2: Record provenance events
@@ -46,7 +47,7 @@ def main(args):
         source_type="file",
         format="csv",
         location="/path/to/dataset.csv",
-        description="Original CSV dataset"
+        description="Original CSV dataset",
     )
     print(f"  Recorded source: {source_id}")
 
@@ -57,7 +58,7 @@ def main(args):
         transformation_type="clean",
         tool="pandas",
         parameters={"drop_na": True, "drop_duplicates": True},
-        description="Clean dataset by removing NA values and duplicates"
+        description="Clean dataset by removing NA values and duplicates",
     )
     print(f"  Recorded transformation: {transform_id}")
 
@@ -68,7 +69,7 @@ def main(args):
         schema={"id": "integer", "name": "string", "value": "float"},
         pass_count=1000,
         fail_count=0,
-        description="Verify data schema"
+        description="Verify data schema",
     )
     print(f"  Recorded verification: {verify_id}")
 
@@ -80,7 +81,7 @@ def main(args):
         model_framework="scikit-learn",
         hyperparameters={"n_estimators": 100, "max_depth": 10},
         metrics={"accuracy": 0.92, "f1": 0.91},
-        description="Train random forest classifier"
+        description="Train random forest classifier",
     )
     print(f"  Recorded model training: {model_id}")
 
@@ -92,7 +93,7 @@ def main(args):
         model_version="1.0",
         output_type="classification",
         performance_metrics={"latency_ms": 250},
-        description="Generate predictions using trained model"
+        description="Generate predictions using trained model",
     )
     print(f"  Recorded model inference: {inference_id}")
 
@@ -102,7 +103,7 @@ def main(args):
         content="Predictions appear to be biased towards class 0",
         annotation_type="issue",
         tags=["bias", "accuracy"],
-        description="Note potential bias in model predictions"
+        description="Note potential bias in model predictions",
     )
     print(f"  Recorded annotation: {annotation_id}")
 
@@ -129,7 +130,7 @@ def main(args):
         default_agent_id="ipld-example-agent",
         tracking_level="detailed",
         enable_crypto_verification=True,
-        ipfs_api=args.ipfs_api
+        ipfs_api=args.ipfs_api,
     )
 
     # Step 6: Import from CAR file
@@ -163,7 +164,7 @@ def main(args):
     query_results = import_manager.semantic_search("model training random forest", limit=2)
     print(f"  Found {len(query_results)} matches:")
     for i, result in enumerate(query_results):
-        print(f"  Result {i+1}:")
+        print(f"  Result {i + 1}:")
         print(f"    ID: {result['record_id']}")
         print(f"    Type: {result['record_type']}")
         print(f"    Description: {result['description']}")
@@ -171,12 +172,21 @@ def main(args):
 
     print("\nIPLD-Enhanced Provenance Example Completed Successfully")
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="IPLD Provenance Integration Example")
-    parser.add_argument("--storage-dir", type=str, default=None,
-                        help="Directory for storage (default: temporary directory)")
-    parser.add_argument("--ipfs-api", type=str, default="/ip4/127.0.0.1/tcp/5001",
-                        help="IPFS API endpoint (default: /ip4/127.0.0.1/tcp/5001)")
+    parser.add_argument(
+        "--storage-dir",
+        type=str,
+        default=None,
+        help="Directory for storage (default: temporary directory)",
+    )
+    parser.add_argument(
+        "--ipfs-api",
+        type=str,
+        default="/ip4/127.0.0.1/tcp/5001",
+        help="IPFS API endpoint (default: /ip4/127.0.0.1/tcp/5001)",
+    )
 
     args = parser.parse_args()
     main(args)

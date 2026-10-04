@@ -144,7 +144,7 @@ The ZKP simulation uses simple cryptographic primitives (SHA-256) to **mimic the
    # ❌ WRONG: Using in production
    proof = prover.generate_proof(
        theorem="Transaction is valid",
-       private_axioms=[sensitive_data]  # NOT PROTECTED!
+       private_axioms=[sensitive_data],  # NOT PROTECTED!
    )
    ```
 
@@ -153,7 +153,7 @@ The ZKP simulation uses simple cryptographic primitives (SHA-256) to **mimic the
    # ❌ WRONG: Protecting private information
    proof = prover.generate_proof(
        theorem="User identity verified",
-       private_axioms=[ssn, password]  # EXPOSED!
+       private_axioms=[ssn, password],  # EXPOSED!
    )
    ```
 
@@ -162,7 +162,7 @@ The ZKP simulation uses simple cryptographic primitives (SHA-256) to **mimic the
    # ❌ WRONG: Meeting regulatory requirements
    proof = prover.generate_proof(
        theorem="GDPR compliant",
-       private_axioms=[user_data]  # NOT COMPLIANT!
+       private_axioms=[user_data],  # NOT COMPLIANT!
    )
    ```
 
@@ -171,7 +171,7 @@ The ZKP simulation uses simple cryptographic primitives (SHA-256) to **mimic the
    # ❌ WRONG: Authentication or authorization
    proof = prover.generate_proof(
        theorem="Has admin rights",
-       private_axioms=[credentials]  # NOT SECURE!
+       private_axioms=[credentials],  # NOT SECURE!
    )
    ```
 
@@ -180,7 +180,7 @@ The ZKP simulation uses simple cryptographic primitives (SHA-256) to **mimic the
    # ❌ WRONG: Cryptocurrency, trading, payments
    proof = prover.generate_proof(
        theorem="Transaction valid",
-       private_axioms=[balance, signature]  # NOT SAFE!
+       private_axioms=[balance, signature],  # NOT SAFE!
    )
    ```
 
@@ -234,6 +234,7 @@ verifier.verify_proof(old_proof)  # Still valid!
 ```python
 # Add your own timestamp checks
 import time
+
 if time.time() - proof.timestamp > 3600:  # 1 hour
     raise ValueError("Proof expired")
 ```
@@ -259,15 +260,12 @@ if time.time() - proof.timestamp > 3600:  # 1 hour
 2. **Never Use with Real Secrets**
    ```python
    # ✅ OK: Test data
-   proof = prover.generate_proof(
-       theorem="Test theorem",
-       private_axioms=["public info", "test data"]
-   )
-   
+   proof = prover.generate_proof(theorem="Test theorem", private_axioms=["public info", "test data"])
+
    # ❌ WRONG: Real secrets
    proof = prover.generate_proof(
        theorem="...",
-       private_axioms=[password, api_key]  # DON'T!
+       private_axioms=[password, api_key],  # DON'T!
    )
    ```
 

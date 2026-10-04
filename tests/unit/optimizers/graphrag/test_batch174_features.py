@@ -10,6 +10,7 @@ Methods under test:
   - OntologyGenerator.relationship_confidence_mean(result)
   - OntologyGenerator.entities_above_confidence(result, threshold)
 """
+
 import pytest
 from unittest.mock import MagicMock
 
@@ -26,11 +27,13 @@ def _push_opt(o, avg):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -42,9 +45,14 @@ def _push_run(p, score):
 
 def _make_score(**kwargs):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     defaults = dict(
-        completeness=0.5, consistency=0.5, clarity=0.5,
-        granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+        completeness=0.5,
+        consistency=0.5,
+        clarity=0.5,
+        granularity=0.5,
+        relationship_coherence=0.5,
+        domain_alignment=0.5,
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -52,6 +60,7 @@ def _make_score(**kwargs):
 
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
@@ -70,11 +79,13 @@ class _FakeOntology:
 
 def _make_entity(eid, confidence=0.5):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type="T", text=eid, confidence=confidence)
 
 
 def _make_result(entities, rels=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities, relationships=rels or [], confidence=1.0, metadata={}, errors=[]
     )
@@ -82,15 +93,18 @@ def _make_result(entities, rels=None):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
 # ── OntologyOptimizer.score_cumulative_min ────────────────────────────────────
+
 
 class TestScoreCumulativeMin:
     def test_empty_returns_empty(self):
@@ -118,6 +132,7 @@ class TestScoreCumulativeMin:
 
 # ── OntologyOptimizer.history_below_median_count ──────────────────────────────
 
+
 class TestHistoryBelowMedianCount:
     def test_empty_returns_zero(self):
         o = _make_optimizer()
@@ -144,6 +159,7 @@ class TestHistoryBelowMedianCount:
 
 # ── OntologyPipeline.first_score ──────────────────────────────────────────────
 
+
 class TestPipelineFirstScore:
     def test_empty_returns_zero(self):
         p = _make_pipeline()
@@ -157,6 +173,7 @@ class TestPipelineFirstScore:
 
 
 # ── OntologyPipeline.score_below_mean_count ───────────────────────────────────
+
 
 class TestScoreBelowMeanCount:
     def test_empty_returns_zero(self):
@@ -184,13 +201,36 @@ class TestScoreBelowMeanCount:
 
 # ── OntologyCritic.dimension_improvement_rate ────────────────────────────────
 
+
 class TestDimensionImprovementRate:
     def test_all_improved_returns_one(self):
         c = _make_critic()
-        before = _make_score(**{d: 0.3 for d in ["completeness", "consistency", "clarity",
-                                                  "granularity", "relationship_coherence", "domain_alignment"]})
-        after = _make_score(**{d: 0.8 for d in ["completeness", "consistency", "clarity",
-                                                 "granularity", "relationship_coherence", "domain_alignment"]})
+        before = _make_score(
+            **{
+                d: 0.3
+                for d in [
+                    "completeness",
+                    "consistency",
+                    "clarity",
+                    "granularity",
+                    "relationship_coherence",
+                    "domain_alignment",
+                ]
+            }
+        )
+        after = _make_score(
+            **{
+                d: 0.8
+                for d in [
+                    "completeness",
+                    "consistency",
+                    "clarity",
+                    "granularity",
+                    "relationship_coherence",
+                    "domain_alignment",
+                ]
+            }
+        )
         assert c.dimension_improvement_rate(before, after) == pytest.approx(1.0)
 
     def test_none_improved_returns_zero(self):
@@ -199,15 +239,28 @@ class TestDimensionImprovementRate:
 
     def test_half_improved(self):
         c = _make_critic()
-        before = _make_score(completeness=0.3, consistency=0.7, clarity=0.3,
-                             granularity=0.7, relationship_coherence=0.3, domain_alignment=0.7)
-        after = _make_score(completeness=0.8, consistency=0.7, clarity=0.8,
-                            granularity=0.7, relationship_coherence=0.8, domain_alignment=0.7)
+        before = _make_score(
+            completeness=0.3,
+            consistency=0.7,
+            clarity=0.3,
+            granularity=0.7,
+            relationship_coherence=0.3,
+            domain_alignment=0.7,
+        )
+        after = _make_score(
+            completeness=0.8,
+            consistency=0.7,
+            clarity=0.8,
+            granularity=0.7,
+            relationship_coherence=0.8,
+            domain_alignment=0.7,
+        )
         rate = c.dimension_improvement_rate(before, after)
         assert rate == pytest.approx(0.5)
 
 
 # ── LogicValidator.leaf_node_count ────────────────────────────────────────────
+
 
 class TestLeafNodeCount:
     def test_no_rels_returns_zero(self):
@@ -232,6 +285,7 @@ class TestLeafNodeCount:
 
 # ── OntologyGenerator.relationship_confidence_mean ───────────────────────────
 
+
 class TestRelationshipConfidenceMean:
     def test_empty_returns_zero(self):
         gen = _make_generator()
@@ -242,12 +296,14 @@ class TestRelationshipConfidenceMean:
         rels = [_FakeRel("a", "b", confidence=0.8)]
         # Use actual Relationship objects
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Relationship
+
         r = Relationship(id="r1", type="t", source_id="a", target_id="b", confidence=0.8)
         assert gen.relationship_confidence_mean(_make_result([], [r])) == pytest.approx(0.8)
 
     def test_mean_of_two(self):
         gen = _make_generator()
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Relationship
+
         rels = [
             Relationship(id="r1", type="t", source_id="a", target_id="b", confidence=0.6),
             Relationship(id="r2", type="t", source_id="b", target_id="c", confidence=0.4),
@@ -256,6 +312,7 @@ class TestRelationshipConfidenceMean:
 
 
 # ── OntologyGenerator.entities_above_confidence ──────────────────────────────
+
 
 class TestEntitiesAboveConfidence:
     def test_empty_returns_empty(self):

@@ -13,6 +13,7 @@ Run with::
 
     pytest benchmarks/bench_p2p_connection_pool.py -v
 """
+
 from __future__ import annotations
 
 import anyio
@@ -24,6 +25,7 @@ from unittest.mock import AsyncMock, MagicMock
 # ---------------------------------------------------------------------------
 # Minimal mock connection pool (used when real P2P deps are absent)
 # ---------------------------------------------------------------------------
+
 
 class _MockConnection:
     """Lightweight mock of a P2P connection."""
@@ -44,9 +46,7 @@ class _MockConnectionPool:
     """Thread-safe mock connection pool with configurable pool_size."""
 
     def __init__(self, pool_size: int = 5) -> None:
-        self._pool: list[_MockConnection] = [
-            _MockConnection(f"peer-{i}") for i in range(pool_size)
-        ]
+        self._pool: list[_MockConnection] = [_MockConnection(f"peer-{i}") for i in range(pool_size)]
         # No lock needed; single-threaded benchmark accesses pool sequentially.
         self._lock = None
 
@@ -71,6 +71,7 @@ class _MockConnectionPool:
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture()
 def pool_with_connections() -> _MockConnectionPool:
     """Pool pre-filled with 8 connections (pool-hit scenario)."""
@@ -91,6 +92,7 @@ try:
     from ipfs_datasets_py.mcp_server.p2p_service_manager import (  # type: ignore[import]
         P2PServiceManager,
     )
+
     _HAS_REAL_POOL = True
 except Exception:
     _HAS_REAL_POOL = False
@@ -99,6 +101,7 @@ except Exception:
 # ---------------------------------------------------------------------------
 # Benchmarks
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.benchmark(group="p2p_pool")
 def test_pool_hit_acquire_release(benchmark, pool_with_connections):

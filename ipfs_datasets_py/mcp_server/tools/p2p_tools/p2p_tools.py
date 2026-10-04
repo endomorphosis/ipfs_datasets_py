@@ -35,7 +35,7 @@ def _ensure_ipfs_accelerate_on_path() -> None:
     category="p2p_service",
     priority=8,
     timeout_seconds=10.0,
-    mcp_description="Get P2P service status and peer information"
+    mcp_description="Get P2P service status and peer information",
 )
 def p2p_service_status(include_peers: bool = True, peers_limit: int = 50) -> Dict[str, Any]:
     """Return local P2P service status and (optionally) recently seen peers."""
@@ -78,7 +78,7 @@ def p2p_service_status(include_peers: bool = True, peers_limit: int = 50) -> Dic
     category="p2p_cache",
     priority=9,
     timeout_seconds=5.0,
-    mcp_description="Get value from P2P cache"
+    mcp_description="Get value from P2P cache",
 )
 def p2p_cache_get(key: str) -> Dict[str, Any]:
     """Get a value from the shared disk TTL cache (local view)."""
@@ -86,7 +86,11 @@ def p2p_cache_get(key: str) -> Dict[str, Any]:
     _ensure_ipfs_accelerate_on_path()
 
     try:
-        from ipfs_accelerate_py.p2p_tasks.cache_store import DiskTTLCache, cache_enabled, default_cache_dir
+        from ipfs_accelerate_py.p2p_tasks.cache_store import (
+            DiskTTLCache,
+            cache_enabled,
+            default_cache_dir,
+        )
 
         if not cache_enabled():
             return {"ok": False, "error": "cache_disabled"}
@@ -104,7 +108,7 @@ def p2p_cache_get(key: str) -> Dict[str, Any]:
     category="p2p_cache",
     priority=9,
     timeout_seconds=5.0,
-    mcp_description="Check if key exists in P2P cache"
+    mcp_description="Check if key exists in P2P cache",
 )
 def p2p_cache_has(key: str) -> Dict[str, Any]:
     """Check if a key exists in the shared disk TTL cache (local view)."""
@@ -112,7 +116,11 @@ def p2p_cache_has(key: str) -> Dict[str, Any]:
     _ensure_ipfs_accelerate_on_path()
 
     try:
-        from ipfs_accelerate_py.p2p_tasks.cache_store import DiskTTLCache, cache_enabled, default_cache_dir
+        from ipfs_accelerate_py.p2p_tasks.cache_store import (
+            DiskTTLCache,
+            cache_enabled,
+            default_cache_dir,
+        )
 
         if not cache_enabled():
             return {"ok": False, "error": "cache_disabled"}
@@ -130,7 +138,7 @@ def p2p_cache_has(key: str) -> Dict[str, Any]:
     category="p2p_cache",
     priority=8,
     timeout_seconds=10.0,
-    mcp_description="Set value in P2P cache with optional TTL"
+    mcp_description="Set value in P2P cache with optional TTL",
 )
 def p2p_cache_set(key: str, value: Any, ttl_s: Optional[float] = None) -> Dict[str, Any]:
     """Set a value in the shared disk TTL cache (local view)."""
@@ -138,7 +146,11 @@ def p2p_cache_set(key: str, value: Any, ttl_s: Optional[float] = None) -> Dict[s
     _ensure_ipfs_accelerate_on_path()
 
     try:
-        from ipfs_accelerate_py.p2p_tasks.cache_store import DiskTTLCache, cache_enabled, default_cache_dir
+        from ipfs_accelerate_py.p2p_tasks.cache_store import (
+            DiskTTLCache,
+            cache_enabled,
+            default_cache_dir,
+        )
 
         if not cache_enabled():
             return {"ok": False, "error": "cache_disabled"}
@@ -156,7 +168,7 @@ def p2p_cache_set(key: str, value: Any, ttl_s: Optional[float] = None) -> Dict[s
     category="p2p_cache",
     priority=8,
     timeout_seconds=5.0,
-    mcp_description="Delete key from P2P cache"
+    mcp_description="Delete key from P2P cache",
 )
 def p2p_cache_delete(key: str) -> Dict[str, Any]:
     """Delete a key from the shared disk TTL cache (local view)."""
@@ -164,7 +176,11 @@ def p2p_cache_delete(key: str) -> Dict[str, Any]:
     _ensure_ipfs_accelerate_on_path()
 
     try:
-        from ipfs_accelerate_py.p2p_tasks.cache_store import DiskTTLCache, cache_enabled, default_cache_dir
+        from ipfs_accelerate_py.p2p_tasks.cache_store import (
+            DiskTTLCache,
+            cache_enabled,
+            default_cache_dir,
+        )
 
         if not cache_enabled():
             return {"ok": False, "error": "cache_disabled"}
@@ -183,9 +199,11 @@ def p2p_cache_delete(key: str) -> Dict[str, Any]:
     priority=8,
     timeout_seconds=30.0,
     io_intensive=True,
-    mcp_description="Submit task to P2P task queue"
+    mcp_description="Submit task to P2P task queue",
 )
-def p2p_task_submit(task_type: str, payload: Dict[str, Any], model_name: str = "") -> Dict[str, Any]:
+def p2p_task_submit(
+    task_type: str, payload: Dict[str, Any], model_name: str = ""
+) -> Dict[str, Any]:
     """Submit a task into the durable DuckDB-backed task queue (local)."""
 
     _ensure_ipfs_accelerate_on_path()
@@ -194,7 +212,9 @@ def p2p_task_submit(task_type: str, payload: Dict[str, Any], model_name: str = "
         from ipfs_accelerate_py.p2p_tasks.task_queue import TaskQueue
 
         q = TaskQueue()
-        task_id = q.submit(task_type=str(task_type), model_name=str(model_name or ""), payload=dict(payload or {}))
+        task_id = q.submit(
+            task_type=str(task_type), model_name=str(model_name or ""), payload=dict(payload or {})
+        )
         return {"ok": True, "task_id": task_id}
     except Exception as e:
         return {"ok": False, "error": str(e)}
@@ -206,7 +226,7 @@ def p2p_task_submit(task_type: str, payload: Dict[str, Any], model_name: str = "
     category="p2p_task",
     priority=9,
     timeout_seconds=10.0,
-    mcp_description="Get task status from P2P queue"
+    mcp_description="Get task status from P2P queue",
 )
 def p2p_task_get(task_id: str) -> Dict[str, Any]:
     """Get task status/result from the durable DuckDB-backed task queue (local)."""
@@ -231,7 +251,7 @@ def p2p_task_get(task_id: str) -> Dict[str, Any]:
     category="p2p_task",
     priority=8,
     timeout_seconds=10.0,
-    mcp_description="Delete task from P2P queue"
+    mcp_description="Delete task from P2P queue",
 )
 def p2p_task_delete(task_id: str) -> Dict[str, Any]:
     """Delete a task row from the queue (local)."""
@@ -261,7 +281,7 @@ def _remote_queue(*, peer_id: str = "", multiaddr: str = "") -> Any:
     category="p2p_remote",
     priority=8,
     timeout_seconds=15.0,
-    mcp_description="Get status from remote P2P peer"
+    mcp_description="Get status from remote P2P peer",
 )
 async def p2p_remote_status(
     remote_multiaddr: str = "",
@@ -305,7 +325,7 @@ async def p2p_remote_status(
     priority=7,
     timeout_seconds=60.0,
     io_intensive=True,
-    mcp_description="Call MCP tool on remote P2P peer"
+    mcp_description="Call MCP tool on remote P2P peer",
 )
 async def p2p_remote_call_tool(
     tool_name: str,
@@ -347,7 +367,7 @@ async def p2p_remote_call_tool(
     category="p2p_remote",
     priority=8,
     timeout_seconds=10.0,
-    mcp_description="Get value from remote peer cache"
+    mcp_description="Get value from remote peer cache",
 )
 async def p2p_remote_cache_get(
     key: str,
@@ -374,7 +394,7 @@ async def p2p_remote_cache_get(
     category="p2p_remote",
     priority=7,
     timeout_seconds=15.0,
-    mcp_description="Set value in remote peer cache"
+    mcp_description="Set value in remote peer cache",
 )
 async def p2p_remote_cache_set(
     key: str,
@@ -408,7 +428,7 @@ async def p2p_remote_cache_set(
     category="p2p_remote",
     priority=8,
     timeout_seconds=10.0,
-    mcp_description="Check if key exists in remote peer cache"
+    mcp_description="Check if key exists in remote peer cache",
 )
 async def p2p_remote_cache_has(
     key: str,
@@ -435,7 +455,7 @@ async def p2p_remote_cache_has(
     category="p2p_remote",
     priority=7,
     timeout_seconds=10.0,
-    mcp_description="Delete key from remote peer cache"
+    mcp_description="Delete key from remote peer cache",
 )
 async def p2p_remote_cache_delete(
     key: str,
@@ -450,7 +470,9 @@ async def p2p_remote_cache_delete(
         from ipfs_accelerate_py.p2p_tasks.client import cache_delete
 
         remote = _remote_queue(peer_id=remote_peer_id, multiaddr=remote_multiaddr)
-        resp = await run_in_trio(cache_delete, remote=remote, key=str(key), timeout_s=float(timeout_s))
+        resp = await run_in_trio(
+            cache_delete, remote=remote, key=str(key), timeout_s=float(timeout_s)
+        )
         return resp if isinstance(resp, dict) else {"ok": False, "error": "invalid_response"}
     except Exception as e:
         return {"ok": False, "error": str(e)}
@@ -463,7 +485,7 @@ async def p2p_remote_cache_delete(
     priority=7,
     timeout_seconds=30.0,
     io_intensive=True,
-    mcp_description="Submit task to remote peer queue"
+    mcp_description="Submit task to remote peer queue",
 )
 async def p2p_remote_submit_task(
     task_type: str,

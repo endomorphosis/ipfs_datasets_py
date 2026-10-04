@@ -22,11 +22,11 @@ class CachedGitHubCLI:
     """
     Wrapper for GitHub CLI that caches responses in distributed P2P cache
     """
-    
+
     def __init__(self, gh_cli, cache: Optional[DistributedGitHubCache] = None):
         """
         Initialize cached wrapper
-        
+
         Args:
             gh_cli: GitHubCLI instance to wrap
             cache: Distributed cache instance (creates one if not provided)
@@ -73,16 +73,13 @@ class CachedGitHubCLI:
         # Store in cache with 10 minute TTL
         await self.cache.set(cache_key, repos, ttl=600)
         return repos
-    
+
     def list_repos(
-        self,
-        owner: Optional[str] = None,
-        since_days: int = 1,
-        use_cache: bool = True
+        self, owner: Optional[str] = None, since_days: int = 1, use_cache: bool = True
     ) -> List[str]:
         """
         List repositories with caching
-        
+
         Args:
             owner: Repository owner
             since_days: Filter repos updated in last N days
@@ -116,18 +113,18 @@ class CachedGitHubCLI:
         # Cache for 2 minutes (workflow status changes frequently)
         await self.cache.set(cache_key, runs, ttl=120)
         return runs
-    
+
     def get_workflow_runs(
         self,
         repo: str,
         owner: Optional[str] = None,
         status: str = "queued",
         limit: int = 10,
-        use_cache: bool = True
+        use_cache: bool = True,
     ) -> List[Dict]:
         """
         Get workflow runs with caching
-        
+
         Args:
             repo: Repository name
             owner: Repository owner
@@ -138,22 +135,21 @@ class CachedGitHubCLI:
         return self._run_async_from_sync(
             self.get_workflow_runs_async(repo, owner, status, limit, use_cache)
         )
-    
+
     def get_workflow_queue_depth(
-        self,
-        repo: str,
-        owner: Optional[str] = None,
-        use_cache: bool = True
+        self, repo: str, owner: Optional[str] = None, use_cache: bool = True
     ) -> int:
         """
         Get workflow queue depth with caching
-        
+
         Args:
             repo: Repository name
             owner: Repository owner
             use_cache: Whether to use cache
         """
-        return self._run_async_from_sync(self.get_workflow_queue_depth_async(repo, owner, use_cache))
+        return self._run_async_from_sync(
+            self.get_workflow_queue_depth_async(repo, owner, use_cache)
+        )
 
     async def get_workflow_queue_depth_async(
         self,
@@ -181,16 +177,13 @@ class CachedGitHubCLI:
         # Cache for 1 minute
         await self.cache.set(cache_key, depth, ttl=60)
         return depth
-    
+
     def list_runners(
-        self,
-        repo: Optional[str] = None,
-        owner: Optional[str] = None,
-        use_cache: bool = True
+        self, repo: Optional[str] = None, owner: Optional[str] = None, use_cache: bool = True
     ) -> List[Dict]:
         """
         List runners with caching
-        
+
         Args:
             repo: Repository name (None for org/user level)
             owner: Repository owner
@@ -222,15 +215,15 @@ class CachedGitHubCLI:
         # Cache for 5 minutes
         await self.cache.set(cache_key, runners, ttl=300)
         return runners
-    
+
     def get_cache_stats(self) -> Dict[str, Any]:
         """Get cache statistics"""
         return self.cache.get_stats()
-    
+
     def invalidate_cache(self, pattern: Optional[str] = None):
         """
         Invalidate cache entries
-        
+
         Args:
             pattern: If provided, only invalidate matching keys
         """
@@ -244,36 +237,30 @@ class CachedGitHubCLI:
             # Clear all
             self.cache.local_cache.clear()
             logger.info("Cleared all cache entries")
-        
+
         self.cache._save_cache()
-    
+
     # Pass through methods that don't need caching
     def __getattr__(self, name):
         """Forward non-cached methods to underlying GitHubCLI"""
         return getattr(self.gh, name)
 
 
-async def start_cache_network(
-    listen_port: int = 9000,
-    bootstrap_peers: Optional[List[str]] = None
-):
+async def start_cache_network(listen_port: int = 9000, bootstrap_peers: Optional[List[str]] = None):
     """
     Start the distributed cache P2P network
-    
+
     Args:
         listen_port: Port to listen on
         bootstrap_peers: List of peer addresses to connect to
     """
     from .distributed_cache import initialize_cache
-    
-    cache = await initialize_cache(
-        listen_port=listen_port,
-        bootstrap_peers=bootstrap_peers
-    )
-    
+
+    cache = await initialize_cache(listen_port=listen_port, bootstrap_peers=bootstrap_peers)
+
     logger.info("Distributed cache network started")
     logger.info(f"  Peer ID: {cache.peer_id}")
     logger.info(f"  Listening on port: {listen_port}")
     logger.info(f"  Bootstrap peers: {len(bootstrap_peers) if bootstrap_peers else 0}")
-    
+
     return cache

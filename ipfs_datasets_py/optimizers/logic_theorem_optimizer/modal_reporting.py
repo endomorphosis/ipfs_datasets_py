@@ -22,9 +22,7 @@ from ipfs_datasets_py.logic.modal.introspection_metrics import (
 )
 
 
-STATE_TO_COMPILER_PATCH_LAG_REPORT_SCHEMA_VERSION = (
-    "legal-ir-state-to-compiler-patch-lag-report-v1"
-)
+STATE_TO_COMPILER_PATCH_LAG_REPORT_SCHEMA_VERSION = "legal-ir-state-to-compiler-patch-lag-report-v1"
 
 
 @dataclass(frozen=True)
@@ -104,9 +102,7 @@ class ModalSupervisorHealthReport:
             "queue_pressure": float(self.queue_pressure),
             "reasons": list(self.reasons),
             "seed_block_reasons": list(self.seed_block_reasons),
-            "state_to_compiler_patch_lag": dict(
-                sorted(self.state_to_compiler_patch_lag.items())
-            ),
+            "state_to_compiler_patch_lag": dict(sorted(self.state_to_compiler_patch_lag.items())),
             "transient_failure_rate": float(self.transient_failure_rate),
         }
 
@@ -124,8 +120,7 @@ class LeanstralFeedbackSummary:
         counts.update({str(key): int(value) for key, value in self.outcome_counts.items()})
         return {
             "compiler_targets_for_autoencoder_evaluation": [
-                dict(target)
-                for target in self.compiler_targets_for_autoencoder_evaluation
+                dict(target) for target in self.compiler_targets_for_autoencoder_evaluation
             ],
             "outcome_counts": dict(sorted(counts.items())),
             "suppressed_count": len(self.suppressed_feature_clusters),
@@ -152,7 +147,9 @@ def build_modal_parser_report(
         if not sample.modal_ir.formulas:
             parser_failures.append(sample.sample_id)
         for formula in sample.modal_ir.formulas:
-            family_counts[formula.operator.family] = family_counts.get(formula.operator.family, 0) + 1
+            family_counts[formula.operator.family] = (
+                family_counts.get(formula.operator.family, 0) + 1
+            )
         if sample.sample_id in expected:
             top1_total += 1
             if sample.selected_frame == expected[sample.sample_id]:
@@ -184,9 +181,7 @@ def build_modal_supervisor_health_report(
     cycles = _safe_int(data.get("cycles"))
     phase = str(data.get("active_cycle_phase") or "")
     phase_timings = _float_mapping(
-        data.get("latest_cycle_phase_timings")
-        or data.get("active_cycle_phase_timings")
-        or {}
+        data.get("latest_cycle_phase_timings") or data.get("active_cycle_phase_timings") or {}
     )
     queue_counts = _int_mapping(data.get("latest_queue_counts") or {})
     cache_counters = _cache_counters_from_summary(data)
@@ -205,7 +200,9 @@ def build_modal_supervisor_health_report(
 
     productive_signals = {
         "applied_todo_count": _safe_int(data.get("applied_todo_ids"))
-        or _safe_int(_mapping(data.get("latest_autoencoder_state_telemetry")).get("applied_todo_count")),
+        or _safe_int(
+            _mapping(data.get("latest_autoencoder_state_telemetry")).get("applied_todo_count")
+        ),
         "compiler_guidance_improved_cycles": _safe_int(
             data.get("compiler_guidance_improved_cycles")
         ),
@@ -258,8 +255,7 @@ def build_leanstral_feedback_summary(
         outcome_counts=counts,
         suppressed_feature_clusters=list(report.suppressed_feature_clusters),
         compiler_targets_for_autoencoder_evaluation=[
-            dict(target)
-            for target in report.compiler_targets_for_autoencoder_evaluation
+            dict(target) for target in report.compiler_targets_for_autoencoder_evaluation
         ],
     )
 
@@ -267,9 +263,7 @@ def build_leanstral_feedback_summary(
 def state_to_compiler_patch_lag(
     summary: Mapping[str, Any] | None = None,
     *,
-    lifecycle_paths: Optional[
-        Iterable[StateToCompilerPatchLifecycle | Mapping[str, Any]]
-    ] = None,
+    lifecycle_paths: Optional[Iterable[StateToCompilerPatchLifecycle | Mapping[str, Any]]] = None,
     state_update_count: Optional[int] = None,
     compiler_patch_count: Optional[int] = None,
 ) -> Dict[str, Any]:
@@ -325,9 +319,7 @@ def state_to_compiler_patch_lag(
             _timestamp_seconds(path.observed_next_cycle.timestamp)
             - _timestamp_seconds(path.state_snapshot.timestamp)
         )
-        cycle_values.append(
-            float(path.observed_next_cycle.cycle_id - path.state_snapshot.cycle_id)
-        )
+        cycle_values.append(float(path.observed_next_cycle.cycle_id - path.state_snapshot.cycle_id))
 
     transition_names = tuple(
         f"{source}_to_{destination}"
@@ -336,15 +328,9 @@ def state_to_compiler_patch_lag(
             STATE_TO_COMPILER_PATCH_STAGES[1:],
         )
     )
-    transition_seconds: Dict[str, List[float]] = {
-        transition: [] for transition in transition_names
-    }
-    transition_cycles: Dict[str, List[float]] = {
-        transition: [] for transition in transition_names
-    }
-    transition_censored: Dict[str, int] = {
-        transition: 0 for transition in transition_names
-    }
+    transition_seconds: Dict[str, List[float]] = {transition: [] for transition in transition_names}
+    transition_cycles: Dict[str, List[float]] = {transition: [] for transition in transition_names}
+    transition_censored: Dict[str, int] = {transition: 0 for transition in transition_names}
     censored_by_stage = {stage: 0 for stage in STATE_TO_COMPILER_PATCH_STAGES[1:]}
 
     for path in paths:
@@ -386,13 +372,7 @@ def state_to_compiler_patch_lag(
         for transition in transition_names
     }
     path_count = len(raw_paths)
-    status = (
-        "no_data"
-        if path_count == 0
-        else "complete"
-        if censored_count == 0
-        else "censored"
-    )
+    status = "no_data" if path_count == 0 else "complete" if censored_count == 0 else "censored"
     legacy_counter_inputs_ignored = bool(
         state_update_count is not None
         or compiler_patch_count is not None
@@ -407,9 +387,7 @@ def state_to_compiler_patch_lag(
         "complete_path_count": len(complete_paths),
         "censored_path_count": censored_count,
         "invalid_path_count": invalid_count,
-        "completion_rate": (
-            round(len(complete_paths) / path_count, 9) if path_count else None
-        ),
+        "completion_rate": (round(len(complete_paths) / path_count, 9) if path_count else None),
         "legacy_counter_inputs_ignored": legacy_counter_inputs_ignored,
         "wall_clock_lag_seconds": _percentile_summary(
             wall_clock_values,
@@ -431,9 +409,7 @@ def state_to_compiler_patch_lag(
                 "path_id": path.path_id,
                 "censored": path.censored,
                 "versions": {
-                    stage: (
-                        milestone.version_id if milestone is not None else None
-                    )
+                    stage: (milestone.version_id if milestone is not None else None)
                     for stage, milestone in path.milestones().items()
                 },
             }
@@ -444,9 +420,7 @@ def state_to_compiler_patch_lag(
 
 def _state_to_patch_path_payloads(summary: Mapping[str, Any]) -> List[Any]:
     direct_paths = summary.get("paths")
-    if isinstance(direct_paths, Sequence) and not isinstance(
-        direct_paths, (str, bytes, bytearray)
-    ):
+    if isinstance(direct_paths, Sequence) and not isinstance(direct_paths, (str, bytes, bytearray)):
         return list(direct_paths)
     if isinstance(summary.get("state_snapshot"), Mapping):
         return [summary]
@@ -465,22 +439,16 @@ def _state_to_patch_path_payloads(summary: Mapping[str, Any]) -> List[Any]:
             continue
         if isinstance(value, Mapping):
             nested = value.get("paths")
-            if isinstance(nested, Sequence) and not isinstance(
-                nested, (str, bytes, bytearray)
-            ):
+            if isinstance(nested, Sequence) and not isinstance(nested, (str, bytes, bytearray)):
                 return list(nested)
             return [value]
-        if isinstance(value, Sequence) and not isinstance(
-            value, (str, bytes, bytearray)
-        ):
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
             return list(value)
         return [value]
     existing_report = summary.get("state_to_compiler_patch_lag")
     if isinstance(existing_report, Mapping):
         nested = existing_report.get("paths")
-        if isinstance(nested, Sequence) and not isinstance(
-            nested, (str, bytes, bytearray)
-        ):
+        if isinstance(nested, Sequence) and not isinstance(nested, (str, bytes, bytearray)):
             return list(nested)
     return []
 
@@ -495,8 +463,7 @@ def _contains_legacy_lag_counters(summary: Mapping[str, Any]) -> bool:
     )
     state_telemetry = _mapping(summary.get("latest_autoencoder_state_telemetry"))
     return any(key in summary for key in legacy_keys) or any(
-        key in state_telemetry
-        for key in ("applied_todo_count", "generalizable_entry_count")
+        key in state_telemetry for key in ("applied_todo_count", "generalizable_entry_count")
     )
 
 
@@ -530,10 +497,7 @@ def _percentile_summary(
             result = finite_values[lower]
         else:
             fraction = position - lower
-            result = (
-                finite_values[lower]
-                + (finite_values[upper] - finite_values[lower]) * fraction
-            )
+            result = finite_values[lower] + (finite_values[upper] - finite_values[lower]) * fraction
         return round(result, 9)
 
     observed_count = len(finite_values)
@@ -598,8 +562,7 @@ def _queue_pressure_from_summary(
     if pending <= 0:
         pending = _safe_int(queue_counts.get("pending"))
     cap = _safe_int(
-        summary.get("program_synthesis_pending_cap")
-        or summary.get("max_program_synthesis_pending")
+        summary.get("program_synthesis_pending_cap") or summary.get("max_program_synthesis_pending")
     )
     return (float(pending) / float(cap)) if cap > 0 else 0.0
 
@@ -621,8 +584,7 @@ def _transient_failure_rate_from_summary(
         or summary.get("program_synthesis_transient_requeue_count")
     )
     executions = _safe_int(
-        summary.get("codex_execution_count")
-        or summary.get("program_synthesis_execution_count")
+        summary.get("codex_execution_count") or summary.get("program_synthesis_execution_count")
     )
     return (float(transient) / float(executions)) if executions > 0 else 0.0
 

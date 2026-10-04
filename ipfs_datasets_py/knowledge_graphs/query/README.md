@@ -56,15 +56,12 @@ Main query engine that coordinates execution across backends.
 from ipfs_datasets_py.knowledge_graphs.query import UnifiedQueryEngine
 
 engine = UnifiedQueryEngine(
-    cypher_backend=cypher_engine,
-    ir_backend=ir_executor,
-    hybrid_backend=hybrid_search_engine
+    cypher_backend=cypher_engine, ir_backend=ir_executor, hybrid_backend=hybrid_search_engine
 )
 
 # Execute Cypher query
 result = await engine.execute_query(
-    query="MATCH (n:Person) WHERE n.age > 30 RETURN n",
-    query_type="cypher"
+    query="MATCH (n:Person) WHERE n.age > 30 RETURN n", query_type="cypher"
 )
 ```
 
@@ -80,7 +77,7 @@ hybrid = HybridSearchEngine(graph_engine, vector_store)
 results = await hybrid.search(
     graph_pattern="MATCH (n:Document)-[:MENTIONS]->(e:Entity)",
     vector_query="machine learning applications",
-    alpha=0.5  # Balance between graph and vector results
+    alpha=0.5,  # Balance between graph and vector results
 )
 ```
 
@@ -90,11 +87,7 @@ Controls computational budgets for queries.
 ```python
 from ipfs_datasets_py.knowledge_graphs.query import BudgetManager
 
-budget = BudgetManager(
-    max_nodes=1000,
-    max_edges=5000,
-    max_time_seconds=30.0
-)
+budget = BudgetManager(max_nodes=1000, max_edges=5000, max_time_seconds=30.0)
 
 # Execute with budget constraints
 result = await engine.execute_query(query, budget=budget)
@@ -108,20 +101,21 @@ result = await engine.execute_query(query, budget=budget)
 from ipfs_datasets_py.knowledge_graphs.query import UnifiedQueryEngine
 import asyncio
 
+
 async def find_people():
     engine = UnifiedQueryEngine(cypher_backend=cypher_engine)
-    
+
     # Find all people older than 30
     result = await engine.execute_query(
-        query="MATCH (p:Person) WHERE p.age > 30 RETURN p.name, p.age",
-        query_type="cypher"
+        query="MATCH (p:Person) WHERE p.age > 30 RETURN p.name, p.age", query_type="cypher"
     )
-    
+
     if result.success:
         for record in result.records:
             print(f"{record['p.name']}: {record['p.age']}")
     else:
         print(f"Query failed: {result.error}")
+
 
 asyncio.run(find_people())
 ```
@@ -131,26 +125,25 @@ asyncio.run(find_people())
 ```python
 from ipfs_datasets_py.knowledge_graphs.query import HybridSearchEngine
 
+
 async def hybrid_search_example():
     # Initialize hybrid search engine
-    hybrid = HybridSearchEngine(
-        graph_engine=graph_engine,
-        vector_store=vector_store
-    )
-    
+    hybrid = HybridSearchEngine(graph_engine=graph_engine, vector_store=vector_store)
+
     # Search for documents related to "AI" with semantic similarity
     results = await hybrid.search(
         graph_pattern="MATCH (d:Document)-[:ABOUT]->(t:Topic {name: 'AI'})",
         vector_query="artificial intelligence applications",
         alpha=0.6,  # 60% graph, 40% vector
-        top_k=10
+        top_k=10,
     )
-    
+
     for result in results:
         print(f"Document: {result.document_id}")
         print(f"  Graph score: {result.graph_score}")
         print(f"  Vector score: {result.vector_score}")
         print(f"  Combined score: {result.combined_score}")
+
 
 asyncio.run(hybrid_search_example())
 ```
@@ -161,25 +154,21 @@ asyncio.run(hybrid_search_example())
 from ipfs_datasets_py.knowledge_graphs.query import UnifiedQueryEngine, BudgetManager
 from ipfs_datasets_py.knowledge_graphs.exceptions import QueryTimeoutError
 
+
 async def budgeted_query():
     engine = UnifiedQueryEngine(cypher_backend=cypher_engine)
-    
+
     # Create budget: max 500 nodes, 2000 edges, 10 seconds
-    budget = BudgetManager(
-        max_nodes=500,
-        max_edges=2000,
-        max_time_seconds=10.0
-    )
-    
+    budget = BudgetManager(max_nodes=500, max_edges=2000, max_time_seconds=10.0)
+
     try:
         result = await engine.execute_query(
-            query="MATCH (n)-[r*1..5]-(m) RETURN n, r, m",
-            query_type="cypher",
-            budget=budget
+            query="MATCH (n)-[r*1..5]-(m) RETURN n, r, m", query_type="cypher", budget=budget
         )
         print(f"Query completed: {len(result.records)} results")
     except QueryTimeoutError:
         print("Query exceeded time budget")
+
 
 asyncio.run(budgeted_query())
 ```
@@ -189,22 +178,20 @@ asyncio.run(budgeted_query())
 ```python
 async def ir_query_example():
     engine = UnifiedQueryEngine(ir_backend=ir_executor)
-    
+
     # Execute IR query (more direct graph traversal)
     ir_query = {
         "operation": "traverse",
         "start_nodes": ["node123"],
         "relationship_type": "KNOWS",
-        "max_depth": 3
+        "max_depth": 3,
     }
-    
-    result = await engine.execute_query(
-        query=ir_query,
-        query_type="ir"
-    )
-    
+
+    result = await engine.execute_query(query=ir_query, query_type="ir")
+
     if result.success:
         print(f"Found {len(result.nodes)} connected nodes")
+
 
 asyncio.run(ir_query_example())
 ```
@@ -225,13 +212,7 @@ RETURN DISTINCT fof.name
 Lower-level graph operations:
 
 ```python
-{
-    "operation": "filter",
-    "node_type": "Person",
-    "property": "age",
-    "operator": ">",
-    "value": 30
-}
+{"operation": "filter", "node_type": "Person", "property": "age", "operator": ">", "value": 30}
 ```
 
 ### Hybrid Queries
@@ -242,7 +223,7 @@ Combined graph + vector search:
     "graph_pattern": "MATCH (d:Document)-[:TAGGED]->(t:Tag)",
     "vector_query": "natural language processing",
     "alpha": 0.7,
-    "top_k": 20
+    "top_k": 20,
 }
 ```
 
@@ -253,13 +234,13 @@ All queries return a `QueryResult` object:
 ```python
 @dataclass
 class QueryResult:
-    success: bool              # True if query executed successfully
-    records: List[Dict]        # Query results as list of dicts
-    error: Optional[str]       # Error message if success=False
-    execution_time: float      # Query execution time in seconds
-    nodes_visited: int         # Number of nodes traversed
-    edges_visited: int         # Number of edges traversed
-    metadata: Dict[str, Any]   # Additional query metadata
+    success: bool  # True if query executed successfully
+    records: List[Dict]  # Query results as list of dicts
+    error: Optional[str]  # Error message if success=False
+    execution_time: float  # Query execution time in seconds
+    nodes_visited: int  # Number of nodes traversed
+    edges_visited: int  # Number of edges traversed
+    metadata: Dict[str, Any]  # Additional query metadata
 ```
 
 ## Error Handling
@@ -268,9 +249,9 @@ The query engine uses specific exceptions for different failure modes:
 
 ```python
 from ipfs_datasets_py.knowledge_graphs.exceptions import (
-    QueryParseError,      # Invalid query syntax
+    QueryParseError,  # Invalid query syntax
     QueryExecutionError,  # Query execution failed
-    QueryTimeoutError     # Query exceeded time budget
+    QueryTimeoutError,  # Query exceeded time budget
 )
 
 try:
@@ -304,7 +285,7 @@ Results can be cached for repeated queries:
 engine = UnifiedQueryEngine(
     cypher_backend=cypher_engine,
     enable_cache=True,
-    cache_ttl=300  # Cache for 5 minutes
+    cache_ttl=300,  # Cache for 5 minutes
 )
 
 # First call: executes query
@@ -322,12 +303,10 @@ Multiple independent queries can run in parallel:
 queries = [
     "MATCH (n:Person) RETURN count(n)",
     "MATCH (n:Document) RETURN count(n)",
-    "MATCH (n:Entity) RETURN count(n)"
+    "MATCH (n:Entity) RETURN count(n)",
 ]
 
-results = await asyncio.gather(*[
-    engine.execute_query(q) for q in queries
-])
+results = await asyncio.gather(*[engine.execute_query(q) for q in queries])
 ```
 
 ## See Also
@@ -354,7 +333,10 @@ result = executor.execute("""
 ### Federated Knowledge Graphs (`federation.py`)
 
 ```python
-from ipfs_datasets_py.knowledge_graphs.query import FederatedKnowledgeGraph, EntityResolutionStrategy
+from ipfs_datasets_py.knowledge_graphs.query import (
+    FederatedKnowledgeGraph,
+    EntityResolutionStrategy,
+)
 
 fed = FederatedKnowledgeGraph()
 fed.add_graph(kg1, "knowledge_base_1")
@@ -402,6 +384,7 @@ assert verifier.verify_statement(proof)
 
 # Connect to real logic.zkp backend
 from ipfs_datasets_py.logic.zkp import ZKPProver
+
 logic_prover = ZKPProver(backend="simulation")
 prover_with_backend = KGZKProver.from_logic_prover(kg, logic_prover)
 ```
@@ -410,7 +393,9 @@ prover_with_backend = KGZKProver.from_logic_prover(kg, logic_prover)
 
 ```python
 from ipfs_datasets_py.knowledge_graphs.query import (
-    create_groth16_kg_prover, describe_groth16_status, KGEntityFormula
+    create_groth16_kg_prover,
+    describe_groth16_status,
+    KGEntityFormula,
 )
 
 # Diagnostic

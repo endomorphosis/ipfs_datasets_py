@@ -11,24 +11,27 @@ from .registry import StateScraperRegistry
 
 class SouthCarolinaScraper(BaseStateScraper):
     """Scraper for South Carolina state laws from https://www.scstatehouse.gov"""
+
     _TITLE_URL_RE = re.compile(r"/code/title(\d+)\.php$", re.IGNORECASE)
     _CHAPTER_URL_RE = re.compile(r"/code/t(\d{2})c(\d{3})\.php$", re.IGNORECASE)
     _SECTION_START_RE = re.compile(r"\bSECTION\s+([0-9A-Za-z.-]+)\.\s*", re.IGNORECASE)
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for South Carolina's legislative website."""
         return "https://www.scstatehouse.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for South Carolina."""
-        return [{
-            "name": "South Carolina Code of Laws",
-            # Use the statute master page directly; home page navigation is noisy
-            # and often yields zero probable statute links.
-            "url": f"{self.get_base_url()}/code/statmast.php",
-            "type": "Code"
-        }]
-    
+        return [
+            {
+                "name": "South Carolina Code of Laws",
+                # Use the statute master page directly; home page navigation is noisy
+                # and often yields zero probable statute links.
+                "url": f"{self.get_base_url()}/code/statmast.php",
+                "type": "Code",
+            }
+        ]
+
     async def scrape_code(
         self,
         code_name: str,
@@ -36,11 +39,11 @@ class SouthCarolinaScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from South Carolina's legislative website.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
@@ -49,15 +52,25 @@ class SouthCarolinaScraper(BaseStateScraper):
             return_threshold = max(1, min(return_threshold, int(max_statutes)))
         official = await self._scrape_official_code_tree(
             code_name,
-            max_statutes=None if self._full_corpus_enabled() and max_statutes is None else return_threshold,
+            max_statutes=None
+            if self._full_corpus_enabled() and max_statutes is None
+            else return_threshold,
         )
         if official:
-            return official if self._full_corpus_enabled() and max_statutes is None else official[:return_threshold]
+            return (
+                official
+                if self._full_corpus_enabled() and max_statutes is None
+                else official[:return_threshold]
+            )
         if not self._full_corpus_enabled():
-            direct = await self._scrape_direct_seed_sections(code_name, max_statutes=return_threshold)
+            direct = await self._scrape_direct_seed_sections(
+                code_name, max_statutes=return_threshold
+            )
             if direct:
                 return direct[:return_threshold]
-        return await self._generic_scrape(code_name, code_url, "S.C. Code Ann.", max_sections=max(10, return_threshold))
+        return await self._generic_scrape(
+            code_name, code_url, "S.C. Code Ann.", max_sections=max(10, return_threshold)
+        )
 
     async def _scrape_official_code_tree(
         self,
@@ -65,7 +78,9 @@ class SouthCarolinaScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         title_links = await self._discover_title_links()
-        self.logger.info("South Carolina official index: discovered %s title links", len(title_links))
+        self.logger.info(
+            "South Carolina official index: discovered %s title links", len(title_links)
+        )
         statutes: List[NormalizedStatute] = []
         limit = max(1, int(max_statutes)) if max_statutes is not None else None
 
@@ -93,7 +108,11 @@ class SouthCarolinaScraper(BaseStateScraper):
                     max_statutes=(None if limit is None else max(0, limit - len(statutes))),
                 )
                 statutes.extend(parsed)
-                if chapter_index == 1 or chapter_index % 10 == 0 or chapter_index == len(chapter_links):
+                if (
+                    chapter_index == 1
+                    or chapter_index % 10 == 0
+                    or chapter_index == len(chapter_links)
+                ):
                     self.logger.info(
                         "South Carolina official index: title=%s chapter=%s/%s statutes_so_far=%s",
                         title_number,
@@ -141,7 +160,9 @@ class SouthCarolinaScraper(BaseStateScraper):
         except ImportError:
             return []
 
-        payload = await self._fetch_page_content_with_archival_fallback(title_url, timeout_seconds=35)
+        payload = await self._fetch_page_content_with_archival_fallback(
+            title_url, timeout_seconds=35
+        )
         if not payload:
             return []
         soup = BeautifulSoup(payload, "html.parser")
@@ -174,7 +195,9 @@ class SouthCarolinaScraper(BaseStateScraper):
         except ImportError:
             return []
 
-        payload = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=35)
+        payload = await self._fetch_page_content_with_archival_fallback(
+            chapter_url, timeout_seconds=35
+        )
         if not payload:
             return []
 
@@ -200,7 +223,9 @@ class SouthCarolinaScraper(BaseStateScraper):
                 segment,
                 flags=re.IGNORECASE,
             )
-            section_name = title_match.group(1).strip() if title_match else f"Section {section_number}"
+            section_name = (
+                title_match.group(1).strip() if title_match else f"Section {section_number}"
+            )
             statutes.append(
                 NormalizedStatute(
                     state_code=self.state_code,
@@ -256,7 +281,9 @@ class SouthCarolinaScraper(BaseStateScraper):
             body = self._normalize_legal_text(f"SECTION {section_number}. {match.group(1)}")
             if len(body) < 120:
                 continue
-            name_match = re.match(rf"SECTION\s+{re.escape(section_number)}\.\s*([^\.]+)\.", body, flags=re.IGNORECASE)
+            name_match = re.match(
+                rf"SECTION\s+{re.escape(section_number)}\.\s*([^\.]+)\.", body, flags=re.IGNORECASE
+            )
             section_name = name_match.group(1).strip() if name_match else section_number
             out.append(
                 NormalizedStatute(

@@ -40,9 +40,13 @@ python -c "
 docstring_match = re.search(r'"""([^"]+)"""', content)
 docstring = docstring_match.group(1).strip() if docstring_match else "Test function docstring"
 
-# After  
+# After
 docstring_matches = re.findall(r'"""([^"]+)"""', content)
-docstring = docstring_matches[1].strip() if len(docstring_matches) > 1 else (docstring_matches[0].strip() if docstring_matches else "Test function docstring")
+docstring = (
+    docstring_matches[1].strip()
+    if len(docstring_matches) > 1
+    else (docstring_matches[0].strip() if docstring_matches else "Test function docstring")
+)
 ```
 
 ##### Fix #2: Import Path Correction
@@ -50,10 +54,12 @@ docstring = docstring_matches[1].strip() if len(docstring_matches) > 1 else (doc
 **Change**: Fixed module import path for function tools
 ```python
 # Before
-module = importlib.import_module(f'tools.functions.{function_name}')
+module = importlib.import_module(f"tools.functions.{function_name}")
 
 # After
-module = importlib.import_module(f'ipfs_datasets_py.mcp_server.tools.lizardpersons_function_tools.functions.{function_name}')
+module = importlib.import_module(
+    f"ipfs_datasets_py.mcp_server.tools.lizardpersons_function_tools.functions.{function_name}"
+)
 ```
 
 #### 4. **Verification Phase**

@@ -101,9 +101,7 @@ class DeonticNormsBridgeAdapter:
         embedded_prover_records = _prover_syntax_records_by_source_from_norm_rows(
             norms or deontic_source_rows
         )
-        capability_records = _list_of_dicts(
-            metadata.get("legal_parser_capability_profile_records")
-        )
+        capability_records = _list_of_dicts(metadata.get("legal_parser_capability_profile_records"))
         if not formula_records and norm_objects:
             formula_records = _formula_records_from_norm_objects(norm_objects)
         if not coverage_records:
@@ -214,9 +212,7 @@ class DeonticNormsBridgeAdapter:
                 source_component="deontic.exports",
                 payload={"records": deontic_exports["proof_obligation_records"]},
                 metadata={
-                    "proof_obligation_count": len(
-                        deontic_exports["proof_obligation_records"]
-                    ),
+                    "proof_obligation_count": len(deontic_exports["proof_obligation_records"]),
                 },
             ),
             "deontic_repair_queue": LogicIRView(
@@ -225,9 +221,7 @@ class DeonticNormsBridgeAdapter:
                 source_component="deontic.exports",
                 payload={"records": deontic_exports["repair_queue_records"]},
                 metadata={
-                    "repair_record_count": len(
-                        deontic_exports["repair_queue_records"]
-                    ),
+                    "repair_record_count": len(deontic_exports["repair_queue_records"]),
                 },
             ),
             "deontic_reconstruction_slot_loss": LogicIRView(
@@ -253,9 +247,7 @@ class DeonticNormsBridgeAdapter:
                     "summary": deontic_exports["ir_slot_provenance_summary"],
                 },
                 metadata={
-                    "provenance_record_count": len(
-                        deontic_exports["ir_slot_provenance_records"]
-                    ),
+                    "provenance_record_count": len(deontic_exports["ir_slot_provenance_records"]),
                 },
             ),
             "deontic_phase8_quality": LogicIRView(
@@ -267,9 +259,7 @@ class DeonticNormsBridgeAdapter:
                     "summary": deontic_exports["phase8_quality_summary"],
                 },
                 metadata={
-                    "quality_record_count": len(
-                        deontic_exports["phase8_quality_records"]
-                    ),
+                    "quality_record_count": len(deontic_exports["phase8_quality_records"]),
                     "requires_validation_count": int(
                         deontic_exports["phase8_quality_summary"].get(
                             "requires_validation_source_count"
@@ -363,9 +353,7 @@ class DeonticNormsBridgeAdapter:
             context["parser_metrics"],
             context["deontic_exports"],
         )
-        coverage_requires_validation = _coverage_requires_validation(
-            context["coverage_records"]
-        )
+        coverage_requires_validation = _coverage_requires_validation(context["coverage_records"])
         proof_gate_soft_pass = _deontic_proof_gate_soft_pass(
             coverage_requires_validation=coverage_requires_validation,
             proof_gate=proof_gate,
@@ -476,9 +464,7 @@ def _deterministic_deontic_fallback_result(
     ]
     norm_rows = [norm.to_dict() for norm in legal_norm_irs]
     formula_records = build_deontic_formula_records_from_irs(legal_norm_irs)
-    coverage_records = build_prover_syntax_target_coverage_records_from_irs(
-        legal_norm_irs
-    )
+    coverage_records = build_prover_syntax_target_coverage_records_from_irs(legal_norm_irs)
     metadata: dict[str, Any] = {
         "parser_elements": parser_elements,
         "legal_norm_irs": norm_rows,
@@ -491,9 +477,7 @@ def _deterministic_deontic_fallback_result(
         ),
         "legal_prover_syntax_target_coverage_records": coverage_records,
         "legal_formal_syntax_valid_count": sum(
-            1
-            for record in coverage_records
-            if record.get("formal_syntax_valid") is True
+            1 for record in coverage_records if record.get("formal_syntax_valid") is True
         ),
         "deterministic_parser": {
             "enabled": True,
@@ -567,9 +551,7 @@ def _deontic_norm_family_metadata(
         )[0][0]
     semantic_family_distribution = dict(sorted(semantic_distribution.items()))
     modal_family_distribution = dict(sorted(modal_distribution.items()))
-    normalized_semantic_distribution = _normalized_family_distribution(
-        semantic_distribution
-    )
+    normalized_semantic_distribution = _normalized_family_distribution(semantic_distribution)
     normalized_modal_distribution = _normalized_family_distribution(modal_distribution)
     deontic_family_distribution = _deontic_family_distribution_with_floor(
         normalized_modal_distribution,
@@ -596,9 +578,7 @@ def _normalized_family_distribution(counts: Counter[str]) -> dict[str, float]:
     if total <= 0.0:
         return {}
     return {
-        family: round(count / total, 12)
-        for family, count in sorted(counts.items())
-        if count > 0
+        family: round(count / total, 12) for family, count in sorted(counts.items()) if count > 0
     }
 
 
@@ -638,11 +618,7 @@ def _deontic_family_distribution_with_floor(
         remainder_after = 1.0 - _DEONTIC_FAMILY_PROBABILITY_FLOOR
         scale = remainder_after / remainder_before if remainder_before > 0.0 else 0.0
         normalized = {
-            family: (
-                _DEONTIC_FAMILY_PROBABILITY_FLOOR
-                if family == "deontic"
-                else weight * scale
-            )
+            family: (_DEONTIC_FAMILY_PROBABILITY_FLOOR if family == "deontic" else weight * scale)
             for family, weight in normalized.items()
         }
         normalized.setdefault("deontic", _DEONTIC_FAMILY_PROBABILITY_FLOOR)
@@ -786,9 +762,7 @@ def _apply_deontic_compiler_guidance_to_rows(
                     frame_guidance["compiler_guidance_source"],
                 )
                 enriched.setdefault("selected_frame", frame_guidance["selected_frame"])
-                enriched["compiler_guidance_source"] = frame_guidance[
-                    "compiler_guidance_source"
-                ]
+                enriched["compiler_guidance_source"] = frame_guidance["compiler_guidance_source"]
             if bridge_guidance:
                 _fill_deontic_row_from_compiler_guidance_ir(
                     enriched,
@@ -827,15 +801,12 @@ def _merge_legal_norm_rows_into_parser_elements(
     normalized_parser_rows = [
         dict(row) for row in parser_elements or [] if isinstance(row, Mapping)
     ]
-    normalized_norm_rows = [
-        dict(row) for row in norm_rows or [] if isinstance(row, Mapping)
-    ]
+    normalized_norm_rows = [dict(row) for row in norm_rows or [] if isinstance(row, Mapping)]
     if not normalized_norm_rows:
         return normalized_parser_rows
     if not normalized_parser_rows:
         return [
-            _fill_parser_row_from_legal_norm_row({}, norm_row)
-            for norm_row in normalized_norm_rows
+            _fill_parser_row_from_legal_norm_row({}, norm_row) for norm_row in normalized_norm_rows
         ]
 
     norm_by_source: dict[str, dict[str, Any]] = {}
@@ -969,13 +940,17 @@ def _parser_rows_from_deontic_compiler_guidance(
     candidates = list(_deontic_guidance_evidence_rows(guidance))
     candidates.append(("top_level", guidance))
     for collection_key, candidate in candidates:
-        quality_gate = str(
-            candidate.get("compiler_guidance_quality_gate")
-            or candidate.get("quality_gate")
-            or guidance.get("compiler_guidance_quality_gate")
-            or guidance.get("quality_gate")
-            or ""
-        ).strip().lower()
+        quality_gate = (
+            str(
+                candidate.get("compiler_guidance_quality_gate")
+                or candidate.get("quality_gate")
+                or guidance.get("compiler_guidance_quality_gate")
+                or guidance.get("quality_gate")
+                or ""
+            )
+            .strip()
+            .lower()
+        )
         if quality_gate not in {"pass", "passed", "ok"}:
             continue
         evidence = _deontic_bridge_evidence_from_guidance_row(
@@ -1116,11 +1091,7 @@ def _parser_row_from_deontic_guidance_ir(
     support_span = promoted_ir.get("support_span")
     if not _value_is_present(support_span) and support_text and source_text:
         start = source_text.find(support_text)
-        support_span = (
-            [start, start + len(support_text)]
-            if start >= 0
-            else [0, len(support_text)]
-        )
+        support_span = [start, start + len(support_text)] if start >= 0 else [0, len(support_text)]
 
     source_id = str(
         promoted_ir.get("source_id")
@@ -1138,12 +1109,8 @@ def _parser_row_from_deontic_guidance_ir(
             or context.get("citation")
             or ""
         ),
-        "norm_type": (
-            _copy_slot_value(norm_type) if _value_is_present(norm_type) else ""
-        ),
-        "deontic_operator": (
-            _copy_slot_value(modality) if _value_is_present(modality) else ""
-        ),
+        "norm_type": (_copy_slot_value(norm_type) if _value_is_present(norm_type) else ""),
+        "deontic_operator": (_copy_slot_value(modality) if _value_is_present(modality) else ""),
         "modality": _copy_slot_value(modality) if _value_is_present(modality) else "",
         "subject": _list_value(actor),
         "action": _list_value(action),
@@ -1158,9 +1125,7 @@ def _parser_row_from_deontic_guidance_ir(
     }
     row = _fill_parser_row_from_legal_norm_row(row, promoted_ir)
     legal_frame = {
-        key: _copy_slot_value(value)
-        for key, value in evidence.items()
-        if _value_is_present(value)
+        key: _copy_slot_value(value) for key, value in evidence.items() if _value_is_present(value)
     }
     legal_frame.setdefault("compiler_guidance_legal_norm_ir", dict(promoted_ir))
     row["legal_frame"] = legal_frame
@@ -1200,16 +1165,10 @@ def _compiler_guidance_has_deontic_route(guidance: Mapping[str, Any]) -> bool:
     for key in ("compiler_guidance_todo_routes", "todo_routes", "routes", "samples"):
         value = guidance.get(key)
         if isinstance(value, Mapping):
-            if any(
-                _compiler_guidance_token_is_deontic(route, route_tokens)
-                for route in value
-            ):
+            if any(_compiler_guidance_token_is_deontic(route, route_tokens) for route in value):
                 return True
         elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
-            if any(
-                _compiler_guidance_token_is_deontic(route, route_tokens)
-                for route in value
-            ):
+            if any(_compiler_guidance_token_is_deontic(route, route_tokens) for route in value):
                 return True
         elif _compiler_guidance_token_is_deontic(value, route_tokens):
             return True
@@ -1339,11 +1298,11 @@ def _deontic_bridge_evidence_from_guidance_row(
     route: str,
 ) -> dict[str, Any]:
     target_view = _deontic_guidance_target_view(row)
-    quality_gate = str(
-        row.get("compiler_guidance_quality_gate")
-        or row.get("quality_gate")
-        or ""
-    ).strip().lower()
+    quality_gate = (
+        str(row.get("compiler_guidance_quality_gate") or row.get("quality_gate") or "")
+        .strip()
+        .lower()
+    )
     component_gaps = _deontic_guidance_component_gaps(row)
     underrepresented = _deontic_guidance_underrepresented_components(row)
     promoted_ir = _deontic_guidance_legal_norm_ir_slots(row)
@@ -1366,9 +1325,9 @@ def _deontic_bridge_evidence_from_guidance_row(
         evidence["compiler_guidance_predicted_view"] = predicted_view
     normalized_underrepresented = _list_of_strings(underrepresented)
     if normalized_underrepresented:
-        evidence["compiler_guidance_legal_ir_underrepresented_components"] = (
-            [_canonical_deontic_target_view(item) for item in normalized_underrepresented]
-        )
+        evidence["compiler_guidance_legal_ir_underrepresented_components"] = [
+            _canonical_deontic_target_view(item) for item in normalized_underrepresented
+        ]
     if isinstance(component_gaps, Mapping):
         evidence["compiler_guidance_legal_ir_component_gaps"] = (
             _canonical_deontic_component_gap_map(component_gaps)
@@ -1565,9 +1524,7 @@ def _deontic_guidance_export_readiness(
         "formula_requires_validation": False,
         "formula_repair_required": False,
         "metric_requires_validation": False,
-        "deterministic_resolution": _deontic_guidance_deterministic_resolution(
-            bridge_guidance
-        ),
+        "deterministic_resolution": _deontic_guidance_deterministic_resolution(bridge_guidance),
     }
 
 
@@ -1577,19 +1534,13 @@ def _deontic_guidance_deterministic_resolution(
     return {
         "type": "compiler_guidance_deontic_ir_reconstruction",
         "route": str(
-            bridge_guidance.get("compiler_guidance_source")
-            or "repair_deontic_bridge_quality_gate"
+            bridge_guidance.get("compiler_guidance_source") or "repair_deontic_bridge_quality_gate"
         ),
         "evidence_source": str(
-            bridge_guidance.get("compiler_guidance_evidence_source")
-            or "compiler_guidance"
+            bridge_guidance.get("compiler_guidance_evidence_source") or "compiler_guidance"
         ),
-        "target_view": str(
-            bridge_guidance.get("compiler_guidance_target_view") or "deontic.ir"
-        ),
-        "quality_gate": str(
-            bridge_guidance.get("compiler_guidance_quality_gate") or "pass"
-        ),
+        "target_view": str(bridge_guidance.get("compiler_guidance_target_view") or "deontic.ir"),
+        "quality_gate": str(bridge_guidance.get("compiler_guidance_quality_gate") or "pass"),
     }
 
 
@@ -1798,9 +1749,7 @@ def _deontic_guidance_evidence_rows(
         collect(collection_key, guidance.get(collection_key))
         rows[before:] = sorted(
             rows[before:],
-            key=lambda item: int(
-                item[1].get("evidence_rank") or item[1].get("rank") or 999999
-            ),
+            key=lambda item: int(item[1].get("evidence_rank") or item[1].get("rank") or 999999),
         )
     return rows
 
@@ -1876,11 +1825,7 @@ def _coverage_records_need_rebuild(records: Sequence[Mapping[str, Any]]) -> bool
             return True
         if not isinstance(status_by_target, Mapping):
             return True
-        required_targets = [
-            str(target).strip()
-            for target in required
-            if str(target).strip()
-        ]
+        required_targets = [str(target).strip() for target in required if str(target).strip()]
         if not required_targets:
             return True
         if any(target not in status_by_target for target in required_targets):
@@ -1962,16 +1907,12 @@ def _deontic_export_context_from_parser_elements(
                         build_ir_slot_provenance_audit_record(norm, slots=slots)
                     )
                 else:
-                    ir_slot_provenance_records.append(
-                        build_ir_slot_provenance_audit_record(norm)
-                    )
+                    ir_slot_provenance_records.append(build_ir_slot_provenance_audit_record(norm))
         else:
-            ir_slot_provenance_records = build_ir_slot_provenance_audit_records(
-                norm_objects
-            )
+            ir_slot_provenance_records = build_ir_slot_provenance_audit_records(norm_objects)
         context["ir_slot_provenance_records"] = ir_slot_provenance_records
-        context["ir_slot_provenance_summary"] = (
-            summarize_ir_slot_provenance_audit_records(ir_slot_provenance_records)
+        context["ir_slot_provenance_summary"] = summarize_ir_slot_provenance_audit_records(
+            ir_slot_provenance_records
         )
     except Exception as exc:  # pragma: no cover - diagnostics only
         _record_export_context_error(context, "ir_slot_provenance", exc)
@@ -1994,9 +1935,7 @@ def _deontic_export_context_from_parser_elements(
         context["proof_obligation_records"] = list(
             document_export_tables.get("proof_obligations", [])
         )
-        context["repair_queue_records"] = list(
-            document_export_tables.get("repair_queue", [])
-        )
+        context["repair_queue_records"] = list(document_export_tables.get("repair_queue", []))
     except Exception as exc:  # pragma: no cover - diagnostics only
         _record_export_context_error(context, "proof_and_repair_records", exc)
 
@@ -2011,9 +1950,7 @@ def _deontic_export_context_from_parser_elements(
             prover_by_source = _group_records_by_source(prover_syntax_records)
             provenance_by_source = _group_records_by_source(ir_slot_provenance_records)
             source_ids = sorted(
-                set(decoder_by_source)
-                | set(prover_by_source)
-                | set(provenance_by_source)
+                set(decoder_by_source) | set(prover_by_source) | set(provenance_by_source)
             )
             phase8_records = [
                 build_phase8_quality_summary_record(
@@ -2317,9 +2254,7 @@ def _summarize_reconstruction_slot_loss_rows(
         grounded_required_slot_count += int(
             summary_mapping.get("grounded_required_slot_count") or 0
         )
-        missing_required_slot_count += int(
-            summary_mapping.get("missing_required_slot_count") or 0
-        )
+        missing_required_slot_count += int(summary_mapping.get("missing_required_slot_count") or 0)
         ungrounded_slot_count += int(summary_mapping.get("ungrounded_slot_count") or 0)
 
         _append_unique_strings(required_slots, summary_mapping.get("required_slots"))
@@ -2346,20 +2281,14 @@ def _summarize_reconstruction_slot_loss_rows(
             all_complete = False
 
     if record_count <= 0:
-        record_count = len(
-            [row for row in rows if isinstance(row, Mapping)]
-        )
+        record_count = len([row for row in rows if isinstance(row, Mapping)])
 
     grounded_required_slot_rate = (
-        round(grounded_required_slot_count / required_slot_count, 6)
-        if required_slot_count
-        else 0.0
+        round(grounded_required_slot_count / required_slot_count, 6) if required_slot_count else 0.0
     )
     grounded_or_ungrounded = grounded_required_slot_count + ungrounded_slot_count
     ungrounded_decoded_slot_rate = (
-        round(ungrounded_slot_count / grounded_or_ungrounded, 6)
-        if grounded_or_ungrounded
-        else 0.0
+        round(ungrounded_slot_count / grounded_or_ungrounded, 6) if grounded_or_ungrounded else 0.0
     )
 
     return {
@@ -2397,14 +2326,10 @@ def _phase8_summary_from_records(
     valid_records = [record for record in records or [] if isinstance(record, Mapping)]
     record_count = len(valid_records)
     complete_count = sum(
-        1
-        for record in valid_records
-        if record.get("phase8_quality_complete") is True
+        1 for record in valid_records if record.get("phase8_quality_complete") is True
     )
     requires_validation_count = sum(
-        1
-        for record in valid_records
-        if record.get("requires_validation") is True
+        1 for record in valid_records if record.get("requires_validation") is True
     )
     blockers: set[str] = set()
     for record in valid_records:
@@ -2414,9 +2339,7 @@ def _phase8_summary_from_records(
             if str(blocker or "").strip()
         )
 
-    source_scoped_reconstruction = _reconstruction_slot_loss_from_phase8_records(
-        valid_records
-    )
+    source_scoped_reconstruction = _reconstruction_slot_loss_from_phase8_records(valid_records)
     if source_scoped_reconstruction:
         summary["reconstruction_slot_loss"] = source_scoped_reconstruction
 
@@ -2613,12 +2536,9 @@ def _deontic_graph_row_from_norm(norm: Any) -> dict[str, Any]:
     return {
         "rule_id": base_id,
         "modality": _graph_modality(getattr(norm, "modality", "")),
-        "predicate": _safe_predicate(
-            action or getattr(norm, "norm_type", "") or "governs"
-        ),
+        "predicate": _safe_predicate(action or getattr(norm, "norm_type", "") or "governs"),
         "target_id": f"{base_id}:action",
-        "target_label": action
-        or str(getattr(norm, "support_text", "") or "Governed action"),
+        "target_label": action or str(getattr(norm, "support_text", "") or "Governed action"),
         "target_type": "action",
         "target_active": True,
         "sources": source_nodes,
@@ -2658,10 +2578,7 @@ def _stable_norm_id(norm: Any) -> str:
 
 def _safe_predicate(value: Any) -> str:
     text = str(value or "").strip().lower()
-    tokens = [
-        "".join(char for char in token if char.isalnum())
-        for token in text.split()
-    ]
+    tokens = ["".join(char for char in token if char.isalnum()) for token in text.split()]
     predicate = "_".join(token for token in tokens if token)
     return predicate or "governs"
 
@@ -2697,9 +2614,7 @@ def _round_trip_from_deontic_context(
         grounded_slot_rate = 1.0
         syntax_valid_rate = 1.0
         quality_requires_validation_rate = 0.0
-    reconstruction_summary = _mapping(
-        deontic_exports.get("reconstruction_slot_loss_summary")
-    )
+    reconstruction_summary = _mapping(deontic_exports.get("reconstruction_slot_loss_summary"))
     provenance_summary = _mapping(deontic_exports.get("ir_slot_provenance_summary"))
     graph_metadata = _mapping(deontic_exports.get("deontic_graph_metadata"))
     phase8_quality_records = _list_of_dicts(deontic_exports.get("phase8_quality_records"))
@@ -2772,12 +2687,8 @@ def _proof_gate_from_coverage_records(records: Sequence[Mapping[str, Any]]) -> P
         passed_targets = list(summary["passed_targets"])
         failed_targets = list(summary["failed_targets"])
         missing_targets = list(summary["missing_targets"])
-        soft_failed_targets = [
-            target for target in failed_targets if str(target) in soft_targets
-        ]
-        soft_missing_targets = [
-            target for target in missing_targets if str(target) in soft_targets
-        ]
+        soft_failed_targets = [target for target in failed_targets if str(target) in soft_targets]
+        soft_missing_targets = [target for target in missing_targets if str(target) in soft_targets]
         blocking_failed_targets = [
             target for target in failed_targets if str(target) not in soft_targets
         ]
@@ -2785,9 +2696,7 @@ def _proof_gate_from_coverage_records(records: Sequence[Mapping[str, Any]]) -> P
             target for target in missing_targets if str(target) not in soft_targets
         ]
         attempted_count += (
-            len(passed_targets)
-            + len(blocking_failed_targets)
-            + len(blocking_missing_targets)
+            len(passed_targets) + len(blocking_failed_targets) + len(blocking_missing_targets)
         )
         valid_count += len(passed_targets)
         failed_count += len(blocking_failed_targets) + len(blocking_missing_targets)
@@ -2821,7 +2730,8 @@ def _coverage_summary_from_record(record: Mapping[str, Any]) -> dict[str, Any]:
     summary = record.get("coverage_summary")
     if isinstance(summary, Mapping):
         has_target_lists = any(
-            isinstance(summary.get(key), Sequence) and not isinstance(summary.get(key), (str, bytes))
+            isinstance(summary.get(key), Sequence)
+            and not isinstance(summary.get(key), (str, bytes))
             for key in ("passed_targets", "failed_targets", "missing_targets")
         )
         if has_target_lists:
@@ -2972,10 +2882,26 @@ def _frame_logic_triples_from_deontic_records(
             [
                 {"subject": document_id, "predicate": "contains_norm", "object": source_id},
                 {"subject": source_id, "predicate": "type", "object": "legal_deontic_norm"},
-                {"subject": source_id, "predicate": "norm_type", "object": str(norm.get("norm_type") or "")},
-                {"subject": source_id, "predicate": "modality", "object": str(norm.get("modality") or "")},
-                {"subject": source_id, "predicate": "actor", "object": str(norm.get("actor") or "")},
-                {"subject": source_id, "predicate": "action", "object": str(norm.get("action") or "")},
+                {
+                    "subject": source_id,
+                    "predicate": "norm_type",
+                    "object": str(norm.get("norm_type") or ""),
+                },
+                {
+                    "subject": source_id,
+                    "predicate": "modality",
+                    "object": str(norm.get("modality") or ""),
+                },
+                {
+                    "subject": source_id,
+                    "predicate": "actor",
+                    "object": str(norm.get("actor") or ""),
+                },
+                {
+                    "subject": source_id,
+                    "predicate": "action",
+                    "object": str(norm.get("action") or ""),
+                },
             ]
         )
         legal_frame = norm.get("legal_frame")
@@ -3000,37 +2926,27 @@ def _frame_logic_triples_from_deontic_records(
                     {
                         "subject": source_id,
                         "predicate": "compiler_guidance_target_view",
-                        "object": str(
-                            legal_frame.get("compiler_guidance_target_view") or ""
-                        ),
+                        "object": str(legal_frame.get("compiler_guidance_target_view") or ""),
                     },
                     {
                         "subject": source_id,
                         "predicate": "compiler_guidance_quality_gate",
-                        "object": str(
-                            legal_frame.get("compiler_guidance_quality_gate") or ""
-                        ),
+                        "object": str(legal_frame.get("compiler_guidance_quality_gate") or ""),
                     },
                     {
                         "subject": source_id,
                         "predicate": "compiler_guidance_evidence_source",
-                        "object": str(
-                            legal_frame.get("compiler_guidance_evidence_source") or ""
-                        ),
+                        "object": str(legal_frame.get("compiler_guidance_evidence_source") or ""),
                     },
                 ]
             )
             for component in _list_of_strings(
-                legal_frame.get(
-                    "compiler_guidance_legal_ir_underrepresented_components"
-                )
+                legal_frame.get("compiler_guidance_legal_ir_underrepresented_components")
             ):
                 triples.append(
                     {
                         "subject": source_id,
-                        "predicate": (
-                            "compiler_guidance_legal_ir_underrepresented_component"
-                        ),
+                        "predicate": ("compiler_guidance_legal_ir_underrepresented_component"),
                         "object": component,
                     }
                 )
@@ -3048,9 +2964,21 @@ def _frame_logic_triples_from_deontic_records(
         if formula_record:
             triples.extend(
                 [
-                    {"subject": source_id, "predicate": "formula", "object": str(formula_record.get("formula") or "")},
-                    {"subject": source_id, "predicate": "target_logic", "object": str(formula_record.get("target_logic") or "")},
-                    {"subject": source_id, "predicate": "proof_ready", "object": str(bool(formula_record.get("proof_ready"))).lower()},
+                    {
+                        "subject": source_id,
+                        "predicate": "formula",
+                        "object": str(formula_record.get("formula") or ""),
+                    },
+                    {
+                        "subject": source_id,
+                        "predicate": "target_logic",
+                        "object": str(formula_record.get("target_logic") or ""),
+                    },
+                    {
+                        "subject": source_id,
+                        "predicate": "proof_ready",
+                        "object": str(bool(formula_record.get("proof_ready"))).lower(),
+                    },
                 ]
             )
         coverage_record = coverage_by_source.get(source_id, {})
@@ -3139,10 +3067,8 @@ def _normalize_coverage_validation_records(
             row = _promote_coverage_record_to_validated_bridge_report(row)
             if isinstance(row.get("coverage_summary"), Mapping):
                 coverage_summary = dict(row["coverage_summary"])
-                coverage_summary = (
-                    _promote_coverage_summary_to_validated_bridge_report(
-                        coverage_summary
-                    )
+                coverage_summary = _promote_coverage_summary_to_validated_bridge_report(
+                    coverage_summary
                 )
                 row["coverage_summary"] = coverage_summary
 
@@ -3195,15 +3121,13 @@ def _coverage_bridge_validation_basis(record: Mapping[str, Any]) -> dict[str, An
         "status": "validated",
         "all_required_passed": all_required_passed,
         "quality_gate_all_targets_complete": bool(
-            quality_summary.get("quality_gate_all_targets_complete") is True
-            or not quality_summary
+            quality_summary.get("quality_gate_all_targets_complete") is True or not quality_summary
         ),
         "target_role_matrix_complete": bool(
             role_summary.get("target_role_matrix_complete") is not False
         ),
         "formal_syntax_valid": bool(
-            record.get("formal_syntax_valid") is True
-            or all_required_passed
+            record.get("formal_syntax_valid") is True or all_required_passed
         ),
         "coverage_blockers": [],
     }
@@ -3275,9 +3199,7 @@ def _coverage_record_validated_by_quality_gate(record: Mapping[str, Any]) -> boo
 
     quality_complete = quality_summary.get("quality_gate_all_targets_complete")
     legacy_complete_without_quality_summary = (
-        not quality_summary
-        and all_required_passed
-        and bool(required_targets)
+        not quality_summary and all_required_passed and bool(required_targets)
     )
     if quality_complete is not True and not legacy_complete_without_quality_summary:
         return False
@@ -3379,9 +3301,9 @@ def _merge_phase8_validation_from_coverage_records(
         if isinstance(coverage_summary, Mapping):
             summary = dict(coverage_summary)
             summary["requires_validation"] = requires_validation
-            summary["phase8_quality_complete"] = bool(
-                summary.get("phase8_quality_complete")
-            ) and not requires_validation
+            summary["phase8_quality_complete"] = (
+                bool(summary.get("phase8_quality_complete")) and not requires_validation
+            )
             summary_blockers = set(_list_of_strings(summary.get("coverage_blockers")))
             summary_blockers.update(blockers)
             summary["coverage_blockers"] = sorted(summary_blockers)
@@ -3635,9 +3557,7 @@ def _rate(numerator: Any, denominator: Any) -> float:
 def _record_validation_rate(records: Sequence[Mapping[str, Any]]) -> float:
     if not records:
         return 0.0
-    requires_validation = sum(
-        1 for record in records if record.get("requires_validation") is True
-    )
+    requires_validation = sum(1 for record in records if record.get("requires_validation") is True)
     return requires_validation / len(records)
 
 

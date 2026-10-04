@@ -48,21 +48,25 @@ Example with pytest-bdd:
 ```python
 from pytest_bdd import scenario, given, when, then
 
-@scenario('config.feature', 'Load configuration from default location')
+
+@scenario("config.feature", "Load configuration from default location")
 def test_load_config_default():
     pass
 
-@given('a valid config.toml file exists in the default path')
+
+@given("a valid config.toml file exists in the default path")
 def default_config():
     # Setup code
     pass
 
-@when('the configuration is initialized')
+
+@when("the configuration is initialized")
 def init_config():
     # Action code
     pass
 
-@then('the configuration is loaded')
+
+@then("the configuration is loaded")
 def verify_config_loaded():
     # Assertion code
     pass

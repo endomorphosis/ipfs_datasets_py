@@ -55,20 +55,12 @@ from .model import (
 )
 
 
-SECURITY_IR_FORMALIZATION_ADAPTER_VERSION: Final = (
-    "security-ir-formalization-adapter/v1"
-)
-SECURITY_IR_FORMALIZATION_PRODUCER_ID: Final = (
-    "security-ir-formalization-adapter"
-)
-SECURITY_IR_FORMALIZATION_CONFIG_ID: Final = (
-    "security-ir-formalization-default"
-)
+SECURITY_IR_FORMALIZATION_ADAPTER_VERSION: Final = "security-ir-formalization-adapter/v1"
+SECURITY_IR_FORMALIZATION_PRODUCER_ID: Final = "security-ir-formalization-adapter"
+SECURITY_IR_FORMALIZATION_CONFIG_ID: Final = "security-ir-formalization-default"
 SECURITY_IR_FORMALIZATION_DOMAIN: Final = "security"
 # Legal-adapter-shaped spellings used by shared integration code.
-SECURITY_IR_ADAPTER_PRODUCER_ID: Final = (
-    SECURITY_IR_FORMALIZATION_PRODUCER_ID
-)
+SECURITY_IR_ADAPTER_PRODUCER_ID: Final = SECURITY_IR_FORMALIZATION_PRODUCER_ID
 SECURITY_IR_ADAPTER_CONFIG_ID: Final = SECURITY_IR_FORMALIZATION_CONFIG_ID
 SECURITY_IR_DOMAIN: Final = SECURITY_IR_FORMALIZATION_DOMAIN
 
@@ -161,9 +153,7 @@ def _derived_id(prefix: str, value: str) -> str:
 
 
 def _binding_id(subject_id: str, purpose: str) -> str:
-    digest = hashlib.sha256(
-        f"{purpose}\0{subject_id}".encode("utf-8")
-    ).hexdigest()
+    digest = hashlib.sha256(f"{purpose}\0{subject_id}".encode("utf-8")).hexdigest()
     return f"binding:security:{purpose}:{digest[:32]}"
 
 
@@ -186,8 +176,7 @@ def _declaration_from_input(value: Any) -> SecurityIR:
         declaration.validate()
         return declaration
     if isinstance(value, Mapping) and (
-        value.get("schema_version") == "security-ir/v1"
-        or "declaration_id" in value
+        value.get("schema_version") == "security-ir/v1" or "declaration_id" in value
     ):
         try:
             return SecurityIR.from_dict(value)
@@ -217,8 +206,7 @@ def _record_sources(
         # check here prevents a future relaxed domain schema from fabricating
         # generic provenance.
         raise SecurityIRFormalizationAdapterError(
-            "declaration node references unknown Security sources: "
-            + ", ".join(sorted(unknown))
+            "declaration node references unknown Security sources: " + ", ".join(sorted(unknown))
         )
     return resolved or (declaration_source_id,)
 
@@ -226,9 +214,9 @@ def _record_sources(
 def _source_ref(source: SecuritySource) -> SourceRef:
     source_dict = source.to_dict()
     exact_content_address = bool(source.content_sha256)
-    content_sha256 = source.content_sha256 or hashlib.sha256(
-        _canonical_bytes(source_dict)
-    ).hexdigest()
+    content_sha256 = (
+        source.content_sha256 or hashlib.sha256(_canonical_bytes(source_dict)).hexdigest()
+    )
     source_uri = (
         source.uri
         if exact_content_address
@@ -236,9 +224,7 @@ def _source_ref(source: SecuritySource) -> SourceRef:
     )
     metadata = {
         "content_binding": (
-            "declared_source_bytes"
-            if exact_content_address
-            else "security_source_descriptor"
+            "declared_source_bytes" if exact_content_address else "security_source_descriptor"
         ),
         "declared_review_status": source.review_status,
         "original_source_uri": source.uri,
@@ -267,9 +253,7 @@ def _symbol_id(kind: str, source_id: str) -> str:
     return _derived_id(f"symbol:security:{kind}", source_id)
 
 
-def _transition_key(
-    machine: StateMachine, transition: StateTransition, index: int
-) -> str:
+def _transition_key(machine: StateMachine, transition: StateTransition, index: int) -> str:
     semantic = {
         "index": index,
         "machine_id": machine.state_machine_id,
@@ -284,9 +268,7 @@ def _contains_result_fields(value: Any) -> bool:
         if _RESULT_FIELD_NAMES.intersection(value):
             return True
         return any(_contains_result_fields(item) for item in value.values())
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return any(_contains_result_fields(item) for item in value)
     return False
 
@@ -314,9 +296,7 @@ class SecurityIRFormalizationAdapter(FormalizationCompiler):
 
         declaration_bytes = declaration.canonical_bytes()
         declaration_sha256 = hashlib.sha256(declaration_bytes).hexdigest()
-        declaration_source_id = (
-            f"source:security-declaration:{declaration_sha256[:24]}"
-        )
+        declaration_source_id = f"source:security-declaration:{declaration_sha256[:24]}"
         sample_id = f"sample:security:{declaration_sha256[:32]}"
 
         sources = tuple(_source_ref(item) for item in declaration.sources)
@@ -338,15 +318,11 @@ class SecurityIRFormalizationAdapter(FormalizationCompiler):
         assumptions: list[Assumption] = []
         bindings: list[ProvenanceBinding] = [
             ProvenanceBinding(
-                binding_id=_binding_id(
-                    declaration.declaration_id, "declaration"
-                ),
+                binding_id=_binding_id(declaration.declaration_id, "declaration"),
                 subject_id=declaration.declaration_id,
                 source_ref_ids=(declaration_source_id,),
                 metadata={
-                    "adapter_schema_version": (
-                        SECURITY_IR_FORMALIZATION_ADAPTER_VERSION
-                    ),
+                    "adapter_schema_version": (SECURITY_IR_FORMALIZATION_ADAPTER_VERSION),
                     "security_construct": "declaration",
                 },
             )
@@ -377,9 +353,7 @@ class SecurityIRFormalizationAdapter(FormalizationCompiler):
             return node_id, refs
 
         for item in declaration.assumptions:
-            node_id, refs = bind_node(
-                "assumption", item.assumption_id, item.source_ids
-            )
+            node_id, refs = bind_node("assumption", item.assumption_id, item.source_ids)
             assumptions.append(
                 Assumption(
                     assumption_id=item.assumption_id,
@@ -394,9 +368,7 @@ class SecurityIRFormalizationAdapter(FormalizationCompiler):
         for item in declaration.policies:
             bind_node("policy", item.policy_id, item.source_ids)
         for machine in declaration.state_machines:
-            bind_node(
-                "state-machine", machine.state_machine_id, machine.source_ids
-            )
+            bind_node("state-machine", machine.state_machine_id, machine.source_ids)
             for index, transition in enumerate(machine.transitions):
                 bind_node(
                     "transition",
@@ -409,9 +381,7 @@ class SecurityIRFormalizationAdapter(FormalizationCompiler):
             bind_node("extension", item.extension_id, item.source_ids)
 
         payload = {
-            "adapter_schema_version": (
-                SECURITY_IR_FORMALIZATION_ADAPTER_VERSION
-            ),
+            "adapter_schema_version": (SECURITY_IR_FORMALIZATION_ADAPTER_VERSION),
             "declaration": declaration_payload,
             "declaration_identity": declaration.identity.to_dict(),
             "input_scope": "security_ir_declaration_only",
@@ -421,9 +391,7 @@ class SecurityIRFormalizationAdapter(FormalizationCompiler):
             sources=(*sources, declaration_source),
             bindings=tuple(bindings),
             metadata={
-                "adapter_schema_version": (
-                    SECURITY_IR_FORMALIZATION_ADAPTER_VERSION
-                ),
+                "adapter_schema_version": (SECURITY_IR_FORMALIZATION_ADAPTER_VERSION),
                 "declaration_digest": declaration.digest,
                 "result_artifacts_excluded": True,
             },
@@ -439,9 +407,7 @@ class SecurityIRFormalizationAdapter(FormalizationCompiler):
             assumptions=tuple(assumptions),
             tags=("declaration", "security"),
             metadata={
-                "adapter_schema_version": (
-                    SECURITY_IR_FORMALIZATION_ADAPTER_VERSION
-                ),
+                "adapter_schema_version": (SECURITY_IR_FORMALIZATION_ADAPTER_VERSION),
                 "declaration_cid": declaration.cid,
                 "result_artifacts_excluded": True,
             },
@@ -478,9 +444,7 @@ class SecurityIRFormalizationAdapter(FormalizationCompiler):
             producer_id=self.producer_id,
             unsupported_policy=UnsupportedSemanticsPolicy.PRESERVE_OPAQUE,
             options={
-                "adapter_schema_version": (
-                    SECURITY_IR_FORMALIZATION_ADAPTER_VERSION
-                ),
+                "adapter_schema_version": (SECURITY_IR_FORMALIZATION_ADAPTER_VERSION),
                 "proof_backend_execution": False,
                 "result_artifacts_are_features": False,
             },
@@ -494,24 +458,18 @@ class SecurityIRFormalizationAdapter(FormalizationCompiler):
         """Compile a Security sample without invoking a solver or proof backend."""
 
         declaration = self._sample_declaration(sample)
-        unknown_views = set(config.target_view_ids) - set(
-            self.view_registry.view_ids
-        )
+        unknown_views = set(config.target_view_ids) - set(self.view_registry.view_ids)
         if unknown_views:
             raise SecurityIRFormalizationAdapterError(
-                "Security compiler targets unknown views: "
-                + ", ".join(sorted(unknown_views))
+                "Security compiler targets unknown views: " + ", ".join(sorted(unknown_views))
             )
 
-        source_ids = frozenset(
-            item.ref_id for item in sample.provenance.sources
-        )
+        source_ids = frozenset(item.ref_id for item in sample.provenance.sources)
         declaration_source_id = next(
             (
                 item.ref_id
                 for item in sample.provenance.sources
-                if item.metadata.get("content_binding")
-                == "canonical_security_ir_declaration"
+                if item.metadata.get("content_binding") == "canonical_security_ir_declaration"
             ),
             "",
         )
@@ -552,11 +510,7 @@ class SecurityIRFormalizationAdapter(FormalizationCompiler):
             symbol = FormalSymbol(
                 symbol_id=symbol_id,
                 name=name,
-                kind=(
-                    "relation"
-                    if kind in {"transition", "state-machine"}
-                    else "predicate"
-                ),
+                kind=("relation" if kind in {"transition", "state-machine"} else "predicate"),
                 sort=kind,
                 source_ref_ids=refs,
                 metadata={
@@ -661,18 +615,12 @@ class SecurityIRFormalizationAdapter(FormalizationCompiler):
                             "transition": transition.to_dict(),
                         },
                         source_refs=machine.source_ids,
-                        metadata={
-                            "state_machine_id": machine.state_machine_id
-                        },
+                        metadata={"state_machine_id": machine.state_machine_id},
                     )
 
         if SECURITY_IR_CLAIM_VIEW_ID in config.target_view_ids:
-            assumptions_by_id = {
-                item.assumption_id: item for item in declaration.assumptions
-            }
-            policies_by_id = {
-                item.policy_id: item for item in declaration.policies
-            }
+            assumptions_by_id = {item.assumption_id: item for item in declaration.assumptions}
+            policies_by_id = {item.policy_id: item for item in declaration.policies}
             for item in declaration.claims:
                 formula_id = emit(
                     kind="claim",
@@ -693,18 +641,13 @@ class SecurityIRFormalizationAdapter(FormalizationCompiler):
                     ],
                     "claim": item.to_dict(),
                     "policies": [
-                        policies_by_id[identifier].to_dict()
-                        for identifier in item.policy_ids
+                        policies_by_id[identifier].to_dict() for identifier in item.policy_ids
                     ],
                 }
                 obligations.append(
                     ProofObligation(
-                        obligation_id=_derived_id(
-                            "obligation:security", item.claim_id
-                        ),
-                        statement=_canonical_bytes(
-                            obligation_semantics
-                        ).decode("utf-8"),
+                        obligation_id=_derived_id("obligation:security", item.claim_id),
+                        statement=_canonical_bytes(obligation_semantics).decode("utf-8"),
                         assumption_ids=item.assumption_ids,
                         logic_family="security_verification_condition",
                         source_refs=refs_for(item.source_ids),
@@ -722,9 +665,7 @@ class SecurityIRFormalizationAdapter(FormalizationCompiler):
                 )
 
         severity = (
-            DiagnosticSeverity.ERROR
-            if config.strict_unsupported
-            else DiagnosticSeverity.WARNING
+            DiagnosticSeverity.ERROR if config.strict_unsupported else DiagnosticSeverity.WARNING
         )
         for extension in declaration.extensions:
             diagnostics.append(
@@ -742,8 +683,7 @@ class SecurityIRFormalizationAdapter(FormalizationCompiler):
                 Diagnostic(
                     code=DiagnosticCode.UNSUPPORTED_FEATURE,
                     message=(
-                        "Security declaration contains no construct for "
-                        f"requested view {view_id}"
+                        f"Security declaration contains no construct for requested view {view_id}"
                     ),
                     severity=severity,
                     location=DiagnosticLocation(
@@ -754,9 +694,7 @@ class SecurityIRFormalizationAdapter(FormalizationCompiler):
                     producer_id=binding_producer_id,
                     config_id=config.config_id,
                     metadata={
-                        "adapter_schema_version": (
-                            SECURITY_IR_FORMALIZATION_ADAPTER_VERSION
-                        ),
+                        "adapter_schema_version": (SECURITY_IR_FORMALIZATION_ADAPTER_VERSION),
                         "view_id": view_id,
                     },
                 )
@@ -779,34 +717,25 @@ class SecurityIRFormalizationAdapter(FormalizationCompiler):
             spans=sample.provenance.spans,
             producers=tuple(
                 {
-                    item.producer_id: item
-                    for item in (*sample.provenance.producers, producer)
+                    item.producer_id: item for item in (*sample.provenance.producers, producer)
                 }.values()
             ),
             configs=tuple(
                 {
-                    item.config_id: item
-                    for item in (*sample.provenance.configs, config_binding)
+                    item.config_id: item for item in (*sample.provenance.configs, config_binding)
                 }.values()
             ),
             bindings=tuple(bindings),
             metadata=sample.provenance.metadata,
         )
         report = DiagnosticReport(
-            report_id=(
-                f"diagnostics:security:{sample.digest[7:23]}:"
-                f"{config.digest[7:23]}"
-            ),
-            diagnostics=tuple(
-                sorted(diagnostics, key=lambda item: item.diagnostic_id)
-            ),
+            report_id=(f"diagnostics:security:{sample.digest[7:23]}:{config.digest[7:23]}"),
+            diagnostics=tuple(sorted(diagnostics, key=lambda item: item.diagnostic_id)),
             provenance_id=source_map.provenance_id,
             producer_id=binding_producer_id,
             config_id=config.config_id,
             metadata={
-                "adapter_schema_version": (
-                    SECURITY_IR_FORMALIZATION_ADAPTER_VERSION
-                ),
+                "adapter_schema_version": (SECURITY_IR_FORMALIZATION_ADAPTER_VERSION),
                 "result_artifacts_excluded": True,
                 "unsupported_extension_count": len(declaration.extensions),
             },
@@ -816,9 +745,7 @@ class SecurityIRFormalizationAdapter(FormalizationCompiler):
             compiler_config=config,
             view_registry=self.view_registry,
             symbol_table=SymbolTable(
-                table_id=_derived_id(
-                    "symbols:security", declaration.declaration_id
-                ),
+                table_id=_derived_id("symbols:security", declaration.declaration_id),
                 symbols=tuple(symbols),
                 metadata={"domain": SECURITY_IR_FORMALIZATION_DOMAIN},
             ),
@@ -827,9 +754,7 @@ class SecurityIRFormalizationAdapter(FormalizationCompiler):
             source_map=source_map,
             diagnostics=report,
             metadata={
-                "adapter_schema_version": (
-                    SECURITY_IR_FORMALIZATION_ADAPTER_VERSION
-                ),
+                "adapter_schema_version": (SECURITY_IR_FORMALIZATION_ADAPTER_VERSION),
                 "declaration_cid": declaration.cid,
                 "proof_backend_executed": False,
                 "result_artifacts_excluded": True,
@@ -848,22 +773,16 @@ class SecurityIRFormalizationAdapter(FormalizationCompiler):
     # ``adapt_sample``/``to_formalization_sample``.
     adapt = adapt_artifact
 
-    def _sample_declaration(
-        self, sample: FormalizationSample
-    ) -> SecurityIR:
+    def _sample_declaration(self, sample: FormalizationSample) -> SecurityIR:
         if (
             not isinstance(sample, FormalizationSample)
             or sample.domain != SECURITY_IR_FORMALIZATION_DOMAIN
         ):
             raise SecurityIRFormalizationAdapterError(
-                "SecurityIRFormalizationAdapter requires a Security "
-                "FormalizationSample"
+                "SecurityIRFormalizationAdapter requires a Security FormalizationSample"
             )
         payload = sample.payload.to_dict()
-        if (
-            payload.get("adapter_schema_version")
-            != SECURITY_IR_FORMALIZATION_ADAPTER_VERSION
-        ):
+        if payload.get("adapter_schema_version") != SECURITY_IR_FORMALIZATION_ADAPTER_VERSION:
             raise SecurityIRFormalizationAdapterError(
                 "sample was not produced by this Security adapter schema"
             )
@@ -917,9 +836,7 @@ class SecurityIRFormalizationAdapter(FormalizationCompiler):
             producer_id=config.producer_id or self.producer_id,
             config_id=config.config_id,
             metadata={
-                "adapter_schema_version": (
-                    SECURITY_IR_FORMALIZATION_ADAPTER_VERSION
-                ),
+                "adapter_schema_version": (SECURITY_IR_FORMALIZATION_ADAPTER_VERSION),
                 "construct_id": node_id,
                 "extension_id": extension.extension_id,
                 "required": extension.required,
@@ -942,9 +859,7 @@ def adapt_security_ir(
 ) -> FormalizationArtifact:
     """Functional convenience wrapper for Security IR formalization."""
 
-    return SecurityIRFormalizationAdapter().adapt_artifact(
-        security_declaration, config=config
-    )
+    return SecurityIRFormalizationAdapter().adapt_artifact(security_declaration, config=config)
 
 
 # Legal-adapter-shaped convenience spelling.

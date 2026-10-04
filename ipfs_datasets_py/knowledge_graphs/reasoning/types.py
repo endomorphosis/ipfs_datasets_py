@@ -12,6 +12,7 @@ reasoning process:
 These types are re-exported from :mod:`cross_document_reasoning` for backward
 compatibility, so existing code that imports them from there continues to work.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -20,6 +21,7 @@ from typing import Any, Dict, List, Optional
 
 try:
     import numpy as np
+
     _NpNdarray = np.ndarray
 except ImportError:  # numpy is optional — type hints remain as strings
     np = None  # type: ignore[assignment]
@@ -29,14 +31,14 @@ except ImportError:  # numpy is optional — type hints remain as strings
 class InformationRelationType(Enum):
     """Types of relations between pieces of information across documents."""
 
-    COMPLEMENTARY = "complementary"   # Information that adds to or extends other information
-    SUPPORTING = "supporting"         # Information that confirms or backs up other information
-    CONTRADICTING = "contradicting"   # Information that conflicts with other information
-    ELABORATING = "elaborating"       # Information that provides more detail on other information
-    PREREQUISITE = "prerequisite"     # Information needed to understand other information
-    CONSEQUENCE = "consequence"       # Information that follows from other information
-    ALTERNATIVE = "alternative"       # Information that provides a different perspective
-    UNCLEAR = "unclear"               # Relationship cannot be determined
+    COMPLEMENTARY = "complementary"  # Information that adds to or extends other information
+    SUPPORTING = "supporting"  # Information that confirms or backs up other information
+    CONTRADICTING = "contradicting"  # Information that conflicts with other information
+    ELABORATING = "elaborating"  # Information that provides more detail on other information
+    PREREQUISITE = "prerequisite"  # Information needed to understand other information
+    CONSEQUENCE = "consequence"  # Information that follows from other information
+    ALTERNATIVE = "alternative"  # Information that provides a different perspective
+    UNCLEAR = "unclear"  # Relationship cannot be determined
 
 
 @dataclass

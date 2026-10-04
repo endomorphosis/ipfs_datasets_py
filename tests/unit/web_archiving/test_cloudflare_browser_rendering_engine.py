@@ -41,7 +41,9 @@ def test_build_payload_omits_zero_depth() -> None:
 
 
 def test_resolve_credentials_falls_back_to_vault(monkeypatch: pytest.MonkeyPatch) -> None:
-    from ipfs_datasets_py.processors.web_archiving import cloudflare_browser_rendering_engine as engine
+    from ipfs_datasets_py.processors.web_archiving import (
+        cloudflare_browser_rendering_engine as engine,
+    )
 
     class _Vault:
         def get(self, name: str) -> str | None:
@@ -52,7 +54,9 @@ def test_resolve_credentials_falls_back_to_vault(monkeypatch: pytest.MonkeyPatch
             return mapping.get(name)
 
     monkeypatch.setattr(engine, "_first_env", lambda *names: None)
-    monkeypatch.setattr(engine, "_first_vault", lambda *names: _Vault().get(names[1]) if len(names) > 1 else None)
+    monkeypatch.setattr(
+        engine, "_first_vault", lambda *names: _Vault().get(names[1]) if len(names) > 1 else None
+    )
     monkeypatch.setattr(engine, "_first_keyring", lambda *names: None)
 
     account_id, api_token = _resolve_credentials()
@@ -65,7 +69,9 @@ def test_resolve_credentials_falls_back_to_shared_config_agent_key(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path,
 ) -> None:
-    from ipfs_datasets_py.processors.web_archiving import cloudflare_browser_rendering_engine as engine
+    from ipfs_datasets_py.processors.web_archiving import (
+        cloudflare_browser_rendering_engine as engine,
+    )
 
     secrets_path = tmp_path / "secrets.json"
     secrets_path.write_text(
@@ -90,7 +96,9 @@ def test_resolve_credentials_falls_back_to_shared_config_agent_key(
 
 
 def test_resolve_credentials_falls_back_to_keyring(monkeypatch: pytest.MonkeyPatch) -> None:
-    from ipfs_datasets_py.processors.web_archiving import cloudflare_browser_rendering_engine as engine
+    from ipfs_datasets_py.processors.web_archiving import (
+        cloudflare_browser_rendering_engine as engine,
+    )
 
     monkeypatch.setattr(engine, "_first_env", lambda *names: None)
     monkeypatch.setattr(engine, "_first_vault", lambda *names: None)
@@ -159,7 +167,9 @@ async def test_start_cloudflare_browser_rendering_crawl_retries_rate_limit(
     fake_requests = types.SimpleNamespace(post=lambda *args, **kwargs: next(responses))
     monkeypatch.setitem(sys.modules, "requests", fake_requests)
 
-    from ipfs_datasets_py.processors.web_archiving import cloudflare_browser_rendering_engine as engine
+    from ipfs_datasets_py.processors.web_archiving import (
+        cloudflare_browser_rendering_engine as engine,
+    )
 
     sleeps: list[float] = []
 
@@ -268,9 +278,7 @@ async def test_wait_for_cloudflare_browser_rendering_crawl_retries_transient_not
                     "result": {
                         "id": "job-123",
                         "status": "completed",
-                        "records": [
-                            {"url": "https://example.com", "status": "completed"}
-                        ],
+                        "records": [{"url": "https://example.com", "status": "completed"}],
                     },
                 },
             ),
@@ -281,9 +289,7 @@ async def test_wait_for_cloudflare_browser_rendering_crawl_retries_transient_not
                     "result": {
                         "id": "job-123",
                         "status": "completed",
-                        "records": [
-                            {"url": "https://example.com", "status": "completed"}
-                        ],
+                        "records": [{"url": "https://example.com", "status": "completed"}],
                     },
                 },
             ),
@@ -293,7 +299,9 @@ async def test_wait_for_cloudflare_browser_rendering_crawl_retries_transient_not
     fake_requests = types.SimpleNamespace(get=lambda *args, **kwargs: next(responses))
     monkeypatch.setitem(sys.modules, "requests", fake_requests)
 
-    from ipfs_datasets_py.processors.web_archiving import cloudflare_browser_rendering_engine as engine
+    from ipfs_datasets_py.processors.web_archiving import (
+        cloudflare_browser_rendering_engine as engine,
+    )
 
     async def _no_sleep(_: float) -> None:
         return None
@@ -335,9 +343,7 @@ async def test_wait_for_cloudflare_browser_rendering_crawl_retries_rate_limit(
                     "result": {
                         "id": "job-123",
                         "status": "completed",
-                        "records": [
-                            {"url": "https://example.com", "status": "completed"}
-                        ],
+                        "records": [{"url": "https://example.com", "status": "completed"}],
                     },
                 },
             ),
@@ -348,9 +354,7 @@ async def test_wait_for_cloudflare_browser_rendering_crawl_retries_rate_limit(
                     "result": {
                         "id": "job-123",
                         "status": "completed",
-                        "records": [
-                            {"url": "https://example.com", "status": "completed"}
-                        ],
+                        "records": [{"url": "https://example.com", "status": "completed"}],
                     },
                 },
             ),
@@ -360,7 +364,9 @@ async def test_wait_for_cloudflare_browser_rendering_crawl_retries_rate_limit(
     fake_requests = types.SimpleNamespace(get=lambda *args, **kwargs: next(responses))
     monkeypatch.setitem(sys.modules, "requests", fake_requests)
 
-    from ipfs_datasets_py.processors.web_archiving import cloudflare_browser_rendering_engine as engine
+    from ipfs_datasets_py.processors.web_archiving import (
+        cloudflare_browser_rendering_engine as engine,
+    )
 
     sleeps: list[float] = []
 

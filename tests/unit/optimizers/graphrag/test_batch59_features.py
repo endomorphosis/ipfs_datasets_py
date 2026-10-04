@@ -1,6 +1,7 @@
 """Batch 59: CriticScore.to_radar_chart_data, weighted_overall, compare_batch,
 Entity.to_dict, EntityExtractionResult.to_json, LogicValidator.batch_validate.
 """
+
 from __future__ import annotations
 
 import json
@@ -27,13 +28,15 @@ from ipfs_datasets_py.optimizers.graphrag.logic_validator import (
 # Fixtures / helpers
 # ---------------------------------------------------------------------------
 
+
 def _score(c=0.8, co=0.7, cl=0.9, g=0.6, da=0.75):
     return CriticScore(
         completeness=c,
         consistency=co,
         clarity=cl,
         granularity=g,
-        relationship_coherence=da, domain_alignment=da,
+        relationship_coherence=da,
+        domain_alignment=da,
     )
 
 
@@ -45,7 +48,9 @@ def ctx():
 @pytest.fixture
 def ontology_builder(ontology_dict_factory):
     def _build(n: int = 3):
-        return ontology_dict_factory(entity_count=n, relationship_count=0, domain="test", metadata={})
+        return ontology_dict_factory(
+            entity_count=n, relationship_count=0, domain="test", metadata={}
+        )
 
     return _build
 
@@ -53,6 +58,7 @@ def ontology_builder(ontology_dict_factory):
 # ---------------------------------------------------------------------------
 # CriticScore.to_radar_chart_data
 # ---------------------------------------------------------------------------
+
 
 class TestRadarChartData:
     def test_returns_axes_and_values(self):
@@ -62,7 +68,14 @@ class TestRadarChartData:
     def test_axes_are_five_dimensions(self):
         data = _score().to_radar_chart_data()
         assert len(data["axes"]) in (5, 6)
-        expected = {"completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"}
+        expected = {
+            "completeness",
+            "consistency",
+            "clarity",
+            "granularity",
+            "relationship_coherence",
+            "domain_alignment",
+        }
         assert set(data["axes"]) == expected
 
     def test_values_match_score_attributes(self):
@@ -93,10 +106,14 @@ class TestRadarChartData:
 # CriticScore.weighted_overall
 # ---------------------------------------------------------------------------
 
+
 class TestWeightedOverall:
     def test_equal_weights_close_to_mean(self):
         s = _score(c=0.5, co=0.5, cl=0.5, g=0.5, da=0.5)
-        weights = {d: 1.0 for d in ["completeness", "consistency", "clarity", "granularity", "domain_alignment"]}
+        weights = {
+            d: 1.0
+            for d in ["completeness", "consistency", "clarity", "granularity", "domain_alignment"]
+        }
         assert s.weighted_overall(weights) == pytest.approx(0.5)
 
     def test_single_dimension_weight(self):
@@ -135,6 +152,7 @@ class TestWeightedOverall:
 # ---------------------------------------------------------------------------
 # OntologyCritic.compare_batch
 # ---------------------------------------------------------------------------
+
 
 class TestCompareBatch:
     def _make_critic(self):
@@ -185,9 +203,12 @@ class TestCompareBatch:
 # Entity.to_dict
 # ---------------------------------------------------------------------------
 
+
 class TestEntityToDict:
     def _entity(self, **kwargs):
-        defaults = dict(id="e1", type="Person", text="Alice", confidence=0.9, properties={"age": 30})
+        defaults = dict(
+            id="e1", type="Person", text="Alice", confidence=0.9, properties={"age": 30}
+        )
         defaults.update(kwargs)
         return Entity(**defaults)
 
@@ -228,6 +249,7 @@ class TestEntityToDict:
 # ---------------------------------------------------------------------------
 # EntityExtractionResult.to_json
 # ---------------------------------------------------------------------------
+
 
 class TestEntityExtractionResultToJson:
     def _result(self):
@@ -285,6 +307,7 @@ class TestEntityExtractionResultToJson:
 # ---------------------------------------------------------------------------
 # LogicValidator.batch_validate
 # ---------------------------------------------------------------------------
+
 
 class TestBatchValidate:
     def _validator(self):

@@ -6,6 +6,7 @@ Both ``embedding_tools/embedding_generation.py`` and
 ``embedding_tools/advanced_embedding_generation.py`` are thin re-exports of
 the functions defined here.
 """
+
 from __future__ import annotations
 
 import json
@@ -21,6 +22,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 try:
     from ipfs_datasets_py.embeddings.core import IPFSEmbeddings  # type: ignore
+
     HAVE_EMBEDDINGS = True
 except ImportError:
     HAVE_EMBEDDINGS = False
@@ -30,6 +32,7 @@ except ImportError:
 # ---------------------------------------------------------------------------
 # Public functions
 # ---------------------------------------------------------------------------
+
 
 async def generate_embedding(
     text: Union[str, Dict[str, Any]],
@@ -226,7 +229,7 @@ async def generate_embeddings_from_file(
             except json.JSONDecodeError:
                 texts = [content]
         elif chunk_size:
-            texts = [content[i:i + chunk_size] for i in range(0, len(content), chunk_size)]
+            texts = [content[i : i + chunk_size] for i in range(0, len(content), chunk_size)]
         else:
             texts = [content]
 
@@ -243,6 +246,7 @@ async def generate_embeddings_from_file(
             if output_format.lower() == "parquet":
                 try:
                     import pandas as pd  # type: ignore
+
                     pd.DataFrame(result["embeddings"]).to_parquet(opath)
                 except ImportError:
                     logger.warning("pandas not available – saving as JSON instead")

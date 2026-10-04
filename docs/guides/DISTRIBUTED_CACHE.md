@@ -126,10 +126,7 @@ The autoscaler automatically uses the distributed cache:
 from github_autoscaler import GitHubRunnerAutoscaler
 
 # Autoscaler will use distributed cache if available
-autoscaler = GitHubRunnerAutoscaler(
-    owner="endomorphosis",
-    poll_interval=120
-)
+autoscaler = GitHubRunnerAutoscaler(owner="endomorphosis", poll_interval=120)
 
 autoscaler.run()
 # API calls are now cached and shared between runner instances
@@ -141,18 +138,20 @@ autoscaler.run()
 import asyncio
 from ipfs_accelerate_py.cached_github_cli import start_cache_network
 
+
 async def main():
     # Start P2P cache network
     cache = await start_cache_network(
         listen_port=9000,
         bootstrap_peers=[
             "/ip4/192.168.1.100/tcp/9000/p2p/QmPeerID1",
-            "/ip4/192.168.1.101/tcp/9000/p2p/QmPeerID2"
-        ]
+            "/ip4/192.168.1.101/tcp/9000/p2p/QmPeerID2",
+        ],
     )
-    
+
     # Cache is now running and sharing with peers
     await asyncio.sleep(3600)  # Run for 1 hour
+
 
 asyncio.run(main())
 ```

@@ -297,14 +297,15 @@ log_convergence_detected(
 import json
 import logging
 
+
 def test_session_logs_are_structured(caplog):
     with caplog.at_level(logging.INFO):
         log_session_start(logger, session_id="test", domain="test", input_size=100)
-    
+
     # Parse JSON log
     log_record = caplog.records[0]
     log_data = json.loads(log_record.message)
-    
+
     # Assert schema fields
     assert log_data["schema"] == "ipfs_datasets_py.optimizer_log"
     assert log_data["schema_version"] == 3

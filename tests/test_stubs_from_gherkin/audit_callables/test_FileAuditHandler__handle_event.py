@@ -21,26 +21,35 @@ def a_fileaudithandler_with_file_pathtmpauditlog_is_in():
     """
     try:
         # Create a temporary file for testing
-        temp_fd, temp_path = tempfile.mkstemp(suffix='.log', prefix='audit_test_')
+        temp_fd, temp_path = tempfile.mkstemp(suffix=".log", prefix="audit_test_")
         os.close(temp_fd)
-        
+
         handler = FileAuditHandler(file_path=temp_path)
-        
+
         if handler is None:
-            raise FixtureError("Failed to create fixture a_fileaudithandler_with_file_pathtmpauditlog_is_in: Handler instance is None") from None
-        
-        if not hasattr(handler, 'file_path'):
-            raise FixtureError("Failed to create fixture a_fileaudithandler_with_file_pathtmpauditlog_is_in: Handler missing 'file_path' attribute") from None
-        
+            raise FixtureError(
+                "Failed to create fixture a_fileaudithandler_with_file_pathtmpauditlog_is_in: Handler instance is None"
+            ) from None
+
+        if not hasattr(handler, "file_path"):
+            raise FixtureError(
+                "Failed to create fixture a_fileaudithandler_with_file_pathtmpauditlog_is_in: Handler missing 'file_path' attribute"
+            ) from None
+
         if handler.file_path != temp_path:
-            raise FixtureError(f"Failed to create fixture a_fileaudithandler_with_file_pathtmpauditlog_is_in: Handler file_path is {handler.file_path}, expected {temp_path}") from None
-        
+            raise FixtureError(
+                f"Failed to create fixture a_fileaudithandler_with_file_pathtmpauditlog_is_in: Handler file_path is {handler.file_path}, expected {temp_path}"
+            ) from None
+
         # Store temp path for cleanup
         handler._test_temp_path = temp_path
-        
+
         return handler
     except Exception as e:
-        raise FixtureError(f"Failed to create fixture a_fileaudithandler_with_file_pathtmpauditlog_is_in: {e}") from e
+        raise FixtureError(
+            f"Failed to create fixture a_fileaudithandler_with_file_pathtmpauditlog_is_in: {e}"
+        ) from e
+
 
 @pytest.fixture
 def the_handler_is_enabled(a_fileaudithandler_with_file_pathtmpauditlog_is_in):
@@ -49,17 +58,20 @@ def the_handler_is_enabled(a_fileaudithandler_with_file_pathtmpauditlog_is_in):
     """
     try:
         handler = a_fileaudithandler_with_file_pathtmpauditlog_is_in
-        
+
         # Enable the handler
         handler.enabled = True
-        
+
         # Verify handler is enabled
         if not handler.enabled:
-            raise FixtureError("Failed to create fixture the_handler_is_enabled: Handler is not enabled after setting enabled=True") from None
-        
+            raise FixtureError(
+                "Failed to create fixture the_handler_is_enabled: Handler is not enabled after setting enabled=True"
+            ) from None
+
         return handler
     except Exception as e:
         raise FixtureError(f"Failed to create fixture the_handler_is_enabled: {e}") from e
+
 
 @pytest.fixture
 def the_file_is_opened(the_handler_is_enabled):
@@ -68,23 +80,27 @@ def the_file_is_opened(the_handler_is_enabled):
     """
     try:
         handler = the_handler_is_enabled
-        
+
         # Verify file exists (FileAuditHandler should create it if needed)
         if not os.path.exists(handler.file_path):
             # Try to create the file
-            with open(handler.file_path, 'a'):
+            with open(handler.file_path, "a"):
                 pass
-        
+
         # Verify file was created
         if not os.path.exists(handler.file_path):
-            raise FixtureError(f"Failed to create fixture the_file_is_opened: File {handler.file_path} does not exist") from None
-        
+            raise FixtureError(
+                f"Failed to create fixture the_file_is_opened: File {handler.file_path} does not exist"
+            ) from None
+
         return handler
     except Exception as e:
         raise FixtureError(f"Failed to create fixture the_file_is_opened: {e}") from e
 
 
-def test_handle_event_writes_formatted_event_to_file(a_fileaudithandler_with_file_pathtmpauditlog_is_in, the_handler_is_enabled, the_file_is_opened):
+def test_handle_event_writes_formatted_event_to_file(
+    a_fileaudithandler_with_file_pathtmpauditlog_is_in, the_handler_is_enabled, the_file_is_opened
+):
     """
     Scenario: Handle event writes formatted event to file
 
@@ -101,7 +117,9 @@ def test_handle_event_writes_formatted_event_to_file(a_fileaudithandler_with_fil
     pass
 
 
-def test_handle_event_file_contains_formatted_event_text(a_fileaudithandler_with_file_pathtmpauditlog_is_in, the_handler_is_enabled, the_file_is_opened):
+def test_handle_event_file_contains_formatted_event_text(
+    a_fileaudithandler_with_file_pathtmpauditlog_is_in, the_handler_is_enabled, the_file_is_opened
+):
     """
     Scenario: Handle event file contains formatted event text
 
@@ -118,7 +136,9 @@ def test_handle_event_file_contains_formatted_event_text(a_fileaudithandler_with
     pass
 
 
-def test_handle_event_returns_true_on_success(a_fileaudithandler_with_file_pathtmpauditlog_is_in, the_handler_is_enabled, the_file_is_opened):
+def test_handle_event_returns_true_on_success(
+    a_fileaudithandler_with_file_pathtmpauditlog_is_in, the_handler_is_enabled, the_file_is_opened
+):
     """
     Scenario: Handle event returns True on success
 
@@ -135,7 +155,9 @@ def test_handle_event_returns_true_on_success(a_fileaudithandler_with_file_patht
     pass
 
 
-def test_handle_event_appends_newline_to_formatted_event(a_fileaudithandler_with_file_pathtmpauditlog_is_in, the_handler_is_enabled, the_file_is_opened):
+def test_handle_event_appends_newline_to_formatted_event(
+    a_fileaudithandler_with_file_pathtmpauditlog_is_in, the_handler_is_enabled, the_file_is_opened
+):
     """
     Scenario: Handle event appends newline to formatted event
 
@@ -152,7 +174,9 @@ def test_handle_event_appends_newline_to_formatted_event(a_fileaudithandler_with
     pass
 
 
-def test_handle_event_flushes_file_after_write(a_fileaudithandler_with_file_pathtmpauditlog_is_in, the_handler_is_enabled, the_file_is_opened):
+def test_handle_event_flushes_file_after_write(
+    a_fileaudithandler_with_file_pathtmpauditlog_is_in, the_handler_is_enabled, the_file_is_opened
+):
     """
     Scenario: Handle event flushes file after write
 
@@ -169,7 +193,9 @@ def test_handle_event_flushes_file_after_write(a_fileaudithandler_with_file_path
     pass
 
 
-def test_handle_event_updates_current_size_counter(a_fileaudithandler_with_file_pathtmpauditlog_is_in, the_handler_is_enabled, the_file_is_opened):
+def test_handle_event_updates_current_size_counter(
+    a_fileaudithandler_with_file_pathtmpauditlog_is_in, the_handler_is_enabled, the_file_is_opened
+):
     """
     Scenario: Handle event updates current_size counter
 
@@ -186,7 +212,9 @@ def test_handle_event_updates_current_size_counter(a_fileaudithandler_with_file_
     pass
 
 
-def test_handle_event_triggers_rotation_when_size_exceeded(a_fileaudithandler_with_file_pathtmpauditlog_is_in, the_handler_is_enabled, the_file_is_opened):
+def test_handle_event_triggers_rotation_when_size_exceeded(
+    a_fileaudithandler_with_file_pathtmpauditlog_is_in, the_handler_is_enabled, the_file_is_opened
+):
     """
     Scenario: Handle event triggers rotation when size exceeded
 
@@ -203,7 +231,9 @@ def test_handle_event_triggers_rotation_when_size_exceeded(a_fileaudithandler_wi
     pass
 
 
-def test_handle_event_reopens_file_if_closed(a_fileaudithandler_with_file_pathtmpauditlog_is_in, the_handler_is_enabled, the_file_is_opened):
+def test_handle_event_reopens_file_if_closed(
+    a_fileaudithandler_with_file_pathtmpauditlog_is_in, the_handler_is_enabled, the_file_is_opened
+):
     """
     Scenario: Handle event reopens file if closed
 
@@ -220,7 +250,9 @@ def test_handle_event_reopens_file_if_closed(a_fileaudithandler_with_file_pathtm
     pass
 
 
-def test_handle_event_writes_event_after_reopening(a_fileaudithandler_with_file_pathtmpauditlog_is_in, the_handler_is_enabled, the_file_is_opened):
+def test_handle_event_writes_event_after_reopening(
+    a_fileaudithandler_with_file_pathtmpauditlog_is_in, the_handler_is_enabled, the_file_is_opened
+):
     """
     Scenario: Handle event writes event after reopening
 
@@ -237,7 +269,9 @@ def test_handle_event_writes_event_after_reopening(a_fileaudithandler_with_file_
     pass
 
 
-def test_handle_event_returns_false_on_file_open_error(a_fileaudithandler_with_file_pathtmpauditlog_is_in, the_handler_is_enabled, the_file_is_opened):
+def test_handle_event_returns_false_on_file_open_error(
+    a_fileaudithandler_with_file_pathtmpauditlog_is_in, the_handler_is_enabled, the_file_is_opened
+):
     """
     Scenario: Handle event returns False on file open error
 
@@ -254,7 +288,9 @@ def test_handle_event_returns_false_on_file_open_error(a_fileaudithandler_with_f
     pass
 
 
-def test_handle_event_returns_false_on_write_error(a_fileaudithandler_with_file_pathtmpauditlog_is_in, the_handler_is_enabled, the_file_is_opened):
+def test_handle_event_returns_false_on_write_error(
+    a_fileaudithandler_with_file_pathtmpauditlog_is_in, the_handler_is_enabled, the_file_is_opened
+):
     """
     Scenario: Handle event returns False on write error
 
@@ -271,7 +307,9 @@ def test_handle_event_returns_false_on_write_error(a_fileaudithandler_with_file_
     pass
 
 
-def test_handle_event_handles_compression_when_enabled(a_fileaudithandler_with_file_pathtmpauditlog_is_in, the_handler_is_enabled, the_file_is_opened):
+def test_handle_event_handles_compression_when_enabled(
+    a_fileaudithandler_with_file_pathtmpauditlog_is_in, the_handler_is_enabled, the_file_is_opened
+):
     """
     Scenario: Handle event handles compression when enabled
 
@@ -288,7 +326,9 @@ def test_handle_event_handles_compression_when_enabled(a_fileaudithandler_with_f
     pass
 
 
-def test_handle_event_encodes_text_for_compressed_files(a_fileaudithandler_with_file_pathtmpauditlog_is_in, the_handler_is_enabled, the_file_is_opened):
+def test_handle_event_encodes_text_for_compressed_files(
+    a_fileaudithandler_with_file_pathtmpauditlog_is_in, the_handler_is_enabled, the_file_is_opened
+):
     """
     Scenario: Handle event encodes text for compressed files
 
@@ -303,4 +343,3 @@ def test_handle_event_encodes_text_for_compressed_files(a_fileaudithandler_with_
     """
     # TODO: Implement test
     pass
-

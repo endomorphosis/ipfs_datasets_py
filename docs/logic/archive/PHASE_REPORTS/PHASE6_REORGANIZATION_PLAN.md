@@ -319,11 +319,11 @@ from .ipfs_proof_cache import IPFSProofCache, get_global_ipfs_cache
 from .ipld_logic_storage import LogicIPLDStorage
 
 __all__ = [
-    'ProofCache',
-    'get_global_cache',
-    'IPFSProofCache',
-    'get_global_ipfs_cache',
-    'LogicIPLDStorage',
+    "ProofCache",
+    "get_global_cache",
+    "IPFSProofCache",
+    "get_global_ipfs_cache",
+    "LogicIPLDStorage",
 ]
 ```
 
@@ -368,23 +368,20 @@ from .converters import DeonticLogicConverter, ModalLogicExtension
 
 __all__ = [
     # Caching
-    'ProofCache',
-    'get_global_cache',
-    'IPFSProofCache',
-    
+    "ProofCache",
+    "get_global_cache",
+    "IPFSProofCache",
     # Reasoning
-    'ProofExecutionEngine',
-    'DeontologicalReasoning',
-    
+    "ProofExecutionEngine",
+    "DeontologicalReasoning",
     # Bridges
-    'BaseProverBridge',
-    'SymbolicFOLBridge',
-    'TDFOLCECBridge',
-    'TDFOLGrammarBridge',
-    
+    "BaseProverBridge",
+    "SymbolicFOLBridge",
+    "TDFOLCECBridge",
+    "TDFOLGrammarBridge",
     # Converters
-    'DeonticLogicConverter',
-    'ModalLogicExtension',
+    "DeonticLogicConverter",
+    "ModalLogicExtension",
 ]
 ```
 
@@ -444,16 +441,18 @@ For less common direct imports, consider deprecation warnings:
 # integration/__init__.py
 import warnings
 
+
 def __getattr__(name):
     """Handle imports of moved modules."""
-    if name == 'proof_cache':
+    if name == "proof_cache":
         warnings.warn(
             "Importing proof_cache directly from integration is deprecated. "
             "Use: from ipfs_datasets_py.logic.integration.caching import proof_cache",
             DeprecationWarning,
-            stacklevel=2
+            stacklevel=2,
         )
         from .caching import proof_cache
+
         return proof_cache
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 ```

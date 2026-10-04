@@ -42,6 +42,7 @@ from ipfs_datasets_py.knowledge_graphs.exceptions import (
 # Minimal in-memory storage stub compatible with WriteAheadLog
 # ---------------------------------------------------------------------------
 
+
 class _InMemoryStorage:
     """
     Minimal in-memory storage that implements the two methods the WAL uses:
@@ -63,15 +64,14 @@ class _InMemoryStorage:
     def retrieve_json(self, cid: str) -> dict:
         payload = self._store.get(cid)
         if payload is None:
-            raise DeserializationError(
-                f"CID not found: {cid}", details={"cid": cid}
-            )
+            raise DeserializationError(f"CID not found: {cid}", details={"cid": cid})
         return json.loads(payload.decode())
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_storage() -> _InMemoryStorage:
     """Return a fresh in-memory storage stub."""
@@ -116,6 +116,7 @@ def _wal_with_n_entries(n: int, state: TransactionState = TransactionState.COMMI
 # 1. Append-only: WAL head changes on each append
 # ---------------------------------------------------------------------------
 
+
 class TestAppendOnly:
     """Invariant: each append produces a new, distinct WAL head CID."""
 
@@ -155,6 +156,7 @@ class TestAppendOnly:
 # ---------------------------------------------------------------------------
 # 2. Chain integrity: prev_wal_cid links form a valid chain
 # ---------------------------------------------------------------------------
+
 
 class TestChainIntegrity:
     """Invariant: WAL entries are correctly linked via prev_wal_cid."""
@@ -210,6 +212,7 @@ class TestChainIntegrity:
 # 3. Read returns reverse-chronological order
 # ---------------------------------------------------------------------------
 
+
 class TestReadOrder:
     """Invariant: read() yields entries newest-first."""
 
@@ -250,6 +253,7 @@ class TestReadOrder:
 # ---------------------------------------------------------------------------
 # 4. Recovery replays only committed transactions
 # ---------------------------------------------------------------------------
+
 
 class TestRecovery:
     """Invariant: recover() returns operations from COMMITTED txns only."""
@@ -321,6 +325,7 @@ class TestRecovery:
 # 5. Empty WAL behaviour
 # ---------------------------------------------------------------------------
 
+
 class TestEmptyWAL:
     """Invariant: all operations on empty WAL are safe."""
 
@@ -360,6 +365,7 @@ class TestEmptyWAL:
 # ---------------------------------------------------------------------------
 # 6. Compaction
 # ---------------------------------------------------------------------------
+
 
 class TestCompaction:
     """Invariant: compaction resets entry_count and produces a new head."""
@@ -401,6 +407,7 @@ class TestCompaction:
 # ---------------------------------------------------------------------------
 # 7. get_stats reflects entry_count correctly
 # ---------------------------------------------------------------------------
+
 
 class TestGetStats:
     """Invariant: get_stats() entry_count matches actual appends."""
@@ -450,6 +457,7 @@ class TestGetStats:
 # 8. Cycle detection
 # ---------------------------------------------------------------------------
 
+
 class TestCycleDetection:
     """Invariant: read() terminates even if the chain contains a cycle."""
 
@@ -486,6 +494,7 @@ class TestCycleDetection:
 # ---------------------------------------------------------------------------
 # 9. get_transaction_history filters correctly
 # ---------------------------------------------------------------------------
+
 
 class TestTransactionHistory:
     """Invariant: get_transaction_history returns only matching txn_id entries."""
@@ -530,6 +539,7 @@ class TestTransactionHistory:
 # 10. verify_integrity detects anomalies
 # ---------------------------------------------------------------------------
 
+
 class TestVerifyIntegrity:
     """Invariant: verify_integrity() correctly validates the WAL chain."""
 
@@ -567,4 +577,3 @@ class TestVerifyIntegrity:
         # THEN – must not raise, must return a bool
         result = wal.verify_integrity()
         assert isinstance(result, bool)
-

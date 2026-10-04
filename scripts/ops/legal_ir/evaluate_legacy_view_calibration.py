@@ -62,13 +62,9 @@ def _load_mapping(path: Path) -> dict[str, Any]:
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        raise LegacyViewCalibrationError(
-            f"cannot read calibration packet {path}: {exc}"
-        ) from exc
+        raise LegacyViewCalibrationError(f"cannot read calibration packet {path}: {exc}") from exc
     if not isinstance(value, Mapping):
-        raise LegacyViewCalibrationError(
-            "calibration input must be a JSON object"
-        )
+        raise LegacyViewCalibrationError("calibration input must be a JSON object")
     return dict(value)
 
 
@@ -152,19 +148,13 @@ def evaluate_packet(packet: Mapping[str, Any]) -> dict[str, Any]:
     _reject_canary_exposure(packet)
     lineage_payload = packet.get("lineage")
     split_manifest = packet.get("split_manifest")
-    raw_examples = packet.get(
-        "development_examples", packet.get("examples")
-    )
+    raw_examples = packet.get("development_examples", packet.get("examples"))
     if not isinstance(lineage_payload, Mapping):
         raise LegacyViewCalibrationError("input is missing lineage")
     if not isinstance(split_manifest, Mapping):
         raise LegacyViewCalibrationError("input is missing split_manifest")
-    if not isinstance(raw_examples, Sequence) or isinstance(
-        raw_examples, (str, bytes, bytearray)
-    ):
-        raise LegacyViewCalibrationError(
-            "input is missing development_examples"
-        )
+    if not isinstance(raw_examples, Sequence) or isinstance(raw_examples, (str, bytes, bytearray)):
+        raise LegacyViewCalibrationError("input is missing development_examples")
     current = packet.get(
         "current_feature_legal_ir_view_logits",
         packet.get("student_feature_legal_ir_view_logits", {}),
@@ -174,9 +164,7 @@ def evaluate_packet(packet: Mapping[str, Any]) -> dict[str, Any]:
         packet.get("teacher_feature_legal_ir_view_logits", {}),
     )
     if not isinstance(current, Mapping) or not isinstance(legacy, Mapping):
-        raise LegacyViewCalibrationError(
-            "current and legacy feature logit tables must be mappings"
-        )
+        raise LegacyViewCalibrationError("current and legacy feature logit tables must be mappings")
     examples = tuple(
         LegacyViewCalibrationExample.from_mapping(
             item,
@@ -187,9 +175,7 @@ def evaluate_packet(packet: Mapping[str, Any]) -> dict[str, Any]:
         if isinstance(item, Mapping)
     )
     if len(examples) != len(raw_examples):
-        raise LegacyViewCalibrationError(
-            "every development example must be a JSON object"
-        )
+        raise LegacyViewCalibrationError("every development example must be a JSON object")
     raw_space = packet.get("search_space", {})
     if not isinstance(raw_space, Mapping):
         raise LegacyViewCalibrationError("search_space must be a mapping")
@@ -215,9 +201,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         report = evaluate_packet(packet)
         _write_atomic(output, report)
     except LegacyViewCalibrationError as exc:
-        raise SystemExit(
-            f"legacy view calibration evaluation failed: {exc}"
-        ) from exc
+        raise SystemExit(f"legacy view calibration evaluation failed: {exc}") from exc
     print(
         "decision=development_search_complete "
         f"selected_config={report['config_digest']} "

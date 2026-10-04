@@ -16,7 +16,7 @@ try:
     from ipfs_datasets_py.mcp_server.tools.development_tools.linting_tools import LintingTools
 
     # Create a temporary Python file with deliberate linting issues
-    with tempfile.NamedTemporaryFile(suffix='.py', mode='w+', delete=False) as temp:
+    with tempfile.NamedTemporaryFile(suffix=".py", mode="w+", delete=False) as temp:
         print(f"Creating temporary file {temp.name}...")
         temp.write("""
 import sys, os  # Multiple imports should be on separate lines
@@ -29,42 +29,37 @@ def bad_function( a,b ):  # Extra space after open paren
     # Import config for debugging
     print("Getting configuration...")
     from ipfs_datasets_py.mcp_server.tools.development_tools.config import get_config
+
     config = get_config()
     print(f"LintingToolsConfig attributes: {vars(config.linting_tools)}")
 
     # Create linting tool instance directly
     print("Creating linting tool instance...")
     tool = LintingTools()
-    
+
     # Run the execute method asynchronously
     print("Running the execute method...")
     try:
         loop = asyncio.get_event_loop()
-        result = loop.run_until_complete(tool.execute(
-            path=temp_path,
-            fix_issues=False,
-            dry_run=True
-        ))
+        result = loop.run_until_complete(
+            tool.execute(path=temp_path, fix_issues=False, dry_run=True)
+        )
     except RuntimeError:
         # No event loop in thread
-        result = anyio.run(tool.execute(
-            path=temp_path,
-            fix_issues=False,
-            dry_run=True
-        ))
+        result = anyio.run(tool.execute(path=temp_path, fix_issues=False, dry_run=True))
 
     print(f"Linting completed successfully: {result['success']}")
-    if result['success']:
-        issues = result['result'].get('issues', [])
-        total_issues = result['result'].get('total_issues', 0)
+    if result["success"]:
+        issues = result["result"].get("issues", [])
+        total_issues = result["result"].get("total_issues", 0)
         print(f"Found {total_issues} issues in the code")
-        
+
         # Print out issue summary by rule
-        rule_breakdown = result['result'].get('rule_breakdown', {})
+        rule_breakdown = result["result"].get("rule_breakdown", {})
         print("\nIssue breakdown by rule:")
         for rule, count in rule_breakdown.items():
             print(f"- {rule}: {count}")
-        
+
         # Print a few example issues
         if issues:
             print("\nExample issues (first 5):")

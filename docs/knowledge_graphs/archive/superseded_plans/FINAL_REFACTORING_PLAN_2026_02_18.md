@@ -164,10 +164,12 @@ def test_invalid_format_raises_not_implemented():
     with pytest.raises(NotImplementedError):
         save_to_file(graph, "output.graphml", format="graphml")
 
+
 def test_malformed_csv_raises_error():
     """Verify proper error handling for malformed input"""
     with pytest.raises(ValueError):
         load_from_file("malformed.csv", format="csv")
+
 
 def test_empty_graph_export():
     """Verify empty graphs export correctly"""
@@ -348,28 +350,26 @@ Implementation:
 ```python
 def _save_graphml(self, filepath: str):
     """Export graph to GraphML format (XML-based).
-    
+
     GraphML is used by Gephi, yEd, and other graph tools.
     """
     import xml.etree.ElementTree as ET
-    
-    root = ET.Element('graphml')
-    graph = ET.SubElement(root, 'graph', edgedefault='directed')
-    
+
+    root = ET.Element("graphml")
+    graph = ET.SubElement(root, "graph", edgedefault="directed")
+
     # Add nodes
     for entity in self.entities:
-        node = ET.SubElement(graph, 'node', id=str(entity.id))
+        node = ET.SubElement(graph, "node", id=str(entity.id))
         # Add node attributes
-    
+
     # Add edges
     for rel in self.relationships:
-        edge = ET.SubElement(graph, 'edge',
-                           source=str(rel.source),
-                           target=str(rel.target))
+        edge = ET.SubElement(graph, "edge", source=str(rel.source), target=str(rel.target))
         # Add edge attributes
-    
+
     tree = ET.ElementTree(root)
-    tree.write(filepath, encoding='utf-8', xml_declaration=True)
+    tree.write(filepath, encoding="utf-8", xml_declaration=True)
 ```
 
 **Tests:** 8-10 tests (write, read, round-trip, attributes)

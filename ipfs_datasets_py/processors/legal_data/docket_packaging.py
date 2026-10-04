@@ -21,7 +21,12 @@ import pyarrow.parquet as pq
 
 from ..serialization.car_conversion import DataInterchangeUtils
 from ..storage.ipld.storage import IPLDStorage
-from ..retrieval import bm25_search_documents, embed_query_for_backend, hashed_term_projection, vector_dot
+from ..retrieval import (
+    bm25_search_documents,
+    embed_query_for_backend,
+    hashed_term_projection,
+    vector_dot,
+)
 from ..legal_data.canonical_legal_corpora import get_canonical_legal_corpus
 from .docket_pdf_export import export_docket_dataset_single_pdf
 
@@ -68,7 +73,13 @@ def _extract_document_attachments(documents: Sequence[Dict[str, Any]]) -> List[D
             candidates.extend(acquisition_candidates)
         for attachment_index, candidate in enumerate(candidates, start=1):
             if isinstance(candidate, dict):
-                label = str(candidate.get("title") or candidate.get("label") or candidate.get("path") or candidate.get("url") or f"attachment_{attachment_index}")
+                label = str(
+                    candidate.get("title")
+                    or candidate.get("label")
+                    or candidate.get("path")
+                    or candidate.get("url")
+                    or f"attachment_{attachment_index}"
+                )
                 path_or_url = str(
                     candidate.get("path")
                     or candidate.get("url")
@@ -107,16 +118,26 @@ def _extract_preferred_filing_records(documents: Sequence[Dict[str, Any]]) -> Li
         document_id = str(document.get("document_id") or document.get("id") or f"document_{index}")
         metadata = dict(document.get("metadata") or {})
         rendered_row = dict(metadata.get("rendered_docket_row") or {})
-        acquisition_candidates = [dict(item) for item in list(metadata.get("acquisition_candidates") or []) if isinstance(item, dict)]
+        acquisition_candidates = [
+            dict(item)
+            for item in list(metadata.get("acquisition_candidates") or [])
+            if isinstance(item, dict)
+        ]
         text_extraction = dict(metadata.get("text_extraction") or {})
         text_source = str(text_extraction.get("source") or "").strip()
         if text_source in {"courtlistener_summary_metadata", "synthesized_docket_summary"}:
             continue
-        document_number = str(document.get("document_number") or rendered_row.get("document_number") or "").strip()
+        document_number = str(
+            document.get("document_number") or rendered_row.get("document_number") or ""
+        ).strip()
         title = str(rendered_row.get("title") or document.get("title") or "").strip()
         if not title or title.lower() == "none":
             continue
-        dedupe_key = f"{document_number}::{_normalize_filing_title(title)}" if document_number else _normalize_filing_title(title)
+        dedupe_key = (
+            f"{document_number}::{_normalize_filing_title(title)}"
+            if document_number
+            else _normalize_filing_title(title)
+        )
         if not dedupe_key:
             continue
 
@@ -127,7 +148,10 @@ def _extract_preferred_filing_records(documents: Sequence[Dict[str, Any]]) -> Li
             priority = 300
         elif acquisition_candidates:
             priority = 250
-        elif str(document.get("text") or "").strip() and text_source not in {"courtlistener_summary_metadata", "courtlistener_entry_metadata"}:
+        elif str(document.get("text") or "").strip() and text_source not in {
+            "courtlistener_summary_metadata",
+            "courtlistener_entry_metadata",
+        }:
             priority = 200
         elif str(document.get("title") or "").strip().lower().startswith("docket entry "):
             priority = 0
@@ -141,11 +165,12 @@ def _extract_preferred_filing_records(documents: Sequence[Dict[str, Any]]) -> Li
             "document_id": document_id,
             "document_number": document_number,
             "title": title,
-            "date_filed": str(document.get("date_filed") or rendered_row.get("date_filed") or "").strip(),
+            "date_filed": str(
+                document.get("date_filed") or rendered_row.get("date_filed") or ""
+            ).strip(),
             "source_url": str(document.get("source_url") or ""),
-            "pacer_available": bool(rendered_row.get("pacer_available")) or any(
-                bool(candidate.get("pacer_available")) for candidate in acquisition_candidates
-            ),
+            "pacer_available": bool(rendered_row.get("pacer_available"))
+            or any(bool(candidate.get("pacer_available")) for candidate in acquisition_candidates),
             "text_available": bool(str(document.get("text") or "").strip()),
             "text_source": text_source,
             "selection_priority": int(priority),
@@ -157,7 +182,9 @@ def _extract_preferred_filing_records(documents: Sequence[Dict[str, Any]]) -> Li
                 else "document"
             ),
             "rendered_row_json": json.dumps(_jsonable(rendered_row), sort_keys=True),
-            "acquisition_candidates_json": json.dumps(_jsonable(acquisition_candidates), sort_keys=True),
+            "acquisition_candidates_json": json.dumps(
+                _jsonable(acquisition_candidates), sort_keys=True
+            ),
             "metadata_json": json.dumps(
                 _jsonable(
                     {
@@ -174,7 +201,13 @@ def _extract_preferred_filing_records(documents: Sequence[Dict[str, Any]]) -> Li
             best_by_key[dedupe_key] = (priority, filing_row)
 
     filings = [item[1] for item in best_by_key.values()]
-    filings.sort(key=lambda row: (str(row.get("date_filed") or ""), str(row.get("document_number") or ""), str(row.get("title") or "")))
+    filings.sort(
+        key=lambda row: (
+            str(row.get("date_filed") or ""),
+            str(row.get("document_number") or ""),
+            str(row.get("title") or ""),
+        )
+    )
     return filings
 
 
@@ -414,13 +447,20 @@ def _build_revalidation_snapshot_from_dataset_payload(
 ) -> Dict[str, Any]:
     proof_assistant = dict(dataset_payload.get("proof_assistant") or {})
     agenda = _sort_proof_agenda_items(proof_assistant.get("agenda") or [])
-    runs = [dict(item) for item in list(proof_assistant.get("revalidation_runs") or []) if isinstance(item, Mapping)]
+    runs = [
+        dict(item)
+        for item in list(proof_assistant.get("revalidation_runs") or [])
+        if isinstance(item, Mapping)
+    ]
     queue_items: List[Dict[str, Any]] = []
     minimum_rank = _proof_revalidation_priority_rank(min_priority)
     for item in agenda:
         if not bool(item.get("current_proof_packet_review_required")):
             continue
-        if _proof_revalidation_priority_rank(str(item.get("proof_revalidation_priority") or "")) < minimum_rank:
+        if (
+            _proof_revalidation_priority_rank(str(item.get("proof_revalidation_priority") or ""))
+            < minimum_rank
+        ):
             continue
         queue_items.append(
             {
@@ -443,11 +483,14 @@ def _build_revalidation_snapshot_from_dataset_payload(
     )[: max(0, int(run_top_k))]
     latest_run = dict(runs_sorted[0] if runs_sorted else {})
     next_queue_item = dict(queue_items[0] if queue_items else {})
-    total_review_required = sum(1 for item in agenda if bool(item.get("current_proof_packet_review_required")))
+    total_review_required = sum(
+        1 for item in agenda if bool(item.get("current_proof_packet_review_required"))
+    )
     high_priority_count = sum(
         1
         for item in agenda
-        if _proof_revalidation_priority_rank(str(item.get("proof_revalidation_priority") or "")) >= 3
+        if _proof_revalidation_priority_rank(str(item.get("proof_revalidation_priority") or ""))
+        >= 3
         and bool(item.get("current_proof_packet_review_required"))
     )
     return {
@@ -482,13 +525,19 @@ def _build_revalidation_snapshot_from_dataset_payload(
             "run_id": str(latest_run.get("run_id") or ""),
             "best_work_item_id": str(latest_run.get("best_work_item_id") or ""),
             "best_terminal_source_type": str(latest_run.get("best_terminal_source_type") or ""),
-            "best_terminal_support_strength": str(latest_run.get("best_terminal_support_strength") or ""),
+            "best_terminal_support_strength": str(
+                latest_run.get("best_terminal_support_strength") or ""
+            ),
             "attached_packet_count": int(latest_run.get("attached_packet_count") or 0),
         },
         "next_queue_item_summary": {
             "work_item_id": str(next_queue_item.get("work_item_id") or ""),
-            "proof_revalidation_priority": str(next_queue_item.get("proof_revalidation_priority") or ""),
-            "proof_revalidation_status": str(next_queue_item.get("proof_revalidation_status") or ""),
+            "proof_revalidation_priority": str(
+                next_queue_item.get("proof_revalidation_priority") or ""
+            ),
+            "proof_revalidation_status": str(
+                next_queue_item.get("proof_revalidation_status") or ""
+            ),
             "recommended_source_type": "",
         },
         "source": "packaged_proof_revalidation_snapshot",
@@ -608,7 +657,9 @@ class DocketDatasetPackager:
     ) -> Dict[str, Any]:
         dataset_payload = dataset.to_dict() if hasattr(dataset, "to_dict") else dict(dataset)
         output_root = Path(output_dir)
-        bundle_name = package_name or str(dataset_payload.get("dataset_id") or "docket_dataset_bundle")
+        bundle_name = package_name or str(
+            dataset_payload.get("dataset_id") or "docket_dataset_bundle"
+        )
         legacy_layout = package_name is None
         bundle_dir = output_root if legacy_layout else output_root / _safe_identifier(bundle_name)
         parquet_dir = bundle_dir if legacy_layout else bundle_dir / "parquet"
@@ -617,7 +668,11 @@ class DocketDatasetPackager:
         if include_car:
             car_dir.mkdir(parents=True, exist_ok=True)
 
-        documents = [dict(item) for item in list(dataset_payload.get("documents") or []) if isinstance(item, dict)]
+        documents = [
+            dict(item)
+            for item in list(dataset_payload.get("documents") or [])
+            if isinstance(item, dict)
+        ]
         attachments = _extract_document_attachments(documents)
         filings = _extract_preferred_filing_records(documents)
         acquisition_queue = _build_filing_acquisition_queue(filings)
@@ -647,7 +702,9 @@ class DocketDatasetPackager:
             or {}
         )
         dcec = dict(proof_assistant.get("deontic_cognitive_event_calculus") or {})
-        frame_logic = dict(proof_assistant.get("frame_logic") or proof_assistant.get("frames") or {})
+        frame_logic = dict(
+            proof_assistant.get("frame_logic") or proof_assistant.get("frames") or {}
+        )
         proof_knowledge_graph = dict(proof_assistant.get("knowledge_graph") or {})
 
         temporal_formula_rows = [
@@ -662,7 +719,9 @@ class DocketDatasetPackager:
         ]
         frame_rows = [
             dict(frame)
-            for frame in list(frame_logic.values() if isinstance(frame_logic, Mapping) else frame_logic)
+            for frame in list(
+                frame_logic.values() if isinstance(frame_logic, Mapping) else frame_logic
+            )
             if isinstance(frame, Mapping)
         ]
         routing_provenance_row = (
@@ -763,12 +822,20 @@ class DocketDatasetPackager:
                 "acquisition_queue_count": len(acquisition_queue),
                 "proof_packet_count": len(list(proof_assistant.get("evidence_packets") or [])),
                 "proof_store_count": len(list((proof_store.get("proofs") or {}).keys())),
-                "review_required_work_item_count": int(proof_assistant_summary.get("review_required_work_item_count") or 0),
-                "high_priority_revalidation_count": int(proof_assistant_summary.get("high_priority_revalidation_count") or 0),
+                "review_required_work_item_count": int(
+                    proof_assistant_summary.get("review_required_work_item_count") or 0
+                ),
+                "high_priority_revalidation_count": int(
+                    proof_assistant_summary.get("high_priority_revalidation_count") or 0
+                ),
                 "revalidation_run_count": len(list(proof_assistant.get("revalidation_runs") or [])),
                 "eu_citation_count": int(eu_citation_audit.get("citation_count") or 0),
-                "eu_unique_citation_count": int(eu_citation_audit.get("unique_citation_count") or 0),
-                "eu_documents_with_citations": int(eu_citation_audit.get("documents_with_citations") or 0),
+                "eu_unique_citation_count": int(
+                    eu_citation_audit.get("unique_citation_count") or 0
+                ),
+                "eu_documents_with_citations": int(
+                    eu_citation_audit.get("documents_with_citations") or 0
+                ),
             },
             "source": "packaged_operator_dashboard",
         }
@@ -792,7 +859,9 @@ class DocketDatasetPackager:
                         "docket_id": str(dataset_payload.get("docket_id") or ""),
                         "case_name": str(dataset_payload.get("case_name") or ""),
                         "court": str(dataset_payload.get("court") or ""),
-                        "metadata_json": json.dumps(_jsonable(dataset_payload.get("metadata") or {}), sort_keys=True),
+                        "metadata_json": json.dumps(
+                            _jsonable(dataset_payload.get("metadata") or {}), sort_keys=True
+                        ),
                     }
                 ],
                 [],
@@ -804,52 +873,99 @@ class DocketDatasetPackager:
             (
                 "plaintiff_docket",
                 "docket_sidecars",
-                [dict(item) for item in list(dataset_payload.get("plaintiff_docket") or []) if isinstance(item, dict)],
+                [
+                    dict(item)
+                    for item in list(dataset_payload.get("plaintiff_docket") or [])
+                    if isinstance(item, dict)
+                ],
                 ["dataset_core"],
             ),
             (
                 "defendant_docket",
                 "docket_sidecars",
-                [dict(item) for item in list(dataset_payload.get("defendant_docket") or []) if isinstance(item, dict)],
+                [
+                    dict(item)
+                    for item in list(dataset_payload.get("defendant_docket") or [])
+                    if isinstance(item, dict)
+                ],
                 ["dataset_core"],
             ),
             (
                 "authorities",
                 "docket_sidecars",
-                [dict(item) for item in list(dataset_payload.get("authorities") or []) if isinstance(item, dict)],
+                [
+                    dict(item)
+                    for item in list(dataset_payload.get("authorities") or [])
+                    if isinstance(item, dict)
+                ],
                 ["dataset_core"],
             ),
-            ("knowledge_graph_entities", "knowledge_graph", list(knowledge_graph.get("entities") or []), ["dataset_core"]),
+            (
+                "knowledge_graph_entities",
+                "knowledge_graph",
+                list(knowledge_graph.get("entities") or []),
+                ["dataset_core"],
+            ),
             (
                 "knowledge_graph_relationships",
                 "knowledge_graph",
                 list(knowledge_graph.get("relationships") or []),
                 ["knowledge_graph_entities"],
             ),
-            ("deontic_nodes", "deontic_graph", _flatten_mapping_rows(dict(deontic_graph.get("nodes") or {}), row_id_field="node_id"), ["dataset_core"]),
-            ("deontic_rules", "deontic_graph", _flatten_mapping_rows(dict(deontic_graph.get("rules") or {}), row_id_field="rule_id"), ["deontic_nodes"]),
+            (
+                "deontic_nodes",
+                "deontic_graph",
+                _flatten_mapping_rows(
+                    dict(deontic_graph.get("nodes") or {}), row_id_field="node_id"
+                ),
+                ["dataset_core"],
+            ),
+            (
+                "deontic_rules",
+                "deontic_graph",
+                _flatten_mapping_rows(
+                    dict(deontic_graph.get("rules") or {}), row_id_field="rule_id"
+                ),
+                ["deontic_nodes"],
+            ),
             (
                 "deontic_trigger_entries",
                 "deontic_graph",
-                [dict(item) for item in list(deontic_triggers.get("entries") or []) if isinstance(item, dict)],
+                [
+                    dict(item)
+                    for item in list(deontic_triggers.get("entries") or [])
+                    if isinstance(item, dict)
+                ],
                 ["deontic_rules"],
             ),
             (
                 "proof_agenda",
                 "proof_assistant",
-                [dict(item) for item in list(proof_assistant.get("agenda") or []) if isinstance(item, dict)],
+                [
+                    dict(item)
+                    for item in list(proof_assistant.get("agenda") or [])
+                    if isinstance(item, dict)
+                ],
                 ["deontic_trigger_entries"],
             ),
             (
                 "proof_tactician_plans",
                 "proof_assistant",
-                [dict(item) for item in list(tactician.get("plans") or []) if isinstance(item, dict)],
+                [
+                    dict(item)
+                    for item in list(tactician.get("plans") or [])
+                    if isinstance(item, dict)
+                ],
                 ["proof_agenda"],
             ),
             (
                 "proof_evidence_packets",
                 "proof_assistant",
-                [dict(item) for item in list(proof_assistant.get("evidence_packets") or []) if isinstance(item, dict)],
+                [
+                    dict(item)
+                    for item in list(proof_assistant.get("evidence_packets") or [])
+                    if isinstance(item, dict)
+                ],
                 ["proof_tactician_plans"],
             ),
             (
@@ -868,7 +984,11 @@ class DocketDatasetPackager:
             (
                 "proof_store_certificates",
                 "proof_assistant",
-                [dict(item) for item in list(proof_store.get("certificates") or []) if isinstance(item, dict)],
+                [
+                    dict(item)
+                    for item in list(proof_store.get("certificates") or [])
+                    if isinstance(item, dict)
+                ],
                 ["proof_store_entries"],
             ),
             (
@@ -876,16 +996,26 @@ class DocketDatasetPackager:
                 "proof_assistant",
                 [
                     {
-                        "metadata_json": json.dumps(_jsonable(proof_assistant_metadata), sort_keys=True),
-                        "summary_json": json.dumps(_jsonable(proof_assistant_summary), sort_keys=True),
+                        "metadata_json": json.dumps(
+                            _jsonable(proof_assistant_metadata), sort_keys=True
+                        ),
+                        "summary_json": json.dumps(
+                            _jsonable(proof_assistant_summary), sort_keys=True
+                        ),
                     }
-                ] if proof_assistant_metadata or proof_assistant_summary else [],
+                ]
+                if proof_assistant_metadata or proof_assistant_summary
+                else [],
                 ["proof_store_certificates"],
             ),
             (
                 "proof_revalidation_runs",
                 "proof_assistant",
-                [dict(item) for item in list(proof_assistant.get("revalidation_runs") or []) if isinstance(item, dict)],
+                [
+                    dict(item)
+                    for item in list(proof_assistant.get("revalidation_runs") or [])
+                    if isinstance(item, dict)
+                ],
                 ["proof_assistant_metadata"],
             ),
             (
@@ -915,7 +1045,11 @@ class DocketDatasetPackager:
                         "report_text": revalidation_report_text,
                         "report_markdown": revalidation_report_markdown,
                     }
-                ] if revalidation_report_json or revalidation_report_text or revalidation_report_markdown else [],
+                ]
+                if revalidation_report_json
+                or revalidation_report_text
+                or revalidation_report_markdown
+                else [],
                 ["inspection_report"],
             ),
             (
@@ -951,25 +1085,43 @@ class DocketDatasetPackager:
             (
                 "proof_knowledge_graph_entities",
                 "proof_assistant",
-                [dict(item) for item in list(proof_knowledge_graph.get("entities") or []) if isinstance(item, dict)],
+                [
+                    dict(item)
+                    for item in list(proof_knowledge_graph.get("entities") or [])
+                    if isinstance(item, dict)
+                ],
                 ["frame_logic_frames"],
             ),
             (
                 "proof_knowledge_graph_relationships",
                 "proof_assistant",
-                [dict(item) for item in list(proof_knowledge_graph.get("relationships") or []) if isinstance(item, dict)],
+                [
+                    dict(item)
+                    for item in list(proof_knowledge_graph.get("relationships") or [])
+                    if isinstance(item, dict)
+                ],
                 ["proof_knowledge_graph_entities"],
             ),
             (
                 "bm25_documents",
                 "search_indices",
-                [dict(item) for item in list((dataset_payload.get("bm25_index") or {}).get("documents") or []) if isinstance(item, dict)],
+                [
+                    dict(item)
+                    for item in list(
+                        (dataset_payload.get("bm25_index") or {}).get("documents") or []
+                    )
+                    if isinstance(item, dict)
+                ],
                 ["documents"],
             ),
             (
                 "vector_items",
                 "search_indices",
-                [dict(item) for item in list((dataset_payload.get("vector_index") or {}).get("items") or []) if isinstance(item, dict)],
+                [
+                    dict(item)
+                    for item in list((dataset_payload.get("vector_index") or {}).get("items") or [])
+                    if isinstance(item, dict)
+                ],
                 ["documents"],
             ),
         ]
@@ -1039,18 +1191,28 @@ class DocketDatasetPackager:
                 "filing_count": len(filings),
                 "acquisition_queue_count": len(acquisition_queue),
                 "knowledge_graph_entity_count": len(list(knowledge_graph.get("entities") or [])),
-                "knowledge_graph_relationship_count": len(list(knowledge_graph.get("relationships") or [])),
+                "knowledge_graph_relationship_count": len(
+                    list(knowledge_graph.get("relationships") or [])
+                ),
                 "deontic_rule_count": len(list((deontic_graph.get("rules") or {}).keys())),
                 "proof_agenda_count": len(list(proof_assistant.get("agenda") or [])),
                 "tactician_plan_count": len(list(tactician.get("plans") or [])),
                 "proof_packet_count": len(list(proof_assistant.get("evidence_packets") or [])),
                 "proof_store_count": len(list((proof_store.get("proofs") or {}).keys())),
-                "review_required_work_item_count": int((proof_assistant_summary.get("review_required_work_item_count") or 0)),
-                "high_priority_revalidation_count": int((proof_assistant_summary.get("high_priority_revalidation_count") or 0)),
+                "review_required_work_item_count": int(
+                    (proof_assistant_summary.get("review_required_work_item_count") or 0)
+                ),
+                "high_priority_revalidation_count": int(
+                    (proof_assistant_summary.get("high_priority_revalidation_count") or 0)
+                ),
                 "revalidation_run_count": len(list(proof_assistant.get("revalidation_runs") or [])),
                 "eu_citation_count": int(eu_citation_audit.get("citation_count") or 0),
-                "eu_unique_citation_count": int(eu_citation_audit.get("unique_citation_count") or 0),
-                "eu_documents_with_citations": int(eu_citation_audit.get("documents_with_citations") or 0),
+                "eu_unique_citation_count": int(
+                    eu_citation_audit.get("unique_citation_count") or 0
+                ),
+                "eu_documents_with_citations": int(
+                    eu_citation_audit.get("documents_with_citations") or 0
+                ),
             },
             "provenance": {
                 "latest_proof_packet_routing_explanation": _jsonable(latest_routing_explanation),
@@ -1065,14 +1227,17 @@ class DocketDatasetPackager:
             pdf_dir = bundle_dir if legacy_layout else bundle_dir / "pdf"
             pdf_dir.mkdir(parents=True, exist_ok=True)
             pdf_filename = str(
-                normalized_pdf_options.get("filename")
-                or f"{_safe_identifier(bundle_name)}.pdf"
+                normalized_pdf_options.get("filename") or f"{_safe_identifier(bundle_name)}.pdf"
             )
             pdf_path = pdf_dir / pdf_filename
             pdf_result = export_docket_dataset_single_pdf(
                 dataset_payload,
                 pdf_path,
-                title=str(normalized_pdf_options.get("title") or dataset_payload.get("case_name") or bundle_name),
+                title=str(
+                    normalized_pdf_options.get("title")
+                    or dataset_payload.get("case_name")
+                    or bundle_name
+                ),
                 include_source_files=bool(normalized_pdf_options.get("include_source_files", True)),
             )
             pdf_artifacts.append(
@@ -1090,9 +1255,15 @@ class DocketDatasetPackager:
         manifest["pdf_enabled"] = bool(pdf_artifacts)
         manifest["pdf_artifacts"] = pdf_artifacts
 
-        manifest_json_path = bundle_dir / ("manifest.json" if legacy_layout else "bundle_manifest.json")
-        manifest_json_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-        manifest_parquet_path = parquet_dir / ("manifest.parquet" if legacy_layout else "bundle_manifest.parquet")
+        manifest_json_path = bundle_dir / (
+            "manifest.json" if legacy_layout else "bundle_manifest.json"
+        )
+        manifest_json_path.write_text(
+            json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
+        manifest_parquet_path = parquet_dir / (
+            "manifest.parquet" if legacy_layout else "bundle_manifest.parquet"
+        )
         _write_rows_to_parquet(
             [
                 {
@@ -1110,11 +1281,15 @@ class DocketDatasetPackager:
         manifest_root_cid = ""
         if include_car:
             manifest_car = car_dir / ("manifest.car" if legacy_layout else "bundle_manifest.car")
-            manifest_root_cid = str(self._car_utils.parquet_to_car(str(manifest_parquet_path), str(manifest_car)))
+            manifest_root_cid = str(
+                self._car_utils.parquet_to_car(str(manifest_parquet_path), str(manifest_car))
+            )
             manifest_car_path = str(manifest_car.relative_to(bundle_dir))
             manifest["manifest_root_cid"] = manifest_root_cid
             manifest["manifest_car_path"] = manifest_car_path
-            manifest_json_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+            manifest_json_path.write_text(
+                json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+            )
 
         return {
             "bundle_dir": str(bundle_dir),
@@ -1191,14 +1366,26 @@ class DocketDatasetPackager:
         bundle_dir, manifest = self._resolve_manifest(manifest_path)
         rows_by_piece = self.load_package_components(
             bundle_dir,
-            piece_ids=["dataset_core", "documents", "attachments", "filings", "acquisition_queue", "routing_provenance", "inspection_report", "proof_revalidation_report", "operator_dashboard_report"],
+            piece_ids=[
+                "dataset_core",
+                "documents",
+                "attachments",
+                "filings",
+                "acquisition_queue",
+                "routing_provenance",
+                "inspection_report",
+                "proof_revalidation_report",
+                "operator_dashboard_report",
+            ],
             manifest=manifest,
         )
         dataset_core = dict((rows_by_piece.get("dataset_core") or [{}])[0])
         routing_provenance = dict((rows_by_piece.get("routing_provenance") or [{}])[0])
         inspection_report = dict((rows_by_piece.get("inspection_report") or [{}])[0])
         revalidation_report = dict((rows_by_piece.get("proof_revalidation_report") or [{}])[0])
-        operator_dashboard_report = dict((rows_by_piece.get("operator_dashboard_report") or [{}])[0])
+        operator_dashboard_report = dict(
+            (rows_by_piece.get("operator_dashboard_report") or [{}])[0]
+        )
         return {
             "dataset_id": str(dataset_core.get("dataset_id") or manifest.get("dataset_id") or ""),
             "docket_id": str(dataset_core.get("docket_id") or manifest.get("docket_id") or ""),
@@ -1208,10 +1395,16 @@ class DocketDatasetPackager:
             "attachments": self._restore_rows(rows_by_piece.get("attachments")),
             "filings": self._restore_rows(rows_by_piece.get("filings")),
             "acquisition_queue": self._restore_rows(rows_by_piece.get("acquisition_queue")),
-            "routing_provenance": routing_provenance if routing_provenance and "_empty" not in routing_provenance else {},
+            "routing_provenance": routing_provenance
+            if routing_provenance and "_empty" not in routing_provenance
+            else {},
             "inspection_report": _normalize_packaged_inspection_report_row(inspection_report),
-            "proof_revalidation_report": _normalize_packaged_revalidation_report_row(revalidation_report),
-            "operator_dashboard_report": _normalize_packaged_operator_dashboard_row(operator_dashboard_report),
+            "proof_revalidation_report": _normalize_packaged_revalidation_report_row(
+                revalidation_report
+            ),
+            "operator_dashboard_report": _normalize_packaged_operator_dashboard_row(
+                operator_dashboard_report
+            ),
             "package_manifest": dict(manifest),
         }
 
@@ -1219,14 +1412,22 @@ class DocketDatasetPackager:
         bundle_dir, manifest = self._resolve_manifest(manifest_path)
         rows_by_piece = self.load_package_components(
             bundle_dir,
-            piece_ids=["dataset_core", "routing_provenance", "inspection_report", "proof_revalidation_report", "operator_dashboard_report"],
+            piece_ids=[
+                "dataset_core",
+                "routing_provenance",
+                "inspection_report",
+                "proof_revalidation_report",
+                "operator_dashboard_report",
+            ],
             manifest=manifest,
         )
         dataset_core = dict((rows_by_piece.get("dataset_core") or [{}])[0])
         routing_provenance = dict((rows_by_piece.get("routing_provenance") or [{}])[0])
         inspection_report = dict((rows_by_piece.get("inspection_report") or [{}])[0])
         revalidation_report = dict((rows_by_piece.get("proof_revalidation_report") or [{}])[0])
-        operator_dashboard_report = dict((rows_by_piece.get("operator_dashboard_report") or [{}])[0])
+        operator_dashboard_report = dict(
+            (rows_by_piece.get("operator_dashboard_report") or [{}])[0]
+        )
         manifest_summary = dict(manifest.get("summary") or {})
         return {
             "dataset_id": str(dataset_core.get("dataset_id") or manifest.get("dataset_id") or ""),
@@ -1239,21 +1440,37 @@ class DocketDatasetPackager:
             "acquisition_queue_count": int(manifest_summary.get("acquisition_queue_count") or 0),
             "eu_citation_count": int(manifest_summary.get("eu_citation_count") or 0),
             "eu_unique_citation_count": int(manifest_summary.get("eu_unique_citation_count") or 0),
-            "eu_documents_with_citations": int(manifest_summary.get("eu_documents_with_citations") or 0),
-            "knowledge_graph_entity_count": int(manifest_summary.get("knowledge_graph_entity_count") or 0),
-            "knowledge_graph_relationship_count": int(manifest_summary.get("knowledge_graph_relationship_count") or 0),
+            "eu_documents_with_citations": int(
+                manifest_summary.get("eu_documents_with_citations") or 0
+            ),
+            "knowledge_graph_entity_count": int(
+                manifest_summary.get("knowledge_graph_entity_count") or 0
+            ),
+            "knowledge_graph_relationship_count": int(
+                manifest_summary.get("knowledge_graph_relationship_count") or 0
+            ),
             "deontic_rule_count": int(manifest_summary.get("deontic_rule_count") or 0),
             "proof_agenda_count": int(manifest_summary.get("proof_agenda_count") or 0),
             "proof_tactician_plan_count": int(manifest_summary.get("tactician_plan_count") or 0),
             "proof_packet_count": int(manifest_summary.get("proof_packet_count") or 0),
             "proof_store_count": int(manifest_summary.get("proof_store_count") or 0),
-            "review_required_work_item_count": int(manifest_summary.get("review_required_work_item_count") or 0),
-            "high_priority_revalidation_count": int(manifest_summary.get("high_priority_revalidation_count") or 0),
+            "review_required_work_item_count": int(
+                manifest_summary.get("review_required_work_item_count") or 0
+            ),
+            "high_priority_revalidation_count": int(
+                manifest_summary.get("high_priority_revalidation_count") or 0
+            ),
             "revalidation_run_count": int(manifest_summary.get("revalidation_run_count") or 0),
-            "routing_provenance": routing_provenance if routing_provenance and "_empty" not in routing_provenance else {},
+            "routing_provenance": routing_provenance
+            if routing_provenance and "_empty" not in routing_provenance
+            else {},
             "inspection_report": _normalize_packaged_inspection_report_row(inspection_report),
-            "proof_revalidation_report": _normalize_packaged_revalidation_report_row(revalidation_report),
-            "operator_dashboard_report": _normalize_packaged_operator_dashboard_row(operator_dashboard_report),
+            "proof_revalidation_report": _normalize_packaged_revalidation_report_row(
+                revalidation_report
+            ),
+            "operator_dashboard_report": _normalize_packaged_operator_dashboard_row(
+                operator_dashboard_report
+            ),
             "package_manifest": dict(manifest),
         }
 
@@ -1280,21 +1497,34 @@ class DocketDatasetPackager:
 
     def inspect_packaged_bundle(self, manifest_path: str | Path) -> Dict[str, Any]:
         summary_view = self.load_summary_view(manifest_path)
-        archived_report = _parse_packaged_inspection_report_row(summary_view.get("inspection_report"))
+        archived_report = _parse_packaged_inspection_report_row(
+            summary_view.get("inspection_report")
+        )
         if archived_report:
-            archived_report["routing_provenance_piece_present"] = bool(summary_view.get("routing_provenance"))
+            archived_report["routing_provenance_piece_present"] = bool(
+                summary_view.get("routing_provenance")
+            )
             if "routing_provenance" not in archived_report:
-                archived_report["routing_provenance"] = dict(summary_view.get("routing_provenance") or {})
-            archived_report["proof_revalidation_report"] = dict(summary_view.get("proof_revalidation_report") or {})
-            archived_report["review_required_work_item_count"] = int(summary_view.get("review_required_work_item_count") or 0)
-            archived_report["high_priority_revalidation_count"] = int(summary_view.get("high_priority_revalidation_count") or 0)
-            archived_report["revalidation_run_count"] = int(summary_view.get("revalidation_run_count") or 0)
+                archived_report["routing_provenance"] = dict(
+                    summary_view.get("routing_provenance") or {}
+                )
+            archived_report["proof_revalidation_report"] = dict(
+                summary_view.get("proof_revalidation_report") or {}
+            )
+            archived_report["review_required_work_item_count"] = int(
+                summary_view.get("review_required_work_item_count") or 0
+            )
+            archived_report["high_priority_revalidation_count"] = int(
+                summary_view.get("high_priority_revalidation_count") or 0
+            )
+            archived_report["revalidation_run_count"] = int(
+                summary_view.get("revalidation_run_count") or 0
+            )
             return archived_report
         manifest = dict(summary_view.get("package_manifest") or {})
         routing_provenance = dict(summary_view.get("routing_provenance") or {})
         latest_routing = dict(
-            manifest.get("provenance", {}).get("latest_proof_packet_routing_explanation")
-            or {}
+            manifest.get("provenance", {}).get("latest_proof_packet_routing_explanation") or {}
         )
         return _build_packaged_inspection_payload(
             dataset_id=summary_view.get("dataset_id"),
@@ -1309,7 +1539,9 @@ class DocketDatasetPackager:
             eu_unique_citation_count=int(summary_view.get("eu_unique_citation_count") or 0),
             eu_documents_with_citations=int(summary_view.get("eu_documents_with_citations") or 0),
             latest_proof_packet_id=(manifest.get("metadata") or {}).get("latest_proof_packet_id"),
-            latest_proof_packet_version=(manifest.get("metadata") or {}).get("latest_proof_packet_version"),
+            latest_proof_packet_version=(manifest.get("metadata") or {}).get(
+                "latest_proof_packet_version"
+            ),
             latest_routing_explanation=latest_routing,
             routing_provenance=routing_provenance,
         )
@@ -1431,7 +1663,9 @@ class DocketDatasetPackager:
         package_manifest = dict(manifest)
         package_manifest["attachments"] = self._restore_rows(rows_by_piece.get("attachments"))
         package_manifest["filings"] = self._restore_rows(rows_by_piece.get("filings"))
-        package_manifest["acquisition_queue"] = self._restore_rows(rows_by_piece.get("acquisition_queue"))
+        package_manifest["acquisition_queue"] = self._restore_rows(
+            rows_by_piece.get("acquisition_queue")
+        )
         bm25_documents = self._restore_rows(rows_by_piece.get("bm25_documents"))
         vector_items = self._restore_rows(rows_by_piece.get("vector_items"))
         proof_agenda = self._restore_rows(rows_by_piece.get("proof_agenda"))
@@ -1446,11 +1680,19 @@ class DocketDatasetPackager:
         temporal_formula_rows = self._restore_rows(rows_by_piece.get("temporal_formulas"))
         dcec_formula_rows = self._restore_rows(rows_by_piece.get("dcec_formulas"))
         frame_logic_rows = self._restore_rows(rows_by_piece.get("frame_logic_frames"))
-        proof_knowledge_graph_entities = self._restore_rows(rows_by_piece.get("proof_knowledge_graph_entities"))
-        proof_knowledge_graph_relationships = self._restore_rows(rows_by_piece.get("proof_knowledge_graph_relationships"))
+        proof_knowledge_graph_entities = self._restore_rows(
+            rows_by_piece.get("proof_knowledge_graph_entities")
+        )
+        proof_knowledge_graph_relationships = self._restore_rows(
+            rows_by_piece.get("proof_knowledge_graph_relationships")
+        )
         proof_assistant_meta_row = dict((rows_by_piece.get("proof_assistant_metadata") or [{}])[0])
-        proof_assistant_metadata = self._parse_possible_json(proof_assistant_meta_row.get("metadata_json")) or {}
-        proof_assistant_summary = self._parse_possible_json(proof_assistant_meta_row.get("summary_json")) or {}
+        proof_assistant_metadata = (
+            self._parse_possible_json(proof_assistant_meta_row.get("metadata_json")) or {}
+        )
+        proof_assistant_summary = (
+            self._parse_possible_json(proof_assistant_meta_row.get("summary_json")) or {}
+        )
         proof_revalidation_runs = self._restore_rows(rows_by_piece.get("proof_revalidation_runs"))
         proof_revalidation_report = _normalize_packaged_revalidation_report_row(
             dict((rows_by_piece.get("proof_revalidation_report") or [{}])[0])
@@ -1460,8 +1702,12 @@ class DocketDatasetPackager:
         )
         metadata = json.loads(str(dataset_core.get("metadata_json") or "{}"))
         artifact_provenance = dict((metadata or {}).get("artifact_provenance") or {})
-        current_packet_count = sum(1 for item in proof_evidence_packets if bool(item.get("is_current", True)))
-        superseded_packet_count = sum(1 for item in proof_evidence_packets if bool(item.get("superseded")))
+        current_packet_count = sum(
+            1 for item in proof_evidence_packets if bool(item.get("is_current", True))
+        )
+        superseded_packet_count = sum(
+            1 for item in proof_evidence_packets if bool(item.get("superseded"))
+        )
         sorted_proof_agenda = _sort_proof_agenda_items(proof_agenda)
         revalidation_counts = _count_agenda_revalidation_items(sorted_proof_agenda)
         return {
@@ -1475,7 +1721,9 @@ class DocketDatasetPackager:
             "authorities": self._restore_rows(rows_by_piece.get("authorities")),
             "knowledge_graph": {
                 "entities": self._restore_rows(rows_by_piece.get("knowledge_graph_entities")),
-                "relationships": self._restore_rows(rows_by_piece.get("knowledge_graph_relationships")),
+                "relationships": self._restore_rows(
+                    rows_by_piece.get("knowledge_graph_relationships")
+                ),
             },
             "deontic_graph": {
                 "nodes": deontic_nodes,
@@ -1485,12 +1733,17 @@ class DocketDatasetPackager:
                 "entries": self._restore_rows(rows_by_piece.get("deontic_trigger_entries")),
             },
             "bm25_index": {
-                "backend": str((artifact_provenance.get("bm25_index") or {}).get("backend") or "local_bm25"),
+                "backend": str(
+                    (artifact_provenance.get("bm25_index") or {}).get("backend") or "local_bm25"
+                ),
                 "documents": bm25_documents,
                 "document_count": len(bm25_documents),
             },
             "vector_index": {
-                "backend": str((artifact_provenance.get("vector_index") or {}).get("backend") or "local_hashed_term_projection"),
+                "backend": str(
+                    (artifact_provenance.get("vector_index") or {}).get("backend")
+                    or "local_hashed_term_projection"
+                ),
                 "items": vector_items,
                 "document_count": len(vector_items),
             },
@@ -1519,13 +1772,25 @@ class DocketDatasetPackager:
                     },
                 },
                 "temporal_fol": {
-                    "formulas": [str(row.get("formula") or "") for row in temporal_formula_rows if str(row.get("formula") or "").strip()],
+                    "formulas": [
+                        str(row.get("formula") or "")
+                        for row in temporal_formula_rows
+                        if str(row.get("formula") or "").strip()
+                    ],
                 },
                 "deontic_temporal_first_order_logic": {
-                    "formulas": [str(row.get("formula") or "") for row in temporal_formula_rows if str(row.get("formula") or "").strip()],
+                    "formulas": [
+                        str(row.get("formula") or "")
+                        for row in temporal_formula_rows
+                        if str(row.get("formula") or "").strip()
+                    ],
                 },
                 "deontic_cognitive_event_calculus": {
-                    "formulas": [str(row.get("formula") or "") for row in dcec_formula_rows if str(row.get("formula") or "").strip()],
+                    "formulas": [
+                        str(row.get("formula") or "")
+                        for row in dcec_formula_rows
+                        if str(row.get("formula") or "").strip()
+                    ],
                 },
                 "frames": {
                     str(row.get("frame_id") or row.get("id") or f"frame_{index}"): dict(row)
@@ -1577,7 +1842,9 @@ class DocketDatasetPackager:
     def _restore_rows(self, rows: Sequence[Dict[str, Any]] | None) -> List[Dict[str, Any]]:
         restored: List[Dict[str, Any]] = []
         for row in list(rows or []):
-            restored.append({str(key): self._parse_possible_json(value) for key, value in dict(row).items()})
+            restored.append(
+                {str(key): self._parse_possible_json(value) for key, value in dict(row).items()}
+            )
         return restored
 
     def _resolve_manifest(
@@ -1592,7 +1859,11 @@ class DocketDatasetPackager:
             manifest_file = bundle_dir / "bundle_manifest.json"
             if not manifest_file.exists():
                 manifest_file = bundle_dir / "manifest.json"
-            resolved_manifest = dict(manifest) if manifest is not None else json.loads(manifest_file.read_text(encoding="utf-8"))
+            resolved_manifest = (
+                dict(manifest)
+                if manifest is not None
+                else json.loads(manifest_file.read_text(encoding="utf-8"))
+            )
             return bundle_dir, resolved_manifest
         suffix = path.suffix.lower()
         if suffix == ".zip":
@@ -1600,17 +1871,27 @@ class DocketDatasetPackager:
             return bundle_dir, resolved_manifest
         if suffix == ".parquet":
             bundle_dir = self._bundle_dir_from_manifest_sidecar(path)
-            resolved_manifest = dict(manifest) if manifest is not None else self._load_manifest_from_parquet(path)
+            resolved_manifest = (
+                dict(manifest) if manifest is not None else self._load_manifest_from_parquet(path)
+            )
             return bundle_dir, resolved_manifest
         if suffix == ".car":
             bundle_dir = self._bundle_dir_from_manifest_sidecar(path)
             manifest_parquet = self._materialize_manifest_parquet_from_car(path)
-            resolved_manifest = dict(manifest) if manifest is not None else self._load_manifest_from_parquet(manifest_parquet)
+            resolved_manifest = (
+                dict(manifest)
+                if manifest is not None
+                else self._load_manifest_from_parquet(manifest_parquet)
+            )
             return bundle_dir, resolved_manifest
         else:
             manifest_file = path
             bundle_dir = manifest_file.parent
-        resolved_manifest = dict(manifest) if manifest is not None else json.loads(manifest_file.read_text(encoding="utf-8"))
+        resolved_manifest = (
+            dict(manifest)
+            if manifest is not None
+            else json.loads(manifest_file.read_text(encoding="utf-8"))
+        )
         return bundle_dir, resolved_manifest
 
     def _load_manifest_from_parquet(self, manifest_parquet_path: Path) -> Dict[str, Any]:
@@ -1639,17 +1920,25 @@ class DocketDatasetPackager:
         temp_dir_obj = self._temp_bundle_dirs.get(cache_key)
         if temp_dir_obj is None:
             safe_temp_root = os.environ.get("IPFS_DATASETS_SAFE_ROOT") or str(Path.cwd())
-            temp_dir_obj = tempfile.TemporaryDirectory(prefix="docket_bundle_zip_", dir=safe_temp_root)
+            temp_dir_obj = tempfile.TemporaryDirectory(
+                prefix="docket_bundle_zip_", dir=safe_temp_root
+            )
             with zipfile.ZipFile(archive_path, "r") as archive:
                 archive.extractall(temp_dir_obj.name)
             self._temp_bundle_dirs[cache_key] = temp_dir_obj
         extracted_root = Path(temp_dir_obj.name)
-        manifest_candidates = sorted(extracted_root.rglob("bundle_manifest.json")) or sorted(extracted_root.rglob("manifest.json"))
+        manifest_candidates = sorted(extracted_root.rglob("bundle_manifest.json")) or sorted(
+            extracted_root.rglob("manifest.json")
+        )
         if not manifest_candidates:
             raise FileNotFoundError(f"No bundle manifest found in zip archive: {archive_path}")
         manifest_file = manifest_candidates[0]
         bundle_dir = manifest_file.parent
-        resolved_manifest = dict(manifest) if manifest is not None else json.loads(manifest_file.read_text(encoding="utf-8"))
+        resolved_manifest = (
+            dict(manifest)
+            if manifest is not None
+            else json.loads(manifest_file.read_text(encoding="utf-8"))
+        )
         return bundle_dir, resolved_manifest
 
     def _materialize_manifest_parquet_from_car(self, manifest_car_path: Path) -> Path:
@@ -1657,7 +1946,9 @@ class DocketDatasetPackager:
         temp_dir_obj = self._temp_piece_dirs.get(cache_key)
         if temp_dir_obj is None:
             safe_temp_root = os.environ.get("IPFS_DATASETS_SAFE_ROOT") or str(Path.cwd())
-            temp_dir_obj = tempfile.TemporaryDirectory(prefix="docket_manifest_car_", dir=safe_temp_root)
+            temp_dir_obj = tempfile.TemporaryDirectory(
+                prefix="docket_manifest_car_", dir=safe_temp_root
+            )
             self._temp_piece_dirs[cache_key] = temp_dir_obj
         temp_dir = Path(temp_dir_obj.name)
         parquet_path = temp_dir / "bundle_manifest.parquet"
@@ -1665,7 +1956,9 @@ class DocketDatasetPackager:
             self._car_utils.car_to_parquet(str(manifest_car_path), str(parquet_path))
         return parquet_path
 
-    def _resolve_piece_parquet_path(self, bundle_dir: Path, piece: Mapping[str, Any]) -> Path | None:
+    def _resolve_piece_parquet_path(
+        self, bundle_dir: Path, piece: Mapping[str, Any]
+    ) -> Path | None:
         parquet_path = bundle_dir / str(piece.get("parquet_path") or "")
         if parquet_path.exists():
             return parquet_path
@@ -1679,7 +1972,9 @@ class DocketDatasetPackager:
         temp_dir_obj = self._temp_piece_dirs.get(cache_key)
         if temp_dir_obj is None:
             safe_temp_root = os.environ.get("IPFS_DATASETS_SAFE_ROOT") or str(Path.cwd())
-            temp_dir_obj = tempfile.TemporaryDirectory(prefix="docket_piece_car_", dir=safe_temp_root)
+            temp_dir_obj = tempfile.TemporaryDirectory(
+                prefix="docket_piece_car_", dir=safe_temp_root
+            )
             self._temp_piece_dirs[cache_key] = temp_dir_obj
         temp_dir = Path(temp_dir_obj.name)
         piece_parquet_path = temp_dir / f"{str(piece.get('piece_id') or 'piece')}.parquet"
@@ -1699,7 +1994,20 @@ class PackagedDocketQueryAdapter:
         lowered = str(query or "").strip().lower()
         manifest = self._manifest()
         candidates: List[PackagedQueryExecutionPlan] = []
-        if any(token in lowered for token in ("temporal", "formula", "formulas", "dcec", "calculus", "frame", "frames", "logic artifact", "frame logic")):
+        if any(
+            token in lowered
+            for token in (
+                "temporal",
+                "formula",
+                "formulas",
+                "dcec",
+                "calculus",
+                "frame",
+                "frames",
+                "logic artifact",
+                "frame logic",
+            )
+        ):
             candidates.extend(
                 [
                     self._make_plan(
@@ -1723,13 +2031,21 @@ class PackagedDocketQueryAdapter:
                             },
                             {
                                 "name": "logic_expansion",
-                                "piece_ids": ["temporal_formulas", "dcec_formulas", "frame_logic_frames"],
+                                "piece_ids": [
+                                    "temporal_formulas",
+                                    "dcec_formulas",
+                                    "frame_logic_frames",
+                                ],
                                 "purpose": "Expand to DCEC and frame rows if temporal formulas alone are insufficient.",
                                 "continue_on_success": True,
                                 "result_policy": {
                                     "merge_mode": "by_artifact",
                                     "ranking": "logic_score_desc",
-                                    "artifact_priority": ["temporal_formula", "dcec_formula", "frame_logic_frame"],
+                                    "artifact_priority": [
+                                        "temporal_formula",
+                                        "dcec_formula",
+                                        "frame_logic_frame",
+                                    ],
                                 },
                             },
                         ],
@@ -1738,14 +2054,24 @@ class PackagedDocketQueryAdapter:
                         query=query,
                         strategy="logic-fallback-proof",
                         target="proof_tasks",
-                        piece_ids=["proof_agenda", "proof_tactician_plans", "deontic_trigger_entries", "proof_store_entries"],
+                        piece_ids=[
+                            "proof_agenda",
+                            "proof_tactician_plans",
+                            "deontic_trigger_entries",
+                            "proof_store_entries",
+                        ],
                         rationale="If explicit logic artifacts are too thin, fall back to proof-oriented packaged artifacts.",
                         priority=1,
                         manifest=manifest,
                         stages=[
                             {
                                 "name": "proof_context",
-                                "piece_ids": ["proof_agenda", "proof_tactician_plans", "deontic_trigger_entries", "proof_store_entries"],
+                                "piece_ids": [
+                                    "proof_agenda",
+                                    "proof_tactician_plans",
+                                    "deontic_trigger_entries",
+                                    "proof_store_entries",
+                                ],
                                 "purpose": "Use proof artifacts as the first fallback when symbolic logic rows do not match.",
                                 "result_policy": {
                                     "merge_mode": "by_work_item",
@@ -1756,7 +2082,18 @@ class PackagedDocketQueryAdapter:
                     ),
                 ]
             )
-        elif any(token in lowered for token in ("proof", "obligation", "duty", "must", "shall", "prohibition", "permission")):
+        elif any(
+            token in lowered
+            for token in (
+                "proof",
+                "obligation",
+                "duty",
+                "must",
+                "shall",
+                "prohibition",
+                "permission",
+            )
+        ):
             candidates.extend(
                 [
                     self._make_plan(
@@ -1800,7 +2137,12 @@ class PackagedDocketQueryAdapter:
                                     "ranking": "proof_context",
                                     "prefer_authority_sources": True,
                                     "prefer_plans": True,
-                                    "prefer_source_types": ["proof_packet", "authority", "party_analysis", "docket_item"],
+                                    "prefer_source_types": [
+                                        "proof_packet",
+                                        "authority",
+                                        "party_analysis",
+                                        "docket_item",
+                                    ],
                                 },
                             },
                         ],
@@ -1836,7 +2178,10 @@ class PackagedDocketQueryAdapter:
                     ),
                 ]
             )
-        elif any(token in lowered for token in ("graph", "relationship", "entity", "authority network", "knowledge graph")):
+        elif any(
+            token in lowered
+            for token in ("graph", "relationship", "entity", "authority network", "knowledge graph")
+        ):
             candidates.extend(
                 [
                     self._make_plan(
@@ -1860,12 +2205,18 @@ class PackagedDocketQueryAdapter:
                             },
                             {
                                 "name": "kg_relationships",
-                                "piece_ids": ["knowledge_graph_entities", "knowledge_graph_relationships"],
+                                "piece_ids": [
+                                    "knowledge_graph_entities",
+                                    "knowledge_graph_relationships",
+                                ],
                                 "purpose": "Expand to relationships when entity-only context is not enough.",
                                 "continue_on_success": True,
                                 "result_policy": {
                                     "merge_mode": "by_piece",
-                                    "piece_priority": ["knowledge_graph_entities", "knowledge_graph_relationships"],
+                                    "piece_priority": [
+                                        "knowledge_graph_entities",
+                                        "knowledge_graph_relationships",
+                                    ],
                                 },
                             },
                         ],
@@ -1892,7 +2243,9 @@ class PackagedDocketQueryAdapter:
                     ),
                 ]
             )
-        elif any(token in lowered for token in ("similar", "semantic", "concept", "like", "related")):
+        elif any(
+            token in lowered for token in ("similar", "semantic", "concept", "like", "related")
+        ):
             candidates.extend(
                 [
                     self._make_plan(
@@ -1946,7 +2299,20 @@ class PackagedDocketQueryAdapter:
                     ),
                 ]
             )
-        elif any(token in lowered for token in ("document", "filing", "complaint", "answer", "motion", "order", "notice", "search", "find")):
+        elif any(
+            token in lowered
+            for token in (
+                "document",
+                "filing",
+                "complaint",
+                "answer",
+                "motion",
+                "order",
+                "notice",
+                "search",
+                "find",
+            )
+        ):
             candidates.extend(
                 [
                     self._make_plan(
@@ -2054,24 +2420,42 @@ class PackagedDocketQueryAdapter:
                     ),
                 ]
             )
-        return min(candidates, key=lambda plan: (plan.priority, plan.estimated_cost, len(plan.piece_ids), plan.strategy))
+        return min(
+            candidates,
+            key=lambda plan: (
+                plan.priority,
+                plan.estimated_cost,
+                len(plan.piece_ids),
+                plan.strategy,
+            ),
+        )
 
-    def execute_plan(self, plan: PackagedQueryExecutionPlan | Dict[str, Any], *, top_k: int = 10) -> Dict[str, Any]:
-        resolved_plan = plan if isinstance(plan, PackagedQueryExecutionPlan) else PackagedQueryExecutionPlan(
-            query=str(plan.get("query") or ""),
-            strategy=str(plan.get("strategy") or ""),
-            target=str(plan.get("target") or ""),
-            piece_ids=[str(value) for value in list(plan.get("piece_ids") or [])],
-            rationale=str(plan.get("rationale") or ""),
-            priority=int(plan.get("priority") or 0),
-            estimated_cost=int(plan.get("estimated_cost") or 0),
-            piece_costs=dict(plan.get("piece_costs") or {}),
-            stages=[dict(stage) for stage in list(plan.get("stages") or [])],
+    def execute_plan(
+        self, plan: PackagedQueryExecutionPlan | Dict[str, Any], *, top_k: int = 10
+    ) -> Dict[str, Any]:
+        resolved_plan = (
+            plan
+            if isinstance(plan, PackagedQueryExecutionPlan)
+            else PackagedQueryExecutionPlan(
+                query=str(plan.get("query") or ""),
+                strategy=str(plan.get("strategy") or ""),
+                target=str(plan.get("target") or ""),
+                piece_ids=[str(value) for value in list(plan.get("piece_ids") or [])],
+                rationale=str(plan.get("rationale") or ""),
+                priority=int(plan.get("priority") or 0),
+                estimated_cost=int(plan.get("estimated_cost") or 0),
+                piece_costs=dict(plan.get("piece_costs") or {}),
+                stages=[dict(stage) for stage in list(plan.get("stages") or [])],
+            )
         )
         execution_stages: List[Dict[str, Any]] = []
         active_result: Dict[str, Any] = {}
         for stage_index, stage in enumerate(list(resolved_plan.stages or []), start=1):
-            stage_piece_ids = [str(piece_id) for piece_id in list(stage.get("piece_ids") or []) if str(piece_id).strip()]
+            stage_piece_ids = [
+                str(piece_id)
+                for piece_id in list(stage.get("piece_ids") or [])
+                if str(piece_id).strip()
+            ]
             stage_result = self._execute_target(
                 resolved_plan.target,
                 resolved_plan.query,
@@ -2104,7 +2488,9 @@ class PackagedDocketQueryAdapter:
                     "result_policy": _jsonable(stage_policy),
                 }
             )
-            if self._stage_satisfied(resolved_plan.target, stage_result, top_k=top_k) and not bool(stage.get("continue_on_success")):
+            if self._stage_satisfied(resolved_plan.target, stage_result, top_k=top_k) and not bool(
+                stage.get("continue_on_success")
+            ):
                 break
 
         if not execution_stages:
@@ -2133,9 +2519,21 @@ class PackagedDocketQueryAdapter:
         top_k: int = 10,
         piece_ids: Optional[Sequence[str]] = None,
     ) -> Dict[str, Any]:
-        requested = {str(piece_id) for piece_id in list(piece_ids or ["bm25_documents"]) if str(piece_id).strip()}
-        rows = self._packager.load_package_piece(self.manifest_path, "bm25_documents") if "bm25_documents" in requested else []
-        documents = self._packager.load_package_piece(self.manifest_path, "documents") if "documents" in requested else []
+        requested = {
+            str(piece_id)
+            for piece_id in list(piece_ids or ["bm25_documents"])
+            if str(piece_id).strip()
+        }
+        rows = (
+            self._packager.load_package_piece(self.manifest_path, "bm25_documents")
+            if "bm25_documents" in requested
+            else []
+        )
+        documents = (
+            self._packager.load_package_piece(self.manifest_path, "documents")
+            if "documents" in requested
+            else []
+        )
         results: List[Dict[str, Any]] = []
         if rows:
             normalized_rows = []
@@ -2167,8 +2565,16 @@ class PackagedDocketQueryAdapter:
         top_k: int = 10,
         piece_ids: Optional[Sequence[str]] = None,
     ) -> Dict[str, Any]:
-        requested = {str(piece_id) for piece_id in list(piece_ids or ["vector_items"]) if str(piece_id).strip()}
-        rows = self._packager.load_package_piece(self.manifest_path, "vector_items") if "vector_items" in requested else []
+        requested = {
+            str(piece_id)
+            for piece_id in list(piece_ids or ["vector_items"])
+            if str(piece_id).strip()
+        }
+        rows = (
+            self._packager.load_package_piece(self.manifest_path, "vector_items")
+            if "vector_items" in requested
+            else []
+        )
         vector_meta = self._vector_backend_metadata()
         query_vector = embed_query_for_backend(
             query,
@@ -2219,15 +2625,41 @@ class PackagedDocketQueryAdapter:
         requested = {
             str(piece_id)
             for piece_id in list(
-                piece_ids or ["proof_agenda", "proof_tactician_plans", "proof_evidence_packets", "proof_store_entries"]
+                piece_ids
+                or [
+                    "proof_agenda",
+                    "proof_tactician_plans",
+                    "proof_evidence_packets",
+                    "proof_store_entries",
+                ]
             )
             if str(piece_id).strip()
         }
-        agenda = self._packager.load_package_piece(self.manifest_path, "proof_agenda") if "proof_agenda" in requested else []
-        plans = self._packager.load_package_piece(self.manifest_path, "proof_tactician_plans") if "proof_tactician_plans" in requested else []
-        triggers = self._packager.load_package_piece(self.manifest_path, "deontic_trigger_entries") if "deontic_trigger_entries" in requested else []
-        proof_packets = self._packager.load_package_piece(self.manifest_path, "proof_evidence_packets") if "proof_evidence_packets" in requested else []
-        proof_store_rows = self._packager.load_package_piece(self.manifest_path, "proof_store_entries") if "proof_store_entries" in requested else []
+        agenda = (
+            self._packager.load_package_piece(self.manifest_path, "proof_agenda")
+            if "proof_agenda" in requested
+            else []
+        )
+        plans = (
+            self._packager.load_package_piece(self.manifest_path, "proof_tactician_plans")
+            if "proof_tactician_plans" in requested
+            else []
+        )
+        triggers = (
+            self._packager.load_package_piece(self.manifest_path, "deontic_trigger_entries")
+            if "deontic_trigger_entries" in requested
+            else []
+        )
+        proof_packets = (
+            self._packager.load_package_piece(self.manifest_path, "proof_evidence_packets")
+            if "proof_evidence_packets" in requested
+            else []
+        )
+        proof_store_rows = (
+            self._packager.load_package_piece(self.manifest_path, "proof_store_entries")
+            if "proof_store_entries" in requested
+            else []
+        )
         query_terms = {term for term in str(query or "").lower().split() if term}
         scored: List[Dict[str, Any]] = []
         plan_map = {str(item.get("work_item_id") or ""): dict(item) for item in plans}
@@ -2258,10 +2690,12 @@ class PackagedDocketQueryAdapter:
                     "party": item.get("party"),
                     "action": item.get("action"),
                     "modality": item.get("modality"),
-                    "score": (
-                        overlap / max(1, len(query_terms))
-                    ) + (
-                        0.2 * _proof_revalidation_priority_rank(str(item.get("proof_revalidation_priority") or ""))
+                    "score": (overlap / max(1, len(query_terms)))
+                    + (
+                        0.2
+                        * _proof_revalidation_priority_rank(
+                            str(item.get("proof_revalidation_priority") or "")
+                        )
                     ),
                     "plan": plan_map.get(work_item_id, {}),
                     "source_type": item.get("source_type"),
@@ -2269,14 +2703,19 @@ class PackagedDocketQueryAdapter:
                     "authority_backed": authority_backed,
                     "authority_count": int(trigger.get("authority_count") or 0),
                     "trigger": trigger,
-                    "current_proof_packet_review_required": bool(item.get("current_proof_packet_review_required")),
+                    "current_proof_packet_review_required": bool(
+                        item.get("current_proof_packet_review_required")
+                    ),
                     "current_proof_packet_review_trigger": (
                         self._parse_possible_json(item.get("current_proof_packet_review_trigger"))
                         if not isinstance(item.get("current_proof_packet_review_trigger"), Mapping)
                         else dict(item.get("current_proof_packet_review_trigger") or {})
-                    ) or {},
+                    )
+                    or {},
                     "proof_revalidation_status": str(item.get("proof_revalidation_status") or ""),
-                    "proof_revalidation_priority": str(item.get("proof_revalidation_priority") or ""),
+                    "proof_revalidation_priority": str(
+                        item.get("proof_revalidation_priority") or ""
+                    ),
                     "selection_rationale": (
                         "Work item matches the proof query and is flagged for proof revalidation."
                         if bool(item.get("current_proof_packet_review_required"))
@@ -2301,8 +2740,14 @@ class PackagedDocketQueryAdapter:
                     str(proof_payload.get("title") or ""),
                     str(proof_payload.get("action") or ""),
                     str(proof_payload.get("party") or ""),
-                    " ".join(str(item.get("title") or "") for item in list(evidence_bundle.get("evidence_items") or [])),
-                    " ".join(str(item.get("excerpt") or "") for item in list(evidence_bundle.get("evidence_items") or [])),
+                    " ".join(
+                        str(item.get("title") or "")
+                        for item in list(evidence_bundle.get("evidence_items") or [])
+                    ),
+                    " ".join(
+                        str(item.get("excerpt") or "")
+                        for item in list(evidence_bundle.get("evidence_items") or [])
+                    ),
                 ]
             ).lower()
             overlap = sum(1 for term in query_terms if term in combined)
@@ -2317,7 +2762,9 @@ class PackagedDocketQueryAdapter:
             )
             matched_plan = dict(proof_payload.get("matched_plan") or {})
             is_current = bool(
-                proof_payload.get("is_current", packet_map.get(proof_id, {}).get("is_current", True))
+                proof_payload.get(
+                    "is_current", packet_map.get(proof_id, {}).get("is_current", True)
+                )
             )
             support_strength = str(
                 proof_payload.get("support_strength")
@@ -2344,14 +2791,27 @@ class PackagedDocketQueryAdapter:
                 {
                     "work_item_id": str(proof_payload.get("work_item_id") or ""),
                     "proof_id": proof_id,
-                    "title": proof_payload.get("title") or packet_map.get(proof_id, {}).get("query") or proof_id,
+                    "title": proof_payload.get("title")
+                    or packet_map.get(proof_id, {}).get("query")
+                    or proof_id,
                     "party": proof_payload.get("party"),
                     "action": proof_payload.get("action"),
                     "modality": proof_payload.get("modality"),
                     "score": max(
                         overlap / max(1, len(query_terms)),
-                        0.5 + (0.05 * int(dict(evidence_bundle.get("summary") or {}).get("evidence_item_count") or 0)),
-                    ) + (0.15 if is_current else 0.0) + (0.01 * history_rank),
+                        0.5
+                        + (
+                            0.05
+                            * int(
+                                dict(evidence_bundle.get("summary") or {}).get(
+                                    "evidence_item_count"
+                                )
+                                or 0
+                            )
+                        ),
+                    )
+                    + (0.15 if is_current else 0.0)
+                    + (0.01 * history_rank),
                     "plan": matched_plan,
                     "source_type": "proof_packet",
                     "packet_version": int(
@@ -2366,10 +2826,13 @@ class PackagedDocketQueryAdapter:
                     "preference_history": list(proof_payload.get("preference_history") or []),
                     "is_current": is_current,
                     "superseded": bool(
-                        proof_payload.get("superseded", packet_map.get(proof_id, {}).get("superseded", False))
+                        proof_payload.get(
+                            "superseded", packet_map.get(proof_id, {}).get("superseded", False)
+                        )
                     ),
                     "authority_ids": list(proof_payload.get("authority_ids") or []),
-                    "authority_backed": "authority_list" in supporting_sources or bool(proof_payload.get("authority_ids")),
+                    "authority_backed": "authority_list" in supporting_sources
+                    or bool(proof_payload.get("authority_ids")),
                     "authority_count": len(list(proof_payload.get("authority_ids") or [])),
                     "trigger": {
                         "proof_id": proof_id,
@@ -2392,7 +2855,9 @@ class PackagedDocketQueryAdapter:
             )
         scored.sort(
             key=lambda item: (
-                _proof_revalidation_priority_rank(str(item.get("proof_revalidation_priority") or "")),
+                _proof_revalidation_priority_rank(
+                    str(item.get("proof_revalidation_priority") or "")
+                ),
                 float(item.get("score") or 0.0),
                 int(item.get("history_quality") or 0),
                 _support_strength_rank(str(item.get("support_strength") or "")),
@@ -2410,7 +2875,6 @@ class PackagedDocketQueryAdapter:
             "source": "packaged_proof_agenda",
         }
 
-
     def search_logic_artifacts(
         self,
         query: str,
@@ -2420,12 +2884,26 @@ class PackagedDocketQueryAdapter:
     ) -> Dict[str, Any]:
         requested = {
             str(piece_id)
-            for piece_id in list(piece_ids or ["temporal_formulas", "dcec_formulas", "frame_logic_frames"])
+            for piece_id in list(
+                piece_ids or ["temporal_formulas", "dcec_formulas", "frame_logic_frames"]
+            )
             if str(piece_id).strip()
         }
-        temporal_rows = self._packager.load_package_piece(self.manifest_path, "temporal_formulas") if "temporal_formulas" in requested else []
-        dcec_rows = self._packager.load_package_piece(self.manifest_path, "dcec_formulas") if "dcec_formulas" in requested else []
-        frame_rows = self._packager.load_package_piece(self.manifest_path, "frame_logic_frames") if "frame_logic_frames" in requested else []
+        temporal_rows = (
+            self._packager.load_package_piece(self.manifest_path, "temporal_formulas")
+            if "temporal_formulas" in requested
+            else []
+        )
+        dcec_rows = (
+            self._packager.load_package_piece(self.manifest_path, "dcec_formulas")
+            if "dcec_formulas" in requested
+            else []
+        )
+        frame_rows = (
+            self._packager.load_package_piece(self.manifest_path, "frame_logic_frames")
+            if "frame_logic_frames" in requested
+            else []
+        )
         query_terms = {term for term in str(query or "").lower().split() if term}
         scored: List[Dict[str, Any]] = []
 
@@ -2473,7 +2951,9 @@ class PackagedDocketQueryAdapter:
                 [
                     frame_id,
                     label,
-                    json.dumps(slots, sort_keys=True) if isinstance(slots, (dict, list)) else str(slots or ""),
+                    json.dumps(slots, sort_keys=True)
+                    if isinstance(slots, (dict, list))
+                    else str(slots or ""),
                     str(row.get("ergo") or ""),
                 ]
             ).lower()
@@ -2492,7 +2972,10 @@ class PackagedDocketQueryAdapter:
             )
 
         scored.sort(
-            key=lambda item: (float(item.get("score") or 0.0), item.get("artifact_type") == "temporal_formula"),
+            key=lambda item: (
+                float(item.get("score") or 0.0),
+                item.get("artifact_type") == "temporal_formula",
+            ),
             reverse=True,
         )
         results = scored[:top_k]
@@ -2581,7 +3064,10 @@ class PackagedDocketQueryAdapter:
             return {
                 "query": query,
                 "top_k": top_k,
-                "results": [{"piece_id": piece_id, "rows": rows_for_piece[:top_k]} for piece_id, rows_for_piece in rows.items()],
+                "results": [
+                    {"piece_id": piece_id, "rows": rows_for_piece[:top_k]}
+                    for piece_id, rows_for_piece in rows.items()
+                ],
                 "result_count": len(rows),
                 "source": "packaged_metadata",
             }
@@ -2619,8 +3105,14 @@ class PackagedDocketQueryAdapter:
 
         base_source = str(base.get("source") or "")
         incoming_source = str(incoming.get("source") or "")
-        merged["source"] = incoming_source if not base_source else (
-            base_source if incoming_source == base_source else f"{base_source}+{incoming_source}"
+        merged["source"] = (
+            incoming_source
+            if not base_source
+            else (
+                base_source
+                if incoming_source == base_source
+                else f"{base_source}+{incoming_source}"
+            )
         )
         return merged
 
@@ -2634,7 +3126,10 @@ class PackagedDocketQueryAdapter:
         top_k: int,
     ) -> List[Dict[str, Any]]:
         merge_mode = str((stage_policy or {}).get("merge_mode") or "")
-        if target in {"bm25_search", "vector_search", "proof_tasks"} or merge_mode in {"by_document", "by_work_item"}:
+        if target in {"bm25_search", "vector_search", "proof_tasks"} or merge_mode in {
+            "by_document",
+            "by_work_item",
+        }:
             key_fields = {
                 "bm25_search": ("id", "document_id", "title"),
                 "vector_search": ("document_id", "title"),
@@ -2680,7 +3175,9 @@ class PackagedDocketQueryAdapter:
                     incoming_rows = list(row.get("rows") or [])
                     if incoming_rows:
                         existing["rows"] = incoming_rows[:top_k]
-                    existing["row_count"] = max(int(existing.get("row_count") or 0), int(row.get("row_count") or 0))
+                    existing["row_count"] = max(
+                        int(existing.get("row_count") or 0), int(row.get("row_count") or 0)
+                    )
                     merged_index[identity] = existing
                 else:
                     merged_index[identity] = row
@@ -2727,7 +3224,10 @@ class PackagedDocketQueryAdapter:
             if source_type in source_priority:
                 source_rank = len(source_priority) - source_priority.index(source_type)
             return (
-                1 if bool(policy.get("prefer_authority_sources")) and bool(row.get("authority_backed")) else 0,
+                1
+                if bool(policy.get("prefer_authority_sources"))
+                and bool(row.get("authority_backed"))
+                else 0,
                 1 if bool(policy.get("prefer_plans")) and bool(row.get("plan")) else 0,
                 int(row.get("history_quality") or 0),
                 _support_strength_rank(str(row.get("support_strength") or "")),
@@ -2741,7 +3241,10 @@ class PackagedDocketQueryAdapter:
             piece_priority = list(policy.get("piece_priority") or [])
             piece_id = str(row.get("piece_id") or "")
             if piece_id in piece_priority:
-                return (len(piece_priority) - piece_priority.index(piece_id), int(row.get("row_count") or len(list(row.get("rows") or []))))
+                return (
+                    len(piece_priority) - piece_priority.index(piece_id),
+                    int(row.get("row_count") or len(list(row.get("rows") or []))),
+                )
             return (0, int(row.get("row_count") or len(list(row.get("rows") or []))))
         return (float(row.get("score") or 0.0),)
 
@@ -2769,7 +3272,9 @@ class PackagedDocketQueryAdapter:
             }
 
         rows = [dict(item) for item in list(result.get("results") or [])]
-        tactician_plans = self._packager.load_package_piece(self.manifest_path, "proof_tactician_plans")
+        tactician_plans = self._packager.load_package_piece(
+            self.manifest_path, "proof_tactician_plans"
+        )
         source_catalog = self._collect_source_catalog(tactician_plans)
         source_catalog.extend(self._collect_proof_packet_source_catalog(plan.query))
         matched_plan_ids = {
@@ -2778,7 +3283,11 @@ class PackagedDocketQueryAdapter:
             if str(row.get("plan", {}).get("plan_id") or "")
         }
         matched_sources = self._collect_source_catalog(
-            [plan_row for plan_row in tactician_plans if str(plan_row.get("plan_id") or "") in matched_plan_ids]
+            [
+                plan_row
+                for plan_row in tactician_plans
+                if str(plan_row.get("plan_id") or "") in matched_plan_ids
+            ]
         )
 
         has_results = bool(rows)
@@ -2788,23 +3297,49 @@ class PackagedDocketQueryAdapter:
         if not enough_hits:
             enough_hits = any(
                 str(row.get("source_type") or "") == "proof_packet"
-                and int(dict(row.get("evidence_bundle") or {}).get("summary", {}).get("evidence_item_count") or 0) >= 1
+                and int(
+                    dict(row.get("evidence_bundle") or {})
+                    .get("summary", {})
+                    .get("evidence_item_count")
+                    or 0
+                )
+                >= 1
                 for row in rows
             )
 
         should_escalate = not has_results or not authority_backed or not planned or not enough_hits
         if not has_results:
             reason = "No packaged proof results matched the query, so the tactician should expand beyond the local proof agenda."
-            preferred_types = ["proof_packet", "authority_list", "legal_dataset_parser", "search_engine"]
+            preferred_types = [
+                "proof_packet",
+                "authority_list",
+                "legal_dataset_parser",
+                "search_engine",
+            ]
         elif not authority_backed:
             reason = "Packaged proof hits exist but lack authority-backed support, so the next step should consult authorities and parser-backed corpora."
-            preferred_types = ["proof_packet", "authority_list", "legal_dataset_parser", "search_engine"]
+            preferred_types = [
+                "proof_packet",
+                "authority_list",
+                "legal_dataset_parser",
+                "search_engine",
+            ]
         elif not planned:
             reason = "Packaged proof hits exist but do not yet carry tactician support plans, so retrieval should continue through local and parser routes."
-            preferred_types = ["proof_packet", "local_docket_documents", "authority_list", "legal_dataset_parser"]
+            preferred_types = [
+                "proof_packet",
+                "local_docket_documents",
+                "authority_list",
+                "legal_dataset_parser",
+            ]
         elif not enough_hits:
             reason = "Packaged proof hits are too sparse for a confident answer, so retrieval should widen along the tactician route."
-            preferred_types = ["proof_packet", "authority_list", "legal_dataset_parser", "search_engine"]
+            preferred_types = [
+                "proof_packet",
+                "authority_list",
+                "legal_dataset_parser",
+                "search_engine",
+            ]
         else:
             reason = "Packaged proof results include authority-backed items with tactician plans, so escalation is not currently necessary."
             preferred_types = []
@@ -2858,13 +3393,17 @@ class PackagedDocketQueryAdapter:
             "proof_preference_review_trigger": proof_preference_review_trigger,
             "observations": {
                 "result_count": len(rows),
-                "authority_backed_result_count": sum(1 for row in rows if bool(row.get("authority_backed"))),
+                "authority_backed_result_count": sum(
+                    1 for row in rows if bool(row.get("authority_backed"))
+                ),
                 "planned_result_count": sum(1 for row in rows if bool(row.get("plan"))),
                 "stages_executed": len(list(execution_stages or [])),
             },
         }
 
-    def _collect_source_catalog(self, tactician_plans: Sequence[Mapping[str, Any]]) -> List[Dict[str, Any]]:
+    def _collect_source_catalog(
+        self, tactician_plans: Sequence[Mapping[str, Any]]
+    ) -> List[Dict[str, Any]]:
         catalog: Dict[str, Dict[str, Any]] = {}
         for plan in tactician_plans:
             raw_candidates = self._parse_possible_json(plan.get("candidate_sources"))
@@ -2877,7 +3416,9 @@ class PackagedDocketQueryAdapter:
                 if not source_id:
                     continue
                 existing = catalog.get(source_id)
-                if existing is None or int(source.get("priority") or 999) < int(existing.get("priority") or 999):
+                if existing is None or int(source.get("priority") or 999) < int(
+                    existing.get("priority") or 999
+                ):
                     catalog[source_id] = source
         return list(catalog.values())
 
@@ -2899,7 +3440,9 @@ class PackagedDocketQueryAdapter:
                     "source_id": proof_id,
                     "source_type": "proof_packet",
                     "label": str(packet.get("query") or packet.get("bundle_kind") or proof_id),
-                    "priority": (0 if is_current else 10) - _support_strength_rank(support_strength) - history_rank,
+                    "priority": (0 if is_current else 10)
+                    - _support_strength_rank(support_strength)
+                    - history_rank,
                     "rationale": _build_proof_packet_selection_rationale(
                         is_current=is_current,
                         support_strength=support_strength,
@@ -2966,7 +3509,9 @@ class PackagedDocketQueryAdapter:
 
         steps: List[Dict[str, Any]] = []
         for index, source in enumerate(recommended_sources, start=1):
-            query_terms = [plan.query] + [str(item) for item in list(source.get("query_hints") or []) if str(item).strip()]
+            query_terms = [plan.query] + [
+                str(item) for item in list(source.get("query_hints") or []) if str(item).strip()
+            ]
             for hint in query_hints:
                 if hint not in query_terms:
                     query_terms.append(hint)
@@ -2987,14 +3532,30 @@ class PackagedDocketQueryAdapter:
                     "retrieval_query": retrieval_query,
                     "rationale": str(source.get("rationale") or ""),
                     "modules": list((source.get("metadata") or {}).get("modules") or []),
-                    "preferred_corpus_keys": list((source.get("metadata") or {}).get("preferred_corpus_keys") or []),
-                    "preferred_corpus_priority": list((source.get("metadata") or {}).get("preferred_corpus_priority") or []),
-                    "preferred_dataset_ids": list((source.get("metadata") or {}).get("preferred_dataset_ids") or []),
-                    "preferred_dataset_priority": list((source.get("metadata") or {}).get("preferred_dataset_priority") or []),
-                    "preferred_state_codes": list((source.get("metadata") or {}).get("preferred_state_codes") or []),
-                    "routing_evidence": list((source.get("metadata") or {}).get("routing_evidence") or []),
-                    "routing_reason": str((source.get("metadata") or {}).get("routing_reason") or ""),
-                    "authority_backed": bool((source.get("metadata") or {}).get("authority_backed")),
+                    "preferred_corpus_keys": list(
+                        (source.get("metadata") or {}).get("preferred_corpus_keys") or []
+                    ),
+                    "preferred_corpus_priority": list(
+                        (source.get("metadata") or {}).get("preferred_corpus_priority") or []
+                    ),
+                    "preferred_dataset_ids": list(
+                        (source.get("metadata") or {}).get("preferred_dataset_ids") or []
+                    ),
+                    "preferred_dataset_priority": list(
+                        (source.get("metadata") or {}).get("preferred_dataset_priority") or []
+                    ),
+                    "preferred_state_codes": list(
+                        (source.get("metadata") or {}).get("preferred_state_codes") or []
+                    ),
+                    "routing_evidence": list(
+                        (source.get("metadata") or {}).get("routing_evidence") or []
+                    ),
+                    "routing_reason": str(
+                        (source.get("metadata") or {}).get("routing_reason") or ""
+                    ),
+                    "authority_backed": bool(
+                        (source.get("metadata") or {}).get("authority_backed")
+                    ),
                 }
             )
         return {
@@ -3050,7 +3611,9 @@ class PackagedDocketQueryAdapter:
                 "preferred_corpus_keys": list(next_step.get("preferred_corpus_keys") or []),
                 "preferred_corpus_priority": list(next_step.get("preferred_corpus_priority") or []),
                 "preferred_dataset_ids": list(next_step.get("preferred_dataset_ids") or []),
-                "preferred_dataset_priority": list(next_step.get("preferred_dataset_priority") or []),
+                "preferred_dataset_priority": list(
+                    next_step.get("preferred_dataset_priority") or []
+                ),
                 "preferred_state_codes": list(next_step.get("preferred_state_codes") or []),
                 "routing_evidence": list(next_step.get("routing_evidence") or []),
                 "routing_reason": str(next_step.get("routing_reason") or ""),
@@ -3138,7 +3701,9 @@ class PackagedDocketQueryAdapter:
                     "packet_version": int(row.get("packet_version") or 0),
                     "support_strength": str(row.get("support_strength") or ""),
                     "history_quality": int(row.get("history_quality") or 0),
-                    "action_candidate_history_summary": dict(row.get("action_candidate_history_summary") or {}),
+                    "action_candidate_history_summary": dict(
+                        row.get("action_candidate_history_summary") or {}
+                    ),
                     "packet_preference_summary": dict(row.get("packet_preference_summary") or {}),
                     "is_current": bool(row.get("is_current")),
                     "selection_rationale": str(row.get("selection_rationale") or ""),
@@ -3166,7 +3731,9 @@ class PackagedDocketQueryAdapter:
             candidates.append(
                 {
                     "candidate_type": "proof_packet",
-                    "action_type": "reuse_current_packet" if bool(packet.get("is_current")) else "refresh_local_support",
+                    "action_type": "reuse_current_packet"
+                    if bool(packet.get("is_current"))
+                    else "refresh_local_support",
                     "source_type": "proof_packet",
                     "source_id": proof_id,
                     "label": str(packet.get("title") or proof_id),
@@ -3174,13 +3741,17 @@ class PackagedDocketQueryAdapter:
                     "support_strength": str(packet.get("support_strength") or ""),
                     "priority": 0 if bool(packet.get("is_current")) else 1,
                     "selection_rationale": str(packet.get("selection_rationale") or ""),
-                    "packet_preference_summary": dict(packet.get("packet_preference_summary") or {}),
+                    "packet_preference_summary": dict(
+                        packet.get("packet_preference_summary") or {}
+                    ),
                     "execution_hint": {
                         "job_kind": "proof_retrieval_follow_up",
                         "step_index": 1,
                         "source_id": proof_id,
                         "source_type": "proof_packet",
-                        "action_type": "reuse_current_packet" if bool(packet.get("is_current")) else "refresh_local_support",
+                        "action_type": "reuse_current_packet"
+                        if bool(packet.get("is_current"))
+                        else "refresh_local_support",
                         "label": str(packet.get("title") or proof_id),
                         "retrieval_query": query,
                         "modules": [],
@@ -3217,9 +3788,13 @@ class PackagedDocketQueryAdapter:
                         "retrieval_query": str(step.get("retrieval_query") or ""),
                         "modules": list(step.get("modules") or []),
                         "preferred_corpus_keys": list(step.get("preferred_corpus_keys") or []),
-                        "preferred_corpus_priority": list(step.get("preferred_corpus_priority") or []),
+                        "preferred_corpus_priority": list(
+                            step.get("preferred_corpus_priority") or []
+                        ),
                         "preferred_dataset_ids": list(step.get("preferred_dataset_ids") or []),
-                        "preferred_dataset_priority": list(step.get("preferred_dataset_priority") or []),
+                        "preferred_dataset_priority": list(
+                            step.get("preferred_dataset_priority") or []
+                        ),
                         "preferred_state_codes": list(step.get("preferred_state_codes") or []),
                         "routing_evidence": list(step.get("routing_evidence") or []),
                         "routing_reason": str(step.get("routing_reason") or ""),
@@ -3253,15 +3828,23 @@ class PackagedDocketQueryAdapter:
         stages: Optional[Sequence[Mapping[str, Any]]] = None,
     ) -> PackagedQueryExecutionPlan:
         cost_map = self._piece_cost_map(manifest)
-        selected_piece_costs = {piece_id: int(cost_map.get(piece_id) or 1000) for piece_id in piece_ids}
+        selected_piece_costs = {
+            piece_id: int(cost_map.get(piece_id) or 1000) for piece_id in piece_ids
+        }
         normalized_stages: List[Dict[str, Any]] = []
         for index, stage in enumerate(list(stages or []), start=1):
-            stage_piece_ids = [str(piece_id) for piece_id in list(stage.get("piece_ids") or []) if str(piece_id).strip()]
+            stage_piece_ids = [
+                str(piece_id)
+                for piece_id in list(stage.get("piece_ids") or [])
+                if str(piece_id).strip()
+            ]
             normalized_stages.append(
                 {
                     "name": str(stage.get("name") or f"stage_{index}"),
                     "piece_ids": stage_piece_ids,
-                    "estimated_cost": sum(int(cost_map.get(piece_id) or 1000) for piece_id in stage_piece_ids),
+                    "estimated_cost": sum(
+                        int(cost_map.get(piece_id) or 1000) for piece_id in stage_piece_ids
+                    ),
                     "purpose": str(stage.get("purpose") or ""),
                     "continue_on_success": bool(stage.get("continue_on_success")),
                     "result_policy": _jsonable(stage.get("result_policy") or {}),
@@ -3308,7 +3891,11 @@ def export_docket_dataset_single_parquet(
     """Export a docket dataset into a single parquet file with section-tagged rows."""
 
     dataset_payload = dataset.to_dict() if hasattr(dataset, "to_dict") else dict(dataset)
-    documents = [dict(item) for item in list(dataset_payload.get("documents") or []) if isinstance(item, dict)]
+    documents = [
+        dict(item)
+        for item in list(dataset_payload.get("documents") or [])
+        if isinstance(item, dict)
+    ]
     attachments = _extract_document_attachments(documents)
     filings = _extract_preferred_filing_records(documents)
     acquisition_queue = _build_filing_acquisition_queue(filings)
@@ -3316,8 +3903,16 @@ def export_docket_dataset_single_parquet(
     deontic_graph = dict(dataset_payload.get("deontic_graph") or {})
     deontic_triggers = dict(dataset_payload.get("deontic_triggers") or {})
     proof_assistant = dict(dataset_payload.get("proof_assistant") or {})
-    bm25_documents = [dict(item) for item in list((dataset_payload.get("bm25_index") or {}).get("documents") or []) if isinstance(item, dict)]
-    vector_items = [dict(item) for item in list((dataset_payload.get("vector_index") or {}).get("items") or []) if isinstance(item, dict)]
+    bm25_documents = [
+        dict(item)
+        for item in list((dataset_payload.get("bm25_index") or {}).get("documents") or [])
+        if isinstance(item, dict)
+    ]
+    vector_items = [
+        dict(item)
+        for item in list((dataset_payload.get("vector_index") or {}).get("items") or [])
+        if isinstance(item, dict)
+    ]
 
     section_map: List[tuple[str, List[Dict[str, Any]]]] = [
         (
@@ -3342,17 +3937,86 @@ def export_docket_dataset_single_parquet(
         ("attachments", attachments),
         ("filings", filings),
         ("acquisition_queue", acquisition_queue),
-        ("plaintiff_docket", [dict(item) for item in list(dataset_payload.get("plaintiff_docket") or []) if isinstance(item, dict)]),
-        ("defendant_docket", [dict(item) for item in list(dataset_payload.get("defendant_docket") or []) if isinstance(item, dict)]),
-        ("authorities", [dict(item) for item in list(dataset_payload.get("authorities") or []) if isinstance(item, dict)]),
-        ("knowledge_graph_entities", [dict(item) for item in list(knowledge_graph.get("entities") or []) if isinstance(item, dict)]),
-        ("knowledge_graph_relationships", [dict(item) for item in list(knowledge_graph.get("relationships") or []) if isinstance(item, dict)]),
-        ("deontic_nodes", _flatten_mapping_rows(dict(deontic_graph.get("nodes") or {}), row_id_field="node_id")),
-        ("deontic_rules", _flatten_mapping_rows(dict(deontic_graph.get("rules") or {}), row_id_field="rule_id")),
-        ("deontic_trigger_entries", [dict(item) for item in list(deontic_triggers.get("entries") or []) if isinstance(item, dict)]),
-        ("proof_agenda", [dict(item) for item in list(proof_assistant.get("agenda") or []) if isinstance(item, dict)]),
-        ("proof_evidence_packets", [dict(item) for item in list(proof_assistant.get("evidence_packets") or []) if isinstance(item, dict)]),
-        ("proof_revalidation_runs", [dict(item) for item in list(proof_assistant.get("revalidation_runs") or []) if isinstance(item, dict)]),
+        (
+            "plaintiff_docket",
+            [
+                dict(item)
+                for item in list(dataset_payload.get("plaintiff_docket") or [])
+                if isinstance(item, dict)
+            ],
+        ),
+        (
+            "defendant_docket",
+            [
+                dict(item)
+                for item in list(dataset_payload.get("defendant_docket") or [])
+                if isinstance(item, dict)
+            ],
+        ),
+        (
+            "authorities",
+            [
+                dict(item)
+                for item in list(dataset_payload.get("authorities") or [])
+                if isinstance(item, dict)
+            ],
+        ),
+        (
+            "knowledge_graph_entities",
+            [
+                dict(item)
+                for item in list(knowledge_graph.get("entities") or [])
+                if isinstance(item, dict)
+            ],
+        ),
+        (
+            "knowledge_graph_relationships",
+            [
+                dict(item)
+                for item in list(knowledge_graph.get("relationships") or [])
+                if isinstance(item, dict)
+            ],
+        ),
+        (
+            "deontic_nodes",
+            _flatten_mapping_rows(dict(deontic_graph.get("nodes") or {}), row_id_field="node_id"),
+        ),
+        (
+            "deontic_rules",
+            _flatten_mapping_rows(dict(deontic_graph.get("rules") or {}), row_id_field="rule_id"),
+        ),
+        (
+            "deontic_trigger_entries",
+            [
+                dict(item)
+                for item in list(deontic_triggers.get("entries") or [])
+                if isinstance(item, dict)
+            ],
+        ),
+        (
+            "proof_agenda",
+            [
+                dict(item)
+                for item in list(proof_assistant.get("agenda") or [])
+                if isinstance(item, dict)
+            ],
+        ),
+        (
+            "proof_evidence_packets",
+            [
+                dict(item)
+                for item in list(proof_assistant.get("evidence_packets") or [])
+                if isinstance(item, dict)
+            ],
+        ),
+        (
+            "proof_revalidation_runs",
+            [
+                dict(item)
+                for item in list(proof_assistant.get("revalidation_runs") or [])
+                if isinstance(item, dict)
+            ],
+        ),
         ("bm25_documents", bm25_documents),
         ("vector_items", vector_items),
     ]
@@ -3385,9 +4049,16 @@ def export_docket_dataset_single_parquet(
                         or payload.get("rule_id")
                         or f"{section}_{index}"
                     ),
-                    "title": str(payload.get("title") or payload.get("label") or payload.get("case_name") or ""),
+                    "title": str(
+                        payload.get("title")
+                        or payload.get("label")
+                        or payload.get("case_name")
+                        or ""
+                    ),
                     "document_number": str(payload.get("document_number") or ""),
-                    "source_url": str(payload.get("source_url") or payload.get("path_or_url") or ""),
+                    "source_url": str(
+                        payload.get("source_url") or payload.get("path_or_url") or ""
+                    ),
                     "text": str(payload.get("text") or ""),
                     "payload_json": json.dumps(_jsonable(payload), sort_keys=True),
                 }
@@ -3401,10 +4072,7 @@ def export_docket_dataset_single_parquet(
         "row_count": int(write_meta["row_count"]),
         "schema": list(write_meta["schema"]),
         "sha256": _digest_file(output_path),
-        "section_counts": {
-            section: len(rows)
-            for section, rows in section_map
-        },
+        "section_counts": {section: len(rows) for section, rows in section_map},
     }
 
 
@@ -3497,11 +4165,17 @@ def export_packaged_docket_hf_records_parquet(
         if str(piece.get("piece_id") or "")
     ]
     for piece_id in ordered_piece_ids:
-        rows = [dict(row) for row in list(rows_by_piece.get(piece_id) or []) if isinstance(row, Mapping)]
+        rows = [
+            dict(row) for row in list(rows_by_piece.get(piece_id) or []) if isinstance(row, Mapping)
+        ]
         section_counts[piece_id] = len(rows)
         for index, row in enumerate(rows, start=1):
             metadata = row.get("metadata")
-            metadata_json = metadata if isinstance(metadata, str) else json.dumps(_jsonable(metadata or {}), sort_keys=True)
+            metadata_json = (
+                metadata
+                if isinstance(metadata, str)
+                else json.dumps(_jsonable(metadata or {}), sort_keys=True)
+            )
             hf_rows.append(
                 {
                     "dataset_id": dataset_id,
@@ -3647,8 +4321,12 @@ def get_packaged_docket_operator_dashboard(
             "attachment_count": int(summary_view.get("attachment_count") or 0),
             "proof_packet_count": int(summary_view.get("proof_packet_count") or 0),
             "proof_store_count": int(summary_view.get("proof_store_count") or 0),
-            "review_required_work_item_count": int(summary_view.get("review_required_work_item_count") or 0),
-            "high_priority_revalidation_count": int(summary_view.get("high_priority_revalidation_count") or 0),
+            "review_required_work_item_count": int(
+                summary_view.get("review_required_work_item_count") or 0
+            ),
+            "high_priority_revalidation_count": int(
+                summary_view.get("high_priority_revalidation_count") or 0
+            ),
             "revalidation_run_count": int(summary_view.get("revalidation_run_count") or 0),
         },
         "source": "packaged_operator_dashboard",
@@ -3673,7 +4351,9 @@ def render_packaged_docket_operator_dashboard(
 
     summary = dict(dashboard.get("summary") or {})
     inspection = dict(dashboard.get("inspection") or {})
-    latest_run = dict((dict(dashboard.get("proof_revalidation_snapshot") or {})).get("latest_run_summary") or {})
+    latest_run = dict(
+        (dict(dashboard.get("proof_revalidation_snapshot") or {})).get("latest_run_summary") or {}
+    )
     lines = [
         "Packaged Docket Operator Dashboard",
         f"Dataset ID: {str(dashboard.get('dataset_id') or '')}",
@@ -3775,8 +4455,12 @@ def get_packaged_docket_proof_revalidation_queue(
     """Return proof-assistant work items that currently need revalidation."""
 
     package_view = load_packaged_docket_dataset(manifest_path)
-    agenda = _sort_proof_agenda_items((package_view.get("proof_assistant") or {}).get("agenda") or [])
-    proof_store = dict(((package_view.get("proof_assistant") or {}).get("proof_store") or {}).get("proofs") or {})
+    agenda = _sort_proof_agenda_items(
+        (package_view.get("proof_assistant") or {}).get("agenda") or []
+    )
+    proof_store = dict(
+        ((package_view.get("proof_assistant") or {}).get("proof_store") or {}).get("proofs") or {}
+    )
     minimum_rank = _proof_revalidation_priority_rank(min_priority)
     queue_items: List[Dict[str, Any]] = []
 
@@ -3814,7 +4498,9 @@ def get_packaged_docket_proof_revalidation_queue(
                 "action_type": str(next_action.get("action_type") or ""),
                 "source_type": str(next_action.get("source_type") or ""),
                 "source_id": str(next_action.get("source_id") or ""),
-                "selection_rationale": str(next_action.get("selection_rationale") or next_action.get("reason") or ""),
+                "selection_rationale": str(
+                    next_action.get("selection_rationale") or next_action.get("reason") or ""
+                ),
                 "execution_hint": dict(next_action.get("execution_hint") or {}),
                 "support_strength": str(next_action.get("support_strength") or ""),
             }
@@ -3828,8 +4514,12 @@ def get_packaged_docket_proof_revalidation_queue(
                 continue
             if str(action_candidate.get("source_type") or "") == "proof_packet":
                 continue
-            candidate_summary = dict((dict(execution or {}).get("candidate_execution_summary") or {}))
-            successful_summary = dict((dict(execution or {}).get("successful_action_summary") or {}))
+            candidate_summary = dict(
+                (dict(execution or {}).get("candidate_execution_summary") or {})
+            )
+            successful_summary = dict(
+                (dict(execution or {}).get("successful_action_summary") or {})
+            )
             terminal_source_type = str(
                 successful_summary.get("source_type")
                 or candidate_summary.get("terminal_source_type")
@@ -3846,7 +4536,9 @@ def get_packaged_docket_proof_revalidation_queue(
                     (
                         _support_strength_priority(terminal_support_strength),
                         1 if terminal_source_type == "legal_dataset_parser" else 0,
-                        1 if str(action_candidate.get("source_type") or "") == "legal_dataset_parser" else 0,
+                        1
+                        if str(action_candidate.get("source_type") or "") == "legal_dataset_parser"
+                        else 0,
                     ),
                     action_candidate,
                 )
@@ -3871,7 +4563,9 @@ def get_packaged_docket_proof_revalidation_queue(
             "modality": str(item.get("modality") or ""),
             "current_proof_packet_id": str(item.get("current_proof_packet_id") or ""),
             "current_proof_packet_version": int(item.get("current_proof_packet_version") or 0),
-            "current_proof_packet_support_strength": str(item.get("current_proof_packet_support_strength") or ""),
+            "current_proof_packet_support_strength": str(
+                item.get("current_proof_packet_support_strength") or ""
+            ),
             "proof_revalidation_status": str(item.get("proof_revalidation_status") or ""),
             "proof_revalidation_priority": priority,
             "current_proof_packet_review_required": True,
@@ -3887,13 +4581,17 @@ def get_packaged_docket_proof_revalidation_queue(
             "revalidation_query": queue_query,
         }
         if include_execution_hints and queue_query:
-            proof_payload = dict(proof_store.get(str(item.get("current_proof_packet_id") or "")) or {})
+            proof_payload = dict(
+                proof_store.get(str(item.get("current_proof_packet_id") or "")) or {}
+            )
             query_result = execute_packaged_docket_query(
                 manifest_path,
                 queue_query,
                 top_k=action_top_k,
             )
-            recommended_action = _select_revalidation_action(query_result, queue_query, proof_payload)
+            recommended_action = _select_revalidation_action(
+                query_result, queue_query, proof_payload
+            )
             queue_entry["recommended_revalidation_action"] = recommended_action
             queue_entry["recommended_revalidation_execution_hint"] = dict(
                 recommended_action.get("execution_hint") or {}
@@ -3913,7 +4611,8 @@ def get_packaged_docket_proof_revalidation_queue(
         "high_priority_revalidation_count": sum(
             1
             for item in queue_items
-            if _proof_revalidation_priority_rank(str(item.get("proof_revalidation_priority") or "")) >= 3
+            if _proof_revalidation_priority_rank(str(item.get("proof_revalidation_priority") or ""))
+            >= 3
         ),
         "min_priority": str(min_priority or ""),
         "execution_hints_included": bool(include_execution_hints),
@@ -3946,9 +4645,14 @@ def get_packaged_docket_proof_revalidation_runs(
         filtered_rows = [
             row
             for row in filtered_rows
-            if target in {
+            if target
+            in {
                 str(row.get("best_work_item_id") or ""),
-                *[str(item) for item in list(row.get("refreshed_work_item_ids") or []) if str(item).strip()],
+                *[
+                    str(item)
+                    for item in list(row.get("refreshed_work_item_ids") or [])
+                    if str(item).strip()
+                ],
             }
         ]
     filtered_rows.sort(
@@ -4005,8 +4709,12 @@ def get_packaged_docket_proof_revalidation_snapshot(
         "queue": queue,
         "runs": runs,
         "current_status": {
-            "review_required_work_item_count": int((dict(queue.get("summary") or {})).get("total_review_required_work_item_count") or 0),
-            "high_priority_revalidation_count": int((dict(queue.get("summary") or {})).get("high_priority_revalidation_count") or 0),
+            "review_required_work_item_count": int(
+                (dict(queue.get("summary") or {})).get("total_review_required_work_item_count") or 0
+            ),
+            "high_priority_revalidation_count": int(
+                (dict(queue.get("summary") or {})).get("high_priority_revalidation_count") or 0
+            ),
             "queue_count": int(queue.get("result_count") or 0),
             "has_pending_revalidation": bool(queue.get("result_count")),
             "latest_run_available": bool(latest_run),
@@ -4015,14 +4723,25 @@ def get_packaged_docket_proof_revalidation_snapshot(
             "run_id": str(latest_run.get("run_id") or ""),
             "best_work_item_id": str(latest_run.get("best_work_item_id") or ""),
             "best_terminal_source_type": str(latest_run.get("best_terminal_source_type") or ""),
-            "best_terminal_support_strength": str(latest_run.get("best_terminal_support_strength") or ""),
+            "best_terminal_support_strength": str(
+                latest_run.get("best_terminal_support_strength") or ""
+            ),
             "attached_packet_count": int(latest_run.get("attached_packet_count") or 0),
         },
         "next_queue_item_summary": {
             "work_item_id": str(latest_queue_item.get("work_item_id") or ""),
-            "proof_revalidation_priority": str(latest_queue_item.get("proof_revalidation_priority") or ""),
-            "proof_revalidation_status": str(latest_queue_item.get("proof_revalidation_status") or ""),
-            "recommended_source_type": str((dict(latest_queue_item.get("recommended_revalidation_action") or {})).get("source_type") or ""),
+            "proof_revalidation_priority": str(
+                latest_queue_item.get("proof_revalidation_priority") or ""
+            ),
+            "proof_revalidation_status": str(
+                latest_queue_item.get("proof_revalidation_status") or ""
+            ),
+            "recommended_source_type": str(
+                (dict(latest_queue_item.get("recommended_revalidation_action") or {})).get(
+                    "source_type"
+                )
+                or ""
+            ),
         },
         "source": "packaged_proof_revalidation_snapshot",
     }
@@ -4073,7 +4792,9 @@ def execute_packaged_docket_proof_revalidation_queue(
     queue_items = [dict(item) for item in list(queue.get("results") or [])]
     if queue_limit is not None:
         queue_items = queue_items[: max(0, int(queue_limit))]
-    attached_package_view = load_packaged_docket_dataset(manifest_path) if attach_refreshed_packets else {}
+    attached_package_view = (
+        load_packaged_docket_dataset(manifest_path) if attach_refreshed_packets else {}
+    )
     attached_packets: List[Dict[str, Any]] = []
     attachment_summaries: List[Dict[str, Any]] = []
     executions: List[Dict[str, Any]] = []
@@ -4112,7 +4833,9 @@ def execute_packaged_docket_proof_revalidation_queue(
                 force_new_packet=bool(item.get("current_proof_packet_review_required")),
             )
             attached_package_view = refreshed_packet_view
-            attached_packet = dict(refreshed_packet_view.get("attached_proof_assistant_packet") or {})
+            attached_packet = dict(
+                refreshed_packet_view.get("attached_proof_assistant_packet") or {}
+            )
             refresh_summary = dict(refreshed_packet_view.get("proof_packet_refresh") or {})
             attached_packets.append(attached_packet)
             attachment_summaries.append(
@@ -4122,7 +4845,9 @@ def execute_packaged_docket_proof_revalidation_queue(
                     "packet_version": int(attached_packet.get("packet_version") or 0),
                     "support_strength": str(attached_packet.get("support_strength") or ""),
                     "refresh_decision": str(refresh_summary.get("decision") or ""),
-                    "material_change_detected": bool(refresh_summary.get("material_change_detected")),
+                    "material_change_detected": bool(
+                        refresh_summary.get("material_change_detected")
+                    ),
                 }
             )
         executions.append(execution)
@@ -4133,7 +4858,9 @@ def execute_packaged_docket_proof_revalidation_queue(
                 "proof_revalidation_priority": str(item.get("proof_revalidation_priority") or ""),
                 "executed": bool(execution.get("executed")),
                 "resolution_status": str(
-                    (dict(execution.get("candidate_execution_summary") or {})).get("resolution_status")
+                    (dict(execution.get("candidate_execution_summary") or {})).get(
+                        "resolution_status"
+                    )
                     or ("not_executed" if not bool(execution.get("executed")) else "direct")
                 ),
                 "terminal_source_type": str(successful_summary.get("source_type") or ""),
@@ -4209,14 +4936,22 @@ def persist_packaged_docket_proof_revalidation_queue(
         }
     proof_assistant = dict(attached_view.get("proof_assistant") or {})
     run_record = _build_proof_revalidation_run_record(execution)
-    existing_runs = [dict(item) for item in list(proof_assistant.get("revalidation_runs") or []) if isinstance(item, Mapping)]
+    existing_runs = [
+        dict(item)
+        for item in list(proof_assistant.get("revalidation_runs") or [])
+        if isinstance(item, Mapping)
+    ]
     existing_runs.append(run_record)
     proof_assistant["revalidation_runs"] = existing_runs
     proof_summary = dict(proof_assistant.get("summary") or {})
     proof_summary["revalidation_run_count"] = len(existing_runs)
     proof_summary["latest_revalidation_run_id"] = str(run_record.get("run_id") or "")
-    proof_summary["latest_revalidation_attached_packet_count"] = int(run_record.get("attached_packet_count") or 0)
-    proof_summary["latest_revalidation_refreshed_work_item_count"] = len(list(run_record.get("refreshed_work_item_ids") or []))
+    proof_summary["latest_revalidation_attached_packet_count"] = int(
+        run_record.get("attached_packet_count") or 0
+    )
+    proof_summary["latest_revalidation_refreshed_work_item_count"] = len(
+        list(run_record.get("refreshed_work_item_ids") or [])
+    )
     proof_assistant["summary"] = proof_summary
     proof_metadata = dict(proof_assistant.get("metadata") or {})
     proof_metadata["latest_revalidation_run"] = run_record
@@ -4296,9 +5031,15 @@ def execute_packaged_docket_query(
             execution_stages=result["execution_stages"],
             top_k=top_k,
         )
-        result["proof_preference_summary"] = dict((result.get("escalation") or {}).get("proof_preference_summary") or {})
-        result["proof_preference_history_summary"] = dict((result.get("escalation") or {}).get("proof_preference_history_summary") or {})
-        result["proof_preference_review_trigger"] = dict((result.get("escalation") or {}).get("proof_preference_review_trigger") or {})
+        result["proof_preference_summary"] = dict(
+            (result.get("escalation") or {}).get("proof_preference_summary") or {}
+        )
+        result["proof_preference_history_summary"] = dict(
+            (result.get("escalation") or {}).get("proof_preference_history_summary") or {}
+        )
+        result["proof_preference_review_trigger"] = dict(
+            (result.get("escalation") or {}).get("proof_preference_review_trigger") or {}
+        )
         if include_action_candidate_comparison:
             result = _attach_action_candidate_comparison(
                 manifest_path,
@@ -4309,9 +5050,15 @@ def execute_packaged_docket_query(
             )
         return result
     result = adapter.execute_plan(plan, top_k=top_k)
-    result["proof_preference_summary"] = dict((result.get("escalation") or {}).get("proof_preference_summary") or {})
-    result["proof_preference_history_summary"] = dict((result.get("escalation") or {}).get("proof_preference_history_summary") or {})
-    result["proof_preference_review_trigger"] = dict((result.get("escalation") or {}).get("proof_preference_review_trigger") or {})
+    result["proof_preference_summary"] = dict(
+        (result.get("escalation") or {}).get("proof_preference_summary") or {}
+    )
+    result["proof_preference_history_summary"] = dict(
+        (result.get("escalation") or {}).get("proof_preference_history_summary") or {}
+    )
+    result["proof_preference_review_trigger"] = dict(
+        (result.get("escalation") or {}).get("proof_preference_review_trigger") or {}
+    )
     if include_action_candidate_comparison:
         result = _attach_action_candidate_comparison(
             manifest_path,
@@ -4355,9 +5102,13 @@ def prepare_packaged_docket_follow_up_job(
                     "retrieval_query": str(reuse_step.get("retrieval_query") or query),
                     "modules": list(reuse_step.get("modules") or []),
                     "preferred_corpus_keys": list(reuse_step.get("preferred_corpus_keys") or []),
-                    "preferred_corpus_priority": list(reuse_step.get("preferred_corpus_priority") or []),
+                    "preferred_corpus_priority": list(
+                        reuse_step.get("preferred_corpus_priority") or []
+                    ),
                     "preferred_dataset_ids": list(reuse_step.get("preferred_dataset_ids") or []),
-                    "preferred_dataset_priority": list(reuse_step.get("preferred_dataset_priority") or []),
+                    "preferred_dataset_priority": list(
+                        reuse_step.get("preferred_dataset_priority") or []
+                    ),
                     "preferred_state_codes": list(reuse_step.get("preferred_state_codes") or []),
                     "routing_evidence": list(reuse_step.get("routing_evidence") or []),
                     "routing_reason": str(reuse_step.get("routing_reason") or ""),
@@ -4400,7 +5151,9 @@ def prepare_packaged_docket_follow_up_job(
             "preferred_corpus_keys": list(selected_step.get("preferred_corpus_keys") or []),
             "preferred_corpus_priority": list(selected_step.get("preferred_corpus_priority") or []),
             "preferred_dataset_ids": list(selected_step.get("preferred_dataset_ids") or []),
-            "preferred_dataset_priority": list(selected_step.get("preferred_dataset_priority") or []),
+            "preferred_dataset_priority": list(
+                selected_step.get("preferred_dataset_priority") or []
+            ),
             "preferred_state_codes": list(selected_step.get("preferred_state_codes") or []),
             "routing_evidence": list(selected_step.get("routing_evidence") or []),
             "routing_reason": str(selected_step.get("routing_reason") or ""),
@@ -4564,10 +5317,17 @@ def execute_packaged_docket_follow_up_job(
                 matched_row = dict(row)
                 break
         if matched_row is None:
-            packet_ids = {str(item.get("proof_id") or "") for item in packets if str(item.get("proof_id") or "")}
+            packet_ids = {
+                str(item.get("proof_id") or "")
+                for item in packets
+                if str(item.get("proof_id") or "")
+            }
             if source_id and source_id not in packet_ids:
                 rebuilt = load_packaged_docket_dataset(manifest_path)
-                rebuilt_proofs = dict(((rebuilt.get("proof_assistant") or {}).get("proof_store") or {}).get("proofs") or {})
+                rebuilt_proofs = dict(
+                    ((rebuilt.get("proof_assistant") or {}).get("proof_store") or {}).get("proofs")
+                    or {}
+                )
                 rebuilt_payload = dict(rebuilt_proofs.get(source_id) or {})
                 if not rebuilt_payload:
                     return {
@@ -4584,7 +5344,9 @@ def execute_packaged_docket_follow_up_job(
             else:
                 proof_payload = {}
         else:
-            proof_payload = dict(packager._parse_possible_json((matched_row or {}).get("payload_json")) or {})
+            proof_payload = dict(
+                packager._parse_possible_json((matched_row or {}).get("payload_json")) or {}
+            )
         evidence_bundle = dict(proof_payload.get("evidence_bundle") or {})
         evidence_items = [dict(item) for item in list(evidence_bundle.get("evidence_items") or [])]
         return {
@@ -4599,11 +5361,19 @@ def execute_packaged_docket_follow_up_job(
             "proof_packet": {
                 "proof_id": str(proof_payload.get("proof_id") or source_id),
                 "work_item_id": str(proof_payload.get("work_item_id") or ""),
-                "packet_version": int(proof_payload.get("packet_version") or packet_summary.get("packet_version") or 0),
-                "is_current": bool(proof_payload.get("is_current", packet_summary.get("is_current", True))),
-                "superseded": bool(proof_payload.get("superseded", packet_summary.get("superseded", False))),
+                "packet_version": int(
+                    proof_payload.get("packet_version") or packet_summary.get("packet_version") or 0
+                ),
+                "is_current": bool(
+                    proof_payload.get("is_current", packet_summary.get("is_current", True))
+                ),
+                "superseded": bool(
+                    proof_payload.get("superseded", packet_summary.get("superseded", False))
+                ),
                 "superseded_by_proof_id": str(
-                    proof_payload.get("superseded_by_proof_id") or packet_summary.get("superseded_by_proof_id") or ""
+                    proof_payload.get("superseded_by_proof_id")
+                    or packet_summary.get("superseded_by_proof_id")
+                    or ""
                 ),
                 "status": str(proof_payload.get("status") or ""),
                 "matched_plan": dict(proof_payload.get("matched_plan") or {}),
@@ -4725,7 +5495,9 @@ def execute_packaged_docket_next_action(
             "executed": False,
             "action_type": str(summary.get("action_type") or ""),
             "source_type": str(summary.get("source_type") or ""),
-            "reason": str(summary.get("reason") or "No execution hint is available for this next action."),
+            "reason": str(
+                summary.get("reason") or "No execution hint is available for this next action."
+            ),
             "results": [],
             "result_count": 0,
             "next_action_summary": summary,
@@ -4738,15 +5510,28 @@ def execute_packaged_docket_next_action(
             "job_kind": str(execution_hint.get("job_kind") or "proof_retrieval_follow_up"),
             "step_index": int(execution_hint.get("step_index") or summary.get("step_index") or 1),
             "source_id": str(execution_hint.get("source_id") or summary.get("source_id") or ""),
-            "source_type": str(execution_hint.get("source_type") or summary.get("source_type") or ""),
-            "action_type": str(execution_hint.get("action_type") or summary.get("action_type") or ""),
+            "source_type": str(
+                execution_hint.get("source_type") or summary.get("source_type") or ""
+            ),
+            "action_type": str(
+                execution_hint.get("action_type") or summary.get("action_type") or ""
+            ),
             "label": str(execution_hint.get("label") or ""),
-            "retrieval_query": str(execution_hint.get("retrieval_query") or summary.get("retrieval_query") or query or ""),
+            "retrieval_query": str(
+                execution_hint.get("retrieval_query")
+                or summary.get("retrieval_query")
+                or query
+                or ""
+            ),
             "modules": list(execution_hint.get("modules") or []),
             "preferred_corpus_keys": list(execution_hint.get("preferred_corpus_keys") or []),
-            "preferred_corpus_priority": list(execution_hint.get("preferred_corpus_priority") or []),
+            "preferred_corpus_priority": list(
+                execution_hint.get("preferred_corpus_priority") or []
+            ),
             "preferred_dataset_ids": list(execution_hint.get("preferred_dataset_ids") or []),
-            "preferred_dataset_priority": list(execution_hint.get("preferred_dataset_priority") or []),
+            "preferred_dataset_priority": list(
+                execution_hint.get("preferred_dataset_priority") or []
+            ),
             "preferred_state_codes": list(execution_hint.get("preferred_state_codes") or []),
             "routing_evidence": list(execution_hint.get("routing_evidence") or []),
             "routing_reason": str(execution_hint.get("routing_reason") or ""),
@@ -4769,7 +5554,9 @@ def execute_packaged_docket_next_action(
         and query_text
         and not _follow_up_execution_satisfied(execution, top_k=top_k)
     ):
-        start_step_index = max(1, int(summary.get("step_index") or execution_hint.get("step_index") or 1))
+        start_step_index = max(
+            1, int(summary.get("step_index") or execution_hint.get("step_index") or 1)
+        )
         chained = execute_packaged_docket_follow_up_plan(
             manifest_path,
             query_text,
@@ -4817,11 +5604,19 @@ def execute_packaged_docket_action_candidate(
     execution = execute_packaged_docket_next_action(
         manifest_path,
         next_action={
-            "query": str(candidate.get("query") or query or execution_hint.get("retrieval_query") or ""),
-            "action_type": str(candidate.get("action_type") or execution_hint.get("action_type") or ""),
-            "source_type": str(candidate.get("source_type") or execution_hint.get("source_type") or ""),
+            "query": str(
+                candidate.get("query") or query or execution_hint.get("retrieval_query") or ""
+            ),
+            "action_type": str(
+                candidate.get("action_type") or execution_hint.get("action_type") or ""
+            ),
+            "source_type": str(
+                candidate.get("source_type") or execution_hint.get("source_type") or ""
+            ),
             "source_id": str(candidate.get("source_id") or execution_hint.get("source_id") or ""),
-            "reason": str(candidate.get("selection_rationale") or execution_hint.get("rationale") or ""),
+            "reason": str(
+                candidate.get("selection_rationale") or execution_hint.get("rationale") or ""
+            ),
             "retrieval_query": str(execution_hint.get("retrieval_query") or query or ""),
             "execution_hint": execution_hint,
         },
@@ -4870,10 +5665,7 @@ def execute_packaged_docket_action_candidates(
         )
         executions.append(execution)
 
-    comparison_rows = [
-        _build_action_candidate_execution_row(execution)
-        for execution in executions
-    ]
+    comparison_rows = [_build_action_candidate_execution_row(execution) for execution in executions]
     ranked_pairs = sorted(
         list(zip(executions, comparison_rows)),
         key=lambda pair: (
@@ -4883,14 +5675,26 @@ def execute_packaged_docket_action_candidates(
             int(pair[1].get("terminal_result_count") or 0) * -1,
         ),
     )
-    best_execution = dict(ranked_pairs[0][0]) if ranked_pairs and bool(ranked_pairs[0][0].get("executed")) else {}
-    best_summary = dict(ranked_pairs[0][1]) if ranked_pairs and bool(ranked_pairs[0][0].get("executed")) else {}
+    best_execution = (
+        dict(ranked_pairs[0][0])
+        if ranked_pairs and bool(ranked_pairs[0][0].get("executed"))
+        else {}
+    )
+    best_summary = (
+        dict(ranked_pairs[0][1])
+        if ranked_pairs and bool(ranked_pairs[0][0].get("executed"))
+        else {}
+    )
     return {
         "query": query_text,
         "candidate_count": len(candidates),
-        "executed_candidate_count": sum(1 for execution in executions if bool(execution.get("executed"))),
+        "executed_candidate_count": sum(
+            1 for execution in executions if bool(execution.get("executed"))
+        ),
         "chain_until_satisfied": bool(chain_until_satisfied),
-        "comparison_mode": "chain_until_satisfied" if bool(chain_until_satisfied) else "single_step",
+        "comparison_mode": "chain_until_satisfied"
+        if bool(chain_until_satisfied)
+        else "single_step",
         "candidate_executions": executions,
         "candidate_comparison": comparison_rows,
         "best_candidate_execution": best_execution,
@@ -4915,7 +5719,9 @@ def _attach_action_candidate_comparison(
             "candidate_count": 0,
             "executed_candidate_count": 0,
             "chain_until_satisfied": bool(chain_until_satisfied),
-            "comparison_mode": "chain_until_satisfied" if bool(chain_until_satisfied) else "single_step",
+            "comparison_mode": "chain_until_satisfied"
+            if bool(chain_until_satisfied)
+            else "single_step",
             "candidate_executions": [],
             "candidate_comparison": [],
             "best_candidate_execution": {},
@@ -4952,7 +5758,9 @@ def _build_query_proof_preference_summary(
             "query": str(query or ""),
             "preferred_source_type": "proof_packet",
             "preferred_source_id": str(chosen.get("proof_id") or ""),
-            "preferred_action_type": "reuse_current_packet" if bool(chosen.get("is_current", True)) else "refresh_local_support",
+            "preferred_action_type": "reuse_current_packet"
+            if bool(chosen.get("is_current", True))
+            else "refresh_local_support",
             "should_escalate": bool(should_escalate),
             "selection_rationale": str(chosen.get("selection_rationale") or ""),
             "packet_preference_summary": preference_summary,
@@ -4964,7 +5772,9 @@ def _build_query_proof_preference_summary(
         "preferred_source_id": str(next_summary.get("source_id") or ""),
         "preferred_action_type": str(next_summary.get("action_type") or ""),
         "should_escalate": bool(should_escalate),
-        "selection_rationale": str(next_summary.get("selection_rationale") or next_summary.get("reason") or ""),
+        "selection_rationale": str(
+            next_summary.get("selection_rationale") or next_summary.get("reason") or ""
+        ),
         "packet_preference_summary": dict(next_summary.get("packet_preference_summary") or {}),
     }
 
@@ -4995,13 +5805,17 @@ def _build_query_proof_preference_history_summary(
             "preferred_source_type": "proof_packet",
             "preferred_source_id": str(chosen.get("proof_id") or ""),
             "history_count": len(history),
-            "latest_packet_version": int(latest.get("packet_version") or chosen.get("packet_version") or 0),
+            "latest_packet_version": int(
+                latest.get("packet_version") or chosen.get("packet_version") or 0
+            ),
             "has_previous_preference": bool(previous),
             "stable_preference": bool(
                 previous
                 and latest_terminal == previous_terminal
                 and latest_strength == previous_strength
-            ) if previous else True,
+            )
+            if previous
+            else True,
             "changed_since_previous": changed,
             "change_summary": {
                 "changed": changed,
@@ -5045,7 +5859,9 @@ def _build_proof_preference_review_trigger(
     latest_strength = str(change_summary.get("latest_terminal_support_strength") or "")
     previous_strength = str(change_summary.get("previous_terminal_support_strength") or "")
     source_changed = bool(previous_source and latest_source and previous_source != latest_source)
-    strength_changed = bool(previous_strength and latest_strength and previous_strength != latest_strength)
+    strength_changed = bool(
+        previous_strength and latest_strength and previous_strength != latest_strength
+    )
     if source_changed:
         severity = "high"
     elif strength_changed:
@@ -5080,7 +5896,9 @@ def _build_agenda_revalidation_metadata(
     return {
         "current_proof_packet_review_required": review_required,
         "current_proof_packet_review_trigger": trigger,
-        "proof_revalidation_status": "needs_revalidation" if review_required else "current_support_stable",
+        "proof_revalidation_status": "needs_revalidation"
+        if review_required
+        else "current_support_stable",
         "proof_revalidation_priority": severity if review_required else "none",
     }
 
@@ -5122,7 +5940,8 @@ def _count_agenda_revalidation_items(
         "high_priority_revalidation_count": sum(
             1
             for item in rows
-            if _proof_revalidation_priority_rank(str(item.get("proof_revalidation_priority") or "")) >= 3
+            if _proof_revalidation_priority_rank(str(item.get("proof_revalidation_priority") or ""))
+            >= 3
         ),
     }
 
@@ -5131,7 +5950,9 @@ def _build_proof_revalidation_run_record(
     execution: Mapping[str, Any],
 ) -> Dict[str, Any]:
     attached_packets = [dict(item) for item in list(execution.get("attached_packets") or [])]
-    attachment_summaries = [dict(item) for item in list(execution.get("attachment_summaries") or [])]
+    attachment_summaries = [
+        dict(item) for item in list(execution.get("attachment_summaries") or [])
+    ]
     execution_summaries = [dict(item) for item in list(execution.get("execution_summaries") or [])]
     refreshed_work_item_ids = [
         str(item.get("work_item_id") or "")
@@ -5159,7 +5980,9 @@ def _build_proof_revalidation_run_record(
         "refreshed_work_item_ids": refreshed_work_item_ids,
         "superseded_proof_ids": superseded_proof_ids,
         "best_terminal_source_type": str(best_execution_summary.get("terminal_source_type") or ""),
-        "best_terminal_support_strength": str(best_execution_summary.get("terminal_support_strength") or ""),
+        "best_terminal_support_strength": str(
+            best_execution_summary.get("terminal_support_strength") or ""
+        ),
         "best_work_item_id": str(best_execution_summary.get("work_item_id") or ""),
         "attachment_summaries": attachment_summaries,
         "execution_summaries": execution_summaries,
@@ -5194,7 +6017,9 @@ def _build_persisted_action_candidate_history(
             "candidate_count": 1,
             "executed_candidate_count": 1 if bool(execution.get("executed")) else 0,
             "chain_until_satisfied": bool(execution.get("auto_chained")),
-            "comparison_mode": "chain_until_satisfied" if bool(execution.get("auto_chained")) else "single_step",
+            "comparison_mode": "chain_until_satisfied"
+            if bool(execution.get("auto_chained"))
+            else "single_step",
             "candidate_executions": [dict(execution)],
             "candidate_comparison": [summary],
             "best_candidate_execution": dict(execution),
@@ -5232,7 +6057,11 @@ def _normalize_action_candidate_summary(
     history: Mapping[str, Any],
     fallback: Optional[Mapping[str, Any]] = None,
 ) -> Dict[str, Any]:
-    summary = dict(history.get("best_terminal_candidate_summary") or history.get("best_candidate_summary") or {})
+    summary = dict(
+        history.get("best_terminal_candidate_summary")
+        or history.get("best_candidate_summary")
+        or {}
+    )
     if summary:
         return summary
     fallback_summary = dict(fallback or {})
@@ -5251,7 +6080,9 @@ def _normalize_action_candidate_summary(
         "terminal_action_type": str(fallback_summary.get("terminal_action_type") or ""),
         "terminal_source_type": str(fallback_summary.get("best_terminal_source_type") or ""),
         "terminal_source_id": str(fallback_summary.get("terminal_source_id") or ""),
-        "terminal_support_strength": str(fallback_summary.get("best_terminal_support_strength") or ""),
+        "terminal_support_strength": str(
+            fallback_summary.get("best_terminal_support_strength") or ""
+        ),
         "terminal_result_count": int(fallback_summary.get("terminal_result_count") or 0),
         "terminal_reason": str(fallback_summary.get("terminal_reason") or ""),
         "selection_rationale": str(fallback_summary.get("selection_rationale") or ""),
@@ -5275,9 +6106,7 @@ def _build_successful_action_summary(
             or ""
         ),
         "query": str(
-            dict(execution.get("job") or {}).get("retrieval_query")
-            or fallback_query
-            or ""
+            dict(execution.get("job") or {}).get("retrieval_query") or fallback_query or ""
         ),
         "result_count": int(execution.get("result_count") or 0),
         "reason": str(execution.get("reason") or ""),
@@ -5297,9 +6126,10 @@ def _build_candidate_execution_summary(
     terminal_action_type = str(successful_action.get("action_type") or "")
     terminal_source_type = str(successful_action.get("source_type") or "")
     terminal_source_id = str(successful_action.get("source_id") or "")
-    source_matches = (
-        candidate_source_type == terminal_source_type
-        and (not candidate_source_id or not terminal_source_id or candidate_source_id == terminal_source_id)
+    source_matches = candidate_source_type == terminal_source_type and (
+        not candidate_source_id
+        or not terminal_source_id
+        or candidate_source_id == terminal_source_id
     )
     action_matches = candidate_action_type == terminal_action_type
     resolves_directly = bool(source_matches and action_matches)
@@ -5334,11 +6164,21 @@ def _build_action_candidate_execution_row(execution: Mapping[str, Any]) -> Dict[
     summary = dict(execution.get("candidate_execution_summary") or {})
     successful_action = dict(summary.get("successful_action_summary") or {})
     return {
-        "candidate_type": str(summary.get("candidate_type") or candidate.get("candidate_type") or ""),
-        "candidate_action_type": str(summary.get("candidate_action_type") or candidate.get("action_type") or ""),
-        "candidate_source_type": str(summary.get("candidate_source_type") or candidate.get("source_type") or ""),
-        "candidate_source_id": str(summary.get("candidate_source_id") or candidate.get("source_id") or ""),
-        "candidate_support_strength": str(summary.get("candidate_support_strength") or candidate.get("support_strength") or ""),
+        "candidate_type": str(
+            summary.get("candidate_type") or candidate.get("candidate_type") or ""
+        ),
+        "candidate_action_type": str(
+            summary.get("candidate_action_type") or candidate.get("action_type") or ""
+        ),
+        "candidate_source_type": str(
+            summary.get("candidate_source_type") or candidate.get("source_type") or ""
+        ),
+        "candidate_source_id": str(
+            summary.get("candidate_source_id") or candidate.get("source_id") or ""
+        ),
+        "candidate_support_strength": str(
+            summary.get("candidate_support_strength") or candidate.get("support_strength") or ""
+        ),
         "executed": bool(execution.get("executed")),
         "auto_chained": bool(summary.get("auto_chained")),
         "resolution_status": str(summary.get("resolution_status") or ""),
@@ -5394,7 +6234,9 @@ def _support_strength_priority(value: Any) -> int:
 def _classify_execution_support_strength(execution: Mapping[str, Any]) -> str:
     if not bool(execution.get("executed")):
         return "none"
-    if _follow_up_execution_satisfied(execution, top_k=max(1, int(execution.get("result_count") or 1))):
+    if _follow_up_execution_satisfied(
+        execution, top_k=max(1, int(execution.get("result_count") or 1))
+    ):
         source_type = str(execution.get("source_type") or "")
         if source_type in {"legal_dataset_parser", "proof_packet"}:
             return "strong"
@@ -5436,9 +6278,7 @@ def _proof_packet_history_summary(packet_like: Mapping[str, Any]) -> Dict[str, A
         }
     return {
         "comparison_mode": str(
-            packet_like.get("comparison_mode")
-            or metadata_summary.get("comparison_mode")
-            or ""
+            packet_like.get("comparison_mode") or metadata_summary.get("comparison_mode") or ""
         ),
         "candidate_count": int(metadata_summary.get("candidate_count") or 0),
         "executed_candidate_count": int(metadata_summary.get("executed_candidate_count") or 0),
@@ -5465,7 +6305,10 @@ def _proof_packet_history_rank(packet_like: Mapping[str, Any]) -> int:
     rank = _support_strength_rank(str(summary.get("best_terminal_support_strength") or "")) * 10
     if str(summary.get("comparison_mode") or "") == "chain_until_satisfied":
         rank += 3
-    if str(summary.get("best_terminal_source_type") or "") in {"legal_dataset_parser", "proof_packet"}:
+    if str(summary.get("best_terminal_source_type") or "") in {
+        "legal_dataset_parser",
+        "proof_packet",
+    }:
         rank += 2
     if int(summary.get("executed_candidate_count") or 0) > 0:
         rank += 1
@@ -5486,7 +6329,9 @@ def _build_proof_packet_preference_summary(packet_like: Mapping[str, Any]) -> Di
         "comparison_mode": str(history_summary.get("comparison_mode") or ""),
         "best_candidate_source_type": str(history_summary.get("best_candidate_source_type") or ""),
         "best_terminal_source_type": str(history_summary.get("best_terminal_source_type") or ""),
-        "best_terminal_support_strength": str(history_summary.get("best_terminal_support_strength") or ""),
+        "best_terminal_support_strength": str(
+            history_summary.get("best_terminal_support_strength") or ""
+        ),
         "selection_rationale": _build_proof_packet_selection_rationale(
             is_current=is_current,
             support_strength=support_strength,
@@ -5533,9 +6378,17 @@ def _build_proof_packet_preference_history(
         "packet_version": int(packet_version or 0),
         **dict(current_summary or {}),
     }
-    current_key = (str(current_row.get("proof_id") or ""), int(current_row.get("packet_version") or 0))
+    current_key = (
+        str(current_row.get("proof_id") or ""),
+        int(current_row.get("packet_version") or 0),
+    )
     if current_key[0]:
-        history = [item for item in history if (str(item.get("proof_id") or ""), int(item.get("packet_version") or 0)) != current_key]
+        history = [
+            item
+            for item in history
+            if (str(item.get("proof_id") or ""), int(item.get("packet_version") or 0))
+            != current_key
+        ]
         history.append(current_row)
     history.sort(key=lambda item: int(item.get("packet_version") or 0))
     return history
@@ -5555,7 +6408,9 @@ def _build_proof_packet_selection_rationale(
     if normalized_strength:
         reasons.append(f"it has {normalized_strength} support")
     history_summary = dict(action_candidate_history_summary or {})
-    best_terminal_support_strength = str(history_summary.get("best_terminal_support_strength") or "").lower()
+    best_terminal_support_strength = str(
+        history_summary.get("best_terminal_support_strength") or ""
+    ).lower()
     comparison_mode = str(history_summary.get("comparison_mode") or "")
     best_terminal_source_type = str(history_summary.get("best_terminal_source_type") or "")
     if best_terminal_support_strength:
@@ -5576,7 +6431,11 @@ def _routing_explanation_summary(packet_like: Mapping[str, Any]) -> Dict[str, An
     routing = dict(packet_like.get("routing_explanation") or {})
     return {
         "routing_reason": str(routing.get("routing_reason") or ""),
-        "routing_evidence": [dict(item) for item in list(routing.get("routing_evidence") or []) if isinstance(item, Mapping)],
+        "routing_evidence": [
+            dict(item)
+            for item in list(routing.get("routing_evidence") or [])
+            if isinstance(item, Mapping)
+        ],
         "preferred_corpus_keys": list(routing.get("preferred_corpus_keys") or []),
         "preferred_corpus_priority": list(routing.get("preferred_corpus_priority") or []),
         "preferred_dataset_ids": list(routing.get("preferred_dataset_ids") or []),
@@ -5621,7 +6480,9 @@ def execute_packaged_docket_follow_up_plan(
 
     available_steps = [dict(step) for step in list(prepared.get("available_steps") or [])]
     normalized_start = max(1, int(start_step_index))
-    selected_steps = [step for step in available_steps if int(step.get("step_index") or 0) >= normalized_start]
+    selected_steps = [
+        step for step in available_steps if int(step.get("step_index") or 0) >= normalized_start
+    ]
     if max_steps is not None:
         selected_steps = selected_steps[: max(0, int(max_steps))]
 
@@ -5794,7 +6655,11 @@ def build_packaged_docket_proof_evidence_bundle(
     final_job = dict(final_execution.get("job") or {})
     routing_explanation = {
         "routing_reason": str(final_job.get("routing_reason") or ""),
-        "routing_evidence": [dict(item) for item in list(final_job.get("routing_evidence") or []) if isinstance(item, Mapping)],
+        "routing_evidence": [
+            dict(item)
+            for item in list(final_job.get("routing_evidence") or [])
+            if isinstance(item, Mapping)
+        ],
         "preferred_corpus_keys": list(final_job.get("preferred_corpus_keys") or []),
         "preferred_corpus_priority": list(final_job.get("preferred_corpus_priority") or []),
         "preferred_dataset_ids": list(final_job.get("preferred_dataset_ids") or []),
@@ -5895,9 +6760,7 @@ def build_packaged_docket_proof_assistant_packet(
         if isinstance(item, Mapping)
     ]
     work_item_packets = [
-        item
-        for item in existing_packets
-        if str(item.get("work_item_id") or "") == work_item_id
+        item for item in existing_packets if str(item.get("work_item_id") or "") == work_item_id
     ]
     packet_version = 1 + max(
         [int(item.get("packet_version") or 0) for item in work_item_packets] or [0]
@@ -5905,8 +6768,7 @@ def build_packaged_docket_proof_assistant_packet(
     supersedes_proof_ids = [
         str(item.get("proof_id") or "")
         for item in work_item_packets
-        if str(item.get("proof_id") or "")
-        and bool(item.get("is_current", True))
+        if str(item.get("proof_id") or "") and bool(item.get("is_current", True))
     ]
     proof_id_seed = work_item_id or query
     proof_id = (
@@ -5977,7 +6839,11 @@ def build_packaged_docket_proof_assistant_packet(
         "source_type": str(matched_work_item.get("source_type") or ""),
         "authority_ids": list(matched_work_item.get("authority_ids") or []),
         "evidence_bundle": evidence_bundle,
-        "evidence_ids": [str(item.get("evidence_id") or "") for item in evidence_items if str(item.get("evidence_id") or "")],
+        "evidence_ids": [
+            str(item.get("evidence_id") or "")
+            for item in evidence_items
+            if str(item.get("evidence_id") or "")
+        ],
         "support_strength": support_strength,
         "matched_plan": matched_plan,
         "retrieval_trace": list(evidence_bundle.get("retrieval_trace") or []),
@@ -5986,7 +6852,9 @@ def build_packaged_docket_proof_assistant_packet(
         "preference_history": preference_history,
         "preference_history_summary": preference_history_summary,
         "preference_review_trigger": preference_review_trigger,
-        "routing_explanation": dict((evidence_bundle.get("metadata") or {}).get("routing_explanation") or {}),
+        "routing_explanation": dict(
+            (evidence_bundle.get("metadata") or {}).get("routing_explanation") or {}
+        ),
         "certificates": [],
         "metadata": {
             "backend": "packaged_docket_follow_up_proof_packet",
@@ -5999,10 +6867,18 @@ def build_packaged_docket_proof_assistant_packet(
             "action_candidate_history_summary": {
                 "comparison_mode": str(action_candidate_history.get("comparison_mode") or ""),
                 "candidate_count": int(action_candidate_history.get("candidate_count") or 0),
-                "executed_candidate_count": int(action_candidate_history.get("executed_candidate_count") or 0),
-                "best_candidate_source_type": str(best_action_candidate_summary.get("candidate_source_type") or ""),
-                "best_terminal_source_type": str(best_action_candidate_summary.get("terminal_source_type") or ""),
-                "best_terminal_support_strength": str(best_action_candidate_summary.get("terminal_support_strength") or ""),
+                "executed_candidate_count": int(
+                    action_candidate_history.get("executed_candidate_count") or 0
+                ),
+                "best_candidate_source_type": str(
+                    best_action_candidate_summary.get("candidate_source_type") or ""
+                ),
+                "best_terminal_source_type": str(
+                    best_action_candidate_summary.get("terminal_source_type") or ""
+                ),
+                "best_terminal_support_strength": str(
+                    best_action_candidate_summary.get("terminal_support_strength") or ""
+                ),
             },
             "packet_preference_summary": packet_preference_summary,
             "preference_history_count": len(preference_history),
@@ -6014,7 +6890,9 @@ def build_packaged_docket_proof_assistant_packet(
                 "supersedes_proof_ids": supersedes_proof_ids,
                 "superseded_by_proof_id": "",
             },
-            "routing_explanation": dict((evidence_bundle.get("metadata") or {}).get("routing_explanation") or {}),
+            "routing_explanation": dict(
+                (evidence_bundle.get("metadata") or {}).get("routing_explanation") or {}
+            ),
         },
     }
     proof_store = {
@@ -6051,7 +6929,9 @@ def build_packaged_docket_proof_assistant_packet(
         "matched_work_item": matched_work_item,
         "matched_plan": matched_plan,
         "evidence_bundle": evidence_bundle,
-        "routing_explanation": dict((evidence_bundle.get("metadata") or {}).get("routing_explanation") or {}),
+        "routing_explanation": dict(
+            (evidence_bundle.get("metadata") or {}).get("routing_explanation") or {}
+        ),
         "proof_store": proof_store,
     }
 
@@ -6113,12 +6993,30 @@ def enrich_packaged_docket_with_tactician(
         enrichments.append(
             {
                 "query": query,
-                "proof_id": str((package_view.get("attached_proof_assistant_packet") or {}).get("proof_id") or ""),
-                "packet_version": int((package_view.get("attached_proof_assistant_packet") or {}).get("packet_version") or 0),
-                "support_strength": str((package_view.get("attached_proof_assistant_packet") or {}).get("support_strength") or ""),
+                "proof_id": str(
+                    (package_view.get("attached_proof_assistant_packet") or {}).get("proof_id")
+                    or ""
+                ),
+                "packet_version": int(
+                    (package_view.get("attached_proof_assistant_packet") or {}).get(
+                        "packet_version"
+                    )
+                    or 0
+                ),
+                "support_strength": str(
+                    (package_view.get("attached_proof_assistant_packet") or {}).get(
+                        "support_strength"
+                    )
+                    or ""
+                ),
                 "decision": str(refresh.get("decision") or ""),
                 "material_change_detected": bool(refresh.get("material_change_detected")),
-                "result_count": int((dict(execution.get("proof_evidence_bundle") or {}).get("summary") or {}).get("evidence_item_count") or 0),
+                "result_count": int(
+                    (dict(execution.get("proof_evidence_bundle") or {}).get("summary") or {}).get(
+                        "evidence_item_count"
+                    )
+                    or 0
+                ),
             }
         )
     metadata = dict(package_view.get("metadata") or {})
@@ -6155,6 +7053,7 @@ def _attach_packet_to_package_view(
         proof_assistant,
         proof_id=str(current_packet_summary.get("proof_id") or ""),
     )
+
     def _apply_agenda_packet_metadata(
         agenda_rows: Sequence[Mapping[str, Any]],
         packet_like: Mapping[str, Any],
@@ -6172,7 +7071,10 @@ def _attach_packet_to_package_view(
                 for value in list(item.get("evidence_packet_ids") or [])
                 if str(value).strip()
             ]
-            if str(packet_like.get("proof_id") or "") and str(packet_like.get("proof_id") or "") not in evidence_packet_ids:
+            if (
+                str(packet_like.get("proof_id") or "")
+                and str(packet_like.get("proof_id") or "") not in evidence_packet_ids
+            ):
                 evidence_packet_ids.append(str(packet_like.get("proof_id") or ""))
             item["evidence_packet_ids"] = evidence_packet_ids
             item["attached_evidence_count"] = len(
@@ -6181,15 +7083,22 @@ def _attach_packet_to_package_view(
             item["latest_proof_packet_id"] = str(packet_like.get("proof_id") or "")
             item["current_proof_packet_id"] = str(packet_like.get("proof_id") or "")
             item["current_proof_packet_version"] = int(packet_like.get("packet_version") or 0)
-            item["current_proof_packet_support_strength"] = str(packet_like.get("support_strength") or "")
+            item["current_proof_packet_support_strength"] = str(
+                packet_like.get("support_strength") or ""
+            )
             item.update(review_metadata)
             item["evidence_status"] = "collected_evidence"
             updated_count += 1
         return updated_agenda, updated_count
 
-    if (not force_new_packet) and current_packet_summary and current_proof_payload and not _proof_packet_material_change(
-        current_proof_payload,
-        packet,
+    if (
+        (not force_new_packet)
+        and current_packet_summary
+        and current_proof_payload
+        and not _proof_packet_material_change(
+            current_proof_payload,
+            packet,
+        )
     ):
         reused_packet = _build_existing_proof_assistant_packet(
             current_proof_payload,
@@ -6204,7 +7113,9 @@ def _attach_packet_to_package_view(
         package_metadata = dict(package_view.get("metadata") or {})
         package_metadata["proof_packet_attached"] = True
         package_metadata["latest_proof_packet_id"] = str(reused_packet.get("proof_id") or "")
-        package_metadata["latest_proof_packet_version"] = int(reused_packet.get("packet_version") or 0)
+        package_metadata["latest_proof_packet_version"] = int(
+            reused_packet.get("packet_version") or 0
+        )
         package_metadata["proof_packet_reused"] = True
         package_metadata["latest_proof_packet_routing_explanation"] = routing_summary
         package_view["metadata"] = package_metadata
@@ -6212,17 +7123,29 @@ def _attach_packet_to_package_view(
         revalidation_counts = _count_agenda_revalidation_items(agenda)
         proof_metadata = dict(proof_assistant.get("metadata") or {})
         proof_metadata["latest_proof_packet_id"] = str(reused_packet.get("proof_id") or "")
-        proof_metadata["latest_proof_packet_version"] = int(reused_packet.get("packet_version") or 0)
+        proof_metadata["latest_proof_packet_version"] = int(
+            reused_packet.get("packet_version") or 0
+        )
         proof_metadata["latest_proof_packet_query"] = query
         proof_metadata["proof_packet_reused"] = True
         proof_metadata["latest_proof_packet_routing_explanation"] = routing_summary
-        proof_metadata["latest_proof_packet_support_strength"] = str(reused_packet.get("support_strength") or "")
-        proof_metadata["latest_proof_packet_preference_history_count"] = len(list(reused_packet.get("preference_history") or []))
-        proof_metadata["latest_proof_packet_review_trigger"] = dict(reused_packet.get("preference_review_trigger") or {})
+        proof_metadata["latest_proof_packet_support_strength"] = str(
+            reused_packet.get("support_strength") or ""
+        )
+        proof_metadata["latest_proof_packet_preference_history_count"] = len(
+            list(reused_packet.get("preference_history") or [])
+        )
+        proof_metadata["latest_proof_packet_review_trigger"] = dict(
+            reused_packet.get("preference_review_trigger") or {}
+        )
         summary = dict(proof_assistant.get("summary") or {})
         summary["attached_work_item_count"] = attached_work_item_count
-        summary["latest_proof_packet_support_strength"] = str(reused_packet.get("support_strength") or "")
-        summary["latest_proof_packet_preference_history_count"] = len(list(reused_packet.get("preference_history") or []))
+        summary["latest_proof_packet_support_strength"] = str(
+            reused_packet.get("support_strength") or ""
+        )
+        summary["latest_proof_packet_preference_history_count"] = len(
+            list(reused_packet.get("preference_history") or [])
+        )
         summary["latest_proof_packet_review_required"] = bool(
             (reused_packet.get("preference_review_trigger") or {}).get("review_required")
         )
@@ -6249,7 +7172,11 @@ def _attach_packet_to_package_view(
     agenda = _sort_proof_agenda_items(agenda)
     revalidation_counts = _count_agenda_revalidation_items(agenda)
     existing_packets = [dict(item) for item in list(proof_assistant.get("evidence_packets") or [])]
-    existing_packet_ids = {str(item.get("proof_id") or "") for item in existing_packets if str(item.get("proof_id") or "")}
+    existing_packet_ids = {
+        str(item.get("proof_id") or "")
+        for item in existing_packets
+        if str(item.get("proof_id") or "")
+    }
     superseded_packet_ids: List[str] = []
     for existing_packet in existing_packets:
         if str(existing_packet.get("work_item_id") or "") != matched_work_item_id:
@@ -6268,7 +7195,9 @@ def _attach_packet_to_package_view(
         "query": query,
         "work_item_id": matched_work_item_id,
         "bundle_kind": str(((packet.get("evidence_bundle") or {}).get("bundle_kind")) or ""),
-        "evidence_item_count": len(list(((packet.get("evidence_bundle") or {}).get("evidence_items") or []))),
+        "evidence_item_count": len(
+            list(((packet.get("evidence_bundle") or {}).get("evidence_items") or []))
+        ),
         "matched_plan_id": str(((packet.get("matched_plan") or {}).get("plan_id")) or ""),
         "packet_version": int(packet.get("packet_version") or 0),
         "is_current": True,
@@ -6276,15 +7205,27 @@ def _attach_packet_to_package_view(
         "supersedes_proof_ids": superseded_packet_ids,
         "superseded_by_proof_id": "",
         "support_strength": str(packet.get("support_strength") or ""),
-        "comparison_mode": str(((packet.get("action_candidate_history") or {}).get("comparison_mode")) or ""),
-        "best_candidate_source_type": str(((packet.get("best_action_candidate_summary") or {}).get("candidate_source_type")) or ""),
-        "best_terminal_source_type": str(((packet.get("best_action_candidate_summary") or {}).get("terminal_source_type")) or ""),
-        "best_terminal_support_strength": str(((packet.get("best_action_candidate_summary") or {}).get("terminal_support_strength")) or ""),
+        "comparison_mode": str(
+            ((packet.get("action_candidate_history") or {}).get("comparison_mode")) or ""
+        ),
+        "best_candidate_source_type": str(
+            ((packet.get("best_action_candidate_summary") or {}).get("candidate_source_type")) or ""
+        ),
+        "best_terminal_source_type": str(
+            ((packet.get("best_action_candidate_summary") or {}).get("terminal_source_type")) or ""
+        ),
+        "best_terminal_support_strength": str(
+            ((packet.get("best_action_candidate_summary") or {}).get("terminal_support_strength"))
+            or ""
+        ),
         "packet_preference_summary": dict(packet.get("packet_preference_summary") or {}),
         "preference_history": list(packet.get("preference_history") or []),
         "preference_review_trigger": dict(packet.get("preference_review_trigger") or {}),
     }
-    if str(packet_summary.get("proof_id") or "") and str(packet_summary.get("proof_id") or "") not in existing_packet_ids:
+    if (
+        str(packet_summary.get("proof_id") or "")
+        and str(packet_summary.get("proof_id") or "") not in existing_packet_ids
+    ):
         existing_packets.append(packet_summary)
 
     proof_store = dict(proof_assistant.get("proof_store") or {})
@@ -6331,16 +7272,29 @@ def _attach_packet_to_package_view(
     summary = dict(proof_assistant.get("summary") or {})
     summary["proof_packet_count"] = len(existing_packets)
     summary["proof_count"] = len(merged_proofs)
-    summary["evidence_item_count"] = int((proof_assistant.get("proof_store") or {}).get("summary", {}).get("evidence_item_count") or 0)
+    summary["evidence_item_count"] = int(
+        (proof_assistant.get("proof_store") or {}).get("summary", {}).get("evidence_item_count")
+        or 0
+    )
     summary["attached_work_item_count"] = attached_work_item_count
     summary["current_proof_packet_count"] = current_packet_count
     summary["superseded_proof_packet_count"] = superseded_packet_count
     summary["latest_proof_packet_support_strength"] = str(packet.get("support_strength") or "")
-    summary["latest_proof_packet_comparison_mode"] = str(((packet.get("action_candidate_history") or {}).get("comparison_mode")) or "")
-    summary["latest_proof_packet_best_terminal_source_type"] = str(((packet.get("best_action_candidate_summary") or {}).get("terminal_source_type")) or "")
-    summary["latest_proof_packet_best_terminal_support_strength"] = str(((packet.get("best_action_candidate_summary") or {}).get("terminal_support_strength")) or "")
-    summary["latest_proof_packet_preference_history_count"] = len(list(packet.get("preference_history") or []))
-    summary["latest_proof_packet_review_required"] = bool((packet.get("preference_review_trigger") or {}).get("review_required"))
+    summary["latest_proof_packet_comparison_mode"] = str(
+        ((packet.get("action_candidate_history") or {}).get("comparison_mode")) or ""
+    )
+    summary["latest_proof_packet_best_terminal_source_type"] = str(
+        ((packet.get("best_action_candidate_summary") or {}).get("terminal_source_type")) or ""
+    )
+    summary["latest_proof_packet_best_terminal_support_strength"] = str(
+        ((packet.get("best_action_candidate_summary") or {}).get("terminal_support_strength")) or ""
+    )
+    summary["latest_proof_packet_preference_history_count"] = len(
+        list(packet.get("preference_history") or [])
+    )
+    summary["latest_proof_packet_review_required"] = bool(
+        (packet.get("preference_review_trigger") or {}).get("review_required")
+    )
     summary.update(revalidation_counts)
     proof_assistant["summary"] = summary
     proof_assistant["agenda"] = agenda
@@ -6350,11 +7304,21 @@ def _attach_packet_to_package_view(
     metadata["latest_proof_packet_query"] = query
     metadata["latest_proof_packet_version"] = int(packet.get("packet_version") or 0)
     metadata["latest_proof_packet_support_strength"] = str(packet.get("support_strength") or "")
-    metadata["latest_proof_packet_comparison_mode"] = str(((packet.get("action_candidate_history") or {}).get("comparison_mode")) or "")
-    metadata["latest_proof_packet_best_terminal_source_type"] = str(((packet.get("best_action_candidate_summary") or {}).get("terminal_source_type")) or "")
-    metadata["latest_proof_packet_best_terminal_support_strength"] = str(((packet.get("best_action_candidate_summary") or {}).get("terminal_support_strength")) or "")
-    metadata["latest_proof_packet_preference_history_count"] = len(list(packet.get("preference_history") or []))
-    metadata["latest_proof_packet_review_trigger"] = dict(packet.get("preference_review_trigger") or {})
+    metadata["latest_proof_packet_comparison_mode"] = str(
+        ((packet.get("action_candidate_history") or {}).get("comparison_mode")) or ""
+    )
+    metadata["latest_proof_packet_best_terminal_source_type"] = str(
+        ((packet.get("best_action_candidate_summary") or {}).get("terminal_source_type")) or ""
+    )
+    metadata["latest_proof_packet_best_terminal_support_strength"] = str(
+        ((packet.get("best_action_candidate_summary") or {}).get("terminal_support_strength")) or ""
+    )
+    metadata["latest_proof_packet_preference_history_count"] = len(
+        list(packet.get("preference_history") or [])
+    )
+    metadata["latest_proof_packet_review_trigger"] = dict(
+        packet.get("preference_review_trigger") or {}
+    )
     metadata["current_proof_packet_count"] = current_packet_count
     metadata["superseded_proof_packet_count"] = superseded_packet_count
     proof_assistant["metadata"] = metadata
@@ -6419,12 +7383,18 @@ def _proof_packet_support_signature(packet_like: Mapping[str, Any]) -> Dict[str,
             "source_type": str(step.get("source_type") or ""),
             "satisfied": bool(step.get("satisfied")),
         }
-        for step in list(evidence_bundle.get("retrieval_trace") or packet_like.get("retrieval_trace") or [])
+        for step in list(
+            evidence_bundle.get("retrieval_trace") or packet_like.get("retrieval_trace") or []
+        )
         if isinstance(step, Mapping)
     ]
     return {
-        "work_item_id": str(packet_like.get("work_item_id") or matched_work_item.get("work_item_id") or ""),
-        "matched_plan_id": str(matched_plan.get("plan_id") or matched_work_item.get("plan_id") or ""),
+        "work_item_id": str(
+            packet_like.get("work_item_id") or matched_work_item.get("work_item_id") or ""
+        ),
+        "matched_plan_id": str(
+            matched_plan.get("plan_id") or matched_work_item.get("plan_id") or ""
+        ),
         "evidence_ids": sorted(
             str(item.get("evidence_id") or "")
             for item in evidence_items
@@ -6441,7 +7411,9 @@ def _proof_packet_material_change(
     existing_packet: Mapping[str, Any],
     new_packet: Mapping[str, Any],
 ) -> bool:
-    return _proof_packet_support_signature(existing_packet) != _proof_packet_support_signature(new_packet)
+    return _proof_packet_support_signature(existing_packet) != _proof_packet_support_signature(
+        new_packet
+    )
 
 
 def _build_existing_proof_assistant_packet(
@@ -6449,14 +7421,25 @@ def _build_existing_proof_assistant_packet(
     current_packet_summary: Mapping[str, Any],
     new_packet: Mapping[str, Any],
 ) -> Dict[str, Any]:
-    proof_id = str(existing_proof_payload.get("proof_id") or current_packet_summary.get("proof_id") or "")
+    proof_id = str(
+        existing_proof_payload.get("proof_id") or current_packet_summary.get("proof_id") or ""
+    )
     existing_store = {
         "proofs": {proof_id: dict(existing_proof_payload)},
         "certificates": list(existing_proof_payload.get("certificates") or []),
         "summary": {
             "proof_count": 1,
-            "evidence_item_count": len(list((dict(existing_proof_payload.get("evidence_bundle") or {})).get("evidence_items") or [])),
-            "matched_work_item_count": 1 if str(existing_proof_payload.get("work_item_id") or "") else 0,
+            "evidence_item_count": len(
+                list(
+                    (dict(existing_proof_payload.get("evidence_bundle") or {})).get(
+                        "evidence_items"
+                    )
+                    or []
+                )
+            ),
+            "matched_work_item_count": 1
+            if str(existing_proof_payload.get("work_item_id") or "")
+            else 0,
         },
         "metadata": {
             "backend": "packaged_docket_follow_up_proof_packet",
@@ -6469,25 +7452,53 @@ def _build_existing_proof_assistant_packet(
         "dataset_id": str(new_packet.get("dataset_id") or ""),
         "docket_id": str(new_packet.get("docket_id") or ""),
         "proof_id": proof_id,
-        "packet_version": int(existing_proof_payload.get("packet_version") or current_packet_summary.get("packet_version") or 0),
-        "is_current": bool(existing_proof_payload.get("is_current", current_packet_summary.get("is_current", True))),
-        "superseded": bool(existing_proof_payload.get("superseded", current_packet_summary.get("superseded", False))),
-        "supersedes_proof_ids": list(existing_proof_payload.get("supersedes_proof_ids") or current_packet_summary.get("supersedes_proof_ids") or []),
-        "superseded_by_proof_id": str(
-            existing_proof_payload.get("superseded_by_proof_id") or current_packet_summary.get("superseded_by_proof_id") or ""
+        "packet_version": int(
+            existing_proof_payload.get("packet_version")
+            or current_packet_summary.get("packet_version")
+            or 0
         ),
-        "support_strength": str(existing_proof_payload.get("support_strength") or current_packet_summary.get("support_strength") or ""),
+        "is_current": bool(
+            existing_proof_payload.get("is_current", current_packet_summary.get("is_current", True))
+        ),
+        "superseded": bool(
+            existing_proof_payload.get(
+                "superseded", current_packet_summary.get("superseded", False)
+            )
+        ),
+        "supersedes_proof_ids": list(
+            existing_proof_payload.get("supersedes_proof_ids")
+            or current_packet_summary.get("supersedes_proof_ids")
+            or []
+        ),
+        "superseded_by_proof_id": str(
+            existing_proof_payload.get("superseded_by_proof_id")
+            or current_packet_summary.get("superseded_by_proof_id")
+            or ""
+        ),
+        "support_strength": str(
+            existing_proof_payload.get("support_strength")
+            or current_packet_summary.get("support_strength")
+            or ""
+        ),
         "action_candidate_history": dict(
             existing_proof_payload.get("action_candidate_history")
             or new_packet.get("action_candidate_history")
             or {}
         ),
         "best_action_candidate_summary": _normalize_action_candidate_summary(
-            dict(existing_proof_payload.get("action_candidate_history") or new_packet.get("action_candidate_history") or {}),
-            fallback=(dict(existing_proof_payload.get("metadata") or {})).get("action_candidate_history_summary"),
+            dict(
+                existing_proof_payload.get("action_candidate_history")
+                or new_packet.get("action_candidate_history")
+                or {}
+            ),
+            fallback=(dict(existing_proof_payload.get("metadata") or {})).get(
+                "action_candidate_history_summary"
+            ),
         ),
         "matched_work_item": dict(new_packet.get("matched_work_item") or {}),
-        "matched_plan": dict(existing_proof_payload.get("matched_plan") or new_packet.get("matched_plan") or {}),
+        "matched_plan": dict(
+            existing_proof_payload.get("matched_plan") or new_packet.get("matched_plan") or {}
+        ),
         "evidence_bundle": dict(existing_proof_payload.get("evidence_bundle") or {}),
         "proof_store": existing_store,
         "refresh_decision": "reused_current_packet",
@@ -6554,13 +7565,22 @@ def _rebase_packet_version_against_view(
     if not existing_packets:
         return packet
 
-    current_packet_summary = _find_current_proof_packet_summary(proof_assistant, work_item_id=work_item_id)
+    current_packet_summary = _find_current_proof_packet_summary(
+        proof_assistant, work_item_id=work_item_id
+    )
     current_proof_payload = _find_proof_store_entry(
         proof_assistant,
         proof_id=str(current_packet_summary.get("proof_id") or ""),
     )
-    if (not force_new_packet) and current_packet_summary and current_proof_payload and not _proof_packet_material_change(current_proof_payload, packet):
-        return _build_existing_proof_assistant_packet(current_proof_payload, current_packet_summary, packet)
+    if (
+        (not force_new_packet)
+        and current_packet_summary
+        and current_proof_payload
+        and not _proof_packet_material_change(current_proof_payload, packet)
+    ):
+        return _build_existing_proof_assistant_packet(
+            current_proof_payload, current_packet_summary, packet
+        )
 
     highest_version = max(int(item.get("packet_version") or 0) for item in existing_packets)
     packet_version = max(int(packet.get("packet_version") or 0), highest_version + 1)
@@ -6654,8 +7674,12 @@ def _build_proof_evidence_item(
         "text": text,
         "score": float(row.get("score") or 0.0),
         "best_support_source": best_support_source,
-        "supporting_sources": [str(item) for item in list(row.get("supporting_sources") or []) if str(item).strip()],
-        "supporting_steps": [int(item) for item in list(row.get("supporting_steps") or []) if str(item).strip()],
+        "supporting_sources": [
+            str(item) for item in list(row.get("supporting_sources") or []) if str(item).strip()
+        ],
+        "supporting_steps": [
+            int(item) for item in list(row.get("supporting_steps") or []) if str(item).strip()
+        ],
         "source_type": str(row.get("source_type") or best_support_source),
         "query": query,
         "excerpt": text[:280],
@@ -6764,7 +7788,9 @@ def _merge_follow_up_results(
         if source_type and source_type not in sources:
             sources.append(source_type)
         merged_row["supporting_sources"] = sources
-        steps = [int(item) for item in list(existing.get("supporting_steps") or []) if str(item).strip()]
+        steps = [
+            int(item) for item in list(existing.get("supporting_steps") or []) if str(item).strip()
+        ]
         if step_index and step_index not in steps:
             steps.append(step_index)
         merged_row["supporting_steps"] = steps
@@ -6808,7 +7834,9 @@ def _follow_up_result_rank_key(
     *,
     source_priority: Sequence[str],
 ) -> tuple[Any, ...]:
-    available = [str(item) for item in list(row.get("supporting_sources") or []) if str(item).strip()]
+    available = [
+        str(item) for item in list(row.get("supporting_sources") or []) if str(item).strip()
+    ]
     best_source = str(row.get("best_support_source") or "")
     source_rank = 0
     if best_source in source_priority:
@@ -6828,7 +7856,9 @@ def _prepare_legal_dataset_parser_adapter(
     *,
     top_k: int,
 ) -> Dict[str, Any]:
-    modules = [str(module).strip() for module in list(job.get("modules") or []) if str(module).strip()]
+    modules = [
+        str(module).strip() for module in list(job.get("modules") or []) if str(module).strip()
+    ]
     source_id = str(job.get("source_id") or "")
     for module_name in modules:
         adapter = _build_legal_dataset_parser_adapter(
@@ -6911,11 +7941,31 @@ def _select_legal_dataset_parser_callable(
     top_k: int,
 ) -> Dict[str, Any]:
     lowered_query = str(retrieval_query or "").lower()
-    preferred_corpus_priority = [str(item).strip() for item in list(job.get("preferred_corpus_priority") or []) if str(item).strip()]
-    preferred_corpus_keys = preferred_corpus_priority or [str(item).strip() for item in list(job.get("preferred_corpus_keys") or []) if str(item).strip()]
-    preferred_dataset_priority = [str(item).strip() for item in list(job.get("preferred_dataset_priority") or []) if str(item).strip()]
-    preferred_dataset_ids = preferred_dataset_priority or [str(item).strip() for item in list(job.get("preferred_dataset_ids") or []) if str(item).strip()]
-    preferred_state_codes = [str(item).strip().upper() for item in list(job.get("preferred_state_codes") or []) if str(item).strip()]
+    preferred_corpus_priority = [
+        str(item).strip()
+        for item in list(job.get("preferred_corpus_priority") or [])
+        if str(item).strip()
+    ]
+    preferred_corpus_keys = preferred_corpus_priority or [
+        str(item).strip()
+        for item in list(job.get("preferred_corpus_keys") or [])
+        if str(item).strip()
+    ]
+    preferred_dataset_priority = [
+        str(item).strip()
+        for item in list(job.get("preferred_dataset_priority") or [])
+        if str(item).strip()
+    ]
+    preferred_dataset_ids = preferred_dataset_priority or [
+        str(item).strip()
+        for item in list(job.get("preferred_dataset_ids") or [])
+        if str(item).strip()
+    ]
+    preferred_state_codes = [
+        str(item).strip().upper()
+        for item in list(job.get("preferred_state_codes") or [])
+        if str(item).strip()
+    ]
     routing_reason = str(job.get("routing_reason") or "").strip()
     state_code = preferred_state_codes[0] if preferred_state_codes else "OR"
 
@@ -6945,7 +7995,9 @@ def _select_legal_dataset_parser_callable(
                 "top_k": int(top_k),
                 "hf_dataset_id": preferred_dataset_ids[0] if preferred_dataset_ids else None,
             },
-            "reason": _with_routing_reason("Linked authority citations identify the US Code corpus as the preferred parser target."),
+            "reason": _with_routing_reason(
+                "Linked authority citations identify the US Code corpus as the preferred parser target."
+            ),
         }
     if "federal_register" in preferred_corpus_keys:
         return {
@@ -6957,7 +8009,9 @@ def _select_legal_dataset_parser_callable(
                 "top_k": int(top_k),
                 "hf_dataset_id": preferred_dataset_ids[0] if preferred_dataset_ids else None,
             },
-            "reason": _with_routing_reason("Linked authority citations identify the Federal Register corpus as the preferred parser target."),
+            "reason": _with_routing_reason(
+                "Linked authority citations identify the Federal Register corpus as the preferred parser target."
+            ),
         }
     if "state_court_rules" in preferred_corpus_keys:
         params = _preferred_state_parameters("state_court_rules")
@@ -6971,7 +8025,9 @@ def _select_legal_dataset_parser_callable(
                 "jurisdiction": "state",
                 **params,
             },
-            "reason": _with_routing_reason("Linked authority citations identify state court rules as the preferred parser target."),
+            "reason": _with_routing_reason(
+                "Linked authority citations identify state court rules as the preferred parser target."
+            ),
         }
     if "state_admin_rules" in preferred_corpus_keys and "state_laws" not in preferred_corpus_keys:
         params = _preferred_state_parameters("state_admin_rules")
@@ -6984,13 +8040,17 @@ def _select_legal_dataset_parser_callable(
                 "top_k": int(top_k),
                 **params,
             },
-            "reason": _with_routing_reason("Linked authority citations identify state administrative rules as the preferred parser target."),
+            "reason": _with_routing_reason(
+                "Linked authority citations identify state administrative rules as the preferred parser target."
+            ),
         }
     if "state_laws" in preferred_corpus_keys or "state_admin_rules" in preferred_corpus_keys:
         params = _preferred_state_parameters("state_laws")
         if "state_admin_rules" in preferred_corpus_keys:
             admin_corpus = get_canonical_legal_corpus("state_admin_rules")
-            params["hf_dataset_ids"] = list(dict.fromkeys([*params["hf_dataset_ids"], admin_corpus.hf_dataset_id]))
+            params["hf_dataset_ids"] = list(
+                dict.fromkeys([*params["hf_dataset_ids"], admin_corpus.hf_dataset_id])
+            )
         return {
             "module_name": module_name,
             "callable_name": "search_state_law_corpus_from_parameters",
@@ -7000,10 +8060,15 @@ def _select_legal_dataset_parser_callable(
                 "top_k": int(top_k),
                 **params,
             },
-            "reason": _with_routing_reason("Linked authority citations identify state-law corpora as the preferred parser target."),
+            "reason": _with_routing_reason(
+                "Linked authority citations identify state-law corpora as the preferred parser target."
+            ),
         }
     if module_name.endswith("legal_dataset_api"):
-        if any(token in lowered_query for token in ("rule", "rules", "frcp", "civil procedure", "local rule", "court rule")):
+        if any(
+            token in lowered_query
+            for token in ("rule", "rules", "frcp", "civil procedure", "local rule", "court rule")
+        ):
             return {
                 "module_name": module_name,
                 "callable_name": "search_court_rules_corpus_from_parameters",
@@ -7016,7 +8081,17 @@ def _select_legal_dataset_parser_callable(
                 },
                 "reason": "Court-rule language in the proof gap maps to the court-rules corpus adapter.",
             }
-        if any(token in lowered_query for token in ("register", "regulation", "regulations", "administrative", "agency", "cfr")):
+        if any(
+            token in lowered_query
+            for token in (
+                "register",
+                "regulation",
+                "regulations",
+                "administrative",
+                "agency",
+                "cfr",
+            )
+        ):
             return {
                 "module_name": module_name,
                 "callable_name": "search_federal_register_corpus_from_parameters",
@@ -7027,7 +8102,13 @@ def _select_legal_dataset_parser_callable(
                 },
                 "reason": "Regulatory language in the proof gap maps to the Federal Register corpus adapter.",
             }
-        if any(token in lowered_query for token in ("u.s.c", "usc", "statute", "statutory", "code section", "section ")) or "§" in lowered_query:
+        if (
+            any(
+                token in lowered_query
+                for token in ("u.s.c", "usc", "statute", "statutory", "code section", "section ")
+            )
+            or "§" in lowered_query
+        ):
             return {
                 "module_name": module_name,
                 "callable_name": "search_us_code_corpus_from_parameters",
@@ -7049,7 +8130,9 @@ def _select_legal_dataset_parser_callable(
             },
             "reason": "General proof-gap language maps to the state-law corpus adapter as the default legal parser path.",
         }
-    if module_name.endswith("recap_archive_scraper") or module_name.endswith("legal_web_archive_search"):
+    if module_name.endswith("recap_archive_scraper") or module_name.endswith(
+        "legal_web_archive_search"
+    ):
         return {
             "module_name": "ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api",
             "callable_name": "search_recap_documents_from_parameters",
@@ -7167,7 +8250,15 @@ def _normalize_legal_dataset_parser_result(parser_result: Any) -> Dict[str, Any]
                 results.append({"value": item})
 
     if not results and isinstance(payload, Mapping):
-        content_keys = {"status", "error", "message", "metadata", "query", "operation", "tool_version"}
+        content_keys = {
+            "status",
+            "error",
+            "message",
+            "metadata",
+            "query",
+            "operation",
+            "tool_version",
+        }
         residual = {str(key): value for key, value in payload.items() if key not in content_keys}
         if residual:
             results = [residual]

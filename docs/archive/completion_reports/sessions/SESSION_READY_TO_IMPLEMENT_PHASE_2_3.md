@@ -50,31 +50,31 @@ def session(
     database: Optional[str] = None,
     default_access_mode: str = "WRITE",
     bookmarks: Optional[Union[str, List[str], Bookmarks]] = None,
-    **kwargs
+    **kwargs,
 ) -> IPFSSession:
     """
     Create a new session for specified database.
-    
+
     Args:
         database: Database name (default: "neo4j")
         default_access_mode: "READ" or "WRITE"
         bookmarks: Initial bookmarks for causal consistency
         **kwargs: Additional session configuration
-        
+
     Returns:
         IPFSSession instance
     """
     database = database or "neo4j"  # Neo4j default
-    
+
     # Get or create database-specific backend
     backend = self._get_database_backend(database)
-    
+
     return IPFSSession(
         driver=self,
         backend=backend,
         database=database,
         default_access_mode=default_access_mode,
-        bookmarks=bookmarks
+        bookmarks=bookmarks,
     )
 ```
 
@@ -100,49 +100,54 @@ File: `tests/unit/knowledge_graphs/test_multi_database.py`
 import pytest
 from ipfs_datasets_py.knowledge_graphs.neo4j_compat import GraphDatabase
 
+
 def test_default_database():
     """Test default database is 'neo4j'."""
     driver = GraphDatabase.driver("ipfs+embedded://")
     session = driver.session()
     assert session._database == "neo4j"
-    
+
+
 def test_specify_database():
     """Test specifying database name."""
     driver = GraphDatabase.driver("ipfs+embedded://")
     session = driver.session(database="mydb")
     assert session._database == "mydb"
 
+
 def test_database_isolation():
     """Test that databases are isolated."""
     driver = GraphDatabase.driver("ipfs+embedded://")
-    
+
     # Create node in database1
     session1 = driver.session(database="db1")
     session1.run("CREATE (n:Person {name: 'Alice'})")
-    
+
     # Query from database2
     session2 = driver.session(database="db2")
     result = session2.run("MATCH (n:Person) RETURN count(n) as c")
     count = result.single()["c"]
-    
+
     # Should be 0 - isolated
     assert count == 0
-    
+
+
 def test_multiple_sessions_same_database():
     """Test multiple sessions can access same database."""
     driver = GraphDatabase.driver("ipfs+embedded://")
-    
+
     # Session 1 creates
     session1 = driver.session(database="shared")
     session1.run("CREATE (n:Person {name: 'Bob'})")
-    
+
     # Session 2 reads
     session2 = driver.session(database="shared")
     result = session2.run("MATCH (n:Person) RETURN count(n) as c")
     count = result.single()["c"]
-    
+
     # Should see the node
     assert count == 1
+
 
 # 10+ more tests...
 ```
@@ -176,6 +181,7 @@ import random
 from typing import Any, Dict, Optional, Union
 from datetime import datetime, date
 
+
 # Math Functions
 def abs_func(n: Union[int, float]) -> Union[int, float]:
     """Return absolute value of number."""
@@ -183,11 +189,13 @@ def abs_func(n: Union[int, float]) -> Union[int, float]:
         return None
     return abs(n)
 
+
 def ceil_func(n: Union[int, float]) -> int:
     """Return smallest integer >= n."""
     if n is None:
         return None
     return math.ceil(n)
+
 
 def floor_func(n: Union[int, float]) -> int:
     """Return largest integer <= n."""
@@ -195,19 +203,22 @@ def floor_func(n: Union[int, float]) -> int:
         return None
     return math.floor(n)
 
+
 def round_func(n: Union[int, float], precision: int = 0) -> Union[int, float]:
     """Round number to given precision."""
     if n is None:
         return None
     return round(n, precision)
 
+
 def sqrt_func(n: Union[int, float]) -> float:
     """Return square root of number."""
     if n is None:
         return None
     if n < 0:
-        return float('nan')
+        return float("nan")
     return math.sqrt(n)
+
 
 def sign_func(n: Union[int, float]) -> int:
     """Return sign of number (-1, 0, or 1)."""
@@ -220,27 +231,26 @@ def sign_func(n: Union[int, float]) -> int:
     else:
         return 0
 
+
 def rand_func() -> float:
     """Return random float between 0.0 and 1.0."""
     return random.random()
 
+
 # Function registry
 BUILTIN_FUNCTIONS = {
     # Math functions
-    'abs': abs_func,
-    'ceil': ceil_func,
-    'floor': floor_func,
-    'round': round_func,
-    'sqrt': sqrt_func,
-    'sign': sign_func,
-    'rand': rand_func,
-    
+    "abs": abs_func,
+    "ceil": ceil_func,
+    "floor": floor_func,
+    "round": round_func,
+    "sqrt": sqrt_func,
+    "sign": sign_func,
+    "rand": rand_func,
     # String functions (to be added - exist in query_executor)
     # 'toLower', 'toUpper', 'substring', 'trim', etc.
-    
     # Spatial functions (Part 2)
     # 'point', 'distance'
-    
     # Temporal functions (Part 2)
     # 'date', 'datetime', 'timestamp'
 }
@@ -255,11 +265,12 @@ Add function evaluation using the registry:
 ```python
 from ..cypher.functions import BUILTIN_FUNCTIONS
 
+
 def _evaluate_function(self, func_name: str, args: List[Any]) -> Any:
     """Evaluate a built-in function."""
     if func_name in BUILTIN_FUNCTIONS:
         return BUILTIN_FUNCTIONS[func_name](*args)
-    
+
     # Fall back to existing string function handling
     # ...
 ```
@@ -272,85 +283,94 @@ File: `tests/unit/knowledge_graphs/test_math_functions.py`
 import pytest
 from ipfs_datasets_py.knowledge_graphs.neo4j_compat import GraphDatabase
 
+
 def test_abs_function():
     """Test abs() function."""
     driver = GraphDatabase.driver("ipfs+embedded://")
     session = driver.session()
-    
+
     result = session.run("RETURN abs(-5) as val")
     assert result.single()["val"] == 5
-    
+
     result = session.run("RETURN abs(3.14) as val")
     assert result.single()["val"] == 3.14
+
 
 def test_ceil_function():
     """Test ceil() function."""
     driver = GraphDatabase.driver("ipfs+embedded://")
     session = driver.session()
-    
+
     result = session.run("RETURN ceil(3.2) as val")
     assert result.single()["val"] == 4
-    
+
     result = session.run("RETURN ceil(-2.8) as val")
     assert result.single()["val"] == -2
+
 
 def test_floor_function():
     """Test floor() function."""
     driver = GraphDatabase.driver("ipfs+embedded://")
     session = driver.session()
-    
+
     result = session.run("RETURN floor(3.8) as val")
     assert result.single()["val"] == 3
+
 
 def test_round_function():
     """Test round() function."""
     driver = GraphDatabase.driver("ipfs+embedded://")
     session = driver.session()
-    
+
     result = session.run("RETURN round(3.14159, 2) as val")
     assert result.single()["val"] == 3.14
+
 
 def test_sqrt_function():
     """Test sqrt() function."""
     driver = GraphDatabase.driver("ipfs+embedded://")
     session = driver.session()
-    
+
     result = session.run("RETURN sqrt(16) as val")
     assert result.single()["val"] == 4.0
-    
+
     result = session.run("RETURN sqrt(2) as val")
     assert abs(result.single()["val"] - 1.414) < 0.001
+
 
 def test_sign_function():
     """Test sign() function."""
     driver = GraphDatabase.driver("ipfs+embedded://")
     session = driver.session()
-    
+
     result = session.run("RETURN sign(5) as val")
     assert result.single()["val"] == 1
-    
+
     result = session.run("RETURN sign(-3) as val")
     assert result.single()["val"] == -1
-    
+
     result = session.run("RETURN sign(0) as val")
     assert result.single()["val"] == 0
+
 
 def test_rand_function():
     """Test rand() function."""
     driver = GraphDatabase.driver("ipfs+embedded://")
     session = driver.session()
-    
+
     result = session.run("RETURN rand() as val")
     val = result.single()["val"]
     assert 0.0 <= val <= 1.0
+
 
 def test_math_functions_with_null():
     """Test math functions handle NULL."""
     driver = GraphDatabase.driver("ipfs+embedded://")
     session = driver.session()
-    
+
     result = session.run("RETURN abs(null) as val")
     assert result.single()["val"] is None
+
 
 # 15+ more tests...
 ```
@@ -384,18 +404,15 @@ SCHEMA_ORG_EXTENDED = {
         "Corporation": "Corporation",
         "GovernmentOrganization": "GovernmentOrganization",
         "NGO": "NGO",
-        
         # Place types
         "Place": "Place",
         "City": "City",
         "Country": "Country",
         "PostalAddress": "PostalAddress",
-        
         # Event types
         "Event": "Event",
         "SocialEvent": "SocialEvent",
         "BusinessEvent": "BusinessEvent",
-        
         # Properties
         "address": "address",
         "location": "location",
@@ -410,14 +427,12 @@ SCHEMA_ORG_EXTENDED = {
 FOAF_CONTEXT = {
     "@context": {
         "foaf": "http://xmlns.com/foaf/0.1/",
-        
         # Classes
         "Person": "foaf:Person",
         "Agent": "foaf:Agent",
         "Document": "foaf:Document",
         "Image": "foaf:Image",
         "OnlineAccount": "foaf:OnlineAccount",
-        
         # Properties
         "knows": {"@id": "foaf:knows", "@type": "@id"},
         "friend": {"@id": "foaf:friend", "@type": "@id"},
@@ -435,7 +450,6 @@ FOAF_CONTEXT = {
 DUBLIN_CORE_CONTEXT = {
     "@context": {
         "dc": "http://purl.org/dc/terms/",
-        
         # Properties
         "title": "dc:title",
         "creator": "dc:creator",
@@ -460,12 +474,10 @@ DUBLIN_CORE_CONTEXT = {
 SKOS_CONTEXT = {
     "@context": {
         "skos": "http://www.w3.org/2004/02/skos/core#",
-        
         # Classes
         "Concept": "skos:Concept",
         "ConceptScheme": "skos:ConceptScheme",
         "Collection": "skos:Collection",
-        
         # Properties
         "prefLabel": "skos:prefLabel",
         "altLabel": "skos:altLabel",
@@ -495,44 +507,49 @@ from ipfs_datasets_py.knowledge_graphs.jsonld import (
     SCHEMA_ORG_EXTENDED,
     FOAF_CONTEXT,
     DUBLIN_CORE_CONTEXT,
-    SKOS_CONTEXT
+    SKOS_CONTEXT,
 )
+
 
 def test_schema_org_extended():
     """Test Schema.org extended vocabulary."""
     context = JSONLDContext(SCHEMA_ORG_EXTENDED)
-    
+
     # Test organization types
     assert "Organization" in context.get_terms()
     assert "Corporation" in context.get_terms()
-    
+
     # Test properties
     assert context.expand_term("address") == "http://schema.org/address"
+
 
 def test_foaf_vocabulary():
     """Test FOAF vocabulary."""
     context = JSONLDContext(FOAF_CONTEXT)
-    
+
     # Test classes
     assert context.expand_term("Person") == "http://xmlns.com/foaf/0.1/Person"
-    
+
     # Test properties
     assert context.expand_term("knows") == "http://xmlns.com/foaf/0.1/knows"
     assert context.expand_term("givenName") == "http://xmlns.com/foaf/0.1/givenName"
 
+
 def test_dublin_core():
     """Test Dublin Core vocabulary."""
     context = JSONLDContext(DUBLIN_CORE_CONTEXT)
-    
+
     assert context.expand_term("title") == "http://purl.org/dc/terms/title"
     assert context.expand_term("creator") == "http://purl.org/dc/terms/creator"
+
 
 def test_skos_vocabulary():
     """Test SKOS vocabulary."""
     context = JSONLDContext(SKOS_CONTEXT)
-    
+
     assert context.expand_term("Concept") == "http://www.w3.org/2004/02/skos/core#Concept"
     assert context.expand_term("prefLabel") == "http://www.w3.org/2004/02/skos/core#prefLabel"
+
 
 # 10+ more tests...
 ```

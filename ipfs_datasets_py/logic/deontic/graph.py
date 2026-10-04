@@ -213,7 +213,9 @@ class DeonticGraph:
         assessments = self.assess_rules()
         return {
             "rule_count": len(assessments),
-            "fully_supported_rule_count": sum(1 for item in assessments if not item.missing_sources),
+            "fully_supported_rule_count": sum(
+                1 for item in assessments if not item.missing_sources
+            ),
             "rules_with_gaps": [item.to_dict() for item in assessments if item.missing_sources],
         }
 
@@ -379,7 +381,9 @@ class DeonticGraphBuilder:
                             else str(authority)
                         ),
                         node_type=DeonticNodeType.AUTHORITY,
-                        attributes=dict(authority.get("attributes") or {}) if isinstance(authority, dict) else {},
+                        attributes=dict(authority.get("attributes") or {})
+                        if isinstance(authority, dict)
+                        else {},
                     )
                 )
 
@@ -416,8 +420,12 @@ class DeonticGraphBuilder:
                     "rule_id": finding.get("id") or f"finding_rule_{index + 1}",
                     "modality": finding.get("modality", default_modality.value),
                     "predicate": finding.get("predicate") or finding.get("label") or "governs",
-                    "target_id": finding.get("target_id") or finding.get("action_id") or f"action_{index + 1}",
-                    "target_label": finding.get("target_label") or finding.get("action") or "Governed action",
+                    "target_id": finding.get("target_id")
+                    or finding.get("action_id")
+                    or f"action_{index + 1}",
+                    "target_label": finding.get("target_label")
+                    or finding.get("action")
+                    or "Governed action",
                     "target_type": finding.get("target_type") or DeonticNodeType.ACTION.value,
                     "sources": finding.get("sources")
                     or finding.get("conditions")
@@ -541,7 +549,9 @@ class DeonticGraphBuilder:
 
 
 def _safe_identifier(value: str) -> str:
-    return "".join(char.lower() if char.isalnum() else "_" for char in str(value)).strip("_") or "item"
+    return (
+        "".join(char.lower() if char.isalnum() else "_" for char in str(value)).strip("_") or "item"
+    )
 
 
 def _modalities_conflict(left: DeonticModality, right: DeonticModality) -> bool:

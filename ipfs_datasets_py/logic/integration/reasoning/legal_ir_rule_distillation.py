@@ -41,19 +41,11 @@ from .legal_ir_premise_security import (
 )
 
 
-LEGAL_IR_RULE_CANDIDATE_SCHEMA_VERSION: Final = (
-    "legal-ir-deterministic-rule-candidate-v1"
-)
+LEGAL_IR_RULE_CANDIDATE_SCHEMA_VERSION: Final = "legal-ir-deterministic-rule-candidate-v1"
 LEGAL_IR_RULE_DISTILLATION_SCHEMA_VERSION: Final = "legal-ir-rule-distillation-v1"
-LEGAL_IR_RULE_DISTILLATION_TODO_SCHEMA_VERSION: Final = (
-    "legal-ir-rule-distillation-codex-todo-v1"
-)
-LEGAL_IR_RULE_DISTILLATION_ROLLBACK_SCHEMA_VERSION: Final = (
-    "legal-ir-rule-distillation-rollback-v1"
-)
-LEGAL_IR_FAMILY_ATTRIBUTION_SCHEMA_VERSION: Final = (
-    "legal-ir-family-heldout-attribution-v1"
-)
+LEGAL_IR_RULE_DISTILLATION_TODO_SCHEMA_VERSION: Final = "legal-ir-rule-distillation-codex-todo-v1"
+LEGAL_IR_RULE_DISTILLATION_ROLLBACK_SCHEMA_VERSION: Final = "legal-ir-rule-distillation-rollback-v1"
+LEGAL_IR_FAMILY_ATTRIBUTION_SCHEMA_VERSION: Final = "legal-ir-family-heldout-attribution-v1"
 
 HARD_MAX_RULE_CANDIDATES: Final = 64
 HARD_MAX_PATTERNS_PER_CANDIDATE: Final = 32
@@ -178,9 +170,7 @@ class LegalIRRuleDistillationConfig:
             "max_owned_paths_per_candidate": HARD_MAX_OWNED_PATHS,
         }
         for name, hard_limit in bounds.items():
-            object.__setattr__(
-                self, name, max(1, min(int(getattr(self, name)), hard_limit))
-            )
+            object.__setattr__(self, name, max(1, min(int(getattr(self, name)), hard_limit)))
 
     @classmethod
     def from_value(
@@ -463,18 +453,12 @@ class LegalIRRuleDistillationResult(_SerializableMapping):
 
     @property
     def bounded(self) -> bool:
-        return (
-            len(self.candidates) <= self.config.max_candidates
-            and all(
-                len(item.patterns) <= self.config.max_patterns_per_candidate
-                and len(item.counterfactuals)
-                <= self.config.max_counterfactuals_per_candidate
-                and len(item.mutation_evidence)
-                <= self.config.max_mutations_per_candidate
-                and len(item.owned_paths)
-                <= self.config.max_owned_paths_per_candidate
-                for item in self.candidates
-            )
+        return len(self.candidates) <= self.config.max_candidates and all(
+            len(item.patterns) <= self.config.max_patterns_per_candidate
+            and len(item.counterfactuals) <= self.config.max_counterfactuals_per_candidate
+            and len(item.mutation_evidence) <= self.config.max_mutations_per_candidate
+            and len(item.owned_paths) <= self.config.max_owned_paths_per_candidate
+            for item in self.candidates
         )
 
     @property
@@ -580,14 +564,14 @@ def distill_legal_ir_rule_candidates(
     if mutation_evidence is None:
         mutation_evidence = mutations
     if mutation_evidence is None:
-        mutation_evidence = container.get("mutation_evidence") or container.get(
-            "mutations"
-        )
+        mutation_evidence = container.get("mutation_evidence") or container.get("mutations")
 
     raw_rows = _pattern_rows(learned_patterns, source_id=source_id)
     unsafe_container = bool(container and _unsafe_payload(container))
     rejected: list[dict[str, Any]] = []
-    accepted: list[tuple[LegalIRStablePattern, Mapping[str, Any], LegalIRViewContract, LegalIRRepairLane]] = []
+    accepted: list[
+        tuple[LegalIRStablePattern, Mapping[str, Any], LegalIRViewContract, LegalIRRepairLane]
+    ] = []
     for index, raw in enumerate(raw_rows):
         pattern_id = str(raw.get("pattern_id") or raw.get("feature_id") or f"pattern-{index}")
         if unsafe_container or premise_security.rejected:
@@ -620,7 +604,9 @@ def distill_legal_ir_rule_candidates(
 
     groups: dict[
         tuple[str, str, str, str],
-        list[tuple[LegalIRStablePattern, Mapping[str, Any], LegalIRViewContract, LegalIRRepairLane]],
+        list[
+            tuple[LegalIRStablePattern, Mapping[str, Any], LegalIRViewContract, LegalIRRepairLane]
+        ],
     ] = {}
     deduped_accepted: dict[
         tuple[str, str, str, str],
@@ -671,9 +657,7 @@ def distill_legal_ir_rule_candidates(
             12,
         )
         if support_count < policy.min_support:
-            rejected.extend(
-                _group_rejections(patterns, "insufficient_candidate_support")
-            )
+            rejected.extend(_group_rejections(patterns, "insufficient_candidate_support"))
             continue
         if confidence < policy.min_confidence:
             rejected.extend(_group_rejections(patterns, "candidate_confidence_below_threshold"))
@@ -714,9 +698,7 @@ def distill_legal_ir_rule_candidates(
                 pattern_id=_pattern.pattern_id,
             )
         ]
-        nested_mutations.extend(
-            _evidence_values(mutation_evidence, family=family, pattern_id="")
-        )
+        nested_mutations.extend(_evidence_values(mutation_evidence, family=family, pattern_id=""))
         mutation_records = _mutation_records(
             nested_mutations,
             family=family,
@@ -725,9 +707,7 @@ def distill_legal_ir_rule_candidates(
         if not mutation_records:
             rejected.extend(_group_rejections(patterns, "mutation_evidence_missing"))
             continue
-        if policy.require_passing_mutations and not all(
-            item.passed for item in mutation_records
-        ):
+        if policy.require_passing_mutations and not all(item.passed for item in mutation_records):
             rejected.extend(_group_rejections(patterns, "mutation_evidence_failed"))
             continue
 
@@ -808,9 +788,7 @@ def distill_legal_ir_rule_candidates(
     )
     overflow = candidate_seeds[policy.max_candidates :]
     for item in overflow:
-        rejected.extend(
-            _group_rejections(item["patterns"], "candidate_batch_limit_exceeded")
-        )
+        rejected.extend(_group_rejections(item["patterns"], "candidate_batch_limit_exceeded"))
     candidate_seeds = candidate_seeds[: policy.max_candidates]
 
     distillation_descriptor = {
@@ -818,9 +796,7 @@ def distill_legal_ir_rule_candidates(
         "config": _config_dict(policy),
         "source_id": source_id,
     }
-    distillation_id = "lir-rule-distillation-" + _stable_hash(
-        distillation_descriptor
-    )[:24]
+    distillation_id = "lir-rule-distillation-" + _stable_hash(distillation_descriptor)[:24]
     candidates: list[LegalIRRuleCandidate] = []
     todos: list[LegalIRRuleCodexTodo] = []
     for seed in candidate_seeds:
@@ -956,11 +932,7 @@ def project_distilled_rules_to_codex_todos(
                 LegalIRArtifactUse.CODEX_TODO,
             )
         ]
-    return list(
-        distill_legal_ir_rule_candidates(
-            distillation_or_patterns, **kwargs
-        ).codex_todos
-    )
+    return list(distill_legal_ir_rule_candidates(distillation_or_patterns, **kwargs).codex_todos)
 
 
 def _pattern_rows(value: Any, *, source_id: str) -> list[dict[str, Any]]:
@@ -986,9 +958,7 @@ def _pattern_rows(value: Any, *, source_id: str) -> list[dict[str, Any]]:
                 if lane_records:
                     defaults.update(
                         {
-                            "allowed_paths": _as_mapping(lane_records[0]).get(
-                                "allowed_paths"
-                            ),
+                            "allowed_paths": _as_mapping(lane_records[0]).get("allowed_paths"),
                             "lane_id": _as_mapping(lane_records[0]).get("lane_id"),
                         }
                     )
@@ -1081,9 +1051,7 @@ def _normalize_pattern(
         return None, None, None, "sample_memory_or_source_copy_feature"
     if raw.get("stable") is not True:
         return None, None, None, "unstable_pattern"
-    feature = str(
-        raw.get("feature") or raw.get("pattern") or raw.get("feature_name") or ""
-    ).strip()
+    feature = str(raw.get("feature") or raw.get("pattern") or raw.get("feature_name") or "").strip()
     if not feature or len(feature.encode("utf-8")) > HARD_MAX_SERIALIZED_STRING_BYTES:
         return None, None, None, "missing_or_oversized_feature"
     kind = _pattern_kind(raw, feature)
@@ -1155,12 +1123,12 @@ def _normalize_pattern(
 
 
 def _pattern_kind(raw: Mapping[str, Any], feature: str) -> LegalIRPatternKind | None:
-    value = str(
-        raw.get("pattern_kind")
-        or raw.get("kind")
-        or raw.get("feature_group")
-        or ""
-    ).strip().lower().replace("-", "_")
+    value = (
+        str(raw.get("pattern_kind") or raw.get("kind") or raw.get("feature_group") or "")
+        .strip()
+        .lower()
+        .replace("-", "_")
+    )
     aliases = {
         "compiler_contract": LegalIRPatternKind.FAMILY,
         "contract_id": LegalIRPatternKind.FAMILY,
@@ -1267,9 +1235,7 @@ def _counterfactual_records(
             item.get("outcome_preserved"),
             default=bool(observed and observed == expected),
         )
-        held_out = _explicit_bool(
-            item.get("held_out"), item.get("heldout"), default=True
-        )
+        held_out = _explicit_bool(item.get("held_out"), item.get("heldout"), default=True)
         evidence_id = _identifier(item.get("evidence_id"))
         descriptor = {
             "evidence_id": evidence_id,
@@ -1280,9 +1246,10 @@ def _counterfactual_records(
             "observed": observed,
             "passed": passed,
         }
-        counterfactual_id = _identifier(
-            item.get("counterfactual_id") or item.get("case_id") or item.get("id")
-        ) or "lir-counterfactual-" + _stable_hash(descriptor)[:20]
+        counterfactual_id = (
+            _identifier(item.get("counterfactual_id") or item.get("case_id") or item.get("id"))
+            or "lir-counterfactual-" + _stable_hash(descriptor)[:20]
+        )
         records[counterfactual_id] = LegalIRCounterfactualEvidence(
             counterfactual_id=counterfactual_id,
             family=family,
@@ -1335,9 +1302,10 @@ def _mutation_records(
             "observed": observed,
             "verified": verified,
         }
-        mutation_id = _identifier(
-            item.get("mutation_id") or item.get("case_id") or item.get("id")
-        ) or "lir-mutation-" + _stable_hash(descriptor)[:20]
+        mutation_id = (
+            _identifier(item.get("mutation_id") or item.get("case_id") or item.get("id"))
+            or "lir-mutation-" + _stable_hash(descriptor)[:20]
+        )
         records[mutation_id] = LegalIRMutationEvidence(
             mutation_id=mutation_id,
             family=family,
@@ -1356,9 +1324,7 @@ def _family_attribution(value: Any, *, family: str) -> LegalIRFamilyAttribution 
         return value if _canonical_family(value.family) == family else None
     payload = _as_mapping(value)
     per_family = False
-    canonical_key = next(
-        (key for key in payload if _canonical_family(key) == family), None
-    )
+    canonical_key = next((key for key in payload if _canonical_family(key) == family), None)
     if canonical_key is not None:
         payload = _as_mapping(payload[canonical_key])
         per_family = True
@@ -1371,9 +1337,7 @@ def _family_attribution(value: Any, *, family: str) -> LegalIRFamilyAttribution 
             for key in ("families", "family_attributions", "per_family")
             if key in payload and isinstance(payload[key], Mapping)
         )
-        nested_key = next(
-            (key for key in nested if _canonical_family(key) == family), None
-        )
+        nested_key = next((key for key in nested if _canonical_family(key) == family), None)
         payload = _as_mapping(nested.get(nested_key)) if nested_key is not None else {}
         per_family = True
     elif _canonical_family(payload.get("family")) == family:
@@ -1586,9 +1550,7 @@ def _evidence_values(value: Any, *, family: str, pattern_id: str) -> list[Any]:
     if isinstance(value, Mapping):
         if pattern_id and pattern_id in value:
             return _evidence_values(value[pattern_id], family=family, pattern_id="")
-        family_key = next(
-            (key for key in value if _canonical_family(key) == family), None
-        )
+        family_key = next((key for key in value if _canonical_family(key) == family), None)
         if family_key is not None:
             return _evidence_values(value[family_key], family=family, pattern_id="")
         for key in ("items", "records", "evidence", "counterfactuals", "mutations"):
@@ -1617,13 +1579,18 @@ def _unsafe_payload(value: Any, *, feature_context: bool = True) -> bool:
             not feature_context and normalized in {"sample_id", "sample_ids"}
         ):
             return True
-        if feature_context and normalized in {
-            "feature",
-            "feature_name",
-            "pattern",
-            "rule",
-            "deterministic_rule",
-        } and _contains_forbidden_marker(child):
+        if (
+            feature_context
+            and normalized
+            in {
+                "feature",
+                "feature_name",
+                "pattern",
+                "rule",
+                "deterministic_rule",
+            }
+            and _contains_forbidden_marker(child)
+        ):
             return True
     return False
 
@@ -1703,10 +1670,7 @@ def _source_id(payload: Mapping[str, Any], original: Any) -> str:
 
 
 def _config_dict(config: LegalIRRuleDistillationConfig) -> dict[str, Any]:
-    return {
-        name: getattr(config, name)
-        for name in config.__dataclass_fields__
-    }
+    return {name: getattr(config, name) for name in config.__dataclass_fields__}
 
 
 def _group_rejections(
@@ -1717,8 +1681,7 @@ def _group_rejections(
 
 def _dedupe_rejections(values: Iterable[Mapping[str, Any]]) -> list[dict[str, Any]]:
     deduped = {
-        (str(item.get("pattern_id") or ""), str(item.get("reason") or "")):
-        dict(item)
+        (str(item.get("pattern_id") or ""), str(item.get("reason") or "")): dict(item)
         for item in values
     }
     return [deduped[key] for key in sorted(deduped)]
@@ -1749,11 +1712,7 @@ def _sequence(value: Any) -> list[Any]:
 def _string_values(value: Any) -> tuple[str, ...]:
     return tuple(
         sorted(
-            {
-                str(item).strip().replace("\\", "/")
-                for item in _sequence(value)
-                if str(item).strip()
-            }
+            {str(item).strip().replace("\\", "/") for item in _sequence(value) if str(item).strip()}
         )
     )
 

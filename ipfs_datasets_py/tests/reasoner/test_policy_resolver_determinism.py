@@ -1,4 +1,5 @@
 """Tests for deterministic policy resolver (WS12-02)."""
+
 from __future__ import annotations
 
 import pytest
@@ -13,6 +14,7 @@ from reasoner.policy_resolver import (
 # ---------------------------------------------------------------------------
 # Helpers / fixtures
 # ---------------------------------------------------------------------------
+
 
 def _pack(jurisdiction: str, effective_date: str, pack_id: str = None) -> dict:
     p = {
@@ -38,6 +40,7 @@ PACKS_BASIC = [
 # TestReplayStability
 # ---------------------------------------------------------------------------
 
+
 class TestReplayStability:
     def test_same_inputs_return_same_result(self):
         # GIVEN the same packs, jurisdiction, and date
@@ -49,10 +52,7 @@ class TestReplayStability:
 
     def test_same_inputs_multiple_calls_deterministic(self):
         # GIVEN same inputs called many times
-        results = [
-            resolve_policy_pack(PACKS_BASIC, "US-CA", "2024-12-01")
-            for _ in range(5)
-        ]
+        results = [resolve_policy_pack(PACKS_BASIC, "US-CA", "2024-12-01") for _ in range(5)]
         ids = [r["selected_pack_id"] for r in results]
         assert len(set(ids)) == 1, "resolve_policy_pack is not deterministic"
 
@@ -60,6 +60,7 @@ class TestReplayStability:
 # ---------------------------------------------------------------------------
 # TestMostRecentEffectiveDateWins
 # ---------------------------------------------------------------------------
+
 
 class TestMostRecentEffectiveDateWins:
     def test_most_recent_effective_date_selected(self):
@@ -85,6 +86,7 @@ class TestMostRecentEffectiveDateWins:
 # ---------------------------------------------------------------------------
 # TestTieBreakByPackId
 # ---------------------------------------------------------------------------
+
 
 class TestTieBreakByPackId:
     def test_tie_break_by_pack_id_lexicographic(self):
@@ -123,6 +125,7 @@ class TestTieBreakByPackId:
 # TestJurisdictionFiltering
 # ---------------------------------------------------------------------------
 
+
 class TestJurisdictionFiltering:
     def test_only_matching_jurisdiction_selected(self):
         # GIVEN packs from multiple jurisdictions
@@ -145,6 +148,7 @@ class TestJurisdictionFiltering:
 # ---------------------------------------------------------------------------
 # TestDateFiltering
 # ---------------------------------------------------------------------------
+
 
 class TestDateFiltering:
     def test_future_effective_date_not_selected(self):
@@ -175,6 +179,7 @@ class TestDateFiltering:
 # TestNoMatchingPacks
 # ---------------------------------------------------------------------------
 
+
 class TestNoMatchingPacks:
     def test_empty_packs_list_raises(self):
         # GIVEN an empty packs list
@@ -195,14 +200,20 @@ class TestNoMatchingPacks:
 # TestDecisionEnvelope
 # ---------------------------------------------------------------------------
 
+
 class TestDecisionEnvelope:
     def test_envelope_has_required_fields(self):
         # GIVEN a valid resolution
         result = resolve_policy_pack(PACKS_BASIC, "US-CA", "2024-12-01")
         # THEN all required fields are present
         for key in (
-            "schema_version", "selected_pack_id", "selected_pack_index",
-            "jurisdiction", "date", "tie_break_applied", "trace",
+            "schema_version",
+            "selected_pack_id",
+            "selected_pack_index",
+            "jurisdiction",
+            "date",
+            "tie_break_applied",
+            "trace",
         ):
             assert key in result, f"Missing envelope field: {key}"
 
@@ -230,6 +241,7 @@ class TestDecisionEnvelope:
 # ---------------------------------------------------------------------------
 # TestTraceFields
 # ---------------------------------------------------------------------------
+
 
 class TestTraceFields:
     def test_trace_is_list(self):

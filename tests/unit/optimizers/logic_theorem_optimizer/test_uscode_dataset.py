@@ -8,8 +8,12 @@ from types import SimpleNamespace
 import pytest
 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import uscode_modal_daemon_runner as runner
-from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import AdaptiveModalAutoencoder
-from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import ModalTodoSupervisor
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import (
+    AdaptiveModalAutoencoder,
+)
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import (
+    ModalTodoSupervisor,
+)
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec import (
     SpaCyLegalEncoder,
     SpaCyModalCodec,
@@ -126,7 +130,10 @@ def test_supervisor_optimizes_uscode_parquet_with_spacy_codec(tmp_path) -> None:
     )
 
     assert run.final_evaluation.cross_entropy_loss < run.steps[0].before.cross_entropy_loss
-    assert run.final_evaluation.embedding_cosine_similarity > run.steps[0].before.embedding_cosine_similarity
+    assert (
+        run.final_evaluation.embedding_cosine_similarity
+        > run.steps[0].before.embedding_cosine_similarity
+    )
     counts = supervisor.queue.status_counts()
     assert counts.get("completed", 0) >= 3
 

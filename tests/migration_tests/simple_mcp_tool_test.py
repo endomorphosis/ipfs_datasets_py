@@ -15,6 +15,7 @@ from pathlib import Path
 # Import the configuration loading function
 from ipfs_datasets_py.mcp_server.configs import load_config_from_yaml, configs
 
+
 def discover_tools():
     """Discover all available MCP tools."""
     tools_discovered = {}
@@ -28,7 +29,7 @@ def discover_tools():
 
     # Iterate through each category directory
     for category_dir in tools_path.iterdir():
-        if category_dir.is_dir() and not category_dir.name.startswith('__'):
+        if category_dir.is_dir() and not category_dir.name.startswith("__"):
             category_name = category_dir.name
             tools_discovered[category_name] = []
 
@@ -42,6 +43,7 @@ def discover_tools():
                     print(f"  Found tool: {tool_name}")
 
     return tools_discovered
+
 
 def test_tool_import(category, tool_name):
     """Test if a tool can be imported."""
@@ -58,7 +60,7 @@ def test_tool_import(category, tool_name):
             # Look for any async function
             for attr_name in dir(module):
                 attr = getattr(module, attr_name)
-                if callable(attr) and not attr_name.startswith('_'):
+                if callable(attr) and not attr_name.startswith("_"):
                     print(f"    ✓ Found callable: {attr_name}")
                     return True, attr
 
@@ -72,33 +74,35 @@ def test_tool_import(category, tool_name):
         print(f"    ✗ Unexpected error: {e}")
         return False, None
 
+
 async def test_tool_execution(category, tool_name, func):
     """Test basic execution of a tool."""
     try:
         # Get function signature to understand parameters
         import inspect
+
         sig = inspect.signature(func)
         params = {}
 
         # Provide basic test parameters based on common patterns
         for param_name, param in sig.parameters.items():
-            if param_name in ['source', 'dataset', 'data']:
+            if param_name in ["source", "dataset", "data"]:
                 params[param_name] = "test_data"
-            elif param_name in ['path', 'output_path', 'destination']:
+            elif param_name in ["path", "output_path", "destination"]:
                 params[param_name] = "/tmp/test_output"
-            elif param_name in ['cid']:
+            elif param_name in ["cid"]:
                 params[param_name] = "QmTestCID123"
-            elif param_name in ['format']:
+            elif param_name in ["format"]:
                 params[param_name] = "json"
-            elif param_name in ['command']:
+            elif param_name in ["command"]:
                 params[param_name] = "echo 'test'"
-            elif param_name in ['code']:
+            elif param_name in ["code"]:
                 params[param_name] = "print('test')"
-            elif param_name in ['query']:
+            elif param_name in ["query"]:
                 params[param_name] = "SELECT * FROM test LIMIT 1"
-            elif param_name in ['urls']:
+            elif param_name in ["urls"]:
                 params[param_name] = ["https://example.com"]
-            elif param_name in ['operations']:
+            elif param_name in ["operations"]:
                 params[param_name] = ["normalize"]
 
         # Try to call the function
@@ -110,7 +114,7 @@ async def test_tool_execution(category, tool_name, func):
         print(f"    ✓ Execution successful")
         print(f"      Result type: {type(result)}")
 
-        if isinstance(result, dict) and 'status' in result:
+        if isinstance(result, dict) and "status" in result:
             print(f"      Status: {result['status']}")
 
         return True, result
@@ -119,11 +123,12 @@ async def test_tool_execution(category, tool_name, func):
         print(f"    ⚠ Execution failed: {e}")
         return False, str(e)
 
+
 async def main():
     """Main test function."""
-    print("="*60)
+    print("=" * 60)
     print("MCP TOOLS VERIFICATION AND TEST")
-    print("="*60)
+    print("=" * 60)
 
     # Load configuration
     config_path = Path(__file__).parent / "config" / "mcp_config.yaml"
@@ -150,9 +155,9 @@ async def main():
     failed = 0
 
     for category, tool_list in tools.items():
-        print(f"\n{'='*40}")
+        print(f"\n{'=' * 40}")
         print(f"TESTING CATEGORY: {category.upper()}")
-        print(f"{'='*40}")
+        print(f"{'=' * 40}")
 
         for tool_name in tool_list:
             print(f"\nTesting {category}.{tool_name}:")
@@ -172,13 +177,14 @@ async def main():
                 failed += 1
 
     # Summary
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("SUMMARY")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"Total tools: {total_tools}")
     print(f"Passed: {passed}")
     print(f"Failed: {failed}")
-    print(f"Success rate: {passed/total_tools*100:.1f}%" if total_tools > 0 else "0%")
+    print(f"Success rate: {passed / total_tools * 100:.1f}%" if total_tools > 0 else "0%")
+
 
 if __name__ == "__main__":
     anyio.run(main())

@@ -33,20 +33,14 @@ The implementation continues to follow the adversarial harness patterns from com
 **API Highlights:**
 ```python
 session = OntologySession(
-    generator=generator,
-    mediator=mediator,
-    critic=critic,
-    validator=validator,
-    max_rounds=10
+    generator=generator, mediator=mediator, critic=critic, validator=validator, max_rounds=10
 )
 
 result = session.run(data, context)
 # SessionResult with ontology, scores, validation, history
 
 # With automatic retry on validation failure
-result = session.run_with_validation_retry(
-    data, context, max_validation_retries=3
-)
+result = session.run_with_validation_retry(data, context, max_validation_retries=3)
 ```
 
 #### 2. ontology_harness.py (500 LOC)
@@ -65,27 +59,22 @@ result = session.run_with_validation_retry(
 **API Highlights:**
 ```python
 harness = OntologyHarness(
-    generator_config={'model': 'bert-base-uncased'},
-    critic_config={'model': 'gpt-4'},
-    validator_config={'strategy': 'AUTO'},
+    generator_config={"model": "bert-base-uncased"},
+    critic_config={"model": "gpt-4"},
+    validator_config={"strategy": "AUTO"},
     parallelism=4,
-    max_retries=3
+    max_retries=3,
 )
 
 # Run batch
 batch_result = harness.run_sessions(
-    data_sources=[doc1, doc2, doc3],
-    contexts=[ctx1, ctx2, ctx3],
-    num_sessions_per_source=2
+    data_sources=[doc1, doc2, doc3], contexts=[ctx1, ctx2, ctx3], num_sessions_per_source=2
 )
 # BatchResult with success_rate, average_score, optimization_report
 
 # Run SGD cycles
 cycle_results = harness.run_sgd_cycle(
-    data_sources=documents,
-    contexts=contexts,
-    num_cycles=10,
-    convergence_threshold=0.85
+    data_sources=documents, contexts=contexts, num_cycles=10, convergence_threshold=0.85
 )
 # List[BatchResult] tracking improvement over cycles
 ```
@@ -114,18 +103,15 @@ generator = PromptGenerator()
 prompt = generator.generate_extraction_prompt(
     context=context,  # Has domain='legal'
     feedback=critic_score,  # Optional feedback
-    examples=high_quality_examples  # Optional examples
+    examples=high_quality_examples,  # Optional examples
 )
 
 # Adapt prompt based on feedback
-adapted_prompt = generator.adapt_prompt_from_feedback(
-    base_prompt,
-    critic_score
-)
+adapted_prompt = generator.adapt_prompt_from_feedback(base_prompt, critic_score)
 
 # Get/add templates
-template = generator.get_template('medical')
-generator.add_template('finance', custom_template)
+template = generator.get_template("medical")
+generator.add_template("finance", custom_template)
 ```
 
 ---
@@ -155,22 +141,20 @@ generator.add_template('finance', custom_template)
 library = OntologyTemplateLibrary()
 
 # Get template
-template = library.get_template('legal')
+template = library.get_template("legal")
 print(f"Entity types: {template.entity_types}")
 print(f"Relationship types: {template.relationship_types}")
 
 # Generate ontology from template
 ontology = library.generate_from_template(
-    'legal',
-    parties=['Alice', 'Bob'],
-    obligations=['pay $100', 'deliver goods']
+    "legal", parties=["Alice", "Bob"], obligations=["pay $100", "deliver goods"]
 )
 
 # Add custom template
 library.add_template(custom_template)
 
 # Merge templates
-merged = library.merge_templates('legal', 'medical', 'legal_medical')
+merged = library.merge_templates("legal", "medical", "legal_medical")
 library.add_template(merged)
 
 # List all domains
@@ -211,11 +195,11 @@ print(f"Convergence rate: {stats['convergence_rate']:.1%}")
 print(f"Domain breakdown: {stats['domains']}")
 
 # Time series
-quality_over_time = collector.get_time_series('quality_score')
+quality_over_time = collector.get_time_series("quality_score")
 
 # Export
-json_data = collector.export_metrics(format='json')
-csv_data = collector.export_metrics(format='csv')
+json_data = collector.export_metrics(format="json")
+csv_data = collector.export_metrics(format="csv")
 
 # Trend analysis
 trends = collector.get_trend_analysis(window_size=10)
@@ -270,15 +254,15 @@ from ipfs_datasets_py.optimizers.graphrag import (
     OntologyTemplateLibrary,
     PromptGenerator,
     ExtractionStrategy,
-    DataType
+    DataType,
 )
 
 # Initialize components
 harness = OntologyHarness(
-    generator_config={'model': 'bert-base-uncased'},
-    critic_config={'model': 'gpt-4'},
-    validator_config={'strategy': 'AUTO'},
-    parallelism=4
+    generator_config={"model": "bert-base-uncased"},
+    critic_config={"model": "gpt-4"},
+    validator_config={"strategy": "AUTO"},
+    parallelism=4,
 )
 
 metrics = MetricsCollector()
@@ -289,55 +273,57 @@ prompt_gen = PromptGenerator()
 contexts = []
 for doc in documents:
     # Get domain-specific template
-    template = template_library.get_template('legal')
-    
+    template = template_library.get_template("legal")
+
     # Generate optimized prompt
     prompt = prompt_gen.generate_extraction_prompt(
         OntologyGenerationContext(
             data_source=doc.name,
             data_type=DataType.PDF,
-            domain='legal',
-            extraction_strategy=ExtractionStrategy.LLM_BASED
+            domain="legal",
+            extraction_strategy=ExtractionStrategy.LLM_BASED,
         )
     )
-    
-    contexts.append(OntologyGenerationContext(
-        data_source=doc.name,
-        data_type=DataType.PDF,
-        domain='legal',
-        base_ontology=template_library.generate_from_template('legal')
-    ))
+
+    contexts.append(
+        OntologyGenerationContext(
+            data_source=doc.name,
+            data_type=DataType.PDF,
+            domain="legal",
+            base_ontology=template_library.generate_from_template("legal"),
+        )
+    )
 
 # Run SGD cycles
 for cycle in range(10):
     print(f"=== Cycle {cycle + 1} ===")
-    
+
     # Run batch
     batch = harness.run_sessions(documents, contexts)
-    
+
     # Record metrics
     for session in batch.sessions:
         metrics.record_session(session)
     metrics.record_batch(batch)
-    
+
     # Analyze
     stats = metrics.get_statistics()
     print(f"Avg quality: {stats['average_quality_score']:.2f}")
     print(f"Convergence: {stats['convergence_rate']:.1%}")
-    
+
     # Check convergence
     if batch.average_score >= 0.85:
         print("Converged!")
         break
-    
+
     # Adapt prompts for next cycle
     if batch.optimization_report:
         for rec in batch.optimization_report.recommendations:
             print(f"Recommendation: {rec}")
 
 # Export final metrics
-with open('metrics.json', 'w') as f:
-    f.write(metrics.export_metrics(format='json'))
+with open("metrics.json", "w") as f:
+    f.write(metrics.export_metrics(format="json"))
 ```
 
 ---

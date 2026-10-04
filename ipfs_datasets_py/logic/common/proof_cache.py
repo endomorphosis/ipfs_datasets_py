@@ -38,22 +38,22 @@ This ensures:
 
 Usage:
     >>> from ipfs_datasets_py.logic.common import ProofCache, get_global_cache
-    >>> 
+    >>>
     >>> # Local caching only
     >>> cache = ProofCache(maxsize=1000, ttl=3600)
-    >>> 
+    >>>
     >>> # With IPFS backend for distributed caching
     >>> cache = ProofCache(maxsize=1000, ttl=3600, enable_ipfs_backend=True)
-    >>> 
+    >>>
     >>> # Cache a proof result
     >>> result = prover.prove(formula)
     >>> cache.set(formula, result, prover_name="z3")
-    >>> 
+    >>>
     >>> # Retrieve cached result (O(1) lookup, checks IPFS if enabled)
     >>> cached = cache.get(formula, prover_name="z3")
     >>> if cached:
     ...     print("Cache hit!")
-    >>> 
+    >>>
     >>> # Or use the global singleton
     >>> global_cache = get_global_cache()
     >>> global_cache.set(formula, result, prover_name="lean")
@@ -61,9 +61,9 @@ Usage:
 Backward Compatibility:
     The module is used as the unified cache for:
     - external_provers.proof_cache.ProofCache
-    - TDFOL.tdfol_proof_cache.TDFOLProofCache  
+    - TDFOL.tdfol_proof_cache.TDFOLProofCache
     - integration.caching.proof_cache.ProofCache
-    
+
     All legacy imports are maintained via compatibility shims.
 """
 
@@ -84,6 +84,7 @@ except ImportError:  # pragma: no cover - non-POSIX compatibility
 
 try:
     from cachetools import TTLCache
+
     CACHETOOLS_AVAILABLE = True
 except ImportError:
     CACHETOOLS_AVAILABLE = False
@@ -91,16 +92,18 @@ except ImportError:
 
 try:
     from ipfs_datasets_py.utils.cid_utils import cid_for_obj, canonical_json_bytes
+
     CID_UTILS_AVAILABLE = True
 except ImportError:
     CID_UTILS_AVAILABLE = False
     # Fallback to simple hashing
     import hashlib
-    
+
     def cid_for_obj(obj: Any) -> str:
         """Fallback CID computation using SHA256."""
         json_str = json.dumps(obj, sort_keys=True)
         return hashlib.sha256(json_str.encode()).hexdigest()
+
 
 # IPFS backend imports are deferred to ProofCache.__init__ to keep this module
 # lightweight at import time (avoids pulling in ipfs_kit_py / lotus_kit eagerly).
@@ -116,6 +119,7 @@ def _probe_ipfs_backend() -> bool:
         return IPFS_BACKEND_AVAILABLE
     try:
         import warnings as _cache_warnings
+
         with _cache_warnings.catch_warnings():
             _cache_warnings.simplefilter("ignore")
             from ipfs_datasets_py.caching.router_remote_cache import (  # noqa: PLC0415
@@ -130,6 +134,7 @@ def _probe_ipfs_backend() -> bool:
     except Exception:
         IPFS_BACKEND_AVAILABLE = False
     return IPFS_BACKEND_AVAILABLE
+
 
 logger = logging.getLogger(__name__)
 _CID_FALLBACK_LOGGED = False
@@ -153,7 +158,7 @@ def _safe_timestamp(value: Any) -> float:
 @dataclass
 class CachedProofResult:
     """Cached proof result with metadata.
-    
+
     Attributes:
         result: The actual proof result (any prover result type)
         cid: Content identifier (hash) of the query
@@ -162,31 +167,32 @@ class CachedProofResult:
         timestamp: When this result was cached
         hit_count: Number of times this result was retrieved
     """
+
     result: Any
     cid: str
     prover_name: str
     formula_str: str
     timestamp: float
     hit_count: int = 0
-    
+
     def to_dict(self) -> Dict:
         """Convert to dictionary for serialization."""
         return {
-            'cid': self.cid,
-            'prover_name': self.prover_name,
-            'formula_str': self.formula_str,
-            'timestamp': self.timestamp,
-            'hit_count': self.hit_count,
+            "cid": self.cid,
+            "prover_name": self.prover_name,
+            "formula_str": self.formula_str,
+            "timestamp": self.timestamp,
+            "hit_count": self.hit_count,
             # result is not serialized (may contain non-serializable objects)
         }
 
 
 class ProofCache:
     """Unified proof cache with CID-based content addressing.
-    
+
     This cache provides O(1) lookups for proof results across all provers
     using IPFS-native CID hashing.
-    
+
     Attributes:
         maxsize: Maximum number of cached proofs
         ttl: Time-to-live in seconds
@@ -194,7 +200,7 @@ class ProofCache:
         lock: Thread lock for safe concurrent access
         stats: Cache statistics
     """
-    
+
     def __init__(
         self,
         maxsize: int = 1000,
@@ -210,7 +216,7 @@ class ProofCache:
         default_ttl: Optional[int] = None,
     ):
         """Initialize proof cache with optional IPFS backend.
-        
+
         Args:
             maxsize: Maximum number of cached proofs (default: 1000)
             ttl: Time-to-live in seconds for local cache (default: 3600 = 1 hour)
@@ -236,7 +242,7 @@ class ProofCache:
         self.enable_ipfs_backend = enable_ipfs_backend
         self.ipfs_pin = ipfs_pin
         self.ipfs_ttl = ipfs_ttl or ttl
-        
+
         # Initialize cache storage
         if CACHETOOLS_AVAILABLE:
             self.cache = TTLCache(maxsize=maxsize, ttl=ttl)
@@ -244,10 +250,11 @@ class ProofCache:
             # Fallback to simple dict (no TTL or size limit)
             self.cache = {}
             logger.warning("cachetools not available, using simple dict cache")
-        
+
         self.lock = RLock()
         # Backward-compat attributes (ordered dict for LRU)
         from collections import OrderedDict
+
         self._cache: dict = OrderedDict()
         self._compat_hits: int = 0
         self._compat_misses: int = 0
@@ -255,23 +262,23 @@ class ProofCache:
         self._compat_expirations: int = 0
         self._compat_puts: int = 0
         self.stats = {
-            'hits': 0,
-            'misses': 0,
-            'sets': 0,
-            'evictions': 0,
-            'cid_collisions': 0,
-            'ipfs_hits': 0,
-            'ipfs_sets': 0,
-            'ipfs_errors': 0,
-            'persistence_loads': 0,
-            'persistence_writes': 0,
-            'persistence_errors': 0,
-            'persistence_skipped_results': 0,
+            "hits": 0,
+            "misses": 0,
+            "sets": 0,
+            "evictions": 0,
+            "cid_collisions": 0,
+            "ipfs_hits": 0,
+            "ipfs_sets": 0,
+            "ipfs_errors": 0,
+            "persistence_loads": 0,
+            "persistence_writes": 0,
+            "persistence_errors": 0,
+            "persistence_skipped_results": 0,
         }
 
         if self.enable_persistence:
             self._load_persistent_cache()
-        
+
         # Initialize IPFS backend if requested (Phase 1 Task 1.3)
         self.ipfs_backend = None
         self.ipfs_cache = None
@@ -285,28 +292,30 @@ class ProofCache:
                 try:
                     # Get or create IPFS backend
                     backend = ipfs_backend or get_ipfs_backend()
-                    
+
                     # Create local mapping cache for IPFS pointers
                     mapping_cache = {}  # Simple dict for CID -> IPFS pointer mapping
-                    
+
                     # Initialize IPFS-backed cache
                     self.ipfs_cache = IPFSBackedRemoteCache(
                         mapping_cache=mapping_cache,
                         ipfs_backend=backend,
                         pin=ipfs_pin,
                         ttl_seconds=ipfs_ttl,
-                        broadcast=True
+                        broadcast=True,
                     )
                     self.ipfs_backend = backend
-                    logger.info(
-                        f"IPFS backend enabled with pin={ipfs_pin}, ttl={ipfs_ttl}s"
-                    )
+                    logger.info(f"IPFS backend enabled with pin={ipfs_pin}, ttl={ipfs_ttl}s")
                 except Exception as e:
-                    logger.warning(f"Failed to initialize IPFS backend: {e}. "
-                                 "Falling back to local-only caching.")
-        
-        logger.info(f"Initialized ProofCache with maxsize={maxsize}, ttl={ttl}s, "
-                   f"ipfs_backend={enable_ipfs_backend}")
+                    logger.warning(
+                        f"Failed to initialize IPFS backend: {e}. "
+                        "Falling back to local-only caching."
+                    )
+
+        logger.info(
+            f"Initialized ProofCache with maxsize={maxsize}, ttl={ttl}s, "
+            f"ipfs_backend={enable_ipfs_backend}"
+        )
 
     def _entry_expired(
         self,
@@ -444,8 +453,7 @@ class ProofCache:
         retained = [
             entry
             for entry in entries.values()
-            if self.ttl <= 0
-            or now - _safe_timestamp(entry.get("timestamp")) < self.ttl
+            if self.ttl <= 0 or now - _safe_timestamp(entry.get("timestamp")) < self.ttl
         ]
         retained.sort(
             key=lambda entry: _safe_timestamp(entry.get("timestamp")),
@@ -510,41 +518,41 @@ class ProofCache:
                     temporary_path.unlink(missing_ok=True)
                 except OSError:
                     pass
-    
+
     def _compute_cid(
         self,
         formula,
         axioms: Optional[List] = None,
         prover_name: str = "unknown",
-        prover_config: Optional[Dict] = None
+        prover_config: Optional[Dict] = None,
     ) -> str:
         """Compute CID for a proof query.
-        
+
         The CID is computed from:
         - Formula (canonical representation)
         - Axioms (if any)
         - Prover name
         - Prover configuration (if any)
-        
+
         This ensures different queries get different CIDs.
-        
+
         Args:
             formula: TDFOL formula or string
             axioms: Optional list of axioms
             prover_name: Name of prover
             prover_config: Optional prover configuration
-            
+
         Returns:
             CID string (content identifier)
         """
         # Build canonical representation
         query_obj = {
-            'formula': str(formula),
-            'axioms': [str(a) for a in axioms] if axioms else [],
-            'prover': prover_name,
-            'config': prover_config or {}
+            "formula": str(formula),
+            "axioms": [str(a) for a in axioms] if axioms else [],
+            "prover": prover_name,
+            "config": prover_config or {},
         }
-        
+
         # Compute CID
         try:
             cid = cid_for_obj(query_obj)
@@ -556,9 +564,10 @@ class ProofCache:
                 _CID_FALLBACK_LOGGED = True
             # Fallback to simple hash
             import hashlib
+
             json_str = json.dumps(query_obj, sort_keys=True, default=str)
             return hashlib.sha256(json_str.encode()).hexdigest()
-    
+
     def get(
         self,
         formula,
@@ -591,7 +600,9 @@ class ProofCache:
         # axioms= keyword arg takes priority over positional
         if axioms is not None:
             _axioms = axioms
-            _prover_name = prover_name or (axioms_or_prover if isinstance(axioms_or_prover, str) else "unknown")
+            _prover_name = prover_name or (
+                axioms_or_prover if isinstance(axioms_or_prover, str) else "unknown"
+            )
         elif prover_name is not None:
             # Explicit prover_name keyword
             _prover_name = prover_name
@@ -607,6 +618,7 @@ class ProofCache:
 
         # Check compat cache first (formula::prover_name key)
         import time as _time
+
         key = self._make_key(str(formula), _prover_name)
         if key in self._cache:
             entry = self._cache[key]
@@ -618,7 +630,7 @@ class ProofCache:
                 entry.hit_count += 1
                 self._compat_hits += 1
                 self._cache.move_to_end(key)
-                self.stats['hits'] += 1
+                self.stats["hits"] += 1
                 return entry.result
 
         cid = self._compute_cid(formula, _axioms, _prover_name, prover_config)
@@ -630,11 +642,11 @@ class ProofCache:
                 if isinstance(cached, CachedProofResult) and self._entry_expired(cached):
                     del self.cache[cid]
                 else:
-                    if hasattr(cached, 'hit_count'):
+                    if hasattr(cached, "hit_count"):
                         cached.hit_count += 1
-                    self.stats['hits'] += 1
+                    self.stats["hits"] += 1
                     logger.debug(f"Local cache HIT for CID {cid[:16]}... (prover: {_prover_name})")
-                    return cached.result if hasattr(cached, 'result') else cached
+                    return cached.result if hasattr(cached, "result") else cached
 
         # If not in local cache and IPFS backend enabled, try IPFS
         if self.ipfs_cache is not None:
@@ -648,22 +660,22 @@ class ProofCache:
                             prover_name=_prover_name,
                             formula_str=str(formula),
                             timestamp=time.time(),
-                            hit_count=1
+                            hit_count=1,
                         )
                         self.cache[cid] = cached_result
-                        self.stats['ipfs_hits'] += 1
-                        self.stats['hits'] += 1
+                        self.stats["ipfs_hits"] += 1
+                        self.stats["hits"] += 1
                     logger.debug(f"IPFS cache HIT for CID {cid[:16]}... (prover: {_prover_name})")
                     return ipfs_result
             except Exception as e:
                 logger.debug(f"IPFS cache lookup failed for CID {cid[:16]}...: {e}")
                 with self.lock:
-                    self.stats['ipfs_errors'] += 1
+                    self.stats["ipfs_errors"] += 1
 
         # Not found in either cache
         self._compat_misses += 1
         with self.lock:
-            self.stats['misses'] += 1
+            self.stats["misses"] += 1
         logger.debug(f"Cache MISS for CID {cid[:16]}... (prover: {_prover_name})")
         return None
 
@@ -673,24 +685,24 @@ class ProofCache:
         result: Any,
         axioms: Optional[List] = None,
         prover_name: str = "unknown",
-        prover_config: Optional[Dict] = None
+        prover_config: Optional[Dict] = None,
     ) -> str:
         """Cache a proof result (O(1) insertion).
-        
+
         Stores in local cache and optionally in IPFS backend if enabled.
-        
+
         Args:
             formula: TDFOL formula or string
             result: Proof result to cache
             axioms: Optional list of axioms
             prover_name: Name of prover
             prover_config: Optional prover configuration
-            
+
         Returns:
             CID of the cached entry
         """
         cid = self._compute_cid(formula, axioms, prover_name, prover_config)
-        
+
         with self.lock:
             cached_result = CachedProofResult(
                 result=result,
@@ -698,71 +710,73 @@ class ProofCache:
                 prover_name=prover_name,
                 formula_str=str(formula),
                 timestamp=time.time(),
-                hit_count=0
+                hit_count=0,
             )
-            
+
             # Check if cache is full (for non-TTLCache)
             if not CACHETOOLS_AVAILABLE and len(self.cache) >= self.maxsize:
                 # Simple LRU eviction: remove oldest entry
                 oldest_cid = min(self.cache.keys(), key=lambda k: self.cache[k].timestamp)
                 del self.cache[oldest_cid]
-                self.stats['evictions'] += 1
-            
+                self.stats["evictions"] += 1
+
             self.cache[cid] = cached_result
-            self.stats['sets'] += 1
-            logger.debug(f"Cached result in local cache with CID {cid[:16]}... (prover: {prover_name})")
+            self.stats["sets"] += 1
+            logger.debug(
+                f"Cached result in local cache with CID {cid[:16]}... (prover: {prover_name})"
+            )
 
         self._persist_cache()
-        
+
         # Also store in IPFS backend if enabled
         if self.ipfs_cache is not None:
             try:
                 # Serialize result for IPFS storage
                 result_data = {
-                    'result': result,
-                    'prover_name': prover_name,
-                    'formula_str': str(formula),
-                    'timestamp': time.time(),
-                    'cid': cid
+                    "result": result,
+                    "prover_name": prover_name,
+                    "formula_str": str(formula),
+                    "timestamp": time.time(),
+                    "cid": cid,
                 }
                 self.ipfs_cache.set(cid, result_data)
                 with self.lock:
-                    self.stats['ipfs_sets'] += 1
+                    self.stats["ipfs_sets"] += 1
                 logger.debug(f"Cached result in IPFS with CID {cid[:16]}...")
             except Exception as e:
                 logger.debug(f"IPFS cache storage failed for CID {cid[:16]}...: {e}")
                 with self.lock:
-                    self.stats['ipfs_errors'] += 1
-        
+                    self.stats["ipfs_errors"] += 1
+
         return cid
-    
+
     def invalidate(
         self,
         formula,
         axioms: Optional[List] = None,
         prover_name: str = "unknown",
-        prover_config: Optional[Dict] = None
+        prover_config: Optional[Dict] = None,
     ) -> bool:
         """Invalidate a cached entry.
-        
+
         Args:
             formula: TDFOL formula or string
             axioms: Optional list of axioms
             prover_name: Name of prover
             prover_config: Optional prover configuration
-            
+
         Returns:
             True if entry was found and removed, False otherwise
         """
         cid = self._compute_cid(formula, axioms, prover_name, prover_config)
-        
+
         with self.lock:
             if cid in self.cache:
                 del self.cache[cid]
                 logger.debug(f"Invalidated cache entry {cid[:16]}...")
                 return True
             return False
-    
+
     def clear(self):
         """Clear all cached entries. Returns the number of entries cleared."""
         with self.lock:
@@ -772,26 +786,25 @@ class ProofCache:
             logger.info("Cache cleared")
         self._persist_cache(replace_existing=True)
         return count
-    
+
     def get_stats(self) -> Dict:
         """Get cache statistics.
-        
+
         Returns:
             Dictionary with cache statistics including hit rate
         """
         with self.lock:
-            total_requests = self.stats['hits'] + self.stats['misses']
-            hit_rate = self.stats['hits'] / total_requests if total_requests > 0 else 0.0
-            
+            total_requests = self.stats["hits"] + self.stats["misses"]
+            hit_rate = self.stats["hits"] / total_requests if total_requests > 0 else 0.0
+
             return {
                 **self.stats,
-                'total_requests': total_requests,
-                'hit_rate': hit_rate,
-                'cache_size': len(self.cache),
-                'maxsize': self.maxsize,
-                'ttl': self.ttl
+                "total_requests": total_requests,
+                "hit_rate": hit_rate,
+                "cache_size": len(self.cache),
+                "maxsize": self.maxsize,
+                "ttl": self.ttl,
             }
-    
 
     # ------------------------------------------------------------------
     # Compat API (simple formula+prover_name key-value interface)
@@ -804,6 +817,7 @@ class ProofCache:
     def put(self, formula: str, prover_name: str, result: Any, ttl: int = None) -> None:
         """Simple compat put: store (formula, prover_name) → result."""
         import time as _time
+
         key = self._make_key(formula, prover_name)
         # LRU eviction if at capacity
         if self.max_size and len(self._cache) >= self.max_size and key not in self._cache:
@@ -811,8 +825,18 @@ class ProofCache:
             del self._cache[oldest_key]
             self._compat_evictions += 1
         effective_ttl = ttl if ttl is not None else self.default_ttl
+
         class _Entry:
-            __slots__ = ('result', 'ttl', '_expires_at', 'hit_count', 'prover', 'formula', 'timestamp')
+            __slots__ = (
+                "result",
+                "ttl",
+                "_expires_at",
+                "hit_count",
+                "prover",
+                "formula",
+                "timestamp",
+            )
+
             def __init__(self, result, ttl, expires_at, prover, formula, timestamp):
                 self.result = result
                 self.ttl = ttl
@@ -821,6 +845,7 @@ class ProofCache:
                 self.prover = prover
                 self.formula = formula
                 self.timestamp = timestamp
+
         self._cache[key] = _Entry(
             result=result,
             ttl=effective_ttl,
@@ -831,10 +856,12 @@ class ProofCache:
         )
         self._compat_puts += 1
 
-    def compat_get(self, formula: str, prover_name: str = "unknown",
-            axioms=None, prover_config=None) -> Any:
+    def compat_get(
+        self, formula: str, prover_name: str = "unknown", axioms=None, prover_config=None
+    ) -> Any:
         """Retrieve a cached proof (compat API — checks compat cache, CID cache, then IPFS)."""
         import time as _time
+
         key = self._make_key(formula, prover_name)
         if key in self._cache:
             entry = self._cache[key]
@@ -854,10 +881,10 @@ class ProofCache:
         with self.lock:
             if cid in self.cache:
                 cached = self.cache[cid]
-                if hasattr(cached, 'hit_count'):
+                if hasattr(cached, "hit_count"):
                     cached.hit_count += 1
-                self.stats['hits'] += 1
-                return cached.result if hasattr(cached, 'result') else cached
+                self.stats["hits"] += 1
+                return cached.result if hasattr(cached, "result") else cached
 
         # Check IPFS backend if enabled
         if self.ipfs_cache is not None:
@@ -871,21 +898,21 @@ class ProofCache:
                             prover_name=prover_name,
                             formula_str=str(formula),
                             timestamp=time.time(),
-                            hit_count=1
+                            hit_count=1,
                         )
                         self.cache[cid] = cached_result
-                        self.stats['ipfs_hits'] += 1
-                        self.stats['hits'] += 1
+                        self.stats["ipfs_hits"] += 1
+                        self.stats["hits"] += 1
                     return ipfs_result
             except Exception as e:
                 logger.debug(f"IPFS cache lookup failed: {e}")
                 with self.lock:
-                    self.stats['ipfs_errors'] += 1
+                    self.stats["ipfs_errors"] += 1
 
         # Not found in any cache
         self._compat_misses += 1
         with self.lock:
-            self.stats['misses'] += 1
+            self.stats["misses"] += 1
         return None
 
     def invalidate(self, formula: str, prover_name: str = "unknown") -> bool:
@@ -899,9 +926,11 @@ class ProofCache:
     def cleanup_expired(self) -> int:
         """Remove all expired entries. Returns count removed."""
         import time as _time
+
         now = _time.monotonic()
         expired_keys = [
-            k for k, v in list(self._cache.items())
+            k
+            for k, v in list(self._cache.items())
             if v._expires_at is not None and now > v._expires_at
         ]
         for k in expired_keys:
@@ -949,10 +978,10 @@ class ProofCache:
 
     def get_info(self, cid: str) -> Optional[Dict]:
         """Get information about a cached entry.
-        
+
         Args:
             cid: Content identifier
-            
+
         Returns:
             Dictionary with entry information, or None if not found
         """
@@ -966,30 +995,27 @@ class ProofCache:
 _global_proof_cache: Optional[ProofCache] = None
 
 
-def get_global_cache(
-    maxsize: int = 1000,
-    ttl: int = 3600
-) -> ProofCache:
+def get_global_cache(maxsize: int = 1000, ttl: int = 3600) -> ProofCache:
     """Get or create global proof cache instance.
-    
+
     Args:
         maxsize: Maximum cache size (only used if creating new cache)
         ttl: Time-to-live in seconds (only used if creating new cache)
-        
+
     Returns:
         Global ProofCache instance
     """
     global _global_proof_cache
-    
+
     if _global_proof_cache is None:
         _global_proof_cache = ProofCache(maxsize=maxsize, ttl=ttl)
-    
+
     return _global_proof_cache
 
 
 def cache_proof_result(func):
     """Decorator to cache proof results.
-    
+
     Usage:
         @cache_proof_result
         def prove(self, formula, axioms=None):
@@ -997,44 +1023,35 @@ def cache_proof_result(func):
             return result
     """
     from functools import wraps
-    
+
     @wraps(func)
     def wrapper(self, formula, axioms=None, *args, **kwargs):
         # Get prover name
-        prover_name = getattr(self, '__class__', type(self)).__name__
-        
+        prover_name = getattr(self, "__class__", type(self)).__name__
+
         # Try to get from cache
         cache = get_global_cache()
         cached_result = cache.get(
-            formula,
-            axioms=axioms,
-            prover_name=prover_name,
-            prover_config=kwargs
+            formula, axioms=axioms, prover_name=prover_name, prover_config=kwargs
         )
-        
+
         if cached_result is not None:
             return cached_result
-        
+
         # Not in cache, compute result
         result = func(self, formula, axioms, *args, **kwargs)
-        
+
         # Cache the result
-        cache.set(
-            formula,
-            result,
-            axioms=axioms,
-            prover_name=prover_name,
-            prover_config=kwargs
-        )
-        
+        cache.set(formula, result, axioms=axioms, prover_name=prover_name, prover_config=kwargs)
+
         return result
-    
+
     return wrapper
 
 
 __all__ = [
-    'ProofCache',
-    'CachedProofResult',
-    'get_global_cache',
-    'cache_proof_result',
+    "ProofCache",
+    "CachedProofResult",
+    "get_global_cache",
+    "cache_proof_result",
 ]

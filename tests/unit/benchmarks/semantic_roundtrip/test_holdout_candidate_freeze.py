@@ -67,9 +67,7 @@ from benchmarks.semantic_roundtrip.residual_catalog import (
 ROOT = Path(__file__).resolve().parents[4]
 FREEZE_PATH = ROOT / DEFAULT_FREEZE_RELATIVE_PATH
 AUTH_PATH = ROOT / DEFAULT_AUTHORIZATION_RELATIVE_PATH
-FREEZE_DOCS = (
-    ROOT / "docs/benchmarks/semantic_roundtrip_plateau2_candidate_freeze.md"
-)
+FREEZE_DOCS = ROOT / "docs/benchmarks/semantic_roundtrip_plateau2_candidate_freeze.md"
 
 
 # ---------------------------------------------------------------------------
@@ -148,9 +146,7 @@ def _population_results_from_baseline_plus_clears() -> dict[str, dict[str, objec
         case["semantic_score_eligible"] = True
         repair_cases.append(case)
 
-    pilot_block = score_population_block(
-        POPULATION_KIND_PILOT, case_records=pilot_cases
-    )
+    pilot_block = score_population_block(POPULATION_KIND_PILOT, case_records=pilot_cases)
     repair_block = score_population_block(
         POPULATION_KIND_REPAIR_DEVELOPMENT, case_records=repair_cases
     )

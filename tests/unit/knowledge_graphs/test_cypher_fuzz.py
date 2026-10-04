@@ -24,6 +24,7 @@ from ipfs_datasets_py.knowledge_graphs.cypher.lexer import CypherLexer
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _parse_safe(query: str):
     """Parse *query* and return the AST, or None if a parse exception is raised.
 
@@ -43,14 +44,23 @@ def _parse_and_compile_safe(query: str):
     try:
         ast = parser.parse(query)
         return compiler.compile(ast)
-    except (CypherParseError, CypherCompileError, ValueError, IndexError,
-            AttributeError, TypeError, KeyError, SyntaxError):
+    except (
+        CypherParseError,
+        CypherCompileError,
+        ValueError,
+        IndexError,
+        AttributeError,
+        TypeError,
+        KeyError,
+        SyntaxError,
+    ):
         return None
 
 
 # ---------------------------------------------------------------------------
 # 1. Truncated / incomplete queries
 # ---------------------------------------------------------------------------
+
 
 class TestTruncatedQueries:
     """Parser must not crash on incomplete / truncated Cypher queries."""
@@ -95,6 +105,7 @@ class TestTruncatedQueries:
 # 2. Malformed syntax
 # ---------------------------------------------------------------------------
 
+
 class TestMalformedSyntax:
     """Parser handles structurally malformed queries gracefully."""
 
@@ -105,8 +116,8 @@ class TestMalformedSyntax:
         "MATCH [n:Person] RETURN n",
         # Extra/missing keywords
         "MATCH MATCH (n) RETURN n",
-        "RETURN n",                      # RETURN without MATCH
-        "WHERE n.age > 30 RETURN n",     # WHERE without MATCH
+        "RETURN n",  # RETURN without MATCH
+        "WHERE n.age > 30 RETURN n",  # WHERE without MATCH
         # Double operators
         "MATCH (n) WHERE n.age >> 30 RETURN n",
         "MATCH (n) WHERE n.age = = 30 RETURN n",
@@ -116,7 +127,7 @@ class TestMalformedSyntax:
         "MATCH (n) RETURN n,",
         # Semicolons (not standard Cypher)
         "MATCH (n);",
-        # SQL injection-style strings  
+        # SQL injection-style strings
         "MATCH (n:Person) WHERE n.name = '; DROP TABLE nodes; --' RETURN n",
         # Mixed quotes
         "MATCH (n) WHERE n.name = \"Alice' RETURN n",
@@ -137,6 +148,7 @@ class TestMalformedSyntax:
 # ---------------------------------------------------------------------------
 # 3. Very long / large inputs
 # ---------------------------------------------------------------------------
+
 
 class TestLargeInputs:
     """Parser does not crash or hang on very long inputs."""
@@ -188,9 +200,7 @@ class TestLargeInputs:
         THEN: Does not crash
         """
         # Build a chain of 10 MATCH patterns
-        patterns = "\n".join(
-            f"MATCH (n{i}:Label{i})" for i in range(10)
-        )
+        patterns = "\n".join(f"MATCH (n{i}:Label{i})" for i in range(10))
         result = _parse_and_compile_safe(patterns + "\nRETURN n0")
         assert result is None or isinstance(result, list)
 
@@ -198,6 +208,7 @@ class TestLargeInputs:
 # ---------------------------------------------------------------------------
 # 4. Unicode and special characters
 # ---------------------------------------------------------------------------
+
 
 class TestUnicodeAndSpecialChars:
     """Parser handles Unicode identifiers, strings, and null bytes gracefully."""
@@ -252,11 +263,26 @@ class TestUnicodeAndSpecialChars:
 # 5. Reserved words as variable names
 # ---------------------------------------------------------------------------
 
+
 class TestReservedWordsAsVariables:
     """Parser correctly handles or rejects reserved Cypher keywords used as names."""
 
-    KEYWORDS = ["MATCH", "WHERE", "RETURN", "CREATE", "DELETE", "SET",
-                "WITH", "LIMIT", "ORDER", "BY", "AS", "NOT", "AND", "OR"]
+    KEYWORDS = [
+        "MATCH",
+        "WHERE",
+        "RETURN",
+        "CREATE",
+        "DELETE",
+        "SET",
+        "WITH",
+        "LIMIT",
+        "ORDER",
+        "BY",
+        "AS",
+        "NOT",
+        "AND",
+        "OR",
+    ]
 
     @pytest.mark.parametrize("kw", KEYWORDS)
     def test_keyword_as_variable_does_not_crash(self, kw):
@@ -272,6 +298,7 @@ class TestReservedWordsAsVariables:
 # ---------------------------------------------------------------------------
 # 6. Valid edge cases that MUST parse successfully
 # ---------------------------------------------------------------------------
+
 
 class TestValidEdgeCases:
     """Certain edge-case queries that are valid Cypher must parse without error."""
@@ -347,6 +374,7 @@ class TestValidEdgeCases:
 # 7. Lexer-level stress tests
 # ---------------------------------------------------------------------------
 
+
 class TestLexerStress:
     """The Cypher lexer must never crash regardless of input."""
 
@@ -391,7 +419,7 @@ class TestLexerStress:
         WHEN: Tokenized
         THEN: Returns a token list (or SyntaxError) without crashing Python
         """
-        tokens = self._tokenize_safe("!@#$%^&*()[]{}|\\;\"")
+        tokens = self._tokenize_safe('!@#$%^&*()[]{}|\\;"')
         assert tokens is None or isinstance(tokens, list)
 
     def test_lexer_random_printable_ascii(self):

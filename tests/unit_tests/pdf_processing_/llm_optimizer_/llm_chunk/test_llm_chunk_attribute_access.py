@@ -17,7 +17,7 @@ from tests._test_utils import (
     raise_on_bad_callable_code_quality,
     get_ast_tree,
     BadDocumentationError,
-    BadSignatureError
+    BadSignatureError,
 )
 
 work_dir = os.path.abspath(os.path.dirname(__file__))
@@ -30,8 +30,12 @@ file_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/llm_optimize
 md_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/llm_optimizer_stubs.md")
 
 # Make sure the input file and documentation file exist.
-assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
-assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+assert os.path.exists(file_path), (
+    f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
+)
+assert os.path.exists(md_path), (
+    f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+)
 
 from ipfs_datasets_py.pdf_processing.llm_optimizer import (
     ChunkOptimizer,
@@ -39,9 +43,11 @@ from ipfs_datasets_py.pdf_processing.llm_optimizer import (
     TextProcessor,
     LLMChunk,
     LLMDocument,
-    LLMChunkMetadata
+    LLMChunkMetadata,
 )
-from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk.llm_chunk_factory import LLMChunkTestDataFactory
+from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk.llm_chunk_factory import (
+    LLMChunkTestDataFactory,
+)
 
 
 # Check if each classes methods are accessible:
@@ -87,7 +93,7 @@ class TestLLMChunkAttributeAccess:
             content="Sample test content for testing",
             chunk_id="chunk_test_001",
             relationships=["chunk_000", "chunk_002"],
-            embedding=np.array([0.1, 0.2, 0.3, 0.4])
+            embedding=np.array([0.1, 0.2, 0.3, 0.4]),
         )
 
     def test_content_attribute_access(self):
@@ -99,7 +105,6 @@ class TestLLMChunkAttributeAccess:
         # When/Then
         assert self.sample_chunk.content == "Sample test content for testing"
 
-
     def test_chunk_id_attribute_access(self):
         """
         GIVEN LLMChunk instance with chunk_id
@@ -109,7 +114,7 @@ class TestLLMChunkAttributeAccess:
         # When/Then
         assert self.sample_chunk.chunk_id == "chunk_test_001"
         assert isinstance(self.sample_chunk.chunk_id, str)
-        assert hasattr(self.sample_chunk, 'chunk_id')
+        assert hasattr(self.sample_chunk, "chunk_id")
 
     def test_embedding_attribute_access_none(self):
         """
@@ -119,7 +124,7 @@ class TestLLMChunkAttributeAccess:
         """
         # Given
         chunk_none_embedding = LLMChunkTestDataFactory.create_chunk_instance(embedding=None)
-        
+
         # When/Then
         assert chunk_none_embedding.embedding is None
 
@@ -133,7 +138,7 @@ class TestLLMChunkAttributeAccess:
             - Array data integrity maintained
         """
         import numpy as np
-        
+
         # When/Then
         assert isinstance(self.sample_chunk.embedding, np.ndarray)
         assert self.sample_chunk.embedding.shape == (4,)
@@ -151,16 +156,17 @@ class TestLLMChunkAttributeAccess:
         # Given - initial state
         original_relationships = self.sample_chunk.relationships.copy()
         assert original_relationships == ["chunk_000", "chunk_002"]
-        
+
         # When - modify the list
         self.sample_chunk.relationships.append("chunk_003")
         self.sample_chunk.relationships.remove("chunk_000")
-        
+
         # Then - changes should be reflected
         assert len(self.sample_chunk.relationships) == 2
         assert "chunk_003" in self.sample_chunk.relationships
         assert "chunk_000" not in self.sample_chunk.relationships
         assert "chunk_002" in self.sample_chunk.relationships
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

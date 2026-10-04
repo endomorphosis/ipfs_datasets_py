@@ -22,24 +22,24 @@ class TestWebArchiveProcessorExtractDatasetFromCdxj:
         """
         try:
             from ipfs_datasets_py.processors.web_archiving.web_archive import WebArchiveProcessor
-            
+
             processor = WebArchiveProcessor()
             cdxj_path = "/data/indexes/crawl.cdxj"
             output_format = "json"
-            
+
             # Mock dataset extraction result
             mock_result = {
                 "status": "success",
                 "format": "json",
                 "records_count": 150,
-                "output_file": "/tmp/extracted_dataset.json"
+                "output_file": "/tmp/extracted_dataset.json",
             }
-            
+
             # Validate returns dict with dataset extraction result
             assert isinstance(mock_result, dict)
             assert "status" in mock_result
             assert mock_result["status"] == "success"
-            
+
         except (ImportError, AttributeError):
             # WebArchiveProcessor not available, test passes
             assert True
@@ -54,23 +54,23 @@ class TestWebArchiveProcessorExtractDatasetFromCdxj:
         """
         try:
             from ipfs_datasets_py.processors.web_archiving.web_archive import WebArchiveProcessor
-            
+
             processor = WebArchiveProcessor()
             cdxj_path = "/data/indexes/crawl.cdxj"
             output_format = "json"
-            
+
             # Mock dataset extraction result with format field
             mock_result = {
                 "status": "success",
                 "format": "json",
                 "records_count": 150,
-                "output_file": "/tmp/extracted_dataset.json"
+                "output_file": "/tmp/extracted_dataset.json",
             }
-            
+
             # Validate format field contains "json"
             assert "format" in mock_result
             assert mock_result["format"] == "json"
-            
+
         except (ImportError, AttributeError):
             # WebArchiveProcessor not available, test passes
             assert True
@@ -86,17 +86,17 @@ class TestWebArchiveProcessorExtractDatasetFromCdxj:
         # GIVEN: Valid CDXJ file path and json format
         cdxj_path = "/data/indexes/crawl.cdxj"
         output_format = "json"
-        
+
         # WHEN: extract_dataset_from_cdxj is called
         try:
-            with patch('os.path.exists', return_value=True):
+            with patch("os.path.exists", return_value=True):
                 result = processor.extract_dataset_from_cdxj(cdxj_path, output_format)
-                
+
             # THEN: Should return dict containing sample records
             assert isinstance(result, dict)
             if "records" in result:
                 assert isinstance(result["records"], (list, int))
-            
+
         except Exception as e:
             # If method has dependencies that fail, validate expected behavior
             pytest.skip(f"extract_dataset_from_cdxj dependencies not available: {e}")
@@ -112,16 +112,16 @@ class TestWebArchiveProcessorExtractDatasetFromCdxj:
         # GIVEN: Valid CDXJ file path and csv format
         cdxj_path = "/data/indexes/crawl.cdxj"
         output_format = "csv"
-        
+
         # WHEN: extract_dataset_from_cdxj is called
         try:
-            with patch('os.path.exists', return_value=True):
+            with patch("os.path.exists", return_value=True):
                 result = processor.extract_dataset_from_cdxj(cdxj_path, output_format)
-                
+
             # THEN: Should return dict with csv extraction result
             assert isinstance(result, dict)
             assert "status" in result or "format" in result
-            
+
         except Exception as e:
             # If method has dependencies that fail, validate expected behavior
             pytest.skip(f"extract_dataset_from_cdxj csv format dependencies not available: {e}")
@@ -137,20 +137,22 @@ class TestWebArchiveProcessorExtractDatasetFromCdxj:
         # GIVEN: Valid CDXJ file path and csv format
         cdxj_path = "/data/indexes/crawl.cdxj"
         output_format = "csv"
-        
+
         # WHEN: extract_dataset_from_cdxj is called
         try:
-            with patch('os.path.exists', return_value=True):
+            with patch("os.path.exists", return_value=True):
                 result = processor.extract_dataset_from_cdxj(cdxj_path, output_format)
-                
+
             # THEN: Should return dict containing format field with csv
             assert isinstance(result, dict)
             if "format" in result:
                 assert result["format"] == "csv" or "csv" in str(result)
-                
+
         except Exception as e:
             # If method has dependencies that fail, validate expected behavior
-            pytest.skip(f"extract_dataset_from_cdxj csv format field dependencies not available: {e}")
+            pytest.skip(
+                f"extract_dataset_from_cdxj csv format field dependencies not available: {e}"
+            )
 
     def test_extract_dataset_from_cdxj_csv_format_dataset_converted(self, processor):
         """
@@ -162,18 +164,18 @@ class TestWebArchiveProcessorExtractDatasetFromCdxj:
         """
         try:
             # Check if method exists
-            if hasattr(processor, 'extract_dataset_from_cdxj'):
+            if hasattr(processor, "extract_dataset_from_cdxj"):
                 # GIVEN: Valid CDXJ file path and CSV format
                 cdxj_path = "/data/indexes/crawl.cdxj"
-                
+
                 # WHEN: extract_dataset_from_cdxj is called with CSV format
                 # THEN: Should convert dataset to CSV format
                 try:
                     result = processor.extract_dataset_from_cdxj(cdxj_path, output_format="csv")
                     assert isinstance(result, dict)
                     # Should contain CSV format data
-                    if 'format' in result:
-                        assert result['format'] == 'csv'
+                    if "format" in result:
+                        assert result["format"] == "csv"
                 except (FileNotFoundError, OSError):
                     # Expected for test file - validates CSV conversion logic
                     pass
@@ -182,7 +184,7 @@ class TestWebArchiveProcessorExtractDatasetFromCdxj:
                     pass
             else:
                 pytest.skip("extract_dataset_from_cdxj method not available")
-                
+
         except ImportError:
             pytest.skip("WebArchiveProcessor not available")
 
@@ -196,13 +198,13 @@ class TestWebArchiveProcessorExtractDatasetFromCdxj:
         # GIVEN: Non-existent CDXJ file path
         nonexistent_cdxj_path = "/data/indexes/nonexistent.cdxj"
         output_format = "json"
-        
+
         # WHEN: extract_dataset_from_cdxj is called
         try:
-            with patch('os.path.exists', return_value=False):
+            with patch("os.path.exists", return_value=False):
                 with pytest.raises(FileNotFoundError):
                     processor.extract_dataset_from_cdxj(nonexistent_cdxj_path, output_format)
-                    
+
         except Exception as e:
             # If method doesn't have proper error handling yet, skip test
             pytest.skip(f"extract_dataset_from_cdxj error handling dependencies not available: {e}")
@@ -214,6 +216,7 @@ class TestWebArchiveProcessorExtractDatasetFromCdxj:
         THEN expect:
             - Exception message indicates CDXJ file not found
         """
+
     def test_extract_dataset_from_cdxj_nonexistent_file_error_message(self, processor):
         """
         GIVEN nonexistent CDXJ file path "/nonexistent/file.cdxj"
@@ -225,19 +228,22 @@ class TestWebArchiveProcessorExtractDatasetFromCdxj:
         try:
             nonexistent_path = "/nonexistent/file.cdxj"
             output_format = "json"
-            
+
             # Check if method exists
-            if hasattr(processor, 'extract_dataset_from_cdxj'):
+            if hasattr(processor, "extract_dataset_from_cdxj"):
                 # WHEN extract_dataset_from_cdxj is called with nonexistent file
                 with pytest.raises((FileNotFoundError, IOError, OSError)) as exc_info:
                     processor.extract_dataset_from_cdxj(nonexistent_path, output_format)
-                
+
                 # THEN expect exception message indicates file not found
                 error_message = str(exc_info.value).lower()
-                assert any(keyword in error_message for keyword in ["not found", "no such file", "does not exist", "cdxj"])
+                assert any(
+                    keyword in error_message
+                    for keyword in ["not found", "no such file", "does not exist", "cdxj"]
+                )
             else:
                 pytest.skip("extract_dataset_from_cdxj method not available")
-                
+
         except ImportError:
             pytest.skip("WebArchiveProcessor not available")
 
@@ -248,6 +254,7 @@ class TestWebArchiveProcessorExtractDatasetFromCdxj:
         THEN expect:
             - source_file: string path to input CDXJ file
         """
+
     def test_extract_dataset_from_cdxj_return_contains_source_file(self, processor):
         """
         GIVEN valid CDXJ file
@@ -259,23 +266,25 @@ class TestWebArchiveProcessorExtractDatasetFromCdxj:
         try:
             cdxj_path = "/mock/test.cdxj"
             output_format = "json"
-            
+
             # Check if method exists
-            if hasattr(processor, 'extract_dataset_from_cdxj'):
+            if hasattr(processor, "extract_dataset_from_cdxj"):
                 try:
                     # WHEN extract_dataset_from_cdxj is called
                     result = processor.extract_dataset_from_cdxj(cdxj_path, output_format)
-                    
+
                     # THEN expect result contains source_file field
                     assert isinstance(result, dict)
                     if "source_file" in result:
                         assert isinstance(result["source_file"], str)
                         # Should reference input path
-                        assert cdxj_path in result["source_file"] or result["source_file"].endswith(".cdxj")
+                        assert cdxj_path in result["source_file"] or result["source_file"].endswith(
+                            ".cdxj"
+                        )
                     elif "input_file" in result:
                         # Alternative field name
                         assert isinstance(result["input_file"], str)
-                    
+
                 except (FileNotFoundError, IOError):
                     # Expected for mock paths - validate structure expectation
                     mock_result = {"source_file": cdxj_path, "format": output_format}
@@ -287,7 +296,7 @@ class TestWebArchiveProcessorExtractDatasetFromCdxj:
                     pytest.skip("extract_dataset_from_cdxj method has implementation dependencies")
             else:
                 pytest.skip("extract_dataset_from_cdxj method not available")
-                
+
         except ImportError:
             pytest.skip("WebArchiveProcessor not available")
 
@@ -298,6 +307,7 @@ class TestWebArchiveProcessorExtractDatasetFromCdxj:
         THEN expect:
             - format: string output format used
         """
+
     def test_extract_dataset_from_cdxj_return_contains_format(self, processor):
         """
         GIVEN valid CDXJ file
@@ -309,13 +319,13 @@ class TestWebArchiveProcessorExtractDatasetFromCdxj:
         try:
             cdxj_path = "/mock/test.cdxj"
             output_format = "json"
-            
+
             # Check if method exists
-            if hasattr(processor, 'extract_dataset_from_cdxj'):
+            if hasattr(processor, "extract_dataset_from_cdxj"):
                 try:
                     # WHEN extract_dataset_from_cdxj is called
                     result = processor.extract_dataset_from_cdxj(cdxj_path, output_format)
-                    
+
                     # THEN expect result contains format field
                     assert isinstance(result, dict)
                     if "format" in result:
@@ -325,7 +335,7 @@ class TestWebArchiveProcessorExtractDatasetFromCdxj:
                         # Alternative field name
                         assert isinstance(result["output_format"], str)
                         assert result["output_format"] == output_format
-                    
+
                 except (FileNotFoundError, IOError):
                     # Expected for mock paths - validate structure expectation
                     mock_result = {"format": output_format, "status": "success"}
@@ -338,7 +348,7 @@ class TestWebArchiveProcessorExtractDatasetFromCdxj:
                     pytest.skip("extract_dataset_from_cdxj method has implementation dependencies")
             else:
                 pytest.skip("extract_dataset_from_cdxj method not available")
-                
+
         except ImportError:
             pytest.skip("WebArchiveProcessor not available")
 
@@ -349,6 +359,7 @@ class TestWebArchiveProcessorExtractDatasetFromCdxj:
         THEN expect:
             - record_count: integer total records extracted
         """
+
     def test_extract_dataset_from_cdxj_return_contains_record_count(self, processor):
         """
         GIVEN valid CDXJ file
@@ -360,13 +371,13 @@ class TestWebArchiveProcessorExtractDatasetFromCdxj:
         try:
             cdxj_path = "/mock/test.cdxj"
             output_format = "json"
-            
+
             # Check if method exists
-            if hasattr(processor, 'extract_dataset_from_cdxj'):
+            if hasattr(processor, "extract_dataset_from_cdxj"):
                 try:
                     # WHEN extract_dataset_from_cdxj is called
                     result = processor.extract_dataset_from_cdxj(cdxj_path, output_format)
-                    
+
                     # THEN expect result contains record_count field
                     assert isinstance(result, dict)
                     if "record_count" in result:
@@ -380,7 +391,7 @@ class TestWebArchiveProcessorExtractDatasetFromCdxj:
                         # Another alternative field name
                         assert isinstance(result["total_records"], int)
                         assert result["total_records"] >= 0
-                    
+
                 except (FileNotFoundError, IOError):
                     # Expected for mock paths - validate structure expectation
                     mock_result = {"record_count": 42, "format": output_format}
@@ -393,7 +404,7 @@ class TestWebArchiveProcessorExtractDatasetFromCdxj:
                     pytest.skip("extract_dataset_from_cdxj method has implementation dependencies")
             else:
                 pytest.skip("extract_dataset_from_cdxj method not available")
-                
+
         except ImportError:
             pytest.skip("WebArchiveProcessor not available")
 
@@ -406,19 +417,19 @@ class TestWebArchiveProcessorExtractDatasetFromCdxj:
         """
         try:
             # Check if method exists
-            if hasattr(processor, 'extract_dataset_from_cdxj'):
+            if hasattr(processor, "extract_dataset_from_cdxj"):
                 # GIVEN: Valid CDXJ file
                 cdxj_path = "/data/test.cdxj"
-                
+
                 # WHEN: extract_dataset_from_cdxj is called
                 # THEN: Should contain extraction_date timestamp
                 try:
                     result = processor.extract_dataset_from_cdxj(cdxj_path)
                     assert isinstance(result, dict)
                     # Should contain extraction_date field
-                    if 'extraction_date' in result:
-                        assert isinstance(result['extraction_date'], str)
-                        assert len(result['extraction_date']) > 0  # Should be non-empty timestamp
+                    if "extraction_date" in result:
+                        assert isinstance(result["extraction_date"], str)
+                        assert len(result["extraction_date"]) > 0  # Should be non-empty timestamp
                 except (FileNotFoundError, OSError):
                     # Expected for mock file - validates timestamp inclusion logic
                     pass
@@ -427,7 +438,7 @@ class TestWebArchiveProcessorExtractDatasetFromCdxj:
                     pass
             else:
                 pytest.skip("extract_dataset_from_cdxj method not available")
-                
+
         except ImportError:
             pytest.skip("WebArchiveProcessor not available")
 

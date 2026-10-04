@@ -4,6 +4,7 @@ Test suite for utils/class_to_typeddict_converter/detect_attributes_in_init.py c
 NOTE: Original tests were commented out. This file contains NotImplementedError placeholders
 indicating tests need to be written when the module implementation is ready.
 """
+
 import pytest
 
 # Skip tests if the module can't be imported
@@ -28,4 +29,6 @@ class TestDetectAttributesInInit:
         THEN expect NotImplementedError is raised indicating test needs implementation
         """
         with pytest.raises(NotImplementedError):
-            raise NotImplementedError("test_when_valid_method_node_provided_then_raises_not_implemented_error needs implementation")
+            raise NotImplementedError(
+                "test_when_valid_method_node_provided_then_raises_not_implemented_error needs implementation"
+            )

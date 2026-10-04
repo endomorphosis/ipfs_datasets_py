@@ -33,8 +33,7 @@ _DOCS_KG = _BASE / "docs" / "knowledge_graphs"
 _MASTER = _DOCS_KG / "MASTER_STATUS.md"
 _CHANGELOG = _DOCS_KG / "CHANGELOG_KNOWLEDGE_GRAPHS.md"
 _ROADMAP = _DOCS_KG / "ROADMAP.md"
-_README_GT = (_BASE / "ipfs_datasets_py" / "mcp_server" / "tools" /
-              "graph_tools" / "README.md")
+_README_GT = _BASE / "ipfs_datasets_py" / "mcp_server" / "tools" / "graph_tools" / "README.md"
 
 
 def _read(path: pathlib.Path) -> str:
@@ -44,8 +43,11 @@ def _read(path: pathlib.Path) -> str:
 def _make_kg():
     """Build a small test KnowledgeGraph with 3 entities + 2 relationships."""
     from ipfs_datasets_py.knowledge_graphs.extraction.graph import (
-        KnowledgeGraph, Entity, Relationship,
+        KnowledgeGraph,
+        Entity,
+        Relationship,
     )
+
     kg = KnowledgeGraph(name="test_session81")
     alice = Entity(entity_id="alice", entity_type="person", name="alice")
     bob = Entity(entity_id="bob", entity_type="person", name="bob")
@@ -81,12 +83,14 @@ class TestGraphGraphqlQueryTool:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_graphql_query import (
             graph_graphql_query,
         )
+
         assert callable(graph_graphql_query)
 
     def test_empty_kg_success(self):
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_graphql_query import (
             graph_graphql_query,
         )
+
         r = asyncio.run(graph_graphql_query("{ person { id name } }"))
         assert r["status"] == "success"
 
@@ -94,6 +98,7 @@ class TestGraphGraphqlQueryTool:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_graphql_query import (
             graph_graphql_query,
         )
+
         r = asyncio.run(graph_graphql_query("{ person { id name } }"))
         assert "data" in r
 
@@ -101,6 +106,7 @@ class TestGraphGraphqlQueryTool:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_graphql_query import (
             graph_graphql_query,
         )
+
         r = asyncio.run(graph_graphql_query("{ person { id } }"))
         assert "entity_count" in r
         assert isinstance(r["entity_count"], int)
@@ -109,11 +115,14 @@ class TestGraphGraphqlQueryTool:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_graphql_query import (
             graph_graphql_query,
         )
+
         kg = _make_kg()
-        r = asyncio.run(graph_graphql_query(
-            "{ person { id name } }",
-            kg_data=kg.to_dict(),
-        ))
+        r = asyncio.run(
+            graph_graphql_query(
+                "{ person { id name } }",
+                kg_data=kg.to_dict(),
+            )
+        )
         assert r["status"] == "success"
         assert r["entity_count"] == 3
 
@@ -121,6 +130,7 @@ class TestGraphGraphqlQueryTool:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_graphql_query import (
             graph_graphql_query,
         )
+
         q = "{ person { id } }"
         r = asyncio.run(graph_graphql_query(q))
         assert r["query_length"] == len(q)
@@ -136,12 +146,14 @@ class TestGraphVisualizeTool:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_visualize import (
             graph_visualize,
         )
+
         assert callable(graph_visualize)
 
     def test_dot_format(self):
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_visualize import (
             graph_visualize,
         )
+
         kg = _make_kg()
         r = asyncio.run(graph_visualize(format="dot", kg_data=kg.to_dict()))
         assert r["status"] == "success"
@@ -152,6 +164,7 @@ class TestGraphVisualizeTool:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_visualize import (
             graph_visualize,
         )
+
         kg = _make_kg()
         r = asyncio.run(graph_visualize(format="mermaid", kg_data=kg.to_dict()))
         assert r["status"] == "success"
@@ -161,6 +174,7 @@ class TestGraphVisualizeTool:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_visualize import (
             graph_visualize,
         )
+
         kg = _make_kg()
         r = asyncio.run(graph_visualize(format="d3_json", kg_data=kg.to_dict()))
         assert r["status"] == "success"
@@ -169,6 +183,7 @@ class TestGraphVisualizeTool:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_visualize import (
             graph_visualize,
         )
+
         kg = _make_kg()
         r = asyncio.run(graph_visualize(format="ascii", kg_data=kg.to_dict()))
         assert r["status"] == "success"
@@ -177,6 +192,7 @@ class TestGraphVisualizeTool:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_visualize import (
             graph_visualize,
         )
+
         kg = _make_kg()
         r = asyncio.run(graph_visualize(format="dot", kg_data=kg.to_dict()))
         assert r["entity_count"] == 3
@@ -186,6 +202,7 @@ class TestGraphVisualizeTool:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_visualize import (
             graph_visualize,
         )
+
         r = asyncio.run(graph_visualize(format="dot"))
         assert r["status"] == "success"
         assert r["entity_count"] == 0
@@ -201,12 +218,14 @@ class TestGraphCompleteSuggestionsTool:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_complete_suggestions import (
             graph_complete_suggestions,
         )
+
         assert callable(graph_complete_suggestions)
 
     def test_empty_kg(self):
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_complete_suggestions import (
             graph_complete_suggestions,
         )
+
         r = asyncio.run(graph_complete_suggestions())
         assert r["status"] == "success"
         assert r["suggestion_count"] == 0
@@ -215,10 +234,9 @@ class TestGraphCompleteSuggestionsTool:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_complete_suggestions import (
             graph_complete_suggestions,
         )
+
         kg = _make_kg()
-        r = asyncio.run(graph_complete_suggestions(
-            kg_data=kg.to_dict(), min_score=0.1
-        ))
+        r = asyncio.run(graph_complete_suggestions(kg_data=kg.to_dict(), min_score=0.1))
         assert r["status"] == "success"
         assert r["suggestion_count"] >= 1  # triadic alice→charlie
 
@@ -226,10 +244,9 @@ class TestGraphCompleteSuggestionsTool:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_complete_suggestions import (
             graph_complete_suggestions,
         )
+
         kg = _make_kg()
-        r = asyncio.run(graph_complete_suggestions(
-            kg_data=kg.to_dict(), min_score=0.1
-        ))
+        r = asyncio.run(graph_complete_suggestions(kg_data=kg.to_dict(), min_score=0.1))
         if r["suggestions"]:
             s = r["suggestions"][0]
             for key in ("source_id", "target_id", "rel_type", "score", "reason"):
@@ -239,10 +256,9 @@ class TestGraphCompleteSuggestionsTool:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_complete_suggestions import (
             graph_complete_suggestions,
         )
+
         kg = _make_kg()
-        r = asyncio.run(graph_complete_suggestions(
-            kg_data=kg.to_dict(), min_score=0.99
-        ))
+        r = asyncio.run(graph_complete_suggestions(kg_data=kg.to_dict(), min_score=0.99))
         assert r["status"] == "success"
         assert all(s["score"] >= 0.99 for s in r["suggestions"])
 
@@ -250,6 +266,7 @@ class TestGraphCompleteSuggestionsTool:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_complete_suggestions import (
             graph_complete_suggestions,
         )
+
         r = asyncio.run(graph_complete_suggestions())
         assert "isolated_entity_count" in r
 
@@ -257,10 +274,11 @@ class TestGraphCompleteSuggestionsTool:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_complete_suggestions import (
             graph_complete_suggestions,
         )
+
         kg = _make_kg()
-        r = asyncio.run(graph_complete_suggestions(
-            kg_data=kg.to_dict(), min_score=0.0, max_suggestions=1
-        ))
+        r = asyncio.run(
+            graph_complete_suggestions(kg_data=kg.to_dict(), min_score=0.0, max_suggestions=1)
+        )
         assert len(r["suggestions"]) <= 1
 
 
@@ -274,18 +292,22 @@ class TestGraphExplainTool:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_explain import (
             graph_explain,
         )
+
         assert callable(graph_explain)
 
     def test_explain_entity_known(self):
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_explain import (
             graph_explain,
         )
+
         kg = _make_kg()
-        r = asyncio.run(graph_explain(
-            explain_type="entity",
-            entity_id="alice",
-            kg_data=kg.to_dict(),
-        ))
+        r = asyncio.run(
+            graph_explain(
+                explain_type="entity",
+                entity_id="alice",
+                kg_data=kg.to_dict(),
+            )
+        )
         assert r["status"] == "success"
         assert "narrative" in r
         assert "alice" in r["narrative"].lower()
@@ -294,10 +316,13 @@ class TestGraphExplainTool:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_explain import (
             graph_explain,
         )
-        r = asyncio.run(graph_explain(
-            explain_type="entity",
-            entity_id="nobody",
-        ))
+
+        r = asyncio.run(
+            graph_explain(
+                explain_type="entity",
+                entity_id="nobody",
+            )
+        )
         assert r["status"] == "success"
         assert "narrative" in r
 
@@ -305,13 +330,16 @@ class TestGraphExplainTool:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_explain import (
             graph_explain,
         )
+
         kg = _make_kg()
-        r = asyncio.run(graph_explain(
-            explain_type="path",
-            start_entity_id="alice",
-            end_entity_id="charlie",
-            kg_data=kg.to_dict(),
-        ))
+        r = asyncio.run(
+            graph_explain(
+                explain_type="path",
+                start_entity_id="alice",
+                end_entity_id="charlie",
+                kg_data=kg.to_dict(),
+            )
+        )
         assert r["status"] == "success"
         assert "hops" in r["explanation"] or "narrative" in r
 
@@ -319,13 +347,16 @@ class TestGraphExplainTool:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_explain import (
             graph_explain,
         )
+
         kg = _make_kg()
-        r = asyncio.run(graph_explain(
-            explain_type="why_connected",
-            start_entity_id="alice",
-            end_entity_id="charlie",
-            kg_data=kg.to_dict(),
-        ))
+        r = asyncio.run(
+            graph_explain(
+                explain_type="why_connected",
+                start_entity_id="alice",
+                end_entity_id="charlie",
+                kg_data=kg.to_dict(),
+            )
+        )
         assert r["status"] == "success"
         assert isinstance(r["narrative"], str)
         assert len(r["narrative"]) > 0
@@ -334,6 +365,7 @@ class TestGraphExplainTool:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_explain import (
             graph_explain,
         )
+
         r = asyncio.run(graph_explain(explain_type="entity"))
         assert r["status"] == "error"
 
@@ -341,24 +373,30 @@ class TestGraphExplainTool:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_explain import (
             graph_explain,
         )
+
         kg = _make_kg()
-        r = asyncio.run(graph_explain(
-            explain_type="entity",
-            entity_id="bob",
-            kg_data=kg.to_dict(),
-        ))
+        r = asyncio.run(
+            graph_explain(
+                explain_type="entity",
+                entity_id="bob",
+                kg_data=kg.to_dict(),
+            )
+        )
         assert isinstance(r["explanation"], dict)
 
     def test_explain_type_echoed(self):
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_explain import (
             graph_explain,
         )
+
         kg = _make_kg()
-        r = asyncio.run(graph_explain(
-            explain_type="entity",
-            entity_id="alice",
-            kg_data=kg.to_dict(),
-        ))
+        r = asyncio.run(
+            graph_explain(
+                explain_type="entity",
+                entity_id="alice",
+                kg_data=kg.to_dict(),
+            )
+        )
         assert r["explain_type"] == "entity"
 
 
@@ -372,12 +410,14 @@ class TestGraphProvenanceVerifyTool:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_provenance_verify import (
             graph_provenance_verify,
         )
+
         assert callable(graph_provenance_verify)
 
     def test_empty_chain_valid(self):
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_provenance_verify import (
             graph_provenance_verify,
         )
+
         r = asyncio.run(graph_provenance_verify())
         assert r["status"] == "success"
         assert r["valid"] is True
@@ -387,6 +427,7 @@ class TestGraphProvenanceVerifyTool:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_provenance_verify import (
             graph_provenance_verify,
         )
+
         r = asyncio.run(graph_provenance_verify())
         for key in ("status", "valid", "event_count", "errors", "latest_cid", "depth"):
             assert key in r, f"missing key: {key}"
@@ -396,6 +437,7 @@ class TestGraphProvenanceVerifyTool:
             graph_provenance_verify,
         )
         from ipfs_datasets_py.knowledge_graphs.extraction.provenance import ProvenanceChain
+
         chain = ProvenanceChain()
         chain.record_entity_created("alice", "person", "alice")
         chain.record_entity_created("bob", "person", "bob")
@@ -409,6 +451,7 @@ class TestGraphProvenanceVerifyTool:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_provenance_verify import (
             graph_provenance_verify,
         )
+
         r = asyncio.run(graph_provenance_verify())
         assert r["errors"] == []
 
@@ -416,6 +459,7 @@ class TestGraphProvenanceVerifyTool:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_provenance_verify import (
             graph_provenance_verify,
         )
+
         r = asyncio.run(graph_provenance_verify())
         assert r["latest_cid"] is None
 
@@ -424,6 +468,7 @@ class TestGraphProvenanceVerifyTool:
             graph_provenance_verify,
         )
         from ipfs_datasets_py.knowledge_graphs.extraction.provenance import ProvenanceChain
+
         chain = ProvenanceChain()
         chain.record_entity_created("x", "thing", "x")
         r = asyncio.run(graph_provenance_verify(provenance_jsonl=chain.to_jsonl()))
@@ -441,6 +486,7 @@ class TestKnowledgeGraphManagerNewMethods:
         from ipfs_datasets_py.core_operations.knowledge_graph_manager import (
             KnowledgeGraphManager,
         )
+
         return KnowledgeGraphManager()
 
     def test_graphql_query_method_exists(self):
@@ -497,13 +543,18 @@ class TestGraphToolsExports:
     def test_five_new_tools_in_all(self):
         from ipfs_datasets_py.mcp_server.tools.graph_tools import __init__ as init_mod
         import importlib.util, pathlib
+
         spec = importlib.util.spec_from_file_location(
             "gt",
-            str(pathlib.Path(__file__).parent.parent.parent.parent /
-                "ipfs_datasets_py/mcp_server/tools/graph_tools/__init__.py"),
+            str(
+                pathlib.Path(__file__).parent.parent.parent.parent
+                / "ipfs_datasets_py/mcp_server/tools/graph_tools/__init__.py"
+            ),
         )
-        src = (pathlib.Path(__file__).parent.parent.parent.parent /
-               "ipfs_datasets_py/mcp_server/tools/graph_tools/__init__.py").read_text()
+        src = (
+            pathlib.Path(__file__).parent.parent.parent.parent
+            / "ipfs_datasets_py/mcp_server/tools/graph_tools/__init__.py"
+        ).read_text()
         for name in (
             "graph_graphql_query",
             "graph_visualize",
@@ -515,8 +566,11 @@ class TestGraphToolsExports:
 
     def test_total_tool_count(self):
         import ast
-        init_src = (pathlib.Path(__file__).parent.parent.parent.parent /
-                    "ipfs_datasets_py/mcp_server/tools/graph_tools/__init__.py").read_text()
+
+        init_src = (
+            pathlib.Path(__file__).parent.parent.parent.parent
+            / "ipfs_datasets_py/mcp_server/tools/graph_tools/__init__.py"
+        ).read_text()
         tree = ast.parse(init_src)
         all_list = None
         for node in ast.walk(tree):

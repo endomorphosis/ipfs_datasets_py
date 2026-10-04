@@ -123,4 +123,3 @@ def test_autoencoder_skips_untrusted_hammer_guidance() -> None:
     assert report["status"] == "no_applicable_guidance"
     assert report["skipped_untrusted_count"] == 1
     assert autoencoder.state.applied_leanstral_guidance_ids == []
-

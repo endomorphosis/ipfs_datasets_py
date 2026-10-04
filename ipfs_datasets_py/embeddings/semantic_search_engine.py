@@ -20,7 +20,7 @@ async def semantic_search(
     top_k: int = 10,
     similarity_threshold: float = 0.7,
     include_metadata: bool = True,
-    **kwargs
+    **kwargs,
 ) -> Dict[str, Any]:
     """
     Perform semantic search using embedding similarity.
@@ -52,14 +52,14 @@ async def semantic_search(
             similarity_score = 0.95 - (i * 0.1)
             if similarity_score >= similarity_threshold:
                 result: Dict[str, Any] = {
-                    "id": f"doc_{i+1}",
-                    "text": f"Sample document {i+1} that matches the query '{query}'",
+                    "id": f"doc_{i + 1}",
+                    "text": f"Sample document {i + 1} that matches the query '{query}'",
                     "similarity_score": similarity_score,
-                    "embedding": [0.1 + i*0.01, 0.2 + i*0.01, 0.3 + i*0.01, 0.4 + i*0.01],
+                    "embedding": [0.1 + i * 0.01, 0.2 + i * 0.01, 0.3 + i * 0.01, 0.4 + i * 0.01],
                 }
                 if include_metadata:
                     result["metadata"] = {
-                        "source": f"document_{i+1}.txt",
+                        "source": f"document_{i + 1}.txt",
                         "created_at": "2025-06-07",
                         "category": "sample_data",
                         "word_count": 100 + i * 10,
@@ -99,7 +99,7 @@ async def multi_modal_search(
     model_name: str = "clip-ViT-B-32",
     top_k: int = 10,
     modality_weights: Optional[Dict[str, float]] = None,
-    **kwargs
+    **kwargs,
 ) -> Dict[str, Any]:
     """
     Perform multi-modal search combining text and image queries.
@@ -134,30 +134,31 @@ async def multi_modal_search(
             text_sim = 0.9 - (i * 0.15) if query else 0
             image_sim = 0.85 - (i * 0.12) if image_query else 0
 
-            combined_score = (
-                text_sim * modality_weights.get("text", 0)
-                + image_sim * modality_weights.get("image", 0)
-            )
+            combined_score = text_sim * modality_weights.get(
+                "text", 0
+            ) + image_sim * modality_weights.get("image", 0)
 
-            simulated_results.append({
-                "id": f"multimodal_doc_{i+1}",
-                "text": f"Document {i+1} with both text and visual content",
-                "combined_similarity": combined_score,
-                "modality_scores": {
-                    "text_similarity": text_sim,
-                    "image_similarity": image_sim,
-                },
-                "content_type": "multimodal",
-                "metadata": {
-                    "has_text": bool(query),
-                    "has_image": bool(image_query),
-                    "modalities": (
-                        ["text", "image"]
-                        if query and image_query
-                        else (["text"] if query else ["image"])
-                    ),
-                },
-            })
+            simulated_results.append(
+                {
+                    "id": f"multimodal_doc_{i + 1}",
+                    "text": f"Document {i + 1} with both text and visual content",
+                    "combined_similarity": combined_score,
+                    "modality_scores": {
+                        "text_similarity": text_sim,
+                        "image_similarity": image_sim,
+                    },
+                    "content_type": "multimodal",
+                    "metadata": {
+                        "has_text": bool(query),
+                        "has_image": bool(image_query),
+                        "modalities": (
+                            ["text", "image"]
+                            if query and image_query
+                            else (["text"] if query else ["image"])
+                        ),
+                    },
+                }
+            )
 
         return {
             "status": "success",
@@ -193,7 +194,7 @@ async def hybrid_search(
     semantic_weight: float = 0.7,
     top_k: int = 10,
     rerank_results: bool = True,
-    **kwargs
+    **kwargs,
 ) -> Dict[str, Any]:
     """
     Perform hybrid search combining lexical and semantic search methods.
@@ -225,8 +226,8 @@ async def hybrid_search(
 
         lexical_results = [
             {
-                "id": f"lex_doc_{i+1}",
-                "text": f"Document {i+1} containing keywords from '{query}'",
+                "id": f"lex_doc_{i + 1}",
+                "text": f"Document {i + 1} containing keywords from '{query}'",
                 "lexical_score": 0.8 - (i * 0.1),
                 "method": "lexical",
             }
@@ -235,8 +236,8 @@ async def hybrid_search(
 
         semantic_results = [
             {
-                "id": f"sem_doc_{i+1}",
-                "text": f"Document {i+1} semantically similar to '{query}'",
+                "id": f"sem_doc_{i + 1}",
+                "text": f"Document {i + 1} semantically similar to '{query}'",
                 "semantic_score": 0.9 - (i * 0.12),
                 "method": "semantic",
             }
@@ -258,7 +259,9 @@ async def hybrid_search(
             if doc_id in combined_results:
                 combined_results[doc_id]["semantic_score"] = result["semantic_score"]
                 combined_results[doc_id]["score_components"]["semantic"] = result["semantic_score"]
-                combined_results[doc_id]["combined_score"] += result["semantic_score"] * semantic_weight
+                combined_results[doc_id]["combined_score"] += (
+                    result["semantic_score"] * semantic_weight
+                )
                 combined_results[doc_id]["method"] = "hybrid"
             else:
                 combined_results[doc_id] = {
@@ -316,7 +319,7 @@ async def search_with_filters(
     filters: Dict[str, Any],
     top_k: int = 10,
     search_method: str = "semantic",
-    **kwargs
+    **kwargs,
 ) -> Dict[str, Any]:
     """
     Perform filtered search with metadata and content constraints.
@@ -345,19 +348,21 @@ async def search_with_filters(
             score = 0.9 - (i * 0.03)
             metadata = {
                 "category": ["tech", "science", "business", "health"][i % 4],
-                "date_created": f"2025-{6-(i%6):02d}-{(i%28)+1:02d}",
+                "date_created": f"2025-{6 - (i % 6):02d}-{(i % 28) + 1:02d}",
                 "word_count": 100 + (i * 20),
                 "language": "en",
-                "author": f"author_{(i%5)+1}",
+                "author": f"author_{(i % 5) + 1}",
                 "tags": [f"tag_{j}" for j in range((i % 3) + 1)],
             }
-            all_results.append({
-                "id": f"filtered_doc_{i+1}",
-                "text": f"Document {i+1} matching query '{query}' with specific metadata",
-                "score": score,
-                "metadata": metadata,
-                "search_method": search_method,
-            })
+            all_results.append(
+                {
+                    "id": f"filtered_doc_{i + 1}",
+                    "text": f"Document {i + 1} matching query '{query}' with specific metadata",
+                    "score": score,
+                    "metadata": metadata,
+                    "search_method": search_method,
+                }
+            )
 
         filtered_results = []
         for result in all_results:

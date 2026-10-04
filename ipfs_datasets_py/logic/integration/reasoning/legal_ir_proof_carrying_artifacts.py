@@ -46,12 +46,8 @@ from .legal_ir_source_maps import (
 )
 
 
-LEGAL_IR_PROOF_CARRYING_ARTIFACT_SCHEMA_VERSION: Final = (
-    "legal-ir-proof-carrying-artifact-v1"
-)
-LEGAL_IR_PROOF_VERIFICATION_POLICY_SCHEMA_VERSION: Final = (
-    "legal-ir-proof-verification-policy-v1"
-)
+LEGAL_IR_PROOF_CARRYING_ARTIFACT_SCHEMA_VERSION: Final = "legal-ir-proof-carrying-artifact-v1"
+LEGAL_IR_PROOF_VERIFICATION_POLICY_SCHEMA_VERSION: Final = "legal-ir-proof-verification-policy-v1"
 
 
 class LegalIRProofArtifactError(ValueError):
@@ -80,7 +76,9 @@ class LegalIRProofArtifactDiagnostic:
 
     @property
     def error(self) -> bool:
-        return str(self.severity or "").lower() == LegalIRProofArtifactDiagnosticSeverity.ERROR.value
+        return (
+            str(self.severity or "").lower() == LegalIRProofArtifactDiagnosticSeverity.ERROR.value
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -146,9 +144,7 @@ class LegalIRProofVerificationPolicy:
         object.__setattr__(
             self,
             "accepted_compiler_commits",
-            tuple(
-                dict.fromkeys(str(item) for item in self.accepted_compiler_commits if str(item))
-            ),
+            tuple(dict.fromkeys(str(item) for item in self.accepted_compiler_commits if str(item))),
         )
         defaults = {
             "build_manifest": LEGAL_IR_BUILD_MANIFEST_SCHEMA_VERSION,
@@ -162,7 +158,9 @@ class LegalIRProofVerificationPolicy:
             "proof_router": LEGAL_IR_PROOF_ROUTER_SCHEMA_VERSION,
             "source_map": LEGAL_IR_SOURCE_MAP_SCHEMA_VERSION,
         }
-        defaults.update({str(key): str(value) for key, value in self.component_schema_versions.items()})
+        defaults.update(
+            {str(key): str(value) for key, value in self.component_schema_versions.items()}
+        )
         object.__setattr__(self, "component_schema_versions", dict(sorted(defaults.items())))
 
     @property
@@ -173,9 +171,7 @@ class LegalIRProofVerificationPolicy:
         payload = {
             "accepted_build_ids": list(self.accepted_build_ids),
             "accepted_compiler_commits": list(self.accepted_compiler_commits),
-            "allow_typed_unsupported_obligations": bool(
-                self.allow_typed_unsupported_obligations
-            ),
+            "allow_typed_unsupported_obligations": bool(self.allow_typed_unsupported_obligations),
             "component_schema_versions": _json_ready(self.component_schema_versions),
             "expected_build_manifest_sha256": self.expected_build_manifest_sha256,
             "expected_legal_ir_output_sha256": self.expected_legal_ir_output_sha256,
@@ -219,9 +215,7 @@ class LegalIRProofVerificationPolicy:
             require_hammer_receipts=bool(data.get("require_hammer_receipts", True)),
             require_translation_records=bool(data.get("require_translation_records", True)),
             require_reconstruction_status=bool(data.get("require_reconstruction_status", True)),
-            require_all_obligations_proved=bool(
-                data.get("require_all_obligations_proved", True)
-            ),
+            require_all_obligations_proved=bool(data.get("require_all_obligations_proved", True)),
             require_trusted_proofs=bool(data.get("require_trusted_proofs", False)),
             require_native_reconstruction=bool(data.get("require_native_reconstruction", False)),
             require_native_reconstruction_verified=bool(
@@ -234,14 +228,14 @@ class LegalIRProofVerificationPolicy:
             allow_typed_unsupported_obligations=bool(
                 data.get("allow_typed_unsupported_obligations", False)
             ),
-            accepted_build_ids=tuple(str(item) for item in _sequence(data.get("accepted_build_ids"))),
+            accepted_build_ids=tuple(
+                str(item) for item in _sequence(data.get("accepted_build_ids"))
+            ),
             accepted_compiler_commits=tuple(
                 str(item) for item in _sequence(data.get("accepted_compiler_commits"))
             ),
             expected_build_manifest_sha256=str(data.get("expected_build_manifest_sha256") or ""),
-            expected_legal_ir_output_sha256=str(
-                data.get("expected_legal_ir_output_sha256") or ""
-            ),
+            expected_legal_ir_output_sha256=str(data.get("expected_legal_ir_output_sha256") or ""),
             component_schema_versions=_mapping(data.get("component_schema_versions")),
             metadata=_mapping(data.get("metadata")),
             schema_version=str(
@@ -329,9 +323,7 @@ class LegalIRProofArtifactValidationResult:
 
     artifact_id: str
     diagnostics: tuple[LegalIRProofArtifactDiagnostic, ...] = ()
-    policy: LegalIRProofVerificationPolicy = field(
-        default_factory=LegalIRProofVerificationPolicy
-    )
+    policy: LegalIRProofVerificationPolicy = field(default_factory=LegalIRProofVerificationPolicy)
     schema_version: str = LEGAL_IR_PROOF_CARRYING_ARTIFACT_SCHEMA_VERSION
 
     @property
@@ -424,7 +416,9 @@ class LegalIRProofCarryingArtifact:
                 for item in self.evidence_bindings
             ),
         )
-        object.__setattr__(self, "route_results", tuple(_mapping(item) for item in self.route_results))
+        object.__setattr__(
+            self, "route_results", tuple(_mapping(item) for item in self.route_results)
+        )
         object.__setattr__(
             self,
             "diagnostics",
@@ -469,9 +463,7 @@ class LegalIRProofCarryingArtifact:
             "legal_ir_output_sha256": self.legal_ir_output_sha256,
             "legal_ir_outputs": _json_ready(self.legal_ir_outputs),
             "metadata": _json_ready(self.metadata),
-            "proof_obligations": [
-                obligation.to_dict() for obligation in self.proof_obligations
-            ],
+            "proof_obligations": [obligation.to_dict() for obligation in self.proof_obligations],
             "reconstruction_receipts": [
                 receipt.to_dict() for receipt in self.reconstruction_receipts
             ],
@@ -504,13 +496,11 @@ class LegalIRProofCarryingArtifact:
                     sample_id=str(_mapping(item).get("sample_id") or ""),
                     formula_id=str(_mapping(item).get("formula_id") or ""),
                     premise_hints=[
-                        str(value)
-                        for value in _sequence(_mapping(item).get("premise_hints"))
+                        str(value) for value in _sequence(_mapping(item).get("premise_hints"))
                     ],
                     metadata=_mapping(_mapping(item).get("metadata")),
                     schema_version=str(
-                        _mapping(item).get("schema_version")
-                        or LEGAL_IR_OBLIGATION_SCHEMA_VERSION
+                        _mapping(item).get("schema_version") or LEGAL_IR_OBLIGATION_SCHEMA_VERSION
                     ),
                 )
                 for item in _sequence(data.get("proof_obligations"))
@@ -595,7 +585,8 @@ def build_legal_ir_proof_carrying_artifact(
     hammer_report: LegalIRHammerReport | Mapping[str, Any] | None = None,
     hammer_guidance_artifacts: Sequence[HammerGuidanceArtifact | Mapping[str, Any]] | None = None,
     translation_records: Sequence[HammerTranslationRecord | Mapping[str, Any]] | None = None,
-    reconstruction_receipts: Sequence[HammerReconstructionReceipt | Mapping[str, Any]] | None = None,
+    reconstruction_receipts: Sequence[HammerReconstructionReceipt | Mapping[str, Any]]
+    | None = None,
     route_results: Sequence[Mapping[str, Any] | Any] | None = None,
     unsupported_diagnostics: Sequence[LegalIRBackendUnsupportedDiagnostic | Mapping[str, Any]] = (),
     source_map: LegalIRSourceMap | Mapping[str, Any] | None = None,
@@ -613,13 +604,13 @@ def build_legal_ir_proof_carrying_artifact(
                 "artifacts", ()
             )
         if translation_records is None:
-            translation_records = getattr(report, "translation_records", None) or report_payload.get(
-                "translation_records", ()
-            )
+            translation_records = getattr(
+                report, "translation_records", None
+            ) or report_payload.get("translation_records", ())
         if reconstruction_receipts is None:
-            reconstruction_receipts = getattr(report, "reconstruction_receipts", None) or report_payload.get(
-                "reconstruction_receipts", ()
-            )
+            reconstruction_receipts = getattr(
+                report, "reconstruction_receipts", None
+            ) or report_payload.get("reconstruction_receipts", ())
         if route_results is None:
             route_results = getattr(report, "route_results", None) or report_payload.get(
                 "route_results", ()
@@ -820,7 +811,9 @@ def _validate_artifact_envelope(
             )
         )
     if not value.artifact_id:
-        diagnostics.append(_diagnostic("artifact_id_missing", "Artifact id is required.", "artifact_id"))
+        diagnostics.append(
+            _diagnostic("artifact_id_missing", "Artifact id is required.", "artifact_id")
+        )
     computed_output = _stable_hash(value.legal_ir_outputs)
     if value.legal_ir_output_sha256 != computed_output:
         diagnostics.append(
@@ -1186,9 +1179,9 @@ def _validate_cross_references(
                     "orphaned_unsupported_diagnostic",
                     "Unsupported diagnostic references unknown proof obligations.",
                     f"unsupported_diagnostics.{index}.obligation_ids",
-                metadata={"unknown_obligation_ids": unknown_ids},
+                    metadata={"unknown_obligation_ids": unknown_ids},
+                )
             )
-        )
     for binding in value.evidence_bindings:
         if binding.obligation_id not in obligation_ids:
             diagnostics.append(
@@ -1270,9 +1263,8 @@ def _validate_obligation_evidence(
         binding = bindings.get(obligation.obligation_id)
         if binding is None:
             continue
-        unsupported_allowed = (
-            policy.allow_typed_unsupported_obligations
-            and bool(binding.unsupported_diagnostic_keys)
+        unsupported_allowed = policy.allow_typed_unsupported_obligations and bool(
+            binding.unsupported_diagnostic_keys
         )
         if policy.require_hammer_guidance and not binding.guidance_ids:
             diagnostics.append(
@@ -1310,11 +1302,7 @@ def _validate_obligation_evidence(
                     "route_results",
                 )
             )
-        if (
-            policy.require_all_obligations_proved
-            and not binding.proved
-            and not unsupported_allowed
-        ):
+        if policy.require_all_obligations_proved and not binding.proved and not unsupported_allowed:
             diagnostics.append(
                 _obligation_diagnostic(
                     "proof_failed",
@@ -1408,9 +1396,7 @@ def _build_evidence_bindings(
         translation_items = [item for item in translations if item.obligation_id == obligation_id]
         receipt_items = [item for item in receipts if item.obligation_id == obligation_id]
         routes = [
-            item
-            for item in route_results
-            if str(item.get("obligation_id") or "") == obligation_id
+            item for item in route_results if str(item.get("obligation_id") or "") == obligation_id
         ]
         unsupported = [
             item
@@ -1652,9 +1638,8 @@ def _first_text(values: Sequence[Any]) -> str:
 
 def _unsupported_key(diagnostic: LegalIRBackendUnsupportedDiagnostic) -> str:
     scope = ",".join(diagnostic.obligation_ids)
-    return (
-        f"{diagnostic.backend}:{diagnostic.feature}:{diagnostic.reason_code}"
-        + (f":{scope}" if scope else "")
+    return f"{diagnostic.backend}:{diagnostic.feature}:{diagnostic.reason_code}" + (
+        f":{scope}" if scope else ""
     )
 
 
@@ -1732,9 +1717,7 @@ def _dedupe_diagnostics(
 
 
 def _format_diagnostics(diagnostics: Sequence[LegalIRProofArtifactDiagnostic]) -> str:
-    return "; ".join(
-        f"{diagnostic.code}: {diagnostic.message}" for diagnostic in diagnostics
-    )
+    return "; ".join(f"{diagnostic.code}: {diagnostic.message}" for diagnostic in diagnostics)
 
 
 __all__ = [

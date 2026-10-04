@@ -249,9 +249,7 @@ from ipfs_datasets_py.processors.web_archiving import CommonCrawlSearchEngine
 cc_engine = CommonCrawlSearchEngine()
 results = await cc_engine.search_domain("www.federalregister.gov")
 content = await cc_engine.fetch_warc_content(
-    warc_url=results[0]['warc_url'],
-    offset=results[0]['offset'],
-    length=results[0]['length']
+    warc_url=results[0]["warc_url"], offset=results[0]["offset"], length=results[0]["length"]
 )
 ```
 
@@ -265,21 +263,16 @@ content = await cc_engine.fetch_warc_content(
 from datasets import load_dataset
 
 # Load federal Common Crawl index
-federal_index = load_dataset(
-    "endomorphosis/common_crawl_federal_index",
-    split="train"
-)
+federal_index = load_dataset("endomorphosis/common_crawl_federal_index", split="train")
 
 # Query for specific URL
-matches = federal_index.filter(
-    lambda x: "www.govinfo.gov" in x['url']
-)
+matches = federal_index.filter(lambda x: "www.govinfo.gov" in x["url"])
 
 # Get WARC pointers
 for match in matches:
-    warc_url = match['warc_filename']
-    offset = match['warc_record_offset']
-    length = match['warc_record_length']
+    warc_url = match["warc_filename"]
+    offset = match["warc_record_offset"]
+    length = match["warc_record_length"]
     # Fetch content...
 ```
 
@@ -322,12 +315,13 @@ Expected fields in HuggingFace datasets:
 ```python
 import json
 
+
 def load_federal_urls(jsonl_path):
     urls = []
     with open(jsonl_path) as f:
         for line in f:
             data = json.loads(line)
-            urls.extend(data.get('seed_urls', []))
+            urls.extend(data.get("seed_urls", []))
     return urls
 ```
 

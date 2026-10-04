@@ -47,9 +47,7 @@ def test_capacity_compaction_keeps_coupled_heads_aligned_and_sample_memory() -> 
     assert set(state.feature_legal_ir_view_logits) == expected
     assert state.decoded_embeddings == {"sample": [0.25, 0.75]}
     assert state.family_logits == {"sample": {"deontic": 1.0}}
-    assert report["schema_version"] == (
-        MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_SCHEMA_VERSION
-    )
+    assert report["schema_version"] == (MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_SCHEMA_VERSION)
     assert report["compacted"] is True
     assert report["groups"]["feature"]["unique_keys_dropped"] == 1
     assert report["groups"]["feature"]["protected_keys_after"] == 1
@@ -101,9 +99,7 @@ def test_capacity_compaction_is_idempotent_when_state_is_within_limit() -> None:
 
 def test_capacity_compacted_state_round_trips_through_compact_checkpoint() -> None:
     state = ModalAutoencoderTrainingState(
-        semantic_slot_embedding_weights={
-            f"slot-{index}": [float(index)] for index in range(6)
-        },
+        semantic_slot_embedding_weights={f"slot-{index}": [float(index)] for index in range(6)},
         semantic_slot_family_logits={
             f"slot-{index}": {"deontic": float(index)} for index in range(6)
         },

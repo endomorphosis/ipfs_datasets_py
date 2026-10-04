@@ -53,9 +53,7 @@ from .receipt import (
 DECISION_CACHE_KEY_INTERFACE: Final = "DecisionCacheKey@1"
 DECISION_CACHE_KEY_SCHEMA_VERSION: Final = "decision-cache-key/v1"
 TENANT_SAFE_DECISION_CACHE_INTERFACE: Final = "TenantSafeDecisionCache@1"
-TENANT_SAFE_DECISION_CACHE_SCHEMA_VERSION: Final = (
-    "tenant-safe-decision-cache/v1"
-)
+TENANT_SAFE_DECISION_CACHE_SCHEMA_VERSION: Final = "tenant-safe-decision-cache/v1"
 AUTHORIZATION_RUNTIME_INTERFACE: Final = "AuthorizationRuntime@1"
 AUTHORIZATION_RUNTIME_SCHEMA_VERSION: Final = "authorization-runtime/v1"
 CACHED_DECISION_SCHEMA_VERSION: Final = "cached-decision/v1"
@@ -156,9 +154,7 @@ def _digest(value: Any, name: str) -> str:
     if text.startswith("sha256:"):
         text = text[len("sha256:") :]
     if not _SHA256_HEX_RE.fullmatch(text):
-        raise DecisionCacheError(
-            f"{name} must be a lowercase SHA-256 hex digest"
-        )
+        raise DecisionCacheError(f"{name} must be a lowercase SHA-256 hex digest")
     return text
 
 
@@ -176,9 +172,7 @@ def _unique_sorted_ids(
 ) -> tuple[str, ...]:
     if values is None:
         return ()
-    if isinstance(values, (str, bytes, bytearray)) or not isinstance(
-        values, Sequence
-    ):
+    if isinstance(values, (str, bytes, bytearray)) or not isinstance(values, Sequence):
         raise DecisionCacheError(f"{name} must be a sequence of strings")
     if len(values) > MAX_COLLECTION_ITEMS:
         raise DecisionCacheError(f"{name} exceeds maximum collection size")
@@ -261,15 +255,9 @@ class DecisionCacheKey:
     key_digest: str = ""
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "tenant_id", _identifier(self.tenant_id, "tenant_id")
-        )
-        object.__setattr__(
-            self, "actor_id", _identifier(self.actor_id, "actor_id")
-        )
-        object.__setattr__(
-            self, "audience_id", _identifier(self.audience_id, "audience_id")
-        )
+        object.__setattr__(self, "tenant_id", _identifier(self.tenant_id, "tenant_id"))
+        object.__setattr__(self, "actor_id", _identifier(self.actor_id, "actor_id"))
+        object.__setattr__(self, "audience_id", _identifier(self.audience_id, "audience_id"))
         object.__setattr__(
             self,
             "request_digest",
@@ -280,9 +268,7 @@ class DecisionCacheKey:
             "arguments_digest",
             _digest(self.arguments_digest, "arguments_digest"),
         )
-        object.__setattr__(
-            self, "tool_id", _optional_identifier(self.tool_id, "tool_id")
-        )
+        object.__setattr__(self, "tool_id", _optional_identifier(self.tool_id, "tool_id"))
         object.__setattr__(
             self,
             "tool_version",
@@ -291,23 +277,17 @@ class DecisionCacheKey:
         object.__setattr__(
             self,
             "effect_ids",
-            _unique_sorted_ids(
-                self.effect_ids, "effect_ids", require_identifier=True
-            ),
+            _unique_sorted_ids(self.effect_ids, "effect_ids", require_identifier=True),
         )
         object.__setattr__(
             self,
             "resource_ids",
-            _unique_sorted_ids(
-                self.resource_ids, "resource_ids", require_identifier=True
-            ),
+            _unique_sorted_ids(self.resource_ids, "resource_ids", require_identifier=True),
         )
         object.__setattr__(
             self,
             "delegation_ids",
-            _unique_sorted_ids(
-                self.delegation_ids, "delegation_ids", require_identifier=True
-            ),
+            _unique_sorted_ids(self.delegation_ids, "delegation_ids", require_identifier=True),
         )
         object.__setattr__(
             self,
@@ -324,9 +304,7 @@ class DecisionCacheKey:
             "environment_id",
             _optional_identifier(self.environment_id, "environment_id"),
         )
-        object.__setattr__(
-            self, "policy_root", _optional_text(self.policy_root, "policy_root")
-        )
+        object.__setattr__(self, "policy_root", _optional_text(self.policy_root, "policy_root"))
         object.__setattr__(
             self,
             "corpus_roots",
@@ -342,15 +320,9 @@ class DecisionCacheKey:
             "circuit_roots",
             _unique_sorted_ids(self.circuit_roots, "circuit_roots"),
         )
-        object.__setattr__(
-            self, "vk_roots", _unique_sorted_ids(self.vk_roots, "vk_roots")
-        )
-        object.__setattr__(
-            self, "profile_id", _optional_text(self.profile_id, "profile_id")
-        )
-        object.__setattr__(
-            self, "purpose", _optional_text(self.purpose, "purpose")
-        )
+        object.__setattr__(self, "vk_roots", _unique_sorted_ids(self.vk_roots, "vk_roots"))
+        object.__setattr__(self, "profile_id", _optional_text(self.profile_id, "profile_id"))
+        object.__setattr__(self, "purpose", _optional_text(self.purpose, "purpose"))
         object.__setattr__(
             self,
             "effective_time",
@@ -359,16 +331,12 @@ class DecisionCacheKey:
         object.__setattr__(
             self,
             "evidence_coverage_profile",
-            _optional_text(
-                self.evidence_coverage_profile, "evidence_coverage_profile"
-            ),
+            _optional_text(self.evidence_coverage_profile, "evidence_coverage_profile"),
         )
         object.__setattr__(
             self,
             "decision_policy_digest",
-            _optional_digest(
-                self.decision_policy_digest, "decision_policy_digest"
-            ),
+            _optional_digest(self.decision_policy_digest, "decision_policy_digest"),
         )
         if self.interface != DECISION_CACHE_KEY_INTERFACE:
             raise DecisionCacheError(
@@ -376,8 +344,7 @@ class DecisionCacheKey:
             )
         if self.schema_version != DECISION_CACHE_KEY_SCHEMA_VERSION:
             raise DecisionCacheError(
-                f"unsupported decision cache key schema: "
-                f"{self.schema_version!r}"
+                f"unsupported decision cache key schema: {self.schema_version!r}"
             )
         digest = stable_digest(self._identity_payload())
         if self.key_digest:
@@ -385,9 +352,7 @@ class DecisionCacheKey:
             if provided.startswith("sha256:"):
                 provided = provided[len("sha256:") :]
             if provided != digest:
-                raise DecisionCacheError(
-                    "key_digest does not match recomputed cache key identity"
-                )
+                raise DecisionCacheError("key_digest does not match recomputed cache key identity")
         object.__setattr__(self, "key_digest", digest)
 
     def _identity_payload(self) -> dict[str, Any]:
@@ -489,14 +454,10 @@ class DecisionCacheKey:
             profile_id=clean.get("profile_id", ""),
             purpose=clean.get("purpose", ""),
             effective_time=clean.get("effective_time", ""),
-            evidence_coverage_profile=clean.get(
-                "evidence_coverage_profile", ""
-            ),
+            evidence_coverage_profile=clean.get("evidence_coverage_profile", ""),
             decision_policy_digest=clean.get("decision_policy_digest", ""),
             interface=clean.get("interface", DECISION_CACHE_KEY_INTERFACE),
-            schema_version=clean.get(
-                "schema_version", DECISION_CACHE_KEY_SCHEMA_VERSION
-            ),
+            schema_version=clean.get("schema_version", DECISION_CACHE_KEY_SCHEMA_VERSION),
             key_digest=clean.get("key_digest", ""),
         )
 
@@ -684,9 +645,7 @@ class CachedDecision:
         if not isinstance(self.ttl_seconds, int) or self.ttl_seconds < 0:
             raise DecisionCacheError("ttl_seconds must be a non-negative int")
         if self.ttl_seconds == 0 and self.kind is CacheEntryKind.ALLOW:
-            raise DecisionCacheError(
-                "allow entries require a short positive TTL"
-            )
+            raise DecisionCacheError("allow entries require a short positive TTL")
 
     @property
     def is_allow(self) -> bool:
@@ -695,9 +654,7 @@ class CachedDecision:
     def is_expired(self, now_monotonic: float | None = None) -> bool:
         if self.ttl_seconds <= 0:
             return True
-        now = (
-            time.monotonic() if now_monotonic is None else float(now_monotonic)
-        )
+        now = time.monotonic() if now_monotonic is None else float(now_monotonic)
         return now >= self.expires_at_monotonic
 
     def to_dict(self) -> dict[str, Any]:
@@ -739,9 +696,7 @@ class TenantSafeDecisionCache:
     schema_version: str = TENANT_SAFE_DECISION_CACHE_SCHEMA_VERSION
     _lock: threading.RLock = field(default_factory=threading.RLock, init=False)
     # Storage: tenant_id → key_digest → CachedDecision
-    _entries: dict[str, dict[str, CachedDecision]] = field(
-        default_factory=dict, init=False
-    )
+    _entries: dict[str, dict[str, CachedDecision]] = field(default_factory=dict, init=False)
     _hits: int = field(default=0, init=False)
     _misses: int = field(default=0, init=False)
     _stores: int = field(default=0, init=False)
@@ -765,17 +720,11 @@ class TenantSafeDecisionCache:
         ):
             raise DecisionCacheError("negative_ttl_seconds must be an int")
         if self.negative_ttl_seconds < 0:
-            raise DecisionCacheError(
-                "negative_ttl_seconds must be non-negative"
-            )
+            raise DecisionCacheError("negative_ttl_seconds must be non-negative")
         if self.interface != TENANT_SAFE_DECISION_CACHE_INTERFACE:
-            raise DecisionCacheError(
-                f"unsupported cache interface: {self.interface!r}"
-            )
+            raise DecisionCacheError(f"unsupported cache interface: {self.interface!r}")
         if self.schema_version != TENANT_SAFE_DECISION_CACHE_SCHEMA_VERSION:
-            raise DecisionCacheError(
-                f"unsupported cache schema: {self.schema_version!r}"
-            )
+            raise DecisionCacheError(f"unsupported cache schema: {self.schema_version!r}")
 
     def get(
         self,
@@ -787,9 +736,7 @@ class TenantSafeDecisionCache:
 
         if not isinstance(key, DecisionCacheKey):
             raise DecisionCacheError("key must be a DecisionCacheKey")
-        now = (
-            time.monotonic() if now_monotonic is None else float(now_monotonic)
-        )
+        now = time.monotonic() if now_monotonic is None else float(now_monotonic)
         tenant = key.tenant_id
         digest = key.digest
         with self._lock:
@@ -854,16 +801,10 @@ class TenantSafeDecisionCache:
         else:
             wire_text = str(wire_status)
 
-        now = (
-            time.monotonic() if now_monotonic is None else float(now_monotonic)
-        )
+        now = time.monotonic() if now_monotonic is None else float(now_monotonic)
 
         if kind is CacheEntryKind.ALLOW:
-            ttl = (
-                self.positive_ttl_seconds
-                if ttl_seconds is None
-                else int(ttl_seconds)
-            )
+            ttl = self.positive_ttl_seconds if ttl_seconds is None else int(ttl_seconds)
             if ttl <= 0:
                 with self._lock:
                     self._rejected_stores += 1
@@ -876,11 +817,7 @@ class TenantSafeDecisionCache:
                 with self._lock:
                     self._rejected_stores += 1
                 return None
-            ttl = (
-                self.negative_ttl_seconds
-                if ttl_seconds is None
-                else int(ttl_seconds)
-            )
+            ttl = self.negative_ttl_seconds if ttl_seconds is None else int(ttl_seconds)
             if ttl <= 0:
                 with self._lock:
                     self._rejected_stores += 1
@@ -892,9 +829,7 @@ class TenantSafeDecisionCache:
             kind=kind,
             status=status_text,
             wire_status=wire_text,
-            decision_digest=_optional_digest(
-                decision_digest, "decision_digest"
-            )
+            decision_digest=_optional_digest(decision_digest, "decision_digest")
             if decision_digest
             else "",
             receipt_digest=_optional_digest(receipt_digest, "receipt_digest")
@@ -904,8 +839,7 @@ class TenantSafeDecisionCache:
             stored_at_monotonic=now,
             expires_at_monotonic=now + float(ttl),
             ttl_seconds=ttl,
-            monotonic_negative=bool(monotonic_negative)
-            and kind is not CacheEntryKind.ALLOW,
+            monotonic_negative=bool(monotonic_negative) and kind is not CacheEntryKind.ALLOW,
             tenant_id=key.tenant_id,
             key_digest=key.digest,
         )
@@ -1003,12 +937,8 @@ class AuthorizationRuntime:
     pre-dispatch boundary.
     """
 
-    cache: TenantSafeDecisionCache = field(
-        default_factory=TenantSafeDecisionCache
-    )
-    store: CapabilityConsumptionStore = field(
-        default_factory=InMemoryCapabilityConsumptionStore
-    )
+    cache: TenantSafeDecisionCache = field(default_factory=TenantSafeDecisionCache)
+    store: CapabilityConsumptionStore = field(default_factory=InMemoryCapabilityConsumptionStore)
     dispatcher: FakeDispatcher | None = field(default_factory=FakeDispatcher)
     enforcement: PreInvocationEnforcement | None = None
     interface: str = AUTHORIZATION_RUNTIME_INTERFACE
@@ -1021,13 +951,9 @@ class AuthorizationRuntime:
                 dispatcher=self.dispatcher,
             )
         if self.interface != AUTHORIZATION_RUNTIME_INTERFACE:
-            raise DecisionCacheError(
-                f"unsupported runtime interface: {self.interface!r}"
-            )
+            raise DecisionCacheError(f"unsupported runtime interface: {self.interface!r}")
         if self.schema_version != AUTHORIZATION_RUNTIME_SCHEMA_VERSION:
-            raise DecisionCacheError(
-                f"unsupported runtime schema: {self.schema_version!r}"
-            )
+            raise DecisionCacheError(f"unsupported runtime schema: {self.schema_version!r}")
 
     def cache_decision(
         self,

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from ipfs_datasets_py.processors.legal_data.reasoner.optimizer_policy import build_optimizer_chain_plan
+from ipfs_datasets_py.processors.legal_data.reasoner.optimizer_policy import (
+    build_optimizer_chain_plan,
+)
 
 
 def _decision(accepted: bool) -> dict:

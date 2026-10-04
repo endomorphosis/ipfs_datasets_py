@@ -55,24 +55,14 @@ Abstract base class defining the common interface for all vector stores.
 from ipfs_datasets_py.vector_stores import QdrantVectorStore
 
 # Initialize store
-store = QdrantVectorStore(
-    host="localhost",
-    port=6333,
-    collection_name="documents"
-)
+store = QdrantVectorStore(host="localhost", port=6333, collection_name="documents")
 
 # Add vectors
-await store.add_vectors(
-    vectors=embeddings,
-    metadata=document_metadata,
-    ids=document_ids
-)
+await store.add_vectors(vectors=embeddings, metadata=document_metadata, ids=document_ids)
 
 # Search for similar vectors
 results = await store.search(
-    query_vector=query_embedding,
-    limit=10,
-    filter_conditions={"category": "research"}
+    query_vector=query_embedding, limit=10, filter_conditions={"category": "research"}
 )
 ```
 
@@ -89,17 +79,11 @@ production_store = QdrantVectorStore()  # Feature rich
 ```python
 from ipfs_datasets_py.vector_stores import ElasticsearchVectorStore
 
-store = ElasticsearchVectorStore(
-    hosts=["localhost:9200"],
-    index_name="hybrid_search"
-)
+store = ElasticsearchVectorStore(hosts=["localhost:9200"], index_name="hybrid_search")
 
 # Combine text and vector search
 results = await store.hybrid_search(
-    query_text="machine learning",
-    query_vector=embedding,
-    text_weight=0.3,
-    vector_weight=0.7
+    query_text="machine learning", query_vector=embedding, text_weight=0.3, vector_weight=0.7
 )
 ```
 

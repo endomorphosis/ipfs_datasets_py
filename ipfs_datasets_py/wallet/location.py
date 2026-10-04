@@ -27,7 +27,9 @@ def region_membership_statement(lat: float, lon: float, region_id: str) -> Dict[
     privately and exposes only the requested region identifier.
     """
 
-    witness_commitment = hashlib.sha256(f"{float(lat):.8f}:{float(lon):.8f}:{region_id}".encode()).hexdigest()
+    witness_commitment = hashlib.sha256(
+        f"{float(lat):.8f}:{float(lon):.8f}:{region_id}".encode()
+    ).hexdigest()
     return {
         "region_id": region_id,
         "claim": "location_in_region",
@@ -85,7 +87,9 @@ def distance_membership_statement(
     }
 
 
-def make_coarse_location_claim(record_id: str, lat: float, lon: float, precision: int = 2) -> LocationClaim:
+def make_coarse_location_claim(
+    record_id: str, lat: float, lon: float, precision: int = 2
+) -> LocationClaim:
     return LocationClaim(
         claim_type="coarse_location",
         public_value=coarse_location(lat, lon, precision),
@@ -94,7 +98,9 @@ def make_coarse_location_claim(record_id: str, lat: float, lon: float, precision
     )
 
 
-def serialize_location(lat: float, lon: float, source: str = "user", accuracy_m: float | None = None) -> bytes:
+def serialize_location(
+    lat: float, lon: float, source: str = "user", accuracy_m: float | None = None
+) -> bytes:
     payload = {
         "lat": float(lat),
         "lon": float(lon),

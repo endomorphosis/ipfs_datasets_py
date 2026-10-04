@@ -69,7 +69,7 @@ def _run_with_timeout(operation: Callable[[], T], timeout_seconds: float) -> T:
 
 def _backoff_seconds(policy: BackendCallPolicy, attempt: int) -> float:
     """Compute backoff delay for a zero-based retry attempt."""
-    delay = policy.initial_backoff_seconds * (policy.backoff_multiplier ** attempt)
+    delay = policy.initial_backoff_seconds * (policy.backoff_multiplier**attempt)
     return min(delay, policy.max_backoff_seconds)
 
 

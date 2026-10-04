@@ -82,7 +82,9 @@ def validate_feedback_schema(feedback: Any, *, strict: bool = False) -> List[str
         errors.append("entities_to_remove must be a list of strings")
     if "entities_to_merge" in feedback and not _is_pair_list(feedback["entities_to_merge"]):
         errors.append("entities_to_merge must be a list of [id1, id2] pairs")
-    if "relationships_to_remove" in feedback and not _is_str_list(feedback["relationships_to_remove"]):
+    if "relationships_to_remove" in feedback and not _is_str_list(
+        feedback["relationships_to_remove"]
+    ):
         errors.append("relationships_to_remove must be a list of strings")
     if "relationships_to_add" in feedback and not _is_relationship_list(
         feedback["relationships_to_add"], strict=strict
@@ -90,7 +92,9 @@ def validate_feedback_schema(feedback: Any, *, strict: bool = False) -> List[str
         errors.append("relationships_to_add must be a list of dicts")
     if "type_corrections" in feedback and not _is_type_corrections(feedback["type_corrections"]):
         errors.append("type_corrections must be a dict[str, str]")
-    if "confidence_floor" in feedback and not isinstance(feedback["confidence_floor"], (int, float)):
+    if "confidence_floor" in feedback and not isinstance(
+        feedback["confidence_floor"], (int, float)
+    ):
         errors.append("confidence_floor must be a number")
     if strict and "confidence_floor" in feedback:
         if not (0.0 <= float(feedback["confidence_floor"]) <= 1.0):

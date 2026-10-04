@@ -6,6 +6,7 @@ Test data factory for generating MediaUtils instances and test data.
 Provides methods to create valid baseline data, invalid variations, and edge cases
 for comprehensive testing of the MediaUtils class validation logic.
 """
+
 from typing import Dict, Any, List, Set, Union
 from pathlib import Path
 
@@ -15,22 +16,22 @@ from ipfs_datasets_py.data_transformation.multimedia.media_utils import MediaUti
 class MediaUtilsTestDataFactory:
     """
     Test data factory for generating MediaUtils instances and test data.
-    
+
     Provides methods to create valid baseline data, invalid variations, and edge cases
     for comprehensive testing of the MediaUtils class validation logic.
-    
+
     Examples:
         >>> # Create a MediaUtils instance for testing
         >>> utils = MediaUtilsTestDataFactory.create_utils_instance()
-        >>> 
+        >>>
         >>> # Get valid file paths for testing
         >>> file_paths = MediaUtilsTestDataFactory.create_valid_file_paths()
         >>> video_path = file_paths['video_mp4']  # "/path/to/video.mp4"
-        >>> 
+        >>>
         >>> # Get test data for file size formatting
         >>> sizes = MediaUtilsTestDataFactory.create_file_size_test_data()
         >>> megabyte_size = sizes['megabytes']  # 1048576
-        >>> 
+        >>>
         >>> # Get filename sanitization test cases
         >>> filenames = MediaUtilsTestDataFactory.create_filename_test_data()
         >>> invalid_name = filenames['invalid_chars']  # "file<name>with:invalid|chars?.mp4"
@@ -40,12 +41,12 @@ class MediaUtilsTestDataFactory:
     def create_valid_file_paths(cls) -> Dict[str, str]:
         """
         Create dictionary of valid file paths for different media types.
-        
+
         Returns:
             Dict[str, str]: Dictionary with valid file paths for testing.
                 Keys:
                 - 'video_mp4': str - Path to MP4 video file
-                - 'video_avi': str - Path to AVI video file  
+                - 'video_avi': str - Path to AVI video file
                 - 'video_mkv': str - Path to MKV video file
                 - 'audio_mp3': str - Path to MP3 audio file
                 - 'audio_wav': str - Path to WAV audio file
@@ -65,14 +66,14 @@ class MediaUtilsTestDataFactory:
             "image_jpg": "/path/to/image.jpg",
             "image_png": "/path/to/image.png",
             "image_gif": "/path/to/image.gif",
-            "non_media": "/path/to/document.pdf"
+            "non_media": "/path/to/document.pdf",
         }
 
     @classmethod
     def create_valid_urls(cls) -> Dict[str, str]:
         """
         Create dictionary of valid URLs for different protocols.
-        
+
         Returns:
             Dict[str, str]: Dictionary with valid URLs for testing.
                 Keys:
@@ -80,7 +81,7 @@ class MediaUtilsTestDataFactory:
                 - 'https_video': str - HTTPS URL pointing to video file
                 - 'ftp_file': str - FTP URL pointing to media file
                 - 'rtmp_stream': str - RTMP streaming URL
-                - 'rtsp_stream': str - RTSP streaming URL  
+                - 'rtsp_stream': str - RTSP streaming URL
                 - 'local_file': str - Local file path
         """
         return {
@@ -89,14 +90,14 @@ class MediaUtilsTestDataFactory:
             "ftp_file": "ftp://server.com/file.avi",
             "rtmp_stream": "rtmp://stream.server.com/live",
             "rtsp_stream": "rtsp://camera.server.com/stream",
-            "local_file": "/home/user/video.mp4"
+            "local_file": "/home/user/video.mp4",
         }
 
     @classmethod
     def create_invalid_urls(cls) -> Dict[str, str]:
         """
         Create dictionary of invalid URLs for testing.
-        
+
         Returns:
             Dict[str, str]: Dictionary with invalid URLs for testing.
                 Keys:
@@ -113,14 +114,14 @@ class MediaUtilsTestDataFactory:
             "invalid_protocol": "invalid://example.com/video.mp4",
             "malformed": "not-a-url",
             "whitespace_only": "   ",
-            "missing_extension": "https://example.com/video"
+            "missing_extension": "https://example.com/video",
         }
 
     @classmethod
     def create_file_size_test_data(cls) -> Dict[str, int]:
         """
         Create dictionary of file sizes in bytes for testing formatting.
-        
+
         Returns:
             Dict[str, int]: Dictionary with file sizes for testing.
                 Keys:
@@ -139,14 +140,14 @@ class MediaUtilsTestDataFactory:
             "megabytes": 1048576,
             "gigabytes": 1073741824,
             "terabytes": 1099511627776,
-            "large": 1125899906842624  # 1 PB
+            "large": 1125899906842624,  # 1 PB
         }
 
     @classmethod
     def create_duration_test_data(cls) -> Dict[str, float]:
         """
         Create dictionary of durations in seconds for testing formatting.
-        
+
         Returns:
             Dict[str, float]: Dictionary with durations for testing.
                 Keys:
@@ -165,14 +166,14 @@ class MediaUtilsTestDataFactory:
             "hour": 3600.0,
             "hour_minute_second": 3661.0,
             "two_hours": 7200.0,
-            "fractional": 125.7
+            "fractional": 125.7,
         }
 
     @classmethod
     def create_filename_test_data(cls) -> Dict[str, str]:
         """
         Create dictionary of filenames for sanitization testing.
-        
+
         Returns:
             Dict[str, str]: Dictionary with filenames for testing.
                 Keys:
@@ -195,14 +196,14 @@ class MediaUtilsTestDataFactory:
             "empty": "",
             "very_long": "a" * 250 + ".mp4",
             "unicode": "файл_видео.mp4",
-            "special_chars": "file@#$%^&*()_+name.mp4"
+            "special_chars": "file@#$%^&*()_+name.mp4",
         }
 
     @classmethod
     def create_expected_sanitized_filenames(cls) -> Dict[str, str]:
         """
         Create dictionary of expected sanitized filenames.
-        
+
         Returns:
             Dict[str, str]: Dictionary with expected sanitized results.
                 Keys:
@@ -225,14 +226,14 @@ class MediaUtilsTestDataFactory:
             "empty": "unnamed_file",
             "very_long": "a" * 196 + ".mp4",  # 200 - 4 for extension
             "unicode": "файл_видео.mp4",
-            "special_chars": "file_#$%^&_()__name.mp4"
+            "special_chars": "file_#$%^&_()__name.mp4",
         }
 
     @classmethod
     def create_mime_type_expectations(cls) -> Dict[str, str]:
         """
         Create dictionary of file extensions and their expected MIME types.
-        
+
         Returns:
             Dict[str, str]: Dictionary mapping file paths to expected MIME types.
                 Keys:
@@ -249,41 +250,81 @@ class MediaUtilsTestDataFactory:
             "image.jpg": "image/jpeg",
             "image.png": "image/png",
             "video.avi": "video/x-msvideo",
-            "audio.wav": "audio/wav"
+            "audio.wav": "audio/wav",
         }
 
     @classmethod
     def create_supported_formats_data(cls) -> Dict[str, Set[str]]:
         """
         Create the expected supported formats data structure.
-        
+
         Returns:
             Dict[str, Set[str]]: Dictionary with supported formats by media type.
                 Keys:
                 - 'video': Set[str] - Set of supported video file extensions
-                - 'audio': Set[str] - Set of supported audio file extensions  
+                - 'audio': Set[str] - Set of supported audio file extensions
                 - 'image': Set[str] - Set of supported image file extensions
         """
         return {
             "video": {
-                'mp4', 'avi', 'mov', 'mkv', 'wmv', 'flv', 'webm', 'm4v', '3gp',
-                'mpg', 'mpeg', 'ts', 'vob', 'asf', 'rm', 'rmvb', 'ogv'
+                "mp4",
+                "avi",
+                "mov",
+                "mkv",
+                "wmv",
+                "flv",
+                "webm",
+                "m4v",
+                "3gp",
+                "mpg",
+                "mpeg",
+                "ts",
+                "vob",
+                "asf",
+                "rm",
+                "rmvb",
+                "ogv",
             },
             "audio": {
-                'mp3', 'wav', 'flac', 'aac', 'ogg', 'wma', 'm4a', 'opus',
-                'aiff', 'au', 'ra', 'amr', 'ac3', 'dts'
+                "mp3",
+                "wav",
+                "flac",
+                "aac",
+                "ogg",
+                "wma",
+                "m4a",
+                "opus",
+                "aiff",
+                "au",
+                "ra",
+                "amr",
+                "ac3",
+                "dts",
             },
             "image": {
-                'jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'tif', 'webp',
-                'svg', 'ico', 'psd', 'raw', 'cr2', 'nef', 'arw'
-            }
+                "jpg",
+                "jpeg",
+                "png",
+                "gif",
+                "bmp",
+                "tiff",
+                "tif",
+                "webp",
+                "svg",
+                "ico",
+                "psd",
+                "raw",
+                "cr2",
+                "nef",
+                "arw",
+            },
         }
 
     @classmethod
     def create_file_type_test_cases(cls) -> Dict[str, Dict[str, Any]]:
         """
         Create test cases for file type detection.
-        
+
         Returns:
             Dict[str, Dict[str, Any]]: Dictionary with file paths and expected types.
                 Keys:
@@ -292,7 +333,7 @@ class MediaUtilsTestDataFactory:
                   - 'expected_type': str - Expected media type ("video")
                 - 'video_avi': Dict - Test case for AVI video file (case insensitive)
                 - 'audio_mp3': Dict - Test case for MP3 audio file
-                - 'audio_flac': Dict - Test case for FLAC audio file  
+                - 'audio_flac': Dict - Test case for FLAC audio file
                 - 'image_jpg': Dict - Test case for JPEG image file
                 - 'image_png': Dict - Test case for PNG image file
                 - 'non_media': Dict - Test case for non-media file (expected_type: None)
@@ -308,14 +349,14 @@ class MediaUtilsTestDataFactory:
             "image_png": {"path": "picture.PNG", "expected_type": "image"},
             "non_media": {"path": "document.pdf", "expected_type": None},
             "no_extension": {"path": "filename", "expected_type": None},
-            "hidden_file": {"path": ".hidden.mp4", "expected_type": "video"}
+            "hidden_file": {"path": ".hidden.mp4", "expected_type": "video"},
         }
 
     @classmethod
     def create_media_validation_test_cases(cls) -> Dict[str, Dict[str, Any]]:
         """
         Create test cases for media file validation.
-        
+
         Returns:
             Dict[str, Dict[str, Any]]: Dictionary with file paths and expected validation results.
                 Keys:
@@ -336,14 +377,14 @@ class MediaUtilsTestDataFactory:
             "invalid_document": {"path": "doc.pdf", "is_media": False},
             "invalid_text": {"path": "file.txt", "is_media": False},
             "no_extension": {"path": "filename", "is_media": False},
-            "case_insensitive": {"path": "VIDEO.MP4", "is_media": True}
+            "case_insensitive": {"path": "VIDEO.MP4", "is_media": True},
         }
 
     @classmethod
     def create_utils_instance(cls) -> MediaUtils:
         """
         Create a MediaUtils instance for testing.
-        
+
         Returns:
             MediaUtils: MediaUtils instance.
         """
@@ -353,7 +394,7 @@ class MediaUtilsTestDataFactory:
     def create_edge_case_data(cls) -> Dict[str, Any]:
         """
         Create edge case data for comprehensive testing.
-        
+
         Returns:
             Dict[str, Any]: Dictionary with edge case test data.
                 Keys:
@@ -361,7 +402,7 @@ class MediaUtilsTestDataFactory:
                 - 'none_values': List[None] - None values for testing
                 - 'unicode_paths': List[str] - File paths with Unicode characters
                 - 'extreme_sizes': List[int] - Edge case file sizes (0, 1, max int)
-                - 'extreme_durations': List[float] - Edge case durations 
+                - 'extreme_durations': List[float] - Edge case durations
                 - 'path_objects': List[Path] - pathlib.Path objects for testing
                 - 'malformed_extensions': List[str] - Files with malformed extensions
                 - 'very_long_extensions': List[str] - Files with extremely long extensions
@@ -374,5 +415,5 @@ class MediaUtilsTestDataFactory:
             "extreme_durations": [0.0, 0.1, 999999.9],  # Edge durations
             "path_objects": [Path("test.mp4"), Path("/absolute/path.avi")],
             "malformed_extensions": [".mp4.", "file..mp4", "test."],
-            "very_long_extensions": ["file." + "a" * 100]
+            "very_long_extensions": ["file." + "a" * 100],
         }

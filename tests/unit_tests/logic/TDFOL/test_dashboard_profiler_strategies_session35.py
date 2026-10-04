@@ -64,9 +64,11 @@ def _make_proof_result(proved: bool = True, time_ms: float = 5.0) -> ProofResult
 # PerformanceDashboard tests
 # ---------------------------------------------------------------------------
 
+
 class TestPerformanceDashboardInit:
     def setup_method(self):
         from ipfs_datasets_py.logic.TDFOL.performance_dashboard import PerformanceDashboard
+
         self.PerformanceDashboard = PerformanceDashboard
 
     def test_empty_init(self):
@@ -83,6 +85,7 @@ class TestPerformanceDashboardInit:
 class TestPerformanceDashboardDataClasses:
     def test_proof_metrics_to_dict(self):
         from ipfs_datasets_py.logic.TDFOL.performance_dashboard import ProofMetrics
+
         m = ProofMetrics(
             timestamp=1000.0,
             formula_str="P ∧ Q",
@@ -103,6 +106,7 @@ class TestPerformanceDashboardDataClasses:
 
     def test_timeseries_metric_to_dict(self):
         from ipfs_datasets_py.logic.TDFOL.performance_dashboard import TimeSeriesMetric
+
         m = TimeSeriesMetric(
             timestamp=time.time(),
             metric_name="proof_time_ms",
@@ -115,18 +119,21 @@ class TestPerformanceDashboardDataClasses:
 
     def test_aggregated_stats_to_dict_empty(self):
         from ipfs_datasets_py.logic.TDFOL.performance_dashboard import AggregatedStats
+
         stats = AggregatedStats(total_proofs=0, successful_proofs=0)
         d = stats.to_dict()
         assert d["success_rate"] == 0.0
 
     def test_aggregated_stats_to_dict_with_data(self):
         from ipfs_datasets_py.logic.TDFOL.performance_dashboard import AggregatedStats
+
         stats = AggregatedStats(total_proofs=10, successful_proofs=8)
         d = stats.to_dict()
         assert abs(d["success_rate"] - 0.8) < 1e-9
 
     def test_metric_type_enum(self):
         from ipfs_datasets_py.logic.TDFOL.performance_dashboard import MetricType
+
         assert MetricType.PROOF_TIME.value == "proof_time"
         assert MetricType.CACHE_HIT.value == "cache_hit"
 
@@ -134,6 +141,7 @@ class TestPerformanceDashboardDataClasses:
 class TestPerformanceDashboardRecordProof:
     def setup_method(self):
         from ipfs_datasets_py.logic.TDFOL.performance_dashboard import PerformanceDashboard
+
         self.d = PerformanceDashboard()
 
     def test_record_proof_success(self):
@@ -187,6 +195,7 @@ class TestPerformanceDashboardRecordProof:
 class TestPerformanceDashboardRecordMetric:
     def setup_method(self):
         from ipfs_datasets_py.logic.TDFOL.performance_dashboard import PerformanceDashboard
+
         self.d = PerformanceDashboard()
 
     def test_record_metric_basic(self):
@@ -204,6 +213,7 @@ class TestPerformanceDashboardRecordMetric:
 class TestPerformanceDashboardGetStatistics:
     def setup_method(self):
         from ipfs_datasets_py.logic.TDFOL.performance_dashboard import PerformanceDashboard
+
         self.d = PerformanceDashboard()
 
     def test_empty_stats(self):
@@ -254,6 +264,7 @@ class TestPerformanceDashboardGetStatistics:
 class TestPerformanceDashboardCompareStrategies:
     def setup_method(self):
         from ipfs_datasets_py.logic.TDFOL.performance_dashboard import PerformanceDashboard
+
         self.d = PerformanceDashboard()
 
     def test_empty_comparison(self):
@@ -276,6 +287,7 @@ class TestPerformanceDashboardCompareStrategies:
 class TestPerformanceDashboardClear:
     def test_clear_resets_all_data(self):
         from ipfs_datasets_py.logic.TDFOL.performance_dashboard import PerformanceDashboard
+
         d = PerformanceDashboard()
         d.record_proof(_make_proof_result())
         d.record_metric("cpu", 0.5)
@@ -288,6 +300,7 @@ class TestPerformanceDashboardClear:
 class TestPerformanceDashboardComplexity:
     def setup_method(self):
         from ipfs_datasets_py.logic.TDFOL.performance_dashboard import PerformanceDashboard
+
         self.d = PerformanceDashboard()
 
     def test_complexity_flat_formula(self):
@@ -316,6 +329,7 @@ class TestPerformanceDashboardComplexity:
 class TestPerformanceDashboardExportHTML:
     def test_generate_html_creates_file(self):
         from ipfs_datasets_py.logic.TDFOL.performance_dashboard import PerformanceDashboard
+
         d = PerformanceDashboard()
         d.record_proof(_make_proof_result(), metadata={"strategy": "forward"})
         with tempfile.NamedTemporaryFile(suffix=".html", delete=False) as f:
@@ -330,6 +344,7 @@ class TestPerformanceDashboardExportHTML:
 
     def test_export_json_creates_valid_json(self):
         from ipfs_datasets_py.logic.TDFOL.performance_dashboard import PerformanceDashboard
+
         d = PerformanceDashboard()
         d.record_proof(_make_proof_result(), metadata={"strategy": "test"})
         with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
@@ -352,6 +367,7 @@ class TestPerformanceDashboardGlobalFunctions:
             reset_global_dashboard,
             PerformanceDashboard,
         )
+
         reset_global_dashboard()
         d = get_global_dashboard()
         assert isinstance(d, PerformanceDashboard)
@@ -361,6 +377,7 @@ class TestPerformanceDashboardGlobalFunctions:
             get_global_dashboard,
             reset_global_dashboard,
         )
+
         reset_global_dashboard()
         d1 = get_global_dashboard()
         d2 = get_global_dashboard()
@@ -371,6 +388,7 @@ class TestPerformanceDashboardGlobalFunctions:
             get_global_dashboard,
             reset_global_dashboard,
         )
+
         reset_global_dashboard()
         d1 = get_global_dashboard()
         # Record something so we can tell them apart
@@ -382,12 +400,14 @@ class TestPerformanceDashboardGlobalFunctions:
 
     def test_histogram_bins_empty(self):
         from ipfs_datasets_py.logic.TDFOL.performance_dashboard import PerformanceDashboard
+
         d = PerformanceDashboard()
         bins = d._create_histogram_bins([], num_bins=5)
         assert bins == []
 
     def test_histogram_bins_with_data(self):
         from ipfs_datasets_py.logic.TDFOL.performance_dashboard import PerformanceDashboard
+
         d = PerformanceDashboard()
         data = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0]
         bins = d._create_histogram_bins(data, num_bins=5)
@@ -400,9 +420,11 @@ class TestPerformanceDashboardGlobalFunctions:
 # PerformanceProfiler tests
 # ---------------------------------------------------------------------------
 
+
 class TestPerformanceProfilerDataClasses:
     def test_profiling_stats_to_dict(self):
         from ipfs_datasets_py.logic.TDFOL.performance_profiler import ProfilingStats
+
         stats = ProfilingStats(
             function_name="test",
             total_time=1.0,
@@ -420,17 +442,23 @@ class TestPerformanceProfilerDataClasses:
 
     def test_profiling_stats_mean_time_ms(self):
         from ipfs_datasets_py.logic.TDFOL.performance_profiler import ProfilingStats
+
         s = ProfilingStats("f", 1.0, 0.05, 0.05, 0.04, 0.06, 0.005, 10, 20.0)
         assert abs(s.mean_time_ms - 50.0) < 1e-9
 
     def test_profiling_stats_meets_threshold(self):
-        from ipfs_datasets_py.logic.TDFOL.performance_profiler import ProfilingStats, THRESHOLD_COMPLEX_FORMULA
+        from ipfs_datasets_py.logic.TDFOL.performance_profiler import (
+            ProfilingStats,
+            THRESHOLD_COMPLEX_FORMULA,
+        )
+
         # mean_time=0.05s -> mean_time_ms=50ms < 100ms threshold
         s = ProfilingStats("f", 0.5, 0.05, 0.05, 0.04, 0.06, 0.005, 10, 20.0)
         assert s.meets_threshold
 
     def test_bottleneck_to_dict(self):
         from ipfs_datasets_py.logic.TDFOL.performance_profiler import Bottleneck, BottleneckSeverity
+
         b = Bottleneck(
             function="module:42:heavy_fn",
             time=2.5,
@@ -445,6 +473,7 @@ class TestPerformanceProfilerDataClasses:
 
     def test_memory_stats_to_dict(self):
         from ipfs_datasets_py.logic.TDFOL.performance_profiler import MemoryStats
+
         m = MemoryStats(
             function_name="fn",
             peak_mb=50.0,
@@ -459,17 +488,26 @@ class TestPerformanceProfilerDataClasses:
         assert d["peak_mb"] == 50.0
 
     def test_memory_stats_has_leak_false(self):
-        from ipfs_datasets_py.logic.TDFOL.performance_profiler import MemoryStats, THRESHOLD_MEMORY_LEAK
+        from ipfs_datasets_py.logic.TDFOL.performance_profiler import (
+            MemoryStats,
+            THRESHOLD_MEMORY_LEAK,
+        )
+
         m = MemoryStats("fn", 10.0, 5.0, 5.5, 0.5, 0, 0, 0)
         assert not m.has_leak  # growth < threshold
 
     def test_memory_stats_has_leak_true(self):
-        from ipfs_datasets_py.logic.TDFOL.performance_profiler import MemoryStats, THRESHOLD_MEMORY_LEAK
+        from ipfs_datasets_py.logic.TDFOL.performance_profiler import (
+            MemoryStats,
+            THRESHOLD_MEMORY_LEAK,
+        )
+
         m = MemoryStats("fn", 100.0, 5.0, 15.0, 10.0, 0, 0, 0)
         assert m.has_leak  # growth > 5MB threshold
 
     def test_benchmark_result_to_dict(self):
         from ipfs_datasets_py.logic.TDFOL.performance_profiler import BenchmarkResult
+
         r = BenchmarkResult(
             name="test_bench",
             formula="P",
@@ -482,7 +520,11 @@ class TestPerformanceProfilerDataClasses:
         assert d["passed"] is True
 
     def test_benchmark_results_pass_rate(self):
-        from ipfs_datasets_py.logic.TDFOL.performance_profiler import BenchmarkResult, BenchmarkResults
+        from ipfs_datasets_py.logic.TDFOL.performance_profiler import (
+            BenchmarkResult,
+            BenchmarkResults,
+        )
+
         r1 = BenchmarkResult("a", "P", 5.0, 0.0, True)
         r2 = BenchmarkResult("b", "Q", 15.0, 0.0, False)
         results = BenchmarkResults(
@@ -497,6 +539,7 @@ class TestPerformanceProfilerDataClasses:
 
     def test_report_format_enum(self):
         from ipfs_datasets_py.logic.TDFOL.performance_profiler import ReportFormat
+
         assert ReportFormat.TEXT.value == "text"
         assert ReportFormat.JSON.value == "json"
         assert ReportFormat.HTML.value == "html"
@@ -505,6 +548,7 @@ class TestPerformanceProfilerDataClasses:
 class TestPerformanceProfilerInit:
     def test_basic_init(self):
         from ipfs_datasets_py.logic.TDFOL.performance_profiler import PerformanceProfiler
+
         with tempfile.TemporaryDirectory() as tmpdir:
             p = PerformanceProfiler(output_dir=tmpdir)
             assert p.enable_cprofile
@@ -513,6 +557,7 @@ class TestPerformanceProfilerInit:
 
     def test_init_with_baseline(self):
         from ipfs_datasets_py.logic.TDFOL.performance_profiler import PerformanceProfiler
+
         with tempfile.TemporaryDirectory() as tmpdir:
             baseline_path = os.path.join(tmpdir, "baseline.json")
             with open(baseline_path, "w") as f:
@@ -524,6 +569,7 @@ class TestPerformanceProfilerInit:
 class TestPerformanceProfilerFunctionProfiling:
     def test_profile_simple_function(self):
         from ipfs_datasets_py.logic.TDFOL.performance_profiler import PerformanceProfiler
+
         with tempfile.TemporaryDirectory() as tmpdir:
             p = PerformanceProfiler(output_dir=tmpdir)
 
@@ -538,7 +584,11 @@ class TestPerformanceProfilerFunctionProfiling:
             assert len(p.history) == 1
 
     def test_profile_function_error(self):
-        from ipfs_datasets_py.logic.TDFOL.performance_profiler import PerformanceProfiler, TDFOLError
+        from ipfs_datasets_py.logic.TDFOL.performance_profiler import (
+            PerformanceProfiler,
+            TDFOLError,
+        )
+
         with tempfile.TemporaryDirectory() as tmpdir:
             p = PerformanceProfiler(output_dir=tmpdir)
 
@@ -549,7 +599,11 @@ class TestPerformanceProfilerFunctionProfiling:
                 p.profile_function(failing_fn, runs=1)
 
     def test_profile_function_cprofile_disabled(self):
-        from ipfs_datasets_py.logic.TDFOL.performance_profiler import PerformanceProfiler, TDFOLError
+        from ipfs_datasets_py.logic.TDFOL.performance_profiler import (
+            PerformanceProfiler,
+            TDFOLError,
+        )
+
         with tempfile.TemporaryDirectory() as tmpdir:
             p = PerformanceProfiler(output_dir=tmpdir, enable_cprofile=False)
 
@@ -563,6 +617,7 @@ class TestPerformanceProfilerFunctionProfiling:
 class TestPerformanceProfilerProverProfiling:
     def test_profile_prover(self):
         from ipfs_datasets_py.logic.TDFOL.performance_profiler import PerformanceProfiler
+
         with tempfile.TemporaryDirectory() as tmpdir:
             p = PerformanceProfiler(output_dir=tmpdir)
             formula = Predicate("P", ())
@@ -576,7 +631,11 @@ class TestPerformanceProfilerProverProfiling:
             assert stats.runs == 3
 
     def test_profile_prover_missing_method(self):
-        from ipfs_datasets_py.logic.TDFOL.performance_profiler import PerformanceProfiler, TDFOLError
+        from ipfs_datasets_py.logic.TDFOL.performance_profiler import (
+            PerformanceProfiler,
+            TDFOLError,
+        )
+
         with tempfile.TemporaryDirectory() as tmpdir:
             p = PerformanceProfiler(output_dir=tmpdir)
             mock_prover = MagicMock(spec=[])  # no methods
@@ -586,7 +645,11 @@ class TestPerformanceProfilerProverProfiling:
 
 class TestPerformanceProfilerMemoryProfiling:
     def test_memory_profile_basic(self):
-        from ipfs_datasets_py.logic.TDFOL.performance_profiler import PerformanceProfiler, MemoryStats
+        from ipfs_datasets_py.logic.TDFOL.performance_profiler import (
+            PerformanceProfiler,
+            MemoryStats,
+        )
+
         with tempfile.TemporaryDirectory() as tmpdir:
             p = PerformanceProfiler(output_dir=tmpdir)
 
@@ -599,7 +662,11 @@ class TestPerformanceProfilerMemoryProfiling:
             assert stats.peak_mb >= 0
 
     def test_memory_profile_disabled(self):
-        from ipfs_datasets_py.logic.TDFOL.performance_profiler import PerformanceProfiler, TDFOLError
+        from ipfs_datasets_py.logic.TDFOL.performance_profiler import (
+            PerformanceProfiler,
+            TDFOLError,
+        )
+
         with tempfile.TemporaryDirectory() as tmpdir:
             p = PerformanceProfiler(output_dir=tmpdir, enable_memory=False)
             with pytest.raises(TDFOLError, match="Memory profiling disabled"):
@@ -608,7 +675,11 @@ class TestPerformanceProfilerMemoryProfiling:
 
 class TestPerformanceProfilerBenchmarkSuite:
     def test_run_benchmark_suite_default(self):
-        from ipfs_datasets_py.logic.TDFOL.performance_profiler import PerformanceProfiler, BenchmarkResults
+        from ipfs_datasets_py.logic.TDFOL.performance_profiler import (
+            PerformanceProfiler,
+            BenchmarkResults,
+        )
+
         with tempfile.TemporaryDirectory() as tmpdir:
             p = PerformanceProfiler(output_dir=tmpdir)
             results = p.run_benchmark_suite()
@@ -618,7 +689,15 @@ class TestPerformanceProfilerBenchmarkSuite:
 
     def test_run_benchmark_suite_custom(self):
         from ipfs_datasets_py.logic.TDFOL.performance_profiler import PerformanceProfiler
-        custom = [{"name": "custom_bench", "formula": "P ∧ Q", "threshold_ms": 100.0, "func": lambda: True}]
+
+        custom = [
+            {
+                "name": "custom_bench",
+                "formula": "P ∧ Q",
+                "threshold_ms": 100.0,
+                "func": lambda: True,
+            }
+        ]
         with tempfile.TemporaryDirectory() as tmpdir:
             p = PerformanceProfiler(output_dir=tmpdir)
             results = p.run_benchmark_suite(custom_benchmarks=custom)
@@ -628,7 +707,11 @@ class TestPerformanceProfilerBenchmarkSuite:
 
 class TestPerformanceProfilerGenerateReport:
     def test_generate_text_report(self):
-        from ipfs_datasets_py.logic.TDFOL.performance_profiler import PerformanceProfiler, ReportFormat
+        from ipfs_datasets_py.logic.TDFOL.performance_profiler import (
+            PerformanceProfiler,
+            ReportFormat,
+        )
+
         with tempfile.TemporaryDirectory() as tmpdir:
             p = PerformanceProfiler(output_dir=tmpdir)
             output_path = p.generate_report(format=ReportFormat.TEXT)
@@ -637,7 +720,11 @@ class TestPerformanceProfilerGenerateReport:
             assert "TDFOL" in content or "Performance" in content
 
     def test_generate_json_report(self):
-        from ipfs_datasets_py.logic.TDFOL.performance_profiler import PerformanceProfiler, ReportFormat
+        from ipfs_datasets_py.logic.TDFOL.performance_profiler import (
+            PerformanceProfiler,
+            ReportFormat,
+        )
+
         with tempfile.TemporaryDirectory() as tmpdir:
             p = PerformanceProfiler(output_dir=tmpdir)
             output_path = p.generate_report(format=ReportFormat.JSON)
@@ -647,7 +734,11 @@ class TestPerformanceProfilerGenerateReport:
             assert "history" in data or isinstance(data, dict)
 
     def test_generate_html_report(self):
-        from ipfs_datasets_py.logic.TDFOL.performance_profiler import PerformanceProfiler, ReportFormat
+        from ipfs_datasets_py.logic.TDFOL.performance_profiler import (
+            PerformanceProfiler,
+            ReportFormat,
+        )
+
         with tempfile.TemporaryDirectory() as tmpdir:
             p = PerformanceProfiler(output_dir=tmpdir)
             output_path = p.generate_report(format=ReportFormat.HTML)
@@ -656,7 +747,11 @@ class TestPerformanceProfilerGenerateReport:
             assert "<html" in content or "<!DOCTYPE" in content
 
     def test_generate_report_to_file(self):
-        from ipfs_datasets_py.logic.TDFOL.performance_profiler import PerformanceProfiler, ReportFormat
+        from ipfs_datasets_py.logic.TDFOL.performance_profiler import (
+            PerformanceProfiler,
+            ReportFormat,
+        )
+
         with tempfile.TemporaryDirectory() as tmpdir:
             output_file = os.path.join(tmpdir, "custom_report.txt")
             p = PerformanceProfiler(output_dir=tmpdir)
@@ -667,6 +762,7 @@ class TestPerformanceProfilerGenerateReport:
 class TestPerformanceProfilerDecorators:
     def test_profile_this_decorator_no_args(self):
         from ipfs_datasets_py.logic.TDFOL.performance_profiler import profile_this
+
         call_count = {"n": 0}
 
         @profile_this
@@ -680,6 +776,7 @@ class TestPerformanceProfilerDecorators:
 
     def test_profile_this_decorator_with_args(self):
         from ipfs_datasets_py.logic.TDFOL.performance_profiler import profile_this
+
         call_count = {"n": 0}
 
         @profile_this(print_stats=False, top_n=5)
@@ -693,6 +790,7 @@ class TestPerformanceProfilerDecorators:
 
     def test_profile_this_disabled(self):
         from ipfs_datasets_py.logic.TDFOL.performance_profiler import profile_this
+
         call_count = {"n": 0}
 
         @profile_this(enabled=False)
@@ -706,6 +804,7 @@ class TestPerformanceProfilerDecorators:
 
     def test_memory_profile_this_decorator(self):
         from ipfs_datasets_py.logic.TDFOL.performance_profiler import memory_profile_this
+
         call_count = {"n": 0}
 
         @memory_profile_this
@@ -720,7 +819,11 @@ class TestPerformanceProfilerDecorators:
 
 class TestProfileBlock:
     def test_profile_block_context_manager(self):
-        from ipfs_datasets_py.logic.TDFOL.performance_profiler import ProfileBlock, PerformanceProfiler
+        from ipfs_datasets_py.logic.TDFOL.performance_profiler import (
+            ProfileBlock,
+            PerformanceProfiler,
+        )
+
         with tempfile.TemporaryDirectory() as tmpdir:
             p = PerformanceProfiler(output_dir=tmpdir)
             with ProfileBlock("test_block", profiler=p) as block:
@@ -729,6 +832,7 @@ class TestProfileBlock:
 
     def test_profile_block_no_profiler(self):
         from ipfs_datasets_py.logic.TDFOL.performance_profiler import ProfileBlock
+
         with ProfileBlock("standalone_block") as block:
             time.sleep(0.001)
         assert block.end_time > block.start_time
@@ -738,26 +842,31 @@ class TestProfileBlock:
 # Strategy tests
 # ---------------------------------------------------------------------------
 
+
 class TestStrategiesInit:
     def test_strategy_type_enum(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.base import StrategyType
+
         assert StrategyType.FORWARD_CHAINING.value == "forward_chaining"
         assert StrategyType.MODAL_TABLEAUX.value == "modal_tableaux"
 
     def test_prover_strategy_str(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.forward_chaining import ForwardChainingStrategy
+
         s = ForwardChainingStrategy()
         text = str(s)
         assert "Forward Chaining" in text
 
     def test_prover_strategy_repr(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.forward_chaining import ForwardChainingStrategy
+
         s = ForwardChainingStrategy()
         text = repr(s)
         assert "ProverStrategy" in text
 
     def test_prover_strategy_estimate_cost_default(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.forward_chaining import ForwardChainingStrategy
+
         s = ForwardChainingStrategy()
         kb = TDFOLKnowledgeBase()
         formula = Predicate("P", ())
@@ -768,12 +877,14 @@ class TestStrategiesInit:
 class TestForwardChainingStrategy:
     def test_can_handle_any_formula(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.forward_chaining import ForwardChainingStrategy
+
         s = ForwardChainingStrategy()
         kb = TDFOLKnowledgeBase()
         assert s.can_handle(Predicate("P", ()), kb)
 
     def test_prove_axiom_in_kb(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.forward_chaining import ForwardChainingStrategy
+
         s = ForwardChainingStrategy()
         kb = TDFOLKnowledgeBase()
         formula = Predicate("P", ())
@@ -783,6 +894,7 @@ class TestForwardChainingStrategy:
 
     def test_prove_theorem_in_kb(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.forward_chaining import ForwardChainingStrategy
+
         s = ForwardChainingStrategy()
         kb = TDFOLKnowledgeBase()
         formula = Predicate("Q", ())
@@ -792,6 +904,7 @@ class TestForwardChainingStrategy:
 
     def test_prove_not_in_kb_returns_unknown(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.forward_chaining import ForwardChainingStrategy
+
         s = ForwardChainingStrategy(max_iterations=2)
         kb = TDFOLKnowledgeBase()
         formula = Predicate("Unknown", ())
@@ -801,6 +914,7 @@ class TestForwardChainingStrategy:
     def test_prove_max_derived_limit(self):
         """Test that max_derived stops forward chaining early."""
         from ipfs_datasets_py.logic.TDFOL.strategies.forward_chaining import ForwardChainingStrategy
+
         s = ForwardChainingStrategy(max_iterations=100, max_derived=1)
         kb = TDFOLKnowledgeBase()
         # Add many axioms to trigger the max_derived limit
@@ -813,6 +927,7 @@ class TestForwardChainingStrategy:
 
     def test_get_priority(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.forward_chaining import ForwardChainingStrategy
+
         s = ForwardChainingStrategy()
         assert s.get_priority() > 0
 
@@ -820,6 +935,7 @@ class TestForwardChainingStrategy:
 class TestModalTableauxStrategy:
     def test_is_modal_deontic(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.modal_tableaux import ModalTableauxStrategy
+
         s = ModalTableauxStrategy()
         formula = DeonticFormula(DeonticOperator.OBLIGATION, Predicate("P", ()))
         kb = TDFOLKnowledgeBase()
@@ -827,6 +943,7 @@ class TestModalTableauxStrategy:
 
     def test_is_modal_temporal(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.modal_tableaux import ModalTableauxStrategy
+
         s = ModalTableauxStrategy()
         formula = TemporalFormula(TemporalOperator.ALWAYS, Predicate("P", ()))
         kb = TDFOLKnowledgeBase()
@@ -834,6 +951,7 @@ class TestModalTableauxStrategy:
 
     def test_is_not_modal_propositional(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.modal_tableaux import ModalTableauxStrategy
+
         s = ModalTableauxStrategy()
         formula = Predicate("P", ())
         kb = TDFOLKnowledgeBase()
@@ -841,18 +959,21 @@ class TestModalTableauxStrategy:
 
     def test_has_deontic_operators(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.modal_tableaux import ModalTableauxStrategy
+
         s = ModalTableauxStrategy()
         df = DeonticFormula(DeonticOperator.OBLIGATION, Predicate("P", ()))
         assert s._has_deontic_operators(df)
 
     def test_has_temporal_operators(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.modal_tableaux import ModalTableauxStrategy
+
         s = ModalTableauxStrategy()
         tf = TemporalFormula(TemporalOperator.ALWAYS, Predicate("P", ()))
         assert s._has_temporal_operators(tf)
 
     def test_has_nested_temporal(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.modal_tableaux import ModalTableauxStrategy
+
         s = ModalTableauxStrategy()
         inner = TemporalFormula(TemporalOperator.ALWAYS, Predicate("P", ()))
         outer = TemporalFormula(TemporalOperator.EVENTUALLY, inner)
@@ -860,6 +981,7 @@ class TestModalTableauxStrategy:
 
     def test_has_no_nested_temporal_shallow(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.modal_tableaux import ModalTableauxStrategy
+
         s = ModalTableauxStrategy()
         tf = TemporalFormula(TemporalOperator.ALWAYS, Predicate("P", ()))
         # Single level only, not nested
@@ -867,6 +989,7 @@ class TestModalTableauxStrategy:
 
     def test_traverse_formula_binary_formula(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.modal_tableaux import ModalTableauxStrategy
+
         s = ModalTableauxStrategy()
         # BinaryFormula contains a DeonticFormula on the right
         lhs = Predicate("P", ())
@@ -876,6 +999,7 @@ class TestModalTableauxStrategy:
 
     def test_traverse_formula_quantified(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.modal_tableaux import ModalTableauxStrategy
+
         s = ModalTableauxStrategy()
         x = Variable("x")
         inner = DeonticFormula(DeonticOperator.OBLIGATION, Predicate("P", (x,)))
@@ -884,6 +1008,7 @@ class TestModalTableauxStrategy:
 
     def test_traverse_formula_unary_formula(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.modal_tableaux import ModalTableauxStrategy
+
         s = ModalTableauxStrategy()
         inner = DeonticFormula(DeonticOperator.OBLIGATION, Predicate("P", ()))
         uf = UnaryFormula(LogicOperator.NOT, inner)
@@ -891,6 +1016,7 @@ class TestModalTableauxStrategy:
 
     def test_estimate_cost_base(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.modal_tableaux import ModalTableauxStrategy
+
         s = ModalTableauxStrategy()
         formula = DeonticFormula(DeonticOperator.OBLIGATION, Predicate("P", ()))
         kb = TDFOLKnowledgeBase()
@@ -899,34 +1025,45 @@ class TestModalTableauxStrategy:
 
     def test_estimate_cost_nested_temporal_increases_cost(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.modal_tableaux import ModalTableauxStrategy
+
         s = ModalTableauxStrategy()
         inner = TemporalFormula(TemporalOperator.ALWAYS, Predicate("P", ()))
         outer = TemporalFormula(TemporalOperator.EVENTUALLY, inner)
         kb = TDFOLKnowledgeBase()
-        base_cost = s.estimate_cost(DeonticFormula(DeonticOperator.OBLIGATION, Predicate("P", ())), kb)
+        base_cost = s.estimate_cost(
+            DeonticFormula(DeonticOperator.OBLIGATION, Predicate("P", ())), kb
+        )
         nested_cost = s.estimate_cost(outer, kb)
         assert nested_cost > base_cost
 
     def test_get_priority(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.modal_tableaux import ModalTableauxStrategy
+
         s = ModalTableauxStrategy()
         assert s.get_priority() == 80
 
     def test_prove_deontic_formula(self):
         """Prove a deontic formula - triggers _prove_basic_modal fallback path."""
         from ipfs_datasets_py.logic.TDFOL.strategies.modal_tableaux import ModalTableauxStrategy
+
         s = ModalTableauxStrategy()
         formula = DeonticFormula(DeonticOperator.OBLIGATION, Predicate("P", ()))
         kb = TDFOLKnowledgeBase()
         result = s.prove(formula, kb, timeout_ms=1000)
         assert result is not None
-        assert result.status in (ProofStatus.PROVED, ProofStatus.DISPROVED, ProofStatus.UNKNOWN, ProofStatus.ERROR)
+        assert result.status in (
+            ProofStatus.PROVED,
+            ProofStatus.DISPROVED,
+            ProofStatus.UNKNOWN,
+            ProofStatus.ERROR,
+        )
 
 
 class TestCECDelegateStrategy:
     def test_can_handle_no_cec(self):
         from ipfs_datasets_py.logic.TDFOL.strategies import cec_delegate
-        with patch.object(cec_delegate, 'HAVE_CEC_PROVER', False):
+
+        with patch.object(cec_delegate, "HAVE_CEC_PROVER", False):
             s = cec_delegate.CECDelegateStrategy()
             s.cec_engine = None
             kb = TDFOLKnowledgeBase()
@@ -934,7 +1071,8 @@ class TestCECDelegateStrategy:
 
     def test_prove_no_cec_returns_unknown(self):
         from ipfs_datasets_py.logic.TDFOL.strategies import cec_delegate
-        with patch.object(cec_delegate, 'HAVE_CEC_PROVER', False):
+
+        with patch.object(cec_delegate, "HAVE_CEC_PROVER", False):
             s = cec_delegate.CECDelegateStrategy()
             s.cec_engine = None
             kb = TDFOLKnowledgeBase()
@@ -944,11 +1082,12 @@ class TestCECDelegateStrategy:
     def test_prove_axiom_in_kb_with_cec(self):
         """When CEC available and formula in KB, prove it directly."""
         from ipfs_datasets_py.logic.TDFOL.strategies import cec_delegate
+
         formula = Predicate("P", ())
         kb = TDFOLKnowledgeBase()
         kb.add_axiom(formula)
         mock_engine = MagicMock()
-        with patch.object(cec_delegate, 'HAVE_CEC_PROVER', True):
+        with patch.object(cec_delegate, "HAVE_CEC_PROVER", True):
             s = cec_delegate.CECDelegateStrategy()
             s.cec_engine = mock_engine
             result = s.prove(formula, kb)
@@ -956,11 +1095,12 @@ class TestCECDelegateStrategy:
 
     def test_prove_theorem_in_kb_with_cec(self):
         from ipfs_datasets_py.logic.TDFOL.strategies import cec_delegate
+
         formula = Predicate("Q", ())
         kb = TDFOLKnowledgeBase()
         kb.add_theorem(formula)
         mock_engine = MagicMock()
-        with patch.object(cec_delegate, 'HAVE_CEC_PROVER', True):
+        with patch.object(cec_delegate, "HAVE_CEC_PROVER", True):
             s = cec_delegate.CECDelegateStrategy()
             s.cec_engine = mock_engine
             result = s.prove(formula, kb)
@@ -968,10 +1108,11 @@ class TestCECDelegateStrategy:
 
     def test_prove_unknown_with_cec(self):
         from ipfs_datasets_py.logic.TDFOL.strategies import cec_delegate
+
         formula = Predicate("Unknown", ())
         kb = TDFOLKnowledgeBase()
         mock_engine = MagicMock()
-        with patch.object(cec_delegate, 'HAVE_CEC_PROVER', True):
+        with patch.object(cec_delegate, "HAVE_CEC_PROVER", True):
             s = cec_delegate.CECDelegateStrategy()
             s.cec_engine = mock_engine
             result = s.prove(formula, kb)
@@ -979,27 +1120,32 @@ class TestCECDelegateStrategy:
 
     def test_prove_exception_returns_error(self):
         from ipfs_datasets_py.logic.TDFOL.strategies import cec_delegate
+
         formula = Predicate("P", ())
         kb = TDFOLKnowledgeBase()
         mock_engine = MagicMock()
-        with patch.object(cec_delegate, 'HAVE_CEC_PROVER', True):
+        with patch.object(cec_delegate, "HAVE_CEC_PROVER", True):
             s = cec_delegate.CECDelegateStrategy()
             s.cec_engine = mock_engine
+
             # Force exception by making the axioms container raise on __contains__
             class _RaisingSet:
                 def __contains__(self, x):
                     raise RuntimeError("test error")
+
             kb.axioms = _RaisingSet()  # type: ignore[assignment]
             result = s.prove(formula, kb)
             assert result.status == ProofStatus.ERROR
 
     def test_get_priority(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.cec_delegate import CECDelegateStrategy
+
         s = CECDelegateStrategy()
         assert s.get_priority() == 60
 
     def test_estimate_cost(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.cec_delegate import CECDelegateStrategy
+
         s = CECDelegateStrategy()
         kb = TDFOLKnowledgeBase()
         assert s.estimate_cost(Predicate("P", ()), kb) > 1.0
@@ -1009,6 +1155,7 @@ class TestStrategySelector:
     def test_select_strategy_forward_chaining(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.forward_chaining import ForwardChainingStrategy
         from ipfs_datasets_py.logic.TDFOL.strategies.strategy_selector import StrategySelector
+
         s = StrategySelector([ForwardChainingStrategy()])
         kb = TDFOLKnowledgeBase()
         result = s.select_strategy(Predicate("P", ()), kb)
@@ -1018,6 +1165,7 @@ class TestStrategySelector:
         from ipfs_datasets_py.logic.TDFOL.strategies.forward_chaining import ForwardChainingStrategy
         from ipfs_datasets_py.logic.TDFOL.strategies.modal_tableaux import ModalTableauxStrategy
         from ipfs_datasets_py.logic.TDFOL.strategies.strategy_selector import StrategySelector
+
         s = StrategySelector([ForwardChainingStrategy(), ModalTableauxStrategy()])
         kb = TDFOLKnowledgeBase()
         formula = DeonticFormula(DeonticOperator.OBLIGATION, Predicate("P", ()))
@@ -1027,6 +1175,7 @@ class TestStrategySelector:
     def test_select_strategy_prefer_low_cost(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.forward_chaining import ForwardChainingStrategy
         from ipfs_datasets_py.logic.TDFOL.strategies.strategy_selector import StrategySelector
+
         s = StrategySelector([ForwardChainingStrategy()])
         kb = TDFOLKnowledgeBase()
         result = s.select_strategy(Predicate("P", ()), kb, prefer_low_cost=True)
@@ -1036,6 +1185,7 @@ class TestStrategySelector:
         """When no strategy claims can_handle, fallback is used."""
         from ipfs_datasets_py.logic.TDFOL.strategies.forward_chaining import ForwardChainingStrategy
         from ipfs_datasets_py.logic.TDFOL.strategies.strategy_selector import StrategySelector
+
         fc = ForwardChainingStrategy()
         s = StrategySelector([fc])
         kb = TDFOLKnowledgeBase()
@@ -1051,6 +1201,7 @@ class TestStrategySelector:
 
     def test_select_strategy_empty_raises(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.strategy_selector import StrategySelector
+
         s = StrategySelector([])
         kb = TDFOLKnowledgeBase()
         with pytest.raises(ValueError, match="No strategies available"):
@@ -1060,6 +1211,7 @@ class TestStrategySelector:
         from ipfs_datasets_py.logic.TDFOL.strategies.forward_chaining import ForwardChainingStrategy
         from ipfs_datasets_py.logic.TDFOL.strategies.modal_tableaux import ModalTableauxStrategy
         from ipfs_datasets_py.logic.TDFOL.strategies.strategy_selector import StrategySelector
+
         s = StrategySelector([ForwardChainingStrategy(), ModalTableauxStrategy()])
         kb = TDFOLKnowledgeBase()
         results = s.select_multiple(Predicate("P", ()), kb, max_strategies=2)
@@ -1067,6 +1219,7 @@ class TestStrategySelector:
 
     def test_select_multiple_no_applicable(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.strategy_selector import StrategySelector
+
         mock_s = MagicMock()
         mock_s.can_handle.return_value = False
         mock_s.get_priority.return_value = 50
@@ -1079,6 +1232,7 @@ class TestStrategySelector:
     def test_get_strategy_info(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.forward_chaining import ForwardChainingStrategy
         from ipfs_datasets_py.logic.TDFOL.strategies.strategy_selector import StrategySelector
+
         s = StrategySelector([ForwardChainingStrategy()])
         info = s.get_strategy_info()
         assert len(info) == 1
@@ -1090,6 +1244,7 @@ class TestStrategySelector:
         from ipfs_datasets_py.logic.TDFOL.strategies.forward_chaining import ForwardChainingStrategy
         from ipfs_datasets_py.logic.TDFOL.strategies.modal_tableaux import ModalTableauxStrategy
         from ipfs_datasets_py.logic.TDFOL.strategies.strategy_selector import StrategySelector
+
         s = StrategySelector([ForwardChainingStrategy()])
         s.add_strategy(ModalTableauxStrategy())
         assert len(s.strategies) == 2
@@ -1097,6 +1252,7 @@ class TestStrategySelector:
     def test_fallback_uses_forward_chaining(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.forward_chaining import ForwardChainingStrategy
         from ipfs_datasets_py.logic.TDFOL.strategies.strategy_selector import StrategySelector
+
         fc = ForwardChainingStrategy()
         s = StrategySelector([fc])
         result = s._get_fallback_strategy()
@@ -1105,6 +1261,7 @@ class TestStrategySelector:
     def test_fallback_first_when_no_forward_chaining(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.modal_tableaux import ModalTableauxStrategy
         from ipfs_datasets_py.logic.TDFOL.strategies.strategy_selector import StrategySelector
+
         mt = ModalTableauxStrategy()
         s = StrategySelector([mt])
         result = s._get_fallback_strategy()
@@ -1112,12 +1269,14 @@ class TestStrategySelector:
 
     def test_fallback_empty_raises(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.strategy_selector import StrategySelector
+
         s = StrategySelector([])
         with pytest.raises(ValueError):
             s._get_fallback_strategy()
 
     def test_default_strategies_loaded(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.strategy_selector import StrategySelector
+
         s = StrategySelector()
         assert len(s.strategies) >= 1
 
@@ -1126,9 +1285,11 @@ class TestStrategySelector:
 # ProofExplainer gap tests (96% -> 99%)
 # ---------------------------------------------------------------------------
 
+
 class TestProofExplainerGaps:
     def setup_method(self):
         from ipfs_datasets_py.logic.TDFOL.proof_explainer import ProofExplainer, ExplanationLevel
+
         self.explainer = ProofExplainer(level=ExplanationLevel.NORMAL)
 
     def _formula(self):
@@ -1137,6 +1298,7 @@ class TestProofExplainerGaps:
     def test_explain_inference_rule_known(self):
         """Line 274 - rule found in descriptions dict."""
         from ipfs_datasets_py.logic.TDFOL.proof_explainer import ProofExplainer
+
         formula = self._formula()
         explanation = self.explainer.explain_inference_rule("ModusPonens", [formula], formula)
         assert isinstance(explanation, str)
@@ -1151,6 +1313,7 @@ class TestProofExplainerGaps:
     def test_explain_proof_zkp_method(self):
         """Lines 249-256 - ZKP method branch."""
         from ipfs_datasets_py.logic.TDFOL.proof_explainer import ProofType
+
         formula = self._formula()
         explanation = self.explainer.explain_proof(formula, [], ProofType.ZKP, is_proved=True)
         assert explanation is not None
@@ -1158,6 +1321,7 @@ class TestProofExplainerGaps:
     def test_compare_proofs(self):
         """Line 346+ - compare_proofs method."""
         from ipfs_datasets_py.logic.TDFOL.proof_explainer import ProofType
+
         formula = self._formula()
         r1 = self.explainer.explain_proof(formula, [], ProofType.FORWARD_CHAINING)
         r2 = self.explainer.explain_proof(formula, [], ProofType.FORWARD_CHAINING)
@@ -1167,26 +1331,42 @@ class TestProofExplainerGaps:
     def test_explain_proof_no_steps(self):
         """Line 191 - proof with no steps."""
         from ipfs_datasets_py.logic.TDFOL.proof_explainer import ProofType
+
         formula = self._formula()
-        explanation = self.explainer.explain_proof(formula, [], ProofType.FORWARD_CHAINING, is_proved=True)
+        explanation = self.explainer.explain_proof(
+            formula, [], ProofType.FORWARD_CHAINING, is_proved=True
+        )
         assert explanation is not None
 
     def test_explain_proof_tableaux_method(self):
         """Lines 235-245 - tableaux method branch."""
         from ipfs_datasets_py.logic.TDFOL.proof_explainer import ProofType
+
         formula = self._formula()
-        explanation = self.explainer.explain_proof(formula, [], ProofType.MODAL_TABLEAUX, is_proved=True)
+        explanation = self.explainer.explain_proof(
+            formula, [], ProofType.MODAL_TABLEAUX, is_proved=True
+        )
         assert explanation is not None
 
     def test_proof_explainer_verbose_level(self):
-        from ipfs_datasets_py.logic.TDFOL.proof_explainer import ProofExplainer, ExplanationLevel, ProofType
+        from ipfs_datasets_py.logic.TDFOL.proof_explainer import (
+            ProofExplainer,
+            ExplanationLevel,
+            ProofType,
+        )
+
         exp = ProofExplainer(level=ExplanationLevel.VERBOSE)
         formula = self._formula()
         explanation = exp.explain_proof(formula, [], ProofType.FORWARD_CHAINING)
         assert explanation is not None
 
     def test_proof_explainer_simple_level(self):
-        from ipfs_datasets_py.logic.TDFOL.proof_explainer import ProofExplainer, ExplanationLevel, ProofType
+        from ipfs_datasets_py.logic.TDFOL.proof_explainer import (
+            ProofExplainer,
+            ExplanationLevel,
+            ProofType,
+        )
+
         exp = ProofExplainer(level=ExplanationLevel.BRIEF)
         formula = self._formula()
         explanation = exp.explain_proof(formula, [], ProofType.FORWARD_CHAINING)
@@ -1198,9 +1378,11 @@ class TestProofExplainerGaps:
 #   _prove_basic_modal (patched shadowprover), strategies/__init__ imports
 # ---------------------------------------------------------------------------
 
+
 class TestIdentifyBottlenecks:
     def test_identify_bottlenecks_empty(self):
         from ipfs_datasets_py.logic.TDFOL.performance_profiler import PerformanceProfiler
+
         with tempfile.TemporaryDirectory() as tmpdir:
             p = PerformanceProfiler(output_dir=tmpdir)
             result = p.identify_bottlenecks(None)
@@ -1208,7 +1390,11 @@ class TestIdentifyBottlenecks:
 
     def test_identify_bottlenecks_with_profile(self):
         import cProfile, pstats
-        from ipfs_datasets_py.logic.TDFOL.performance_profiler import PerformanceProfiler, Bottleneck
+        from ipfs_datasets_py.logic.TDFOL.performance_profiler import (
+            PerformanceProfiler,
+            Bottleneck,
+        )
+
         with tempfile.TemporaryDirectory() as tmpdir:
             p = PerformanceProfiler(output_dir=tmpdir)
             pr = cProfile.Profile()
@@ -1221,8 +1407,11 @@ class TestIdentifyBottlenecks:
 
     def test_analyze_bottleneck_o_n3(self):
         from ipfs_datasets_py.logic.TDFOL.performance_profiler import (
-            PerformanceProfiler, BottleneckSeverity, THRESHOLD_O_N3_SUSPECT
+            PerformanceProfiler,
+            BottleneckSeverity,
+            THRESHOLD_O_N3_SUSPECT,
         )
+
         with tempfile.TemporaryDirectory() as tmpdir:
             p = PerformanceProfiler(output_dir=tmpdir)
             sev, rec, comp = p._analyze_bottleneck(
@@ -1233,8 +1422,10 @@ class TestIdentifyBottlenecks:
 
     def test_analyze_bottleneck_unify_slow(self):
         from ipfs_datasets_py.logic.TDFOL.performance_profiler import (
-            PerformanceProfiler, BottleneckSeverity
+            PerformanceProfiler,
+            BottleneckSeverity,
         )
+
         with tempfile.TemporaryDirectory() as tmpdir:
             p = PerformanceProfiler(output_dir=tmpdir)
             sev, rec, comp = p._analyze_bottleneck("unify_formulas", 1.5, 10, 0.15)
@@ -1243,8 +1434,10 @@ class TestIdentifyBottlenecks:
 
     def test_analyze_bottleneck_prove_slow(self):
         from ipfs_datasets_py.logic.TDFOL.performance_profiler import (
-            PerformanceProfiler, BottleneckSeverity
+            PerformanceProfiler,
+            BottleneckSeverity,
         )
+
         with tempfile.TemporaryDirectory() as tmpdir:
             p = PerformanceProfiler(output_dir=tmpdir)
             sev, rec, _ = p._analyze_bottleneck("prove_formula", 1.5, 5, 0.3)
@@ -1253,8 +1446,10 @@ class TestIdentifyBottlenecks:
 
     def test_analyze_bottleneck_critical_generic(self):
         from ipfs_datasets_py.logic.TDFOL.performance_profiler import (
-            PerformanceProfiler, BottleneckSeverity
+            PerformanceProfiler,
+            BottleneckSeverity,
         )
+
         with tempfile.TemporaryDirectory() as tmpdir:
             p = PerformanceProfiler(output_dir=tmpdir)
             sev, rec, _ = p._analyze_bottleneck("some_generic_slow_fn", 1.5, 5, 0.3)
@@ -1262,8 +1457,10 @@ class TestIdentifyBottlenecks:
 
     def test_analyze_bottleneck_high(self):
         from ipfs_datasets_py.logic.TDFOL.performance_profiler import (
-            PerformanceProfiler, BottleneckSeverity
+            PerformanceProfiler,
+            BottleneckSeverity,
         )
+
         with tempfile.TemporaryDirectory() as tmpdir:
             p = PerformanceProfiler(output_dir=tmpdir)
             sev, rec, _ = p._analyze_bottleneck("some_fn", 0.15, 5, 0.03)
@@ -1271,8 +1468,10 @@ class TestIdentifyBottlenecks:
 
     def test_analyze_bottleneck_medium(self):
         from ipfs_datasets_py.logic.TDFOL.performance_profiler import (
-            PerformanceProfiler, BottleneckSeverity
+            PerformanceProfiler,
+            BottleneckSeverity,
         )
+
         with tempfile.TemporaryDirectory() as tmpdir:
             p = PerformanceProfiler(output_dir=tmpdir)
             sev, rec, _ = p._analyze_bottleneck("some_fn", 0.05, 5, 0.01)
@@ -1280,8 +1479,10 @@ class TestIdentifyBottlenecks:
 
     def test_analyze_bottleneck_low(self):
         from ipfs_datasets_py.logic.TDFOL.performance_profiler import (
-            PerformanceProfiler, BottleneckSeverity
+            PerformanceProfiler,
+            BottleneckSeverity,
         )
+
         with tempfile.TemporaryDirectory() as tmpdir:
             p = PerformanceProfiler(output_dir=tmpdir)
             sev, rec, _ = p._analyze_bottleneck("fast_fn", 0.001, 2, 0.0005)
@@ -1294,56 +1495,70 @@ class TestModalTableauxProveShadowprover:
     def test_prove_modal_fallback_not_available(self):
         """_prove_with_shadowprover returns UNKNOWN when ImportError, then _prove_basic_modal called."""
         from ipfs_datasets_py.logic.TDFOL.strategies.modal_tableaux import ModalTableauxStrategy
+
         s = ModalTableauxStrategy()
         formula = DeonticFormula(DeonticOperator.OBLIGATION, Predicate("P", ()))
         kb = TDFOLKnowledgeBase()
         # The bridge may or may not be importable - either way prove() must not crash
         result = s.prove(formula, kb, timeout_ms=500)
-        assert result.status in (ProofStatus.PROVED, ProofStatus.DISPROVED, ProofStatus.UNKNOWN, ProofStatus.ERROR)
+        assert result.status in (
+            ProofStatus.PROVED,
+            ProofStatus.DISPROVED,
+            ProofStatus.UNKNOWN,
+            ProofStatus.ERROR,
+        )
 
     def test_prove_basic_modal_formula_in_axioms(self):
         """_prove_basic_modal with formula in KB -> PROVED."""
         from ipfs_datasets_py.logic.TDFOL.strategies.modal_tableaux import ModalTableauxStrategy
+
         s = ModalTableauxStrategy()
         formula = DeonticFormula(DeonticOperator.OBLIGATION, Predicate("P", ()))
         kb = TDFOLKnowledgeBase()
         kb.add_axiom(formula)
         import time as t
+
         result = s._prove_basic_modal(formula, kb, 1000, t.time())
         assert result.status == ProofStatus.PROVED
 
     def test_prove_basic_modal_formula_in_theorems(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.modal_tableaux import ModalTableauxStrategy
+
         s = ModalTableauxStrategy()
         formula = TemporalFormula(TemporalOperator.ALWAYS, Predicate("Q", ()))
         kb = TDFOLKnowledgeBase()
         kb.add_theorem(formula)
         import time as t
+
         result = s._prove_basic_modal(formula, kb, 1000, t.time())
         assert result.status == ProofStatus.PROVED
 
     def test_prove_basic_modal_not_in_kb(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.modal_tableaux import ModalTableauxStrategy
+
         s = ModalTableauxStrategy()
         formula = DeonticFormula(DeonticOperator.PERMISSION, Predicate("R", ()))
         kb = TDFOLKnowledgeBase()
         import time as t
+
         result = s._prove_basic_modal(formula, kb, 1000, t.time())
         assert result.status == ProofStatus.UNKNOWN
 
     def test_prove_exception_returns_error(self):
         """Lines 113-118 - exception in prove() returns ERROR."""
         from ipfs_datasets_py.logic.TDFOL.strategies.modal_tableaux import ModalTableauxStrategy
+
         s = ModalTableauxStrategy()
         formula = DeonticFormula(DeonticOperator.OBLIGATION, Predicate("P", ()))
         kb = TDFOLKnowledgeBase()
         # Force exception by making _prove_with_shadowprover raise non-ImportError
-        with patch.object(s, '_prove_with_shadowprover', side_effect=RuntimeError("injected")):
+        with patch.object(s, "_prove_with_shadowprover", side_effect=RuntimeError("injected")):
             result = s.prove(formula, kb)
             assert result.status == ProofStatus.ERROR
 
     def test_is_modal_formula_returns_false_for_predicate(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.modal_tableaux import ModalTableauxStrategy
+
         s = ModalTableauxStrategy()
         # Pure predicate has no modal operators - _traverse_formula returns False
         formula = Predicate("P", ())
@@ -1351,6 +1566,7 @@ class TestModalTableauxProveShadowprover:
 
     def test_is_modal_nested_in_binary(self):
         from ipfs_datasets_py.logic.TDFOL.strategies.modal_tableaux import ModalTableauxStrategy
+
         s = ModalTableauxStrategy()
         # BinaryFormula with modal on left
         lhs = DeonticFormula(DeonticOperator.OBLIGATION, Predicate("P", ()))
@@ -1361,6 +1577,7 @@ class TestModalTableauxProveShadowprover:
     def test_traverse_formula_no_match(self):
         """_traverse_formula returns False at leaf for non-matching leaf."""
         from ipfs_datasets_py.logic.TDFOL.strategies.modal_tableaux import ModalTableauxStrategy
+
         s = ModalTableauxStrategy()
         formula = Predicate("P", ())
         # Should not match DeonticFormula
@@ -1376,12 +1593,14 @@ class TestStrategiesInit:
             StrategyType,
             ProverStrategy,
         )
+
         assert StrategyType.FORWARD_CHAINING.value == "forward_chaining"
 
     def test_all_exports_available(self):
         import ipfs_datasets_py.logic.TDFOL.strategies as strat_mod
-        assert hasattr(strat_mod, 'StrategyType')
-        assert hasattr(strat_mod, 'ProverStrategy')
+
+        assert hasattr(strat_mod, "StrategyType")
+        assert hasattr(strat_mod, "ProverStrategy")
 
     def test_strategy_classes_importable(self):
         from ipfs_datasets_py.logic.TDFOL.strategies import (
@@ -1390,6 +1609,7 @@ class TestStrategiesInit:
             CECDelegateStrategy,
             StrategySelector,
         )
+
         assert ForwardChainingStrategy is not None
         assert ModalTableauxStrategy is not None
         assert CECDelegateStrategy is not None
@@ -1401,6 +1621,7 @@ class TestModalTableauxMixedCost:
         """Line 353 - cost *= 1.5 when both deontic AND temporal."""
         from ipfs_datasets_py.logic.TDFOL.strategies.modal_tableaux import ModalTableauxStrategy
         from ipfs_datasets_py.logic.TDFOL.tdfol_core import BinaryTemporalFormula
+
         s = ModalTableauxStrategy()
         # Inner deontic formula
         deontic = DeonticFormula(DeonticOperator.OBLIGATION, Predicate("P", ()))
@@ -1415,8 +1636,11 @@ class TestModalTableauxMixedCost:
         """Line 353 area - BinaryTemporalFormula leaf returns False."""
         from ipfs_datasets_py.logic.TDFOL.strategies.modal_tableaux import ModalTableauxStrategy
         from ipfs_datasets_py.logic.TDFOL.tdfol_core import BinaryTemporalFormula
+
         s = ModalTableauxStrategy()
-        formula = BinaryTemporalFormula(TemporalOperator.UNTIL, Predicate("P", ()), Predicate("Q", ()))
+        formula = BinaryTemporalFormula(
+            TemporalOperator.UNTIL, Predicate("P", ()), Predicate("Q", ())
+        )
         # Searching for DeonticFormula - not present
         result = s._traverse_formula(formula, lambda f: isinstance(f, DeonticFormula))
         assert result is False
@@ -1426,6 +1650,7 @@ class TestMemoryProfileThisDecorator:
     def test_memory_profile_this_with_args(self):
         """Lines 411+ - memory_profile_this decorator variant with func=None."""
         from ipfs_datasets_py.logic.TDFOL.performance_profiler import memory_profile_this
+
         call_count = {"n": 0}
 
         @memory_profile_this()

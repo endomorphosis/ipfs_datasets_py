@@ -41,4 +41,7 @@ def test_predicate_conjunction_evaluates_against_model():
         Predicate("notice_sent", ("tenant_1",)),
     )
 
-    assert condition.evaluate({"requested_review(tenant_1)": True, "notice_sent(tenant_1)": True}) is True
+    assert (
+        condition.evaluate({"requested_review(tenant_1)": True, "notice_sent(tenant_1)": True})
+        is True
+    )

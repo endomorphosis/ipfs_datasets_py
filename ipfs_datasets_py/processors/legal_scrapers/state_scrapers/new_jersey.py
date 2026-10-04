@@ -19,26 +19,27 @@ class NewJerseyScraper(BaseStateScraper):
 
     _LIS_GATEWAY = "https://lis.njleg.state.nj.us/nxt/gateway.dll"
     _XHITLIST_SELECT = (
-        "title;path;relevance-weight;content-type;home-title;"
-        "item-bookmark;title-path"
+        "title;path;relevance-weight;content-type;home-title;item-bookmark;title-path"
     )
     _XMLCONTENTS_BASE = (
         "https://lis.njleg.state.nj.us/nxt/gateway.dll"
         "?f=xmlcontents&maxnodes=75&minnodesleft=10&siteshowhits=true&hidezerohits=true"
     )
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for New Jersey's legislative website."""
         return "https://www.njleg.state.nj.us"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for New Jersey."""
-        return [{
-            "name": "New Jersey Statutes",
-            "url": "https://lis.njleg.state.nj.us/nxt/gateway.dll/statutes/1?f=templates&fn=default.htm&vid=Publish:10.1048/Enu",
-            "type": "Code"
-        }]
-    
+        return [
+            {
+                "name": "New Jersey Statutes",
+                "url": "https://lis.njleg.state.nj.us/nxt/gateway.dll/statutes/1?f=templates&fn=default.htm&vid=Publish:10.1048/Enu",
+                "type": "Code",
+            }
+        ]
+
     async def scrape_code(
         self,
         code_name: str,
@@ -46,11 +47,11 @@ class NewJerseyScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from New Jersey's legislative website.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
@@ -62,10 +63,14 @@ class NewJerseyScraper(BaseStateScraper):
         if official:
             return official[: int(return_threshold)]
         if not self._full_corpus_enabled():
-            direct = await self._scrape_direct_public_law_pdfs(code_name, max_statutes=return_threshold)
+            direct = await self._scrape_direct_public_law_pdfs(
+                code_name, max_statutes=return_threshold
+            )
             if direct:
                 return direct[: int(return_threshold)]
-        statutes = await self._scrape_via_xhitlist(code_name, max_sections=max(10, return_threshold))
+        statutes = await self._scrape_via_xhitlist(
+            code_name, max_sections=max(10, return_threshold)
+        )
         if len(statutes) >= int(return_threshold):
             return statutes
 
@@ -73,7 +78,9 @@ class NewJerseyScraper(BaseStateScraper):
             "NJ xhitlist extraction returned %d records; falling back to generic scrape",
             len(statutes),
         )
-        fallback = await self._generic_scrape(code_name, code_url, "N.J. Stat. Ann.", max_sections=max(10, return_threshold))
+        fallback = await self._generic_scrape(
+            code_name, code_url, "N.J. Stat. Ann.", max_sections=max(10, return_threshold)
+        )
         if not fallback:
             return statutes
 
@@ -123,16 +130,29 @@ class NewJerseyScraper(BaseStateScraper):
 
     async def _discover_title_nodes(self) -> List[Dict[str, str]]:
         nodes = await self._fetch_xmlcontents_nodes(basepathid="statutes", command="getchildren")
-        title_nodes = [node for node in nodes if str(node.get("id") or "").startswith("statutes/1/")]
+        title_nodes = [
+            node for node in nodes if str(node.get("id") or "").startswith("statutes/1/")
+        ]
         more_nodes = [node for node in nodes if str(node.get("ct") or "") == "application/morenode"]
         while more_nodes:
             next_more = more_nodes.pop(0)
             start = str(next_more.get("n") or "").strip()
             if not start:
                 continue
-            page = await self._fetch_xmlcontents_nodes(basepathid="statutes/1", command="getmore", start=start, direction="1")
-            title_nodes.extend([node for node in page if str(node.get("id") or "").startswith("statutes/1/") and str(node.get("ct") or "") != "application/morenode"])
-            more_nodes.extend([node for node in page if str(node.get("ct") or "") == "application/morenode"])
+            page = await self._fetch_xmlcontents_nodes(
+                basepathid="statutes/1", command="getmore", start=start, direction="1"
+            )
+            title_nodes.extend(
+                [
+                    node
+                    for node in page
+                    if str(node.get("id") or "").startswith("statutes/1/")
+                    and str(node.get("ct") or "") != "application/morenode"
+                ]
+            )
+            more_nodes.extend(
+                [node for node in page if str(node.get("ct") or "") == "application/morenode"]
+            )
         deduped: List[Dict[str, str]] = []
         seen: set[str] = set()
         for node in title_nodes:
@@ -143,7 +163,9 @@ class NewJerseyScraper(BaseStateScraper):
             deduped.append(node)
         return deduped
 
-    async def _discover_section_nodes(self, title_id: str, limit: Optional[int] = None) -> List[Dict[str, str]]:
+    async def _discover_section_nodes(
+        self, title_id: str, limit: Optional[int] = None
+    ) -> List[Dict[str, str]]:
         nodes = await self._fetch_xmlcontents_nodes(basepathid=title_id, command="getchildren")
         section_nodes = [node for node in nodes if str(node.get("ct") or "") == "text/xml"]
         more_nodes = [node for node in nodes if str(node.get("ct") or "") == "application/morenode"]
@@ -152,9 +174,13 @@ class NewJerseyScraper(BaseStateScraper):
             start = str(next_more.get("n") or "").strip()
             if not start:
                 continue
-            page = await self._fetch_xmlcontents_nodes(basepathid=title_id, command="getmore", start=start, direction="1")
+            page = await self._fetch_xmlcontents_nodes(
+                basepathid=title_id, command="getmore", start=start, direction="1"
+            )
             section_nodes.extend([node for node in page if str(node.get("ct") or "") == "text/xml"])
-            more_nodes.extend([node for node in page if str(node.get("ct") or "") == "application/morenode"])
+            more_nodes.extend(
+                [node for node in page if str(node.get("ct") or "") == "application/morenode"]
+            )
         deduped: List[Dict[str, str]] = []
         seen: set[str] = set()
         for node in section_nodes:
@@ -230,7 +256,9 @@ class NewJerseyScraper(BaseStateScraper):
             normal = soup.select_one("div.Normal-Level")
             heading = self._normalize_legal_text((headnotes or soup).get_text(" ", strip=True))
             body = self._normalize_legal_text((normal or soup).get_text(" ", strip=True))
-            full_text = self._normalize_legal_text(" ".join(part for part in [heading, body] if part))
+            full_text = self._normalize_legal_text(
+                " ".join(part for part in [heading, body] if part)
+            )
             if len(full_text) < 80:
                 continue
             section_label = str(node.get("t") or "").strip()
@@ -239,7 +267,7 @@ class NewJerseyScraper(BaseStateScraper):
                 section_number = self._extract_section_number(heading)
             section_name = section_label
             if section_number and section_name.startswith(section_number):
-                section_name = section_name[len(section_number):].lstrip(". ").strip()
+                section_name = section_name[len(section_number) :].lstrip(". ").strip()
             if not section_name:
                 section_name = self._normalize_legal_text(heading)
             out.append(
@@ -266,7 +294,9 @@ class NewJerseyScraper(BaseStateScraper):
             )
         return out
 
-    async def _scrape_direct_public_law_pdfs(self, code_name: str, max_statutes: int = 1) -> List[NormalizedStatute]:
+    async def _scrape_direct_public_law_pdfs(
+        self, code_name: str, max_statutes: int = 1
+    ) -> List[NormalizedStatute]:
         seeds = [
             ("P.L. 2025, c.1", "https://pub.njleg.state.nj.us/Bills/2024/PL25/1_.PDF"),
             ("P.L. 2025, c.2", "https://pub.njleg.state.nj.us/Bills/2024/PL25/2_.PDF"),
@@ -333,7 +363,9 @@ class NewJerseyScraper(BaseStateScraper):
         text = proc.stdout.decode("utf-8", errors="ignore")
         return re.sub(r"\s+", " ", text).strip()[:max_chars]
 
-    async def _scrape_via_xhitlist(self, code_name: str, max_sections: int = 120) -> List[NormalizedStatute]:
+    async def _scrape_via_xhitlist(
+        self, code_name: str, max_sections: int = 120
+    ) -> List[NormalizedStatute]:
         """Collect NJ statutes from LIS query result pages.
 
         The LIS default page is JS-driven and often sparse when fetched as static

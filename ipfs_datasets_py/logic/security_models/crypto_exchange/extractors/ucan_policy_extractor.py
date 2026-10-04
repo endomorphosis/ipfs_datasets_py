@@ -9,4 +9,4 @@ class UCANPolicyExtractor:
     """Extract minimal capability facts from delegation-like records."""
 
     def extract(self, capabilities: Iterable[dict[str, Any]]) -> dict[str, Any]:
-        return {'capabilities': [dict(capability) for capability in capabilities]}
+        return {"capabilities": [dict(capability) for capability in capabilities]}

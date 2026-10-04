@@ -168,9 +168,7 @@ def test_plan_covers_required_axes_and_types_every_omission() -> None:
         RepairMode.ALWAYS_ON,
     }
     assert {
-        item.constructor_route
-        for item in plan.compositions
-        if item.repair is RepairMode.ALWAYS_ON
+        item.constructor_route for item in plan.compositions if item.repair is RepairMode.ALWAYS_ON
     } == {ModelRoute.DIRECT, ModelRoute.SYMAI}
     assert {(item.mode, item.route) for item in plan.realizers} == {
         (RealizerMode.DETERMINISTIC, ModelRoute.NOT_APPLICABLE),
@@ -185,8 +183,7 @@ def test_plan_covers_required_axes_and_types_every_omission() -> None:
     assert reasons == set(OmissionReason)
     assert all(item.axes and item.detail for item in plan.omissions)
     assert all(
-        overlay.candidate_mutation_allowed is False
-        and overlay.score_mutation_allowed is False
+        overlay.candidate_mutation_allowed is False and overlay.score_mutation_allowed is False
         for overlay in plan.validation_overlays
     )
 
@@ -222,9 +219,7 @@ def test_all_thirty_cells_use_core_cases_scores_and_validation_overlays() -> Non
         }
         assert all(item["candidate_unchanged"] is True for item in actions)
         assert all(item["score_mutation_allowed"] is False for item in actions)
-        assert coordinate.semantic_record.validation["candidate_cid"] == (
-            coordinate.candidate_cid
-        )
+        assert coordinate.semantic_record.validation["candidate_cid"] == (coordinate.candidate_cid)
 
     # The extension delegates the full semantic payload to the core runner.
     plain_constructors = {
@@ -268,16 +263,14 @@ def test_every_call_fallback_model_action_and_resource_is_exposed() -> None:
         if item.composition.repair is RepairMode.NO_REPAIR
         and item.realizer.mode is RealizerMode.DETERMINISTIC
     )
-    assert [
-        call["phase"]
-        for call in deterministic_cell.execution["component_calls"]
-    ] == ["t0_to_l1", "l1_to_t1", "t1_to_l2"]
+    assert [call["phase"] for call in deterministic_cell.execution["component_calls"]] == [
+        "t0_to_l1",
+        "l1_to_t1",
+        "t1_to_l2",
+    ]
     assert deterministic_cell.execution["model_calls"] == ()
     assert len(deterministic_cell.execution["fallbacks"]) == 3
-    assert all(
-        fallback["used"] is False
-        for fallback in deterministic_cell.execution["fallbacks"]
-    )
+    assert all(fallback["used"] is False for fallback in deterministic_cell.execution["fallbacks"])
 
     model_cell = next(
         item
@@ -291,9 +284,7 @@ def test_every_call_fallback_model_action_and_resource_is_exposed() -> None:
     assert len({call["slot_sequence"] for call in calls}) == 3
     assert all(call["serialized"] is True for call in calls)
     assert all(call["shared_capacity"] == 1 for call in calls)
-    assert all(
-        call["resource_id"] == SHARED_MODEL_RESOURCE_ID for call in calls
-    )
+    assert all(call["resource_id"] == SHARED_MODEL_RESOURCE_ID for call in calls)
     resources = model_cell.execution["resource_identities"]
     assert resources[SHARED_MODEL_RESOURCE_ID]["capacity"] == 1
     assert resources["symai_route"]["independent_model"] is False
@@ -322,15 +313,11 @@ def test_selective_receipt_preserves_exact_model_calls_and_fallback() -> None:
             super().__init__("SelectiveLeanstralRepair@1:fixture")
             self.ordinal = 0
 
-        def construct_with_diagnostics(
-            self, request: ConstructorRequest
-        ) -> object:
+        def construct_with_diagnostics(self, request: ConstructorRequest) -> object:
             self.requests.append(request)
             current = self.ordinal
             self.ordinal += 1
-            result = ConstructorResult(
-                ComponentStatus.SUCCESS, canonical_ir=IR
-            )
+            result = ConstructorResult(ComponentStatus.SUCCESS, canonical_ir=IR)
             return SimpleNamespace(
                 result=result,
                 diagnostics={
@@ -350,19 +337,16 @@ def test_selective_receipt_preserves_exact_model_calls_and_fallback() -> None:
 
     result = ExtendedSemanticRoundTripMatrix(
         (ExtendedConstructorArm(spec, SelectiveLeanstralRepairFixture()),),
-        (
-            ExtendedRealizerArm(
-                realizer_spec, FixedRealizer("deterministic@1")
-            ),
-        ),
+        (ExtendedRealizerArm(realizer_spec, FixedRealizer("deterministic@1")),),
         plan=plan,
         validators={},
     ).run((_case(),))
     coordinate = result.coordinates[0]
 
-    assert [
-        call["call_id"] for call in coordinate.execution["model_calls"]
-    ] == ["repair-0", "repair-1"]
+    assert [call["call_id"] for call in coordinate.execution["model_calls"]] == [
+        "repair-0",
+        "repair-1",
+    ]
     assert [call["slot_sequence"] for call in coordinate.execution["model_calls"]] == [
         1,
         2,
@@ -389,10 +373,7 @@ def test_failures_remain_loss_one_and_validation_is_not_applicable() -> None:
     assert len(failed.coordinates) == 30
     assert all(item.primary_loss == 1.0 for item in failed.coordinates)
     assert all(item.status is ComponentStatus.FAILED for item in failed.coordinates)
-    assert all(
-        len(item.execution["component_calls"]) == 1
-        for item in failed.coordinates
-    )
+    assert all(len(item.execution["component_calls"]) == 1 for item in failed.coordinates)
     assert all(
         action["receipt"]["status"] == "not_applicable"
         for item in failed.coordinates
@@ -420,46 +401,31 @@ def test_extended_records_are_content_addressed() -> None:
     plan = ExtendedMatrixPlan(
         (spec,),
         (realizer_spec,),
-        (
-            ValidationOverlaySpec(
-                "hammer_cvc5", "hammer/cvc5 fixture"
-            ),
-        ),
+        (ValidationOverlaySpec("hammer_cvc5", "hammer/cvc5 fixture"),),
         (),
     )
     result = ExtendedSemanticRoundTripMatrix(
-        (
-            ExtendedConstructorArm(
-                spec, FixedConstructor("typed-no-guidance@1")
-            ),
-        ),
-        (
-            ExtendedRealizerArm(
-                realizer_spec, FixedRealizer("deterministic@1")
-            ),
-        ),
+        (ExtendedConstructorArm(spec, FixedConstructor("typed-no-guidance@1")),),
+        (ExtendedRealizerArm(realizer_spec, FixedRealizer("deterministic@1")),),
         plan=plan,
         validators={"hammer_cvc5": _validator},
     ).run((_case(),))
 
     assert validate_cid(result.run_cid, codecs=("dag-json",)) == result.run_cid
     run_payload = result.to_dict()
-    assert cid_for_dag_json(
-        {key: value for key, value in run_payload.items() if key != "run_cid"}
-    ) == result.run_cid
+    assert (
+        cid_for_dag_json({key: value for key, value in run_payload.items() if key != "run_cid"})
+        == result.run_cid
+    )
     case_payload = result.cases[0].to_dict()
-    assert cid_for_dag_json(
-        {
-            key: value
-            for key, value in case_payload.items()
-            if key != "record_cid"
-        }
-    ) == result.cases[0].record_cid
+    assert (
+        cid_for_dag_json({key: value for key, value in case_payload.items() if key != "record_cid"})
+        == result.cases[0].record_cid
+    )
     coordinate_payload = result.coordinates[0].to_dict()
-    assert cid_for_dag_json(
-        {
-            key: value
-            for key, value in coordinate_payload.items()
-            if key != "record_cid"
-        }
-    ) == result.coordinates[0].record_cid
+    assert (
+        cid_for_dag_json(
+            {key: value for key, value in coordinate_payload.items() if key != "record_cid"}
+        )
+        == result.coordinates[0].record_cid
+    )

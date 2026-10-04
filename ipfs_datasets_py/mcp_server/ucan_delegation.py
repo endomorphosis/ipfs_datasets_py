@@ -64,6 +64,7 @@ __all__ = [
 # Capability
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class Capability:
     """Represents a single capability: a (resource, ability) pair.
@@ -89,16 +90,8 @@ class Capability:
         Both the stored values and the queried values are checked for
         wildcard ``"*"``.
         """
-        resource_ok = (
-            self.resource == "*"
-            or resource == "*"
-            or self.resource == resource
-        )
-        ability_ok = (
-            self.ability == "*"
-            or ability == "*"
-            or self.ability == ability
-        )
+        resource_ok = self.resource == "*" or resource == "*" or self.resource == resource
+        ability_ok = self.ability == "*" or ability == "*" or self.ability == ability
         return resource_ok and ability_ok
 
     def to_dict(self) -> Dict:
@@ -108,6 +101,7 @@ class Capability:
 # ---------------------------------------------------------------------------
 # Delegation
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class Delegation:
@@ -354,6 +348,7 @@ class DelegationChain:
 # DelegationEvaluator
 # ---------------------------------------------------------------------------
 
+
 class DelegationEvaluator:
     """Validates UCAN-style delegation chains at execution time.
 
@@ -450,15 +445,11 @@ class DelegationEvaluator:
 
         while current_cid is not None:
             if current_cid in seen:
-                raise ValueError(
-                    f"Cycle detected in delegation chain at CID '{current_cid}'"
-                )
+                raise ValueError(f"Cycle detected in delegation chain at CID '{current_cid}'")
             seen.add(current_cid)
             delegation = self._store.get(current_cid)
             if delegation is None:
-                raise KeyError(
-                    f"Delegation '{current_cid}' not found in store"
-                )
+                raise KeyError(f"Delegation '{current_cid}' not found in store")
             chain.append(delegation)
             current_cid = delegation.proof_cid
 
@@ -551,9 +542,7 @@ class DelegationEvaluator:
         # Actor check on the leaf (last in root-first order)
         leaf = chain[-1]
         if actor_str is not None and leaf.audience != actor_str:
-            return False, (
-                f"Actor '{actor_str}' does not match leaf audience '{leaf.audience}'"
-            )
+            return False, (f"Actor '{actor_str}' does not match leaf audience '{leaf.audience}'")
 
         # Expiry check across the whole chain
         t = now if now is not None else time.time()
@@ -563,7 +552,7 @@ class DelegationEvaluator:
 
         # Signature verification — if delegation is a DIDSignedDelegation, verify it
         for d in chain:
-            if hasattr(d, '_signed') and d._signed is not None:
+            if hasattr(d, "_signed") and d._signed is not None:
                 if not verify_delegation_signature(d._signed):
                     return False, f"Delegation '{d.cid}' has invalid signature"
             elif self._require_signatures and d.issuer.startswith("did:key:"):
@@ -575,9 +564,7 @@ class DelegationEvaluator:
             if d.has_capability(resource, ability):
                 return True, "authorized"
 
-        return False, (
-            f"No delegation in chain grants '{ability}' on '{resource}'"
-        )
+        return False, (f"No delegation in chain grants '{ability}' on '{resource}'")
 
 
 # ---------------------------------------------------------------------------
@@ -597,15 +584,13 @@ def get_delegation_evaluator() -> DelegationEvaluator:
     if _GLOBAL_EVALUATOR is None:
         with _GLOBAL_EVALUATOR_LOCK:
             if _GLOBAL_EVALUATOR is None:
-                _GLOBAL_EVALUATOR = DelegationEvaluator(
-                    max_chain_depth=_MAX_CHAIN_DEPTH
-                )
+                _GLOBAL_EVALUATOR = DelegationEvaluator(max_chain_depth=_MAX_CHAIN_DEPTH)
     return _GLOBAL_EVALUATOR
 
 
 def add_delegation(cid_or_delegation: Any, delegation: Optional[Delegation] = None) -> None:
     """Add *delegation* to the global evaluator store.
-    
+
     Supports two call signatures:
     - add_delegation(delegation) — adds delegation using its .cid
     - add_delegation(proof_cid, delegation) — adds with explicit CID
@@ -627,6 +612,7 @@ def get_delegation(cid: str) -> Optional[Delegation]:
 # ---------------------------------------------------------------------------
 # Invocation context
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class InvocationContext:
@@ -653,6 +639,7 @@ class InvocationContext:
 # ---------------------------------------------------------------------------
 # DID key manager integration (session 56)
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class DIDSignedDelegation:
@@ -713,6 +700,7 @@ def sign_delegation(delegation: Delegation, *, key_manager: Any = None) -> "DIDS
     if mgr is None:
         try:
             from .did_key_manager import get_default_manager  # noqa: PLC0415
+
             mgr = get_default_manager()
         except Exception:
             pass
@@ -772,6 +760,7 @@ def verify_delegation_signature(
     if mgr is None:
         try:
             from .did_key_manager import get_default_manager  # noqa: PLC0415
+
             mgr = get_default_manager()
         except Exception:
             pass
@@ -791,6 +780,7 @@ def verify_delegation_signature(
 # ---------------------------------------------------------------------------
 # Phase H — Revocation list (session 57)
 # ---------------------------------------------------------------------------
+
 
 class RevocationList:
     """Tracks revoked delegation CIDs to prevent use in chain evaluation.
@@ -1074,6 +1064,7 @@ def can_invoke_with_revocation(
 # Phase I — Persistent delegation store (session 57)
 # ---------------------------------------------------------------------------
 
+
 class DelegationStore:
     """Persistent store for :class:`Delegation` objects backed by a JSON file.
 
@@ -1138,9 +1129,7 @@ class DelegationStore:
         import json as _json
         import os
 
-        data: Dict[str, Any] = {
-            cid: d.to_dict() for cid, d in self._store.items()
-        }
+        data: Dict[str, Any] = {cid: d.to_dict() for cid, d in self._store.items()}
         parent = os.path.dirname(self.path)
         if parent:
             os.makedirs(parent, exist_ok=True)
@@ -1572,7 +1561,9 @@ class DelegationManager:
             return False, "missing required invocation parameters"
 
         allowed, reason = can_invoke_with_revocation(
-            leaf_cid, resource, actor,
+            leaf_cid,
+            resource,
+            actor,
             ability=ability,
             evaluator=self.get_evaluator(),
             revocation_list=self._revocation,
@@ -1790,6 +1781,7 @@ class DelegationManager:
                 details.
         """
         import os as _os
+
         base = self._store.path
         enc_path = _os.path.splitext(base)[0] + ".revoked.enc"
         self._revocation.save_encrypted(enc_path, password)
@@ -1810,6 +1802,7 @@ class DelegationManager:
             Number of CIDs loaded into the revocation list.
         """
         import os as _os
+
         base = self._store.path
         enc_path = _os.path.splitext(base)[0] + ".revoked.enc"
         return self._revocation.load_encrypted(enc_path, password)
@@ -1845,6 +1838,7 @@ class DelegationManager:
                 get_global_bus,
                 PubSubEventType,
             )
+
             bus = get_global_bus()
             bus.publish(
                 PubSubEventType.RECEIPT_DISSEMINATE,

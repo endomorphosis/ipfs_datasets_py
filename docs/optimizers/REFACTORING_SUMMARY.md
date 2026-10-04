@@ -95,20 +95,22 @@ from ipfs_datasets_py.optimizers.common import (
     OptimizationContext,
 )
 
+
 class MyOptimizer(BaseOptimizer):
     def generate(self, input_data, context):
         # Create initial artifact
         return self._create_artifact(input_data)
-    
+
     def critique(self, artifact, context):
         # Evaluate quality (0-1) + feedback
         score = self._evaluate(artifact)
         feedback = self._get_suggestions(artifact)
         return (score, feedback)
-    
+
     def optimize(self, artifact, score, feedback, context):
         # Improve based on feedback
         return self._apply_improvements(artifact, feedback)
+
 
 # Run optimization
 config = OptimizerConfig(
@@ -142,19 +144,20 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
     LogicCritic,
 )
 
+
 class UnifiedLogicOptimizer(BaseOptimizer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.extractor = LogicExtractor()
         self.critic = LogicCritic()
-    
+
     def generate(self, input_data, context):
         return self.extractor.extract(input_data)
-    
+
     def critique(self, artifact, context):
         score = self.critic.evaluate(artifact)
         return (score.overall, score.feedback)
-    
+
     def optimize(self, artifact, score, feedback, context):
         # Use existing optimization logic
         return self._sgd_optimize(artifact, feedback)
@@ -169,19 +172,20 @@ from ipfs_datasets_py.optimizers.graphrag import (
     OntologyCritic,
 )
 
+
 class UnifiedGraphRAGOptimizer(BaseOptimizer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.generator = OntologyGenerator()
         self.critic = OntologyCritic()
-    
+
     def generate(self, input_data, context):
         return self.generator.generate_ontology(input_data)
-    
+
     def critique(self, artifact, context):
         score = self.critic.evaluate_ontology(artifact)
         return (score.overall, score.feedback)
-    
+
     def optimize(self, artifact, score, feedback, context):
         # Use existing optimization logic
         return self._improve_ontology(artifact, feedback)

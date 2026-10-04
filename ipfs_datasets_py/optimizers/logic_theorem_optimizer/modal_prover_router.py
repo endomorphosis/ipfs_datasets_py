@@ -75,6 +75,7 @@ class ModalProverRouter:
                 ModalLogicType,
                 prove_modal_formula,
             )
+
             logic_type = ModalLogicType(system.value)
             if formula is None:
                 return ModalProverRouteResult(

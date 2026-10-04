@@ -68,7 +68,9 @@ class SearchExecutor:
                     is_retryable=self._is_retryable_error,
                 )
 
-                providers_used = list(getattr(raw_response, "metadata", {}).get("engines_used", []) or [])
+                providers_used = list(
+                    getattr(raw_response, "metadata", {}).get("engines_used", []) or []
+                )
                 if not providers_used:
                     providers_used = [provider]
 
@@ -104,7 +106,9 @@ class SearchExecutor:
     def _is_retryable_error(exc: Exception) -> bool:
         if SearchEngineRateLimitError is not None and isinstance(exc, SearchEngineRateLimitError):
             return False
-        if SearchEngineQuotaExceededError is not None and isinstance(exc, SearchEngineQuotaExceededError):
+        if SearchEngineQuotaExceededError is not None and isinstance(
+            exc, SearchEngineQuotaExceededError
+        ):
             return False
         message = str(exc or "").lower()
         if "rate limit" in message or "rate-limited" in message or "too many requests" in message:

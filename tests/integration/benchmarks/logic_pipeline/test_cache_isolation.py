@@ -60,52 +60,37 @@ def _adapters(
 ) -> dict[StageName, StageAdapter]:
     adapters: dict[StageName, StageAdapter] = {}
     for stage in StageName:
+
         def handler(request, current=stage):
             identity = dict(request.requested_identity)
             identity["backend_revision"] = (
-                "drifted"
-                if drift_warm and request.cache_mode is CacheMode.WARM
-                else "pinned"
+                "drifted" if drift_warm and request.cache_mode is CacheMode.WARM else "pinned"
             )
             if operational_cache_identity:
                 identity.update(
                     {
-                        "cache_namespace": (
-                            f"{request.run_id}/{request.cache_mode.value}"
-                        ),
-                        "cache_key": (
-                            f"{request.case_id}/{request.cache_mode.value}"
-                        ),
+                        "cache_namespace": (f"{request.run_id}/{request.cache_mode.value}"),
+                        "cache_key": (f"{request.case_id}/{request.cache_mode.value}"),
                         "cache_hit": request.cache_mode is CacheMode.WARM,
                         "router_cache": request.cache_mode.value,
                         "router_cache_key": request.cache_mode.value,
                         "router_cached_backend": (
-                            "pinned"
-                            if request.cache_mode is CacheMode.WARM
-                            else None
+                            "pinned" if request.cache_mode is CacheMode.WARM else None
                         ),
                         "semantic_context_sha256": hashlib.sha256(
-                            f"semantic:{request.cache_mode.value}".encode(
-                                "utf-8"
-                            )
+                            f"semantic:{request.cache_mode.value}".encode("utf-8")
                         ).hexdigest(),
                         "premise_selection_sha256": hashlib.sha256(
-                            f"premises:{request.cache_mode.value}".encode(
-                                "utf-8"
-                            )
+                            f"premises:{request.cache_mode.value}".encode("utf-8")
                         ).hexdigest(),
                         "generation_boundary_sha256": hashlib.sha256(
-                            f"generation:{request.cache_mode.value}".encode(
-                                "utf-8"
-                            )
+                            f"generation:{request.cache_mode.value}".encode("utf-8")
                         ).hexdigest(),
                     }
                 )
             if unrecognized_cache_prime_drift:
                 identity["cache_prime_effective_provider"] = (
-                    "drifted"
-                    if request.cache_mode is CacheMode.WARM
-                    else "pinned"
+                    "drifted" if request.cache_mode is CacheMode.WARM else "pinned"
                 )
             return StageOutput(
                 data={"case_id": request.case_id, "stage": current.value},
@@ -154,9 +139,7 @@ def test_cache_evidence_namespaces_and_scope_receipts_bind_all_identities(
         assert scope["environment_sha256"] == SHA_ENVIRONMENT
         assert scope["configuration_sha256"] == contract.configuration_sha256
         assert scope["cache_namespace"] == contract.cache_namespace
-        assert scope["canonical_root"] == scope_path.parent.relative_to(
-            tmp_path
-        ).as_posix()
+        assert scope["canonical_root"] == scope_path.parent.relative_to(tmp_path).as_posix()
 
 
 def test_schedule_is_seeded_recorded_and_position_counterbalanced() -> None:
@@ -165,16 +148,9 @@ def test_schedule_is_seeded_recorded_and_position_counterbalanced() -> None:
     other = _plan(seed=701)
 
     assert first.to_dict() == replay.to_dict()
-    assert tuple(job.job_id for job in first.jobs) != tuple(
-        job.job_id for job in other.jobs
-    )
-    assert tuple(job.ordinal for job in first.jobs) == tuple(
-        range(len(first.jobs))
-    )
-    positions = {
-        variant: [0 for _ in first.variant_ids]
-        for variant in first.variant_ids
-    }
+    assert tuple(job.job_id for job in first.jobs) != tuple(job.job_id for job in other.jobs)
+    assert tuple(job.ordinal for job in first.jobs) == tuple(range(len(first.jobs)))
+    positions = {variant: [0 for _ in first.variant_ids] for variant in first.variant_ids}
     for block in first.blocks:
         assert {job.cache_mode for job in block} in (
             {CacheMode.COLD},
@@ -254,9 +230,7 @@ def test_cold_and_warm_records_remain_separate_and_resume_immutable(
         output_root=tmp_path,
         resume=False,
     )
-    before = {
-        path: path.read_bytes() for path in first.result_paths
-    }
+    before = {path: path.read_bytes() for path in first.result_paths}
     resumed = runner.execute_ablation(
         plan,
         _adapters(),
@@ -266,14 +240,9 @@ def test_cold_and_warm_records_remain_separate_and_resume_immutable(
 
     assert not resumed.executed_job_ids
     assert len(resumed.resumed_job_ids) == len(plan.jobs)
-    assert {
-        result.cache_mode for result in resumed.results
-    } == {CacheMode.COLD, CacheMode.WARM}
+    assert {result.cache_mode for result in resumed.results} == {CacheMode.COLD, CacheMode.WARM}
     assert len(
-        {
-            (result.case_id, result.variant_id, result.cache_mode)
-            for result in resumed.results
-        }
+        {(result.case_id, result.variant_id, result.cache_mode) for result in resumed.results}
     ) == len(resumed.results)
     assert {path: path.read_bytes() for path in resumed.result_paths} == before
     runner.validate_cache_isolation(resumed)

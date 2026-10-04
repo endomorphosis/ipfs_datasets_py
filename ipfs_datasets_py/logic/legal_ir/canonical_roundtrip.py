@@ -60,15 +60,11 @@ from ipfs_datasets_py.logic.legal_ir.canonical_decompiler import (
 from ipfs_datasets_py.utils.cid_utils import cid_for_dag_json, validate_cid
 
 
-CANONICAL_SEMANTIC_ROUNDTRIP_INTERFACE: Final = (
-    "CanonicalSemanticRoundTrip@1"
-)
+CANONICAL_SEMANTIC_ROUNDTRIP_INTERFACE: Final = "CanonicalSemanticRoundTrip@1"
 CANONICAL_SEMANTIC_ROUNDTRIP_RESULT_SCHEMA: Final = (
     "ipfs-datasets.canonical-semantic-roundtrip-result.v1"
 )
-CANONICAL_SEMANTIC_ROUNDTRIP_COMPONENT_ID: Final = (
-    "typed_deontic_source_withheld_roundtrip"
-)
+CANONICAL_SEMANTIC_ROUNDTRIP_COMPONENT_ID: Final = "typed_deontic_source_withheld_roundtrip"
 CANONICAL_SEMANTIC_ROUNDTRIP_STAGES: Final = (
     "l1_compile",
     "t1_decompile",
@@ -84,9 +80,7 @@ def _configuration_payload() -> dict[str, object]:
         "component_id": CANONICAL_SEMANTIC_ROUNDTRIP_COMPONENT_ID,
         "policy_cid": CANONICAL_PARITY_POLICY_CID,
         "selection": {
-            "implementation_representative_arm_id": (
-                IMPLEMENTATION_REPRESENTATIVE_ARM_ID
-            ),
+            "implementation_representative_arm_id": (IMPLEMENTATION_REPRESENTATIVE_ARM_ID),
             "implementation_representative_arm_identity_cid": (
                 IMPLEMENTATION_REPRESENTATIVE_ARM_IDENTITY_CID
             ),
@@ -108,9 +102,7 @@ def _configuration_payload() -> dict[str, object]:
     }
 
 
-CANONICAL_SEMANTIC_ROUNDTRIP_CONFIG_CID: Final = cid_for_dag_json(
-    _configuration_payload()
-)
+CANONICAL_SEMANTIC_ROUNDTRIP_CONFIG_CID: Final = cid_for_dag_json(_configuration_payload())
 
 
 def roundtrip_configuration() -> dict[str, object]:
@@ -149,27 +141,21 @@ def _dag_json_cid(value: object, field: str) -> str:
     try:
         return validate_cid(value, codecs=("dag-json",))
     except (TypeError, ValueError) as exc:
-        raise CanonicalContractError(
-            f"{field} must be a canonical dag-json CIDv1"
-        ) from exc
+        raise CanonicalContractError(f"{field} must be a canonical dag-json CIDv1") from exc
 
 
 def _raw_cid(value: object, field: str) -> str:
     try:
         return validate_cid(value, codecs=("raw",))
     except (TypeError, ValueError) as exc:
-        raise CanonicalContractError(
-            f"{field} must be a canonical raw CIDv1"
-        ) from exc
+        raise CanonicalContractError(f"{field} must be a canonical raw CIDv1") from exc
 
 
 def _error_from_stage(
     stage_result: CompilerResult | DecompilerResult,
 ) -> CanonicalError:
     if stage_result.error is None:
-        raise CanonicalContractError(
-            "non-successful stage result must carry a canonical error"
-        )
+        raise CanonicalContractError("non-successful stage result must carry a canonical error")
     return stage_result.error
 
 
@@ -205,9 +191,7 @@ class CanonicalSemanticRoundTripResult:
             "request_cid",
             _dag_json_cid(self.request_cid, "request_cid"),
         )
-        object.__setattr__(
-            self, "source_cid", _raw_cid(self.source_cid, "source_cid")
-        )
+        object.__setattr__(self, "source_cid", _raw_cid(self.source_cid, "source_cid"))
         policy_cid = _dag_json_cid(self.policy_cid, "policy_cid")
         if policy_cid != CANONICAL_PARITY_POLICY_CID:
             raise CanonicalContractError("roundtrip policy CID changed")
@@ -225,13 +209,9 @@ class CanonicalSemanticRoundTripResult:
         ):
             raise CanonicalContractError("completed_stages must be an array")
         completed = tuple(self.completed_stages)
-        expected_prefix = CANONICAL_SEMANTIC_ROUNDTRIP_STAGES[
-            : len(completed)
-        ]
+        expected_prefix = CANONICAL_SEMANTIC_ROUNDTRIP_STAGES[: len(completed)]
         if completed != expected_prefix:
-            raise CanonicalContractError(
-                "completed_stages must be an ordered stage prefix"
-            )
+            raise CanonicalContractError("completed_stages must be an ordered stage prefix")
         object.__setattr__(self, "completed_stages", completed)
 
         for field_name, expected_type in (
@@ -241,9 +221,7 @@ class CanonicalSemanticRoundTripResult:
         ):
             value = getattr(self, field_name)
             if value is not None and not isinstance(value, expected_type):
-                raise CanonicalContractError(
-                    f"{field_name} must use its canonical result contract"
-                )
+                raise CanonicalContractError(f"{field_name} must use its canonical result contract")
         if self.error is not None and not isinstance(self.error, CanonicalError):
             raise CanonicalContractError("roundtrip error must be canonical")
 
@@ -258,55 +236,41 @@ class CanonicalSemanticRoundTripResult:
             (True, True, False),
             (True, True, True),
         }:
-            raise CanonicalContractError(
-                "roundtrip stage results must form an ordered prefix"
-            )
+            raise CanonicalContractError("roundtrip stage results must form an ordered prefix")
         if self.l1_result is not None:
             if self.l1_result.request_cid != self.request_cid:
-                raise CanonicalContractError(
-                    "L1 result is not bound to the outer request"
-                )
+                raise CanonicalContractError("L1 result is not bound to the outer request")
             l1_provenance = self.l1_result.provenance
             if (
                 not isinstance(l1_provenance, Mapping)
                 or l1_provenance.get("source_cid") != self.source_cid
             ):
-                raise CanonicalContractError(
-                    "L1 provenance is not bound to the outer source_cid"
-                )
+                raise CanonicalContractError("L1 provenance is not bound to the outer source_cid")
         if self.t1_result is not None:
             if (
                 self.l1_result is None
                 or self.l1_result.status is not OperationStatus.SUCCESS
                 or self.l1_result.canonical_ir is None
             ):
-                raise CanonicalContractError(
-                    "T1 result requires a successful nonempty L1"
-                )
+                raise CanonicalContractError("T1 result requires a successful nonempty L1")
             if not self.t1_result.component_trace or any(
                 trace.input_cid != self.l1_result.canonical_ir.ir_cid
                 for trace in self.t1_result.component_trace
             ):
-                raise CanonicalContractError(
-                    "T1 trace is not bound only to the L1 canonical IR"
-                )
+                raise CanonicalContractError("T1 trace is not bound only to the L1 canonical IR")
         if self.l2_result is not None:
             if (
                 self.t1_result is None
                 or self.t1_result.status is not OperationStatus.SUCCESS
                 or self.t1_result.text_cid is None
             ):
-                raise CanonicalContractError(
-                    "L2 result requires a successful nonblank T1"
-                )
+                raise CanonicalContractError("L2 result requires a successful nonblank T1")
             l2_provenance = self.l2_result.provenance
             if (
                 not isinstance(l2_provenance, Mapping)
                 or l2_provenance.get("source_cid") != self.t1_result.text_cid
             ):
-                raise CanonicalContractError(
-                    "L2 provenance is not bound to the T1 text_cid"
-                )
+                raise CanonicalContractError("L2 provenance is not bound to the T1 text_cid")
         traces = tuple(
             trace
             for result in (
@@ -346,9 +310,7 @@ class CanonicalSemanticRoundTripResult:
                     "successful roundtrip requires three successful stages"
                 )
         elif self.terminal_stage == "complete" or self.error is None:
-            raise CanonicalContractError(
-                "non-successful roundtrip requires a stage and error"
-            )
+            raise CanonicalContractError("non-successful roundtrip requires a stage and error")
 
     @property
     def model_call_count(self) -> int:
@@ -376,21 +338,9 @@ class CanonicalSemanticRoundTripResult:
             "terminal_stage": self.terminal_stage,
             "completed_stages": list(self.completed_stages),
             "stage_results": {
-                "l1": (
-                    None
-                    if self.l1_result is None
-                    else self.l1_result.to_dict()
-                ),
-                "t1": (
-                    None
-                    if self.t1_result is None
-                    else self.t1_result.to_dict()
-                ),
-                "l2": (
-                    None
-                    if self.l2_result is None
-                    else self.l2_result.to_dict()
-                ),
+                "l1": (None if self.l1_result is None else self.l1_result.to_dict()),
+                "t1": (None if self.t1_result is None else self.t1_result.to_dict()),
+                "l2": (None if self.l2_result is None else self.l2_result.to_dict()),
             },
             "source_withheld": True,
             "fallback_used": False,
@@ -441,31 +391,20 @@ class CanonicalSemanticRoundTripResult:
             raise CanonicalContractError("roundtrip result fields changed")
         if value["interface"] != CANONICAL_SEMANTIC_ROUNDTRIP_INTERFACE:
             raise CanonicalContractError("roundtrip result interface changed")
-        if (
-            value["schema_version"]
-            != CANONICAL_SEMANTIC_ROUNDTRIP_RESULT_SCHEMA
-        ):
+        if value["schema_version"] != CANONICAL_SEMANTIC_ROUNDTRIP_RESULT_SCHEMA:
             raise CanonicalContractError("roundtrip result schema changed")
-        if (
-            value["configuration_cid"]
-            != CANONICAL_SEMANTIC_ROUNDTRIP_CONFIG_CID
-        ):
-            raise CanonicalContractError(
-                "roundtrip result configuration CID changed"
-            )
+        if value["configuration_cid"] != CANONICAL_SEMANTIC_ROUNDTRIP_CONFIG_CID:
+            raise CanonicalContractError("roundtrip result configuration CID changed")
         if (
             value["source_withheld"] is not True
             or value["fallback_used"] is not False
             or value["model_call_count"] != 0
             or value["model_receipt_cids"] != []
         ):
-            raise CanonicalContractError(
-                "roundtrip execution profile changed"
-            )
+            raise CanonicalContractError("roundtrip execution profile changed")
         if (
             value["result_cid_codec"] != "dag-json"
-            or value["result_cid_scope"]
-            != "document_without_result_cid_fields"
+            or value["result_cid_scope"] != "document_without_result_cid_fields"
         ):
             raise CanonicalContractError("roundtrip result CID contract changed")
         stage_results = value["stage_results"]
@@ -498,17 +437,11 @@ class CanonicalSemanticRoundTripResult:
                 if stage_results["l2"] is None
                 else CompilerResult.from_dict(stage_results["l2"])
             ),
-            error=(
-                None
-                if raw_error is None
-                else CanonicalError.from_dict(raw_error)
-            ),
+            error=(None if raw_error is None else CanonicalError.from_dict(raw_error)),
         )
         supplied = _dag_json_cid(value["result_cid"], "result_cid")
         if supplied != result.result_cid:
-            raise CanonicalContractError(
-                "result_cid does not match roundtrip result"
-            )
+            raise CanonicalContractError("result_cid does not match roundtrip result")
         return result
 
 
@@ -522,16 +455,8 @@ class CanonicalSemanticRoundTrip:
         compiler: CanonicalStructuredTextCompiler | None = None,
         decompiler: CanonicalStructuredTextDecompiler | None = None,
     ) -> None:
-        self._compiler = (
-            TypedDeonticCanonicalCompiler()
-            if compiler is None
-            else compiler
-        )
-        self._decompiler = (
-            SourceWithheldCanonicalDecompiler()
-            if decompiler is None
-            else decompiler
-        )
+        self._compiler = TypedDeonticCanonicalCompiler() if compiler is None else compiler
+        self._decompiler = SourceWithheldCanonicalDecompiler() if decompiler is None else decompiler
 
     @property
     def identity(self) -> str:
@@ -593,8 +518,7 @@ class CanonicalSemanticRoundTrip:
                 details={},
             )
         if (
-            getattr(self._decompiler, "identity", None)
-            != SELECTED_REALIZER_INTERFACE
+            getattr(self._decompiler, "identity", None) != SELECTED_REALIZER_INTERFACE
             or getattr(self._decompiler, "deterministic", None) is not True
             or getattr(self._decompiler, "uses_model", None) is not False
         ):
@@ -609,9 +533,7 @@ class CanonicalSemanticRoundTrip:
             )
         return None
 
-    def run(
-        self, request: CompilerRequest
-    ) -> CanonicalSemanticRoundTripResult:
+    def run(self, request: CompilerRequest) -> CanonicalSemanticRoundTripResult:
         """Compile, realize without source, and compile again.
 
         Policy and component drift are rejected before a component call.  The
@@ -628,9 +550,7 @@ class CanonicalSemanticRoundTrip:
         try:
             policy = load_parity_policy()
             if policy.policy_cid != CANONICAL_PARITY_POLICY_CID:
-                raise CanonicalContractError(
-                    "loaded parity policy CID changed"
-                )
+                raise CanonicalContractError("loaded parity policy CID changed")
         except Exception as exc:
             return self._failure(
                 request,
@@ -639,8 +559,7 @@ class CanonicalSemanticRoundTrip:
                 error=CanonicalError(
                     code=CanonicalErrorCode.POLICY_MISMATCH,
                     message=(
-                        "canonical parity policy is unavailable or invalid; "
-                        "no component was called"
+                        "canonical parity policy is unavailable or invalid; no component was called"
                     ),
                     retryable=False,
                     details={"exception_type": type(exc).__name__},

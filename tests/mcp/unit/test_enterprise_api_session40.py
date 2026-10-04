@@ -11,6 +11,7 @@ Covers previously-uncovered code paths:
 - create_enterprise_api() singleton factory
 - AuthenticationManager.authenticate() success + invalid-token paths
 """
+
 import asyncio
 import sys
 from datetime import datetime
@@ -21,6 +22,7 @@ import pytest
 # ---------------------------------------------------------------------------
 # Mock heavy dependencies before import
 # ---------------------------------------------------------------------------
+
 
 def _setup_mocks():
     mock_graphrag = MagicMock()
@@ -52,8 +54,8 @@ from ipfs_datasets_py.mcp_server.enterprise_api import (
 # EnterpriseGraphRAGAPI construction
 # ---------------------------------------------------------------------------
 
-class TestEnterpriseGraphRAGAPIInit:
 
+class TestEnterpriseGraphRAGAPIInit:
     def test_default_init(self):
         """
         GIVEN: No config
@@ -85,8 +87,8 @@ class TestEnterpriseGraphRAGAPIInit:
 # EnterpriseGraphRAGAPI.create_jwt_token / validate_jwt_token
 # ---------------------------------------------------------------------------
 
-class TestEnterpriseGraphRAGAPITokenMethods:
 
+class TestEnterpriseGraphRAGAPITokenMethods:
     def setup_method(self):
         self.api = EnterpriseGraphRAGAPI()
 
@@ -127,8 +129,8 @@ class TestEnterpriseGraphRAGAPITokenMethods:
 # ProcessingJobManager — additional paths
 # ---------------------------------------------------------------------------
 
-class TestProcessingJobManagerAdditional:
 
+class TestProcessingJobManagerAdditional:
     def test_get_job_status_missing_job_returns_none(self):
         """get_job_status() returns None for a job_id that doesn't exist."""
         jm = ProcessingJobManager()
@@ -154,8 +156,8 @@ class TestProcessingJobManagerAdditional:
 # AdvancedAnalyticsDashboard — additional paths
 # ---------------------------------------------------------------------------
 
-class TestAdvancedAnalyticsDashboardAdditional:
 
+class TestAdvancedAnalyticsDashboardAdditional:
     def _make_dashboard(self):
         jm = ProcessingJobManager()
         return AdvancedAnalyticsDashboard(job_manager=jm)
@@ -223,11 +225,12 @@ class TestAdvancedAnalyticsDashboardAdditional:
 # create_enterprise_api() factory
 # ---------------------------------------------------------------------------
 
-class TestCreateEnterpriseAPIFactory:
 
+class TestCreateEnterpriseAPIFactory:
     def test_create_enterprise_api_returns_instance(self):
         """create_enterprise_api() returns an EnterpriseGraphRAGAPI instance."""
         import ipfs_datasets_py.mcp_server.enterprise_api as _mod
+
         original = _mod.api_instance
         try:
             _mod.api_instance = None
@@ -239,6 +242,7 @@ class TestCreateEnterpriseAPIFactory:
     def test_create_enterprise_api_returns_singleton(self):
         """create_enterprise_api() returns the same instance on repeated calls."""
         import ipfs_datasets_py.mcp_server.enterprise_api as _mod
+
         original = _mod.api_instance
         try:
             _mod.api_instance = None
@@ -253,8 +257,8 @@ class TestCreateEnterpriseAPIFactory:
 # AuthenticationManager.authenticate()
 # ---------------------------------------------------------------------------
 
-class TestAuthManagerAuthenticate:
 
+class TestAuthManagerAuthenticate:
     def test_authenticate_valid_token_returns_user(self):
         """authenticate() returns a User for a valid token with known username."""
         auth = AuthenticationManager(secret_key="test-secret")
@@ -268,6 +272,7 @@ class TestAuthManagerAuthenticate:
     def test_authenticate_invalid_token_raises_http_exception(self):
         """authenticate() raises HTTPException for an invalid/expired token."""
         from fastapi import HTTPException
+
         auth = AuthenticationManager(secret_key="test-secret")
         with patch("ipfs_datasets_py.mcp_server.enterprise_api.jwt") as mock_jwt:
             mock_jwt.decode.side_effect = Exception("invalid")
@@ -279,6 +284,7 @@ class TestAuthManagerAuthenticate:
     def test_authenticate_unknown_user_raises_http_exception(self):
         """authenticate() raises HTTPException when username not in users_db."""
         from fastapi import HTTPException
+
         auth = AuthenticationManager(secret_key="test-secret")
         with patch("ipfs_datasets_py.mcp_server.enterprise_api.jwt") as mock_jwt:
             mock_jwt.decode.return_value = {"sub": "unknown_user"}

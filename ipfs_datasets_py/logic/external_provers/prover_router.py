@@ -9,7 +9,7 @@ Usage:
     >>> from ipfs_datasets_py.logic.external_provers import ProverRouter
     >>> router = ProverRouter(enable_z3=True, enable_cvc5=True)
     >>> result = router.prove(formula, strategy='auto')
-    
+
     >>> # Parallel proving
     >>> results = router.prove_parallel(formula, timeout=10.0)
     >>> best = router.select_best(results)
@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 
 class ProverStrategy(Enum):
     """Strategy for prover selection."""
+
     AUTO = "auto"  # Automatic selection based on formula
     FASTEST = "fastest"  # Try fastest prover first
     MOST_CAPABLE = "most_capable"  # Try most capable prover
@@ -41,7 +42,7 @@ class ProverStrategy(Enum):
 @dataclass
 class RouterProofResult:
     """Result from prover router.
-    
+
     Attributes:
         is_proved: True if formula was proved
         prover_used: Name of prover that succeeded
@@ -50,13 +51,14 @@ class RouterProofResult:
         strategy_used: Strategy that was used
         reason: Reason for result
     """
+
     is_proved: bool
     prover_used: Optional[str]
     proof_time: float
     all_results: Dict[str, Any]
     strategy_used: str
     reason: str
-    
+
     def get_prover_result(self, prover_name: str) -> Optional[Any]:
         """Get result from a specific prover."""
         return self.all_results.get(prover_name)
@@ -66,10 +68,7 @@ class RouterProofResult:
 
         if self.is_proved:
             return True
-        return any(
-            _result_is_compiled_result(result)
-            for result in self.all_results.values()
-        )
+        return any(_result_is_compiled_result(result) for result in self.all_results.values())
 
 
 def _result_is_compiled_result(result: Any) -> bool:
@@ -357,7 +356,8 @@ def _guidance_metric_targets_external_router(value: Any) -> bool:
 
     collect(value)
     return any(
-        metric in {
+        metric
+        in {
             "external_prover_unavailable_loss",
             "external_prover_failure_ratio",
             "legal_ir_multiview_proof_failure_ratio",
@@ -411,13 +411,13 @@ class SyntacticNativeFallbackProver:
 
 class ProverRouter:
     """Router for selecting and coordinating multiple theorem provers.
-    
+
     The router can:
     1. Automatically select the best prover for a formula
     2. Try provers in parallel
     3. Try provers sequentially with fallback
     4. Aggregate and compare results
-    
+
     Attributes:
         enable_z3: Whether to enable Z3
         enable_cvc5: Whether to enable CVC5
@@ -427,7 +427,7 @@ class ProverRouter:
         default_strategy: Default proving strategy
         default_timeout: Default timeout per prover
     """
-    
+
     def __init__(
         self,
         enable_z3: bool = True,
@@ -442,7 +442,7 @@ class ProverRouter:
         enable_syntactic_fallback: bool = True,
     ):
         """Initialize prover router.
-        
+
         Args:
             enable_z3: Whether to enable Z3
             enable_cvc5: Whether to enable CVC5
@@ -466,25 +466,26 @@ class ProverRouter:
         self.default_timeout = default_timeout
         self.enable_cache = enable_cache
         self.enable_syntactic_fallback = enable_syntactic_fallback
-        
+
         # Initialize formula analyzer for intelligent selection
         self.analyzer = FormulaAnalyzer()
-        
+
         # Initialize cache if enabled
         self._cache = None
         if self.enable_cache:
             try:
                 from .proof_cache import get_global_cache
+
                 self._cache = get_global_cache()
             except ImportError:
                 self.enable_cache = False
-        
+
         # Initialize provers
         self.provers = {}
         self._initialize_provers()
         if self.enable_syntactic_fallback and not self.provers:
-            self.provers['native_syntactic'] = SyntacticNativeFallbackProver()
-    
+            self.provers["native_syntactic"] = SyntacticNativeFallbackProver()
+
     def _initialize_provers(self):
         """Initialize available provers."""
         # Z3
@@ -493,71 +494,76 @@ class ProverRouter:
                 from .smt import z3_prover_bridge
 
                 if z3_prover_bridge._ensure_z3_available():
-                    self.provers['z3'] = z3_prover_bridge.Z3ProverBridge(
-                        timeout=self.default_timeout,
-                        enable_cache=self.enable_cache
+                    self.provers["z3"] = z3_prover_bridge.Z3ProverBridge(
+                        timeout=self.default_timeout, enable_cache=self.enable_cache
                     )
             except Exception:
                 logger.debug("Z3 prover unavailable during router init", exc_info=True)
-        
+
         # CVC5
         if self.enable_cvc5:
             try:
                 from .smt import cvc5_prover_bridge
 
                 if cvc5_prover_bridge._ensure_cvc5_available():
-                    self.provers['cvc5'] = cvc5_prover_bridge.CVC5ProverBridge(timeout=self.default_timeout)
+                    self.provers["cvc5"] = cvc5_prover_bridge.CVC5ProverBridge(
+                        timeout=self.default_timeout
+                    )
             except Exception:
                 logger.debug("CVC5 prover unavailable during router init", exc_info=True)
-        
+
         # Lean
         if self.enable_lean:
             try:
                 from .interactive import lean_prover_bridge
 
                 if lean_prover_bridge._ensure_lean_available():
-                    self.provers['lean'] = lean_prover_bridge.LeanProverBridge(timeout=self.default_timeout)
+                    self.provers["lean"] = lean_prover_bridge.LeanProverBridge(
+                        timeout=self.default_timeout
+                    )
             except Exception:
                 logger.debug("Lean prover unavailable during router init", exc_info=True)
-        
+
         # Coq
         if self.enable_coq:
             try:
                 from .interactive import coq_prover_bridge
 
                 if coq_prover_bridge._ensure_coq_available():
-                    self.provers['coq'] = coq_prover_bridge.CoqProverBridge(timeout=self.default_timeout)
+                    self.provers["coq"] = coq_prover_bridge.CoqProverBridge(
+                        timeout=self.default_timeout
+                    )
             except Exception:
                 logger.debug("Coq prover unavailable during router init", exc_info=True)
-        
+
         # SymbolicAI
         if self.enable_symbolicai:
             try:
                 from .neural import symbolicai_prover_bridge
 
                 if symbolicai_prover_bridge._ensure_symbolicai_available():
-                    self.provers['symbolicai'] = symbolicai_prover_bridge.SymbolicAIProverBridge(
-                        timeout=self.default_timeout,
-                        enable_cache=self.enable_cache
+                    self.provers["symbolicai"] = symbolicai_prover_bridge.SymbolicAIProverBridge(
+                        timeout=self.default_timeout, enable_cache=self.enable_cache
                     )
             except Exception:
                 logger.debug("SymbolicAI prover unavailable during router init", exc_info=True)
-        
+
         # Native prover
         if self.enable_native:
             try:
                 from ..TDFOL.tdfol_prover import TDFOLProver
-                self.provers['native'] = TDFOLProver()
+
+                self.provers["native"] = TDFOLProver()
                 if self.enable_syntactic_fallback:
-                    self.provers['native_syntactic'] = SyntacticNativeFallbackProver()
+                    self.provers["native_syntactic"] = SyntacticNativeFallbackProver()
             except Exception:
                 logger.debug(
                     "Native TDFOL prover unavailable; using syntactic fallback",
                     exc_info=True,
                 )
                 if self.enable_syntactic_fallback:
-                    self.provers['native_syntactic'] = SyntacticNativeFallbackProver()
-    
+                    self.provers["native_syntactic"] = SyntacticNativeFallbackProver()
+
     def get_available_provers(self) -> List[str]:
         """Get list of available provers."""
         return list(self.provers.keys())
@@ -642,13 +648,7 @@ class ProverRouter:
             return strategy
         if strategy is None:
             return ProverStrategy.AUTO
-        text = (
-            str(strategy or "")
-            .strip()
-            .lower()
-            .replace("-", "_")
-            .replace(" ", "_")
-        )
+        text = str(strategy or "").strip().lower().replace("-", "_").replace(" ", "_")
         if not text:
             return ProverStrategy.AUTO
         if text in {"default", "router_default"}:
@@ -668,9 +668,7 @@ class ProverRouter:
     ) -> Any:
         """Call one prover while normalizing signature differences."""
 
-        timeout_seconds = float(
-            self.default_timeout if timeout is None else timeout
-        )
+        timeout_seconds = float(self.default_timeout if timeout is None else timeout)
         timeout_ms = max(1, int(timeout_seconds * 1000.0))
         normalized_formula = formula
         normalized_axioms = axioms
@@ -680,9 +678,7 @@ class ProverRouter:
             if axioms:
                 normalized_axioms = [
                     item
-                    for item in (
-                        self._coerce_native_formula(axiom) for axiom in axioms
-                    )
+                    for item in (self._coerce_native_formula(axiom) for axiom in axioms)
                     if item is not None
                 ]
 
@@ -701,8 +697,7 @@ class ProverRouter:
             prove_params = {}
 
         accepts_kwargs = any(
-            param.kind == inspect.Parameter.VAR_KEYWORD
-            for param in prove_params.values()
+            param.kind == inspect.Parameter.VAR_KEYWORD for param in prove_params.values()
         )
 
         kwargs: Dict[str, Any] = {}
@@ -871,13 +866,13 @@ class ProverRouter:
             return result
 
         return False
-    
+
     def _select_prover_for_formula(self, formula) -> str:
         """Select best prover for a formula based on characteristics.
-        
+
         Args:
             formula: TDFOL formula
-            
+
         Returns:
             Name of selected prover
         """
@@ -885,8 +880,10 @@ class ProverRouter:
             # Analyze formula to get recommendations
             analysis = self.analyzer.analyze(formula)
 
-            logger.debug(f"Formula analysis: type={analysis.formula_type.value}, "
-                        f"complexity={analysis.complexity.value}, score={analysis.complexity_score:.1f}")
+            logger.debug(
+                f"Formula analysis: type={analysis.formula_type.value}, "
+                f"complexity={analysis.complexity.value}, score={analysis.complexity_score:.1f}"
+            )
             logger.debug(f"Recommended provers: {analysis.recommended_provers}")
 
             # Try recommended provers in order
@@ -899,50 +896,50 @@ class ProverRouter:
                 "Formula analysis failed during prover selection; using fallback order",
                 exc_info=True,
             )
-        
-        # Fallback: prefer Z3 for FOL
-        if 'z3' in self.provers:
-            logger.info("Fallback to Z3")
-            return 'z3'
-        
-        # Fall back to native
-        if 'native' in self.provers:
-            logger.info("Fallback to native prover")
-            return 'native'
 
-        if 'native_syntactic' in self.provers:
+        # Fallback: prefer Z3 for FOL
+        if "z3" in self.provers:
+            logger.info("Fallback to Z3")
+            return "z3"
+
+        # Fall back to native
+        if "native" in self.provers:
+            logger.info("Fallback to native prover")
+            return "native"
+
+        if "native_syntactic" in self.provers:
             logger.info("Fallback to syntactic native prover")
-            return 'native_syntactic'
-        
+            return "native_syntactic"
+
         # Use first available
         if self.provers:
             prover_name = list(self.provers.keys())[0]
             logger.info(f"Using first available prover: {prover_name}")
             return prover_name
-        
+
         raise RuntimeError("No provers available")
-    
+
     def prove(
         self,
         formula,
         axioms: Optional[List] = None,
         strategy: Optional[ProverStrategy] = None,
-        timeout: Optional[float] = None
+        timeout: Optional[float] = None,
     ) -> RouterProofResult:
         """Prove a formula using the specified strategy.
-        
+
         Args:
             formula: TDFOL formula to prove
             axioms: Optional list of axioms
             strategy: Proving strategy (None = use default)
             timeout: Timeout per prover (None = use default)
-            
+
         Returns:
             RouterProofResult with proof status
         """
         strategy = self._coerce_strategy(strategy or self.default_strategy)
         timeout = self.default_timeout if timeout is None else float(timeout)
-        
+
         if strategy == ProverStrategy.AUTO:
             return self._prove_auto(formula, axioms, timeout)
         elif strategy == ProverStrategy.PARALLEL:
@@ -955,13 +952,8 @@ class ProverRouter:
             return self._prove_most_capable(formula, axioms, timeout)
         else:
             raise ValueError(f"Unknown strategy: {strategy}")
-    
-    def _prove_auto(
-        self,
-        formula,
-        axioms: Optional[List],
-        timeout: float
-    ) -> RouterProofResult:
+
+    def _prove_auto(self, formula, axioms: Optional[List], timeout: float) -> RouterProofResult:
         """Prove using automatic prover selection."""
         start_time = time.time()
 
@@ -982,9 +974,7 @@ class ProverRouter:
         # Keep the analyzer-selected prover first, then deterministically
         # fall back across the remaining available provers.
         ordered_provers = [selected_prover] + [
-            prover_name
-            for prover_name in self.provers
-            if prover_name != selected_prover
+            prover_name for prover_name in self.provers if prover_name != selected_prover
         ]
         all_results: Dict[str, Any] = {}
         first_non_error: Optional[str] = None
@@ -1032,13 +1022,8 @@ class ProverRouter:
             strategy_used="auto",
             reason=reason,
         )
-    
-    def _prove_parallel(
-        self,
-        formula,
-        axioms: Optional[List],
-        timeout: float
-    ) -> RouterProofResult:
+
+    def _prove_parallel(self, formula, axioms: Optional[List], timeout: float) -> RouterProofResult:
         """Prove using all provers in parallel."""
         start_time = time.time()
         all_results = {}
@@ -1052,7 +1037,7 @@ class ProverRouter:
                 strategy_used="parallel",
                 reason="No provers available",
             )
-        
+
         def prove_with_prover(prover_name: str, prover):
             """Wrapper for parallel execution."""
             try:
@@ -1060,22 +1045,20 @@ class ProverRouter:
                 return (prover_name, result, None)
             except Exception as e:
                 return (prover_name, None, str(e))
-        
+
         # Execute all provers in parallel
         with concurrent.futures.ThreadPoolExecutor(max_workers=len(self.provers)) as executor:
             futures = {
                 executor.submit(prove_with_prover, name, prover): name
                 for name, prover in self.provers.items()
             }
-            
+
             for future in concurrent.futures.as_completed(futures):
                 prover_name, result, error = future.result()
-                all_results[prover_name] = (
-                    f"Error: {error}" if error is not None else result
-                )
-        
+                all_results[prover_name] = f"Error: {error}" if error is not None else result
+
         proof_time = time.time() - start_time
-        
+
         # Find first successful proof
         for prover_name, result in all_results.items():
             if self._result_is_proved(result):
@@ -1085,7 +1068,7 @@ class ProverRouter:
                     proof_time=proof_time,
                     all_results=all_results,
                     strategy_used="parallel",
-                    reason=f"Proved by {prover_name}"
+                    reason=f"Proved by {prover_name}",
                 )
 
         first_non_error = next(
@@ -1096,7 +1079,7 @@ class ProverRouter:
             ),
             None,
         )
-        
+
         return RouterProofResult(
             is_proved=False,
             prover_used=first_non_error,
@@ -1104,28 +1087,23 @@ class ProverRouter:
             all_results=all_results,
             strategy_used="parallel",
             reason=(
-                f"Used {first_non_error} (no proof)"
-                if first_non_error
-                else "No prover succeeded"
-            )
+                f"Used {first_non_error} (no proof)" if first_non_error else "No prover succeeded"
+            ),
         )
-    
+
     def _prove_sequential(
-        self,
-        formula,
-        axioms: Optional[List],
-        timeout: float
+        self, formula, axioms: Optional[List], timeout: float
     ) -> RouterProofResult:
         """Prove trying provers sequentially."""
         start_time = time.time()
         all_results = {}
-        
+
         # Try provers in order
         for prover_name, prover in self.provers.items():
             try:
                 result = self._call_prover(prover_name, prover, formula, axioms, timeout)
                 all_results[prover_name] = result
-                
+
                 if self._result_is_proved(result):
                     proof_time = time.time() - start_time
                     return RouterProofResult(
@@ -1134,11 +1112,11 @@ class ProverRouter:
                         proof_time=proof_time,
                         all_results=all_results,
                         strategy_used="sequential",
-                        reason=f"Proved by {prover_name}"
+                        reason=f"Proved by {prover_name}",
                     )
             except Exception as e:
                 all_results[prover_name] = f"Error: {str(e)}"
-        
+
         proof_time = time.time() - start_time
         first_non_error = next(
             (
@@ -1162,13 +1140,8 @@ class ProverRouter:
             strategy_used="sequential",
             reason=reason,
         )
-    
-    def _prove_fastest(
-        self,
-        formula,
-        axioms: Optional[List],
-        timeout: float
-    ) -> RouterProofResult:
+
+    def _prove_fastest(self, formula, axioms: Optional[List], timeout: float) -> RouterProofResult:
         """Prove with fastest prover (Z3 preferred)."""
         fastest_order = [
             "z3",
@@ -1179,9 +1152,7 @@ class ProverRouter:
             "coq",
             "symbolicai",
         ]
-        ordered_provers = [
-            name for name in fastest_order if name in self.provers
-        ] + [
+        ordered_provers = [name for name in fastest_order if name in self.provers] + [
             name for name in self.provers if name not in fastest_order
         ]
         return self._prove_ordered(
@@ -1192,18 +1163,13 @@ class ProverRouter:
             strategy_used="fastest",
             no_available_reason="No fastest prover available",
         )
-    
+
     def _prove_most_capable(
-        self,
-        formula,
-        axioms: Optional[List],
-        timeout: float
+        self, formula, axioms: Optional[List], timeout: float
     ) -> RouterProofResult:
         """Prove with most capable prover (Lean/Coq preferred)."""
-        capable_order = ['lean', 'coq', 'cvc5', 'z3', 'native', 'native_syntactic']
-        ordered_provers = [
-            name for name in capable_order if name in self.provers
-        ] + [
+        capable_order = ["lean", "coq", "cvc5", "z3", "native", "native_syntactic"]
+        ordered_provers = [name for name in capable_order if name in self.provers] + [
             name for name in self.provers if name not in capable_order
         ]
         return self._prove_ordered(
@@ -1286,33 +1252,30 @@ class ProverRouter:
             strategy_used=strategy_used,
             reason=no_available_reason,
         )
-    
+
     def prove_parallel(
-        self,
-        formula,
-        axioms: Optional[List] = None,
-        timeout: float = None
+        self, formula, axioms: Optional[List] = None, timeout: float = None
     ) -> RouterProofResult:
         """Convenience method for parallel proving."""
         return self.prove(formula, axioms, strategy=ProverStrategy.PARALLEL, timeout=timeout)
-    
+
     def select_best(self, result: RouterProofResult) -> Any:
         """Select best result from parallel proving.
-        
+
         Args:
             result: RouterProofResult from parallel proving
-            
+
         Returns:
             Best individual prover result
         """
         if not result.all_results:
             return None
-        
+
         # If any proved, return first proof
         for prover_name, prover_result in result.all_results.items():
             if self._result_is_proved(prover_result):
                 return prover_result
-        
+
         # Otherwise return first result
         return list(result.all_results.values())[0]
 

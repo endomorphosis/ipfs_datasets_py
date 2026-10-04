@@ -51,13 +51,9 @@ from .reasons import (
 # ---------------------------------------------------------------------------
 
 AUTHORIZATION_QUERY_COMPOSER_INTERFACE: Final = "AuthorizationQueryComposer@1"
-AUTHORIZATION_QUERY_COMPOSER_SCHEMA_VERSION: Final = (
-    "authorization-query-composer/v1"
-)
+AUTHORIZATION_QUERY_COMPOSER_SCHEMA_VERSION: Final = "authorization-query-composer/v1"
 AUTHORIZATION_DECISION_POLICY_INTERFACE: Final = "AuthorizationDecisionPolicy@1"
-AUTHORIZATION_DECISION_POLICY_SCHEMA_VERSION: Final = (
-    "authorization-decision-policy/v1"
-)
+AUTHORIZATION_DECISION_POLICY_SCHEMA_VERSION: Final = "authorization-decision-policy/v1"
 AUTHORIZATION_DECISION_INTERFACE: Final = "AuthorizationDecision@1"
 AUTHORIZATION_DECISION_SCHEMA_VERSION: Final = "authorization-decision/v1"
 AUTHORIZATION_QUERY_BUNDLE_SCHEMA_VERSION: Final = "authorization-query-bundle/v1"
@@ -216,22 +212,16 @@ def _mapping(value: Any, name: str) -> Mapping[str, Any]:
     return value
 
 
-def _reject_unknown(
-    value: Mapping[str, Any], allowed: frozenset[str], record_name: str
-) -> None:
+def _reject_unknown(value: Mapping[str, Any], allowed: frozenset[str], record_name: str) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise ComposeError(
-            f"unknown {record_name} field(s): {', '.join(unknown)}"
-        )
+        raise ComposeError(f"unknown {record_name} field(s): {', '.join(unknown)}")
 
 
 def _unique_sorted_ids(values: Any, name: str) -> tuple[str, ...]:
     if values is None:
         return ()
-    if isinstance(values, (str, bytes, bytearray)) or not isinstance(
-        values, Sequence
-    ):
+    if isinstance(values, (str, bytes, bytearray)) or not isinstance(values, Sequence):
         raise ComposeError(f"{name} must be a sequence of strings")
     items = tuple(_text(item, f"{name} item") for item in values)
     if len(items) != len(set(items)):
@@ -273,12 +263,8 @@ class ActionScope:
     schema_version: str = ACTION_SCOPE_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "action_id", _text(self.action_id, "action_id")
-        )
-        object.__setattr__(
-            self, "effect_id", _optional_text(self.effect_id, "effect_id")
-        )
+        object.__setattr__(self, "action_id", _text(self.action_id, "action_id"))
+        object.__setattr__(self, "effect_id", _optional_text(self.effect_id, "effect_id"))
         object.__setattr__(
             self,
             "resource_ids",
@@ -290,17 +276,13 @@ class ActionScope:
             _unique_sorted_ids(self.capability_ids, "capability_ids"),
         )
         object.__setattr__(self, "domain", _text(self.domain, "domain"))
-        object.__setattr__(
-            self, "logic_family", _text(self.logic_family, "logic_family")
-        )
+        object.__setattr__(self, "logic_family", _text(self.logic_family, "logic_family"))
         if not isinstance(self.statement, str):
             raise ComposeError("statement must be a string")
         object.__setattr__(
             self,
             "metadata",
-            self.metadata
-            if isinstance(self.metadata, FrozenMap)
-            else FrozenMap(self.metadata),
+            self.metadata if isinstance(self.metadata, FrozenMap) else FrozenMap(self.metadata),
         )
         object.__setattr__(
             self,
@@ -308,9 +290,7 @@ class ActionScope:
             _text(self.schema_version, "schema_version"),
         )
         if self.schema_version != ACTION_SCOPE_SCHEMA_VERSION:
-            raise ComposeError(
-                f"unsupported action scope schema: {self.schema_version!r}"
-            )
+            raise ComposeError(f"unsupported action scope schema: {self.schema_version!r}")
 
     @property
     def scope_key(self) -> str:
@@ -363,9 +343,7 @@ class ActionScope:
             logic_family=value.get("logic_family", "first_order"),
             statement=value.get("statement", ""),
             metadata=FrozenMap(value.get("metadata", {})),
-            schema_version=value.get(
-                "schema_version", ACTION_SCOPE_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", ACTION_SCOPE_SCHEMA_VERSION),
         )
 
 
@@ -399,31 +377,19 @@ class ProofJob:
     def __post_init__(self) -> None:
         object.__setattr__(self, "job_id", _text(self.job_id, "job_id"))
         object.__setattr__(self, "kind", _enum(self.kind, ProofJobKind, "kind"))
-        object.__setattr__(
-            self, "action_id", _text(self.action_id, "action_id")
-        )
-        object.__setattr__(
-            self, "effect_id", _optional_text(self.effect_id, "effect_id")
-        )
-        object.__setattr__(
-            self, "logic_family", _text(self.logic_family, "logic_family")
-        )
+        object.__setattr__(self, "action_id", _text(self.action_id, "action_id"))
+        object.__setattr__(self, "effect_id", _optional_text(self.effect_id, "effect_id"))
+        object.__setattr__(self, "logic_family", _text(self.logic_family, "logic_family"))
         object.__setattr__(self, "domain", _text(self.domain, "domain"))
-        object.__setattr__(
-            self, "query_kind", _enum(self.query_kind, QueryKind, "query_kind")
-        )
+        object.__setattr__(self, "query_kind", _enum(self.query_kind, QueryKind, "query_kind"))
         object.__setattr__(
             self,
             "required_authority",
-            _enum(
-                self.required_authority, AuthorityKind, "required_authority"
-            ),
+            _enum(self.required_authority, AuthorityKind, "required_authority"),
         )
         # Authority must match the question asked.
         if self.query_kind.authority_kind is not self.required_authority:
-            raise ComposeError(
-                "proof job query_kind authority must match required_authority"
-            )
+            raise ComposeError("proof job query_kind authority must match required_authority")
         if not isinstance(self.statement, str):
             raise ComposeError("statement must be a string")
         object.__setattr__(
@@ -431,15 +397,11 @@ class ProofJob:
             "constraint_roles",
             _unique_sorted_ids(self.constraint_roles, "constraint_roles"),
         )
-        object.__setattr__(
-            self, "view_ids", _unique_sorted_ids(self.view_ids, "view_ids")
-        )
+        object.__setattr__(self, "view_ids", _unique_sorted_ids(self.view_ids, "view_ids"))
         object.__setattr__(
             self,
             "cross_view_link_ids",
-            _unique_sorted_ids(
-                self.cross_view_link_ids, "cross_view_link_ids"
-            ),
+            _unique_sorted_ids(self.cross_view_link_ids, "cross_view_link_ids"),
         )
         object.__setattr__(
             self,
@@ -459,9 +421,7 @@ class ProofJob:
         object.__setattr__(
             self,
             "metadata",
-            self.metadata
-            if isinstance(self.metadata, FrozenMap)
-            else FrozenMap(self.metadata),
+            self.metadata if isinstance(self.metadata, FrozenMap) else FrozenMap(self.metadata),
         )
         object.__setattr__(
             self,
@@ -469,9 +429,7 @@ class ProofJob:
             _text(self.schema_version, "schema_version"),
         )
         if self.schema_version != PROOF_JOB_SCHEMA_VERSION:
-            raise ComposeError(
-                f"unsupported proof job schema: {self.schema_version!r}"
-            )
+            raise ComposeError(f"unsupported proof job schema: {self.schema_version!r}")
         forbid_silent_logic_concatenation(
             (self.logic_family,),
             context=f"proof job {self.job_id!r}",
@@ -547,9 +505,7 @@ class ProofJob:
             evidence_cids=tuple(value.get("evidence_cids", ())),
             world_policy=value.get("world_policy", WorldPolicyKind.CLOSED),
             metadata=FrozenMap(value.get("metadata", {})),
-            schema_version=value.get(
-                "schema_version", PROOF_JOB_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", PROOF_JOB_SCHEMA_VERSION),
         )
 
 
@@ -583,12 +539,8 @@ class AuthorizationQueryBundle:
     interface: str = AUTHORIZATION_QUERY_COMPOSER_INTERFACE
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "bundle_id", _text(self.bundle_id, "bundle_id")
-        )
-        object.__setattr__(
-            self, "profile_id", _text(self.profile_id, "profile_id")
-        )
+        object.__setattr__(self, "bundle_id", _text(self.bundle_id, "bundle_id"))
+        object.__setattr__(self, "profile_id", _text(self.profile_id, "profile_id"))
         object.__setattr__(
             self,
             "world_policy",
@@ -615,9 +567,7 @@ class AuthorizationQueryBundle:
         if not self.jobs:
             raise ComposeError("bundle requires at least one proof job")
         jobs = tuple(
-            item
-            if isinstance(item, ProofJob)
-            else ProofJob.from_dict(_mapping(item, "job"))
+            item if isinstance(item, ProofJob) else ProofJob.from_dict(_mapping(item, "job"))
             for item in self.jobs
         )
         job_ids = [item.job_id for item in jobs]
@@ -645,33 +595,23 @@ class AuthorizationQueryBundle:
             "invocation_digest",
             _optional_digest(self.invocation_digest, "invocation_digest"),
         )
-        object.__setattr__(
-            self, "intent_cid", _optional_text(self.intent_cid, "intent_cid")
-        )
-        object.__setattr__(
-            self, "corpus_root", _optional_text(self.corpus_root, "corpus_root")
-        )
+        object.__setattr__(self, "intent_cid", _optional_text(self.intent_cid, "intent_cid"))
+        object.__setattr__(self, "corpus_root", _optional_text(self.corpus_root, "corpus_root"))
         object.__setattr__(
             self,
             "revocation_root",
             _optional_text(self.revocation_root, "revocation_root"),
         )
-        object.__setattr__(
-            self, "policy_root", _optional_text(self.policy_root, "policy_root")
-        )
+        object.__setattr__(self, "policy_root", _optional_text(self.policy_root, "policy_root"))
         object.__setattr__(
             self,
             "legal_evidence_cids",
-            _unique_sorted_ids(
-                self.legal_evidence_cids, "legal_evidence_cids"
-            ),
+            _unique_sorted_ids(self.legal_evidence_cids, "legal_evidence_cids"),
         )
         object.__setattr__(
             self,
             "security_evidence_cids",
-            _unique_sorted_ids(
-                self.security_evidence_cids, "security_evidence_cids"
-            ),
+            _unique_sorted_ids(self.security_evidence_cids, "security_evidence_cids"),
         )
         views = tuple(
             item
@@ -710,9 +650,7 @@ class AuthorizationQueryBundle:
         object.__setattr__(
             self,
             "metadata",
-            self.metadata
-            if isinstance(self.metadata, FrozenMap)
-            else FrozenMap(self.metadata),
+            self.metadata if isinstance(self.metadata, FrozenMap) else FrozenMap(self.metadata),
         )
         object.__setattr__(
             self,
@@ -720,22 +658,16 @@ class AuthorizationQueryBundle:
             _text(self.schema_version, "schema_version"),
         )
         if self.schema_version != AUTHORIZATION_QUERY_BUNDLE_SCHEMA_VERSION:
-            raise ComposeError(
-                f"unsupported query bundle schema: {self.schema_version!r}"
-            )
+            raise ComposeError(f"unsupported query bundle schema: {self.schema_version!r}")
         if self.interface != AUTHORIZATION_QUERY_COMPOSER_INTERFACE:
-            raise ComposeError(
-                f"unsupported query bundle interface: {self.interface!r}"
-            )
+            raise ComposeError(f"unsupported query bundle interface: {self.interface!r}")
 
     @property
     def digest(self) -> str:
         return stable_digest(self.to_dict())
 
     def jobs_for_action(self, action_id: str) -> tuple[ProofJob, ...]:
-        return tuple(
-            job for job in self.jobs if job.action_id == action_id
-        )
+        return tuple(job for job in self.jobs if job.action_id == action_id)
 
     def jobs_of_kind(self, kind: ProofJobKind) -> tuple[ProofJob, ...]:
         kind = _enum(kind, ProofJobKind, "kind")
@@ -748,9 +680,7 @@ class AuthorizationQueryBundle:
             "bundle_id": self.bundle_id,
             "config_digest": self.config_digest,
             "corpus_root": self.corpus_root,
-            "cross_view_links": [
-                item.to_dict() for item in self.cross_view_links
-            ],
+            "cross_view_links": [item.to_dict() for item in self.cross_view_links],
             "intent_cid": self.intent_cid,
             "interface": self.interface,
             "invocation_digest": self.invocation_digest,
@@ -808,20 +738,14 @@ class AuthorizationQueryBundle:
             revocation_root=value.get("revocation_root", ""),
             policy_root=value.get("policy_root", ""),
             legal_evidence_cids=tuple(value.get("legal_evidence_cids", ())),
-            security_evidence_cids=tuple(
-                value.get("security_evidence_cids", ())
-            ),
+            security_evidence_cids=tuple(value.get("security_evidence_cids", ())),
             native_views=tuple(value.get("native_views", ())),
             cross_view_links=tuple(value.get("cross_view_links", ())),
             assumptions=tuple(value.get("assumptions", ())),
             config_digest=value.get("config_digest", ""),
             metadata=FrozenMap(value.get("metadata", {})),
-            schema_version=value.get(
-                "schema_version", AUTHORIZATION_QUERY_BUNDLE_SCHEMA_VERSION
-            ),
-            interface=value.get(
-                "interface", AUTHORIZATION_QUERY_COMPOSER_INTERFACE
-            ),
+            schema_version=value.get("schema_version", AUTHORIZATION_QUERY_BUNDLE_SCHEMA_VERSION),
+            interface=value.get("interface", AUTHORIZATION_QUERY_COMPOSER_INTERFACE),
         )
 
 
@@ -849,17 +773,13 @@ class ProofJobResult:
     def __post_init__(self) -> None:
         object.__setattr__(self, "job_id", _text(self.job_id, "job_id"))
         object.__setattr__(self, "kind", _enum(self.kind, ProofJobKind, "kind"))
-        object.__setattr__(
-            self, "verdict", _enum(self.verdict, JobVerdict, "verdict")
-        )
+        object.__setattr__(self, "verdict", _enum(self.verdict, JobVerdict, "verdict"))
         object.__setattr__(
             self,
             "authority_path",
             _text(self.authority_path, "authority_path"),
         )
-        object.__setattr__(
-            self, "backend_id", _optional_text(self.backend_id, "backend_id")
-        )
+        object.__setattr__(self, "backend_id", _optional_text(self.backend_id, "backend_id"))
         object.__setattr__(
             self,
             "attempt_ids",
@@ -882,9 +802,7 @@ class ProofJobResult:
         object.__setattr__(
             self,
             "metadata",
-            self.metadata
-            if isinstance(self.metadata, FrozenMap)
-            else FrozenMap(self.metadata),
+            self.metadata if isinstance(self.metadata, FrozenMap) else FrozenMap(self.metadata),
         )
         object.__setattr__(
             self,
@@ -892,9 +810,7 @@ class ProofJobResult:
             _text(self.schema_version, "schema_version"),
         )
         if self.schema_version != JOB_RESULT_SCHEMA_VERSION:
-            raise ComposeError(
-                f"unsupported job result schema: {self.schema_version!r}"
-            )
+            raise ComposeError(f"unsupported job result schema: {self.schema_version!r}")
 
     @property
     def is_proved(self) -> bool:
@@ -956,9 +872,7 @@ class ProofJobResult:
             diagnostics=tuple(value.get("diagnostics", ())),
             reason=value.get("reason", ""),
             metadata=FrozenMap(value.get("metadata", {})),
-            schema_version=value.get(
-                "schema_version", JOB_RESULT_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", JOB_RESULT_SCHEMA_VERSION),
         )
 
 
@@ -1007,9 +921,7 @@ class AuthorizationDecision:
     schema_version: str = AUTHORIZATION_DECISION_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "status", _enum(self.status, InternalDecisionStatus, "status")
-        )
+        object.__setattr__(self, "status", _enum(self.status, InternalDecisionStatus, "status"))
         object.__setattr__(
             self,
             "wire_status",
@@ -1022,9 +934,7 @@ class AuthorizationDecision:
                 f"internal status {self.status.value!r} "
                 f"(expected {expected_wire.value!r})"
             )
-        object.__setattr__(
-            self, "reasons", _unique_sorted_ids(self.reasons, "reasons")
-        )
+        object.__setattr__(self, "reasons", _unique_sorted_ids(self.reasons, "reasons"))
         results = tuple(
             item
             if isinstance(item, ProofJobResult)
@@ -1036,15 +946,9 @@ class AuthorizationDecision:
             "job_results",
             tuple(sorted(results, key=lambda item: item.job_id)),
         )
-        object.__setattr__(
-            self, "bundle_digest", _digest(self.bundle_digest, "bundle_digest")
-        )
-        object.__setattr__(
-            self, "policy_digest", _digest(self.policy_digest, "policy_digest")
-        )
-        object.__setattr__(
-            self, "profile_id", _text(self.profile_id, "profile_id")
-        )
+        object.__setattr__(self, "bundle_digest", _digest(self.bundle_digest, "bundle_digest"))
+        object.__setattr__(self, "policy_digest", _digest(self.policy_digest, "policy_digest"))
+        object.__setattr__(self, "profile_id", _text(self.profile_id, "profile_id"))
         object.__setattr__(
             self,
             "reason_codes",
@@ -1053,16 +957,12 @@ class AuthorizationDecision:
         object.__setattr__(
             self,
             "selected_evidence_cids",
-            _unique_sorted_ids(
-                self.selected_evidence_cids, "selected_evidence_cids"
-            ),
+            _unique_sorted_ids(self.selected_evidence_cids, "selected_evidence_cids"),
         )
         object.__setattr__(
             self,
             "residual_obligations",
-            _unique_sorted_ids(
-                self.residual_obligations, "residual_obligations"
-            ),
+            _unique_sorted_ids(self.residual_obligations, "residual_obligations"),
         )
         object.__setattr__(
             self,
@@ -1072,18 +972,12 @@ class AuthorizationDecision:
         object.__setattr__(
             self,
             "metadata",
-            self.metadata
-            if isinstance(self.metadata, FrozenMap)
-            else FrozenMap(self.metadata),
+            self.metadata if isinstance(self.metadata, FrozenMap) else FrozenMap(self.metadata),
         )
         if self.interface != AUTHORIZATION_DECISION_INTERFACE:
-            raise ComposeError(
-                f"unsupported decision interface: {self.interface!r}"
-            )
+            raise ComposeError(f"unsupported decision interface: {self.interface!r}")
         if self.schema_version != AUTHORIZATION_DECISION_SCHEMA_VERSION:
-            raise ComposeError(
-                f"unsupported decision schema: {self.schema_version!r}"
-            )
+            raise ComposeError(f"unsupported decision schema: {self.schema_version!r}")
 
     @property
     def is_allow(self) -> bool:
@@ -1167,16 +1061,12 @@ class AuthorizationDecision:
             policy_digest=value.get("policy_digest", ""),
             profile_id=value.get("profile_id", ""),
             reason_codes=tuple(value.get("reason_codes", ())),
-            selected_evidence_cids=tuple(
-                value.get("selected_evidence_cids", ())
-            ),
+            selected_evidence_cids=tuple(value.get("selected_evidence_cids", ())),
             residual_obligations=tuple(value.get("residual_obligations", ())),
             diagnostics=tuple(value.get("diagnostics", ())),
             metadata=FrozenMap(value.get("metadata", {})),
             interface=value.get("interface", AUTHORIZATION_DECISION_INTERFACE),
-            schema_version=value.get(
-                "schema_version", AUTHORIZATION_DECISION_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", AUTHORIZATION_DECISION_SCHEMA_VERSION),
         )
 
 
@@ -1211,9 +1101,7 @@ class AuthorizationDecisionPolicy:
     interface: str = AUTHORIZATION_DECISION_POLICY_INTERFACE
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "policy_id", _text(self.policy_id, "policy_id")
-        )
+        object.__setattr__(self, "policy_id", _text(self.policy_id, "policy_id"))
         object.__setattr__(
             self,
             "combining_rule",
@@ -1247,19 +1135,13 @@ class AuthorizationDecisionPolicy:
             )
         if self.world_policy is WorldPolicyKind.CLOSED:
             if not self.require_positive_grant:
-                raise ComposeError(
-                    "closed-world policy requires an applicable positive grant"
-                )
+                raise ComposeError("closed-world policy requires an applicable positive grant")
             if not self.require_proved_non_conflict:
-                raise ComposeError(
-                    "closed-world policy requires proved non-conflict"
-                )
+                raise ComposeError("closed-world policy requires proved non-conflict")
         object.__setattr__(
             self,
             "allowed_authority_paths",
-            _unique_sorted_ids(
-                self.allowed_authority_paths, "allowed_authority_paths"
-            ),
+            _unique_sorted_ids(self.allowed_authority_paths, "allowed_authority_paths"),
         )
         if not self.allowed_authority_paths:
             raise ComposeError("allowed_authority_paths must not be empty")
@@ -1269,17 +1151,11 @@ class AuthorizationDecisionPolicy:
                 "allowed_authority_paths cannot include non-allowing paths: "
                 + ", ".join(sorted(forbidden))
             )
-        object.__setattr__(
-            self, "profile_id", _text(self.profile_id, "profile_id")
-        )
+        object.__setattr__(self, "profile_id", _text(self.profile_id, "profile_id"))
         if self.interface != AUTHORIZATION_DECISION_POLICY_INTERFACE:
-            raise ComposeError(
-                f"unsupported decision policy interface: {self.interface!r}"
-            )
+            raise ComposeError(f"unsupported decision policy interface: {self.interface!r}")
         if self.schema_version != AUTHORIZATION_DECISION_POLICY_SCHEMA_VERSION:
-            raise ComposeError(
-                f"unsupported decision policy schema: {self.schema_version!r}"
-            )
+            raise ComposeError(f"unsupported decision policy schema: {self.schema_version!r}")
 
     @property
     def digest(self) -> str:
@@ -1299,9 +1175,7 @@ class AuthorizationDecisionPolicy:
             "require_context_binding": self.require_context_binding,
             "require_coverage": self.require_coverage,
             "require_positive_grant": self.require_positive_grant,
-            "require_pre_dispatch_obligations": (
-                self.require_pre_dispatch_obligations
-            ),
+            "require_pre_dispatch_obligations": (self.require_pre_dispatch_obligations),
             "require_proved_non_conflict": self.require_proved_non_conflict,
             "require_security_invariants": self.require_security_invariants,
             "schema_version": self.schema_version,
@@ -1309,9 +1183,7 @@ class AuthorizationDecisionPolicy:
         }
 
     @classmethod
-    def from_dict(
-        cls, value: Mapping[str, Any]
-    ) -> "AuthorizationDecisionPolicy":
+    def from_dict(cls, value: Mapping[str, Any]) -> "AuthorizationDecisionPolicy":
         value = _mapping(value, "authorization decision policy")
         _reject_unknown(
             value,
@@ -1338,51 +1210,32 @@ class AuthorizationDecisionPolicy:
         )
         return cls(
             policy_id=value.get("policy_id", ""),
-            combining_rule=value.get(
-                "combining_rule", CombiningRule.DENY_OVERRIDES
-            ),
+            combining_rule=value.get("combining_rule", CombiningRule.DENY_OVERRIDES),
             world_policy=value.get("world_policy", WorldPolicyKind.CLOSED),
-            require_positive_grant=bool(
-                value.get("require_positive_grant", True)
-            ),
-            require_proved_non_conflict=bool(
-                value.get("require_proved_non_conflict", True)
-            ),
-            require_security_invariants=bool(
-                value.get("require_security_invariants", True)
-            ),
+            require_positive_grant=bool(value.get("require_positive_grant", True)),
+            require_proved_non_conflict=bool(value.get("require_proved_non_conflict", True)),
+            require_security_invariants=bool(value.get("require_security_invariants", True)),
             require_pre_dispatch_obligations=bool(
                 value.get("require_pre_dispatch_obligations", True)
             ),
             require_coverage=bool(value.get("require_coverage", True)),
-            require_context_binding=bool(
-                value.get("require_context_binding", True)
-            ),
-            require_applicability=bool(
-                value.get("require_applicability", True)
-            ),
+            require_context_binding=bool(value.get("require_context_binding", True)),
+            require_applicability=bool(value.get("require_applicability", True)),
             accept_no_retrieved_deny_as_non_conflict=bool(
                 value.get("accept_no_retrieved_deny_as_non_conflict", False)
             ),
-            allowed_authority_paths=tuple(
-                value.get("allowed_authority_paths", ("theorem_proof",))
-            ),
+            allowed_authority_paths=tuple(value.get("allowed_authority_paths", ("theorem_proof",))),
             profile_id=value.get("profile_id", "legal-strict"),
             schema_version=value.get(
                 "schema_version", AUTHORIZATION_DECISION_POLICY_SCHEMA_VERSION
             ),
-            interface=value.get(
-                "interface", AUTHORIZATION_DECISION_POLICY_INTERFACE
-            ),
+            interface=value.get("interface", AUTHORIZATION_DECISION_POLICY_INTERFACE),
         )
 
     @classmethod
     def for_profile(
         cls,
-        profile: AdmissibilityProfile
-        | AdmissibilityProfileId
-        | str
-        | None = None,
+        profile: AdmissibilityProfile | AdmissibilityProfileId | str | None = None,
         *,
         policy_id: str = "policy:deny-overrides-closed",
     ) -> "AuthorizationDecisionPolicy":
@@ -1392,8 +1245,7 @@ class AuthorizationDecisionPolicy:
         if not resolution.ok or resolution.profile is None:
             requested = resolution.requested or profile
             raise ComposeError(
-                f"cannot build decision policy for unresolved profile: "
-                f"{requested!r}"
+                f"cannot build decision policy for unresolved profile: {requested!r}"
             )
         resolved = resolution.profile
         return cls(
@@ -1443,20 +1295,15 @@ class AuthorizationDecisionPolicy:
         for result in ordered:
             previous = by_job.get(result.job_id)
             if previous is not None and previous.digest != result.digest:
-                diagnostics.append(
-                    f"auth.decision.duplicate_job_conflict:{result.job_id}"
-                )
+                diagnostics.append(f"auth.decision.duplicate_job_conflict:{result.job_id}")
             by_job[result.job_id] = result
             evidence.extend(result.evidence_cids)
 
         # Missing required jobs → indeterminate (fail closed).
-        missing_jobs = [
-            job.job_id for job in bundle.jobs if job.job_id not in by_job
-        ]
+        missing_jobs = [job.job_id for job in bundle.jobs if job.job_id not in by_job]
         if missing_jobs:
             diagnostics.extend(
-                f"auth.decision.missing_job_result:{job_id}"
-                for job_id in sorted(missing_jobs)
+                f"auth.decision.missing_job_result:{job_id}" for job_id in sorted(missing_jobs)
             )
 
         def _results_of(kind: ProofJobKind) -> list[ProofJobResult]:
@@ -1470,27 +1317,17 @@ class AuthorizationDecisionPolicy:
         deny_results = [
             result
             for result in by_job.values()
-            if result.is_deny
-            or result.verdict is JobVerdict.DISPROVED
+            if result.is_deny or result.verdict is JobVerdict.DISPROVED
         ]
         if deny_results:
             for result in sorted(deny_results, key=lambda item: item.job_id):
-                reasons.append(
-                    result.reason
-                    or f"deny from {result.kind.value}:{result.job_id}"
-                )
+                reasons.append(result.reason or f"deny from {result.kind.value}:{result.job_id}")
                 if result.kind is ProofJobKind.SECURITY_INVARIANT:
-                    reason_codes.append(
-                        AdmissibilityReasonCode.SECURITY_HARD_CONSTRAINT.value
-                    )
+                    reason_codes.append(AdmissibilityReasonCode.SECURITY_HARD_CONSTRAINT.value)
                 elif result.kind is ProofJobKind.POSITIVE_GRANT:
-                    reason_codes.append(
-                        AdmissibilityReasonCode.LEGAL_HARD_CONSTRAINT.value
-                    )
+                    reason_codes.append(AdmissibilityReasonCode.LEGAL_HARD_CONSTRAINT.value)
                 else:
-                    reason_codes.append(
-                        AdmissibilityReasonCode.CONSTRAINT_CONTRADICTION.value
-                    )
+                    reason_codes.append(AdmissibilityReasonCode.CONSTRAINT_CONTRADICTION.value)
             diagnostics.append("auth.decision.deny_overrides")
             return AuthorizationDecision(
                 status=InternalDecisionStatus.DENY,
@@ -1542,10 +1379,7 @@ class AuthorizationDecisionPolicy:
         # Also catch any result whose authority path is outside allowlist
         # when claiming proved.
         for result in by_job.values():
-            if (
-                result.is_proved
-                and result.authority_path not in self.allowed_authority_paths
-            ):
+            if result.is_proved and result.authority_path not in self.allowed_authority_paths:
                 non_allowing.append(result)
                 diagnostics.append(
                     f"auth.decision.authority_not_allowlisted:"
@@ -1556,9 +1390,7 @@ class AuthorizationDecisionPolicy:
         if any(r.verdict is JobVerdict.CONTRADICTORY for r in by_job.values()):
             diagnostics.append("auth.decision.contradictory_results")
             reasons.append("contradictory authoritative backend results")
-            reason_codes.append(
-                AdmissibilityReasonCode.CONSTRAINT_CONTRADICTION.value
-            )
+            reason_codes.append(AdmissibilityReasonCode.CONSTRAINT_CONTRADICTION.value)
             return AuthorizationDecision(
                 status=InternalDecisionStatus.REVIEW,
                 wire_status=AdmissibilityStatus.ABSTAIN,
@@ -1572,8 +1404,7 @@ class AuthorizationDecisionPolicy:
                 residual_obligations=tuple(
                     job.job_id
                     for job in bundle.jobs
-                    if job.job_id not in by_job
-                    or not by_job[job.job_id].is_proved
+                    if job.job_id not in by_job or not by_job[job.job_id].is_proved
                 ),
                 diagnostics=tuple(sorted(set(diagnostics))),
             )
@@ -1581,9 +1412,7 @@ class AuthorizationDecisionPolicy:
         if any(r.verdict is JobVerdict.ERROR for r in by_job.values()):
             diagnostics.append("auth.decision.error_path")
             reasons.append("backend or evaluation error; fail closed")
-            reason_codes.append(
-                AdmissibilityReasonCode.INTEGRITY_FAILURE.value
-            )
+            reason_codes.append(AdmissibilityReasonCode.INTEGRITY_FAILURE.value)
             return AuthorizationDecision(
                 status=InternalDecisionStatus.ERROR,
                 wire_status=AdmissibilityStatus.ABSTAIN,
@@ -1594,18 +1423,14 @@ class AuthorizationDecisionPolicy:
                 profile_id=self.profile_id,
                 reason_codes=tuple(sorted(set(reason_codes))),
                 selected_evidence_cids=tuple(sorted(set(evidence))),
-                residual_obligations=tuple(
-                    r.job_id for r in by_job.values() if not r.is_proved
-                ),
+                residual_obligations=tuple(r.job_id for r in by_job.values() if not r.is_proved),
                 diagnostics=tuple(sorted(set(diagnostics))),
             )
 
         if any(r.verdict is JobVerdict.REVIEW for r in by_job.values()):
             diagnostics.append("auth.decision.review_required")
             reasons.append("policy-mandated review or resolvable ambiguity")
-            reason_codes.append(
-                AdmissibilityReasonCode.MISSING_EVIDENCE.value
-            )
+            reason_codes.append(AdmissibilityReasonCode.MISSING_EVIDENCE.value)
             return AuthorizationDecision(
                 status=InternalDecisionStatus.REVIEW,
                 wire_status=AdmissibilityStatus.ABSTAIN,
@@ -1616,9 +1441,7 @@ class AuthorizationDecisionPolicy:
                 profile_id=self.profile_id,
                 reason_codes=tuple(sorted(set(reason_codes))),
                 selected_evidence_cids=tuple(sorted(set(evidence))),
-                residual_obligations=tuple(
-                    r.job_id for r in by_job.values() if not r.is_proved
-                ),
+                residual_obligations=tuple(r.job_id for r in by_job.values() if not r.is_proved),
                 diagnostics=tuple(sorted(set(diagnostics))),
             )
 
@@ -1642,8 +1465,7 @@ class AuthorizationDecisionPolicy:
                 if result.authority_path not in self.allowed_authority_paths:
                     residual.append(result.job_id)
                     diagnostics.append(
-                        f"auth.decision.weak_authority:"
-                        f"{kind.value}:{result.authority_path}"
+                        f"auth.decision.weak_authority:{kind.value}:{result.authority_path}"
                     )
                     return False
             return True
@@ -1673,9 +1495,7 @@ class AuthorizationDecisionPolicy:
                 if not self.accept_no_retrieved_deny_as_non_conflict:
                     all_gates = False
                     residual.append(result.job_id)
-                    diagnostics.append(
-                        "auth.decision.no_retrieved_deny_is_not_non_conflict"
-                    )
+                    diagnostics.append("auth.decision.no_retrieved_deny_is_not_non_conflict")
                     reasons.append(
                         "closed profile requires proved non-conflict; "
                         "absence of a retrieved deny is not sufficient"
@@ -1697,22 +1517,12 @@ class AuthorizationDecisionPolicy:
         if missing_jobs or not all_gates:
             diagnostics.append("auth.decision.indeterminate")
             if not reasons:
-                reasons.append(
-                    "incomplete evidence, unproved gates, or non-allowing path"
-                )
+                reasons.append("incomplete evidence, unproved gates, or non-allowing path")
             reason_codes.append(AdmissibilityReasonCode.MISSING_EVIDENCE.value)
-            if any(
-                r.verdict is JobVerdict.UNAVAILABLE for r in by_job.values()
-            ):
-                reason_codes.append(
-                    AdmissibilityReasonCode.PROVER_UNAVAILABLE.value
-                )
-            if any(
-                r.verdict is JobVerdict.UNSUPPORTED for r in by_job.values()
-            ):
-                reason_codes.append(
-                    AdmissibilityReasonCode.SEMANTICS_UNSUPPORTED.value
-                )
+            if any(r.verdict is JobVerdict.UNAVAILABLE for r in by_job.values()):
+                reason_codes.append(AdmissibilityReasonCode.PROVER_UNAVAILABLE.value)
+            if any(r.verdict is JobVerdict.UNSUPPORTED for r in by_job.values()):
+                reason_codes.append(AdmissibilityReasonCode.SEMANTICS_UNSUPPORTED.value)
             return AuthorizationDecision(
                 status=InternalDecisionStatus.INDETERMINATE,
                 wire_status=AdmissibilityStatus.ABSTAIN,
@@ -1729,20 +1539,13 @@ class AuthorizationDecisionPolicy:
 
         # All closed gates theorem-proved under allowlisted authority.
         diagnostics.append("auth.decision.allow")
-        reasons.append(
-            "applicable positive grant and proved non-conflict under closed profile"
-        )
-        reason_codes.append(
-            AdmissibilityReasonCode.OBLIGATIONS_SUPPORTED.value
-        )
+        reasons.append("applicable positive grant and proved non-conflict under closed profile")
+        reason_codes.append(AdmissibilityReasonCode.OBLIGATIONS_SUPPORTED.value)
         residual_post = [
             job.job_id
             for job in bundle.jobs
-            if job.kind
-            in {ProofJobKind.OBLIGATION_DURING, ProofJobKind.OBLIGATION_POST}
-            and (
-                job.job_id not in by_job or not by_job[job.job_id].is_proved
-            )
+            if job.kind in {ProofJobKind.OBLIGATION_DURING, ProofJobKind.OBLIGATION_POST}
+            and (job.job_id not in by_job or not by_job[job.job_id].is_proved)
         ]
         return AuthorizationDecision(
             status=InternalDecisionStatus.ALLOW,
@@ -1797,16 +1600,12 @@ def _default_jobs_for_action(
             kind=ProofJobKind.APPLICABILITY,
             query_kind=QueryKind.THEOREM_PROOF,
             required_authority=AuthorityKind.THEOREM_PROOF,
-            statement=(
-                f"Applicability of authorities for action {action.action_id}"
-            ),
+            statement=(f"Applicability of authorities for action {action.action_id}"),
             constraint_roles=(
                 ConstraintRole.PREMISE.value,
                 ConstraintRole.CLAIM.value,
             ),
-            evidence_cids=tuple(
-                sorted(set(legal_evidence) | set(security_evidence))
-            ),
+            evidence_cids=tuple(sorted(set(legal_evidence) | set(security_evidence))),
             **shared_kwargs,
         ),
         ProofJob(
@@ -1814,9 +1613,7 @@ def _default_jobs_for_action(
             kind=ProofJobKind.POSITIVE_GRANT,
             query_kind=QueryKind.THEOREM_PROOF,
             required_authority=AuthorityKind.THEOREM_PROOF,
-            statement=(
-                f"Explicit applicable positive grant for {action.action_id}"
-            ),
+            statement=(f"Explicit applicable positive grant for {action.action_id}"),
             constraint_roles=(ConstraintRole.GRANT.value,),
             evidence_cids=tuple(sorted(set(legal_evidence))),
             **shared_kwargs,
@@ -1827,16 +1624,13 @@ def _default_jobs_for_action(
             query_kind=QueryKind.THEOREM_PROOF,
             required_authority=AuthorityKind.THEOREM_PROOF,
             statement=(
-                f"Proved non-conflict (applicable prohibition check) for "
-                f"{action.action_id}"
+                f"Proved non-conflict (applicable prohibition check) for {action.action_id}"
             ),
             constraint_roles=(
                 ConstraintRole.PROHIBITION.value,
                 ConstraintRole.EXCEPTION.value,
             ),
-            evidence_cids=tuple(
-                sorted(set(legal_evidence) | set(security_evidence))
-            ),
+            evidence_cids=tuple(sorted(set(legal_evidence) | set(security_evidence))),
             **shared_kwargs,
         ),
         ProofJob(
@@ -1862,9 +1656,7 @@ def _default_jobs_for_action(
             required_authority=AuthorityKind.THEOREM_PROOF,
             statement=f"Pre-dispatch obligations for {action.action_id}",
             constraint_roles=(ConstraintRole.OBLIGATION.value,),
-            evidence_cids=tuple(
-                sorted(set(legal_evidence) | set(security_evidence))
-            ),
+            evidence_cids=tuple(sorted(set(legal_evidence) | set(security_evidence))),
             **shared_kwargs,
         ),
         ProofJob(
@@ -1874,9 +1666,7 @@ def _default_jobs_for_action(
             required_authority=AuthorityKind.THEOREM_PROOF,
             statement=f"Corpus/evidence coverage for {action.action_id}",
             constraint_roles=(ConstraintRole.PREMISE.value,),
-            evidence_cids=tuple(
-                sorted(set(legal_evidence) | set(security_evidence))
-            ),
+            evidence_cids=tuple(sorted(set(legal_evidence) | set(security_evidence))),
             **shared_kwargs,
         ),
         ProofJob(
@@ -1884,9 +1674,7 @@ def _default_jobs_for_action(
             kind=ProofJobKind.CONTEXT_BINDING,
             query_kind=QueryKind.THEOREM_PROOF,
             required_authority=AuthorityKind.THEOREM_PROOF,
-            statement=(
-                f"Exact decision-context binding for {action.action_id}"
-            ),
+            statement=(f"Exact decision-context binding for {action.action_id}"),
             constraint_roles=(ConstraintRole.CLAIM.value,),
             evidence_cids=(),
             **shared_kwargs,
@@ -1898,9 +1686,7 @@ def _default_jobs_for_action(
             required_authority=AuthorityKind.THEOREM_PROOF,
             statement=f"Cross-view consistency for {action.action_id}",
             constraint_roles=(ConstraintRole.CLAIM.value,),
-            evidence_cids=tuple(
-                sorted(set(legal_evidence) | set(security_evidence))
-            ),
+            evidence_cids=tuple(sorted(set(legal_evidence) | set(security_evidence))),
             **shared_kwargs,
         ),
     ]
@@ -1912,9 +1698,7 @@ def _default_jobs_for_action(
                     kind=ProofJobKind.OBLIGATION_DURING,
                     query_kind=QueryKind.THEOREM_PROOF,
                     required_authority=AuthorityKind.THEOREM_PROOF,
-                    statement=(
-                        f"During-use residual obligations for {action.action_id}"
-                    ),
+                    statement=(f"During-use residual obligations for {action.action_id}"),
                     constraint_roles=(ConstraintRole.OBLIGATION.value,),
                     evidence_cids=tuple(sorted(set(legal_evidence))),
                     **shared_kwargs,
@@ -1924,9 +1708,7 @@ def _default_jobs_for_action(
                     kind=ProofJobKind.OBLIGATION_POST,
                     query_kind=QueryKind.THEOREM_PROOF,
                     required_authority=AuthorityKind.THEOREM_PROOF,
-                    statement=(
-                        f"Post-use residual obligations for {action.action_id}"
-                    ),
+                    statement=(f"Post-use residual obligations for {action.action_id}"),
                     constraint_roles=(ConstraintRole.OBLIGATION.value,),
                     evidence_cids=tuple(sorted(set(legal_evidence))),
                     **shared_kwargs,
@@ -1941,9 +1723,7 @@ def _default_jobs_for_action(
                     kind=ProofJobKind.TRANSLATION,
                     query_kind=QueryKind.THEOREM_PROOF,
                     required_authority=AuthorityKind.THEOREM_PROOF,
-                    statement=(
-                        f"Translation fidelity obligations for {action.action_id}"
-                    ),
+                    statement=(f"Translation fidelity obligations for {action.action_id}"),
                     constraint_roles=(ConstraintRole.ASSUMPTION.value,),
                     **shared_kwargs,
                 ),
@@ -1952,18 +1732,14 @@ def _default_jobs_for_action(
                     kind=ProofJobKind.RECONSTRUCTION,
                     query_kind=QueryKind.THEOREM_PROOF,
                     required_authority=AuthorityKind.THEOREM_PROOF,
-                    statement=(
-                        f"Reconstruction obligations for {action.action_id}"
-                    ),
+                    statement=(f"Reconstruction obligations for {action.action_id}"),
                     constraint_roles=(ConstraintRole.ASSUMPTION.value,),
                     **shared_kwargs,
                 ),
             ]
         )
     if len(jobs) > MAX_JOBS_PER_ACTION:
-        raise ComposeError(
-            f"jobs per action exceed MAX_JOBS_PER_ACTION ({MAX_JOBS_PER_ACTION})"
-        )
+        raise ComposeError(f"jobs per action exceed MAX_JOBS_PER_ACTION ({MAX_JOBS_PER_ACTION})")
     return jobs
 
 
@@ -1981,22 +1757,15 @@ class AuthorizationQueryComposer:
 
     def __post_init__(self) -> None:
         if self.interface != AUTHORIZATION_QUERY_COMPOSER_INTERFACE:
-            raise ComposeError(
-                f"unsupported composer interface: {self.interface!r}"
-            )
+            raise ComposeError(f"unsupported composer interface: {self.interface!r}")
         if self.schema_version != AUTHORIZATION_QUERY_COMPOSER_SCHEMA_VERSION:
-            raise ComposeError(
-                f"unsupported composer schema: {self.schema_version!r}"
-            )
+            raise ComposeError(f"unsupported composer schema: {self.schema_version!r}")
 
     def compose(
         self,
         actions: Sequence[ActionScope | Mapping[str, Any]],
         *,
-        profile: AdmissibilityProfile
-        | AdmissibilityProfileId
-        | str
-        | None = None,
+        profile: AdmissibilityProfile | AdmissibilityProfileId | str | None = None,
         world_policy: WorldPolicyKind | str = WorldPolicyKind.CLOSED,
         invocation_digest: str = "",
         intent_cid: str = "",
@@ -2007,9 +1776,7 @@ class AuthorizationQueryComposer:
         security_evidence_cids: Sequence[str] = (),
         native_views: Sequence[NativeViewBinding | Mapping[str, Any]] = (),
         cross_view_links: Sequence[CrossViewLink | Mapping[str, Any]] = (),
-        constraint_artifacts: Sequence[
-            ConstraintArtifact | Mapping[str, Any]
-        ] = (),
+        constraint_artifacts: Sequence[ConstraintArtifact | Mapping[str, Any]] = (),
         assumptions: Sequence[str] = (),
         include_during_post: bool = True,
         include_translation_reconstruction: bool = True,
@@ -2025,9 +1792,7 @@ class AuthorizationQueryComposer:
         resolution = resolve_profile_fail_closed(profile)
         if not resolution.ok or resolution.profile is None:
             requested = resolution.requested or profile
-            raise ComposeError(
-                f"profile resolution failed closed: {requested!r}"
-            )
+            raise ComposeError(f"profile resolution failed closed: {requested!r}")
         profile_obj = resolution.profile
         world = _enum(world_policy, WorldPolicyKind, "world_policy")
         if not actions:
@@ -2053,9 +1818,7 @@ class AuthorizationQueryComposer:
                 if isinstance(artifact, Mapping):
                     artifact = ConstraintArtifact.from_dict(artifact)
                 else:
-                    raise ComposeError(
-                        "constraint_artifacts must be ConstraintArtifact instances"
-                    )
+                    raise ComposeError("constraint_artifacts must be ConstraintArtifact instances")
             views.extend(artifact.native_views)
 
         links: list[CrossViewLink] = []
@@ -2063,9 +1826,7 @@ class AuthorizationQueryComposer:
             links.append(
                 item
                 if isinstance(item, CrossViewLink)
-                else CrossViewLink.from_dict(
-                    _mapping(item, "cross-view link")
-                )
+                else CrossViewLink.from_dict(_mapping(item, "cross-view link"))
             )
 
         view_ids = tuple(sorted({view.view_id for view in views}))
@@ -2084,9 +1845,7 @@ class AuthorizationQueryComposer:
                     legal_evidence=legal,
                     security_evidence=security,
                     include_during_post=include_during_post,
-                    include_translation_reconstruction=(
-                        include_translation_reconstruction
-                    ),
+                    include_translation_reconstruction=(include_translation_reconstruction),
                 )
             )
 

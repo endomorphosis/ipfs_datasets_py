@@ -5,7 +5,12 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Iterable
 
-from .builders.ipfs_indexes import build_all_indexes, build_bm25_index, build_knowledge_graph, build_vector_index
+from .builders.ipfs_indexes import (
+    build_all_indexes,
+    build_bm25_index,
+    build_knowledge_graph,
+    build_vector_index,
+)
 from .builders.ipfs_package import build_ipfs_cid_package
 from .builders.normalized_package import build_normalized_package
 from .upload import upload_datasets, verify_remote_datasets
@@ -24,7 +29,9 @@ async def scrape(
     skip_existing: bool = False,
     resume: bool = False,
 ) -> dict[str, Any]:
-    from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import scrape_netherlands_laws_from_parameters
+    from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
+        scrape_netherlands_laws_from_parameters,
+    )
 
     params = {
         "output_dir": str(output_dir),
@@ -45,7 +52,13 @@ def build_package_set(raw_dir: Path | None = None) -> dict[str, Path]:
     normalized = build_normalized_package(raw_dir=raw_dir)
     base = build_ipfs_cid_package(raw_dir=raw_dir)
     indexes = build_all_indexes(source_dir=base)
-    return {"normalized": normalized, "base": base, "vector": indexes[0], "bm25": indexes[1], "knowledge-graph": indexes[2]}
+    return {
+        "normalized": normalized,
+        "base": base,
+        "vector": indexes[0],
+        "bm25": indexes[1],
+        "knowledge-graph": indexes[2],
+    }
 
 
 def upload_all(targets: Iterable[str] | None = None, **kwargs: Any) -> list[dict[str, Any]]:

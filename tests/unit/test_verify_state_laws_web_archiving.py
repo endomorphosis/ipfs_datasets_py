@@ -7,7 +7,9 @@ import sys
 
 def _load_module():
     repo_root = Path(__file__).resolve().parents[2]
-    script_path = repo_root / "scripts" / "ops" / "legal_data" / "verify_state_laws_web_archiving.py"
+    script_path = (
+        repo_root / "scripts" / "ops" / "legal_data" / "verify_state_laws_web_archiving.py"
+    )
     spec = importlib.util.spec_from_file_location("verify_state_laws_web_archiving", script_path)
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
@@ -21,7 +23,10 @@ def test_norm_url_prefers_http_for_wayback() -> None:
 
     url = "https://web.archive.org/web/20250124114611/https:///www.gencourt.state.nh.us/rsa/html/NHTOC/NHTOC-I.htm"
 
-    assert module._norm_url(url) == "http://web.archive.org/web/20250124114611/https://www.gencourt.state.nh.us/rsa/html/NHTOC/NHTOC-I.htm"
+    assert (
+        module._norm_url(url)
+        == "http://web.archive.org/web/20250124114611/https://www.gencourt.state.nh.us/rsa/html/NHTOC/NHTOC-I.htm"
+    )
 
 
 def test_build_wayback_candidates_include_http_and_https_variants_for_live_url() -> None:

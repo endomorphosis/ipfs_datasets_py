@@ -254,8 +254,7 @@ def _require_native_confirmation(
             "not passed"
         ),
         notes=[
-            "pass confirm_native_execution=True to explicitly authorize this "
-            "native process launch"
+            "pass confirm_native_execution=True to explicitly authorize this native process launch"
         ],
     )
 
@@ -297,8 +296,7 @@ def _load_corpus_manifest(
     if corpus_manifest_path is not None:
         return CorpusManifest.load(corpus_manifest_path)
     raise ValueError(
-        "either corpus_manifest (a dict) or corpus_manifest_path (a file "
-        "path) must be provided"
+        "either corpus_manifest (a dict) or corpus_manifest_path (a file path) must be provided"
     )
 
 
@@ -317,9 +315,7 @@ def _load_corpus_manifest(
 
 def _type_from_dict(data: Dict[str, Any]) -> Any:
     if not isinstance(data, dict) or "kind" not in data:
-        raise ValueError(
-            f"type payload must be a dict with a 'kind' key, got {data!r}"
-        )
+        raise ValueError(f"type payload must be a dict with a 'kind' key, got {data!r}")
     kind = data["kind"]
     if kind == "sort":
         return _translation.SortRef(name=data["name"])
@@ -332,16 +328,13 @@ def _type_from_dict(data: Dict[str, Any]) -> Any:
     if kind == "dependent":
         return _translation.DependentTypeRef(description=data["description"])
     raise ValueError(
-        f"unknown type kind {kind!r}; expected one of "
-        "'sort', 'type_var', 'function', 'dependent'"
+        f"unknown type kind {kind!r}; expected one of 'sort', 'type_var', 'function', 'dependent'"
     )
 
 
 def _term_from_dict(data: Dict[str, Any]) -> Any:
     if not isinstance(data, dict) or "kind" not in data:
-        raise ValueError(
-            f"term payload must be a dict with a 'kind' key, got {data!r}"
-        )
+        raise ValueError(f"term payload must be a dict with a 'kind' key, got {data!r}")
     kind = data["kind"]
     if kind == "var":
         return _translation.Var(name=data["name"], type=_type_from_dict(data["type"]))
@@ -402,9 +395,7 @@ def _term_from_dict(data: Dict[str, Any]) -> Any:
     if kind == "opaque":
         type_payload = data.get("type")
         if type_payload is not None:
-            return _translation.Opaque(
-                reason=data["reason"], type=_type_from_dict(type_payload)
-            )
+            return _translation.Opaque(reason=data["reason"], type=_type_from_dict(type_payload))
         return _translation.Opaque(reason=data["reason"])
     raise ValueError(
         f"unknown term kind {kind!r}; expected one of 'var', 'const', 'app', "
@@ -464,9 +455,7 @@ async def hammer_inspect(
             error=f"unknown itp {itp!r}; expected one of {[k.value for k in ITPKind]!r}",
         )
 
-    frontend = get_frontend(
-        itp_kind, timeout=timeout or _DEFAULT_FRONTEND_TIMEOUT_SECONDS
-    )
+    frontend = get_frontend(itp_kind, timeout=timeout or _DEFAULT_FRONTEND_TIMEOUT_SECONDS)
     capability = frontend.capability()
     if not capability.available:
         return _envelope(
@@ -488,9 +477,7 @@ async def hammer_inspect(
         return confirmation
 
     try:
-        snapshot = frontend.snapshot_goal(
-            native_source, theorem_id=theorem_id, timeout=timeout
-        )
+        snapshot = frontend.snapshot_goal(native_source, theorem_id=theorem_id, timeout=timeout)
     except FrontendUnavailableError as exc:
         return _envelope(
             operation=operation,
@@ -590,9 +577,7 @@ async def hammer_select_premises(
             error=f"invalid policy payload: {exc}",
         )
 
-    goal = GoalFeatures.from_statement(
-        goal_statement, theorem_id=theorem_id, imports=imports
-    )
+    goal = GoalFeatures.from_statement(goal_statement, theorem_id=theorem_id, imports=imports)
 
     try:
         result = select_premises(manifest, goal, top_k=top_k, policy=hammer_policy)
@@ -739,8 +724,7 @@ async def hammer_translate(
             "translation_map": ctx.translation_map.to_dict(),
         },
         notes=(
-            ["translation is PARTIAL: see obligations for what must still "
-             "be discharged"]
+            ["translation is PARTIAL: see obligations for what must still be discharged"]
             if record.status is TranslationStatus.PARTIAL
             else []
         ),
@@ -1048,9 +1032,7 @@ async def hammer_reconstruct(
                 error=f"invalid environment_lock payload: {exc}",
             )
 
-    frontend = get_frontend(
-        itp_kind, timeout=timeout or _DEFAULT_FRONTEND_TIMEOUT_SECONDS
-    )
+    frontend = get_frontend(itp_kind, timeout=timeout or _DEFAULT_FRONTEND_TIMEOUT_SECONDS)
     capability = frontend.capability()
     if not capability.available:
         return _envelope(
@@ -1366,9 +1348,7 @@ async def hammer_capability_status(
         )
 
     resolved_frontend_timeout = frontend_timeout or _DEFAULT_FRONTEND_TIMEOUT_SECONDS
-    resolved_reconstruction_timeout = (
-        frontend_timeout or DEFAULT_RECONSTRUCTION_TIMEOUT_SECONDS
-    )
+    resolved_reconstruction_timeout = frontend_timeout or DEFAULT_RECONSTRUCTION_TIMEOUT_SECONDS
 
     itp_report: Dict[str, Any] = {}
     for kind in itp_kinds:
@@ -1437,7 +1417,9 @@ class _HammerToolBase:
     tags: List[str] = []
     _func_name: str = ""
 
-    async def execute(self, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
+    async def execute(
+        self, params: Optional[Dict[str, Any]] = None, **kwargs: Any
+    ) -> Dict[str, Any]:
         merged: Dict[str, Any] = dict(params or {})
         merged.update(kwargs)
         func = globals()[self._func_name]

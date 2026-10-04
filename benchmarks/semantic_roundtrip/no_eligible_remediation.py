@@ -102,9 +102,7 @@ def _require(condition: object, message: str) -> None:
 
 
 def _mapping(value: object, path: str) -> Mapping[str, Any]:
-    if not isinstance(value, Mapping) or not all(
-        isinstance(key, str) for key in value
-    ):
+    if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
         raise NoEligibleRemediationError(f"{path} must be an object")
     return value
 
@@ -122,21 +120,14 @@ def _exact_fields(
 ) -> None:
     if set(value) != expected:
         raise NoEligibleRemediationError(
-            f"{path} fields changed; expected {sorted(expected)}, "
-            f"got {sorted(value)}"
+            f"{path} fields changed; expected {sorted(expected)}, got {sorted(value)}"
         )
 
 
 def _count(value: object, path: str, *, positive: bool = False) -> int:
-    if (
-        not isinstance(value, int)
-        or isinstance(value, bool)
-        or value < (1 if positive else 0)
-    ):
+    if not isinstance(value, int) or isinstance(value, bool) or value < (1 if positive else 0):
         qualifier = "positive" if positive else "nonnegative"
-        raise NoEligibleRemediationError(
-            f"{path} must be a {qualifier} integer"
-        )
+        raise NoEligibleRemediationError(f"{path} must be a {qualifier} integer")
     return value
 
 
@@ -148,9 +139,7 @@ def _string_array(
 ) -> list[str]:
     values = _array(value, path)
     if any(not isinstance(item, str) or not item for item in values):
-        raise NoEligibleRemediationError(
-            f"{path} must contain nonempty strings"
-        )
+        raise NoEligibleRemediationError(f"{path} must contain nonempty strings")
     if unique and len(set(values)) != len(values):
         raise NoEligibleRemediationError(f"{path} contains duplicates")
     return values
@@ -164,9 +153,7 @@ def _counter(
     result: dict[str, int] = {}
     for key, count in counts.items():
         if not key:
-            raise NoEligibleRemediationError(
-                f"{path} keys must be nonempty strings"
-            )
+            raise NoEligibleRemediationError(f"{path} keys must be nonempty strings")
         result[key] = _count(count, f"{path}.{key}", positive=True)
     return result
 
@@ -175,9 +162,7 @@ def _canonical_cid(value: object, path: str, *, codec: str) -> str:
     try:
         return validate_cid(value, codecs=(codec,))
     except (TypeError, ValueError) as exc:
-        raise NoEligibleRemediationError(
-            f"{path} must be a canonical {codec} CID"
-        ) from exc
+        raise NoEligibleRemediationError(f"{path} must be a canonical {codec} CID") from exc
 
 
 def _validate_gate_identity(gate: Mapping[str, Any]) -> None:
@@ -217,8 +202,7 @@ def _validate_remediation(
         "SRT-014 remediation source report CID is contradictory",
     )
     _require(
-        remediation.get("classification")
-        == "all_preregistered_arms_failed_selection_eligibility",
+        remediation.get("classification") == "all_preregistered_arms_failed_selection_eligibility",
         "SRT-014 remediation classification changed",
     )
     _require(
@@ -251,12 +235,8 @@ def _validate_remediation(
 
     gate_ids = tuple(SRT014_SELECTION_GATE_IDS)
     gate_id_set = set(gate_ids)
-    affected_arm_ids: dict[str, list[str]] = {
-        gate_id: [] for gate_id in gate_ids
-    }
-    failed_coordinate_totals = Counter(
-        {gate_id: 0 for gate_id in gate_ids}
-    )
+    affected_arm_ids: dict[str, list[str]] = {gate_id: [] for gate_id in gate_ids}
+    failed_coordinate_totals = Counter({gate_id: 0 for gate_id in gate_ids})
     terminal_reason_totals: Counter[str] = Counter()
     terminal_stage_totals: Counter[str] = Counter()
 
@@ -307,10 +287,7 @@ def _validate_remediation(
         for gate_id in gate_ids:
             failed_count = _count(
                 failed_counts[gate_id],
-                (
-                    f"remediation.arms.{arm_id}."
-                    f"failed_coordinate_count_by_gate.{gate_id}"
-                ),
+                (f"remediation.arms.{arm_id}.failed_coordinate_count_by_gate.{gate_id}"),
             )
             _require(
                 failed_count <= coordinate_count,
@@ -318,17 +295,11 @@ def _validate_remediation(
             )
             cases = _string_array(
                 affected_cases[gate_id],
-                (
-                    f"remediation.arms.{arm_id}."
-                    f"affected_case_ids_by_gate.{gate_id}"
-                ),
+                (f"remediation.arms.{arm_id}.affected_case_ids_by_gate.{gate_id}"),
             )
             samples = _string_array(
                 sample_coordinates[gate_id],
-                (
-                    f"remediation.arms.{arm_id}."
-                    f"sample_coordinate_keys_by_gate.{gate_id}"
-                ),
+                (f"remediation.arms.{arm_id}.sample_coordinate_keys_by_gate.{gate_id}"),
             )
             _require(
                 len(samples) <= min(5, failed_count),
@@ -433,9 +404,7 @@ def _validate_remediation(
         }
 
     systemic_gate_ids = [
-        gate_id
-        for gate_id in gate_ids
-        if len(affected_arm_ids[gate_id]) == len(arms)
+        gate_id for gate_id in gate_ids if len(affected_arm_ids[gate_id]) == len(arms)
     ]
     component_local_gate_ids = [
         gate_id
@@ -648,9 +617,7 @@ def _load_json_object(path: Path) -> Mapping[str, Any]:
         value: dict[str, object] = {}
         for key, item in pairs:
             if key in value:
-                raise NoEligibleRemediationError(
-                    f"duplicate JSON key {key!r} in {path}"
-                )
+                raise NoEligibleRemediationError(f"duplicate JSON key {key!r} in {path}")
             value[key] = item
         return value
 
@@ -660,9 +627,7 @@ def _load_json_object(path: Path) -> Mapping[str, Any]:
             object_pairs_hook=reject_duplicates,
         )
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
-        raise NoEligibleRemediationError(
-            f"cannot load remediation manifest: {path}"
-        ) from exc
+        raise NoEligibleRemediationError(f"cannot load remediation manifest: {path}") from exc
     return _mapping(raw_value, str(path))
 
 
@@ -675,11 +640,7 @@ def write_no_eligible_remediation_manifest(
     """Atomically create the frozen manifest, refusing a changed overwrite."""
 
     repo_root = repo_root.resolve()
-    path = (
-        output_path.resolve()
-        if output_path is not None
-        else repo_root / MANIFEST_RELATIVE_PATH
-    )
+    path = output_path.resolve() if output_path is not None else repo_root / MANIFEST_RELATIVE_PATH
     manifest = build_no_eligible_remediation_manifest(
         repo_root,
         srt014_gate=srt014_gate,
@@ -693,10 +654,9 @@ def write_no_eligible_remediation_manifest(
         return path
 
     path.parent.mkdir(parents=True, exist_ok=True)
-    rendered = (
-        json.dumps(manifest, indent=2, sort_keys=True, ensure_ascii=False)
-        + "\n"
-    ).encode("utf-8")
+    rendered = (json.dumps(manifest, indent=2, sort_keys=True, ensure_ascii=False) + "\n").encode(
+        "utf-8"
+    )
     temporary_name: str | None = None
     try:
         with tempfile.NamedTemporaryFile(

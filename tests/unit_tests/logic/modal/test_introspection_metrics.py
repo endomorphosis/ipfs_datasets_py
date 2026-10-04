@@ -167,9 +167,9 @@ def test_manifest_rejects_missing_required_family_and_unknown_record_family() ->
 
     payload = _fixture_payload()
     payload["cases"][0]["family"] = "invented_family"
-    payload["cases"][0]["learned_ir_view_by_family"]["invented_family"] = (
-        payload["cases"][0]["learned_ir_view_by_family"].pop("alethic")
-    )
+    payload["cases"][0]["learned_ir_view_by_family"]["invented_family"] = payload["cases"][0][
+        "learned_ir_view_by_family"
+    ].pop("alethic")
     payload["cases"][0]["learned_ir_view_by_family"]["invented_family"]["family"] = (
         "invented_family"
     )

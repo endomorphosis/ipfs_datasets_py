@@ -34,12 +34,8 @@ from benchmarks.semantic_roundtrip.contracts import (
 )
 
 
-SOURCE_WITHHELD_CANONICAL_PARAPHRASER_INTERFACE: Final = (
-    "SourceWithheldCanonicalParaphraser@1"
-)
-SOURCE_WITHHELD_PARAPHRASE_ATTRIBUTION_INTERFACE: Final = (
-    "SourceWithheldParaphraseAttribution@1"
-)
+SOURCE_WITHHELD_CANONICAL_PARAPHRASER_INTERFACE: Final = "SourceWithheldCanonicalParaphraser@1"
+SOURCE_WITHHELD_PARAPHRASE_ATTRIBUTION_INTERFACE: Final = "SourceWithheldParaphraseAttribution@1"
 SOURCE_WITHHELD_PARAPHRASE_ATTRIBUTION_SCHEMA: Final = (
     "ipfs-datasets.semantic-roundtrip-source-withheld-paraphrase-attribution.v1"
 )
@@ -61,9 +57,7 @@ FROZEN_REPLACEMENT_CONFIG: Final[Mapping[str, str]] = MappingProxyType(
         "rule_order": "canonical_rule_ir_v1",
     }
 )
-FROZEN_REPLACEMENT_CONFIG_CID: Final = cid_for_dag_json(
-    dict(FROZEN_REPLACEMENT_CONFIG)
-)
+FROZEN_REPLACEMENT_CONFIG_CID: Final = cid_for_dag_json(dict(FROZEN_REPLACEMENT_CONFIG))
 
 _MODAL_PHRASES: Final = MappingProxyType(
     {
@@ -130,14 +124,12 @@ def paraphrase_rule(rule: CanonicalRule) -> str:
     if rule.temporal:
         sentence += " " + _join_atoms(rule.temporal, "and")
     if rule.conditions:
-        sentence += (
-            f" {FROZEN_REPLACEMENT_CONFIG['condition_connector']} "
-            + _join_atoms(rule.conditions, "and")
+        sentence += f" {FROZEN_REPLACEMENT_CONFIG['condition_connector']} " + _join_atoms(
+            rule.conditions, "and"
         )
     if rule.exceptions:
-        sentence += (
-            f" {FROZEN_REPLACEMENT_CONFIG['exception_connector']} "
-            + _join_atoms(rule.exceptions, "or")
+        sentence += f" {FROZEN_REPLACEMENT_CONFIG['exception_connector']} " + _join_atoms(
+            rule.exceptions, "or"
         )
 
     # RealizerRequest vocabulary validation guarantees nonempty actor/action
@@ -164,23 +156,17 @@ def _attribution_receipt(
         "interface": SOURCE_WITHHELD_PARAPHRASE_ATTRIBUTION_INTERFACE,
         "schema_version": SOURCE_WITHHELD_PARAPHRASE_ATTRIBUTION_SCHEMA,
         "realizer_identity": SOURCE_WITHHELD_CANONICAL_PARAPHRASER_INTERFACE,
-        "rendering_spec_cid": (
-            SOURCE_WITHHELD_PARAPHRASE_RENDERING_SPEC_CID
-        ),
+        "rendering_spec_cid": (SOURCE_WITHHELD_PARAPHRASE_RENDERING_SPEC_CID),
         "deterministic": True,
         "source_withheld": True,
         "observed_input_fields": list(_PUBLIC_INPUT_FIELDS),
         "excluded_input_channels": list(_EXCLUDED_INPUT_CHANNELS),
         "input_attribution": {
-            "canonical_l1_cid": cid_for_dag_json(
-                request.canonical_ir.to_dict()
-            ),
+            "canonical_l1_cid": cid_for_dag_json(request.canonical_ir.to_dict()),
             "public_closed_vocabulary_cid": cid_for_dag_json(
                 request.allowed_atom_vocabulary.to_dict()
             ),
-            "frozen_replacement_config_cid": (
-                FROZEN_REPLACEMENT_CONFIG_CID
-            ),
+            "frozen_replacement_config_cid": (FROZEN_REPLACEMENT_CONFIG_CID),
             "public_request_cid": cid_for_dag_json(request_payload),
         },
         "output_attribution": {
@@ -226,10 +212,7 @@ class SourceWithheldCanonicalParaphraser:
             )
 
         try:
-            text = " ".join(
-                paraphrase_rule(rule)
-                for rule in request.canonical_ir.rules
-            )
+            text = " ".join(paraphrase_rule(rule) for rule in request.canonical_ir.rules)
             return RealizerResult(
                 status=ComponentStatus.SUCCESS,
                 text=text,

@@ -18,7 +18,7 @@ from tests._test_utils import (
     raise_on_bad_callable_code_quality,
     get_ast_tree,
     BadDocumentationError,
-    BadSignatureError
+    BadSignatureError,
 )
 
 work_dir = os.path.abspath(os.path.dirname(__file__))
@@ -31,8 +31,12 @@ file_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/llm_optimize
 md_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/llm_optimizer_stubs.md")
 
 # Make sure the input file and documentation file exist.
-assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
-assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+assert os.path.exists(file_path), (
+    f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
+)
+assert os.path.exists(md_path), (
+    f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+)
 
 from ipfs_datasets_py.pdf_processing.llm_optimizer import (
     ChunkOptimizer,
@@ -77,7 +81,6 @@ except ImportError as e:
     raise ImportError(f"Failed to import necessary modules: {e}")
 
 
-
 class TestTextProcessorInitialization:
     """Test TextProcessor initialization and configuration."""
 
@@ -92,13 +95,13 @@ class TestTextProcessorInitialization:
         """
         # When
         processor = TextProcessor()
-        
+
         # Then
         assert isinstance(processor, TextProcessor), "Should create TextProcessor instance"
-        
+
         # Check that methods are accessible
-        assert hasattr(processor, 'split_sentences'), "Should have split_sentences method"
-        assert hasattr(processor, 'extract_keywords'), "Should have extract_keywords method"
+        assert hasattr(processor, "split_sentences"), "Should have split_sentences method"
+        assert hasattr(processor, "extract_keywords"), "Should have extract_keywords method"
         assert callable(processor.split_sentences), "split_sentences should be callable"
         assert callable(processor.extract_keywords), "extract_keywords should be callable"
 
@@ -111,14 +114,13 @@ class TestTextProcessorInitialization:
             - No errors raised
         """
 
-        
         # Given
         processor = TextProcessor()
         text = ""
-        
+
         # When
         result = processor.split_sentences(text)
-        
+
         # Then
         assert isinstance(result, list), "Result should be a list"
         assert len(result) == 0, "Should return empty list for empty input"
@@ -133,11 +135,10 @@ class TestTextProcessorInitialization:
             - Empty list returned
         """
 
-
         # Given
         processor = TextProcessor()
         text = None
-        
+
         # When
         with pytest.raises((TypeError, AttributeError)):
             result = processor.split_sentences(text)
@@ -152,11 +153,10 @@ class TestTextProcessorInitialization:
             - Empty list returned
         """
 
-        
         # Given
         processor = TextProcessor()
-        test_inputs = [123, [1, 2, 3], {'key': 'value'}, True, 3.14]
-        
+        test_inputs = [123, [1, 2, 3], {"key": "value"}, True, 3.14]
+
         for input_value in test_inputs:
             # When/Then - should either handle gracefully or raise TypeError
             try:
@@ -177,33 +177,41 @@ class TestTextProcessorInitialization:
             - True sentence boundaries detected
         """
 
-        
         # Given
         processor = TextProcessor()
-        
+
         test_cases = [
             # Decimal numbers should not break sentences
-            ("The value is 3.14159 and it represents pi.", ["The value is 3.14159 and it represents pi"]),
-            
+            (
+                "The value is 3.14159 and it represents pi.",
+                ["The value is 3.14159 and it represents pi"],
+            ),
             # Ellipses should be handled
-            ("This is incomplete... But this continues.", ["This is incomplete", "But this continues"]),
-            
+            (
+                "This is incomplete... But this continues.",
+                ["This is incomplete", "But this continues"],
+            ),
             # Multiple periods in numbers
-            ("Version 2.1.3 was released. The next version is 2.2.0.", 
-            ["Version 2.1.3 was released", "The next version is 2.2.0"]),
-            
+            (
+                "Version 2.1.3 was released. The next version is 2.2.0.",
+                ["Version 2.1.3 was released", "The next version is 2.2.0"],
+            ),
             # URLs with periods
-            ("Visit www.example.com for more info. This is a new sentence.",
-            ["Visit www.example.com for more info", "This is a new sentence"]),
+            (
+                "Visit www.example.com for more info. This is a new sentence.",
+                ["Visit www.example.com for more info", "This is a new sentence"],
+            ),
         ]
-        
+
         for input_text, expected_min_sentences in test_cases:
             # When
             result = processor.split_sentences(input_text)
-            
+
             # Then
             assert isinstance(result, list), f"Result should be list for: {input_text}"
-            assert len(result) >= len(expected_min_sentences) - 1, f"Should detect reasonable sentence boundaries in: {input_text}"
+            assert len(result) >= len(expected_min_sentences) - 1, (
+                f"Should detect reasonable sentence boundaries in: {input_text}"
+            )
 
     def test_split_sentences_abbreviations_handling(self):
         """
@@ -216,32 +224,31 @@ class TestTextProcessorInitialization:
         """
         # Given
         processor = TextProcessor()
-        
+
         test_cases = [
             # Common titles
             ("Dr. Smith is here. He has a Ph.D. degree.", 2),
             ("Mr. Johnson and Mrs. Smith attended.", 1),
             ("Prof. Williams vs. Dr. Brown in the debate.", 1),
-            
             # Academic abbreviations
             ("He earned his Ph.D. in 1995. The research was groundbreaking.", 2),
             ("The B.A. and M.A. degrees are prerequisites.", 1),
-            
             # Common abbreviations
             ("It happened in Jan. last year. Feb. was different.", 2),
             ("The U.S.A. and U.K. have treaties.", 1),
             ("At 3 a.m. the alarm rang. Everyone woke up.", 2),
         ]
-        
+
         for input_text, expected_sentences in test_cases:
             # When
             result = processor.split_sentences(input_text)
-            
+
             # Then
             assert isinstance(result, list), f"Result should be list for: {input_text}"
             # Allow some flexibility in sentence detection for complex cases
-            assert len(result) >= expected_sentences - 1 and len(result) <= expected_sentences + 1, \
-                f"Expected ~{expected_sentences} sentences, got {len(result)} for: {input_text}"
+            assert (
+                len(result) >= expected_sentences - 1 and len(result) <= expected_sentences + 1
+            ), f"Expected ~{expected_sentences} sentences, got {len(result)} for: {input_text}"
 
     def test_split_sentences_multiple_terminators(self):
         """
@@ -253,43 +260,50 @@ class TestTextProcessorInitialization:
             - Sentence content preserved
         """
 
-        
         # Given
         processor = TextProcessor()
-        
+
         test_cases = [
-            ("This is exciting!!! What do you think??? I'm not sure...",
-            ["This is exciting", "What do you think", "I'm not sure"]),
-            
-            ("Help!!! Someone please help!!! This is urgent!!!",
-            ["Help", "Someone please help", "This is urgent"]),
-            
-            ("Really??? Are you sure??? Yes, absolutely!!!",
-            ["Really", "Are you sure", "Yes, absolutely"]),
-            
-            ("Wait... Let me think... OK, I understand...",
-            ["Wait", "Let me think", "OK, I understand"]),
+            (
+                "This is exciting!!! What do you think??? I'm not sure...",
+                ["This is exciting", "What do you think", "I'm not sure"],
+            ),
+            (
+                "Help!!! Someone please help!!! This is urgent!!!",
+                ["Help", "Someone please help", "This is urgent"],
+            ),
+            (
+                "Really??? Are you sure??? Yes, absolutely!!!",
+                ["Really", "Are you sure", "Yes, absolutely"],
+            ),
+            (
+                "Wait... Let me think... OK, I understand...",
+                ["Wait", "Let me think", "OK, I understand"],
+            ),
         ]
-        
+
         for input_text, expected_content in test_cases:
             # When
             result = processor.split_sentences(input_text)
-            
+
             # Then
             assert isinstance(result, list), f"Result should be list for: {input_text}"
-            assert len(result) == len(expected_content), f"Expected {len(expected_content)} sentences, got {len(result)} for: {input_text}"
-            
+            assert len(result) == len(expected_content), (
+                f"Expected {len(expected_content)} sentences, got {len(result)} for: {input_text}"
+            )
+
             # Check no empty sentences
             for sentence in result:
                 assert len(sentence.strip()) > 0, f"Should not have empty sentences: '{sentence}'"
-            
+
             # Check general content preservation
-            combined_result = ' '.join(result).lower()
+            combined_result = " ".join(result).lower()
             for expected_part in expected_content:
                 key_words = expected_part.lower().split()[:2]  # Check first two words
                 if key_words:
-                    assert any(word in combined_result for word in key_words), \
+                    assert any(word in combined_result for word in key_words), (
                         f"Should preserve content from: {expected_part}"
+                    )
 
     def test_split_sentences_paragraph_breaks(self):
         """
@@ -301,36 +315,43 @@ class TestTextProcessorInitialization:
             - Whitespace normalized appropriately
         """
 
-        
         # Given
         processor = TextProcessor()
-        
+
         test_cases = [
             # Paragraph breaks should not affect sentence detection
-            ("First sentence.\n\nSecond paragraph starts. It continues here.",
-            ["First sentence", "Second paragraph starts", "It continues here"]),
-            
+            (
+                "First sentence.\n\nSecond paragraph starts. It continues here.",
+                ["First sentence", "Second paragraph starts", "It continues here"],
+            ),
             # Multiple paragraph breaks
-            ("Para one.\n\n\nPara two starts.\n\nPara three here.",
-            ["Para one", "Para two starts", "Para three here"]),
-            
+            (
+                "Para one.\n\n\nPara two starts.\n\nPara three here.",
+                ["Para one", "Para two starts", "Para three here"],
+            ),
             # Mixed line breaks
-            ("Line one.\nLine two continues.\n\nNew paragraph.",
-            ["Line one", "Line two continues", "New paragraph"]),
+            (
+                "Line one.\nLine two continues.\n\nNew paragraph.",
+                ["Line one", "Line two continues", "New paragraph"],
+            ),
         ]
-        
+
         for input_text, expected_sentences in test_cases:
             # When
             result = processor.split_sentences(input_text)
-            
+
             # Then
             assert isinstance(result, list), f"Result should be list for: {input_text}"
-            assert len(result) == len(expected_sentences), f"Expected {len(expected_sentences)} sentences, got {len(result)}"
-            
+            assert len(result) == len(expected_sentences), (
+                f"Expected {len(expected_sentences)} sentences, got {len(result)}"
+            )
+
             # Check whitespace normalization
             for sentence in result:
-                assert sentence == sentence.strip(), f"Sentence should have no leading/trailing whitespace: '{sentence}'"
-                assert '\n' not in sentence, f"Sentence should not contain newlines: '{sentence}'"
+                assert sentence == sentence.strip(), (
+                    f"Sentence should have no leading/trailing whitespace: '{sentence}'"
+                )
+                assert "\n" not in sentence, f"Sentence should not contain newlines: '{sentence}'"
 
     def test_split_sentences_unicode_text(self):
         """
@@ -342,45 +363,45 @@ class TestTextProcessorInitialization:
             - Character encoding preserved
         """
 
-        
         # Given
         processor = TextProcessor()
-        
+
         test_cases = [
             # Unicode characters
             ("Café is open. Naïve approach failed.", 2),
-            
             # Non-ASCII punctuation
             ("这是第一句。这是第二句？", 2),  # Chinese punctuation
-            
             # Mixed languages
             ("Hello world. Bonjour monde. Hola mundo.", 3),
-            
             # Special Unicode punctuation
             ("Question… Answer！ More text？", 3),
-            
             # Emoji and special characters
             ("Great work! 🎉 Let's celebrate! 🎊 Amazing results!", 3),
         ]
-        
+
         for input_text, expected_count in test_cases:
             # When
             result = processor.split_sentences(input_text)
-            
+
             # Then
             assert isinstance(result, list), f"Result should be list for: {input_text}"
             # Allow some flexibility for Unicode handling
-            assert len(result) >= expected_count - 1 and len(result) <= expected_count + 1, \
+            assert len(result) >= expected_count - 1 and len(result) <= expected_count + 1, (
                 f"Expected ~{expected_count} sentences, got {len(result)} for: {input_text}"
-            
+            )
+
             # Check character preservation
-            combined = ' '.join(result)
+            combined = " ".join(result)
             original_chars = set(c for c in input_text if c.isalnum() or ord(c) > 127)
             result_chars = set(c for c in combined if c.isalnum() or ord(c) > 127)
-            
+
             # Most Unicode characters should be preserved
-            preserved_ratio = len(original_chars.intersection(result_chars)) / max(len(original_chars), 1)
-            assert preserved_ratio >= 0.8, f"Should preserve most Unicode characters: {preserved_ratio}"
+            preserved_ratio = len(original_chars.intersection(result_chars)) / max(
+                len(original_chars), 1
+            )
+            assert preserved_ratio >= 0.8, (
+                f"Should preserve most Unicode characters: {preserved_ratio}"
+            )
 
     def test_split_sentences_academic_text(self):
         """
@@ -393,33 +414,36 @@ class TestTextProcessorInitialization:
         """
         # Given
         processor = TextProcessor()
-        
+
         test_cases = [
             # Citations
-            ("Smith et al. (2020) showed great results. The study by Jones et al. (2019) differed.", 2),
-            
+            (
+                "Smith et al. (2020) showed great results. The study by Jones et al. (2019) differed.",
+                2,
+            ),
             # Technical abbreviations
             ("The DNA analysis was complete. RNA extraction followed standard protocols.", 2),
-            
             # Complex academic language
-            ("The methodology utilized in vivo experiments. Results indicated significant p < 0.05 values.", 2),
-            
+            (
+                "The methodology utilized in vivo experiments. Results indicated significant p < 0.05 values.",
+                2,
+            ),
             # References and equations
             ("See Figure 1.2 for details. Equation 3.14 shows the relationship.", 2),
-            
             # Version numbers and technical specs
             ("Algorithm v2.1.3 was implemented. Performance improved by 15.7% over baseline.", 2),
         ]
-        
+
         for input_text, expected_count in test_cases:
             # When
             result = processor.split_sentences(input_text)
-            
+
             # Then
             assert isinstance(result, list), f"Result should be list for: {input_text}"
-            assert len(result) >= expected_count - 1 and len(result) <= expected_count + 1, \
+            assert len(result) >= expected_count - 1 and len(result) <= expected_count + 1, (
                 f"Expected ~{expected_count} sentences, got {len(result)} for: {input_text}"
-            
+            )
+
             # Check that technical terms are preserved
             for sentence in result:
                 assert len(sentence.strip()) > 0, "Should not have empty sentences"
@@ -434,40 +458,43 @@ class TestTextProcessorInitialization:
             - Dialogue attribution handled correctly
         """
 
-        
         # Given
         processor = TextProcessor()
-        
+
         test_cases = [
             # Basic quotations
             ('He said "Hello world." She replied "How are you?"', 2),
-            
             # Quotations with attribution
             ('"This is important," she said. "Very important indeed."', 2),
-            
             # Mixed quotation styles
-            ("The paper states 'significant results.' The author noted 'further research needed.'", 2),
-            
+            (
+                "The paper states 'significant results.' The author noted 'further research needed.'",
+                2,
+            ),
             # Complex dialogue
             ('John asked, "Are you ready?" Mary answered, "Yes, let\'s go!"', 2),
         ]
-        
+
         for input_text, expected_min in test_cases:
             # When
             result = processor.split_sentences(input_text)
-            
+
             # Then
             assert isinstance(result, list), f"Result should be list for: {input_text}"
-            assert len(result) >= expected_min - 1, f"Should detect at least {expected_min-1} sentences for: {input_text}"
-            
+            assert len(result) >= expected_min - 1, (
+                f"Should detect at least {expected_min - 1} sentences for: {input_text}"
+            )
+
             # Check quotation marks are preserved
-            combined = ' '.join(result)
-            quote_chars = ['"', "'", '"', '"', ''', ''']
+            combined = " ".join(result)
+            quote_chars = ['"', "'", '"', '"', """, """]
             original_quotes = sum(input_text.count(q) for q in quote_chars)
             result_quotes = sum(combined.count(q) for q in quote_chars)
-            
+
             if original_quotes > 0:
-                assert result_quotes >= original_quotes * 0.8, "Should preserve most quotation marks"
+                assert result_quotes >= original_quotes * 0.8, (
+                    "Should preserve most quotation marks"
+                )
 
     def test_split_sentences_malformed_input(self):
         """
@@ -479,33 +506,32 @@ class TestTextProcessorInitialization:
             - Fallback behavior or empty list returned
         """
 
-        
         # Given
         processor = TextProcessor()
-        
+
         malformed_inputs = [
             # Extremely nested parentheses
             "(" * 100 + "text" + ")" * 100,
-            
             # Control characters
             "\x00\x01\x02text\x03\x04\x05",
-            
             # Very long sequences of special characters
             "." * 1000 + "text" + "!" * 1000,
-            
             # Mixed problematic characters
             "\\\\\\text///with\\\\problems",
         ]
-        
+
         for malformed_text in malformed_inputs:
             # When/Then - should not crash
             try:
                 result = processor.split_sentences(malformed_text)
-                assert isinstance(result, list), f"Should return list for malformed input: {malformed_text[:20]}..."
+                assert isinstance(result, list), (
+                    f"Should return list for malformed input: {malformed_text[:20]}..."
+                )
             except Exception as e:
                 # If an exception occurs, it should be a controlled one, not a crash
-                assert isinstance(e, (ValueError, TypeError, RuntimeError)), \
+                assert isinstance(e, (ValueError, TypeError, RuntimeError)), (
                     f"Should handle malformed input gracefully, got: {type(e).__name__}: {e}"
+                )
 
     def test_split_sentences_very_long_text(self):
         """
@@ -518,39 +544,42 @@ class TestTextProcessorInitialization:
         """
 
         import time
-        
+
         # Given
         processor = TextProcessor()
-        
+
         # Create large text with known sentence structure
         base_sentences = [
             "This is sentence one.",
             "This is sentence two!",
             "Is this sentence three?",
-            "Yes, this is sentence four."
+            "Yes, this is sentence four.",
         ]
-        
+
         # Repeat to create large text (~1MB)
         repetitions = 50000  # Should create ~1MB of text
         large_text = " ".join(base_sentences * repetitions)
-        
+
         # When
         start_time = time.time()
         result = processor.split_sentences(large_text)
         end_time = time.time()
-        
+
         # Then
         processing_time = end_time - start_time
-        assert processing_time < 60.0, f"Should process large text in reasonable time (<60s), took {processing_time}s"
-        
+        assert processing_time < 60.0, (
+            f"Should process large text in reasonable time (<60s), took {processing_time}s"
+        )
+
         assert isinstance(result, list), "Should return list for large text"
         assert len(result) > 0, "Should detect sentences in large text"
-        
+
         # Should detect approximately the right number of sentences
         expected_sentences = len(base_sentences) * repetitions
         detected_ratio = len(result) / expected_sentences
-        assert detected_ratio >= 0.8 and detected_ratio <= 1.2, \
+        assert detected_ratio >= 0.8 and detected_ratio <= 1.2, (
             f"Should detect reasonable number of sentences: expected ~{expected_sentences}, got {len(result)}"
+        )
 
     def test_split_sentences_empty_sentences_filtered(self):
         """
@@ -562,36 +591,34 @@ class TestTextProcessorInitialization:
             - No whitespace-only sentences
         """
 
-        
         # Given
         processor = TextProcessor()
-        
+
         test_cases = [
             # Multiple terminators that might create empty sentences
             "Text.......More text!!!!!!Final text???",
-            
             # Whitespace around terminators
             "First.   \n\n   Second!    \t\t   Third?",
-            
             # Only punctuation between real sentences
             "Real sentence. !@#$%^&*() Another real sentence.",
-            
             # Empty quotations
             'He said "". She replied "Nothing to say."',
         ]
-        
+
         for input_text in test_cases:
             # When
             result = processor.split_sentences(input_text)
-            
+
             # Then
             assert isinstance(result, list), f"Result should be list for: {input_text}"
-            
+
             # Check no empty or whitespace-only sentences
             for sentence in result:
                 assert isinstance(sentence, str), "All results should be strings"
                 assert len(sentence.strip()) > 0, f"Should not have empty sentences: '{sentence}'"
-                assert sentence == sentence.strip(), f"Should not have leading/trailing whitespace: '{sentence}'"
+                assert sentence == sentence.strip(), (
+                    f"Should not have leading/trailing whitespace: '{sentence}'"
+                )
 
     def test_split_sentences_return_type_validation(self):
         """
@@ -603,10 +630,9 @@ class TestTextProcessorInitialization:
             - No None or invalid elements
         """
 
-        
         # Given
         processor = TextProcessor()
-        
+
         test_inputs = [
             "Simple sentence.",
             "Multiple sentences. Here they are! Questions too?",
@@ -616,18 +642,20 @@ class TestTextProcessorInitialization:
             "Mixed! Cases? Here.",
             "Unicode café. More text.",
         ]
-        
+
         for input_text in test_inputs:
             # When
             result = processor.split_sentences(input_text)
-            
+
             # Then
             assert isinstance(result, list), f"Return type should be list for: '{input_text}'"
-            
+
             for i, sentence in enumerate(result):
-                assert isinstance(sentence, str), f"Element {i} should be string, got {type(sentence)}: '{sentence}'"
+                assert isinstance(sentence, str), (
+                    f"Element {i} should be string, got {type(sentence)}: '{sentence}'"
+                )
                 assert sentence is not None, f"Element {i} should not be None"
-                
+
             # Check list consistency
             assert len(result) >= 0, "List length should be non-negative"
 

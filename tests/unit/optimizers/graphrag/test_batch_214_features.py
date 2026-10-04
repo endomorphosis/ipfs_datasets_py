@@ -10,12 +10,14 @@ Methods under test (3 new + 3 stale-verified):
     - OntologyLearningAdapter.feedback_range()
     - OntologyPipeline.run_score_percentile(p)
 """
+
 import math
 import pytest
 from unittest.mock import MagicMock
 
 
 # ── helpers ───────────────────────────────────────────────────────────────────
+
 
 class _FakeEntry:
     def __init__(self, avg):
@@ -28,18 +30,26 @@ def _push_opt(o, avg):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
 def _make_critic_direct():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic.__new__(OntologyCritic)
 
 
-def _make_critic_score(completeness=0.8, consistency=0.7, clarity=0.6,
-                        granularity=0.5, relationship_coherence=0.4,
-                        domain_alignment=0.3):
+def _make_critic_score(
+    completeness=0.8,
+    consistency=0.7,
+    clarity=0.6,
+    granularity=0.5,
+    relationship_coherence=0.4,
+    domain_alignment=0.3,
+):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     return CriticScore(
         completeness=completeness,
         consistency=consistency,
@@ -52,11 +62,13 @@ def _make_critic_score(completeness=0.8, consistency=0.7, clarity=0.6,
 
 def _make_entity(eid, confidence=1.0, entity_type="T"):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type=entity_type, text=eid, confidence=confidence)
 
 
 def _make_result(entities=None, relationships=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities or [],
         relationships=relationships or [],
@@ -66,21 +78,27 @@ def _make_result(entities=None, relationships=None):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
 def _push_feedback(a, score):
     from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import FeedbackRecord
+
     a._feedback.append(FeedbackRecord(final_score=score))
 
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -92,6 +110,7 @@ def _push_run(p, score_val):
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
@@ -109,6 +128,7 @@ def ontology_builder(ontology_dict_factory):
 
 
 # ── OntologyOptimizer.score_bimodality_dip ───────────────────────────────────
+
 
 class TestScoreBimodalityDip:
     def test_empty_returns_zero(self):
@@ -201,6 +221,7 @@ class TestScoreBimodalityDip:
 
 # ── OntologyGenerator.entity_confidence_trimmed_mean ─────────────────────────
 
+
 class TestEntityConfidenceTrimmedMean:
     def test_no_entities_returns_zero(self):
         g = _make_generator()
@@ -215,8 +236,7 @@ class TestEntityConfidenceTrimmedMean:
 
     def test_zero_trim_equals_mean(self):
         g = _make_generator()
-        entities = [_make_entity(f"e{i}", confidence=v)
-                    for i, v in enumerate([0.2, 0.4, 0.6, 0.8])]
+        entities = [_make_entity(f"e{i}", confidence=v) for i, v in enumerate([0.2, 0.4, 0.6, 0.8])]
         result = _make_result(entities=entities)
         mean = g.avg_entity_confidence(result)
         tm = g.entity_confidence_trimmed_mean(result, trim_pct=0.0)
@@ -237,8 +257,9 @@ class TestEntityConfidenceTrimmedMean:
 
     def test_default_trim_10_pct(self):
         g = _make_generator()
-        entities = [_make_entity(f"e{i}", confidence=float(i) / 10.0)
-                    for i in range(10)]  # 0.0, 0.1, ..., 0.9
+        entities = [
+            _make_entity(f"e{i}", confidence=float(i) / 10.0) for i in range(10)
+        ]  # 0.0, 0.1, ..., 0.9
         result = _make_result(entities=entities)
         tm = g.entity_confidence_trimmed_mean(result)
         # k=1, keep indices 1..8 → [0.1..0.8], mean = 0.45
@@ -246,8 +267,7 @@ class TestEntityConfidenceTrimmedMean:
 
     def test_result_in_unit_interval(self):
         g = _make_generator()
-        entities = [_make_entity(f"e{i}", confidence=v)
-                    for i, v in enumerate([0.1, 0.3, 0.7, 0.9])]
+        entities = [_make_entity(f"e{i}", confidence=v) for i, v in enumerate([0.1, 0.3, 0.7, 0.9])]
         result = _make_result(entities=entities)
         tm = g.entity_confidence_trimmed_mean(result, trim_pct=10.0)
         assert 0.0 <= tm <= 1.0
@@ -283,14 +303,14 @@ class TestEntityConfidenceTrimmedMean:
 
     def test_large_trim_pct_just_below_50(self):
         g = _make_generator()
-        entities = [_make_entity(f"e{i}", confidence=float(i) / 9.0)
-                    for i in range(10)]
+        entities = [_make_entity(f"e{i}", confidence=float(i) / 9.0) for i in range(10)]
         result = _make_result(entities=entities)
         tm = g.entity_confidence_trimmed_mean(result, trim_pct=49.0)
         assert 0.0 <= tm <= 1.0
 
 
 # ── LogicValidator.diameter_approx ───────────────────────────────────────────
+
 
 class TestDiameterApprox:
     def test_empty_graph_returns_zero(self, ontology_builder):
@@ -354,9 +374,10 @@ class TestDiameterApprox:
     def test_self_loop_ignored(self):
         # A→A (self-loop) + A→B → diameter should be 1
         v = _make_validator()
-        onto = {"entities": [{"id": "A"}, {"id": "B"}],
-                "relationships": [{"source": "A", "target": "A"},
-                                   {"source": "A", "target": "B"}]}
+        onto = {
+            "entities": [{"id": "A"}, {"id": "B"}],
+            "relationships": [{"source": "A", "target": "A"}, {"source": "A", "target": "B"}],
+        }
         assert v.diameter_approx(onto) == 1
 
     def test_star_graph_diameter_two(self, ontology_builder):
@@ -384,13 +405,15 @@ class TestDiameterApprox:
     def test_edges_only_nodes_not_in_entities(self):
         # Nodes introduced only via relationships
         v = _make_validator()
-        onto = {"entities": [],
-                "relationships": [{"source": "A", "target": "B"},
-                                   {"source": "B", "target": "C"}]}
+        onto = {
+            "entities": [],
+            "relationships": [{"source": "A", "target": "B"}, {"source": "B", "target": "C"}],
+        }
         assert v.diameter_approx(onto) == 2
 
 
 # ── Stale smoke tests (already existed) ─────────────────────────────────────
+
 
 class TestStaleDimensionEntropy:
     """dimension_entropy already existed – smoke-test to confirm it works."""
@@ -398,8 +421,12 @@ class TestStaleDimensionEntropy:
     def test_uniform_dims_max_entropy(self):
         c = _make_critic_direct()
         score = _make_critic_score(
-            completeness=0.5, consistency=0.5, clarity=0.5,
-            granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+            completeness=0.5,
+            consistency=0.5,
+            clarity=0.5,
+            granularity=0.5,
+            relationship_coherence=0.5,
+            domain_alignment=0.5,
         )
         entropy = c.dimension_entropy(score)
         # Uniform distribution → max entropy = log2(6) ≈ 2.585
@@ -408,16 +435,24 @@ class TestStaleDimensionEntropy:
     def test_all_zero_dims_returns_zero(self):
         c = _make_critic_direct()
         score = _make_critic_score(
-            completeness=0.0, consistency=0.0, clarity=0.0,
-            granularity=0.0, relationship_coherence=0.0, domain_alignment=0.0,
+            completeness=0.0,
+            consistency=0.0,
+            clarity=0.0,
+            granularity=0.0,
+            relationship_coherence=0.0,
+            domain_alignment=0.0,
         )
         assert c.dimension_entropy(score) == 0.0
 
     def test_single_nonzero_dim_returns_zero(self):
         c = _make_critic_direct()
         score = _make_critic_score(
-            completeness=1.0, consistency=0.0, clarity=0.0,
-            granularity=0.0, relationship_coherence=0.0, domain_alignment=0.0,
+            completeness=1.0,
+            consistency=0.0,
+            clarity=0.0,
+            granularity=0.0,
+            relationship_coherence=0.0,
+            domain_alignment=0.0,
         )
         # All probability mass on one bin → H = 0
         assert c.dimension_entropy(score) == pytest.approx(0.0)

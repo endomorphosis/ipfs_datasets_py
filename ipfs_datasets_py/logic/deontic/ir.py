@@ -145,10 +145,7 @@ def _hydrate_parser_element_from_nested_context(element: Mapping[str, Any]) -> D
             _fill_empty_field(hydrated, source, key)
         if not _value_is_present(hydrated.get("text")):
             hydrated["text"] = (
-                source.get("text")
-                or source.get("source_text")
-                or source.get("support_text")
-                or ""
+                source.get("text") or source.get("source_text") or source.get("support_text") or ""
             )
         _fill_list_field_from_aliases(
             hydrated,
@@ -269,9 +266,13 @@ def _actor_text(element: Dict[str, Any]) -> str:
         return modal_clause_actor
 
     passive_contribution_actor = _passive_contribution_actor_text(element)
-    if flat_value and passive_contribution_actor and _is_clipped_passive_actor(
-        flat_value,
-        passive_contribution_actor,
+    if (
+        flat_value
+        and passive_contribution_actor
+        and _is_clipped_passive_actor(
+            flat_value,
+            passive_contribution_actor,
+        )
     ):
         return passive_contribution_actor
 
@@ -497,9 +498,7 @@ def _source_grounded_lifecycle_instrument_text(element: Dict[str, Any]) -> str:
 
     for key in ("canonical_citation", "citation"):
         value = str(element.get(key) or "").strip()
-        if _US_CODE_CITATION_TEXT_RE.search(value) or _SECTION_MARKER_TEXT_RE.search(
-            value
-        ):
+        if _US_CODE_CITATION_TEXT_RE.search(value) or _SECTION_MARKER_TEXT_RE.search(value):
             return value
 
     for key in ("support_text", "text", "source_text"):
@@ -521,9 +520,7 @@ def _instrument_lifecycle_actor_field_span(
     """Return a source span for compact lifecycle instrument labels."""
 
     norm_type = str(element.get("norm_type") or "").strip().lower()
-    operator = str(
-        element.get("deontic_operator") or element.get("modality") or ""
-    ).strip().upper()
+    operator = str(element.get("deontic_operator") or element.get("modality") or "").strip().upper()
     if norm_type != "instrument_lifecycle" and operator != "LIFE":
         return {}
 
@@ -597,7 +594,9 @@ def _instrument_lifecycle_action_text(element: Dict[str, Any]) -> str:
                 or ""
             ).strip()
             duration = str(normalized.get("duration") or normalized.get("valid_for") or "").strip()
-            anchor = str(normalized.get("anchor") or normalized.get("expiration_anchor") or "").strip()
+            anchor = str(
+                normalized.get("anchor") or normalized.get("expiration_anchor") or ""
+            ).strip()
             action = _instrument_lifecycle_action_from_parts(kind, duration, anchor)
             if action:
                 return action
@@ -626,9 +625,13 @@ def _expanded_lifecycle_action_text(action_text: str, element: Mapping[str, Any]
 
 def _instrument_lifecycle_action_from_parts(kind: str, duration: str, anchor: str) -> str:
     normalized_kind = str(kind or "").strip().lower().replace("_", "-")
-    if duration and ("valid" in normalized_kind or "duration" in normalized_kind or normalized_kind in {""}):
+    if duration and (
+        "valid" in normalized_kind or "duration" in normalized_kind or normalized_kind in {""}
+    ):
         return f"valid for {duration}"
-    if anchor and ("expir" in normalized_kind or "terminat" in normalized_kind or "expire" in normalized_kind):
+    if anchor and (
+        "expir" in normalized_kind or "terminat" in normalized_kind or "expire" in normalized_kind
+    ):
         return f"expires {anchor}"
     return ""
 
@@ -695,9 +698,7 @@ def _lifecycle_recipient_matches(
     element: Mapping[str, Any],
 ) -> List[tuple[re.Match[str], str]]:
     norm_type = str(element.get("norm_type") or "").strip().lower()
-    operator = str(
-        element.get("deontic_operator") or element.get("modality") or ""
-    ).strip().upper()
+    operator = str(element.get("deontic_operator") or element.get("modality") or "").strip().upper()
     if norm_type != "instrument_lifecycle" and operator != "LIFE":
         return []
 
@@ -720,9 +721,7 @@ def _instrument_lifecycle_status_action_match(
     element: Mapping[str, Any],
 ) -> Optional[re.Match[str]]:
     norm_type = str(element.get("norm_type") or "").strip().lower()
-    operator = str(
-        element.get("deontic_operator") or element.get("modality") or ""
-    ).strip().upper()
+    operator = str(element.get("deontic_operator") or element.get("modality") or "").strip().upper()
     if norm_type != "instrument_lifecycle" and operator != "LIFE":
         return None
 
@@ -846,7 +845,15 @@ def _applicability_action_text(element: Dict[str, Any]) -> str:
     ):
         for record in _list_of_dicts(element.get(detail_key)):
             normalized = _with_value_alias(record)
-            for key in ("target", "target_text", "applicability_target", "value", "normalized_text", "raw_text", "text"):
+            for key in (
+                "target",
+                "target_text",
+                "applicability_target",
+                "value",
+                "normalized_text",
+                "raw_text",
+                "text",
+            ):
                 value = str(normalized.get(key) or "").strip()
                 if value:
                     return value
@@ -916,7 +923,16 @@ def _exemption_action_text(element: Dict[str, Any]) -> str:
     ):
         for record in _list_of_dicts(element.get(detail_key)):
             normalized = _with_value_alias(record)
-            for key in ("requirement", "requirement_text", "exemption_requirement", "instrument", "value", "normalized_text", "raw_text", "text"):
+            for key in (
+                "requirement",
+                "requirement_text",
+                "exemption_requirement",
+                "instrument",
+                "value",
+                "normalized_text",
+                "raw_text",
+                "text",
+            ):
                 value = str(normalized.get(key) or "").strip()
                 if value:
                     return value
@@ -1449,7 +1465,9 @@ def _prefer_field_span_action(flat_value: str, span_action: str) -> bool:
         return False
     if flat.endswith(","):
         return True
-    if len(flat.split()) <= 2 and re.search(r"\b(?:under|for|to|of|in|by)\b", span_text, re.IGNORECASE):
+    if len(flat.split()) <= 2 and re.search(
+        r"\b(?:under|for|to|of|in|by)\b", span_text, re.IGNORECASE
+    ):
         return True
     return False
 
@@ -1498,7 +1516,9 @@ def _condition_records_from_source_text(
 ) -> List[Dict[str, Any]]:
     """Recover explicit conditional clauses for reduced IR rows."""
 
-    text = str(element.get("support_text") or element.get("text") or element.get("source_text") or "")
+    text = str(
+        element.get("support_text") or element.get("text") or element.get("source_text") or ""
+    )
     if not text:
         return []
     base_offset = 0
@@ -1532,7 +1552,9 @@ def _exception_records_from_source_text(
 ) -> List[Dict[str, Any]]:
     """Recover explicit unless/except exception clauses for reduced IR rows."""
 
-    text = str(element.get("support_text") or element.get("text") or element.get("source_text") or "")
+    text = str(
+        element.get("support_text") or element.get("text") or element.get("source_text") or ""
+    )
     if not text:
         return []
     base_offset = 0
@@ -1629,12 +1651,17 @@ def _unlawful_clause_field_spans(element: Mapping[str, Any]) -> Dict[str, List[i
 
 
 def _penalty_action_from_parts(record: Dict[str, Any]) -> str:
-    sanction_class = str(
-        record.get("sanction_class")
-        or record.get("penalty_class")
-        or record.get("type")
-        or "penalty"
-    ).strip().lower().replace("_", " ")
+    sanction_class = (
+        str(
+            record.get("sanction_class")
+            or record.get("penalty_class")
+            or record.get("type")
+            or "penalty"
+        )
+        .strip()
+        .lower()
+        .replace("_", " ")
+    )
     sanction_class = sanction_class.replace("sanction", "").strip()
 
     amount_text = _penalty_amount_text(record)
@@ -1674,11 +1701,7 @@ def _actor_entities(element: Dict[str, Any]) -> List[str]:
 
     actors = _actor_texts(element.get("subject"))
     passive_actor = _passive_contribution_actor_text(element)
-    if (
-        len(actors) == 1
-        and passive_actor
-        and _is_clipped_passive_actor(actors[0], passive_actor)
-    ):
+    if len(actors) == 1 and passive_actor and _is_clipped_passive_actor(actors[0], passive_actor):
         return [passive_actor]
     if actors:
         return actors
@@ -1779,9 +1802,7 @@ def _passive_grant_recipient_matches(
 ) -> List[tuple[re.Match[str], str]]:
     matches: List[tuple[re.Match[str], str]] = []
     for key, text in _modal_clause_source_text_candidates(element):
-        matches.extend(
-            (match, key) for match in _PASSIVE_GRANT_RECIPIENT_RE.finditer(text)
-        )
+        matches.extend((match, key) for match in _PASSIVE_GRANT_RECIPIENT_RE.finditer(text))
     return matches
 
 
@@ -1803,7 +1824,18 @@ def _enumeration_index(value: Any) -> Optional[int]:
     if len(text) == 1 and text.isalpha():
         return ord(text.lower()) - ord("a") + 1
 
-    roman_values = {"i": 1, "ii": 2, "iii": 3, "iv": 4, "v": 5, "vi": 6, "vii": 7, "viii": 8, "ix": 9, "x": 10}
+    roman_values = {
+        "i": 1,
+        "ii": 2,
+        "iii": 3,
+        "iv": 4,
+        "v": 5,
+        "vi": 6,
+        "vii": 7,
+        "viii": 8,
+        "ix": 9,
+        "x": 10,
+    }
     return roman_values.get(text.lower())
 
 
@@ -2114,7 +2146,9 @@ def _support_scoped_slot_records(
     return scoped
 
 
-def _same_sentence_slot_scope(element: Mapping[str, Any], support_span: "SourceSpan") -> "SourceSpan":
+def _same_sentence_slot_scope(
+    element: Mapping[str, Any], support_span: "SourceSpan"
+) -> "SourceSpan":
     """Expand slot scoping to the containing sentence, not the whole section."""
 
     text = str(element.get("text") or element.get("source_text") or "")
@@ -2214,7 +2248,16 @@ def _with_value_alias(record: Dict[str, Any]) -> Dict[str, Any]:
     if normalized.get("value"):
         return normalized
 
-    for key in ("canonical_citation", "citation", "normalized_text", "raw_text", "text", "term", "defined_term", "name"):
+    for key in (
+        "canonical_citation",
+        "citation",
+        "normalized_text",
+        "raw_text",
+        "text",
+        "term",
+        "defined_term",
+        "name",
+    ):
         value = normalized.get(key)
         if value:
             normalized["value"] = value
@@ -2420,12 +2463,13 @@ def _temporal_alternatives(record: Dict[str, Any]) -> List[Any]:
 def _temporal_selector(record: Dict[str, Any]) -> str:
     """Return normalized whichever-is-earlier/later selector text."""
 
-    selector = str(
-        record.get("selector")
-        or record.get("comparison")
-        or record.get("whichever")
-        or ""
-    ).strip().lower().replace("-", "_").replace(" ", "_")
+    selector = (
+        str(record.get("selector") or record.get("comparison") or record.get("whichever") or "")
+        .strip()
+        .lower()
+        .replace("-", "_")
+        .replace(" ", "_")
+    )
     if selector.startswith("whichever_is_"):
         selector = selector[len("whichever_is_") :]
     return selector
@@ -2520,23 +2564,15 @@ class LegalNormQuality:
     @classmethod
     def from_parser_element(cls, element: Dict[str, Any]) -> "LegalNormQuality":
         nested_quality = element.get("quality")
-        quality = (
-            dict(nested_quality)
-            if isinstance(nested_quality, Mapping)
-            else {}
-        )
+        quality = dict(nested_quality) if isinstance(nested_quality, Mapping) else {}
         export_readiness = _merged_export_readiness(element, quality)
         return cls(
             schema_valid=bool(quality.get("schema_valid", element.get("schema_valid"))),
-            slot_coverage=float(
-                quality.get("slot_coverage", element.get("slot_coverage")) or 0.0
-            ),
+            slot_coverage=float(quality.get("slot_coverage", element.get("slot_coverage")) or 0.0),
             scaffold_quality=float(
                 quality.get("scaffold_quality", element.get("scaffold_quality")) or 0.0
             ),
-            quality_label=str(
-                quality.get("quality_label", element.get("quality_label")) or ""
-            ),
+            quality_label=str(quality.get("quality_label", element.get("quality_label")) or ""),
             parser_warnings=_list_of_strings(
                 quality.get("parser_warnings", element.get("parser_warnings"))
             ),
@@ -2627,7 +2663,9 @@ class LegalNormIR:
 
         enumeration_label = str(element.get("enumeration_label") or "")
         enumeration_index = element.get("enumeration_index")
-        derived_index = _enumeration_index(enumeration_index) or _enumeration_index(enumeration_label)
+        derived_index = _enumeration_index(enumeration_index) or _enumeration_index(
+            enumeration_label
+        )
         conditions = _support_scoped_slot_records(
             _slot_detail_records(element, "condition_details", "conditions"),
             slot_scope_span,
@@ -2678,7 +2716,9 @@ class LegalNormIR:
             parent_source_id=str(element.get("parent_source_id") or ""),
             enumeration_label=enumeration_label,
             enumeration_index=derived_index,
-            is_enumerated_child=bool(element.get("parent_source_id") or enumeration_label or derived_index),
+            is_enumerated_child=bool(
+                element.get("parent_source_id") or enumeration_label or derived_index
+            ),
             source_text=str(element.get("text") or element.get("source_text") or ""),
             support_text=str(element.get("support_text") or ""),
             source_span=SourceSpan.from_value(source_span_value),
@@ -2704,7 +2744,8 @@ class LegalNormIR:
             ),
             mental_state=_mental_state_text(element),
             action_verb=_action_verb_text(element),
-            action_object=_action_object_text(element) or _detail_only_regulated_activity_text(element),
+            action_object=_action_object_text(element)
+            or _detail_only_regulated_activity_text(element),
             recipient=_recipient_text(element) or _detail_only_recipient_text(element),
             conditions=conditions,
             exceptions=exceptions,
@@ -2712,7 +2753,8 @@ class LegalNormIR:
             temporal_constraints=temporal_constraints,
             cross_references=cross_references,
             resolved_cross_references=[
-                _with_value_alias(record) for record in _list_of_dicts(element.get("resolved_cross_references"))
+                _with_value_alias(record)
+                for record in _list_of_dicts(element.get("resolved_cross_references"))
             ],
             defined_terms=[
                 _with_value_alias(record)
@@ -2723,10 +2765,12 @@ class LegalNormIR:
             penalty=_with_penalty_value_alias(dict(element.get("penalty") or {})),
             procedure=_with_procedure_value_alias(dict(element.get("procedure") or {})),
             ontology_terms=[
-                _with_value_alias(record) for record in _list_of_dicts(element.get("ontology_terms"))
+                _with_value_alias(record)
+                for record in _list_of_dicts(element.get("ontology_terms"))
             ],
             kg_relationship_hints=[
-                _with_relationship_value_alias(record) for record in _list_of_dicts(element.get("kg_relationship_hints"))
+                _with_relationship_value_alias(record)
+                for record in _list_of_dicts(element.get("kg_relationship_hints"))
             ],
             field_spans=_field_spans_with_source_fallback(element),
             formal_terms=dict(element.get("formal_terms") or {}),
@@ -3070,7 +3114,8 @@ def _ir_slot_spans(norm: LegalNormIR, slot: str, value: Any) -> List[List[int]]:
     if (
         slot == "modality"
         and not spans
-        and norm.norm_type in {"definition", "applicability", "exemption", "instrument_lifecycle", "purpose"}
+        and norm.norm_type
+        in {"definition", "applicability", "exemption", "instrument_lifecycle", "purpose"}
     ):
         spans.extend(_normalized_span_records(norm.support_span.to_list()))
     spans.extend(_nested_slot_spans(value))
@@ -3194,8 +3239,10 @@ def _nested_slot_spans(value: Any) -> List[List[int]]:
 
 
 def _normalized_span_records(value: Any) -> List[List[int]]:
-    if isinstance(value, (list, tuple)) and len(value) == 2 and all(
-        isinstance(item, int) for item in value
+    if (
+        isinstance(value, (list, tuple))
+        and len(value) == 2
+        and all(isinstance(item, int) for item in value)
     ):
         return [[int(value[0]), int(value[1])]]
     if isinstance(value, (list, tuple)):

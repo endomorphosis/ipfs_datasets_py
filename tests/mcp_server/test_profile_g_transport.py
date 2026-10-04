@@ -12,16 +12,21 @@ def test_profile_g_descriptor_lists_every_method_and_transport():
 
 
 def test_profile_e_rejects_unnegotiated_profile_g():
-    response = asyncio.run(dispatch_profile_e_jsonrpc_request(
-        {"jsonrpc": "2.0", "id": 3, "method": "mcp++/risk/profile", "params": {}},
-        initialized=True, profile_g_negotiated=False,
-    ))
+    response = asyncio.run(
+        dispatch_profile_e_jsonrpc_request(
+            {"jsonrpc": "2.0", "id": 3, "method": "mcp++/risk/profile", "params": {}},
+            initialized=True,
+            profile_g_negotiated=False,
+        )
+    )
     assert response["error"]["data"]["code"] == "G_CAPABILITY_NOT_NEGOTIATED"
 
 
 def test_profile_e_rejects_profile_g_before_initialize():
-    response = asyncio.run(dispatch_profile_e_jsonrpc_request(
-        {"jsonrpc": "2.0", "id": 4, "method": "mcp++/risk/profile", "params": {}},
-        initialized=False,
-    ))
+    response = asyncio.run(
+        dispatch_profile_e_jsonrpc_request(
+            {"jsonrpc": "2.0", "id": 4, "method": "mcp++/risk/profile", "params": {}},
+            initialized=False,
+        )
+    )
     assert response["error"]["message"] == "init_required"

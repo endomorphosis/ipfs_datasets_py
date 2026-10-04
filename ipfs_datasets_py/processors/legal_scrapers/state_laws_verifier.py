@@ -25,6 +25,7 @@ except Exception:
 try:
     from .state_laws_scraper import _should_flag_quality
 except Exception:
+
     def _should_flag_quality(quality_metrics: Dict[str, Any]) -> bool:
         return False
 
@@ -77,7 +78,9 @@ def _build_operational_diagnostics(metadata: Dict[str, Any], *, top_n: int = 8) 
                 }
             )
 
-    weak_fetch_states.sort(key=lambda row: (row.get("success_ratio", 1.0), -int(row.get("attempted", 0) or 0)))
+    weak_fetch_states.sort(
+        key=lambda row: (row.get("success_ratio", 1.0), -int(row.get("attempted", 0) or 0))
+    )
 
     weak_quality_states: List[Dict[str, Any]] = []
     if isinstance(quality_by_state, dict):
@@ -92,8 +95,12 @@ def _build_operational_diagnostics(metadata: Dict[str, Any], *, top_n: int = 8) 
                     "total": int(metrics.get("total", 0) or 0),
                     "scaffold_ratio": float(metrics.get("scaffold_ratio", 0.0) or 0.0),
                     "nav_like_ratio": float(metrics.get("nav_like_ratio", 0.0) or 0.0),
-                    "fallback_section_ratio": float(metrics.get("fallback_section_ratio", 0.0) or 0.0),
-                    "numeric_section_name_ratio": float(metrics.get("numeric_section_name_ratio", 0.0) or 0.0),
+                    "fallback_section_ratio": float(
+                        metrics.get("fallback_section_ratio", 0.0) or 0.0
+                    ),
+                    "numeric_section_name_ratio": float(
+                        metrics.get("numeric_section_name_ratio", 0.0) or 0.0
+                    ),
                 }
             )
 
@@ -109,7 +116,9 @@ def _build_operational_diagnostics(metadata: Dict[str, Any], *, top_n: int = 8) 
         "coverage": {
             "states_targeted": int(coverage.get("states_targeted", 0) or 0),
             "states_returned": int(coverage.get("states_returned", 0) or 0),
-            "states_with_nonzero_statutes": int(coverage.get("states_with_nonzero_statutes", 0) or 0),
+            "states_with_nonzero_statutes": int(
+                coverage.get("states_with_nonzero_statutes", 0) or 0
+            ),
             "coverage_gap_states": coverage_gap_states,
         },
         "fetch": {
@@ -170,7 +179,9 @@ def _build_triage_rows(diagnostics: Dict[str, Any]) -> Dict[str, List[Dict[str, 
                 "scaffold_ratio": float(row.get("scaffold_ratio", 0.0) or 0.0),
                 "nav_like_ratio": float(row.get("nav_like_ratio", 0.0) or 0.0),
                 "fallback_section_ratio": float(row.get("fallback_section_ratio", 0.0) or 0.0),
-                "numeric_section_name_ratio": float(row.get("numeric_section_name_ratio", 0.0) or 0.0),
+                "numeric_section_name_ratio": float(
+                    row.get("numeric_section_name_ratio", 0.0) or 0.0
+                ),
             }
         )
 
@@ -266,7 +277,9 @@ class StateLawsVerifier:
         }
         self._last_scrape_metadata: Dict[str, Any] = {}
 
-    def log_test(self, name: str, status: str, message: str, details: Optional[Dict[str, Any]] = None) -> None:
+    def log_test(
+        self, name: str, status: str, message: str, details: Optional[Dict[str, Any]] = None
+    ) -> None:
         test_result = {
             "name": name,
             "status": status,
@@ -355,10 +368,23 @@ class StateLawsVerifier:
 
             if _VERIFY_SCAFFOLD_RE.match(full_text):
                 scaffold_count += 1
-            nav_url = any(tok in source_url.lower() for tok in ("/calendar", "/meeting", "/roster", "/blog", "/news", "/jobs", "/contact"))
+            nav_url = any(
+                tok in source_url.lower()
+                for tok in (
+                    "/calendar",
+                    "/meeting",
+                    "/roster",
+                    "/blog",
+                    "/news",
+                    "/jobs",
+                    "/contact",
+                )
+            )
             if len(full_text.strip()) < int(min_full_text_chars) or nav_url:
                 weak_text_count += 1
-            if _VERIFY_STATUTE_SIGNAL_RE.search(full_text) or _VERIFY_STATUTE_SIGNAL_RE.search(section_name):
+            if _VERIFY_STATUTE_SIGNAL_RE.search(full_text) or _VERIFY_STATUTE_SIGNAL_RE.search(
+                section_name
+            ):
                 legal_signal_count += 1
 
             preamble = structured.get("preamble")
@@ -468,11 +494,17 @@ class StateLawsVerifier:
 
         if require_kg_ready and not is_kg_ready:
             reasons.append("kg-etl-not-ready")
-        if min_fetch_success_ratio is not None and fetch_success_ratio < float(min_fetch_success_ratio):
+        if min_fetch_success_ratio is not None and fetch_success_ratio < float(
+            min_fetch_success_ratio
+        ):
             reasons.append("fetch-success-ratio-below-threshold")
-        if max_fetch_fallback_ratio is not None and fetch_fallback_ratio > float(max_fetch_fallback_ratio):
+        if max_fetch_fallback_ratio is not None and fetch_fallback_ratio > float(
+            max_fetch_fallback_ratio
+        ):
             reasons.append("fetch-fallback-ratio-above-threshold")
-        if max_coverage_gap_states is not None and len(coverage_gap_states) > int(max_coverage_gap_states):
+        if max_coverage_gap_states is not None and len(coverage_gap_states) > int(
+            max_coverage_gap_states
+        ):
             reasons.append("too-many-coverage-gap-states")
 
         # Always surface high-signal warnings for likely non-statutory payloads.
@@ -586,7 +618,9 @@ class StateLawsVerifier:
             status = str(result.get("status") or "unknown")
             data_blocks = result.get("data") or []
             statutes_count = 0
-            strict_removed_total = int((result.get("metadata") or {}).get("strict_removed_total") or 0)
+            strict_removed_total = int(
+                (result.get("metadata") or {}).get("strict_removed_total") or 0
+            )
             for block in data_blocks:
                 statutes = block.get("statutes") if isinstance(block, dict) else []
                 if isinstance(statutes, list):
@@ -666,7 +700,9 @@ class StateLawsVerifier:
             max_coverage_gap_states=max_coverage_gap_states,
             top_n=max(1, int(operational_report_top_n or 1)),
         )
-        await self.verify_state_smoke_coverage(states=states, per_state_max_statutes=per_state_max_statutes)
+        await self.verify_state_smoke_coverage(
+            states=states, per_state_max_statutes=per_state_max_statutes
+        )
 
         output_dir = Path.home() / ".ipfs_datasets" / "state_laws"
         output_file = output_dir / "verification_results.json"

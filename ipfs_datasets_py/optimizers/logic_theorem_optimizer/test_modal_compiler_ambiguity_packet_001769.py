@@ -95,9 +95,7 @@ def test_compiler_preserves_packet_001769_compiler_ambiguity_policy_evidence_mar
         predicted_share = 1.0
         target_share = predicted_share + expected_margin
 
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="spacy")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
         def _mock_adaptive_family_ranking_from_logits(
             _encoding,
@@ -149,13 +147,9 @@ def test_compiler_preserves_packet_001769_compiler_ambiguity_policy_evidence_mar
             f"{predicted_family}->{target_family}"
         )
         assert (
-            abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - expected_margin)
-            <= 1e-12
+            abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - expected_margin) <= 1e-12
         )
-        assert (
-            abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority)
-            <= 1e-12
-        )
+        assert abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority) <= 1e-12
         assert (
             abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - expected_priority)
             <= 1e-12

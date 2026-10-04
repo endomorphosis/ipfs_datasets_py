@@ -69,53 +69,36 @@ from benchmarks.semantic_roundtrip.constructors.autoencoder_guided import (
 from benchmarks.semantic_roundtrip_capabilities import REPO_ROOT
 
 
-CAUSAL_AUTOENCODER_GUIDANCE_INTERFACE: Final = (
-    "CausalAutoencoderGuidance@1"
-)
-CAUSAL_GUIDANCE_QUALIFICATION_INTERFACE: Final = (
-    "CausalGuidanceQualification@1"
-)
+CAUSAL_AUTOENCODER_GUIDANCE_INTERFACE: Final = "CausalAutoencoderGuidance@1"
+CAUSAL_GUIDANCE_QUALIFICATION_INTERFACE: Final = "CausalGuidanceQualification@1"
 CAUSAL_GUIDANCE_QUALIFICATION_SCHEMA: Final = (
     "ipfs-datasets.semantic-roundtrip-causal-guidance-qualification.v1"
 )
-REVIEWED_CAUSAL_L1_CONTRACT_INTERFACE: Final = (
-    "ReviewedFeatureToCanonicalFieldIntervention@1"
-)
+REVIEWED_CAUSAL_L1_CONTRACT_INTERFACE: Final = "ReviewedFeatureToCanonicalFieldIntervention@1"
 CAUSAL_CHANGE_RECEIPT_INTERFACE: Final = "CausalGuidanceChangeReceipt@1"
 CAUSAL_MATRIX_PLANNER_INTERFACE: Final = "CausalGuidanceMatrixPlanner@1"
 TEACHER_RESIDUAL_INTERFACE: Final = "CausalAutoencoderTeacherResidual@1"
-UNAVAILABLE_NO_REVIEWED_CAUSAL_L1_ADAPTER: Final = (
-    "unavailable_no_reviewed_causal_l1_adapter"
-)
+UNAVAILABLE_NO_REVIEWED_CAUSAL_L1_ADAPTER: Final = "unavailable_no_reviewed_causal_l1_adapter"
 SCORED_SUPPORTED: Final = "scored_supported"
 TERMINAL_UNSUPPORTED: Final = "terminal_unsupported"
 EVALUATION_STATUS_NOT_MEASURED: Final = "not_measured"
 SEMANTIC_SCHEDULE_EXCLUDED: Final = "excluded_from_semantic_schedule"
-MATRIX_SCHEDULE_POLICY: Final = (
-    "exclude_guided_without_reviewed_causal_l1_adapter"
-)
+MATRIX_SCHEDULE_POLICY: Final = "exclude_guided_without_reviewed_causal_l1_adapter"
 TEACHER_RESIDUAL_ROLE: Final = "teacher_residual_only"
 TEACHER_RESIDUAL_PROMOTION_REQUIRES: Final = "reviewed_causal_l1_adapter"
 PLATEAU_BREAK_TASK_ID: Final = "PLAT-060"
 PLATEAU_BREAK_BOARD_NAMESPACE: Final = "semantic-roundtrip-plateau-break-v1"
 
-STABLE_EXPORT_SCHEMA: Final = (
-    "legal-ir-stable-autoencoder-feature-export-v1"
-)
+STABLE_EXPORT_SCHEMA: Final = "legal-ir-stable-autoencoder-feature-export-v1"
 SRT021_MANIFEST_RELATIVE_PATH: Final = Path(
-    "workspace/benchmarks/semantic-roundtrip-compositions/"
-    "no_eligible_remediation_manifest.json"
+    "workspace/benchmarks/semantic-roundtrip-compositions/no_eligible_remediation_manifest.json"
 )
 DEFAULT_QUALIFICATION_RELATIVE_PATH: Final = Path(
     "workspace/benchmarks/semantic-roundtrip-compositions/"
     "causal_autoencoder_guidance_qualification.json"
 )
-DEFAULT_QUALIFICATION_PATH: Final = (
-    REPO_ROOT / DEFAULT_QUALIFICATION_RELATIVE_PATH
-)
-PINNED_SRT021_MANIFEST_CID: Final = (
-    "baguqeerarr7ebjrzd3argtdekd7er3bqrnvhuzy2ogqzfi7h5nv37dbea52a"
-)
+DEFAULT_QUALIFICATION_PATH: Final = REPO_ROOT / DEFAULT_QUALIFICATION_RELATIVE_PATH
+PINNED_SRT021_MANIFEST_CID: Final = "baguqeerarr7ebjrzd3argtdekd7er3bqrnvhuzy2ogqzfi7h5nv37dbea52a"
 
 MISSING_CAUSAL_CONTRACT_FIELDS: Final = (
     "independent_review_cid",
@@ -132,12 +115,8 @@ FORBIDDEN_CAUSAL_INPUTS: Final = (
     "target_embeddings",
     "outcome_dependent_selection",
 )
-CAUSAL_SELECTION_RULE: Final = (
-    "apply_preregistered_interventions_without_outcome_observation"
-)
-SOURCE_GROUNDING_RULE: Final = (
-    "preserve_rule_cardinality_and_closed_source_vocabulary"
-)
+CAUSAL_SELECTION_RULE: Final = "apply_preregistered_interventions_without_outcome_observation"
+SOURCE_GROUNDING_RULE: Final = "preserve_rule_cardinality_and_closed_source_vocabulary"
 
 _REQUIRED_EXCLUDED_CATEGORIES: Final = frozenset(
     {
@@ -197,11 +176,7 @@ def _normalized(value: object) -> str:
     text = str(value).strip()
     result: list[str] = []
     for index, character in enumerate(text):
-        if (
-            index
-            and character.isupper()
-            and text[index - 1].islower()
-        ):
+        if index and character.isupper() and text[index - 1].islower():
             result.append("_")
         result.append(character.lower() if character.isalnum() else "_")
     return "_".join(part for part in "".join(result).split("_") if part)
@@ -213,9 +188,7 @@ def _nonblank(value: object, name: str) -> str:
     return value.strip()
 
 
-def _forbidden_config_path(
-    value: object, path: str = "request.config"
-) -> str | None:
+def _forbidden_config_path(value: object, path: str = "request.config") -> str | None:
     if isinstance(value, Mapping):
         for key, item in value.items():
             normalized = _normalized(key)
@@ -224,9 +197,7 @@ def _forbidden_config_path(
             nested = _forbidden_config_path(item, f"{path}.{key}")
             if nested is not None:
                 return nested
-    elif isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    elif isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         for index, item in enumerate(value):
             nested = _forbidden_config_path(item, f"{path}[{index}]")
             if nested is not None:
@@ -245,9 +216,7 @@ def _strict_json_object(path: Path) -> dict[str, object]:
         result: dict[str, object] = {}
         for key, value in pairs:
             if key in result:
-                raise ContractError(
-                    f"duplicate JSON key {key!r} in {path}"
-                )
+                raise ContractError(f"duplicate JSON key {key!r} in {path}")
             result[key] = value
         return result
 
@@ -294,9 +263,7 @@ class StableExportEvidence:
             or len(set(self.feature_ids)) != self.feature_count
             or len(set(self.feature_names)) != self.feature_count
         ):
-            raise ContractError(
-                "stable export feature identities are incomplete or duplicate"
-            )
+            raise ContractError("stable export feature identities are incomplete or duplicate")
         if (
             isinstance(self.sample_count, bool)
             or self.sample_count != 0
@@ -304,41 +271,25 @@ class StableExportEvidence:
             or self.global_export is not True
             or self.sample_free is not True
         ):
-            raise ContractError(
-                "stable export is not global and sample-free"
-            )
-        if not _REQUIRED_EXCLUDED_CATEGORIES <= set(
-            self.excluded_categories
-        ):
-            raise ContractError(
-                "stable export does not exclude every sample-specific category"
-            )
+            raise ContractError("stable export is not global and sample-free")
+        if not _REQUIRED_EXCLUDED_CATEGORIES <= set(self.excluded_categories):
+            raise ContractError("stable export does not exclude every sample-specific category")
 
     @classmethod
-    def from_guidance(
-        cls, guidance: FrozenAutoencoderGuidance
-    ) -> "StableExportEvidence":
+    def from_guidance(cls, guidance: FrozenAutoencoderGuidance) -> "StableExportEvidence":
         if not isinstance(guidance, FrozenAutoencoderGuidance):
-            raise ContractError(
-                "guidance loader did not return frozen guidance"
-            )
+            raise ContractError("guidance loader did not return frozen guidance")
         export = guidance.stable_export
         features = export.get("stable_features")
-        if not isinstance(features, Sequence) or isinstance(
-            features, (str, bytes, bytearray)
-        ):
+        if not isinstance(features, Sequence) or isinstance(features, (str, bytes, bytearray)):
             raise ContractError("stable_features must be an array")
         feature_ids: list[str] = []
         feature_names: list[str] = []
         for index, item in enumerate(features):
             if not isinstance(item, Mapping):
-                raise ContractError(
-                    f"stable_features[{index}] must be an object"
-                )
+                raise ContractError(f"stable_features[{index}] must be an object")
             if item.get("stable") is not True:
-                raise ContractError(
-                    f"stable_features[{index}] is not stable"
-                )
+                raise ContractError(f"stable_features[{index}] is not stable")
             feature_ids.append(
                 _nonblank(
                     item.get("feature_id"),
@@ -352,23 +303,15 @@ class StableExportEvidence:
                 )
             )
         excluded = export.get("excluded_categories")
-        if not isinstance(excluded, Sequence) or isinstance(
-            excluded, (str, bytes, bytearray)
-        ):
+        if not isinstance(excluded, Sequence) or isinstance(excluded, (str, bytes, bytearray)):
             raise ContractError("excluded_categories must be an array")
-        excluded_categories = tuple(
-            _nonblank(item, "excluded category") for item in excluded
-        )
+        excluded_categories = tuple(_nonblank(item, "excluded category") for item in excluded)
         declared_count = export.get("feature_count")
         if declared_count != len(features):
-            raise ContractError(
-                "stable export feature_count does not match stable_features"
-            )
+            raise ContractError("stable export feature_count does not match stable_features")
         return cls(
             export_id=_nonblank(export.get("export_id"), "stable export ID"),
-            schema_version=_nonblank(
-                export.get("schema_version"), "stable export schema"
-            ),
+            schema_version=_nonblank(export.get("schema_version"), "stable export schema"),
             feature_count=len(features),
             feature_ids=tuple(feature_ids),
             feature_names=tuple(feature_names),
@@ -384,16 +327,12 @@ class StableExportEvidence:
         return _sha(
             [
                 {"feature_id": feature_id, "feature": feature}
-                for feature_id, feature in zip(
-                    self.feature_ids, self.feature_names, strict=True
-                )
+                for feature_id, feature in zip(self.feature_ids, self.feature_names, strict=True)
             ]
         )
 
     def feature_map(self) -> dict[str, str]:
-        return dict(
-            zip(self.feature_ids, self.feature_names, strict=True)
-        )
+        return dict(zip(self.feature_ids, self.feature_names, strict=True))
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -427,8 +366,7 @@ class FeatureToCanonicalFieldIntervention:
             or any(field not in RULE_FIELDS for field in fields)
         ):
             raise ContractError(
-                "intervention canonical_fields must be nonempty, unique, "
-                "canonical fields"
+                "intervention canonical_fields must be nonempty, unique, canonical fields"
             )
         object.__setattr__(self, "canonical_fields", fields)
 
@@ -457,34 +395,21 @@ class ReviewedCausalL1Contract:
         _nonblank(self.reviewed_by, "review authority")
         _nonblank(self.stable_export_id, "reviewed stable export ID")
         try:
-            validate_cid(
-                self.independent_review_cid, codecs=("dag-json",)
-            )
+            validate_cid(self.independent_review_cid, codecs=("dag-json",))
         except (TypeError, ValueError) as exc:
-            raise ContractError(
-                "independent_review_cid must be a canonical DAG-JSON CID"
-            ) from exc
+            raise ContractError("independent_review_cid must be a canonical DAG-JSON CID") from exc
         if self.selection_rule != CAUSAL_SELECTION_RULE:
-            raise ContractError(
-                "causal selection must be preregistered and outcome-independent"
-            )
+            raise ContractError("causal selection must be preregistered and outcome-independent")
         if self.source_grounding_rule != SOURCE_GROUNDING_RULE:
-            raise ContractError(
-                "causal adapter must preserve the source-grounding rule"
-            )
+            raise ContractError("causal adapter must preserve the source-grounding rule")
         interventions = tuple(self.interventions)
         if not interventions or not all(
-            isinstance(item, FeatureToCanonicalFieldIntervention)
-            for item in interventions
+            isinstance(item, FeatureToCanonicalFieldIntervention) for item in interventions
         ):
-            raise ContractError(
-                "reviewed contract requires feature-to-field interventions"
-            )
+            raise ContractError("reviewed contract requires feature-to-field interventions")
         feature_ids = [item.feature_id for item in interventions]
         if len(set(feature_ids)) != len(feature_ids):
-            raise ContractError(
-                "reviewed intervention feature IDs must be unique"
-            )
+            raise ContractError("reviewed intervention feature IDs must be unique")
         object.__setattr__(self, "interventions", interventions)
 
     @property
@@ -502,9 +427,7 @@ class ReviewedCausalL1Contract:
 
     def validate_export(self, evidence: StableExportEvidence) -> None:
         if self.stable_export_id != evidence.export_id:
-            raise ContractError(
-                "reviewed contract targets a different stable export"
-            )
+            raise ContractError("reviewed contract targets a different stable export")
         exported = evidence.feature_map()
         for intervention in self.interventions:
             if exported.get(intervention.feature_id) != intervention.feature:
@@ -519,9 +442,7 @@ class ReviewedCausalL1Contract:
             "forbidden_inputs": list(FORBIDDEN_CAUSAL_INPUTS),
             "independent_review_cid": self.independent_review_cid,
             "interface": REVIEWED_CAUSAL_L1_CONTRACT_INTERFACE,
-            "interventions": [
-                item.to_dict() for item in self.interventions
-            ],
+            "interventions": [item.to_dict() for item in self.interventions],
             "reviewed_by": self.reviewed_by,
             "selection_rule": self.selection_rule,
             "source_grounding_rule": self.source_grounding_rule,
@@ -559,16 +480,10 @@ class CausalAdapterOutput:
 
     def __post_init__(self) -> None:
         if not isinstance(self.canonical_ir, CanonicalRuleIR):
-            raise ContractError(
-                "causal adapter output requires CanonicalRuleIR"
-            )
+            raise ContractError("causal adapter output requires CanonicalRuleIR")
         values = tuple(self.attributions)
-        if not values or not all(
-            isinstance(item, CausalFeatureAttribution) for item in values
-        ):
-            raise ContractError(
-                "causal adapter output requires nonempty feature attribution"
-            )
+        if not values or not all(isinstance(item, CausalFeatureAttribution) for item in values):
+            raise ContractError("causal adapter output requires nonempty feature attribution")
         if len(set(values)) != len(values):
             raise ContractError("causal attributions must be unique")
         object.__setattr__(self, "attributions", values)
@@ -604,16 +519,11 @@ class CausalGuidanceChangeReceipt:
         if not self.changes or not all(
             isinstance(item, CanonicalFieldChange) for item in self.changes
         ):
-            raise ContractError(
-                "causal change receipt must contain canonical changes"
-            )
+            raise ContractError("causal change receipt must contain canonical changes")
         if not self.attributions or not all(
-            isinstance(item, CausalFeatureAttribution)
-            for item in self.attributions
+            isinstance(item, CausalFeatureAttribution) for item in self.attributions
         ):
-            raise ContractError(
-                "causal change receipt must name causal features"
-            )
+            raise ContractError("causal change receipt must name causal features")
         for name in ("source_sha256", "vocabulary_sha256"):
             value = getattr(self, name)
             if (
@@ -634,15 +544,11 @@ class CausalGuidanceChangeReceipt:
 
     @property
     def causal_feature_ids(self) -> tuple[str, ...]:
-        return tuple(
-            dict.fromkeys(item.feature_id for item in self.attributions)
-        )
+        return tuple(dict.fromkeys(item.feature_id for item in self.attributions))
 
     def to_dict(self) -> dict[str, object]:
         return {
-            "attributions": [
-                item.to_dict() for item in self.attributions
-            ],
+            "attributions": [item.to_dict() for item in self.attributions],
             "causal_feature_ids": list(self.causal_feature_ids),
             "changed_field_paths": list(self.changed_field_paths),
             "changed_fields": list(self.changed_fields),
@@ -674,9 +580,7 @@ class NegativeControlReceipt:
             or self.causal_feature_ids
             or self.guidance_enabled
         ):
-            raise ContractError(
-                "disabled-guidance negative control must have zero change"
-            )
+            raise ContractError("disabled-guidance negative control must have zero change")
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -715,22 +619,16 @@ class CausalGuidancePairResult:
                 or self.missing_causal_contract
                 or self.guided_disposition != "scored_supported"
             ):
-                raise ContractError(
-                    "qualified guidance requires a successful changed output"
-                )
+                raise ContractError("qualified guidance requires a successful changed output")
         elif self.status is CausalQualificationStatus.UNAVAILABLE:
             if (
                 self.change_receipt is not None
-                or tuple(self.missing_causal_contract)
-                != MISSING_CAUSAL_CONTRACT_FIELDS
+                or tuple(self.missing_causal_contract) != MISSING_CAUSAL_CONTRACT_FIELDS
                 or self.guided.status is not ComponentStatus.FAILED
-                or self.guided.failure_reason
-                is not FailureReason.CAPABILITY_UNAVAILABLE
+                or self.guided.failure_reason is not FailureReason.CAPABILITY_UNAVAILABLE
                 or self.guided_disposition != "terminal_unsupported"
             ):
-                raise ContractError(
-                    "unavailable guidance must remain terminal unsupported"
-                )
+                raise ContractError("unavailable guidance must remain terminal unsupported")
 
 
 def _failure(reason: FailureReason, detail: str) -> ConstructorResult:
@@ -762,20 +660,13 @@ class CausalAutoencoderGuidance:
 
             base_constructor = TypedDeonticCanonicalConstructor()
         if not isinstance(base_constructor, RoundTripConstructor):
-            raise ContractError(
-                "base_constructor must implement RoundTripConstructor"
-            )
+            raise ContractError("base_constructor must implement RoundTripConstructor")
         if (reviewed_contract is None) != (applicator is None):
-            raise ContractError(
-                "reviewed contract and causal applicator must be supplied "
-                "together"
-            )
+            raise ContractError("reviewed contract and causal applicator must be supplied together")
         if reviewed_contract is not None and not isinstance(
             reviewed_contract, ReviewedCausalL1Contract
         ):
-            raise ContractError(
-                "reviewed_contract must be ReviewedCausalL1Contract"
-            )
+            raise ContractError("reviewed_contract must be ReviewedCausalL1Contract")
         if applicator is not None and not callable(applicator):
             raise ContractError("causal applicator must be callable")
         if not callable(guidance_loader):
@@ -803,23 +694,17 @@ class CausalAutoencoderGuidance:
     ) -> tuple[FrozenAutoencoderGuidance, StableExportEvidence]:
         guidance = self._guidance_loader(self._state_path)
         if not isinstance(guidance, FrozenAutoencoderGuidance):
-            raise ContractError(
-                "guidance_loader must return FrozenAutoencoderGuidance"
-            )
+            raise ContractError("guidance_loader must return FrozenAutoencoderGuidance")
         return guidance, StableExportEvidence.from_guidance(guidance)
 
-    def construct_pair(
-        self, request: ConstructorRequest
-    ) -> CausalGuidancePairResult:
+    def construct_pair(self, request: ConstructorRequest) -> CausalGuidancePairResult:
         """Produce paired outputs from exactly one baseline construction."""
 
         if not isinstance(request, ConstructorRequest):
             raise ContractError("request must be ConstructorRequest")
         forbidden = _forbidden_config_path(request.config)
         if forbidden is not None:
-            raise ContractError(
-                f"{forbidden} is a forbidden causal-guidance input"
-            )
+            raise ContractError(f"{forbidden} is a forbidden causal-guidance input")
 
         # Qualification always verifies the frozen state, including the
         # unavailable path.  The loader opens it read-only and checks both CID
@@ -827,9 +712,7 @@ class CausalAutoencoderGuidance:
         guidance, export_evidence = self._load_evidence()
         baseline = self._base_constructor.construct(request)
         if not isinstance(baseline, ConstructorResult):
-            raise ContractError(
-                "base constructor returned a non-ConstructorResult"
-            )
+            raise ContractError("base constructor returned a non-ConstructorResult")
         if baseline.status is ComponentStatus.FAILED:
             digest = _sha(
                 {
@@ -865,9 +748,7 @@ class CausalAutoencoderGuidance:
             )
             return CausalGuidancePairResult(
                 no_guidance=baseline,
-                guided=_failure(
-                    FailureReason.CAPABILITY_UNAVAILABLE, detail
-                ),
+                guided=_failure(FailureReason.CAPABILITY_UNAVAILABLE, detail),
                 status=CausalQualificationStatus.UNAVAILABLE,
                 negative_control=negative_control,
                 state_evidence=export_evidence,
@@ -884,76 +765,44 @@ class CausalAutoencoderGuidance:
                 guidance,
             )
             if not isinstance(application, CausalAdapterOutput):
-                raise ContractError(
-                    "causal applicator must return CausalAdapterOutput"
-                )
+                raise ContractError("causal applicator must return CausalAdapterOutput")
             guided_ir = application.canonical_ir
             guided_ir.validate_vocabulary(request.allowed_atom_vocabulary)
             if guided_ir.is_empty:
-                raise ContractError(
-                    "causal applicator produced empty canonical L1"
-                )
+                raise ContractError("causal applicator produced empty canonical L1")
             if len(guided_ir.rules) != len(baseline.canonical_ir.rules):
-                raise ContractError(
-                    "causal applicator changed source-grounded rule cardinality"
-                )
-            changes = canonical_field_changes(
-                baseline.canonical_ir, guided_ir
-            )
+                raise ContractError("causal applicator changed source-grounded rule cardinality")
+            changes = canonical_field_changes(baseline.canonical_ir, guided_ir)
             if not changes:
-                raise ContractError(
-                    "causal guidance requires a nonempty canonical change"
-                )
+                raise ContractError("causal guidance requires a nonempty canonical change")
             changed_by_path = {change.path: change for change in changes}
-            attributed_paths = {
-                item.changed_field_path for item in application.attributions
-            }
+            attributed_paths = {item.changed_field_path for item in application.attributions}
             if attributed_paths != set(changed_by_path):
-                raise ContractError(
-                    "causal receipt must attribute every and only changed field"
-                )
+                raise ContractError("causal receipt must attribute every and only changed field")
             intervention_map = self._reviewed_contract.intervention_map()
             for attribution in application.attributions:
                 intervention = intervention_map.get(attribution.feature_id)
-                if (
-                    intervention is None
-                    or intervention.feature != attribution.feature
-                ):
-                    raise ContractError(
-                        "causal receipt names an unreviewed stable feature"
-                    )
+                if intervention is None or intervention.feature != attribution.feature:
+                    raise ContractError("causal receipt names an unreviewed stable feature")
                 changed = changed_by_path[attribution.changed_field_path]
-                if changed.canonical_field not in (
-                    intervention.canonical_fields
-                ):
-                    raise ContractError(
-                        "causal receipt maps a feature to an unreviewed field"
-                    )
+                if changed.canonical_field not in (intervention.canonical_fields):
+                    raise ContractError("causal receipt maps a feature to an unreviewed field")
             receipt = CausalGuidanceChangeReceipt(
                 contract_identity=self._reviewed_contract.identity,
                 contract_digest=self._reviewed_contract.digest,
                 changes=changes,
                 attributions=application.attributions,
-                source_sha256=hashlib.sha256(
-                    request.source_text.encode("utf-8")
-                ).hexdigest(),
-                vocabulary_sha256=_sha(
-                    request.allowed_atom_vocabulary.to_dict()
-                ),
+                source_sha256=hashlib.sha256(request.source_text.encode("utf-8")).hexdigest(),
+                vocabulary_sha256=_sha(request.allowed_atom_vocabulary.to_dict()),
             )
         except ContractError:
             raise
         except Exception as exc:
-            raise ContractError(
-                "causal applicator raised "
-                f"{type(exc).__name__}"
-            ) from exc
+            raise ContractError(f"causal applicator raised {type(exc).__name__}") from exc
 
         return CausalGuidancePairResult(
             no_guidance=baseline,
-            guided=ConstructorResult(
-                ComponentStatus.SUCCESS, canonical_ir=guided_ir
-            ),
+            guided=ConstructorResult(ComponentStatus.SUCCESS, canonical_ir=guided_ir),
             status=CausalQualificationStatus.QUALIFIED,
             negative_control=negative_control,
             state_evidence=export_evidence,
@@ -970,9 +819,7 @@ def _is_guided_arm_id(arm_id: object) -> bool:
     if not isinstance(arm_id, str) or not arm_id.strip():
         return False
     text = arm_id.strip()
-    return "__guided__" in text or text.startswith("guided") or (
-        ".guided." in text
-    )
+    return "__guided__" in text or text.startswith("guided") or (".guided." in text)
 
 
 def _arm_id_from_candidate(candidate: object) -> str:
@@ -998,9 +845,7 @@ def _arm_id_from_candidate(candidate: object) -> str:
                 if isinstance(cell, str) and cell.strip():
                     return cell.strip()
                 return "guided"
-    raise ContractError(
-        "schedule candidate must provide a nonblank arm_id or cell_id"
-    )
+    raise ContractError("schedule candidate must provide a nonblank arm_id or cell_id")
 
 
 def _candidate_is_guided(candidate: object) -> bool:
@@ -1043,16 +888,10 @@ def guided_scored_support_from_qualification(
         disposition = qualification.get("disposition")
     status = qualification.get("status")
     contract = qualification.get("causal_contract")
-    preregistered = (
-        isinstance(contract, Mapping)
-        and contract.get("preregistered") is True
-    )
+    preregistered = isinstance(contract, Mapping) and contract.get("preregistered") is True
     if disposition == SCORED_SUPPORTED or status == SCORED_SUPPORTED:
         return SCORED_SUPPORTED
-    if (
-        status == CausalQualificationStatus.QUALIFIED.value
-        and preregistered
-    ):
+    if status == CausalQualificationStatus.QUALIFIED.value and preregistered:
         return SCORED_SUPPORTED
     return TERMINAL_UNSUPPORTED
 
@@ -1071,9 +910,7 @@ def teacher_residual_disposition_from_qualification(
     support = guided_scored_support_from_qualification(qualification)
     scored = support == SCORED_SUPPORTED
     return {
-        "evaluation_status": (
-            SCORED_SUPPORTED if scored else EVALUATION_STATUS_NOT_MEASURED
-        ),
+        "evaluation_status": (SCORED_SUPPORTED if scored else EVALUATION_STATUS_NOT_MEASURED),
         "interface": TEACHER_RESIDUAL_INTERFACE,
         "production_default": False,
         "promotion_requires": TEACHER_RESIDUAL_PROMOTION_REQUIRES,
@@ -1096,9 +933,7 @@ def plan_guided_semantic_schedule(
     unchanged.
     """
 
-    if not isinstance(candidates, Sequence) or isinstance(
-        candidates, (str, bytes, bytearray)
-    ):
+    if not isinstance(candidates, Sequence) or isinstance(candidates, (str, bytes, bytearray)):
         raise ContractError("candidates must be a sequence of arm specs")
 
     support = guided_scored_support_from_qualification(qualification)
@@ -1126,9 +961,7 @@ def plan_guided_semantic_schedule(
         scheduled.append(candidate)
 
     return {
-        "evaluation_status_for_excluded_guided": (
-            EVALUATION_STATUS_NOT_MEASURED
-        ),
+        "evaluation_status_for_excluded_guided": (EVALUATION_STATUS_NOT_MEASURED),
         "guided_disposition": support,
         "interface": CAUSAL_MATRIX_PLANNER_INTERFACE,
         "not_measured": not_measured,
@@ -1137,9 +970,7 @@ def plan_guided_semantic_schedule(
         "scheduled_arm_ids": scheduled_ids,
         "scheduled_for_semantic_scoring": scheduled,
         "semantic_schedule": (
-            SCORED_SUPPORTED
-            if support == SCORED_SUPPORTED
-            else SEMANTIC_SCHEDULE_EXCLUDED
+            SCORED_SUPPORTED if support == SCORED_SUPPORTED else SEMANTIC_SCHEDULE_EXCLUDED
         ),
     }
 
@@ -1160,9 +991,7 @@ def filter_semantic_schedule_candidates(
 def _guided_coordinate_evidence(
     repo_root: Path,
 ) -> tuple[str, list[dict[str, object]]]:
-    manifest = _strict_json_object(
-        repo_root / SRT021_MANIFEST_RELATIVE_PATH
-    )
+    manifest = _strict_json_object(repo_root / SRT021_MANIFEST_RELATIVE_PATH)
     manifest_cid = manifest.get("manifest_cid")
     try:
         validate_cid(manifest_cid, codecs=("dag-json",))
@@ -1170,10 +999,7 @@ def _guided_coordinate_evidence(
         raise ContractError("SRT-021 manifest CID is invalid") from exc
     payload = dict(manifest)
     del payload["manifest_cid"]
-    if (
-        manifest_cid != PINNED_SRT021_MANIFEST_CID
-        or cid_for_dag_json(payload) != manifest_cid
-    ):
+    if manifest_cid != PINNED_SRT021_MANIFEST_CID or cid_for_dag_json(payload) != manifest_cid:
         raise ContractError("SRT-021 manifest differs from its frozen CID")
     remediation = manifest.get("remediation")
     if not isinstance(remediation, Mapping):
@@ -1192,9 +1018,7 @@ def _guided_coordinate_evidence(
             {
                 "arm_id": arm_id,
                 "evaluation_status": EVALUATION_STATUS_NOT_MEASURED,
-                "historical_terminal_failure_count": summary.get(
-                    "terminal_failure_count"
-                ),
+                "historical_terminal_failure_count": summary.get("terminal_failure_count"),
                 "reason": UNAVAILABLE_NO_REVIEWED_CAUSAL_L1_ADAPTER,
                 "schedule_for_semantic_scoring": False,
                 "status": TERMINAL_UNSUPPORTED,
@@ -1223,8 +1047,7 @@ def build_causal_guidance_qualification(
     resolved_state = (
         Path(state_path)
         if state_path is not None
-        else root
-        / DEFAULT_AUTOENCODER_STATE_PATH.relative_to(REPO_ROOT)
+        else root / DEFAULT_AUTOENCODER_STATE_PATH.relative_to(REPO_ROOT)
     )
     guidance = guidance_loader(resolved_state)
     evidence = StableExportEvidence.from_guidance(guidance)
@@ -1239,9 +1062,7 @@ def build_causal_guidance_qualification(
         arm_ids,
         unavailable_qualification,
     )
-    teacher_residual = teacher_residual_disposition_from_qualification(
-        unavailable_qualification
-    )
+    teacher_residual = teacher_residual_disposition_from_qualification(unavailable_qualification)
     payload: dict[str, object] = {
         "board_namespace": PLATEAU_BREAK_BOARD_NAMESPACE,
         "causal_contract": {
@@ -1271,15 +1092,11 @@ def build_causal_guidance_qualification(
         },
         "interface": CAUSAL_GUIDANCE_QUALIFICATION_INTERFACE,
         "matrix_planner": {
-            "excluded_guided_arm_ids": list(
-                schedule_plan["not_measured_arm_ids"]
-            ),
+            "excluded_guided_arm_ids": list(schedule_plan["not_measured_arm_ids"]),
             "include_guided_in_semantic_schedule": False,
             "interface": CAUSAL_MATRIX_PLANNER_INTERFACE,
             "policy": MATRIX_SCHEDULE_POLICY,
-            "scheduled_for_semantic_scoring_arm_ids": list(
-                schedule_plan["scheduled_arm_ids"]
-            ),
+            "scheduled_for_semantic_scoring_arm_ids": list(schedule_plan["scheduled_arm_ids"]),
             "semantic_schedule": SEMANTIC_SCHEDULE_EXCLUDED,
         },
         "negative_control": {
@@ -1287,9 +1104,7 @@ def build_causal_guidance_qualification(
             "causal_feature_ids": [],
             "changed_fields": [],
             "guidance_enabled": False,
-            "proof": (
-                "no_guidance returns the exact single baseline construction"
-            ),
+            "proof": ("no_guidance returns the exact single baseline construction"),
             "status": "passed_zero_change",
         },
         "paired_output_contract": {
@@ -1305,12 +1120,8 @@ def build_causal_guidance_qualification(
             "access": "read_only",
             "cid": PINNED_AUTOENCODER_STATE_CID,
             "cid_verified": True,
-            "declared_architecture": (
-                PINNED_AUTOENCODER_DECLARED_ARCHITECTURE
-            ),
-            "effective_architecture": (
-                PINNED_AUTOENCODER_EFFECTIVE_ARCHITECTURE
-            ),
+            "declared_architecture": (PINNED_AUTOENCODER_DECLARED_ARCHITECTURE),
+            "effective_architecture": (PINNED_AUTOENCODER_EFFECTIVE_ARCHITECTURE),
             "schema": PINNED_AUTOENCODER_STATE_SCHEMA,
             "sha256": PINNED_AUTOENCODER_STATE_SHA256,
         },
@@ -1342,18 +1153,14 @@ def validate_causal_guidance_qualification(
     cid_payload = dict(supplied)
     del cid_payload["qualification_cid"]
     if cid_for_dag_json(cid_payload) != cid:
-        raise ContractError(
-            "qualification CID does not match its canonical payload"
-        )
+        raise ContractError("qualification CID does not match its canonical payload")
     expected = build_causal_guidance_qualification(
         repo_root,
         guidance_loader=guidance_loader,
         state_path=state_path,
     )
     if supplied != expected:
-        raise ContractError(
-            "qualification contradicts frozen causal-guidance evidence"
-        )
+        raise ContractError("qualification contradicts frozen causal-guidance evidence")
     return expected
 
 

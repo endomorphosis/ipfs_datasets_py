@@ -9,6 +9,7 @@ Targets (GIVEN-WHEN-THEN format):
   * transactions/wal.py            (61% → target 80%)
   * neo4j_compat/session.py        (60% → target 80%)
 """
+
 import math
 import json
 import pytest
@@ -20,14 +21,17 @@ from datetime import date, datetime, timedelta
 # Helpers / shared fixtures
 # ---------------------------------------------------------------------------
 
+
 def _make_engine():
     """Return a _LegacyGraphEngine without a storage backend."""
     from ipfs_datasets_py.knowledge_graphs.core._legacy_graph_engine import _LegacyGraphEngine
+
     return _LegacyGraphEngine()
 
 
 def _make_kg():
     from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
     return KnowledgeGraph(name="test")
 
 
@@ -40,6 +44,7 @@ def _add_two_entities(kg):
 # ===========================================================================
 # _LegacyGraphEngine tests
 # ===========================================================================
+
 
 class TestLegacyGraphEngineNodeCRUD:
     """GIVEN a _LegacyGraphEngine without persistence."""
@@ -130,6 +135,7 @@ class TestLegacyGraphEngineFindAndTraverse:
 
     def _populated(self):
         from ipfs_datasets_py.knowledge_graphs.core._legacy_graph_engine import _LegacyGraphEngine
+
         eng = _LegacyGraphEngine()
         a = eng.create_node(labels=["Person"], properties={"name": "Alice", "age": 30})
         b = eng.create_node(labels=["Person"], properties={"name": "Bob", "age": 25})
@@ -216,8 +222,7 @@ class TestLegacyGraphEngineFindAndTraverse:
         """WHEN traversing a 1-hop pattern THEN matches are found."""
         eng, a, b, c, r1, r2 = self._populated()
         pattern = [
-            {"rel_type": "KNOWS", "direction": "out", "variable": "r",
-             "labels": ["Person"]},
+            {"rel_type": "KNOWS", "direction": "out", "variable": "r", "labels": ["Person"]},
             {"variable": "other", "labels": ["Person"]},
         ]
         matches = eng.traverse_pattern([a], pattern)
@@ -228,52 +233,64 @@ class TestLegacyGraphEngineFindAndTraverse:
 # cypher/functions.py tests
 # ===========================================================================
 
+
 class TestCypherFunctionsMathNullPropagation:
     """GIVEN math functions that accept None WHEN None is passed THEN None returned."""
 
     def test_abs_none(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import fn_abs
+
         assert fn_abs(None) is None
 
     def test_ceil_none(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import fn_ceil
+
         assert fn_ceil(None) is None
 
     def test_floor_none(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import fn_floor
+
         assert fn_floor(None) is None
 
     def test_round_none(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import fn_round
+
         assert fn_round(None) is None
 
     def test_sqrt_none(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import fn_sqrt
+
         assert fn_sqrt(None) is None
 
     def test_sqrt_negative_raises(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import fn_sqrt
+
         with pytest.raises(ValueError):
             fn_sqrt(-1)
 
     def test_sign_none(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import fn_sign
+
         assert fn_sign(None) is None
 
     def test_sign_positive(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import fn_sign
+
         assert fn_sign(5) == 1
 
     def test_sign_negative(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import fn_sign
+
         assert fn_sign(-3) == -1
 
     def test_sign_zero(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import fn_sign
+
         assert fn_sign(0) == 0
 
     def test_rand_returns_float_in_range(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import fn_rand
+
         for _ in range(5):
             v = fn_rand()
             assert 0.0 <= v < 1.0
@@ -284,53 +301,64 @@ class TestCypherFunctionsSpatial:
 
     def test_point_creates_point(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import fn_point, Point
+
         p = fn_point({"x": 3.0, "y": 4.0})
         assert isinstance(p, Point)
         assert p.x == 3.0
 
     def test_point_none_returns_none(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import fn_point
+
         assert fn_point(None) is None
 
     def test_point_default_srid(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import fn_point
+
         p = fn_point({"x": 0, "y": 0})
         assert p.srid == 7203
 
     def test_point_custom_srid(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import fn_point
+
         p = fn_point({"x": 1, "y": 2, "srid": 4326})
         assert p.srid == 4326
 
     def test_point_repr(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import Point
+
         p = Point(1.0, 2.0)
         assert "1.0" in repr(p) and "2.0" in repr(p)
 
     def test_point_eq_same(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import Point
+
         assert Point(1.0, 2.0) == Point(1.0, 2.0)
 
     def test_point_eq_different(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import Point
+
         assert Point(1.0, 2.0) != Point(3.0, 4.0)
 
     def test_point_eq_non_point(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import Point
+
         assert Point(1.0, 2.0) != "not a point"
 
     def test_distance_pythagorean(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import fn_distance, Point
+
         d = fn_distance(Point(0, 0), Point(3, 4))
         assert abs(d - 5.0) < 1e-9
 
     def test_distance_none_arg(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import fn_distance, Point
+
         assert fn_distance(None, Point(1, 2)) is None
         assert fn_distance(Point(1, 2), None) is None
 
     def test_distance_type_error(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import fn_distance
+
         with pytest.raises(TypeError):
             fn_distance("a", "b")
 
@@ -340,72 +368,86 @@ class TestCypherFunctionsTemporal:
 
     def test_date_today(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import fn_date
+
         d = fn_date()
         assert isinstance(d, date)
 
     def test_date_from_string(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import fn_date
+
         d = fn_date("2024-06-15")
         assert d == date(2024, 6, 15)
 
     def test_date_from_date_object(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import fn_date
+
         today = date.today()
         assert fn_date(today) == today
 
     def test_date_invalid_type_raises(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import fn_date
+
         with pytest.raises(TypeError):
             fn_date(12345)
 
     def test_datetime_now(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import fn_datetime
+
         dt = fn_datetime()
         assert isinstance(dt, datetime)
 
     def test_datetime_from_string(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import fn_datetime
+
         dt = fn_datetime("2024-06-15T12:30:00")
         assert dt.year == 2024
 
     def test_datetime_from_datetime_object(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import fn_datetime
+
         now = datetime.now()
         assert fn_datetime(now) == now
 
     def test_datetime_invalid_type_raises(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import fn_datetime
+
         with pytest.raises(TypeError):
             fn_datetime(12345)
 
     def test_datetime_unparseable_string_raises(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import fn_datetime
+
         with pytest.raises(ValueError):
             fn_datetime("not-a-date")
 
     def test_timestamp_returns_int(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import fn_timestamp
+
         ts = fn_timestamp()
         assert isinstance(ts, int)
         assert ts > 0
 
     def test_duration_days(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import fn_duration
+
         d = fn_duration("P1D")
         assert isinstance(d, timedelta)
         assert d.days == 1
 
     def test_duration_hours_minutes(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import fn_duration
+
         d = fn_duration("PT2H30M")
         assert d.seconds == 2 * 3600 + 30 * 60
 
     def test_duration_none_returns_none(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import fn_duration
+
         assert fn_duration(None) is None
 
     def test_duration_invalid_raises(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import fn_duration
+
         with pytest.raises(ValueError):
             fn_duration("NOTISO")
 
@@ -438,10 +480,12 @@ class TestCypherFunctionsIntrospection:
     def test_fn_properties_none(self):
         """WHEN None passed THEN None returned."""
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import fn_properties
+
         assert fn_properties(None) is None
 
     def test_fn_keys_via_dict(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import fn_keys
+
         assert set(fn_keys({"a": 1, "b": 2})) == {"a", "b"}
 
     def test_fn_keys_plain_object(self):
@@ -461,10 +505,12 @@ class TestCypherFunctionsEvaluate:
 
     def test_evaluate_known_function(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import evaluate_function
+
         assert evaluate_function("abs", -7) == 7
 
     def test_evaluate_unknown_function_raises(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import evaluate_function
+
         with pytest.raises(ValueError, match="Unknown function"):
             evaluate_function("no_such_func")
 
@@ -472,6 +518,7 @@ class TestCypherFunctionsEvaluate:
 # ===========================================================================
 # extraction/graph.py tests
 # ===========================================================================
+
 
 class TestKnowledgeGraphFindPaths:
     """GIVEN a KnowledgeGraph with entities and relationships."""
@@ -611,16 +658,19 @@ class TestKnowledgeGraphSerialisation:
 # neo4j_compat/result.py tests
 # ===========================================================================
 
+
 class TestRecord:
     """GIVEN a Record with keys and values."""
 
     def _rec(self):
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.result import Record
+
         return Record(["name", "age"], ["Alice", 30])
 
     def test_keys_length_mismatch_raises(self):
         """WHEN keys/values length mismatch THEN ValueError raised."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.result import Record
+
         with pytest.raises(ValueError):
             Record(["a", "b"], [1])
 
@@ -661,6 +711,7 @@ class TestResult:
 
     def _result(self, n=3):
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.result import Result, Record
+
         records = [Record(["n"], [i]) for i in range(n)]
         return Result(records=records, summary={})
 
@@ -673,6 +724,7 @@ class TestResult:
     def test_single_strict_zero_records_raises(self):
         """WHEN single(strict=True) with empty result THEN ValueError raised."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.result import Result
+
         r = Result(records=[], summary={})
         with pytest.raises(ValueError):
             r.single(strict=True)
@@ -686,6 +738,7 @@ class TestResult:
     def test_single_empty_non_strict_returns_none(self):
         """WHEN single() with empty result THEN None returned."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.result import Result
+
         r = Result(records=[], summary={})
         assert r.single() is None
 
@@ -711,6 +764,7 @@ class TestResult:
     def test_value_empty_result(self):
         """WHEN value() on empty result THEN empty list returned."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.result import Result
+
         r = Result(records=[], summary={})
         assert r.value("x") == []
 
@@ -730,6 +784,7 @@ class TestResult:
     def test_peek_empty_returns_none(self):
         """WHEN peek() on empty result THEN None returned."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.result import Result
+
         r = Result(records=[], summary={})
         assert r.peek() is None
 
@@ -755,11 +810,13 @@ class TestResult:
 # transactions/wal.py tests
 # ===========================================================================
 
+
 class TestWALSerializationError:
     """GIVEN a WAL object whose storage raises serialization failures."""
 
     def _wal(self):
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
+
         mock_storage = MagicMock()
         mock_storage.store_json.return_value = "bafycid1"
         mock_storage.retrieve_json.return_value = None
@@ -773,6 +830,7 @@ class TestWALSerializationError:
     def test_append_entry(self):
         """WHEN a valid entry is appended THEN CID returned from storage."""
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WALEntry
+
         wal = self._wal()
         entry = WALEntry(txn_id="txn-1", operations=[], timestamp=0.0)
         cid = wal.append(entry)
@@ -783,6 +841,7 @@ class TestWALSerializationError:
         """WHEN storage raises TypeError THEN SerializationError raised."""
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog, WALEntry
         from ipfs_datasets_py.knowledge_graphs.exceptions import SerializationError
+
         mock_storage = MagicMock()
         mock_storage.store_json.side_effect = TypeError("bad type")
         wal = WriteAheadLog(storage=mock_storage)
@@ -799,6 +858,7 @@ class TestWALSerializationError:
     def test_read_from_cid_calls_storage(self):
         """WHEN reading from a CID THEN storage.retrieve_json called."""
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog, WALEntry
+
         mock_storage = MagicMock()
         entry = WALEntry(txn_id="t1", operations=[], timestamp=0.0)
         entry_dict = entry.to_dict()
@@ -814,17 +874,20 @@ class TestWALSerializationError:
 # neo4j_compat/session.py  (selected uncovered paths)
 # ===========================================================================
 
+
 class TestNeo4jSessionUncoveredPaths:
     """GIVEN IPFSTransaction and IPFSSession objects with mocked backends."""
 
     def _mock_session(self):
         """Create a minimal mock IPFSSession for transaction tests."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.session import IPFSSession
+
         # Build a mock that satisfies IPFSSession's interface needs
         mock_driver = MagicMock()
         mock_backend = MagicMock()
         mock_driver.backend = mock_backend
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.result import Result
+
         mock_executor = MagicMock()
         mock_executor.execute.return_value = Result(records=[], summary={})
         session = IPFSSession.__new__(IPFSSession)
@@ -836,6 +899,7 @@ class TestNeo4jSessionUncoveredPaths:
         session.backend = mock_backend
         session._query_executor = mock_executor
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.bookmarks import Bookmarks
+
         session._bookmarks = Bookmarks(None)
         session._last_bookmark = None
         return session
@@ -843,6 +907,7 @@ class TestNeo4jSessionUncoveredPaths:
     def test_begin_transaction_returns_tx(self):
         """WHEN begin_transaction() called THEN Transaction returned."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.session import IPFSTransaction
+
         s = self._mock_session()
         tx = s.begin_transaction()
         assert isinstance(tx, IPFSTransaction)
@@ -890,6 +955,7 @@ class TestNeo4jSessionUncoveredPaths:
     def test_session_run_returns_result(self):
         """WHEN session.run() called THEN Result returned."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.result import Result
+
         s = self._mock_session()
         result = s.run("MATCH (n) RETURN n")
         assert result is not None
@@ -905,35 +971,42 @@ class TestNeo4jSessionUncoveredPaths:
 # Deprecation shim coverage (root-level shims that redirect to subpackages)
 # ===========================================================================
 
+
 class TestRootLevelShimImports:
     """GIVEN root-level shim files WHEN imported THEN DeprecationWarning emitted."""
 
     def test_cross_document_lineage_shim(self):
         """WHEN cross_document_lineage imported THEN DeprecationWarning raised."""
         import warnings
+
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             import importlib
             import ipfs_datasets_py.knowledge_graphs.cross_document_lineage as m
+
             importlib.reload(m)
         assert any(issubclass(x.category, DeprecationWarning) for x in w)
 
     def test_reasoning_helpers_shim(self):
         """WHEN _reasoning_helpers imported THEN DeprecationWarning raised."""
         import warnings
+
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             import importlib
             import ipfs_datasets_py.knowledge_graphs._reasoning_helpers as m
+
             importlib.reload(m)
         assert any(issubclass(x.category, DeprecationWarning) for x in w)
 
     def test_query_knowledge_graph_shim(self):
         """WHEN query_knowledge_graph imported THEN DeprecationWarning raised."""
         import warnings
+
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             import importlib
             import ipfs_datasets_py.knowledge_graphs.query_knowledge_graph as m
+
             importlib.reload(m)
         assert any(issubclass(x.category, DeprecationWarning) for x in w)

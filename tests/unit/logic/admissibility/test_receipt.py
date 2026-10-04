@@ -145,9 +145,7 @@ def _allow_receipt(**overrides: Any) -> DecisionReceipt:
     return build_decision_receipt(**kwargs)
 
 
-def _receipt_for_status(
-    status: InternalDecisionStatus, **overrides: Any
-) -> DecisionReceipt:
+def _receipt_for_status(status: InternalDecisionStatus, **overrides: Any) -> DecisionReceipt:
     return _allow_receipt(
         receipt_id=f"receipt:{status.value}",
         outcome=status,
@@ -257,9 +255,7 @@ class TestDecisionReceipt:
             receipt_id="receipt:mutated-actor",
         )
         assert base.content_digest != mutated.content_digest
-        assert receipt_context_fingerprint(base) != receipt_context_fingerprint(
-            mutated
-        )
+        assert receipt_context_fingerprint(base) != receipt_context_fingerprint(mutated)
 
     @pytest.mark.parametrize(
         "field,mutator",
@@ -283,9 +279,7 @@ class TestDecisionReceipt:
             receipt_id=f"receipt:mut-{field}",
             context=mutator(),
         )
-        assert receipt_context_fingerprint(base) != receipt_context_fingerprint(
-            mutated
-        ), field
+        assert receipt_context_fingerprint(base) != receipt_context_fingerprint(mutated), field
 
     def test_root_mutation_changes_identity(self) -> None:
         base = _allow_receipt()
@@ -372,9 +366,7 @@ class TestDecisionReceipt:
             policy_digest=_DIGEST_B,
             profile_id="profile:closed-world",
             reason_codes=("allow.positive_grant",),
-            selected_evidence_cids=(
-                "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
-            ),
+            selected_evidence_cids=("bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",),
             residual_obligations=("duty:post",),
         )
         receipt = build_decision_receipt(
@@ -428,9 +420,7 @@ class TestVerifyDecisionReceipt:
 
     def test_reject_wrong_audience(self) -> None:
         with pytest.raises(ReceiptVerificationError, match="audience"):
-            verify_decision_receipt(
-                _allow_receipt(), expected_audience="audience:other"
-            )
+            verify_decision_receipt(_allow_receipt(), expected_audience="audience:other")
 
     def test_reject_stale_roots(self) -> None:
         with pytest.raises(ReceiptVerificationError, match="stale|roots"):
@@ -456,9 +446,7 @@ class TestVerifyDecisionReceipt:
 
     def test_reject_nonce_mismatch(self) -> None:
         with pytest.raises(ReceiptVerificationError, match="nonce"):
-            verify_decision_receipt(
-                _allow_receipt(), expected_nonce="nonce-other"
-            )
+            verify_decision_receipt(_allow_receipt(), expected_nonce="nonce-other")
 
     def test_mutated_payload_fails_integrity(self) -> None:
         payload = _allow_receipt().to_dict()
@@ -501,13 +489,9 @@ class TestAuthorizationCapability:
             InternalDecisionStatus.ERROR,
         ],
     )
-    def test_reject_non_allow_derivation(
-        self, status: InternalDecisionStatus
-    ) -> None:
+    def test_reject_non_allow_derivation(self, status: InternalDecisionStatus) -> None:
         receipt = _receipt_for_status(status)
-        with pytest.raises(
-            CapabilityDerivationError, match="allow decision receipt"
-        ):
+        with pytest.raises(CapabilityDerivationError, match="allow decision receipt"):
             derive_capability(
                 receipt,
                 capability_id="cap:bad",
@@ -517,9 +501,7 @@ class TestAuthorizationCapability:
     def test_require_strict_subset_attenuation(self) -> None:
         receipt = _allow_receipt()
         # Full copy of multi-effect set is rejected under strict subset.
-        with pytest.raises(
-            CapabilityDerivationError, match="strict subset"
-        ):
+        with pytest.raises(CapabilityDerivationError, match="strict subset"):
             derive_capability(
                 receipt,
                 capability_id="cap:full",
@@ -666,9 +648,7 @@ class TestAuthorizationCapability:
             allowed_effects=("effect:ledger-write",),
         )
         with pytest.raises(ReceiptVerificationError, match="stale|roots"):
-            verify_capability(
-                cap, expected_roots=_roots(revocation_root="revocation:old")
-            )
+            verify_capability(cap, expected_roots=_roots(revocation_root="revocation:old"))
 
     def test_verify_capability_rejects_expiry(self) -> None:
         receipt = _allow_receipt()

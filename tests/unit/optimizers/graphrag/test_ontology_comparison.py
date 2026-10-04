@@ -28,9 +28,9 @@ class TestCompareOntologies:
             "entities": [{"id": "e1"}],
             "relationships": [{"id": "r1"}],
         }
-        
+
         result = compare_ontologies(shared, shared)
-        
+
         assert result.entity_similarity == 1.0
         assert result.relationship_similarity == 1.0
         assert result.overall_similarity == 1.0
@@ -45,9 +45,9 @@ class TestCompareOntologies:
             "entities": [{"id": "e2"}],
             "relationships": [{"id": "r2"}],
         }
-        
+
         result = compare_ontologies(ont1, ont2)
-        
+
         assert result.entity_similarity == 0.0
         assert result.relationship_similarity == 0.0
         assert result.overall_similarity == 0.0
@@ -62,9 +62,9 @@ class TestCompareOntologies:
             "entities": [{"id": "e2"}, {"id": "e3"}],
             "relationships": [],
         }
-        
+
         result = compare_ontologies(ont1, ont2)
-        
+
         assert result.entity_overlap == 1  # e2
         assert len(result.entity_only_left) == 1  # e1
         assert len(result.entity_only_right) == 1  # e3
@@ -73,9 +73,9 @@ class TestCompareOntologies:
     def test_empty_ontologies(self):
         """Test comparing two empty ontologies."""
         onto_empty = {"entities": [], "relationships": []}
-        
+
         result = compare_ontologies(onto_empty, onto_empty)
-        
+
         assert result.entity_similarity == 1.0
         assert result.relationship_similarity == 1.0
 
@@ -86,9 +86,9 @@ class TestCompareOntologies:
             "entities": [{"id": "e1"}],
             "relationships": [{"id": "r1"}],
         }
-        
+
         result = compare_ontologies(onto_empty, onto_full)
-        
+
         assert result.entity_similarity == 0.0
         assert result.relationship_similarity == 0.0
 
@@ -112,9 +112,9 @@ class TestCompareOntologies:
             ],
             "relationships": [],
         }
-        
+
         result = compare_ontologies(ont1, ont2)
-        
+
         assert result.entity_overlap == 2  # e2, e3
         assert len(result.entity_only_left) == 2  # e1, e4
         assert len(result.entity_only_right) == 2  # e5, e6
@@ -129,26 +129,26 @@ class TestComputeSimilarity:
             "entities": [{"id": "e1"}],
             "relationships": [{"id": "r1"}],
         }
-        
+
         similarity = compute_similarity(onto, onto)
-        
+
         assert similarity == 1.0
 
     def test_different_similarity(self):
         """Test similarity returns a float between 0 and 1."""
         ont1 = {"entities": [{"id": "e1"}], "relationships": []}
         ont2 = {"entities": [{"id": "e2"}], "relationships": []}
-        
+
         similarity = compute_similarity(ont1, ont2)
-        
+
         assert 0.0 <= similarity <= 1.0
 
     def test_empty_similarity(self):
         """Test similarity of empty ontologies."""
         onto = {"entities": [], "relationships": []}
-        
+
         similarity = compute_similarity(onto, onto)
-        
+
         assert similarity == 1.0
 
 
@@ -158,9 +158,9 @@ class TestAnalyzeEntityDistribution:
     def test_empty_entities(self):
         """Test distribution with no entities."""
         ontology = {"entities": []}
-        
+
         stats = analyze_entity_distribution(ontology)
-        
+
         assert stats.total_items == 0
         assert stats.unique_types == 0
         assert stats.dominant_type == ""
@@ -174,9 +174,9 @@ class TestAnalyzeEntityDistribution:
                 {"id": "e3", "type": "Person"},
             ]
         }
-        
+
         stats = analyze_entity_distribution(ontology)
-        
+
         assert stats.total_items == 3
         assert stats.unique_types == 1
         assert stats.dominant_type == "Person"
@@ -192,9 +192,9 @@ class TestAnalyzeEntityDistribution:
                 {"id": "e4", "type": "Organization"},
             ]
         }
-        
+
         stats = analyze_entity_distribution(ontology)
-        
+
         assert stats.total_items == 4
         assert stats.unique_types == 3
         assert stats.dominant_type == "Person"
@@ -211,9 +211,9 @@ class TestAnalyzeEntityDistribution:
                 {"id": "e3", "type": "B"},
             ]
         }
-        
+
         stats = analyze_entity_distribution(ontology)
-        
+
         assert stats.dominant_type_percentage == pytest.approx(66.666666667, rel=0.01)
 
 
@@ -223,9 +223,9 @@ class TestAnalyzeRelationshipDistribution:
     def test_empty_relationships(self):
         """Test distribution with no relationships."""
         ontology = {"relationships": []}
-        
+
         stats = analyze_relationship_distribution(ontology)
-        
+
         assert stats.total_items == 0
         assert stats.unique_types == 0
 
@@ -238,9 +238,9 @@ class TestAnalyzeRelationshipDistribution:
                 {"id": "r3", "type": "works_at"},
             ]
         }
-        
+
         stats = analyze_relationship_distribution(ontology)
-        
+
         assert stats.total_items == 3
         assert stats.unique_types == 2
         assert stats.type_counts["knows"] == 2
@@ -254,27 +254,27 @@ class TestFindEntityOverlap:
     def test_complete_overlap(self):
         """Test complete entity overlap."""
         ont = {"entities": [{"id": "e1"}, {"id": "e2"}]}
-        
+
         overlap = find_entity_overlap(ont, ont)
-        
+
         assert sorted(overlap) == ["e1", "e2"]
 
     def test_no_overlap(self):
         """Test no entity overlap."""
         ont1 = {"entities": [{"id": "e1"}]}
         ont2 = {"entities": [{"id": "e2"}]}
-        
+
         overlap = find_entity_overlap(ont1, ont2)
-        
+
         assert len(overlap) == 0
 
     def test_partial_overlap(self):
         """Test partial entity overlap."""
         ont1 = {"entities": [{"id": "e1"}, {"id": "e2"}]}
         ont2 = {"entities": [{"id": "e2"}, {"id": "e3"}]}
-        
+
         overlap = find_entity_overlap(ont1, ont2)
-        
+
         assert overlap == ["e2"]
 
 
@@ -284,27 +284,27 @@ class TestFindRelationshipOverlap:
     def test_complete_overlap(self):
         """Test complete relationship overlap."""
         ont = {"relationships": [{"id": "r1"}, {"id": "r2"}]}
-        
+
         overlap = find_relationship_overlap(ont, ont)
-        
+
         assert sorted(overlap) == ["r1", "r2"]
 
     def test_no_overlap(self):
         """Test no relationship overlap."""
         ont1 = {"relationships": [{"id": "r1"}]}
         ont2 = {"relationships": [{"id": "r2"}]}
-        
+
         overlap = find_relationship_overlap(ont1, ont2)
-        
+
         assert len(overlap) == 0
 
     def test_partial_overlap(self):
         """Test partial relationship overlap."""
         ont1 = {"relationships": [{"id": "r1"}, {"id": "r2"}]}
         ont2 = {"relationships": [{"id": "r2"}, {"id": "r3"}]}
-        
+
         overlap = find_relationship_overlap(ont1, ont2)
-        
+
         assert overlap == ["r2"]
 
 
@@ -314,15 +314,15 @@ class TestExtractTypeDistribution:
     def test_empty_list(self):
         """Test with empty list."""
         distribution = extract_type_distribution([])
-        
+
         assert len(distribution) == 0
 
     def test_single_type(self):
         """Test with single type."""
         items = [{"type": "A"}, {"type": "A"}, {"type": "A"}]
-        
+
         distribution = extract_type_distribution(items)
-        
+
         assert distribution == {"A": 3}
 
     def test_multiple_types(self):
@@ -334,17 +334,17 @@ class TestExtractTypeDistribution:
             {"type": "C"},
             {"type": "B"},
         ]
-        
+
         distribution = extract_type_distribution(items)
-        
+
         assert distribution == {"A": 2, "B": 2, "C": 1}
 
     def test_items_without_type(self):
         """Test that items without type field are ignored."""
         items = [{"type": "A"}, {"id": "e1"}, {"type": "A"}]
-        
+
         distribution = extract_type_distribution(items)
-        
+
         assert distribution == {"A": 2}
 
 
@@ -357,7 +357,7 @@ class TestComparisonResult:
             entity_similarity=0.0,
             relationship_similarity=0.0,
         )
-        
+
         assert result.overall_similarity == 0.0
 
     def test_overall_similarity_perfect(self):
@@ -366,7 +366,7 @@ class TestComparisonResult:
             entity_similarity=1.0,
             relationship_similarity=1.0,
         )
-        
+
         assert result.overall_similarity == 1.0
 
     def test_overall_similarity_average(self):
@@ -375,7 +375,7 @@ class TestComparisonResult:
             entity_similarity=0.8,
             relationship_similarity=0.6,
         )
-        
+
         assert result.overall_similarity == pytest.approx(0.7)
 
     def test_total_entities_union(self):
@@ -385,7 +385,7 @@ class TestComparisonResult:
             entity_only_left=["e1", "e2"],
             entity_only_right=["e3"],
         )
-        
+
         assert result.total_entities_union == 8
 
     def test_total_relationships_union(self):
@@ -395,7 +395,7 @@ class TestComparisonResult:
             rel_only_left=["r1", "r2", "r3"],
             rel_only_right=["r4", "r5"],
         )
-        
+
         # 3 overlap + 3 left + 2 right = 8
         assert result.total_relationships_union == 8
 
@@ -408,7 +408,7 @@ class TestComparisonResult:
             relationship_similarity=0.6,
         )
         repr_str = repr(result)
-        
+
         assert "ComparisonResult" in repr_str
         assert "entity_overlap=5" in repr_str
         assert "rel_overlap=3" in repr_str
@@ -420,7 +420,7 @@ class TestDistributionStats:
     def test_empty_stats(self):
         """Test stats with no items."""
         stats = DistributionStats()
-        
+
         assert stats.total_items == 0
         assert stats.unique_types == 0
         assert stats.dominant_type == ""
@@ -432,7 +432,7 @@ class TestDistributionStats:
             type_counts={"A": 5, "B": 3, "C": 2},
             total_items=10,
         )
-        
+
         assert stats.dominant_type == "A"
 
     def test_dominant_percentage(self):
@@ -441,7 +441,7 @@ class TestDistributionStats:
             type_counts={"A": 7, "B": 3},
             total_items=10,
         )
-        
+
         assert stats.dominant_type_percentage == 70.0
 
     def test_unique_types(self):
@@ -449,7 +449,7 @@ class TestDistributionStats:
         stats = DistributionStats(
             type_counts={"A": 5, "B": 3, "C": 2},
         )
-        
+
         assert stats.unique_types == 3
 
     def test_repr(self):
@@ -459,7 +459,7 @@ class TestDistributionStats:
             total_items=10,
         )
         repr_str = repr(stats)
-        
+
         assert "DistributionStats" in repr_str
         assert "total=10" in repr_str
         assert "types=2" in repr_str
@@ -477,7 +477,7 @@ class TestFormatComparisonResult:
             relationship_similarity=0.6,
         )
         formatted = format_comparison_result(result, verbose=False)
-        
+
         assert "Ontology Comparison" in formatted
         assert "70.0%" in formatted  # Overall similarity
 
@@ -492,7 +492,7 @@ class TestFormatComparisonResult:
             entity_only_right=["e3"],
         )
         formatted = format_comparison_result(result, verbose=True)
-        
+
         assert "Only in Left" in formatted
         assert "Only in Right" in formatted
 
@@ -503,7 +503,7 @@ class TestFormatComparisonResult:
             relationship_similarity=1.0,
         )
         formatted = format_comparison_result(result)
-        
+
         assert "100.0%" in formatted
 
 
@@ -514,29 +514,29 @@ class TestEdgeCases:
         """Test comparison with ontologies missing keys."""
         ont1 = {"entities": [{"id": "e1"}]}  # Missing relationships
         ont2 = {"entities": [{"id": "e1"}], "relationships": []}
-        
+
         result = compare_ontologies(ont1, ont2)
-        
+
         assert result.entity_similarity == 1.0
         assert result.relationship_similarity == 1.0
 
     def test_distribution_with_non_dict_items(self):
         """Test distribution with invalid items."""
         items = [{"type": "A"}, "invalid", {"type": "B"}]
-        
+
         distribution = extract_type_distribution(items)
-        
+
         assert distribution == {"A": 1, "B": 1}
 
     def test_large_ontology_comparison(self):
         """Test comparison of large ontologies."""
         entities_left = [{"id": f"e{i}"} for i in range(1000)]
         entities_right = [{"id": f"e{i}"} for i in range(500, 1500)]
-        
+
         ont1 = {"entities": entities_left, "relationships": []}
         ont2 = {"entities": entities_right, "relationships": []}
-        
+
         result = compare_ontologies(ont1, ont2)
-        
+
         # 500 shared entities, 1500 total
         assert result.entity_similarity == pytest.approx(500 / 1500)

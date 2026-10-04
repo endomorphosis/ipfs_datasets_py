@@ -63,36 +63,36 @@ DetailedLineageIntegrator = LineageMetrics
 
 __all__ = [
     # Core types
-    'LineageNode',
-    'LineageLink',
-    'LineageDomain',
-    'LineageBoundary',
-    'LineageTransformationDetail',
-    'LineageVersion',
-    'LineageSubgraph',
+    "LineageNode",
+    "LineageLink",
+    "LineageDomain",
+    "LineageBoundary",
+    "LineageTransformationDetail",
+    "LineageVersion",
+    "LineageSubgraph",
     # Core classes
-    'LineageGraph',
-    'LineageTracker',
+    "LineageGraph",
+    "LineageTracker",
     # Enhanced features
-    'SemanticAnalyzer',
-    'BoundaryDetector',
-    'ConfidenceScorer',
-    'EnhancedLineageTracker',
+    "SemanticAnalyzer",
+    "BoundaryDetector",
+    "ConfidenceScorer",
+    "EnhancedLineageTracker",
     # Visualization
-    'LineageVisualizer',
-    'visualize_lineage',
+    "LineageVisualizer",
+    "visualize_lineage",
     # Metrics and analysis
-    'LineageMetrics',
-    'ImpactAnalyzer',
-    'DependencyAnalyzer',
+    "LineageMetrics",
+    "ImpactAnalyzer",
+    "DependencyAnalyzer",
     # Deprecated aliases
-    'CrossDocumentLineageEnhancer',
-    'DetailedLineageIntegrator',
+    "CrossDocumentLineageEnhancer",
+    "DetailedLineageIntegrator",
 ]
 
 # Version info
-__version__ = '1.0.0'
-__status__ = 'Production'
+__version__ = "1.0.0"
+__status__ = "Production"
 
 # Deprecation notice for old modules
 import warnings
@@ -107,6 +107,7 @@ Please update your imports to use the new lineage package:
 
 See docs/knowledge_graphs/MIGRATION_GUIDE.md for details.
 """
+
 
 def _show_deprecation_warning():
     """Show deprecation warning when importing legacy modules."""

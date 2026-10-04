@@ -79,7 +79,7 @@ from ipfs_datasets_py.mcp_server.tools.finance_data_tools import (
     fetch_stock_data,
     fetch_financial_news,
     analyze_executive_performance,
-    analyze_embedding_market_correlation
+    analyze_embedding_market_correlation,
 )
 
 # Scrape data
@@ -90,7 +90,7 @@ news = fetch_financial_news(query="AAPL", sources=["reuters"])
 results = analyze_executive_performance(
     news_articles_json=json.dumps(news),
     stock_data_json=json.dumps(stocks),
-    hypothesis="Female CEOs outperform male CEOs"
+    hypothesis="Female CEOs outperform male CEOs",
 )
 ```
 

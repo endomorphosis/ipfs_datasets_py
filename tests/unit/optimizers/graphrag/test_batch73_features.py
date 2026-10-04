@@ -22,10 +22,9 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipel
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _ctx():
-    return OntologyGenerationContext(
-        data_source="test", data_type="text", domain="general"
-    )
+    return OntologyGenerationContext(data_source="test", data_type="text", domain="general")
 
 
 def _ont(n=2):
@@ -37,8 +36,12 @@ def _ont(n=2):
 
 def _score(**overrides):
     defaults = dict(
-        completeness=0.7, consistency=0.8, clarity=0.6, granularity=0.5, relationship_coherence=0.9
-    , domain_alignment=0.9
+        completeness=0.7,
+        consistency=0.8,
+        clarity=0.6,
+        granularity=0.5,
+        relationship_coherence=0.9,
+        domain_alignment=0.9,
     )
     defaults.update(overrides)
     return CriticScore(**defaults)
@@ -47,6 +50,7 @@ def _score(**overrides):
 # ---------------------------------------------------------------------------
 # OntologyCritic.compare_batch
 # ---------------------------------------------------------------------------
+
 
 class TestCompareBatch:
     def test_returns_list(self):
@@ -89,6 +93,7 @@ class TestCompareBatch:
 # OntologyCritic.weighted_overall
 # ---------------------------------------------------------------------------
 
+
 class TestWeightedOverall:
     def test_returns_float(self):
         critic = OntologyCritic(use_llm=False)
@@ -129,6 +134,7 @@ class TestWeightedOverall:
 # OntologyPipeline.clone_with
 # ---------------------------------------------------------------------------
 
+
 class TestCloneWith:
     def test_returns_pipeline(self):
         p = OntologyPipeline(domain="legal")
@@ -164,6 +170,7 @@ class TestCloneWith:
 # OntologyPipeline.get_stage_names
 # ---------------------------------------------------------------------------
 
+
 class TestGetStageNames:
     def test_returns_list(self):
         assert isinstance(OntologyPipeline().get_stage_names(), list)
@@ -185,6 +192,7 @@ class TestGetStageNames:
 # ---------------------------------------------------------------------------
 # ExtractionConfig.validate
 # ---------------------------------------------------------------------------
+
 
 class TestExtractionConfigValidate:
     def test_default_config_valid(self):

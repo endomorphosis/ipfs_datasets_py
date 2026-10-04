@@ -75,17 +75,15 @@ from .reassessment_namespace import (
     reject_published_write_targets,
 )
 from .runner import CacheIsolationError, validate_cache_isolation
+
 HOLDOUT_REASSESSMENT_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.reassessment-holdout.v1"
 )
 HOLDOUT_REASSESSMENT_SNAPSHOT_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "reassessment-holdout-snapshot.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.reassessment-holdout-snapshot.v1"
 )
 HOLDOUT_REASSESSMENT_RUN_ID: Final = "holdout-reassessment-v2"
-_PUBLISHED_LAYOUT: Final = ReassessmentRunLayout.for_run(
-    PUBLISHED_REASSESSMENT_RUN_ID
-)
+_PUBLISHED_LAYOUT: Final = ReassessmentRunLayout.for_run(PUBLISHED_REASSESSMENT_RUN_ID)
 DEFAULT_HOLDOUT_REASSESSMENT_PATH: Final = _PUBLISHED_LAYOUT.holdout_report
 DEFAULT_HOLDOUT_REASSESSMENT_SNAPSHOT: Final = _PUBLISHED_LAYOUT.holdout_snapshot
 REPOSITORY_ROOT: Final = Path(__file__).resolve().parents[2]
@@ -112,11 +110,7 @@ class HoldoutReassessmentError(ValueError):
 
 
 def _holdout_run_id(run_id: str) -> str:
-    return (
-        HOLDOUT_REASSESSMENT_RUN_ID
-        if run_id == PUBLISHED_REASSESSMENT_RUN_ID
-        else run_id
-    )
+    return HOLDOUT_REASSESSMENT_RUN_ID if run_id == PUBLISHED_REASSESSMENT_RUN_ID else run_id
 
 
 def HSSLEV1507C49() -> str:
@@ -140,9 +134,7 @@ def _sha_bytes(value: bytes) -> str:
 
 
 def _mapping(value: object, field: str) -> Mapping[str, object]:
-    if not isinstance(value, Mapping) or not all(
-        isinstance(key, str) for key in value
-    ):
+    if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
         raise HoldoutReassessmentError(f"{field} must be an object")
     return value
 
@@ -157,13 +149,9 @@ def _resolve_root(repository_root: str | Path) -> Path:
     try:
         root = Path(repository_root).resolve(strict=True)
     except OSError as exc:
-        raise HoldoutReassessmentError(
-            "repository root is unavailable"
-        ) from exc
+        raise HoldoutReassessmentError("repository root is unavailable") from exc
     if not root.is_dir():
-        raise HoldoutReassessmentError(
-            "repository root is not a directory"
-        )
+        raise HoldoutReassessmentError("repository root is not a directory")
     return root
 
 
@@ -184,36 +172,24 @@ def _reject_duplicate_pairs(
 
 
 def _reject_nonfinite(token: str) -> object:
-    raise HoldoutReassessmentError(
-        f"non-finite JSON number is forbidden: {token}"
-    )
+    raise HoldoutReassessmentError(f"non-finite JSON number is forbidden: {token}")
 
 
 def _read_canonical(path: Path, field: str) -> tuple[object, bytes]:
     try:
         file_stat = path.lstat()
-        if stat.S_ISLNK(file_stat.st_mode) or not stat.S_ISREG(
-            file_stat.st_mode
-        ):
-            raise HoldoutReassessmentError(
-                f"{field} must be a regular non-symlink file"
-            )
+        if stat.S_ISLNK(file_stat.st_mode) or not stat.S_ISREG(file_stat.st_mode):
+            raise HoldoutReassessmentError(f"{field} must be a regular non-symlink file")
         if file_stat.st_size <= 0 or file_stat.st_size > _MAX_ARTIFACT_BYTES:
-            raise HoldoutReassessmentError(
-                f"{field} size is outside the safe bound"
-            )
+            raise HoldoutReassessmentError(f"{field} size is outside the safe bound")
         raw = path.read_bytes()
         text = raw.decode("utf-8")
     except HoldoutReassessmentError:
         raise
     except (OSError, UnicodeError) as exc:
-        raise HoldoutReassessmentError(
-            f"cannot read {field}: {path}"
-        ) from exc
+        raise HoldoutReassessmentError(f"cannot read {field}: {path}") from exc
     if not text.endswith("\n") or text.endswith("\n\n"):
-        raise HoldoutReassessmentError(
-            f"{field} is not canonical newline JSON"
-        )
+        raise HoldoutReassessmentError(f"{field} is not canonical newline JSON")
     try:
         value = json.loads(
             text,
@@ -221,15 +197,11 @@ def _read_canonical(path: Path, field: str) -> tuple[object, bytes]:
             parse_constant=_reject_nonfinite,
         )
     except (json.JSONDecodeError, HoldoutReassessmentError) as exc:
-        raise HoldoutReassessmentError(
-            f"{field} is not strict JSON"
-        ) from exc
+        raise HoldoutReassessmentError(f"{field} is not strict JSON") from exc
     try:
         expected = (canonical_json(value) + "\n").encode("utf-8")
     except (TypeError, ValueError) as exc:
-        raise HoldoutReassessmentError(
-            f"{field} is not canonically serializable"
-        ) from exc
+        raise HoldoutReassessmentError(f"{field} is not canonically serializable") from exc
     if raw != expected:
         raise HoldoutReassessmentError(f"{field} is not canonical JSON")
     return value, raw
@@ -303,14 +275,10 @@ def _authorization_audit(
             "source_revalidated": True,
             "shortlist_frozen": shortlist["frozen"],
             "shortlist_nonempty": bool(shortlist["selected_variant_ids"]),
-            "candidate_count_within_limit": (
-                1 <= int(shortlist["selected_count"]) <= 4
-            ),
+            "candidate_count_within_limit": (1 <= int(shortlist["selected_count"]) <= 4),
             "decision_complete": decision["status"] == "complete",
             "holdout_explicitly_authorized": holdout["authorized"] is True,
-            "holdout_previously_unopened": (
-                holdout["outcomes_inspected"] is False
-            ),
+            "holdout_previously_unopened": (holdout["outcomes_inspected"] is False),
             "tuning_forbidden": deep_freeze["tuning_permitted"] is False,
         },
         "satisfied": False,
@@ -324,9 +292,7 @@ def _authorization_audit(
     }
     checks = _mapping(payload["checks"], "authorization audit checks")
     payload["satisfied"] = all(item is True for item in checks.values())
-    payload["rejection_stage"] = (
-        None if payload["satisfied"] else "before_holdout_activity"
-    )
+    payload["rejection_stage"] = None if payload["satisfied"] else "before_holdout_activity"
     payload["audit_sha256"] = _sha(
         {key: item for key, item in payload.items() if key != "audit_sha256"}
     )
@@ -354,9 +320,7 @@ def _authorization_from_pilot(
         or holdout.get("outcomes_inspected") is not False
         or deep_freeze.get("tuning_permitted") is not False
     ):
-        raise HoldoutReassessmentError(
-            "pilot did not satisfy the holdout authorization boundary"
-        )
+        raise HoldoutReassessmentError("pilot did not satisfy the holdout authorization boundary")
     source = _mapping(inputs["source"], "pilot.deep_freeze.inputs.source")
     prompts = _mapping(inputs["prompts"], "pilot.deep_freeze.inputs.prompts")
     policies = _mapping(inputs["policies"], "pilot.deep_freeze.inputs.policies")
@@ -394,8 +358,7 @@ def _authorization_from_pilot(
         )
     except (HoldoutExecutionError, TypeError, ValueError) as exc:
         raise HoldoutReassessmentError(
-            "pilot authorization could not be projected into the execution "
-            "boundary"
+            "pilot authorization could not be projected into the execution boundary"
         ) from exc
 
 
@@ -424,9 +387,7 @@ def build_holdout_authorization(
             benchmark_root=benchmark_root,
         )
     except (ValueError, PilotReassessmentError) as exc:
-        raise HoldoutReassessmentError(
-            "HSSL-G140 prerequisite failed source validation"
-        ) from exc
+        raise HoldoutReassessmentError("HSSL-G140 prerequisite failed source validation") from exc
     return _authorization_from_pilot(pilot, run_id=run_id)
 
 
@@ -449,9 +410,7 @@ def _raw_terminal_kernel_accepted(result: CaseResultRecord) -> bool:
     kernel = result.stages[-1]
     if kernel.stage is not StageName.KERNEL:
         return False
-    graph_invoked = kernel.provenance.effective_identity.get(
-        "graph_invoked"
-    )
+    graph_invoked = kernel.provenance.effective_identity.get("graph_invoked")
     has_native_receipt = (
         isinstance(kernel.data, Mapping)
         and kernel.data.get("schema") == NATIVE_KERNEL_RECEIPT_SCHEMA
@@ -463,9 +422,7 @@ def _raw_terminal_kernel_accepted(result: CaseResultRecord) -> bool:
             )
         return False
     if graph_invoked is not True:
-        raise HoldoutReassessmentError(
-            "kernel stage lacks an explicit graph invocation decision"
-        )
+        raise HoldoutReassessmentError("kernel stage lacks an explicit graph invocation decision")
     try:
         return validate_native_kernel_stage_receipt(kernel)
     except ProtocolContractError as exc:
@@ -496,9 +453,7 @@ def _holdout_execution_accounting(
     for result in results:
         setups: list[TelemetryRecord] = []
         for stage in result.stages:
-            graph_invoked = stage.provenance.effective_identity.get(
-                "graph_invoked"
-            )
+            graph_invoked = stage.provenance.effective_identity.get("graph_invoked")
             if type(graph_invoked) is not bool:
                 raise HoldoutReassessmentError(
                     "holdout stage lacks an explicit graph invocation decision"
@@ -523,9 +478,7 @@ def _holdout_execution_accounting(
             if graph_invoked and stage.stage is not StageName.KERNEL:
                 if stage.stage is StageName.SYMAI:
                     try:
-                        backend_calls += symai_backend_invocation_count(
-                            stage
-                        )
+                        backend_calls += symai_backend_invocation_count(stage)
                     except ProtocolContractError as exc:
                         raise HoldoutReassessmentError(
                             "SyMAI backend invocation accounting is invalid"
@@ -563,24 +516,16 @@ def _build_authorized_holdout_report(
             pilot,
             run_id=layout.run_id,
         )
-        receipt = HoldoutExecutionReceipt.from_dict(
-            authorized_run.receipt.to_dict()
-        )
+        receipt = HoldoutExecutionReceipt.from_dict(authorized_run.receipt.to_dict())
     except (AttributeError, HoldoutExecutionError, TypeError, ValueError) as exc:
-        raise HoldoutReassessmentError(
-            "authorized holdout execution evidence is invalid"
-        ) from exc
+        raise HoldoutReassessmentError("authorized holdout execution evidence is invalid") from exc
     execution = authorized_run.execution
     if not isinstance(execution, AblationRunResult):
-        raise HoldoutReassessmentError(
-            "authorized holdout execution result is invalid"
-        )
+        raise HoldoutReassessmentError("authorized holdout execution result is invalid")
     plan = execution.plan
     results = tuple(execution.results)
     holdout_manifest = tuple(
-        item
-        for item in reviewed_corpus.manifest.cases
-        if item.split is Split.HOLDOUT
+        item for item in reviewed_corpus.manifest.cases if item.split is Split.HOLDOUT
     )
     shortlist = _mapping(pilot["shortlist"], "pilot.shortlist")
     selected = tuple(
@@ -592,17 +537,11 @@ def _build_authorized_holdout_report(
     )
     deep_freeze = _mapping(pilot["deep_freeze"], "pilot.deep_freeze")
     freeze_inputs = _mapping(deep_freeze["inputs"], "deep_freeze.inputs")
-    manifest_by_id = {
-        str(getattr(item, "case_id")): item for item in holdout_manifest
-    }
+    manifest_by_id = {str(getattr(item, "case_id")): item for item in holdout_manifest}
     expected_cases = tuple(str(getattr(item, "case_id")) for item in holdout_manifest)
-    expected_coordinates = (
-        len(expected_cases) * len(CACHE_MODES) * (1 + len(selected))
-    )
+    expected_coordinates = len(expected_cases) * len(CACHE_MODES) * (1 + len(selected))
     expected_job_ids = tuple(job.job_id for job in plan.jobs)
-    expected_namespaces = tuple(
-        contract.cache_namespace for contract in plan.run_contracts
-    )
+    expected_namespaces = tuple(contract.cache_namespace for contract in plan.run_contracts)
     if (
         audit.get("satisfied") is not True
         or receipt.authorization_sha256 != authorization.authorization_sha256
@@ -614,8 +553,7 @@ def _build_authorized_holdout_report(
         or receipt.run_id != plan.run_id
         or plan.run_id != layout.run_id
         or plan.protocol_sha256 != authorization.protocol_sha256
-        or plan.case_manifest_sha256
-        != authorization.corpus_manifest_sha256
+        or plan.case_manifest_sha256 != authorization.corpus_manifest_sha256
         or plan.environment_sha256 != authorization.environment_sha256
         or plan.split is not Split.HOLDOUT
         or plan.variant_ids != ("A0", *selected)
@@ -634,10 +572,7 @@ def _build_authorized_holdout_report(
             item.case_id != job.case_id
             or item.variant_id != job.variant_id
             or item.cache_mode is not job.cache_mode
-            or any(
-                stage.provenance.input_sha256 != job.input_sha256
-                for stage in item.stages
-            )
+            or any(stage.provenance.input_sha256 != job.input_sha256 for stage in item.stages)
             for job, item in zip(plan.jobs, results, strict=True)
         )
         or any(
@@ -646,27 +581,21 @@ def _build_authorized_holdout_report(
             or item.case_manifest_sha256 != plan.case_manifest_sha256
             or item.split is not Split.HOLDOUT
             or any(
-                stage.provenance.environment_sha256
-                != authorization.environment_sha256
+                stage.provenance.environment_sha256 != authorization.environment_sha256
                 for stage in item.stages
             )
             for item in results
         )
         or any(
-            job.case_sha256
-            != getattr(manifest_by_id.get(job.case_id), "case_sha256", None)
+            job.case_sha256 != getattr(manifest_by_id.get(job.case_id), "case_sha256", None)
             or hashlib.sha256(
-                str(_mapping(job.input_data, "holdout input")["text"]).encode(
-                    "utf-8"
-                )
+                str(_mapping(job.input_data, "holdout input")["text"]).encode("utf-8")
             ).hexdigest()
             != getattr(manifest_by_id.get(job.case_id), "source_sha256", None)
             for job in plan.jobs
         )
     ):
-        raise HoldoutReassessmentError(
-            "authorized execution differs from the frozen pilot handoff"
-        )
+        raise HoldoutReassessmentError("authorized execution differs from the frozen pilot handoff")
     try:
         access_audits = validate_holdout_access_audits(
             authorization,
@@ -676,12 +605,8 @@ def _build_authorized_holdout_report(
             purpose="evaluation",
         )
     except HoldoutExecutionError as exc:
-        raise HoldoutReassessmentError(
-            "authorized execution access audits are invalid"
-        ) from exc
-    if tuple(
-        item.audit_sha256 for item in access_audits
-    ) != receipt.access_audit_sha256s:
+        raise HoldoutReassessmentError("authorized execution access audits are invalid") from exc
+    if tuple(item.audit_sha256 for item in access_audits) != receipt.access_audit_sha256s:
         raise HoldoutReassessmentError(
             "authorized execution receipt does not bind its access audits"
         )
@@ -699,17 +624,13 @@ def _build_authorized_holdout_report(
         ) from exc
 
     raw_terminal_kernel_acceptance = {
-        item.digest: _raw_terminal_kernel_accepted(item)
-        for item in results
+        item.digest: _raw_terminal_kernel_accepted(item) for item in results
     }
     by_coordinate = {
-        (item.case_id, item.cache_mode.value, item.variant_id): item
-        for item in results
+        (item.case_id, item.cache_mode.value, item.variant_id): item for item in results
     }
     if len(by_coordinate) != len(results):
-        raise HoldoutReassessmentError(
-            "authorized execution contains duplicate coordinates"
-        )
+        raise HoldoutReassessmentError("authorized execution contains duplicate coordinates")
     expected_keys = {
         (case_id, mode, variant)
         for case_id in expected_cases
@@ -717,9 +638,7 @@ def _build_authorized_holdout_report(
         for variant in ("A0", *selected)
     }
     if set(by_coordinate) != expected_keys:
-        raise HoldoutReassessmentError(
-            "authorized execution is not the complete paired holdout"
-        )
+        raise HoldoutReassessmentError("authorized execution is not the complete paired holdout")
 
     paired_deltas: list[int] = []
     baseline_regressions = 0
@@ -729,73 +648,39 @@ def _build_authorized_holdout_report(
             baseline = by_coordinate[(case_id, mode, "A0")]
             for variant_id in selected:
                 candidate = by_coordinate[(case_id, mode, variant_id)]
-                paired_deltas.append(
-                    int(candidate.kernel_accepted)
-                    - int(baseline.kernel_accepted)
-                )
-                baseline_regressions += (
-                    baseline.kernel_accepted
-                    and not candidate.kernel_accepted
-                )
-                unique_wins += (
-                    candidate.kernel_accepted
-                    and not baseline.kernel_accepted
-                )
-    candidate_results = [
-        item for item in results if item.variant_id in selected
-    ]
-    candidate_verified = sum(
-        item.kernel_accepted for item in candidate_results
-    )
-    baseline_results = [
-        item for item in results if item.variant_id == "A0"
-    ]
+                paired_deltas.append(int(candidate.kernel_accepted) - int(baseline.kernel_accepted))
+                baseline_regressions += baseline.kernel_accepted and not candidate.kernel_accepted
+                unique_wins += candidate.kernel_accepted and not baseline.kernel_accepted
+    candidate_results = [item for item in results if item.variant_id in selected]
+    candidate_verified = sum(item.kernel_accepted for item in candidate_results)
+    baseline_results = [item for item in results if item.variant_id == "A0"]
     baseline_verified = sum(item.kernel_accepted for item in baseline_results)
     invalid_case_ids = {
         job.case_id
         for job in plan.jobs
-        if _mapping(job.input_data, "holdout case input").get(
-            "expected_class"
-        )
+        if _mapping(job.input_data, "holdout case input").get("expected_class")
         in INVALID_CONTROL_EXPECTED_CLASSES
     }
     invalid_false_positives = sum(
-        item.case_id in invalid_case_ids
-        and raw_terminal_kernel_acceptance[item.digest]
+        item.case_id in invalid_case_ids and raw_terminal_kernel_acceptance[item.digest]
         for item in results
     )
     (
         setup_by_result,
         setup_telemetry,
         backend_calls,
-    ) = _holdout_execution_accounting(
-        results
-    )
+    ) = _holdout_execution_accounting(results)
     latencies = [
         sum(stage.telemetry.wall_time_ms for stage in item.stages)
-        + sum(
-            setup.wall_time_ms
-            for setup in setup_by_result[item.digest]
-        )
+        + sum(setup.wall_time_ms for setup in setup_by_result[item.digest])
         for item in candidate_results
     ]
-    peak_values = [
-        stage.telemetry.peak_memory_bytes
-        for item in results
-        for stage in item.stages
-    ]
-    peak_values.extend(
-        setup.peak_memory_bytes for setup in setup_telemetry
-    )
+    peak_values = [stage.telemetry.peak_memory_bytes for item in results for stage in item.stages]
+    peak_values.extend(setup.peak_memory_bytes for setup in setup_telemetry)
     peak_memory = max(peak_values, default=0)
-    model_calls = (
-        sum(
-            stage.telemetry.model_calls
-            for item in results
-            for stage in item.stages
-        )
-        + sum(setup.model_calls for setup in setup_telemetry)
-    )
+    model_calls = sum(
+        stage.telemetry.model_calls for item in results for stage in item.stages
+    ) + sum(setup.model_calls for setup in setup_telemetry)
     observed_pairs = 10 * len(CACHE_MODES) * len(selected)
     explicit_failures = sum(
         item.status
@@ -818,14 +703,11 @@ def _build_authorized_holdout_report(
                 "status": "measured",
                 "complete": True,
                 "values": {
-                    "invalid_control_kernel_false_positive_count": (
-                        invalid_false_positives
-                    ),
+                    "invalid_control_kernel_false_positive_count": (invalid_false_positives),
                     "a0_solved_regression_rate": (
                         None
                         if baseline_verified == 0
-                        else baseline_regressions
-                        / (baseline_verified * len(selected))
+                        else baseline_regressions / (baseline_verified * len(selected))
                     ),
                     "unexplained_a0_regressions": baseline_regressions,
                 },
@@ -839,9 +721,7 @@ def _build_authorized_holdout_report(
                     "kernel_verified_completion_rate": (
                         candidate_verified / len(candidate_results)
                     ),
-                    "paired_verified_delta_vs_a0": (
-                        sum(paired_deltas) / len(paired_deltas)
-                    ),
+                    "paired_verified_delta_vs_a0": (sum(paired_deltas) / len(paired_deltas)),
                     "semantic_equivalence_acceptance_rate": None,
                 },
                 "reason": semantic_reason,
@@ -851,14 +731,11 @@ def _build_authorized_holdout_report(
                 "status": "incomplete",
                 "complete": False,
                 "values": {
-                    "p95_latency_seconds": (
-                        None if not latencies else _p95(latencies) / 1000
-                    ),
+                    "p95_latency_seconds": (None if not latencies else _p95(latencies) / 1000),
                     "paired_p95_delta_vs_a0": None,
                 },
                 "reason": (
-                    "paired p95 delta requires per-arm aggregation in the "
-                    "statistics publication"
+                    "paired p95 delta requires per-arm aggregation in the statistics publication"
                 ),
             },
             {
@@ -870,10 +747,7 @@ def _build_authorized_holdout_report(
                     "model_call_count": model_calls,
                     "accelerator_minutes": None,
                 },
-                "reason": (
-                    "accelerator-minute telemetry is not present in the "
-                    "execution receipt"
-                ),
+                "reason": ("accelerator-minute telemetry is not present in the execution receipt"),
             },
             {
                 "domain": "routing",
@@ -884,9 +758,7 @@ def _build_authorized_holdout_report(
                     "escalation_precision": None,
                     "unique_kernel_verified_wins": unique_wins,
                 },
-                "reason": (
-                    "routing usefulness requires reviewed per-call attribution"
-                ),
+                "reason": ("routing usefulness requires reviewed per-call attribution"),
             },
         ],
         "measured_domain_count": 1,
@@ -899,9 +771,7 @@ def _build_authorized_holdout_report(
         "baseline_variant_id": "A0",
         "candidate_variant_ids": list(selected),
         "evaluation_variant_ids": ["A0", *selected],
-        "configuration_sha256s": dict(
-            authorization.configuration_sha256s
-        ),
+        "configuration_sha256s": dict(authorization.configuration_sha256s),
         "cache_modes": list(CACHE_MODES),
         "cache_namespaces_isolated": True,
         "identical_case_and_source_manifest_required": True,
@@ -966,11 +836,7 @@ def _build_authorized_holdout_report(
         "audit_sha256": "",
     }
     executed_audit["audit_sha256"] = _sha(
-        {
-            key: item
-            for key, item in executed_audit.items()
-            if key != "audit_sha256"
-        }
+        {key: item for key, item in executed_audit.items() if key != "audit_sha256"}
     )
     report: dict[str, object] = {
         "schema": HOLDOUT_REASSESSMENT_SCHEMA,
@@ -1009,12 +875,10 @@ def _build_authorized_holdout_report(
             "case_count": len(expected_cases),
             "case_ids": list(expected_cases),
             "case_sha256s": [
-                getattr(manifest_by_id[case_id], "case_sha256")
-                for case_id in expected_cases
+                getattr(manifest_by_id[case_id], "case_sha256") for case_id in expected_cases
             ],
             "source_sha256s": [
-                getattr(manifest_by_id[case_id], "source_sha256")
-                for case_id in expected_cases
+                getattr(manifest_by_id[case_id], "source_sha256") for case_id in expected_cases
             ],
             "reviewed_inputs_loaded": True,
             "semantic_targets_inspected": True,
@@ -1038,18 +902,14 @@ def _build_authorized_holdout_report(
             "authorization": authorization.to_dict(),
             "plan": plan.to_dict(),
             "receipt": receipt.to_dict(),
-            "access_audits": [
-                item.to_dict() for item in access_audits
-            ],
+            "access_audits": [item.to_dict() for item in access_audits],
             "case_results": [item.to_dict() for item in results],
         },
         "access": {
             "status": "executed",
             "authorized": True,
             "access_audit_count": len(receipt.access_audit_sha256s),
-            "access_audit_sha256s": list(
-                receipt.access_audit_sha256s
-            ),
+            "access_audit_sha256s": list(receipt.access_audit_sha256s),
             "first_access_recorded": True,
             "cache_namespaces_opened": list(receipt.cache_namespaces),
             "execution_namespace_created": True,
@@ -1134,17 +994,13 @@ def build_holdout_reassessment_report(
             benchmark_root=benchmark_root,
         )
     except PilotReassessmentError as exc:
-        raise HoldoutReassessmentError(
-            "HSSL-G140 prerequisite failed source validation"
-        ) from exc
+        raise HoldoutReassessmentError("HSSL-G140 prerequisite failed source validation") from exc
     pilot_value, pilot_bytes = _read_canonical(
         pilot_path,
         "pilot reassessment artifact",
     )
     if pilot_value != pilot:
-        raise HoldoutReassessmentError(
-            "validated pilot differs from its canonical artifact"
-        )
+        raise HoldoutReassessmentError("validated pilot differs from its canonical artifact")
     shortlist = _mapping(pilot["shortlist"], "pilot.shortlist")
     holdout = _mapping(pilot["holdout"], "pilot.holdout")
     decision = _mapping(pilot["decision"], "pilot.decision")
@@ -1153,22 +1009,16 @@ def build_holdout_reassessment_report(
         shortlist["selected_variant_ids"],
         "pilot.shortlist.selected_variant_ids",
     )
-    audit = _authorization_audit(
-        pilot=pilot, pilot_bytes_sha256=_sha_bytes(pilot_bytes)
-    )
+    audit = _authorization_audit(pilot=pilot, pilot_bytes_sha256=_sha_bytes(pilot_bytes))
     # This is public manifest metadata only: identities and content digests,
     # never reviewed source text, semantic targets, or proof obligations.
     manifest = load_manifest(root / DEFAULT_MANIFEST_PATH)
-    holdout_cases = tuple(
-        item for item in manifest.cases if item.split is Split.HOLDOUT
-    )
+    holdout_cases = tuple(item for item in manifest.cases if item.split is Split.HOLDOUT)
     if (
         corpus_manifest_sha256(manifest) != FROZEN_CORPUS_MANIFEST_SHA256
         or len(holdout_cases) != 10
     ):
-        raise HoldoutReassessmentError(
-            "frozen public holdout manifest identity changed"
-        )
+        raise HoldoutReassessmentError("frozen public holdout manifest identity changed")
     if audit["satisfied"] is True:
         if authorized_run is None:
             raise HoldoutReassessmentError(
@@ -1230,9 +1080,7 @@ def build_holdout_reassessment_report(
             "cache_mode",
             "candidate_variant_id",
         ],
-        "expected_pair_count": len(holdout_cases)
-        * len(CACHE_MODES)
-        * len(selected),
+        "expected_pair_count": len(holdout_cases) * len(CACHE_MODES) * len(selected),
         "balanced_order": {
             "required": True,
             "method": "case-cache parity crossover",
@@ -1243,9 +1091,7 @@ def build_holdout_reassessment_report(
             "scheduled_coordinates": [],
             "status": "not_scheduled_before_authorization",
         },
-        "source_commit": _mapping(
-            freeze_inputs["source"], "deep_freeze.inputs.source"
-        )["commit"],
+        "source_commit": _mapping(freeze_inputs["source"], "deep_freeze.inputs.source")["commit"],
         **(
             {}
             if run_id == PUBLISHED_REASSESSMENT_RUN_ID
@@ -1258,12 +1104,12 @@ def build_holdout_reassessment_report(
         ),
         "protocol_sha256": pilot["protocol_sha256"],
         "registry_sha256": pilot["registry_sha256"],
-        "prompts_sha256": _mapping(
-            freeze_inputs["prompts"], "deep_freeze.inputs.prompts"
-        )["sha256"],
-        "policies_sha256": _mapping(
-            freeze_inputs["policies"], "deep_freeze.inputs.policies"
-        )["sha256"],
+        "prompts_sha256": _mapping(freeze_inputs["prompts"], "deep_freeze.inputs.prompts")[
+            "sha256"
+        ],
+        "policies_sha256": _mapping(freeze_inputs["policies"], "deep_freeze.inputs.policies")[
+            "sha256"
+        ],
         "model_identities_sha256": _mapping(
             freeze_inputs["model_identities"],
             "deep_freeze.inputs.model_identities",
@@ -1272,9 +1118,9 @@ def build_holdout_reassessment_report(
             freeze_inputs["resource_policy"],
             "deep_freeze.inputs.resource_policy",
         )["sha256"],
-        "thresholds_sha256": _mapping(
-            freeze_inputs["thresholds"], "deep_freeze.inputs.thresholds"
-        )["sha256"],
+        "thresholds_sha256": _mapping(freeze_inputs["thresholds"], "deep_freeze.inputs.thresholds")[
+            "sha256"
+        ],
         "source_freeze_sha256": deep_freeze["freeze_sha256"],
         "access_audit_required_before_activity": True,
         "one_access_audit_per_run_contract": True,
@@ -1288,9 +1134,7 @@ def build_holdout_reassessment_report(
         "production_promotion_authorized": False,
     }
     candidate_dispositions: list[dict[str, object]] = []
-    for raw_candidate in _array(
-        pilot["candidate_evidence"], "pilot.candidate_evidence"
-    ):
+    for raw_candidate in _array(pilot["candidate_evidence"], "pilot.candidate_evidence"):
         item = _mapping(raw_candidate, "pilot.candidate_evidence[]")
         candidate_dispositions.append(
             {
@@ -1407,32 +1251,22 @@ def validate_holdout_reassessment_report(
 
     data = dict(_mapping(value, "holdout reassessment report"))
     if data.get("schema") != HOLDOUT_REASSESSMENT_SCHEMA:
-        raise HoldoutReassessmentError(
-            "unsupported holdout reassessment schema"
-        )
+        raise HoldoutReassessmentError("unsupported holdout reassessment schema")
     if data.get("evidence") != "HSSLEV1507C49":
-        raise HoldoutReassessmentError(
-            "holdout reassessment evidence marker changed"
-        )
+        raise HoldoutReassessmentError("holdout reassessment evidence marker changed")
     if data.get("evidence_statement") != HSSLEV1507C49():
-        raise HoldoutReassessmentError(
-            "holdout reassessment evidence statement changed"
-        )
+        raise HoldoutReassessmentError("holdout reassessment evidence statement changed")
     if data.get("artifact_sha256") != _sha(
         {key: item for key, item in data.items() if key != "artifact_sha256"}
     ):
-        raise HoldoutReassessmentError(
-            "holdout reassessment digest changed"
-        )
+        raise HoldoutReassessmentError("holdout reassessment digest changed")
     if data.get("status") != "blocked":
         evidence = _mapping(
             data.get("execution_evidence"),
             "holdout execution evidence",
         )
         try:
-            authorization = PilotAuthorizationReceipt.from_dict(
-                evidence["authorization"]
-            )
+            authorization = PilotAuthorizationReceipt.from_dict(evidence["authorization"])
             plan = AblationPlan.from_dict(evidence["plan"])
             receipt = HoldoutExecutionReceipt.from_dict(evidence["receipt"])
             access_audits = tuple(
@@ -1446,13 +1280,9 @@ def validate_holdout_reassessment_report(
                 evidence["case_results"],
                 "holdout execution case_results",
             )
-            results = tuple(
-                CaseResultRecord.from_dict(item) for item in raw_results
-            )
+            results = tuple(CaseResultRecord.from_dict(item) for item in raw_results)
             if authorization.authorization_sha256 != receipt.authorization_sha256:
-                raise HoldoutReassessmentError(
-                    "execution authorization and receipt differ"
-                )
+                raise HoldoutReassessmentError("execution authorization and receipt differ")
             execution = AblationRunResult(
                 plan=plan,
                 contracts=plan.run_contracts,
@@ -1480,8 +1310,7 @@ def validate_holdout_reassessment_report(
         )
         if data != expected:
             raise HoldoutReassessmentError(
-                "holdout reassessment differs from recomputed execution "
-                "evidence"
+                "holdout reassessment differs from recomputed execution evidence"
             )
         return data
     expected = build_holdout_reassessment_report(
@@ -1543,9 +1372,7 @@ def _snapshot(
                     "Holdout activity is reported exactly as authorized and "
                     "receipt-bound; missing metric domains remain typed null."
                 ),
-                (
-                    "Benchmark evidence never authorizes production promotion."
-                ),
+                ("Benchmark evidence never authorizes production promotion."),
             ]
         ),
         "results": {
@@ -1570,12 +1397,8 @@ def _snapshot(
                 "execution_write_count": access["execution_write_count"],
                 "backend_call_count": access["backend_call_count"],
             },
-            "metrics_complete": _mapping(
-                report["metrics"], "metrics"
-            )["complete"],
-            "production_promotion_authorized": decision[
-                "production_promotion_authorized"
-            ],
+            "metrics_complete": _mapping(report["metrics"], "metrics")["complete"],
+            "production_promotion_authorized": decision["production_promotion_authorized"],
             "remediation": report["remediation"],
         },
     }
@@ -1602,9 +1425,7 @@ def load_holdout_reassessment_report(
         raise HoldoutReassessmentError("reassessment run_id is invalid") from exc
     artifact_reference = Path(layout.holdout_report if path is None else path)
     artifact_path = _rooted(root, artifact_reference)
-    value, _ = _read_canonical(
-        artifact_path, "holdout reassessment artifact"
-    )
+    value, _ = _read_canonical(artifact_path, "holdout reassessment artifact")
     report = validate_holdout_reassessment_report(
         value,
         repository_root=root,
@@ -1613,9 +1434,7 @@ def load_holdout_reassessment_report(
     )
     if validate_snapshot:
         selected_snapshot = Path(
-            layout.holdout_snapshot
-            if snapshot_path is None
-            else snapshot_path
+            layout.holdout_snapshot if snapshot_path is None else snapshot_path
         )
         snapshot, _ = _read_canonical(
             _rooted(root, selected_snapshot),
@@ -1668,9 +1487,7 @@ def _atomic_write(path: Path, payload: bytes, *, overwrite: bool) -> None:
         os.replace(temporary_name, path)
         temporary_name = None
     except OSError as exc:
-        raise HoldoutReassessmentError(
-            f"cannot write evidence: {path}"
-        ) from exc
+        raise HoldoutReassessmentError(f"cannot write evidence: {path}") from exc
     finally:
         if temporary_name is not None:
             try:
@@ -1697,13 +1514,9 @@ def write_holdout_reassessment_report(
             run_id,
             benchmark_root=benchmark_root,
         )
-        artifact_reference = Path(
-            layout.holdout_report if path is None else path
-        )
+        artifact_reference = Path(layout.holdout_report if path is None else path)
         snapshot_reference = Path(
-            layout.holdout_snapshot
-            if snapshot_path is None
-            else snapshot_path
+            layout.holdout_snapshot if snapshot_path is None else snapshot_path
         )
         reject_published_write_targets(
             repository_root=root,
@@ -1766,9 +1579,7 @@ def holdout_reassessment_summary(report: object) -> dict[str, object]:
         "backend_call_count": access["backend_call_count"],
         "metrics_complete": metrics["complete"],
         "efficacy_claimed": outcomes["efficacy_claimed"],
-        "production_promotion_authorized": decision[
-            "production_promotion_authorized"
-        ],
+        "production_promotion_authorized": decision["production_promotion_authorized"],
     }
 
 

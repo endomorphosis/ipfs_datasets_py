@@ -4,11 +4,13 @@ Test stubs for graphrag_integration module.
 Feature: GraphRAG Integration
   Retrieval-Augmented Generation with knowledge graphs
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def a_graph_subgraph():
@@ -83,6 +85,7 @@ def vector_and_graph_indexes():
 
 
 # Test scenarios
+
 
 def test_initialize_graphrag_system():
     """
@@ -173,6 +176,7 @@ def test_handle_multihop_reasoning():
 
 
 # Step definitions
+
 
 # Given steps
 @given("a graph subgraph")
@@ -343,4 +347,3 @@ def the_system_is_ready_for_queries():
     """Step: Then the system is ready for queries"""
     # TODO: Implement step
     pass
-

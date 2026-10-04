@@ -23,6 +23,7 @@ from unittest.mock import MagicMock
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_context(domain: str = "legal"):
     ctx = MagicMock()
     extraction_config = MagicMock()
@@ -77,14 +78,20 @@ def minimal_ontology_builder(ontology_dict_factory):
 # OntologyGenerator
 # ---------------------------------------------------------------------------
 
+
 class TestOntologyGeneratorRuleBased:
     def setup_method(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
-            OntologyGenerator, OntologyGenerationContext, ExtractionStrategy
+            OntologyGenerator,
+            OntologyGenerationContext,
+            ExtractionStrategy,
         )
+
         self.gen = OntologyGenerator(use_ipfs_accelerate=False)
         self.ctx = OntologyGenerationContext(
-            data_source="test", data_type="text", domain="legal",
+            data_source="test",
+            data_type="text",
+            domain="legal",
             extraction_strategy=ExtractionStrategy.RULE_BASED,
         )
 
@@ -110,6 +117,7 @@ class TestOntologyGeneratorRuleBased:
 
     def test_returns_entity_extraction_result(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
         result = self.gen.extract_entities("Alice owns Acme Corp.", self.ctx)
         assert isinstance(result, EntityExtractionResult)
         assert result.confidence > 0
@@ -119,8 +127,11 @@ class TestOntologyGeneratorRuleBased:
 class TestOntologyGeneratorRelationships:
     def setup_method(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
-            OntologyGenerator, OntologyGenerationContext, Entity
+            OntologyGenerator,
+            OntologyGenerationContext,
+            Entity,
         )
+
         self.gen = OntologyGenerator(use_ipfs_accelerate=False)
         self.ctx = OntologyGenerationContext(data_source="t", data_type="text", domain="legal")
         # Build two entities manually
@@ -142,18 +153,29 @@ class TestOntologyGeneratorRelationships:
         assert rels == []
 
     def test_co_occurrence_within_window(self):
-        rels = self.gen.infer_relationships([self.alice, self.bob], self.ctx, "Alice and Bob spoke.")
+        rels = self.gen.infer_relationships(
+            [self.alice, self.bob], self.ctx, "Alice and Bob spoke."
+        )
         assert any(r.source_id in ("e1", "e2") and r.target_id in ("e1", "e2") for r in rels)
 
 
 class TestOntologyGeneratorMerge:
     def setup_method(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
         self.gen = OntologyGenerator(use_ipfs_accelerate=False)
 
     def _o1(self):
         return {
-            "entities": [{"id": "e1", "type": "Person", "text": "Alice", "properties": {"role": "obligor"}, "confidence": 0.9}],
+            "entities": [
+                {
+                    "id": "e1",
+                    "type": "Person",
+                    "text": "Alice",
+                    "properties": {"role": "obligor"},
+                    "confidence": 0.9,
+                }
+            ],
             "relationships": [],
             "metadata": {"source": "doc1"},
         }
@@ -161,10 +183,24 @@ class TestOntologyGeneratorMerge:
     def _o2(self):
         return {
             "entities": [
-                {"id": "e1", "type": "Person", "text": "Alice", "properties": {"age": 30}, "confidence": 0.7},
+                {
+                    "id": "e1",
+                    "type": "Person",
+                    "text": "Alice",
+                    "properties": {"age": 30},
+                    "confidence": 0.7,
+                },
                 {"id": "e2", "type": "Org", "text": "Acme", "properties": {}, "confidence": 0.8},
             ],
-            "relationships": [{"id": "r1", "source_id": "e1", "target_id": "e2", "type": "works_for", "confidence": 0.7}],
+            "relationships": [
+                {
+                    "id": "r1",
+                    "source_id": "e1",
+                    "target_id": "e2",
+                    "type": "works_for",
+                    "confidence": 0.7,
+                }
+            ],
             "metadata": {"source": "doc2"},
         }
 
@@ -198,14 +234,18 @@ class TestOntologyGeneratorMerge:
 # OntologyCritic
 # ---------------------------------------------------------------------------
 
+
 class TestOntologyCriticDimensions:
     def setup_method(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
         self.critic = OntologyCritic(use_llm=False)
         self.ctx = _make_context("legal")
 
     def test_empty_ontology_completeness_zero(self):
-        score = self.critic._evaluate_completeness({"entities": [], "relationships": []}, self.ctx, None)
+        score = self.critic._evaluate_completeness(
+            {"entities": [], "relationships": []}, self.ctx, None
+        )
         assert score == 0.0
 
     def test_full_ontology_completeness_high(self, minimal_ontology_builder):
@@ -232,7 +272,11 @@ class TestOntologyCriticDimensions:
         assert score > 0.0  # all entities have properties in minimal_ontology_builder output
 
     def test_granularity_zero_no_properties(self):
-        ont = {"entities": [{"id": "e1", "type": "P", "text": "A", "properties": {}}], "relationships": [], "metadata": {}}
+        ont = {
+            "entities": [{"id": "e1", "type": "P", "text": "A", "properties": {}}],
+            "relationships": [],
+            "metadata": {},
+        }
         score = self.critic._evaluate_granularity(ont, self.ctx)
         assert score <= 0.45  # coarseness penalty should dominate
 
@@ -249,8 +293,9 @@ class TestOntologyCriticDimensions:
 class TestOntologyCriticCache:
     def setup_method(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
         self.critic = OntologyCritic(use_llm=False)
-        if hasattr(self.critic, '_eval_cache'):
+        if hasattr(self.critic, "_eval_cache"):
             self.critic._eval_cache.clear()
         self.ctx = _make_context()
 
@@ -282,11 +327,13 @@ class TestOntologyCriticCache:
 # OntologyMediator.refine_ontology
 # ---------------------------------------------------------------------------
 
+
 class TestOntologyMediatorRefine:
     def setup_method(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
         from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import OntologyMediator
+
         self.gen = OntologyGenerator(use_ipfs_accelerate=False)
         self.critic = OntologyCritic(use_llm=False)
         self.med = OntologyMediator(generator=self.gen, critic=self.critic)
@@ -301,15 +348,27 @@ class TestOntologyMediatorRefine:
         return s
 
     def test_add_properties_action(self):
-        ont = {"entities": [{"id": "e1", "type": "Person", "text": "A", "properties": {}, "confidence": 0.9}],
-               "relationships": [], "metadata": {}}
-        refined = self.med.refine_ontology(ont, self._score(["Add more property details"]), self.ctx)
+        ont = {
+            "entities": [
+                {"id": "e1", "type": "Person", "text": "A", "properties": {}, "confidence": 0.9}
+            ],
+            "relationships": [],
+            "metadata": {},
+        }
+        refined = self.med.refine_ontology(
+            ont, self._score(["Add more property details"]), self.ctx
+        )
         assert refined["entities"][0].get("properties")
 
     def test_normalize_names_action(self):
-        ont = {"entities": [{"id": "e1", "type": "some_type", "text": "a", "properties": {}}],
-               "relationships": [], "metadata": {}}
-        refined = self.med.refine_ontology(ont, self._score(["Normalize naming conventions"]), self.ctx)
+        ont = {
+            "entities": [{"id": "e1", "type": "some_type", "text": "a", "properties": {}}],
+            "relationships": [],
+            "metadata": {},
+        }
+        refined = self.med.refine_ontology(
+            ont, self._score(["Normalize naming conventions"]), self.ctx
+        )
         assert refined["entities"][0]["type"] == "SomeType"
 
     def test_prune_orphans_action(self):
@@ -326,9 +385,14 @@ class TestOntologyMediatorRefine:
         assert "e2" not in remaining_ids
 
     def test_actions_recorded_in_metadata(self):
-        ont = {"entities": [{"id": "e1", "type": "P", "text": "A", "properties": {}}],
-               "relationships": [], "metadata": {}}
-        refined = self.med.refine_ontology(ont, self._score(["Add more property details"]), self.ctx)
+        ont = {
+            "entities": [{"id": "e1", "type": "P", "text": "A", "properties": {}}],
+            "relationships": [],
+            "metadata": {},
+        }
+        refined = self.med.refine_ontology(
+            ont, self._score(["Add more property details"]), self.ctx
+        )
         assert "refinement_actions" in refined["metadata"]
 
 
@@ -336,9 +400,11 @@ class TestOntologyMediatorRefine:
 # LogicValidator.suggest_fixes
 # ---------------------------------------------------------------------------
 
+
 class TestLogicValidatorSuggestFixes:
     def setup_method(self):
         from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
         self.validator = LogicValidator()
 
     @pytest.fixture(autouse=True)
@@ -370,9 +436,11 @@ class TestLogicValidatorSuggestFixes:
 # PromptGenerator
 # ---------------------------------------------------------------------------
 
+
 class TestPromptGeneratorExamples:
     def setup_method(self):
         from ipfs_datasets_py.optimizers.graphrag.prompt_generator import PromptGenerator
+
         self.pg = PromptGenerator()
 
     def test_builtin_legal_examples(self):
@@ -385,9 +453,9 @@ class TestPromptGeneratorExamples:
         assert all(e["quality_score"] >= 0.99 for e in examples)
 
     def test_add_examples_roundtrip(self):
-        self.pg.add_examples("custom_domain", [
-            {"input": "test", "ontology": {}, "quality_score": 0.95}
-        ])
+        self.pg.add_examples(
+            "custom_domain", [{"input": "test", "ontology": {}, "quality_score": 0.95}]
+        )
         examples = self.pg.select_examples("custom_domain", quality_threshold=0.0)
         assert len(examples) == 1
 
@@ -404,9 +472,11 @@ class TestPromptGeneratorExamples:
 # BaseSession
 # ---------------------------------------------------------------------------
 
+
 class TestBaseSession:
     def setup_method(self):
         from ipfs_datasets_py.optimizers.common.base_session import BaseSession
+
         self.Session = BaseSession
 
     def test_initial_state(self):
@@ -417,26 +487,33 @@ class TestBaseSession:
 
     def test_record_rounds_improving(self):
         s = self.Session(session_id="s1", domain="test")
-        s.start_round(); s.record_round(0.5)
-        s.start_round(); s.record_round(0.7)
-        s.start_round(); s.record_round(0.9)
+        s.start_round()
+        s.record_round(0.5)
+        s.start_round()
+        s.record_round(0.7)
+        s.start_round()
+        s.record_round(0.9)
         assert s.best_score == 0.9
         assert s.trend == "improving"
 
     def test_converged_when_target_reached(self):
         s = self.Session(session_id="s1", domain="test", target_score=0.85)
-        s.start_round(); s.record_round(0.9)
+        s.start_round()
+        s.record_round(0.9)
         assert s.converged is True
 
     def test_converged_when_no_improvement(self):
         s = self.Session(session_id="s1", domain="test", convergence_threshold=0.05)
-        s.start_round(); s.record_round(0.7)
-        s.start_round(); s.record_round(0.71)  # delta = 0.01 < 0.05
+        s.start_round()
+        s.record_round(0.7)
+        s.start_round()
+        s.record_round(0.71)  # delta = 0.01 < 0.05
         assert s.converged is True
 
     def test_to_dict_structure(self):
         s = self.Session(session_id="s1", domain="test")
-        s.start_round(); s.record_round(0.6)
+        s.start_round()
+        s.record_round(0.6)
         s.finish()
         d = s.to_dict()
         assert d["session_id"] == "s1"
@@ -447,6 +524,7 @@ class TestBaseSession:
 # ---------------------------------------------------------------------------
 # BaseHarness
 # ---------------------------------------------------------------------------
+
 
 class TestBaseHarness:
     def _make_harness(self, target_score=0.9, max_rounds=5):
@@ -472,6 +550,7 @@ class TestBaseHarness:
 
     def test_run_returns_base_session(self):
         from ipfs_datasets_py.optimizers.common.base_session import BaseSession
+
         h = self._make_harness(target_score=0.9, max_rounds=5)
         session = h.run(None, None)
         assert isinstance(session, BaseSession)
@@ -496,9 +575,11 @@ class TestBaseHarness:
 # ProverConfig
 # ---------------------------------------------------------------------------
 
+
 class TestProverConfig:
     def test_defaults(self):
         from ipfs_datasets_py.optimizers.graphrag import ProverConfig
+
         cfg = ProverConfig()
         assert cfg.strategy == "AUTO"
         assert cfg.provers == []
@@ -507,6 +588,7 @@ class TestProverConfig:
 
     def test_from_dict(self):
         from ipfs_datasets_py.optimizers.graphrag import ProverConfig
+
         cfg = ProverConfig.from_dict({"strategy": "SYMBOLIC", "timeout": 5.0, "parallel": True})
         assert cfg.strategy == "SYMBOLIC"
         assert cfg.timeout == 5.0
@@ -514,6 +596,7 @@ class TestProverConfig:
 
     def test_to_dict_roundtrip(self):
         from ipfs_datasets_py.optimizers.graphrag import ProverConfig
+
         orig = ProverConfig(strategy="HYBRID", provers=["z3"], timeout=3.0, parallel=True)
         d = orig.to_dict()
         cfg2 = ProverConfig.from_dict(d)
@@ -523,17 +606,20 @@ class TestProverConfig:
 
     def test_logic_validator_accepts_prover_config(self):
         from ipfs_datasets_py.optimizers.graphrag import ProverConfig, LogicValidator
+
         cfg = ProverConfig(strategy="SYMBOLIC")
         v = LogicValidator(prover_config=cfg)
         assert v.prover_config.strategy == "SYMBOLIC"
 
     def test_logic_validator_accepts_dict(self):
         from ipfs_datasets_py.optimizers.graphrag import LogicValidator
+
         v = LogicValidator(prover_config={"strategy": "AUTO", "timeout": 2.0})
         assert v.prover_config.timeout == 2.0
 
     def test_logic_validator_default_config(self):
         from ipfs_datasets_py.optimizers.graphrag import LogicValidator
+
         v = LogicValidator()
         assert v.prover_config.strategy == "AUTO"
 
@@ -542,17 +628,23 @@ class TestProverConfig:
 # _prove_consistency — structural checking on string formulas
 # ---------------------------------------------------------------------------
 
+
 class TestProveConsistency:
     def _validator(self):
         from ipfs_datasets_py.optimizers.graphrag import LogicValidator
+
         return LogicValidator(use_cache=False)
 
     def test_consistent_ontology(self):
         v = self._validator()
         ontology = {
-            "entities": [{"id": "e1", "type": "Person", "text": "Alice"},
-                         {"id": "e2", "type": "Organization", "text": "Corp"}],
-            "relationships": [{"id": "r1", "type": "works_for", "source_id": "e1", "target_id": "e2"}],
+            "entities": [
+                {"id": "e1", "type": "Person", "text": "Alice"},
+                {"id": "e2", "type": "Organization", "text": "Corp"},
+            ],
+            "relationships": [
+                {"id": "r1", "type": "works_for", "source_id": "e1", "target_id": "e2"}
+            ],
         }
         result = v.check_consistency(ontology)
         assert result.is_consistent
@@ -562,7 +654,9 @@ class TestProveConsistency:
         v = self._validator()
         ontology = {
             "entities": [{"id": "e1", "type": "Person", "text": "Alice"}],
-            "relationships": [{"id": "r1", "type": "works_for", "source_id": "e1", "target_id": "MISSING"}],
+            "relationships": [
+                {"id": "r1", "type": "works_for", "source_id": "e1", "target_id": "MISSING"}
+            ],
         }
         result = v.check_consistency(ontology)
         assert not result.is_consistent
@@ -571,8 +665,10 @@ class TestProveConsistency:
     def test_circular_isa_detected(self):
         v = self._validator()
         ontology = {
-            "entities": [{"id": "A", "type": "Concept", "text": "A"},
-                         {"id": "B", "type": "Concept", "text": "B"}],
+            "entities": [
+                {"id": "A", "type": "Concept", "text": "A"},
+                {"id": "B", "type": "Concept", "text": "B"},
+            ],
             "relationships": [
                 {"id": "r1", "type": "is_a", "source_id": "A", "target_id": "B"},
                 {"id": "r2", "type": "is_a", "source_id": "B", "target_id": "A"},
@@ -592,6 +688,7 @@ class TestProveConsistency:
 # _extract_hybrid / _extract_neural
 # ---------------------------------------------------------------------------
 
+
 class TestHybridNeuralExtraction:
     def _make_context(self, domain: str = "legal"):
         ctx = MagicMock()
@@ -605,6 +702,7 @@ class TestHybridNeuralExtraction:
         ctx.data_source = "test"
         ctx.data_type = MagicMock()
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionStrategy
+
         ctx.data_type.__eq__ = lambda s, o: False
         ctx.extraction_strategy = ExtractionStrategy.HYBRID
         ctx.extraction_config = extraction_config
@@ -613,6 +711,7 @@ class TestHybridNeuralExtraction:
     def test_hybrid_returns_result(self):
         from ipfs_datasets_py.optimizers.graphrag import OntologyGenerator
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionStrategy
+
         gen = OntologyGenerator()
         ctx = self._make_context()
         result = gen._extract_hybrid("Alice works for Acme Corp in New York.", ctx)
@@ -622,6 +721,7 @@ class TestHybridNeuralExtraction:
 
     def test_neural_returns_result(self):
         from ipfs_datasets_py.optimizers.graphrag import OntologyGenerator
+
         gen = OntologyGenerator()
         ctx = self._make_context()
         result = gen._extract_neural("Alice governs Acme Corp.", ctx)
@@ -630,6 +730,7 @@ class TestHybridNeuralExtraction:
 
     def test_hybrid_deduplicates_entities(self):
         from ipfs_datasets_py.optimizers.graphrag import OntologyGenerator
+
         gen = OntologyGenerator()
         ctx = self._make_context()
         text = "Alice Alice Alice."
@@ -641,6 +742,7 @@ class TestHybridNeuralExtraction:
 # ---------------------------------------------------------------------------
 # OntologyPipelineHarness
 # ---------------------------------------------------------------------------
+
 
 class TestOntologyPipelineHarness:
     def _build_harness(self, target_score=0.8, max_rounds=3):
@@ -673,6 +775,7 @@ class TestOntologyPipelineHarness:
 
     def test_run_returns_session(self):
         from ipfs_datasets_py.optimizers.common import BaseSession
+
         h, _ = self._build_harness()
         session = h.run(None, None)
         assert isinstance(session, BaseSession)
@@ -695,9 +798,11 @@ class TestOntologyPipelineHarness:
 # ExtractionConfig
 # ---------------------------------------------------------------------------
 
+
 class TestExtractionConfig:
     def test_defaults(self):
         from ipfs_datasets_py.optimizers.graphrag import ExtractionConfig
+
         cfg = ExtractionConfig()
         assert cfg.confidence_threshold == 0.5
         assert cfg.max_entities == 0
@@ -706,12 +811,14 @@ class TestExtractionConfig:
 
     def test_from_dict(self):
         from ipfs_datasets_py.optimizers.graphrag import ExtractionConfig
+
         cfg = ExtractionConfig.from_dict({"confidence_threshold": 0.7, "window_size": 3})
         assert cfg.confidence_threshold == 0.7
         assert cfg.window_size == 3
 
     def test_to_dict_roundtrip(self):
         from ipfs_datasets_py.optimizers.graphrag import ExtractionConfig
+
         orig = ExtractionConfig(max_entities=50, max_relationships=100)
         cfg2 = ExtractionConfig.from_dict(orig.to_dict())
         assert cfg2.max_entities == 50
@@ -719,10 +826,14 @@ class TestExtractionConfig:
 
     def test_context_normalises_dict_config(self):
         from ipfs_datasets_py.optimizers.graphrag import (
-            OntologyGenerationContext, ExtractionConfig,
+            OntologyGenerationContext,
+            ExtractionConfig,
         )
+
         ctx = OntologyGenerationContext(
-            data_source="test", data_type="text", domain="legal",
+            data_source="test",
+            data_type="text",
+            domain="legal",
             config={"confidence_threshold": 0.8},
         )
         assert isinstance(ctx.config, ExtractionConfig)
@@ -730,20 +841,29 @@ class TestExtractionConfig:
 
     def test_context_accepts_extraction_config(self):
         from ipfs_datasets_py.optimizers.graphrag import (
-            OntologyGenerationContext, ExtractionConfig,
+            OntologyGenerationContext,
+            ExtractionConfig,
         )
+
         cfg = ExtractionConfig(max_entities=200)
         ctx = OntologyGenerationContext(
-            data_source="test", data_type="text", domain="legal", config=cfg,
+            data_source="test",
+            data_type="text",
+            domain="legal",
+            config=cfg,
         )
         assert ctx.extraction_config.max_entities == 200
 
     def test_context_default_config_is_extraction_config(self):
         from ipfs_datasets_py.optimizers.graphrag import (
-            OntologyGenerationContext, ExtractionConfig,
+            OntologyGenerationContext,
+            ExtractionConfig,
         )
+
         ctx = OntologyGenerationContext(
-            data_source="test", data_type="text", domain="legal",
+            data_source="test",
+            data_type="text",
+            domain="legal",
         )
         assert isinstance(ctx.config, ExtractionConfig)
 
@@ -752,13 +872,18 @@ class TestExtractionConfig:
 # BaseSession metrics extensions
 # ---------------------------------------------------------------------------
 
+
 class TestBaseSessionMetrics:
     def _make_session(self):
         from ipfs_datasets_py.optimizers.common import BaseSession
+
         s = BaseSession(session_id="m-test", target_score=0.99)
-        s.start_round(); s.record_round(score=0.5)
-        s.start_round(); s.record_round(score=0.7)
-        s.start_round(); s.record_round(score=0.6)  # regression
+        s.start_round()
+        s.record_round(score=0.5)
+        s.start_round()
+        s.record_round(score=0.7)
+        s.start_round()
+        s.record_round(score=0.6)  # regression
         return s
 
     def test_score_delta(self):
@@ -783,6 +908,7 @@ class TestBaseSessionMetrics:
 
     def test_no_rounds_safe(self):
         from ipfs_datasets_py.optimizers.common import BaseSession
+
         s = BaseSession(session_id="empty")
         assert s.score_delta == 0.0
         assert s.avg_score == 0.0
@@ -793,11 +919,13 @@ class TestBaseSessionMetrics:
 # BackendConfig tests (batch 9)
 # ===========================================================================
 
+
 class TestBackendConfig:
     """Tests for the typed BackendConfig dataclass."""
 
     def test_defaults(self):
         from ipfs_datasets_py.optimizers.graphrag import BackendConfig
+
         bc = BackendConfig()
         assert bc.provider == "accelerate"
         assert bc.model == "gpt-4"
@@ -807,7 +935,14 @@ class TestBackendConfig:
 
     def test_from_dict_all_fields(self):
         from ipfs_datasets_py.optimizers.graphrag import BackendConfig
-        d = {"provider": "openai", "model": "gpt-4o", "temperature": 0.7, "max_tokens": 512, "top_p": 0.9}
+
+        d = {
+            "provider": "openai",
+            "model": "gpt-4o",
+            "temperature": 0.7,
+            "max_tokens": 512,
+            "top_p": 0.9,
+        }
         bc = BackendConfig.from_dict(d)
         assert bc.provider == "openai"
         assert bc.model == "gpt-4o"
@@ -817,13 +952,21 @@ class TestBackendConfig:
 
     def test_from_dict_defaults(self):
         from ipfs_datasets_py.optimizers.graphrag import BackendConfig
+
         bc = BackendConfig.from_dict({})
         assert bc.provider == "accelerate"
         assert bc.model == "gpt-4"
 
     def test_to_dict_roundtrip(self):
         from ipfs_datasets_py.optimizers.graphrag import BackendConfig
-        bc = BackendConfig(provider="anthropic", model="claude-3", temperature=0.5, max_tokens=1024, extra={"stop": ["\n"]})
+
+        bc = BackendConfig(
+            provider="anthropic",
+            model="claude-3",
+            temperature=0.5,
+            max_tokens=1024,
+            extra={"stop": ["\n"]},
+        )
         d = bc.to_dict()
         assert d["provider"] == "anthropic"
         assert d["model"] == "claude-3"
@@ -831,23 +974,27 @@ class TestBackendConfig:
 
     def test_critic_accepts_dict(self):
         from ipfs_datasets_py.optimizers.graphrag import OntologyCritic, BackendConfig
+
         critic = OntologyCritic(backend_config={"model": "gpt-3.5"})
         assert isinstance(critic.backend_config, BackendConfig)
         assert critic.backend_config.model == "gpt-3.5"
 
     def test_critic_accepts_backendconfig(self):
         from ipfs_datasets_py.optimizers.graphrag import OntologyCritic, BackendConfig
+
         bc = BackendConfig(provider="anthropic", model="claude-3")
         critic = OntologyCritic(backend_config=bc)
         assert critic.backend_config is bc
 
     def test_critic_default_none(self):
         from ipfs_datasets_py.optimizers.graphrag import OntologyCritic, BackendConfig
+
         critic = OntologyCritic()
         assert isinstance(critic.backend_config, BackendConfig)
 
     def test_exported_from_init(self):
         from ipfs_datasets_py.optimizers.graphrag import BackendConfig
+
         assert BackendConfig is not None
 
 
@@ -855,39 +1002,47 @@ class TestBackendConfig:
 # Slotted dataclass tests (batch 9)
 # ===========================================================================
 
+
 class TestSlottedDataclasses:
     """Verify __slots__ is present on hot-path dataclasses."""
 
     def test_entity_has_slots(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
         assert hasattr(Entity, "__slots__")
 
     def test_relationship_has_slots(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Relationship
+
         assert hasattr(Relationship, "__slots__")
 
     def test_entity_extraction_result_has_slots(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
         assert hasattr(EntityExtractionResult, "__slots__")
 
     def test_entity_no_dict(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
         e = Entity(id="e1", type="Person", text="Alice")
         assert not hasattr(e, "__dict__")
 
     def test_relationship_no_dict(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Relationship
+
         r = Relationship(id="r1", source_id="e1", target_id="e2", type="knows")
         assert not hasattr(r, "__dict__")
 
     def test_entity_fields_accessible(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
         e = Entity(id="e2", type="Org", text="Acme", confidence=0.9)
         assert e.id == "e2"
         assert e.confidence == 0.9
 
     def test_relationship_fields_accessible(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Relationship
+
         r = Relationship(id="r2", source_id="e1", target_id="e2", type="employs", confidence=0.85)
         assert r.type == "employs"
         assert r.confidence == 0.85
@@ -897,12 +1052,15 @@ class TestSlottedDataclasses:
 # BaseOptimizer metrics collector wiring (batch 9)
 # ===========================================================================
 
+
 class TestBaseOptimizerMetrics:
     """Tests for PerformanceMetricsCollector hooks in BaseOptimizer.run_session()."""
 
     def _make_optimizer(self, collector=None):
         from ipfs_datasets_py.optimizers.common.base_optimizer import (
-            BaseOptimizer, OptimizerConfig, OptimizationContext
+            BaseOptimizer,
+            OptimizerConfig,
+            OptimizationContext,
         )
 
         class _Opt(BaseOptimizer):
@@ -924,6 +1082,7 @@ class TestBaseOptimizerMetrics:
 
     def _make_context(self):
         from ipfs_datasets_py.optimizers.common.base_optimizer import OptimizationContext
+
         return OptimizationContext(session_id="s1", input_data="input", domain="test")
 
     def test_no_collector_runs_cleanly(self):
@@ -979,6 +1138,7 @@ class TestBaseOptimizerMetrics:
 # analyze_batch_parallel tests (batch 11)
 # ===========================================================================
 
+
 class TestAnalyzeBatchParallel:
     """Tests for OntologyOptimizer.analyze_batch_parallel()."""
 
@@ -999,6 +1159,7 @@ class TestAnalyzeBatchParallel:
 
     def test_empty_returns_report(self):
         from ipfs_datasets_py.optimizers.graphrag import OntologyOptimizer
+
         opt = OntologyOptimizer()
         report = opt.analyze_batch_parallel([])
         assert report.average_score == 0.0
@@ -1006,6 +1167,7 @@ class TestAnalyzeBatchParallel:
 
     def test_single_result(self):
         from ipfs_datasets_py.optimizers.graphrag import OntologyOptimizer
+
         opt = OntologyOptimizer()
         report = opt.analyze_batch_parallel([self._make_result(0.75)])
         assert abs(report.average_score - 0.75) < 1e-6
@@ -1013,6 +1175,7 @@ class TestAnalyzeBatchParallel:
 
     def test_multiple_results_avg_score(self):
         from ipfs_datasets_py.optimizers.graphrag import OntologyOptimizer
+
         opt = OntologyOptimizer()
         scores = [0.6, 0.8, 0.7]
         report = opt.analyze_batch_parallel([self._make_result(s) for s in scores])
@@ -1020,6 +1183,7 @@ class TestAnalyzeBatchParallel:
 
     def test_returns_optimization_report_type(self):
         from ipfs_datasets_py.optimizers.graphrag import OntologyOptimizer, OptimizationReport
+
         opt = OntologyOptimizer()
         report = opt.analyze_batch_parallel([self._make_result(0.7)])
         assert isinstance(report, OptimizationReport)
@@ -1027,6 +1191,7 @@ class TestAnalyzeBatchParallel:
     def test_parallel_equals_sequential(self):
         """analyze_batch_parallel must return equivalent results to analyze_batch."""
         from ipfs_datasets_py.optimizers.graphrag import OntologyOptimizer
+
         scores = [0.55, 0.65, 0.75, 0.80]
         opt_seq = OntologyOptimizer()
         opt_par = OntologyOptimizer()
@@ -1038,6 +1203,7 @@ class TestAnalyzeBatchParallel:
 
     def test_high_score_trend(self):
         from ipfs_datasets_py.optimizers.graphrag import OntologyOptimizer
+
         opt = OntologyOptimizer()
         report = opt.analyze_batch_parallel([self._make_result(0.92)])
         # trend is a non-empty string
@@ -1046,6 +1212,7 @@ class TestAnalyzeBatchParallel:
 
     def test_history_updated(self):
         from ipfs_datasets_py.optimizers.graphrag import OntologyOptimizer
+
         opt = OntologyOptimizer()
         opt.analyze_batch_parallel([self._make_result(0.6)])
         opt.analyze_batch_parallel([self._make_result(0.7)])
@@ -1057,18 +1224,21 @@ class TestAnalyzeBatchParallel:
 # OntologyCritic optional logger tests (batch 15)
 # ===========================================================================
 
+
 class TestOntologyCriticLogger:
     """Tests for optional logger dependency injection on OntologyCritic."""
 
     def test_default_logger_assigned(self):
         from ipfs_datasets_py.optimizers.graphrag import OntologyCritic
         import logging
+
         critic = OntologyCritic(use_llm=False)
         assert isinstance(critic._log, logging.Logger)
 
     def test_custom_logger_used(self):
         from ipfs_datasets_py.optimizers.graphrag import OntologyCritic
         import logging
+
         custom = logging.getLogger("test.custom.critic")
         critic = OntologyCritic(use_llm=False, logger=custom)
         assert critic._log is custom
@@ -1076,6 +1246,7 @@ class TestOntologyCriticLogger:
     def test_logger_records_messages(self, minimal_ontology_builder):
         from ipfs_datasets_py.optimizers.graphrag import OntologyCritic, OntologyCritic
         import logging
+
         records = []
 
         class Capturing(logging.Handler):
@@ -1090,31 +1261,44 @@ class TestOntologyCriticLogger:
         ctx = _make_context()
         ontology = minimal_ontology_builder()
         critic.evaluate_ontology(ontology, ctx)
-        assert any("Evaluating" in r or "evaluation" in r.lower() for r in records), \
+        assert any("Evaluating" in r or "evaluation" in r.lower() for r in records), (
             f"Expected log message, got: {records}"
+        )
 
 
 # ===========================================================================
 # execution_time_ms in run_session results (batch 16)
 # ===========================================================================
 
+
 class TestRunSessionExecutionTimeMs:
     """Verify execution_time_ms is present in run_session() results."""
 
     def _make_optimizer(self):
         from ipfs_datasets_py.optimizers.common.base_optimizer import (
-            BaseOptimizer, OptimizerConfig, OptimizationContext
+            BaseOptimizer,
+            OptimizerConfig,
+            OptimizationContext,
         )
+
         class _Opt(BaseOptimizer):
-            def generate(self, data, ctx): return {"v": data}
-            def critique(self, art, ctx): return 0.95, []
-            def optimize(self, art, score, fb, ctx): return art
-            def validate(self, art, ctx): return True
+            def generate(self, data, ctx):
+                return {"v": data}
+
+            def critique(self, art, ctx):
+                return 0.95, []
+
+            def optimize(self, art, score, fb, ctx):
+                return art
+
+            def validate(self, art, ctx):
+                return True
 
         return _Opt(config=OptimizerConfig(max_iterations=1, validation_enabled=False))
 
     def _make_context(self):
         from ipfs_datasets_py.optimizers.common.base_optimizer import OptimizationContext
+
         return OptimizationContext(session_id="s_ms_test", input_data="x", domain="test")
 
     def test_execution_time_ms_in_result(self):
@@ -1142,11 +1326,13 @@ class TestRunSessionExecutionTimeMs:
 # OntologyOptimizer pure helper tests (batch 18)
 # ===========================================================================
 
+
 class TestOntologyOptimizerPureHelpers:
     """Deterministic tests for OntologyOptimizer private helper methods."""
 
     def _opt(self):
         from ipfs_datasets_py.optimizers.graphrag import OntologyOptimizer
+
         return OntologyOptimizer()
 
     # --- _compute_std ---
@@ -1162,6 +1348,7 @@ class TestOntologyOptimizerPureHelpers:
 
     def test_std_known(self):
         import math
+
         scores = [0.0, 0.0, 1.0, 1.0]
         result = self._opt()._compute_std(scores)
         assert abs(result - 0.5) < 1e-9
@@ -1178,28 +1365,40 @@ class TestOntologyOptimizerPureHelpers:
 
     def test_trend_improving(self):
         from ipfs_datasets_py.optimizers.graphrag import OntologyOptimizer, OptimizationReport
+
         opt = self._opt()
-        opt._history.append(OptimizationReport(average_score=0.5, trend="baseline", recommendations=[]))
+        opt._history.append(
+            OptimizationReport(average_score=0.5, trend="baseline", recommendations=[])
+        )
         assert opt._determine_trend(0.65) == "improving"
 
     def test_trend_degrading(self):
         from ipfs_datasets_py.optimizers.graphrag import OptimizationReport
+
         opt = self._opt()
-        opt._history.append(OptimizationReport(average_score=0.8, trend="baseline", recommendations=[]))
+        opt._history.append(
+            OptimizationReport(average_score=0.8, trend="baseline", recommendations=[])
+        )
         assert opt._determine_trend(0.70) == "degrading"
 
     def test_trend_stable(self):
         from ipfs_datasets_py.optimizers.graphrag import OptimizationReport
+
         opt = self._opt()
-        opt._history.append(OptimizationReport(average_score=0.75, trend="baseline", recommendations=[]))
+        opt._history.append(
+            OptimizationReport(average_score=0.75, trend="baseline", recommendations=[])
+        )
         assert opt._determine_trend(0.77) == "stable"
 
     def test_trend_boundary_exactly_plus_005(self):
         from ipfs_datasets_py.optimizers.graphrag import OptimizationReport
+
         opt = self._opt()
-        opt._history.append(OptimizationReport(average_score=0.60, trend="baseline", recommendations=[]))
+        opt._history.append(
+            OptimizationReport(average_score=0.60, trend="baseline", recommendations=[])
+        )
         # 0.65 is exactly prev_score + 0.05 — should be "improving" (strictly >)
-        # Actually the condition is > so 0.65 == 0.60 + 0.05 is NOT strictly > 
+        # Actually the condition is > so 0.65 == 0.60 + 0.05 is NOT strictly >
         trend = opt._determine_trend(0.65)
         assert trend in ("stable", "improving")  # boundary is stable by convention
 

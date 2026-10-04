@@ -392,14 +392,17 @@ class LegalIRSemanticDiffEngine:
         )
         before_digest = _stable_hash(before_snapshot["canonical"])
         after_digest = _stable_hash(after_snapshot["canonical"])
-        diff_id = "lir-semantic-diff-" + _stable_hash(
-            {
-                "after_digest": after_digest,
-                "before_digest": before_digest,
-                "change_ids": [item.change_id for item in changes],
-                "schema_version": LEGAL_IR_SEMANTIC_DIFF_SCHEMA_VERSION,
-            }
-        )[:24]
+        diff_id = (
+            "lir-semantic-diff-"
+            + _stable_hash(
+                {
+                    "after_digest": after_digest,
+                    "before_digest": before_digest,
+                    "change_ids": [item.change_id for item in changes],
+                    "schema_version": LEGAL_IR_SEMANTIC_DIFF_SCHEMA_VERSION,
+                }
+            )[:24]
+        )
         summary = _summary(changes, amendment_impacts, codex_todos, version_bindings)
         return LegalIRSemanticDiffReport(
             diff_id=diff_id,
@@ -552,16 +555,12 @@ def _diff_context(
     after: Mapping[str, Any],
     version_bindings: Sequence[LegalIRSemanticVersionBinding],
 ) -> dict[str, Any]:
-    changed_dimensions = {
-        binding.dimension for binding in version_bindings if binding.changed
-    }
+    changed_dimensions = {binding.dimension for binding in version_bindings if binding.changed}
     return {
         "amendment_ids": _changed_amendment_ids(before["amendments"], after["amendments"]),
         "changed_dimensions": changed_dimensions,
         "compiler_commits": tuple(
-            item
-            for item in _unique((before["compiler_commit"], after["compiler_commit"]))
-            if item
+            item for item in _unique((before["compiler_commit"], after["compiler_commit"])) if item
         ),
         "learned_guidance_states": {
             "before": before["learned_guidance"],
@@ -786,8 +785,7 @@ def _obligation_change(
         or compiler_evidence.get("compiler_impact_verified")
     )
     explicit_regression = _explicit_regression(before, after) or _truthy(
-        compiler_evidence.get("regression")
-        or compiler_evidence.get("compiler_impact_regression")
+        compiler_evidence.get("regression") or compiler_evidence.get("compiler_impact_regression")
     )
     final_regression = bool(regression or explicit_regression)
     final_verified = bool(explicit_verified and _compiler_dimension_changed(context))
@@ -869,8 +867,12 @@ def _amendment_impacts(
     before_snapshot: Mapping[str, Any],
     after_snapshot: Mapping[str, Any],
 ) -> tuple[LegalIRAmendmentImpact, ...]:
-    amendment_ids = _changed_amendment_ids(before_snapshot["amendments"], after_snapshot["amendments"])
-    grouped: dict[str, list[LegalIRSemanticChange]] = {amendment_id: [] for amendment_id in amendment_ids}
+    amendment_ids = _changed_amendment_ids(
+        before_snapshot["amendments"], after_snapshot["amendments"]
+    )
+    grouped: dict[str, list[LegalIRSemanticChange]] = {
+        amendment_id: [] for amendment_id in amendment_ids
+    }
     for change in changes:
         ids = change.amendment_ids or tuple(amendment_ids)
         for amendment_id in ids:
@@ -958,8 +960,7 @@ def _codex_todo(change: LegalIRSemanticChange) -> LegalIRSemanticDiffCodexTodo:
         todo_id="lir-semantic-diff-codex-todo-" + _stable_hash(descriptor)[:24],
         change_id=change.change_id,
         objective=(
-            f"Fix verified LegalIR compiler regression for {change.target_id}: "
-            f"{change.kind}"
+            f"Fix verified LegalIR compiler regression for {change.target_id}: {change.kind}"
         ),
         action="repair_compiler_impact_regression",
         target_component=str(
@@ -1038,7 +1039,9 @@ def _normalize_obligation(row: Mapping[str, Any], index: int) -> dict[str, Any]:
     )
     statement = str(row.get("statement") or row.get("text") or row.get("formula") or "")
     canonical = {
-        "action": _terms(row.get("action") or row.get("verb") or _mapping(row.get("predicate")).get("name")),
+        "action": _terms(
+            row.get("action") or row.get("verb") or _mapping(row.get("predicate")).get("name")
+        ),
         "ambiguity": _ambiguity_signature(row),
         "citations": _citation_signature(row),
         "conditions": _constraint_terms(row),
@@ -1115,10 +1118,7 @@ def _amendments(payload: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
         if not row:
             continue
         amendment_id = str(
-            row.get("amendment_id")
-            or row.get("change_id")
-            or row.get("id")
-            or f"amendment-{index}"
+            row.get("amendment_id") or row.get("change_id") or row.get("id") or f"amendment-{index}"
         )
         normalized[amendment_id] = {
             **_json_value(row),
@@ -1154,7 +1154,9 @@ def _source_revisions(payload: Mapping[str, Any]) -> dict[str, Any]:
         or payload.get("source_revision_id")
         or ""
     )
-    return _id_map(value, id_fields=("source_revision_id", "revision_id", "source_id", "artifact_id", "id"))
+    return _id_map(
+        value, id_fields=("source_revision_id", "revision_id", "source_id", "artifact_id", "id")
+    )
 
 
 def _schema_versions(payload: Mapping[str, Any]) -> dict[str, Any]:
@@ -1191,9 +1193,14 @@ def _id_map(value: Any, *, id_fields: Sequence[str]) -> dict[str, Any]:
         return {value: value} if value else {}
     if isinstance(value, Mapping):
         if any(field in value for field in id_fields):
-            item_id = next((str(value.get(field) or "") for field in id_fields if value.get(field)), "")
+            item_id = next(
+                (str(value.get(field) or "") for field in id_fields if value.get(field)), ""
+            )
             return {item_id: _json_value(value)} if item_id else _json_value(dict(value))
-        return {str(key): _json_value(item) for key, item in sorted(value.items(), key=lambda item: str(item[0]))}
+        return {
+            str(key): _json_value(item)
+            for key, item in sorted(value.items(), key=lambda item: str(item[0]))
+        }
     rows = [_mapping(item) for item in _sequence(value)]
     mapped: dict[str, Any] = {}
     for index, row in enumerate(rows):
@@ -1204,7 +1211,9 @@ def _id_map(value: Any, *, id_fields: Sequence[str]) -> dict[str, Any]:
     return dict(sorted(mapped.items()))
 
 
-def _scope_change(before: Mapping[str, Any], after: Mapping[str, Any]) -> tuple[bool, bool, dict[str, Any]]:
+def _scope_change(
+    before: Mapping[str, Any], after: Mapping[str, Any]
+) -> tuple[bool, bool, dict[str, Any]]:
     before_conditions = set(_strings(before.get("conditions", ())))
     after_conditions = set(_strings(after.get("conditions", ())))
     before_exceptions = set(_strings(before.get("exceptions", ())))
@@ -1237,18 +1246,22 @@ def _scope_change(before: Mapping[str, Any], after: Mapping[str, Any]) -> tuple[
     if after_strength > before_strength:
         broadened = True
 
-    return narrowed, broadened, {
-        "after_conditions": sorted(after_conditions),
-        "after_exceptions": sorted(after_exceptions),
-        "after_operator_strength": after_strength,
-        "after_objects": sorted(after_objects),
-        "after_subjects": sorted(after_subjects),
-        "before_conditions": sorted(before_conditions),
-        "before_exceptions": sorted(before_exceptions),
-        "before_operator_strength": before_strength,
-        "before_objects": sorted(before_objects),
-        "before_subjects": sorted(before_subjects),
-    }
+    return (
+        narrowed,
+        broadened,
+        {
+            "after_conditions": sorted(after_conditions),
+            "after_exceptions": sorted(after_exceptions),
+            "after_operator_strength": after_strength,
+            "after_objects": sorted(after_objects),
+            "after_subjects": sorted(after_subjects),
+            "before_conditions": sorted(before_conditions),
+            "before_exceptions": sorted(before_exceptions),
+            "before_operator_strength": before_strength,
+            "before_objects": sorted(before_objects),
+            "before_subjects": sorted(before_subjects),
+        },
+    )
 
 
 def _deontic_operator(row: Mapping[str, Any]) -> str:
@@ -1296,7 +1309,9 @@ def _temporal_signature(row: Mapping[str, Any]) -> dict[str, Any]:
     temporal = _mapping(row.get("temporal") or row.get("temporal_window") or row.get("validity"))
     raw = _mapping(row.get("raw"))
     if not temporal:
-        temporal = _mapping(raw.get("temporal_window") or raw.get("temporal") or raw.get("validity"))
+        temporal = _mapping(
+            raw.get("temporal_window") or raw.get("temporal") or raw.get("validity")
+        )
     for key in (
         "effective_date",
         "effective_on",
@@ -1381,7 +1396,9 @@ def _proof_regression(before: Mapping[str, Any], after: Mapping[str, Any]) -> bo
 
 
 def _ambiguity_regression(before: Mapping[str, Any], after: Mapping[str, Any]) -> bool:
-    return _ambiguity_rank(_ambiguity_signature(after)) > _ambiguity_rank(_ambiguity_signature(before))
+    return _ambiguity_rank(_ambiguity_signature(after)) > _ambiguity_rank(
+        _ambiguity_signature(before)
+    )
 
 
 def _proof_rank(value: Mapping[str, Any]) -> int:
@@ -1417,7 +1434,12 @@ def _ambiguity_rank(value: Mapping[str, Any]) -> int:
 
 
 def _explicit_verified_compiler_impact(before: Mapping[str, Any], after: Mapping[str, Any]) -> bool:
-    for source in (before, after, _mapping(before.get("metadata")), _mapping(after.get("metadata"))):
+    for source in (
+        before,
+        after,
+        _mapping(before.get("metadata")),
+        _mapping(after.get("metadata")),
+    ):
         if _truthy(
             source.get("verified_compiler_impact")
             or source.get("compiler_impact_verified")
@@ -1429,7 +1451,12 @@ def _explicit_verified_compiler_impact(before: Mapping[str, Any], after: Mapping
 
 
 def _explicit_regression(before: Mapping[str, Any], after: Mapping[str, Any]) -> bool:
-    for source in (before, after, _mapping(before.get("metadata")), _mapping(after.get("metadata"))):
+    for source in (
+        before,
+        after,
+        _mapping(before.get("metadata")),
+        _mapping(after.get("metadata")),
+    ):
         if _truthy(
             source.get("regression")
             or source.get("compiler_impact_regression")
@@ -1467,7 +1494,9 @@ def _compiler_impact_evidence_index(value: Any) -> dict[str, dict[str, Any]]:
     for row in rows:
         if not row:
             continue
-        target = str(row.get("target_id") or row.get("obligation_id") or row.get("change_id") or "*")
+        target = str(
+            row.get("target_id") or row.get("obligation_id") or row.get("change_id") or "*"
+        )
         kind = str(row.get("change_kind") or row.get("kind") or "*")
         index[f"{target}|{kind}"] = row
         index.setdefault(f"{target}|*", row)
@@ -1513,7 +1542,9 @@ def _changed_amendment_ids(before: Mapping[str, Any], after: Mapping[str, Any]) 
     return tuple(_unique(ids))
 
 
-def _changed_source_revision_ids(before: Mapping[str, Any], after: Mapping[str, Any]) -> tuple[str, ...]:
+def _changed_source_revision_ids(
+    before: Mapping[str, Any], after: Mapping[str, Any]
+) -> tuple[str, ...]:
     ids = []
     for key in sorted(set(before) | set(after)):
         if _json_value(before.get(key)) != _json_value(after.get(key)):
@@ -1556,7 +1587,9 @@ def _max_impact(levels: Any) -> str:
 def _terms(value: Any) -> tuple[str, ...]:
     if isinstance(value, Mapping):
         value = value.values()
-    return tuple(_unique(_atom(item, fallback="") for item in _sequence(value) if _atom(item, fallback="")))
+    return tuple(
+        _unique(_atom(item, fallback="") for item in _sequence(value) if _atom(item, fallback=""))
+    )
 
 
 def _strings(value: Any) -> list[str]:
@@ -1597,11 +1630,7 @@ def _mapping(value: Any) -> dict[str, Any]:
         except (TypeError, ValueError):
             return {}
     if hasattr(value, "__dict__"):
-        return {
-            key: item
-            for key, item in vars(value).items()
-            if not key.startswith("_")
-        }
+        return {key: item for key, item in vars(value).items() if not key.startswith("_")}
     return {}
 
 

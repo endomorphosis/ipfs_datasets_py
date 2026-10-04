@@ -21,13 +21,19 @@ import pytest
 
 _KG_ROOT = os.path.join(
     os.path.dirname(__file__),
-    "..", "..", "..",
-    "ipfs_datasets_py", "knowledge_graphs",
+    "..",
+    "..",
+    "..",
+    "ipfs_datasets_py",
+    "knowledge_graphs",
 )
 _DOCS_KG = os.path.join(
     os.path.dirname(__file__),
-    "..", "..", "..",
-    "docs", "knowledge_graphs",
+    "..",
+    "..",
+    "..",
+    "docs",
+    "knowledge_graphs",
 )
 
 
@@ -35,8 +41,23 @@ _DOCS_KG = os.path.join(
 # Helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def _read(path: str) -> str:
-    _moved = {'COMPREHENSIVE_ANALYSIS_2026_02_18.md', 'DOCUMENTATION_GUIDE.md', 'CHANGELOG_KNOWLEDGE_GRAPHS.md', 'IMPROVEMENT_TODO.md', 'INDEX.md', 'P3_P4_IMPLEMENTATION_COMPLETE.md', 'QUICKSTART.md', 'EXECUTIVE_SUMMARY_FINAL_2026_02_18.md', 'MASTER_REFACTORING_PLAN_2026.md', 'MASTER_STATUS.md', 'DEFERRED_FEATURES.md', 'ROADMAP.md', 'REFACTORING_COMPLETE_2026_02_18.md'}
+    _moved = {
+        "COMPREHENSIVE_ANALYSIS_2026_02_18.md",
+        "DOCUMENTATION_GUIDE.md",
+        "CHANGELOG_KNOWLEDGE_GRAPHS.md",
+        "IMPROVEMENT_TODO.md",
+        "INDEX.md",
+        "P3_P4_IMPLEMENTATION_COMPLETE.md",
+        "QUICKSTART.md",
+        "EXECUTIVE_SUMMARY_FINAL_2026_02_18.md",
+        "MASTER_REFACTORING_PLAN_2026.md",
+        "MASTER_STATUS.md",
+        "DEFERRED_FEATURES.md",
+        "ROADMAP.md",
+        "REFACTORING_COMPLETE_2026_02_18.md",
+    }
     base = _DOCS_KG if path in _moved else _KG_ROOT
     with open(os.path.join(base, path), encoding="utf-8") as fh:
         return fh.read()
@@ -44,6 +65,7 @@ def _read(path: str) -> str:
 
 def _make_kg():
     from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
     kg = KnowledgeGraph("test_s77")
     alice = kg.add_entity("person", "Alice", confidence=0.9)
     carol = kg.add_entity("org", "ACME")
@@ -56,6 +78,7 @@ def _logic_prover():
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
         from ipfs_datasets_py.logic.zkp import ZKPProver
+
         return ZKPProver()
 
 
@@ -63,6 +86,7 @@ def _logic_verifier():
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
         from ipfs_datasets_py.logic.zkp import ZKPVerifier
+
         return ZKPVerifier()
 
 
@@ -70,9 +94,11 @@ def _logic_verifier():
 # 1. Standalone mode — unchanged from session 76
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestStandaloneMode:
     def _prover(self):
         from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKProver
+
         kg, _, _ = _make_kg()
         return KGZKProver(kg), kg
 
@@ -101,6 +127,7 @@ class TestStandaloneMode:
 
     def test_standalone_verifier_works(self):
         from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKProver, KGZKVerifier
+
         kg, _, _ = _make_kg()
         stmt = KGZKProver(kg).prove_entity_exists("person", "Alice")
         assert KGZKVerifier().verify_statement(stmt)
@@ -110,14 +137,17 @@ class TestStandaloneMode:
 # 2. KGZKProver.from_logic_prover factory
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestFromLogicProver:
     def _p2(self):
         from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKProver
+
         kg, _, _ = _make_kg()
         return KGZKProver.from_logic_prover(kg, _logic_prover())
 
     def test_factory_returns_kgzkprover(self):
         from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKProver
+
         assert isinstance(self._p2(), KGZKProver)
 
     def test_uses_logic_backend_true(self):
@@ -132,6 +162,7 @@ class TestFromLogicProver:
 
     def test_custom_prover_id(self):
         from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKProver
+
         kg, _, _ = _make_kg()
         p = KGZKProver.from_logic_prover(kg, _logic_prover(), prover_id="custom_id")
         assert p.prover_id == "custom_id"
@@ -141,9 +172,11 @@ class TestFromLogicProver:
 # 3. Logic proof data embedded in KGProofStatement
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestLogicProofDataEmbedded:
     def _setup(self):
         from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKProver
+
         kg, _, _ = _make_kg()
         p = KGZKProver.from_logic_prover(kg, _logic_prover())
         return p, kg
@@ -168,6 +201,7 @@ class TestLogicProofDataEmbedded:
         p, _ = self._setup()
         stmt = p.prove_entity_exists("person", "Alice")
         from ipfs_datasets_py.logic.zkp import ZKPProof
+
         proof = ZKPProof.from_dict(stmt.public_inputs["logic_proof_data"])
         assert proof.size_bytes > 0
 
@@ -179,6 +213,7 @@ class TestLogicProofDataEmbedded:
 
     def test_entity_id_not_in_public_inputs(self):
         from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKProver
+
         kg, alice, _ = _make_kg()
         p = KGZKProver.from_logic_prover(kg, _logic_prover())
         stmt = p.prove_entity_exists("person", "Alice")
@@ -193,20 +228,24 @@ class TestLogicProofDataEmbedded:
 # 4. KGZKVerifier.from_logic_verifier factory + enhanced verification
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestFromLogicVerifier:
     def test_factory_returns_kgzkverifier(self):
         from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKVerifier
+
         v = KGZKVerifier.from_logic_verifier(_logic_verifier())
         assert isinstance(v, KGZKVerifier)
 
     def test_logic_verifier_stored(self):
         from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKVerifier
+
         lv = _logic_verifier()
         v = KGZKVerifier.from_logic_verifier(lv)
         assert v._logic_verifier is lv
 
     def test_verify_statement_with_logic_backend(self):
         from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKProver, KGZKVerifier
+
         kg, _, _ = _make_kg()
         p = KGZKProver.from_logic_prover(kg, _logic_prover())
         v = KGZKVerifier.from_logic_verifier(_logic_verifier())
@@ -216,6 +255,7 @@ class TestFromLogicVerifier:
     def test_verify_statement_no_logic_proof_data_still_passes(self):
         """Verifier with logic backend still handles statements without embedded proof."""
         from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKProver, KGZKVerifier
+
         kg, _, _ = _make_kg()
         # standalone prover → no logic_proof_data
         stmt = KGZKProver(kg).prove_entity_exists("person", "Alice")
@@ -224,6 +264,7 @@ class TestFromLogicVerifier:
 
     def test_verify_path_proof_with_logic_backend(self):
         from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKProver, KGZKVerifier
+
         kg, _, _ = _make_kg()
         p = KGZKProver.from_logic_prover(kg, _logic_prover())
         v = KGZKVerifier.from_logic_verifier(_logic_verifier())
@@ -232,6 +273,7 @@ class TestFromLogicVerifier:
 
     def test_replay_protection_still_active(self):
         from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKProver, KGZKVerifier
+
         kg, _, _ = _make_kg()
         p = KGZKProver.from_logic_prover(kg, _logic_prover())
         v = KGZKVerifier.from_logic_verifier(_logic_verifier())
@@ -244,6 +286,7 @@ class TestFromLogicVerifier:
 # ─────────────────────────────────────────────────────────────────────────────
 # 5. Doc-integrity tests
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 class TestDocIntegritySession77:
     def test_deferred_features_groth16_section(self):
@@ -274,8 +317,15 @@ class TestDocIntegritySession77:
 class TestVersionAgreement:
     def _extract_top_version(self, path: str) -> str:
         import re
-        _moved = {'MASTER_STATUS.md', 'ROADMAP.md', 'CHANGELOG_KNOWLEDGE_GRAPHS.md',
-                  'DEFERRED_FEATURES.md', 'INDEX.md', 'QUICKSTART.md'}
+
+        _moved = {
+            "MASTER_STATUS.md",
+            "ROADMAP.md",
+            "CHANGELOG_KNOWLEDGE_GRAPHS.md",
+            "DEFERRED_FEATURES.md",
+            "INDEX.md",
+            "QUICKSTART.md",
+        }
         base = _DOCS_KG if path in _moved else _KG_ROOT
         with open(os.path.join(base, path), encoding="utf-8") as f:
             content = f.read()

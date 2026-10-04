@@ -76,8 +76,7 @@ class MCPToolPolicyError(MCPToolSourceError):
     def __init__(self, decision: "MCPToolSourcePolicyDecision") -> None:
         self.decision = decision
         super().__init__(
-            "MCP tool is not eligible for content normalization: "
-            f"{decision.allowed_use.value}"
+            f"MCP tool is not eligible for content normalization: {decision.allowed_use.value}"
         )
 
 
@@ -162,8 +161,7 @@ class MCPToolSourcePolicyDecision:
     @property
     def secret_pii_decision(self) -> FindingDecision:
         if any(
-            finding.category
-            in {FindingCategory.SECRET, FindingCategory.PERSONAL_DATA}
+            finding.category in {FindingCategory.SECRET, FindingCategory.PERSONAL_DATA}
             for finding in self.findings
         ):
             return FindingDecision.QUARANTINED
@@ -210,13 +208,9 @@ class MCPToolEntryIdentity:
             or bytes(decoded.digest) != self.multihash_bytes
             or decoded.raw_digest.hex() != self.sha256
         ):
-            raise MCPToolRecordError(
-                "entry identity does not use CIDv1/raw/sha2-256 consistently"
-            )
+            raise MCPToolRecordError("entry identity does not use CIDv1/raw/sha2-256 consistently")
         if self.identity_schema_version != MCP_TOOL_ENTRY_IDENTITY_SCHEMA_VERSION:
-            raise MCPToolRecordError(
-                "entry identity schema version is unsupported"
-            )
+            raise MCPToolRecordError("entry identity schema version is unsupported")
 
     def to_dict(self) -> dict[str, str]:
         return {
@@ -263,9 +257,7 @@ class MCPToolRecord:
         )
         tags = _normalize_tags(self.tags)
         if self.schema_version != MCP_TOOL_RECORD_SCHEMA_VERSION:
-            raise MCPToolRecordError(
-                "mcp tool record schema version is unsupported"
-            )
+            raise MCPToolRecordError("mcp tool record schema version is unsupported")
         object.__setattr__(self, "name", name)
         object.__setattr__(self, "description", description)
         object.__setattr__(self, "input_schema_json", input_schema_json)
@@ -367,12 +359,8 @@ class MCPToolRecord:
             or f"mcp://tool/{quote(self.server_name or 'local', safe='')}/{encoded_name}"
         )
         source_id = self.source_id or self.tool_id
-        reference_material = (
-            f"{source_id}@{self.source_revision}#{self.content_sha256}"
-        )
-        reference_digest = hashlib.sha256(
-            reference_material.encode("utf-8")
-        ).hexdigest()
+        reference_material = f"{source_id}@{self.source_revision}#{self.content_sha256}"
+        reference_digest = hashlib.sha256(reference_material.encode("utf-8")).hexdigest()
         return SourceRef(
             ref_id=f"mcp-tool:{reference_digest}",
             source_uri=source_uri,
@@ -579,9 +567,7 @@ class MCPToolSourcePolicy:
         findings.extend(self._scan_schema_structure(record.input_schema_json, "input_schema_json"))
         if record.output_schema_json:
             findings.extend(
-                self._scan_schema_structure(
-                    record.output_schema_json, "output_schema_json"
-                )
+                self._scan_schema_structure(record.output_schema_json, "output_schema_json")
             )
         findings = _deduplicate_and_sort_findings(findings)
         if findings:
@@ -660,9 +646,7 @@ class MCPToolSourcePolicy:
             )
         return findings
 
-    def _scan_schema_structure(
-        self, schema_json: str, field: str
-    ) -> list[MCPToolPolicyFinding]:
+    def _scan_schema_structure(self, schema_json: str, field: str) -> list[MCPToolPolicyFinding]:
         if not schema_json:
             return []
         try:
@@ -774,9 +758,7 @@ class MCPToolIntentAdapter:
             input_schema, default={"type": "object", "properties": {}}
         )
         output_schema_json = (
-            ""
-            if output_schema is None
-            else _coerce_json_object(output_schema, default={})
+            "" if output_schema is None else _coerce_json_object(output_schema, default={})
         )
         annotations_json = _coerce_json_object(annotations, default={})
         if len(description) > self.max_text_chars:
@@ -834,9 +816,7 @@ def _build_mcp_tool_intent_document(
     base_source.validate()
     description = record.description.strip() or f"MCP tool capability: {record.name}"
     body = (
-        f"name: {record.name}\n"
-        f"description: {description}\n"
-        f"input_schema: {record.input_schema_json}"
+        f"name: {record.name}\ndescription: {description}\ninput_schema: {record.input_schema_json}"
     )
     span = SourceSpan(0, len(body))
     span.validate()
@@ -909,9 +889,7 @@ def _require_tool_name(value: Any) -> str:
     return name
 
 
-def _normalize_json_object(
-    value: Any, label: str, *, allow_empty: bool
-) -> str:
+def _normalize_json_object(value: Any, label: str, *, allow_empty: bool) -> str:
     if value is None or value == "":
         if allow_empty:
             return ""
@@ -954,7 +932,9 @@ def _coerce_json_object(
     return json.dumps(payload, ensure_ascii=True, separators=(",", ":"), sort_keys=True)
 
 
-def _validate_json_bounds(value: Any, *, path: str, depth: int = 0, counter: list[int] | None = None) -> None:
+def _validate_json_bounds(
+    value: Any, *, path: str, depth: int = 0, counter: list[int] | None = None
+) -> None:
     if counter is None:
         counter = [0]
     counter[0] += 1
@@ -966,15 +946,11 @@ def _validate_json_bounds(value: Any, *, path: str, depth: int = 0, counter: lis
         for key, item in value.items():
             if not isinstance(key, str):
                 raise MCPToolRecordError(f"{path} contains a non-string key")
-            _validate_json_bounds(
-                item, path=f"{path}.{key}", depth=depth + 1, counter=counter
-            )
+            _validate_json_bounds(item, path=f"{path}.{key}", depth=depth + 1, counter=counter)
         return
     if isinstance(value, list):
         for index, item in enumerate(value):
-            _validate_json_bounds(
-                item, path=f"{path}[{index}]", depth=depth + 1, counter=counter
-            )
+            _validate_json_bounds(item, path=f"{path}[{index}]", depth=depth + 1, counter=counter)
         return
     if value is None or isinstance(value, (str, bool, int, float)):
         return

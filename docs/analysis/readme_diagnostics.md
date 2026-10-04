@@ -230,11 +230,13 @@ from state_scrapers import AlabamaScraper
 
 logging.basicConfig(level=logging.DEBUG)
 
+
 async def test():
     scraper = AlabamaScraper("AL", "Alabama")
     codes = scraper.get_code_list()
-    statutes = await scraper.scrape_code(codes[0]['name'], codes[0]['url'])
+    statutes = await scraper.scrape_code(codes[0]["name"], codes[0]["url"])
     print(f"Scraped {len(statutes)} statutes")
+
 
 asyncio.run(test())
 ```

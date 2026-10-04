@@ -5,9 +5,11 @@ Feature: Scrape Municipal Codes MCP Tool
   Unit tests for the ScrapeMunicipalCodesTool MCP tool that integrates
   the scrape_the_law_mk3 submodule.
 """
+
 import pytest
 import sys
 from typing import Dict, Any, Optional, Type
+
 
 class FixtureError(Exception):
     """Local fixture error used by stub test templates."""
@@ -15,12 +17,14 @@ class FixtureError(Exception):
 
 # Fixtures from Background
 
+
 @pytest.fixture
 def scrape_municipal_codes_tool_imported() -> Dict[str, Any]:
     """
     Given the ScrapeMunicipalCodesTool class is imported from legal_dataset_mcp_tools
     """
     raise NotImplementedError
+
 
 class TestToolInitialization:
     """Tool Initialization"""
@@ -50,6 +54,7 @@ class TestToolInitialization:
 
     def test_tags_include_codes(self, scrape_municipal_codes_tool_imported):
         raise NotImplementedError
+
 
 class TestInputSchemaStructure:
     """Input Schema Structure"""
@@ -89,6 +94,7 @@ class TestInputSchemaStructure:
 
     def test_schema_has_resume(self, scrape_municipal_codes_tool_imported):
         raise NotImplementedError
+
 
 class TestGetSchemaMethod:
     """Get Schema Method"""
@@ -131,6 +137,7 @@ class TestGetSchemaMethod:
         """
         raise NotImplementedError
 
+
 class TestExecuteWithSingleJurisdiction:
     """Execute with Single Jurisdiction"""
 
@@ -148,6 +155,7 @@ class TestExecuteWithSingleJurisdiction:
 
     def test_single_jurisdiction_format_correct(self, scrape_municipal_codes_tool_imported):
         raise NotImplementedError
+
 
 class TestExecuteWithMultipleJurisdictions:
     """Execute with Multiple Jurisdictions"""
@@ -170,6 +178,7 @@ class TestExecuteWithMultipleJurisdictions:
     def test_multiple_jurisdictions_contains_chi(self, scrape_municipal_codes_tool_imported):
         raise NotImplementedError
 
+
 class TestExecuteWithoutJurisdiction:
     """Execute without Jurisdiction"""
 
@@ -179,6 +188,7 @@ class TestExecuteWithoutJurisdiction:
     def test_no_jurisdiction_error_message(self, scrape_municipal_codes_tool_imported):
         raise NotImplementedError
 
+
 class TestCustomJobID:
     """Custom Job ID"""
 
@@ -187,6 +197,7 @@ class TestCustomJobID:
 
     def test_custom_job_id_used(self, scrape_municipal_codes_tool_imported):
         raise NotImplementedError
+
 
 class TestAllParameters:
     """All Parameters"""
@@ -217,6 +228,7 @@ class TestAllParameters:
     def test_all_params_fallback_methods_count(self, scrape_municipal_codes_tool_imported):
         raise NotImplementedError
 
+
 class TestAutoJobIDGeneration:
     """Auto Job ID Generation"""
 
@@ -225,6 +237,7 @@ class TestAutoJobIDGeneration:
 
     def test_auto_job_id_prefix(self, scrape_municipal_codes_tool_imported):
         raise NotImplementedError
+
 
 class TestResumeCapability:
     """Resume Capability"""
@@ -235,6 +248,7 @@ class TestResumeCapability:
     def test_resume_job_id_correct(self, scrape_municipal_codes_tool_imported):
         raise NotImplementedError
 
+
 class TestToolRegistrationInMCP:
     """Tool Registration in MCP"""
 
@@ -243,6 +257,7 @@ class TestToolRegistrationInMCP:
 
     def test_tool_accessible_via_server(self, scrape_municipal_codes_tool_imported):
         raise NotImplementedError
+
 
 class TestFallbackMethodsEnabled:
     """Fallback Methods Enabled"""
@@ -272,6 +287,7 @@ class TestFallbackMethodsEnabled:
 
     def test_fallbacks_metadata_strategy(self, scrape_municipal_codes_tool_imported):
         raise NotImplementedError
+
 
 class TestFallbackMethodsDisabled:
     """Fallback Methods Disabled"""

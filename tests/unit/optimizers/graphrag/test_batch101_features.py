@@ -85,15 +85,36 @@ class TestBestDimension:
         self.critic = OntologyCritic()
 
     def test_returns_string(self):
-        s = CriticScore(completeness=0.5, consistency=0.5, clarity=0.5, granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5)
+        s = CriticScore(
+            completeness=0.5,
+            consistency=0.5,
+            clarity=0.5,
+            granularity=0.5,
+            relationship_coherence=0.5,
+            domain_alignment=0.5,
+        )
         assert isinstance(self.critic.best_dimension(s), str)
 
     def test_identifies_best(self):
-        s = CriticScore(completeness=0.9, consistency=0.3, clarity=0.3, granularity=0.3, relationship_coherence=0.3, domain_alignment=0.3)
+        s = CriticScore(
+            completeness=0.9,
+            consistency=0.3,
+            clarity=0.3,
+            granularity=0.3,
+            relationship_coherence=0.3,
+            domain_alignment=0.3,
+        )
         assert self.critic.best_dimension(s) == "completeness"
 
     def test_valid_dimension_name(self):
-        s = CriticScore(completeness=0.5, consistency=0.5, clarity=0.5, granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5)
+        s = CriticScore(
+            completeness=0.5,
+            consistency=0.5,
+            clarity=0.5,
+            granularity=0.5,
+            relationship_coherence=0.5,
+            domain_alignment=0.5,
+        )
         valid = {"completeness", "consistency", "clarity", "granularity", "domain_alignment"}
         assert self.critic.best_dimension(s) in valid
 
@@ -103,15 +124,36 @@ class TestWorstDimension:
         self.critic = OntologyCritic()
 
     def test_returns_string(self):
-        s = CriticScore(completeness=0.5, consistency=0.5, clarity=0.5, granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5)
+        s = CriticScore(
+            completeness=0.5,
+            consistency=0.5,
+            clarity=0.5,
+            granularity=0.5,
+            relationship_coherence=0.5,
+            domain_alignment=0.5,
+        )
         assert isinstance(self.critic.worst_dimension(s), str)
 
     def test_identifies_worst(self):
-        s = CriticScore(completeness=0.1, consistency=0.8, clarity=0.8, granularity=0.8, relationship_coherence=0.8, domain_alignment=0.8)
+        s = CriticScore(
+            completeness=0.1,
+            consistency=0.8,
+            clarity=0.8,
+            granularity=0.8,
+            relationship_coherence=0.8,
+            domain_alignment=0.8,
+        )
         assert self.critic.worst_dimension(s) == "completeness"
 
     def test_valid_dimension_name(self):
-        s = CriticScore(completeness=0.5, consistency=0.5, clarity=0.5, granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5)
+        s = CriticScore(
+            completeness=0.5,
+            consistency=0.5,
+            clarity=0.5,
+            granularity=0.5,
+            relationship_coherence=0.5,
+            domain_alignment=0.5,
+        )
         valid = {"completeness", "consistency", "clarity", "granularity", "domain_alignment"}
         assert self.critic.worst_dimension(s) in valid
 

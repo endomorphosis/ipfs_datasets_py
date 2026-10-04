@@ -223,8 +223,7 @@ from ipfs_datasets_py.knowledge_graphs.query import UnifiedQueryEngine
 
 engine = UnifiedQueryEngine(graph)
 result = engine.execute_cypher(
-    "MATCH (p:Person)-[:KNOWS]->(f:Person) WHERE p.name = $name RETURN f",
-    params={"name": "Alice"}
+    "MATCH (p:Person)-[:KNOWS]->(f:Person) WHERE p.name = $name RETURN f", params={"name": "Alice"}
 )
 ```
 

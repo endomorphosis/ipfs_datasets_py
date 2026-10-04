@@ -80,12 +80,18 @@ def test_generate_legal_ir_obligations_covers_all_core_view_families() -> None:
     assert all(obligation.obligation_id.startswith("lir-obligation-") for obligation in obligations)
     assert any(obligation.legal_ir_view == "deontic.ir" for obligation in obligations)
     assert any(obligation.legal_ir_view == "TDFOL.prover" for obligation in obligations)
-    assert any(obligation.legal_ir_view == "knowledge_graphs.neo4j_compat" for obligation in obligations)
+    assert any(
+        obligation.legal_ir_view == "knowledge_graphs.neo4j_compat" for obligation in obligations
+    )
 
 
 def test_generate_legal_ir_obligations_is_stable() -> None:
-    first = [obligation.to_dict() for obligation in generate_legal_ir_proof_obligations(_document())]
-    second = [obligation.to_dict() for obligation in generate_legal_ir_proof_obligations(_document())]
+    first = [
+        obligation.to_dict() for obligation in generate_legal_ir_proof_obligations(_document())
+    ]
+    second = [
+        obligation.to_dict() for obligation in generate_legal_ir_proof_obligations(_document())
+    ]
 
     assert first == second
 
@@ -98,10 +104,13 @@ def test_generate_legal_ir_obligations_respects_bounded_prefix() -> None:
     )
 
     assert bounded == complete[:7]
-    assert generate_legal_ir_proof_obligations(
-        _document(),
-        max_obligations=0,
-    ) == []
+    assert (
+        generate_legal_ir_proof_obligations(
+            _document(),
+            max_obligations=0,
+        )
+        == []
+    )
 
 
 def test_generate_legal_ir_obligations_reports_empty_formula_documents() -> None:

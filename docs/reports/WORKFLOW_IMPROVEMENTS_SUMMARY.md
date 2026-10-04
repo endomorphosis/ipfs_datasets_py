@@ -195,6 +195,7 @@ python3 scripts/ci/init_p2p_cache.py
 
 ```python
 from ipfs_datasets_py.p2p_networking.p2p_peer_registry import P2PPeerRegistry
+
 registry = P2PPeerRegistry(repo="endomorphosis/ipfs_datasets_py")
 peers = registry.discover_peers()
 print(f"Discovered {len(peers)} peers")

@@ -34,7 +34,7 @@ from ipfs_datasets_py.mcp_server.tools.p2p_tools import schedule_workflow
 result = await schedule_workflow(
     workflow_id="embed_legal_corpus",
     params={"dataset": "legal_v2", "model": "all-MiniLM-L6-v2"},
-    strategy="round_robin"      # "round_robin" | "least_loaded" | "sticky"
+    strategy="round_robin",  # "round_robin" | "least_loaded" | "sticky"
 )
 # Returns: {"workflow_id": "...", "assigned_peer": "12D3Koo...", "status": "queued"}
 ```

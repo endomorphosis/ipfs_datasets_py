@@ -11,7 +11,9 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 
-def _bootstrap_symai_env_for_benchmark(*, base_env: Dict[str, str], model: str, provider: str | None, log) -> None:
+def _bootstrap_symai_env_for_benchmark(
+    *, base_env: Dict[str, str], model: str, provider: str | None, log
+) -> None:
     """Best-effort SyMAI environment bootstrap.
 
     The SymbolicAI (`symai`) package may try to run an interactive setup wizard
@@ -62,8 +64,12 @@ def _bootstrap_symai_env_for_benchmark(*, base_env: Dict[str, str], model: str, 
     # Default to routing SyMAI through our engine router when possible.
     base_env.setdefault("IPFS_DATASETS_PY_SYMAI_SITEBOOT", "1")
     base_env.setdefault("IPFS_DATASETS_PY_USE_SYMAI_ENGINE_ROUTER", "1")
-    base_env.setdefault("NEUROSYMBOLIC_ENGINE_MODEL", base_env.get("NEUROSYMBOLIC_ENGINE_MODEL") or "ipfs:default")
-    base_env.setdefault("NEUROSYMBOLIC_ENGINE_API_KEY", base_env.get("NEUROSYMBOLIC_ENGINE_API_KEY") or "ipfs")
+    base_env.setdefault(
+        "NEUROSYMBOLIC_ENGINE_MODEL", base_env.get("NEUROSYMBOLIC_ENGINE_MODEL") or "ipfs:default"
+    )
+    base_env.setdefault(
+        "NEUROSYMBOLIC_ENGINE_API_KEY", base_env.get("NEUROSYMBOLIC_ENGINE_API_KEY") or "ipfs"
+    )
 
     config_path = ensure_symai_config(
         neurosymbolic_model=base_env["NEUROSYMBOLIC_ENGINE_MODEL"],
@@ -384,7 +390,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     )
 
     symai_debug_runpy = bool(
-        args.symai_debug_runpy or _truthy(os.environ.get("IPFS_DATASETS_PY_BENCHMARK_SYMAI_DEBUG_RUNPY"))
+        args.symai_debug_runpy
+        or _truthy(os.environ.get("IPFS_DATASETS_PY_BENCHMARK_SYMAI_DEBUG_RUNPY"))
     )
 
     workspace = Path(__file__).resolve().parents[1]
@@ -484,7 +491,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     base_env.setdefault("IPFS_DATASETS_PY_PROOF_TIMEOUT", str(int(args.timeout)))
 
     # Ensure SyMAI doesn't prompt/exit and that tests can route via Codex/IPFS.
-    _bootstrap_symai_env_for_benchmark(base_env=base_env, model=model, provider=args.provider, log=log)
+    _bootstrap_symai_env_for_benchmark(
+        base_env=base_env, model=model, provider=args.provider, log=log
+    )
 
     # Mirror historical benchmark behavior: ensure local ipfs_kit_py + workspace are
     # on PYTHONPATH for subprocesses, without requiring installation.

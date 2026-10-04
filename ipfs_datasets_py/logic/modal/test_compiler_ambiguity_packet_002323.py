@@ -71,4 +71,3 @@ def test_packet_002323_deontic_to_conditional_emits_without_lexical_signal(
     )
     assert ambiguity.metadata.get("signal_free_pair_policy_applied") is True
     assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
-

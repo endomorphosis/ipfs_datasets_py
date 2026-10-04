@@ -138,18 +138,14 @@ def _context(
                 description="Host-resolved read capability",
             ),
         ),
-        resolved_effects=(
-            ResolvedScopeClaim("scope:effect:host-read", "read_metadata"),
-        ),
+        resolved_effects=(ResolvedScopeClaim("scope:effect:host-read", "read_metadata"),),
         resolved_resources=(
             ResolvedScopeClaim("scope:res:fixture-store", "resource:fixture-store"),
         ),
         resolved_network=(ResolvedScopeClaim("scope:net:none", "none"),),
         resolved_filesystem=(ResolvedScopeClaim("scope:fs:none", "none"),),
         resolved_subprocess=(ResolvedScopeClaim("scope:sub:none", "none"),),
-        resolved_data_classes=(
-            ResolvedScopeClaim("scope:data:public", "public"),
-        ),
+        resolved_data_classes=(ResolvedScopeClaim("scope:data:public", "public"),),
         purpose=PurposeContext(
             purpose="authorization-evaluation",
             jurisdiction="US-OR",
@@ -180,9 +176,7 @@ def _context(
 
 def test_interface_constants() -> None:
     assert SKILLCENTER_INVOCATION_ADAPTER == "SkillCenterInvocationAdapter@1"
-    assert (
-        SKILLCENTER_INVOCATION_ADAPTER_VERSION == "skillcenter-invocation-adapter/v1"
-    )
+    assert SKILLCENTER_INVOCATION_ADAPTER_VERSION == "skillcenter-invocation-adapter/v1"
     adapter = SkillCenterInvocationAdapter()
     assert adapter.interface == SKILLCENTER_INVOCATION_ADAPTER
 
@@ -219,14 +213,11 @@ def test_benign_skill_adapts_to_validated_envelope() -> None:
     assert any(e.value == "read_metadata" for e in envelope.scope.effects)
     # Intent-derived actions and effects are mapped with grounding.
     assert any(a.attributes.get("grounding") == "intent" for a in envelope.scope.actions)
-    assert any(
-        e.attributes.get("grounding") == "intent" for e in envelope.scope.effects
-    )
+    assert any(e.attributes.get("grounding") == "intent" for e in envelope.scope.effects)
     assert any("Runtime context must be present" in p for p in envelope.preconditions)
     assert any("Missing runtime context aborts" in f for f in envelope.failure_modes)
     assert any(
-        "Confirm fixture digest matches pin" in step.description
-        for step in envelope.verification
+        "Confirm fixture digest matches pin" in step.description for step in envelope.verification
     )
     assert envelope.rollback
     # Source maps include body identity and at least one action span.
@@ -250,7 +241,9 @@ def test_identity_mismatch_rejected() -> None:
     with pytest.raises(SkillCenterInvocationIdentityError, match="content_sha256"):
         SkillCenterInvocationAdapter().adapt(record, context)
 
-    context = _context(record, expected_entry_cid="bagaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+    context = _context(
+        record, expected_entry_cid="bagaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    )
     with pytest.raises(SkillCenterInvocationIdentityError, match="entry_cid"):
         SkillCenterInvocationAdapter().adapt(record, context)
 
@@ -267,25 +260,21 @@ def test_identity_mismatch_rejected() -> None:
         expected_formalization_artifact_id="formal:other",
         formalization_artifact_id="formal:skill-fixture-1",
     )
-    with pytest.raises(
-        SkillCenterInvocationIdentityError, match="formalization_artifact_id"
-    ):
+    with pytest.raises(SkillCenterInvocationIdentityError, match="formalization_artifact_id"):
         SkillCenterInvocationAdapter().adapt(record, context)
 
     context = _context(record, expected_intent_document_id="intent:wrong")
-    with pytest.raises(
-        SkillCenterInvocationIdentityError, match="intent_document_id|Intent IR"
-    ):
+    with pytest.raises(SkillCenterInvocationIdentityError, match="intent_document_id|Intent IR"):
         SkillCenterInvocationAdapter().adapt(record, context)
 
 
 def test_mutable_revision_rejected() -> None:
     for revision in ("main", "latest", "HEAD", "refs/heads/master"):
         record = _record(dataset_revision=revision)
-        with pytest.raises(
-            SkillCenterInvocationMutableError, match="mutable|dataset_revision"
-        ):
-            SkillCenterInvocationAdapter().adapt(record, _context(record, expected_dataset_revision=revision))
+        with pytest.raises(SkillCenterInvocationMutableError, match="mutable|dataset_revision"):
+            SkillCenterInvocationAdapter().adapt(
+                record, _context(record, expected_dataset_revision=revision)
+            )
 
 
 def test_quarantined_and_hostile_policy_fail_closed() -> None:
@@ -335,9 +324,7 @@ def test_caller_controlled_dispatcher_rejected() -> None:
             deployment_id="deploy:x",
         ),
     )
-    with pytest.raises(
-        SkillCenterInvocationDispatcherError, match="caller-controlled|caller"
-    ):
+    with pytest.raises(SkillCenterInvocationDispatcherError, match="caller-controlled|caller"):
         SkillCenterInvocationAdapter().adapt(record, context)
 
     context = _context(
@@ -348,9 +335,7 @@ def test_caller_controlled_dispatcher_rejected() -> None:
             attributes={"authority": "skill"},
         ),
     )
-    with pytest.raises(
-        SkillCenterInvocationDispatcherError, match="caller-controlled|authority"
-    ):
+    with pytest.raises(SkillCenterInvocationDispatcherError, match="caller-controlled|authority"):
         SkillCenterInvocationAdapter().adapt(record, context)
 
     context = _context(
@@ -361,9 +346,7 @@ def test_caller_controlled_dispatcher_rejected() -> None:
             attributes={"caller_controlled": True},
         ),
     )
-    with pytest.raises(
-        SkillCenterInvocationDispatcherError, match="caller_controlled"
-    ):
+    with pytest.raises(SkillCenterInvocationDispatcherError, match="caller_controlled"):
         SkillCenterInvocationAdapter().adapt(record, context)
 
 
@@ -372,25 +355,17 @@ def test_unknown_capability_rejected() -> None:
     context = _context(
         record,
         known_capabilities=("skill.fixture.read",),
-        resolved_capabilities=(
-            ResolvedScopeClaim("scope:cap:admin", "admin.superuser"),
-        ),
+        resolved_capabilities=(ResolvedScopeClaim("scope:cap:admin", "admin.superuser"),),
     )
-    with pytest.raises(
-        SkillCenterInvocationCapabilityError, match="unknown capability"
-    ):
+    with pytest.raises(SkillCenterInvocationCapabilityError, match="unknown capability"):
         SkillCenterInvocationAdapter().adapt(record, context)
 
     context = _context(
         record,
         known_capabilities=(),
-        resolved_capabilities=(
-            ResolvedScopeClaim("scope:cap:any", "anything"),
-        ),
+        resolved_capabilities=(ResolvedScopeClaim("scope:cap:any", "anything"),),
     )
-    with pytest.raises(
-        SkillCenterInvocationCapabilityError, match="unknown capability"
-    ):
+    with pytest.raises(SkillCenterInvocationCapabilityError, match="unknown capability"):
         SkillCenterInvocationAdapter().adapt(record, context)
 
 
@@ -435,16 +410,12 @@ def test_network_and_skill_execution_forbidden_during_adaptation() -> None:
 
 def test_missing_runtime_context_rejected() -> None:
     record = _record()
-    with pytest.raises(
-        SkillCenterInvocationContextError, match="environment_id|runtime context"
-    ):
+    with pytest.raises(SkillCenterInvocationContextError, match="environment_id|runtime context"):
         SkillCenterInvocationContext(
             envelope_id="inv:x",
             tenant_id="tenant:demo",
             actor=ActorBinding(actor_id="actor:user-1", kind="user"),
-            audience=AudienceBinding(
-                audience_id="audience:dispatcher-1", kind="dispatcher"
-            ),
+            audience=AudienceBinding(audience_id="audience:dispatcher-1", kind="dispatcher"),
             environment=EnvironmentBinding(),
             redacted_arguments={},
             nonce="nonce:1",
@@ -472,8 +443,7 @@ def test_oversized_and_nested_arguments_rejected() -> None:
 
 def test_unsupported_and_ambiguous_retained() -> None:
     record = _record(
-        skill_md=_BENIGN_SKILL_MD
-        + "\n## Capabilities\nadmin.superuser\n\n```\nrun rm -rf /\n```\n"
+        skill_md=_BENIGN_SKILL_MD + "\n## Capabilities\nadmin.superuser\n\n```\nrun rm -rf /\n```\n"
     )
     # Capability section may still pass policy if no injection detectors fire.
     # If policy quarantines, that is also fail-closed and acceptable.
@@ -534,23 +504,16 @@ def test_supplied_intent_document_identity_binding() -> None:
         record, context, intent_document=document
     )
     assert envelope.source.intent_document_id == document.document_id
-    assert any(
-        a.attributes.get("action_id") for a in envelope.scope.actions if a.attributes
-    )
+    assert any(a.attributes.get("action_id") for a in envelope.scope.actions if a.attributes)
 
 
 def test_host_resolved_scope_independent_of_skill_prose() -> None:
-    record = _record(
-        skill_md=_BENIGN_SKILL_MD
-        + "\n## Network\nhttps://evil.example/\n"
-    )
+    record = _record(skill_md=_BENIGN_SKILL_MD + "\n## Network\nhttps://evil.example/\n")
     try:
         context = _context(
             record,
             resolved_network=(
-                ResolvedScopeClaim(
-                    "scope:net:internal", "https://fixtures.internal/"
-                ),
+                ResolvedScopeClaim("scope:net:internal", "https://fixtures.internal/"),
             ),
         )
         envelope = SkillCenterInvocationAdapter().adapt(record, context)
@@ -558,9 +521,7 @@ def test_host_resolved_scope_independent_of_skill_prose() -> None:
         # Hostile URL detectors may quarantine; still fail-closed.
         return
 
-    assert {n.value for n in envelope.scope.network} == {
-        "https://fixtures.internal/"
-    }
+    assert {n.value for n in envelope.scope.network} == {"https://fixtures.internal/"}
     assert "https://evil.example/" not in {n.value for n in envelope.scope.network}
 
 

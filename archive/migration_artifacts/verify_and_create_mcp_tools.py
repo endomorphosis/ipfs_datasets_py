@@ -4,6 +4,7 @@ MCP Tools File Verification
 
 This script checks if the expected MCP tool files exist in the ipfs_datasets_py project.
 """
+
 import os
 import sys
 import json
@@ -19,48 +20,25 @@ TOOLS_PATH = MCP_SERVER_PATH / "tools"
 
 # Expected tool categories and tools
 EXPECTED_TOOLS = {
-    "dataset_tools": [
-        "load_dataset",
-        "save_dataset",
-        "process_dataset",
-        "convert_dataset_format"
-    ],
-    "ipfs_tools": [
-        "get_from_ipfs",
-        "pin_to_ipfs"
-    ],
-    "vector_tools": [
-        "create_vector_index",
-        "search_vector_index"
-    ],
-    "graph_tools": [
-        "query_knowledge_graph"
-    ],
-    "audit_tools": [
-        "record_audit_event",
-        "generate_audit_report"
-    ],
-    "security_tools": [
-        "check_access_permission"
-    ],
-    "provenance_tools": [
-        "record_provenance"
-    ],
+    "dataset_tools": ["load_dataset", "save_dataset", "process_dataset", "convert_dataset_format"],
+    "ipfs_tools": ["get_from_ipfs", "pin_to_ipfs"],
+    "vector_tools": ["create_vector_index", "search_vector_index"],
+    "graph_tools": ["query_knowledge_graph"],
+    "audit_tools": ["record_audit_event", "generate_audit_report"],
+    "security_tools": ["check_access_permission"],
+    "provenance_tools": ["record_provenance"],
     "web_archive_tools": [
         "create_warc",
         "index_warc",
         "extract_dataset_from_cdxj",
         "extract_text_from_warc",
         "extract_links_from_warc",
-        "extract_metadata_from_warc"
+        "extract_metadata_from_warc",
     ],
-    "cli": [
-        "execute_command"
-    ],
-    "functions": [
-        "execute_python_snippet"
-    ]
+    "cli": ["execute_command"],
+    "functions": ["execute_python_snippet"],
 }
+
 
 def check_mcp_server_existence():
     """Check if the MCP server directory exists."""
@@ -73,6 +51,7 @@ def check_mcp_server_existence():
     print(f"Found MCP server directory: {MCP_SERVER_PATH}")
     return True
 
+
 def check_tools_directory():
     """Check if the tools directory exists."""
     print("\nChecking tools directory...")
@@ -83,6 +62,7 @@ def check_tools_directory():
 
     print(f"Found tools directory: {TOOLS_PATH}")
     return True
+
 
 def check_tool_categories():
     """Check if expected tool category directories exist."""
@@ -98,11 +78,14 @@ def check_tool_categories():
             missing_categories.append(category)
 
     if missing_categories:
-        print(f"\nMissing {len(missing_categories)} category directories: {', '.join(missing_categories)}")
+        print(
+            f"\nMissing {len(missing_categories)} category directories: {', '.join(missing_categories)}"
+        )
     else:
         print("\nAll expected category directories exist.")
 
     return len(missing_categories) == 0
+
 
 def check_tool_files():
     """Check if expected tool files exist."""
@@ -134,11 +117,16 @@ def check_tool_files():
     total_tools = sum(len(tools) for tools in EXPECTED_TOOLS.values())
     present_count = total_tools - missing_count
 
-    print(f"\nFound {present_count}/{total_tools} expected tool files ({present_count/total_tools*100:.1f}%)")
+    print(
+        f"\nFound {present_count}/{total_tools} expected tool files ({present_count / total_tools * 100:.1f}%)"
+    )
     if missing_count > 0:
-        print(f"Missing {missing_count}/{total_tools} tool files ({missing_count/total_tools*100:.1f}%)")
+        print(
+            f"Missing {missing_count}/{total_tools} tool files ({missing_count / total_tools * 100:.1f}%)"
+        )
 
     return results
+
 
 def generate_missing_tool_templates():
     """Generate template files for missing tools."""
@@ -172,6 +160,7 @@ def generate_missing_tool_templates():
 
     print(f"\nGenerated {generated_count} tool template files.")
     return generated_count
+
 
 def generate_tool_template(category, tool_name):
     """Generate a template for a specific tool."""
@@ -218,7 +207,6 @@ def {tool_name}(
             "message": f"Error: {{str(e)}}"
         }}
 """,
-
         "ipfs_tools": """\"\"\"
 {tool_description}
 \"\"\"
@@ -259,7 +247,6 @@ def {tool_name}(
             "message": f"Error: {{str(e)}}"
         }}
 """,
-
         "vector_tools": """\"\"\"
 {tool_description}
 \"\"\"
@@ -302,7 +289,6 @@ def {tool_name}(
             "message": f"Error: {{str(e)}}"
         }}
 """,
-
         "graph_tools": """\"\"\"
 {tool_description}
 \"\"\"
@@ -343,7 +329,6 @@ def {tool_name}(
             "message": f"Error: {{str(e)}}"
         }}
 """,
-
         "audit_tools": """\"\"\"
 {tool_description}
 \"\"\"
@@ -388,7 +373,6 @@ def {tool_name}(
             "message": f"Error: {{str(e)}}"
         }}
 """,
-
         "security_tools": """\"\"\"
 {tool_description}
 \"\"\"
@@ -431,7 +415,6 @@ def {tool_name}(
             "message": f"Error: {{str(e)}}"
         }}
 """,
-
         "provenance_tools": """\"\"\"
 {tool_description}
 \"\"\"
@@ -470,7 +453,6 @@ def {tool_name}(
             "message": f"Error: {{str(e)}}"
         }}
 """,
-
         "web_archive_tools": """\"\"\"
 {tool_description}
 \"\"\"
@@ -591,7 +573,6 @@ def {tool_name}(
             "message": f"Error: {{str(e)}}"
         }}
 """,
-
         "cli": """\"\"\"
 {tool_description}
 \"\"\"
@@ -637,7 +618,6 @@ def {tool_name}(
             "message": f"Error executing command: {{str(e)}}"
         }}
 """,
-
         "functions": """\"\"\"
 {tool_description}
 \"\"\"
@@ -679,7 +659,7 @@ def {tool_name}(
             "status": "error",
             "message": f"Error executing code: {{str(e)}}"
         }}
-"""
+""",
     }
 
     # Tool descriptions mapping
@@ -704,7 +684,7 @@ def {tool_name}(
         "extract_links_from_warc": "Extract links from a WARC file",
         "extract_metadata_from_warc": "Extract metadata from a WARC file",
         "execute_command": "Execute a shell command",
-        "execute_python_snippet": "Execute a Python code snippet"
+        "execute_python_snippet": "Execute a Python code snippet",
     }
 
     # Tool function names (for templates that need it)
@@ -721,24 +701,25 @@ def {tool_name}(
         "record_audit_event": "record_event",
         "generate_audit_report": "generate_report",
         "check_access_permission": "check_permission",
-        "record_provenance": "record_provenance"
+        "record_provenance": "record_provenance",
     }
 
     # Get the appropriate template
     template = tool_templates.get(category, tool_templates["web_archive_tools"])
 
     # Get the tool description
-    tool_description = tool_descriptions.get(tool_name, f"{tool_name.replace('_', ' ').title()} tool")
+    tool_description = tool_descriptions.get(
+        tool_name, f"{tool_name.replace('_', ' ').title()} tool"
+    )
 
     # Get the tool function name
     tool_function = tool_functions.get(tool_name, tool_name)
 
     # Format the template
     return template.format(
-        tool_name=tool_name,
-        tool_description=tool_description,
-        tool_function=tool_function
+        tool_name=tool_name, tool_description=tool_description, tool_function=tool_function
     )
+
 
 def create_test_files():
     """Create test files for the MCP tools."""
@@ -761,6 +742,7 @@ def create_test_files():
 
     print(f"\nGenerated {len(test_files)} test files.")
     return test_files
+
 
 def generate_test_template(category, tools):
     """Generate a test template for a specific category."""
@@ -797,8 +779,9 @@ if __name__ == "__main__":
     return template.format(
         category=category,
         test_class_name=f"{category.replace('_', ' ').title().replace(' ', '')}ToolsTest",
-        test_methods="\n".join(test_methods)
+        test_methods="\n".join(test_methods),
     )
+
 
 def generate_test_method(category, tool):
     """Generate a test method for a specific tool."""
@@ -822,7 +805,6 @@ def generate_test_method(category, tool):
             self.assertEqual(result["status"], "success")
             # TODO: Add more assertions specific to {tool}
 """,
-
         "ipfs_tools": """    def test_{tool}(self):
         \"\"\"Test the {tool} tool.\"\"\"
         try:
@@ -841,7 +823,6 @@ def generate_test_method(category, tool):
             self.assertEqual(result["status"], "success")
             # TODO: Add more assertions specific to {tool}
 """,
-
         "vector_tools": """    def test_{tool}(self):
         \"\"\"Test the {tool} tool.\"\"\"
         try:
@@ -860,7 +841,6 @@ def generate_test_method(category, tool):
             self.assertEqual(result["status"], "success")
             # TODO: Add more assertions specific to {tool}
 """,
-
         "graph_tools": """    def test_{tool}(self):
         \"\"\"Test the {tool} tool.\"\"\"
         try:
@@ -879,7 +859,6 @@ def generate_test_method(category, tool):
             self.assertEqual(result["status"], "success")
             # TODO: Add more assertions specific to {tool}
 """,
-
         "audit_tools": """    def test_{tool}(self):
         \"\"\"Test the {tool} tool.\"\"\"
         try:
@@ -898,7 +877,6 @@ def generate_test_method(category, tool):
             self.assertEqual(result["status"], "success")
             # TODO: Add more assertions specific to {tool}
 """,
-
         "security_tools": """    def test_{tool}(self):
         \"\"\"Test the {tool} tool.\"\"\"
         try:
@@ -917,7 +895,6 @@ def generate_test_method(category, tool):
             self.assertEqual(result["status"], "success")
             # TODO: Add more assertions specific to {tool}
 """,
-
         "provenance_tools": """    def test_{tool}(self):
         \"\"\"Test the {tool} tool.\"\"\"
         try:
@@ -936,7 +913,6 @@ def generate_test_method(category, tool):
             self.assertEqual(result["status"], "success")
             # TODO: Add more assertions specific to {tool}
 """,
-
         "web_archive_tools": """    def test_{tool}(self):
         \"\"\"Test the {tool} tool.\"\"\"
         try:
@@ -959,7 +935,6 @@ def generate_test_method(category, tool):
             self.assertEqual(result["status"], "success")
             # TODO: Add more assertions specific to {tool}
 """,
-
         "cli": """    def test_{tool}(self):
         \"\"\"Test the {tool} tool.\"\"\"
         try:
@@ -985,7 +960,6 @@ def generate_test_method(category, tool):
             self.assertIn("output", result)
             mock_run.assert_called_once()
 """,
-
         "functions": """    def test_{tool}(self):
         \"\"\"Test the {tool} tool.\"\"\"
         try:
@@ -1003,17 +977,15 @@ def generate_test_method(category, tool):
             # Check results
             self.assertEqual(result["status"], "success")
             mock_exec.assert_called_once()
-"""
+""",
     }
 
     # Get the appropriate template
     template = test_method_templates.get(category, test_method_templates["web_archive_tools"])
 
     # Format the template
-    return template.format(
-        tool=tool,
-        category=category
-    )
+    return template.format(tool=tool, category=category)
+
 
 def main():
     """Main function."""
@@ -1042,6 +1014,7 @@ def main():
         create_test_files()
 
     print("\nVerification completed.")
+
 
 if __name__ == "__main__":
     main()

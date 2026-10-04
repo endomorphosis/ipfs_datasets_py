@@ -12,12 +12,14 @@ import datetime
 import logging
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 try:
     # Import the main components
     from ipfs_datasets_py.rag.rag_query_visualization import (
-        RAGQueryDashboard, EnhancedQueryVisualizer, ENHANCED_VIS_AVAILABLE
+        RAGQueryDashboard,
+        EnhancedQueryVisualizer,
+        ENHANCED_VIS_AVAILABLE,
     )
     from ipfs_datasets_py.enhanced_rag_visualization import EnhancedQueryAuditVisualizer
     from ipfs_datasets_py.rag.rag_query_optimizer import QueryMetricsCollector
@@ -26,6 +28,7 @@ try:
     try:
         from ipfs_datasets_py.audit.audit_visualization import AuditMetricsAggregator
         from ipfs_datasets_py.audit.audit_logger import AuditEvent, AuditLevel, AuditCategory
+
         AUDIT_COMPONENTS_AVAILABLE = True
     except ImportError:
         logging.warning("Audit components not available. Creating mock objects for testing.")
@@ -35,6 +38,7 @@ try:
     try:
         import matplotlib
         import seaborn
+
         VIS_COMPONENTS_AVAILABLE = True
     except ImportError:
         logging.warning("Visualization libraries not available. Test will be limited.")
@@ -44,8 +48,10 @@ except ImportError as e:
     logging.error(f"Missing required components: {e}")
     raise
 
+
 def create_mock_audit_metrics():
     """Create a mock audit metrics object if the real one is not available."""
+
     class MockAuditMetricsAggregator:
         def get_recent_events(self, hours_back=24, include_details=False):
             # Generate some test events
@@ -73,22 +79,25 @@ def create_mock_audit_metrics():
                     category = "SYSTEM"
 
                 # Create event
-                events.append({
-                    "event_id": f"test-event-{i}",
-                    "timestamp": event_time,
-                    "level": level,
-                    "category": category,
-                    "action": f"action-{i % 5}",
-                    "status": "success" if i % 5 != 0 else "failure",
-                    "user": f"user-{i % 3}",
-                    "resource_id": f"resource-{i % 4}",
-                    "resource_type": f"type-{i % 2}",
-                    "message": f"Test event {i} with {level} level"
-                })
+                events.append(
+                    {
+                        "event_id": f"test-event-{i}",
+                        "timestamp": event_time,
+                        "level": level,
+                        "category": category,
+                        "action": f"action-{i % 5}",
+                        "status": "success" if i % 5 != 0 else "failure",
+                        "user": f"user-{i % 3}",
+                        "resource_id": f"resource-{i % 4}",
+                        "resource_type": f"type-{i % 2}",
+                        "message": f"Test event {i} with {level} level",
+                    }
+                )
 
             return events
 
     return MockAuditMetricsAggregator()
+
 
 def create_test_query_metrics():
     """Create test query metrics for visualization."""
@@ -103,8 +112,7 @@ def create_test_query_metrics():
 
         # Start tracking a query
         metrics.start_query_tracking(
-            query_id=f"test-query-{i}",
-            query_params={"max_depth": 2, "max_results": 10}
+            query_id=f"test-query-{i}", query_params={"max_depth": 2, "max_results": 10}
         )
 
         # Set the start time explicitly for testing
@@ -114,19 +122,17 @@ def create_test_query_metrics():
         metrics.query_metrics[-1]["phases"] = {
             "vector_search": {"duration": 0.1 + (i * 0.01)},
             "graph_traversal": {"duration": 0.2 + (i * 0.02)},
-            "ranking": {"duration": 0.05 + (i * 0.005)}
+            "ranking": {"duration": 0.05 + (i * 0.005)},
         }
 
         # Set the duration
         metrics.query_metrics[-1]["duration"] = 0.35 + (i * 0.035)
 
         # Add results
-        metrics.query_metrics[-1]["results"] = {
-            "count": 5 + i,
-            "quality_score": 0.7 + (i * 0.02)
-        }
+        metrics.query_metrics[-1]["results"] = {"count": 5 + i, "quality_score": 0.7 + (i * 0.02)}
 
     return metrics
+
 
 def test_enhanced_visualization_integration():
     """Test the integration of the enhanced visualization components."""
@@ -150,16 +156,22 @@ def test_enhanced_visualization_integration():
             event = AuditEvent(
                 event_id=f"test-event-{i}",
                 timestamp=datetime.datetime.fromtimestamp(now - 3600 * i / 20).isoformat(),
-                level=AuditLevel.ERROR if i % 8 == 0 else
-                      AuditLevel.WARNING if i % 4 == 0 else AuditLevel.INFO,
-                category=AuditCategory.SECURITY if i % 3 == 0 else
-                         AuditCategory.DATA_ACCESS if i % 3 == 1 else AuditCategory.SYSTEM,
+                level=AuditLevel.ERROR
+                if i % 8 == 0
+                else AuditLevel.WARNING
+                if i % 4 == 0
+                else AuditLevel.INFO,
+                category=AuditCategory.SECURITY
+                if i % 3 == 0
+                else AuditCategory.DATA_ACCESS
+                if i % 3 == 1
+                else AuditCategory.SYSTEM,
                 action=f"action-{i % 5}",
                 status="success" if i % 5 != 0 else "failure",
                 user=f"user-{i % 3}",
                 resource_id=f"resource-{i % 4}",
                 resource_type=f"type-{i % 2}",
-                message=f"Test event {i}"
+                message=f"Test event {i}",
             )
 
             # Add event to metrics
@@ -173,15 +185,15 @@ def test_enhanced_visualization_integration():
 
     # Create dashboard
     dashboard = RAGQueryDashboard(
-        metrics_collector=query_metrics,
-        dashboard_dir=temp_dir,
-        theme="light"
+        metrics_collector=query_metrics, dashboard_dir=temp_dir, theme="light"
     )
 
     # Check the visualizer type
     if ENHANCED_VIS_AVAILABLE:
         logging.info(f"Dashboard visualizer type: {type(dashboard.visualizer).__name__}")
-        assert isinstance(dashboard.visualizer, EnhancedQueryAuditVisualizer), "Dashboard not using enhanced visualizer"
+        assert isinstance(dashboard.visualizer, EnhancedQueryAuditVisualizer), (
+            "Dashboard not using enhanced visualizer"
+        )
 
     # Generate timeline visualization
     if VIS_COMPONENTS_AVAILABLE:
@@ -192,7 +204,7 @@ def test_enhanced_visualization_integration():
             audit_metrics_aggregator=audit_metrics,
             output_file=timeline_path,
             time_window=24 * 3600,  # 24 hours
-            show_plot=False
+            show_plot=False,
         )
 
         if fig is not None:
@@ -213,7 +225,7 @@ def test_enhanced_visualization_integration():
             output_file=dashboard_path,
             audit_metrics_aggregator=audit_metrics,
             title="Test Integrated Dashboard",
-            include_query_audit_timeline=True
+            include_query_audit_timeline=True,
         )
 
         if os.path.exists(dashboard_path):
@@ -227,6 +239,7 @@ def test_enhanced_visualization_integration():
 
     logging.info("Integration test completed")
     return temp_dir
+
 
 if __name__ == "__main__":
     output_dir = test_enhanced_visualization_integration()

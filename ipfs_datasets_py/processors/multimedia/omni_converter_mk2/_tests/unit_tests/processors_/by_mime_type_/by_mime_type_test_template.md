@@ -3,6 +3,7 @@
 ```python
 import unittest
 
+
 class TestMimeTypeProcessorInitialization(unittest.TestCase):
     """Test MIME-type specific processor initialization (e.g., XlsxProcessor)."""
 
@@ -444,6 +445,6 @@ class TestMimeTypeProcessorIntegration(unittest.TestCase):
         """
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
 ```

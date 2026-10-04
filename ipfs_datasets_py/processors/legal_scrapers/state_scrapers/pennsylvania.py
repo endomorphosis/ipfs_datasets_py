@@ -18,19 +18,21 @@ class PennsylvaniaScraper(BaseStateScraper):
     """Scraper for Pennsylvania state laws from https://www.legis.state.pa.us"""
 
     _SECTION_HEADER_RE = re.compile(r"(?m)^\s*§\s*([0-9A-Za-z.-]+)\.\s+(.+)$")
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for Pennsylvania's legislative website."""
         return "https://www.palegis.us"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Pennsylvania."""
-        return [{
-            "name": "Pennsylvania Consolidated Statutes",
-            "url": f"{self.get_base_url()}/statutes/consolidated",
-            "type": "Code"
-        }]
-    
+        return [
+            {
+                "name": "Pennsylvania Consolidated Statutes",
+                "url": f"{self.get_base_url()}/statutes/consolidated",
+                "type": "Code",
+            }
+        ]
+
     async def scrape_code(
         self,
         code_name: str,
@@ -38,11 +40,11 @@ class PennsylvaniaScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from Pennsylvania's legislative website.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
@@ -102,8 +104,12 @@ class PennsylvaniaScraper(BaseStateScraper):
 
         return merged
 
-    async def _scrape_consolidated_title_pdfs(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
-        discovered = await self._discover_consolidated_title_pdfs(limit=max(4, int(max_statutes or 1)))
+    async def _scrape_consolidated_title_pdfs(
+        self, code_name: str, max_statutes: int
+    ) -> List[NormalizedStatute]:
+        discovered = await self._discover_consolidated_title_pdfs(
+            limit=max(4, int(max_statutes or 1))
+        )
         if not discovered:
             return []
 
@@ -115,7 +121,9 @@ class PennsylvaniaScraper(BaseStateScraper):
             pdf_bytes = await self._request_pdf_bytes(pdf_url, timeout=60)
             if not pdf_bytes:
                 continue
-            title_text = self._extract_pdf_text_preserve_layout(pdf_bytes=pdf_bytes, max_chars=900000)
+            title_text = self._extract_pdf_text_preserve_layout(
+                pdf_bytes=pdf_bytes, max_chars=900000
+            )
             if len(title_text) < 500:
                 continue
             split_sections = self._split_title_pdf_into_sections(
@@ -136,14 +144,18 @@ class PennsylvaniaScraper(BaseStateScraper):
                     break
         return statutes
 
-    async def _discover_consolidated_title_pdfs(self, limit: int = 120) -> List[Tuple[str, str, str]]:
+    async def _discover_consolidated_title_pdfs(
+        self, limit: int = 120
+    ) -> List[Tuple[str, str, str]]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
             return []
 
         index_url = f"{self.get_base_url()}/statutes/consolidated"
-        payload = await self._fetch_page_content_with_archival_fallback(index_url, timeout_seconds=45)
+        payload = await self._fetch_page_content_with_archival_fallback(
+            index_url, timeout_seconds=45
+        )
         if not payload:
             return []
 
@@ -248,8 +260,12 @@ class PennsylvaniaScraper(BaseStateScraper):
         for index, match in enumerate(body_matches):
             section_number = str(match.group(1) or "").strip()
             section_name = re.sub(r"\s+", " ", str(match.group(2) or "").strip()).strip(" .")
-            end = body_matches[index + 1].start() if index + 1 < len(body_matches) else len(title_text)
-            raw_block = title_text[match.start():end]
+            end = (
+                body_matches[index + 1].start()
+                if index + 1 < len(body_matches)
+                else len(title_text)
+            )
+            raw_block = title_text[match.start() : end]
             normalized = self._normalize_legal_text(raw_block)
             if len(normalized) < 60:
                 continue
@@ -278,7 +294,9 @@ class PennsylvaniaScraper(BaseStateScraper):
             )
         return statutes
 
-    async def _scrape_direct_titles(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def _scrape_direct_titles(
+        self, code_name: str, max_statutes: int
+    ) -> List[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:

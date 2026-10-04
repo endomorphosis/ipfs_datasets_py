@@ -5,10 +5,13 @@ Tests cover:
 - record_audit_event: log an audit event
 - generate_audit_report: produce compliance/security report
 """
+
 import pytest
 
 from ipfs_datasets_py.mcp_server.tools.audit_tools.record_audit_event import record_audit_event
-from ipfs_datasets_py.mcp_server.tools.audit_tools.generate_audit_report import generate_audit_report
+from ipfs_datasets_py.mcp_server.tools.audit_tools.generate_audit_report import (
+    generate_audit_report,
+)
 
 
 class TestRecordAuditEvent:

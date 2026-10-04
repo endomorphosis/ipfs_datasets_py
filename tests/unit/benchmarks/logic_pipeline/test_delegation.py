@@ -34,9 +34,7 @@ def _provenance() -> delegation.LearnedRouterProvenance:
 
 def _configs(
     *,
-    thresholds: delegation.DelegationThresholds = (
-        delegation.DelegationThresholds()
-    ),
+    thresholds: delegation.DelegationThresholds = (delegation.DelegationThresholds()),
     limits: ResourceLimits = ResourceLimits(),
 ) -> dict[delegation.DelegationPolicy, delegation.DelegationPolicyConfig]:
     return dict(
@@ -58,12 +56,8 @@ def _signals(
     rejected: bool = False,
     obligation_valid: bool = True,
     family: delegation.ProofFamily = delegation.ProofFamily.FIRST_ORDER,
-    hammer: delegation.ProofAttemptOutcome = (
-        delegation.ProofAttemptOutcome.NOT_ATTEMPTED
-    ),
-    leanstral: delegation.ProofAttemptOutcome = (
-        delegation.ProofAttemptOutcome.NOT_ATTEMPTED
-    ),
+    hammer: delegation.ProofAttemptOutcome = (delegation.ProofAttemptOutcome.NOT_ATTEMPTED),
+    leanstral: delegation.ProofAttemptOutcome = (delegation.ProofAttemptOutcome.NOT_ATTEMPTED),
     symai_score: float = 0.25,
     lean_score: float = 0.25,
 ) -> delegation.RoutingSignals:
@@ -121,9 +115,7 @@ def test_objective_evidence_and_policy_order_are_stable() -> None:
         delegation.DelegationPolicy.P2_PROOF_FAMILY,
         delegation.DelegationPolicy.P3_BOUNDED_LEARNED,
     )
-    assert {
-        item.value for item in delegation.POLICY_ORDER
-    } == {"P0", "P1", "P2", "P3"}
+    assert {item.value for item in delegation.POLICY_ORDER} == {"P0", "P1", "P2", "P3"}
 
 
 def test_module_import_is_dependency_free_and_side_effect_free(
@@ -158,18 +150,12 @@ def test_configs_are_immutable_content_addressed_and_strict_round_trips() -> Non
         assert restored.digest == config.digest
         assert restored.policy is policy
     with pytest.raises(FrozenInstanceError):
-        configs[
-            delegation.DelegationPolicy.P1_DETERMINISTIC_FIRST
-        ].policy = (  # type: ignore[misc]
+        configs[delegation.DelegationPolicy.P1_DETERMINISTIC_FIRST].policy = (  # type: ignore[misc]
             delegation.DelegationPolicy.P0_ALWAYS_ON
         )
-    tampered = configs[
-        delegation.DelegationPolicy.P1_DETERMINISTIC_FIRST
-    ].to_dict()
+    tampered = configs[delegation.DelegationPolicy.P1_DETERMINISTIC_FIRST].to_dict()
     tampered["resource_limits_sha256"] = SHA_A
-    with pytest.raises(
-        delegation.DelegationContractError, match="resource-limits digest"
-    ):
+    with pytest.raises(delegation.DelegationContractError, match="resource-limits digest"):
         delegation.DelegationPolicyConfig.from_dict(tampered)
 
 
@@ -189,9 +175,7 @@ def test_learned_router_requires_development_only_pinned_provenance() -> None:
     with pytest.raises(delegation.DelegationContractError, match="development"):
         replace(_provenance(), training_splits=(Split.PILOT, Split.DEVELOPMENT))
     with pytest.raises(delegation.DelegationContractError, match="requires pinned"):
-        delegation.DelegationPolicyConfig(
-            delegation.DelegationPolicy.P3_BOUNDED_LEARNED
-        )
+        delegation.DelegationPolicyConfig(delegation.DelegationPolicy.P3_BOUNDED_LEARNED)
     with pytest.raises(delegation.DelegationContractError, match="cannot carry"):
         delegation.DelegationPolicyConfig(
             delegation.DelegationPolicy.P1_DETERMINISTIC_FIRST,
@@ -260,9 +244,7 @@ def test_p1_hammer_fallback_is_conditional_and_bounded() -> None:
     assert initial.proof_order == (StageName.HAMMER,)
     failed = _decision(
         delegation.DelegationPolicy.P1_DETERMINISTIC_FIRST,
-        _signals(
-            hammer=delegation.ProofAttemptOutcome.RECONSTRUCTION_FAILED
-        ),
+        _signals(hammer=delegation.ProofAttemptOutcome.RECONSTRUCTION_FAILED),
     )
     assert failed.proof_order == (StageName.HAMMER, StageName.LEANSTRAL)
     assert failed.cross_family_fallback_count == 1
@@ -321,12 +303,8 @@ def test_p2_crosses_proof_family_once_and_never_bounces() -> None:
 def test_p3_thresholds_are_inclusive_and_decisions_retain_provenance() -> None:
     configs = _configs()
     config = configs[delegation.DelegationPolicy.P3_BOUNDED_LEARNED]
-    below = delegation.route_case(
-        config, _signals(symai_score=0.499, lean_score=0.499)
-    )
-    at = delegation.route_case(
-        config, _signals(symai_score=0.5, lean_score=0.5)
-    )
+    below = delegation.route_case(config, _signals(symai_score=0.499, lean_score=0.499))
+    at = delegation.route_case(config, _signals(symai_score=0.5, lean_score=0.5))
     assert StageName.SYMAI not in below.component_calls
     assert below.proof_order == (StageName.HAMMER,)
     assert StageName.SYMAI in at.component_calls
@@ -335,9 +313,7 @@ def test_p3_thresholds_are_inclusive_and_decisions_retain_provenance() -> None:
     assert at.learned_provenance_sha256 == _provenance().digest
     assert at.feature_vector_sha256 == SHA_F
     assert delegation.DelegationDecision.from_dict(at.to_dict()) == at
-    replay = delegation.route_case(
-        config, _signals(symai_score=0.5, lean_score=0.5)
-    )
+    replay = delegation.route_case(config, _signals(symai_score=0.5, lean_score=0.5))
     assert replay == at
 
 
@@ -356,12 +332,8 @@ def test_p3_rejects_missing_score_provenance_and_unfrozen_holdout() -> None:
             partial,
         )
 
-    thresholds = delegation.DelegationThresholds(
-        frozen_before_holdout=False
-    )
-    config = _configs(thresholds=thresholds)[
-        delegation.DelegationPolicy.P3_BOUNDED_LEARNED
-    ]
+    thresholds = delegation.DelegationThresholds(frozen_before_holdout=False)
+    config = _configs(thresholds=thresholds)[delegation.DelegationPolicy.P3_BOUNDED_LEARNED]
     with pytest.raises(delegation.DelegationContractError, match="holdout"):
         delegation.route_case(config, _signals(split=Split.HOLDOUT))
 
@@ -395,9 +367,9 @@ def test_every_route_obeys_identical_resource_and_verification_limits() -> None:
     assert all(len(item.component_calls) <= 3 for item in decisions)
     assert all(item.cross_family_fallback_count <= 1 for item in decisions)
 
-    too_small = _configs(
-        limits=replace(limits, max_model_calls_per_case=1)
-    )[delegation.DelegationPolicy.P0_ALWAYS_ON]
+    too_small = _configs(limits=replace(limits, max_model_calls_per_case=1))[
+        delegation.DelegationPolicy.P0_ALWAYS_ON
+    ]
     with pytest.raises(delegation.DelegationContractError, match="model-call"):
         delegation.route_case(too_small, _signals())
 
@@ -488,9 +460,7 @@ def test_paired_comparison_reports_exact_unnecessary_call_accounting() -> None:
     comparison = delegation.compare_delegation_policies(_paired_observations())
     assert comparison.policies == delegation.POLICY_ORDER
     assert len(comparison.case_keys) == 2
-    p0 = comparison.summaries[
-        delegation.DelegationPolicy.P0_ALWAYS_ON
-    ]
+    p0 = comparison.summaries[delegation.DelegationPolicy.P0_ALWAYS_ON]
     assert p0.case_count == 2
     assert p0.component_call_count == 6
     assert p0.useful_call_count == 1
@@ -545,11 +515,9 @@ def test_comparison_rejects_unpaired_or_mixed_scientific_inputs(
         )
     elif mutation == "limits":
         different = delegation.route_case(
-            _configs(
-                limits=replace(
-                    ResourceLimits(), case_timeout_seconds=121
-                )
-            )[records[0].decision.policy],
+            _configs(limits=replace(ResourceLimits(), case_timeout_seconds=121))[
+                records[0].decision.policy
+            ],
             _signals(records[0].decision.case_id),
         )
         records[0] = replace(

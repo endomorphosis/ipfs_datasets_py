@@ -34,45 +34,25 @@ from ipfs_datasets_py.utils.cid_utils import (
 )
 
 
-CANONICAL_STRUCTURED_TEXT_COMPILER_INTERFACE: Final = (
-    "CanonicalStructuredTextCompiler@1"
-)
-CANONICAL_STRUCTURED_TEXT_DECOMPILER_INTERFACE: Final = (
-    "CanonicalStructuredTextDecompiler@1"
-)
-CANONICAL_ROUNDTRIP_CONTRACTS_INTERFACE: Final = (
-    "CanonicalRoundTripContracts@1"
-)
+CANONICAL_STRUCTURED_TEXT_COMPILER_INTERFACE: Final = "CanonicalStructuredTextCompiler@1"
+CANONICAL_STRUCTURED_TEXT_DECOMPILER_INTERFACE: Final = "CanonicalStructuredTextDecompiler@1"
+CANONICAL_ROUNDTRIP_CONTRACTS_INTERFACE: Final = "CanonicalRoundTripContracts@1"
 CANONICAL_ROUNDTRIP_IR_INTERFACE: Final = "CanonicalRoundTripIR@1"
-CANONICAL_ROUNDTRIP_IR_SCHEMA_VERSION: Final = (
-    "ipfs-datasets.canonical-roundtrip-ir.v1"
-)
-CANONICAL_ROUNDTRIP_PARITY_POLICY_INTERFACE: Final = (
-    "CanonicalRoundTripParityPolicy@1"
-)
+CANONICAL_ROUNDTRIP_IR_SCHEMA_VERSION: Final = "ipfs-datasets.canonical-roundtrip-ir.v1"
+CANONICAL_ROUNDTRIP_PARITY_POLICY_INTERFACE: Final = "CanonicalRoundTripParityPolicy@1"
 CANONICAL_ROUNDTRIP_PARITY_POLICY_SCHEMA: Final = (
     "ipfs-datasets.semantic-roundtrip-canonical-parity-policy.v1"
 )
 
 # Immutable benchmark-to-design lineage, revalidated by SRT-027.
-SRT014_REPORT_CID: Final = (
-    "baguqeerakqgerwv6npdlqpgrc3bjzuxqog3hiouey3c4giw5vkdgk2jhfbpq"
-)
-SRT014_GATE_CID: Final = (
-    "baguqeeraa7vbts26rxvqujbvgvgplq4xrprcebufol5qqmstc6cbrac2rthq"
-)
+SRT014_REPORT_CID: Final = "baguqeerakqgerwv6npdlqpgrc3bjzuxqog3hiouey3c4giw5vkdgk2jhfbpq"
+SRT014_GATE_CID: Final = "baguqeeraa7vbts26rxvqujbvgvgplq4xrprcebufol5qqmstc6cbrac2rthq"
 SRT014_REMEDIATION_MANIFEST_CID: Final = (
     "baguqeerarr7ebjrzd3argtdekd7er3bqrnvhuzy2ogqzfi7h5nv37dbea52a"
 )
-REPLACEMENT_REPORT_CID: Final = (
-    "baguqeeramdvshi4ynajkvsb72zncgcn2pgvklsglgxwea7za25lndnaf5cga"
-)
-REPLACEMENT_GATE_CID: Final = (
-    "baguqeerawhggoyrnacv74kbuq3rhpmz4jikhr3tnv5uahpxcnpghfrwfj6jq"
-)
-CANONICAL_DESIGN_GATE_CID: Final = (
-    "baguqeerab4top4ljgojms7f7p6y4ksdlivfwhyzxzhynnii4zbrfvw4mqtfq"
-)
+REPLACEMENT_REPORT_CID: Final = "baguqeeramdvshi4ynajkvsb72zncgcn2pgvklsglgxwea7za25lndnaf5cga"
+REPLACEMENT_GATE_CID: Final = "baguqeerawhggoyrnacv74kbuq3rhpmz4jikhr3tnv5uahpxcnpghfrwfj6jq"
+CANONICAL_DESIGN_GATE_CID: Final = "baguqeerab4top4ljgojms7f7p6y4ksdlivfwhyzxzhynnii4zbrfvw4mqtfq"
 SELECTION_BASIS: Final = "replacement_bounded_tie_policy"
 SELECTABLE_ARM_IDS: Final = (
     "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
@@ -119,9 +99,7 @@ SOURCE_WITHHELD_RENDERING_SPEC_CID: Final = (
 
 # Filled from the checked-in policy.  The value is verified again at import
 # boundary by ``load_parity_policy``; it is not trusted merely as a constant.
-CANONICAL_PARITY_POLICY_CID: Final = (
-    "baguqeera5g5z4yvncxbn3uk4ftqmnxxmmclwpnwjpdshiy52la2o5bzdk27a"
-)
+CANONICAL_PARITY_POLICY_CID: Final = "baguqeera5g5z4yvncxbn3uk4ftqmnxxmmclwpnwjpdshiy52la2o5bzdk27a"
 
 MAX_TEXT_CHARS: Final = 1_000_000
 MAX_ATOM_CHARS: Final = 4_096
@@ -220,9 +198,7 @@ def _string(
     if not isinstance(value, str):
         raise CanonicalContractError(f"{field} must be a string")
     if len(value) > maximum:
-        raise CanonicalContractError(
-            f"{field} exceeds the {maximum} character bound"
-        )
+        raise CanonicalContractError(f"{field} exceeds the {maximum} character bound")
     if not allow_blank and not value.strip():
         raise CanonicalContractError(f"{field} must be nonblank")
     return value
@@ -232,9 +208,7 @@ def _cid(value: object, field: str, *, codec: str) -> str:
     try:
         return validate_cid(value, codecs=(codec,))
     except (TypeError, ValueError) as exc:
-        raise CanonicalContractError(
-            f"{field} must be a canonical {codec} CIDv1"
-        ) from exc
+        raise CanonicalContractError(f"{field} must be a canonical {codec} CIDv1") from exc
 
 
 def _cid_with_declared_codec(
@@ -255,9 +229,7 @@ def _freeze_json(value: object, field: str, depth: int = 0) -> object:
         return value
     if type(value) is float:
         if not math.isfinite(value):
-            raise CanonicalContractError(
-                f"{field} contains a non-finite number"
-            )
+            raise CanonicalContractError(f"{field} contains a non-finite number")
         return value
     if isinstance(value, Mapping):
         frozen: dict[str, object] = {}
@@ -266,12 +238,9 @@ def _freeze_json(value: object, field: str, depth: int = 0) -> object:
                 raise CanonicalContractError(f"{field} keys must be strings")
             frozen[key] = _freeze_json(item, f"{field}.{key}", depth + 1)
         return MappingProxyType(frozen)
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return tuple(
-            _freeze_json(item, f"{field}[{index}]", depth + 1)
-            for index, item in enumerate(value)
+            _freeze_json(item, f"{field}[{index}]", depth + 1) for index, item in enumerate(value)
         )
     raise CanonicalContractError(f"{field} must contain only JSON values")
 
@@ -297,9 +266,7 @@ def _frozen_object(value: object, field: str) -> Mapping[str, object]:
         allow_nan=False,
     ).encode("utf-8")
     if len(encoded) > MAX_CONFIG_BYTES:
-        raise CanonicalContractError(
-            f"{field} exceeds the {MAX_CONFIG_BYTES} byte bound"
-        )
+        raise CanonicalContractError(f"{field} exceeds the {MAX_CONFIG_BYTES} byte bound")
     return result
 
 
@@ -309,20 +276,11 @@ def _string_items(
     *,
     maximum: int = MAX_QUALIFIERS_PER_FACET,
 ) -> tuple[str, ...]:
-    if not isinstance(value, Sequence) or isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if not isinstance(value, Sequence) or isinstance(value, (str, bytes, bytearray)):
         raise CanonicalContractError(f"{field} must be a string array")
     if len(value) > maximum:
         raise CanonicalContractError(f"{field} exceeds the {maximum} item bound")
-    return tuple(
-        sorted(
-            {
-                _string(item, f"{field}[{index}]")
-                for index, item in enumerate(value)
-            }
-        )
-    )
+    return tuple(sorted({_string(item, f"{field}[{index}]") for index, item in enumerate(value)}))
 
 
 def _enum(value: object, enum_type: type[Enum], field: str) -> Enum:
@@ -333,25 +291,25 @@ def _enum(value: object, enum_type: type[Enum], field: str) -> Enum:
 
 
 def _normalized_key(key: object) -> str:
-    return re.sub(
-        r"[^a-z0-9]+",
-        "_",
-        re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "_", str(key).strip()),
-        flags=re.IGNORECASE,
-    ).strip("_").lower()
+    return (
+        re.sub(
+            r"[^a-z0-9]+",
+            "_",
+            re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "_", str(key).strip()),
+            flags=re.IGNORECASE,
+        )
+        .strip("_")
+        .lower()
+    )
 
 
 def _reject_source_channels(value: object, path: str = "config") -> None:
     if isinstance(value, Mapping):
         for key, item in value.items():
             if _normalized_key(key) in _FORBIDDEN_DECOMPILER_KEYS:
-                raise CanonicalContractError(
-                    f"decompiler request may not contain {path}.{key}"
-                )
+                raise CanonicalContractError(f"decompiler request may not contain {path}.{key}")
             _reject_source_channels(item, f"{path}.{key}")
-    elif isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    elif isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         for index, item in enumerate(value):
             _reject_source_channels(item, f"{path}[{index}]")
 
@@ -434,6 +392,7 @@ class CanonicalRule:
                 field,
                 _string_items(getattr(self, field), field),
             )
+
     def to_dict(self) -> dict[str, object]:
         """Return the exact open-vocabulary rule payload measured by SRT-026."""
 
@@ -489,12 +448,8 @@ class SourceMapEntry:
     attribution: str = "direct"
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "rule_cid", _cid(self.rule_cid, "rule_cid", codec="dag-json")
-        )
-        object.__setattr__(
-            self, "source_cid", _cid(self.source_cid, "source_cid", codec="raw")
-        )
+        object.__setattr__(self, "rule_cid", _cid(self.rule_cid, "rule_cid", codec="dag-json"))
+        object.__setattr__(self, "source_cid", _cid(self.source_cid, "source_cid", codec="raw"))
         _string(self.field_path, "field_path")
         _string(self.attribution, "attribution")
         if (
@@ -505,9 +460,7 @@ class SourceMapEntry:
             or self.start < 0
             or self.end <= self.start
         ):
-            raise CanonicalContractError(
-                "source-map offsets must form a nonempty half-open span"
-            )
+            raise CanonicalContractError("source-map offsets must form a nonempty half-open span")
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -617,14 +570,10 @@ class CanonicalRoundTripIR:
     rules: tuple[CanonicalRule, ...]
 
     def __post_init__(self) -> None:
-        if not isinstance(self.rules, Sequence) or isinstance(
-            self.rules, (str, bytes, bytearray)
-        ):
+        if not isinstance(self.rules, Sequence) or isinstance(self.rules, (str, bytes, bytearray)):
             raise CanonicalContractError("rules must be an array")
         if not 0 < len(self.rules) <= MAX_RULES:
-            raise CanonicalContractError(
-                f"rules must contain between 1 and {MAX_RULES} entries"
-            )
+            raise CanonicalContractError(f"rules must contain between 1 and {MAX_RULES} entries")
         rules = tuple(
             rule if isinstance(rule, CanonicalRule) else CanonicalRule.from_dict(rule)
             for rule in self.rules
@@ -719,20 +668,14 @@ class CanonicalError:
     code: CanonicalErrorCode
     message: str
     retryable: bool = False
-    details: Mapping[str, object] = field(
-        default_factory=lambda: MappingProxyType({})
-    )
+    details: Mapping[str, object] = field(default_factory=lambda: MappingProxyType({}))
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "code", _enum(self.code, CanonicalErrorCode, "error.code")
-        )
+        object.__setattr__(self, "code", _enum(self.code, CanonicalErrorCode, "error.code"))
         _string(self.message, "error.message")
         if not isinstance(self.retryable, bool):
             raise CanonicalContractError("error.retryable must be boolean")
-        object.__setattr__(
-            self, "details", _frozen_object(self.details, "error.details")
-        )
+        object.__setattr__(self, "details", _frozen_object(self.details, "error.details"))
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -803,9 +746,7 @@ class ComponentTrace:
                 ),
             )
         if self.deterministic and self.model_receipt_cid is not None:
-            raise CanonicalContractError(
-                "deterministic trace cannot carry a model receipt"
-            )
+            raise CanonicalContractError("deterministic trace cannot carry a model receipt")
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -846,9 +787,7 @@ class CompilerRequest:
     atom_vocabulary: CanonicalAtomVocabulary
     policy_cid: str = CANONICAL_PARITY_POLICY_CID
     allow_explicit_partial: bool = False
-    config: Mapping[str, object] = field(
-        default_factory=lambda: MappingProxyType({})
-    )
+    config: Mapping[str, object] = field(default_factory=lambda: MappingProxyType({}))
 
     def __post_init__(self) -> None:
         _string(
@@ -872,16 +811,10 @@ class CompilerRequest:
                     CanonicalAtomVocabulary.from_dict(self.atom_vocabulary),
                 )
             else:
-                raise CanonicalContractError(
-                    "atom_vocabulary must be CanonicalAtomVocabulary"
-                )
+                raise CanonicalContractError("atom_vocabulary must be CanonicalAtomVocabulary")
         if not isinstance(self.allow_explicit_partial, bool):
-            raise CanonicalContractError(
-                "allow_explicit_partial must be boolean"
-            )
-        object.__setattr__(
-            self, "config", _frozen_object(self.config, "config")
-        )
+            raise CanonicalContractError("allow_explicit_partial must be boolean")
+        object.__setattr__(self, "config", _frozen_object(self.config, "config"))
 
     @property
     def source_cid(self) -> str:
@@ -931,16 +864,15 @@ class CompilerRequest:
             raise CanonicalContractError("compiler request fields changed")
         if value["interface"] != CANONICAL_STRUCTURED_TEXT_COMPILER_INTERFACE:
             raise CanonicalContractError("compiler request interface changed")
-        if value["request_cid_codec"] != "dag-json" or value[
-            "request_cid_scope"
-        ] != "identity_payload_with_source_cid":
+        if (
+            value["request_cid_codec"] != "dag-json"
+            or value["request_cid_scope"] != "identity_payload_with_source_cid"
+        ):
             raise CanonicalContractError("compiler request CID contract changed")
         request = cls(
             source_text=value["source_text"],  # type: ignore[arg-type]
             request_id=value["request_id"],  # type: ignore[arg-type]
-            atom_vocabulary=CanonicalAtomVocabulary.from_dict(
-                value["atom_vocabulary"]
-            ),
+            atom_vocabulary=CanonicalAtomVocabulary.from_dict(value["atom_vocabulary"]),
             policy_cid=value["policy_cid"],  # type: ignore[arg-type]
             allow_explicit_partial=value[  # type: ignore[arg-type]
                 "allow_explicit_partial"
@@ -949,13 +881,8 @@ class CompilerRequest:
         )
         if _cid(value["source_cid"], "source_cid", codec="raw") != request.source_cid:
             raise CanonicalContractError("source_cid does not match source_text")
-        if (
-            _cid(value["request_cid"], "request_cid", codec="dag-json")
-            != request.request_cid
-        ):
-            raise CanonicalContractError(
-                "request_cid does not match compiler request"
-            )
+        if _cid(value["request_cid"], "request_cid", codec="dag-json") != request.request_cid:
+            raise CanonicalContractError("request_cid does not match compiler request")
         return request
 
 
@@ -966,15 +893,11 @@ class DecompilerRequest:
     canonical_ir: CanonicalRoundTripIR
     request_id: str
     policy_cid: str = CANONICAL_PARITY_POLICY_CID
-    config: Mapping[str, object] = field(
-        default_factory=lambda: SOURCE_WITHHELD_DECOMPILER_CONFIG
-    )
+    config: Mapping[str, object] = field(default_factory=lambda: SOURCE_WITHHELD_DECOMPILER_CONFIG)
 
     def __post_init__(self) -> None:
         if not isinstance(self.canonical_ir, CanonicalRoundTripIR):
-            raise CanonicalContractError(
-                "canonical_ir must be CanonicalRoundTripIR"
-            )
+            raise CanonicalContractError("canonical_ir must be CanonicalRoundTripIR")
         _string(self.request_id, "request_id")
         object.__setattr__(
             self,
@@ -990,10 +913,7 @@ class DecompilerRequest:
                 "decompiler config must equal the measured source-withheld "
                 f"profile {SOURCE_WITHHELD_DECOMPILER_CONFIG_CID}"
             )
-        if (
-            cid_for_dag_json(dict(frozen_config))
-            != SOURCE_WITHHELD_DECOMPILER_CONFIG_CID
-        ):
+        if cid_for_dag_json(dict(frozen_config)) != SOURCE_WITHHELD_DECOMPILER_CONFIG_CID:
             raise CanonicalContractError(
                 "decompiler config CID does not match the measured profile"
             )
@@ -1051,9 +971,10 @@ class DecompilerRequest:
             raise CanonicalContractError("decompiler config CID changed")
         if value["rendering_spec_cid"] != SOURCE_WITHHELD_RENDERING_SPEC_CID:
             raise CanonicalContractError("decompiler rendering spec CID changed")
-        if value["request_cid_codec"] != "dag-json" or value[
-            "request_cid_scope"
-        ] != "identity_payload_with_canonical_ir_cid":
+        if (
+            value["request_cid_codec"] != "dag-json"
+            or value["request_cid_scope"] != "identity_payload_with_canonical_ir_cid"
+        ):
             raise CanonicalContractError("decompiler request CID contract changed")
         canonical_ir = CanonicalRoundTripIR.from_dict(value["canonical_ir"])
         if (
@@ -1064,42 +985,29 @@ class DecompilerRequest:
             )
             != canonical_ir.ir_cid
         ):
-            raise CanonicalContractError(
-                "canonical_ir_cid does not match canonical_ir"
-            )
+            raise CanonicalContractError("canonical_ir_cid does not match canonical_ir")
         request = cls(
             canonical_ir=canonical_ir,
             request_id=value["request_id"],  # type: ignore[arg-type]
             policy_cid=value["policy_cid"],  # type: ignore[arg-type]
             config=value["config"],  # type: ignore[arg-type]
         )
-        if (
-            _cid(value["request_cid"], "request_cid", codec="dag-json")
-            != request.request_cid
-        ):
-            raise CanonicalContractError(
-                "request_cid does not match decompiler request"
-            )
+        if _cid(value["request_cid"], "request_cid", codec="dag-json") != request.request_cid:
+            raise CanonicalContractError("request_cid does not match decompiler request")
         return request
 
 
 def _diagnostics(value: object) -> tuple[CanonicalDiagnostic, ...]:
-    if not isinstance(value, Sequence) or isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if not isinstance(value, Sequence) or isinstance(value, (str, bytes, bytearray)):
         raise CanonicalContractError("diagnostics must be an array")
     return tuple(
-        item
-        if isinstance(item, CanonicalDiagnostic)
-        else CanonicalDiagnostic.from_dict(item)
+        item if isinstance(item, CanonicalDiagnostic) else CanonicalDiagnostic.from_dict(item)
         for item in value
     )
 
 
 def _traces(value: object) -> tuple[ComponentTrace, ...]:
-    if not isinstance(value, Sequence) or isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if not isinstance(value, Sequence) or isinstance(value, (str, bytes, bytearray)):
         raise CanonicalContractError("component_trace must be an array")
     return tuple(
         item if isinstance(item, ComponentTrace) else ComponentTrace.from_dict(item)
@@ -1116,17 +1024,13 @@ class CompilerResult:
     canonical_ir: CanonicalRoundTripIR | None = None
     source_map: tuple[SourceMapEntry, ...] = ()
     unsupported_semantics: tuple[UnsupportedSemantic, ...] = ()
-    provenance: Mapping[str, object] = field(
-        default_factory=lambda: MappingProxyType({})
-    )
+    provenance: Mapping[str, object] = field(default_factory=lambda: MappingProxyType({}))
     diagnostics: tuple[CanonicalDiagnostic, ...] = ()
     component_trace: tuple[ComponentTrace, ...] = ()
     error: CanonicalError | None = None
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "status", _enum(self.status, OperationStatus, "status")
-        )
+        object.__setattr__(self, "status", _enum(self.status, OperationStatus, "status"))
         object.__setattr__(
             self,
             "request_cid",
@@ -1135,27 +1039,17 @@ class CompilerResult:
         if self.canonical_ir is not None and not isinstance(
             self.canonical_ir, CanonicalRoundTripIR
         ):
-            raise CanonicalContractError(
-                "canonical_ir must be CanonicalRoundTripIR or None"
-            )
+            raise CanonicalContractError("canonical_ir must be CanonicalRoundTripIR or None")
         entries = tuple(
-            entry
-            if isinstance(entry, SourceMapEntry)
-            else SourceMapEntry.from_dict(entry)
+            entry if isinstance(entry, SourceMapEntry) else SourceMapEntry.from_dict(entry)
             for entry in self.source_map
         )
         if self.canonical_ir is None and entries:
-            raise CanonicalContractError(
-                "source_map requires a canonical IR result"
-            )
+            raise CanonicalContractError("source_map requires a canonical IR result")
         if self.canonical_ir is not None:
-            known_rule_cids = {
-                rule.rule_cid for rule in self.canonical_ir.rules
-            }
+            known_rule_cids = {rule.rule_cid for rule in self.canonical_ir.rules}
             if any(entry.rule_cid not in known_rule_cids for entry in entries):
-                raise CanonicalContractError(
-                    "source_map references a rule outside this IR"
-                )
+                raise CanonicalContractError("source_map references a rule outside this IR")
         object.__setattr__(
             self,
             "source_map",
@@ -1172,9 +1066,7 @@ class CompilerResult:
             ),
         )
         unsupported = tuple(
-            item
-            if isinstance(item, UnsupportedSemantic)
-            else UnsupportedSemantic.from_dict(item)
+            item if isinstance(item, UnsupportedSemantic) else UnsupportedSemantic.from_dict(item)
             for item in self.unsupported_semantics
         )
         object.__setattr__(
@@ -1198,16 +1090,12 @@ class CompilerResult:
             _frozen_object(self.provenance, "provenance"),
         )
         object.__setattr__(self, "diagnostics", _diagnostics(self.diagnostics))
-        object.__setattr__(
-            self, "component_trace", _traces(self.component_trace)
-        )
+        object.__setattr__(self, "component_trace", _traces(self.component_trace))
         if self.error is not None and not isinstance(self.error, CanonicalError):
             raise CanonicalContractError("error must be CanonicalError or None")
         if self.status is OperationStatus.SUCCESS:
             if self.canonical_ir is None or self.error is not None:
-                raise CanonicalContractError(
-                    "successful compiler result requires IR and no error"
-                )
+                raise CanonicalContractError("successful compiler result requires IR and no error")
             if any(
                 item.disposition is UnsupportedDisposition.ABSTAIN
                 for item in self.unsupported_semantics
@@ -1242,21 +1130,13 @@ class CompilerResult:
             "interface": CANONICAL_STRUCTURED_TEXT_COMPILER_INTERFACE,
             "status": self.status.value,
             "request_cid": self.request_cid,
-            "canonical_ir": (
-                None if self.canonical_ir is None else self.canonical_ir.to_dict()
-            ),
-            "canonical_ir_cid": (
-                None if self.canonical_ir is None else self.canonical_ir.ir_cid
-            ),
+            "canonical_ir": (None if self.canonical_ir is None else self.canonical_ir.to_dict()),
+            "canonical_ir_cid": (None if self.canonical_ir is None else self.canonical_ir.ir_cid),
             "source_map_receipt": self.source_map_receipt(),
-            "unsupported_semantics": [
-                item.to_dict() for item in self.unsupported_semantics
-            ],
+            "unsupported_semantics": [item.to_dict() for item in self.unsupported_semantics],
             "provenance": _thaw_json(self.provenance),
             "diagnostics": [item.to_dict() for item in self.diagnostics],
-            "component_trace": [
-                item.to_dict() for item in self.component_trace
-            ],
+            "component_trace": [item.to_dict() for item in self.component_trace],
             "error": None if self.error is None else self.error.to_dict(),
         }
 
@@ -1299,14 +1179,10 @@ class CompilerResult:
         ):
             raise CanonicalContractError("compiler result CID contract changed")
         raw_ir = value["canonical_ir"]
-        canonical_ir = (
-            None if raw_ir is None else CanonicalRoundTripIR.from_dict(raw_ir)
-        )
+        canonical_ir = None if raw_ir is None else CanonicalRoundTripIR.from_dict(raw_ir)
         if canonical_ir is None:
             if value["canonical_ir_cid"] is not None:
-                raise CanonicalContractError(
-                    "compiler result has CID without canonical IR"
-                )
+                raise CanonicalContractError("compiler result has CID without canonical IR")
         elif (
             _cid(
                 value["canonical_ir_cid"],
@@ -1315,9 +1191,7 @@ class CompilerResult:
             )
             != canonical_ir.ir_cid
         ):
-            raise CanonicalContractError(
-                "compiler result canonical_ir_cid does not match IR"
-            )
+            raise CanonicalContractError("compiler result canonical_ir_cid does not match IR")
         raw_error = value["error"]
         result = cls(
             status=value["status"],  # type: ignore[arg-type]
@@ -1346,18 +1220,11 @@ class CompilerResult:
                 ComponentTrace.from_dict(item)
                 for item in value["component_trace"]  # type: ignore[union-attr]
             ),
-            error=(
-                None
-                if raw_error is None
-                else CanonicalError.from_dict(raw_error)
-            ),
+            error=(None if raw_error is None else CanonicalError.from_dict(raw_error)),
         )
         if result.source_map_receipt() != value["source_map_receipt"]:
             raise CanonicalContractError("source-map receipt does not match result")
-        if (
-            _cid(value["result_cid"], "result_cid", codec="dag-json")
-            != result.result_cid
-        ):
+        if _cid(value["result_cid"], "result_cid", codec="dag-json") != result.result_cid:
             raise CanonicalContractError("result_cid does not match compiler result")
         return result
 
@@ -1375,18 +1242,14 @@ class DecompilerResult:
     error: CanonicalError | None = None
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "status", _enum(self.status, OperationStatus, "status")
-        )
+        object.__setattr__(self, "status", _enum(self.status, OperationStatus, "status"))
         object.__setattr__(
             self,
             "request_cid",
             _cid(self.request_cid, "request_cid", codec="dag-json"),
         )
         object.__setattr__(self, "diagnostics", _diagnostics(self.diagnostics))
-        object.__setattr__(
-            self, "component_trace", _traces(self.component_trace)
-        )
+        object.__setattr__(self, "component_trace", _traces(self.component_trace))
         if self.error is not None and not isinstance(self.error, CanonicalError):
             raise CanonicalContractError("error must be CanonicalError or None")
         if self.status is OperationStatus.SUCCESS:
@@ -1398,9 +1261,7 @@ class DecompilerResult:
             supplied = _cid(self.text_cid, "text_cid", codec="raw")
             expected = cid_for_bytes(self.text.encode("utf-8"))
             if supplied != expected:
-                raise CanonicalContractError(
-                    "text_cid does not match reconstructed text"
-                )
+                raise CanonicalContractError("text_cid does not match reconstructed text")
         elif self.text is not None or self.text_cid is not None or self.error is None:
             raise CanonicalContractError(
                 "abstained/failed decompiler result requires an error and no text"
@@ -1414,9 +1275,7 @@ class DecompilerResult:
             "text": self.text,
             "text_cid": self.text_cid,
             "diagnostics": [item.to_dict() for item in self.diagnostics],
-            "component_trace": [
-                item.to_dict() for item in self.component_trace
-            ],
+            "component_trace": [item.to_dict() for item in self.component_trace],
             "error": None if self.error is None else self.error.to_dict(),
             "source_withheld": True,
         }
@@ -1473,19 +1332,10 @@ class DecompilerResult:
                 ComponentTrace.from_dict(item)
                 for item in value["component_trace"]  # type: ignore[union-attr]
             ),
-            error=(
-                None
-                if raw_error is None
-                else CanonicalError.from_dict(raw_error)
-            ),
+            error=(None if raw_error is None else CanonicalError.from_dict(raw_error)),
         )
-        if (
-            _cid(value["result_cid"], "result_cid", codec="dag-json")
-            != result.result_cid
-        ):
-            raise CanonicalContractError(
-                "result_cid does not match decompiler result"
-            )
+        if _cid(value["result_cid"], "result_cid", codec="dag-json") != result.result_cid:
+            raise CanonicalContractError("result_cid does not match decompiler result")
         return result
 
 
@@ -1531,9 +1381,7 @@ class CanonicalParityPolicy:
             "outcome": "exact_tie",
             "selection_basis": SELECTION_BASIS,
             "selectable_arm_ids": list(SELECTABLE_ARM_IDS),
-            "implementation_representative_arm_id": (
-                IMPLEMENTATION_REPRESENTATIVE_ARM_ID
-            ),
+            "implementation_representative_arm_id": (IMPLEMENTATION_REPRESENTATIVE_ARM_ID),
             "representative_semantically_superior": False,
         }:
             raise CanonicalContractError("parity policy selection lineage changed")

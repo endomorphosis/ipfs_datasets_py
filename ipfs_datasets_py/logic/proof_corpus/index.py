@@ -48,9 +48,7 @@ class ProofCorpusIndexError(ProofCorpusSchemaError):
     """Raised when a secondary index cannot be built, loaded, or queried."""
 
 
-class ProofCorpusIndexIntegrityError(
-    ProofCorpusIndexError, ProofCorpusIntegrityError
-):
+class ProofCorpusIndexIntegrityError(ProofCorpusIndexError, ProofCorpusIntegrityError):
     """Raised when a secondary index fails integrity or drift checks."""
 
 
@@ -62,9 +60,7 @@ def normalize_obligation_digest(value: Any) -> str:
     """
 
     if not isinstance(value, str) or not value.strip() or value != value.strip():
-        raise ProofCorpusIndexError(
-            "obligation_digest must be a non-empty trimmed string"
-        )
+        raise ProofCorpusIndexError("obligation_digest must be a non-empty trimmed string")
     text = value
     if text.startswith(_HEX64_RE_PREFIX):
         return require_digest(text, "obligation_digest")
@@ -187,22 +183,14 @@ class ProofCorpusIndex:
             for oblig_digest in obligation_digests_for_envelope(envelope):
                 obligations.setdefault(oblig_digest, set()).add(cid)
 
-        self.families = {
-            family: sorted(cids) for family, cids in sorted(families.items())
-        }
+        self.families = {family: sorted(cids) for family, cids in sorted(families.items())}
         self.sources = {
             digest: dict(sorted(profiles_map.items()))
             for digest, profiles_map in sorted(sources.items())
         }
-        self.profiles = {
-            profile: sorted(cids) for profile, cids in sorted(profiles.items())
-        }
-        self.source_ids = {
-            sid: sorted(cids) for sid, cids in sorted(source_ids.items())
-        }
-        self.obligations = {
-            digest: sorted(cids) for digest, cids in sorted(obligations.items())
-        }
+        self.profiles = {profile: sorted(cids) for profile, cids in sorted(profiles.items())}
+        self.source_ids = {sid: sorted(cids) for sid, cids in sorted(source_ids.items())}
+        self.obligations = {digest: sorted(cids) for digest, cids in sorted(obligations.items())}
         self.content_cids = sorted(content_cids)
         self.schema_version = PROOF_CORPUS_INDEX_SCHEMA_VERSION
         self.interface = PROOF_CORPUS_INDEX_INTERFACE
@@ -275,22 +263,14 @@ class ProofCorpusIndex:
 
         return {
             "content_cids": list(self.content_cids),
-            "families": {
-                family: list(cids) for family, cids in sorted(self.families.items())
-            },
+            "families": {family: list(cids) for family, cids in sorted(self.families.items())},
             "interface": self.interface,
             "obligations": {
-                digest: list(cids)
-                for digest, cids in sorted(self.obligations.items())
+                digest: list(cids) for digest, cids in sorted(self.obligations.items())
             },
-            "profiles": {
-                profile: list(cids)
-                for profile, cids in sorted(self.profiles.items())
-            },
+            "profiles": {profile: list(cids) for profile, cids in sorted(self.profiles.items())},
             "schema_version": self.schema_version,
-            "source_ids": {
-                sid: list(cids) for sid, cids in sorted(self.source_ids.items())
-            },
+            "source_ids": {sid: list(cids) for sid, cids in sorted(self.source_ids.items())},
             "sources": {
                 digest: dict(sorted(profiles.items()))
                 for digest, profiles in sorted(self.sources.items())
@@ -310,14 +290,10 @@ class ProofCorpusIndex:
         """
 
         return {
-            "families": {
-                family: list(cids) for family, cids in sorted(self.families.items())
-            },
+            "families": {family: list(cids) for family, cids in sorted(self.families.items())},
             "interface": PROOF_CORPUS_STORE_INTERFACE,
             "profiles": {
-                profile: cids[-1]
-                for profile, cids in sorted(self.profiles.items())
-                if cids
+                profile: cids[-1] for profile, cids in sorted(self.profiles.items()) if cids
             },
             "schema_version": PROOF_CORPUS_INDEX_SCHEMA_VERSION,
             "sources": {
@@ -360,9 +336,7 @@ class ProofCorpusIndex:
             if isinstance(value, str):
                 profiles[profile_key] = [require_text(value, "index profile cid")]
             else:
-                profiles[profile_key] = _require_cid_list(
-                    value, f"index.profiles[{profile_key}]"
-                )
+                profiles[profile_key] = _require_cid_list(value, f"index.profiles[{profile_key}]")
 
         source_ids_raw = as_mapping(payload.get("source_ids", {}), "index.source_ids")
         source_ids: dict[str, list[str]] = {}
@@ -370,20 +344,14 @@ class ProofCorpusIndex:
             sid = require_text(sid, "index.source_ids key")
             source_ids[sid] = _require_cid_list(cids, f"index.source_ids[{sid}]")
 
-        obligations_raw = as_mapping(
-            payload.get("obligations", {}), "index.obligations"
-        )
+        obligations_raw = as_mapping(payload.get("obligations", {}), "index.obligations")
         obligations: dict[str, list[str]] = {}
         for digest_key, cids in obligations_raw.items():
             digest = normalize_obligation_digest(digest_key)
-            obligations[digest] = _require_cid_list(
-                cids, f"index.obligations[{digest}]"
-            )
+            obligations[digest] = _require_cid_list(cids, f"index.obligations[{digest}]")
 
         if "content_cids" in payload:
-            content_cids = _require_cid_list(
-                payload.get("content_cids"), "index.content_cids"
-            )
+            content_cids = _require_cid_list(payload.get("content_cids"), "index.content_cids")
         else:
             # Derive from family postings when loading a store-shaped index.
             derived: set[str] = set()
@@ -399,13 +367,9 @@ class ProofCorpusIndex:
             obligations=dict(sorted(obligations.items())),
             content_cids=list(content_cids),
             schema_version=PROOF_CORPUS_INDEX_SCHEMA_VERSION,
-            interface=str(
-                payload.get("interface", PROOF_CORPUS_INDEX_INTERFACE)
-            ),
+            interface=str(payload.get("interface", PROOF_CORPUS_INDEX_INTERFACE)),
             store_schema_version=str(
-                payload.get(
-                    "store_schema_version", PROOF_CORPUS_STORE_SCHEMA_VERSION
-                )
+                payload.get("store_schema_version", PROOF_CORPUS_STORE_SCHEMA_VERSION)
             ),
         )
 
@@ -499,14 +463,11 @@ def load_store_index(path: Path | str) -> dict[str, Any]:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
-        raise ProofCorpusStoreIntegrityError(
-            f"proof corpus index is unreadable: {exc}"
-        ) from exc
+        raise ProofCorpusStoreIntegrityError(f"proof corpus index is unreadable: {exc}") from exc
     payload = dict(as_mapping(payload, "proof corpus index"))
     if payload.get("schema_version") != PROOF_CORPUS_INDEX_SCHEMA_VERSION:
         raise ProofCorpusStoreIntegrityError(
-            "unsupported proof corpus index schema: "
-            f"{payload.get('schema_version')!r}"
+            f"unsupported proof corpus index schema: {payload.get('schema_version')!r}"
         )
     return payload
 

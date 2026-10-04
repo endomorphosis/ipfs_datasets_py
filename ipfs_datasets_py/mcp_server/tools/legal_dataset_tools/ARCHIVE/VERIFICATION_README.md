@@ -230,24 +230,21 @@ You can also test the scrapers manually:
 import asyncio
 from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import (
     scrape_us_code,
-    scrape_federal_register
+    scrape_federal_register,
 )
+
 
 # Test US Code scraper
 async def test_us_code():
-    result = await scrape_us_code(
-        titles=["1"],
-        max_sections=5
-    )
+    result = await scrape_us_code(titles=["1"], max_sections=5)
     print(result)
+
 
 # Test Federal Register scraper
 async def test_fed_reg():
-    result = await scrape_federal_register(
-        agencies=["EPA"],
-        max_documents=5
-    )
+    result = await scrape_federal_register(agencies=["EPA"], max_documents=5)
     print(result)
+
 
 # Run tests
 asyncio.run(test_us_code())

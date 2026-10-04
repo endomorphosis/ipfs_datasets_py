@@ -19,12 +19,9 @@ from utils.converter_system.monads.helper_functions import start, stop
 
 
 # Type definitions
-T = TypeVar('T')
-E = TypeVar('E')
-Resource = TypeVar('Resource') # TODO Import the pydantic model from experiments file.
-
-
-
+T = TypeVar("T")
+E = TypeVar("E")
+Resource = TypeVar("Resource")  # TODO Import the pydantic model from experiments file.
 
 
 class ValidationResult(Enum):
@@ -33,15 +30,16 @@ class ValidationResult(Enum):
     CORRUPTED = "CORRUPTED"
     SIZE_EXCEEDED = "SIZE_EXCEEDED"
 
+
 class ConversionStatus(Enum):
     IDLE = "IDLE"
     PROCESSING = "PROCESSING"
     ERROR = "ERROR"
     SUCCESS = "SUCCESS"
 
+
 # Health monitoring system
 class HealthMonitor:
-
     def __init__(self, resources=None, configs=None):
         self.configs = configs
         self.resources = resources
@@ -51,7 +49,7 @@ class HealthMonitor:
         self.max_file_handles = 100
         self.status = ConversionStatus.IDLE
 
-    def check_memory(self, x: Any) -> Any|Exception:
+    def check_memory(self, x: Any) -> Any | Exception:
         memory = psutil.virtual_memory()
         if memory.percent > (self.memory_threshold * 100):
             return ValueError(f"Memory usage too high: {memory.percent}%")
@@ -60,10 +58,10 @@ class HealthMonitor:
     def check_file_handles(self, x: Any) -> Either[str, int]:
 
         # Get the current process ID
-        if os.name == 'nt':
+        if os.name == "nt":
             # On Windows, we'll use the pid we just obtained
             current_handles = psutil.Process(os.getpid()).num_fds()
-        else: # On Linux, psutil.Process().num_fds() works directly
+        else:  # On Linux, psutil.Process().num_fds() works directly
             current_handles = psutil.Process().num_fds()
 
         # Use psutil to get the number of open file descriptors for the current process
@@ -74,7 +72,6 @@ class HealthMonitor:
 
 # Circuit Breaker implementation TODO Rewrite with Monad pipelines in mind.
 class CircuitBreaker:
-
     def __init__(self, failure_threshold: int = 5, reset_timeout: int = 60):
         self.failure_count = 0
         self.failure_threshold = failure_threshold
@@ -87,7 +84,7 @@ class CircuitBreaker:
         def wrapper(*args, **kwargs):
             if self.is_open:
                 raise Exception("Circuit breaker is open")
-            
+
             try:
                 result = func(*args, **kwargs)
                 self.failure_count = 0
@@ -97,29 +94,30 @@ class CircuitBreaker:
                 if self.failure_count >= self.failure_threshold:
                     self.is_open = True
                 raise e
+
         return wrapper
+
 
 # Placeholder Resource manager with context
 class ResourceManager:
-
     def __init__(self, resources=None, configs=None):
         self.configs = configs
         self.resources = resources
 
-        self._logger = self.resources['logger']
+        self._logger = self.resources["logger"]
 
-        self._throttle = self.resources['throttle']
-        self._check_memory = self.resources['check_memory']
-        self._check_file_handles = self.resources['check_file_handles']
+        self._throttle = self.resources["throttle"]
+        self._check_memory = self.resources["check_memory"]
+        self._check_file_handles = self.resources["check_file_handles"]
 
     def __enter__(self):
-        x = True # Dummy value. 
-        health_check: Monad = start(x, ErrorMonad
-            ) >> (
-                lambda x: self._check_file_handles(x)
-            ) >> (
-                lambda x: self._check_memory(x)
-            ) >> stop
+        x = True  # Dummy value.
+        health_check: Monad = (
+            start(x, ErrorMonad)
+            >> (lambda x: self._check_file_handles(x))
+            >> (lambda x: self._check_memory(x))
+            >> stop
+        )
 
         if health_check.errored:
             self._logger.error(f"Health check failed: {health_check.value}")
@@ -150,17 +148,14 @@ class ResourceException(BaseModel, Exception):
 
 
 class CoreErrorManager:
-
     def __init__(self, resources=None, configs=None):
         self.configs = configs
         self.resources = resources
 
-        self._logger: logging.Logger = self.resources['logger']
+        self._logger: logging.Logger = self.resources["logger"]
 
     def log(self, result: Resource) -> Resource:
-        """
-        
-        """
+        """ """
         if isinstance(result, Exception):
             self._logger.error(f"Error occurred: {result}")
 

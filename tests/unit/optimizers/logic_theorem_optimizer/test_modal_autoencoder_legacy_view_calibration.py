@@ -153,8 +153,7 @@ def _report(
         config_digest=config.digest,
         split=split,
         family_metrics={
-            head: overrides.get(head, _metrics())
-            for head in LEGACY_VIEW_CALIBRATION_HEADS
+            head: overrides.get(head, _metrics()) for head in LEGACY_VIEW_CALIBRATION_HEADS
         },
     )
 
@@ -222,9 +221,7 @@ def test_per_head_and_per_view_temperature_interpolation_and_confidence_gate() -
     assert calibrated.logits["deontic.special"] == pytest.approx(5.0)
     assert calibrated.logits["external_provers.router"] == 3.0
     assert calibrated.effective_alpha_by_view["external_provers.router"] == 0.0
-    assert calibrated.rejected_views["external_provers.router"] == (
-        "below_minimum_confidence"
-    )
+    assert calibrated.rejected_views["external_provers.router"] == ("below_minimum_confidence")
 
 
 def test_application_changes_only_feature_view_table_on_a_copied_state() -> None:
@@ -238,9 +235,7 @@ def test_application_changes_only_feature_view_table_on_a_copied_state() -> None
         feature_legal_ir_view_logits={"feature": {"deontic.ir": 8.0}},
         legal_ir_view_logits={"do-not-transfer": 99.0},
     )
-    config = LegacyViewCalibrationConfig(
-        heads={"deontic": HeadCalibration(alpha=0.5)}
-    )
+    config = LegacyViewCalibrationConfig(heads={"deontic": HeadCalibration(alpha=0.5)})
 
     candidate = apply_legacy_view_calibration(current, legacy, config)
 
@@ -253,9 +248,7 @@ def test_application_changes_only_feature_view_table_on_a_copied_state() -> None
 
 def test_full_transfer_and_nonfinite_or_invalid_calibration_fail_closed() -> None:
     with pytest.raises(LegacyViewCalibrationError, match="full legacy"):
-        LegacyViewCalibrationConfig(
-            default=HeadCalibration(alpha=1.0)
-        )
+        LegacyViewCalibrationConfig(default=HeadCalibration(alpha=1.0))
     with pytest.raises(LegacyViewCalibrationError, match="positive"):
         HeadCalibration(temperature=0.0)
     with pytest.raises(LegacyViewCalibrationError, match="finite"):
@@ -266,9 +259,7 @@ def test_full_transfer_and_nonfinite_or_invalid_calibration_fail_closed() -> Non
 
 def test_unknown_or_ambiguous_declared_heads_fail_closed() -> None:
     with pytest.raises(LegacyViewCalibrationError, match="unknown calibration head"):
-        LegacyViewCalibrationConfig(
-            heads={"deontci": HeadCalibration(alpha=0.25)}
-        )
+        LegacyViewCalibrationConfig(heads={"deontci": HeadCalibration(alpha=0.25)})
     with pytest.raises(LegacyViewCalibrationError, match="duplicate calibration head"):
         LegacyViewCalibrationConfig(
             heads={
@@ -277,9 +268,7 @@ def test_unknown_or_ambiguous_declared_heads_fail_closed() -> None:
             }
         )
     with pytest.raises(LegacyViewCalibrationError, match="may not be empty"):
-        LegacyViewCalibrationConfig(
-            views={"": ViewCalibration(alpha=0.25)}
-        )
+        LegacyViewCalibrationConfig(views={"": ViewCalibration(alpha=0.25)})
     with pytest.raises(
         LegacyViewCalibrationError,
         match="unknown calibration example head",
@@ -435,9 +424,7 @@ def test_promotion_rejects_canary_family_regression_and_lineage_mismatch() -> No
             refine_views=False,
         ),
     )
-    canary_baseline = _report(
-        LegacyViewCalibrationConfig.alpha_zero(), split="canary"
-    )
+    canary_baseline = _report(LegacyViewCalibrationConfig.alpha_zero(), split="canary")
     improvements = {
         head: _metrics(
             ce=0.20,
@@ -533,9 +520,7 @@ def test_promotion_accepts_only_selected_lineage_bound_nonregressing_candidate()
             refine_views=False,
         ),
     )
-    baseline = _report(
-        LegacyViewCalibrationConfig.alpha_zero(), split="canary"
-    )
+    baseline = _report(LegacyViewCalibrationConfig.alpha_zero(), split="canary")
     candidate = _report(
         search.config,
         split="canary",
@@ -565,9 +550,7 @@ def test_promotion_accepts_only_selected_lineage_bound_nonregressing_candidate()
 
 
 def test_evaluator_packet_rejects_canary_observations() -> None:
-    module_path = (
-        ROOT / "scripts" / "ops" / "legal_ir" / "evaluate_legacy_view_calibration.py"
-    )
+    module_path = ROOT / "scripts" / "ops" / "legal_ir" / "evaluate_legacy_view_calibration.py"
     spec = importlib.util.spec_from_file_location(
         "evaluate_legacy_view_calibration_under_test", module_path
     )
@@ -579,15 +562,11 @@ def test_evaluator_packet_rejects_canary_observations() -> None:
     with pytest.raises(LegacyViewCalibrationError, match="remain hidden"):
         module.evaluate_packet({"canary_examples": []})
     with pytest.raises(LegacyViewCalibrationError, match="remain hidden"):
-        module.evaluate_packet(
-            {"metadata": {"canary_metrics": {"cross_entropy": 0.1}}}
-        )
+        module.evaluate_packet({"metadata": {"canary_metrics": {"cross_entropy": 0.1}}})
 
 
 def test_evaluator_packet_emits_source_free_hidden_canary_report() -> None:
-    module_path = (
-        ROOT / "scripts" / "ops" / "legal_ir" / "evaluate_legacy_view_calibration.py"
-    )
+    module_path = ROOT / "scripts" / "ops" / "legal_ir" / "evaluate_legacy_view_calibration.py"
     spec = importlib.util.spec_from_file_location(
         "evaluate_legacy_view_calibration_packet_under_test", module_path
     )
@@ -603,8 +582,7 @@ def test_evaluator_packet_emits_source_free_hidden_canary_report() -> None:
             "family": example.head,
             "legacy_logits": dict(example.legacy_logits),
             "outcomes_by_view": {
-                view: dict(metrics)
-                for view, metrics in example.outcomes_by_view.items()
+                view: dict(metrics) for view, metrics in example.outcomes_by_view.items()
             },
             "sample_id": example.sample_id,
             "target_distribution": dict(example.target_distribution),

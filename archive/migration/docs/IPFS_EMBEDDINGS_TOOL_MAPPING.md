@@ -70,17 +70,22 @@ docs/ipfs_embeddings_py/src/mcp_server/tools/
 ```python
 # ipfs_datasets_py/mcp_server/tools/embedding_tools/__init__.py
 from .generation import EmbeddingGenerationTool
-from .batch_processing import BatchEmbeddingTool  
+from .batch_processing import BatchEmbeddingTool
 from .multimodal import MultimodalEmbeddingTool
 from .creation_functions import create_text_embeddings, create_image_embeddings
 from .sharding import ShardEmbeddingTool, distribute_embeddings
 from .sparse_vectors import SparseEmbeddingTool, sparse_encode
 
 __all__ = [
-    'EmbeddingGenerationTool', 'BatchEmbeddingTool', 'MultimodalEmbeddingTool',
-    'create_text_embeddings', 'create_image_embeddings',
-    'ShardEmbeddingTool', 'distribute_embeddings',
-    'SparseEmbeddingTool', 'sparse_encode'
+    "EmbeddingGenerationTool",
+    "BatchEmbeddingTool",
+    "MultimodalEmbeddingTool",
+    "create_text_embeddings",
+    "create_image_embeddings",
+    "ShardEmbeddingTool",
+    "distribute_embeddings",
+    "SparseEmbeddingTool",
+    "sparse_encode",
 ]
 ```
 
@@ -228,21 +233,21 @@ __all__ = [
 ```python
 # Priority 1: Essential embedding functionality
 tools_to_integrate = [
-    'embedding_tools.py',           # Core embedding generation
-    'search_tools.py',              # Semantic search
-    'vector_store_tools.py',        # Vector storage
-    'ipfs_cluster_tools.py'         # IPFS clustering
+    "embedding_tools.py",  # Core embedding generation
+    "search_tools.py",  # Semantic search
+    "vector_store_tools.py",  # Vector storage
+    "ipfs_cluster_tools.py",  # IPFS clustering
 ]
 ```
 
 ### Week 2: Enhanced Dataset & Security
 ```python
-# Priority 2: Enhanced existing functionality  
+# Priority 2: Enhanced existing functionality
 tools_to_integrate = [
-    'storage_tools.py',             # Enhanced storage
-    'analysis_tools.py',            # Data analysis
-    'monitoring_tools.py',          # Performance monitoring
-    'auth_tools.py'                 # Authentication
+    "storage_tools.py",  # Enhanced storage
+    "analysis_tools.py",  # Data analysis
+    "monitoring_tools.py",  # Performance monitoring
+    "auth_tools.py",  # Authentication
 ]
 ```
 
@@ -250,10 +255,10 @@ tools_to_integrate = [
 ```python
 # Priority 3: Administrative and performance tools
 tools_to_integrate = [
-    'admin_tools.py',               # Administrative operations
-    'cache_tools.py',               # Performance optimization
-    'workflow_tools.py',            # Workflow management
-    'background_task_tools.py'      # Background processing
+    "admin_tools.py",  # Administrative operations
+    "cache_tools.py",  # Performance optimization
+    "workflow_tools.py",  # Workflow management
+    "background_task_tools.py",  # Background processing
 ]
 ```
 
@@ -261,10 +266,10 @@ tools_to_integrate = [
 ```python
 # Priority 4: Specialized functionality
 tools_to_integrate = [
-    'session_management_tools.py',  # Session handling
-    'rate_limiting_tools.py',       # Rate limiting
-    'data_processing_tools.py',     # Data transformation
-    'index_management_tools.py'     # Index operations
+    "session_management_tools.py",  # Session handling
+    "rate_limiting_tools.py",  # Rate limiting
+    "data_processing_tools.py",  # Data transformation
+    "index_management_tools.py",  # Index operations
 ]
 ```
 
@@ -280,10 +285,10 @@ tools_to_integrate = [
 ```python
 # Test compatibility between old and new tools
 compatibility_tests = {
-    'embedding_tools': ['dataset_tools', 'vector_tools', 'ipfs_tools'],
-    'vector_store_tools': ['search_tools', 'embedding_tools'],
-    'monitoring_tools': ['audit_tools', 'security_tools'],
-    'auth_tools': ['security_tools', 'session_tools']
+    "embedding_tools": ["dataset_tools", "vector_tools", "ipfs_tools"],
+    "vector_store_tools": ["search_tools", "embedding_tools"],
+    "monitoring_tools": ["audit_tools", "security_tools"],
+    "auth_tools": ["security_tools", "session_tools"],
 }
 ```
 

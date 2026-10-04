@@ -87,12 +87,12 @@ class CodexOwnershipScope(str, Enum):
             return cls(normalized)
         except ValueError as exc:
             expected = ", ".join(scope.value for scope in cls)
-            raise ValueError(f"unsupported Codex ownership scope {value!r}; expected {expected}") from exc
+            raise ValueError(
+                f"unsupported Codex ownership scope {value!r}; expected {expected}"
+            ) from exc
 
 
-CODEX_OWNERSHIP_SCOPES: Final[tuple[str, ...]] = tuple(
-    scope.value for scope in CodexOwnershipScope
-)
+CODEX_OWNERSHIP_SCOPES: Final[tuple[str, ...]] = tuple(scope.value for scope in CodexOwnershipScope)
 # Names used in the planning packet/acceptance text.  Runtime queue names stay
 # lowercase and compatible with the existing modal daemon.
 CODEX_OWNERSHIP_SCOPE_LABELS: Final[Mapping[str, str]] = MappingProxyType(
@@ -303,7 +303,9 @@ class PredictedWriteSet:
         object.__setattr__(self, "sources", _identifiers(self.sources))
 
     @classmethod
-    def from_value(cls, value: "PredictedWriteSet | Mapping[str, Any] | Sequence[str]") -> "PredictedWriteSet":
+    def from_value(
+        cls, value: "PredictedWriteSet | Mapping[str, Any] | Sequence[str]"
+    ) -> "PredictedWriteSet":
         if isinstance(value, cls):
             return value
         if isinstance(value, Mapping):
@@ -323,9 +325,7 @@ class PredictedWriteSet:
         if set(self.symbols) & set(other.symbols):
             return True
         return any(
-            _path_patterns_conflict(left, right)
-            for left in self.paths
-            for right in other.paths
+            _path_patterns_conflict(left, right) for left in self.paths for right in other.paths
         )
 
     def union(self, *others: "PredictedWriteSet") -> "PredictedWriteSet":
@@ -432,8 +432,12 @@ class CodexScopeTask:
         predicted_symbols: list[Any] = []
         for source in (data, metadata):
             for key in (
-                "predicted_write_set", "predicted_write_paths", "changed_files",
-                "suggested_target_files", "target_files", "allowed_paths",
+                "predicted_write_set",
+                "predicted_write_paths",
+                "changed_files",
+                "suggested_target_files",
+                "target_files",
+                "allowed_paths",
             ):
                 raw = source.get(key)
                 if isinstance(raw, Mapping):
@@ -458,9 +462,11 @@ class CodexScopeTask:
             "sample_ids": data.get("sample_ids") or (),
             "target_component": metadata.get("target_component"),
         }
-        status = str(
-            data.get("status") or metadata.get("status") or data.get("queue_status") or ""
-        ).strip().lower()
+        status = (
+            str(data.get("status") or metadata.get("status") or data.get("queue_status") or "")
+            .strip()
+            .lower()
+        )
         explicit_ready = (
             data.get("readiness_verified")
             if "readiness_verified" in data
@@ -627,9 +633,7 @@ class ScopeEvidenceBundle:
                 self.observed_confirmed_patches_per_hour,
             ),
         )
-        blockers = tuple(
-            blocker for task in self.tasks for blocker in task.ready_blockers
-        )
+        blockers = tuple(blocker for task in self.tasks for blocker in task.ready_blockers)
         object.__setattr__(self, "ready_blockers", _identifiers((*self.ready_blockers, *blockers)))
         object.__setattr__(
             self,
@@ -664,7 +668,9 @@ class ScopeEvidenceBundle:
 class ScopeEvidenceBundler:
     """Bundle related evidence without ever crossing a write-ownership lane."""
 
-    def __init__(self, *, predictor: Optional[WriteSetPredictor] = None, max_tasks: int = 16) -> None:
+    def __init__(
+        self, *, predictor: Optional[WriteSetPredictor] = None, max_tasks: int = 16
+    ) -> None:
         if int(max_tasks) < 1:
             raise ValueError("max_tasks must be at least one")
         self.predictor = predictor or WriteSetPredictor()
@@ -812,7 +818,9 @@ class SchedulerSignals:
 
     def __post_init__(self) -> None:
         for name in (
-            "validation_failure_rate", "apply_conflict_rate", "memory_pressure",
+            "validation_failure_rate",
+            "apply_conflict_rate",
+            "memory_pressure",
             "transient_failure_rate",
         ):
             value = float(getattr(self, name))
@@ -1024,8 +1032,7 @@ class CodexFlowControlSignals:
                 data.get("predicted_conflict_count", data.get("conflict_count", 0)) or 0
             ),
             conflict_growth_rate=float(
-                data.get("conflict_growth_rate", data.get("apply_conflict_growth_rate", 0.0))
-                or 0.0
+                data.get("conflict_growth_rate", data.get("apply_conflict_growth_rate", 0.0)) or 0.0
             ),
             validation_backlog_pause_threshold=int(
                 data.get("validation_backlog_pause_threshold", 8) or 8
@@ -1329,7 +1336,10 @@ class AdaptiveWorkerController:
         self._lock = threading.Lock()
 
     def recommend(
-        self, signals: SchedulerSignals | Mapping[str, Any], *, requested_workers: Optional[int] = None
+        self,
+        signals: SchedulerSignals | Mapping[str, Any],
+        *,
+        requested_workers: Optional[int] = None,
     ) -> WorkerDecision:
         if isinstance(signals, Mapping):
             signals = SchedulerSignals.from_mapping(signals)
@@ -1340,9 +1350,17 @@ class AdaptiveWorkerController:
         effective = requested
         reasons: list[str] = []
         checks = (
-            (signals.validation_failure_rate, self.validation_failure_threshold, "validation_failures"),
+            (
+                signals.validation_failure_rate,
+                self.validation_failure_threshold,
+                "validation_failures",
+            ),
             (signals.apply_conflict_rate, self.apply_conflict_threshold, "apply_conflicts"),
-            (signals.transient_failure_rate, self.transient_failure_threshold, "transient_failures"),
+            (
+                signals.transient_failure_rate,
+                self.transient_failure_threshold,
+                "transient_failures",
+            ),
         )
         for rate, threshold, reason in checks:
             if rate >= threshold and rate > 0.0:
@@ -1350,7 +1368,10 @@ class AdaptiveWorkerController:
                 reasons.append(reason)
                 if threshold > 0.0 and rate >= min(1.0, threshold * 2.5):
                     effective -= 1
-        if signals.memory_pressure >= self.memory_pressure_threshold and signals.memory_pressure > 0.0:
+        if (
+            signals.memory_pressure >= self.memory_pressure_threshold
+            and signals.memory_pressure > 0.0
+        ):
             effective -= 1
             reasons.append("memory_pressure")
             if signals.memory_pressure >= 0.95:
@@ -1374,30 +1395,43 @@ class AdaptiveWorkerController:
 
     def observe(self, outcome: SchedulerOutcome | Mapping[str, Any]) -> WorkerDecision:
         if isinstance(outcome, Mapping):
-            outcome = SchedulerOutcome(**{
-                key: bool(outcome.get(key, False))
-                for key in SchedulerOutcome.__dataclass_fields__
-            })
+            outcome = SchedulerOutcome(
+                **{
+                    key: bool(outcome.get(key, False))
+                    for key in SchedulerOutcome.__dataclass_fields__
+                }
+            )
         with self._lock:
             self.window.append(outcome)
             unhealthy = any(
-                (outcome.validation_failed, outcome.apply_conflict,
-                 outcome.memory_pressure, outcome.transient_failure)
+                (
+                    outcome.validation_failed,
+                    outcome.apply_conflict,
+                    outcome.memory_pressure,
+                    outcome.transient_failure,
+                )
             )
             self._healthy_streak = 0 if unhealthy else self._healthy_streak + int(outcome.accepted)
             signals = self._signals_locked()
             decision = self.recommend(signals, requested_workers=self.initial_workers)
             if decision.effective_workers < self.current_workers:
                 self.current_workers = decision.effective_workers
-            elif self._healthy_streak >= self.recovery_successes and self.current_workers < self.initial_workers:
+            elif (
+                self._healthy_streak >= self.recovery_successes
+                and self.current_workers < self.initial_workers
+            ):
                 self.current_workers += 1
                 self._healthy_streak = 0
             return replace(decision, effective_workers=self.current_workers)
 
     def snapshot(self) -> WorkerDecision:
         with self._lock:
-            decision = self.recommend(self._signals_locked(), requested_workers=self.initial_workers)
-            return replace(decision, effective_workers=min(self.current_workers, decision.effective_workers))
+            decision = self.recommend(
+                self._signals_locked(), requested_workers=self.initial_workers
+            )
+            return replace(
+                decision, effective_workers=min(self.current_workers, decision.effective_workers)
+            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -1556,12 +1590,16 @@ class IsolatedValidationExecutor:
             return value, {}, "" if value else "validation_failed"
         if isinstance(value, Mapping):
             data = dict(value)
-            accepted = bool(data.pop("accepted", data.pop("passed", data.get("status") == "passed")))
+            accepted = bool(
+                data.pop("accepted", data.pop("passed", data.get("status") == "passed"))
+            )
             error = str(data.pop("error", data.pop("reason", "")) or "")
             return accepted, data, error
         return False, {}, f"invalid_validation_result:{type(value).__name__}"
 
-    def _run(self, assignment: ScopeAssignment, callback: ValidationCallback) -> IsolatedValidationResult:
+    def _run(
+        self, assignment: ScopeAssignment, callback: ValidationCallback
+    ) -> IsolatedValidationResult:
         started = time.monotonic()
         try:
             accepted, evidence, error = self._normalize(callback(assignment))
@@ -1594,7 +1632,9 @@ class IsolatedValidationExecutor:
         if require_distinct_worktrees and len(assignments) > 1:
             worktrees = [str(item.worktree_path or "") for item in assignments]
             if any(not path for path in worktrees) or len(set(worktrees)) != len(worktrees):
-                raise ValueError("concurrent validation requires one distinct worktree per assignment")
+                raise ValueError(
+                    "concurrent validation requires one distinct worktree per assignment"
+                )
         results: dict[str, IsolatedValidationResult] = {}
         if not assignments:
             return MappingProxyType(results)
@@ -1602,7 +1642,9 @@ class IsolatedValidationExecutor:
             max_workers=min(self.max_workers, len(assignments)),
             thread_name_prefix="codex-isolated-validation",
         ) as pool:
-            futures = {pool.submit(self._run, item, callback): item.assignment_id for item in assignments}
+            futures = {
+                pool.submit(self._run, item, callback): item.assignment_id for item in assignments
+            }
             for future in as_completed(futures):
                 result = future.result()
                 results[result.assignment_id] = result
@@ -1655,9 +1697,13 @@ class ConflictAwareMergeSerializer:
             self._next_ticket += 1
             request = (ticket, write_set)
             self._pending.append(request)
-            deadline = None if timeout_seconds is None else started + max(0.0, float(timeout_seconds))
+            deadline = (
+                None if timeout_seconds is None else started + max(0.0, float(timeout_seconds))
+            )
             while True:
-                active_conflict = any(write_set.conflicts_with(active) for active in self._active.values())
+                active_conflict = any(
+                    write_set.conflicts_with(active) for active in self._active.values()
+                )
                 earlier_conflict = any(
                     earlier_ticket < ticket and write_set.conflicts_with(earlier_set)
                     for earlier_ticket, earlier_set in self._pending
@@ -1666,7 +1712,9 @@ class ConflictAwareMergeSerializer:
                     self._pending.remove(request)
                     self._active[ticket] = write_set
                     self._counters["acquisitions"] += 1
-                    self._counters["contended_acquisitions"] += int(time.monotonic() > started + 0.0001)
+                    self._counters["contended_acquisitions"] += int(
+                        time.monotonic() > started + 0.0001
+                    )
                     self._counters["max_parallel_merges"] = max(
                         self._counters["max_parallel_merges"], len(self._active)
                     )
@@ -1706,21 +1754,37 @@ class ConflictAwareMergeSerializer:
                 status = "merged" if accepted else "rejected"
             except TimeoutError as exc:
                 waited, accepted, evidence, error, status = (
-                    time.monotonic() - started, False, {}, str(exc), "timeout"
+                    time.monotonic() - started,
+                    False,
+                    {},
+                    str(exc),
+                    "timeout",
                 )
             except Exception as exc:
                 waited, accepted, evidence, error, status = (
-                    0.0, False, {}, f"{type(exc).__name__}: {exc}", "failed"
+                    0.0,
+                    False,
+                    {},
+                    f"{type(exc).__name__}: {exc}",
+                    "failed",
                 )
             return MergeResult(
-                assignment.assignment_id, assignment.scope, accepted, status,
-                waited, time.monotonic() - started, evidence, error,
+                assignment.assignment_id,
+                assignment.scope,
+                accepted,
+                status,
+                waited,
+                time.monotonic() - started,
+                evidence,
+                error,
             )
 
         results: dict[str, MergeResult] = {}
         if assignments:
             with ThreadPoolExecutor(
-                max_workers=min(MAX_INITIAL_CODEX_WORKERS, max(1, int(max_workers)), len(assignments)),
+                max_workers=min(
+                    MAX_INITIAL_CODEX_WORKERS, max(1, int(max_workers)), len(assignments)
+                ),
                 thread_name_prefix="codex-merge",
             ) as pool:
                 futures = {pool.submit(run, item): item.assignment_id for item in assignments}
@@ -1753,7 +1817,9 @@ class ConflictAwareMergeSerializer:
             receipt = validation_results.get(assignment.assignment_id)
             if isinstance(receipt, Mapping):
                 accepted = bool(
-                    receipt.get("accepted", receipt.get("passed", receipt.get("merge_allowed", False)))
+                    receipt.get(
+                        "accepted", receipt.get("passed", receipt.get("merge_allowed", False))
+                    )
                 )
             else:
                 accepted = bool(

@@ -149,7 +149,9 @@ Graph create tool - Thin wrapper for KnowledgeGraphManager.
 
 Delegates graph creation to core graph management module.
 """
+
 from ipfs_datasets_py.graph import KnowledgeGraphManager
+
 
 async def graph_create(name: str, config: dict) -> dict:
     """Create a new knowledge graph."""

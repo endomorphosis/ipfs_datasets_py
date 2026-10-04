@@ -72,7 +72,9 @@ def _scheduler(
     return LegalIRHParamScheduler(config)
 
 
-def _family_metrics(*, confidence: float = 0.95, regression: bool = False) -> dict[str, dict[str, object]]:
+def _family_metrics(
+    *, confidence: float = 0.95, regression: bool = False
+) -> dict[str, dict[str, object]]:
     candidate_cosine = 0.69 if regression else 0.72
     return {
         family: {
@@ -130,12 +132,8 @@ def _snapshot(
 
 
 def test_default_plan_uses_deterministic_seeds_and_successive_halving_budget() -> None:
-    first = LegalIRHParamScheduler(
-        HParamSearchConfig(baseline=_baseline(), base_seed=123)
-    )
-    second = LegalIRHParamScheduler(
-        HParamSearchConfig(baseline=_baseline(), base_seed=123)
-    )
+    first = LegalIRHParamScheduler(HParamSearchConfig(baseline=_baseline(), base_seed=123))
+    second = LegalIRHParamScheduler(HParamSearchConfig(baseline=_baseline(), base_seed=123))
 
     assert [candidate.seed for candidate in first.candidates] == [
         candidate.seed for candidate in second.candidates
@@ -196,10 +194,7 @@ def test_confidence_aware_family_guardrails_filter_regressing_candidates() -> No
     assert low_confidence.eligible is False
     assert any(failure.startswith("family_confidence:") for failure in low_confidence.failures)
     assert regressing.eligible is False
-    assert any(
-        failure.startswith("family_metric_regression:")
-        for failure in regressing.failures
-    )
+    assert any(failure.startswith("family_metric_regression:") for failure in regressing.failures)
     assert {item.candidate.candidate_id for item in scheduler.ready_work()} == {
         candidate_ids[2],
         candidate_ids[3],

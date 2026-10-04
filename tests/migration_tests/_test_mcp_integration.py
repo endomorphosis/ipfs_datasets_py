@@ -11,6 +11,7 @@ It will verify:
 3. Basic functionality of the server configuration
 4. Integration with IPFS Kit components
 """
+
 import os
 import sys
 from pathlib import Path
@@ -40,7 +41,7 @@ EXPECTED_COMPONENTS = [
     "tools/graph_tools",
     "tools/audit_tools",
     "tools/security_tools",
-    "tools/provenance_tools"
+    "tools/provenance_tools",
 ]
 
 # Define expected core functions/classes
@@ -48,7 +49,7 @@ EXPECTED_CORE = [
     "IPFSDatasetsMCPServer",
     "start_server",
     "Configs",
-    "SimpleIPFSDatasetsMCPServer"  # Added our simplified implementation
+    "SimpleIPFSDatasetsMCPServer",  # Added our simplified implementation
 ]
 
 # Build the path to the MCP server module
@@ -61,8 +62,9 @@ test_results = {
     "tools": {"present": [], "missing": []},
     "ipfs_kit_integration": {"status": "not_tested", "details": ""},
     "total_passed": 0,
-    "total_failed": 0
+    "total_failed": 0,
 }
+
 
 def check_component_exists(component_path):
     """Check if a component exists at the given path."""
@@ -79,6 +81,7 @@ def check_component_exists(component_path):
         test_results["total_failed"] += 1
     return exists
 
+
 def check_tools_directory():
     """Check the structure and content of the tools directory."""
     tools_dir = MCP_SERVER_PATH / "tools"
@@ -92,10 +95,15 @@ def check_tools_directory():
         if category_dir.is_dir() and not category_dir.name.startswith("__"):
             category_name = category_dir.name
             # Check if there are actual tool files
-            tool_files = [f for f in category_dir.iterdir()
-                         if f.is_file() and f.name.endswith(".py") and not f.name.startswith("__")]
+            tool_files = [
+                f
+                for f in category_dir.iterdir()
+                if f.is_file() and f.name.endswith(".py") and not f.name.startswith("__")
+            ]
             if tool_files:
-                test_results["tools"]["present"].append(f"{category_name} ({len(tool_files)} tools)")
+                test_results["tools"]["present"].append(
+                    f"{category_name} ({len(tool_files)} tools)"
+                )
                 print(f"✓ Tool category found: {category_name} with {len(tool_files)} tools")
                 test_results["total_passed"] += 1
 
@@ -109,6 +117,7 @@ def check_tools_directory():
                 test_results["total_failed"] += 1
 
     return True
+
 
 def check_core_components():
     """Check if core components are importable."""
@@ -134,7 +143,9 @@ def check_core_components():
             # For our simplified implementation
             if attr_name == "SimpleIPFSDatasetsMCPServer" and hasattr(mcp_server, "simple_server"):
                 try:
-                    server_module = importlib.import_module("ipfs_datasets_py.mcp_server.simple_server")
+                    server_module = importlib.import_module(
+                        "ipfs_datasets_py.mcp_server.simple_server"
+                    )
                     if hasattr(server_module, "SimpleIPFSDatasetsMCPServer"):
                         test_results["core"]["passed"].append(attr_name)
                         print(f"✓ Core component found: {attr_name} (simplified implementation)")
@@ -162,6 +173,7 @@ def check_core_components():
 
     return True
 
+
 def check_ipfs_kit_integration():
     """Check integration with IPFS Kit."""
     has_integration = False
@@ -179,7 +191,9 @@ def check_ipfs_kit_integration():
                     integration_details.append(f"Integration type: {configs.ipfs_kit_integration}")
                 if hasattr(configs, "ipfs_kit_mcp_url"):
                     has_integration = True
-                    integration_details.append(f"IPFS Kit MCP URL configuration: {configs.ipfs_kit_mcp_url}")
+                    integration_details.append(
+                        f"IPFS Kit MCP URL configuration: {configs.ipfs_kit_mcp_url}"
+                    )
         except ImportError as e:
             print(f"Note: Could not import configs module: {e}")
 
@@ -187,19 +201,21 @@ def check_ipfs_kit_integration():
         tools_dir = MCP_SERVER_PATH / "tools" / "ipfs_tools"
         if tools_dir.exists():
             ipfs_kit_files = list(tools_dir.glob("*.py"))
-            ipfs_kit_tools = [f.stem for f in ipfs_kit_files
-                             if f.is_file()
-                             and not f.name.startswith("__")]
+            ipfs_kit_tools = [
+                f.stem for f in ipfs_kit_files if f.is_file() and not f.name.startswith("__")
+            ]
 
             # Look for IPFS Kit related code in tool files
             for tool_file in ipfs_kit_files:
                 try:
-                    with open(tool_file, 'r') as f:
+                    with open(tool_file, "r") as f:
                         content = f.read()
                         if "ipfs_kit" in content.lower():
                             has_integration = True
                             if tool_file.stem not in integration_details:
-                                integration_details.append(f"IPFS Kit integration in: {tool_file.stem}")
+                                integration_details.append(
+                                    f"IPFS Kit integration in: {tool_file.stem}"
+                                )
                 except Exception:
                     pass
 
@@ -217,7 +233,9 @@ def check_ipfs_kit_integration():
             test_results["total_passed"] += 1
         else:
             test_results["ipfs_kit_integration"]["status"] = "not_found"
-            test_results["ipfs_kit_integration"]["details"] = "No integration configuration or specific tools found"
+            test_results["ipfs_kit_integration"]["details"] = (
+                "No integration configuration or specific tools found"
+            )
             print(f"✗ IPFS Kit integration not found")
             test_results["total_failed"] += 1
 
@@ -230,6 +248,7 @@ def check_ipfs_kit_integration():
     return has_integration
 
     return has_integration
+
 
 def main():
     print("\n" + "=" * 60)
@@ -262,8 +281,12 @@ def main():
     print("=" * 60)
     print(f"Total tests passed: {test_results['total_passed']}")
     print(f"Total tests failed: {test_results['total_failed']}")
-    print(f"Components checked: {len(test_results['components']['passed']) + len(test_results['components']['failed'])}")
-    print(f"Core functions checked: {len(test_results['core']['passed']) + len(test_results['core']['failed'])}")
+    print(
+        f"Components checked: {len(test_results['components']['passed']) + len(test_results['components']['failed'])}"
+    )
+    print(
+        f"Core functions checked: {len(test_results['core']['passed']) + len(test_results['core']['failed'])}"
+    )
     print(f"Tool categories found: {len(test_results['tools']['present'])}")
     print(f"IPFS Kit integration: {test_results['ipfs_kit_integration']['status']}")
 
@@ -275,6 +298,7 @@ def main():
 
     # Return overall success
     return test_results["total_failed"] == 0
+
 
 if __name__ == "__main__":
     success = main()

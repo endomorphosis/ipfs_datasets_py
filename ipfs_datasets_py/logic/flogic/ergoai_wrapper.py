@@ -111,6 +111,7 @@ def _find_ergo_binary() -> Optional[Path]:
 
     # Fall back to PATH
     import shutil
+
     for name in _ERGO_BINARY_NAMES:
         found = shutil.which(name)
         if found:
@@ -273,10 +274,7 @@ class ErgoAIWrapper:
         timeout_seconds: float = 30.0,
     ) -> List[FLogicQuery]:
         """Execute multiple goals and return one :class:`FLogicQuery` per goal."""
-        return [
-            self.query(g, timeout_seconds=timeout_seconds)
-            for g in goals
-        ]
+        return [self.query(g, timeout_seconds=timeout_seconds) for g in goals]
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -301,9 +299,7 @@ class ErgoAIWrapper:
         timeout = max(0.001, min(300.0, float(timeout_seconds)))
 
         try:
-            with tempfile.NamedTemporaryFile(
-                mode="w", suffix=".ergo", delete=False
-            ) as tmp:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".ergo", delete=False) as tmp:
                 tmp.write(program)
                 tmp_path = tmp.name
 
@@ -328,9 +324,7 @@ class ErgoAIWrapper:
                 result.error_message = output.strip()
         except subprocess.TimeoutExpired:
             result.status = FLogicStatus.ERROR
-            result.error_message = (
-                f"ErgoAI subprocess timed out after {timeout:g} s"
-            )
+            result.error_message = f"ErgoAI subprocess timed out after {timeout:g} s"
         except (OSError, ValueError) as exc:
             result.status = FLogicStatus.ERROR
             result.error_message = str(exc)

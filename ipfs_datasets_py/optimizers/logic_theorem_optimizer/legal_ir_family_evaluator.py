@@ -34,9 +34,7 @@ from .snapshot_evaluator import (
 )
 
 
-LEGAL_IR_FAMILY_EVALUATION_SCHEMA_VERSION: Final = (
-    "legal-ir-family-evaluation-v1"
-)
+LEGAL_IR_FAMILY_EVALUATION_SCHEMA_VERSION: Final = "legal-ir-family-evaluation-v1"
 LEGAL_IR_EVALUATION_FAMILIES: Final[tuple[str, ...]] = (
     "deontic",
     "frame_logic",
@@ -93,9 +91,7 @@ def _immutable(value: Any) -> Any:
     if value is None or isinstance(value, (str, bytes, bool, int, float)):
         return value
     if isinstance(value, Mapping):
-        return MappingProxyType(
-            {str(key): _immutable(item) for key, item in value.items()}
-        )
+        return MappingProxyType({str(key): _immutable(item) for key, item in value.items()})
     if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return tuple(_immutable(item) for item in value)
     # LegalIREvaluationArtifact and similar repository artifacts are frozen
@@ -123,8 +119,7 @@ def _deeply_immutable(value: Any) -> bool:
         return all(_deeply_immutable(item) for item in value)
     if isinstance(value, MappingProxyType):
         return all(
-            _deeply_immutable(key) and _deeply_immutable(item)
-            for key, item in value.items()
+            _deeply_immutable(key) and _deeply_immutable(item) for key, item in value.items()
         )
     parameters = getattr(type(value), "__dataclass_params__", None)
     return bool(
@@ -140,9 +135,7 @@ def _artifact_tuple(artifacts: Any) -> tuple[Any, ...]:
         return ()
     if isinstance(artifacts, Mapping) or is_dataclass(artifacts):
         return (artifacts,)
-    if isinstance(artifacts, Sequence) and not isinstance(
-        artifacts, (str, bytes, bytearray)
-    ):
+    if isinstance(artifacts, Sequence) and not isinstance(artifacts, (str, bytes, bytearray)):
         return tuple(artifacts)
     return (artifacts,)
 
@@ -190,8 +183,7 @@ class SharedEvaluationArtifacts:
                 mismatches.append("schema_version")
             if mismatches:
                 raise ValueError(
-                    "shared artifact does not match snapshot versions: "
-                    + ", ".join(mismatches)
+                    "shared artifact does not match snapshot versions: " + ", ".join(mismatches)
                 )
 
     @classmethod
@@ -250,9 +242,7 @@ class FamilyShardRequest:
     attempt: int = 1
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "family", canonical_legal_ir_evaluation_family(self.family)
-        )
+        object.__setattr__(self, "family", canonical_legal_ir_evaluation_family(self.family))
         if not isinstance(self.snapshot, EvaluationSnapshot):
             raise TypeError("snapshot must be EvaluationSnapshot")
         if not isinstance(self.shared_artifacts, SharedEvaluationArtifacts):
@@ -294,9 +284,7 @@ class FamilyShardResult:
     elapsed_seconds: float = 0.0
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "family", canonical_legal_ir_evaluation_family(self.family)
-        )
+        object.__setattr__(self, "family", canonical_legal_ir_evaluation_family(self.family))
         if int(self.sequence) < 0:
             raise ValueError("sequence must be non-negative")
         if not isinstance(self.versions, SnapshotVersions):
@@ -417,19 +405,13 @@ class FamilyEvaluationAggregate:
     @property
     def failures(self) -> Mapping[str, str]:
         return MappingProxyType(
-            {
-                family: result.error
-                for family, result in self.results.items()
-                if result.failed
-            }
+            {family: result.error for family, result in self.results.items() if result.failed}
         )
 
     @property
     def failed_families(self) -> tuple[str, ...]:
         return tuple(
-            family
-            for family in LEGAL_IR_EVALUATION_FAMILIES
-            if self.results[family].failed
+            family for family in LEGAL_IR_EVALUATION_FAMILIES if self.results[family].failed
         )
 
     @property
@@ -462,9 +444,7 @@ class FamilyEvaluationAggregate:
 
     @property
     def family_metrics(self) -> Mapping[str, Mapping[str, Any]]:
-        return MappingProxyType(
-            {family: result.metrics for family, result in self.results.items()}
-        )
+        return MappingProxyType({family: result.metrics for family, result in self.results.items()})
 
     @property
     def snapshot_id(self) -> str:
@@ -479,8 +459,7 @@ class FamilyEvaluationAggregate:
             "failures": dict(self.failures),
             "family_count": len(self.results),
             "family_results": {
-                family: self.results[family].to_dict()
-                for family in LEGAL_IR_EVALUATION_FAMILIES
+                family: self.results[family].to_dict() for family in LEGAL_IR_EVALUATION_FAMILIES
             },
             "finished_at": self.finished_at,
             "macro_score": macro,
@@ -600,8 +579,7 @@ class LegalIRFamilyEvaluator:
         positional = [
             parameter
             for parameter in signature.parameters.values()
-            if parameter.kind
-            in (parameter.POSITIONAL_ONLY, parameter.POSITIONAL_OR_KEYWORD)
+            if parameter.kind in (parameter.POSITIONAL_ONLY, parameter.POSITIONAL_OR_KEYWORD)
         ]
         if any(
             parameter.kind == parameter.VAR_POSITIONAL
@@ -613,9 +591,7 @@ class LegalIRFamilyEvaluator:
         if len(positional) == 2:
             return evaluator(request.snapshot, request.shared_artifacts)
         if len(positional) == 3:
-            return evaluator(
-                request.family, request.snapshot, request.shared_artifacts
-            )
+            return evaluator(request.family, request.snapshot, request.shared_artifacts)
         raise TypeError(
             "family evaluator must accept request, (snapshot, artifacts), or "
             "(family, snapshot, artifacts)"
@@ -750,9 +726,7 @@ class LegalIRFamilyEvaluator:
             shards_succeeded=int(normalized.succeeded),
             shards_failed=int(normalized.failed),
             retry_budget_exhausted=int(
-                normalized.failed
-                and normalized.attempt_count == max_attempts
-                and final.retryable
+                normalized.failed and normalized.attempt_count == max_attempts and final.retryable
             ),
         )
         return normalized

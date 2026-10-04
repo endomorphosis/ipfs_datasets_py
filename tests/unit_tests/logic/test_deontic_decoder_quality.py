@@ -35,9 +35,7 @@ def test_reduced_structured_condition_text_is_grounded_for_decoder_quality() -> 
 
     decoder_record = build_decoder_record_from_ir(norm)
     condition_phrases = [
-        phrase
-        for phrase in decoder_record["phrase_provenance"]
-        if phrase["slot"] == "conditions"
+        phrase for phrase in decoder_record["phrase_provenance"] if phrase["slot"] == "conditions"
     ]
     assert condition_phrases
     assert condition_phrases[0]["spans"] == [[31, 54]]
@@ -85,23 +83,14 @@ def test_bridge_hydrates_decoder_rows_from_standalone_legal_norm_ir() -> None:
                 metadata={"legal_norm_irs": [norm.to_dict()]},
             )
 
-    report = DeonticNormsBridgeAdapter(converter=NormOnlyConverter()).evaluate(
-        source_text
-    )
+    report = DeonticNormsBridgeAdapter(converter=NormOnlyConverter()).evaluate(source_text)
 
-    decoder_records = report.ir_document.views[
-        "deontic_decoder_reconstructions"
-    ].payload["records"]
-    slot_loss = report.ir_document.views[
-        "deontic_reconstruction_slot_loss"
-    ].payload
+    decoder_records = report.ir_document.views["deontic_decoder_reconstructions"].payload["records"]
+    slot_loss = report.ir_document.views["deontic_reconstruction_slot_loss"].payload
 
     assert len(decoder_records) == 1
     assert decoder_records[0]["decoded_text"] == "Secretary shall publish notice."
     assert decoder_records[0]["requires_validation"] is False
     assert slot_loss["summary"]["grounded_required_slot_rate"] == 1.0
     assert slot_loss["records"][0]["requires_validation"] is False
-    assert (
-        report.round_trip.extra_losses["deontic_decoder_slot_loss"]
-        == 0.0
-    )
+    assert report.round_trip.extra_losses["deontic_decoder_slot_loss"] == 0.0

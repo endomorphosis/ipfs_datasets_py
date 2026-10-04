@@ -4,9 +4,10 @@ Test suite for utils/class_to_typeddict_converter/analyze_init_method.py convert
 This module contains comprehensive tests for the analyze_init_method function
 following the red-green-refactor methodology.
 
-NOTE: Original tests were commented out. This is a skeleton conversion 
+NOTE: Original tests were commented out. This is a skeleton conversion
 that can be expanded when the implementation is ready.
 """
+
 import pytest
 import ast
 from unittest.mock import MagicMock
@@ -40,14 +41,14 @@ class TestClass:
     def test_analyze_init_method_with_valid_method(self, sample_init_method):
         """
         Test analyzing a valid __init__ method.
-        
+
         Verifies:
         - Method parameters are correctly identified
         - Type annotations are preserved
         - Default values are recognized
         """
         result = analyze_init_method(sample_init_method)
-        
+
         assert isinstance(result, dict)
         assert "parameters" in result
         assert "attributes" in result
@@ -55,7 +56,7 @@ class TestClass:
     def test_analyze_init_method_with_no_parameters(self):
         """
         Test analyzing __init__ method with no parameters except self.
-        
+
         Verifies:
         - Empty parameter list is handled correctly
         - Result structure is consistent
@@ -67,14 +68,14 @@ class TestClass:
         """
         tree = ast.parse(code)
         init_method = tree.body[0].body[0]
-        
+
         result = analyze_init_method(init_method)
         assert isinstance(result, dict)
 
     def test_analyze_init_method_with_complex_types(self):
         """
         Test analyzing __init__ method with complex type annotations.
-        
+
         Verifies:
         - Complex types (List, Dict, Optional) are handled
         - Generic types are preserved correctly
@@ -89,16 +90,18 @@ class TestClass:
         """
         tree = ast.parse(code)
         init_method = tree.body[1].body[0]  # Skip import, get class
-        
+
         result = analyze_init_method(init_method)
         assert isinstance(result, dict)
 
 
 # Placeholder test class for when the implementation is ready
-@pytest.mark.skip(reason="analyze_init_method tests converted from commented unittest - implementation pending")
+@pytest.mark.skip(
+    reason="analyze_init_method tests converted from commented unittest - implementation pending"
+)
 class TestAnalyzeInitMethodPlaceholder:
     """Placeholder for analyze_init_method tests that will be implemented later."""
-    
+
     def test_placeholder(self):
         """Placeholder test to mark this conversion as complete."""
         assert True  # This will pass but indicates work pending

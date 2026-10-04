@@ -3,56 +3,56 @@
 """
 GUI Analysis and Improvement Implementation
 
-Based on screenshot analysis, this script implements specific GUI improvements 
+Based on screenshot analysis, this script implements specific GUI improvements
 to fix bugs and enhance user experience.
 """
+
 import json
 from pathlib import Path
 from datetime import datetime
+
 
 def load_analysis_report():
     """Load the GUI analysis report to understand issues."""
     report_file = Path("gui_improvement_report.json")
     if report_file.exists():
-        with open(report_file, 'r') as f:
+        with open(report_file, "r") as f:
             return json.load(f)
     return None
+
 
 def create_improved_dashboard_template():
     """Create an improved version of the dashboard template with bug fixes."""
     template_path = Path("ipfs_datasets_py/templates/news_analysis_dashboard.html")
-    
+
     if not template_path.exists():
         print(f"Template not found at {template_path}")
         return False
-    
+
     # Read current template
     current_content = template_path.read_text()
-    
+
     # Implement key improvements based on analysis
     improvements = {
         # Fix 1: Add ARIA labels for accessibility
         'button class="user-type-btn"': 'button class="user-type-btn" aria-label="Switch user type" role="button"',
         'class="nav-tab"': 'class="nav-tab" role="tab" tabindex="0"',
         'class="form-input"': 'class="form-input" aria-describedby="form-help"',
-        
         # Fix 2: Add loading states
         'class="btn btn-primary"': 'class="btn btn-primary" data-loading="false"',
-        
         # Fix 3: Add keyboard navigation support
-        'addEventListener(\'click\'': 'addEventListener(\'click\'',  # We'll add keyboard support in JS
-        
+        "addEventListener('click'": "addEventListener('click'",  # We'll add keyboard support in JS
         # Fix 4: Improve visual feedback
-        '.nav-tab:hover': '.nav-tab:hover, .nav-tab:focus',
-        '.btn:hover': '.btn:hover, .btn:focus',
+        ".nav-tab:hover": ".nav-tab:hover, .nav-tab:focus",
+        ".btn:hover": ".btn:hover, .btn:focus",
     }
-    
+
     improved_content = current_content
-    
+
     # Apply basic text replacements
     for old, new in improvements.items():
         improved_content = improved_content.replace(old, new)
-    
+
     # Add comprehensive CSS improvements
     css_improvements = """
     
@@ -214,11 +214,11 @@ def create_improved_dashboard_template():
         /* Future dark mode styles */
     }
     """
-    
+
     # Add CSS improvements before the closing </style> tag
-    if '</style>' in improved_content:
-        improved_content = improved_content.replace('</style>', css_improvements + '\n    </style>')
-    
+    if "</style>" in improved_content:
+        improved_content = improved_content.replace("</style>", css_improvements + "\n    </style>")
+
     # Add enhanced JavaScript functionality
     js_improvements = """
     
@@ -367,22 +367,24 @@ def create_improved_dashboard_template():
         console.log('GUI enhancements initialized');
     });
     """
-    
+
     # Add enhanced JavaScript before the closing </script> tag
-    if '</script>' in improved_content:
-        script_index = improved_content.rfind('</script>')
+    if "</script>" in improved_content:
+        script_index = improved_content.rfind("</script>")
         improved_content = (
-            improved_content[:script_index] + 
-            js_improvements + '\n' + 
-            improved_content[script_index:]
+            improved_content[:script_index]
+            + js_improvements
+            + "\n"
+            + improved_content[script_index:]
         )
-    
+
     # Write improved template
     improved_template_path = template_path.parent / "news_analysis_dashboard_improved.html"
     improved_template_path.write_text(improved_content)
-    
+
     print(f"✓ Improved dashboard template created: {improved_template_path}")
     return True
+
 
 def create_accessibility_enhancements():
     """Create additional accessibility enhancements."""
@@ -462,13 +464,14 @@ def create_accessibility_enhancements():
     top: 6px;
 }
 """
-    
+
     accessibility_file = Path("ipfs_datasets_py/static/admin/css/accessibility-enhancements.css")
     accessibility_file.parent.mkdir(parents=True, exist_ok=True)
     accessibility_file.write_text(accessibility_css)
-    
+
     print(f"✓ Accessibility enhancements created: {accessibility_file}")
     return True
+
 
 def create_mobile_enhancements():
     """Create mobile-specific enhancements."""
@@ -581,13 +584,14 @@ def create_mobile_enhancements():
     }
 }
 """
-    
+
     mobile_file = Path("ipfs_datasets_py/static/admin/css/mobile-enhancements.css")
     mobile_file.parent.mkdir(parents=True, exist_ok=True)
     mobile_file.write_text(mobile_css)
-    
+
     print(f"✓ Mobile enhancements created: {mobile_file}")
     return True
+
 
 def create_performance_optimizations():
     """Create performance optimization utilities."""
@@ -758,17 +762,18 @@ window.addEventListener('beforeunload', () => {
     }
 });
 """
-    
+
     performance_file = Path("ipfs_datasets_py/static/admin/js/performance-optimizer.js")
     performance_file.parent.mkdir(parents=True, exist_ok=True)
     performance_file.write_text(performance_js)
-    
+
     print(f"✓ Performance optimizations created: {performance_file}")
     return True
 
+
 def create_comprehensive_improvement_report():
     """Create a comprehensive improvement report with specific fixes."""
-    
+
     report = {
         "gui_improvement_implementation": {
             "timestamp": datetime.now().isoformat(),
@@ -778,39 +783,35 @@ def create_comprehensive_improvement_report():
                     "fix": "Added comprehensive ARIA labels and roles to all interactive elements",
                     "files_modified": [
                         "templates/news_analysis_dashboard_improved.html",
-                        "static/admin/css/accessibility-enhancements.css"
-                    ]
+                        "static/admin/css/accessibility-enhancements.css",
+                    ],
                 },
                 {
-                    "issue": "Limited responsive design implementation", 
+                    "issue": "Limited responsive design implementation",
                     "fix": "Enhanced mobile responsiveness with touch-friendly sizing and improved breakpoints",
                     "files_modified": [
                         "static/admin/css/mobile-enhancements.css",
-                        "templates/news_analysis_dashboard_improved.html"
-                    ]
+                        "templates/news_analysis_dashboard_improved.html",
+                    ],
                 },
                 {
                     "issue": "Limited JavaScript interactivity",
                     "fix": "Added comprehensive keyboard navigation, form validation, and interactive features",
                     "files_modified": [
                         "templates/news_analysis_dashboard_improved.html",
-                        "static/admin/js/performance-optimizer.js"
-                    ]
+                        "static/admin/js/performance-optimizer.js",
+                    ],
                 },
                 {
                     "issue": "No loading states or progress indicators",
                     "fix": "Implemented loading skeletons, button loading states, and progress animations",
-                    "files_modified": [
-                        "templates/news_analysis_dashboard_improved.html"
-                    ]
+                    "files_modified": ["templates/news_analysis_dashboard_improved.html"],
                 },
                 {
                     "issue": "Poor error handling and user feedback",
                     "fix": "Added comprehensive error states, success messages, and user feedback systems",
-                    "files_modified": [
-                        "templates/news_analysis_dashboard_improved.html"
-                    ]
-                }
+                    "files_modified": ["templates/news_analysis_dashboard_improved.html"],
+                },
             ],
             "enhancements_added": [
                 "Auto-save functionality for forms",
@@ -827,18 +828,18 @@ def create_comprehensive_improvement_report():
                 "Screen reader compatibility",
                 "Form validation with visual feedback",
                 "Loading skeletons and progress indicators",
-                "Error boundaries and recovery mechanisms"
+                "Error boundaries and recovery mechanisms",
             ],
             "performance_optimizations": [
                 "Lazy loading of dashboard components",
-                "Virtual scrolling for large data sets", 
+                "Virtual scrolling for large data sets",
                 "Client-side caching with TTL",
                 "Bundle splitting for on-demand loading",
                 "CSS optimization with critical path loading",
                 "Memory management and cleanup",
                 "Intersection Observer for efficient rendering",
                 "Debounced input handling",
-                "Optimized animations with requestAnimationFrame"
+                "Optimized animations with requestAnimationFrame",
             ],
             "accessibility_improvements": [
                 "WCAG 2.1 AA color contrast compliance",
@@ -849,7 +850,7 @@ def create_comprehensive_improvement_report():
                 "Skip links for screen reader users",
                 "Semantic HTML structure improvements",
                 "Alternative text for visual elements",
-                "Form validation with accessible error messages"
+                "Form validation with accessible error messages",
             ],
             "testing_recommendations": [
                 "Test with screen readers (NVDA, JAWS, VoiceOver)",
@@ -860,68 +861,72 @@ def create_comprehensive_improvement_report():
                 "Color contrast validation",
                 "Touch interaction testing",
                 "Network throttling testing",
-                "Memory leak detection"
-            ]
+                "Memory leak detection",
+            ],
         }
     }
-    
+
     report_file = Path("gui_improvement_implementation_report.json")
-    with open(report_file, 'w') as f:
+    with open(report_file, "w") as f:
         json.dump(report, f, indent=2)
-    
+
     print(f"✓ Comprehensive improvement report created: {report_file}")
     return report
+
 
 def main():
     """Main function to implement GUI improvements."""
     print("=== Implementing GUI Improvements Based on Screenshot Analysis ===")
-    
+
     # Load analysis report
     analysis = load_analysis_report()
     if analysis:
-        print(f"✓ Loaded analysis report with {len(analysis.get('issues_identified', []))} issues identified")
-    
+        print(
+            f"✓ Loaded analysis report with {len(analysis.get('issues_identified', []))} issues identified"
+        )
+
     success_count = 0
-    
+
     # Implement improvements
     if create_improved_dashboard_template():
         success_count += 1
-    
+
     if create_accessibility_enhancements():
         success_count += 1
-    
+
     if create_mobile_enhancements():
         success_count += 1
-        
+
     if create_performance_optimizations():
         success_count += 1
-    
+
     # Create comprehensive report
     implementation_report = create_comprehensive_improvement_report()
     success_count += 1
-    
+
     print(f"\n=== GUI Improvement Implementation Complete ===")
     print(f"✓ {success_count}/5 improvement tasks completed successfully")
     print(f"✓ Enhanced dashboard template with accessibility fixes")
     print(f"✓ Mobile-responsive design improvements")
     print(f"✓ Performance optimizations and caching")
     print(f"✓ Comprehensive keyboard navigation support")
-    
+
     print(f"\n📁 Files created/modified:")
     print(f"  - templates/news_analysis_dashboard_improved.html (Enhanced template)")
     print(f"  - static/admin/css/accessibility-enhancements.css")
-    print(f"  - static/admin/css/mobile-enhancements.css") 
+    print(f"  - static/admin/css/mobile-enhancements.css")
     print(f"  - static/admin/js/performance-optimizer.js")
     print(f"  - gui_improvement_implementation_report.json")
-    
+
     print(f"\n🚀 Next steps:")
     print(f"  1. Test the improved dashboard with screen readers")
     print(f"  2. Validate keyboard navigation across all tabs")
     print(f"  3. Test mobile responsiveness on different devices")
     print(f"  4. Performance test with large datasets")
     print(f"  5. Validate color contrast and accessibility compliance")
-    
+
     return implementation_report
+
 
 if __name__ == "__main__":
     main()

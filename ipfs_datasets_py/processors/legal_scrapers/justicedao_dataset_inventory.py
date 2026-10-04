@@ -401,7 +401,11 @@ def _query_templates(features: Sequence[str], query_modes: Sequence[str]) -> Lis
             _add("FULLTEXT/semantic search over semantic_text")
 
     if "metadata_lookup" in query_modes:
-        metadata_fields = [field for field in ("name", "title", "source_url", "law_identifier") if field in feature_set]
+        metadata_fields = [
+            field
+            for field in ("name", "title", "source_url", "law_identifier")
+            if field in feature_set
+        ]
         if metadata_fields:
             _add(f"SELECT * WHERE {' OR '.join(f'{field} = ?' for field in metadata_fields)}")
 
@@ -417,7 +421,9 @@ def _notes_for_config(features: Sequence[str], query_modes: Sequence[str]) -> Li
         notes.append("JSON-LD often contains richer identifiers than the top-level columns.")
     if feature_set <= {"ipfs_cid", "title_number", "section_number"}:
         notes.append("This config is a compact CID index; dereference the CID for rich text.")
-    if {"source_id", "identifier", "text"}.issubset(feature_set) and "official_cite" not in feature_set:
+    if {"source_id", "identifier", "text"}.issubset(
+        feature_set
+    ) and "official_cite" not in feature_set:
         notes.append("Exact matching may require parsing section slugs from source_id or text.")
     return notes
 
@@ -459,14 +465,26 @@ def _profile_legal_branch(profile: DatasetProfile) -> str:
     branch = str(profile.legal_branch or "").strip().lower()
     if branch:
         return branch
-    return str(_canonical_metadata_for_dataset(profile.dataset_id).get("legal_branch") or "").strip().lower()
+    return (
+        str(_canonical_metadata_for_dataset(profile.dataset_id).get("legal_branch") or "")
+        .strip()
+        .lower()
+    )
 
 
 def _profile_country_codes(profile: DatasetProfile) -> List[str]:
-    values = [str(item).strip().upper() for item in list(profile.country_codes or []) if str(item).strip()]
+    values = [
+        str(item).strip().upper() for item in list(profile.country_codes or []) if str(item).strip()
+    ]
     if values:
         return values
-    return [str(item).strip().upper() for item in list(_canonical_metadata_for_dataset(profile.dataset_id).get("country_codes") or []) if str(item).strip()]
+    return [
+        str(item).strip().upper()
+        for item in list(
+            _canonical_metadata_for_dataset(profile.dataset_id).get("country_codes") or []
+        )
+        if str(item).strip()
+    ]
 
 
 def _inspect_justicedao_datasets_uncached(
@@ -537,12 +555,20 @@ def _inspect_justicedao_datasets_uncached(
                 )
             )
         except Exception as exc:
-            profiles.append(DatasetProfile(dataset_id=dataset_id, error=str(exc), **_canonical_metadata_for_dataset(dataset_id)))
+            profiles.append(
+                DatasetProfile(
+                    dataset_id=dataset_id,
+                    error=str(exc),
+                    **_canonical_metadata_for_dataset(dataset_id),
+                )
+            )
     return profiles
 
 
 @lru_cache(maxsize=8)
-def _inspect_justicedao_datasets_cached(author: str, dataset_prefix: str) -> tuple[DatasetProfile, ...]:
+def _inspect_justicedao_datasets_cached(
+    author: str, dataset_prefix: str
+) -> tuple[DatasetProfile, ...]:
     return tuple(
         _inspect_justicedao_datasets_uncached(
             author=author,
@@ -595,7 +621,9 @@ def filter_dataset_profiles(
     return filtered
 
 
-def summarize_dataset_profiles_by_branch(profiles: Sequence[DatasetProfile]) -> Dict[str, Dict[str, Any]]:
+def summarize_dataset_profiles_by_branch(
+    profiles: Sequence[DatasetProfile],
+) -> Dict[str, Dict[str, Any]]:
     summary: Dict[str, Dict[str, Any]] = {}
     for profile in profiles:
         branch = _profile_legal_branch(profile) or "unclassified"
@@ -614,7 +642,9 @@ def summarize_dataset_profiles_by_branch(profiles: Sequence[DatasetProfile]) -> 
     return dict(sorted(summary.items()))
 
 
-def summarize_dataset_profiles_by_country(profiles: Sequence[DatasetProfile]) -> Dict[str, Dict[str, Any]]:
+def summarize_dataset_profiles_by_country(
+    profiles: Sequence[DatasetProfile],
+) -> Dict[str, Dict[str, Any]]:
     summary: Dict[str, Dict[str, Any]] = {}
     for profile in profiles:
         countries = _profile_country_codes(profile) or ["UNSPECIFIED"]
@@ -651,7 +681,9 @@ def summarize_dataset_profile_coverage_by_branch(
     observed_countries_by_branch: Dict[str, set[str]] = {}
     for profile in profiles:
         branch = _profile_legal_branch(profile) or "unclassified"
-        observed_countries_by_branch.setdefault(branch, set()).update(_profile_country_codes(profile))
+        observed_countries_by_branch.setdefault(branch, set()).update(
+            _profile_country_codes(profile)
+        )
 
     expected_map = expected_country_codes_by_branch or _default_expected_country_codes_by_branch()
     coverage: Dict[str, Dict[str, Any]] = {}
@@ -670,7 +702,9 @@ def summarize_dataset_profile_coverage_by_branch(
             "covered_country_codes": covered_country_codes,
             "expected_country_codes": expected_country_codes,
             "missing_country_codes": [
-                country_code for country_code in expected_country_codes if country_code not in covered_country_codes
+                country_code
+                for country_code in expected_country_codes
+                if country_code not in covered_country_codes
             ],
         }
     for branch, expected_country_codes in expected_map.items():
@@ -719,13 +753,17 @@ def build_eu_country_corpus_onboarding_plan(
             for dataset_id in list(country_summary.get(country_code, {}).get("dataset_ids") or [])
             if dataset_id
         ]
-        canonical_keys = [corpus.key for corpus in canonical_corpora if corpus.normalized_branch() == "eu"]
+        canonical_keys = [
+            corpus.key for corpus in canonical_corpora if corpus.normalized_branch() == "eu"
+        ]
         canonical_dataset_ids = {
             str(corpus.hf_dataset_id)
             for corpus in canonical_corpora
             if corpus.normalized_branch() == "eu"
         }
-        has_observed_primary_dataset = any(dataset_id in canonical_dataset_ids for dataset_id in existing_dataset_ids)
+        has_observed_primary_dataset = any(
+            dataset_id in canonical_dataset_ids for dataset_id in existing_dataset_ids
+        )
         proposed_corpus = proposed_corpora.get(country_code)
         plan[country_code] = {
             "label": label,
@@ -744,8 +782,12 @@ def build_eu_country_corpus_onboarding_plan(
                 else "missing_dataset"
             ),
             "proposed_corpus_key": None if proposed_corpus is None else proposed_corpus.key,
-            "proposed_dataset_id": None if proposed_corpus is None else proposed_corpus.hf_dataset_id,
-            "proposed_local_root_name": None if proposed_corpus is None else proposed_corpus.local_root_name,
+            "proposed_dataset_id": None
+            if proposed_corpus is None
+            else proposed_corpus.hf_dataset_id,
+            "proposed_local_root_name": None
+            if proposed_corpus is None
+            else proposed_corpus.local_root_name,
         }
     return plan
 
@@ -782,7 +824,11 @@ def render_dataset_profiles_markdown(profiles: Sequence[DatasetProfile]) -> str:
         lines.append("")
         for branch, payload in coverage_summary.items():
             coverage_bits: List[str] = []
-            covered = ", ".join(payload["covered_country_codes"]) if payload["covered_country_codes"] else "none"
+            covered = (
+                ", ".join(payload["covered_country_codes"])
+                if payload["covered_country_codes"]
+                else "none"
+            )
             coverage_bits.append(f"covered {covered}")
             if payload["missing_country_codes"]:
                 coverage_bits.append(f"missing {', '.join(payload['missing_country_codes'])}")
@@ -793,7 +839,9 @@ def render_dataset_profiles_markdown(profiles: Sequence[DatasetProfile]) -> str:
         lines.append("## EU Country Onboarding")
         lines.append("")
         for country_code, payload in eu_onboarding.items():
-            schemes = ", ".join(payload["identifier_schemes"]) if payload["identifier_schemes"] else "n/a"
+            schemes = (
+                ", ".join(payload["identifier_schemes"]) if payload["identifier_schemes"] else "n/a"
+            )
             if payload["status"] == "covered":
                 lines.append(
                     f"- {country_code}: covered by {', '.join(payload['existing_dataset_ids'])}"
@@ -823,8 +871,12 @@ def render_dataset_profiles_markdown(profiles: Sequence[DatasetProfile]) -> str:
             lines.append("")
             continue
         metadata = _canonical_metadata_for_dataset(profile.dataset_id)
-        canonical_corpus_key = str(profile.canonical_corpus_key or metadata.get("canonical_corpus_key") or "").strip()
-        proposed_corpus_key = str(profile.proposed_corpus_key or metadata.get("proposed_corpus_key") or "").strip()
+        canonical_corpus_key = str(
+            profile.canonical_corpus_key or metadata.get("canonical_corpus_key") or ""
+        ).strip()
+        proposed_corpus_key = str(
+            profile.proposed_corpus_key or metadata.get("proposed_corpus_key") or ""
+        ).strip()
         if canonical_corpus_key:
             lines.append(f"Canonical corpus: {canonical_corpus_key}")
         elif proposed_corpus_key:
@@ -833,7 +885,9 @@ def render_dataset_profiles_markdown(profiles: Sequence[DatasetProfile]) -> str:
             lines.append(f"Legal branch: {str(profile.legal_branch).upper()}")
         if profile.country_codes:
             lines.append(f"Countries: {', '.join(profile.country_codes)}")
-        lines.append(f"Top-level paths: {', '.join(profile.top_level_paths) if profile.top_level_paths else 'n/a'}")
+        lines.append(
+            f"Top-level paths: {', '.join(profile.top_level_paths) if profile.top_level_paths else 'n/a'}"
+        )
         lines.append(f"Parquet files: {len(profile.parquet_files)}")
         lines.append("")
         for config in profile.configs:
@@ -843,7 +897,9 @@ def render_dataset_profiles_markdown(profiles: Sequence[DatasetProfile]) -> str:
                 lines.append(f"Error: {config.error}")
                 lines.append("")
                 continue
-            lines.append(f"Query modes: {', '.join(config.query_modes) if config.query_modes else 'n/a'}")
+            lines.append(
+                f"Query modes: {', '.join(config.query_modes) if config.query_modes else 'n/a'}"
+            )
             lines.append(
                 f"Recommended fields: {', '.join(config.recommended_fields) if config.recommended_fields else 'n/a'}"
             )
@@ -879,7 +935,9 @@ def _strategy(
         proposed_corpus_key=metadata.get("proposed_corpus_key"),
         legal_branch=metadata.get("legal_branch"),
         country_codes=list(metadata.get("country_codes") or []),
-        citation_lookup_fields=[str(item) for item in list(citation_lookup_fields or []) if str(item).strip()],
+        citation_lookup_fields=[
+            str(item) for item in list(citation_lookup_fields or []) if str(item).strip()
+        ],
         text_fields=[str(item) for item in list(text_fields or []) if str(item).strip()],
         join_fields=[str(item) for item in list(join_fields or []) if str(item).strip()],
         notes=[str(item) for item in list(notes or []) if str(item).strip()],
@@ -997,7 +1055,10 @@ def derive_justicedao_bluebook_strategies(
             ],
         )
 
-    for dataset_id in ("justicedao/caselaw_access_project", "justicedao/ipfs_caselaw_access_project"):
+    for dataset_id in (
+        "justicedao/caselaw_access_project",
+        "justicedao/ipfs_caselaw_access_project",
+    ):
         if dataset_id in profile_map:
             strategies[dataset_id] = _strategy(
                 dataset_id,
@@ -1016,7 +1077,12 @@ def derive_justicedao_bluebook_strategies(
             "justicedao/ipfs_netherlands_laws",
             "metadata_only",
             "non_bluebook_identifier_or_citation_lookup",
-            citation_lookup_fields=["citation", "identifier", "law_identifier", "official_identifier"],
+            citation_lookup_fields=[
+                "citation",
+                "identifier",
+                "law_identifier",
+                "official_identifier",
+            ],
             text_fields=["title", "text", "metadata"],
             join_fields=["cid", "content_address"],
             notes=[
@@ -1030,7 +1096,12 @@ def derive_justicedao_bluebook_strategies(
             "justicedao/ipfs_france_laws",
             "metadata_only",
             "non_bluebook_identifier_or_citation_lookup",
-            citation_lookup_fields=["citation", "identifier", "law_identifier", "official_identifier"],
+            citation_lookup_fields=[
+                "citation",
+                "identifier",
+                "law_identifier",
+                "official_identifier",
+            ],
             text_fields=["title", "text", "metadata"],
             join_fields=["cid", "content_address", "source_cid"],
             notes=[
@@ -1044,7 +1115,12 @@ def derive_justicedao_bluebook_strategies(
             "justicedao/ipfs_france_laws_bm25_index",
             "sidecar",
             "secondary_sparse_retrieval_after_primary_citation_match",
-            citation_lookup_fields=["citation", "law_identifier", "article_identifier", "source_cid"],
+            citation_lookup_fields=[
+                "citation",
+                "law_identifier",
+                "article_identifier",
+                "source_cid",
+            ],
             text_fields=["title", "text_preview"],
             join_fields=["source_cid", "law_cid", "cid"],
             notes=[
@@ -1069,7 +1145,12 @@ def derive_justicedao_bluebook_strategies(
             "justicedao/ipfs_spain_laws",
             "metadata_only",
             "non_bluebook_identifier_or_citation_lookup",
-            citation_lookup_fields=["citation", "identifier", "law_identifier", "official_identifier"],
+            citation_lookup_fields=[
+                "citation",
+                "identifier",
+                "law_identifier",
+                "official_identifier",
+            ],
             text_fields=["title", "text", "metadata"],
             join_fields=["cid", "content_address", "source_cid"],
             notes=[
@@ -1083,7 +1164,12 @@ def derive_justicedao_bluebook_strategies(
             "justicedao/ipfs_spain_laws_bm25_index",
             "sidecar",
             "secondary_sparse_retrieval_after_primary_citation_match",
-            citation_lookup_fields=["citation", "law_identifier", "article_identifier", "source_cid"],
+            citation_lookup_fields=[
+                "citation",
+                "law_identifier",
+                "article_identifier",
+                "source_cid",
+            ],
             text_fields=["title", "text_preview"],
             join_fields=["source_cid", "law_cid", "cid"],
             notes=[
@@ -1108,7 +1194,12 @@ def derive_justicedao_bluebook_strategies(
             "justicedao/ipfs_germany_laws",
             "metadata_only",
             "non_bluebook_identifier_or_citation_lookup",
-            citation_lookup_fields=["citation", "identifier", "law_identifier", "official_identifier"],
+            citation_lookup_fields=[
+                "citation",
+                "identifier",
+                "law_identifier",
+                "official_identifier",
+            ],
             text_fields=["title", "text", "metadata"],
             join_fields=["cid", "content_address", "source_cid"],
             notes=[
@@ -1122,7 +1213,12 @@ def derive_justicedao_bluebook_strategies(
             "justicedao/ipfs_germany_laws_bm25_index",
             "sidecar",
             "secondary_sparse_retrieval_after_primary_citation_match",
-            citation_lookup_fields=["citation", "law_identifier", "article_identifier", "source_cid"],
+            citation_lookup_fields=[
+                "citation",
+                "law_identifier",
+                "article_identifier",
+                "source_cid",
+            ],
             text_fields=["title", "text_preview"],
             join_fields=["source_cid", "law_cid", "cid"],
             notes=[
@@ -1147,7 +1243,12 @@ def derive_justicedao_bluebook_strategies(
             "justicedao/ipfs_netherlands_laws_bm25_index",
             "sidecar",
             "secondary_sparse_retrieval_after_primary_citation_match",
-            citation_lookup_fields=["citation", "law_identifier", "article_identifier", "source_cid"],
+            citation_lookup_fields=[
+                "citation",
+                "law_identifier",
+                "article_identifier",
+                "source_cid",
+            ],
             text_fields=["title", "text_preview"],
             join_fields=["source_cid", "law_cid", "cid"],
             notes=[
@@ -1188,7 +1289,9 @@ def _strategy_rank_for_citation(citation: Citation, strategy: BluebookQueryStrat
             return 60
     if citation.type == "usc" and strategy.dataset_id.endswith("ipfs_uscode"):
         return 100
-    if citation.type == "federal_register" and strategy.dataset_id.endswith("ipfs_federal_register"):
+    if citation.type == "federal_register" and strategy.dataset_id.endswith(
+        "ipfs_federal_register"
+    ):
         return 100
     if citation.type == "case" and "caselaw_access_project" in strategy.dataset_id:
         return 100
@@ -1199,7 +1302,9 @@ def _strategy_rank_for_citation(citation: Citation, strategy: BluebookQueryStrat
 
 def _strategy_rank_for_eu_citation(citation: Any, strategy: BluebookQueryStrategy) -> int:
     member_state = str(getattr(citation, "member_state", "") or "").strip().upper()
-    if not member_state or member_state not in {str(code).strip().upper() for code in strategy.country_codes}:
+    if not member_state or member_state not in {
+        str(code).strip().upper() for code in strategy.country_codes
+    }:
         return 0
     if strategy.support_level == "metadata_only":
         return 100
@@ -1229,15 +1334,21 @@ def build_justicedao_bluebook_query_plan(
         candidates = [item for item in ranked if _strategy_rank_for_citation(citation, item) > 0]
         notes: List[str] = []
         if citation.type == "state_statute":
-            notes.append("Parse state abbreviation and section number first, then try state_laws before rules datasets.")
+            notes.append(
+                "Parse state abbreviation and section number first, then try state_laws before rules datasets."
+            )
         elif citation.type == "usc":
-            notes.append("Convert the Bluebook citation to title_number + section_number before querying the CID index.")
+            notes.append(
+                "Convert the Bluebook citation to title_number + section_number before querying the CID index."
+            )
         elif citation.type == "federal_register":
             notes.append("Prefer exact identifier or volume/page lookup before semantic retrieval.")
         elif citation.type == "case":
             notes.append("Prefer exact volume + reporter + page matching.")
         elif citation.type == "public_law":
-            notes.append("Resolve Pub. L. references through uscode/federal_register metadata before text search.")
+            notes.append(
+                "Resolve Pub. L. references through uscode/federal_register metadata before text search."
+            )
         plans.append(
             CitationQueryPlan(
                 citation_text=citation.text,
@@ -1367,7 +1478,9 @@ def render_bluebook_dataset_query_plan_markdown(plan: BluebookDatasetQueryPlan) 
             lines.append(f"Support level: {strategy.support_level}")
             lines.append(f"Query path: {strategy.query_path}")
             if strategy.citation_lookup_fields:
-                lines.append(f"Citation lookup fields: {', '.join(strategy.citation_lookup_fields)}")
+                lines.append(
+                    f"Citation lookup fields: {', '.join(strategy.citation_lookup_fields)}"
+                )
             if strategy.text_fields:
                 lines.append(f"Text fields: {', '.join(strategy.text_fields)}")
             if strategy.join_fields:
@@ -1419,7 +1532,9 @@ _CANONICAL_QUERY_DATASETS: Dict[str, Dict[str, Any]] = {
         "publish_cid_index_files": ["uscode_parquet/cid_index.parquet"],
         "publish_bm25_files": ["uscode_parquet/laws_bm25.parquet"],
         "publish_kg_entities_files": ["uscode_parquet/laws_knowledge_graph_entities.parquet"],
-        "publish_kg_relationships_files": ["uscode_parquet/laws_knowledge_graph_relationships.parquet"],
+        "publish_kg_relationships_files": [
+            "uscode_parquet/laws_knowledge_graph_relationships.parquet"
+        ],
         "publish_kg_summary_files": ["uscode_parquet/laws_knowledge_graph_summary.json"],
         "publish_embeddings_files": ["uscode_parquet/laws_embeddings.parquet"],
         "publish_faiss_index_files": ["uscode_parquet/laws.faiss"],
@@ -1437,7 +1552,9 @@ _CANONICAL_QUERY_DATASETS: Dict[str, Dict[str, Any]] = {
         "publish_cid_index_files": ["federal_register_cid_index.parquet"],
         "publish_bm25_files": ["federal_register_bm25.parquet"],
         "publish_kg_entities_files": ["federal_register_knowledge_graph_entities.parquet"],
-        "publish_kg_relationships_files": ["federal_register_knowledge_graph_relationships.parquet"],
+        "publish_kg_relationships_files": [
+            "federal_register_knowledge_graph_relationships.parquet"
+        ],
         "publish_kg_summary_files": ["federal_register_knowledge_graph_summary.json"],
         "publish_embeddings_files": [],
         "publish_faiss_index_files": ["federal_register_gte_small.faiss"],
@@ -1454,12 +1571,20 @@ _CANONICAL_QUERY_DATASETS: Dict[str, Dict[str, Any]] = {
         "embedding_fallback_patterns": [r"state_laws_parquet_cid/.+_embeddings\.parquet$"],
         "publish_cid_index_templates": ["state_laws_parquet_cid/STATE-{state}_cid_index.parquet"],
         "publish_bm25_templates": ["state_laws_parquet_cid/STATE-{state}_bm25.parquet"],
-        "publish_kg_entities_templates": ["state_laws_parquet_cid/STATE-{state}_knowledge_graph_entities.parquet"],
-        "publish_kg_relationships_templates": ["state_laws_parquet_cid/STATE-{state}_knowledge_graph_relationships.parquet"],
-        "publish_kg_summary_templates": ["state_laws_parquet_cid/STATE-{state}_knowledge_graph_summary.json"],
+        "publish_kg_entities_templates": [
+            "state_laws_parquet_cid/STATE-{state}_knowledge_graph_entities.parquet"
+        ],
+        "publish_kg_relationships_templates": [
+            "state_laws_parquet_cid/STATE-{state}_knowledge_graph_relationships.parquet"
+        ],
+        "publish_kg_summary_templates": [
+            "state_laws_parquet_cid/STATE-{state}_knowledge_graph_summary.json"
+        ],
         "publish_embeddings_templates": ["state_laws_parquet_cid/STATE-{state}_embeddings.parquet"],
         "publish_faiss_index_templates": ["state_laws_parquet_cid/STATE-{state}.faiss"],
-        "publish_faiss_metadata_templates": ["state_laws_parquet_cid/STATE-{state}_faiss_metadata.parquet"],
+        "publish_faiss_metadata_templates": [
+            "state_laws_parquet_cid/STATE-{state}_faiss_metadata.parquet"
+        ],
         "join_field": "ipfs_cid",
         "title_fields": ["name", "identifier", "source_id", "official_cite"],
         "text_fields": ["text", "jsonld", "name", "identifier", "source_id"],
@@ -1473,17 +1598,46 @@ _CANONICAL_QUERY_DATASETS: Dict[str, Dict[str, Any]] = {
         "parquet_fallback_patterns": [r"municipal_laws_parquet_cid/.+\.parquet$"],
         "embedding_templates": ["municipal_laws_parquet_cid/STATE-{state}_embeddings.parquet"],
         "embedding_fallback_patterns": [r"municipal_laws_parquet_cid/.+_embeddings\.parquet$"],
-        "publish_cid_index_templates": ["municipal_laws_parquet_cid/STATE-{state}_cid_index.parquet"],
+        "publish_cid_index_templates": [
+            "municipal_laws_parquet_cid/STATE-{state}_cid_index.parquet"
+        ],
         "publish_bm25_templates": ["municipal_laws_parquet_cid/STATE-{state}_bm25.parquet"],
-        "publish_kg_entities_templates": ["municipal_laws_parquet_cid/STATE-{state}_knowledge_graph_entities.parquet"],
-        "publish_kg_relationships_templates": ["municipal_laws_parquet_cid/STATE-{state}_knowledge_graph_relationships.parquet"],
-        "publish_kg_summary_templates": ["municipal_laws_parquet_cid/STATE-{state}_knowledge_graph_summary.json"],
-        "publish_embeddings_templates": ["municipal_laws_parquet_cid/STATE-{state}_embeddings.parquet"],
-        "publish_faiss_index_templates": ["municipal_laws_parquet_cid/STATE-{state}_gte_small.faiss"],
-        "publish_faiss_metadata_templates": ["municipal_laws_parquet_cid/STATE-{state}_gte_small_metadata.parquet"],
+        "publish_kg_entities_templates": [
+            "municipal_laws_parquet_cid/STATE-{state}_knowledge_graph_entities.parquet"
+        ],
+        "publish_kg_relationships_templates": [
+            "municipal_laws_parquet_cid/STATE-{state}_knowledge_graph_relationships.parquet"
+        ],
+        "publish_kg_summary_templates": [
+            "municipal_laws_parquet_cid/STATE-{state}_knowledge_graph_summary.json"
+        ],
+        "publish_embeddings_templates": [
+            "municipal_laws_parquet_cid/STATE-{state}_embeddings.parquet"
+        ],
+        "publish_faiss_index_templates": [
+            "municipal_laws_parquet_cid/STATE-{state}_gte_small.faiss"
+        ],
+        "publish_faiss_metadata_templates": [
+            "municipal_laws_parquet_cid/STATE-{state}_gte_small_metadata.parquet"
+        ],
         "join_field": "ipfs_cid",
-        "title_fields": ["name", "identifier", "source_id", "official_cite", "bluebook_citation", "html_title"],
-        "text_fields": ["text", "jsonld", "name", "identifier", "source_id", "html_title", "source_url"],
+        "title_fields": [
+            "name",
+            "identifier",
+            "source_id",
+            "official_cite",
+            "bluebook_citation",
+            "html_title",
+        ],
+        "text_fields": [
+            "text",
+            "jsonld",
+            "name",
+            "identifier",
+            "source_id",
+            "html_title",
+            "source_url",
+        ],
     },
     "state_admin_rules": {
         "dataset_id": "justicedao/ipfs_state_admin_rules",
@@ -1491,14 +1645,30 @@ _CANONICAL_QUERY_DATASETS: Dict[str, Dict[str, Any]] = {
         "parquet_fallback_patterns": [r".*administrative_rules.*\.parquet$"],
         "embedding_templates": ["state_admin_rules_parquet_cid/STATE-{state}_embeddings.parquet"],
         "embedding_fallback_patterns": [r".*administrative_rules.*embeddings.*\.parquet$"],
-        "publish_cid_index_templates": ["US_ADMINISTRATIVE_RULES/parsed/parquet/state_admin_rules_cid/STATE-{state}_cid_index.parquet"],
-        "publish_bm25_templates": ["US_ADMINISTRATIVE_RULES/parsed/parquet/state_admin_rules_cid/STATE-{state}_bm25.parquet"],
-        "publish_kg_entities_templates": ["US_ADMINISTRATIVE_RULES/parsed/parquet/state_admin_rules_cid/STATE-{state}_knowledge_graph_entities.parquet"],
-        "publish_kg_relationships_templates": ["US_ADMINISTRATIVE_RULES/parsed/parquet/state_admin_rules_cid/STATE-{state}_knowledge_graph_relationships.parquet"],
-        "publish_kg_summary_templates": ["US_ADMINISTRATIVE_RULES/parsed/parquet/state_admin_rules_cid/STATE-{state}_knowledge_graph_summary.json"],
-        "publish_embeddings_templates": ["US_ADMINISTRATIVE_RULES/parsed/parquet/state_admin_rules_cid/STATE-{state}_embeddings.parquet"],
-        "publish_faiss_index_templates": ["US_ADMINISTRATIVE_RULES/parsed/parquet/state_admin_rules_cid/STATE-{state}.faiss"],
-        "publish_faiss_metadata_templates": ["US_ADMINISTRATIVE_RULES/parsed/parquet/state_admin_rules_cid/STATE-{state}_faiss_metadata.parquet"],
+        "publish_cid_index_templates": [
+            "US_ADMINISTRATIVE_RULES/parsed/parquet/state_admin_rules_cid/STATE-{state}_cid_index.parquet"
+        ],
+        "publish_bm25_templates": [
+            "US_ADMINISTRATIVE_RULES/parsed/parquet/state_admin_rules_cid/STATE-{state}_bm25.parquet"
+        ],
+        "publish_kg_entities_templates": [
+            "US_ADMINISTRATIVE_RULES/parsed/parquet/state_admin_rules_cid/STATE-{state}_knowledge_graph_entities.parquet"
+        ],
+        "publish_kg_relationships_templates": [
+            "US_ADMINISTRATIVE_RULES/parsed/parquet/state_admin_rules_cid/STATE-{state}_knowledge_graph_relationships.parquet"
+        ],
+        "publish_kg_summary_templates": [
+            "US_ADMINISTRATIVE_RULES/parsed/parquet/state_admin_rules_cid/STATE-{state}_knowledge_graph_summary.json"
+        ],
+        "publish_embeddings_templates": [
+            "US_ADMINISTRATIVE_RULES/parsed/parquet/state_admin_rules_cid/STATE-{state}_embeddings.parquet"
+        ],
+        "publish_faiss_index_templates": [
+            "US_ADMINISTRATIVE_RULES/parsed/parquet/state_admin_rules_cid/STATE-{state}.faiss"
+        ],
+        "publish_faiss_metadata_templates": [
+            "US_ADMINISTRATIVE_RULES/parsed/parquet/state_admin_rules_cid/STATE-{state}_faiss_metadata.parquet"
+        ],
         "join_field": "ipfs_cid",
         "title_fields": ["section_name", "short_title", "official_cite", "statute_id"],
         "text_fields": ["full_text", "summary", "official_cite", "statute_id", "metadata"],
@@ -1509,24 +1679,42 @@ _CANONICAL_QUERY_DATASETS: Dict[str, Dict[str, Any]] = {
             "state_court_rules_parquet_cid/STATE-{state}.parquet",
             "FEDERAL-RULES.parquet",
         ],
-        "parquet_fallback_patterns": [r"state_court_rules_parquet_cid/.+\.parquet$", r"FEDERAL-RULES\.parquet$"],
+        "parquet_fallback_patterns": [
+            r"state_court_rules_parquet_cid/.+\.parquet$",
+            r"FEDERAL-RULES\.parquet$",
+        ],
         "embedding_templates": ["state_court_rules_parquet_cid/STATE-{state}_embeddings.parquet"],
         "embedding_fallback_patterns": [r"state_court_rules_parquet_cid/.+_embeddings\.parquet$"],
-        "publish_cid_index_templates": ["state_court_rules_parquet_cid/STATE-{state}_cid_index.parquet"],
+        "publish_cid_index_templates": [
+            "state_court_rules_parquet_cid/STATE-{state}_cid_index.parquet"
+        ],
         "publish_bm25_templates": ["state_court_rules_parquet_cid/STATE-{state}_bm25.parquet"],
-        "publish_kg_entities_templates": ["state_court_rules_parquet_cid/STATE-{state}_knowledge_graph_entities.parquet"],
-        "publish_kg_relationships_templates": ["state_court_rules_parquet_cid/STATE-{state}_knowledge_graph_relationships.parquet"],
-        "publish_kg_summary_templates": ["state_court_rules_parquet_cid/STATE-{state}_knowledge_graph_summary.json"],
-        "publish_embeddings_templates": ["state_court_rules_parquet_cid/STATE-{state}_embeddings.parquet"],
+        "publish_kg_entities_templates": [
+            "state_court_rules_parquet_cid/STATE-{state}_knowledge_graph_entities.parquet"
+        ],
+        "publish_kg_relationships_templates": [
+            "state_court_rules_parquet_cid/STATE-{state}_knowledge_graph_relationships.parquet"
+        ],
+        "publish_kg_summary_templates": [
+            "state_court_rules_parquet_cid/STATE-{state}_knowledge_graph_summary.json"
+        ],
+        "publish_embeddings_templates": [
+            "state_court_rules_parquet_cid/STATE-{state}_embeddings.parquet"
+        ],
         "publish_faiss_index_templates": ["state_court_rules_parquet_cid/STATE-{state}.faiss"],
-        "publish_faiss_metadata_templates": ["state_court_rules_parquet_cid/STATE-{state}_faiss_metadata.parquet"],
+        "publish_faiss_metadata_templates": [
+            "state_court_rules_parquet_cid/STATE-{state}_faiss_metadata.parquet"
+        ],
         "join_field": "ipfs_cid",
         "title_fields": ["name", "identifier", "source_id", "ruleNumber", "@id"],
         "text_fields": ["text", "jsonld", "name", "@id", "ruleNumber"],
     },
     "netherlands_laws": {
         "dataset_id": "justicedao/ipfs_netherlands_laws",
-        "parquet_files": ["parquet/laws/train-00000-of-00001.parquet", "parquet/articles/train-00000-of-00001.parquet"],
+        "parquet_files": [
+            "parquet/laws/train-00000-of-00001.parquet",
+            "parquet/articles/train-00000-of-00001.parquet",
+        ],
         "embedding_files": [],
         "publish_cid_index_files": ["artifacts/cid_index.parquet"],
         "publish_bm25_files": ["artifacts/bm25_documents.parquet"],
@@ -1537,12 +1725,28 @@ _CANONICAL_QUERY_DATASETS: Dict[str, Dict[str, Any]] = {
         "publish_faiss_index_files": ["artifacts/faiss.index"],
         "publish_faiss_metadata_files": ["artifacts/faiss_metadata.parquet"],
         "join_field": "source_cid",
-        "title_fields": ["title", "identifier", "law_identifier", "official_identifier", "citation"],
-        "text_fields": ["text", "title", "summary", "citation", "law_identifier", "article_identifier"],
+        "title_fields": [
+            "title",
+            "identifier",
+            "law_identifier",
+            "official_identifier",
+            "citation",
+        ],
+        "text_fields": [
+            "text",
+            "title",
+            "summary",
+            "citation",
+            "law_identifier",
+            "article_identifier",
+        ],
     },
     "france_laws": {
         "dataset_id": "justicedao/ipfs_france_laws",
-        "parquet_files": ["parquet/laws/train-00000-of-00001.parquet", "parquet/articles/train-00000-of-00001.parquet"],
+        "parquet_files": [
+            "parquet/laws/train-00000-of-00001.parquet",
+            "parquet/articles/train-00000-of-00001.parquet",
+        ],
         "embedding_files": [],
         "publish_cid_index_files": ["artifacts/cid_index.parquet"],
         "publish_bm25_files": ["artifacts/bm25_documents.parquet"],
@@ -1553,12 +1757,28 @@ _CANONICAL_QUERY_DATASETS: Dict[str, Dict[str, Any]] = {
         "publish_faiss_index_files": ["artifacts/faiss.index"],
         "publish_faiss_metadata_files": ["artifacts/faiss_metadata.parquet"],
         "join_field": "source_cid",
-        "title_fields": ["title", "identifier", "law_identifier", "official_identifier", "citation"],
-        "text_fields": ["text", "title", "summary", "citation", "law_identifier", "article_identifier"],
+        "title_fields": [
+            "title",
+            "identifier",
+            "law_identifier",
+            "official_identifier",
+            "citation",
+        ],
+        "text_fields": [
+            "text",
+            "title",
+            "summary",
+            "citation",
+            "law_identifier",
+            "article_identifier",
+        ],
     },
     "spain_laws": {
         "dataset_id": "justicedao/ipfs_spain_laws",
-        "parquet_files": ["parquet/laws/train-00000-of-00001.parquet", "parquet/articles/train-00000-of-00001.parquet"],
+        "parquet_files": [
+            "parquet/laws/train-00000-of-00001.parquet",
+            "parquet/articles/train-00000-of-00001.parquet",
+        ],
         "embedding_files": [],
         "publish_cid_index_files": ["artifacts/cid_index.parquet"],
         "publish_bm25_files": ["artifacts/bm25_documents.parquet"],
@@ -1569,12 +1789,28 @@ _CANONICAL_QUERY_DATASETS: Dict[str, Dict[str, Any]] = {
         "publish_faiss_index_files": ["artifacts/faiss.index"],
         "publish_faiss_metadata_files": ["artifacts/faiss_metadata.parquet"],
         "join_field": "source_cid",
-        "title_fields": ["title", "identifier", "law_identifier", "official_identifier", "citation"],
-        "text_fields": ["text", "title", "summary", "citation", "law_identifier", "article_identifier"],
+        "title_fields": [
+            "title",
+            "identifier",
+            "law_identifier",
+            "official_identifier",
+            "citation",
+        ],
+        "text_fields": [
+            "text",
+            "title",
+            "summary",
+            "citation",
+            "law_identifier",
+            "article_identifier",
+        ],
     },
     "germany_laws": {
         "dataset_id": "justicedao/ipfs_germany_laws",
-        "parquet_files": ["parquet/laws/train-00000-of-00001.parquet", "parquet/articles/train-00000-of-00001.parquet"],
+        "parquet_files": [
+            "parquet/laws/train-00000-of-00001.parquet",
+            "parquet/articles/train-00000-of-00001.parquet",
+        ],
         "embedding_files": [],
         "publish_cid_index_files": ["artifacts/cid_index.parquet"],
         "publish_bm25_files": ["artifacts/bm25_documents.parquet"],
@@ -1585,8 +1821,21 @@ _CANONICAL_QUERY_DATASETS: Dict[str, Dict[str, Any]] = {
         "publish_faiss_index_files": ["artifacts/faiss.index"],
         "publish_faiss_metadata_files": ["artifacts/faiss_metadata.parquet"],
         "join_field": "source_cid",
-        "title_fields": ["title", "identifier", "law_identifier", "official_identifier", "citation"],
-        "text_fields": ["text", "title", "summary", "citation", "law_identifier", "article_identifier"],
+        "title_fields": [
+            "title",
+            "identifier",
+            "law_identifier",
+            "official_identifier",
+            "citation",
+        ],
+        "text_fields": [
+            "text",
+            "title",
+            "summary",
+            "citation",
+            "law_identifier",
+            "article_identifier",
+        ],
     },
 }
 
@@ -1595,11 +1844,15 @@ def canonical_corpus_query_result_to_dict(result: CanonicalCorpusQueryResult) ->
     return asdict(result)
 
 
-def canonical_corpus_index_build_result_to_dict(result: CanonicalCorpusIndexBuildResult) -> Dict[str, Any]:
+def canonical_corpus_index_build_result_to_dict(
+    result: CanonicalCorpusIndexBuildResult,
+) -> Dict[str, Any]:
     return asdict(result)
 
 
-def canonical_corpus_index_publish_result_to_dict(result: CanonicalCorpusIndexPublishResult) -> Dict[str, Any]:
+def canonical_corpus_index_publish_result_to_dict(
+    result: CanonicalCorpusIndexPublishResult,
+) -> Dict[str, Any]:
     return asdict(result)
 
 
@@ -1633,7 +1886,9 @@ def _select_repo_file(
         compiled = re.compile(pattern, re.IGNORECASE)
         matches = [path for path in available if compiled.search(path)]
         if normalized_state:
-            state_matches = [path for path in matches if f"STATE-{normalized_state}" in path.upper()]
+            state_matches = [
+                path for path in matches if f"STATE-{normalized_state}" in path.upper()
+            ]
             if state_matches:
                 return sorted(state_matches)[0]
         if matches:
@@ -1652,7 +1907,10 @@ def _matching_inventory_profiles_for_corpus(
         if str(profile.dataset_id) == str(dataset_id):
             matches.append(profile)
             continue
-        if str(profile.canonical_corpus_key or "").strip().lower() == str(corpus_key).strip().lower():
+        if (
+            str(profile.canonical_corpus_key or "").strip().lower()
+            == str(corpus_key).strip().lower()
+        ):
             matches.append(profile)
     return matches
 
@@ -1691,7 +1949,10 @@ def _inventory_score_repo_file(
     if normalized_kind == "parquet":
         if not lowered.endswith(".parquet"):
             return -10_000
-        if any(token in filename for token in ("_embeddings.parquet", "_metadata.parquet", "_bm25.parquet")):
+        if any(
+            token in filename
+            for token in ("_embeddings.parquet", "_metadata.parquet", "_bm25.parquet")
+        ):
             score -= 200
         if any(token in lowered for token in ("knowledge_graph", "cid_index", "vector_index")):
             score -= 120
@@ -1701,11 +1962,25 @@ def _inventory_score_repo_file(
             score += 80
         if corpus_key.startswith("state_") and filename.startswith("state-"):
             score += 90
-        if corpus_key in {"netherlands_laws", "france_laws", "spain_laws", "germany_laws"} and "/laws/" in lowered:
+        if (
+            corpus_key in {"netherlands_laws", "france_laws", "spain_laws", "germany_laws"}
+            and "/laws/" in lowered
+        ):
             score += 80
-        if corpus_key in {"netherlands_laws", "france_laws", "spain_laws", "germany_laws"} and "/articles/" in lowered:
+        if (
+            corpus_key in {"netherlands_laws", "france_laws", "spain_laws", "germany_laws"}
+            and "/articles/" in lowered
+        ):
             score += 40
-        if any(mode in query_modes for mode in ("identifier_lookup", "section_lookup", "state_section_lookup", "citation_lookup")):
+        if any(
+            mode in query_modes
+            for mode in (
+                "identifier_lookup",
+                "section_lookup",
+                "state_section_lookup",
+                "citation_lookup",
+            )
+        ):
             score += 25
         return score
 
@@ -1962,7 +2237,9 @@ def _safe_artifact_base_dir(corpus_key: str, dataset_id: str, canonical_parquet_
     if not _is_hf_cache_snapshot_path(str(canonical_path)):
         return canonical_path.parent
     repo_slug = str(dataset_id or corpus_key).replace("/", "__")
-    target_root = Path.home() / ".ipfs_datasets" / "justicedao_rebuilds" / repo_slug / str(corpus_key)
+    target_root = (
+        Path.home() / ".ipfs_datasets" / "justicedao_rebuilds" / repo_slug / str(corpus_key)
+    )
     target_root.mkdir(parents=True, exist_ok=True)
     return target_root
 
@@ -2001,7 +2278,9 @@ def _ensure_join_field_rows(
         row_dict = dict(row)
         join_value = str(row_dict.get(join_field) or "").strip()
         if not join_value:
-            row_dict[join_field] = _content_addressed_row_identifier(row_dict, join_field=join_field)
+            row_dict[join_field] = _content_addressed_row_identifier(
+                row_dict, join_field=join_field
+            )
             filled += 1
         normalized.append(row_dict)
     return normalized, filled
@@ -2014,7 +2293,19 @@ def _build_cid_index_rows(
     config: Mapping[str, Any],
 ) -> List[Dict[str, Any]]:
     candidate_fields: List[str] = []
-    for key in ("state_code", "country_code", "identifier", "source_id", "official_cite", "citation", "name", "title_number", "section_number", "law_identifier", "article_identifier"):
+    for key in (
+        "state_code",
+        "country_code",
+        "identifier",
+        "source_id",
+        "official_cite",
+        "citation",
+        "name",
+        "title_number",
+        "section_number",
+        "law_identifier",
+        "article_identifier",
+    ):
         if key not in candidate_fields:
             candidate_fields.append(key)
     for key in list(config.get("title_fields") or []) + list(config.get("text_fields") or []):
@@ -2099,7 +2390,14 @@ def _ontology_norm_patterns() -> Sequence[tuple[str, str, str, str]]:
     patterns = []
     for item in list(_active_municipal_ontology().get("norm_patterns") or []):
         if isinstance(item, Mapping):
-            patterns.append((str(item.get("regex") or ""), str(item.get("id") or ""), str(item.get("predicate") or ""), str(item.get("class") or "LegalNorm")))
+            patterns.append(
+                (
+                    str(item.get("regex") or ""),
+                    str(item.get("id") or ""),
+                    str(item.get("predicate") or ""),
+                    str(item.get("class") or "LegalNorm"),
+                )
+            )
     return tuple(patterns) or _MUNICIPAL_NORM_PATTERNS
 
 
@@ -2141,7 +2439,12 @@ def _municipal_sentence_window(text: str, pattern: str) -> str:
 def _municipal_body_text(text: str) -> str:
     """Remove Portland page-label boilerplate before semantic mention extraction."""
 
-    return re.sub(r"^\s*Label:\s*City code section\s*(?:\([^)]*\))?\s*", "", str(text or ""), flags=re.IGNORECASE)
+    return re.sub(
+        r"^\s*Label:\s*City code section\s*(?:\([^)]*\))?\s*",
+        "",
+        str(text or ""),
+        flags=re.IGNORECASE,
+    )
 
 
 def _extract_municipal_defined_terms(text: str) -> List[str]:
@@ -2161,7 +2464,10 @@ def _extract_municipal_defined_terms(text: str) -> List[str]:
 def _extract_municipal_references(text: str) -> List[Dict[str, str]]:
     refs: Dict[tuple[str, str], Dict[str, str]] = {}
     patterns = [
-        ("portland_code_section", r"\b(?:Section|Subsection|Chapter)?\s*(\d{1,3}\.\d{2,3}\.\d{3})\b"),
+        (
+            "portland_code_section",
+            r"\b(?:Section|Subsection|Chapter)?\s*(\d{1,3}\.\d{2,3}\.\d{3})\b",
+        ),
         ("portland_code_chapter", r"\bChapter\s+(\d{1,3}\.\d{2,3})\b"),
         ("portland_code_title", r"\bTitle\s+(\d{1,3})\b"),
         ("oregon_revised_statute", r"\bORS\s+(\d+[A-Z]?(?:\.\d+)?)\b"),
@@ -2191,7 +2497,9 @@ def _add_municipal_law_ontology(
     entities_by_id: Dict[str, Dict[str, Any]],
     relationships_by_id: Dict[str, Dict[str, Any]],
 ) -> None:
-    def add_entity(entity_id: str, entity_type: str, label: str, properties: Optional[Dict[str, Any]] = None) -> None:
+    def add_entity(
+        entity_id: str, entity_type: str, label: str, properties: Optional[Dict[str, Any]] = None
+    ) -> None:
         if not entity_id:
             return
         existing = entities_by_id.get(entity_id)
@@ -2204,7 +2512,9 @@ def _add_municipal_law_ontology(
             "properties": dict(properties or {}),
         }
 
-    def add_relationship(source: str, rel_type: str, target: str, properties: Optional[Dict[str, Any]] = None) -> None:
+    def add_relationship(
+        source: str, rel_type: str, target: str, properties: Optional[Dict[str, Any]] = None
+    ) -> None:
         if not source or not target:
             return
         rel_id = f"{source}->{rel_type}->{target}"
@@ -2237,11 +2547,21 @@ def _add_municipal_law_ontology(
     )
     if title_number:
         title_id = f"portland_code_title:{title_number}"
-        add_entity(title_id, "MunicipalCodeTitle", f"Portland City Code Title {title_number}", {"title_number": title_number})
+        add_entity(
+            title_id,
+            "MunicipalCodeTitle",
+            f"Portland City Code Title {title_number}",
+            {"title_number": title_number},
+        )
         add_relationship(join_value, "PART_OF_TITLE", title_id)
     if chapter_number:
         chapter_id = f"portland_code_chapter:{chapter_number}"
-        add_entity(chapter_id, "MunicipalCodeChapter", f"Portland City Code Chapter {chapter_number}", {"chapter_number": chapter_number, "title_number": title_number})
+        add_entity(
+            chapter_id,
+            "MunicipalCodeChapter",
+            f"Portland City Code Chapter {chapter_number}",
+            {"chapter_number": chapter_number, "title_number": title_number},
+        )
         add_relationship(join_value, "PART_OF_CHAPTER", chapter_id)
         if title_number:
             add_relationship(chapter_id, "PART_OF_TITLE", f"portland_code_title:{title_number}")
@@ -2252,31 +2572,78 @@ def _add_municipal_law_ontology(
     for term, actor_type in _ontology_actor_lexicon().items():
         if re.search(rf"\b{re.escape(term)}s?\b", lowered):
             actor_id = f"municipal_actor:{_slug_token(term)}"
-            add_entity(actor_id, actor_type, term, {"canonical_term": term, "ontology_version": MUNICIPAL_ONTOLOGY_VERSION})
-            add_relationship(join_value, "MENTIONS_ACTOR", actor_id, {"evidence": _municipal_sentence_window(semantic_text, rf"\b{re.escape(term)}s?\b")})
-            if any(re.search(pattern, lowered) and rel_type == "IMPOSES_DUTY" for pattern, _, rel_type, _ in norm_patterns):
+            add_entity(
+                actor_id,
+                actor_type,
+                term,
+                {"canonical_term": term, "ontology_version": MUNICIPAL_ONTOLOGY_VERSION},
+            )
+            add_relationship(
+                join_value,
+                "MENTIONS_ACTOR",
+                actor_id,
+                {
+                    "evidence": _municipal_sentence_window(
+                        semantic_text, rf"\b{re.escape(term)}s?\b"
+                    )
+                },
+            )
+            if any(
+                re.search(pattern, lowered) and rel_type == "IMPOSES_DUTY"
+                for pattern, _, rel_type, _ in norm_patterns
+            ):
                 add_relationship(join_value, "IMPOSES_DUTY_ON", actor_id)
-            if any(re.search(pattern, lowered) and rel_type == "GRANTS_AUTHORITY" for pattern, _, rel_type, _ in norm_patterns):
+            if any(
+                re.search(pattern, lowered) and rel_type == "GRANTS_AUTHORITY"
+                for pattern, _, rel_type, _ in norm_patterns
+            ):
                 add_relationship(join_value, "GRANTS_AUTHORITY_TO", actor_id)
 
     for term, subject_type in _ontology_subject_lexicon().items():
         if re.search(rf"\b{re.escape(term)}s?\b", lowered):
             subject_id = f"municipal_subject:{_slug_token(term)}"
-            add_entity(subject_id, subject_type, term, {"canonical_term": term, "ontology_version": MUNICIPAL_ONTOLOGY_VERSION})
-            add_relationship(join_value, "REGULATES_SUBJECT", subject_id, {"evidence": _municipal_sentence_window(semantic_text, rf"\b{re.escape(term)}s?\b")})
+            add_entity(
+                subject_id,
+                subject_type,
+                term,
+                {"canonical_term": term, "ontology_version": MUNICIPAL_ONTOLOGY_VERSION},
+            )
+            add_relationship(
+                join_value,
+                "REGULATES_SUBJECT",
+                subject_id,
+                {
+                    "evidence": _municipal_sentence_window(
+                        semantic_text, rf"\b{re.escape(term)}s?\b"
+                    )
+                },
+            )
             if term in {"permit", "license", "business license"}:
                 add_relationship(join_value, "GOVERNS_AUTHORIZATION", subject_id)
 
     for pattern, norm_type, rel_type, norm_class in norm_patterns:
         if re.search(pattern, lowered):
             norm_id = f"{join_value}:norm:{norm_type}"
-            add_entity(norm_id, norm_class, norm_type, {"norm_type": norm_type, "evidence": _municipal_sentence_window(semantic_text, pattern)})
+            add_entity(
+                norm_id,
+                norm_class,
+                norm_type,
+                {
+                    "norm_type": norm_type,
+                    "evidence": _municipal_sentence_window(semantic_text, pattern),
+                },
+            )
             add_relationship(join_value, rel_type, norm_id)
 
     for defined_term in _extract_municipal_defined_terms(semantic_text):
         term_id = f"defined_term:{_slug_token(defined_term)}"
         add_entity(term_id, "DefinedTerm", defined_term, {"defined_term": defined_term})
-        add_relationship(join_value, "DEFINES_TERM", term_id, {"evidence": _municipal_sentence_window(semantic_text, re.escape(defined_term))})
+        add_relationship(
+            join_value,
+            "DEFINES_TERM",
+            term_id,
+            {"evidence": _municipal_sentence_window(semantic_text, re.escape(defined_term))},
+        )
 
     for ref in _extract_municipal_references(text):
         ref_type = ref["type"]
@@ -2298,8 +2665,15 @@ def _add_municipal_law_ontology(
             "oregon_admin_rule": "AdministrativeRule",
             "ordinance": "Ordinance",
         }.get(ref_type, "LegalAuthority")
-        add_entity(ref_id, ref_entity_type, f"{label_prefix} {value}", {"reference_type": ref_type, "reference_value": value})
-        add_relationship(join_value, "REFERENCES_LEGAL_AUTHORITY", ref_id, {"reference_type": ref_type})
+        add_entity(
+            ref_id,
+            ref_entity_type,
+            f"{label_prefix} {value}",
+            {"reference_type": ref_type, "reference_value": value},
+        )
+        add_relationship(
+            join_value, "REFERENCES_LEGAL_AUTHORITY", ref_id, {"reference_type": ref_type}
+        )
         if ref_type == "portland_code_section":
             add_relationship(join_value, "REFERENCES_CODE_SECTION", ref_id)
             target_cid = str(section_lookup.get(value) or "").strip()
@@ -2310,7 +2684,9 @@ def _add_municipal_law_ontology(
                     target_cid,
                     {"reference_type": ref_type, "reference_value": value},
                 )
-        if ref_type == "ordinance" and re.search(r"\bamended by ordinance", text, flags=re.IGNORECASE):
+        if ref_type == "ordinance" and re.search(
+            r"\bamended by ordinance", text, flags=re.IGNORECASE
+        ):
             add_relationship(join_value, "AMENDED_BY", ref_id)
 
 
@@ -2547,8 +2923,16 @@ def _build_generic_knowledge_graph_rows(
     summary = {
         "entity_count": len(entities),
         "relationship_count": len(relationships),
-        "document_count": len([entity for entity in entities if entity.get("type") in {"legal_document", "MunicipalCodeSection"}]),
-        "ontology_version": MUNICIPAL_ONTOLOGY_VERSION if corpus_key == "municipal_laws" else "generic-legal-document-kg-v1",
+        "document_count": len(
+            [
+                entity
+                for entity in entities
+                if entity.get("type") in {"legal_document", "MunicipalCodeSection"}
+            ]
+        ),
+        "ontology_version": MUNICIPAL_ONTOLOGY_VERSION
+        if corpus_key == "municipal_laws"
+        else "generic-legal-document-kg-v1",
         "ontology": _active_municipal_ontology() if corpus_key == "municipal_laws" else {},
         "entity_type_counts": entity_type_counts,
         "relationship_type_counts": relationship_type_counts,
@@ -2648,8 +3032,12 @@ def _audit_canonical_corpus_quality(
         source_id = str(row_dict.get("source_id") or "").strip()
         lowered_title = title.lower()
         lowered_text = text.lower()
-        title_penalties = sum(1 for token in _STATE_LAWS_TITLE_PENALTY_PATTERNS if token in lowered_title)
-        text_penalties = sum(1 for token in _STATE_LAWS_TEXT_PENALTY_PATTERNS if token in lowered_text)
+        title_penalties = sum(
+            1 for token in _STATE_LAWS_TITLE_PENALTY_PATTERNS if token in lowered_title
+        )
+        text_penalties = sum(
+            1 for token in _STATE_LAWS_TEXT_PENALTY_PATTERNS if token in lowered_text
+        )
         is_navigation_like = (title_penalties + text_penalties) > 0
         if is_navigation_like:
             navigation_like_count += 1
@@ -2751,7 +3139,11 @@ def _write_corpus_quality_recovery_manifest_draft(
         citation_text = f"{corpus_key} recovery"
 
     stamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-    manifest_dir = (artifact_base_dir / "source_recovery" / f"{stamp}_{corpus_key}_{(state_code or 'corpus').lower()}").resolve()
+    manifest_dir = (
+        artifact_base_dir
+        / "source_recovery"
+        / f"{stamp}_{corpus_key}_{(state_code or 'corpus').lower()}"
+    ).resolve()
     manifest_dir.mkdir(parents=True, exist_ok=True)
     manifest_path = manifest_dir / "recovery_manifest.json"
     payload = {
@@ -2843,12 +3235,22 @@ def _score_row_for_llm_knowledge_graph(
     line_count = combined.count("\n") + 1
     text_length = len(text)
     title_length = len(title)
-    score = float(text_length) + (signal_hits * 250.0) + (line_count * 25.0) + (title_length * 0.1) - (title_penalty_hits * 5000.0)
+    score = (
+        float(text_length)
+        + (signal_hits * 250.0)
+        + (line_count * 25.0)
+        + (title_length * 0.1)
+        - (title_penalty_hits * 5000.0)
+    )
 
     normalized_corpus = str(corpus_key or "").strip().lower()
     if normalized_corpus == "state_laws":
-        state_title_penalties = sum(1 for token in _STATE_LAWS_TITLE_PENALTY_PATTERNS if token in lowered_title)
-        state_text_penalties = sum(1 for token in _STATE_LAWS_TEXT_PENALTY_PATTERNS if token in lowered)
+        state_title_penalties = sum(
+            1 for token in _STATE_LAWS_TITLE_PENALTY_PATTERNS if token in lowered_title
+        )
+        state_text_penalties = sum(
+            1 for token in _STATE_LAWS_TEXT_PENALTY_PATTERNS if token in lowered
+        )
         identifier = str(row.get("identifier") or "").strip()
         source_id = str(row.get("source_id") or "").strip()
         if identifier:
@@ -2907,8 +3309,14 @@ def _merge_router_knowledge_graph_rows(
 
     entities = [dict(item) for item in list(base_entities or [])]
     relationships = [dict(item) for item in list(base_relationships or [])]
-    entity_ids = {str(item.get("id") or "").strip() for item in entities if str(item.get("id") or "").strip()}
-    relationship_ids = {str(item.get("id") or "").strip() for item in relationships if str(item.get("id") or "").strip()}
+    entity_ids = {
+        str(item.get("id") or "").strip() for item in entities if str(item.get("id") or "").strip()
+    }
+    relationship_ids = {
+        str(item.get("id") or "").strip()
+        for item in relationships
+        if str(item.get("id") or "").strip()
+    }
 
     llm_document_count = 0
     llm_entity_count = 0
@@ -2933,7 +3341,10 @@ def _merge_router_knowledge_graph_rows(
 
     def _normalize_entity(entity: Mapping[str, Any], *, document_id: str) -> Dict[str, Any]:
         raw_id = str(entity.get("id") or "").strip()
-        entity_id = raw_id or f"{document_id}:router_entity:{hashlib.sha256(canonical_json_bytes(entity)).hexdigest()[:16]}"
+        entity_id = (
+            raw_id
+            or f"{document_id}:router_entity:{hashlib.sha256(canonical_json_bytes(entity)).hexdigest()[:16]}"
+        )
         return {
             "id": entity_id,
             "type": str(entity.get("type") or "router_entity"),
@@ -2955,13 +3366,18 @@ def _merge_router_knowledge_graph_rows(
             ),
         }
 
-    def _normalize_relationship(rel: Mapping[str, Any], *, document_id: str) -> Optional[Dict[str, Any]]:
+    def _normalize_relationship(
+        rel: Mapping[str, Any], *, document_id: str
+    ) -> Optional[Dict[str, Any]]:
         source = str(rel.get("source") or "").strip()
         target = str(rel.get("target") or "").strip()
         rel_type = str(rel.get("type") or "RELATED_TO").strip() or "RELATED_TO"
         if not (source and target):
             return None
-        rel_id = str(rel.get("id") or "").strip() or f"{document_id}:router_rel:{source}:{rel_type}:{target}"
+        rel_id = (
+            str(rel.get("id") or "").strip()
+            or f"{document_id}:router_rel:{source}:{rel_type}:{target}"
+        )
         return {
             "id": rel_id,
             "source": source,
@@ -3076,22 +3492,26 @@ def _merge_router_knowledge_graph_rows(
             relationships.append(normalized_rel)
             llm_relationship_count += 1
 
-    return entities, relationships, {
-        "enabled": True,
-        "analyzed_document_count": llm_document_count,
-        "skipped_document_count": llm_skipped_count,
-        "entity_count": llm_entity_count,
-        "relationship_count": llm_relationship_count,
-        "missing_document_id_count": missing_document_id_count,
-        "missing_text_count": missing_text_count,
-        "no_analysis_count": no_analysis_count,
-        "providers": providers_used,
-        "model_names": models_used,
-        "max_rows": row_limit,
-        "max_chars": max(192, int(max_chars or 700)),
-        "sampled_rows": sampled_rows,
-        "failed_samples": failed_samples[:10],
-    }
+    return (
+        entities,
+        relationships,
+        {
+            "enabled": True,
+            "analyzed_document_count": llm_document_count,
+            "skipped_document_count": llm_skipped_count,
+            "entity_count": llm_entity_count,
+            "relationship_count": llm_relationship_count,
+            "missing_document_id_count": missing_document_id_count,
+            "missing_text_count": missing_text_count,
+            "no_analysis_count": no_analysis_count,
+            "providers": providers_used,
+            "model_names": models_used,
+            "max_rows": row_limit,
+            "max_chars": max(192, int(max_chars or 700)),
+            "sampled_rows": sampled_rows,
+            "failed_samples": failed_samples[:10],
+        },
+    )
 
 
 def _normalize_value_for_parquet(value: Any) -> Any:
@@ -3108,10 +3528,7 @@ def _normalize_rows_for_parquet(rows: Sequence[Mapping[str, Any]]) -> List[Dict[
     normalized_rows: List[Dict[str, Any]] = []
     for row in rows:
         normalized_rows.append(
-            {
-                str(key): _normalize_value_for_parquet(value)
-                for key, value in dict(row).items()
-            }
+            {str(key): _normalize_value_for_parquet(value) for key, value in dict(row).items()}
         )
     return normalized_rows
 
@@ -3188,9 +3605,13 @@ def _lexical_query_rows(
 
         con = duckdb.connect()
         try:
-            text_clause = "(" + " OR ".join(
-                f"lower(CAST({field} AS VARCHAR)) LIKE ?" for field in searchable_fields
-            ) + ")"
+            text_clause = (
+                "("
+                + " OR ".join(
+                    f"lower(CAST({field} AS VARCHAR)) LIKE ?" for field in searchable_fields
+                )
+                + ")"
+            )
             where_parts = [text_clause]
             params: List[Any] = [f"%{lowered_query}%"] * len(searchable_fields)
             if state_code and "state_code" in schema:
@@ -3203,14 +3624,20 @@ def _lexical_query_rows(
                 f"LIMIT {int(candidate_limit)}"
             )
             cursor = con.execute(sql, params)
-            rows = [dict(zip([col[0] for col in cursor.description], row)) for row in cursor.fetchall()]
+            rows = [
+                dict(zip([col[0] for col in cursor.description], row)) for row in cursor.fetchall()
+            ]
         finally:
             con.close()
     except Exception:
         candidate_rows = _load_rows_from_source(parquet_path)
         lowered_terms = [term for term in re.split(r"\s+", lowered_query) if term]
         for row in candidate_rows:
-            if state_code and str(row.get("state_code") or "").strip().upper() != str(state_code).strip().upper():
+            if (
+                state_code
+                and str(row.get("state_code") or "").strip().upper()
+                != str(state_code).strip().upper()
+            ):
                 continue
             haystack = "\n".join(
                 str(row.get(field) or "").lower()
@@ -3299,7 +3726,10 @@ def _semantic_query_rows(
     scored: List[Dict[str, Any]] = []
     normalized_state = _normalize_state_code(state_code)
     for row in embeddings_rows:
-        if normalized_state and str(row.get("state_code") or "").strip().upper() not in {"", normalized_state}:
+        if normalized_state and str(row.get("state_code") or "").strip().upper() not in {
+            "",
+            normalized_state,
+        }:
             continue
         join_value = str(row.get(join_field) or "")
         if not join_value:
@@ -3387,7 +3817,10 @@ def _faiss_query_rows(
         row = canonical_by_join.get(join_value)
         if not row:
             continue
-        if normalized_state and str(row.get("state_code") or "").strip().upper() not in {"", normalized_state}:
+        if normalized_state and str(row.get("state_code") or "").strip().upper() not in {
+            "",
+            normalized_state,
+        }:
             continue
         results.append(
             {
@@ -3432,12 +3865,17 @@ def build_canonical_corpus_semantic_index(
     semantic_texts: List[str] = []
     for row in rows:
         row_dict = dict(row)
-        if normalized_state and str(row_dict.get("state_code") or "").strip().upper() not in {"", normalized_state}:
+        if normalized_state and str(row_dict.get("state_code") or "").strip().upper() not in {
+            "",
+            normalized_state,
+        }:
             continue
         join_value = str(row_dict.get(join_field) or "").strip()
         if not join_value:
             continue
-        semantic_text = _build_semantic_text_for_row(row_dict, title_fields=title_fields, text_fields=text_fields)
+        semantic_text = _build_semantic_text_for_row(
+            row_dict, title_fields=title_fields, text_fields=text_fields
+        )
         if not semantic_text.strip():
             continue
         filtered_rows.append(row_dict)
@@ -3456,13 +3894,21 @@ def build_canonical_corpus_semantic_index(
     if not vectors:
         raise ValueError("Embedding generation returned no vectors")
 
-    embeddings_output = embeddings_output_path or _default_embeddings_output_path(canonical_parquet_path)
-    faiss_index_output = faiss_index_output_path or _default_faiss_output_path(canonical_parquet_path)
-    faiss_metadata_output = faiss_metadata_output_path or _default_faiss_metadata_output_path(canonical_parquet_path)
+    embeddings_output = embeddings_output_path or _default_embeddings_output_path(
+        canonical_parquet_path
+    )
+    faiss_index_output = faiss_index_output_path or _default_faiss_output_path(
+        canonical_parquet_path
+    )
+    faiss_metadata_output = faiss_metadata_output_path or _default_faiss_metadata_output_path(
+        canonical_parquet_path
+    )
 
     embedding_rows: List[Dict[str, Any]] = []
     faiss_rows: List[Dict[str, Any]] = []
-    for vector_id, (row, semantic_text, vector) in enumerate(zip(filtered_rows, semantic_texts, vectors)):
+    for vector_id, (row, semantic_text, vector) in enumerate(
+        zip(filtered_rows, semantic_texts, vectors)
+    ):
         emb_row: Dict[str, Any] = {
             join_field: row.get(join_field),
             "semantic_text": semantic_text,
@@ -3480,7 +3926,15 @@ def build_canonical_corpus_semantic_index(
             join_field: row.get(join_field),
             "semantic_text": semantic_text,
         }
-        for field in ("identifier", "name", "source_id", "agency", "legislation_type", "date_published", "state_code"):
+        for field in (
+            "identifier",
+            "name",
+            "source_id",
+            "agency",
+            "legislation_type",
+            "date_published",
+            "state_code",
+        ):
             if field in row:
                 faiss_row[field] = row.get(field)
         faiss_rows.append(faiss_row)
@@ -3500,7 +3954,9 @@ def build_canonical_corpus_semantic_index(
             elif hasattr(faiss, "IndexFlatL2"):
                 index = faiss.IndexFlatL2(len(vectors[0]))
             elif hasattr(faiss, "index_factory"):
-                index = faiss.index_factory(len(vectors[0]), "Flat", getattr(faiss, "METRIC_INNER_PRODUCT", 0))
+                index = faiss.index_factory(
+                    len(vectors[0]), "Flat", getattr(faiss, "METRIC_INNER_PRODUCT", 0)
+                )
             else:
                 raise RuntimeError("No usable faiss index constructor found")
 
@@ -3547,7 +4003,11 @@ def publish_canonical_corpus_semantic_index(
 ) -> CanonicalCorpusIndexPublishResult:
     from huggingface_hub import HfApi
 
-    payload = asdict(index_result) if isinstance(index_result, CanonicalCorpusIndexBuildResult) else dict(index_result)
+    payload = (
+        asdict(index_result)
+        if isinstance(index_result, CanonicalCorpusIndexBuildResult)
+        else dict(index_result)
+    )
     corpus_key = str(payload.get("corpus_key") or "").strip().lower()
     if corpus_key not in _CANONICAL_QUERY_DATASETS:
         raise KeyError(f"Unsupported canonical legal corpus: {corpus_key}")
@@ -3582,7 +4042,8 @@ def publish_canonical_corpus_semantic_index(
     if include_canonical_parquet:
         _upload(
             payload.get("canonical_parquet_path"),
-            canonical_repo_path or _first_remote_publish_path(
+            canonical_repo_path
+            or _first_remote_publish_path(
                 config,
                 key_files="parquet_files",
                 key_templates="parquet_templates",
@@ -3592,7 +4053,8 @@ def publish_canonical_corpus_semantic_index(
 
     _upload(
         payload.get("embeddings_parquet_path"),
-        embeddings_repo_path or _first_remote_publish_path(
+        embeddings_repo_path
+        or _first_remote_publish_path(
             config,
             key_files="publish_embeddings_files",
             key_templates="publish_embeddings_templates",
@@ -3601,7 +4063,8 @@ def publish_canonical_corpus_semantic_index(
     )
     _upload(
         payload.get("faiss_index_path"),
-        faiss_index_repo_path or _first_remote_publish_path(
+        faiss_index_repo_path
+        or _first_remote_publish_path(
             config,
             key_files="publish_faiss_index_files",
             key_templates="publish_faiss_index_templates",
@@ -3610,7 +4073,8 @@ def publish_canonical_corpus_semantic_index(
     )
     _upload(
         payload.get("faiss_metadata_path"),
-        faiss_metadata_repo_path or _first_remote_publish_path(
+        faiss_metadata_repo_path
+        or _first_remote_publish_path(
             config,
             key_files="publish_faiss_metadata_files",
             key_templates="publish_faiss_metadata_templates",
@@ -3627,13 +4091,19 @@ def publish_canonical_corpus_semantic_index(
     )
 
 
-def canonical_corpus_artifact_build_result_to_dict(result: CanonicalCorpusArtifactBuildResult) -> Dict[str, Any]:
+def canonical_corpus_artifact_build_result_to_dict(
+    result: CanonicalCorpusArtifactBuildResult,
+) -> Dict[str, Any]:
     return asdict(result)
 
 
-def justicedao_library_rebuild_result_to_dict(result: JusticeDAOLibraryRebuildResult) -> Dict[str, Any]:
+def justicedao_library_rebuild_result_to_dict(
+    result: JusticeDAOLibraryRebuildResult,
+) -> Dict[str, Any]:
     return {
-        "artifact_results": [canonical_corpus_artifact_build_result_to_dict(item) for item in result.artifact_results],
+        "artifact_results": [
+            canonical_corpus_artifact_build_result_to_dict(item) for item in result.artifact_results
+        ],
         "errors": [dict(item) for item in result.errors],
         "success_count": result.success_count,
         "failure_count": result.failure_count,
@@ -3724,8 +4194,12 @@ def _build_eu_rebuild_recommendations(
                 label=str(payload.get("label") or country_code),
                 status=status,
                 reason=reason,
-                canonical_corpus_keys=[str(item) for item in list(payload.get("canonical_corpus_keys") or [])],
-                existing_dataset_ids=[str(item) for item in list(payload.get("existing_dataset_ids") or [])],
+                canonical_corpus_keys=[
+                    str(item) for item in list(payload.get("canonical_corpus_keys") or [])
+                ],
+                existing_dataset_ids=[
+                    str(item) for item in list(payload.get("existing_dataset_ids") or [])
+                ],
                 proposed_corpus_key=str(payload.get("proposed_corpus_key") or "").strip() or None,
                 proposed_dataset_id=str(payload.get("proposed_dataset_id") or "").strip() or None,
             )
@@ -3748,7 +4222,7 @@ def _build_rebuild_batches(
     items = list(targets)
     if batch_size <= 0:
         return [items] if items else []
-    return [items[index:index + batch_size] for index in range(0, len(items), batch_size)]
+    return [items[index : index + batch_size] for index in range(0, len(items), batch_size)]
 
 
 def build_justicedao_rebuild_plan(
@@ -3802,13 +4276,16 @@ def build_justicedao_rebuild_plan(
             continue
         count = 0
         candidate_states = sorted(selected_states) if selected_states else [None]
-        if any("{state}" in str(template) for template in list(config.get("parquet_templates") or [])):
+        if any(
+            "{state}" in str(template) for template in list(config.get("parquet_templates") or [])
+        ):
             for candidate_state in candidate_states:
                 if candidate_state is None and selected_states:
                     continue
                 parquet_path = _select_repo_file(
                     parquet_files,
-                    preferred_paths=list(config.get("parquet_files") or []) + list(config.get("parquet_templates") or []),
+                    preferred_paths=list(config.get("parquet_files") or [])
+                    + list(config.get("parquet_templates") or []),
                     fallback_patterns=list(config.get("parquet_fallback_patterns") or []),
                     state_code=candidate_state,
                 )
@@ -3832,7 +4309,8 @@ def build_justicedao_rebuild_plan(
         else:
             parquet_path = _select_repo_file(
                 parquet_files,
-                preferred_paths=list(config.get("parquet_files") or []) + list(config.get("parquet_templates") or []),
+                preferred_paths=list(config.get("parquet_files") or [])
+                + list(config.get("parquet_templates") or []),
                 fallback_patterns=list(config.get("parquet_fallback_patterns") or []),
                 state_code=None,
             )
@@ -3850,7 +4328,9 @@ def build_justicedao_rebuild_plan(
                     )
     targets.sort(key=lambda item: (item.corpus_key, item.state_code or "", item.parquet_path))
     include_eu_recommendations = corpus_keys is None
-    recommendations = _build_eu_rebuild_recommendations(active_profiles) if include_eu_recommendations else []
+    recommendations = (
+        _build_eu_rebuild_recommendations(active_profiles) if include_eu_recommendations else []
+    )
     return JusticeDAORebuildPlan(
         targets=targets,
         batches=_build_rebuild_batches(targets, batch_size=batch_size),
@@ -3916,27 +4396,43 @@ def build_canonical_corpus_artifacts(
     filtered_rows: List[Dict[str, Any]] = []
     for row in original_rows:
         row_dict = dict(row)
-        if normalized_state and str(row_dict.get("state_code") or "").strip().upper() not in {"", normalized_state}:
+        if normalized_state and str(row_dict.get("state_code") or "").strip().upper() not in {
+            "",
+            normalized_state,
+        }:
             continue
         filtered_rows.append(row_dict)
     if not filtered_rows:
         raise ValueError("No canonical rows were available for artifact rebuild")
 
-    normalized_rows, filled_join_values = _ensure_join_field_rows(filtered_rows, join_field=join_field)
+    normalized_rows, filled_join_values = _ensure_join_field_rows(
+        filtered_rows, join_field=join_field
+    )
     effective_canonical_path = str(canonical_parquet_path)
     if _is_hf_cache_snapshot_path(effective_canonical_path):
-        effective_canonical_path = str((artifact_base_dir / Path(canonical_parquet_path).name).resolve())
-    if rewrite_canonical_parquet and (filled_join_values > 0 or effective_canonical_path != str(canonical_parquet_path)):
+        effective_canonical_path = str(
+            (artifact_base_dir / Path(canonical_parquet_path).name).resolve()
+        )
+    if rewrite_canonical_parquet and (
+        filled_join_values > 0 or effective_canonical_path != str(canonical_parquet_path)
+    ):
         pq.write_table(pa.Table.from_pylist(normalized_rows), effective_canonical_path)
 
-    cid_index_path = cid_index_output_path or _artifact_output_path(artifact_base_dir, effective_canonical_path, "cid_index.parquet")
-    bm25_path = bm25_output_path or _artifact_output_path(artifact_base_dir, effective_canonical_path, "bm25.parquet")
-    kg_entities_path = knowledge_graph_entities_output_path or _artifact_output_path(artifact_base_dir, effective_canonical_path, "knowledge_graph_entities.parquet")
-    kg_relationships_path = (
-        knowledge_graph_relationships_output_path
-        or _artifact_output_path(artifact_base_dir, effective_canonical_path, "knowledge_graph_relationships.parquet")
+    cid_index_path = cid_index_output_path or _artifact_output_path(
+        artifact_base_dir, effective_canonical_path, "cid_index.parquet"
     )
-    kg_summary_path = knowledge_graph_summary_output_path or _artifact_output_path(artifact_base_dir, effective_canonical_path, "knowledge_graph_summary.json")
+    bm25_path = bm25_output_path or _artifact_output_path(
+        artifact_base_dir, effective_canonical_path, "bm25.parquet"
+    )
+    kg_entities_path = knowledge_graph_entities_output_path or _artifact_output_path(
+        artifact_base_dir, effective_canonical_path, "knowledge_graph_entities.parquet"
+    )
+    kg_relationships_path = knowledge_graph_relationships_output_path or _artifact_output_path(
+        artifact_base_dir, effective_canonical_path, "knowledge_graph_relationships.parquet"
+    )
+    kg_summary_path = knowledge_graph_summary_output_path or _artifact_output_path(
+        artifact_base_dir, effective_canonical_path, "knowledge_graph_summary.json"
+    )
 
     Path(cid_index_path).parent.mkdir(parents=True, exist_ok=True)
     Path(bm25_path).parent.mkdir(parents=True, exist_ok=True)
@@ -3947,7 +4443,9 @@ def build_canonical_corpus_artifacts(
     cid_index_rows = _build_cid_index_rows(normalized_rows, join_field=join_field, config=config)
     pq.write_table(pa.Table.from_pylist(cid_index_rows), cid_index_path)
 
-    bm25_rows = _build_bm25_rows(normalized_rows, join_field=join_field, title_fields=title_fields, text_fields=text_fields)
+    bm25_rows = _build_bm25_rows(
+        normalized_rows, join_field=join_field, title_fields=title_fields, text_fields=text_fields
+    )
     pq.write_table(pa.Table.from_pylist(bm25_rows), bm25_path)
 
     kg_entities, kg_relationships, kg_summary = _build_generic_knowledge_graph_rows(
@@ -4016,8 +4514,12 @@ def build_canonical_corpus_artifacts(
         "corpus_quality": dict(corpus_quality_summary),
     }
     pq.write_table(pa.Table.from_pylist(_normalize_rows_for_parquet(kg_entities)), kg_entities_path)
-    pq.write_table(pa.Table.from_pylist(_normalize_rows_for_parquet(kg_relationships)), kg_relationships_path)
-    Path(kg_summary_path).write_text(json.dumps(kg_summary, indent=2, sort_keys=True), encoding="utf-8")
+    pq.write_table(
+        pa.Table.from_pylist(_normalize_rows_for_parquet(kg_relationships)), kg_relationships_path
+    )
+    Path(kg_summary_path).write_text(
+        json.dumps(kg_summary, indent=2, sort_keys=True), encoding="utf-8"
+    )
 
     semantic_index: Optional[CanonicalCorpusIndexBuildResult] = None
     if build_semantic_index:
@@ -4025,9 +4527,16 @@ def build_canonical_corpus_artifacts(
             normalized_corpus,
             canonical_parquet_path=effective_canonical_path,
             state_code=normalized_state,
-            embeddings_output_path=embeddings_output_path or _artifact_output_path(artifact_base_dir, effective_canonical_path, "embeddings.parquet"),
-            faiss_index_output_path=faiss_index_output_path or _artifact_output_path(artifact_base_dir, effective_canonical_path, ".faiss"),
-            faiss_metadata_output_path=faiss_metadata_output_path or _artifact_output_path(artifact_base_dir, effective_canonical_path, "faiss_metadata.parquet"),
+            embeddings_output_path=embeddings_output_path
+            or _artifact_output_path(
+                artifact_base_dir, effective_canonical_path, "embeddings.parquet"
+            ),
+            faiss_index_output_path=faiss_index_output_path
+            or _artifact_output_path(artifact_base_dir, effective_canonical_path, ".faiss"),
+            faiss_metadata_output_path=faiss_metadata_output_path
+            or _artifact_output_path(
+                artifact_base_dir, effective_canonical_path, "faiss_metadata.parquet"
+            ),
             provider=provider,
             model_name=model_name,
             device=device,
@@ -4045,9 +4554,24 @@ def build_canonical_corpus_artifacts(
         for artifact_name, local_path, files_key, templates_key in (
             ("cid_index", cid_index_path, "publish_cid_index_files", "publish_cid_index_templates"),
             ("bm25", bm25_path, "publish_bm25_files", "publish_bm25_templates"),
-            ("kg_entities", kg_entities_path, "publish_kg_entities_files", "publish_kg_entities_templates"),
-            ("kg_relationships", kg_relationships_path, "publish_kg_relationships_files", "publish_kg_relationships_templates"),
-            ("kg_summary", kg_summary_path, "publish_kg_summary_files", "publish_kg_summary_templates"),
+            (
+                "kg_entities",
+                kg_entities_path,
+                "publish_kg_entities_files",
+                "publish_kg_entities_templates",
+            ),
+            (
+                "kg_relationships",
+                kg_relationships_path,
+                "publish_kg_relationships_files",
+                "publish_kg_relationships_templates",
+            ),
+            (
+                "kg_summary",
+                kg_summary_path,
+                "publish_kg_summary_files",
+                "publish_kg_summary_templates",
+            ),
         ):
             repo_path = _first_remote_publish_path(
                 config,
@@ -4102,7 +4626,9 @@ def build_canonical_corpus_artifacts(
         recovery_manifest_draft=recovery_manifest_draft,
         recovery_execution=recovery_execution,
         llm_knowledge_graph_summary=llm_kg_summary,
-        semantic_index=canonical_corpus_index_build_result_to_dict(semantic_index) if semantic_index is not None else None,
+        semantic_index=canonical_corpus_index_build_result_to_dict(semantic_index)
+        if semantic_index is not None
+        else None,
         publish_result=publish_payload,
     )
 
@@ -4137,7 +4663,11 @@ def rebuild_justicedao_dataset_library(
         for item in (corpus_keys or list(_CANONICAL_QUERY_DATASETS.keys()))
         if str(item).strip()
     ]
-    normalized_states = [_normalize_state_code(item) for item in list(state_codes or []) if _normalize_state_code(item)]
+    normalized_states = [
+        _normalize_state_code(item)
+        for item in list(state_codes or [])
+        if _normalize_state_code(item)
+    ]
     errors: List[Dict[str, Any]] = []
     artifact_results: List[CanonicalCorpusArtifactBuildResult] = []
     override_map = _canonical_only_overrides(parquet_file_overrides)
@@ -4151,15 +4681,26 @@ def rebuild_justicedao_dataset_library(
             source_refs: List[tuple[str, Optional[str]]] = []
             override_value = override_map.get(corpus_key)
             if override_value is not None:
-                override_items = [str(override_value)] if isinstance(override_value, str) else [str(item) for item in override_value]
+                override_items = (
+                    [str(override_value)]
+                    if isinstance(override_value, str)
+                    else [str(item) for item in override_value]
+                )
                 for path in override_items:
                     if not _is_canonical_parquet_candidate(path):
                         continue
                     match = re.search(r"STATE-([A-Z]{2})", path.upper())
-                    source_refs.append((path, _normalize_state_code(match.group(1)) if match else None))
+                    source_refs.append(
+                        (path, _normalize_state_code(match.group(1)) if match else None)
+                    )
             else:
                 if not allow_hf_download:
-                    errors.append({"corpus_key": corpus_key, "error": "no_local_overrides_and_hf_download_disabled"})
+                    errors.append(
+                        {
+                            "corpus_key": corpus_key,
+                            "error": "no_local_overrides_and_hf_download_disabled",
+                        }
+                    )
                     continue
                 repo_files = _list_repo_files_cached(str(config["dataset_id"]))
                 candidate_states = normalized_states or [None]
@@ -4169,12 +4710,18 @@ def rebuild_justicedao_dataset_library(
                         corpus_key=corpus_key,
                         dataset_id=str(config["dataset_id"]),
                         kind="parquet",
-                        preferred_paths=list(config.get("parquet_files") or []) + list(config.get("parquet_templates") or []),
+                        preferred_paths=list(config.get("parquet_files") or [])
+                        + list(config.get("parquet_templates") or []),
                         fallback_patterns=list(config.get("parquet_fallback_patterns") or []),
                         state_code=candidate_state,
                     )
                     if parquet_path:
-                        source_refs.append((_download_hf_dataset_file(str(config["dataset_id"]), parquet_path), candidate_state))
+                        source_refs.append(
+                            (
+                                _download_hf_dataset_file(str(config["dataset_id"]), parquet_path),
+                                candidate_state,
+                            )
+                        )
             deduped_source_refs: List[tuple[str, Optional[str]]] = []
             seen_sources: set[str] = set()
             for source_ref, candidate_state in source_refs:
@@ -4238,15 +4785,16 @@ def query_canonical_legal_corpus(
 
     resolver_parquet_overrides = _canonical_only_overrides(parquet_file_overrides)
     override_value = (parquet_file_overrides or {}).get(normalized_corpus)
-    override_items = [str(override_value)] if isinstance(override_value, str) else [str(item) for item in list(override_value or [])]
-    prefer_override_search = (
-        active_mode == "auto"
-        and any(
-            item.endswith("_embeddings.parquet")
-            or item.endswith("_metadata.parquet")
-            or item.endswith(".faiss")
-            for item in override_items
-        )
+    override_items = (
+        [str(override_value)]
+        if isinstance(override_value, str)
+        else [str(item) for item in list(override_value or [])]
+    )
+    prefer_override_search = active_mode == "auto" and any(
+        item.endswith("_embeddings.parquet")
+        or item.endswith("_metadata.parquet")
+        or item.endswith(".faiss")
+        for item in override_items
     )
 
     extracted_links = []
@@ -4267,7 +4815,9 @@ def query_canonical_legal_corpus(
                 corpus_key=normalized_corpus,
                 dataset_id=dataset_id,
                 legal_branch=_canonical_metadata_for_dataset(dataset_id).get("legal_branch"),
-                country_codes=list(_canonical_metadata_for_dataset(dataset_id).get("country_codes") or []),
+                country_codes=list(
+                    _canonical_metadata_for_dataset(dataset_id).get("country_codes") or []
+                ),
                 mode="exact",
                 query_text=query_text,
                 state_code=normalized_state,
@@ -4297,7 +4847,11 @@ def query_canonical_legal_corpus(
     faiss_index_path: Optional[str] = None
     faiss_metadata_path: Optional[str] = None
     if override_value:
-        override_items = [str(override_value)] if isinstance(override_value, str) else [str(item) for item in override_value]
+        override_items = (
+            [str(override_value)]
+            if isinstance(override_value, str)
+            else [str(item) for item in override_value]
+        )
         parquet_candidates = [
             item
             for item in override_items
@@ -4305,9 +4859,13 @@ def query_canonical_legal_corpus(
             and not item.endswith("_metadata.parquet")
             and not item.endswith(".faiss")
         ]
-        embedding_candidates = [item for item in override_items if item.endswith("_embeddings.parquet")]
+        embedding_candidates = [
+            item for item in override_items if item.endswith("_embeddings.parquet")
+        ]
         faiss_index_candidates = [item for item in override_items if item.endswith(".faiss")]
-        faiss_metadata_candidates = [item for item in override_items if item.endswith("_metadata.parquet")]
+        faiss_metadata_candidates = [
+            item for item in override_items if item.endswith("_metadata.parquet")
+        ]
         parquet_path = parquet_candidates[0] if parquet_candidates else None
         embeddings_path = embedding_candidates[0] if embedding_candidates else None
         faiss_index_path = faiss_index_candidates[0] if faiss_index_candidates else None
@@ -4320,20 +4878,26 @@ def query_canonical_legal_corpus(
                 corpus_key=normalized_corpus,
                 dataset_id=dataset_id,
                 legal_branch=_canonical_metadata_for_dataset(dataset_id).get("legal_branch"),
-                country_codes=list(_canonical_metadata_for_dataset(dataset_id).get("country_codes") or []),
+                country_codes=list(
+                    _canonical_metadata_for_dataset(dataset_id).get("country_codes") or []
+                ),
                 mode=active_mode,
                 query_text=query_text,
                 state_code=normalized_state,
                 citation_links=extracted_links,
                 results=[],
-                notes=[f"No local override was provided and HF dataset access is unavailable: {exc}"],
+                notes=[
+                    f"No local override was provided and HF dataset access is unavailable: {exc}"
+                ],
             )
         selected_parquet = _resolve_remote_repo_file(
             repo_files,
             corpus_key=normalized_corpus,
             dataset_id=dataset_id,
             kind="parquet",
-            preferred_paths=list(config.get("parquet_files") or config.get("parquet_templates") or []),
+            preferred_paths=list(
+                config.get("parquet_files") or config.get("parquet_templates") or []
+            ),
             fallback_patterns=list(config.get("parquet_fallback_patterns") or []),
             state_code=normalized_state,
         )
@@ -4344,7 +4908,9 @@ def query_canonical_legal_corpus(
             corpus_key=normalized_corpus,
             dataset_id=dataset_id,
             kind="embeddings",
-            preferred_paths=list(config.get("embedding_files") or config.get("embedding_templates") or []),
+            preferred_paths=list(
+                config.get("embedding_files") or config.get("embedding_templates") or []
+            ),
             fallback_patterns=list(config.get("embedding_fallback_patterns") or []),
             state_code=normalized_state,
         )
@@ -4378,7 +4944,9 @@ def query_canonical_legal_corpus(
             corpus_key=normalized_corpus,
             dataset_id=dataset_id,
             legal_branch=_canonical_metadata_for_dataset(dataset_id).get("legal_branch"),
-            country_codes=list(_canonical_metadata_for_dataset(dataset_id).get("country_codes") or []),
+            country_codes=list(
+                _canonical_metadata_for_dataset(dataset_id).get("country_codes") or []
+            ),
             mode=active_mode,
             query_text=query_text,
             state_code=normalized_state,
@@ -4391,7 +4959,10 @@ def query_canonical_legal_corpus(
     text_fields = list(config["text_fields"])
     join_field = str(config["join_field"])
 
-    if active_mode in {"auto", "exact"} and _canonical_metadata_for_dataset(dataset_id).get("legal_branch") == "eu":
+    if (
+        active_mode in {"auto", "exact"}
+        and _canonical_metadata_for_dataset(dataset_id).get("legal_branch") == "eu"
+    ):
         eu_citation_links, eu_exact_results = _exact_eu_query_rows(
             parquet_path,
             query_text=query_text,
@@ -4404,7 +4975,9 @@ def query_canonical_legal_corpus(
                 corpus_key=normalized_corpus,
                 dataset_id=dataset_id,
                 legal_branch=_canonical_metadata_for_dataset(dataset_id).get("legal_branch"),
-                country_codes=list(_canonical_metadata_for_dataset(dataset_id).get("country_codes") or []),
+                country_codes=list(
+                    _canonical_metadata_for_dataset(dataset_id).get("country_codes") or []
+                ),
                 mode="exact",
                 query_text=query_text,
                 state_code=normalized_state,
@@ -4412,7 +4985,9 @@ def query_canonical_legal_corpus(
                 embeddings_file=None,
                 citation_links=eu_citation_links,
                 results=eu_exact_results,
-                notes=["Resolved with EU citation bridge identifiers before semantic or lexical search."],
+                notes=[
+                    "Resolved with EU citation bridge identifiers before semantic or lexical search."
+                ],
             )
 
     if active_mode in {"semantic", "auto"} and faiss_index_path and faiss_metadata_path:
@@ -4439,7 +5014,9 @@ def query_canonical_legal_corpus(
                 results=faiss_results,
                 notes=["Resolved with FAISS index sidecar and metadata parquet."],
             )
-        notes.append("FAISS query path found no ranked rows; falling back to embeddings or lexical search.")
+        notes.append(
+            "FAISS query path found no ranked rows; falling back to embeddings or lexical search."
+        )
 
     if active_mode in {"semantic", "auto"} and embeddings_path:
         semantic_results = _semantic_query_rows(
@@ -4457,7 +5034,9 @@ def query_canonical_legal_corpus(
                 corpus_key=normalized_corpus,
                 dataset_id=dataset_id,
                 legal_branch=_canonical_metadata_for_dataset(dataset_id).get("legal_branch"),
-                country_codes=list(_canonical_metadata_for_dataset(dataset_id).get("country_codes") or []),
+                country_codes=list(
+                    _canonical_metadata_for_dataset(dataset_id).get("country_codes") or []
+                ),
                 mode="semantic",
                 query_text=query_text,
                 state_code=normalized_state,
@@ -4465,7 +5044,9 @@ def query_canonical_legal_corpus(
                 embeddings_file=embeddings_path,
                 citation_links=extracted_links,
                 results=semantic_results,
-                notes=["Resolved with embeddings parquet and embeddings_router-compatible query embedding."],
+                notes=[
+                    "Resolved with embeddings parquet and embeddings_router-compatible query embedding."
+                ],
             )
         notes.append("Semantic query path found no ranked rows; falling back to lexical search.")
 
@@ -4563,11 +5144,16 @@ def _row_matches_eu_citation(row: Dict[str, Any], citation: Any) -> bool:
         if compact_value and compact_value in compact_terms:
             return True
         if normalized_value and any(
-            term and (term in normalized_value or normalized_value in term) for term in normalized_terms
+            term and (term in normalized_value or normalized_value in term)
+            for term in normalized_terms
         ):
             return True
         if normalized_value and any(
-            term and (_contains_ordered_tokens(normalized_value, term) or _contains_ordered_tokens(term, normalized_value))
+            term
+            and (
+                _contains_ordered_tokens(normalized_value, term)
+                or _contains_ordered_tokens(term, normalized_value)
+            )
             for term in normalized_terms
         ):
             return True
@@ -4608,20 +5194,31 @@ def _exact_eu_query_rows(
             source_cid = str(row.get(join_field) or row.get("source_cid") or row.get("cid") or "")
             citation_links.append(
                 {
-                    "citation_text": str(getattr(citation, "raw_text", "") or getattr(citation, "normalized_text", "") or ""),
+                    "citation_text": str(
+                        getattr(citation, "raw_text", "")
+                        or getattr(citation, "normalized_text", "")
+                        or ""
+                    ),
                     "citation_type": f"eu_{str(getattr(citation, 'scheme', 'identifier')).strip().lower()}",
-                    "normalized_citation": str(getattr(citation, "normalized_text", "") or "").strip(),
+                    "normalized_citation": str(
+                        getattr(citation, "normalized_text", "") or ""
+                    ).strip(),
                     "matched": True,
                     "corpus_key": None,
                     "dataset_id": None,
                     "matched_field": "eu_identifier",
                     "confidence": 1.0,
-                    "source_document_id": str(row.get("law_identifier") or row.get("identifier") or ""),
+                    "source_document_id": str(
+                        row.get("law_identifier") or row.get("identifier") or ""
+                    ),
                     "source_title": _row_title(row, title_fields),
                     "source_url": str(row.get("source_url") or ""),
                     "source_cid": source_cid,
                     "source_ref": parquet_path,
-                    "metadata": {"row": dict(row), "canonical_uri": getattr(citation, "canonical_uri", None)},
+                    "metadata": {
+                        "row": dict(row),
+                        "canonical_uri": getattr(citation, "canonical_uri", None),
+                    },
                 }
             )
             results.append(
@@ -4713,7 +5310,9 @@ def _resolve_local_or_hf_sources(
         try:
             from huggingface_hub import hf_hub_download
 
-            local = hf_hub_download(repo_id=profile.dataset_id, repo_type="dataset", filename=candidate)
+            local = hf_hub_download(
+                repo_id=profile.dataset_id, repo_type="dataset", filename=candidate
+            )
             resolved.append(str(Path(local).resolve()))
         except Exception:
             continue
@@ -4760,6 +5359,7 @@ def _notes_union(*groups: Sequence[str]) -> List[str]:
             if text and text not in notes:
                 notes.append(text)
     return notes
+
 
 def _eu_query_text(citation: Any) -> str:
     raw_text = str(getattr(citation, "raw_text", "") or "").strip()
@@ -4811,7 +5411,9 @@ def _match_from_canonical_query(
     )
 
 
-def _row_matches_citation(row: Dict[str, Any], citation: Citation, strategy: BluebookQueryStrategy) -> bool:
+def _row_matches_citation(
+    row: Dict[str, Any], citation: Citation, strategy: BluebookQueryStrategy
+) -> bool:
     terms = _citation_match_terms(citation)
     normalized_terms = {_normalize_text(term) for term in terms if term}
     compact_terms = {_compact_alnum(term) for term in terms if term}
@@ -4855,8 +5457,13 @@ def execute_justicedao_bluebook_query_plan(
     parquet_file_overrides: Optional[Dict[str, Sequence[str] | str]] = None,
     max_rows_per_dataset: int = 5,
 ) -> BluebookDatasetExecutionResult:
-    active_profiles = {profile.dataset_id: profile for profile in list(profiles or inspect_justicedao_datasets(dataset_prefix=""))}
-    canonical_overrides = _translate_overrides_to_canonical_keys(active_profiles, parquet_file_overrides)
+    active_profiles = {
+        profile.dataset_id: profile
+        for profile in list(profiles or inspect_justicedao_datasets(dataset_prefix=""))
+    }
+    canonical_overrides = _translate_overrides_to_canonical_keys(
+        active_profiles, parquet_file_overrides
+    )
     extractor = CitationExtractor()
     extracted = extractor.extract_citations(plan.input_text)
     citation_map = {(citation.text, citation.type): citation for citation in extracted}
@@ -4946,7 +5553,9 @@ def execute_justicedao_legal_citation_query_plan(
     )
 
 
-def bluebook_dataset_execution_result_to_dict(result: BluebookDatasetExecutionResult) -> Dict[str, Any]:
+def bluebook_dataset_execution_result_to_dict(
+    result: BluebookDatasetExecutionResult,
+) -> Dict[str, Any]:
     return {
         "input_text": result.input_text,
         "citations": [dict(item) for item in result.citations],
@@ -4979,5 +5588,7 @@ def bluebook_dataset_execution_result_to_dict(result: BluebookDatasetExecutionRe
     }
 
 
-def legal_citation_dataset_execution_result_to_dict(result: BluebookDatasetExecutionResult) -> Dict[str, Any]:
+def legal_citation_dataset_execution_result_to_dict(
+    result: BluebookDatasetExecutionResult,
+) -> Dict[str, Any]:
     return bluebook_dataset_execution_result_to_dict(result)

@@ -122,18 +122,14 @@ def build_provekit_proof_cache_key_from_proof(
     backend_id = str(meta.get("backend") or "provekit")
     circuit_ref = str(pub.get("circuit_ref") or "")
     hash_backend = str(
-        meta.get("hash_backend")
-        or (meta.get("provekit") or {}).get("hash_backend")
-        or "sha256"
+        meta.get("hash_backend") or (meta.get("provekit") or {}).get("hash_backend") or "sha256"
     )
     ruleset_id = str(pub.get("ruleset_id") or "")
 
     if provekit_commit is None:
         provekit_nested = meta.get("provekit") or {}
         provekit_commit = str(
-            provekit_nested.get("provekit_commit")
-            or meta.get("provekit_commit")
-            or ""
+            provekit_nested.get("provekit_commit") or meta.get("provekit_commit") or ""
         )
 
     return build_provekit_proof_cache_key(
@@ -232,9 +228,7 @@ def _validate_non_empty(name: str, value: object) -> None:
 
 def _validate_sha256_hex(name: str, value: object) -> None:
     if not isinstance(value, str) or len(value) != 64:
-        raise ValueError(
-            f"{name} must be a 64-character lowercase hex string, got {value!r}"
-        )
+        raise ValueError(f"{name} must be a 64-character lowercase hex string, got {value!r}")
     if value.lower() != value:
         raise ValueError(f"{name} must be lowercase hex")
     try:

@@ -41,16 +41,16 @@ from ipfs_datasets_py.utils.github_cli import GitHubCLI
 
 # Initialize with caching enabled (default)
 cli = GitHubCLI(
-    enable_cache=True,      # Enable caching (default: True)
-    cache_maxsize=100,      # Max cache entries (default: 100)
-    cache_ttl=300           # TTL in seconds (default: 300)
+    enable_cache=True,  # Enable caching (default: True)
+    cache_maxsize=100,  # Max cache entries (default: 100)
+    cache_ttl=300,  # TTL in seconds (default: 300)
 )
 
 # First call - executes command
-result1 = cli.execute(['repo', 'list'])
+result1 = cli.execute(["repo", "list"])
 
 # Second call - returns cached result
-result2 = cli.execute(['repo', 'list'])
+result2 = cli.execute(["repo", "list"])
 
 # Get cache statistics
 stats = cli.get_cache_stats()
@@ -67,7 +67,7 @@ from ipfs_datasets_py.utils.copilot_cli import CopilotCLI
 copilot = CopilotCLI(
     enable_cache=True,
     cache_maxsize=100,
-    cache_ttl=600           # 10 minutes for AI responses
+    cache_ttl=600,  # 10 minutes for AI responses
 )
 
 # First explanation - calls API
@@ -87,7 +87,7 @@ fresh_result = copilot.explain_code("print('hello')", use_cache=False)
 cli = GitHubCLI(enable_cache=False)
 
 # Or bypass cache for specific calls
-result = cli.execute(['repo', 'list'], use_cache=False)
+result = cli.execute(["repo", "list"], use_cache=False)
 ```
 
 ### Cache Management
@@ -111,7 +111,7 @@ cli.clear_cache()
 # Shorter TTL, smaller cache for rapid iteration
 cli = GitHubCLI(
     cache_maxsize=50,
-    cache_ttl=60  # 1 minute
+    cache_ttl=60,  # 1 minute
 )
 ```
 
@@ -120,7 +120,7 @@ cli = GitHubCLI(
 # Larger cache, longer TTL for efficiency
 cli = GitHubCLI(
     cache_maxsize=200,
-    cache_ttl=600  # 10 minutes
+    cache_ttl=600,  # 10 minutes
 )
 ```
 
@@ -161,10 +161,12 @@ from ipfs_datasets_py.utils.query_cache import QueryCache, cached_query
 
 cache = QueryCache(maxsize=50, ttl=60)
 
+
 @cached_query(cache)
 def expensive_operation(param1, param2):
     # Expensive API call or computation
     return result
+
 
 # First call - executes function
 result1 = expensive_operation("a", "b")
@@ -232,10 +234,12 @@ import threading
 
 cli = GitHubCLI(enable_cache=True)
 
+
 def worker(thread_id):
     for i in range(10):
-        result = cli.execute(['repo', 'list'])
+        result = cli.execute(["repo", "list"])
         print(f"Thread {thread_id}: {result}")
+
 
 # Safe concurrent access
 threads = [threading.Thread(target=worker, args=(i,)) for i in range(5)]
@@ -304,7 +308,7 @@ If cache hit rate is low, consider:
 ```python
 # Monitor hit rate
 stats = cli.get_cache_stats()
-if stats['hit_rate'] < 0.3:
+if stats["hit_rate"] < 0.3:
     print("Consider increasing cache_ttl or cache_maxsize")
 ```
 
@@ -318,8 +322,8 @@ If memory usage is a concern:
 ```python
 # Lightweight cache configuration
 cli = GitHubCLI(
-    cache_maxsize=20,   # Smaller cache
-    cache_ttl=120       # Shorter TTL
+    cache_maxsize=20,  # Smaller cache
+    cache_ttl=120,  # Shorter TTL
 )
 ```
 

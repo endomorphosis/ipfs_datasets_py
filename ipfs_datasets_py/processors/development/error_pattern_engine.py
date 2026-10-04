@@ -3,6 +3,7 @@ Error Pattern Detection Engine — canonical package module.
 
 Business logic extracted from mcp_server/tools/software_engineering_tools/error_pattern_detector.py.
 """
+
 from __future__ import annotations
 
 import logging
@@ -116,12 +117,14 @@ def detect_error_patterns(
 
         for pattern_name, count in pattern_counts.items():
             if count >= min_occurrences:
-                result["patterns"].append({
-                    "pattern": pattern_name,
-                    "occurrences": count,
-                    "percentage": round(count / len(error_logs) * 100, 2),
-                    "examples": pattern_examples.get(pattern_name, []),
-                })
+                result["patterns"].append(
+                    {
+                        "pattern": pattern_name,
+                        "occurrences": count,
+                        "percentage": round(count / len(error_logs) * 100, 2),
+                        "examples": pattern_examples.get(pattern_name, []),
+                    }
+                )
 
         result["patterns"].sort(key=lambda x: x["occurrences"], reverse=True)
         result["most_common"] = result["patterns"][:5]
@@ -165,7 +168,15 @@ def suggest_fixes(error_pattern: str) -> Dict[str, Any]:
     try:
         fixes = _FIX_LIBRARY.get(
             error_pattern,
-            {"fixes": [{"action": "Manual investigation required", "code_example": "N/A", "priority": "medium"}]},
+            {
+                "fixes": [
+                    {
+                        "action": "Manual investigation required",
+                        "code_example": "N/A",
+                        "priority": "medium",
+                    }
+                ]
+            },
         )
         return {"success": True, "pattern": error_pattern, **fixes}
     except Exception as e:

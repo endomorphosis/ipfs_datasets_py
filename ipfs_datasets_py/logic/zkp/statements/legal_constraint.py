@@ -88,50 +88,34 @@ def _sha256_digest(data: bytes) -> str:
 
 def _require_text(value: Any, field_name: str) -> str:
     if not isinstance(value, str) or not value.strip() or value != value.strip():
-        raise LegalConstraintZKPError(
-            f"{field_name} must be a non-empty trimmed string"
-        )
+        raise LegalConstraintZKPError(f"{field_name} must be a non-empty trimmed string")
     return value
 
 
 def _require_digest(value: Any, field_name: str) -> str:
     digest = _require_text(value, field_name)
     if not digest.startswith(_DIGEST_PREFIX):
-        raise LegalConstraintZKPError(
-            f"{field_name} must be a sha256:<hex> digest"
-        )
+        raise LegalConstraintZKPError(f"{field_name} must be a sha256:<hex> digest")
     hex_part = digest[len(_DIGEST_PREFIX) :]
     if len(hex_part) != 64:
-        raise LegalConstraintZKPError(
-            f"{field_name} must be a sha256:<64-hex> digest"
-        )
+        raise LegalConstraintZKPError(f"{field_name} must be a sha256:<64-hex> digest")
     try:
         int(hex_part, 16)
     except ValueError as exc:
-        raise LegalConstraintZKPError(
-            f"{field_name} must be a sha256:<hex> digest"
-        ) from exc
+        raise LegalConstraintZKPError(f"{field_name} must be a sha256:<hex> digest") from exc
     if hex_part != hex_part.lower():
-        raise LegalConstraintZKPError(
-            f"{field_name} digest hex must be lowercase"
-        )
+        raise LegalConstraintZKPError(f"{field_name} digest hex must be lowercase")
     return digest
 
 
 def _require_profile(value: Any) -> str:
     profile = _require_text(value, "profile")
     if profile[0] not in "abcdefghijklmnopqrstuvwxyz":
-        raise LegalConstraintZKPError(
-            "profile must start with a lowercase letter"
-        )
+        raise LegalConstraintZKPError("profile must start with a lowercase letter")
     if any(ch not in _PROFILE_ALLOWED for ch in profile):
-        raise LegalConstraintZKPError(
-            "profile must be a lowercase hyphenated identifier"
-        )
+        raise LegalConstraintZKPError("profile must be a lowercase hyphenated identifier")
     if "--" in profile or profile.endswith("-"):
-        raise LegalConstraintZKPError(
-            "profile must be a lowercase hyphenated identifier"
-        )
+        raise LegalConstraintZKPError("profile must be a lowercase hyphenated identifier")
     return profile
 
 
@@ -140,17 +124,11 @@ def _require_jurisdiction(value: Any) -> str:
         return ""
     jurisdiction = _require_text(value, "jurisdiction")
     if jurisdiction[0] not in "abcdefghijklmnopqrstuvwxyz":
-        raise LegalConstraintZKPError(
-            "jurisdiction must start with a lowercase letter"
-        )
+        raise LegalConstraintZKPError("jurisdiction must start with a lowercase letter")
     if any(ch not in _PROFILE_ALLOWED for ch in jurisdiction):
-        raise LegalConstraintZKPError(
-            "jurisdiction must be a lowercase hyphenated identifier"
-        )
+        raise LegalConstraintZKPError("jurisdiction must be a lowercase hyphenated identifier")
     if "--" in jurisdiction or jurisdiction.endswith("-"):
-        raise LegalConstraintZKPError(
-            "jurisdiction must be a lowercase hyphenated identifier"
-        )
+        raise LegalConstraintZKPError("jurisdiction must be a lowercase hyphenated identifier")
     return jurisdiction
 
 
@@ -173,9 +151,7 @@ def _json_ready(value: Any) -> Any:
     to_dict = getattr(value, "to_dict", None)
     if callable(to_dict):
         return _json_ready(to_dict())
-    raise LegalConstraintZKPError(
-        f"value of type {type(value).__name__} is not JSON-serializable"
-    )
+    raise LegalConstraintZKPError(f"value of type {type(value).__name__} is not JSON-serializable")
 
 
 def compute_constraint_digest(payload: Any) -> str:
@@ -224,9 +200,7 @@ class LegalConstraintStatement:
             _require_digest(self.source_digest, "source_digest"),
         )
         object.__setattr__(self, "profile", _require_profile(self.profile))
-        object.__setattr__(
-            self, "jurisdiction", _require_jurisdiction(self.jurisdiction)
-        )
+        object.__setattr__(self, "jurisdiction", _require_jurisdiction(self.jurisdiction))
         if self.artifact_cid is None:
             object.__setattr__(self, "artifact_cid", "")
         elif not isinstance(self.artifact_cid, str):
@@ -234,14 +208,11 @@ class LegalConstraintStatement:
         else:
             object.__setattr__(self, "artifact_cid", self.artifact_cid.strip())
 
-        if not isinstance(self.circuit_version, int) or isinstance(
-            self.circuit_version, bool
-        ):
+        if not isinstance(self.circuit_version, int) or isinstance(self.circuit_version, bool):
             raise LegalConstraintZKPError("circuit_version must be an int")
         if self.circuit_version != LEGAL_CONSTRAINT_CIRCUIT_VERSION:
             raise LegalConstraintZKPError(
-                f"unsupported legal_constraint circuit_version: "
-                f"{self.circuit_version!r}"
+                f"unsupported legal_constraint circuit_version: {self.circuit_version!r}"
             )
         ruleset = _require_text(self.ruleset_id, "ruleset_id")
         object.__setattr__(self, "ruleset_id", ruleset)
@@ -288,12 +259,8 @@ class LegalConstraintStatement:
             profile=str(mapping.get("profile", "")),
             jurisdiction=str(mapping.get("jurisdiction", "") or ""),
             artifact_cid=str(mapping.get("artifact_cid", "") or ""),
-            circuit_version=int(
-                mapping.get("circuit_version", LEGAL_CONSTRAINT_CIRCUIT_VERSION)
-            ),
-            ruleset_id=str(
-                mapping.get("ruleset_id", LEGAL_CONSTRAINT_RULESET_ID)
-            ),
+            circuit_version=int(mapping.get("circuit_version", LEGAL_CONSTRAINT_CIRCUIT_VERSION)),
+            ruleset_id=str(mapping.get("ruleset_id", LEGAL_CONSTRAINT_RULESET_ID)),
         )
 
 
@@ -345,9 +312,7 @@ class LegalConstraintAttestation:
 
     def __post_init__(self) -> None:
         if not isinstance(self.statement, LegalConstraintStatement):
-            raise LegalConstraintZKPError(
-                "statement must be a LegalConstraintStatement"
-            )
+            raise LegalConstraintZKPError("statement must be a LegalConstraintStatement")
         if not isinstance(self.proof_data, (bytes, bytearray)):
             raise LegalConstraintZKPError("proof_data must be bytes")
         object.__setattr__(self, "proof_data", bytes(self.proof_data))
@@ -367,12 +332,8 @@ class LegalConstraintAttestation:
             _require_digest(self.statement_digest, "statement_digest"),
         )
         if self.interface != LEGAL_CONSTRAINT_ZKP_INTERFACE:
-            raise LegalConstraintZKPError(
-                f"unsupported interface: {self.interface!r}"
-            )
-        if not isinstance(self.timestamp, (int, float)) or isinstance(
-            self.timestamp, bool
-        ):
+            raise LegalConstraintZKPError(f"unsupported interface: {self.interface!r}")
+        if not isinstance(self.timestamp, (int, float)) or isinstance(self.timestamp, bool):
             raise LegalConstraintZKPError("timestamp must be a number")
 
     @property
@@ -414,9 +375,7 @@ class LegalConstraintAttestation:
             try:
                 proof_data = bytes.fromhex(proof_raw)
             except ValueError as exc:
-                raise LegalConstraintZKPError(
-                    "proof_data must be hex-encoded bytes"
-                ) from exc
+                raise LegalConstraintZKPError("proof_data must be hex-encoded bytes") from exc
         else:
             raise LegalConstraintZKPError("proof_data must be hex or bytes")
         return cls(
@@ -424,15 +383,11 @@ class LegalConstraintAttestation:
                 _as_mapping(mapping.get("statement"), "statement")
             ),
             proof_data=proof_data,
-            public_inputs=_as_mapping(
-                mapping.get("public_inputs"), "public_inputs"
-            ),
+            public_inputs=_as_mapping(mapping.get("public_inputs"), "public_inputs"),
             metadata=_as_mapping(mapping.get("metadata"), "metadata"),
             statement_digest=str(mapping.get("statement_digest", "")),
             timestamp=float(mapping.get("timestamp", 0.0)),
-            interface=str(
-                mapping.get("interface", LEGAL_CONSTRAINT_ZKP_INTERFACE)
-            ),
+            interface=str(mapping.get("interface", LEGAL_CONSTRAINT_ZKP_INTERFACE)),
         )
 
 
@@ -496,11 +451,7 @@ def _proof_core(
     seed: bytes | None = None,
 ) -> bytes:
     material = (
-        LEGAL_CONSTRAINT_PROOF_DOMAIN
-        + b"|"
-        + _digest_raw(statement_digest)
-        + b"|"
-        + trapdoor
+        LEGAL_CONSTRAINT_PROOF_DOMAIN + b"|" + _digest_raw(statement_digest) + b"|" + trapdoor
     )
     if seed:
         material = material + b"|" + seed
@@ -518,26 +469,16 @@ def _simulate_proof_bytes(
     statement_digest = statement.statement_digest()
     statement_raw = _digest_raw(statement_digest)
     constraint_raw = _digest_raw(statement.constraint_digest)
-    proof_hash = _proof_core(
-        statement_digest=statement_digest, trapdoor=trapdoor, seed=seed
-    )
+    proof_hash = _proof_core(statement_digest=statement_digest, trapdoor=trapdoor, seed=seed)
     # Layout (160 bytes):
     # [0:8]     magic
     # [8:40]    proof_hash
     # [40:72]   statement_digest raw
     # [72:104]  constraint_digest raw
     # [104:160] deterministic padding from proof_hash/trapdoor
-    pad_seed = hashlib.sha256(
-        b"LCZKP_PAD_V1" + proof_hash + trapdoor + statement_raw
-    ).digest()
+    pad_seed = hashlib.sha256(b"LCZKP_PAD_V1" + proof_hash + trapdoor + statement_raw).digest()
     padding = (pad_seed * 3)[:56]
-    proof = (
-        LEGAL_CONSTRAINT_PROOF_MAGIC
-        + proof_hash
-        + statement_raw
-        + constraint_raw
-        + padding
-    )
+    proof = LEGAL_CONSTRAINT_PROOF_MAGIC + proof_hash + statement_raw + constraint_raw + padding
     if len(proof) != LEGAL_CONSTRAINT_PROOF_BYTE_LENGTH:
         raise LegalConstraintZKPError("internal: simulated proof length mismatch")
     return proof
@@ -574,24 +515,16 @@ def prove_legal_constraint_attestation(
     """
 
     if not isinstance(statement, LegalConstraintStatement):
-        raise LegalConstraintZKPError(
-            "statement must be a LegalConstraintStatement"
-        )
+        raise LegalConstraintZKPError("statement must be a LegalConstraintStatement")
     if not isinstance(witness, LegalConstraintWitness):
-        raise LegalConstraintZKPError(
-            "witness must be a LegalConstraintWitness"
-        )
+        raise LegalConstraintZKPError("witness must be a LegalConstraintWitness")
     if not witness.binds_statement(statement):
-        raise LegalConstraintZKPError(
-            "witness does not open statement.constraint_digest"
-        )
+        raise LegalConstraintZKPError("witness does not open statement.constraint_digest")
 
     backend_id = str(backend or "simulated").strip().lower() or "simulated"
     simulated = is_simulated_backend(backend_id)
     if backend_id not in _SIMULATED_BACKENDS and backend_id not in _PRODUCTION_BACKENDS:
-        raise LegalConstraintZKPError(
-            f"unsupported legal-constraint ZKP backend: {backend_id!r}"
-        )
+        raise LegalConstraintZKPError(f"unsupported legal-constraint ZKP backend: {backend_id!r}")
     if not simulated:
         # Production backends are not wired for this circuit yet; fail closed
         # rather than minting a mislabeled simulated proof.
@@ -619,9 +552,7 @@ def prove_legal_constraint_attestation(
         raise LegalConstraintZKPError("seed must be bytes, str, or None")
 
     trapdoor = _witness_trapdoor(witness)
-    proof_data = _simulate_proof_bytes(
-        statement=statement, trapdoor=trapdoor, seed=seed_bytes
-    )
+    proof_data = _simulate_proof_bytes(statement=statement, trapdoor=trapdoor, seed=seed_bytes)
     public_inputs = statement.to_public_inputs()
     statement_digest = statement.statement_digest()
     metadata: dict[str, Any] = {
@@ -742,9 +673,10 @@ def verify_legal_constraint_attestation(
         if att.metadata.get("is_simulated") is False:
             return False
         proof_system = str(att.metadata.get("proof_system") or "").lower()
-        if "simulated" not in proof_system and "simulation" not in str(
-            att.metadata.get("security") or ""
-        ).lower():
+        if (
+            "simulated" not in proof_system
+            and "simulation" not in str(att.metadata.get("security") or "").lower()
+        ):
             # Accept only when either proof_system or security marks simulation.
             if "sim" not in backend:
                 return False
@@ -802,9 +734,7 @@ def prove_and_verify(
 ) -> tuple[LegalConstraintAttestation, bool]:
     """Convenience: prove then verify the same statement (honest path)."""
 
-    attestation = prove_legal_constraint_attestation(
-        statement, witness, backend=backend, seed=seed
-    )
+    attestation = prove_legal_constraint_attestation(statement, witness, backend=backend, seed=seed)
     return attestation, verify_legal_constraint_attestation(
         attestation, expected_statement=statement
     )

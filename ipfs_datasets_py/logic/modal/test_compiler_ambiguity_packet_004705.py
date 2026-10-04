@@ -171,9 +171,7 @@ def test_compiler_preserves_packet_004705_refined_registry_pairs() -> None:
         expected_direction,
         expected_severity,
     ) in evidence_cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="spacy")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
         ranking = _mock_ranking(
             predicted_family=predicted_family,
             target_family=target_family,
@@ -204,6 +202,5 @@ def test_compiler_preserves_packet_004705_refined_registry_pairs() -> None:
         assert ambiguity.metadata.get("adaptive_margin_direction") == expected_direction
         assert ambiguity.severity == expected_severity
         assert (
-            abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - expected_margin)
-            <= 1e-12
+            abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - expected_margin) <= 1e-12
         )

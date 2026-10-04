@@ -11,26 +11,38 @@ import datetime
 import logging
 from typing import Dict, List, Any, Optional, Union, Callable
 
-from ipfs_datasets_py.audit.audit_logger import (
-    AuditLogger, AuditEvent, AuditCategory, AuditLevel
-)
+from ipfs_datasets_py.audit.audit_logger import AuditLogger, AuditEvent, AuditCategory, AuditLevel
 from ipfs_datasets_py.audit.compliance import (
-    ComplianceStandard, ComplianceReport, ComplianceReporter,
-    GDPRComplianceReporter, HIPAAComplianceReporter, SOC2ComplianceReporter
+    ComplianceStandard,
+    ComplianceReport,
+    ComplianceReporter,
+    GDPRComplianceReporter,
+    HIPAAComplianceReporter,
+    SOC2ComplianceReporter,
 )
 from ipfs_datasets_py.audit.integration import (
-    AuditProvenanceIntegrator, IntegratedComplianceReporter,
-    ProvenanceAuditSearchIntegrator, generate_integrated_compliance_report,
-    AuditDatasetIntegrator, AuditContextManager
+    AuditProvenanceIntegrator,
+    IntegratedComplianceReporter,
+    ProvenanceAuditSearchIntegrator,
+    generate_integrated_compliance_report,
+    AuditDatasetIntegrator,
+    AuditContextManager,
 )
 
 # Try to import provenance module for integration
 try:
     from ipfs_datasets_py.data_provenance_enhanced import (
-        EnhancedProvenanceManager, ProvenanceContext,
-        SourceRecord, TransformationRecord, VerificationRecord, AnnotationRecord,
-        ModelTrainingRecord, ModelInferenceRecord, IPLDProvenanceStorage
+        EnhancedProvenanceManager,
+        ProvenanceContext,
+        SourceRecord,
+        TransformationRecord,
+        VerificationRecord,
+        AnnotationRecord,
+        ModelTrainingRecord,
+        ModelInferenceRecord,
+        IPLDProvenanceStorage,
     )
+
     PROVENANCE_MODULE_AVAILABLE = True
 except ImportError:
     PROVENANCE_MODULE_AVAILABLE = False
@@ -67,8 +79,7 @@ def setup_audit_provenance_integration():
 
     # Create and set up the integrator
     integrator = AuditProvenanceIntegrator(
-        audit_logger=audit_logger,
-        provenance_manager=provenance_manager
+        audit_logger=audit_logger, provenance_manager=provenance_manager
     )
 
     # Set up bidirectional event listeners
@@ -100,10 +111,7 @@ def example_dataset_processing_with_provenance():
     print("\n--- Example: Dataset Loading ---")
     # Log dataset loading in audit log
     load_event_id = dataset_integrator.record_dataset_load(
-        dataset_name=dataset_name,
-        dataset_id="ds123",
-        source="s3",
-        user="example_user"
+        dataset_name=dataset_name, dataset_id="ds123", source="s3", user="example_user"
     )
     print(f"Recorded dataset load in audit log (event_id: {load_event_id})")
 
@@ -115,11 +123,7 @@ def example_dataset_processing_with_provenance():
             source_id="ds123",
             source_type="dataset",
             source_uri=source_uri,
-            metadata={
-                "format": "parquet",
-                "size_bytes": 1024000,
-                "audit_event_id": load_event_id
-            }
+            metadata={"format": "parquet", "size_bytes": 1024000, "audit_event_id": load_event_id},
         )
         print(f"Created provenance source record (record_id: {source_record_id})")
 
@@ -130,11 +134,8 @@ def example_dataset_processing_with_provenance():
         input_dataset="ds123",
         output_dataset="ds123_processed",
         transformation_type="normalize",
-        parameters={
-            "columns": ["col1", "col2"],
-            "method": "min_max_scaling"
-        },
-        user="example_user"
+        parameters={"columns": ["col1", "col2"], "method": "min_max_scaling"},
+        user="example_user",
     )
     print(f"Recorded dataset transformation in audit log (event_id: {transform_event_id})")
 
@@ -145,13 +146,8 @@ def example_dataset_processing_with_provenance():
             input_ids=["ds123"],
             output_id="ds123_processed",
             transformation_type="normalize",
-            parameters={
-                "columns": ["col1", "col2"],
-                "method": "min_max_scaling"
-            },
-            metadata={
-                "audit_event_id": transform_event_id
-            }
+            parameters={"columns": ["col1", "col2"], "method": "min_max_scaling"},
+            metadata={"audit_event_id": transform_event_id},
         )
         print(f"Created provenance transformation record (record_id: {transform_record_id})")
 
@@ -163,7 +159,7 @@ def example_dataset_processing_with_provenance():
         dataset_id="ds123_processed",
         destination="ipfs",
         format="car",
-        user="example_user"
+        user="example_user",
     )
     print(f"Recorded dataset save in audit log (event_id: {save_event_id})")
 
@@ -175,18 +171,18 @@ def example_dataset_processing_with_provenance():
         action="process_dataset",
         resource_id="ds123_processed",
         resource_type="dataset",
-        details={
-            "operation": "validate",
-            "validation_rules": ["no_nulls", "range_check"]
-        }
+        details={"operation": "validate", "validation_rules": ["no_nulls", "range_check"]},
     ):
         # Simulate processing
         print("Processing dataset...")
         import time
+
         time.sleep(1)  # Simulate work
         print("Dataset processing complete.")
 
-    print("Context manager automatically logged start and completion events with timing information.")
+    print(
+        "Context manager automatically logged start and completion events with timing information."
+    )
 
     # Example 5: Cross-document lineage analysis
     if PROVENANCE_MODULE_AVAILABLE and provenance_manager:
@@ -194,25 +190,30 @@ def example_dataset_processing_with_provenance():
         try:
             # Get record IDs for analysis
             record_ids = ["ds123", "ds123_processed"]
-            if hasattr(provenance_manager, 'storage') and isinstance(provenance_manager.storage, IPLDProvenanceStorage):
+            if hasattr(provenance_manager, "storage") and isinstance(
+                provenance_manager.storage, IPLDProvenanceStorage
+            ):
                 # Build lineage graph
                 lineage_graph = provenance_manager.storage.build_cross_document_lineage_graph(
-                    record_ids=record_ids,
-                    max_depth=2
+                    record_ids=record_ids, max_depth=2
                 )
 
                 # Analyze lineage
                 analysis = provenance_manager.storage.analyze_cross_document_lineage(lineage_graph)
 
-                print(f"Created lineage graph with {analysis.get('node_count', 0)} nodes and "
-                     f"{analysis.get('edge_count', 0)} edges.")
+                print(
+                    f"Created lineage graph with {analysis.get('node_count', 0)} nodes and "
+                    f"{analysis.get('edge_count', 0)} edges."
+                )
 
-                if 'critical_paths' in analysis:
+                if "critical_paths" in analysis:
                     print(f"Identified {len(analysis['critical_paths'])} critical data flow paths.")
 
-                if 'hub_records' in analysis:
-                    print(f"Identified {len(analysis['hub_records'])} key hub records that "
-                         f"multiple data flows pass through.")
+                if "hub_records" in analysis:
+                    print(
+                        f"Identified {len(analysis['hub_records'])} key hub records that "
+                        f"multiple data flows pass through."
+                    )
             else:
                 print("IPLDProvenanceStorage not available for lineage analysis.")
         except Exception as e:
@@ -222,8 +223,12 @@ def example_dataset_processing_with_provenance():
         "load_event_id": load_event_id,
         "transform_event_id": transform_event_id,
         "save_event_id": save_event_id,
-        "source_record_id": source_record_id if PROVENANCE_MODULE_AVAILABLE and provenance_manager else None,
-        "transform_record_id": transform_record_id if PROVENANCE_MODULE_AVAILABLE and provenance_manager else None
+        "source_record_id": source_record_id
+        if PROVENANCE_MODULE_AVAILABLE and provenance_manager
+        else None,
+        "transform_record_id": transform_record_id
+        if PROVENANCE_MODULE_AVAILABLE and provenance_manager
+        else None,
     }
 
 
@@ -242,7 +247,7 @@ def example_generate_compliance_report():
         standard_name="GDPR",
         start_time=(datetime.datetime.now() - datetime.timedelta(days=30)).isoformat(),
         end_time=datetime.datetime.now().isoformat(),
-        output_format="json"
+        output_format="json",
     )
 
     # For brevity, we'll just show that it was generated
@@ -257,9 +262,7 @@ def example_generate_compliance_report():
     report_path = os.path.join(os.getcwd(), "hipaa_compliance_report.html")
     try:
         hipaa_report = generate_integrated_compliance_report(
-            standard_name="HIPAA",
-            output_format="html",
-            output_path=report_path
+            standard_name="HIPAA", output_format="html", output_path=report_path
         )
         print(f"Generated HIPAA compliance report at: {report_path}")
     except Exception as e:
@@ -275,33 +278,38 @@ def example_generate_compliance_report():
         reporter = IntegratedComplianceReporter(
             standard=ComplianceStandard.SOC2,
             audit_logger=audit_logger,
-            provenance_manager=provenance_manager
+            provenance_manager=provenance_manager,
         )
 
         # Add custom SOC2 requirements
-        reporter.add_requirement(ComplianceRequirement(
-            id="SOC2-Custom1",
-            standard=ComplianceStandard.SOC2,
-            description="Data integrity across processing pipeline",
-            audit_categories=[AuditCategory.DATA_MODIFICATION, AuditCategory.PROVENANCE],
-            actions=["transform", "process", "data_transformation"]
-        ))
+        reporter.add_requirement(
+            ComplianceRequirement(
+                id="SOC2-Custom1",
+                standard=ComplianceStandard.SOC2,
+                description="Data integrity across processing pipeline",
+                audit_categories=[AuditCategory.DATA_MODIFICATION, AuditCategory.PROVENANCE],
+                actions=["transform", "process", "data_transformation"],
+            )
+        )
 
-        reporter.add_requirement(ComplianceRequirement(
-            id="SOC2-Custom2",
-            standard=ComplianceStandard.SOC2,
-            description="Complete audit trail of data access",
-            audit_categories=[AuditCategory.DATA_ACCESS],
-            actions=["read", "query", "export", "data_source_access"]
-        ))
+        reporter.add_requirement(
+            ComplianceRequirement(
+                id="SOC2-Custom2",
+                standard=ComplianceStandard.SOC2,
+                description="Complete audit trail of data access",
+                audit_categories=[AuditCategory.DATA_ACCESS],
+                actions=["read", "query", "export", "data_source_access"],
+            )
+        )
 
         # Generate the report
         report = reporter.generate_report(
-            include_cross_document_analysis=True,
-            include_lineage_metrics=True
+            include_cross_document_analysis=True, include_lineage_metrics=True
         )
 
-        print(f"Generated custom SOC2 compliance report checking {len(report.requirements)} requirements.")
+        print(
+            f"Generated custom SOC2 compliance report checking {len(report.requirements)} requirements."
+        )
         print(f"Overall compliance status: {'Compliant' if report.compliant else 'Non-Compliant'}")
 
         # Show summary statistics
@@ -335,8 +343,7 @@ def example_integrated_search():
 
     # Create search integrator
     search = ProvenanceAuditSearchIntegrator(
-        audit_logger=audit_logger,
-        provenance_manager=provenance_manager
+        audit_logger=audit_logger, provenance_manager=provenance_manager
     )
 
     # Example 1: Search by time range and resource type
@@ -344,16 +351,13 @@ def example_integrated_search():
     query1 = {
         "timerange": {
             "start": (datetime.datetime.now() - datetime.timedelta(days=7)).isoformat(),
-            "end": datetime.datetime.now().isoformat()
+            "end": datetime.datetime.now().isoformat(),
         },
-        "resource_type": "dataset"
+        "resource_type": "dataset",
     }
 
     results1 = search.search(
-        query=query1,
-        include_audit=True,
-        include_provenance=True,
-        correlation_mode="auto"
+        query=query1, include_audit=True, include_provenance=True, correlation_mode="auto"
     )
 
     print(f"Found {results1.get('audit_count', 0)} audit events")
@@ -362,15 +366,9 @@ def example_integrated_search():
 
     # Example 2: Search for a specific resource ID
     print("\n2. Search for a Specific Resource ID")
-    query2 = {
-        "resource_id": "ds123_processed"
-    }
+    query2 = {"resource_id": "ds123_processed"}
 
-    results2 = search.search(
-        query=query2,
-        include_audit=True,
-        include_provenance=True
-    )
+    results2 = search.search(query=query2, include_audit=True, include_provenance=True)
 
     print(f"Found {results2.get('audit_count', 0)} audit events")
     print(f"Found {results2.get('provenance_count', 0)} provenance records")
@@ -378,20 +376,20 @@ def example_integrated_search():
 
     # Example 3: Search with explicit correlations only
     print("\n3. Search with Explicit Correlations Only")
-    query3 = {
-        "action": "transform"
-    }
+    query3 = {"action": "transform"}
 
     results3 = search.search(
         query=query3,
         include_audit=True,
         include_provenance=True,
-        correlation_mode="linked"  # Only show explicitly linked records
+        correlation_mode="linked",  # Only show explicitly linked records
     )
 
     print(f"Found {results3.get('audit_count', 0)} audit events")
     print(f"Found {results3.get('provenance_count', 0)} provenance records")
-    print(f"Established {results3.get('correlation_count', 0)} explicit correlations between records")
+    print(
+        f"Established {results3.get('correlation_count', 0)} explicit correlations between records"
+    )
 
 
 def example_cross_document_audit_search():
@@ -409,8 +407,7 @@ def example_cross_document_audit_search():
 
     # Create search integrator
     search = ProvenanceAuditSearchIntegrator(
-        audit_logger=audit_logger,
-        provenance_manager=provenance_manager
+        audit_logger=audit_logger, provenance_manager=provenance_manager
     )
 
     # Example 1: Cross-document search starting from a specific document
@@ -428,11 +425,7 @@ def example_cross_document_audit_search():
             source_id=doc1_id,
             source_type="dataset",
             source_uri="s3://example-bucket/document_1.csv",
-            metadata={
-                "document_id": doc1_id,
-                "format": "csv",
-                "size_bytes": 1024000
-            }
+            metadata={"document_id": doc1_id, "format": "csv", "size_bytes": 1024000},
         )
 
         # Create records for document 2 with relationship to document 1
@@ -444,8 +437,8 @@ def example_cross_document_audit_search():
             metadata={
                 "document_id": doc2_id,
                 "cross_document": True,
-                "relationship_type": "derived_from"
-            }
+                "relationship_type": "derived_from",
+            },
         )
 
         # Create records for document 3 with relationship to document 2
@@ -457,8 +450,8 @@ def example_cross_document_audit_search():
             metadata={
                 "document_id": doc3_id,
                 "cross_document": True,
-                "relationship_type": "exported_from"
-            }
+                "relationship_type": "exported_from",
+            },
         )
 
         print(f"Created test documents and records for demonstration")
@@ -471,7 +464,7 @@ def example_cross_document_audit_search():
         query1 = {
             "document_id": doc1_id,
             "max_depth": 3,
-            "link_types": ["derived_from", "exported_from", "processes"]
+            "link_types": ["derived_from", "exported_from", "processes"],
         }
 
         results1 = search.search(
@@ -479,11 +472,15 @@ def example_cross_document_audit_search():
             include_audit=True,
             include_provenance=True,
             correlation_mode="auto",
-            include_cross_document=True  # Enable cross-document search
+            include_cross_document=True,  # Enable cross-document search
         )
 
-        print(f"Found {results1.get('provenance_count', 0)} provenance records across document boundaries")
-        print(f"Documents involved: {len(results1.get('cross_document_analysis', {}).get('documents', []))}")
+        print(
+            f"Found {results1.get('provenance_count', 0)} provenance records across document boundaries"
+        )
+        print(
+            f"Documents involved: {len(results1.get('cross_document_analysis', {}).get('documents', []))}"
+        )
 
         if "cross_document_analysis" in results1:
             analysis = results1["cross_document_analysis"]
@@ -501,35 +498,39 @@ def example_cross_document_audit_search():
         query2 = {
             "document_id": doc1_id,
             "max_depth": 3,
-            "link_types": ["contains_pii", "processes_pii", "anonymizes"]  # Focus on PII-related links
+            "link_types": [
+                "contains_pii",
+                "processes_pii",
+                "anonymizes",
+            ],  # Focus on PII-related links
         }
 
         results2 = search.search(
-            query=query2,
-            include_audit=True,
-            include_provenance=True,
-            include_cross_document=True
+            query=query2, include_audit=True, include_provenance=True, include_cross_document=True
         )
 
-        print(f"Found {results2.get('provenance_count', 0)} provenance records with compliance-focused link types")
+        print(
+            f"Found {results2.get('provenance_count', 0)} provenance records with compliance-focused link types"
+        )
 
         # Example 3: Search with document boundary analysis
         print("\n3. Document Boundary Analysis")
         # Generate a compliance report that includes cross-document analysis
-        if hasattr(provenance_manager, 'storage') and hasattr(provenance_manager.storage, 'build_cross_document_lineage_graph'):
+        if hasattr(provenance_manager, "storage") and hasattr(
+            provenance_manager.storage, "build_cross_document_lineage_graph"
+        ):
             from ipfs_datasets_py.audit.compliance import ComplianceStandard
             from ipfs_datasets_py.audit.integration import IntegratedComplianceReporter
 
             reporter = IntegratedComplianceReporter(
                 standard=ComplianceStandard.GDPR,
                 audit_logger=audit_logger,
-                provenance_manager=provenance_manager
+                provenance_manager=provenance_manager,
             )
 
             # Generate report with cross-document analysis
             report = reporter.generate_report(
-                include_cross_document_analysis=True,
-                include_lineage_metrics=True
+                include_cross_document_analysis=True, include_lineage_metrics=True
             )
 
             print("Generated compliance report with cross-document lineage analysis")
@@ -539,7 +540,9 @@ def example_cross_document_audit_search():
                 if "document_boundaries" in lineage_info:
                     boundaries = lineage_info["document_boundaries"]
                     print(f"- Boundary count: {boundaries.get('count', 0)}")
-                    print(f"- Cross-boundary flows: {boundaries.get('cross_boundary_flow_count', 0)}")
+                    print(
+                        f"- Cross-boundary flows: {boundaries.get('cross_boundary_flow_count', 0)}"
+                    )
 
                 if "provenance_insights" in report.details:
                     print("\nCompliance insights from cross-document analysis:")
@@ -551,8 +554,9 @@ def example_cross_document_audit_search():
 
 if __name__ == "__main__":
     # Configure basic logging
-    logging.basicConfig(level=logging.INFO,
-                      format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
 
     print("=== Integrated Audit and Provenance System Examples ===\n")
 

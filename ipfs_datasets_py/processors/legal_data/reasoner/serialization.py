@@ -26,9 +26,22 @@ try:
     )
 except ImportError:
     from municipal_scrape_workspace.hybrid_legal_ir import (  # type: ignore[no-redef]
-        ActionFrame, Atom, CanonicalId, Condition, DeonticOp, Entity,
-        EventFrame, FrameKind, LegalIR, Norm, Query, Rule, StateFrame,
-        TemporalConstraint, TemporalExpr, TemporalRelation,
+        ActionFrame,
+        Atom,
+        CanonicalId,
+        Condition,
+        DeonticOp,
+        Entity,
+        EventFrame,
+        FrameKind,
+        LegalIR,
+        Norm,
+        Query,
+        Rule,
+        StateFrame,
+        TemporalConstraint,
+        TemporalExpr,
+        TemporalRelation,
     )
 
 from .models import (
@@ -66,7 +79,9 @@ V3_SCHEMA_ERROR_CODES: Dict[str, str] = {
 def deterministic_v3_canonical_id(namespace: str, parts: List[str]) -> str:
     ns = str(namespace or "").strip().lower()
     if ns not in V3_ID_NAMESPACES:
-        raise ValueError(f"invalid_namespace:{ns}: code={V3_SCHEMA_ERROR_CODES['invalid_namespace']}")
+        raise ValueError(
+            f"invalid_namespace:{ns}: code={V3_SCHEMA_ERROR_CODES['invalid_namespace']}"
+        )
     normalized_parts = [str(p).strip().lower() for p in parts]
     payload = "|".join(normalized_parts)
     digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
@@ -124,9 +139,10 @@ def map_v2_payload_to_v3(payload: Dict[str, Any]) -> Dict[str, Any]:
         "frames": _normalize_id_table(frames, "frm"),
         "temporals": _normalize_id_table(temporals, "tmp"),
         "norms": _normalize_id_table(norms, "nrm"),
-        "definitions": _normalize_id_table({
-            k: v for k, v in rules.items() if str((v or {}).get("mode") or "") == "definition"
-        }, "rul"),
+        "definitions": _normalize_id_table(
+            {k: v for k, v in rules.items() if str((v or {}).get("mode") or "") == "definition"},
+            "rul",
+        ),
         "sources": v3_sources,
     }
     return v3
@@ -155,7 +171,9 @@ def validate_v3_ir_payload(payload: Dict[str, Any], *, strict: bool = True) -> D
 
     def _check_table(table: Dict[str, Any], namespace: str, kind: str) -> None:
         for key, item in table.items():
-            ref = _normalize_ref((item or {}).get("id") if isinstance(item, dict) else None, namespace, str(key))
+            ref = _normalize_ref(
+                (item or {}).get("id") if isinstance(item, dict) else None, namespace, str(key)
+            )
             if not ref.startswith(f"{namespace}:"):
                 errors.append(
                     f"invalid_namespace:{kind}:{ref}: code={V3_SCHEMA_ERROR_CODES['invalid_namespace']}"
@@ -234,9 +252,7 @@ def validate_v3_ir_payload(payload: Dict[str, Any], *, strict: bool = True) -> D
     return {
         "ok": True,
         "warnings": warnings,
-        "warning_codes": [
-            str(w.split("code=", 1)[1]) for w in warnings if "code=" in str(w)
-        ],
+        "warning_codes": [str(w.split("code=", 1)[1]) for w in warnings if "code=" in str(w)],
     }
 
 
@@ -370,7 +386,9 @@ def _condition_from_dict(data: Dict[str, Any]) -> Condition:
             pred=str(atom_data.get("pred") or ""),
             args=[str(x) for x in (atom_data.get("args") or [])],
         )
-    children = [_condition_from_dict(c) for c in (data.get("children") or []) if isinstance(c, dict)]
+    children = [
+        _condition_from_dict(c) for c in (data.get("children") or []) if isinstance(c, dict)
+    ]
     return Condition(
         op=str(data.get("op") or "atom"),
         atom=atom,
@@ -381,7 +399,19 @@ def _condition_from_dict(data: Dict[str, Any]) -> Condition:
 
 
 def _frame_from_dict(data: Dict[str, Any]):
-    fid = _canonical_id_from_ref(str(data.get("id", {}).get("namespace", "frm") + ":" + data.get("id", {}).get("value", ""))) if isinstance(data.get("id"), dict) else _canonical_id_from_ref(str(data.get("id") if isinstance(data.get("id"), str) else "frm:unknown"))
+    fid = (
+        _canonical_id_from_ref(
+            str(
+                data.get("id", {}).get("namespace", "frm")
+                + ":"
+                + data.get("id", {}).get("value", "")
+            )
+        )
+        if isinstance(data.get("id"), dict)
+        else _canonical_id_from_ref(
+            str(data.get("id") if isinstance(data.get("id"), str) else "frm:unknown")
+        )
+    )
     kind_raw = str(data.get("kind") or FrameKind.ACTION.value)
     kind = FrameKind(kind_raw)
 
@@ -389,7 +419,9 @@ def _frame_from_dict(data: Dict[str, Any]):
         id=fid,
         kind=kind,
         roles={str(k): str(v) for k, v in (data.get("roles") or {}).items()},
-        jurisdiction=(str(data.get("jurisdiction")) if data.get("jurisdiction") is not None else None),
+        jurisdiction=(
+            str(data.get("jurisdiction")) if data.get("jurisdiction") is not None else None
+        ),
         source_span=(str(data.get("source_span")) if data.get("source_span") is not None else None),
         attrs=dict(data.get("attrs") or {}),
     )
@@ -435,7 +467,10 @@ def load_legal_ir_from_json(path: str | Path) -> LegalIR:
     for k, ent in (data.get("entities") or {}).items():
         ent_id = ent.get("id")
         if isinstance(ent_id, dict):
-            cid = CanonicalId(namespace=str(ent_id.get("namespace") or "ent"), value=str(ent_id.get("value") or "unknown"))
+            cid = CanonicalId(
+                namespace=str(ent_id.get("namespace") or "ent"),
+                value=str(ent_id.get("value") or "unknown"),
+            )
         else:
             cid = _canonical_id_from_ref(str(ent_id or k))
         ir.entities[cid.ref()] = Entity(
@@ -454,7 +489,10 @@ def load_legal_ir_from_json(path: str | Path) -> LegalIR:
     for k, tmp in (data.get("temporal") or {}).items():
         tid_raw = tmp.get("id")
         if isinstance(tid_raw, dict):
-            tid = CanonicalId(namespace=str(tid_raw.get("namespace") or "tmp"), value=str(tid_raw.get("value") or "unknown"))
+            tid = CanonicalId(
+                namespace=str(tid_raw.get("namespace") or "tmp"),
+                value=str(tid_raw.get("value") or "unknown"),
+            )
         else:
             tid = _canonical_id_from_ref(str(tid_raw or k))
         expr_data = dict(tmp.get("expr") or {})
@@ -462,8 +500,14 @@ def load_legal_ir_from_json(path: str | Path) -> LegalIR:
             kind=str(expr_data.get("kind") or "window"),
             start=(str(expr_data.get("start")) if expr_data.get("start") is not None else None),
             end=(str(expr_data.get("end")) if expr_data.get("end") is not None else None),
-            duration=(str(expr_data.get("duration")) if expr_data.get("duration") is not None else None),
-            anchor_ref=(str(expr_data.get("anchor_ref")) if expr_data.get("anchor_ref") is not None else None),
+            duration=(
+                str(expr_data.get("duration")) if expr_data.get("duration") is not None else None
+            ),
+            anchor_ref=(
+                str(expr_data.get("anchor_ref"))
+                if expr_data.get("anchor_ref") is not None
+                else None
+            ),
         )
         rel = TemporalRelation(str(tmp.get("relation") or TemporalRelation.WITHIN.value))
         ir.temporal[tid.ref()] = TemporalConstraint(
@@ -478,28 +522,42 @@ def load_legal_ir_from_json(path: str | Path) -> LegalIR:
     for k, n in (data.get("norms") or {}).items():
         nid_raw = n.get("id")
         if isinstance(nid_raw, dict):
-            nid = CanonicalId(namespace=str(nid_raw.get("namespace") or "nrm"), value=str(nid_raw.get("value") or "unknown"))
+            nid = CanonicalId(
+                namespace=str(nid_raw.get("namespace") or "nrm"),
+                value=str(nid_raw.get("value") or "unknown"),
+            )
         else:
             nid = _canonical_id_from_ref(str(nid_raw or k))
         op = DeonticOp(str(n.get("op") or DeonticOp.O.value))
-        activation = _condition_from_dict(dict(n.get("activation") or {"op": "atom", "atom": {"pred": "true", "args": []}}))
-        exceptions = [_condition_from_dict(e) for e in (n.get("exceptions") or []) if isinstance(e, dict)]
+        activation = _condition_from_dict(
+            dict(n.get("activation") or {"op": "atom", "atom": {"pred": "true", "args": []}})
+        )
+        exceptions = [
+            _condition_from_dict(e) for e in (n.get("exceptions") or []) if isinstance(e, dict)
+        ]
         ir.norms[nid.ref()] = Norm(
             id=nid,
             op=op,
             target_frame_ref=str(n.get("target_frame_ref") or ""),
             activation=activation,
             exceptions=exceptions,
-            temporal_ref=(str(n.get("temporal_ref")) if n.get("temporal_ref") is not None else None),
+            temporal_ref=(
+                str(n.get("temporal_ref")) if n.get("temporal_ref") is not None else None
+            ),
             priority=int(n.get("priority") or 0),
-            jurisdiction=(str(n.get("jurisdiction")) if n.get("jurisdiction") is not None else None),
+            jurisdiction=(
+                str(n.get("jurisdiction")) if n.get("jurisdiction") is not None else None
+            ),
             attrs=dict(n.get("attrs") or {}),
         )
 
     for k, r in (data.get("rules") or {}).items():
         rid_raw = r.get("id")
         if isinstance(rid_raw, dict):
-            rid = CanonicalId(namespace=str(rid_raw.get("namespace") or "rul"), value=str(rid_raw.get("value") or "unknown"))
+            rid = CanonicalId(
+                namespace=str(rid_raw.get("namespace") or "rul"),
+                value=str(rid_raw.get("value") or "unknown"),
+            )
         else:
             rid = _canonical_id_from_ref(str(rid_raw or k))
         consequent_data = dict(r.get("consequent") or {})
@@ -509,7 +567,9 @@ def load_legal_ir_from_json(path: str | Path) -> LegalIR:
         )
         ir.rules[rid.ref()] = Rule(
             id=rid,
-            antecedent=_condition_from_dict(dict(r.get("antecedent") or {"op": "atom", "atom": {"pred": "true", "args": []}})),
+            antecedent=_condition_from_dict(
+                dict(r.get("antecedent") or {"op": "atom", "atom": {"pred": "true", "args": []}})
+            ),
             consequent=consequent,
             mode=str(r.get("mode") or "strict"),
         )
@@ -517,12 +577,17 @@ def load_legal_ir_from_json(path: str | Path) -> LegalIR:
     for k, q in (data.get("queries") or {}).items():
         qid_raw = q.get("id")
         if isinstance(qid_raw, dict):
-            qid = CanonicalId(namespace=str(qid_raw.get("namespace") or "qry"), value=str(qid_raw.get("value") or "unknown"))
+            qid = CanonicalId(
+                namespace=str(qid_raw.get("namespace") or "qry"),
+                value=str(qid_raw.get("value") or "unknown"),
+            )
         else:
             qid = _canonical_id_from_ref(str(qid_raw or k))
         ir.queries[qid.ref()] = Query(
             id=qid,
-            goal=_condition_from_dict(dict(q.get("goal") or {"op": "atom", "atom": {"pred": "true", "args": []}})),
+            goal=_condition_from_dict(
+                dict(q.get("goal") or {"op": "atom", "atom": {"pred": "true", "args": []}})
+            ),
             at=(str(q.get("at")) if q.get("at") is not None else None),
         )
 
@@ -609,7 +674,7 @@ def proof_to_dict(proof: ProofObject) -> Dict[str, Any]:
 
 def proof_from_dict(data: Dict[str, Any]) -> ProofObject:
     certificates: List[ProofCertificate] = []
-    for c in (data.get("certificates") or []):
+    for c in data.get("certificates") or []:
         if not isinstance(c, dict):
             continue
         certificates.append(
@@ -637,7 +702,7 @@ def proof_from_dict(data: Dict[str, Any]) -> ProofObject:
             ]
 
     steps: List[ProofStep] = []
-    for s in (data.get("steps") or []):
+    for s in data.get("steps") or []:
         ir_refs = [
             IRReference(kind=str(r.get("kind") or "derived"), id=str(r.get("id") or ""))
             for r in (s.get("ir_refs") or [])
@@ -646,7 +711,9 @@ def proof_from_dict(data: Dict[str, Any]) -> ProofObject:
             SourceProvenance(
                 source_path=str(p.get("source_path") or ""),
                 source_id=str(p.get("source_id") or ""),
-                source_span=(str(p.get("source_span")) if p.get("source_span") is not None else None),
+                source_span=(
+                    str(p.get("source_span")) if p.get("source_span") is not None else None
+                ),
             )
             for p in (s.get("provenance") or [])
         ]
@@ -724,8 +791,7 @@ def load_proof_store(path: str | Path) -> Dict[str, ProofObject]:
 def write_proof_store(path: str | Path, proofs: Dict[str, ProofObject]) -> None:
     payload = {
         "proofs": {
-            pid: proof_to_dict(proof)
-            for pid, proof in sorted(proofs.items(), key=lambda kv: kv[0])
+            pid: proof_to_dict(proof) for pid, proof in sorted(proofs.items(), key=lambda kv: kv[0])
         }
     }
     write_json(path, payload)

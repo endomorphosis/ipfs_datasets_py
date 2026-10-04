@@ -188,11 +188,11 @@ result = store.put(receipt, publish=True)
 # result.full.backend in {"local-disk", "ipfs"}; result.full.digest == receipt.receipt_id
 # result.publishable.digest == receipt.receipt_id (same lookup key, redacted content)
 
-replayed = store.get(receipt.receipt_id)          # full HammerReceipt, replayable
+replayed = store.get(receipt.receipt_id)  # full HammerReceipt, replayable
 published = store.get_publishable(receipt.receipt_id)  # redacted dict, for public sharing
 
-store.exists(receipt.receipt_id)   # -> True
-store.list_ids()                   # -> [receipt.receipt_id, ...]
+store.exists(receipt.receipt_id)  # -> True
+store.list_ids()  # -> [receipt.receipt_id, ...]
 ```
 
 `persist_hammer_receipt(receipt, store=None, publish=False)` is a thin
@@ -249,8 +249,8 @@ receipt = rc.HammerReceipt(
 store = rc.ReceiptStore()  # local-disk by default; safe with zero setup
 persisted = store.put(receipt, publish=True)
 
-print(persisted.full.digest)          # == receipt.receipt_id
-print(persisted.full.backend)         # "local-disk" unless IPFS was opted in and reachable
+print(persisted.full.digest)  # == receipt.receipt_id
+print(persisted.full.backend)  # "local-disk" unless IPFS was opted in and reachable
 
 # Later, potentially in a different process:
 replayed = store.get(receipt.receipt_id)

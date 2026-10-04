@@ -24,39 +24,39 @@ def list_tools_in_functions_dir(get_docstring: bool = True) -> list[dict[str, st
 
     # Look specifically in the functions directory
     if functions_dir.exists():
-        for file in functions_dir.glob('*.py'):
-            if not file.name.startswith('_'):
-                
+        for file in functions_dir.glob("*.py"):
+            if not file.name.startswith("_"):
                 file_dict = {
-                    'name': file.stem,  # Get the name without the .py extension
+                    "name": file.stem,  # Get the name without the .py extension
                 }
             if get_docstring:
                 try:
-                    with open(file, 'r', encoding='utf-8') as f:
+                    with open(file, "r", encoding="utf-8") as f:
                         content = f.read()
-                    
+
                     # Parse the file to extract the first function's docstring
                     tree = ast.parse(content)
                     docstring = None
-                    
+
                     for node in ast.walk(tree):
-                        if (isinstance(node, ast.FunctionDef) and 
-                            not node.name.startswith('_')):
+                        if isinstance(node, ast.FunctionDef) and not node.name.startswith("_"):
                             # Get the first public function's docstring
-                            if (node.body and 
-                                isinstance(node.body[0], ast.Expr) and 
-                                isinstance(node.body[0].value, ast.Constant) and 
-                                isinstance(node.body[0].value.value, str)):
+                            if (
+                                node.body
+                                and isinstance(node.body[0], ast.Expr)
+                                and isinstance(node.body[0].value, ast.Constant)
+                                and isinstance(node.body[0].value.value, str)
+                            ):
                                 docstring = node.body[0].value.value.strip()
                                 break
-                    
-                    file_dict['docstring'] = docstring
-                    
+
+                    file_dict["docstring"] = docstring
+
                 except (OSError, SyntaxError, AttributeError):
                     # If we can't read the file or parse it, set docstring to None
-                    file_dict['docstring'] = None
-            
+                    file_dict["docstring"] = None
+
             python_files.append(file_dict)
 
     # Sort by name for consistent ordering
-    return sorted(python_files, key=lambda x: x['name'])
+    return sorted(python_files, key=lambda x: x["name"])

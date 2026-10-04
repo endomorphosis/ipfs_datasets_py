@@ -111,10 +111,7 @@ from ipfs_datasets_py.processors.web_archiving import CommonCrawlSearchEngine
 engine = CommonCrawlSearchEngine(mode="local")
 
 # Remote mode
-engine = CommonCrawlSearchEngine(
-    mode="remote",
-    mcp_endpoint="http://server:8787"
-)
+engine = CommonCrawlSearchEngine(mode="remote", mcp_endpoint="http://server:8787")
 
 # CLI mode
 engine = CommonCrawlSearchEngine(mode="cli")
@@ -178,14 +175,10 @@ ipfs-datasets cc info CC-MAIN-2024-10 --json
 
 **Example**:
 ```python
-from ipfs_datasets_py.mcp_server.tools.web_archive_tools import (
-    search_common_crawl_advanced
-)
+from ipfs_datasets_py.mcp_server.tools.web_archive_tools import search_common_crawl_advanced
 
 result = await search_common_crawl_advanced(
-    domain="example.com",
-    max_matches=100,
-    collection="CC-MAIN-2024-10"
+    domain="example.com", max_matches=100, collection="CC-MAIN-2024-10"
 )
 
 # Result structure:
@@ -220,13 +213,12 @@ result = await search_common_crawl_advanced(
 ```python
 from ipfs_datasets_py.dashboards.common_crawl_dashboard import (
     CommonCrawlDashboardIntegration,
-    register_dashboard_routes
+    register_dashboard_routes,
 )
 
 # Create integration
 integration = CommonCrawlDashboardIntegration(
-    mode="remote",
-    remote_endpoint="http://ccindex-server:8787"
+    mode="remote", remote_endpoint="http://ccindex-server:8787"
 )
 
 # Get iframe config for main dashboard
@@ -251,6 +243,7 @@ nav_item = integration.get_nav_item()
 
 # Register with Flask app
 from flask import Flask
+
 app = Flask(__name__)
 register_dashboard_routes(app, prefix="/subdashboard/common-crawl")
 ```
@@ -286,8 +279,7 @@ ccindex-dashboard --host 0.0.0.0 --port 8787
 **Client Usage**:
 ```python
 engine = CommonCrawlSearchEngine(
-    mode="remote",
-    mcp_endpoint="http://ccindex-server.example.com:8787"
+    mode="remote", mcp_endpoint="http://ccindex-server.example.com:8787"
 )
 ```
 
@@ -301,10 +293,7 @@ engine = CommonCrawlSearchEngine(
 engine = CommonCrawlSearchEngine(mode="cli")
 
 # Remote CLI via SSH
-engine = CommonCrawlSearchEngine(
-    mode="cli",
-    ssh_host="ccindex-server.example.com"
-)
+engine = CommonCrawlSearchEngine(mode="cli", ssh_host="ccindex-server.example.com")
 ```
 
 ### Scenario 4: Dashboard Integration

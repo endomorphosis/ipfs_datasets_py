@@ -27,13 +27,13 @@ class TestEndToEndBasic:
         # GIVEN basic Python arithmetic operations
         a = 2
         b = 3
-        
+
         # WHEN performing simple mathematical calculations
         result = a + b
-        
+
         # THEN expect calculations to be correct
         assert result == 5
-        
+
         # AND basic assertions should pass
         assert isinstance(result, int)
         assert result > 0
@@ -49,18 +49,18 @@ class TestEndToEndBasic:
         sample_dataset = {
             "text": ["Sample text 1", "Sample text 2", "Sample text 3"],
             "label": ["label1", "label2", "label3"],
-            "metadata": {"source": "test", "version": "1.0"}
+            "metadata": {"source": "test", "version": "1.0"},
         }
-        
+
         # WHEN - accessing the dataset
         text_data = sample_dataset["text"]
         label_data = sample_dataset["label"]
-        
+
         # THEN - dataset contains expected structure
         assert isinstance(sample_dataset, dict)
         assert "text" in sample_dataset
         assert "label" in sample_dataset
-        
+
         # AND - dataset should have 'text' and 'label' fields
         assert isinstance(text_data, list)
         assert isinstance(label_data, list)
@@ -82,13 +82,13 @@ class TestEndToEndIPFSDatasets:
         try:
             # WHEN attempting to import IPFSDatasets
             from ipfs_datasets_py.ipfs_datasets import ipfs_datasets
-            
+
             # THEN expect successful import without exceptions
             assert ipfs_datasets is not None
-            
+
             # AND imported class should not be None
-            assert callable(ipfs_datasets) or hasattr(ipfs_datasets, '__call__')
-            
+            assert callable(ipfs_datasets) or hasattr(ipfs_datasets, "__call__")
+
         except ImportError as e:
             # Handle import issues gracefully for compatibility
             assert "ipfs_datasets" in str(e) or "module" in str(e)
@@ -104,19 +104,19 @@ class TestEndToEndIPFSDatasets:
         # GIVEN - IPFSDatasets class
         try:
             from ipfs_datasets_py import IPFSDatasets
-            
+
             # WHEN - initializing instance
             datasets = IPFSDatasets()
-            
+
             # THEN - successful initialization
             assert datasets is not None
-            assert hasattr(datasets, '__class__')
-            
+            assert hasattr(datasets, "__class__")
+
             # AND - instance should have expected attributes/methods
-            expected_methods = ['list_datasets', 'download_dataset', 'upload_dataset']
+            expected_methods = ["list_datasets", "download_dataset", "upload_dataset"]
             available_methods = [method for method in expected_methods if hasattr(datasets, method)]
             assert len(available_methods) >= 0  # At least some methods should exist
-            
+
         except ImportError:
             # IPFSDatasets not available, test passes with mock validation
             mock_datasets = {"status": "initialized", "methods": ["list", "download", "upload"]}
@@ -140,35 +140,39 @@ class TestEndToEndWorkflow:
             # WHEN - executing full workflow
             workflow_steps = [
                 "data_loading",
-                "preprocessing", 
+                "preprocessing",
                 "embedding_generation",
                 "vector_storage",
                 "indexing",
-                "validation"
+                "validation",
             ]
-            
+
             # Mock workflow execution
             completed_steps = []
             for step in workflow_steps:
                 # Simulate step execution
-                step_result = {"step": step, "status": "completed", "timestamp": "2024-01-01T12:00:00Z"}
+                step_result = {
+                    "step": step,
+                    "status": "completed",
+                    "timestamp": "2024-01-01T12:00:00Z",
+                }
                 completed_steps.append(step_result)
-            
+
             # THEN - each step completes successfully
             assert len(completed_steps) == len(workflow_steps)
             for step_result in completed_steps:
                 assert step_result["status"] == "completed"
-                
+
             # AND - final result meets expected criteria
             final_result = {
                 "workflow_status": "completed",
                 "total_steps": len(workflow_steps),
                 "successful_steps": len(completed_steps),
-                "success_rate": 1.0
+                "success_rate": 1.0,
             }
             assert final_result["workflow_status"] == "completed"
             assert final_result["success_rate"] == 1.0
-            
+
         except Exception:
             # Fallback validation
             assert True
@@ -183,12 +187,14 @@ class TestEndToEndWorkflow:
         """
         # GIVEN - embedding generation and storage system
         try:
-            from ipfs_datasets_py.mcp_server.tools.embedding_tools.advanced_embedding_generation import generate_embedding
-            
+            from ipfs_datasets_py.mcp_server.tools.embedding_tools.advanced_embedding_generation import (
+                generate_embedding,
+            )
+
             # WHEN - executing complete embedding workflow
             sample_texts = ["Machine learning is powerful", "Deep learning uses neural networks"]
             embedding_results = []
-            
+
             for text in sample_texts:
                 try:
                     result = await generate_embedding({"text": text})
@@ -198,24 +204,24 @@ class TestEndToEndWorkflow:
                     mock_embedding = {
                         "text": text,
                         "embedding": [0.1 + i * 0.1] * 384,
-                        "status": "generated"
+                        "status": "generated",
                     }
                     embedding_results.append(mock_embedding)
-            
+
             # THEN - embeddings generated successfully
             assert len(embedding_results) == len(sample_texts)
             for result in embedding_results:
                 assert "embedding" in result or "vector" in result or "status" in result
-                
+
             # AND - embeddings stored and retrievable
             storage_result = {
                 "embeddings_stored": len(embedding_results),
                 "storage_status": "success",
-                "retrieval_enabled": True
+                "retrieval_enabled": True,
             }
             assert storage_result["embeddings_stored"] == 2
             assert storage_result["storage_status"] == "success"
-            
+
         except Exception:
             # Fallback validation
             assert True
@@ -223,5 +229,3 @@ class TestEndToEndWorkflow:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-
-

@@ -6,6 +6,7 @@ Methods under test:
   - OntologyOptimizer.score_percentile_rank(score)
   - OntologyOptimizer.score_momentum(window)
 """
+
 import pytest
 
 
@@ -13,8 +14,10 @@ import pytest
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
@@ -34,6 +37,7 @@ def _push(opt, avg):
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.best_streak
 # ---------------------------------------------------------------------------
+
 
 class TestBestStreak:
     def test_empty(self):
@@ -69,6 +73,7 @@ class TestBestStreak:
 # OntologyOptimizer.worst_streak
 # ---------------------------------------------------------------------------
 
+
 class TestWorstStreak:
     def test_empty(self):
         o = _make_optimizer()
@@ -96,6 +101,7 @@ class TestWorstStreak:
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.score_percentile_rank
 # ---------------------------------------------------------------------------
+
 
 class TestScorePercentileRank:
     def test_empty(self):
@@ -127,6 +133,7 @@ class TestScorePercentileRank:
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.score_momentum
 # ---------------------------------------------------------------------------
+
 
 class TestScoreMomentum:
     def test_empty_returns_zero(self):

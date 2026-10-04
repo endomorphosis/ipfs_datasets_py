@@ -12,12 +12,12 @@ Public API:
 
 Example:
     >>> from ipfs_datasets_py.utils.cache import LocalCache, GitHubCache
-    >>> 
+    >>>
     >>> # Local cache
     >>> cache = LocalCache(maxsize=100, default_ttl=300)
     >>> cache.set("key", "value")
     >>> value = cache.get("key")
-    >>> 
+    >>>
     >>> # GitHub API cache
     >>> gh_cache = GitHubCache()
     >>> gh_cache.set("repos/owner/repo", response, etag="abc", operation_type="get_repo_info")
@@ -46,21 +46,19 @@ from .config_loader import (
 
 __all__ = [
     # Base classes
-    'BaseCache',
-    'DistributedCache',
-    'CacheBackend',
-    'CacheEntry',
-    'CacheStats',
-    
+    "BaseCache",
+    "DistributedCache",
+    "CacheBackend",
+    "CacheEntry",
+    "CacheStats",
     # Implementations
-    'LocalCache',
-    'QueryCache',  # Backward compatibility
-    'GitHubCache',
-    'GitHubCacheEntry',
-    'P2PCache',
-    
+    "LocalCache",
+    "QueryCache",  # Backward compatibility
+    "GitHubCache",
+    "GitHubCacheEntry",
+    "P2PCache",
     # Configuration
-    'CacheConfig',
-    'get_global_config',
-    'set_global_config',
+    "CacheConfig",
+    "get_global_config",
+    "set_global_config",
 ]

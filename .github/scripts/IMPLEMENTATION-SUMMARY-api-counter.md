@@ -88,7 +88,7 @@ A comprehensive API call tracking system with multiple components working togeth
 from github_api_counter import GitHubAPICounter
 
 with GitHubAPICounter() as counter:
-    counter.run_gh_command(['gh', 'pr', 'list'])
+    counter.run_gh_command(["gh", "pr", "list"])
     # Metrics auto-saved on exit
 ```
 
@@ -96,13 +96,14 @@ with GitHubAPICounter() as counter:
 ```python
 from github_api_counter_helper import tracked_subprocess
 
-result = tracked_subprocess.run(['gh', 'pr', 'list'])
+result = tracked_subprocess.run(["gh", "pr", "list"])
 # Automatically tracked and saved
 ```
 
 ### Method 3: Monkey-Patch (Easiest for existing code)
 ```python
 from github_api_counter_helper import patch_subprocess
+
 patch_subprocess()
 
 # All subprocess calls now tracked automatically
@@ -170,17 +171,20 @@ patch_subprocess()
 ```python
 # Before
 import subprocess
-result = subprocess.run(['gh', 'pr', 'list'])
+
+result = subprocess.run(["gh", "pr", "list"])
 
 # After (Option 1 - Direct)
 from github_api_counter import GitHubAPICounter
+
 counter = GitHubAPICounter()
-result = counter.run_gh_command(['gh', 'pr', 'list'])
+result = counter.run_gh_command(["gh", "pr", "list"])
 counter.save_metrics()
 
 # After (Option 2 - Helper)
 from github_api_counter_helper import tracked_subprocess
-result = tracked_subprocess.run(['gh', 'pr', 'list'])
+
+result = tracked_subprocess.run(["gh", "pr", "list"])
 # Auto-saved on exit
 ```
 

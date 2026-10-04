@@ -5,6 +5,7 @@ Implements intelligent OCR processing with multiple engines and retry strategies
 Supports Surya, Tesseract, EasyOCR, TrOCR, PaddleOCR, and GOT-OCR2.0.
 Supports accelerate integration for distributed OCR model inference.
 """
+
 from abc import ABC, abstractmethod
 
 import logging
@@ -19,6 +20,7 @@ from PIL import Image
 # Optional dependencies with proper error handling
 try:
     import cv2
+
     HAVE_CV2 = True
 except ImportError:
     cv2 = None
@@ -26,6 +28,7 @@ except ImportError:
 
 try:
     import numpy as np
+
     HAVE_NUMPY = True
 except ImportError:
     np = None
@@ -55,16 +58,16 @@ except ImportError:
 def _calculate_avg_confidence(confidences):
     """
     Calculate average confidence score with fallback for when numpy is unavailable.
-    
+
     Args:
         confidences (list): List of confidence scores (0.0-1.0 or 0-100 depending on context)
-    
+
     Returns:
         float: Average confidence score, or 0.0 if list is empty
     """
     if not confidences:
         return 0.0
-    
+
     if HAVE_NUMPY:
         return float(np.mean(confidences))
     else:
@@ -106,11 +109,11 @@ class OCREngine(ABC):
         class CustomOCR(OCREngine):
             def __init__(self):
                 super().__init__("custom_ocr")
-            
+
             def _initialize(self):
                 # Initialize custom OCR components
                 self.available = True
-            
+
             def extract_text(self, image_data: bytes) -> Dict[str, Any]:
                 # Implement text extraction logic
                 return {"text": extracted_text, "confidence": 0.95}
@@ -122,12 +125,10 @@ class OCREngine(ABC):
         - Exception handling during initialization should set available = False
         - Text extraction results should follow a consistent dictionary format
     """
-    
-    def __init__(self, 
-                 name: str, 
-                 logger: logging.Logger = logger,
-                 mock_dict: dict[str, Any] | None = None
-                 ) -> None:
+
+    def __init__(
+        self, name: str, logger: logging.Logger = logger, mock_dict: dict[str, Any] | None = None
+    ) -> None:
         """
         Initialize an OCR engine instance with comprehensive setup and validation.
 
@@ -174,7 +175,7 @@ class OCREngine(ABC):
             >>> class CustomOCR(OCREngine):
             ...     def __init__(self, logger=logger, mock_dict=None):
             ...         super().__init__("custom_ocr", logger=logger, mock_dict=mock_dict)  # Calls this constructor
-            ...     
+            ...
             ...     def _initialize(self):
             ...         # Perform custom initialization
             ...         self.available = True
@@ -204,7 +205,9 @@ class OCREngine(ABC):
         if isinstance(mock_dict, dict):
             for key, value in mock_dict.items():
                 if not hasattr(self, key):
-                    raise AttributeError(f"Mock attribute '{key}' does not exist on {self.__class__.__name__}")
+                    raise AttributeError(
+                        f"Mock attribute '{key}' does not exist on {self.__class__.__name__}"
+                    )
                 try:
                     setattr(self, key, value)
                 except Exception as e:
@@ -276,7 +279,7 @@ class OCREngine(ABC):
         """
         if not self.available:
             raise RuntimeError(f"{self.name.capitalize()} engine not available")
-        
+
         if not isinstance(image_data, bytes):
             raise TypeError(f"Expected image_data to be bytes, got {type(image_data).__name__}")
 
@@ -338,7 +341,7 @@ class OCREngine(ABC):
             - Processing time varies based on image size and complexity
         """
         raise NotImplementedError("Subclasses must implement extract_text")
-    
+
     def is_available(self) -> bool:
         """
         Check if the OCR engine is properly initialized and available for text extraction.
@@ -417,7 +420,7 @@ class SuryaOCR(OCREngine):
         - Memory intensive due to transformer models
         - Falls back gracefully if Surya framework not available
     """
-    
+
     def __init__(self, logger: logging.Logger = logger, mock_dict=None) -> None:
         """
         Initialize the Surya OCR engine with transformer-based architecture.
@@ -452,7 +455,7 @@ class SuryaOCR(OCREngine):
             ...     print(f"Extracted: {result['text']}")
         """
         super().__init__("surya", logger=logger, mock_dict=mock_dict)
-    
+
     def _initialize(self) -> None:
         """
         Initialize the Surya OCR engine by loading all required models and components.
@@ -515,7 +518,7 @@ class SuryaOCR(OCREngine):
         except Exception as e:
             self.logger.error(f"Failed to initialize Surya OCR: {e}")
             self.available = False
-    
+
     def extract_text(self, image_data: bytes) -> Dict[str, Any]:
         """
         Extract text from image data using the Surya transformer-based OCR engine.
@@ -569,10 +572,11 @@ class SuryaOCR(OCREngine):
         try:
             # Convert image data to PIL Image
             image = super()._get_image_data(image_data)
-            
+
             # Run OCR
             predictions = self.recognition_predictor(
-                [image], det_predictor=self.detection_predictor,
+                [image],
+                det_predictor=self.detection_predictor,
             )
 
             # Process results
@@ -583,23 +587,25 @@ class SuryaOCR(OCREngine):
 
             for text_line in result.text_lines:
                 full_text += text_line.text + "\n"
-                text_blocks.append({
-                    'text': text_line.text,
-                    'confidence': text_line.confidence,
-                    'bbox': text_line.bbox
-                })
+                text_blocks.append(
+                    {
+                        "text": text_line.text,
+                        "confidence": text_line.confidence,
+                        "bbox": text_line.bbox,
+                    }
+                )
                 confidences.append(text_line.confidence)
-            
+
             # Calculate average confidence
             avg_confidence = _calculate_avg_confidence(confidences)
-            
+
             return {
-                'text': full_text.strip(),
-                'confidence': avg_confidence,
-                'text_blocks': text_blocks,
-                'engine': 'surya'
+                "text": full_text.strip(),
+                "confidence": avg_confidence,
+                "text_blocks": text_blocks,
+                "engine": "surya",
             }
-            
+
         except Exception as e:
             self.logger.error(f"Surya OCR extraction failed: {e}")
             raise
@@ -656,7 +662,7 @@ class TesseractOCR(OCREngine):
         - Configurable character whitelisting for domain-specific text extraction
         - Preprocessing pipeline optimized for PDF-derived images
     """
-    
+
     def __init__(self, logger=logger, mock_dict=None) -> None:
         """
         Initialize the Tesseract OCR engine with comprehensive configuration and dependency validation.
@@ -702,7 +708,7 @@ class TesseractOCR(OCREngine):
             - Configuration can be customized per extraction call
         """
         super().__init__("tesseract", logger=logger, mock_dict=mock_dict)
-    
+
     def _initialize(self) -> None:
         """
         Initialize the Tesseract OCR engine by importing required dependencies.
@@ -737,29 +743,28 @@ class TesseractOCR(OCREngine):
             - Initialization is very fast compared to neural OCR engines
         """
         try:
-            
-
             self.pytesseract = pytesseract
             self.available = True
             self.logger.info("Tesseract OCR engine initialized successfully")
-            
+
         except ImportError as e:
             self.logger.warning(f"Tesseract OCR not available: {e}")
             self.available = False
         except Exception as e:
             self.logger.error(f"Failed to initialize Tesseract OCR: {e}")
             self.available = False
-    
-    def extract_text(self, 
-                     image_data: bytes, 
-                    config: str = '--psm 6 -c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz .,!?-'
-                    ) -> Dict[str, Any]:
+
+    def extract_text(
+        self,
+        image_data: bytes,
+        config: str = "--psm 6 -c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz .,!?-",
+    ) -> Dict[str, Any]:
         """
         Extract text from image data using Tesseract OCR with configurable parameters and preprocessing.
 
         This method processes image data through the complete Tesseract OCR pipeline including
         image preprocessing optimization, configurable OCR parameters, text extraction, and
-        detailed confidence analysis. The preprocessing stage applies noise reduction, 
+        detailed confidence analysis. The preprocessing stage applies noise reduction,
         thresholding, and other optimizations to improve OCR accuracy on challenging images.
 
         Args:
@@ -794,16 +799,16 @@ class TesseractOCR(OCREngine):
             >>> tesseract_engine = TesseractOCR()
             >>> with open('document.png', 'rb') as f:
             ...     image_data = f.read()
-            >>> 
+            >>>
             >>> # Basic extraction
             >>> result = tesseract_engine.extract_text(image_data)
-            >>> 
+            >>>
             >>> # Custom configuration for numbers only
             >>> result = tesseract_engine.extract_text(
-            ...     image_data, 
+            ...     image_data,
             ...     config='--psm 8 -c tessedit_char_whitelist=0123456789'
             ... )
-            >>> 
+            >>>
             >>> # Language-specific extraction
             >>> result = tesseract_engine.extract_text(
             ...     image_data,
@@ -823,42 +828,47 @@ class TesseractOCR(OCREngine):
 
             # Preprocess image for better OCR
             image = self._preprocess_image(image)
-            
+
             # Extract text
             text = self.pytesseract.image_to_string(image, config=config)
-            
+
             # Get confidence data
             data = self.pytesseract.image_to_data(image, output_type=self.pytesseract.Output.DICT)
-            
+
             # Extract confidences from data
-            confidences = [int(conf) for conf in data['conf'] if int(conf) > 0]
-            
+            confidences = [int(conf) for conf in data["conf"] if int(conf) > 0]
+
             # Calculate average confidence (divide by 100 for tesseract which uses 0-100 scale)
             avg_confidence = _calculate_avg_confidence(confidences) / 100.0 if confidences else 0.0
-            
+
             # Extract word boxes
             word_boxes = []
-            for i, word in enumerate(data['text']):
-                if word.strip() and int(data['conf'][i]) > 0:
-                    word_boxes.append({
-                        'text': word,
-                        'bbox': [data['left'][i], data['top'][i], 
-                                data['left'][i] + data['width'][i], 
-                                data['top'][i] + data['height'][i]],
-                        'confidence': int(data['conf'][i]) / 100.0
-                    })
-            
+            for i, word in enumerate(data["text"]):
+                if word.strip() and int(data["conf"][i]) > 0:
+                    word_boxes.append(
+                        {
+                            "text": word,
+                            "bbox": [
+                                data["left"][i],
+                                data["top"][i],
+                                data["left"][i] + data["width"][i],
+                                data["top"][i] + data["height"][i],
+                            ],
+                            "confidence": int(data["conf"][i]) / 100.0,
+                        }
+                    )
+
             return {
-                'text': text.strip(),
-                'confidence': avg_confidence,
-                'word_boxes': word_boxes,
-                'engine': 'tesseract'
+                "text": text.strip(),
+                "confidence": avg_confidence,
+                "word_boxes": word_boxes,
+                "engine": "tesseract",
             }
-            
+
         except Exception as e:
             self.logger.error(f"Tesseract OCR extraction failed: {e}")
             raise
-    
+
     def _preprocess_image(self, image: Image.Image) -> Image.Image:
         """
         Preprocess image to optimize it for Tesseract OCR text extraction accuracy.
@@ -903,19 +913,19 @@ class TesseractOCR(OCREngine):
         if not HAVE_CV2 or not HAVE_NUMPY:
             self.logger.debug("OpenCV or NumPy not available, skipping image preprocessing")
             return image
-        
+
         # Convert to OpenCV format
         opencv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-        
+
         # Convert to grayscale
         gray = cv2.cvtColor(opencv_image, cv2.COLOR_BGR2GRAY)
-        
+
         # Apply noise reduction
         denoised = cv2.medianBlur(gray, 3)
-        
+
         # Apply thresholding
         _, threshold = cv2.threshold(denoised, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        
+
         # Convert back to PIL Image
         result_image = Image.fromarray(threshold)
         return result_image
@@ -975,7 +985,7 @@ class EasyOCR(OCREngine):
         - May be slower than traditional OCR but provides higher accuracy on complex content
         - Supports automatic language detection without explicit configuration
     """
-    
+
     def __init__(self, logger=logger, mock_dict=None) -> None:
         """
         Initialize the EasyOCR engine for neural network-based text recognition.
@@ -1022,14 +1032,14 @@ class EasyOCR(OCREngine):
             - Initialization may take longer on first run due to model downloads
         """
         super().__init__("easyocr", logger=logger, mock_dict=mock_dict)
-    
+
     def _initialize(self) -> None:
         """
         Initialize the EasyOCR engine with English language support.
         Attempts to import and configure the EasyOCR library. Sets up a reader
         instance for English text recognition and updates the availability status
         based on the initialization outcome.
-    
+
         Sets:
             self.reader (easyocr.Reader): EasyOCR reader instance configured for English
             self.available (bool): True if initialization successful, False otherwise
@@ -1048,21 +1058,21 @@ class EasyOCR(OCREngine):
         try:
             import easyocr
 
-            self.reader = easyocr.Reader(['en'])  # Initialize with English
+            self.reader = easyocr.Reader(["en"])  # Initialize with English
             self.available = True
             self.logger.info("EasyOCR engine initialized successfully")
-            
+
         except ImportError as e:
             self.logger.warning(f"EasyOCR not available: {e}")
             self.available = False
         except Exception as e:
             self.logger.error(f"Failed to initialize EasyOCR: {e}")
             self.available = False
-    
+
     def extract_text(self, image_data: bytes) -> Dict[str, Any]:
         """Extract text from image data using EasyOCR engine.
 
-        This method processes image bytes through EasyOCR to perform optical character 
+        This method processes image bytes through EasyOCR to perform optical character
         recognition, returning structured text data with confidence scores and bounding boxes.
 
         Args:
@@ -1114,26 +1124,22 @@ class EasyOCR(OCREngine):
             full_text = ""
             text_blocks = []
             confidences = []
-            
-            for (bbox, text, confidence) in results:
+
+            for bbox, text, confidence in results:
                 full_text += text + " "
-                text_blocks.append({
-                    'text': text,
-                    'bbox': bbox,
-                    'confidence': confidence
-                })
+                text_blocks.append({"text": text, "bbox": bbox, "confidence": confidence})
                 confidences.append(confidence)
-            
+
             # Calculate average confidence
             avg_confidence = _calculate_avg_confidence(confidences)
-            
+
             return {
-                'text': full_text.strip(),
-                'confidence': avg_confidence,
-                'text_blocks': text_blocks,
-                'engine': 'easyocr'
+                "text": full_text.strip(),
+                "confidence": avg_confidence,
+                "text_blocks": text_blocks,
+                "engine": "easyocr",
             }
-            
+
         except Exception as e:
             self.logger.error(f"EasyOCR extraction failed: {e}")
             raise
@@ -1197,7 +1203,7 @@ class TrOCREngine(OCREngine):
         - May be slower than traditional OCR but provides superior accuracy
         - Performs exceptionally well on challenging handwriting styles
     """
-    
+
     def __init__(self, logger=logger, mock_dict=None) -> None:
         """
         Initialize the TrOCR engine for transformer-based text recognition.
@@ -1251,7 +1257,7 @@ class TrOCREngine(OCREngine):
 
         Sets:
             self.processor: The TrOCR processor instance
-            self.model: The TrOCR model instance  
+            self.model: The TrOCR model instance
             self.available: Boolean indicating if the engine is ready for use
 
         Raises:
@@ -1273,25 +1279,25 @@ class TrOCREngine(OCREngine):
         """
         try:
             from transformers import TrOCRProcessor, VisionEncoderDecoderModel
-            
+
             # Load TrOCR model and processor
             self.processor = TrOCRProcessor.from_pretrained("microsoft/trocr-base-printed")
             self.model = VisionEncoderDecoderModel.from_pretrained("microsoft/trocr-base-printed")
-            
+
             self.available = True
             self.logger.info("TrOCR engine initialized successfully")
-            
+
         except ImportError as e:
             self.logger.warning(f"TrOCR not available: {e}")
             self.available = False
         except Exception as e:
             self.logger.error(f"Failed to initialize TrOCR: {e}")
             self.available = False
-    
+
     def extract_text(self, image_data: bytes) -> Dict[str, Any]:
         """
         Extract text from image data using the TrOCR (Transformer-based Optical Character Recognition) model.
-    
+
         This method processes image bytes through a pre-trained TrOCR model to perform optical character
         recognition and extract readable text. The image is automatically converted to RGB format if needed
         before processing through the transformer pipeline.
@@ -1316,7 +1322,7 @@ class TrOCREngine(OCREngine):
             >>> with open('handwritten_note.png', 'rb') as f:
             ...     image_data = f.read()
             >>> result = trocr_engine.extract_text(image_data)
-            >>> print(f"Extracted text: {result['text']}") 
+            >>> print(f"Extracted text: {result['text']}")
             >>> print(f"Engine used: {result['engine']}")
 
         Note:
@@ -1328,22 +1334,22 @@ class TrOCREngine(OCREngine):
             image = super()._get_image_data(image_data)
 
             # Ensure RGB format
-            if image.mode != 'RGB':
-                image = image.convert('RGB')
-            
+            if image.mode != "RGB":
+                image = image.convert("RGB")
+
             # Process image
             pixel_values = self.processor(image, return_tensors="pt").pixel_values
-            
+
             # Generate text
             generated_ids = self.model.generate(pixel_values)
             generated_text = self.processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
-            
+
             return {
-                'text': generated_text.strip(),
-                'confidence': 0.0,  # TrOCR doesn't provide confidence scores
-                'engine': 'trocr'
+                "text": generated_text.strip(),
+                "confidence": 0.0,  # TrOCR doesn't provide confidence scores
+                "engine": "trocr",
             }
-            
+
         except ValueError:
             # Re-raise ValueError for empty or invalid image data
             raise
@@ -1380,7 +1386,7 @@ class MultiEngineOCR:
 
     Supported Engines:
         - SuryaOCR: Modern transformer-based OCR for high accuracy
-        - TesseractOCR: Traditional OCR with proven reliability  
+        - TesseractOCR: Traditional OCR with proven reliability
         - EasyOCR: Neural OCR optimized for complex layouts
         - TrOCREngine: Transformer-based OCR for handwritten text
 
@@ -1398,14 +1404,14 @@ class MultiEngineOCR:
 
     Usage Example:
         multi_ocr = MultiEngineOCR()
-        
+
         # High-quality extraction with retry strategy
         result = multi_ocr.extract_with_ocr(
             image_data=document_bytes,
             strategy='quality_first',
             confidence_threshold=0.8
         )
-        
+
         if result['confidence'] >= 0.8:
             print(f"High confidence text: {result['text']}")
         else:
@@ -1421,10 +1427,10 @@ class MultiEngineOCR:
 
     def __new__(cls):
         """Ensure only one instance of MultiEngineOCR is created (singleton pattern)."""
-        if not hasattr(cls, 'instance'):
+        if not hasattr(cls, "instance"):
             cls.instance = super(MultiEngineOCR, cls).__new__(cls)
         return cls.instance
-    
+
     def __init__(self, logger=logger, mock_dict=None) -> None:
         """Initialize the OCR engine manager with all available OCR engines.
 
@@ -1470,11 +1476,10 @@ class MultiEngineOCR:
                 self.logger.error(f"Failed to initialize {engine_class.__name__}: {e}")
         if not self.engines:
             self.logger.warning("No OCR engines available!")
-    
-    def extract_with_ocr(self, 
-                            image_data: bytes, 
-                            strategy: str = 'quality_first',
-                            confidence_threshold: float = 0.8) -> Dict[str, Any]:
+
+    def extract_with_ocr(
+        self, image_data: bytes, strategy: str = "quality_first", confidence_threshold: float = 0.8
+    ) -> Dict[str, Any]:
         """
         Extract text from image data using multiple OCR engines with intelligent retry strategies.
 
@@ -1492,13 +1497,13 @@ class MultiEngineOCR:
             image_data (bytes): Raw image data in any PIL-supported format (PNG, JPEG, TIFF, etc.).
             Must be non-empty bytes containing valid image content. Higher resolution images
             typically provide better OCR accuracy across all engines.
-            
+
             strategy (str, optional): Processing strategy determining engine priority order.
             Defaults to 'quality_first'. Available strategies:
             - 'quality_first': Prioritizes accuracy (Surya → Tesseract → EasyOCR → TrOCR)
-            - 'speed_first': Prioritizes processing speed (Tesseract → Surya → EasyOCR → TrOCR)  
+            - 'speed_first': Prioritizes processing speed (Tesseract → Surya → EasyOCR → TrOCR)
             - 'accuracy_first': Prioritizes maximum accuracy (Surya → EasyOCR → TrOCR → Tesseract)
-            
+
             confidence_threshold (float, optional): Minimum confidence score (0.0-1.0) required
             to accept OCR results without trying additional engines. Defaults to 0.8.
             Higher thresholds improve quality but may require more processing attempts.
@@ -1523,21 +1528,21 @@ class MultiEngineOCR:
 
         Examples:
             >>> multi_ocr = MultiEngineOCR()
-            >>> 
+            >>>
             >>> # High-quality extraction with quality priority
             >>> result = multi_ocr.extract_with_ocr(
             ...     image_data=document_bytes,
             ...     strategy='quality_first',
             ...     confidence_threshold=0.9
             ... )
-            >>> 
+            >>>
             >>> # Fast processing for real-time applications
             >>> result = multi_ocr.extract_with_ocr(
             ...     image_data=document_bytes,
             ...     strategy='speed_first',
             ...     confidence_threshold=0.7
             ... )
-            >>> 
+            >>>
             >>> # Maximum accuracy for critical documents
             >>> result = multi_ocr.extract_with_ocr(
             ...     image_data=document_bytes,
@@ -1582,51 +1587,50 @@ class MultiEngineOCR:
 
         # Define engine order based on strategy
         match strategy:
-            case 'quality_first':
-                engines = ['surya', 'tesseract', 'easyocr', 'trocr']
-            case 'speed_first':
-                engines = ['tesseract', 'surya', 'easyocr', 'trocr']
-            case 'accuracy_first':
-                engines = ['surya', 'easyocr', 'trocr', 'tesseract']
+            case "quality_first":
+                engines = ["surya", "tesseract", "easyocr", "trocr"]
+            case "speed_first":
+                engines = ["tesseract", "surya", "easyocr", "trocr"]
+            case "accuracy_first":
+                engines = ["surya", "easyocr", "trocr", "tesseract"]
             case _:
                 raise ValueError(f"Unknown strategy: {strategy}")
 
         # Filter to only available engines
         available_engines = [name for name in engines if name in self.engines]
-        
+
         results = []
-        
+
         for engine_name in available_engines:
             try:
                 self.logger.info(f"Trying OCR with {engine_name}")
-                
+
                 result = self.engines[engine_name].extract_text(image_data)
-                result['engine'] = engine_name
+                result["engine"] = engine_name
                 results.append(result)
 
                 # Check if result meets confidence threshold
-                if result.get('confidence', 0) >= confidence_threshold:
-                    self.logger.info(f"OCR successful with {engine_name}, confidence: {result['confidence']:.2f}")
+                if result.get("confidence", 0) >= confidence_threshold:
+                    self.logger.info(
+                        f"OCR successful with {engine_name}, confidence: {result['confidence']:.2f}"
+                    )
                     return result
-                
+
             except Exception as e:
                 self.logger.warning(f"OCR engine {engine_name} failed: {e}")
                 continue
 
         # If no engine met the threshold, return the best result
         if results:
-            best_result = max(results, key=lambda x: x.get('confidence', 0))
-            self.logger.info(f"Returning best result from {best_result['engine']} with confidence {best_result['confidence']:.2f}")
+            best_result = max(results, key=lambda x: x.get("confidence", 0))
+            self.logger.info(
+                f"Returning best result from {best_result['engine']} with confidence {best_result['confidence']:.2f}"
+            )
             return best_result
-        
+
         # If all engines failed, return empty result with error
         self.logger.error("All OCR engines failed")
-        return {
-            'text': '',
-            'confidence': 0.0,
-            'engine': 'none',
-            'error': 'All OCR engines failed'
-        }
+        return {"text": "", "confidence": 0.0, "engine": "none", "error": "All OCR engines failed"}
 
     def get_available_engines(self) -> List[str]:
         """
@@ -1647,9 +1651,7 @@ class MultiEngineOCR:
             >>> print(available)
             ['tesseract', 'easyocr']
         """
-        return [
-            name for name, engine in self.engines.items() if engine.is_available()
-        ]
+        return [name for name, engine in self.engines.items() if engine.is_available()]
 
     def classify_document_type(self, image_data: bytes) -> str:
         """
@@ -1663,7 +1665,7 @@ class MultiEngineOCR:
         Args:
             image_data (bytes): Raw image data to be analyzed for document type classification.
                 The image should contain the document content to be classified.
-        
+
         Returns:
             str: Document type classification from the following categories:
                 - 'printed': Clean printed text with standard fonts
@@ -1691,46 +1693,54 @@ class MultiEngineOCR:
         try:
             # Convert image data to PIL Image for analysis
             image = Image.open(io.BytesIO(image_data))
-            
+
             # If numpy or cv2 not available, return default classification
             if not HAVE_NUMPY or not HAVE_CV2:
-                self.logger.debug("NumPy or OpenCV not available, defaulting to 'printed' classification")
-                return 'printed'
-            
+                self.logger.debug(
+                    "NumPy or OpenCV not available, defaulting to 'printed' classification"
+                )
+                return "printed"
+
             # Convert to numpy array for analysis
             image_array = np.array(image)
-            
+
             # Convert to grayscale for analysis
             if len(image_array.shape) == 3:
                 gray = cv2.cvtColor(image_array, cv2.COLOR_RGB2GRAY)
             else:
                 gray = image_array
-            
+
             # Analyze image characteristics for classification
             height, width = gray.shape
-            
+
             # Calculate edge density to detect handwritten vs printed text
             edges = cv2.Canny(gray, 50, 150)
             edge_density = np.sum(edges > 0) / (width * height)
-            
+
             # Calculate text line consistency for printed vs handwritten detection
             horizontal_projection = np.sum(gray < 200, axis=1)
-            line_variance = np.var(horizontal_projection[horizontal_projection > 0]) if len(horizontal_projection[horizontal_projection > 0]) > 0 else 0
-            
+            line_variance = (
+                np.var(horizontal_projection[horizontal_projection > 0])
+                if len(horizontal_projection[horizontal_projection > 0]) > 0
+                else 0
+            )
+
             # Classify based on characteristics
             if edge_density > 0.1 and line_variance > 1000:
                 # High edge density and irregular lines suggest handwritten text
-                return 'handwritten'
+                return "handwritten"
             elif edge_density < 0.05 and line_variance < 500:
                 # Low edge density and consistent lines suggest printed text
-                return 'printed'
-            elif any(char in str(image_data) for char in ['∑', '∫', '√', 'α', 'β', 'γ', '≈', '≡']):
+                return "printed"
+            elif any(char in str(image_data) for char in ["∑", "∫", "√", "α", "β", "γ", "≈", "≡"]):
                 # Presence of mathematical symbols suggests scientific content
-                return 'scientific'
+                return "scientific"
             else:
                 # Mixed characteristics or complex layout
-                return 'mixed'
-                
+                return "mixed"
+
         except Exception as e:
-            self.logger.warning(f"Document type classification failed: {e}, defaulting to 'printed'")
-            return 'printed'
+            self.logger.warning(
+                f"Document type classification failed: {e}, defaulting to 'printed'"
+            )
+            return "printed"

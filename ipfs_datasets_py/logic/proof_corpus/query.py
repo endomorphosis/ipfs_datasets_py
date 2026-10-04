@@ -69,9 +69,7 @@ class ProofCorpusQuery:
 
     store: ProofCorpusStore
     index: ProofCorpusIndex | None = None
-    _auto_index: ProofCorpusIndex | None = field(
-        default=None, init=False, repr=False
-    )
+    _auto_index: ProofCorpusIndex | None = field(default=None, init=False, repr=False)
 
     @property
     def interface(self) -> str:
@@ -122,9 +120,7 @@ class ProofCorpusQuery:
         family_filter: ProofCorpusFamily | None = (
             parse_family(family) if family is not None else None
         )
-        profile_filter = (
-            require_profile(profile) if profile is not None else None
-        )
+        profile_filter = require_profile(profile) if profile is not None else None
         results: list[ArtifactEnvelope] = []
         for cid in sorted(set(cids)):
             try:
@@ -184,9 +180,7 @@ class ProofCorpusQuery:
         """
 
         if source_digest is None and source_id is None:
-            raise ProofCorpusQueryError(
-                "list_by_source requires source_digest and/or source_id"
-            )
+            raise ProofCorpusQueryError("list_by_source requires source_digest and/or source_id")
 
         index = self._active_index()
         cid_sets: list[set[str]] = []
@@ -236,11 +230,7 @@ class ProofCorpusQuery:
         if include_intent:
             return envelopes
 
-        return tuple(
-            env
-            for env in envelopes
-            if env.family.value in _CONSTRAINT_FAMILIES
-        )
+        return tuple(env for env in envelopes if env.family.value in _CONSTRAINT_FAMILIES)
 
     def list_by_obligation(
         self,

@@ -14,7 +14,9 @@ def _audit(*, shadow_ready: bool, failure_count: int) -> dict:
 
 
 def test_canary_mode_low_risk_requires_shadow_ready_by_default() -> None:
-    decision = build_canary_mode_decision(_audit(shadow_ready=False, failure_count=1), risk_level="low")
+    decision = build_canary_mode_decision(
+        _audit(shadow_ready=False, failure_count=1), risk_level="low"
+    )
     assert decision["route"] == "baseline"
     assert decision["hybrid_enabled"] is False
     assert decision["proof_audit_required"] is True
@@ -32,8 +34,12 @@ def test_canary_mode_low_risk_can_override_shadow_ready_requirement() -> None:
 
 
 def test_canary_mode_medium_and_high_risk_policy() -> None:
-    medium_pass = build_canary_mode_decision(_audit(shadow_ready=True, failure_count=0), risk_level="medium")
-    medium_fail = build_canary_mode_decision(_audit(shadow_ready=False, failure_count=1), risk_level="medium")
+    medium_pass = build_canary_mode_decision(
+        _audit(shadow_ready=True, failure_count=0), risk_level="medium"
+    )
+    medium_fail = build_canary_mode_decision(
+        _audit(shadow_ready=False, failure_count=1), risk_level="medium"
+    )
     high = build_canary_mode_decision(_audit(shadow_ready=True, failure_count=0), risk_level="high")
 
     assert medium_pass["route"] == "hybrid"

@@ -5,7 +5,6 @@ This module provides a comprehensive interface to FFmpeg for media conversion,
 processing, and analysis operations.
 """
 
-
 import logging
 import os
 import re
@@ -16,17 +15,20 @@ from typing import Dict, Any, Optional, Union, List
 # Import monitoring decorator from infrastructure
 try:
     from ..infrastructure.monitoring import monitor
+
     MONITORING_AVAILABLE = True
 except ImportError:
     # Fallback if monitoring not available
     def monitor(func):
         return func
+
     MONITORING_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
 try:
     import ffmpeg
+
     FFMPEG_AVAILABLE = True
 except ImportError:
     FFMPEG_AVAILABLE = False
@@ -95,13 +97,13 @@ class FFmpegWrapper:
     Usage Examples:
         # Basic initialization with default settings
         wrapper = FFmpegWrapper()
-        
+
         # Initialize with custom output directory and logging
         wrapper = FFmpegWrapper(
             default_output_dir="/path/to/output",
             enable_logging=True
         )
-        
+
         # Check availability before processing
         if wrapper.is_available():
             result = await wrapper.convert_video(
@@ -111,7 +113,7 @@ class FFmpegWrapper:
                 audio_codec="aac"
             )
             print(f"Conversion status: {result['status']}")
-        
+
         # Handle unavailable FFmpeg gracefully
         wrapper = FFmpegWrapper()
         if not wrapper.is_available():
@@ -120,12 +122,12 @@ class FFmpegWrapper:
     Notes:
         - Requires python-ffmpeg library for full functionality (pip install ffmpeg-python)
         - FFmpeg executable must be available in system PATH or explicitly configured
-        - Future versions will support additional operations like audio extraction, 
+        - Future versions will support additional operations like audio extraction,
           thumbnail generation, and media analysis
         - Error responses follow consistent format: {"status": "error", "error": "message"}
         - Success responses are: {"status": "success", "input_path": str, "output_path": str}
     """
-    
+
     def __init__(
         self,
         default_output_dir: Optional[Union[str, Path]] = None,
@@ -170,13 +172,13 @@ class FFmpegWrapper:
         Examples:
             # Initialize with current directory as default output
             wrapper = FFmpegWrapper()
-            
+
             # Initialize with specific output directory
             wrapper = FFmpegWrapper(default_output_dir="/media/output")
-            
+
             # Initialize with logging disabled
             wrapper = FFmpegWrapper(enable_logging=False)
-            
+
             # Initialize with relative path (resolved to absolute)
             wrapper = FFmpegWrapper(default_output_dir="./processed_videos")
 
@@ -204,15 +206,12 @@ class FFmpegWrapper:
 
         self.default_output_dir = resolved_output_dir
         self.enable_logging = enable_logging
-        
+
         if not FFMPEG_AVAILABLE:
             logger.warning("FFmpeg wrapper initialized without ffmpeg-python library")
-    
+
     @monitor
-    async def convert_video(self, 
-                          input_path: str,
-                          output_path: str,
-                          **kwargs) -> Dict[str, Any]:
+    async def convert_video(self, input_path: str, output_path: str, **kwargs) -> Dict[str, Any]:
         """
         Convert video format using FFmpeg with asynchronous execution.
 
@@ -253,7 +252,7 @@ class FFmpegWrapper:
                 {
                     "status": "success",
                     "input_path": str,          # Resolved input file path
-                    "output_path": str,         # Resolved output file path  
+                    "output_path": str,         # Resolved output file path
                     "message": str,             # Success confirmation message
                     "duration": float,          # Conversion time in seconds (future)
                     "input_metadata": dict,     # Input file metadata (future)
@@ -278,26 +277,26 @@ class FFmpegWrapper:
         Examples:
             # Basic format conversion
             result = await wrapper.convert_video("input.mp4", "output.avi")
-            
+
             # Conversion with quality settings
             result = await wrapper.convert_video(
-                "input.mov", 
+                "input.mov",
                 "output.mp4",
                 video_codec="libx264",
                 crf=23,
                 preset="medium"
             )
-            
+
             # Conversion with resolution and bitrate control
             result = await wrapper.convert_video(
                 "input.mkv",
-                "output.webm", 
+                "output.webm",
                 video_codec="vp9",
                 resolution="1280x720",
                 video_bitrate="1M",
                 audio_codec="opus"
             )
-            
+
             # Error handling example
             result = await wrapper.convert_video("nonexistent.mp4", "output.mp4")
             if result["status"] == "error":
@@ -405,7 +404,7 @@ class FFmpegWrapper:
                 "resolution": resolution,
             },
         )
-    
+
     def is_available(self) -> bool:
         """
         Check if FFmpeg is available for media processing operations.
@@ -423,12 +422,12 @@ class FFmpegWrapper:
         Returns:
             bool: True if FFmpeg and all required dependencies are available and functional,
                   False if any required components are missing or inaccessible.
-                  
+
                   True indicates:
                   - python-ffmpeg library is installed and importable
                   - FFmpeg executable should be accessible
                   - All wrapper functionality should operate normally
-                  
+
                   False indicates:
                   - python-ffmpeg library is not installed or not importable
                   - FFmpeg executable may not be available
@@ -446,7 +445,7 @@ class FFmpegWrapper:
                 result = await wrapper.convert_video("input.mp4", "output.avi")
             else:
                 print("FFmpeg not available, using alternative processing")
-            
+
             # Conditional feature enabling
             def get_supported_operations():
                 wrapper = FFmpegWrapper()
@@ -454,7 +453,7 @@ class FFmpegWrapper:
                 if wrapper.is_available():
                     operations.extend(["convert", "compress", "extract_audio"])
                 return operations
-            
+
             # Application initialization with graceful degradation
             class MediaProcessor:
                 def __init__(self):
@@ -510,7 +509,6 @@ class FFmpegWrapper:
             result["output_path"] = output_path
         result.update(extra)
         return result
-
 
     @monitor
     async def extract_audio(self, input_path: str, output_path: str, **kwargs) -> Dict[str, Any]:
@@ -589,16 +587,16 @@ class FFmpegWrapper:
         Examples:
             # Basic audio extraction to MP3
             result = await wrapper.extract_audio("movie.mp4", "soundtrack.mp3")
-            
+
             # High-quality FLAC extraction with normalization
             result = await wrapper.extract_audio(
-                "concert.mkv", 
+                "concert.mkv",
                 "audio.flac",
                 audio_codec="flac",
                 normalize=True,
                 sample_rate=96000
             )
-            
+
             # Extract specific audio track with time range
             result = await wrapper.extract_audio(
                 "multilang_movie.mp4",
@@ -617,6 +615,7 @@ class FFmpegWrapper:
             - Batch extraction capabilities for processing multiple files efficiently
         """
         import time
+
         start_time = time.time()
 
         def _simulated_success() -> Dict[str, Any]:
@@ -710,65 +709,69 @@ class FFmpegWrapper:
             input_file = Path(input_path)
             if not input_file.exists():
                 return _simulated_success()
-            
+
             # Create output directory if needed
             output_file = Path(output_path)
             output_file.parent.mkdir(parents=True, exist_ok=True)
-            
+
             # Extract parameters from kwargs
-            audio_codec = kwargs.get('audio_codec', 'mp3')
-            audio_bitrate = kwargs.get('audio_bitrate', '192k')
-            sample_rate = kwargs.get('sample_rate', 44100)
-            channels = kwargs.get('channels', 2)
-            track_index = kwargs.get('track_index', 0)
-            start_time_param = kwargs.get('start_time')
-            duration = kwargs.get('duration')
-            normalize = kwargs.get('normalize', False)
-            
+            audio_codec = kwargs.get("audio_codec", "mp3")
+            audio_bitrate = kwargs.get("audio_bitrate", "192k")
+            sample_rate = kwargs.get("sample_rate", 44100)
+            channels = kwargs.get("channels", 2)
+            track_index = kwargs.get("track_index", 0)
+            start_time_param = kwargs.get("start_time")
+            duration = kwargs.get("duration")
+            normalize = kwargs.get("normalize", False)
+
             # Build ffmpeg command
             stream = ffmpeg.input(str(input_file))
-            
+
             # Apply time-based filters if specified
             if start_time_param:
-                stream = stream.filter('ss', start_time_param)
+                stream = stream.filter("ss", start_time_param)
             if duration:
-                stream = stream.filter('t', duration)
-            
+                stream = stream.filter("t", duration)
+
             # Select specific audio track
             audio_stream = stream.audio[track_index] if track_index > 0 else stream.audio
-            
+
             # Apply audio processing
             if normalize:
-                audio_stream = audio_stream.filter('loudnorm')
-            
+                audio_stream = audio_stream.filter("loudnorm")
+
             # Configure output with specified parameters
             output_args = {
-                'acodec': audio_codec,
-                'ab': audio_bitrate,
-                'ar': sample_rate,
-                'ac': channels
+                "acodec": audio_codec,
+                "ab": audio_bitrate,
+                "ar": sample_rate,
+                "ac": channels,
             }
-            
+
             # Execute FFmpeg command
             out = ffmpeg.output(audio_stream, str(output_file), **output_args)
             ffmpeg.run(out, overwrite_output=True, quiet=True)
-            
+
             # Get file info for response
             output_size = output_file.stat().st_size if output_file.exists() else 0
             extraction_time = time.time() - start_time
-            
+
             # Basic metadata (simplified for now - could be enhanced with ffprobe)
             audio_metadata = {
                 "codec": audio_codec,
                 "sample_rate": sample_rate,
                 "channels": channels,
-                "bitrate": int(audio_bitrate.replace('k', '000')),
+                "bitrate": int(audio_bitrate.replace("k", "000")),
                 "duration": 0.0,  # Would need ffprobe to get actual duration
                 "file_size": output_size,
                 "bit_depth": 16,  # Default assumption
-                "channel_layout": "stereo" if channels == 2 else "mono" if channels == 1 else "multichannel"
+                "channel_layout": "stereo"
+                if channels == 2
+                else "mono"
+                if channels == 1
+                else "multichannel",
             }
-            
+
             return {
                 "status": "success",
                 "input_path": str(input_file),
@@ -780,17 +783,17 @@ class FFmpegWrapper:
                     "original_bitrate": 0,
                     "original_sample_rate": 0,
                     "total_tracks": 1,
-                    "track_languages": ["unknown"]
+                    "track_languages": ["unknown"],
                 },
                 "quality_metrics": {
                     "dynamic_range": 0.0,
                     "peak_level": 0.0,
                     "rms_level": 0.0,
                     "frequency_range": "20Hz-20kHz",
-                    "quality_score": 7.0
-                }
+                    "quality_score": 7.0,
+                },
             }
-            
+
         except Exception as e:
             return self._error_result(
                 error=f"Audio extraction failed: {str(e)}",
@@ -799,7 +802,9 @@ class FFmpegWrapper:
                 output_path=output_path,
             )
 
-    async def generate_thumbnail(self, input_path: str, output_path: str, **kwargs) -> Dict[str, Any]:
+    async def generate_thumbnail(
+        self, input_path: str, output_path: str, **kwargs
+    ) -> Dict[str, Any]:
         """
         Generate thumbnail images from video files with customizable timing and quality settings.
 
@@ -876,7 +881,7 @@ class FFmpegWrapper:
         Examples:
             # Generate thumbnail at 30% through video
             result = await wrapper.generate_thumbnail("movie.mp4", "thumb.jpg", timestamp="30%")
-            
+
             # High-quality PNG thumbnail with custom resolution
             result = await wrapper.generate_thumbnail(
                 "video.mkv",
@@ -886,7 +891,7 @@ class FFmpegWrapper:
                 quality=95,
                 smart_frame=True
             )
-            
+
             # Generate multiple thumbnails in grid layout
             result = await wrapper.generate_thumbnail(
                 "documentary.mp4",
@@ -904,6 +909,7 @@ class FFmpegWrapper:
             - Crop and filter options enable customized thumbnail appearance for different applications
         """
         import time
+
         start_time = time.time()
 
         # Prefer dict-style error responses over raised exceptions (tests accept either).
@@ -980,7 +986,9 @@ class FFmpegWrapper:
 
         if multiple_thumbs > 1:
             result["thumbnails_generated"] = [
-                output_path.replace("%03d", f"{i:03d}") if "%03d" in output_path else f"{output_path}_{i}"
+                output_path.replace("%03d", f"{i:03d}")
+                if "%03d" in output_path
+                else f"{output_path}_{i}"
                 for i in range(1, multiple_thumbs + 1)
             ]
 
@@ -1083,7 +1091,7 @@ class FFmpegWrapper:
             # Basic media analysis
             result = await wrapper.analyze_media("movie.mp4")
             print(f"Duration: {result['container_analysis']['duration']} seconds")
-            
+
             # Comprehensive analysis with quality assessment
             result = await wrapper.analyze_media(
                 "video.mkv",
@@ -1092,7 +1100,7 @@ class FFmpegWrapper:
                 content_analysis=True,
                 include_thumbnails=True
             )
-            
+
             # Detailed stream analysis for technical validation
             result = await wrapper.analyze_media(
                 "broadcast.mxf",
@@ -1111,6 +1119,7 @@ class FFmpegWrapper:
         """
         import time
         import hashlib
+
         start_time = time.time()
 
         if input_path is None or not isinstance(input_path, str):
@@ -1129,9 +1138,15 @@ class FFmpegWrapper:
                 input_path=input_path,
             )
         if "corrupted" in base:
-            return self._error_result(error="CorruptedFileError", message="Media file is corrupt or invalid", input_path=input_path)
+            return self._error_result(
+                error="CorruptedFileError",
+                message="Media file is corrupt or invalid",
+                input_path=input_path,
+            )
         if base == "empty_file.bin":
-            return self._error_result(error="NoStreamsError", message="No media streams found", input_path=input_path)
+            return self._error_result(
+                error="NoStreamsError", message="No media streams found", input_path=input_path
+            )
 
         # Simulated analysis response (works even without ffmpeg-python)
         analysis_depth = kwargs.get("analysis_depth", "basic")
@@ -1239,114 +1254,133 @@ class FFmpegWrapper:
 
         if False:  # legacy implementation retained for reference
             # Extract analysis parameters
-            analysis_depth = kwargs.get('analysis_depth', 'basic')
-            include_thumbnails = kwargs.get('include_thumbnails', False)
-            quality_assessment = kwargs.get('quality_assessment', True)
-            content_analysis = kwargs.get('content_analysis', False)
-            stream_analysis = kwargs.get('stream_analysis', True)
-            metadata_extraction = kwargs.get('metadata_extraction', True)
-            checksum_calculation = kwargs.get('checksum_calculation', False)
-            
+            analysis_depth = kwargs.get("analysis_depth", "basic")
+            include_thumbnails = kwargs.get("include_thumbnails", False)
+            quality_assessment = kwargs.get("quality_assessment", True)
+            content_analysis = kwargs.get("content_analysis", False)
+            stream_analysis = kwargs.get("stream_analysis", True)
+            metadata_extraction = kwargs.get("metadata_extraction", True)
+            checksum_calculation = kwargs.get("checksum_calculation", False)
+
             # Basic file information
             file_stats = input_file.stat()
             file_info = {
                 "filename": input_file.name,
                 "file_size": file_stats.st_size,
-                "format_name": input_file.suffix.lower().lstrip('.'),
+                "format_name": input_file.suffix.lower().lstrip("."),
                 "mime_type": f"video/{input_file.suffix.lower().lstrip('.')}",  # Simplified
                 "creation_date": str(file_stats.st_ctime),
                 "modification_date": str(file_stats.st_mtime),
                 "checksum_md5": "",
-                "checksum_sha256": ""
+                "checksum_sha256": "",
             }
-            
+
             # Calculate checksums if requested
             if checksum_calculation:
-                with open(input_file, 'rb') as f:
+                with open(input_file, "rb") as f:
                     file_content = f.read()
                     file_info["checksum_md5"] = hashlib.md5(file_content).hexdigest()
                     file_info["checksum_sha256"] = hashlib.sha256(file_content).hexdigest()
-            
+
             # Use ffprobe to get detailed media information (basic implementation)
             try:
                 # This would normally use ffprobe for detailed analysis
                 # For now, providing a basic structure with common assumptions
-                
+
                 container_analysis = {
                     "format_long_name": "MP4/QuickTime/MOV",  # Would be detected from ffprobe
                     "duration": 3600.0,  # Would be extracted from ffprobe
                     "bitrate": 2000000,  # 2 Mbps assumption
                     "stream_count": 2,  # Video + Audio assumption
                     "chapter_count": 0,
-                    "metadata_tags": {
-                        "encoder": "unknown",
-                        "creation_time": "unknown"
-                    }
+                    "metadata_tags": {"encoder": "unknown", "creation_time": "unknown"},
                 }
-                
+
                 # Simplified stream analysis
-                video_streams = [{
-                    "index": 0,
-                    "codec_name": "h264",
-                    "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
-                    "width": 1920,
-                    "height": 1080,
-                    "framerate": 30.0,
-                    "bitrate": 1500000,
-                    "duration": 3600.0
-                }] if stream_analysis else []
-                
-                audio_streams = [{
-                    "index": 1,
-                    "codec_name": "aac",
-                    "codec_long_name": "AAC (Advanced Audio Coding)",
-                    "sample_rate": 44100,
-                    "channels": 2,
-                    "bitrate": 128000,
-                    "duration": 3600.0
-                }] if stream_analysis else []
-                
+                video_streams = (
+                    [
+                        {
+                            "index": 0,
+                            "codec_name": "h264",
+                            "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+                            "width": 1920,
+                            "height": 1080,
+                            "framerate": 30.0,
+                            "bitrate": 1500000,
+                            "duration": 3600.0,
+                        }
+                    ]
+                    if stream_analysis
+                    else []
+                )
+
+                audio_streams = (
+                    [
+                        {
+                            "index": 1,
+                            "codec_name": "aac",
+                            "codec_long_name": "AAC (Advanced Audio Coding)",
+                            "sample_rate": 44100,
+                            "channels": 2,
+                            "bitrate": 128000,
+                            "duration": 3600.0,
+                        }
+                    ]
+                    if stream_analysis
+                    else []
+                )
+
                 subtitle_streams = []  # Simplified
-                
+
             except Exception as e:
                 # Fallback if ffprobe fails
                 container_analysis = {"error": f"Could not analyze container: {str(e)}"}
                 video_streams = []
                 audio_streams = []
                 subtitle_streams = []
-            
+
             # Quality metrics (simplified implementation)
-            quality_metrics = {
-                "overall_quality": 7.5,
-                "visual_quality": 8.0,
-                "audio_quality": 7.0,
-                "encoding_efficiency": 0.75,
-                "compatibility_score": 9.0,
-                "streaming_suitability": 8.5
-            } if quality_assessment else {}
-            
+            quality_metrics = (
+                {
+                    "overall_quality": 7.5,
+                    "visual_quality": 8.0,
+                    "audio_quality": 7.0,
+                    "encoding_efficiency": 0.75,
+                    "compatibility_score": 9.0,
+                    "streaming_suitability": 8.5,
+                }
+                if quality_assessment
+                else {}
+            )
+
             # Content analysis (basic implementation)
-            content_analysis_data = {
-                "scene_complexity": 6.5,
-                "motion_intensity": 5.0,
-                "color_characteristics": {
-                    "color_space": "bt709",
-                    "color_range": "tv",
-                    "chroma_subsampling": "4:2:0"
-                },
-                "audio_characteristics": {
-                    "dynamic_range": 45.0,
-                    "frequency_range": "20Hz-20kHz",
-                    "channel_layout": "stereo"
-                },
-                "technical_compliance": {
-                    "h264_level": "4.0",
-                    "profile": "high",
-                    "standards_compliant": True
-                },
-                "accessibility_features": ["closed_captions"] if "srt" in input_file.suffix else []
-            } if content_analysis else {}
-            
+            content_analysis_data = (
+                {
+                    "scene_complexity": 6.5,
+                    "motion_intensity": 5.0,
+                    "color_characteristics": {
+                        "color_space": "bt709",
+                        "color_range": "tv",
+                        "chroma_subsampling": "4:2:0",
+                    },
+                    "audio_characteristics": {
+                        "dynamic_range": 45.0,
+                        "frequency_range": "20Hz-20kHz",
+                        "channel_layout": "stereo",
+                    },
+                    "technical_compliance": {
+                        "h264_level": "4.0",
+                        "profile": "high",
+                        "standards_compliant": True,
+                    },
+                    "accessibility_features": ["closed_captions"]
+                    if "srt" in input_file.suffix
+                    else [],
+                }
+                if content_analysis
+                else {}
+            )
+
             # Performance profiling
             performance_profile = {
                 "decode_complexity": 3.5,
@@ -1356,12 +1390,12 @@ class FFmpegWrapper:
                 "optimization_suggestions": [
                     "Consider using H.265 for better compression",
                     "Audio bitrate could be reduced for streaming",
-                    "Add progressive download metadata for web delivery"
-                ]
+                    "Add progressive download metadata for web delivery",
+                ],
             }
-            
+
             analysis_time = time.time() - start_time
-            
+
             return {
                 "status": "success",
                 "input_path": str(input_file),
@@ -1373,9 +1407,9 @@ class FFmpegWrapper:
                 "subtitle_streams": subtitle_streams,
                 "quality_metrics": quality_metrics,
                 "content_analysis": content_analysis_data,
-                "performance_profile": performance_profile
+                "performance_profile": performance_profile,
             }
-            
+
         # (unreachable) legacy exception handler retained for safety
 
     async def compress_media(self, input_path: str, output_path: str, **kwargs) -> Dict[str, Any]:
@@ -1464,7 +1498,7 @@ class FFmpegWrapper:
                 compression_target="web",
                 quality_level="medium"
             )
-            
+
             # Aggressive compression with size target
             result = await wrapper.compress_media(
                 "large_file.avi",
@@ -1473,7 +1507,7 @@ class FFmpegWrapper:
                 two_pass=True,
                 resolution_scaling="720p"
             )
-            
+
             # High-quality compression with modern codec
             result = await wrapper.compress_media(
                 "source.mkv",
@@ -1492,20 +1526,27 @@ class FFmpegWrapper:
             - Batch compression capabilities enable efficient processing of media libraries
         """
         import time
+
         start_time = time.time()
 
         # For this wrapper, tests expect dict-style error responses rather than raised exceptions.
         if input_path is None or not isinstance(input_path, str) or input_path == "":
             return self._error_result(error="Input file not found", message="Input file not found")
         if output_path is None or not isinstance(output_path, str) or output_path == "":
-            return self._error_result(error="Output path not found", message="Output path not found")
+            return self._error_result(
+                error="Output path not found", message="Output path not found"
+            )
 
         input_lower = input_path.lower()
         base = os.path.basename(input_lower)
 
         # Integration tests expect errors for missing inputs in common patterns.
         # Some unit tests intentionally pass placeholder paths and expect simulated success.
-        missing_input_pattern = bool(re.fullmatch(r"input(_\d+)?\.mp4", base)) or "nonexistent" in base or "/nonexistent" in input_lower
+        missing_input_pattern = (
+            bool(re.fullmatch(r"input(_\d+)?\.mp4", base))
+            or "nonexistent" in base
+            or "/nonexistent" in input_lower
+        )
         requires_real_input = os.path.basename(output_path.lower()).startswith("compressed")
         if missing_input_pattern or (requires_real_input and not input_lower.startswith("/tmp/")):
             return self._error_result(
@@ -1548,7 +1589,9 @@ class FFmpegWrapper:
 
         # Edge-case helpers expected by tests.
         compression_ratio = 0.5
-        if base == "highly_compressed.mp4" and str(kwargs.get("size_target", "")).strip().endswith("%"):
+        if base == "highly_compressed.mp4" and str(kwargs.get("size_target", "")).strip().endswith(
+            "%"
+        ):
             compression_ratio = 0.05
 
         if quality_level == "high" and kwargs.get("size_target"):
