@@ -47,6 +47,10 @@ CLOSED_RECEIPT_SCHEMAS: Final[frozenset[str]] = frozenset(
     }
 )
 
+# Closed public counterexample boundary (FVT-G007 / CounterexampleEnvelope@2).
+COUNTEREXAMPLE_ENVELOPE_INTERFACE: Final = "CounterexampleEnvelope@2"
+PUBLIC_COUNTEREXAMPLE_BOUNDARY_INTERFACE: Final = "PublicCounterexampleBoundary@1"
+
 # Operations advertised by the stable surface (LFV-G070 / plan § Stable logic API).
 STABLE_OPERATIONS: Final[tuple[str, ...]] = (
     "list_logic_families",
@@ -1296,8 +1300,18 @@ class LogicVerificationAPI:
         witness: Mapping[str, Any] | Any,
         *,
         request_id: str = "",
+        property_id: str = "",
+        tool_id: str = "",
+        authority: str = "",
     ) -> VerificationResponse:
-        """Normalize a counterexample / attack-trace / model witness."""
+        """Project a counterexample through the secret-safe public boundary.
+
+        Routes every witness through ``PublicCounterexampleBoundary@1`` so the
+        stable Python/CLI/MCP surface never returns raw provider output,
+        private witnesses, credentials, source text, or stdout.  Raw channels
+        are retained only as private digest / retention metadata on the closed
+        ``CounterexampleEnvelope@2`` wire shape.
+        """
 
         request_id = _text(request_id, "request_id", optional=True)
         if witness is None:
@@ -1306,35 +1320,95 @@ class LogicVerificationAPI:
                 VerificationStatus.INVALID,
                 authority=VerificationAuthority.NONE,
                 diagnostics=("witness is required",),
+                result={
+                    "valid": False,
+                    "boundary": PUBLIC_COUNTEREXAMPLE_BOUNDARY_INTERFACE,
+                    "reason": "empty",
+                },
                 request_id=request_id,
             )
-        if hasattr(witness, "to_dict"):
-            payload = witness.to_dict()
-        elif isinstance(witness, Mapping):
-            payload = dict(witness)
-        else:
-            payload = {"value": str(witness)}
 
-        kind = str(payload.get("kind") or payload.get("witness_kind") or "model")
-        summary = str(
-            payload.get("summary")
-            or payload.get("message")
-            or payload.get("description")
-            or f"Counterexample witness of kind {kind}"
-        )
-        model = payload.get("model") or payload.get("assignment") or payload.get("trace")
+        try:
+            from ipfs_datasets_py.logic.software_verification.counterexamples.contracts import (
+                CounterexampleEnvelopeError,
+                PublicCounterexampleBoundary,
+            )
+        except Exception as error:
+            return _response(
+                "explain_counterexample",
+                VerificationStatus.UNAVAILABLE,
+                authority=VerificationAuthority.NONE,
+                unsupported_features=("public_counterexample_boundary",),
+                diagnostics=(
+                    f"counterexample boundary unavailable: {type(error).__name__}: {error}",
+                ),
+                request_id=request_id,
+            )
+
+        try:
+            envelope = PublicCounterexampleBoundary().project(
+                witness,
+                property_id=property_id,
+                tool_id=tool_id,
+                authority=authority,
+            )
+        except CounterexampleEnvelopeError as error:
+            return _response(
+                "explain_counterexample",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(str(error),),
+                result={
+                    "valid": False,
+                    "boundary": PUBLIC_COUNTEREXAMPLE_BOUNDARY_INTERFACE,
+                    "reason": "rejected",
+                },
+                request_id=request_id,
+            )
+        except Exception as error:
+            return _response(
+                "explain_counterexample",
+                VerificationStatus.ERROR,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(f"{type(error).__name__}: {error}",),
+                result={
+                    "valid": False,
+                    "boundary": PUBLIC_COUNTEREXAMPLE_BOUNDARY_INTERFACE,
+                    "reason": "error",
+                },
+                request_id=request_id,
+            )
+
+        public = envelope.to_public_dict()
+        # Stable API compatibility: expose the public model/assignment body
+        # without re-introducing a raw payload channel.
+        model = envelope.public_model()
+        try:
+            response_authority = VerificationAuthority(envelope.authority)
+        except ValueError:
+            response_authority = VerificationAuthority.BOUNDED
+
         return _response(
             "explain_counterexample",
             VerificationStatus.SUCCEEDED,
-            authority=VerificationAuthority.BOUNDED,
+            authority=response_authority,
             result={
-                "kind": kind,
-                "summary": summary,
+                "kind": envelope.kind,
+                "summary": envelope.summary,
                 "model": model,
-                "raw": payload,
+                "envelope": public,
+                "boundary": PUBLIC_COUNTEREXAMPLE_BOUNDARY_INTERFACE,
+                "interface": COUNTEREXAMPLE_ENVELOPE_INTERFACE,
+                "contains_private_material": False,
+                "contains_raw_prover_output": False,
+                "contains_source": False,
             },
-            witnesses=({"kind": kind, "payload": payload},),
+            witnesses=(public,),
+            assumptions=envelope.assumption_ids,
+            bounds=dict(envelope.finite_bounds),
             request_id=request_id,
+            property_id=envelope.property_id,
+            provider_id=envelope.tool_id,
             cache=_empty_cache(source="counterexample"),
         )
 
