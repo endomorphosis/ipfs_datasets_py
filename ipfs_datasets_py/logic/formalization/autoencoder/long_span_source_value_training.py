@@ -225,6 +225,62 @@ def _group_learning_rates(optimizer, inventory):
     return {item["name"]: group["lr"] for item, group in zip(inventory, optimizer.param_groups)}
 
 
+
+def _source_margin_gradients(torch, loss, named_parameters, weight):
+    """Compute auxiliary gradients without writing any model ``.grad`` field.
+
+    Restrict only this reverse pass. The ordinary objective and the subsequent
+    single global clipping operation still cover all trainable parameters.
+    Disconnected parameters remain None, including the entire zero-weight arm.
+    """
+    names = [name for name, _ in named_parameters]
+    parameters = [parameter for _, parameter in named_parameters]
+    core._require(len(names) == len(set(names)) and len(parameters) == len({id(p) for p in parameters})
+        and all(p.requires_grad for p in parameters), "unique trainable margin gradient inventory required")
+    receipt = dict(parameter_names=names, parameter_count=sum(p.numel() for p in parameters),
+        backward_executed=False, unscaled_l2_norm=0., scaled_l2_norm=0.,
+        backward_elapsed_seconds=0., none_gradient_parameter_names=list(names))
+    if weight == 0. or loss is None:
+        return [None]*len(parameters), receipt
+    core._require(core._finite(torch, loss) and loss.ndim == 0 and loss.requires_grad,
+        "finite differentiable scalar source-margin loss required")
+    started = time.monotonic()
+    gradients = torch.autograd.grad(loss, parameters, retain_graph=True,
+        create_graph=False, allow_unused=True)
+    receipt["backward_elapsed_seconds"] = time.monotonic()-started
+    detached, unscaled_squared, scaled_squared = [], 0., 0.
+    for parameter, gradient in zip(parameters, gradients):
+        if gradient is None:
+            detached.append(None)
+            continue
+        core._require(gradient.shape == parameter.shape and gradient.dtype == parameter.dtype
+            and gradient.device == parameter.device and core._finite(torch, gradient),
+            "invalid source-margin auxiliary gradient")
+        gradient = gradient.detach()
+        scaled = gradient*weight
+        core._require(core._finite(torch, scaled), "nonfinite weighted source-margin auxiliary gradient")
+        detached.append(scaled)
+        unscaled_squared += float(gradient.double().square().sum())
+        scaled_squared += float(scaled.double().square().sum())
+    receipt.update(backward_executed=True, unscaled_l2_norm=math.sqrt(unscaled_squared),
+        scaled_l2_norm=math.sqrt(scaled_squared),
+        none_gradient_parameter_names=[name for (name, _), gradient in zip(named_parameters, gradients)
+            if gradient is None])
+    return detached, receipt
+
+
+def _add_source_margin_gradients(torch, named_parameters, gradients):
+    """Add already weighted detached gradients after ordinary backward only."""
+    core._require(len(named_parameters) == len(gradients), "source-margin gradient inventory mismatch")
+    with torch.no_grad():
+        for (_, parameter), gradient in zip(named_parameters, gradients):
+            if gradient is not None:
+                if parameter.grad is None:
+                    parameter.grad = gradient
+                else:
+                    parameter.grad.add_(gradient)
+
+
 def train(student, training_rows, validation_rows, *, training_references, validation_references,
           codec, input_transform, lineage, validate_rule, validator_id,
           curriculum, strategy="reference_ce", config=None, cardinality_weight=0.,
@@ -232,7 +288,8 @@ def train(student, training_rows, validation_rows, *, training_references, valid
           order_augmentation=None, generated_boundary_weight=0., generated_boundary_gradient_scope="all_trainable",
           source_contexts=None, action_contrastive_weight=0., generated_boundary_site_policy="first_last",
           generated_field_weight=0., generated_site_interval=1, non_action_learning_rate_multiplier=1.0,
-          joint_generated_replay=False):
+          joint_generated_replay=False, generated_source_margin_weight=0.,
+          generated_source_margin_replay=False):
     """Fresh reference-supervised fit; source fidelity gates experimental selection.
 
     The last complete attempt is retained as an explicitly unselected diagnostic.
@@ -245,6 +302,11 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     Explicit joint replay permits a zero-field-weight execution control: both
     components' sites and CE are measured, but only positive-weight losses enter
     the objective.  The ordinary zero-field path retains its original helper.
+    Source-margin replay is a separate explicit experiment. Its auxiliary loss
+    sends direct gradients only to a checked recurrent parameter inventory;
+    ordinary losses and shared global clipping retain their original scope.
+    A zero-weight replay control measures the same sites without an auxiliary
+    reverse pass or a zero-multiplied graph attached to the ordinary objective.
     """
     started = time.monotonic()
     core._require(config is None or type(config) is dict, "configuration must be a mapping")
@@ -281,8 +343,18 @@ def train(student, training_rows, validation_rows, *, training_references, valid
         and 0 <= generated_field_weight <= 1, "invalid generated-field weight")
     core._require(type(joint_generated_replay) is bool, "joint generated replay must be a boolean")
     use_joint_generated_replay = joint_generated_replay or generated_field_weight > 0.
+    core._require(type(generated_source_margin_weight) in (int, float)
+        and math.isfinite(generated_source_margin_weight) and 0 <= generated_source_margin_weight <= 1,
+        "invalid generated-source-margin weight")
+    core._require(type(generated_source_margin_replay) is bool,
+        "generated source-margin replay must be a boolean")
+    use_source_margin = generated_source_margin_replay or generated_source_margin_weight > 0.
+    core._require(not (use_source_margin and use_joint_generated_replay),
+        "source-margin replay cannot be combined with generated-field replay")
     core._require(type(generated_site_interval) is int and 1 <= generated_site_interval <= 32,
         "generated-site interval must be an integer1..32")
+    core._require(not use_source_margin or generated_site_interval == 1,
+        "source-margin replay requires interval1")
     core._require(generated_site_interval == 1 or generated_field_weight > 0,
         "generated-site cadence requires positive field weight")
     core._require(order_augmentation is None or type(order_augmentation) is dict
@@ -307,6 +379,10 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     core._require(not use_joint_generated_replay or contextual and generated_boundary_weight > 0
         and generated_boundary_gradient_scope == "all_trainable",
         "generated-field training requires contextual model and positive all-trainable boundary loss")
+    core._require(not use_source_margin or contextual and head_specification.get("schema") ==
+        "ordered-clause-recurrent-source-decoder-development/v1" and generated_boundary_weight > 0
+        and generated_boundary_gradient_scope == "all_trainable",
+        "source-margin replay requires ordered recurrent contextual model and positive all-trainable boundary loss")
     context_receipt = None
     training_contexts = validation_contexts = None
     if source_contexts is not None:
@@ -371,6 +447,14 @@ def train(student, training_rows, validation_rows, *, training_references, valid
         from . import generated_field_training as field_owner
         field_inventory = field_owner.prepare_training_inventory(training_rows, training_references,
             contexts=training_contexts, codec=codec, validate_rule=validate_rule)
+    margin_owner = margin_inventory = None
+    if use_source_margin:
+        from . import generated_source_margin_training as margin_owner
+        from . import generated_field_training
+        margin_inventory = generated_field_training.prepare_training_inventory(training_rows, training_references,
+            contexts=training_contexts, codec=codec, validate_rule=validate_rule)
+        # Reject unsupported inventories before copying a private model.
+        margin_owner.recurrent_auxiliary_parameters(student)
     stages = core._curriculum(curriculum, training_rows, options)
     parameter_bytes = sum(t.numel()*t.element_size() for t in student.state_dict().values())
     width = max(len(r["target_ids"]) for r in [*training_rows, *validation_rows])
@@ -410,6 +494,19 @@ def train(student, training_rows, validation_rows, *, training_references, valid
         # One bounded incremental retry graph; completed rejected bulk graphs
         # are discarded before the causal retry is constructed.
         estimate += 16*options["batch_size"]*options["max_target_tokens"]*128*4
+    if margin_owner is not None:
+        # Full-vocabulary collected source/combined logits, selected/replay
+        # source vectors and a bounded failed bulk attempt. This is a retained
+        # tensor/receipt work estimate, not a process RSS limit.
+        margin_update_bound = min(options["max_optimizer_steps"], sum(
+            ((len(stage["training_ids"])+options["batch_size"]-1)//options["batch_size"])*stage["epochs"]
+            for stage in stages))
+        # Also reserve one pending uncommitted collection/replay while
+        # the previous committed receipt is retained.
+        estimate += (margin_update_bound+1)*options["batch_size"]*300*len(codec["target_vocabulary"])*32
+        estimate += len(core._raw(margin_inventory))
+        estimate += 16*options["batch_size"]*options["max_target_tokens"]*128*4
+        estimate += parameter_bytes*3  # detached auxiliary grads and reverse-pass work
     if source_contexts is not None:
         estimate += 16*options["batch_size"]*8*student.dimension*4 + len(core._raw(source_contexts))
     if action_contrastive_weight:
@@ -425,6 +522,7 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     working = deepcopy(student)
     trainable = [p for p in working.parameters() if p.requires_grad]
     core._require(trainable, "no trainable decoder parameters")
+    margin_parameters = ([] if margin_owner is None else margin_owner.recurrent_auxiliary_parameters(working))
     frozen = {name: p.detach().cpu().contiguous().numpy().tobytes()
               for name, p in working.named_parameters() if not p.requires_grad}
     group_inventory = None
@@ -465,7 +563,7 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     global_epoch = 0
     boundary_owner = None
     boundary_counts = None
-    if generated_boundary_weight and field_owner is None:
+    if generated_boundary_weight and field_owner is None and margin_owner is None:
         if contextual_boundary:
             from . import contextual_generated_boundary_training as boundary_owner
         else:
@@ -542,9 +640,27 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                         break
                     if action_result["loss"] is not None:
                         objective = objective + action_contrastive_weight*action_result["loss"]
-                boundary_result = generated_result = None
+                boundary_result = generated_result = margin_result = None
                 generated_scheduled = field_owner is not None and steps % generated_site_interval == 0
-                if generated_scheduled:
+                if margin_owner is not None:
+                    try:
+                        generated_sources = [dict(id=row["id"], input=row["input"], source_text=row["source_text"]) for row in part]
+                        generated_contexts = {row["id"]: training_contexts[row["id"]] for row in part}
+                        collection = margin_owner.collect_source_margin_sites(working, generated_sources,
+                            codec=codec, input_transform=input_transform, source_contexts=generated_contexts,
+                            max_target_tokens=options["max_target_tokens"], batch_size=options["batch_size"], deadline=deadline)
+                        margin_result = margin_owner.generated_margin_losses(torch, working, collection, margin_inventory,
+                            codec=codec, input_transform=input_transform, source_contexts=generated_contexts,
+                            deadline=deadline, boundary_site_policy=generated_boundary_site_policy)
+                    except TimeoutError:
+                        optimizer.zero_grad(set_to_none=True)
+                        stopped, complete = "deadline_during_source_margin_replay", False
+                        break
+                    if margin_result["boundary_loss"] is not None:
+                        objective = objective + generated_boundary_weight*margin_result["boundary_loss"]
+                    core._require(margin_result["margin_loss"] is None or
+                        core._finite(torch, margin_result["margin_loss"]), "nonfinite source-margin objective")
+                elif generated_scheduled:
                     try:
                         generated_sources = [dict(id=row["id"], input=row["input"], source_text=row["source_text"]) for row in part]
                         generated_contexts = {row["id"]: training_contexts[row["id"]] for row in part}
@@ -589,7 +705,25 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                 if time.monotonic() >= deadline:
                     stopped, complete = "deadline", False
                     break
+                margin_gradients = margin_gradient_receipt = None
+                if margin_result is not None:
+                    margin_gradients, margin_gradient_receipt = _source_margin_gradients(torch,
+                        margin_result["margin_loss"], margin_parameters, generated_source_margin_weight)
+                    if time.monotonic() >= deadline:
+                        optimizer.zero_grad(set_to_none=True)
+                        stopped, complete = "deadline_after_source_margin_backward", False
+                        break
                 objective.backward()
+                if margin_result is not None:
+                    if time.monotonic() >= deadline:
+                        optimizer.zero_grad(set_to_none=True)
+                        stopped, complete = "deadline_after_ordinary_backward", False
+                        break
+                    _add_source_margin_gradients(torch, margin_parameters, margin_gradients)
+                    if time.monotonic() >= deadline:
+                        optimizer.zero_grad(set_to_none=True)
+                        stopped, complete = "deadline_after_source_margin_gradient_addition", False
+                        break
                 if action_result is not None:
                     action_owner.record_feature_gradient(torch, action_result, weight=action_contrastive_weight)
                 preclip_norm = torch.nn.utils.clip_grad_norm_(trainable, options["max_grad_norm"], error_if_nonfinite=True)
@@ -615,6 +749,19 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                     token_ce=float(plain.detach()), weighted_token_ce=float(weighted.detach()),
                     count_ce=float(count_loss.detach()), source_value_ce=float(source_loss.detach()),
                     raw_reconstruction_mse=float(mse.detach()), objective=float(objective.detach())))
+                if margin_result is not None:
+                    margin_gradient_receipt.update(combined_preclip_norm=float(preclip_norm.detach()),
+                        shared_clip_factor=float((options["max_grad_norm"]/(preclip_norm.detach()+1e-6)).clamp(max=1.)))
+                    ordinary_objective = committed_updates[-1]["objective"]
+                    committed_updates[-1]["ordinary_objective"] = ordinary_objective
+                    # Numeric accounting only: never attach margin to ordinary
+                    # backward, which would give direct auxiliary gradients to heads.
+                    if generated_source_margin_weight != 0. and margin_result["margin_loss"] is not None:
+                        committed_updates[-1]["objective"] = float((objective.detach()
+                            + generated_source_margin_weight*margin_result["margin_loss"].detach()))
+                    committed_updates[-1]["generated_source_margin"] = dict(interval=1,
+                        zero_based_committed_step=steps-1, receipt=margin_result["receipt"],
+                        gradient=margin_gradient_receipt)
                 if group_inventory is not None:
                     committed_updates[-1]["optimizer_group_learning_rates"] = _group_learning_rates(optimizer, group_inventory)
                 if order_selector is not None:
@@ -768,7 +915,7 @@ def train(student, training_rows, validation_rows, *, training_references, valid
             source_value_training_row_policy="same decoder batch with authenticated same-parent order substitution")
     if generated_boundary_gradient_scope != "all_trainable":
         report["generated_boundary_gradient_scope"] = generated_boundary_gradient_scope
-    if boundary_owner is not None or field_owner is not None:
+    if boundary_owner is not None or field_owner is not None or margin_owner is not None:
         report.update(generated_boundary_weight=generated_boundary_weight,
             generated_boundary_policy=("complete_source_only_greedy_then_first_wrong_visited_boundary"
                 if generated_boundary_site_policy == "first_wrong" else
@@ -785,6 +932,23 @@ def train(student, training_rows, validation_rows, *, training_references, valid
             generated_site_joint_replay=True, generated_field_used_for_selection=False,
             generated_site_scheduled_updates=sum(update["generated_sites"]["scheduled"] for update in committed_updates),
             generated_site_skipped_updates=sum(not update["generated_sites"]["scheduled"] for update in committed_updates))
+    if margin_owner is not None:
+        report.update(generated_source_margin_weight=generated_source_margin_weight,
+            generated_source_margin_replay=True, generated_source_margin_inventory=margin_inventory,
+            generated_source_margin_gradient_scope="explicit_recurrent_parameters_only_before_shared_global_clip",
+            generated_source_margin_parameter_names=[name for name, _ in margin_parameters],
+            generated_source_margin_parameter_count=sum(p.numel() for _, p in margin_parameters),
+            generated_source_margin_max_updates_estimated=margin_update_bound,
+            generated_source_margin_uncommitted_work_slots_estimated=1,
+            generated_source_margin_used_for_selection=False,
+            generated_source_margin_objective_enabled=generated_source_margin_weight != 0.,
+            generated_source_margin_scheduled_updates=len(committed_updates),
+            generated_source_margin_auxiliary_backward_updates=sum(
+                update["generated_source_margin"]["gradient"]["backward_executed"] for update in committed_updates),
+            generated_source_margin_objective_scope="numeric_base_plus_weighted_margin; margin_gradient_restricted",
+            generated_source_margin_cadence="every_committed_update; no_reweighting",
+            generated_source_margin_zero_weight_graph_attached=False,
+            generated_source_margin_shared_clip_can_change_other_parameter_updates=True)
     if joint_generated_replay:
         report.update(joint_generated_replay=True,
             generated_field_objective_enabled=generated_field_weight != 0.,

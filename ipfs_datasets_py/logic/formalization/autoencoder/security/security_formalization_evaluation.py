@@ -8,6 +8,7 @@ Its learned-formula acceptance gate stays failed for the current advisory head.
 from __future__ import annotations
 
 import ast
+from dataclasses import dataclass
 from pathlib import Path
 
 from . import security_autoencoder_checkpoint as checkpoint_api
@@ -28,17 +29,34 @@ def _cid(value, domain):
     return canonical_identity(value, domain=domain, schema_version=SCHEMA).cid
 
 
-def _function_span(raw, node):
+@dataclass(frozen=True, slots=True)
+class _FunctionLineIndex:
+    source_bytes: bytes
+    lines: tuple[bytes, ...]
+    offsets: tuple[int, ...]
+
+
+def _function_line_index(raw):
+    """Build one immutable line table for an exact in-memory source object."""
+    lines = tuple(raw.splitlines(keepends=True))
+    offsets = [0]
+    for line in lines:
+        offsets.append(offsets[-1] + len(line))
+    return _FunctionLineIndex(raw, lines, tuple(offsets))
+
+
+def _function_span(raw, node, *, _line_index=None):
     """Keep decorators and record exact per-line indentation removal.
 
     The normalized body is a function-level structural modeling input. Its
     distinct digest is never substituted for the original file's identity.
     """
-    lines = raw.splitlines(keepends=True)
+    if _line_index is None:
+        _line_index = _function_line_index(raw)
+    if type(_line_index) is not _FunctionLineIndex or _line_index.source_bytes is not raw:
+        raise ValueError("exact source-local line index required")
+    lines, offsets = _line_index.lines, _line_index.offsets
     start_line = min([node.lineno, *(item.lineno for item in node.decorator_list)])
-    offsets = [0]
-    for line in lines:
-        offsets.append(offsets[-1] + len(line))
     start, stop = offsets[start_line - 1], offsets[node.end_lineno - 1] + node.end_col_offset
     span = raw[start:stop]
     first = lines[start_line - 1]
