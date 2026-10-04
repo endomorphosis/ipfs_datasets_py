@@ -1,0 +1,350 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipfs-datasets.dev/schemas/proof-context.context-pack.schema.json",
+  "title": "Datasets ContextPack contract v0.1",
+  "description": "Closed, fail-closed JSON Schema for DatasetsContextPackAuthority@0.1. Extends the existing datasets authority rather than minting SupervisorContextPack. Unknown fields, omitted view inputs, floats, fixture-as-live, and synthetic-as-complete identities are rejected. Canonical CIDs are recomputed via software_contracts.content.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "interface",
+    "producer",
+    "repository_state_cid",
+    "task_id",
+    "task_class",
+    "risk_class",
+    "route_tier",
+    "required_source_cids",
+    "capsule_cids",
+    "scanned_tree_oid",
+    "source_tree_oid",
+    "opaque",
+    "freshness",
+    "execution_mode",
+    "identity_kind",
+    "evidence_kind",
+    "identity",
+    "scope",
+    "contracts",
+    "validation",
+    "history",
+    "questions",
+    "budgets",
+    "freshness_bindings",
+    "invalidation",
+    "parent",
+    "delta",
+    "pack_cid",
+    "sufficiency_state",
+    "expansion_required"
+  ],
+  "properties": {
+    "schema": { "const": "ipfs-datasets.proof-context.context-pack@0.1" },
+    "interface": { "const": "DatasetsContextPackAuthority@0.1" },
+    "producer": { "const": "ipfs_datasets_py.proof_context.context_pack" },
+    "repository_state_cid": { "$ref": "#/$defs/cid" },
+    "task_id": { "$ref": "#/$defs/nfcString" },
+    "task_class": { "$ref": "#/$defs/nfcString" },
+    "risk_class": { "$ref": "#/$defs/nfcString" },
+    "route_tier": { "$ref": "#/$defs/routeTier" },
+    "required_source_cids": { "$ref": "#/$defs/requiredSources" },
+    "capsule_cids": { "$ref": "#/$defs/cidList" },
+    "scanned_tree_oid": { "$ref": "#/$defs/gitOid" },
+    "source_tree_oid": { "$ref": "#/$defs/gitOidOrNull" },
+    "opaque": { "type": "boolean" },
+    "freshness": { "const": "fresh" },
+    "execution_mode": { "$ref": "#/$defs/executionMode" },
+    "identity_kind": { "$ref": "#/$defs/identityKind" },
+    "evidence_kind": { "$ref": "#/$defs/evidenceKind" },
+    "identity": { "$ref": "#/$defs/identity" },
+    "scope": { "$ref": "#/$defs/scope" },
+    "contracts": { "$ref": "#/$defs/contracts" },
+    "validation": { "$ref": "#/$defs/validation" },
+    "history": { "$ref": "#/$defs/history" },
+    "questions": { "$ref": "#/$defs/questions" },
+    "budgets": { "$ref": "#/$defs/budgets" },
+    "freshness_bindings": { "$ref": "#/$defs/freshnessBindings" },
+    "invalidation": { "$ref": "#/$defs/invalidation" },
+    "parent": { "$ref": "#/$defs/parent" },
+    "delta": { "$ref": "#/$defs/delta" },
+    "pack_cid": { "$ref": "#/$defs/cid" },
+    "sufficiency_state": { "$ref": "#/$defs/nfcString" },
+    "expansion_required": { "type": "boolean" }
+  },
+  "$defs": {
+    "cid": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 128,
+      "pattern": "^b[a-z2-7]+$"
+    },
+    "cidOrNull": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/cid" }]
+    },
+    "nfcString": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384
+    },
+    "nfcStringOrNull": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/nfcString" }]
+    },
+    "gitOid": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$|^[0-9a-f]{64}$"
+    },
+    "gitOidOrNull": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/gitOid" }]
+    },
+    "commitIdentity": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/cid" },
+        { "$ref": "#/$defs/gitOid" }
+      ]
+    },
+    "nonnegIntOrNull": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      ]
+    },
+    "stringList": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/nfcString" },
+      "uniqueItems": true,
+      "maxItems": 4096
+    },
+    "cidList": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/cid" },
+      "uniqueItems": true,
+      "maxItems": 4096
+    },
+    "routeTier": {
+      "type": "string",
+      "enum": ["deterministic", "small", "medium", "frontier", "human"]
+    },
+    "executionMode": {
+      "type": "string",
+      "enum": ["live", "simulated", "replay"]
+    },
+    "identityKind": {
+      "type": "string",
+      "enum": ["live", "fixture", "synthetic"]
+    },
+    "evidenceKind": {
+      "type": "string",
+      "enum": ["real", "fixture", "synthetic"]
+    },
+    "requiredSources": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target_source", "surrounding_source", "test_source"],
+      "properties": {
+        "target_source": { "$ref": "#/$defs/cid" },
+        "surrounding_source": { "$ref": "#/$defs/cid" },
+        "test_source": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_and_interface_version",
+        "repository_identity",
+        "commit",
+        "tree",
+        "objective_identity",
+        "objective_revision",
+        "policy_identity",
+        "builder_identity",
+        "creation_time",
+        "content_cid",
+        "parent_context_pack_cid"
+      ],
+      "properties": {
+        "schema_and_interface_version": {
+          "const": "DatasetsContextPackAuthority@0.1"
+        },
+        "repository_identity": { "$ref": "#/$defs/nfcString" },
+        "commit": { "$ref": "#/$defs/commitIdentity" },
+        "tree": { "$ref": "#/$defs/gitOid" },
+        "objective_identity": { "$ref": "#/$defs/nfcString" },
+        "objective_revision": { "$ref": "#/$defs/nfcString" },
+        "policy_identity": { "$ref": "#/$defs/cid" },
+        "builder_identity": { "const": "DatasetsContextPackAuthority@0.1" },
+        "creation_time": { "$ref": "#/$defs/nfcString" },
+        "content_cid": { "$ref": "#/$defs/cid" },
+        "parent_context_pack_cid": { "$ref": "#/$defs/cidOrNull" }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "affected_files",
+        "affected_symbols",
+        "dependency_cone",
+        "reverse_dependencies",
+        "explicitly_excluded_paths",
+        "changed_interfaces_and_schemas",
+        "semantic_diff_summary"
+      ],
+      "properties": {
+        "affected_files": { "$ref": "#/$defs/stringList" },
+        "affected_symbols": { "$ref": "#/$defs/stringList" },
+        "dependency_cone": { "$ref": "#/$defs/stringList" },
+        "reverse_dependencies": { "$ref": "#/$defs/stringList" },
+        "explicitly_excluded_paths": { "$ref": "#/$defs/stringList" },
+        "changed_interfaces_and_schemas": { "$ref": "#/$defs/stringList" },
+        "semantic_diff_summary": { "$ref": "#/$defs/nfcStringOrNull" }
+      }
+    },
+    "contracts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "applicable_api_contracts",
+        "assumptions_and_guarantees",
+        "invariants",
+        "security_constraints",
+        "side_effect_classes",
+        "allowed_mutation_scope"
+      ],
+      "properties": {
+        "applicable_api_contracts": { "$ref": "#/$defs/stringList" },
+        "assumptions_and_guarantees": { "$ref": "#/$defs/stringList" },
+        "invariants": { "$ref": "#/$defs/stringList" },
+        "security_constraints": { "$ref": "#/$defs/stringList" },
+        "side_effect_classes": { "$ref": "#/$defs/stringList" },
+        "allowed_mutation_scope": { "$ref": "#/$defs/stringList" }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "known_tests",
+        "selected_tests",
+        "type_static_schema_checks",
+        "proof_obligations",
+        "required_full_suite_conditions",
+        "current_authoritative_receipts"
+      ],
+      "properties": {
+        "known_tests": { "$ref": "#/$defs/stringList" },
+        "selected_tests": { "$ref": "#/$defs/stringList" },
+        "type_static_schema_checks": { "$ref": "#/$defs/stringList" },
+        "proof_obligations": { "$ref": "#/$defs/stringList" },
+        "required_full_suite_conditions": { "$ref": "#/$defs/stringList" },
+        "current_authoritative_receipts": { "$ref": "#/$defs/stringList" }
+      }
+    },
+    "history": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "relevant_prior_failures",
+        "relevant_counterexamples",
+        "prior_accepted_patches",
+        "stale_or_invalidated_receipts",
+        "retry_and_rescue_history"
+      ],
+      "properties": {
+        "relevant_prior_failures": { "$ref": "#/$defs/stringList" },
+        "relevant_counterexamples": { "$ref": "#/$defs/stringList" },
+        "prior_accepted_patches": { "$ref": "#/$defs/stringList" },
+        "stale_or_invalidated_receipts": { "$ref": "#/$defs/stringList" },
+        "retry_and_rescue_history": { "$ref": "#/$defs/stringList" }
+      }
+    },
+    "questions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "named_unresolved_questions",
+        "missing_evidence",
+        "completeness_witness",
+        "expansion_references"
+      ],
+      "properties": {
+        "named_unresolved_questions": { "$ref": "#/$defs/stringList" },
+        "missing_evidence": { "$ref": "#/$defs/stringList" },
+        "completeness_witness": { "$ref": "#/$defs/cidOrNull" },
+        "expansion_references": { "$ref": "#/$defs/stringList" }
+      }
+    },
+    "budgets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maximum_bytes",
+        "maximum_tokens",
+        "maximum_retrieval_operations",
+        "maximum_model_class",
+        "maximum_wall_time",
+        "validation_reserve_models_cannot_consume"
+      ],
+      "properties": {
+        "maximum_bytes": { "$ref": "#/$defs/nonnegIntOrNull" },
+        "maximum_tokens": { "$ref": "#/$defs/nonnegIntOrNull" },
+        "maximum_retrieval_operations": { "$ref": "#/$defs/nonnegIntOrNull" },
+        "maximum_model_class": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/routeTier" }]
+        },
+        "maximum_wall_time": { "$ref": "#/$defs/nonnegIntOrNull" },
+        "validation_reserve_models_cannot_consume": { "const": true }
+      }
+    },
+    "freshnessBindings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file_and_symbol_identities",
+        "schema_identities",
+        "toolchain_identities",
+        "environment_requirements",
+        "reusable_until_conditions"
+      ],
+      "properties": {
+        "file_and_symbol_identities": { "$ref": "#/$defs/stringList" },
+        "schema_identities": { "$ref": "#/$defs/stringList" },
+        "toolchain_identities": { "$ref": "#/$defs/stringList" },
+        "environment_requirements": { "$ref": "#/$defs/stringList" },
+        "reusable_until_conditions": { "$ref": "#/$defs/stringList" }
+      }
+    },
+    "invalidation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["invalidation_triggers", "reusable_until_conditions"],
+      "properties": {
+        "invalidation_triggers": { "$ref": "#/$defs/stringList" },
+        "reusable_until_conditions": { "$ref": "#/$defs/stringList" }
+      }
+    },
+    "parent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["parent_context_pack_cid"],
+      "properties": {
+        "parent_context_pack_cid": { "$ref": "#/$defs/cidOrNull" }
+      }
+    },
+    "delta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["delta_cid", "incremental", "named_missing"],
+      "properties": {
+        "delta_cid": { "$ref": "#/$defs/cidOrNull" },
+        "incremental": { "type": "boolean" },
+        "named_missing": { "$ref": "#/$defs/stringList" }
+      }
+    }
+  }
+}
