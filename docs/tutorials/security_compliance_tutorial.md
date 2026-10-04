@@ -10,25 +10,23 @@ First, let's set up basic security for our application:
 from ipfs_datasets_py.security import SecurityManager, SecurityConfig
 
 # Initialize security manager with basic configuration
-security = SecurityManager.initialize(SecurityConfig(
-    enable_encryption=True,
-    require_authentication=True,
-    track_provenance=True,
-    audit_log_path="logs/audit.log"
-))
+security = SecurityManager.initialize(
+    SecurityConfig(
+        enable_encryption=True,
+        require_authentication=True,
+        track_provenance=True,
+        audit_log_path="logs/audit.log",
+    )
+)
 
 # Create admin user
 admin_id = security.create_user(
-    username="admin",
-    password="secure_admin_password",
-    access_level="admin"
+    username="admin", password="secure_admin_password", access_level="admin"
 )
 
 # Create regular user
 user_id = security.create_user(
-    username="data_scientist",
-    password="secure_user_password",
-    access_level="read"
+    username="data_scientist", password="secure_user_password", access_level="read"
 )
 
 # Authenticate user
@@ -53,30 +51,21 @@ audit_logger = AuditLogger.get_instance()
 
 # Create logs directory
 import os
+
 os.makedirs("logs", exist_ok=True)
 
 # Configure file handler for human-readable logs
 file_handler = FileAuditHandler(
-    name="file",
-    file_path="logs/audit.log",
-    min_level=AuditLevel.INFO,
-    rotate_size_mb=10
+    name="file", file_path="logs/audit.log", min_level=AuditLevel.INFO, rotate_size_mb=10
 )
 audit_logger.add_handler(file_handler)
 
 # Configure JSON handler for machine-readable logs
-json_handler = JSONAuditHandler(
-    name="json",
-    file_path="logs/audit.json",
-    min_level=AuditLevel.INFO
-)
+json_handler = JSONAuditHandler(name="json", file_path="logs/audit.json", min_level=AuditLevel.INFO)
 audit_logger.add_handler(json_handler)
 
 # Log authentication event
-audit_logger.auth("login", 
-                user="data_scientist", 
-                status="success",
-                details={"ip": "192.168.1.100"})
+audit_logger.auth("login", user="data_scientist", status="success", details={"ip": "192.168.1.100"})
 
 # Set context for subsequent operations
 audit_logger.set_context(user="data_scientist", session_id="session123")
@@ -97,10 +86,10 @@ encrypted_data = security.encrypt_data(sensitive_data.encode(), key_id)
 
 # Log data access event
 audit_logger.data_access(
-    "encrypt", 
+    "encrypt",
     resource_id=key_id,
     resource_type="encryption_key",
-    details={"operation": "encrypt", "data_type": "patient_records"}
+    details={"operation": "encrypt", "data_type": "patient_records"},
 )
 
 # Store encrypted data
@@ -116,24 +105,24 @@ if security.check_access(key_id, "read"):
     decrypted_data = security.decrypt_data(encrypted_content, key_id)
     decrypted_text = decrypted_data.decode()
     print(f"Decrypted data: {decrypted_text}")
-    
+
     # Log data access
     audit_logger.data_access(
-        "decrypt", 
+        "decrypt",
         resource_id=key_id,
         resource_type="encryption_key",
-        details={"operation": "decrypt", "data_type": "patient_records"}
+        details={"operation": "decrypt", "data_type": "patient_records"},
     )
 else:
     print("Access denied to encryption key")
-    
+
     # Log access denied
     audit_logger.authz(
-        "access_denied", 
+        "access_denied",
         level=AuditLevel.WARNING,
         resource_id=key_id,
         resource_type="encryption_key",
-        details={"reason": "insufficient_permissions"}
+        details={"reason": "insufficient_permissions"},
     )
 ```
 
@@ -144,64 +133,59 @@ Let's set up access control for a dataset:
 ```python
 # Create a resource policy
 dataset_policy = security.create_resource_policy(
-    resource_id="patient_dataset",
-    resource_type="dataset",
-    owner="admin"
+    resource_id="patient_dataset", resource_type="dataset", owner="admin"
 )
 
 # Grant access to user
 security.update_resource_policy(
     resource_id="patient_dataset",
-    updates={
-        "read_access": ["admin", "data_scientist"],
-        "write_access": ["admin"]
-    }
+    updates={"read_access": ["admin", "data_scientist"], "write_access": ["admin"]},
 )
 
 # Check access (as data_scientist)
 if security.check_access("patient_dataset", "read"):
     print("User has read access to patient_dataset")
-    
+
     # Log successful access
     audit_logger.authz(
-        "access_granted", 
+        "access_granted",
         resource_id="patient_dataset",
         resource_type="dataset",
-        details={"access_type": "read"}
+        details={"access_type": "read"},
     )
-    
+
     # Simulate dataset access
     audit_logger.data_access(
-        "read", 
+        "read",
         resource_id="patient_dataset",
         resource_type="dataset",
-        details={"records_accessed": 100}
+        details={"records_accessed": 100},
     )
 else:
     print("User does not have read access to patient_dataset")
-    
+
     # Log access denied
     audit_logger.authz(
-        "access_denied", 
+        "access_denied",
         level=AuditLevel.WARNING,
         resource_id="patient_dataset",
         resource_type="dataset",
-        details={"access_type": "read", "reason": "insufficient_permissions"}
+        details={"access_type": "read", "reason": "insufficient_permissions"},
     )
-    
+
 # Try write access (which should be denied for data_scientist)
 if security.check_access("patient_dataset", "write"):
     print("User has write access to patient_dataset")
 else:
     print("User does not have write access to patient_dataset")
-    
+
     # Log access denied
     audit_logger.authz(
-        "access_denied", 
+        "access_denied",
         level=AuditLevel.WARNING,
         resource_id="patient_dataset",
         resource_type="dataset",
-        details={"access_type": "write", "reason": "insufficient_permissions"}
+        details={"access_type": "write", "reason": "insufficient_permissions"},
     )
 ```
 
@@ -221,7 +205,7 @@ provenance_manager = EnhancedProvenanceManager(
     storage_path="provenance_data",
     enable_ipld_storage=True,
     enable_crypto_verification=True,
-    default_agent_id="compliance_officer"
+    default_agent_id="compliance_officer",
 )
 
 # Initialize the enhanced lineage tracker with security integration
@@ -231,7 +215,7 @@ lineage_tracker = EnhancedLineageTracker(
         "enable_temporal_consistency": True,
         "enable_ipld_storage": True,
         "security_manager": security_manager,
-        "domain_validation_level": "strict"
+        "domain_validation_level": "strict",
     }
 )
 
@@ -244,16 +228,16 @@ healthcare_domain = lineage_tracker.create_domain(
         "organization": "Hospital System",
         "compliance_frameworks": ["HIPAA", "GDPR"],
         "data_owner": "medical_records_department",
-        "classification": "restricted"
+        "classification": "restricted",
     },
     metadata_schema={
         "required": ["retention_period", "classification", "consent_level"],
         "properties": {
             "retention_period": {"type": "string"},
             "classification": {"enum": ["public", "internal", "confidential", "restricted"]},
-            "consent_level": {"enum": ["none", "basic", "research", "full"]}
-        }
-    }
+            "consent_level": {"enum": ["none", "basic", "research", "full"]},
+        },
+    },
 )
 
 analytics_domain = lineage_tracker.create_domain(
@@ -264,8 +248,8 @@ analytics_domain = lineage_tracker.create_domain(
         "organization": "Research Department",
         "compliance_frameworks": ["HIPAA", "GDPR"],
         "data_owner": "data_science_team",
-        "classification": "confidential"
-    }
+        "classification": "confidential",
+    },
 )
 
 # Create boundary with HIPAA compliance constraints
@@ -279,13 +263,13 @@ healthcare_to_analytics = lineage_tracker.create_domain_boundary(
         "data_masking": "enabled",
         "deidentification": "required",
         "requires_approval": True,
-        "compliance_verified": True
+        "compliance_verified": True,
     },
     constraints=[
         {"type": "field_level", "fields": ["patient_name", "ssn", "mrn"], "action": "mask"},
         {"type": "field_level", "fields": ["date_of_birth"], "action": "generalize"},
-        {"type": "approval", "approvers": ["compliance_officer", "privacy_officer"]}
-    ]
+        {"type": "approval", "approvers": ["compliance_officer", "privacy_officer"]},
+    ],
 )
 
 # Record initial data source in provenance system
@@ -294,7 +278,7 @@ with audit_logger.audit_context(
     operation="import",
     subject="patient_records",
     status="success",
-    details={"source": "hospital_system", "record_count": 5000}
+    details={"source": "hospital_system", "record_count": 5000},
 ):
     source_id = provenance_manager.record_source(
         data_id="patient_dataset",
@@ -308,8 +292,8 @@ with audit_logger.audit_context(
             "hipaa_compliant": True,
             "contains_phi": True,
             "consent_obtained": True,
-            "document_id": "patient_records_2023"
-        }
+            "document_id": "patient_records_2023",
+        },
     )
 
     # Create corresponding node in lineage tracker
@@ -326,12 +310,12 @@ with audit_logger.audit_context(
             "security_controls": {
                 "encryption": "field-level",
                 "access_restriction": "need-to-know",
-                "masking_rules": ["patient_name", "ssn", "mrn"]
+                "masking_rules": ["patient_name", "ssn", "mrn"],
             },
-            "provenance_record_id": source_id  # Link to provenance record
+            "provenance_record_id": source_id,  # Link to provenance record
         },
         domain_id=healthcare_domain,
-        entity_id="patient_dataset_2023"
+        entity_id="patient_dataset_2023",
     )
 
 # Record deidentification transformation
@@ -343,8 +327,8 @@ with audit_logger.audit_context(
     status="success",
     details={
         "method": "HIPAA Safe Harbor",
-        "fields_affected": ["patient_name", "mrn", "ssn", "date_of_birth", "zip"]
-    }
+        "fields_affected": ["patient_name", "mrn", "ssn", "date_of_birth", "zip"],
+    },
 ):
     # Record in provenance system
     transform_id = provenance_manager.record_transformation(
@@ -356,17 +340,17 @@ with audit_logger.audit_context(
             "method": "HIPAA Safe Harbor",
             "k_anonymity": 5,
             "fields_to_mask": ["patient_name", "mrn", "ssn"],
-            "fields_to_generalize": ["date_of_birth", "zip"]
+            "fields_to_generalize": ["date_of_birth", "zip"],
         },
         description="Deidentify patient data using HIPAA Safe Harbor method",
         metadata={
             "hipaa_compliant": True,
             "verification_status": "verified",
             "verifier": "privacy_officer",
-            "document_id": "patient_deidentification_2023"
-        }
+            "document_id": "patient_deidentification_2023",
+        },
     )
-    
+
     # Create transformation node in lineage tracker
     deidentify_node = lineage_tracker.create_node(
         node_type="transformation",
@@ -385,14 +369,14 @@ with audit_logger.audit_context(
                 "security_clearance": "confidential",
                 "compliance_verified": True,
                 "verification_date": datetime.datetime.now().isoformat(),
-                "verifier": "compliance_officer"
+                "verifier": "compliance_officer",
             },
-            "provenance_record_id": transform_id  # Link to provenance record
+            "provenance_record_id": transform_id,  # Link to provenance record
         },
         domain_id=healthcare_domain,
-        entity_id="deidentify_transform_2023"
+        entity_id="deidentify_transform_2023",
     )
-    
+
     # Record detailed transformation information
     lineage_tracker.record_transformation_details(
         transformation_id=deidentify_node,
@@ -404,14 +388,32 @@ with audit_logger.audit_context(
             {"field": "date_of_birth", "type": "date", "sensitivity": "high", "phi": True},
             {"field": "zip", "type": "string", "sensitivity": "medium", "phi": True},
             {"field": "diagnosis", "type": "string", "sensitivity": "high", "phi": True},
-            {"field": "medications", "type": "array", "sensitivity": "high", "phi": True}
+            {"field": "medications", "type": "array", "sensitivity": "high", "phi": True},
         ],
         outputs=[
-            {"field": "id", "type": "string", "sensitivity": "low", "phi": False, "anonymized": True},
-            {"field": "birth_year", "type": "integer", "sensitivity": "low", "phi": False, "generalized": True},
-            {"field": "zip3", "type": "string", "sensitivity": "low", "phi": False, "generalized": True},
+            {
+                "field": "id",
+                "type": "string",
+                "sensitivity": "low",
+                "phi": False,
+                "anonymized": True,
+            },
+            {
+                "field": "birth_year",
+                "type": "integer",
+                "sensitivity": "low",
+                "phi": False,
+                "generalized": True,
+            },
+            {
+                "field": "zip3",
+                "type": "string",
+                "sensitivity": "low",
+                "phi": False,
+                "generalized": True,
+            },
             {"field": "diagnosis", "type": "string", "sensitivity": "high", "phi": True},
-            {"field": "medications", "type": "array", "sensitivity": "high", "phi": True}
+            {"field": "medications", "type": "array", "sensitivity": "high", "phi": True},
         ],
         parameters={
             "deidentification_method": "HIPAA Safe Harbor",
@@ -419,12 +421,12 @@ with audit_logger.audit_context(
             "suppression_threshold": 0.05,
             "generalization_hierarchy": {
                 "date_of_birth": "date→month/year→year",
-                "zip": "5-digit→3-digit→state"
-            }
+                "zip": "5-digit→3-digit→state",
+            },
         },
-        impact_level="field"
+        impact_level="field",
     )
-    
+
     # Create link between nodes
     lineage_tracker.create_link(
         source_id=patient_data_node,
@@ -435,12 +437,12 @@ with audit_logger.audit_context(
             "compliance_context": {
                 "hipaa_compliant": True,
                 "gdpr_compliant": True,
-                "verified_by": "compliance_officer"
-            }
+                "verified_by": "compliance_officer",
+            },
         },
-        confidence=1.0
+        confidence=1.0,
     )
-    
+
     # Create deidentified data node
     deidentified_data_node = lineage_tracker.create_node(
         node_type="dataset",
@@ -455,13 +457,13 @@ with audit_logger.audit_context(
             "deidentification_method": "HIPAA Safe Harbor",
             "security_controls": {
                 "encryption": "transport-only",
-                "access_restriction": "department-level"
-            }
+                "access_restriction": "department-level",
+            },
         },
         domain_id=analytics_domain,
-        entity_id="deidentified_dataset_2023"
+        entity_id="deidentified_dataset_2023",
     )
-    
+
     # Create link to deidentified data
     lineage_tracker.create_link(
         source_id=deidentify_node,
@@ -470,10 +472,10 @@ with audit_logger.audit_context(
         metadata={
             "timestamp": datetime.datetime.now().isoformat(),
             "quality_score": 1.0,
-            "compliance_verified": True
+            "compliance_verified": True,
         },
         confidence=1.0,
-        cross_domain=True  # This crosses domain boundaries
+        cross_domain=True,  # This crosses domain boundaries
     )
 
 # Generate comprehensive compliance report with detailed lineage
@@ -483,7 +485,7 @@ compliance_report = lineage_tracker.generate_provenance_report(
     include_transformation_details=True,
     include_security_context=True,
     include_audit_trail=True,
-    format="html"
+    format="html",
 )
 
 # Export lineage to IPLD for secure, tamper-proof storage
@@ -492,7 +494,7 @@ root_cid = lineage_tracker.export_to_ipld(
     include_boundaries=True,
     include_versions=True,
     include_transformation_details=True,
-    encrypt_sensitive_data=True
+    encrypt_sensitive_data=True,
 )
 print(f"Exported compliant data lineage to IPLD with root CID: {root_cid}")
 
@@ -512,7 +514,7 @@ if inconsistencies:
             subject=issue["source_id"],
             object=issue["target_id"],
             status="failed",
-            details={"issue": "temporal_inconsistency", "description": issue["description"]}
+            details={"issue": "temporal_inconsistency", "description": issue["description"]},
         )
 else:
     print("COMPLIANCE: All data flows have proper temporal consistency")
@@ -564,8 +566,8 @@ audit_logger.compliance(
         "report_type": "GDPR",
         "period_start": start_time,
         "period_end": end_time,
-        "compliance_rate": gdpr_report.summary["compliance_rate"]
-    }
+        "compliance_rate": gdpr_report.summary["compliance_rate"],
+    },
 )
 
 audit_logger.compliance(
@@ -574,8 +576,8 @@ audit_logger.compliance(
         "report_type": "HIPAA",
         "period_start": start_time,
         "period_end": end_time,
-        "compliance_rate": hipaa_report.summary["compliance_rate"]
-    }
+        "compliance_rate": hipaa_report.summary["compliance_rate"],
+    },
 )
 ```
 
@@ -593,10 +595,12 @@ ids = IntrusionDetection()
 # Create alert manager
 alert_manager = SecurityAlertManager(alert_storage_path="logs/alerts.json")
 
+
 # Define a simple alert handler
 def handle_alert(alert):
     print(f"SECURITY ALERT: {alert.level.upper()} - {alert.description}")
     # In a real system, you might send emails, Slack messages, etc.
+
 
 # Register alert handler
 alert_manager.add_notification_handler(handle_alert)
@@ -616,7 +620,7 @@ for i in range(6):  # 6 failed attempts should trigger brute force detection
         user="unknown_user",
         status="failure",
         client_ip="192.168.1.200",
-        details={"reason": "invalid_password", "attempt": i+1}
+        details={"reason": "invalid_password", "attempt": i + 1},
     )
     suspicious_events.append(event)
     time.sleep(0.1)  # Small delay between events

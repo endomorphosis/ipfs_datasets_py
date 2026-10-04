@@ -13,9 +13,7 @@ def test_incremental_cache_hits_on_structurally_equal_ontology():
             {"id": "e1", "type": "Person", "text": "Alice"},
             {"id": "e2", "type": "Organization", "text": "Acme"},
         ],
-        "relationships": [
-            {"id": "r1", "type": "works_for", "source_id": "e1", "target_id": "e2"}
-        ],
+        "relationships": [{"id": "r1", "type": "works_for", "source_id": "e1", "target_id": "e2"}],
         "metadata": {"note": "first"},
     }
 

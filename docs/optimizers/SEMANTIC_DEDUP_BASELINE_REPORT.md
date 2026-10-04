@@ -165,9 +165,9 @@ from ipfs_datasets_py.optimizers.graphrag.semantic_deduplicator import create_se
 deduplicator = create_semantic_deduplicator()
 suggestions = deduplicator.suggest_merges(
     ontology,
-    threshold=0.85,          # Balanced suggestion rate
-    max_suggestions=100,     # Limit post-processing
-    batch_size=64            # Larger batches for speed
+    threshold=0.85,  # Balanced suggestion rate
+    max_suggestions=100,  # Limit post-processing
+    batch_size=64,  # Larger batches for speed
 )
 ```
 
@@ -175,9 +175,9 @@ suggestions = deduplicator.suggest_merges(
 ```python
 suggestions = deduplicator.suggest_merges(
     ontology,
-    threshold=0.80,          # More lenient, catch edge cases
-    max_suggestions=None,    # All suggestions
-    batch_size=32            # Preserve precision
+    threshold=0.80,  # More lenient, catch edge cases
+    max_suggestions=None,  # All suggestions
+    batch_size=32,  # Preserve precision
 )
 ```
 
@@ -185,9 +185,9 @@ suggestions = deduplicator.suggest_merges(
 ```python
 suggestions = deduplicator.suggest_merges(
     ontology,
-    threshold=0.90,          # Strict cutoff
-    max_suggestions=50,      # Limit results
-    batch_size=128           # Larger batches
+    threshold=0.90,  # Strict cutoff
+    max_suggestions=50,  # Limit results
+    batch_size=128,  # Larger batches
 )
 ```
 

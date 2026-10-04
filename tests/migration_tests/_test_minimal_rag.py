@@ -1,14 +1,14 @@
-#\!/usr/bin/env python3
+# \!/usr/bin/env python3
 
 import unittest
 import sys
 
-sys.path.insert(0, '.')
+sys.path.insert(0, ".")
 
 from ipfs_datasets_py.rag.rag_query_optimizer import GraphRAGQueryStats
 
-class TestMinimalRAG(unittest.TestCase):
 
+class TestMinimalRAG(unittest.TestCase):
     def test_query_stats(self):
         """Test that GraphRAGQueryStats works correctly with cache hits."""
         stats = GraphRAGQueryStats()
@@ -32,6 +32,7 @@ class TestMinimalRAG(unittest.TestCase):
         self.assertAlmostEqual(stats.cache_hit_rate, 0.5)
 
         print("Query stats test passed")
+
 
 if __name__ == "__main__":
     unittest.main()

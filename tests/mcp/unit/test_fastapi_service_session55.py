@@ -19,6 +19,7 @@ Coverage targets (fastapi_service.py):
 - custom_openapi function
 - run_development_server / run_production_server
 """
+
 import os
 import sys
 import time
@@ -251,6 +252,7 @@ class TestCreateAccessToken:
 
 class FakeRequest:
     """Minimal request stub for check_rate_limit."""
+
     def __init__(self, ip: str = "10.0.0.1"):
         self.client = MagicMock(host=ip)
 
@@ -344,6 +346,7 @@ class TestToolsEndpoints:
 
     def test_execute_tool_success_path(self, client: TestClient, auth_headers):
         """GIVEN mocked tool on app.state WHEN POST /tools/execute THEN 200."""
+
         async def fake_tool(params):
             return {"output": "result"}
 
@@ -356,8 +359,10 @@ class TestToolsEndpoints:
 
     def test_execute_tool_response_includes_tool_name(self, client: TestClient, auth_headers):
         """GIVEN successful tool execution WHEN decoded THEN 'tool' key equals name."""
+
         async def dummy(params):
             return {}
+
         svc.app.state.mcp_server.tools = {"named_tool": dummy}
         r = client.post("/tools/execute/named_tool", json={}, headers=auth_headers)
         assert r.status_code == 200
@@ -406,6 +411,7 @@ class TestMCPServerErrorHandler:
         req = MagicMock()
         exc = MCPServerError("test server error")
         from ipfs_datasets_py.mcp_server.fastapi_service import mcp_server_error_handler
+
         resp = await mcp_server_error_handler(req, exc)
         assert resp.status_code == 500
 
@@ -414,6 +420,7 @@ class TestMCPServerErrorHandler:
         req = MagicMock()
         exc = ToolNotFoundError("missing tool")
         from ipfs_datasets_py.mcp_server.fastapi_service import mcp_server_error_handler
+
         resp = await mcp_server_error_handler(req, exc)
         assert resp.status_code == 404
 
@@ -422,15 +429,18 @@ class TestMCPServerErrorHandler:
         req = MagicMock()
         exc = ConfigurationError("bad config")
         from ipfs_datasets_py.mcp_server.fastapi_service import mcp_server_error_handler
+
         resp = await mcp_server_error_handler(req, exc)
         assert resp.status_code == 400
 
     async def test_handler_response_has_error_type_key(self):
         """GIVEN MCPServerError WHEN handler called THEN response body has 'error_type'."""
         import json
+
         req = MagicMock()
         exc = MCPServerError("err")
         from ipfs_datasets_py.mcp_server.fastapi_service import mcp_server_error_handler
+
         resp = await mcp_server_error_handler(req, exc)
         body = json.loads(resp.body)
         assert "error_type" in body
@@ -443,14 +453,17 @@ class TestGeneralExceptionHandler:
         """GIVEN generic Exception WHEN handler called THEN 500 response."""
         req = MagicMock()
         from ipfs_datasets_py.mcp_server.fastapi_service import general_exception_handler
+
         resp = await general_exception_handler(req, ValueError("oops"))
         assert resp.status_code == 500
 
     async def test_handler_body_has_error_key(self):
         """GIVEN generic Exception WHEN handler called THEN body has 'error' key."""
         import json
+
         req = MagicMock()
         from ipfs_datasets_py.mcp_server.fastapi_service import general_exception_handler
+
         resp = await general_exception_handler(req, RuntimeError("boom"))
         body = json.loads(resp.body)
         assert "error" in body
@@ -458,8 +471,10 @@ class TestGeneralExceptionHandler:
     async def test_handler_body_has_timestamp(self):
         """GIVEN generic Exception WHEN handler called THEN body has 'timestamp' key."""
         import json
+
         req = MagicMock()
         from ipfs_datasets_py.mcp_server.fastapi_service import general_exception_handler
+
         resp = await general_exception_handler(req, RuntimeError("t"))
         body = json.loads(resp.body)
         assert "timestamp" in body
@@ -477,7 +492,9 @@ class TestWorkflowEndpoints:
         """Inject a mock for the workflow tools inner import."""
         mock_mod = MagicMock()
         mock_mod.execute_workflow = AsyncMock(return_value={"status": "done"})
-        mock_mod.get_workflow_status = AsyncMock(return_value={"task_id": "t1", "status": "completed"})
+        mock_mod.get_workflow_status = AsyncMock(
+            return_value={"task_id": "t1", "status": "completed"}
+        )
         key = "ipfs_datasets_py.mcp_server.mcp_server.tools.workflow_tools.workflow_tools"
         sys.modules[key] = mock_mod
         return mock_mod
@@ -741,7 +758,9 @@ class TestAdditionalRouteGuards:
     """Verify remaining routes require authentication."""
 
     def test_analysis_clustering_no_auth(self, client: TestClient):
-        r = client.post("/analysis/clustering", json={"vectors": [[1.0, 2.0]], "analysis_type": "clustering"})
+        r = client.post(
+            "/analysis/clustering", json={"vectors": [[1.0, 2.0]], "analysis_type": "clustering"}
+        )
         assert r.status_code == 401
 
     def test_analysis_quality_no_auth(self, client: TestClient):

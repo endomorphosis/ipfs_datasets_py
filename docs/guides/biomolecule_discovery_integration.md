@@ -127,17 +127,16 @@ generative-protein-binder-design (model inference)
 
 ```python
 # Step 1: Discover candidates using RAG
-from ipfs_datasets_py.mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import discover_biomolecules_rag
+from ipfs_datasets_py.mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import (
+    discover_biomolecules_rag,
+)
 
 result = discover_biomolecules_rag(
-    target="SARS-CoV-2 spike protein",
-    discovery_type="binders",
-    max_results=50,
-    min_confidence=0.7
+    target="SARS-CoV-2 spike protein", discovery_type="binders", max_results=50, min_confidence=0.7
 )
 
 # Step 2: Extract candidate data
-candidates = result['candidates']
+candidates = result["candidates"]
 
 # Step 3: Pass to generative-protein-binder-design
 for candidate in candidates:
@@ -150,13 +149,13 @@ for candidate in candidates:
     # - uniprot_id: if available
     # - sequence: if available
     # - structure: PDB ID if available
-    
+
     # Use candidate as input to protein binder design model
     protein_binder_design_model.generate(
         target="SARS-CoV-2 spike protein",
-        reference_binder=candidate['name'],
-        sequence=candidate.get('sequence'),
-        confidence=candidate['confidence_score']
+        reference_binder=candidate["name"],
+        sequence=candidate.get("sequence"),
+        confidence=candidate["confidence_score"],
     )
 ```
 
@@ -195,28 +194,19 @@ curl -X POST http://localhost:8899/api/mcp/medicine/discover/protein_binders \
     "sequence": "MKVLSLL...",  # amino acid sequence if available
     "structure": {
         "pdb_id": "6M0J",  # if available
-        "smiles": None
+        "smiles": None,
     },
     "function": "Neutralizing antibody that binds to SARS-CoV-2 spike RBD",
-    "interactions": [
-        {
-            "type": "binding",
-            "target": "SARS-CoV-2 spike protein"
-        }
-    ],
+    "interactions": [{"type": "binding", "target": "SARS-CoV-2 spike protein"}],
     "therapeutic_relevance": "Phase 3 clinical trial for COVID-19 treatment",
     "confidence_score": 0.85,
-    "evidence_sources": [
-        "PMID:12345678",
-        "PMID:23456789",
-        "NCT04567890"
-    ],
+    "evidence_sources": ["PMID:12345678", "PMID:23456789", "NCT04567890"],
     "metadata": {
         "source_type": "pubmed",
         "title": "Neutralizing antibodies against SARS-CoV-2...",
         "journal": "Nature Medicine",
-        "publication_date": "2020-08-15"
-    }
+        "publication_date": "2020-08-15",
+    },
 }
 ```
 
@@ -229,7 +219,7 @@ binders = engine.discover_protein_binders(
     target_protein="SARS-CoV-2 spike protein",
     interaction_type=InteractionType.BINDING,
     min_confidence=0.7,
-    max_results=50
+    max_results=50,
 )
 
 # Results include:
@@ -242,10 +232,7 @@ binders = engine.discover_protein_binders(
 ### Use Case 2: Find Protease Inhibitors
 ```python
 inhibitors = engine.discover_enzyme_inhibitors(
-    target_enzyme="TMPRSS2",
-    enzyme_class="serine protease",
-    min_confidence=0.6,
-    max_results=30
+    target_enzyme="TMPRSS2", enzyme_class="serine protease", min_confidence=0.6, max_results=30
 )
 
 # Results include:
@@ -260,7 +247,7 @@ pathway_components = engine.discover_pathway_biomolecules(
     pathway_name="mTOR signaling pathway",
     biomolecule_types=[BiomoleculeType.PROTEIN, BiomoleculeType.ENZYME],
     min_confidence=0.5,
-    max_results=100
+    max_results=100,
 )
 
 # Results include all proteins and enzymes in the pathway

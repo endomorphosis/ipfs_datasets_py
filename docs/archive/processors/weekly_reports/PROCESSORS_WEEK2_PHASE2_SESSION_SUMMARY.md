@@ -158,10 +158,7 @@ else:
 
 ### Query Available Adapters
 ```python
-from ipfs_datasets_py.processors.adapters import (
-    get_available_adapters,
-    is_registered
-)
+from ipfs_datasets_py.processors.adapters import get_available_adapters, is_registered
 
 # Check if specific adapter is available
 if is_registered("PDFProcessor"):
@@ -180,11 +177,7 @@ from ipfs_datasets_py.processors.adapters import PDFProcessorAdapter
 
 # Register specific adapter
 registry = get_global_registry()
-registry.register(
-    processor=PDFProcessorAdapter(),
-    priority=10,
-    name="PDFProcessor"
-)
+registry.register(processor=PDFProcessorAdapter(), priority=10, name="PDFProcessor")
 ```
 
 ---
@@ -198,10 +191,11 @@ registry.register(
 from ipfs_datasets_py.processors.protocol import ProcessorProtocol
 import asyncio
 
+
 class MyProcessor:
     async def can_process(self, input_source):
-        return input_source.endswith('.custom')
-    
+        return input_source.endswith(".custom")
+
     async def process(self, input_source, **options):
         # Process async
         result = await some_async_call()

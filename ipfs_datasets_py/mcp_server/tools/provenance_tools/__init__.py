@@ -7,6 +7,4 @@ These tools allow AI assistants to work with data provenance through the MCP pro
 
 from .record_provenance import record_provenance
 
-__all__ = [
-    "record_provenance"
-]
+__all__ = ["record_provenance"]

@@ -2,6 +2,7 @@
 LogicValidator.explain_contradictions, OntologyGenerator.extract_entities_with_spans,
 Hypothesis property test for ExtractionConfig round-trip.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -25,6 +26,7 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _score_dict(c=0.8, co=0.7, cl=0.6, g=0.5, da=0.4):
     return {
         "dimensions": {
@@ -44,7 +46,9 @@ def _score_dict(c=0.8, co=0.7, cl=0.6, g=0.5, da=0.4):
 @pytest.fixture
 def ontology_builder(ontology_dict_factory):
     def _build(n: int = 3, dangling: bool = False):
-        ontology = ontology_dict_factory(entity_count=n, relationship_count=1, domain="test", metadata={})
+        ontology = ontology_dict_factory(
+            entity_count=n, relationship_count=1, domain="test", metadata={}
+        )
         ontology["domain"] = "test"
         if dangling:
             ontology.setdefault("relationships", []).append(
@@ -65,6 +69,7 @@ def ontology_builder(ontology_dict_factory):
 # CriticScore.from_dict
 # ---------------------------------------------------------------------------
 
+
 class TestCriticScoreFromDict:
     def test_returns_critic_score(self):
         assert isinstance(CriticScore.from_dict(_score_dict()), CriticScore)
@@ -76,9 +81,15 @@ class TestCriticScoreFromDict:
 
     def test_round_trip_to_dict(self):
         original = CriticScore(
-            completeness=0.75, consistency=0.65, clarity=0.55,
-            granularity=0.45, relationship_coherence=0.35, domain_alignment=0.35,
-            strengths=["s1"], weaknesses=["w1"], recommendations=["r1"],
+            completeness=0.75,
+            consistency=0.65,
+            clarity=0.55,
+            granularity=0.45,
+            relationship_coherence=0.35,
+            domain_alignment=0.35,
+            strengths=["s1"],
+            weaknesses=["w1"],
+            recommendations=["r1"],
         )
         restored = CriticScore.from_dict(original.to_dict())
         assert restored.completeness == pytest.approx(original.completeness)
@@ -86,8 +97,13 @@ class TestCriticScoreFromDict:
         assert restored.strengths == original.strengths
 
     def test_flat_dict_fallback(self):
-        flat = {"completeness": 0.6, "consistency": 0.7, "clarity": 0.5,
-                "granularity": 0.4, "domain_alignment": 0.3}
+        flat = {
+            "completeness": 0.6,
+            "consistency": 0.7,
+            "clarity": 0.5,
+            "granularity": 0.4,
+            "domain_alignment": 0.3,
+        }
         s = CriticScore.from_dict(flat)
         assert s.completeness == pytest.approx(0.6)
 
@@ -115,6 +131,7 @@ class TestCriticScoreFromDict:
 # ---------------------------------------------------------------------------
 # OntologyPipeline.clone
 # ---------------------------------------------------------------------------
+
 
 class TestPipelineClone:
     def test_returns_pipeline(self):
@@ -151,6 +168,7 @@ class TestPipelineClone:
 # ---------------------------------------------------------------------------
 # LogicValidator.explain_contradictions
 # ---------------------------------------------------------------------------
+
 
 class TestExplainContradictions:
     def test_returns_list(self, ontology_builder):
@@ -195,6 +213,7 @@ class TestExplainContradictions:
 # ---------------------------------------------------------------------------
 # OntologyGenerator.extract_entities_with_spans
 # ---------------------------------------------------------------------------
+
 
 class TestExtractEntitiesWithSpans:
     @pytest.fixture
@@ -242,6 +261,7 @@ class TestExtractEntitiesWithSpans:
 # ---------------------------------------------------------------------------
 # Hypothesis property test: ExtractionConfig round-trip
 # ---------------------------------------------------------------------------
+
 
 @st.composite
 def extraction_config_strategy(draw):

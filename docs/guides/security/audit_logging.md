@@ -36,10 +36,7 @@ event_id = audit_logger.log(
     action="dataset_transform",
     resource_id="example_dataset",
     resource_type="dataset",
-    details={
-        "transformation": "normalization",
-        "parameters": {"method": "z-score"}
-    }
+    details={"transformation": "normalization", "parameters": {"method": "z-score"}},
 )
 ```
 
@@ -63,11 +60,7 @@ event = AuditEvent(
     resource_type="dataset",
     source_ip="192.168.1.100",
     message="Detected multiple failed access attempts",
-    details={
-        "attempts": 5,
-        "time_window": "5m",
-        "access_type": "read"
-    }
+    details={"attempts": 5, "time_window": "5m", "access_type": "read"},
 )
 
 # Log the event
@@ -105,20 +98,13 @@ from ipfs_datasets_py.audit.audit_visualization import AuditVisualizer
 visualizer = AuditVisualizer(metrics)
 
 # Generate timeline visualization
-visualizer.create_timeline_visualization(
-    hours_back=24,
-    output_file="audit_timeline.png"
-)
+visualizer.create_timeline_visualization(hours_back=24, output_file="audit_timeline.png")
 
 # Generate category breakdown
-visualizer.create_category_visualization(
-    output_file="audit_categories.png"
-)
+visualizer.create_category_visualization(output_file="audit_categories.png")
 
-# Generate event level breakdown 
-visualizer.create_level_visualization(
-    output_file="audit_levels.png"
-)
+# Generate event level breakdown
+visualizer.create_level_visualization(output_file="audit_levels.png")
 ```
 
 ### AdaptiveSecurity
@@ -140,7 +126,7 @@ security.add_rule(
     action="unauthorized_access",
     min_level=AuditLevel.WARNING,
     response="block_ip",
-    parameters={"duration": "1h"}
+    parameters={"duration": "1h"},
 )
 
 security.add_rule(
@@ -150,7 +136,7 @@ security.add_rule(
     min_count=5,
     time_window="10m",
     response="escalate_event",
-    parameters={"new_level": AuditLevel.WARNING}
+    parameters={"new_level": AuditLevel.WARNING},
 )
 ```
 
@@ -171,22 +157,13 @@ audit_logger.add_handler(compliance.process_event)
 compliance.add_framework(
     name="GDPR",
     requirements={
-        "data_access": {
-            "require_logging": True,
-            "retention_period": "30d"
-        },
-        "data_modification": {
-            "require_approval": True,
-            "require_logging": True
-        }
-    }
+        "data_access": {"require_logging": True, "retention_period": "30d"},
+        "data_modification": {"require_approval": True, "require_logging": True},
+    },
 )
 
 # Generate compliance report
-report = compliance.generate_report(
-    framework="GDPR",
-    time_period="last_30d"
-)
+report = compliance.generate_report(framework="GDPR", time_period="last_30d")
 ```
 
 ## Audit Integration with RAG Query Metrics
@@ -215,7 +192,7 @@ create_query_audit_timeline(
     query_metrics_collector=query_metrics,
     audit_metrics=audit_metrics,
     hours_back=24,
-    output_file="query_audit_timeline.png"
+    output_file="query_audit_timeline.png",
 )
 ```
 
@@ -227,10 +204,7 @@ Generate interactive dashboards with both security and performance metrics:
 from ipfs_datasets_py.rag.rag_query_visualization import RAGQueryDashboard
 
 # Create dashboard
-dashboard = RAGQueryDashboard(
-    metrics_collector=query_metrics,
-    audit_metrics=audit_metrics
-)
+dashboard = RAGQueryDashboard(metrics_collector=query_metrics, audit_metrics=audit_metrics)
 
 # Generate comprehensive dashboard
 dashboard.generate_integrated_dashboard(
@@ -240,7 +214,7 @@ dashboard.generate_integrated_dashboard(
     include_security=True,
     include_query_audit_timeline=True,
     interactive=True,
-    theme='light'
+    theme="light",
 )
 ```
 
@@ -265,9 +239,9 @@ intrusion.add_detection_rule(
         "action": "login_failed",
         "min_count": 5,
         "time_window": "5m",
-        "group_by": ["source_ip", "user"]
+        "group_by": ["source_ip", "user"],
     },
-    severity=AuditLevel.WARNING
+    severity=AuditLevel.WARNING,
 )
 
 # Get detected anomalies
@@ -284,20 +258,11 @@ Store audit data for long-term retention and analysis:
 from ipfs_datasets_py.audit.audit_logger import FileAuditHandler, IPFSAuditHandler
 
 # Add file storage handler
-audit_logger.add_handler(
-    FileAuditHandler(
-        directory="/path/to/audit/logs",
-        rotation="daily"
-    )
-)
+audit_logger.add_handler(FileAuditHandler(directory="/path/to/audit/logs", rotation="daily"))
 
 # Add IPFS storage handler for immutable, tamper-resistant storage
 audit_logger.add_handler(
-    IPFSAuditHandler(
-        ipfs_client=ipfs_client,
-        enable_encryption=True,
-        encryption_key=encryption_key
-    )
+    IPFSAuditHandler(ipfs_client=ipfs_client, enable_encryption=True, encryption_key=encryption_key)
 )
 ```
 
@@ -313,19 +278,13 @@ from ipfs_datasets_py.data_provenance import ProvenanceManager
 provenance = ProvenanceManager()
 
 # Create integrator
-integrator = AuditProvenanceIntegrator(
-    audit_logger=audit_logger,
-    provenance_manager=provenance
-)
+integrator = AuditProvenanceIntegrator(audit_logger=audit_logger, provenance_manager=provenance)
 
 # Enable automatic linking of audit events to provenance records
 integrator.enable_auto_linking()
 
 # Manually link an audit event to a provenance record
-integrator.link_event_to_provenance(
-    audit_event_id="evt_123456",
-    provenance_record_id="prov_789012"
-)
+integrator.link_event_to_provenance(audit_event_id="evt_123456", provenance_record_id="prov_789012")
 ```
 
 ### Cryptographic Verification
@@ -336,9 +295,7 @@ Ensure the integrity of audit records with cryptographic signing:
 from ipfs_datasets_py.audit.audit_logger import AuditCryptoHandler
 
 # Add cryptographic handler
-crypto_handler = AuditCryptoHandler(
-    private_key_path="/path/to/private_key.pem"
-)
+crypto_handler = AuditCryptoHandler(private_key_path="/path/to/private_key.pem")
 audit_logger.add_handler(crypto_handler)
 
 # Verify the integrity of an audit event
@@ -352,29 +309,22 @@ Include rich context with audit events:
 ```python
 # Create a context manager for audit operations
 with audit_logger.context(
-    operation="data_export",
-    resource_id="dataset_456",
-    resource_type="dataset"
+    operation="data_export", resource_id="dataset_456", resource_type="dataset"
 ) as ctx:
     # All audit events within this context will include the operation and resource information
     audit_logger.log(
-        level=AuditLevel.INFO,
-        category=AuditCategory.DATA_ACCESS,
-        action="export_started"
+        level=AuditLevel.INFO, category=AuditCategory.DATA_ACCESS, action="export_started"
     )
-    
+
     # Perform export operation
     export_data()
-    
+
     # Add more audit events with the same context
     audit_logger.log(
         level=AuditLevel.INFO,
         category=AuditCategory.DATA_ACCESS,
         action="export_completed",
-        details={
-            "records_exported": 1000,
-            "format": "parquet"
-        }
+        details={"records_exported": 1000, "format": "parquet"},
     )
 ```
 
@@ -418,17 +368,18 @@ audit_logger.add_handler(audit_metrics.process_event)
 
 # Enable integration between query metrics and audit system
 from ipfs_datasets_py.rag.rag_query_visualization import integrate_with_audit_system
+
 integrate_with_audit_system(
     query_metrics=query_metrics,
     audit_alert_manager=None,  # Optional alert manager
-    audit_logger=audit_logger
+    audit_logger=audit_logger,
 )
 
 # Example query operation with audit logging
 with audit_logger.context(
     operation="knowledge_graph_query",
     resource_id="wikipedia_dataset",
-    resource_type="knowledge_graph"
+    resource_type="knowledge_graph",
 ):
     # Log query start
     audit_logger.log(
@@ -437,46 +388,40 @@ with audit_logger.context(
         action="graph_query_started",
         details={
             "query_text": "What is the relationship between IPFS and libp2p?",
-            "query_type": "relationship"
-        }
+            "query_type": "relationship",
+        },
     )
-    
+
     # Execute query (simulated)
     query_id = "q123456"
     query_params = {
         "query_text": "What is the relationship between IPFS and libp2p?",
         "max_depth": 2,
-        "max_results": 10
+        "max_results": 10,
     }
-    
+
     # Record query metrics
     query_metrics.record_query_start(query_id, query_params)
-    
+
     # Simulate query execution
     import time
+
     time.sleep(0.5)  # Simulate processing time
-    
+
     # Record query completion
     query_metrics.record_query_end(
         query_id=query_id,
         results=[{"text": "IPFS uses libp2p for all network communications", "score": 0.95}],
-        metrics={
-            "vector_search_time": 0.2,
-            "graph_traversal_time": 0.25,
-            "result_count": 5
-        }
+        metrics={"vector_search_time": 0.2, "graph_traversal_time": 0.25, "result_count": 5},
     )
-    
+
     # Log query completion
     audit_logger.log(
         level=AuditLevel.INFO,
         category=AuditCategory.DATA_ACCESS,
         action="graph_query_completed",
         status="success",
-        details={
-            "results_count": 5,
-            "execution_time": 0.5
-        }
+        details={"results_count": 5, "execution_time": 0.5},
     )
 
 # Generate visualizations
@@ -486,7 +431,7 @@ dashboard.generate_integrated_dashboard(
     include_performance=True,
     include_security=True,
     include_query_audit_timeline=True,
-    interactive=True
+    interactive=True,
 )
 
 print("Dashboard generated: knowledge_graph_dashboard.html")
@@ -499,19 +444,23 @@ For production environments, we recommend using the `IntegratedMonitoringSystem`
 ```python
 from ipfs_datasets_py.audit.audit_logger import AuditLogger, AuditEvent, AuditLevel, AuditCategory
 from ipfs_datasets_py.audit.audit_visualization import AuditMetricsAggregator, AuditVisualizer
-from ipfs_datasets_py.rag.rag_query_optimizer import QueryMetricsCollector, UnifiedGraphRAGQueryOptimizer
+from ipfs_datasets_py.rag.rag_query_optimizer import (
+    QueryMetricsCollector,
+    UnifiedGraphRAGQueryOptimizer,
+)
 from ipfs_datasets_py.rag.rag_query_visualization import RAGQueryDashboard, EnhancedQueryVisualizer
+
 
 class IntegratedMonitoringSystem:
     """
     Integrated system for monitoring both performance and security aspects of RAG queries.
     This class demonstrates best practices for setting up a comprehensive monitoring solution.
     """
-    
+
     def __init__(self, output_dir=None, theme="light"):
         """
         Initialize the integrated monitoring system.
-        
+
         Args:
             output_dir: Directory for storing dashboards and visualizations
             theme: Visual theme for dashboards ('light' or 'dark')
@@ -519,32 +468,27 @@ class IntegratedMonitoringSystem:
         self.theme = theme
         self.dashboard_dir = output_dir or tempfile.mkdtemp(prefix="rag_audit_monitoring_")
         os.makedirs(self.dashboard_dir, exist_ok=True)
-        
+
         # Initialize components
         self.query_metrics = QueryMetricsCollector()
         self.query_optimizer = UnifiedGraphRAGQueryOptimizer()
         self.audit_logger = AuditLogger.get_instance()
         self.audit_metrics = AuditMetricsAggregator()
-        
+
         # Set up visualization components
         self.query_visualizer = EnhancedQueryVisualizer(
-            metrics_collector=self.query_metrics,
-            theme=theme
+            metrics_collector=self.query_metrics, theme=theme
         )
-        
-        self.audit_visualizer = AuditVisualizer(
-            theme=theme
-        )
-        
+
+        self.audit_visualizer = AuditVisualizer(theme=theme)
+
         self.dashboard = RAGQueryDashboard(
-            metrics_collector=self.query_metrics,
-            dashboard_dir=self.dashboard_dir,
-            theme=theme
+            metrics_collector=self.query_metrics, dashboard_dir=self.dashboard_dir, theme=theme
         )
-        
+
         # Set up handlers
         self.audit_logger.add_handler(self.audit_metrics.process_event)
-        
+
         # Log system initialization
         self._log_audit_event(
             level=AuditLevel.INFO,
@@ -552,35 +496,35 @@ class IntegratedMonitoringSystem:
             action="system_initialization",
             status="success",
             resource_id="monitoring_system",
-            message="Integrated monitoring system initialized successfully"
+            message="Integrated monitoring system initialized successfully",
         )
-    
+
     def process_rag_query(self, query_text, query_params=None):
         """
         Process a RAG query with comprehensive monitoring.
-        
+
         Args:
             query_text: The query text to process
             query_params: Optional parameters for the query
-            
+
         Returns:
             Query results
         """
         # Generate query ID
         query_id = f"query_{uuid.uuid4()}"
-        
+
         # Default parameters if none provided
         if not query_params:
             query_params = {
                 "max_depth": 2,
                 "traversal": {"max_depth": 2, "relationship_types": ["related_to", "contains"]},
                 "max_vector_results": 5,
-                "min_similarity": 0.6
+                "min_similarity": 0.6,
             }
-            
+
         # Start query monitoring
         self.query_metrics.start_query_tracking(query_id=query_id, query_params=query_params)
-        
+
         # Log query start event
         self._log_audit_event(
             level=AuditLevel.INFO,
@@ -589,44 +533,33 @@ class IntegratedMonitoringSystem:
             status="in_progress",
             resource_id=f"query_{query_id}",
             message=f"RAG query started: {query_text[:50]}...",
-            details={
-                "query_id": query_id,
-                "query_text": query_text,
-                "query_params": query_params
-            }
+            details={"query_id": query_id, "query_text": query_text, "query_params": query_params},
         )
-        
+
         # Process the query (real implementation would go here)
         # For now, just simulate the processing
-        
+
         # Simulate vector search phase
         self.query_metrics.start_phase(query_id, "vector_search")
         time.sleep(0.1)  # Simulate processing
         self.query_metrics.end_phase(query_id, "vector_search")
-        
+
         # Simulate graph traversal phase
         self.query_metrics.start_phase(query_id, "graph_traversal")
         time.sleep(0.2)  # Simulate processing
         self.query_metrics.end_phase(query_id, "graph_traversal")
-        
+
         # Simulate result ranking
         self.query_metrics.start_phase(query_id, "ranking")
         time.sleep(0.05)  # Simulate processing
         self.query_metrics.end_phase(query_id, "ranking")
-        
+
         # Simulate results
-        results = {
-            "count": 5,
-            "quality_score": 0.85,
-            "sources": [f"doc_{i}" for i in range(5)]
-        }
-        
+        results = {"count": 5, "quality_score": 0.85, "sources": [f"doc_{i}" for i in range(5)]}
+
         # End query tracking
-        self.query_metrics.end_query_tracking(
-            query_id=query_id,
-            results=results
-        )
-        
+        self.query_metrics.end_query_tracking(query_id=query_id, results=results)
+
         # Log query completion
         self._log_audit_event(
             level=AuditLevel.INFO,
@@ -639,16 +572,16 @@ class IntegratedMonitoringSystem:
                 "query_id": query_id,
                 "results_count": results["count"],
                 "quality_score": results["quality_score"],
-                "execution_time": self.query_metrics.get_query_metrics(query_id)["total_duration"]
-            }
+                "execution_time": self.query_metrics.get_query_metrics(query_id)["total_duration"],
+            },
         )
-        
+
         return results
-    
+
     def _log_audit_event(self, level, category, action, status, resource_id, message, details=None):
         """Helper method to log audit events with consistent formatting."""
         event_id = str(uuid.uuid4())
-        
+
         event = AuditEvent(
             event_id=event_id,
             timestamp=datetime.datetime.now().isoformat(),
@@ -660,21 +593,21 @@ class IntegratedMonitoringSystem:
             resource_id=resource_id,
             resource_type="system_component",
             message=message,
-            details=details or {}
+            details=details or {},
         )
-        
+
         self.audit_logger.log_event_obj(event)
         return event_id
-    
+
     def generate_dashboard(self):
         """
         Generate a comprehensive dashboard with all visualizations.
-        
+
         Returns:
             Path to the generated dashboard HTML file
         """
         dashboard_path = os.path.join(self.dashboard_dir, "comprehensive_dashboard.html")
-        
+
         self.dashboard.generate_integrated_dashboard(
             output_file=dashboard_path,
             audit_metrics_aggregator=self.audit_metrics,
@@ -683,9 +616,9 @@ class IntegratedMonitoringSystem:
             include_security=True,
             include_query_audit_timeline=True,
             interactive=True,
-            theme=self.theme
+            theme=self.theme,
         )
-        
+
         return dashboard_path
 ```
 

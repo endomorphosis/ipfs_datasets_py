@@ -70,7 +70,9 @@ def _dry_run_enabled() -> bool:
 
 def _dry_run_json_object(prompt: str) -> str:
     lowered = str(prompt or "").lower()
-    fol_formula = "∀x (Student(x) → Studies(x))" if "student" in lowered else "∀x (Cat(x) → Animal(x))"
+    fol_formula = (
+        "∀x (Student(x) → Studies(x))" if "student" in lowered else "∀x (Cat(x) → Animal(x))"
+    )
     payload: Dict[str, Any] = {
         "fol_formula": fol_formula,
         "confidence": 0.9,
@@ -125,9 +127,15 @@ def _backend_capabilities_fingerprint() -> Dict[str, Any]:
     return {
         "ipfs_accelerate_py": importlib.util.find_spec("ipfs_accelerate_py") is not None,
         "copilot_sdk": importlib.util.find_spec("copilot") is not None,
-        "gemini_cli": _cli_available(os.environ.get("IPFS_DATASETS_PY_GEMINI_CLI_CMD", "npx @google/gemini-cli")),
-        "claude_code": _cli_available(os.environ.get("IPFS_DATASETS_PY_CLAUDE_CODE_CLI_CMD", "claude")),
-        "copilot_cli": _cli_available(os.environ.get("IPFS_DATASETS_PY_COPILOT_CLI_CMD", "copilot")),
+        "gemini_cli": _cli_available(
+            os.environ.get("IPFS_DATASETS_PY_GEMINI_CLI_CMD", "npx @google/gemini-cli")
+        ),
+        "claude_code": _cli_available(
+            os.environ.get("IPFS_DATASETS_PY_CLAUDE_CODE_CLI_CMD", "claude")
+        ),
+        "copilot_cli": _cli_available(
+            os.environ.get("IPFS_DATASETS_PY_COPILOT_CLI_CMD", "copilot")
+        ),
         "transformers": importlib.util.find_spec("transformers") is not None,
         "torch": importlib.util.find_spec("torch") is not None,
     }
@@ -234,7 +242,15 @@ def _wants_json_response(argument, prompt: str) -> bool:
         return True
 
     lowered = str(prompt or "").lower()
-    return any(token in lowered for token in ["return a json object", "valid json object", "<output_data_model>", "[[schema]]"])
+    return any(
+        token in lowered
+        for token in [
+            "return a json object",
+            "valid json object",
+            "<output_data_model>",
+            "[[schema]]",
+        ]
+    )
 
 
 def _router_enabled() -> bool:
@@ -320,7 +336,7 @@ def _hf_generate(prompt: str, model_name: str) -> str:
         output = model.generate(**inputs, max_new_tokens=max_new_tokens)
     decoded = tokenizer.decode(output[0], skip_special_tokens=True)
     if decoded.startswith(prompt):
-        return decoded[len(prompt):].lstrip()
+        return decoded[len(prompt) :].lstrip()
     return decoded
 
 
@@ -360,7 +376,9 @@ def _local_bin_paths() -> List[str]:
         os.getenv("IPFS_DATASETS_PROJECT_ROOT", str(Path(__file__).resolve().parents[1]))
     ).resolve()
     bin_dir = Path(os.getenv("IPFS_DATASETS_LOCAL_BIN", str(project_root / "bin"))).resolve()
-    npm_prefix = Path(os.getenv("IPFS_DATASETS_NPM_PREFIX", str(bin_dir / ".deps" / "npm"))).resolve()
+    npm_prefix = Path(
+        os.getenv("IPFS_DATASETS_NPM_PREFIX", str(bin_dir / ".deps" / "npm"))
+    ).resolve()
     npm_bin = npm_prefix / "bin"
     return [str(bin_dir), str(npm_bin)]
 
@@ -555,7 +573,9 @@ class IPFSSyMAIEngine(Engine):
             parts.append(str(processed))
 
         if isinstance(response_format, dict) and response_format.get("type") == "json_object":
-            parts.append("\n\nIMPORTANT: Return only a valid JSON object. Do not include extra text.")
+            parts.append(
+                "\n\nIMPORTANT: Return only a valid JSON object. Do not include extra text."
+            )
         else:
             parts.append(
                 "\n\nIMPORTANT: Return only the final answer text. Do not run commands. Do not describe steps."
@@ -644,6 +664,7 @@ class IPFSSyMAISymbolicEngine(IPFSSyMAIEngine):
 
 class IPFSSyMAINeurosymbolicEngine(IPFSSyMAIEngine):
     """SyMAI neurosymbolic engine router (NEUROSYMBOLIC_ENGINE_MODEL)."""
+
     def __init__(self, engine_id: str, model_key: str, mode: str = "text") -> None:
         super().__init__(engine_id, model_key, mode=mode)
         if not hasattr(self, "model"):

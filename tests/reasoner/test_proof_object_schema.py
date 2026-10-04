@@ -3,11 +3,16 @@ from __future__ import annotations
 from ipfs_datasets_py.processors.legal_data.reasoner.hybrid_legal_ir import parse_cnl_sentence
 from ipfs_datasets_py.processors.legal_data.reasoner import HybridLawReasoner
 from ipfs_datasets_py.processors.legal_data.reasoner.models import SourceProvenance
-from ipfs_datasets_py.processors.legal_data.reasoner.serialization import proof_from_dict, proof_to_dict
+from ipfs_datasets_py.processors.legal_data.reasoner.serialization import (
+    proof_from_dict,
+    proof_to_dict,
+)
 
 
 def _build_reasoner() -> tuple[HybridLawReasoner, str, str]:
-    ir = parse_cnl_sentence("Company A shall file report within 30 days.", jurisdiction="us/federal")
+    ir = parse_cnl_sentence(
+        "Company A shall file report within 30 days.", jurisdiction="us/federal"
+    )
     norm = next(iter(ir.norms.values()))
     frame = ir.frames[norm.target_frame_ref]
     actor_ref = frame.roles["agent"]
@@ -31,7 +36,11 @@ def test_proof_object_has_normalized_schema_and_replay_hash() -> None:
             "events": [],
             "facts": {"true": True},
         },
-        {"at_time": "2026-03-20T10:00:00Z", "start": "2026-03-01T00:00:00Z", "end": "2026-03-20T10:00:00Z"},
+        {
+            "at_time": "2026-03-20T10:00:00Z",
+            "start": "2026-03-01T00:00:00Z",
+            "end": "2026-03-20T10:00:00Z",
+        },
     )
 
     proof = reasoner.get_proof(out["proof_id"])
@@ -57,7 +66,11 @@ def test_proof_steps_always_include_ir_refs_and_provenance() -> None:
             "events": [],
             "facts": {"true": True, "conflict_mode": True},
         },
-        {"at_time": "2026-03-20T10:00:00Z", "start": "2026-03-01T00:00:00Z", "end": "2026-03-20T10:00:00Z"},
+        {
+            "at_time": "2026-03-20T10:00:00Z",
+            "start": "2026-03-01T00:00:00Z",
+            "end": "2026-03-20T10:00:00Z",
+        },
     )
 
     proof = reasoner.get_proof(out["proof_id"])
@@ -110,7 +123,11 @@ def test_proof_roundtrip_preserves_schema_fields() -> None:
             "events": [],
             "facts": {"true": True},
         },
-        {"at_time": "2026-03-20T10:00:00Z", "start": "2026-03-01T00:00:00Z", "end": "2026-03-20T10:00:00Z"},
+        {
+            "at_time": "2026-03-20T10:00:00Z",
+            "start": "2026-03-01T00:00:00Z",
+            "end": "2026-03-20T10:00:00Z",
+        },
     )
 
     proof = reasoner.get_proof(out["proof_id"])

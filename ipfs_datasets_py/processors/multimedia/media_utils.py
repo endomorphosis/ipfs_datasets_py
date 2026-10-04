@@ -17,7 +17,7 @@ class MediaUtils:
     """
     Comprehensive media utility class for multimedia file operations and validation.
 
-    The MediaUtils class provides a complete suite of utility functions for working with 
+    The MediaUtils class provides a complete suite of utility functions for working with
     multimedia files across various formats including video, audio, and image files. It offers
     file type detection, format validation, URL validation, metadata extraction, and file
     processing utilities designed to handle common multimedia operations in a robust and
@@ -120,23 +120,63 @@ class MediaUtils:
         - All methods include comprehensive error handling with fallback return values
         - Logging is integrated throughout for debugging and monitoring purposes
     """
-    
+
     # Supported media formats
     VIDEO_FORMATS = {
-        'mp4', 'avi', 'mov', 'mkv', 'wmv', 'flv', 'webm', 'm4v', '3gp',
-        'mpg', 'mpeg', 'ts', 'vob', 'asf', 'rm', 'rmvb', 'ogv'
+        "mp4",
+        "avi",
+        "mov",
+        "mkv",
+        "wmv",
+        "flv",
+        "webm",
+        "m4v",
+        "3gp",
+        "mpg",
+        "mpeg",
+        "ts",
+        "vob",
+        "asf",
+        "rm",
+        "rmvb",
+        "ogv",
     }
-    
+
     AUDIO_FORMATS = {
-        'mp3', 'wav', 'flac', 'aac', 'ogg', 'wma', 'm4a', 'opus',
-        'aiff', 'au', 'ra', 'amr', 'ac3', 'dts'
+        "mp3",
+        "wav",
+        "flac",
+        "aac",
+        "ogg",
+        "wma",
+        "m4a",
+        "opus",
+        "aiff",
+        "au",
+        "ra",
+        "amr",
+        "ac3",
+        "dts",
     }
-    
+
     IMAGE_FORMATS = {
-        'jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'tif', 'webp',
-        'svg', 'ico', 'psd', 'raw', 'cr2', 'nef', 'arw'
+        "jpg",
+        "jpeg",
+        "png",
+        "gif",
+        "bmp",
+        "tiff",
+        "tif",
+        "webp",
+        "svg",
+        "ico",
+        "psd",
+        "raw",
+        "cr2",
+        "nef",
+        "arw",
     }
-    
+
     @classmethod
     def get_file_type(cls, file_path: Union[str, Path]) -> Optional[str]:
         """
@@ -180,8 +220,8 @@ class MediaUtils:
         """
         try:
             path = Path(file_path)
-            extension = path.suffix.lower().lstrip('.')
-            
+            extension = path.suffix.lower().lstrip(".")
+
             if extension in cls.VIDEO_FORMATS:
                 return "video"
             elif extension in cls.AUDIO_FORMATS:
@@ -190,11 +230,11 @@ class MediaUtils:
                 return "image"
             else:
                 return None
-                
+
         except Exception as e:
             logger.error(f"Error determining file type for {file_path}: {e}")
             return None
-    
+
     @classmethod
     def is_media_file(cls, file_path: Union[str, Path]) -> bool:
         """
@@ -235,7 +275,7 @@ class MediaUtils:
             - The file does not need to exist on the filesystem
         """
         return cls.get_file_type(file_path) is not None
-    
+
     @classmethod
     def get_supported_formats(cls) -> Dict[str, Set[str]]:
         """
@@ -250,7 +290,7 @@ class MediaUtils:
             Dict[str, Set[str]]: A dictionary mapping media type categories to sets
                 of supported file extensions. The dictionary contains:
                 - "video": Set of supported video file extensions
-                - "audio": Set of supported audio file extensions  
+                - "audio": Set of supported audio file extensions
                 - "image": Set of supported image file extensions
                 All extensions are lowercase strings without leading dots.
 
@@ -273,12 +313,8 @@ class MediaUtils:
             - The format lists are comprehensive and exhaustive
             - New formats can be added by modifying the class attributes
         """
-        return {
-            "video": cls.VIDEO_FORMATS,
-            "audio": cls.AUDIO_FORMATS,
-            "image": cls.IMAGE_FORMATS
-        }
-    
+        return {"video": cls.VIDEO_FORMATS, "audio": cls.AUDIO_FORMATS, "image": cls.IMAGE_FORMATS}
+
     @classmethod
     def validate_url(cls, url: str) -> bool:
         """
@@ -331,24 +367,24 @@ class MediaUtils:
         try:
             if not url or not isinstance(url, str):
                 return False
-            
+
             url = url.strip()
             if not url:
                 return False
-            
+
             # Basic checks
-            if url.startswith(('http://', 'https://', 'ftp://', 'rtmp://', 'rtsp://')):
+            if url.startswith(("http://", "https://", "ftp://", "rtmp://", "rtsp://")):
                 return True
-            
+
             # Local file path
             if Path(url).exists():
                 return True
-            
+
             return False
-            
+
         except Exception:
             return False
-    
+
     @classmethod
     def get_mime_type(cls, file_path: Union[str, Path]) -> Optional[str]:
         """
@@ -388,7 +424,7 @@ class MediaUtils:
             return mime_type
         except Exception:
             return None
-    
+
     @classmethod
     def format_file_size(cls, size_bytes: int) -> str:
         """
@@ -435,14 +471,14 @@ class MediaUtils:
             - Maximum supported size is petabytes before precision loss
         """
         try:
-            for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+            for unit in ["B", "KB", "MB", "GB", "TB"]:
                 if size_bytes < 1024.0:
                     return f"{size_bytes:.1f} {unit}"
                 size_bytes /= 1024.0
             return f"{size_bytes:.1f} PB"
         except Exception:
             return "Unknown size"
-    
+
     @classmethod
     def format_duration(cls, seconds: float) -> str:
         """
@@ -490,14 +526,14 @@ class MediaUtils:
             hours = int(seconds // 3600)
             minutes = int((seconds % 3600) // 60)
             secs = int(seconds % 60)
-            
+
             if hours > 0:
                 return f"{hours:02d}:{minutes:02d}:{secs:02d}"
             else:
                 return f"{minutes:02d}:{secs:02d}"
         except Exception:
             return "Unknown duration"
-    
+
     @classmethod
     def sanitize_filename(cls, filename: str) -> str:
         """
@@ -547,17 +583,17 @@ class MediaUtils:
             # Remove/replace invalid characters
             invalid_chars = '<>:"/\\|?*'
             for char in invalid_chars:
-                filename = filename.replace(char, '_')
-            
+                filename = filename.replace(char, "_")
+
             # Remove leading/trailing spaces and dots
-            filename = filename.strip(' .')
-            
+            filename = filename.strip(" .")
+
             # Limit length
             if len(filename) > 200:
                 name, ext = Path(filename).stem, Path(filename).suffix
-                filename = name[:200-len(ext)] + ext
-            
+                filename = name[: 200 - len(ext)] + ext
+
             return filename or "unnamed_file"
-            
+
         except Exception:
             return "unnamed_file"

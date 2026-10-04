@@ -25,17 +25,39 @@ import re
 import pytest
 
 _KG_DIR = os.path.join(
-    os.path.dirname(__file__), "..", "..", "..",
-    "ipfs_datasets_py", "knowledge_graphs",
+    os.path.dirname(__file__),
+    "..",
+    "..",
+    "..",
+    "ipfs_datasets_py",
+    "knowledge_graphs",
 )
 _DOCS_KG = os.path.join(
-    os.path.dirname(__file__), "..", "..", "..",
-    "docs", "knowledge_graphs",
+    os.path.dirname(__file__),
+    "..",
+    "..",
+    "..",
+    "docs",
+    "knowledge_graphs",
 )
 
 
 def _read(relpath: str) -> str:
-    _moved = {'COMPREHENSIVE_ANALYSIS_2026_02_18.md', 'DOCUMENTATION_GUIDE.md', 'CHANGELOG_KNOWLEDGE_GRAPHS.md', 'IMPROVEMENT_TODO.md', 'INDEX.md', 'P3_P4_IMPLEMENTATION_COMPLETE.md', 'QUICKSTART.md', 'EXECUTIVE_SUMMARY_FINAL_2026_02_18.md', 'MASTER_REFACTORING_PLAN_2026.md', 'MASTER_STATUS.md', 'DEFERRED_FEATURES.md', 'ROADMAP.md', 'REFACTORING_COMPLETE_2026_02_18.md'}
+    _moved = {
+        "COMPREHENSIVE_ANALYSIS_2026_02_18.md",
+        "DOCUMENTATION_GUIDE.md",
+        "CHANGELOG_KNOWLEDGE_GRAPHS.md",
+        "IMPROVEMENT_TODO.md",
+        "INDEX.md",
+        "P3_P4_IMPLEMENTATION_COMPLETE.md",
+        "QUICKSTART.md",
+        "EXECUTIVE_SUMMARY_FINAL_2026_02_18.md",
+        "MASTER_REFACTORING_PLAN_2026.md",
+        "MASTER_STATUS.md",
+        "DEFERRED_FEATURES.md",
+        "ROADMAP.md",
+        "REFACTORING_COMPLETE_2026_02_18.md",
+    }
     base = _DOCS_KG if relpath in _moved else _KG_DIR
     with open(os.path.join(base, relpath), encoding="utf-8") as fh:
         return fh.read()
@@ -47,6 +69,7 @@ def _read(relpath: str) -> str:
 class TestProvenanceEventType:
     def test_all_types_exist(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.provenance import ProvenanceEventType
+
         assert ProvenanceEventType.ENTITY_CREATED.value == "entity_created"
         assert ProvenanceEventType.ENTITY_MODIFIED.value == "entity_modified"
         assert ProvenanceEventType.ENTITY_REMOVED.value == "entity_removed"
@@ -57,7 +80,11 @@ class TestProvenanceEventType:
 
     def test_str_enum(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.provenance import ProvenanceEventType
-        assert str(ProvenanceEventType.ENTITY_CREATED) in ("ProvenanceEventType.ENTITY_CREATED", "entity_created")
+
+        assert str(ProvenanceEventType.ENTITY_CREATED) in (
+            "ProvenanceEventType.ENTITY_CREATED",
+            "entity_created",
+        )
         assert ProvenanceEventType("entity_created") is ProvenanceEventType.ENTITY_CREATED
 
 
@@ -67,8 +94,10 @@ class TestProvenanceEventType:
 class TestProvenanceEvent:
     def _make(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.provenance import (
-            ProvenanceEvent, ProvenanceEventType
+            ProvenanceEvent,
+            ProvenanceEventType,
         )
+
         return ProvenanceEvent(
             event_type=ProvenanceEventType.ENTITY_CREATED,
             timestamp=1_000_000.0,
@@ -90,8 +119,10 @@ class TestProvenanceEvent:
 
     def test_cid_changes_with_data(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.provenance import (
-            ProvenanceEvent, ProvenanceEventType
+            ProvenanceEvent,
+            ProvenanceEventType,
         )
+
         evt1 = self._make()
         evt2 = ProvenanceEvent(
             event_type=ProvenanceEventType.ENTITY_CREATED,
@@ -105,6 +136,7 @@ class TestProvenanceEvent:
 
     def test_to_dict_round_trip(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.provenance import ProvenanceEvent
+
         evt = self._make()
         d = evt.to_dict()
         restored = ProvenanceEvent.from_dict(d)
@@ -114,6 +146,7 @@ class TestProvenanceEvent:
 
     def test_from_dict_preserves_cid(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.provenance import ProvenanceEvent
+
         evt = self._make()
         d = evt.to_dict()
         d["cid"] = "tampered-cid"
@@ -127,14 +160,17 @@ class TestProvenanceEvent:
 class TestProvenanceChainRecording:
     def test_empty_chain(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.provenance import ProvenanceChain
+
         chain = ProvenanceChain()
         assert chain.depth == 0
         assert chain.latest_cid is None
 
     def test_record_entity_created(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.provenance import (
-            ProvenanceChain, ProvenanceEventType
+            ProvenanceChain,
+            ProvenanceEventType,
         )
+
         chain = ProvenanceChain()
         evt = chain.record_entity_created("e1", "person", "Alice", confidence=0.9)
         assert chain.depth == 1
@@ -145,8 +181,10 @@ class TestProvenanceChainRecording:
 
     def test_record_entity_modified(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.provenance import (
-            ProvenanceChain, ProvenanceEventType
+            ProvenanceChain,
+            ProvenanceEventType,
         )
+
         chain = ProvenanceChain()
         chain.record_entity_created("e1", "person", "Alice")
         prev = chain.latest_cid
@@ -156,8 +194,10 @@ class TestProvenanceChainRecording:
 
     def test_record_entity_removed(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.provenance import (
-            ProvenanceChain, ProvenanceEventType
+            ProvenanceChain,
+            ProvenanceEventType,
         )
+
         chain = ProvenanceChain()
         chain.record_entity_created("e1", "person", "Alice")
         evt = chain.record_entity_removed("e1")
@@ -166,8 +206,10 @@ class TestProvenanceChainRecording:
 
     def test_record_relationship_created(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.provenance import (
-            ProvenanceChain, ProvenanceEventType
+            ProvenanceChain,
+            ProvenanceEventType,
         )
+
         chain = ProvenanceChain()
         evt = chain.record_relationship_created("r1", "knows", "e1", "e2", confidence=0.8)
         assert evt.event_type == ProvenanceEventType.RELATIONSHIP_CREATED
@@ -176,8 +218,10 @@ class TestProvenanceChainRecording:
 
     def test_record_relationship_removed(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.provenance import (
-            ProvenanceChain, ProvenanceEventType
+            ProvenanceChain,
+            ProvenanceEventType,
         )
+
         chain = ProvenanceChain()
         chain.record_relationship_created("r1", "knows", "e1", "e2")
         evt = chain.record_relationship_removed("r1")
@@ -185,8 +229,10 @@ class TestProvenanceChainRecording:
 
     def test_record_graph_snapshot_and_restored(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.provenance import (
-            ProvenanceChain, ProvenanceEventType
+            ProvenanceChain,
+            ProvenanceEventType,
         )
+
         chain = ProvenanceChain()
         chain.record_graph_snapshot("snap_v1")
         evt = chain.record_graph_restored("snap_v1")
@@ -196,6 +242,7 @@ class TestProvenanceChainRecording:
 
     def test_chain_links_previous_cid(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.provenance import ProvenanceChain
+
         chain = ProvenanceChain()
         e1 = chain.record_entity_created("e1", "person", "Alice")
         e2 = chain.record_entity_created("e2", "person", "Bob")
@@ -210,6 +257,7 @@ class TestProvenanceChainRecording:
 class TestProvenanceChainHistory:
     def test_get_history_all(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.provenance import ProvenanceChain
+
         chain = ProvenanceChain()
         chain.record_entity_created("e1", "person", "Alice")
         chain.record_entity_created("e2", "person", "Bob")
@@ -218,6 +266,7 @@ class TestProvenanceChainHistory:
 
     def test_get_history_by_entity(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.provenance import ProvenanceChain
+
         chain = ProvenanceChain()
         chain.record_entity_created("e1", "person", "Alice")
         chain.record_entity_created("e2", "person", "Bob")
@@ -228,6 +277,7 @@ class TestProvenanceChainHistory:
 
     def test_get_history_by_relationship(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.provenance import ProvenanceChain
+
         chain = ProvenanceChain()
         chain.record_entity_created("e1", "person", "Alice")
         chain.record_relationship_created("r1", "knows", "e1", "e2")
@@ -238,6 +288,7 @@ class TestProvenanceChainHistory:
 
     def test_get_history_unknown_entity_empty(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.provenance import ProvenanceChain
+
         chain = ProvenanceChain()
         assert chain.get_history(entity_id="does-not-exist") == []
 
@@ -248,6 +299,7 @@ class TestProvenanceChainHistory:
 class TestProvenanceChainVerify:
     def test_valid_chain(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.provenance import ProvenanceChain
+
         chain = ProvenanceChain()
         chain.record_entity_created("e1", "person", "Alice")
         chain.record_entity_created("e2", "person", "Bob")
@@ -258,6 +310,7 @@ class TestProvenanceChainVerify:
 
     def test_empty_chain_valid(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.provenance import ProvenanceChain
+
         chain = ProvenanceChain()
         is_valid, errors = chain.verify_chain()
         assert is_valid
@@ -265,6 +318,7 @@ class TestProvenanceChainVerify:
 
     def test_tampered_cid_detected(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.provenance import ProvenanceChain
+
         chain = ProvenanceChain()
         chain.record_entity_created("e1", "person", "Alice")
         chain.record_entity_created("e2", "person", "Bob")
@@ -276,6 +330,7 @@ class TestProvenanceChainVerify:
 
     def test_tampered_previous_cid_detected(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.provenance import ProvenanceChain
+
         chain = ProvenanceChain()
         chain.record_entity_created("e1", "person", "Alice")
         chain.record_entity_created("e2", "person", "Bob")
@@ -292,6 +347,7 @@ class TestProvenanceChainVerify:
 class TestProvenanceChainSerialisation:
     def test_to_jsonl_line_count(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.provenance import ProvenanceChain
+
         chain = ProvenanceChain()
         chain.record_entity_created("e1", "person", "Alice")
         chain.record_entity_created("e2", "person", "Bob")
@@ -302,6 +358,7 @@ class TestProvenanceChainSerialisation:
 
     def test_to_jsonl_valid_json_lines(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.provenance import ProvenanceChain
+
         chain = ProvenanceChain()
         chain.record_entity_created("e1", "person", "Alice")
         jsonl = chain.to_jsonl()
@@ -311,6 +368,7 @@ class TestProvenanceChainSerialisation:
 
     def test_from_jsonl_round_trip_depth(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.provenance import ProvenanceChain
+
         chain = ProvenanceChain()
         chain.record_entity_created("e1", "person", "Alice")
         chain.record_entity_created("e2", "person", "Bob")
@@ -321,6 +379,7 @@ class TestProvenanceChainSerialisation:
 
     def test_from_jsonl_verify_chain(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.provenance import ProvenanceChain
+
         chain = ProvenanceChain()
         chain.record_entity_created("e1", "person", "Alice")
         chain.record_entity_created("e2", "person", "Bob")
@@ -331,6 +390,7 @@ class TestProvenanceChainSerialisation:
 
     def test_from_jsonl_entity_index(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.provenance import ProvenanceChain
+
         chain = ProvenanceChain()
         chain.record_entity_created("e1", "person", "Alice")
         chain.record_entity_modified("e1", {"name": "Alicia"})
@@ -341,6 +401,7 @@ class TestProvenanceChainSerialisation:
 
     def test_from_jsonl_empty_string(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.provenance import ProvenanceChain
+
         restored = ProvenanceChain.from_jsonl("")
         assert restored.depth == 0
 
@@ -351,11 +412,13 @@ class TestProvenanceChainSerialisation:
 class TestKnowledgeGraphProvenanceIntegration:
     def test_provenance_none_by_default(self):
         from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph
+
         kg = KnowledgeGraph("test")
         assert kg.provenance is None
 
     def test_enable_provenance_returns_chain(self):
         from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph, ProvenanceChain
+
         kg = KnowledgeGraph("test")
         chain = kg.enable_provenance()
         assert isinstance(chain, ProvenanceChain)
@@ -363,6 +426,7 @@ class TestKnowledgeGraphProvenanceIntegration:
 
     def test_enable_provenance_idempotent(self):
         from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph
+
         kg = KnowledgeGraph("test")
         chain1 = kg.enable_provenance()
         chain2 = kg.enable_provenance()
@@ -370,6 +434,7 @@ class TestKnowledgeGraphProvenanceIntegration:
 
     def test_disable_provenance(self):
         from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph
+
         kg = KnowledgeGraph("test")
         kg.enable_provenance()
         kg.disable_provenance()
@@ -377,6 +442,7 @@ class TestKnowledgeGraphProvenanceIntegration:
 
     def test_add_entity_auto_records(self):
         from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph
+
         kg = KnowledgeGraph("test")
         chain = kg.enable_provenance()
         kg.add_entity("person", "Alice")
@@ -384,6 +450,7 @@ class TestKnowledgeGraphProvenanceIntegration:
 
     def test_add_relationship_auto_records(self):
         from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph
+
         kg = KnowledgeGraph("test")
         chain = kg.enable_provenance()
         alice = kg.add_entity("person", "Alice")
@@ -393,11 +460,13 @@ class TestKnowledgeGraphProvenanceIntegration:
 
     def test_no_auto_record_without_provenance(self):
         from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph
+
         kg = KnowledgeGraph("test")
         kg.add_entity("person", "Alice")  # should not raise
 
     def test_provenance_chain_valid_after_kg_mutations(self):
         from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph
+
         kg = KnowledgeGraph("test")
         chain = kg.enable_provenance()
         alice = kg.add_entity("person", "Alice")
@@ -413,18 +482,22 @@ class TestKnowledgeGraphProvenanceIntegration:
 class TestExtractionExports:
     def test_provenance_chain_importable(self):
         from ipfs_datasets_py.knowledge_graphs.extraction import ProvenanceChain
+
         assert ProvenanceChain is not None
 
     def test_provenance_event_importable(self):
         from ipfs_datasets_py.knowledge_graphs.extraction import ProvenanceEvent
+
         assert ProvenanceEvent is not None
 
     def test_provenance_event_type_importable(self):
         from ipfs_datasets_py.knowledge_graphs.extraction import ProvenanceEventType
+
         assert ProvenanceEventType is not None
 
     def test_all_provenance_symbols_in_all(self):
         from ipfs_datasets_py.knowledge_graphs import extraction
+
         for sym in ("ProvenanceChain", "ProvenanceEvent", "ProvenanceEventType"):
             assert sym in extraction.__all__, f"{sym!r} not in __all__"
 
@@ -464,13 +537,13 @@ class TestDocIntegritySession75:
 class TestVersionAgreement:
     def _extract_top_version(self, content: str) -> str:
         # Handle "**Version:** X.Y.Z" (MASTER_STATUS.md format)
-        m = re.search(r'\*\*Version:\*\*\s+([0-9]+\.[0-9]+\.[0-9]+)', content)
+        m = re.search(r"\*\*Version:\*\*\s+([0-9]+\.[0-9]+\.[0-9]+)", content)
         if m:
             return m.group(1)
-        m = re.search(r'(?:Current Version|Module Version)[:\s]+([0-9]+\.[0-9]+\.[0-9]+)', content)
+        m = re.search(r"(?:Current Version|Module Version)[:\s]+([0-9]+\.[0-9]+\.[0-9]+)", content)
         if m:
             return m.group(1)
-        m = re.search(r'\*\*Module Version:\*\*\s+([0-9]+\.[0-9]+\.[0-9]+)', content)
+        m = re.search(r"\*\*Module Version:\*\*\s+([0-9]+\.[0-9]+\.[0-9]+)", content)
         return m.group(1) if m else ""
 
     def test_master_status_version(self):

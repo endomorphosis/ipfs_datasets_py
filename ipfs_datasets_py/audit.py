@@ -11,10 +11,10 @@ logger = logging.getLogger(__name__)
 
 class AuditLogger:
     """Simple audit logger."""
-    
+
     def __init__(self):
         self.logger = logging.getLogger("audit")
-        
+
     def log_event(
         self,
         action: str,
@@ -24,7 +24,7 @@ class AuditLogger:
         details: Optional[Dict[str, Any]] = None,
         source_ip: Optional[str] = None,
         severity: str = "info",
-        tags: Optional[List[str]] = None
+        tags: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         """Log an audit event."""
         event = {
@@ -36,8 +36,8 @@ class AuditLogger:
             "details": details or {},
             "source_ip": source_ip,
             "severity": severity,
-            "tags": tags or []
+            "tags": tags or [],
         }
-        
+
         self.logger.info(f"Audit event: {action} - {event}")
         return {"success": True, "event_id": f"audit_{datetime.utcnow().timestamp()}"}

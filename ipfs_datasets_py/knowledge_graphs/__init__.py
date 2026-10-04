@@ -52,15 +52,51 @@ __all__ = [
 
 _DEPRECATED_ROOT_EXPORTS: dict[str, tuple[str, str, str]] = {
     # name: (module, attr, preferred_import_path)
-    "GraphDatabase": ("ipfs_datasets_py.knowledge_graphs.neo4j_compat", "GraphDatabase", "ipfs_datasets_py.knowledge_graphs.neo4j_compat"),
-    "IPFSDriver": ("ipfs_datasets_py.knowledge_graphs.neo4j_compat", "IPFSDriver", "ipfs_datasets_py.knowledge_graphs.neo4j_compat"),
-    "IPFSSession": ("ipfs_datasets_py.knowledge_graphs.neo4j_compat", "IPFSSession", "ipfs_datasets_py.knowledge_graphs.neo4j_compat"),
-    "GraphEngine": ("ipfs_datasets_py.knowledge_graphs.core", "GraphEngine", "ipfs_datasets_py.knowledge_graphs.core"),
-    "QueryExecutor": ("ipfs_datasets_py.knowledge_graphs.core", "QueryExecutor", "ipfs_datasets_py.knowledge_graphs.core"),
-    "IPLDBackend": ("ipfs_datasets_py.knowledge_graphs.storage", "IPLDBackend", "ipfs_datasets_py.knowledge_graphs.storage"),
-    "LRUCache": ("ipfs_datasets_py.knowledge_graphs.storage", "LRUCache", "ipfs_datasets_py.knowledge_graphs.storage"),
-    "Entity": ("ipfs_datasets_py.knowledge_graphs.storage", "Entity", "ipfs_datasets_py.knowledge_graphs.storage"),
-    "Relationship": ("ipfs_datasets_py.knowledge_graphs.storage", "Relationship", "ipfs_datasets_py.knowledge_graphs.storage"),
+    "GraphDatabase": (
+        "ipfs_datasets_py.knowledge_graphs.neo4j_compat",
+        "GraphDatabase",
+        "ipfs_datasets_py.knowledge_graphs.neo4j_compat",
+    ),
+    "IPFSDriver": (
+        "ipfs_datasets_py.knowledge_graphs.neo4j_compat",
+        "IPFSDriver",
+        "ipfs_datasets_py.knowledge_graphs.neo4j_compat",
+    ),
+    "IPFSSession": (
+        "ipfs_datasets_py.knowledge_graphs.neo4j_compat",
+        "IPFSSession",
+        "ipfs_datasets_py.knowledge_graphs.neo4j_compat",
+    ),
+    "GraphEngine": (
+        "ipfs_datasets_py.knowledge_graphs.core",
+        "GraphEngine",
+        "ipfs_datasets_py.knowledge_graphs.core",
+    ),
+    "QueryExecutor": (
+        "ipfs_datasets_py.knowledge_graphs.core",
+        "QueryExecutor",
+        "ipfs_datasets_py.knowledge_graphs.core",
+    ),
+    "IPLDBackend": (
+        "ipfs_datasets_py.knowledge_graphs.storage",
+        "IPLDBackend",
+        "ipfs_datasets_py.knowledge_graphs.storage",
+    ),
+    "LRUCache": (
+        "ipfs_datasets_py.knowledge_graphs.storage",
+        "LRUCache",
+        "ipfs_datasets_py.knowledge_graphs.storage",
+    ),
+    "Entity": (
+        "ipfs_datasets_py.knowledge_graphs.storage",
+        "Entity",
+        "ipfs_datasets_py.knowledge_graphs.storage",
+    ),
+    "Relationship": (
+        "ipfs_datasets_py.knowledge_graphs.storage",
+        "Relationship",
+        "ipfs_datasets_py.knowledge_graphs.storage",
+    ),
 }
 
 

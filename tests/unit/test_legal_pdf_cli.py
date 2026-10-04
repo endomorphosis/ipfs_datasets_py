@@ -122,7 +122,9 @@ def test_legal_pdf_cli_build_full_evidence_binder_json_is_clean(tmp_path: Path, 
     source_path.write_text("sample source text\n", encoding="utf-8")
 
     (covers_dir / "exhibit_A_tab_cover_page.md").write_text(TAB_MD, encoding="utf-8")
-    (covers_dir / "exhibit_A_cover_page.md").write_text(COVER_MD.format(source=source_path), encoding="utf-8")
+    (covers_dir / "exhibit_A_cover_page.md").write_text(
+        COVER_MD.format(source=source_path), encoding="utf-8"
+    )
 
     manifest_path = tmp_path / "full_evidence_binder_manifest.json"
     manifest_path.write_text(
@@ -178,7 +180,9 @@ def test_legal_pdf_cli_build_exhibit_binder_json_is_clean(tmp_path: Path, capsys
 
     (covers_dir / "EXHIBIT_BINDER_FRONT_SHEET.md").write_text(FRONT_SHEET_MD, encoding="utf-8")
     (covers_dir / "Exhibit_A_tab_divider.md").write_text(TAB_MD, encoding="utf-8")
-    (covers_dir / "Exhibit_A_cover_sheet.md").write_text(COVER_MD.format(source=source_path), encoding="utf-8")
+    (covers_dir / "Exhibit_A_cover_sheet.md").write_text(
+        COVER_MD.format(source=source_path), encoding="utf-8"
+    )
 
     manifest_path = tmp_path / "exhibit_binder_manifest.json"
     manifest_path.write_text(
@@ -194,9 +198,9 @@ def test_legal_pdf_cli_build_exhibit_binder_json_is_clean(tmp_path: Path, capsys
                         "code": "A",
                         "title": "Sample Exhibit",
                         "divider_markdown": "covers/Exhibit_A_tab_divider.md",
-                        "cover_markdown": "covers/Exhibit_A_cover_sheet.md"
+                        "cover_markdown": "covers/Exhibit_A_cover_sheet.md",
                     }
-                ]
+                ],
             }
         ),
         encoding="utf-8",
@@ -245,8 +249,8 @@ def test_legal_pdf_cli_build_state_court_filing_packet_json_is_clean(tmp_path: P
                     "case_number_line": "Case No. TEST-123",
                     "filed_date": "April 12, 2026",
                     "signature_doc_keywords": ["motion", "memorandum"],
-                    "declaration_doc_keywords": ["declaration"]
-                }
+                    "declaration_doc_keywords": ["declaration"],
+                },
             }
         ),
         encoding="utf-8",
@@ -300,7 +304,9 @@ def test_legal_pdf_cli_build_courtstyle_packet_default_json_is_clean(capsys, mon
     assert marker["called"] is True
 
 
-def test_legal_pdf_cli_build_courtstyle_packet_default_with_config_json_is_clean(capsys, monkeypatch):
+def test_legal_pdf_cli_build_courtstyle_packet_default_with_config_json_is_clean(
+    capsys, monkeypatch
+):
     marker = {"config_path": None}
 
     def _fake_builder(config_path: str):
@@ -407,7 +413,9 @@ def test_legal_pdf_cli_build_filing_specific_binders_default_json_is_clean(capsy
     assert payload["output_paths"] == [str(path) for path in expected]
 
 
-def test_legal_pdf_cli_build_court_ready_binder_index_default_with_config_json_is_clean(capsys, monkeypatch):
+def test_legal_pdf_cli_build_court_ready_binder_index_default_with_config_json_is_clean(
+    capsys, monkeypatch
+):
     marker = {"config_path": None}
 
     def _fake_builder(config_path: str):
@@ -439,12 +447,18 @@ def test_legal_pdf_cli_build_court_ready_binder_index_default_with_config_json_i
     assert marker["config_path"] == "/tmp/custom_index_config.json"
 
 
-def test_legal_pdf_cli_build_official_form_drafts_default_with_config_json_is_clean(capsys, monkeypatch):
+def test_legal_pdf_cli_build_official_form_drafts_default_with_config_json_is_clean(
+    capsys, monkeypatch
+):
     marker = {"config_path": None}
 
     def _fake_builder(config_path: str):
         marker["config_path"] = config_path
-        return {"config_path": config_path, "output_paths": ["/tmp/js44.pdf", "/tmp/ao440.pdf"], "output_count": 2}
+        return {
+            "config_path": config_path,
+            "output_paths": ["/tmp/js44.pdf", "/tmp/ao440.pdf"],
+            "output_count": 2,
+        }
 
     monkeypatch.setattr(
         legal_pdf_cli,
@@ -471,7 +485,9 @@ def test_legal_pdf_cli_build_official_form_drafts_default_with_config_json_is_cl
     assert marker["config_path"] == "/tmp/custom_forms_config.json"
 
 
-def test_legal_pdf_cli_build_filing_specific_binders_default_with_config_json_is_clean(capsys, monkeypatch):
+def test_legal_pdf_cli_build_filing_specific_binders_default_with_config_json_is_clean(
+    capsys, monkeypatch
+):
     marker = {"config_path": None}
 
     def _fake_builder(config_path: str):

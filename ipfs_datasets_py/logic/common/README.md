@@ -37,11 +37,11 @@ Standardized exception hierarchy replacing inconsistent use of `ValueError`, `Ty
 ```python
 from ipfs_datasets_py.logic.common import ConversionError
 
+
 def convert_logic(formula):
     if not formula:
         raise ConversionError(
-            "Empty formula provided",
-            context={"function": "convert_logic", "formula": formula}
+            "Empty formula provided", context={"function": "convert_logic", "formula": formula}
         )
     # ... conversion logic
 ```
@@ -56,11 +56,7 @@ try:
 except Exception as e:
     raise ConversionError(
         "Failed to convert formula",
-        context={
-            "formula": formula,
-            "source": "user_input",
-            "line": 42
-        }
+        context={"formula": formula, "source": "user_input", "line": 42},
     ) from e
 ```
 
@@ -133,15 +129,17 @@ Standardized base classes for logic conversion operations:
 ```python
 from ipfs_datasets_py.logic.common import LogicConverter, ValidationResult
 
+
 class MyConverter(LogicConverter[str, str]):
     def validate_input(self, text: str) -> ValidationResult:
         result = ValidationResult(valid=True)
         if not text:
             result.add_error("Input cannot be empty")
         return result
-    
+
     def _convert_impl(self, text: str, options: Dict[str, Any]) -> str:
         return text.upper()  # Your conversion logic
+
 
 # Use with default bounded cache (1000 entries, 1 hour TTL)
 converter = MyConverter()
@@ -156,8 +154,8 @@ if result.success:
 # Configure cache size and TTL
 converter = MyConverter(
     enable_caching=True,
-    cache_maxsize=500,   # Max 500 entries
-    cache_ttl=1800,      # 30 minute TTL
+    cache_maxsize=500,  # Max 500 entries
+    cache_ttl=1800,  # 30 minute TTL
 )
 
 # Get detailed statistics

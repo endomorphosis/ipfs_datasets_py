@@ -13,6 +13,7 @@ Reusable by:
         UploadToHuggingFaceInParallel,
     )
 """
+
 from __future__ import annotations
 
 import concurrent.futures as cf
@@ -40,16 +41,19 @@ except (ImportError, ModuleNotFoundError):
 
     class CommitInfo:  # type: ignore[no-redef]
         """Stub CommitInfo when huggingface_hub is unavailable."""
+
         pass
 
     class HfHubHTTPError(Exception):  # type: ignore[no-redef]
         """Stub HfHubHTTPError when huggingface_hub is unavailable."""
+
         def __init__(self, *args: Any, response: Any = None, **kwargs: Any) -> None:
             super().__init__(*args)
             self.response = response
 
     class HfApi:  # type: ignore[no-redef]
         """Stub HfApi that returns empty/no-op results when huggingface_hub is unavailable."""
+
         def list_repo_files(self, *args: Any, **kwargs: Any) -> list[str]:
             """Return empty file list."""
             return []
@@ -65,6 +69,7 @@ except (ImportError, ModuleNotFoundError):
             fut: cf.Future = cf.Future()
             fut.set_result(None)
             return fut
+
 
 try:
     import tqdm  # type: ignore
@@ -99,6 +104,7 @@ except (ImportError, ModuleNotFoundError, ValueError):
 # ---------------------------------------------------------------------------
 # RateLimiter
 # ---------------------------------------------------------------------------
+
 
 class RateLimiter:
     """Token bucket rate limiter for API requests.
@@ -175,6 +181,7 @@ class RateLimiter:
 # UploadToHuggingFaceInParallel
 # ---------------------------------------------------------------------------
 
+
 class UploadToHuggingFaceInParallel:
     """Upload files to HuggingFace in parallel with rate limiting.
 
@@ -217,15 +224,21 @@ class UploadToHuggingFaceInParallel:
 
         if configs is not None:
             self.repo_id: str = getattr(configs, "REPO_ID", "")
-            self.sql_input = Path(getattr(getattr(configs, "paths", None), "INPUT_FROM_SQL", ".") or ".")
+            self.sql_input = Path(
+                getattr(getattr(configs, "paths", None), "INPUT_FROM_SQL", ".") or "."
+            )
             token_path = getattr(configs, "HUGGING_FACE_USER_ACCESS_TOKEN", None)
             try:
                 if self._has_hf_auth_session():
-                    logger.info("HuggingFace auth session detected via `hf auth whoami`; reusing existing login")
+                    logger.info(
+                        "HuggingFace auth session detected via `hf auth whoami`; reusing existing login"
+                    )
                 elif token_path:
                     login(token=token_path)
                 else:
-                    logger.info("No HuggingFace auth session detected and no token configured; skipping login prompt")
+                    logger.info(
+                        "No HuggingFace auth session detected and no token configured; skipping login prompt"
+                    )
             except Exception:  # noqa: BLE001
                 pass
             rate_limit = getattr(configs, "REQUEST_LIMIT_PER_HOUR", 300)
@@ -282,9 +295,7 @@ class UploadToHuggingFaceInParallel:
         for dir_path in data_dir.iterdir():
             if not dir_path.is_dir():
                 continue
-            all_files_exist = all(
-                f.name in file_info_set for f in dir_path.glob("**/*.parquet")
-            )
+            all_files_exist = all(f.name in file_info_set for f in dir_path.glob("**/*.parquet"))
             if not all_files_exist:
                 folders_to_upload.append(dir_path)
         return folders_to_upload
@@ -352,6 +363,7 @@ class UploadToHuggingFaceInParallel:
         sem = None
         try:
             import anyio  # type: ignore
+
             sem = anyio.Semaphore(max_concurrency)
         except (ImportError, ModuleNotFoundError):
             sem = None
@@ -383,9 +395,14 @@ class UploadToHuggingFaceInParallel:
         if self.failed_count > 0:
             logger.error(
                 "Failed to upload %d folders to %s. Check logs for details.",
-                self.failed_count, self.repo_id,
+                self.failed_count,
+                self.repo_id,
             )
-        return {"uploaded": self.upload_count, "failed": self.failed_count, "retried": self.retry_count}
+        return {
+            "uploaded": self.upload_count,
+            "failed": self.failed_count,
+            "retried": self.retry_count,
+        }
 
     def _upload_folder_sync(
         self,
@@ -405,7 +422,9 @@ class UploadToHuggingFaceInParallel:
             ``True`` on success, ``False`` on exhausted retries.
         """
         if not str(self.repo_id).strip():
-            logger.info("No repo_id configured; treating upload of %s as dry-run success", folder_path.name)
+            logger.info(
+                "No repo_id configured; treating upload of %s as dry-run success", folder_path.name
+            )
             return True
 
         for attempt in range(retry_limit + 1):
@@ -418,15 +437,24 @@ class UploadToHuggingFaceInParallel:
                 # Rate limit (429) or server error (5xx) — retry with back-off
                 status = getattr(getattr(e, "response", None), "status_code", 0)
                 if status in (429, 500, 502, 503) and attempt < retry_limit:
-                    wait = 2 ** attempt
+                    wait = 2**attempt
                     logger.warning(
                         "HTTP %s uploading %s, retrying in %ss (attempt %d/%d).",
-                        status, folder_path.name, wait, attempt + 1, retry_limit,
+                        status,
+                        folder_path.name,
+                        wait,
+                        attempt + 1,
+                        retry_limit,
                     )
                     time.sleep(wait)
                     self.retry_count += 1
                 else:
-                    logger.error("Upload failed for %s after %d attempt(s): %s", folder_path.name, attempt + 1, e)
+                    logger.error(
+                        "Upload failed for %s after %d attempt(s): %s",
+                        folder_path.name,
+                        attempt + 1,
+                        e,
+                    )
                     return False
             except Exception as e:
                 logger.error("Unexpected error uploading %s: %s", folder_path.name, e)

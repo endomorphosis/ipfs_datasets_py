@@ -45,7 +45,9 @@ def _top_items(d: Dict[str, int], k: int = 8) -> List[Tuple[str, int]]:
     return sorted(d.items(), key=lambda kv: kv[1], reverse=True)[:k]
 
 
-def _collect_basic_metrics(summary: Dict[str, Any], records: List[Dict[str, Any]]) -> Dict[str, Any]:
+def _collect_basic_metrics(
+    summary: Dict[str, Any], records: List[Dict[str, Any]]
+) -> Dict[str, Any]:
     n = int(summary.get("segment_count") or len(records) or 0)
     entropy_diag = summary.get("conversion_entropy_diagnostics") or {}
     n_effective = int(entropy_diag.get("entropy_effective_segment_count") or n)
@@ -56,7 +58,9 @@ def _collect_basic_metrics(summary: Dict[str, Any], records: List[Dict[str, Any]
     overlong = int(entropy_diag.get("overlong_predicate_formula_count") or 0)
     no_normative_effective = entropy_diag.get("no_normative_rejections_effective")
     if no_normative_effective is None:
-        no_normative = int((summary.get("theorem_rejection_reason_counts") or {}).get("no_normative_cue") or 0)
+        no_normative = int(
+            (summary.get("theorem_rejection_reason_counts") or {}).get("no_normative_cue") or 0
+        )
     else:
         no_normative = int(no_normative_effective)
 
@@ -67,9 +71,15 @@ def _collect_basic_metrics(summary: Dict[str, Any], records: List[Dict[str, Any]
     tdfol_missing_effective = entropy_diag.get("tdfol_missing_effective_count")
     cec_missing_effective = entropy_diag.get("cec_bridge_missing_effective_count")
     missing_by_modality = {
-        "tdfol": int(max(0, n - tdfol_success) if tdfol_missing_effective is None else tdfol_missing_effective),
+        "tdfol": int(
+            max(0, n - tdfol_success)
+            if tdfol_missing_effective is None
+            else tdfol_missing_effective
+        ),
         "cec_bridge": int(
-            max(0, n - cec_bridge_success) if cec_missing_effective is None else cec_missing_effective
+            max(0, n - cec_bridge_success)
+            if cec_missing_effective is None
+            else cec_missing_effective
         ),
     }
 
@@ -87,10 +97,14 @@ def _collect_basic_metrics(summary: Dict[str, Any], records: List[Dict[str, Any]
         "no_normative_rejection_rate": _safe_ratio(no_normative, n_effective),
         "semantic_similarity_by_modality": semantic,
         "missing_modality_counts": missing_by_modality,
-        "missing_modality_rates": {k: _safe_ratio(v, n_effective) for k, v in missing_by_modality.items()},
+        "missing_modality_rates": {
+            k: _safe_ratio(v, n_effective) for k, v in missing_by_modality.items()
+        },
         "deontic_operator_counts": entropy_diag.get("deontic_operator_counts") or {},
         "deontic_operator_entropy_bits": entropy_diag.get("deontic_operator_entropy_bits"),
-        "deontic_operator_entropy_normalized": entropy_diag.get("deontic_operator_entropy_normalized"),
+        "deontic_operator_entropy_normalized": entropy_diag.get(
+            "deontic_operator_entropy_normalized"
+        ),
         "theorem_rejection_reason_counts": (
             entropy_diag.get("theorem_rejection_reason_counts_effective")
             or summary.get("theorem_rejection_reason_counts")
@@ -183,7 +197,9 @@ def _build_recommendations(metrics: Dict[str, Any], kg: Dict[str, Any]) -> List[
     sem = metrics.get("semantic_similarity_by_modality") or {}
     dsim = sem.get("deontic")
     fsim = sem.get("fol")
-    if (isinstance(dsim, (float, int)) and dsim < 0.35) or (isinstance(fsim, (float, int)) and fsim < 0.35):
+    if (isinstance(dsim, (float, int)) and dsim < 0.35) or (
+        isinstance(fsim, (float, int)) and fsim < 0.35
+    ):
         recs.append(
             {
                 "category": "llm-postpass",
@@ -240,7 +256,9 @@ def _build_recommendations(metrics: Dict[str, Any], kg: Dict[str, Any]) -> List[
     return recs
 
 
-def render_md(report_name: str, metrics: Dict[str, Any], kg: Dict[str, Any], recs: List[Dict[str, str]]) -> str:
+def render_md(
+    report_name: str, metrics: Dict[str, Any], kg: Dict[str, Any], recs: List[Dict[str, str]]
+) -> str:
     lines: List[str] = []
     lines.append(f"# Formal Logic Entropy Audit: {report_name}")
     lines.append("")
@@ -252,8 +270,12 @@ def render_md(report_name: str, metrics: Dict[str, Any], kg: Dict[str, Any], rec
     lines.append(f"| Deontic trivial rate | {metrics['deontic_trivial_rate']:.4f} |")
     lines.append(f"| FOL weak rate | {metrics['fol_weak_rate']:.4f} |")
     lines.append(f"| Overlong predicate rate | {metrics.get('overlong_predicate_rate', 0.0):.4f} |")
-    lines.append(f"| Missing TDFOL rate | {metrics['missing_modality_rates'].get('tdfol', 0.0):.4f} |")
-    lines.append(f"| Missing CEC bridge rate | {metrics['missing_modality_rates'].get('cec_bridge', 0.0):.4f} |")
+    lines.append(
+        f"| Missing TDFOL rate | {metrics['missing_modality_rates'].get('tdfol', 0.0):.4f} |"
+    )
+    lines.append(
+        f"| Missing CEC bridge rate | {metrics['missing_modality_rates'].get('cec_bridge', 0.0):.4f} |"
+    )
     lines.append("")
 
     lines.append("## Semantic Means")
@@ -282,7 +304,9 @@ def render_md(report_name: str, metrics: Dict[str, Any], kg: Dict[str, Any], rec
     lines.append(f"| Agent nodes | {kg.get('agent_nodes')} |")
     lines.append(f"| Proposition nodes | {kg.get('proposition_nodes')} |")
     lines.append(f"| Assertion->Agent link rate | {kg.get('assertion_agent_link_rate', 0.0):.4f} |")
-    lines.append(f"| Assertion->Proposition link rate | {kg.get('assertion_proposition_link_rate', 0.0):.4f} |")
+    lines.append(
+        f"| Assertion->Proposition link rate | {kg.get('assertion_proposition_link_rate', 0.0):.4f} |"
+    )
     lines.append("")
 
     lines.append("## Recommendations")
@@ -329,12 +353,17 @@ def main() -> None:
     out_md.parent.mkdir(parents=True, exist_ok=True)
     out_md.write_text(render_md(report_path.parent.name, metrics, kg, recs), encoding="utf-8")
 
-    print(json.dumps({
-        "output_json": str(out_json),
-        "output_md": str(out_md),
-        "segment_count": metrics.get("segment_count", 0),
-        "recommendation_count": len(recs),
-    }, indent=2))
+    print(
+        json.dumps(
+            {
+                "output_json": str(out_json),
+                "output_md": str(out_md),
+                "segment_count": metrics.get("segment_count", 0),
+                "recommendation_count": len(recs),
+            },
+            indent=2,
+        )
+    )
 
 
 if __name__ == "__main__":

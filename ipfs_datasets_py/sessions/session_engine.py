@@ -4,6 +4,7 @@ Session Engine
 Business logic for session management, including validation helpers
 and the MockSessionManager.
 """
+
 from __future__ import annotations
 
 import logging
@@ -62,8 +63,7 @@ class MockSessionManager:
             "configuration": kwargs.get("session_config", {}),
             "resource_limits": kwargs.get(
                 "resource_limits",
-                {"max_memory": "2GB", "max_cpu": "2 cores",
-                 "max_storage": "10GB", "timeout": 3600},
+                {"max_memory": "2GB", "max_cpu": "2 cores", "max_storage": "10GB", "timeout": 3600},
             ),
             "metadata": kwargs.get("metadata", {}),
             "tags": kwargs.get("tags", []),

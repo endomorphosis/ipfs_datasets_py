@@ -21,12 +21,16 @@ from tests._test_utils import (
     raise_on_bad_callable_code_quality,
     get_ast_tree,
     BadDocumentationError,
-    BadSignatureError
+    BadSignatureError,
 )
 
-home_dir = os.path.expanduser('~')
-file_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/pdf_processing/pdf_processor.py")
-md_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/pdf_processing/pdf_processor_stubs.md")
+home_dir = os.path.expanduser("~")
+file_path = os.path.join(
+    home_dir, "ipfs_datasets_py/ipfs_datasets_py/pdf_processing/pdf_processor.py"
+)
+md_path = os.path.join(
+    home_dir, "ipfs_datasets_py/ipfs_datasets_py/pdf_processing/pdf_processor_stubs.md"
+)
 
 # Make sure the input file and documentation file exist.
 # assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
@@ -118,12 +122,14 @@ EXPECTED_KEY_TYPES = {
     "cross_doc_relations": int,
     "stages_completed": list,
     "processing_metadata": dict,
-    "pdf_info": dict
+    "pdf_info": dict,
 }
+
 
 @pytest.fixture
 def expected_key_type_mapping():
     return EXPECTED_KEY_TYPES
+
 
 @pytest.fixture
 def expected_keys():
@@ -133,14 +139,15 @@ def expected_keys():
 EXPECTED_PROCESSING_METADATA_KEY_TYPES = {
     "pipeline_version": str,
     "processing_time": float,
-    "quality_scores": dict, # dict[str, float]
-    "stages_completed": list # list[str]
+    "quality_scores": dict,  # dict[str, float]
+    "stages_completed": list,  # list[str]
 }
 
 
 @pytest.fixture
 def processing_metadata_keys():
     return {key for key in EXPECTED_PROCESSING_METADATA_KEY_TYPES.keys()}
+
 
 @pytest.fixture
 def overlapping_processing_metadata():
@@ -164,12 +171,14 @@ class TestProcessPdfHappyPath:
         """
         result = await real_pdf_processor.process_pdf(mock_pdf_file)
 
-        assert isinstance(result, dict), \
+        assert isinstance(result, dict), (
             f"Expected result to be a dictionary, got {type(result).__name__} instead."
-
+        )
 
     @pytest.mark.asyncio
-    async def test_process_pdf_returns_dict_with_string_keys(self, real_pdf_processor, mock_pdf_file):
+    async def test_process_pdf_returns_dict_with_string_keys(
+        self, real_pdf_processor, mock_pdf_file
+    ):
         """
         GIVEN PDF file path as string
         WHEN process_pdf is called
@@ -178,16 +187,15 @@ class TestProcessPdfHappyPath:
         result = await real_pdf_processor.process_pdf(mock_pdf_file)
 
         for idx, key in enumerate(result.keys()):
-            assert isinstance(key, str), \
+            assert isinstance(key, str), (
                 f"Expected key at index {idx} to be a string, got {type(key).__name__} instead."
-
+            )
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize(
-        "key", [key for key in EXPECTED_KEY_TYPES.keys()]
-    )
+    @pytest.mark.parametrize("key", [key for key in EXPECTED_KEY_TYPES.keys()])
     async def test_process_pdf_successful_return_has_expected_keys(
-        self, key, real_pdf_processor: PDFProcessor, mock_pdf_file):
+        self, key, real_pdf_processor: PDFProcessor, mock_pdf_file
+    ):
         """
         GIVEN valid PDF file path and optional metadata
         WHEN process_pdf is called
@@ -197,13 +205,11 @@ class TestProcessPdfHappyPath:
 
         assert key in result, f"Expected key '{key}' in result, but it was missing."
 
-
     @pytest.mark.asyncio
-    @pytest.mark.parametrize(
-        "key", [key for key in EXPECTED_KEY_TYPES.keys()]
-    )
+    @pytest.mark.parametrize("key", [key for key in EXPECTED_KEY_TYPES.keys()])
     async def test_process_pdf_when_successful_return_keys_have_expected_types(
-        self, key, expected_key_type_mapping, real_pdf_processor: PDFProcessor, mock_pdf_file):
+        self, key, expected_key_type_mapping, real_pdf_processor: PDFProcessor, mock_pdf_file
+    ):
         """
         GIVEN valid PDF file path
         WHEN process_pdf is called
@@ -213,13 +219,14 @@ class TestProcessPdfHappyPath:
 
         expected_type = expected_key_type_mapping[key]
         return_value = result[key]
-        assert isinstance(return_value, expected_type), \
+        assert isinstance(return_value, expected_type), (
             f"Expected key '{key}' to be of type {expected_type.__name__}, got {type(return_value).__name__} instead."
-
+        )
 
     @pytest.mark.asyncio
     async def test_process_pdf_successful_run_returns_status_as_success(
-        self, real_pdf_processor: PDFProcessor, mock_pdf_file):
+        self, real_pdf_processor: PDFProcessor, mock_pdf_file
+    ):
         """
         GIVEN valid PDF file path
         WHEN process_pdf is called
@@ -230,10 +237,10 @@ class TestProcessPdfHappyPath:
         # Verify result structure
         assert result["status"] == "success"
 
-
     @pytest.mark.asyncio
     async def test_process_pdf_successful_return_keys_have_expected_types(
-        self, expected_key_type_mapping, real_pdf_processor: PDFProcessor, mock_pdf_file):
+        self, expected_key_type_mapping, real_pdf_processor: PDFProcessor, mock_pdf_file
+    ):
         """
         GIVEN valid PDF file path
         WHEN process_pdf is called
@@ -244,13 +251,11 @@ class TestProcessPdfHappyPath:
         for key in result.keys():
             assert key in expected_key_type_mapping, f"Unexpected key '{key}' found in result."
 
-
     @pytest.mark.asyncio
-    @pytest.mark.parametrize(
-        "string_value", ["status", "document_id", "ipld_cid"]
-    )
+    @pytest.mark.parametrize("string_value", ["status", "document_id", "ipld_cid"])
     async def test_process_pdf_returns_non_empty_string_values(
-        self, string_value, real_pdf_processor: PDFProcessor, mock_pdf_file):
+        self, string_value, real_pdf_processor: PDFProcessor, mock_pdf_file
+    ):
         """
         GIVEN a PDF file
         WHEN process_pdf is called
@@ -260,21 +265,22 @@ class TestProcessPdfHappyPath:
 
         actual_value = result[string_value].strip()
 
-        assert actual_value != "", \
+        assert actual_value != "", (
             f"Expected '{string_value}' to be a non-empty string after stripping, got empty string instead."
-
+        )
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
         "integer_key", ["entities_count", "relationships_count", "cross_doc_relations"]
     )
     async def test_process_pdf_returns_integer_values_are_non_negatives(
-        self, integer_key, real_pdf_processor: PDFProcessor, mock_pdf_file):
+        self, integer_key, real_pdf_processor: PDFProcessor, mock_pdf_file
+    ):
         """
         GIVEN a PDF file
         WHEN process_pdf is called
         THEN expect values that are integers to be non-negative
-        
+
         returned dict contains:
             - status: 'success'
             - document_id: string UUID
@@ -286,13 +292,14 @@ class TestProcessPdfHappyPath:
         """
         result = await real_pdf_processor.process_pdf(mock_pdf_file)
 
-        assert result[integer_key] >= 0, \
+        assert result[integer_key] >= 0, (
             f"Expected '{integer_key}' to be non-negative, got {result[integer_key]} instead."
-
+        )
 
     @pytest.mark.asyncio
     async def test_process_pdf_with_custom_metadata_returns_dict(
-        self, real_pdf_processor: PDFProcessor, mock_pdf_file, custom_metadata):
+        self, real_pdf_processor: PDFProcessor, mock_pdf_file, custom_metadata
+    ):
         """
         GIVEN PDF file and custom metadata dict
         WHEN process_pdf is called with metadata
@@ -300,8 +307,9 @@ class TestProcessPdfHappyPath:
         """
         result = await real_pdf_processor.process_pdf(mock_pdf_file, custom_metadata)
 
-        assert isinstance(result, dict), \
+        assert isinstance(result, dict), (
             f"Expected result with custom metadata input to be a dictionary, got {type(result).__name__} instead."
+        )
 
 
 CUSTOM_METADATA = {
@@ -315,15 +323,14 @@ CUSTOM_METADATA = {
 }
 
 
-@pytest.mark.parametrize(
-    "key", [key for key in CUSTOM_METADATA.keys()]
-)
+@pytest.mark.parametrize("key", [key for key in CUSTOM_METADATA.keys()])
 class TestProcessPdfHappyPathWithCustomMetadata:
     """Test process_pdf method accepts a custom metadata dict as an argument."""
 
     @pytest.mark.asyncio
     async def test_process_pdf_with_custom_metadata_keys_are_present(
-        self, key, real_pdf_processor, custom_metadata, mock_pdf_file):
+        self, key, real_pdf_processor, custom_metadata, mock_pdf_file
+    ):
         """
         GIVEN PDF file and custom metadata dict
         WHEN process_pdf is called with metadata
@@ -332,13 +339,14 @@ class TestProcessPdfHappyPathWithCustomMetadata:
         result = await real_pdf_processor.process_pdf(mock_pdf_file, custom_metadata)
 
         # Verify custom metadata was passed through
-        assert key in result["processing_metadata"], \
+        assert key in result["processing_metadata"], (
             f"Expected custom metadata key '{key}' to be in processing_metadata sub-dictionary, but it was missing."
-
+        )
 
     @pytest.mark.asyncio
     async def test_process_pdf_with_custom_metadata_types_passed_through(
-        self, key, real_pdf_processor, custom_metadata, mock_pdf_file):
+        self, key, real_pdf_processor, custom_metadata, mock_pdf_file
+    ):
         """
         GIVEN PDF file and custom metadata dict
         WHEN process_pdf is called with metadata
@@ -350,13 +358,14 @@ class TestProcessPdfHappyPathWithCustomMetadata:
         return_value = result["processing_metadata"][key]
 
         # Verify custom metadata was passed through
-        assert isinstance(return_value, expected_type), \
+        assert isinstance(return_value, expected_type), (
             f"Expected key '{key}' to be of type {expected_type.__name__}, got {type(return_value).__name__} instead."
-
+        )
 
     @pytest.mark.asyncio
     async def test_process_pdf_with_custom_metadata_values_passed_through(
-        self, key, real_pdf_processor, custom_metadata, mock_pdf_file):
+        self, key, real_pdf_processor, custom_metadata, mock_pdf_file
+    ):
         """
         GIVEN PDF file and custom metadata dict
         WHEN process_pdf is called with metadata
@@ -368,9 +377,9 @@ class TestProcessPdfHappyPathWithCustomMetadata:
         return_value = result["processing_metadata"][key]
 
         # Verify custom metadata was passed through
-        assert return_value == actual_value, \
+        assert return_value == actual_value, (
             f"Expected metadata key '{key}' to have value '{actual_value}', got '{return_value}' instead."
-
+        )
 
 
 BAD_METADATA_TYPES = {
@@ -391,7 +400,7 @@ BAD_METADATA_TYPES = {
     "lambda": lambda x: x,
     "type": type,
     "object": object(),
-    "exception": Exception("exception_instead_of_dict")
+    "exception": Exception("exception_instead_of_dict"),
 }
 
 
@@ -422,22 +431,24 @@ BAD_METADATA_KEYS = {
     "exception": Exception("exception_key"),
     "slice": slice(1, 5, 2),
     "ellipsis": ...,
-    "inf": float('inf'),
-    "neg_inf": float('-inf'),
-    "nan": float('nan'),
+    "inf": float("inf"),
+    "neg_inf": float("-inf"),
+    "nan": float("nan"),
     "empty_string": "",
     "whitespace": "   ",
     "unicode": "🔑",
     "newline": "\n",
     "tab": "\t",
     "backslash": "\\",
-    "quote": "\"",
+    "quote": '"',
     "apostrophe": "'",
 }
+
 
 @pytest.fixture
 def bad_metadata_keys():
     return BAD_METADATA_KEYS
+
 
 class TestProcessPdfWithCustomMetadataBadInputs:
     """Test that process_pdf method rejects bad custom metadata dict inputs."""
@@ -445,7 +456,8 @@ class TestProcessPdfWithCustomMetadataBadInputs:
     @pytest.mark.asyncio
     @pytest.mark.parametrize("bad_type", [key for key in BAD_METADATA_TYPES.keys()])
     async def test_process_pdf_with_custom_metadata_not_dict_raises_type_error(
-        self, bad_type, bad_metadata_types, real_pdf_processor, mock_pdf_file):
+        self, bad_type, bad_metadata_types, real_pdf_processor, mock_pdf_file
+    ):
         """
         GIVEN PDF file and custom metadata that is not a dict or None
         WHEN process_pdf is called
@@ -459,10 +471,15 @@ class TestProcessPdfWithCustomMetadataBadInputs:
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
         "bad_key_type",
-        [k for k, v in BAD_METADATA_KEYS.items() if (not isinstance(v, str)) and isinstance(v, Hashable)],
+        [
+            k
+            for k, v in BAD_METADATA_KEYS.items()
+            if (not isinstance(v, str)) and isinstance(v, Hashable)
+        ],
     )
     async def test_process_pdf_with_custom_metadata_with_non_string_keys_raises_type_error(
-        self, bad_key_type, bad_metadata_keys, real_pdf_processor, mock_pdf_file):
+        self, bad_key_type, bad_metadata_keys, real_pdf_processor, mock_pdf_file
+    ):
         """
         GIVEN PDF file and custom metadata dict with non-string keys
         WHEN process_pdf is called
@@ -473,10 +490,10 @@ class TestProcessPdfWithCustomMetadataBadInputs:
         with pytest.raises(TypeError):
             result = await real_pdf_processor.process_pdf(mock_pdf_file, metadata=bad_metadata)
 
-
     @pytest.mark.asyncio
     async def test_process_pdf_with_custom_metadata_with_same_keys_as_processing_metadata_raises_key_error(
-        self, real_pdf_processor, overlapping_processing_metadata, mock_pdf_file):
+        self, real_pdf_processor, overlapping_processing_metadata, mock_pdf_file
+    ):
         """
         GIVEN PDF file and custom metadata dict with overlapping keys as processing_metadata
         WHEN process_pdf is called
@@ -486,6 +503,7 @@ class TestProcessPdfWithCustomMetadataBadInputs:
             result = await real_pdf_processor.process_pdf(
                 mock_pdf_file, metadata=overlapping_processing_metadata
             )
+
 
 BAD_FILE_PATHS = {
     "integer": 123,
@@ -509,34 +527,35 @@ BAD_FILE_PATHS = {
     "exception": Exception("exception_instead_of_str_or_path"),
     "slice": slice(1, 5, 2),
     "ellipsis": ...,
-    "inf": float('inf'),
-    "neg_inf": float('-inf'),
-    "nan": float('nan'),
+    "inf": float("inf"),
+    "neg_inf": float("-inf"),
+    "nan": float("nan"),
     "empty_string": "",
     "whitespace": "   ",
     "unicode": "📄",
     "newline": "\n",
     "tab": "\t",
     "backslash": "\\",
-    "quote": "\"",
+    "quote": '"',
     "apostrophe": "'",
 }
+
 
 @pytest.fixture
 def bad_file_paths():
     return BAD_FILE_PATHS
 
 
-
 class TestProcessPdfFilePathBadInputs:
     """Test that process_pdf method rejects bad file path inputs."""
 
-    @pytest.mark.parametrize("bad_type", [
-        k for k, v in BAD_FILE_PATHS.items() if not isinstance(v, (str, Path))
-    ])
+    @pytest.mark.parametrize(
+        "bad_type", [k for k, v in BAD_FILE_PATHS.items() if not isinstance(v, (str, Path))]
+    )
     @pytest.mark.asyncio
     async def test_process_pdf_where_file_path_is_not_path_or_str_raises_type_error(
-        self, bad_type, bad_file_paths, real_pdf_processor: PDFProcessor):
+        self, bad_type, bad_file_paths, real_pdf_processor: PDFProcessor
+    ):
         """
         GIVEN a PDF file path that is not a string or Path
         WHEN process_pdf is called
@@ -545,12 +564,9 @@ class TestProcessPdfFilePathBadInputs:
         with pytest.raises(TypeError):
             await real_pdf_processor.process_pdf(bad_file_paths[bad_type])
 
-
     @pytest.mark.asyncio
     async def test_process_pdf_data_result_stored_in_ipld_storage(
-        self, 
-        valid_pdf_file, 
-        real_pdf_processor: PDFProcessor
+        self, valid_pdf_file, real_pdf_processor: PDFProcessor
     ):
         """
         GIVEN PDF processing pipeline
@@ -564,13 +580,10 @@ class TestProcessPdfFilePathBadInputs:
 
         assert stored is not None, "Expected IPLD storage to return data for ipld_cid"
 
-
     @pytest.mark.asyncio
     async def test_process_pdf_audit_logging_logs_are_stored(
-        self, 
-        default_pdf_processor: PDFProcessor,
-        valid_pdf_file
-        ):
+        self, default_pdf_processor: PDFProcessor, valid_pdf_file
+    ):
         """
         GIVEN PDFProcessor with audit logging enabled
         WHEN process_pdf executes
@@ -579,16 +592,14 @@ class TestProcessPdfFilePathBadInputs:
         await default_pdf_processor.process_pdf(valid_pdf_file)
 
         # Verify audit logging occurred
-        assert len(default_pdf_processor.audit_logger.events) > 0, \
+        assert len(default_pdf_processor.audit_logger.events) > 0, (
             "Expected audit events to be logged, but none were found."
-
+        )
 
     @pytest.mark.asyncio
     async def test_process_pdf_audit_logging_logs_are_stored_are_success(
-        self, 
-        default_pdf_processor: PDFProcessor,
-        valid_pdf_file
-        ):
+        self, default_pdf_processor: PDFProcessor, valid_pdf_file
+    ):
         """
         GIVEN PDFProcessor with audit logging enabled
         WHEN process_pdf executes with a valid PDF
@@ -600,16 +611,14 @@ class TestProcessPdfFilePathBadInputs:
             status = getattr(event, "status", None)
             if status is None and isinstance(event, dict):
                 status = event.get("status")
-            assert status == "success", \
+            assert status == "success", (
                 f"Expected audit event at index {idx} to have status 'success', got '{status}' instead."
-
+            )
 
     @pytest.mark.asyncio
     async def test_process_pdf_monitoring_integration(
-        self, 
-        real_pdf_processor: PDFProcessor,
-        valid_pdf_file
-        ):
+        self, real_pdf_processor: PDFProcessor, valid_pdf_file
+    ):
         """
         GIVEN PDFProcessor with monitoring enabled
         WHEN process_pdf executes
@@ -618,16 +627,12 @@ class TestProcessPdfFilePathBadInputs:
         await real_pdf_processor.process_pdf(valid_pdf_file)
 
         # Verify monitoring system is active
-        assert real_pdf_processor.monitoring.initialized is True, \
+        assert real_pdf_processor.monitoring.initialized is True, (
             "Expected monitoring system to be initialized, but it was not."
-
+        )
 
     @pytest.mark.asyncio
-    async def test_process_pdf_monitoring(
-        self, 
-        real_pdf_processor: PDFProcessor,
-        valid_pdf_file
-        ):
+    async def test_process_pdf_monitoring(self, real_pdf_processor: PDFProcessor, valid_pdf_file):
         """
         GIVEN PDFProcessor with monitoring enabled
         WHEN process_pdf executes
@@ -639,18 +644,16 @@ class TestProcessPdfFilePathBadInputs:
         """
         await real_pdf_processor.process_pdf(valid_pdf_file)
         real_pdf_processor.monitoring.metrics_registry
-        
-        # Verify monitoring system is active
-        assert real_pdf_processor.monitoring.initialized is True, \
-            "Expected monitoring system to be initialized, but it was not."
 
+        # Verify monitoring system is active
+        assert real_pdf_processor.monitoring.initialized is True, (
+            "Expected monitoring system to be initialized, but it was not."
+        )
 
     @pytest.mark.asyncio
     async def test_process_pdf_large_file_memory_remains_in_limit(
-        self, 
-        real_pdf_processor: PDFProcessor,
-        large_pdf_path
-        ):
+        self, real_pdf_processor: PDFProcessor, large_pdf_path
+    ):
         """
         GIVEN very large PDF file (>100MB)
         WHEN process_pdf executes
@@ -661,13 +664,10 @@ class TestProcessPdfFilePathBadInputs:
         # Verify processing completed for large file
         assert result is not None
 
-
     @pytest.mark.asyncio
     async def test_process_pdf_large_file_no_memory_leaks(
-        self, 
-        real_pdf_processor: PDFProcessor,
-        large_pdf_path
-        ):
+        self, real_pdf_processor: PDFProcessor, large_pdf_path
+    ):
         """
         GIVEN very large PDF file (>100MB)
         WHEN process_pdf executes
@@ -677,7 +677,6 @@ class TestProcessPdfFilePathBadInputs:
 
         # Verify processing completed for large file
         assert result is not None
-
 
     @pytest.mark.asyncio
     async def test_process_pdf_concurrent_processing_safety(
@@ -711,7 +710,7 @@ class TestProcessPdfFilePathBadInputs:
         async with anyio.create_task_group() as tg:
             for i, coro in enumerate(coros):
                 tg.start_soon(_run_one, i, coro)
-        
+
         # Verify both completed successfully
         assert len(results) == 2
         assert results[0] is not None

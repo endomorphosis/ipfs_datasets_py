@@ -79,9 +79,11 @@ Example for testing a dataset tool:
 import asyncio
 from ipfs_datasets_py.mcp_server.tools.dataset_tools import load_dataset
 
+
 async def test_load_dataset():
     result = await load_dataset(source="path/to/dataset.json", format="json")
     print(result)
+
 
 asyncio.run(test_load_dataset())
 ```
@@ -95,25 +97,28 @@ import unittest
 from unittest.mock import patch, MagicMock
 import asyncio
 
+
 class DatasetToolsTest(unittest.TestCase):
-    @patch('ipfs_datasets_py.mcp_server.tools.dataset_tools.load_dataset.datasets')
+    @patch("ipfs_datasets_py.mcp_server.tools.dataset_tools.load_dataset.datasets")
     async def test_load_dataset(self, mock_datasets):
         from ipfs_datasets_py.mcp_server.tools.dataset_tools import load_dataset
-        
+
         # Set up mock
         mock_dataset = MagicMock()
         mock_datasets.load_dataset.return_value = mock_dataset
-        
+
         # Call function
         result = await load_dataset("test_dataset", format="json")
-        
+
         # Assertions
         self.assertEqual(result["status"], "success")
         mock_datasets.load_dataset.assert_called_once_with("test_dataset", format="json")
 
+
 # Run with asyncio
 def run_tests():
     unittest.main()
+
 
 if __name__ == "__main__":
     run_tests()
@@ -139,54 +144,57 @@ import asyncio
 import os
 from pathlib import Path
 
+
 class WebArchiveToolsTest(unittest.TestCase):
     def setUp(self):
         self.test_dir = Path("/tmp/web_archive_test")
         os.makedirs(self.test_dir, exist_ok=True)
         self.warc_path = self.test_dir / "test.warc"
         self.cdxj_path = self.test_dir / "test.cdxj"
-    
+
     def tearDown(self):
         import shutil
+
         if self.test_dir.exists():
             shutil.rmtree(self.test_dir)
-    
+
     async def test_create_warc(self):
-        with patch('ipfs_datasets_py.web_archive_utils.WebArchiveProcessor') as mock_class:
+        with patch("ipfs_datasets_py.web_archive_utils.WebArchiveProcessor") as mock_class:
             # Set up mock
             mock_processor = MagicMock()
             mock_class.return_value = mock_processor
             mock_processor.create_warc.return_value = str(self.warc_path)
-            
+
             # Import tool (do this inside the test to keep patch context)
             from ipfs_datasets_py.mcp_server.tools.web_archive_tools import create_warc
-            
+
             # Call function
-            result = await create_warc(
-                url="https://example.com",
-                output_path=str(self.warc_path)
-            )
-            
+            result = await create_warc(url="https://example.com", output_path=str(self.warc_path))
+
             # Assertions
             self.assertEqual(result["status"], "success")
             self.assertEqual(result["warc_path"], str(self.warc_path))
             mock_processor.create_warc.assert_called_once()
 
+
 # Run async tests
 def run_tests():
     loader = unittest.TestLoader()
     suite = loader.loadTestsFromTestCase(WebArchiveToolsTest)
-    
+
     # Create a test runner that will run the async tests
     class AsyncioTestRunner:
         def run(self, test):
             loop = asyncio.get_event_loop()
             return loop.run_until_complete(test)
-    
+
     runner = AsyncioTestRunner()
     result = runner.run(suite)
-    
-    print(f"Ran {result.testsRun} tests with {len(result.errors)} errors and {len(result.failures)} failures")
+
+    print(
+        f"Ran {result.testsRun} tests with {len(result.errors)} errors and {len(result.failures)} failures"
+    )
+
 
 if __name__ == "__main__":
     run_tests()

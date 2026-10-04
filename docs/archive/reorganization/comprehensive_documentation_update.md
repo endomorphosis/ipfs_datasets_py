@@ -172,29 +172,18 @@ from ipfs_accelerate_py import InferenceAccelerator
 accelerator = InferenceAccelerator()
 
 # Accelerated inference
-result = accelerator.run_inference(
-    model="model_name",
-    input_data=data,
-    batch_size=32
-)
+result = accelerator.run_inference(model="model_name", input_data=data, batch_size=32)
 ```
 
 **Advanced Configuration:**
 ```python
 # Specific backend
-accelerator = InferenceAccelerator(
-    backend="cuda",
-    device_id=0,
-    precision="fp16"
-)
+accelerator = InferenceAccelerator(backend="cuda", device_id=0, precision="fp16")
 
 # With ipfs_datasets_py
 from ipfs_datasets_py.pdf_processing import PDFProcessor
 
-processor = PDFProcessor(
-    use_acceleration=True,
-    accelerator=accelerator
-)
+processor = PDFProcessor(use_acceleration=True, accelerator=accelerator)
 ```
 
 #### 4. Performance Benchmarks
@@ -277,18 +266,12 @@ ipfs.pin(cid)
 # CAR file creation
 from ipfs_kit_py import create_car
 
-car_cid = create_car(
-    files=["file1.txt", "file2.json"],
-    output="archive.car"
-)
+car_cid = create_car(files=["file1.txt", "file2.json"], output="archive.car")
 
 # With ipfs_datasets_py
 from ipfs_datasets_py.dataset_manager import DatasetManager
 
-manager = DatasetManager(
-    storage_backend="ipfs",
-    ipfs_client=ipfs
-)
+manager = DatasetManager(storage_backend="ipfs", ipfs_client=ipfs)
 
 # Store dataset
 cid = manager.store_dataset(dataset)

@@ -8,6 +8,7 @@ without errors in environments where pytest-benchmark is unavailable.
 When pytest-benchmark IS installed the stub is never used — the real
 ``benchmark`` fixture from the plugin takes precedence.
 """
+
 from __future__ import annotations
 
 import time
@@ -22,6 +23,7 @@ import pytest
 
 try:
     import pytest_benchmark  # noqa: F401  # type: ignore
+
     # pytest-benchmark is installed — no stub needed.
     _HAVE_BENCHMARK = True
 except ImportError:
@@ -29,6 +31,7 @@ except ImportError:
 
 
 if not _HAVE_BENCHMARK:
+
     class _BenchmarkStub:
         """Minimal substitute for the pytest-benchmark ``benchmark`` fixture.
 

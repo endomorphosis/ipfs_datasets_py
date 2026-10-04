@@ -19,7 +19,7 @@ def unwanted_content_test_cases():
     """Provides test cases for unwanted content removal."""
     return {
         "markup_tags_removed": {
-            "html_input": '<html><body><h1>Hello</h1><p><b>bold</b></p></body></html>',
+            "html_input": "<html><body><h1>Hello</h1><p><b>bold</b></p></body></html>",
             "unwanted_substring": "<b>",
         },
         "script_content_removed": {
@@ -58,13 +58,21 @@ class TestWebArchiveProcessorExtractTextFromHtml:
         """Given valid HTML, when extracting text, then status is success."""
         html = "<html><head><title>Test</title></head><body><h1>Hello</h1></body></html>"
         result = processor.extract_text_from_html(html)
-        
-        assert result[KEY_STATUS] == STATUS_SUCCESS, f"Expected status {STATUS_SUCCESS}, got {result.get(KEY_STATUS)}"
+
+        assert result[KEY_STATUS] == STATUS_SUCCESS, (
+            f"Expected status {STATUS_SUCCESS}, got {result.get(KEY_STATUS)}"
+        )
 
     @pytest.mark.parametrize(
         "test_id",
-        ["markup_tags_removed", "script_content_removed", "script_variables_removed",
-         "script_functions_removed", "excess_spaces_collapsed", "excess_newlines_normalized"],
+        [
+            "markup_tags_removed",
+            "script_content_removed",
+            "script_variables_removed",
+            "script_functions_removed",
+            "excess_spaces_collapsed",
+            "excess_newlines_normalized",
+        ],
     )
     def test_when_extracting_from_html_then_unwanted_content_is_removed(
         self, processor, unwanted_content_test_cases, test_id
@@ -76,18 +84,15 @@ class TestWebArchiveProcessorExtractTextFromHtml:
 
         result = processor.extract_text_from_html(html_input)
 
-        assert unwanted_substring not in result[KEY_TEXT], \
+        assert unwanted_substring not in result[KEY_TEXT], (
             f"Test '{test_id}': Unwanted content '{unwanted_substring}' found in: {result[KEY_TEXT]}"
+        )
 
-
-    def test_when_extracting_from_html_with_scripts_then_only_visible_text_remains(
-        self, processor
-    ):
+    def test_when_extracting_from_html_with_scripts_then_only_visible_text_remains(self, processor):
         """Given HTML with scripts, when extracting, then only visible text remains."""
         html = "<html><body><script>hidden</script><p>visible</p></body></html>"
         result = processor.extract_text_from_html(html)
         assert "visible" in result[KEY_TEXT], f"Expected visible text, got: {result[KEY_TEXT]}"
-
 
     def test_when_extracting_from_valid_html_then_length_is_provided(self, processor):
         """Given valid HTML, when extracting text, then length is provided."""
@@ -95,27 +100,39 @@ class TestWebArchiveProcessorExtractTextFromHtml:
         result = processor.extract_text_from_html(html)
         assert KEY_LENGTH in result, f"Expected {KEY_LENGTH} key in result: {result.keys()}"
 
-    def test_when_extracting_from_html_with_messy_whitespace_then_output_is_clean(
-        self, processor
-    ):
+    def test_when_extracting_from_html_with_messy_whitespace_then_output_is_clean(self, processor):
         """Given HTML with messy whitespace, when extracting, then output is clean."""
         html = "<html><body><p>  Leading and trailing  </p></body></html>"
         result = processor.extract_text_from_html(html)
-        assert result[KEY_TEXT].strip() == result[KEY_TEXT], f"Expected trimmed text: '{result[KEY_TEXT]}'"
+        assert result[KEY_TEXT].strip() == result[KEY_TEXT], (
+            f"Expected trimmed text: '{result[KEY_TEXT]}'"
+        )
 
     @pytest.mark.parametrize(
-        "key,expected_value", [(KEY_STATUS, STATUS_SUCCESS),(KEY_TEXT, EMPTY_STRING),(KEY_LENGTH, ZERO),],
+        "key,expected_value",
+        [
+            (KEY_STATUS, STATUS_SUCCESS),
+            (KEY_TEXT, EMPTY_STRING),
+            (KEY_LENGTH, ZERO),
+        ],
     )
     def test_when_extracting_from_empty_string_then_result_is_correct(
         self, processor, key, expected_value
     ):
         """Given an empty string, when extracting, then the result has the correct properties."""
         result = processor.extract_text_from_html(EMPTY_STRING)
-        
-        assert result[key] == expected_value, f"For key '{key}', expected '{expected_value}', got '{result.get(key)}'"
 
-    @pytest.mark.parametrize("expected_key", [KEY_STATUS, KEY_TEXT, KEY_LENGTH, KEY_MESSAGE],)
-    def test_when_extraction_succeeds_then_result_contains_expected_keys(self, processor, expected_key):
+        assert result[key] == expected_value, (
+            f"For key '{key}', expected '{expected_value}', got '{result.get(key)}'"
+        )
+
+    @pytest.mark.parametrize(
+        "expected_key",
+        [KEY_STATUS, KEY_TEXT, KEY_LENGTH, KEY_MESSAGE],
+    )
+    def test_when_extraction_succeeds_then_result_contains_expected_keys(
+        self, processor, expected_key
+    ):
         """Given valid HTML, when extraction succeeds, then result contains expected keys."""
         html = "<html><body><p>Test</p></body></html>"
         result = processor.extract_text_from_html(html)
@@ -138,10 +155,9 @@ class TestWebArchiveProcessorExtractTextFromHtml:
         """Given malformed HTML, when extraction fails, then status is error."""
         result = processor.extract_text_from_html(None)
 
-        assert result[KEY_STATUS] == STATUS_ERROR, f"Expected error status, got: {result.get(KEY_STATUS)}"
-
-
-
+        assert result[KEY_STATUS] == STATUS_ERROR, (
+            f"Expected error status, got: {result.get(KEY_STATUS)}"
+        )
 
 
 if __name__ == "__main__":

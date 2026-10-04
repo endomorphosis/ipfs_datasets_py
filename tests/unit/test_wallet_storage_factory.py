@@ -56,7 +56,10 @@ def test_wallet_storage_factory_builds_local_store(tmp_path) -> None:
 
 
 def test_wallet_storage_factory_builds_replicated_s3_mirror() -> None:
-    from ipfs_datasets_py.wallet.storage import ReplicatedEncryptedBlobStore, create_encrypted_blob_store
+    from ipfs_datasets_py.wallet.storage import (
+        ReplicatedEncryptedBlobStore,
+        create_encrypted_blob_store,
+    )
 
     s3 = FakeS3Client()
     store = create_encrypted_blob_store(
@@ -76,7 +79,10 @@ def test_wallet_storage_factory_builds_replicated_s3_mirror() -> None:
 
 
 def test_wallet_storage_factory_builds_filecoin_store() -> None:
-    from ipfs_datasets_py.wallet.storage import FilecoinEncryptedBlobStore, create_encrypted_blob_store
+    from ipfs_datasets_py.wallet.storage import (
+        FilecoinEncryptedBlobStore,
+        create_encrypted_blob_store,
+    )
 
     backend = FakeFilecoinBackend()
     store = create_encrypted_blob_store("filecoin", filecoin_backend=backend)
@@ -94,4 +100,3 @@ def test_wallet_storage_factory_rejects_unconfigured_s3() -> None:
 
     with pytest.raises(ValueError, match="S3 wallet storage requires a bucket"):
         create_encrypted_blob_store("s3")
-

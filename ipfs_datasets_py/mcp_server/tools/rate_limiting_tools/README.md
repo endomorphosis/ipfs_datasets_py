@@ -12,15 +12,13 @@ MCP tools for API rate limiting: token bucket, sliding window, and per-client qu
 
 ```python
 from ipfs_datasets_py.mcp_server.tools.rate_limiting_tools import (
-    check_rate_limit, consume_token, get_quota_status
+    check_rate_limit,
+    consume_token,
+    get_quota_status,
 )
 
 # Check if a client is within rate limit
-result = await check_rate_limit(
-    client_id="user_42",
-    action="dataset.download",
-    tokens_required=1
-)
+result = await check_rate_limit(client_id="user_42", action="dataset.download", tokens_required=1)
 # Returns: {"allowed": True, "remaining_tokens": 47, "reset_at": "2026-02-20T10:00:00Z"}
 
 # Consume a token

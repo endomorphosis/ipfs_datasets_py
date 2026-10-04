@@ -72,6 +72,7 @@ logger = logging.getLogger(__name__)
 try:
     from .zkp_prover import ZKPProver
     from . import ZKPProof
+
     _ZKP_AVAILABLE = True
 except Exception:
     _ZKP_AVAILABLE = False
@@ -84,10 +85,12 @@ try:
         Capability,
         get_delegation_evaluator,
     )
+
     _UCAN_AVAILABLE = True
 except Exception:
     try:
         import importlib as _imp
+
         _ud = _imp.import_module("ipfs_datasets_py.mcp_server.ucan_delegation")
         DelegationToken = _ud.DelegationToken
         DelegationEvaluator = _ud.DelegationEvaluator
@@ -100,10 +103,12 @@ except Exception:
 # CID computation (interface_descriptor)
 try:
     from ...mcp_server.interface_descriptor import compute_cid as _compute_cid
+
     _CID_AVAILABLE = True
 except Exception:
     try:
         import importlib as _imp
+
         _ifd = _imp.import_module("ipfs_datasets_py.mcp_server.interface_descriptor")
         _compute_cid = _ifd.compute_cid
         _CID_AVAILABLE = True
@@ -114,6 +119,7 @@ except Exception:
 # ---------------------------------------------------------------------------
 # ZKPCapabilityEvidence  — the caveat payload embedded in UCAN tokens
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class ZKPCapabilityEvidence:
@@ -164,6 +170,7 @@ class ZKPCapabilityEvidence:
 # ---------------------------------------------------------------------------
 # BridgeResult
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class BridgeResult:
@@ -223,6 +230,7 @@ class BridgeResult:
 # ---------------------------------------------------------------------------
 # ZKPToUCANBridge
 # ---------------------------------------------------------------------------
+
 
 class ZKPToUCANBridge:
     """
@@ -291,8 +299,13 @@ class ZKPToUCANBridge:
     def _check_groth16_enabled() -> bool:
         """Return True when IPFS_DATASETS_ENABLE_GROTH16=1 is set."""
         import os as _os
+
         return _os.environ.get("IPFS_DATASETS_ENABLE_GROTH16", "").strip() in {
-            "1", "true", "TRUE", "yes", "YES"
+            "1",
+            "true",
+            "TRUE",
+            "yes",
+            "YES",
         }
 
     def _auto_provision_setup(self) -> None:
@@ -373,6 +386,7 @@ class ZKPToUCANBridge:
         if _UCAN_AVAILABLE:
             try:
                 import time as _time
+
                 cap = Capability(resource=resource, ability=ability)
                 token = DelegationToken(
                     issuer=self._issuer_did,
@@ -381,7 +395,7 @@ class ZKPToUCANBridge:
                     expiry=_time.time() + lifetime_seconds,
                     # Embed a 64-bit (16-char hex) prefix of the proof hash as the
                     # token nonce for ZKP-backed traceability.
-                    nonce=caveat.proof_hash[:self._PROOF_HASH_NONCE_LENGTH] if caveat else None,
+                    nonce=caveat.proof_hash[: self._PROOF_HASH_NONCE_LENGTH] if caveat else None,
                 )
                 result.delegation_token = token
             except Exception as exc:

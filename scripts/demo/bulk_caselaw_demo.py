@@ -13,15 +13,17 @@ import tempfile
 import json
 from datetime import datetime
 from pathlib import Path
-sys.path.append(os.path.join(os.path.dirname(__file__), 'ipfs_datasets_py'))
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "ipfs_datasets_py"))
+
 
 def create_sample_caselaw_corpus():
     """Create a sample caselaw corpus for demonstration."""
     print("📂 Creating sample caselaw corpus...")
-    
+
     # Create temporary directory for sample caselaw
     temp_dir = tempfile.mkdtemp(prefix="sample_caselaw_")
-    
+
     # Sample legal cases in different formats
     cases = [
         {
@@ -49,11 +51,11 @@ def create_sample_caselaw_corpus():
                 "court": "Federal Legislative",
                 "citation": "Fed. Conf. Act § 1-3 (2015)",
                 "legal_domains": ["confidentiality", "professional_services"],
-                "precedent_strength": 0.95
-            }
+                "precedent_strength": 0.95,
+            },
         },
         {
-            "filename": "employment_notice_2020.json", 
+            "filename": "employment_notice_2020.json",
             "data": {
                 "id": "emp_notice_2020_001",
                 "title": "Employment Termination Notice Requirements",
@@ -76,13 +78,13 @@ def create_sample_caselaw_corpus():
                 "court": "Federal Circuit Court",
                 "citation": "Smith Indus. v. Workers Union, 485 F.3d 123 (2020)",
                 "legal_domains": ["employment", "contract"],
-                "precedent_strength": 0.90
-            }
+                "precedent_strength": 0.90,
+            },
         },
         {
             "filename": "business_access_rights_2018.json",
             "data": {
-                "id": "bus_access_2018_001", 
+                "id": "bus_access_2018_001",
                 "title": "Business Information Access Rights",
                 "text": """
                 STATE SUPREME COURT DECISION
@@ -99,11 +101,11 @@ def create_sample_caselaw_corpus():
                 """,
                 "date": "2018-11-12",
                 "jurisdiction": "State",
-                "court": "State Supreme Court", 
+                "court": "State Supreme Court",
                 "citation": "Bus. Access Rights v. Privacy Advoc., 234 St.Sup. 456 (2018)",
                 "legal_domains": ["employment", "confidentiality", "business"],
-                "precedent_strength": 0.85
-            }
+                "precedent_strength": 0.85,
+            },
         },
         {
             "filename": "contract_disclosure_2019.txt",
@@ -124,10 +126,10 @@ def create_sample_caselaw_corpus():
             
             Companies MAY seek injunctive relief and damages for violations.
             This creates strong precedent for confidentiality enforcement.
-            """
+            """,
         },
         {
-            "filename": "intellectual_property_2021.txt", 
+            "filename": "intellectual_property_2021.txt",
             "content": """
             INTELLECTUAL PROPERTY PROTECTION RULING
             
@@ -144,21 +146,21 @@ def create_sample_caselaw_corpus():
             from IP theft or misuse by former employees or competitors.
             
             This ruling strengthens IP protection for technology companies.
-            """
-        }
+            """,
+        },
     ]
-    
+
     # Write sample cases to files
     for case in cases:
         file_path = Path(temp_dir) / case["filename"]
-        
+
         if case["filename"].endswith(".json"):
-            with open(file_path, 'w') as f:
+            with open(file_path, "w") as f:
                 json.dump(case["data"], f, indent=2)
         else:
-            with open(file_path, 'w') as f:
+            with open(file_path, "w") as f:
                 f.write(case["content"])
-    
+
     print(f"✅ Created {len(cases)} sample caselaw documents in {temp_dir}")
     return temp_dir
 
@@ -166,27 +168,31 @@ def create_sample_caselaw_corpus():
 async def demonstrate_bulk_processing():
     """Demonstrate bulk caselaw processing."""
     print("⚖️  BULK CASELAW PROCESSING DEMONSTRATION")
-    print("Building Unified Temporal Deontic Logic System from Entire Caselaw Corpus") 
+    print("Building Unified Temporal Deontic Logic System from Entire Caselaw Corpus")
     print("=" * 80)
-    
+
     try:
         # Import components
         from ipfs_datasets_py.logic.integration.caselaw_bulk_processor import (
-            CaselawBulkProcessor, BulkProcessingConfig, create_bulk_processor
+            CaselawBulkProcessor,
+            BulkProcessingConfig,
+            create_bulk_processor,
         )
-        from ipfs_datasets_py.logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
-        
+        from ipfs_datasets_py.logic.integration.temporal_deontic_rag_store import (
+            TemporalDeonticRAGStore,
+        )
+
         # Step 1: Create sample caselaw corpus
         caselaw_dir = create_sample_caselaw_corpus()
-        
+
         # Step 2: Configure bulk processing
         print(f"\n🔧 Configuring Bulk Processing...")
         print("-" * 50)
-        
+
         # Use /tmp directory for demo outputs
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         output_dir = f"/tmp/unified_deontic_logic_system_demo_{timestamp}"
-        
+
         config = BulkProcessingConfig(
             caselaw_directories=[caselaw_dir],
             output_directory=output_dir,
@@ -195,40 +201,40 @@ async def demonstrate_bulk_processing():
             min_precedent_strength=0.7,
             enable_consistency_validation=True,
             enable_duplicate_detection=True,
-            min_theorem_confidence=0.7
+            min_theorem_confidence=0.7,
         )
-        
+
         print(f"📁 Input Directory: {caselaw_dir}")
         print(f"📁 Output Directory: {config.output_directory}")
         print(f"⚡ Parallel Processing: {config.enable_parallel_processing}")
         print(f"🎯 Min Precedent Strength: {config.min_precedent_strength}")
         print(f"✅ Consistency Validation: {config.enable_consistency_validation}")
-        
+
         # Step 3: Initialize processor
         print(f"\n🚀 Initializing Bulk Processor...")
         print("-" * 50)
-        
+
         processor = CaselawBulkProcessor(config)
         print("✅ Bulk processor initialized")
-        
+
         # Step 4: Process entire caselaw corpus
         print(f"\n📚 Processing Entire Caselaw Corpus...")
         print("-" * 50)
         print("This will:")
         print("  1. Discover all caselaw documents")
         print("  2. Extract temporal deontic logic theorems")
-        print("  3. Build unified legal knowledge system") 
+        print("  3. Build unified legal knowledge system")
         print("  4. Validate system consistency")
         print("  5. Export unified system")
         print()
-        
+
         # Run bulk processing
         stats = await processor.process_caselaw_corpus()
-        
+
         # Step 5: Display results
         print(f"\n🎉 BULK PROCESSING COMPLETE!")
         print("=" * 80)
-        
+
         print(f"\n📊 Processing Statistics:")
         print(f"  Total Documents: {stats.total_documents}")
         print(f"  Processed Documents: {stats.processed_documents}")
@@ -236,69 +242,77 @@ async def demonstrate_bulk_processing():
         print(f"  Processing Errors: {stats.processing_errors}")
         print(f"  Success Rate: {stats.success_rate:.1%}")
         print(f"  Processing Time: {stats.processing_time}")
-        
+
         print(f"\n🌍 Coverage:")
         print(f"  Jurisdictions: {', '.join(stats.jurisdictions_processed)}")
         print(f"  Legal Domains: {', '.join(stats.legal_domains_processed)}")
         if stats.temporal_range[0] and stats.temporal_range[1]:
-            print(f"  Temporal Range: {stats.temporal_range[0].year} - {stats.temporal_range[1].year}")
-        
+            print(
+                f"  Temporal Range: {stats.temporal_range[0].year} - {stats.temporal_range[1].year}"
+            )
+
         # Step 6: Show unified system details
         print(f"\n🏗️  Unified Deontic Logic System:")
         print("-" * 50)
-        
+
         rag_store = processor.rag_store
         rag_stats = rag_store.get_statistics()
-        
+
         print(f"  Total Theorems: {rag_stats['total_theorems']}")
         print(f"  Jurisdictions in System: {rag_stats['jurisdictions']}")
         print(f"  Legal Domains in System: {rag_stats['legal_domains']}")
         print(f"  Average Precedent Strength: {rag_stats['avg_precedent_strength']:.2f}")
-        
+
         # Step 7: Sample theorem queries
         print(f"\n🔍 Sample Theorem Queries from Unified System:")
         print("-" * 50)
-        
-        from ipfs_datasets_py.logic.integration.deontic_logic_core import DeonticFormula, DeonticOperator, LegalAgent
-        
+
+        from ipfs_datasets_py.logic.integration.deontic_logic_core import (
+            DeonticFormula,
+            DeonticOperator,
+            LegalAgent,
+        )
+
         queries = [
             ("confidentiality violations", DeonticOperator.PROHIBITION),
             ("employment notice requirements", DeonticOperator.OBLIGATION),
-            ("business information access", DeonticOperator.PERMISSION)
+            ("business information access", DeonticOperator.PERMISSION),
         ]
-        
+
         for query_text, operator in queries:
             print(f"\n🔎 Query: '{query_text}' ({operator.name})")
-            
+
             query_formula = DeonticFormula(
                 operator=operator,
                 proposition=query_text,
-                agent=LegalAgent("query_agent", "Query Agent", "person")
+                agent=LegalAgent("query_agent", "Query Agent", "person"),
             )
-            
+
             relevant_theorems = rag_store.retrieve_relevant_theorems(
-                query_formula=query_formula,
-                temporal_context=datetime.now(),
-                top_k=3
+                query_formula=query_formula, temporal_context=datetime.now(), top_k=3
             )
-            
+
             print(f"📋 Found {len(relevant_theorems)} relevant theorems:")
             for i, theorem in enumerate(relevant_theorems, 1):
-                print(f"  {i}. {theorem.formula.operator.name}: {theorem.formula.proposition[:60]}...")
+                print(
+                    f"  {i}. {theorem.formula.operator.name}: {theorem.formula.proposition[:60]}..."
+                )
                 print(f"     Source: {theorem.source_case}")
-                print(f"     Jurisdiction: {theorem.jurisdiction}, Strength: {theorem.precedent_strength:.2f}")
-        
+                print(
+                    f"     Jurisdiction: {theorem.jurisdiction}, Strength: {theorem.precedent_strength:.2f}"
+                )
+
         # Step 8: Show output files
         print(f"\n📁 Generated Output Files:")
         print("-" * 50)
-        
+
         output_dir = Path(config.output_directory)
         if output_dir.exists():
             for file_path in output_dir.iterdir():
                 if file_path.is_file():
                     size_kb = file_path.stat().st_size / 1024
                     print(f"  📄 {file_path.name} ({size_kb:.1f} KB)")
-        
+
         print(f"\n🎯 Key Benefits of Unified System:")
         print("-" * 50)
         print("  ✅ Comprehensive coverage of all available caselaw")
@@ -308,7 +322,7 @@ async def demonstrate_bulk_processing():
         print("  ✅ Scalable processing of large legal corpora")
         print("  ✅ RAG-based semantic search of legal precedents")
         print("  ✅ Document consistency checking like a legal debugger")
-        
+
         print(f"\n💡 Usage in Dashboard:")
         print("  🌐 Access via: /mcp/caselaw → Bulk Process Caselaw tab")
         print("  📂 Specify multiple caselaw directories")
@@ -316,20 +330,22 @@ async def demonstrate_bulk_processing():
         print("  ▶️  Start bulk processing with real-time progress")
         print("  📊 Monitor statistics and system building")
         print("  💾 Download unified system when complete")
-        
+
         return True
-        
+
     except Exception as e:
         print(f"\n❌ Demonstration failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
-    
+
     finally:
         # Cleanup sample directory
         try:
             import shutil
-            if 'caselaw_dir' in locals():
+
+            if "caselaw_dir" in locals():
                 shutil.rmtree(caselaw_dir)
                 print(f"\n🧹 Cleaned up sample directory: {caselaw_dir}")
         except Exception as e:

@@ -5,13 +5,23 @@ import json
 import pytest
 
 from ipfs_datasets_py.mcp_server.hierarchical_tool_manager import HierarchicalToolManager
-from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_analytics_contribute import wallet_analytics_contribute
-from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_analytics_create_consent import wallet_analytics_create_consent
-from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_analytics_create_template import wallet_analytics_create_template
-from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_analytics_private_count import wallet_analytics_private_count
+from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_analytics_contribute import (
+    wallet_analytics_contribute,
+)
+from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_analytics_create_consent import (
+    wallet_analytics_create_consent,
+)
+from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_analytics_create_template import (
+    wallet_analytics_create_template,
+)
+from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_analytics_private_count import (
+    wallet_analytics_private_count,
+)
 from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_add_document import wallet_add_document
 from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_add_location import wallet_add_location
-from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_analyze_document_redacted import wallet_analyze_document_redacted
+from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_analyze_document_redacted import (
+    wallet_analyze_document_redacted,
+)
 from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_analyze_document_form_redacted import (
     wallet_analyze_document_form_redacted,
 )
@@ -22,27 +32,47 @@ from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_create import wallet_
 from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_create_document_vector_profile import (
     wallet_create_document_vector_profile,
 )
-from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_create_export_bundle import wallet_create_export_bundle
-from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_create_export_grant import wallet_create_export_grant
+from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_create_export_bundle import (
+    wallet_create_export_bundle,
+)
+from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_create_export_grant import (
+    wallet_create_export_grant,
+)
 from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_create_location_region_proof import (
     wallet_create_location_region_proof,
 )
-from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_create_record_grant import wallet_create_record_grant
+from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_create_record_grant import (
+    wallet_create_record_grant,
+)
 from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_create_redacted_graphrag import (
     wallet_create_redacted_graphrag,
 )
-from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_decrypt_document import wallet_decrypt_document
-from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_export_bundle_storage import wallet_export_bundle_storage
+from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_decrypt_document import (
+    wallet_decrypt_document,
+)
+from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_export_bundle_storage import (
+    wallet_export_bundle_storage,
+)
 from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_extract_document_text_redacted import (
     wallet_extract_document_text_redacted,
 )
-from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_grant_receipts import wallet_grant_receipts
-from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_import_export_bundle import wallet_import_export_bundle
-from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_issue_export_invocation import wallet_issue_export_invocation
-from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_issue_record_invocation import wallet_issue_record_invocation
+from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_grant_receipts import (
+    wallet_grant_receipts,
+)
+from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_import_export_bundle import (
+    wallet_import_export_bundle,
+)
+from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_issue_export_invocation import (
+    wallet_issue_export_invocation,
+)
+from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_issue_record_invocation import (
+    wallet_issue_record_invocation,
+)
 from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_list_records import wallet_list_records
 from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_revoke_grant import wallet_revoke_grant
-from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_verify_export_bundle import wallet_verify_export_bundle
+from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_verify_export_bundle import (
+    wallet_verify_export_bundle,
+)
 from ipfs_datasets_py.wallet.crypto import random_key
 
 
@@ -152,7 +182,9 @@ async def test_wallet_tools_redacted_document_analysis_masks_sensitive_fields(tm
     assert set(analysis["output"]["derived_facts"]["need_categories"]) >= {"housing", "food"}
 
 
-async def test_wallet_tools_create_document_vector_profile_returns_only_safe_features(tmp_path) -> None:
+async def test_wallet_tools_create_document_vector_profile_returns_only_safe_features(
+    tmp_path,
+) -> None:
     wallet_dir = tmp_path / "wallets"
     blob_dir = tmp_path / "blobs"
     owner_key = random_key().hex()
@@ -251,7 +283,11 @@ async def test_wallet_tools_analyze_documents_redacted_batches_safe_facts(tmp_pa
     assert "503-555-1212" not in serialized
     assert analysis["artifact"]["artifact_type"] == "redacted_cross_document_analysis"
     assert analysis["output"]["source_record_count"] == 2
-    assert set(analysis["output"]["derived_facts"]["need_categories"]) >= {"housing", "food", "health"}
+    assert set(analysis["output"]["derived_facts"]["need_categories"]) >= {
+        "housing",
+        "food",
+        "health",
+    }
 
 
 async def test_wallet_tools_extract_document_text_redacted(tmp_path) -> None:
@@ -849,7 +885,9 @@ async def test_hierarchical_manager_dispatches_wallet_redacted_analysis_tools(tm
         "wallet_dir": str(wallet_dir),
         "blob_dir": str(blob_dir),
     }
-    analysis = await manager.dispatch("wallet_tools", "wallet_analyze_document_redacted", common_request)
+    analysis = await manager.dispatch(
+        "wallet_tools", "wallet_analyze_document_redacted", common_request
+    )
     assert analysis["status"] == "success"
     assert analysis["artifact"]["artifact_type"] == "redacted_document_analysis"
     analysis_output = json.dumps(analysis["output"], sort_keys=True)
@@ -859,7 +897,9 @@ async def test_hierarchical_manager_dispatches_wallet_redacted_analysis_tools(tm
     assert "123-45-6789" not in analysis_output
     assert "123 Main St" not in analysis_output
 
-    extraction = await manager.dispatch("wallet_tools", "wallet_extract_document_text_redacted", common_request)
+    extraction = await manager.dispatch(
+        "wallet_tools", "wallet_extract_document_text_redacted", common_request
+    )
     assert extraction["status"] == "success"
     assert extraction["artifact"]["artifact_type"] == "redacted_document_text_extraction"
     extraction_output = json.dumps(extraction["output"], sort_keys=True)
@@ -867,7 +907,9 @@ async def test_hierarchical_manager_dispatches_wallet_redacted_analysis_tools(tm
     assert "jane@example.org" not in extraction_output
     assert "503-555-1212" not in extraction_output
 
-    form = await manager.dispatch("wallet_tools", "wallet_analyze_document_form_redacted", common_request)
+    form = await manager.dispatch(
+        "wallet_tools", "wallet_analyze_document_form_redacted", common_request
+    )
     assert form["status"] == "success"
     assert form["artifact"]["artifact_type"] == "redacted_document_form_analysis"
     assert form["output"]["form"]["field_count"] >= 5
@@ -932,7 +974,9 @@ async def test_hierarchical_manager_dispatches_wallet_redacted_analysis_tools(tm
     assert "503-555-1212" not in graph_output
 
 
-async def test_hierarchical_manager_dispatches_wallet_share_export_revoke_workflow(tmp_path) -> None:
+async def test_hierarchical_manager_dispatches_wallet_share_export_revoke_workflow(
+    tmp_path,
+) -> None:
     manager = HierarchicalToolManager()
     wallet_dir = tmp_path / "wallets"
     blob_dir = tmp_path / "blobs"

@@ -1,13 +1,10 @@
-
-
-
 import ast
 import importlib
 import importlib.resources
 import os
 from pathlib import Path
 import sys
-from typing import Any, Callable, Coroutine,Optional
+from typing import Any, Callable, Coroutine, Optional
 
 
 from utils.common.monads.async_ import Async
@@ -22,7 +19,7 @@ from pydantic_models.resource.resource import Resource
 from pydantic_models.configs import Configs
 
 from .analyze_functions_in_directory.resource_profiler import ResourceProfiler
-from .analyze_functions_in_directory.function_analyzer import FunctionAnalyzer 
+from .analyze_functions_in_directory.function_analyzer import FunctionAnalyzer
 
 
 from .load_functions_from_file import load_functions_from_files
@@ -58,7 +55,7 @@ class CoreFunctionsPool:
         - Self-learning capability to improve conversion success rates
         - Resource usage optimization
         - Persistent storage of conversion knowledge
-        
+
     Example Usage:
         >>> pool_manager = PoolResourceManager()
         >>> system_resource_pools = SystemResourcePools()
@@ -76,31 +73,31 @@ class CoreFunctionsPool:
         max_memory_usage (int, optional): Maximum memory usage in MB. Defaults to 1024.
 
     Methods:
-        - check_if_we_can_do_the_conversion(resource: Resource) -> Optional[FunctionAndParameters]: 
-            Checks to see if we can covert the file at all. 
+        - check_if_we_can_do_the_conversion(resource: Resource) -> Optional[FunctionAndParameters]:
+            Checks to see if we can covert the file at all.
             This is an orchestrator function that calls the other functions in this class.
             Returns a boolean of whether we can process the function,
                 as well as the dictionary of the functions, args, and kwargs that did it.
-            If false, then it only returns the boolean. 
+            If false, then it only returns the boolean.
 
-        - _check_if_we_can_open_the_file(resource: Resource) -> tuple[bool, Optional[FunctionAndParameters]: 
+        - _check_if_we_can_open_the_file(resource: Resource) -> tuple[bool, Optional[FunctionAndParameters]:
                 Check if file can be opened.
                 This function checks to see if the file can be opened by any of the available libraries.
-                Returns a boolean of whether the function can be opened, 
+                Returns a boolean of whether the function can be opened,
                     and a dictionary of function, args, and kwargs that opened the file.
                 If false, then it only returns the boolean.
 
-        - _check_if_we_can_convert_the_file(resource: Resource) -> tuple[bool, Optional[FunctionAndParameters]: 
+        - _check_if_we_can_convert_the_file(resource: Resource) -> tuple[bool, Optional[FunctionAndParameters]:
             Check if file can be converted.
             This function checks to see if the file can be converted by any of the available libraries.
-            Returns a boolean of whether the function can be converted, 
+            Returns a boolean of whether the function can be converted,
                    and a dictionary of function, args, and kwargs that converted the file.
             If false, then it only returns the boolean.
 
-        - _check_if_we_can_save_the_file(resource: Resource) -> tuple[bool, Optional[FunctionAndParameters]: 
+        - _check_if_we_can_save_the_file(resource: Resource) -> tuple[bool, Optional[FunctionAndParameters]:
             Check if file can be saved.
             This function checks to see if the file can be converted by any of the available libraries.
-            Returns a boolean of whether the function can be converted, 
+            Returns a boolean of whether the function can be converted,
                    and a dictionary of function, args, and kwargs that converted the file.
             If false, then it only returns the boolean.
 
@@ -108,16 +105,16 @@ class CoreFunctionsPool:
 
         - see_what_resources_we_need_to_convert_this_file(
                 resource: Resource, func_dict: FunctionDictionary
-            ) -> FunctionDictionary: 
+            ) -> FunctionDictionary:
                 Get resource usage estimate.
-                This is based on a number of different factors, 
+                This is based on a number of different factors,
                     including the disk size of the object, an estimate of how long it would take to convert,
                     and what resources are required by each function.
-        
+
     Raises:
         FileNotFoundError: If knowledge base file cannot be found
         MemoryError: If conversion exceeds memory limits
-        
+
     Notes:
         - Supports all MIME types in Markitdown library.
         - Conversion knowledge is persisted between runs via the knowledge_base.json
@@ -125,7 +122,7 @@ class CoreFunctionsPool:
 
 
     The CoreFunctionsPool class serves as a central repository of conversion functions and their metadata.
-    At its core, it is a dictionary class that checks whether or not we can convert a file to a given format, 
+    At its core, it is a dictionary class that checks whether or not we can convert a file to a given format,
         and how much resources it would take to do so.
     Given the large amount of MIME types that this needs to support, and the large amount of libraries that exist to do so,
         it is more practical to create mock inputs based on the file types and their size, and then
@@ -144,24 +141,25 @@ class CoreFunctionsPool:
         - If they succeed, it stores the function, args, and kwargs in the dictionary, as well as the resources and length of time it took to run.
             It also stores the specific values of the args and kwargs that were used.
             Then, it updates a JSON dictionary with the new values.
-        
+
         - It also includes a method to iterate through the functions and find the most suitable one for a given file.
-        - The class aims to optimize the conversion process by learning from previous attempts and storing successful 
+        - The class aims to optimize the conversion process by learning from previous attempts and storing successful
             configurations.
         - It can handle various file formats and adapts to new file types by continuously updating its knowledge base.
-        - The performance metrics stored for each function help in making informed decisions about which method to use 
+        - The performance metrics stored for each function help in making informed decisions about which method to use
             for different file types and sizes.
-        - This approach allows for a flexible and extensible system that can accommodate new conversion 
+        - This approach allows for a flexible and extensible system that can accommodate new conversion
             libraries and methods as they become available.
     """
 
     def __init__(self, configs: Configs):
         self.logger = configs.make_logger(self.__class__.__qualname__)
-        self.db = configs.make_duck_db('core_function_pool.db')
+        self.db = configs.make_duck_db("core_function_pool.db")
         self.load_functions = None
 
         # Import an Arbitrary file to prevent circular imports
         import __version__
+
         self.anchor = __version__
 
     async def brute_force(self, resource: Resource, func_dir: Path) -> Resource:
@@ -176,30 +174,35 @@ class CoreFunctionsPool:
 
         # Load each function into a dictionary
         for path in os.listdir(func_dir):
-            if path.endswith('.py'):
-                recipe[path]['function'] = load_functions_from_files(path)
+            if path.endswith(".py"):
+                recipe[path]["function"] = load_functions_from_files(path)
 
-
-    async def check_if_we_might_be_able_to_process_this(self, resource: Resource) -> Optional[Resource]:
-        """
-        
-        """
-        pipeline: Async = Async(
-            just(resource)
-        ) >> can_load >> can_convert >> can_save >> (
-            lambda e: e if isinstance(e, Exception) else resource
-        ) >> analyze
+    async def check_if_we_might_be_able_to_process_this(
+        self, resource: Resource
+    ) -> Optional[Resource]:
+        """ """
+        pipeline: Async = (
+            Async(just(resource))
+            >> can_load
+            >> can_convert
+            >> can_save
+            >> (lambda e: e if isinstance(e, Exception) else resource)
+            >> analyze
+        )
 
         return await pipeline.future
 
+
 async def just(resource: Resource) -> Resource:
     return await resource
+
 
 # TODO
 async def analyze(resource: Exception | Resource) -> Optional[Resource]:
     if isinstance(resource, Resource):
         return resource
     return resource
+
 
 async def can_load(resource: Resource) -> Resource | Exception:
     """
@@ -221,5 +224,3 @@ async def can_save(self, data: bytes, resource: Resource) -> Resource | Exceptio
     See if we can save a file with a given func, and with its given parameters.
     """
     pass
-
-

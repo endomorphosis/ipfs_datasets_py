@@ -25,14 +25,14 @@ processor = UniversalProcessor()
 
 # Automatic routing based on input type
 result = await processor.process("https://example.com/page")  # → Website GraphRAG
-result = await processor.process("document.pdf")               # → PDF processing
-result = await processor.process("/path/to/folder")            # → Batch processing
-result = await processor.process("video.mp4")                  # → Media transcription
+result = await processor.process("document.pdf")  # → PDF processing
+result = await processor.process("/path/to/folder")  # → Batch processing
+result = await processor.process("video.mp4")  # → Media transcription
 
 # All outputs standardized knowledge graph + vectors
 print(result.knowledge_graph)  # Entities, relationships, graph
-print(result.vectors)          # Vector embeddings
-print(result.metadata)         # Processing metadata
+print(result.vectors)  # Vector embeddings
+print(result.metadata)  # Processing metadata
 ```
 
 ---
@@ -127,41 +127,39 @@ from typing import Protocol, Union, runtime_checkable
 from pathlib import Path
 from dataclasses import dataclass
 
+
 @dataclass
 class ProcessingResult:
     """Standardized output from all processors."""
-    
+
     # Knowledge Graph
     knowledge_graph: KnowledgeGraph  # Entities, relationships, properties
-    
+
     # Vector Embeddings
     vectors: VectorStore  # Embeddings for semantic search
-    
+
     # Raw Content
     content: dict  # Extracted text, metadata, structured data
-    
+
     # Processing Metadata
     metadata: ProcessingMetadata  # Processor used, timing, errors
-    
+
     # Optional: Processor-specific data
     extra: dict = None
+
 
 @runtime_checkable
 class ProcessorProtocol(Protocol):
     """Protocol that all processors must implement."""
-    
+
     async def can_process(self, input_source: Union[str, Path]) -> bool:
         """Check if this processor can handle the input."""
         ...
-    
-    async def process(
-        self, 
-        input_source: Union[str, Path],
-        **options
-    ) -> ProcessingResult:
+
+    async def process(self, input_source: Union[str, Path], **options) -> ProcessingResult:
         """Process the input and return standardized result."""
         ...
-    
+
     def get_supported_types(self) -> list[str]:
         """Return list of supported input types (URL, PDF, video, etc.)."""
         ...
@@ -173,21 +171,21 @@ class ProcessorProtocol(Protocol):
 class UniversalProcessor:
     """
     Universal processor that automatically routes inputs to specialized processors.
-    
+
     Features:
     - Automatic input type detection (URL, file, folder)
     - Processor selection based on capabilities
     - Parallel processing for batch inputs
     - Standardized knowledge graph + vector output
     - Error handling and fallback strategies
-    
+
     Example:
         >>> processor = UniversalProcessor()
-        >>> 
+        >>>
         >>> # Process any input type
         >>> result = await processor.process("https://arxiv.org/pdf/2301.00001.pdf")
         >>> print(result.knowledge_graph.entities)
-        >>> 
+        >>>
         >>> # Batch processing
         >>> results = await processor.process_batch([
         ...     "https://example.com",
@@ -195,67 +193,65 @@ class UniversalProcessor:
         ...     "/path/to/folder"
         ... ])
     """
-    
+
     def __init__(self, config: Optional[ProcessorConfig] = None):
         self.config = config or ProcessorConfig()
         self.registry = ProcessorRegistry()
         self._initialize_processors()
-    
+
     def _initialize_processors(self):
         """Register all available processors."""
         from .pdf import PDFProcessor
         from .graphrag import GraphRAGProcessor
         from .multimedia import MultimediaProcessor
         from .file_converter import FileConverterProcessor
-        
+
         self.registry.register(PDFProcessor())
         self.registry.register(GraphRAGProcessor())
         self.registry.register(MultimediaProcessor())
         self.registry.register(FileConverterProcessor())
-    
+
     async def process(
-        self,
-        input_source: Union[str, Path, list],
-        **options
+        self, input_source: Union[str, Path, list], **options
     ) -> Union[ProcessingResult, list[ProcessingResult]]:
         """
         Process any input: URL, file, folder, or list of inputs.
-        
+
         Automatically detects input type and routes to appropriate processor.
         """
         # Handle batch inputs
         if isinstance(input_source, list):
             return await self.process_batch(input_source, **options)
-        
+
         # Detect input type
         input_type = self._detect_input_type(input_source)
-        
+
         # Find capable processors
         processors = await self.registry.find_processors(input_source)
-        
+
         if not processors:
             raise ValueError(f"No processor found for: {input_source}")
-        
+
         # Select best processor (by priority/capabilities)
         processor = self._select_best_processor(processors, input_type)
-        
+
         # Process and return standardized result
         return await processor.process(input_source, **options)
-    
+
     def _detect_input_type(self, input_source: Union[str, Path]) -> InputType:
         """Detect if input is URL, file, folder, or other."""
         if isinstance(input_source, str):
-            if input_source.startswith(('http://', 'https://')):
+            if input_source.startswith(("http://", "https://")):
                 return InputType.URL
-            if input_source.startswith('ipfs://'):
+            if input_source.startswith("ipfs://"):
                 return InputType.IPFS
-        
+
         path = Path(input_source)
         if path.is_dir():
             return InputType.FOLDER
         if path.is_file():
             return InputType.FILE
-        
+
         return InputType.UNKNOWN
 ```
 
@@ -265,41 +261,35 @@ class UniversalProcessor:
 class ProcessorRegistry:
     """
     Registry for discovering and managing processors.
-    
+
     Features:
     - Dynamic processor registration
     - Capability-based routing
     - Priority-based selection
     - Hot-reloading of processors
     """
-    
+
     def __init__(self):
         self._processors: dict[str, ProcessorProtocol] = {}
         self._capabilities: dict[str, list[str]] = {}
-    
+
     def register(self, processor: ProcessorProtocol, priority: int = 0):
         """Register a processor with optional priority."""
         name = processor.__class__.__name__
         self._processors[name] = processor
         self._capabilities[name] = processor.get_supported_types()
-    
-    async def find_processors(
-        self, 
-        input_source: Union[str, Path]
-    ) -> list[ProcessorProtocol]:
+
+    async def find_processors(self, input_source: Union[str, Path]) -> list[ProcessorProtocol]:
         """Find all processors that can handle the input."""
         capable = []
         for name, processor in self._processors.items():
             if await processor.can_process(input_source):
                 capable.append(processor)
         return capable
-    
+
     def list_processors(self) -> dict[str, list[str]]:
         """List all registered processors and their capabilities."""
-        return {
-            name: self._capabilities[name]
-            for name in self._processors
-        }
+        return {name: self._capabilities[name] for name in self._processors}
 ```
 
 ### New Directory Structure
@@ -378,16 +368,16 @@ ipfs_datasets_py/processors/
 #### Deliverables:
 ```python
 # New files
-processors/protocol.py              # 150 lines
-processors/registry.py              # 200 lines
-processors/universal_processor.py   # 300 lines
-processors/input_detection.py       # 150 lines
+processors / protocol.py  # 150 lines
+processors / registry.py  # 200 lines
+processors / universal_processor.py  # 300 lines
+processors / input_detection.py  # 150 lines
 
 # Tests
-tests/unit/processors/test_protocol.py
-tests/unit/processors/test_registry.py
-tests/unit/processors/test_universal_processor.py
-tests/unit/processors/test_input_detection.py
+tests / unit / processors / test_protocol.py
+tests / unit / processors / test_registry.py
+tests / unit / processors / test_universal_processor.py
+tests / unit / processors / test_input_detection.py
 ```
 
 #### Success Criteria:
@@ -449,11 +439,12 @@ processors/graphrag/
    class PDFProcessorAdapter(ProcessorProtocol):
        def __init__(self):
            from .pdf_processor import PDFProcessor
+
            self._inner = PDFProcessor()
-       
+
        async def can_process(self, input_source):
-           return str(input_source).endswith('.pdf')
-       
+           return str(input_source).endswith(".pdf")
+
        async def process(self, input_source, **options):
            result = await self._inner.process_pdf(input_source, **options)
            # Convert to ProcessingResult
@@ -494,18 +485,16 @@ async def test_universal_processor_pdf():
     assert isinstance(result, ProcessingResult)
     assert result.knowledge_graph is not None
 
+
 async def test_universal_processor_url():
     processor = UniversalProcessor()
     result = await processor.process("https://example.com")
-    assert result.content['url'] == "https://example.com"
+    assert result.content["url"] == "https://example.com"
+
 
 async def test_universal_processor_batch():
     processor = UniversalProcessor()
-    results = await processor.process([
-        "test.pdf",
-        "https://example.com",
-        "video.mp4"
-    ])
+    results = await processor.process(["test.pdf", "https://example.com", "video.mp4"])
     assert len(results) == 3
 ```
 
@@ -556,52 +545,47 @@ data_transformation/multimedia/
    # processors/multimedia/processor.py
    class MultimediaProcessor(ProcessorProtocol):
        """Unified multimedia processor implementing ProcessorProtocol."""
-       
+
        def __init__(self):
            self.ffmpeg = FFmpegWrapper()
            self.ytdlp = YtDlpWrapper()
            self.media = MediaProcessor()
-       
+
        async def can_process(self, input_source):
            # Check if video, audio, or media URL
-           extensions = ('.mp4', '.mp3', '.wav', '.avi', '.mkv', '.webm')
+           extensions = (".mp4", ".mp3", ".wav", ".avi", ".mkv", ".webm")
            if isinstance(input_source, str):
                if any(input_source.endswith(ext) for ext in extensions):
                    return True
                # Check if video URL
-               if 'youtube.com' in input_source or 'vimeo.com' in input_source:
+               if "youtube.com" in input_source or "vimeo.com" in input_source:
                    return True
            return False
-       
+
        async def process(self, input_source, **options):
            # Download if URL
-           if input_source.startswith('http'):
+           if input_source.startswith("http"):
                local_file = await self.ytdlp.download(input_source)
            else:
                local_file = input_source
-           
+
            # Transcribe or extract metadata
            transcription = await self._transcribe(local_file)
            metadata = await self._extract_metadata(local_file)
-           
+
            # Build knowledge graph from transcription
            kg = await self._build_knowledge_graph(transcription)
-           
+
            # Generate embeddings
            vectors = await self._generate_embeddings(transcription)
-           
+
            return ProcessingResult(
                knowledge_graph=kg,
                vectors=vectors,
-               content={
-                   'transcription': transcription,
-                   'metadata': metadata
-               },
+               content={"transcription": transcription, "metadata": metadata},
                metadata=ProcessingMetadata(
-                   processor='MultimediaProcessor',
-                   input_type='video/audio',
-                   processing_time=elapsed
-               )
+                   processor="MultimediaProcessor", input_type="video/audio", processing_time=elapsed
+               ),
            )
    ```
 
@@ -617,33 +601,36 @@ data_transformation/multimedia/
 import re
 from pathlib import Path
 
+
 def update_imports(file_path: Path):
     """Update multimedia imports in a file."""
     content = file_path.read_text()
-    
+
     # Update import statements
     content = re.sub(
-        r'from ipfs_datasets_py\.data_transformation\.multimedia',
-        r'from ipfs_datasets_py.processors.multimedia',
-        content
+        r"from ipfs_datasets_py\.data_transformation\.multimedia",
+        r"from ipfs_datasets_py.processors.multimedia",
+        content,
     )
     content = re.sub(
-        r'import ipfs_datasets_py\.data_transformation\.multimedia',
-        r'import ipfs_datasets_py.processors.multimedia',
-        content
+        r"import ipfs_datasets_py\.data_transformation\.multimedia",
+        r"import ipfs_datasets_py.processors.multimedia",
+        content,
     )
-    
+
     file_path.write_text(content)
+
 
 def main():
     # Find all Python files
-    for py_file in Path('.').rglob('*.py'):
-        if 'data_transformation/multimedia' not in str(py_file):
+    for py_file in Path(".").rglob("*.py"):
+        if "data_transformation/multimedia" not in str(py_file):
             update_imports(py_file)
-    
+
     print("✓ All imports updated")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
 ```
 
@@ -664,7 +651,7 @@ if __name__ == '__main__':
 class UniversalBatchProcessor(ProcessorProtocol):
     """
     Universal batch processor that delegates to UniversalProcessor.
-    
+
     Features:
     - Parallel processing with worker pool
     - Progress tracking and reporting
@@ -673,26 +660,21 @@ class UniversalBatchProcessor(ProcessorProtocol):
     - Resource limiting (CPU, memory, disk)
     - Checkpointing and resume
     """
-    
+
     def __init__(
-        self,
-        max_workers: int = 4,
-        enable_progress: bool = True,
-        enable_checkpointing: bool = False
+        self, max_workers: int = 4, enable_progress: bool = True, enable_checkpointing: bool = False
     ):
         self.max_workers = max_workers
         self.enable_progress = enable_progress
         self.enable_checkpointing = enable_checkpointing
         self.universal = UniversalProcessor()
-    
+
     async def process_batch(
-        self,
-        inputs: list[Union[str, Path]],
-        **options
+        self, inputs: list[Union[str, Path]], **options
     ) -> BatchProcessingResult:
         """
         Process multiple inputs in parallel.
-        
+
         Returns:
             BatchProcessingResult with:
             - results: List of ProcessingResult
@@ -855,16 +837,19 @@ class UniversalBatchProcessor(ProcessorProtocol):
 ```python
 # PDF processing
 from ipfs_datasets_py.processors.pdf_processor import PDFProcessor
+
 pdf_proc = PDFProcessor()
 result = await pdf_proc.process_pdf("doc.pdf")
 
 # Website GraphRAG
 from ipfs_datasets_py.processors.website_graphrag_processor import WebsiteGraphRAGProcessor
+
 web_proc = WebsiteGraphRAGProcessor()
 result = await web_proc.process_website("https://example.com")
 
 # Multimedia
 from ipfs_datasets_py.data_transformation.multimedia import FFmpegWrapper
+
 ffmpeg = FFmpegWrapper()
 result = await ffmpeg.convert("video.mp4")
 ```
@@ -885,8 +870,8 @@ video_result = await processor.process("video.mp4")
 # All results have consistent structure
 for result in [pdf_result, web_result, video_result]:
     print(result.knowledge_graph)  # Standardized KG
-    print(result.vectors)          # Vector embeddings
-    print(result.metadata)         # Processing info
+    print(result.vectors)  # Vector embeddings
+    print(result.metadata)  # Processing info
 ```
 
 ### Backward Compatibility:
@@ -1027,61 +1012,65 @@ NEW: from ipfs_datasets_py.processors import UniversalProcessor
 @dataclass
 class KnowledgeGraph:
     """Standardized knowledge graph format."""
-    
+
     # Graph structure
-    entities: list[Entity]         # Nodes
+    entities: list[Entity]  # Nodes
     relationships: list[Relationship]  # Edges
-    properties: dict[str, Any]     # Graph-level properties
-    
+    properties: dict[str, Any]  # Graph-level properties
+
     # Metadata
-    source: str                    # Source document/URL
+    source: str  # Source document/URL
     created_at: datetime
     schema_version: str = "1.0"
-    
+
     # Query support
     def query(self, sparql: str) -> list[dict]:
         """Execute SPARQL query."""
         pass
-    
+
     def find_entities(self, entity_type: str) -> list[Entity]:
         """Find entities by type."""
         pass
-    
+
     def find_relationships(self, rel_type: str) -> list[Relationship]:
         """Find relationships by type."""
         pass
-    
+
     # Export formats
     def to_rdf(self) -> str:
         """Export as RDF/XML."""
         pass
-    
+
     def to_neo4j(self) -> dict:
         """Export as Neo4j Cypher."""
         pass
-    
+
     def to_networkx(self):
         """Convert to NetworkX graph."""
         pass
 
+
 @dataclass
 class Entity:
     """Knowledge graph entity (node)."""
+
     id: str
-    type: str                      # Entity type (Person, Organization, etc.)
-    label: str                     # Human-readable label
-    properties: dict[str, Any]     # Entity properties
+    type: str  # Entity type (Person, Organization, etc.)
+    label: str  # Human-readable label
+    properties: dict[str, Any]  # Entity properties
     embedding: Optional[np.ndarray] = None  # Vector embedding
+
 
 @dataclass
 class Relationship:
     """Knowledge graph relationship (edge)."""
+
     id: str
-    source: str                    # Source entity ID
-    target: str                    # Target entity ID
-    type: str                      # Relationship type
-    properties: dict[str, Any]     # Edge properties
-    confidence: float = 1.0        # Confidence score
+    source: str  # Source entity ID
+    target: str  # Target entity ID
+    type: str  # Relationship type
+    properties: dict[str, Any]  # Edge properties
+    confidence: float = 1.0  # Confidence score
 ```
 
 ---

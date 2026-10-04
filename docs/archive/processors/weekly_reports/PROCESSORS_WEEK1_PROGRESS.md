@@ -190,12 +190,13 @@ Created the foundational interface for the unified processor system:
 # InputType enum - 7 types
 class InputType(Enum):
     URL = "url"
-    FILE = "file"  
+    FILE = "file"
     FOLDER = "folder"
     TEXT = "text"
     BINARY = "binary"
     IPFS_CID = "ipfs_cid"
     IPNS = "ipns"
+
 
 # ProcessingContext - Input with metadata
 @dataclass
@@ -205,6 +206,7 @@ class ProcessingContext:
     metadata: Dict[str, Any]
     options: Dict[str, Any]
     # + helper methods
+
 
 # ProcessingResult - Standardized output
 @dataclass
@@ -216,6 +218,7 @@ class ProcessingResult:
     errors: List[str]
     warnings: List[str]
     # + helper methods
+
 
 # ProcessorProtocol - Interface all processors must implement
 class ProcessorProtocol(Protocol):
@@ -289,34 +292,29 @@ from ipfs_datasets_py.processors.core import (
     InputType,
 )
 
+
 # Create a simple processor
 class TextProcessor:
     def can_handle(self, context: ProcessingContext) -> bool:
         return context.input_type == InputType.TEXT
-    
+
     def process(self, context: ProcessingContext) -> ProcessingResult:
         # Extract entities from text
         entities = extract_entities(context.source)
-        
+
         return ProcessingResult(
             success=True,
-            knowledge_graph={'entities': entities},
-            metadata={'processor': 'TextProcessor'}
+            knowledge_graph={"entities": entities},
+            metadata={"processor": "TextProcessor"},
         )
-    
+
     def get_capabilities(self) -> Dict[str, Any]:
-        return {
-            'name': 'TextProcessor',
-            'handles': ['text'],
-            'outputs': ['knowledge_graph']
-        }
+        return {"name": "TextProcessor", "handles": ["text"], "outputs": ["knowledge_graph"]}
+
 
 # Use the processor
 processor = TextProcessor()
-context = ProcessingContext(
-    input_type=InputType.TEXT,
-    source="Sample text content"
-)
+context = ProcessingContext(input_type=InputType.TEXT, source="Sample text content")
 
 if processor.can_handle(context):
     result = processor.process(context)
@@ -530,11 +528,7 @@ registry = get_global_registry()
 
 **Basic Registration and Selection:**
 ```python
-from ipfs_datasets_py.processors.core import (
-    ProcessorRegistry,
-    ProcessingContext,
-    InputType
-)
+from ipfs_datasets_py.processors.core import ProcessorRegistry, ProcessingContext, InputType
 
 # Create registry
 registry = ProcessorRegistry()
@@ -546,9 +540,7 @@ registry.register(multimedia_processor, priority=15, name="Multimedia")
 
 # Find processor for input
 context = ProcessingContext(
-    input_type=InputType.FILE,
-    source="document.pdf",
-    metadata={'format': 'pdf'}
+    input_type=InputType.FILE, source="document.pdf", metadata={"format": "pdf"}
 )
 
 processors = registry.get_processors(context)
@@ -589,7 +581,7 @@ print(f"Total: {caps['total_processors']}")
 print(f"Enabled: {caps['enabled_processors']}")
 print(f"Formats: {caps['supported_formats']}")
 
-for proc_info in caps['processors']:
+for proc_info in caps["processors"]:
     print(f"{proc_info['name']}: priority {proc_info['priority']}")
 ```
 
@@ -629,16 +621,18 @@ Created the single entry point for all processing operations:
 ```python
 # Ultra-simple API
 from ipfs_datasets_py.processors.core import process
+
 result = process("https://example.com")
 
 # Advanced usage
 from ipfs_datasets_py.processors.core import UniversalProcessor
+
 processor = UniversalProcessor()
 result = processor.process(
     input_data,
     max_retries=5,
     use_multiple=True,  # Aggregate multiple processors
-    timeout=30
+    timeout=30,
 )
 
 # Batch processing

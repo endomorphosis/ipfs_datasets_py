@@ -30,17 +30,20 @@ Dependencies:
 - ipld_car: Optional, required for CAR file operations
 - pyrabin: Optional, required for Rabin chunking (falls back to fixed-size)
 """
+
 import os
 from typing import List
 
 try:
     from ipfs_datasets_py import ipfs_backend_router as ipfs_router
+
     HAVE_IPFS = True
 except Exception:
     HAVE_IPFS = False
 
 try:
     import ipld_car
+
     HAVE_IPLD_CAR = True
 except ImportError:
     HAVE_IPLD_CAR = False
@@ -75,7 +78,7 @@ class ChunkerBase:
             def cut(self, context, buffer, end=False):
                 # Implementation here
                 return [len(buffer)]
-        
+
         chunker = CustomChunker()
         lengths = chunker.cut(None, data_buffer, end=False)
     """
@@ -270,7 +273,7 @@ class RabinChunker(ChunkerBase):
 
     Attributes:
         min_size (int): Minimum allowed chunk size in bytes
-        avg_size (int): Target average chunk size in bytes  
+        avg_size (int): Target average chunk size in bytes
         max_size (int): Maximum allowed chunk size in bytes
         rabin (pyrabin.Rabin): Rabin fingerprinting engine (if available)
         fixed_chunker (FixedSizeChunker): Fallback chunker (if pyrabin unavailable)
@@ -288,7 +291,12 @@ class RabinChunker(ChunkerBase):
             print(f"Chunk size: {chunk_size} bytes")
     """
 
-    def __init__(self, min_size: int = 256*1024, avg_size: int = 1024*1024, max_size: int = 4*1024*1024):
+    def __init__(
+        self,
+        min_size: int = 256 * 1024,
+        avg_size: int = 1024 * 1024,
+        max_size: int = 4 * 1024 * 1024,
+    ):
         """
         Initialize a Rabin fingerprinting chunker with size constraints.
 
@@ -331,6 +339,7 @@ class RabinChunker(ChunkerBase):
         # Try to import pyrabin
         try:
             import pyrabin
+
             self.rabin = pyrabin.Rabin(min_size, avg_size, max_size)
             self.have_rabin = True
         except ImportError:
@@ -592,7 +601,7 @@ class UnixFSHandler:
         # Determine chunking strategy
         chunker_str = None
         match chunker:
-            case None: # Use default chunking for None
+            case None:  # Use default chunking for None
                 pass
             case FixedSizeChunker():
                 chunker_str = f"size-{chunker.chunk_size}"
@@ -706,7 +715,7 @@ class UnixFSHandler:
             raise ImportError("IPFS client is not available")
 
         # Use 'dag export' to create a CAR file
-        with open(car_path, 'wb') as f:
+        with open(car_path, "wb") as f:
             data = ipfs_router.dag_export(cid)
             f.write(data)
 

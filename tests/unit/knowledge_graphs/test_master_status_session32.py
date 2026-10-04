@@ -10,6 +10,7 @@ Targets (all previously-uncovered paths reachable without optional deps):
   extraction/finance_graphrag.py  95%  → ~100% (+5pp)  — minimal-imports, test_hypothesis paths
   transactions/manager.py         97%  → ~100% (+3pp)  — TransactionAbortedError, snapshot error
 """
+
 from __future__ import annotations
 
 import sys
@@ -23,46 +24,56 @@ import pytest
 # Shared helpers
 # ─────────────────────────────────────────────────────────────────
 
+
 def _make_extractor(**kwargs):
     from ipfs_datasets_py.knowledge_graphs.extraction.extractor import (
         KnowledgeGraphExtractor,
     )
+
     return KnowledgeGraphExtractor(**kwargs)
 
 
 def _make_entity(name: str, entity_type: str = "entity"):
     from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
+
     return Entity(entity_type=entity_type, name=name, confidence=0.9)
 
 
 def _make_rel(rel_type: str, src, tgt):
     from ipfs_datasets_py.knowledge_graphs.extraction.relationships import Relationship
-    return Relationship(relationship_type=rel_type, source_entity=src, target_entity=tgt, confidence=0.8)
+
+    return Relationship(
+        relationship_type=rel_type, source_entity=src, target_entity=tgt, confidence=0.8
+    )
 
 
 def _make_kg(entities=None, relationships=None):
     from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
     kg = KnowledgeGraph()
-    for e in (entities or []):
+    for e in entities or []:
         kg.add_entity(e)
-    for r in (relationships or []):
+    for r in relationships or []:
         kg.add_relationship(r)
     return kg
 
 
 def _make_graph_engine(storage=None):
     from ipfs_datasets_py.knowledge_graphs.core.graph_engine import GraphEngine
+
     return GraphEngine(storage_backend=storage)
 
 
 def _make_storage_error(msg="storage fail"):
     from ipfs_datasets_py.knowledge_graphs.exceptions import StorageError
+
     return StorageError(msg)
 
 
 # ─────────────────────────────────────────────────────────────────
 # extraction/extractor.py — uncovered paths
 # ─────────────────────────────────────────────────────────────────
+
 
 class TestExtractorNeuralPaths:
     """GIVEN KnowledgeGraphExtractor WHEN hitting neural extraction paths."""
@@ -79,7 +90,9 @@ class TestExtractorNeuralPaths:
         def _raise_re_error(text, entity_map):
             raise RelationshipExtractionError("neural failure", details={})
 
-        with patch.object(extractor, "_neural_relationship_extraction", side_effect=_raise_re_error):
+        with patch.object(
+            extractor, "_neural_relationship_extraction", side_effect=_raise_re_error
+        ):
             e1 = _make_entity("Alice")
             e2 = _make_entity("Bob")
             # Should NOT raise — just warns and continues with rule-based
@@ -115,7 +128,7 @@ class TestExtractorNeuralPaths:
         entity_map = {"X": e1}
 
         mock_model = MagicMock()
-        mock_model.task = "text-classification"   # not text2text
+        mock_model.task = "text-classification"  # not text2text
         mock_model.return_value = [{"label": "rel", "score": 0.9}]
         extractor.re_model = mock_model
 
@@ -160,7 +173,7 @@ class TestExtractorNeuralPaths:
     def test_parse_rebel_output_returns_empty_for_attribute_error(self):
         """GIVEN non-string input WHEN AttributeError raised THEN return empty list."""
         extractor = _make_extractor(use_transformers=False)
-        result = extractor._parse_rebel_output(None)   # type: ignore
+        result = extractor._parse_rebel_output(None)  # type: ignore
         assert isinstance(result, list)
         assert len(result) == 0
 
@@ -183,11 +196,13 @@ class TestExtractorNeuralPaths:
 # extraction/_wikipedia_helpers.py — uncovered paths
 # ─────────────────────────────────────────────────────────────────
 
+
 class TestWikipediaHelpersDeepPaths:
     """GIVEN WikipediaExtractionMixin WHEN hitting remaining uncovered paths."""
 
     def _make_helper(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.extractor import KnowledgeGraphExtractor
+
         return KnowledgeGraphExtractor(use_tracer=False)
 
     def test_validate_against_wikidata_incoming_relationship(self):
@@ -196,12 +211,14 @@ class TestWikipediaHelpersDeepPaths:
         helper = self._make_helper()
         alice = _make_entity("Alice", "person")
         bob = _make_entity("Bob", "person")
-        rel = _make_rel("knows", bob, alice)   # alice is TARGET → incoming for alice
+        rel = _make_rel("knows", bob, alice)  # alice is TARGET → incoming for alice
         kg = _make_kg(entities=[alice, bob], relationships=[rel])
 
-        wikidata_statements = []   # empty → line 364 coverage = 1.0
-        with patch.object(helper, "_get_wikidata_id", return_value="Q123"), \
-             patch.object(helper, "_get_wikidata_statements", return_value=wikidata_statements):
+        wikidata_statements = []  # empty → line 364 coverage = 1.0
+        with (
+            patch.object(helper, "_get_wikidata_id", return_value="Q123"),
+            patch.object(helper, "_get_wikidata_statements", return_value=wikidata_statements),
+        ):
             result = helper.validate_against_wikidata(kg, "Alice")
 
         assert result["coverage"] == 1.0
@@ -214,8 +231,10 @@ class TestWikipediaHelpersDeepPaths:
         alice = _make_entity("Alice", "person")
         kg = _make_kg(entities=[alice])
 
-        with patch.object(helper, "_get_wikidata_id", return_value="Q999"), \
-             patch.object(helper, "_get_wikidata_statements", return_value=[]):
+        with (
+            patch.object(helper, "_get_wikidata_id", return_value="Q999"),
+            patch.object(helper, "_get_wikidata_statements", return_value=[]),
+        ):
             result = helper.validate_against_wikidata(kg, "Alice")
 
         assert result["coverage"] == 1.0
@@ -226,14 +245,14 @@ class TestWikipediaHelpersDeepPaths:
         helper = self._make_helper()
         alice = _make_entity("Alice", "person")
         bob = _make_entity("Bob", "person")
-        rel = _make_rel("knows", alice, bob)   # outgoing: alice → bob
+        rel = _make_rel("knows", alice, bob)  # outgoing: alice → bob
         kg = _make_kg(entities=[alice, bob], relationships=[rel])
 
-        wikidata_stmts = [
-            {"property": "knows", "value": "Bob", "value_id": "Q456"}
-        ]
-        with patch.object(helper, "_get_wikidata_id", return_value="Q123"), \
-             patch.object(helper, "_get_wikidata_statements", return_value=wikidata_stmts):
+        wikidata_stmts = [{"property": "knows", "value": "Bob", "value_id": "Q456"}]
+        with (
+            patch.object(helper, "_get_wikidata_id", return_value="Q123"),
+            patch.object(helper, "_get_wikidata_statements", return_value=wikidata_stmts),
+        ):
             result = helper.validate_against_wikidata(kg, "Alice")
 
         assert result["coverage"] == 1.0
@@ -252,8 +271,10 @@ class TestWikipediaHelpersDeepPaths:
         alice = _make_entity("Alice", "person")
         kg = _make_kg(entities=[alice])
 
-        with patch.object(helper, "_get_wikidata_id", return_value="Q123"), \
-             patch.object(helper, "_get_wikidata_statements", side_effect=KeyError("bad key")):
+        with (
+            patch.object(helper, "_get_wikidata_id", return_value="Q123"),
+            patch.object(helper, "_get_wikidata_statements", side_effect=KeyError("bad key")),
+        ):
             with pytest.raises(ValidationError):
                 helper.validate_against_wikidata(kg, "Alice")
 
@@ -263,14 +284,18 @@ class TestWikipediaHelpersDeepPaths:
         helper = self._make_helper()
 
         mock_response = MagicMock()
-        mock_response.json.return_value = {"unexpected_key": []}   # no 'search' → KeyError if assumed
+        mock_response.json.return_value = {
+            "unexpected_key": []
+        }  # no 'search' → KeyError if assumed
 
         # Patch requests.get to return a response where .json()['search'][0]['id'] raises KeyError
         mock_response2 = MagicMock()
         mock_response2.json.return_value = {"search": [{"no_id_key": "oops"}]}
 
-        with patch("ipfs_datasets_py.knowledge_graphs.extraction._wikipedia_helpers.requests.get",
-                   return_value=mock_response2):
+        with patch(
+            "ipfs_datasets_py.knowledge_graphs.extraction._wikipedia_helpers.requests.get",
+            return_value=mock_response2,
+        ):
             result = helper._get_wikidata_id("TestEntity")
         # "id" key missing from search[0] → KeyError → except KeyError → return None
         assert result is None
@@ -284,9 +309,14 @@ class TestWikipediaHelpersDeepPaths:
 
         mock_kg = _make_kg(entities=[_make_entity("Alice")])
 
-        with patch.object(helper, "extract_from_wikipedia", return_value=mock_kg), \
-             patch.object(helper, "validate_against_wikidata",
-                          side_effect=ValidationError("validation failed", details={})):
+        with (
+            patch.object(helper, "extract_from_wikipedia", return_value=mock_kg),
+            patch.object(
+                helper,
+                "validate_against_wikidata",
+                side_effect=ValidationError("validation failed", details={}),
+            ),
+        ):
             with pytest.raises(ValidationError):
                 helper.extract_and_validate_wikipedia_graph("Alice")
 
@@ -294,6 +324,7 @@ class TestWikipediaHelpersDeepPaths:
 # ─────────────────────────────────────────────────────────────────
 # core/graph_engine.py — uncovered paths
 # ─────────────────────────────────────────────────────────────────
+
 
 class TestGraphEngineUncoveredPaths:
     """GIVEN GraphEngine WHEN hitting StorageError / in-direction / cycle guard."""
@@ -359,7 +390,7 @@ class TestGraphEngineUncoveredPaths:
         engine = _make_graph_engine()
         engine.create_node(["Person"], {"name": "Alice"})
         # Inject non-Node entries
-        engine._node_cache["some-random-key"] = "not-a-node"   # hits line 293
+        engine._node_cache["some-random-key"] = "not-a-node"  # hits line 293
         engine._node_cache["cid:test-node-id"] = "QmCidValue"  # hits line 289
 
         results = engine.find_nodes(labels=["Person"])
@@ -407,6 +438,7 @@ class TestGraphEngineUncoveredPaths:
         alice = engine.create_node(["Person"], {"name": "Alice"})
         # Manually inject a relationship with a ghost end node
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.types import Relationship as NeoRel
+
         ghost_rel = NeoRel(
             rel_id="ghost-rel",
             rel_type="KNOWS",
@@ -432,19 +464,20 @@ class TestGraphEngineUncoveredPaths:
         # a→b→c→a is a cycle; path to e via a→d→e
         engine.create_relationship("LINK", a.id, b.id)
         engine.create_relationship("LINK", b.id, c.id)
-        engine.create_relationship("LINK", c.id, a.id)   # cycle: c→a, a already visited
+        engine.create_relationship("LINK", c.id, a.id)  # cycle: c→a, a already visited
         engine.create_relationship("LINK", a.id, d.id)
         engine.create_relationship("LINK", d.id, e.id)
 
         # find_paths from a to e: explores a→b→c→(a already visited → line 548) and
         # also finds a→d→e
         paths = engine.find_paths(a.id, e.id, max_depth=5)
-        assert len(paths) >= 1   # a→d→e found
+        assert len(paths) >= 1  # a→d→e found
 
 
 # ─────────────────────────────────────────────────────────────────
 # extraction/finance_graphrag.py — uncovered paths
 # ─────────────────────────────────────────────────────────────────
+
 
 class TestFinanceGraphRAGUncoveredPaths:
     """GIVEN GraphRAGNewsAnalyzer WHEN hitting uncovered code paths."""
@@ -476,12 +509,15 @@ class TestFinanceGraphRAGUncoveredPaths:
         from ipfs_datasets_py.knowledge_graphs.extraction.finance_graphrag import (
             GraphRAGNewsAnalyzer,
         )
+
         analyzer = GraphRAGNewsAnalyzer()
         articles = [
-            {"executives": [
-                {"name": "", "person_id": None},    # empty → skipped
-                {"name": "Alice CEO", "person_id": "p1"},
-            ]}
+            {
+                "executives": [
+                    {"name": "", "person_id": None},  # empty → skipped
+                    {"name": "Alice CEO", "person_id": "p1"},
+                ]
+            }
         ]
         profiles = analyzer.extract_executive_profiles(articles)
         assert len(profiles) == 1
@@ -491,8 +527,11 @@ class TestFinanceGraphRAGUncoveredPaths:
         """GIVEN company with None return_percentage AND None in metadata
         WHEN test_hypothesis called THEN performance skipped (lines 263, 270-272)."""
         from ipfs_datasets_py.knowledge_graphs.extraction.finance_graphrag import (
-            GraphRAGNewsAnalyzer, ExecutiveProfile, CompanyPerformance,
+            GraphRAGNewsAnalyzer,
+            ExecutiveProfile,
+            CompanyPerformance,
         )
+
         analyzer = GraphRAGNewsAnalyzer()
 
         exec1 = ExecutiveProfile(person_id="e1", name="Alice")
@@ -502,8 +541,8 @@ class TestFinanceGraphRAGUncoveredPaths:
 
         # Company has no return_percentage (0.0 default) and no metadata
         co = CompanyPerformance(company_id="c1", symbol="AAPL", name="Apple")
-        co.return_percentage = None   # type: ignore
-        co.metadata = {}   # no metadata entry either
+        co.return_percentage = None  # type: ignore
+        co.metadata = {}  # no metadata entry either
         analyzer.companies["c1"] = co
 
         result = analyzer.test_hypothesis(
@@ -520,8 +559,11 @@ class TestFinanceGraphRAGUncoveredPaths:
         """GIVEN attribute_name != 'gender' WHEN test_hypothesis
         THEN get_attr reads from attributes dict (line 280)."""
         from ipfs_datasets_py.knowledge_graphs.extraction.finance_graphrag import (
-            GraphRAGNewsAnalyzer, ExecutiveProfile, CompanyPerformance,
+            GraphRAGNewsAnalyzer,
+            ExecutiveProfile,
+            CompanyPerformance,
         )
+
         analyzer = GraphRAGNewsAnalyzer()
 
         exec1 = ExecutiveProfile(person_id="e1", name="Alice")
@@ -534,10 +576,12 @@ class TestFinanceGraphRAGUncoveredPaths:
 
         analyzer.executives = {"e1": exec1, "e2": exec2}
 
-        co1 = CompanyPerformance(company_id="c1", symbol="AAPL", name="Apple",
-                                 return_percentage=20.0)
-        co2 = CompanyPerformance(company_id="c2", symbol="GOOG", name="Google",
-                                 return_percentage=10.0)
+        co1 = CompanyPerformance(
+            company_id="c1", symbol="AAPL", name="Apple", return_percentage=20.0
+        )
+        co2 = CompanyPerformance(
+            company_id="c2", symbol="GOOG", name="Google", return_percentage=10.0
+        )
         analyzer.companies = {"c1": co1, "c2": co2}
 
         result = analyzer.test_hypothesis(
@@ -554,8 +598,11 @@ class TestFinanceGraphRAGUncoveredPaths:
         """GIVEN group_b outperforms group_a WHEN test_hypothesis
         THEN conclusion == 'contradicts_hypothesis' (line 307)."""
         from ipfs_datasets_py.knowledge_graphs.extraction.finance_graphrag import (
-            GraphRAGNewsAnalyzer, ExecutiveProfile, CompanyPerformance,
+            GraphRAGNewsAnalyzer,
+            ExecutiveProfile,
+            CompanyPerformance,
         )
+
         analyzer = GraphRAGNewsAnalyzer()
 
         for i in range(25):
@@ -564,8 +611,10 @@ class TestFinanceGraphRAGUncoveredPaths:
             exec_a.companies = [f"A{i}"]
             analyzer.executives[f"fa{i}"] = exec_a
             co_a = CompanyPerformance(
-                company_id=f"ca{i}", symbol=f"A{i}", name=f"CoA{i}",
-                return_percentage=5.0,   # low performance for group_a
+                company_id=f"ca{i}",
+                symbol=f"A{i}",
+                name=f"CoA{i}",
+                return_percentage=5.0,  # low performance for group_a
             )
             analyzer.companies[f"ca{i}"] = co_a
 
@@ -575,8 +624,10 @@ class TestFinanceGraphRAGUncoveredPaths:
             exec_b.companies = [f"B{j}"]
             analyzer.executives[f"mb{j}"] = exec_b
             co_b = CompanyPerformance(
-                company_id=f"cb{j}", symbol=f"B{j}", name=f"CoB{j}",
-                return_percentage=50.0,   # higher performance for group_b
+                company_id=f"cb{j}",
+                symbol=f"B{j}",
+                name=f"CoB{j}",
+                return_percentage=50.0,  # higher performance for group_b
             )
             analyzer.companies[f"cb{j}"] = co_b
 
@@ -595,6 +646,7 @@ class TestFinanceGraphRAGUncoveredPaths:
             extract_executive_profiles_from_archives,
         )
         import json
+
         raw = extract_executive_profiles_from_archives(
             sources="ap,reuters",
             start_date="2021-01-01",
@@ -611,6 +663,7 @@ class TestFinanceGraphRAGUncoveredPaths:
 # ─────────────────────────────────────────────────────────────────
 # transactions/manager.py — uncovered paths
 # ─────────────────────────────────────────────────────────────────
+
 
 class TestTransactionManagerUncoveredPaths:
     """GIVEN TransactionManager WHEN hitting uncovered exception paths."""
@@ -660,11 +713,13 @@ class TestTransactionManagerUncoveredPaths:
 # storage/ipld_backend.py — cache truthy path
 # ─────────────────────────────────────────────────────────────────
 
+
 class TestIPLDBackendCachePaths:
     """GIVEN IPLDBackend WHEN cache is populated (truthy) WHEN store/retrieve called."""
 
     def _make_backend(self):
         from ipfs_datasets_py.knowledge_graphs.storage.ipld_backend import IPLDBackend
+
         backend = IPLDBackend()
         mock_ipfs = MagicMock()
         mock_ipfs.block_get.return_value = b'{"key": "value"}'
@@ -678,7 +733,7 @@ class TestIPLDBackendCachePaths:
         backend = self._make_backend()
         # Pre-populate cache so it is truthy
         backend._cache.put("other-cid", b"other-data")
-        assert backend._cache   # truthy now
+        assert backend._cache  # truthy now
 
         mock_ipfs = backend._backend
         mock_ipfs.block_get.return_value = b'{"answer": 42}'
@@ -691,7 +746,7 @@ class TestIPLDBackendCachePaths:
         backend = self._make_backend()
         # Pre-populate cache
         backend._cache.put("some-cid", b"data")
-        assert backend._cache   # truthy
+        assert backend._cache  # truthy
 
         backend._backend.unpin = MagicMock()
         backend.unpin("some-cid")

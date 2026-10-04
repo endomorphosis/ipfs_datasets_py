@@ -3,6 +3,7 @@
 Tests RateLimiter and UploadToHuggingFaceInParallel without requiring
 ``huggingface_hub`` or ``bs4`` to be installed.
 """
+
 from __future__ import annotations
 
 import importlib.util
@@ -37,6 +38,7 @@ login = _engine_mod.login
 # ---------------------------------------------------------------------------
 # RateLimiter tests
 # ---------------------------------------------------------------------------
+
 
 class TestRateLimiter:
     """Tests for the token-bucket RateLimiter class."""
@@ -77,6 +79,7 @@ class TestRateLimiter:
     def test_thread_safety_lock_acquired(self) -> None:
         """GIVEN a RateLimiter; THEN it has a threading.Lock."""
         import threading
+
         rl = RateLimiter()
         assert isinstance(rl.mutex, type(threading.Lock()))
 
@@ -84,6 +87,7 @@ class TestRateLimiter:
 # ---------------------------------------------------------------------------
 # UploadToHuggingFaceInParallel tests
 # ---------------------------------------------------------------------------
+
 
 class TestUploadToHuggingFaceInParallel:
     """Tests for UploadToHuggingFaceInParallel (without huggingface_hub)."""
@@ -98,6 +102,7 @@ class TestUploadToHuggingFaceInParallel:
 
     def test_init_with_mock_configs(self) -> None:
         """GIVEN mock configs; THEN repo_id and rate_limiter are set."""
+
         class MockConfigs:
             REPO_ID = "owner/my-dataset"
             HUGGING_FACE_USER_ACCESS_TOKEN = None
@@ -109,6 +114,7 @@ class TestUploadToHuggingFaceInParallel:
 
     def test_init_checks_existing_auth_before_login(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """GIVEN active `hf auth whoami`; THEN login() is not called."""
+
         class MockConfigs:
             REPO_ID = "owner/my-dataset"
             HUGGING_FACE_USER_ACCESS_TOKEN = "token-value"
@@ -129,8 +135,11 @@ class TestUploadToHuggingFaceInParallel:
         UploadToHuggingFaceInParallel(configs=MockConfigs())
         assert login_called["count"] == 0
 
-    def test_init_without_auth_and_without_token_skips_login(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_init_without_auth_and_without_token_skips_login(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """GIVEN no `hf auth whoami` session and no token; THEN login() is not called."""
+
         class MockConfigs:
             REPO_ID = "owner/my-dataset"
             HUGGING_FACE_USER_ACCESS_TOKEN = None
@@ -195,9 +204,7 @@ class TestUploadToHuggingFaceInParallel:
     def test_upload_folder_sync_succeeds_with_stub(self, tmp_path: Path) -> None:
         """GIVEN stub HfApi that returns resolved Future; WHEN _upload_folder_sync; THEN True."""
         uploader = UploadToHuggingFaceInParallel()
-        result = uploader._upload_folder_sync(
-            folder_path=tmp_path, path_in_repo="data/batch_01"
-        )
+        result = uploader._upload_folder_sync(folder_path=tmp_path, path_in_repo="data/batch_01")
         assert result is True
 
     def test_backward_compat_exports(self) -> None:

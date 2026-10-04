@@ -30,4 +30,3 @@ def test_proof_ready_clause_does_not_call_llm_router(monkeypatch) -> None:
     assert result.metadata["deterministic_parser"]["proof_ready"] is True
     assert result.output is not None
     assert result.output.proposition == "∀x (Tenant(x) → PayRent(x))"
-

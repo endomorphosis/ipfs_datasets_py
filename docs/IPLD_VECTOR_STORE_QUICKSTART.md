@@ -105,10 +105,7 @@ This guide provides a quick reference for implementing the IPLD/IPFS vector sear
 ### 1. Router Integration Pattern
 ```python
 # Config-driven router usage
-config = UnifiedVectorStoreConfig(
-    use_embeddings_router=True,
-    use_ipfs_router=True
-)
+config = UnifiedVectorStoreConfig(use_embeddings_router=True, use_ipfs_router=True)
 
 # Automatic routing in store methods
 store = IPLDVectorStore(config)
@@ -122,7 +119,7 @@ bridge = create_bridge(
     source_type=VectorStoreType.FAISS,
     target_type=VectorStoreType.IPLD,
     source_store=faiss_store,
-    target_store=ipld_store
+    target_store=ipld_store,
 )
 
 # Simple migration API
@@ -149,9 +146,7 @@ Collection Root (CID)
 ```python
 # All methods are async
 async def add_embeddings(
-    self, 
-    embeddings: List[EmbeddingResult],
-    collection_name: Optional[str] = None
+    self, embeddings: List[EmbeddingResult], collection_name: Optional[str] = None
 ) -> List[str]:
     """Async method implementation."""
     # Use anyio for cross-platform async
@@ -165,11 +160,7 @@ async def add_embeddings(
 ### Tip 1: Reuse Existing Code
 ```python
 # Leverage existing IPLD infrastructure
-from ipfs_datasets_py.processors.storage.ipld import (
-    IPLDStorage,
-    OptimizedEncoder,
-    create_dag_node
-)
+from ipfs_datasets_py.processors.storage.ipld import IPLDStorage, OptimizedEncoder, create_dag_node
 
 # Use existing routers
 from ipfs_datasets_py import embeddings_router, ipfs_backend_router
@@ -180,6 +171,7 @@ from ipfs_datasets_py import embeddings_router, ipfs_backend_router
 # Handle optional dependencies gracefully
 try:
     import faiss
+
     HAVE_FAISS = True
 except ImportError:
     HAVE_FAISS = False
@@ -199,11 +191,12 @@ warnings.warn(
     "ipfs_datasets_py.vector_stores.ipld is deprecated. "
     "Use ipfs_datasets_py.vector_stores.ipld_vector_store instead.",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 # Keep old imports working
 from .ipld_vector_store import IPLDVectorStore as _IPLDVectorStore
+
 IPLDVectorStore = _IPLDVectorStore
 ```
 
@@ -211,15 +204,21 @@ IPLDVectorStore = _IPLDVectorStore
 ```python
 class VectorStoreError(Exception):
     """Base exception for vector store errors."""
+
     pass
+
 
 class VectorStoreConnectionError(VectorStoreError):
     """Connection-related errors."""
+
     pass
+
 
 class VectorStoreOperationError(VectorStoreError):
     """Operation-related errors."""
+
     pass
+
 
 # Use in implementation
 try:
@@ -246,133 +245,111 @@ if self.config.use_ipfs_router:
 ### Pattern 1: Collection Management
 ```python
 async def create_collection(
-    self, 
-    collection_name: Optional[str] = None,
-    dimension: Optional[int] = None, 
-    **kwargs
+    self, collection_name: Optional[str] = None, dimension: Optional[int] = None, **kwargs
 ) -> bool:
     """Create new collection with metadata."""
     name = collection_name or self.collection_name
     dim = dimension or self.dimension
-    
+
     # Create metadata block
     metadata = {
         "name": name,
         "dimension": dim,
         "metric": self.distance_metric,
         "created": datetime.utcnow().isoformat(),
-        "type": "vector_collection"
+        "type": "vector_collection",
     }
-    
+
     # Store metadata to IPLD
     metadata_cid = await self._store_metadata(metadata)
-    
+
     # Initialize empty index
     index = self._create_index(dim)
-    
+
     # Store collection info
-    self.collections[name] = {
-        "metadata_cid": metadata_cid,
-        "index": index,
-        "count": 0
-    }
-    
+    self.collections[name] = {"metadata_cid": metadata_cid, "index": index, "count": 0}
+
     return True
 ```
 
 ### Pattern 2: Vector Addition with Router
 ```python
 async def add_embeddings(
-    self,
-    embeddings: List[EmbeddingResult],
-    collection_name: Optional[str] = None
+    self, embeddings: List[EmbeddingResult], collection_name: Optional[str] = None
 ) -> List[str]:
     """Add embeddings to collection."""
     name = collection_name or self.collection_name
-    
+
     # Batch process
     cids = []
     vectors = []
     metadata_list = []
-    
+
     for emb in embeddings:
         # Store vector data to IPLD
-        vector_data = {
-            "vector": emb.vector.tolist(),
-            "text": emb.text,
-            "metadata": emb.metadata
-        }
+        vector_data = {"vector": emb.vector.tolist(), "text": emb.text, "metadata": emb.metadata}
         cid = await self._store_vector_data(vector_data)
         cids.append(cid)
         vectors.append(emb.vector)
         metadata_list.append(emb.metadata)
-    
+
     # Update FAISS index
     vectors_np = np.array(vectors, dtype=np.float32)
     self._index.add(vectors_np)
-    
+
     # Update collection metadata
     await self._update_collection_root(name, cids, metadata_list)
-    
+
     return cids
 ```
 
 ### Pattern 3: CAR Export
 ```python
-async def export_to_car(
-    self,
-    output_path: str,
-    collection_name: Optional[str] = None
-) -> bool:
+async def export_to_car(self, output_path: str, collection_name: Optional[str] = None) -> bool:
     """Export collection to CAR file."""
     name = collection_name or self.collection_name
     collection = self.collections.get(name)
-    
+
     if not collection:
         raise VectorStoreError(f"Collection {name} not found")
-    
+
     # Get all CIDs in collection
     root_cid = collection["root_cid"]
     all_cids = await self._collect_all_cids(root_cid)
-    
+
     # Export to CAR using IPLD storage
     await self.storage.export_to_car(
-        root_cid=root_cid,
-        output_path=output_path,
-        include_cids=all_cids
+        root_cid=root_cid, output_path=output_path, include_cids=all_cids
     )
-    
+
     return True
 ```
 
 ### Pattern 4: Bridge Migration
 ```python
 async def migrate_collection(
-    self,
-    collection_name: str,
-    target_collection_name: Optional[str] = None,
-    batch_size: int = 1000
+    self, collection_name: str, target_collection_name: Optional[str] = None, batch_size: int = 1000
 ) -> int:
     """Migrate collection from source to target."""
     target_name = target_collection_name or collection_name
-    
+
     # Get source metadata
     metadata = await self.source_store.get_store_info()
-    
+
     # Create target collection
     await self.target_store.create_collection(
         collection_name=target_name,
         dimension=metadata["dimension"],
-        distance_metric=metadata["metric"]
+        distance_metric=metadata["metric"],
     )
-    
+
     # Stream and migrate
     total = 0
     async for batch in self.export_collection(collection_name, batch_size):
         await self.target_store.add_embeddings(batch, target_name)
         total += len(batch)
         logger.info(f"Migrated {total} vectors so far...")
-    
+
     logger.info(f"Migration complete: {total} vectors")
     return total
 ```
@@ -386,6 +363,7 @@ import numpy as np
 from ipfs_datasets_py.vector_stores import IPLDVectorStore
 from ipfs_datasets_py.ml.embeddings.schema import EmbeddingResult
 
+
 @pytest.mark.asyncio
 async def test_ipld_vector_store_add_and_search():
     """Test basic add and search operations."""
@@ -395,29 +373,27 @@ async def test_ipld_vector_store_add_and_search():
             collection_name="test",
             dimension=128,
             use_embeddings_router=False,  # Don't use router in tests
-            use_ipfs_router=False
+            use_ipfs_router=False,
         )
     )
-    
+
     await store.create_collection()
-    
+
     # Create test embeddings
     embeddings = [
         EmbeddingResult(
-            text=f"Document {i}",
-            vector=np.random.rand(128).tolist(),
-            metadata={"index": i}
+            text=f"Document {i}", vector=np.random.rand(128).tolist(), metadata={"index": i}
         )
         for i in range(10)
     ]
-    
+
     # WHEN
     ids = await store.add_embeddings(embeddings)
-    
+
     # Search
     query_vector = np.random.rand(128).tolist()
     results = await store.search(query_vector, top_k=5)
-    
+
     # THEN
     assert len(ids) == 10
     assert len(results) == 5
@@ -433,25 +409,20 @@ async def test_faiss_to_ipld_migration():
     # GIVEN - FAISS store with data
     faiss_store = FAISSVectorStore(config=faiss_config)
     await faiss_store.create_collection("test")
-    
+
     embeddings = create_test_embeddings(100)
     await faiss_store.add_embeddings(embeddings)
-    
+
     # Create IPLD store
     ipld_store = IPLDVectorStore(config=ipld_config)
-    
+
     # WHEN - Migrate
-    bridge = create_bridge(
-        VectorStoreType.FAISS,
-        VectorStoreType.IPLD,
-        faiss_store,
-        ipld_store
-    )
+    bridge = create_bridge(VectorStoreType.FAISS, VectorStoreType.IPLD, faiss_store, ipld_store)
     count = await bridge.migrate_collection("test")
-    
+
     # THEN - Verify migration
     assert count == 100
-    
+
     # Verify search works in IPLD
     query = embeddings[0].vector
     results = await ipld_store.search(query, top_k=5)
@@ -465,14 +436,12 @@ async def test_faiss_to_ipld_migration():
 ```python
 # Process in batches to manage memory
 async def add_embeddings_batch(
-    self,
-    embeddings: List[EmbeddingResult],
-    batch_size: int = 1000
+    self, embeddings: List[EmbeddingResult], batch_size: int = 1000
 ) -> List[str]:
     """Add embeddings in batches."""
     all_ids = []
     for i in range(0, len(embeddings), batch_size):
-        batch = embeddings[i:i + batch_size]
+        batch = embeddings[i : i + batch_size]
         ids = await self.add_embeddings(batch)
         all_ids.extend(ids)
     return all_ids
@@ -483,20 +452,18 @@ async def add_embeddings_batch(
 # Use anyio task groups for parallel operations
 import anyio
 
-async def _store_vectors_parallel(
-    self,
-    vectors: List[Dict[str, Any]]
-) -> List[str]:
+
+async def _store_vectors_parallel(self, vectors: List[Dict[str, Any]]) -> List[str]:
     """Store vectors in parallel."""
     cids = []
-    
+
     async def store_one(vector_data):
         return await self._store_vector_data(vector_data)
-    
+
     async with anyio.create_task_group() as tg:
         for vector in vectors:
             cids.append(await tg.start_soon(store_one, vector))
-    
+
     return cids
 ```
 

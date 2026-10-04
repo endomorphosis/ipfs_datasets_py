@@ -111,6 +111,7 @@ def _find_ergo_binary() -> Optional[Path]:
 
     # Fall back to PATH
     import shutil
+
     for name in _ERGO_BINARY_NAMES:
         found = shutil.which(name)
         if found:
@@ -283,9 +284,7 @@ class ErgoAIWrapper:
         tmp_path: Optional[str] = None
 
         try:
-            with tempfile.NamedTemporaryFile(
-                mode="w", suffix=".ergo", delete=False
-            ) as tmp:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".ergo", delete=False) as tmp:
                 tmp.write(program)
                 tmp_path = tmp.name
 

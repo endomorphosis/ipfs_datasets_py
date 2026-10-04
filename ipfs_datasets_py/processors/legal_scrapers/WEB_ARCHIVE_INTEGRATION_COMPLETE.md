@@ -100,8 +100,7 @@ from ipfs_datasets_py.processors.legal_scrapers import LegalWebArchiveSearch
 searcher = LegalWebArchiveSearch()
 
 results = searcher.unified_search(
-    "EPA water pollution regulations California",
-    include_archives=True
+    "EPA water pollution regulations California", include_archives=True
 )
 
 print(f"Current: {len(results['current_results'])}")
@@ -111,14 +110,9 @@ print(f"Combined: {len(results['combined_results'])}")
 
 ### Search with Auto-Archiving
 ```python
-searcher = LegalWebArchiveSearch(
-    archive_dir="/path/to/archives",
-    auto_archive=True
-)
+searcher = LegalWebArchiveSearch(archive_dir="/path/to/archives", auto_archive=True)
 
-results = searcher.unified_search(
-    "OSHA workplace safety requirements"
-)
+results = searcher.unified_search("OSHA workplace safety requirements")
 
 # .gov results automatically archived
 ```
@@ -129,15 +123,13 @@ historical = searcher.search_archives(
     query="California housing discrimination laws",
     from_date="2018-01-01",
     to_date="2022-12-31",
-    domains=["hud.gov", "ca.gov"]
+    domains=["hud.gov", "ca.gov"],
 )
 ```
 
 ### Via MCP Tools
 ```python
-from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import (
-    register_legal_web_archive_tools
-)
+from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import register_legal_web_archive_tools
 
 register_legal_web_archive_tools(tool_registry)
 ```

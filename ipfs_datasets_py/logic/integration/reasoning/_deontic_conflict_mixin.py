@@ -5,6 +5,7 @@ Contains the ConflictDetector class and the DeonticConflictMixin with conflict
 analysis/reporting methods extracted from DeontologicalReasoningEngine.
 Extracted to keep deontological_reasoning.py under 600 lines.
 """
+
 from __future__ import annotations
 
 import logging
@@ -47,7 +48,9 @@ class ConflictDetector:
 
         return conflicts
 
-    def _group_by_entity(self, statements: List[DeonticStatement]) -> Dict[str, List[DeonticStatement]]:
+    def _group_by_entity(
+        self, statements: List[DeonticStatement]
+    ) -> Dict[str, List[DeonticStatement]]:
         """Group statements by the entity they refer to."""
         groups: Dict[str, List[DeonticStatement]] = {}
         for statement in statements:
@@ -62,14 +65,16 @@ class ConflictDetector:
         conflicts = []
 
         for i, stmt1 in enumerate(statements):
-            for j, stmt2 in enumerate(statements[i+1:], i+1):
+            for j, stmt2 in enumerate(statements[i + 1 :], i + 1):
                 conflict = self._check_statement_pair(stmt1, stmt2)
                 if conflict:
                     conflicts.append(conflict)
 
         return conflicts
 
-    def _check_statement_pair(self, stmt1: DeonticStatement, stmt2: DeonticStatement) -> Optional[DeonticConflict]:
+    def _check_statement_pair(
+        self, stmt1: DeonticStatement, stmt2: DeonticStatement
+    ) -> Optional[DeonticConflict]:
         """Check if two statements conflict with each other."""
         if not self._actions_are_related(stmt1.action, stmt2.action):
             return None
@@ -78,20 +83,26 @@ class ConflictDetector:
         severity = "medium"
         explanation = ""
 
-        if (stmt1.modality == DeonticModality.OBLIGATION and
-                stmt2.modality == DeonticModality.PROHIBITION):
+        if (
+            stmt1.modality == DeonticModality.OBLIGATION
+            and stmt2.modality == DeonticModality.PROHIBITION
+        ):
             conflict_type = ConflictType.OBLIGATION_PROHIBITION
             severity = "high"
             explanation = f"Entity '{stmt1.entity}' has conflicting obligations: must {stmt1.action} but must not {stmt2.action}"
 
-        elif (stmt1.modality == DeonticModality.PERMISSION and
-              stmt2.modality == DeonticModality.PROHIBITION):
+        elif (
+            stmt1.modality == DeonticModality.PERMISSION
+            and stmt2.modality == DeonticModality.PROHIBITION
+        ):
             conflict_type = ConflictType.PERMISSION_PROHIBITION
             severity = "high"
             explanation = f"Entity '{stmt1.entity}' has conflicting permissions: may {stmt1.action} but cannot {stmt2.action}"
 
-        elif (stmt1.modality == DeonticModality.CONDITIONAL and
-              stmt2.modality == DeonticModality.CONDITIONAL):
+        elif (
+            stmt1.modality == DeonticModality.CONDITIONAL
+            and stmt2.modality == DeonticModality.CONDITIONAL
+        ):
             if self._conditional_conflict_exists(stmt1, stmt2):
                 conflict_type = ConflictType.CONDITIONAL_CONFLICT
                 severity = "medium"
@@ -101,7 +112,9 @@ class ConflictDetector:
             if self._modalities_conflict(stmt1.modality, stmt2.modality):
                 conflict_type = ConflictType.JURISDICTIONAL
                 severity = "medium"
-                explanation = f"Entity '{stmt1.entity}' has conflicting rules from different sources"
+                explanation = (
+                    f"Entity '{stmt1.entity}' has conflicting rules from different sources"
+                )
 
         if conflict_type:
             conflict_id = f"conflict_{stmt1.id}_{stmt2.id}"
@@ -112,7 +125,9 @@ class ConflictDetector:
                 statement2=stmt2,
                 severity=severity,
                 explanation=explanation,
-                resolution_suggestions=self._generate_resolution_suggestions(stmt1, stmt2, conflict_type)
+                resolution_suggestions=self._generate_resolution_suggestions(
+                    stmt1, stmt2, conflict_type
+                ),
             )
 
         return None
@@ -140,7 +155,9 @@ class ConflictDetector:
 
         return len(intersection) / len(union) if union else 0.0
 
-    def _conditional_conflict_exists(self, stmt1: DeonticStatement, stmt2: DeonticStatement) -> bool:
+    def _conditional_conflict_exists(
+        self, stmt1: DeonticStatement, stmt2: DeonticStatement
+    ) -> bool:
         """Check if two conditional statements conflict."""
         if not stmt1.conditions or not stmt2.conditions:
             return False
@@ -158,38 +175,41 @@ class ConflictDetector:
             (DeonticModality.OBLIGATION, DeonticModality.PROHIBITION),
             (DeonticModality.PERMISSION, DeonticModality.PROHIBITION),
             (DeonticModality.PROHIBITION, DeonticModality.OBLIGATION),
-            (DeonticModality.PROHIBITION, DeonticModality.PERMISSION)
+            (DeonticModality.PROHIBITION, DeonticModality.PERMISSION),
         ]
 
         return (mod1, mod2) in conflicting_pairs or (mod2, mod1) in conflicting_pairs
 
     def _generate_resolution_suggestions(
-        self,
-        stmt1: DeonticStatement,
-        stmt2: DeonticStatement,
-        conflict_type: ConflictType
+        self, stmt1: DeonticStatement, stmt2: DeonticStatement, conflict_type: ConflictType
     ) -> List[str]:
         """Generate suggestions for resolving conflicts."""
         suggestions = []
 
         if conflict_type == ConflictType.JURISDICTIONAL:
-            suggestions.extend([
-                "Determine which jurisdiction takes precedence",
-                "Check if statements apply to different contexts or time periods",
-                "Look for hierarchical authority relationships"
-            ])
+            suggestions.extend(
+                [
+                    "Determine which jurisdiction takes precedence",
+                    "Check if statements apply to different contexts or time periods",
+                    "Look for hierarchical authority relationships",
+                ]
+            )
         elif conflict_type == ConflictType.OBLIGATION_PROHIBITION:
-            suggestions.extend([
-                "Check for exceptions or conditions that might resolve the conflict",
-                "Determine if one statement supersedes the other",
-                "Look for temporal ordering of the requirements"
-            ])
+            suggestions.extend(
+                [
+                    "Check for exceptions or conditions that might resolve the conflict",
+                    "Determine if one statement supersedes the other",
+                    "Look for temporal ordering of the requirements",
+                ]
+            )
         elif conflict_type == ConflictType.CONDITIONAL_CONFLICT:
-            suggestions.extend([
-                "Examine the specific conditions to see if they truly overlap",
-                "Check for implicit priorities between conditions",
-                "Look for exception clauses that might apply"
-            ])
+            suggestions.extend(
+                [
+                    "Examine the specific conditions to see if they truly overlap",
+                    "Check for implicit priorities between conditions",
+                    "Look for exception clauses that might apply",
+                ]
+            )
 
         return suggestions
 
@@ -212,15 +232,10 @@ class DeonticConflictMixin:
             severity = conflict.severity
             by_severity[severity] = by_severity.get(severity, 0) + 1
 
-        return {
-            "by_type": by_type,
-            "by_severity": by_severity
-        }
+        return {"by_type": by_type, "by_severity": by_severity}
 
     def _generate_entity_reports(
-        self,
-        statements: List[DeonticStatement],
-        conflicts: List[DeonticConflict]
+        self, statements: List[DeonticStatement], conflicts: List[DeonticConflict]
     ) -> Dict[str, Any]:
         """Generate conflict reports for each entity."""
         entity_reports: Dict[str, Any] = {}
@@ -253,11 +268,9 @@ class DeonticConflictMixin:
                 "conflict_severity": {
                     "high": len([c for c in entity_conf if c.severity == "high"]),
                     "medium": len([c for c in entity_conf if c.severity == "medium"]),
-                    "low": len([c for c in entity_conf if c.severity == "low"])
+                    "low": len([c for c in entity_conf if c.severity == "low"]),
                 },
-                "top_conflicts": [
-                    self._format_conflict_summary(c) for c in entity_conf[:3]
-                ]
+                "top_conflicts": [self._format_conflict_summary(c) for c in entity_conf[:3]],
             }
 
         return entity_reports
@@ -273,7 +286,7 @@ class DeonticConflictMixin:
             "statement1_text": conflict.statement1.source_text,
             "statement2_text": conflict.statement2.source_text,
             "sources": [conflict.statement1.source_document, conflict.statement2.source_document],
-            "resolution_suggestions": conflict.resolution_suggestions[:2]
+            "resolution_suggestions": conflict.resolution_suggestions[:2],
         }
 
     def _generate_analysis_recommendations(self, conflicts: List[DeonticConflict]) -> List[str]:
@@ -286,19 +299,25 @@ class DeonticConflictMixin:
                 f"Address {high_severity_count} high-severity conflicts that create direct contradictions"
             )
 
-        jurisdictional_conflicts = len([c for c in conflicts if c.conflict_type == ConflictType.JURISDICTIONAL])
+        jurisdictional_conflicts = len(
+            [c for c in conflicts if c.conflict_type == ConflictType.JURISDICTIONAL]
+        )
         if jurisdictional_conflicts > 0:
             recommendations.append(
                 f"Review {jurisdictional_conflicts} jurisdictional conflicts for authority hierarchy"
             )
 
-        conditional_conflicts = len([c for c in conflicts if c.conflict_type == ConflictType.CONDITIONAL_CONFLICT])
+        conditional_conflicts = len(
+            [c for c in conflicts if c.conflict_type == ConflictType.CONDITIONAL_CONFLICT]
+        )
         if conditional_conflicts > 0:
             recommendations.append(
                 f"Examine {conditional_conflicts} conditional conflicts for context specificity"
             )
 
         if not recommendations:
-            recommendations.append("No major conflicts detected. Review extraction patterns for completeness.")
+            recommendations.append(
+                "No major conflicts detected. Review extraction patterns for completeness."
+            )
 
         return recommendations

@@ -33,10 +33,12 @@ def create_cache_cid(data: Dict[str, Any]) -> str:
     # - SHA2-256 hashing
     # - CIDv1 format with base32 encoding
     # - Raw codec for efficiency
-    
+
+
 def validate_cid(cid_str: str) -> bool:
     """Validate that a string is a valid IPFS CID."""
-    
+
+
 def parse_cid(cid_str: str) -> Dict[str, Any]:
     """Parse CID and extract metadata (version, codec, hash)."""
 ```
@@ -97,6 +99,7 @@ Interactive demonstration script showing:
 ```python
 import hashlib
 
+
 class LLMResponseCache:
     def _make_key(self, text: str, provider: str, prompt_hash: str) -> str:
         combined = f"{text}|{provider}|{prompt_hash}"
@@ -107,16 +110,17 @@ class LLMResponseCache:
 ```python
 from .cache_utils import create_cache_cid
 
+
 class LLMResponseCache:
     """In-memory cache using IPFS CIDs."""
-    
+
     def _make_key(self, text: str, provider: str, prompt_hash: str) -> str:
         """Create IPFS CID cache key using multiformats."""
         cache_data = {
             "text": text,
             "provider": provider,
             "prompt_hash": prompt_hash,
-            "version": "1.0"
+            "version": "1.0",
         }
         return create_cache_cid(cache_data)
 ```
@@ -136,11 +140,13 @@ Added 4 new tests to validate IPFS CID format:
 def test_cache_keys_are_ipfs_cids():
     """Test that cache keys are valid IPFS CIDs."""
     # Validates CID format (starts with "bafk")
-    
+
+
 def test_cache_key_determinism():
     """Test that cache keys are deterministic."""
     # Same inputs produce same CID
-    
+
+
 def test_cache_key_uniqueness():
     """Test that different inputs produce different CIDs."""
     # Different inputs produce different CIDs

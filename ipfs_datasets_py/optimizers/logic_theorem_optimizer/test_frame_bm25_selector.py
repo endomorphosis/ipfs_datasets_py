@@ -556,7 +556,9 @@ def test_frame_ontology_contextualized_terms_contextualize_generic_structural_va
     assert frame_ontology_high_signal_terms(terms) == []
 
 
-def test_frame_ontology_contextualized_terms_contextualize_modal_cues_and_low_signal_digit_signatures() -> None:
+def test_frame_ontology_contextualized_terms_contextualize_modal_cues_and_low_signal_digit_signatures() -> (
+    None
+):
     terms = frame_ontology_contextualized_terms(
         feature_keys=[
             "flogic:citation_section_number_parity_positioned:2:even",

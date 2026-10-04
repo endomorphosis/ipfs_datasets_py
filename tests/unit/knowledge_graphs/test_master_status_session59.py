@@ -40,6 +40,7 @@ def _read(path: Path) -> str:
 # Class 1: ROADMAP.md header consistency
 # ---------------------------------------------------------------------------
 
+
 class TestRoadmapHeaderVersion:
     """ROADMAP.md must declare the current version in its header block."""
 
@@ -54,9 +55,7 @@ class TestRoadmapHeaderVersion:
         """ROADMAP.md header must declare version 3.22.14 (updated in session 59)."""
         content = _read(_ROADMAP)
         # Expect either "**Current Version:** 3.22.14" or "Current Version: 3.22.14"
-        assert "3.22.14" in content, (
-            "ROADMAP.md 'Current Version' should be 3.22.14"
-        )
+        assert "3.22.14" in content, "ROADMAP.md 'Current Version' should be 3.22.14"
 
     def test_roadmap_status_is_production_ready(self):
         """ROADMAP.md should declare 'Production Ready' status."""
@@ -69,9 +68,7 @@ class TestRoadmapHeaderVersion:
         # The old stale value was "**Current Version:** 3.22.3"
         # It may still appear in the release table, but NOT as the current-version header
         lines = content.splitlines()
-        current_version_lines = [
-            l for l in lines if "Current Version:" in l
-        ]
+        current_version_lines = [l for l in lines if "Current Version:" in l]
         assert current_version_lines, "ROADMAP.md must have a Current Version line"
         cv_line = current_version_lines[0]
         assert "3.22.3" not in cv_line, (
@@ -90,15 +87,28 @@ class TestRoadmapHeaderVersion:
 # Class 2: ROADMAP.md release table completeness
 # ---------------------------------------------------------------------------
 
+
 class TestRoadmapReleaseTable:
     """All 3.22.x versions from 3.22.0 through 3.22.14 must appear in the
     release schedule table."""
 
     # The full set of expected version strings that must appear in the table.
     _EXPECTED_VERSIONS = [
-        "3.22.0", "3.22.1", "3.22.2", "3.22.3", "3.22.4", "3.22.5",
-        "3.22.6", "3.22.7", "3.22.8", "3.22.9", "3.22.10", "3.22.11",
-        "3.22.12", "3.22.13", "3.22.14",
+        "3.22.0",
+        "3.22.1",
+        "3.22.2",
+        "3.22.3",
+        "3.22.4",
+        "3.22.5",
+        "3.22.6",
+        "3.22.7",
+        "3.22.8",
+        "3.22.9",
+        "3.22.10",
+        "3.22.11",
+        "3.22.12",
+        "3.22.13",
+        "3.22.14",
     ]
 
     def _table_section(self) -> str:
@@ -114,23 +124,17 @@ class TestRoadmapReleaseTable:
     def test_release_table_has_3_22_4_through_3_22_9(self):
         table = self._table_section()
         for v in ["3.22.4", "3.22.5", "3.22.6", "3.22.7", "3.22.8", "3.22.9"]:
-            assert v in table, (
-                f"ROADMAP.md release table is missing version {v}"
-            )
+            assert v in table, f"ROADMAP.md release table is missing version {v}"
 
     def test_release_table_has_3_22_10_through_3_22_14(self):
         table = self._table_section()
         for v in ["3.22.10", "3.22.11", "3.22.12", "3.22.13", "3.22.14"]:
-            assert v in table, (
-                f"ROADMAP.md release table is missing version {v}"
-            )
+            assert v in table, f"ROADMAP.md release table is missing version {v}"
 
     def test_release_table_all_3_22_versions_present(self):
         table = self._table_section()
         missing = [v for v in self._EXPECTED_VERSIONS if v not in table]
-        assert not missing, (
-            f"ROADMAP.md release table is missing versions: {missing}"
-        )
+        assert not missing, f"ROADMAP.md release table is missing versions: {missing}"
 
     def test_future_4_0_entry_still_present(self):
         """The v4.0 future entry should still be in the table."""
@@ -142,13 +146,26 @@ class TestRoadmapReleaseTable:
 # Class 3: CHANGELOG version coverage
 # ---------------------------------------------------------------------------
 
+
 class TestChangelogVersionCoverage:
     """All 3.22.x versions must have proper section headings in the CHANGELOG."""
 
     _EXPECTED_VERSIONS = [
-        "3.22.0", "3.22.1", "3.22.2", "3.22.3", "3.22.4", "3.22.5",
-        "3.22.6", "3.22.7", "3.22.8", "3.22.9", "3.22.10", "3.22.11",
-        "3.22.12", "3.22.13", "3.22.14",
+        "3.22.0",
+        "3.22.1",
+        "3.22.2",
+        "3.22.3",
+        "3.22.4",
+        "3.22.5",
+        "3.22.6",
+        "3.22.7",
+        "3.22.8",
+        "3.22.9",
+        "3.22.10",
+        "3.22.11",
+        "3.22.12",
+        "3.22.13",
+        "3.22.14",
     ]
 
     def _section_headings(self) -> list[str]:
@@ -184,16 +201,15 @@ class TestChangelogVersionCoverage:
     def test_changelog_all_expected_versions_present(self):
         headings = self._section_headings()
         missing = [v for v in self._EXPECTED_VERSIONS if v not in headings]
-        assert not missing, (
-            f"CHANGELOG is missing version sections: {missing}"
-        )
+        assert not missing, f"CHANGELOG is missing version sections: {missing}"
 
     def test_changelog_headings_are_descending(self):
         """CHANGELOG follows Keep-a-Changelog convention: newest version first."""
         headings = self._section_headings()
         # Convert to tuples for comparison
-        tuples = [tuple(int(x) for x in v.split(".")) for v in headings
-                  if re.match(r"\d+\.\d+\.\d+", v)]
+        tuples = [
+            tuple(int(x) for x in v.split(".")) for v in headings if re.match(r"\d+\.\d+\.\d+", v)
+        ]
         assert tuples == sorted(tuples, reverse=True), (
             "CHANGELOG version headings should be in descending order (newest first)"
         )
@@ -203,14 +219,13 @@ class TestChangelogVersionCoverage:
 # Class 4: MASTER_STATUS.md version consistency
 # ---------------------------------------------------------------------------
 
+
 class TestMasterStatusVersion:
     """MASTER_STATUS.md must reflect the current version (3.22.14)."""
 
     def test_master_status_version_is_3_22_14(self):
         content = _read(_MASTER)
-        assert "3.22.14" in content, (
-            "MASTER_STATUS.md must declare version 3.22.14"
-        )
+        assert "3.22.14" in content, "MASTER_STATUS.md must declare version 3.22.14"
 
     def test_master_status_version_header_line(self):
         """The '**Version:**' line should say 3.22.14 or later."""
@@ -218,12 +233,22 @@ class TestMasterStatusVersion:
         version_lines = [l for l in content.splitlines() if l.startswith("**Version:**")]
         assert version_lines, "MASTER_STATUS.md must have a **Version:** line"
         # Accept 3.22.14 (set in session 59), 3.22.15/3.22.16/3.22.17+ (advanced in subsequent sessions)
-        assert any(v in version_lines[0] for v in (
-            "3.22.14", "3.22.15", "3.22.16", "3.22.17", "3.22.18", "3.22.19", "3.22.20",
-            "3.22.21", "3.22.22", "3.22.23", "3.22.24",
-        )), (
-            f"**Version:** line should be 3.22.14 or later, got: {version_lines[0]}"
-        )
+        assert any(
+            v in version_lines[0]
+            for v in (
+                "3.22.14",
+                "3.22.15",
+                "3.22.16",
+                "3.22.17",
+                "3.22.18",
+                "3.22.19",
+                "3.22.20",
+                "3.22.21",
+                "3.22.22",
+                "3.22.23",
+                "3.22.24",
+            )
+        ), f"**Version:** line should be 3.22.14 or later, got: {version_lines[0]}"
 
     def test_master_status_not_stale_3_22_13(self):
         """The **Version:** header should NOT still say 3.22.13."""
@@ -246,6 +271,4 @@ class TestMasterStatusVersion:
             (_MASTER, "MASTER_STATUS.md"),
         ]:
             content = _read(path)
-            assert "3.22.14" in content, (
-                f"{name} should mention version 3.22.14"
-            )
+            assert "3.22.14" in content, f"{name} should mention version 3.22.14"

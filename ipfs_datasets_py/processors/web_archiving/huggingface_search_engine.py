@@ -14,6 +14,7 @@ Usage (package import)::
         batch_search_huggingface,
     )
 """
+
 import logging
 import importlib
 import os
@@ -87,9 +88,17 @@ async def search_huggingface_models(
         if filter_task:
             params["filter"] = f"task:{filter_task}"
         if filter_library:
-            params["filter"] = params.get("filter", "") + f",library:{filter_library}" if "filter" in params else f"library:{filter_library}"
+            params["filter"] = (
+                params.get("filter", "") + f",library:{filter_library}"
+                if "filter" in params
+                else f"library:{filter_library}"
+            )
         if filter_language:
-            params["filter"] = params.get("filter", "") + f",language:{filter_language}" if "filter" in params else f"language:{filter_language}"
+            params["filter"] = (
+                params.get("filter", "") + f",language:{filter_language}"
+                if "filter" in params
+                else f"language:{filter_language}"
+            )
 
         headers = {"Accept": "application/json"}
         if api_token:
@@ -124,14 +133,21 @@ async def search_huggingface_models(
                         "results": results,
                         "total_count": len(results),
                         "query": query,
-                        "filters": {"task": filter_task, "library": filter_library, "language": filter_language},
+                        "filters": {
+                            "task": filter_task,
+                            "library": filter_library,
+                            "language": filter_language,
+                        },
                         "search_timestamp": datetime.now().isoformat(),
                     }
                 elif response.status == 401:
                     return {"status": "error", "error": "Invalid HuggingFace API token"}
                 else:
                     error_text = await response.text()
-                    return {"status": "error", "error": f"HuggingFace API error ({response.status}): {error_text}"}
+                    return {
+                        "status": "error",
+                        "error": f"HuggingFace API error ({response.status}): {error_text}",
+                    }
     except Exception as e:
         logger.error(f"Failed to search HuggingFace models: {e}")
         return {"status": "error", "error": str(e)}
@@ -162,9 +178,17 @@ async def search_huggingface_datasets(
         if filter_task:
             params["filter"] = f"task_categories:{filter_task}"
         if filter_language:
-            params["filter"] = params.get("filter", "") + f",language:{filter_language}" if "filter" in params else f"language:{filter_language}"
+            params["filter"] = (
+                params.get("filter", "") + f",language:{filter_language}"
+                if "filter" in params
+                else f"language:{filter_language}"
+            )
         if filter_size:
-            params["filter"] = params.get("filter", "") + f",size_categories:{filter_size}" if "filter" in params else f"size_categories:{filter_size}"
+            params["filter"] = (
+                params.get("filter", "") + f",size_categories:{filter_size}"
+                if "filter" in params
+                else f"size_categories:{filter_size}"
+            )
 
         headers = {"Accept": "application/json"}
         if api_token:
@@ -198,12 +222,19 @@ async def search_huggingface_datasets(
                         "results": results,
                         "total_count": len(results),
                         "query": query,
-                        "filters": {"task": filter_task, "language": filter_language, "size": filter_size},
+                        "filters": {
+                            "task": filter_task,
+                            "language": filter_language,
+                            "size": filter_size,
+                        },
                         "search_timestamp": datetime.now().isoformat(),
                     }
                 else:
                     error_text = await response.text()
-                    return {"status": "error", "error": f"HuggingFace Datasets API error ({response.status}): {error_text}"}
+                    return {
+                        "status": "error",
+                        "error": f"HuggingFace Datasets API error ({response.status}): {error_text}",
+                    }
     except Exception as e:
         logger.error(f"Failed to search HuggingFace datasets: {e}")
         return {"status": "error", "error": str(e)}
@@ -267,7 +298,10 @@ async def search_huggingface_spaces(
                     }
                 else:
                     error_text = await response.text()
-                    return {"status": "error", "error": f"HuggingFace Spaces API error ({response.status}): {error_text}"}
+                    return {
+                        "status": "error",
+                        "error": f"HuggingFace Spaces API error ({response.status}): {error_text}",
+                    }
     except Exception as e:
         logger.error(f"Failed to search HuggingFace spaces: {e}")
         return {"status": "error", "error": str(e)}
@@ -319,7 +353,10 @@ async def get_huggingface_model_info(
                     return {"status": "error", "error": f"Model not found: {model_id}"}
                 else:
                     error_text = await response.text()
-                    return {"status": "error", "error": f"HuggingFace API error ({response.status}): {error_text}"}
+                    return {
+                        "status": "error",
+                        "error": f"HuggingFace API error ({response.status}): {error_text}",
+                    }
     except Exception as e:
         logger.error(f"Failed to get HuggingFace model info: {e}")
         return {"status": "error", "error": str(e)}

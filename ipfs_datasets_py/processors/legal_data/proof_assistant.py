@@ -15,6 +15,7 @@ _LAST_PROOF_PROGRESS: Dict[str, str] = {
 def get_proof_assistant_progress() -> Dict[str, str]:
     return dict(_LAST_PROOF_PROGRESS)
 
+
 from ...logic.deontic import DeonticGraph
 from ..protocol import Entity, KnowledgeGraph, Relationship
 from .frames import FrameKnowledgeBase
@@ -130,11 +131,15 @@ class DocketProofAssistantBuilder:
         bm25_index: Optional[Dict[str, Any]] = None,
         vector_index: Optional[Dict[str, Any]] = None,
     ) -> DocketProofAssistant:
-        graph = DeonticGraph.from_dict(dict(deontic_graph or {})) if deontic_graph else DeonticGraph()
+        graph = (
+            DeonticGraph.from_dict(dict(deontic_graph or {})) if deontic_graph else DeonticGraph()
+        )
         trigger_state = dict(deontic_triggers or {})
         trigger_entries = list(trigger_state.get("entries") or [])
         party_analysis = dict(trigger_state.get("party_analysis") or {})
-        _LAST_PROOF_PROGRESS.update({"stage": "agenda", "detail": f"entries={len(trigger_entries)}"})
+        _LAST_PROOF_PROGRESS.update(
+            {"stage": "agenda", "detail": f"entries={len(trigger_entries)}"}
+        )
         agenda = self._build_agenda(graph, trigger_entries, party_analysis)
         _LAST_PROOF_PROGRESS.update({"stage": "frames", "detail": f"agenda={len(agenda)}"})
         frames = self._build_frames(
@@ -149,7 +154,9 @@ class DocketProofAssistantBuilder:
             agenda=agenda,
         )
         _LAST_PROOF_PROGRESS.update({"stage": "temporal_fol", "detail": f"agenda={len(agenda)}"})
-        temporal_fol = self._build_temporal_fol(docket_id=docket_id, documents=documents, agenda=agenda)
+        temporal_fol = self._build_temporal_fol(
+            docket_id=docket_id, documents=documents, agenda=agenda
+        )
         _LAST_PROOF_PROGRESS.update({"stage": "dcec", "detail": f"agenda={len(agenda)}"})
         dcec = self._build_dcec(docket_id=docket_id, documents=documents, agenda=agenda)
         _LAST_PROOF_PROGRESS.update({"stage": "proof_kg", "detail": f"agenda={len(agenda)}"})
@@ -174,7 +181,9 @@ class DocketProofAssistantBuilder:
             vector_index=vector_index,
         )
         _LAST_PROOF_PROGRESS.update({"stage": "party_analysis", "detail": f"agenda={len(agenda)}"})
-        enriched_party_analysis = self._enrich_party_analysis(party_analysis=party_analysis, agenda=agenda)
+        enriched_party_analysis = self._enrich_party_analysis(
+            party_analysis=party_analysis, agenda=agenda
+        )
         extractor_status = {
             "deontic_temporal_first_order_logic": {
                 "name": "deontic_temporal_first_order_logic",
@@ -220,7 +229,9 @@ class DocketProofAssistantBuilder:
             "dcec_formula_count": len(list(dcec.get("formulas") or [])),
             "tactician_plan_count": len(list(tactician.get("plans") or [])),
             "proof_knowledge_graph_entity_count": len(list((proof_kg or {}).get("entities") or [])),
-            "proof_knowledge_graph_relationship_count": len(list((proof_kg or {}).get("relationships") or [])),
+            "proof_knowledge_graph_relationship_count": len(
+                list((proof_kg or {}).get("relationships") or [])
+            ),
             "extractor_count": len(extractor_status),
         }
         _LAST_PROOF_PROGRESS.update({"stage": "finalize", "detail": f"work_items={len(agenda)}"})
@@ -273,7 +284,8 @@ class DocketProofAssistantBuilder:
                 rule_ids = [
                     rule.id
                     for rule in graph.rules.values()
-                    if str((rule.attributes or {}).get("trigger_id") or "") == str(entry.get("trigger_id") or "")
+                    if str((rule.attributes or {}).get("trigger_id") or "")
+                    == str(entry.get("trigger_id") or "")
                     and (
                         str((rule.attributes or {}).get("party") or "").strip().lower() == subject
                         or subject == "all"
@@ -298,7 +310,9 @@ class DocketProofAssistantBuilder:
                         f"{subject}_{_safe_identifier(entry.get('action') or 'obligation')}",
                         f"trigger_{_safe_identifier(entry.get('trigger_id') or '')}",
                     ],
-                    formula_refs=[ref for rule_id in rule_ids for ref in formula_map.get(rule_id, [])],
+                    formula_refs=[
+                        ref for rule_id in rule_ids for ref in formula_map.get(rule_id, [])
+                    ],
                 )
                 agenda.append(work_item)
         for party, analysis in sorted(party_analysis.items()):
@@ -328,7 +342,10 @@ class DocketProofAssistantBuilder:
                         status=status,
                         authority_ids=list(analysis.get("authority_ids") or []),
                         predicate_refs=[f"{normalized_party}_{trigger_type}"],
-                        formula_refs=[f"tdfol:{normalized_party}:{trigger_type}", f"dcec:{normalized_party}:{trigger_type}"],
+                        formula_refs=[
+                            f"tdfol:{normalized_party}:{trigger_type}",
+                            f"dcec:{normalized_party}:{trigger_type}",
+                        ],
                     )
                 )
         return agenda
@@ -352,8 +369,16 @@ class DocketProofAssistantBuilder:
         kb.add_fact(f"{dataset_id}:case", "Docket case", "docket_id", docket_id, "dataset")
 
         for document in documents:
-            document_id = str(getattr(document, "document_id", "") or getattr(document, "id", "") or "document")
-            kb.add_fact(f"{dataset_id}:document:{_safe_identifier(document_id)}", "Docket document", "title", str(getattr(document, "title", "") or ""), "document")
+            document_id = str(
+                getattr(document, "document_id", "") or getattr(document, "id", "") or "document"
+            )
+            kb.add_fact(
+                f"{dataset_id}:document:{_safe_identifier(document_id)}",
+                "Docket document",
+                "title",
+                str(getattr(document, "title", "") or ""),
+                "document",
+            )
             if str(getattr(document, "date_filed", "") or "").strip():
                 kb.add_fact(
                     f"{dataset_id}:document:{_safe_identifier(document_id)}",
@@ -367,14 +392,36 @@ class DocketProofAssistantBuilder:
             for item in items:
                 item_id = str(item.get("id") or item.get("title") or item.get("text") or "")
                 frame_id = f"{dataset_id}:{party}:docket:{_safe_identifier(item_id)}"
-                kb.add_fact(frame_id, f"{party.title()} docket entry", "title", str(item.get("title") or ""), party)
-                kb.add_fact(frame_id, f"{party.title()} docket entry", "text", str(item.get("text") or ""), party)
+                kb.add_fact(
+                    frame_id,
+                    f"{party.title()} docket entry",
+                    "title",
+                    str(item.get("title") or ""),
+                    party,
+                )
+                kb.add_fact(
+                    frame_id,
+                    f"{party.title()} docket entry",
+                    "text",
+                    str(item.get("text") or ""),
+                    party,
+                )
 
         for authority in authorities:
-            authority_id = str(authority.get("id") or authority.get("title") or authority.get("text") or "")
+            authority_id = str(
+                authority.get("id") or authority.get("title") or authority.get("text") or ""
+            )
             frame_id = f"{dataset_id}:authority:{_safe_identifier(authority_id)}"
-            kb.add_fact(frame_id, "Authority", "title", str(authority.get("title") or authority.get("label") or ""), "authority")
-            kb.add_fact(frame_id, "Authority", "text", str(authority.get("text") or ""), "authority")
+            kb.add_fact(
+                frame_id,
+                "Authority",
+                "title",
+                str(authority.get("title") or authority.get("label") or ""),
+                "authority",
+            )
+            kb.add_fact(
+                frame_id, "Authority", "text", str(authority.get("text") or ""), "authority"
+            )
 
         for item in agenda:
             frame_id = f"{dataset_id}:proof:{_safe_identifier(item.work_item_id)}"
@@ -396,13 +443,17 @@ class DocketProofAssistantBuilder:
         formulas: List[str] = []
         facts: List[str] = []
         for document in documents:
-            document_id = str(getattr(document, "document_id", "") or getattr(document, "id", "") or "document")
+            document_id = str(
+                getattr(document, "document_id", "") or getattr(document, "id", "") or "document"
+            )
             timepoint = _normalize_timepoint(getattr(document, "date_filed", ""), "t_unknown")
             facts.append(f"Filed({document_id}, {timepoint}).")
         for item in agenda:
             predicate = f"{item.party.title()}Action({_safe_identifier(item.action)}, t)"
             trigger_predicate = f"DocketTrigger({_safe_identifier(item.trigger_id)}, t)"
-            formulas.append(f"forall t. {trigger_predicate} -> {_modality_symbol(item.modality)}({predicate}).")
+            formulas.append(
+                f"forall t. {trigger_predicate} -> {_modality_symbol(item.modality)}({predicate})."
+            )
             formulas.append(
                 f"forall t. {_modality_symbol(item.modality)}({predicate}) -> AnalyzeDuty({item.party.title()}, {_safe_identifier(item.source_id)}, t)."
             )
@@ -423,16 +474,28 @@ class DocketProofAssistantBuilder:
         events: List[Dict[str, Any]] = []
         formulas: List[str] = []
         for document in documents:
-            document_id = str(getattr(document, "document_id", "") or getattr(document, "id", "") or "document")
+            document_id = str(
+                getattr(document, "document_id", "") or getattr(document, "id", "") or "document"
+            )
             timepoint = _normalize_timepoint(getattr(document, "date_filed", ""), "t_unknown")
-            events.append({"event_id": f"filing_{_safe_identifier(document_id)}", "kind": "document_filed", "time": timepoint})
-            formulas.append(f"Happens(DocumentFiled({_safe_identifier(document_id)}), {timepoint}).")
+            events.append(
+                {
+                    "event_id": f"filing_{_safe_identifier(document_id)}",
+                    "kind": "document_filed",
+                    "time": timepoint,
+                }
+            )
+            formulas.append(
+                f"Happens(DocumentFiled({_safe_identifier(document_id)}), {timepoint})."
+            )
         for item in agenda:
             event_name = f"TriggerObserved({_safe_identifier(item.trigger_id)})"
             status_name = f"{item.modality.title()}({_safe_identifier(item.party)}_{_safe_identifier(item.action)})"
             formulas.append(f"Happens({event_name}, t).")
             formulas.append(f"Initiates({event_name}, {status_name}, t).")
-            formulas.append(f"HoldsAt({status_name}, t) -> NeedsProofReview({_safe_identifier(item.work_item_id)}, t).")
+            formulas.append(
+                f"HoldsAt({status_name}, t) -> NeedsProofReview({_safe_identifier(item.work_item_id)}, t)."
+            )
         return {
             "backend": "deontic_cognitive_event_calculus",
             "docket_id": docket_id,
@@ -455,9 +518,30 @@ class DocketProofAssistantBuilder:
         proof_kg = KnowledgeGraph(source=f"{dataset_id}:proof_assistant")
         docket_node_id = f"{dataset_id}:proof:docket"
         assistant_node_id = f"{dataset_id}:proof:assistant"
-        proof_kg.add_entity(Entity(id=docket_node_id, type="docket", label=case_name, properties={"docket_id": docket_id, "court": court}))
-        proof_kg.add_entity(Entity(id=assistant_node_id, type="proof_assistant", label="Agentic proof assistant", properties={"dataset_id": dataset_id}))
-        proof_kg.add_relationship(Relationship(id=f"{assistant_node_id}:monitors", source=assistant_node_id, target=docket_node_id, type="MONITORS"))
+        proof_kg.add_entity(
+            Entity(
+                id=docket_node_id,
+                type="docket",
+                label=case_name,
+                properties={"docket_id": docket_id, "court": court},
+            )
+        )
+        proof_kg.add_entity(
+            Entity(
+                id=assistant_node_id,
+                type="proof_assistant",
+                label="Agentic proof assistant",
+                properties={"dataset_id": dataset_id},
+            )
+        )
+        proof_kg.add_relationship(
+            Relationship(
+                id=f"{assistant_node_id}:monitors",
+                source=assistant_node_id,
+                target=docket_node_id,
+                type="MONITORS",
+            )
+        )
 
         for entity in list((base_knowledge_graph or {}).get("entities") or []):
             entity_id = str(entity.get("id") or "")
@@ -592,7 +676,9 @@ class DocketProofAssistantBuilder:
             analysis.setdefault("proof_formula_refs", [])
             analysis.setdefault("proof_predicate_refs", [])
             analysis["proof_work_item_ids"].append(item.work_item_id)
-            analysis["proof_formula_refs"].extend(ref for ref in item.formula_refs if ref not in analysis["proof_formula_refs"])
+            analysis["proof_formula_refs"].extend(
+                ref for ref in item.formula_refs if ref not in analysis["proof_formula_refs"]
+            )
             analysis["proof_predicate_refs"].extend(
                 ref for ref in item.predicate_refs if ref not in analysis["proof_predicate_refs"]
             )

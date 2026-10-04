@@ -102,13 +102,13 @@ Evaluates ontology quality across five dimensions.
 **Output:**
 ```python
 CriticScore(
-    completeness_score=0.75,   # 0.0-1.0
+    completeness_score=0.75,  # 0.0-1.0
     connectivity_score=0.82,
     consistency_score=0.90,
     overall_quality=0.82,
     dimension_details={...},
     recommendations=[...],
-    confidence=0.85
+    confidence=0.85,
 )
 ```
 

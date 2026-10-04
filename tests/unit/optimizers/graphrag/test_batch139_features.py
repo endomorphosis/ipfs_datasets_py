@@ -7,6 +7,7 @@ Methods under test:
   - OntologyCritic.bucket_scores(scores, buckets)
   - OntologyCritic.median_score(scores)
 """
+
 import pytest
 from unittest.mock import MagicMock
 
@@ -15,8 +16,10 @@ from unittest.mock import MagicMock
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
@@ -27,6 +30,7 @@ def _ont_rels(*pairs):
 
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
@@ -39,6 +43,7 @@ def _cs(overall):
 # ---------------------------------------------------------------------------
 # LogicValidator.in_degree
 # ---------------------------------------------------------------------------
+
 
 class TestInDegree:
     @pytest.mark.parametrize(
@@ -59,6 +64,7 @@ class TestInDegree:
 # LogicValidator.out_degree
 # ---------------------------------------------------------------------------
 
+
 class TestOutDegree:
     @pytest.mark.parametrize(
         "ontology,entity_id,expected",
@@ -77,6 +83,7 @@ class TestOutDegree:
 # ---------------------------------------------------------------------------
 # LogicValidator.top_k_entities_by_degree
 # ---------------------------------------------------------------------------
+
 
 class TestTopKEntitiesByDegree:
     @pytest.mark.parametrize(
@@ -99,6 +106,7 @@ class TestTopKEntitiesByDegree:
 # ---------------------------------------------------------------------------
 # OntologyCritic.bucket_scores
 # ---------------------------------------------------------------------------
+
 
 class TestBucketScores:
     @pytest.mark.parametrize(
@@ -127,6 +135,7 @@ class TestBucketScores:
 # ---------------------------------------------------------------------------
 # OntologyCritic.median_score
 # ---------------------------------------------------------------------------
+
 
 class TestMedianScore:
     @pytest.mark.parametrize(

@@ -177,31 +177,37 @@ tests/
 ```python
 # Registry
 from ipfs_datasets_py.processors.registry import ProcessorRegistry
+
 # ↓ NEW
 from ipfs_datasets_py.processors.core.registry import ProcessorRegistry
 
 # GraphRAG
 from ipfs_datasets_py.processors.graphrag_processor import GraphRAGProcessor
+
 # ↓ NEW
 from ipfs_datasets_py.processors.specialized.graphrag import UnifiedGraphRAGProcessor
 
 # PDF
 from ipfs_datasets_py.processors.pdf_processor import PDFProcessor
+
 # ↓ NEW
 from ipfs_datasets_py.processors.specialized.pdf import PDFProcessor
 
 # LLM Optimizer
 from ipfs_datasets_py.processors.llm_optimizer import LLMOptimizer
+
 # ↓ NEW
 from ipfs_datasets_py.processors.engines.llm import LLMOptimizer
 
 # Query Engine
 from ipfs_datasets_py.processors.query_engine import QueryEngine
+
 # ↓ NEW
 from ipfs_datasets_py.processors.engines.query import QueryEngine
 
 # Advanced Media
 from ipfs_datasets_py.processors.advanced_media_processing import AdvancedMediaProcessor
+
 # ↓ NEW
 from ipfs_datasets_py.processors.specialized.media import AdvancedMediaProcessor
 ```

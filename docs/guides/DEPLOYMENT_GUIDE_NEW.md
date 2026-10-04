@@ -710,17 +710,14 @@ PERFORMANCE_CONFIG = {
     "database_pool_size": 20,
     "redis_pool_size": 10,
     "ipfs_concurrent_requests": 50,
-    
     # Caching
     "enable_query_cache": True,
     "cache_ttl": 3600,
     "max_cache_size": "2gb",
-    
     # Processing
     "max_concurrent_processing": 10,
     "chunk_size": 1000,
     "batch_size": 100,
-    
     # Memory management
     "max_memory_per_worker": "1gb",
     "garbage_collection_threshold": 0.8,
@@ -841,22 +838,23 @@ async def health_check():
     """Basic health check"""
     return {"status": "healthy", "timestamp": datetime.utcnow()}
 
-@app.get("/ready")  
+
+@app.get("/ready")
 async def readiness_check():
     """Readiness check with dependency validation"""
     checks = {
         "database": check_database_connection(),
         "redis": check_redis_connection(),
         "ipfs": check_ipfs_connection(),
-        "theorem_provers": check_theorem_provers()
+        "theorem_provers": check_theorem_provers(),
     }
-    
+
     all_healthy = all(checks.values())
     status_code = 200 if all_healthy else 503
-    
+
     return JSONResponse(
         content={"status": "ready" if all_healthy else "not_ready", "checks": checks},
-        status_code=status_code
+        status_code=status_code,
     )
 ```
 

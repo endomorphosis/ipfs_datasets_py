@@ -4,6 +4,7 @@ Factory module for creating ProcessingPipeline instances.
 This module provides the factory function for creating ProcessingPipeline instances
 following the IoC pattern.
 """
+
 import hashlib
 
 from configs import configs
@@ -28,10 +29,11 @@ from .output_formatter import FormattedOutput
 def make_processing_pipeline() -> ProcessingPipeline:
     """
     Factory function to create a ProcessingPipeline instance.
-    
+
     Returns:
         An instance of ProcessingPipeline configured with proper dependencies.
     """
+
     class _ProcessingPipelineResources(TypedDict):
         file_format_detector: Callable
         file_validator: Callable
@@ -56,6 +58,6 @@ def make_processing_pipeline() -> ProcessingPipeline:
         "processing_result": ProcessingResult,
         "pipeline_status": PipelineStatus(),
         "logger": logger,
-        "hashlib": hashlib
+        "hashlib": hashlib,
     }
     return ProcessingPipeline(resources=resources, configs=configs)

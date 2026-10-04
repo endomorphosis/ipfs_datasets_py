@@ -6,12 +6,14 @@ Methods under test:
   - OntologyCritic.dimension_variance(scores, dim)
   - LogicValidator.average_path_length(ontology)
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
@@ -26,7 +28,10 @@ def _push_opt(o, avg):
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
@@ -38,9 +43,14 @@ def _push_feedback(a, score):
 
 def _make_score(**kwargs):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     defaults = dict(
-        completeness=0.5, consistency=0.5, clarity=0.5,
-        granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+        completeness=0.5,
+        consistency=0.5,
+        clarity=0.5,
+        granularity=0.5,
+        relationship_coherence=0.5,
+        domain_alignment=0.5,
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -48,17 +58,20 @@ def _make_score(**kwargs):
 
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.first_n_history
 # ---------------------------------------------------------------------------
+
 
 class TestFirstNHistory:
     @pytest.mark.parametrize(
@@ -81,6 +94,7 @@ class TestFirstNHistory:
 # ---------------------------------------------------------------------------
 # OntologyLearningAdapter.feedback_rolling_average
 # ---------------------------------------------------------------------------
+
 
 class TestFeedbackRollingAverage:
     @pytest.mark.parametrize(
@@ -109,6 +123,7 @@ class TestFeedbackRollingAverage:
 # OntologyCritic.dimension_variance
 # ---------------------------------------------------------------------------
 
+
 class TestDimensionVariance:
     @pytest.mark.parametrize(
         "scores,dim,expected",
@@ -135,6 +150,7 @@ class TestDimensionVariance:
 # LogicValidator.average_path_length
 # ---------------------------------------------------------------------------
 
+
 class TestAveragePathLength:
     @pytest.mark.parametrize(
         "ontology,predicate",
@@ -147,13 +163,19 @@ class TestAveragePathLength:
             (
                 {
                     "entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}],
-                    "relationships": [{"subject_id": "A", "object_id": "B"}, {"subject_id": "B", "object_id": "C"}],
+                    "relationships": [
+                        {"subject_id": "A", "object_id": "B"},
+                        {"subject_id": "B", "object_id": "C"},
+                    ],
                 },
                 # A->B=1, A->C=2, B->C=1 => 4/3
                 lambda result: result == pytest.approx(4 / 3),
             ),
             (
-                {"entities": [{"id": "X"}, {"id": "Y"}], "relationships": [{"subject_id": "X", "object_id": "Y"}]},
+                {
+                    "entities": [{"id": "X"}, {"id": "Y"}],
+                    "relationships": [{"subject_id": "X", "object_id": "Y"}],
+                },
                 lambda result: result >= 0.0,
             ),
         ],

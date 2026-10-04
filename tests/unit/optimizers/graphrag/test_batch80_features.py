@@ -47,8 +47,12 @@ def _make_mediator():
 
 def _make_score(c=0.8, con=0.7, cl=0.6, g=0.5, da=0.9) -> CriticScore:
     return CriticScore(
-        completeness=c, consistency=con, clarity=cl, granularity=g, relationship_coherence=da
-    , domain_alignment=da
+        completeness=c,
+        consistency=con,
+        clarity=cl,
+        granularity=g,
+        relationship_coherence=da,
+        domain_alignment=da,
     )
 
 
@@ -81,9 +85,7 @@ class TestCountEntitiesByType:
         assert counts["Org"] == 1
 
     def test_sorted_by_frequency(self):
-        entities = [
-            _make_entity(str(i), f"E{i}", "Person") for i in range(5)
-        ] + [
+        entities = [_make_entity(str(i), f"E{i}", "Person") for i in range(5)] + [
             _make_entity("10", "ACME", "Org")
         ]
         r = _make_result(*entities)
@@ -207,7 +209,14 @@ class TestBottomDimension:
 
     def test_valid_dimension_name(self):
         score = _make_score()
-        valid = {"completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"}
+        valid = {
+            "completeness",
+            "consistency",
+            "clarity",
+            "granularity",
+            "relationship_coherence",
+            "domain_alignment",
+        }
         assert self.critic.bottom_dimension(score) in valid
 
     def test_opposite_of_top_dimension(self):

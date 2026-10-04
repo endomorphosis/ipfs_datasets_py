@@ -35,7 +35,7 @@ Target:          100% [███████████████████
 - Usage:
   ```python
   pipeline = UniversalKnowledgeGraphPipeline(enable_ipfs=True)
-  kg = await pipeline.process('document.pdf')
+  kg = await pipeline.process("document.pdf")
   print(f"Entities: {len(kg.entities)}")
   print(f"Relationships: {len(kg.relationships)}")
   ```
@@ -47,8 +47,8 @@ Target:          100% [███████████████████
 - Integration with existing `pdf_processing.llm_optimizer`
 - Usage:
   ```python
-  pipeline = TextSummarizationPipeline(llm_model='gpt-3.5-turbo')
-  summary = await pipeline.summarize('report.docx')
+  pipeline = TextSummarizationPipeline(llm_model="gpt-3.5-turbo")
+  summary = await pipeline.summarize("report.docx")
   print(summary.summary)
   ```
 
@@ -70,15 +70,15 @@ Target:          100% [███████████████████
 - Usage:
   ```python
   pipeline = VectorEmbeddingPipeline(
-      embedding_model='sentence-transformers/all-MiniLM-L6-v2',
-      vector_store='faiss',
+      embedding_model="sentence-transformers/all-MiniLM-L6-v2",
+      vector_store="faiss",
       enable_ipfs=True,
-      enable_acceleration=True
+      enable_acceleration=True,
   )
-  result = await pipeline.process('document.pdf')
-  
+  result = await pipeline.process("document.pdf")
+
   # Semantic search
-  results = await pipeline.search('machine learning', top_k=5)
+  results = await pipeline.search("machine learning", top_k=5)
   ```
 
 ### Phase 6.1: Archive Handling (v0.6.1) ✅
@@ -92,8 +92,8 @@ Target:          100% [███████████████████
 - Usage:
   ```python
   from ipfs_datasets_py.processors.file_converter import extract_archive
-  
-  result = await extract_archive('documents.zip')
+
+  result = await extract_archive("documents.zip")
   for file in result.extracted_files:
       # Process each file
       pass
@@ -146,14 +146,14 @@ from ipfs_datasets_py.processors.file_converter import (
     UniversalKnowledgeGraphPipeline,
     TextSummarizationPipeline,
     VectorEmbeddingPipeline,
-    extract_archive
+    extract_archive,
 )
 
 # Process any file type
-file = 'document.pdf'  # or .docx, .html, .zip, etc.
+file = "document.pdf"  # or .docx, .html, .zip, etc.
 
 # 1. Extract text (if archive, automatically handled)
-converter = FileConverter(backend='native')
+converter = FileConverter(backend="native")
 text = await converter.convert(file, extract_archives=True)
 
 # 2. Generate knowledge graph
@@ -165,21 +165,18 @@ summary_pipeline = TextSummarizationPipeline()
 summary = await summary_pipeline.summarize(file)
 
 # 4. Generate vector embeddings
-vector_pipeline = VectorEmbeddingPipeline(
-    enable_ipfs=True,
-    enable_acceleration=True
-)
+vector_pipeline = VectorEmbeddingPipeline(enable_ipfs=True, enable_acceleration=True)
 embeddings = await vector_pipeline.process(file)
 
 # 5. Semantic search
-results = await vector_pipeline.search('query text', top_k=5)
+results = await vector_pipeline.search("query text", top_k=5)
 ```
 
 ### Batch Processing
 
 ```python
 # Process multiple files/archives
-files = ['doc1.pdf', 'doc2.zip', 'doc3.docx']
+files = ["doc1.pdf", "doc2.zip", "doc3.docx"]
 
 # Knowledge graphs from all
 kg_results = await kg_pipeline.process_batch(files)
@@ -188,7 +185,7 @@ kg_results = await kg_pipeline.process_batch(files)
 embedding_results = await vector_pipeline.process_batch(files)
 
 # Search across all documents
-search_results = await vector_pipeline.search('machine learning')
+search_results = await vector_pipeline.search("machine learning")
 ```
 
 ---

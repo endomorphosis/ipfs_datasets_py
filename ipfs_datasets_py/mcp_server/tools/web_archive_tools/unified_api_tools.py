@@ -36,7 +36,10 @@ async def unified_search(
         offset: Result offset.
     """
     try:
-        from ipfs_datasets_py.processors.web_archiving.contracts import OperationMode, UnifiedSearchRequest
+        from ipfs_datasets_py.processors.web_archiving.contracts import (
+            OperationMode,
+            UnifiedSearchRequest,
+        )
 
         api = _get_api()
         request = UnifiedSearchRequest(
@@ -64,7 +67,10 @@ async def unified_fetch(
 ) -> Dict[str, Any]:
     """Fetch content for a URL using unified scraper fallback."""
     try:
-        from ipfs_datasets_py.processors.web_archiving.contracts import OperationMode, UnifiedFetchRequest
+        from ipfs_datasets_py.processors.web_archiving.contracts import (
+            OperationMode,
+            UnifiedFetchRequest,
+        )
 
         api = _get_api()
         request = UnifiedFetchRequest(url=url, mode=OperationMode(mode), domain=domain)
@@ -87,7 +93,10 @@ async def unified_search_and_fetch(
 ) -> Dict[str, Any]:
     """Run unified search then fetch top document URLs."""
     try:
-        from ipfs_datasets_py.processors.web_archiving.contracts import OperationMode, UnifiedSearchRequest
+        from ipfs_datasets_py.processors.web_archiving.contracts import (
+            OperationMode,
+            UnifiedSearchRequest,
+        )
 
         api = _get_api()
         request = UnifiedSearchRequest(

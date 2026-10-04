@@ -198,7 +198,7 @@ from ipfs_datasets_py.logic.TDFOL import parse
 formula = parse("∀x.(Person(x) → O(□PayTax(x)))")
 # Result: For all x, if x is a person, then it's obligatory that x always pays tax
 
-# Parse ASCII notation  
+# Parse ASCII notation
 formula = parse("forall x. (Person(x) -> O(always PayTax(x)))")
 ```
 

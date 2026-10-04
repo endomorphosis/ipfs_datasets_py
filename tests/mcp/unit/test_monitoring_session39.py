@@ -10,6 +10,7 @@ Covers:
 - P2PMetricsCollector.track_bootstrap_operation()
 - P2PMetricsCollector.get_dashboard_data()
 """
+
 import asyncio
 import pytest
 from unittest.mock import Mock, patch
@@ -27,6 +28,7 @@ from ipfs_datasets_py.mcp_server.monitoring import (
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_collector(**kwargs) -> EnhancedMetricsCollector:
     return EnhancedMetricsCollector(enabled=True, retention_hours=24, **kwargs)
 
@@ -42,6 +44,7 @@ def _run(coro):
 # ---------------------------------------------------------------------------
 # EnhancedMetricsCollector.register_health_check / _check_health
 # ---------------------------------------------------------------------------
+
 
 class TestRegisterHealthCheck:
     """Tests for register_health_check() and _check_health()."""
@@ -115,6 +118,7 @@ class TestRegisterHealthCheck:
 # EnhancedMetricsCollector._calculate_* helpers
 # ---------------------------------------------------------------------------
 
+
 class TestCalculateHelpers:
     """Tests for _calculate_request_rate, _calculate_error_rate, _calculate_avg_response_time."""
 
@@ -152,6 +156,7 @@ class TestCalculateHelpers:
 # EnhancedMetricsCollector._check_alerts
 # ---------------------------------------------------------------------------
 
+
 class TestCheckAlerts:
     """Tests for _check_alerts()."""
 
@@ -165,35 +170,36 @@ class TestCheckAlerts:
     def test_check_alerts_cpu_high_adds_alert(self):
         """_check_alerts() adds a cpu_high alert when CPU% exceeds threshold."""
         collector = _make_collector()
-        collector.system_metrics['cpu_percent'] = 99.0
-        collector.alert_thresholds['cpu_percent'] = 80.0
+        collector.system_metrics["cpu_percent"] = 99.0
+        collector.alert_thresholds["cpu_percent"] = 80.0
         _run(collector._check_alerts())
-        types = [a['type'] for a in collector.alerts]
-        assert 'cpu_high' in types
+        types = [a["type"] for a in collector.alerts]
+        assert "cpu_high" in types
 
     def test_check_alerts_memory_high_adds_alert(self):
         """_check_alerts() adds a memory_high alert when memory% exceeds threshold."""
         collector = _make_collector()
-        collector.system_metrics['memory_percent'] = 95.0
-        collector.alert_thresholds['memory_percent'] = 85.0
+        collector.system_metrics["memory_percent"] = 95.0
+        collector.alert_thresholds["memory_percent"] = 85.0
         _run(collector._check_alerts())
-        types = [a['type'] for a in collector.alerts]
-        assert 'memory_high' in types
+        types = [a["type"] for a in collector.alerts]
+        assert "memory_high" in types
 
     def test_check_alerts_high_error_rate_adds_alert(self):
         """_check_alerts() adds an error_rate_high alert when error rate exceeds threshold."""
         collector = _make_collector()
         collector.request_count = 100
         collector.error_count = 60  # 60% error rate
-        collector.alert_thresholds['error_rate'] = 0.05
+        collector.alert_thresholds["error_rate"] = 0.05
         _run(collector._check_alerts())
-        types = [a['type'] for a in collector.alerts]
-        assert 'error_rate_high' in types
+        types = [a["type"] for a in collector.alerts]
+        assert "error_rate_high" in types
 
 
 # ---------------------------------------------------------------------------
 # P2PMetricsCollector.track_peer_discovery
 # ---------------------------------------------------------------------------
+
 
 class TestTrackPeerDiscovery:
     """Tests for P2PMetricsCollector.track_peer_discovery()."""
@@ -207,44 +213,45 @@ class TestTrackPeerDiscovery:
         p2p = self._make_p2p()
         p2p.track_peer_discovery("dht", 5, success=True)
         p2p.track_peer_discovery("mdns", 0, success=False)
-        assert p2p.peer_discovery_metrics['total_discoveries'] == 2
+        assert p2p.peer_discovery_metrics["total_discoveries"] == 2
 
     def test_success_increments_successful(self):
         """track_peer_discovery(success=True) increments successful_discoveries."""
         p2p = self._make_p2p()
         p2p.track_peer_discovery("dht", 3, success=True)
-        assert p2p.peer_discovery_metrics['successful_discoveries'] == 1
-        assert p2p.peer_discovery_metrics['failed_discoveries'] == 0
+        assert p2p.peer_discovery_metrics["successful_discoveries"] == 1
+        assert p2p.peer_discovery_metrics["failed_discoveries"] == 0
 
     def test_failure_increments_failed(self):
         """track_peer_discovery(success=False) increments failed_discoveries."""
         p2p = self._make_p2p()
         p2p.track_peer_discovery("mdns", 0, success=False)
-        assert p2p.peer_discovery_metrics['failed_discoveries'] == 1
+        assert p2p.peer_discovery_metrics["failed_discoveries"] == 1
 
     def test_peers_counted_by_source_on_success(self):
         """track_peer_discovery() adds peers_found to peers_by_source on success."""
         p2p = self._make_p2p()
         p2p.track_peer_discovery("dht", 10, success=True)
         p2p.track_peer_discovery("dht", 5, success=True)
-        assert p2p.peer_discovery_metrics['peers_by_source']['dht'] == 15
+        assert p2p.peer_discovery_metrics["peers_by_source"]["dht"] == 15
 
     def test_peers_not_counted_on_failure(self):
         """track_peer_discovery() does NOT count peers when success=False."""
         p2p = self._make_p2p()
         p2p.track_peer_discovery("dht", 10, success=False)
-        assert p2p.peer_discovery_metrics['peers_by_source']['dht'] == 0
+        assert p2p.peer_discovery_metrics["peers_by_source"]["dht"] == 0
 
     def test_duration_appended_when_provided(self):
         """track_peer_discovery() appends duration_ms when provided."""
         p2p = self._make_p2p()
         p2p.track_peer_discovery("bootstrap", 2, success=True, duration_ms=150.0)
-        assert 150.0 in p2p.peer_discovery_metrics['discovery_times']
+        assert 150.0 in p2p.peer_discovery_metrics["discovery_times"]
 
 
 # ---------------------------------------------------------------------------
 # P2PMetricsCollector.track_workflow_execution
 # ---------------------------------------------------------------------------
+
 
 class TestTrackWorkflowExecution:
     """Tests for P2PMetricsCollector.track_workflow_execution()."""
@@ -257,30 +264,30 @@ class TestTrackWorkflowExecution:
         """track_workflow_execution('running') increments active_workflows."""
         p2p = self._make_p2p()
         p2p.track_workflow_execution("wf1", "running")
-        assert p2p.workflow_metrics['active_workflows'] == 1
+        assert p2p.workflow_metrics["active_workflows"] == 1
 
     def test_completed_increments_completed_decrements_active(self):
         """track_workflow_execution('completed') increments completed and decrements active."""
         p2p = self._make_p2p()
         p2p.track_workflow_execution("wf1", "running")
         p2p.track_workflow_execution("wf1", "completed", execution_time_ms=1000.0)
-        assert p2p.workflow_metrics['completed_workflows'] == 1
-        assert p2p.workflow_metrics['active_workflows'] == 0
+        assert p2p.workflow_metrics["completed_workflows"] == 1
+        assert p2p.workflow_metrics["active_workflows"] == 0
 
     def test_failed_increments_failed_decrements_active(self):
         """track_workflow_execution('failed') increments failed and decrements active."""
         p2p = self._make_p2p()
         p2p.track_workflow_execution("wf1", "running")
         p2p.track_workflow_execution("wf1", "failed", execution_time_ms=500.0)
-        assert p2p.workflow_metrics['failed_workflows'] == 1
-        assert p2p.workflow_metrics['active_workflows'] == 0
+        assert p2p.workflow_metrics["failed_workflows"] == 1
+        assert p2p.workflow_metrics["active_workflows"] == 0
 
     def test_active_not_negative(self):
         """active_workflows never goes below zero."""
         p2p = self._make_p2p()
         # Complete without prior running
         p2p.track_workflow_execution("wf1", "completed")
-        assert p2p.workflow_metrics['active_workflows'] == 0
+        assert p2p.workflow_metrics["active_workflows"] == 0
 
     def test_total_workflows_always_incremented(self):
         """total_workflows is incremented for every call regardless of status."""
@@ -288,12 +295,13 @@ class TestTrackWorkflowExecution:
         p2p.track_workflow_execution("wf1", "running")
         p2p.track_workflow_execution("wf1", "completed")
         p2p.track_workflow_execution("wf2", "failed")
-        assert p2p.workflow_metrics['total_workflows'] == 3
+        assert p2p.workflow_metrics["total_workflows"] == 3
 
 
 # ---------------------------------------------------------------------------
 # P2PMetricsCollector.track_bootstrap_operation
 # ---------------------------------------------------------------------------
+
 
 class TestTrackBootstrapOperation:
     """Tests for P2PMetricsCollector.track_bootstrap_operation()."""
@@ -306,20 +314,21 @@ class TestTrackBootstrapOperation:
         """track_bootstrap_operation(success=True) increments totals."""
         p2p = self._make_p2p()
         p2p.track_bootstrap_operation("dht", success=True, duration_ms=200.0)
-        assert p2p.bootstrap_metrics['total_bootstrap_attempts'] == 1
-        assert p2p.bootstrap_metrics['successful_bootstraps'] == 1
-        assert p2p.bootstrap_metrics['failed_bootstraps'] == 0
+        assert p2p.bootstrap_metrics["total_bootstrap_attempts"] == 1
+        assert p2p.bootstrap_metrics["successful_bootstraps"] == 1
+        assert p2p.bootstrap_metrics["failed_bootstraps"] == 0
 
     def test_failure_increments_failed(self):
         """track_bootstrap_operation(success=False) increments failed count."""
         p2p = self._make_p2p()
         p2p.track_bootstrap_operation("relay", success=False)
-        assert p2p.bootstrap_metrics['failed_bootstraps'] == 1
+        assert p2p.bootstrap_metrics["failed_bootstraps"] == 1
 
 
 # ---------------------------------------------------------------------------
 # P2PMetricsCollector.get_dashboard_data
 # ---------------------------------------------------------------------------
+
 
 class TestGetDashboardData:
     """Tests for P2PMetricsCollector.get_dashboard_data()."""

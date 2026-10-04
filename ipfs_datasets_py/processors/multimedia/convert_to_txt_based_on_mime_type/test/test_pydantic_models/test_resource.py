@@ -1,4 +1,3 @@
-
 import pytest
 import pytest_asyncio
 
@@ -14,9 +13,3 @@ resource = Resource()
 resource = Resource(
     file_path="test_file.txt",
 )
-
-
-
-
-
-

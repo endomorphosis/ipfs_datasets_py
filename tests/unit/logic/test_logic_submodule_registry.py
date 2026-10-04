@@ -42,11 +42,7 @@ def test_required_logic_submodules_import_from_registry() -> None:
     from ipfs_datasets_py.logic.submodule_registry import logic_submodule_import_report
 
     report = logic_submodule_import_report()
-    failures = {
-        name: entry
-        for name, entry in report.items()
-        if entry.get("ok") is False
-    }
+    failures = {name: entry for name, entry in report.items() if entry.get("ok") is False}
 
     assert failures == {}
     assert report["ErgoAI"]["skipped"] is True
@@ -101,11 +97,7 @@ def test_optimizer_target_file_hints_resolve_to_repo_paths() -> None:
 
     repo_root = Path(__file__).resolve().parents[3]
     missing = {
-        component: [
-            file_path
-            for file_path in file_paths
-            if not (repo_root / file_path).exists()
-        ]
+        component: [file_path for file_path in file_paths if not (repo_root / file_path).exists()]
         for component, file_paths in logic_optimizer_target_file_hints().items()
     }
     missing = {component: paths for component, paths in missing.items() if paths}
@@ -128,11 +120,7 @@ def test_bridge_loss_names_are_known_to_todo_generator() -> None:
         ]
         for spec in logic_bridge_specs(implemented_only=True)
     }
-    missing = {
-        bridge_name: loss_names
-        for bridge_name, loss_names in missing.items()
-        if loss_names
-    }
+    missing = {bridge_name: loss_names for bridge_name, loss_names in missing.items() if loss_names}
 
     assert missing == {}
 
@@ -160,9 +148,7 @@ def test_modal_frame_logic_bridge_remains_neo4j_compatible() -> None:
         modal_ir_to_neo4j_graph_data,
     )
 
-    codec = DeterministicModalLogicCodec(
-        ModalLogicCodecConfig(use_flogic=True)
-    )
+    codec = DeterministicModalLogicCodec(ModalLogicCodecConfig(use_flogic=True))
     result = codec.encode(
         "The agency shall publish notice before the permit takes effect.",
         document_id="registry-smoke",

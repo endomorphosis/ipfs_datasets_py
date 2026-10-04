@@ -35,11 +35,11 @@ from ipfs_datasets_py.logic.fol import FOLConverter
 
 # Create converter with ALL features enabled
 converter = FOLConverter(
-    use_cache=True,          # ✅ Caching (14x speedup)
-    use_ipfs=False,          # 🌐 IPFS (distributed cache)
-    use_ml=True,             # 🤖 ML confidence scoring
-    use_nlp=True,            # 🧠 NLP extraction (spaCy)
-    enable_monitoring=True   # 📊 Monitoring & metrics
+    use_cache=True,  # ✅ Caching (14x speedup)
+    use_ipfs=False,  # 🌐 IPFS (distributed cache)
+    use_ml=True,  # 🤖 ML confidence scoring
+    use_nlp=True,  # 🧠 NLP extraction (spaCy)
+    enable_monitoring=True,  # 📊 Monitoring & metrics
 )
 
 # Single conversion
@@ -47,11 +47,7 @@ result = converter.convert("All humans are mortal")
 print(f"Confidence: {result.confidence}")
 
 # Batch processing (5-8x faster!)
-results = converter.convert_batch([
-    "P -> Q",
-    "All X are Y", 
-    "Some Z exist"
-], max_workers=4)
+results = converter.convert_batch(["P -> Q", "All X are Y", "Some Z exist"], max_workers=4)
 
 # Async for backward compatibility
 result = await converter.convert_async("text")
@@ -157,11 +153,7 @@ count = cache.sync_from_ipfs()
 from ipfs_datasets_py.logic.config import CacheConfig
 
 config = CacheConfig(
-    enabled=True,
-    max_size=1000,
-    default_ttl=3600,
-    persistence_path="./proof_cache/",
-    use_ipfs=False
+    enabled=True, max_size=1000, default_ttl=3600, persistence_path="./proof_cache/", use_ipfs=False
 )
 ```
 
@@ -196,21 +188,13 @@ processor = FOLBatchProcessor()
 
 # Batch convert texts to FOL
 texts = ["All humans are mortal", "Socrates is human", ...]
-results = processor.process_batch(
-    texts,
-    max_workers=4,
-    use_cache=True
-)
+results = processor.process_batch(texts, max_workers=4, use_cache=True)
 
 # Async batch processing
 results = await processor.process_batch_async(texts, max_workers=4)
 
 # Chunked processing for large datasets
-results = processor.process_chunked(
-    large_text_list,
-    chunk_size=100,
-    max_workers=4
-)
+results = processor.process_chunked(large_text_list, chunk_size=100, max_workers=4)
 ```
 
 ### Performance
@@ -443,11 +427,7 @@ from ipfs_datasets_py.logic.integration.ipfs_proof_cache import get_global_ipfs_
 cache = get_global_ipfs_cache()
 
 # Upload and pin
-cid = cache.upload_to_ipfs(
-    key="proof_123",
-    value=proof_result,
-    pin=True
-)
+cid = cache.upload_to_ipfs(key="proof_123", value=proof_result, pin=True)
 print(f"Uploaded to IPFS: {cid}")
 
 # Retrieve from IPFS
@@ -470,8 +450,7 @@ storage = LogicIPLDStorage()
 
 # Store formula with provenance
 cid = storage.store_formula(
-    formula="P -> Q",
-    metadata={"author": "user", "timestamp": "2026-02-13"}
+    formula="P -> Q", metadata={"author": "user", "timestamp": "2026-02-13"}
 )
 
 # Retrieve formula
@@ -504,12 +483,7 @@ kb_cid = storage.store_knowledge_base(formulas, metadata)
 ```python
 from ipfs_datasets_py.logic.integration.ipfs_proof_cache import IPFSProofCache
 
-cache = IPFSProofCache(
-    ipfs_host="127.0.0.1",
-    ipfs_port=5001,
-    auto_pin=True,
-    max_size=1000
-)
+cache = IPFSProofCache(ipfs_host="127.0.0.1", ipfs_port=5001, auto_pin=True, max_size=1000)
 ```
 
 ---
@@ -656,27 +630,29 @@ class MyConverter:
         self.use_cache = use_cache
         if use_ipfs:
             from ipfs_datasets_py.logic.integration.ipfs_proof_cache import get_global_ipfs_cache
+
             self.cache = get_global_ipfs_cache()
         elif use_cache:
             from ipfs_datasets_py.logic.integration.proof_cache import get_global_cache
+
             self.cache = get_global_cache()
         else:
             self.cache = None
-    
+
     def convert(self, input_text: str) -> Result:
         # Check cache
         if self.cache:
             cached = self.cache.get(input_text)
             if cached:
                 return cached
-        
+
         # Process
         result = self._convert_impl(input_text)
-        
+
         # Store in cache
         if self.cache:
             self.cache.put(input_text, result)
-        
+
         return result
 ```
 
@@ -685,19 +661,14 @@ class MyConverter:
 ```python
 from ipfs_datasets_py.logic.batch_processing import BatchProcessor
 
+
 class MyConverter:
     def __init__(self):
         self.batch_processor = BatchProcessor()
-    
-    def convert_batch(
-        self,
-        texts: List[str],
-        max_workers: int = 4
-    ) -> List[Result]:
+
+    def convert_batch(self, texts: List[str], max_workers: int = 4) -> List[Result]:
         return self.batch_processor.process(
-            texts,
-            conversion_func=self.convert,
-            max_workers=max_workers
+            texts, conversion_func=self.convert, max_workers=max_workers
         )
 ```
 
@@ -706,25 +677,26 @@ class MyConverter:
 ```python
 from ipfs_datasets_py.logic.ml_confidence import MLConfidenceScorer
 
+
 class MyProver:
     def __init__(self, use_ml: bool = True):
         self.use_ml = use_ml
         if use_ml:
             self.ml_scorer = MLConfidenceScorer()
-    
+
     def prove_with_confidence(self, theorem: str, axioms: List[str]) -> ProofResult:
         # Predict confidence
         if self.use_ml:
             features = self.ml_scorer.extract_features(theorem, axioms)
             confidence = self.ml_scorer.predict(features)
-        
+
         # Run proof
         result = self.prove(theorem, axioms)
-        
+
         # Add confidence
         if self.use_ml:
             result.ml_confidence = confidence
-        
+
         return result
 ```
 
@@ -734,26 +706,27 @@ class MyProver:
 from ipfs_datasets_py.logic.monitoring import Monitor
 import time
 
+
 class MyConverter:
     def __init__(self, enable_monitoring: bool = True):
         self.enable_monitoring = enable_monitoring
         if enable_monitoring:
             self.monitor = Monitor(enabled=True)
-    
+
     def convert(self, text: str) -> Result:
         if self.enable_monitoring:
             self.monitor.record_operation_start("convert")
-        
+
         start_time = time.time()
-        
+
         try:
             result = self._convert_impl(text)
-            
+
             if self.enable_monitoring:
                 duration = time.time() - start_time
                 self.monitor.record_success("convert", duration)
                 self.monitor.record_metric("complexity", result.complexity)
-            
+
             return result
         except Exception as e:
             if self.enable_monitoring:
@@ -769,17 +742,17 @@ class MyConverter:
 ```python
 def test_caching():
     converter = FOLConverter(use_cache=True)
-    
+
     # First call - cache miss
     result1 = converter.convert("P -> Q")
-    
+
     # Second call - cache hit
     result2 = converter.convert("P -> Q")
-    
+
     # Verify caching
     stats = converter.cache.get_stats()
-    assert stats['hits'] == 1
-    assert stats['misses'] == 1
+    assert stats["hits"] == 1
+    assert stats["misses"] == 1
 ```
 
 ### Batch Testing
@@ -815,28 +788,29 @@ def test_ml_confidence():
 # config.py
 from dataclasses import dataclass
 
+
 @dataclass
 class FeatureConfig:
     """Global feature configuration."""
-    
+
     # Caching
     enable_cache: bool = True
     cache_max_size: int = 1000
     cache_ttl: int = 3600
     use_ipfs_cache: bool = False
-    
+
     # Batch Processing
     default_workers: int = 4
     max_batch_size: int = 1000
-    
+
     # ML Confidence
     enable_ml: bool = True
     ml_model_path: str = "models/ml_confidence.pkl"
-    
+
     # NLP
     enable_nlp: bool = True
     spacy_model: str = "en_core_web_sm"
-    
+
     # Monitoring
     enable_monitoring: bool = True
     prometheus_export: bool = False

@@ -106,9 +106,7 @@ def test_compiler_preserves_packet_004978_compiler_ambiguity_policy_margins() ->
             "family_margin": -0.42130150729,
             "priority": 0.57130150729,
             "severity": "requires_rule",
-            "expected_type": (
-                "adaptive_conditional_normative_temporal_outvoted_margin_low"
-            ),
+            "expected_type": ("adaptive_conditional_normative_temporal_outvoted_margin_low"),
             "text": (
                 "When the Secretary determines eligibility, the annual filing "
                 "must occur within 30 days."
@@ -157,9 +155,7 @@ def test_compiler_preserves_packet_004978_compiler_ambiguity_policy_margins() ->
             target_family,
         )
 
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="spacy")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
         family_margin = float(case["family_margin"])
         expected_priority = float(case["priority"])
         ranking = _adaptive_ranking_for_margin(
@@ -167,9 +163,7 @@ def test_compiler_preserves_packet_004978_compiler_ambiguity_policy_margins() ->
             target_family=target_family,
             family_margin=family_margin,
             runner_up_family=(
-                str(case["runner_up_family"])
-                if case.get("runner_up_family") is not None
-                else None
+                str(case["runner_up_family"]) if case.get("runner_up_family") is not None else None
             ),
         )
 
@@ -194,14 +188,8 @@ def test_compiler_preserves_packet_004978_compiler_ambiguity_policy_margins() ->
         assert ambiguity.metadata.get("is_explicit_adaptive_ambiguity") is True
         assert ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
         assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
-        assert (
-            abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin)
-            <= 1e-12
-        )
-        assert (
-            abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority)
-            <= 1e-12
-        )
+        assert abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin) <= 1e-12
+        assert abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority) <= 1e-12
         assert (
             abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - expected_priority)
             <= 1e-12

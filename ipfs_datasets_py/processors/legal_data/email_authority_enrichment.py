@@ -18,7 +18,9 @@ def _load_email_timeline_handoff(path: str | Path) -> Dict[str, Any]:
     return payload if isinstance(payload, dict) else {}
 
 
-def _topic_summary_items(email_timeline_handoff: Dict[str, Any]) -> List[tuple[str, Dict[str, Any]]]:
+def _topic_summary_items(
+    email_timeline_handoff: Dict[str, Any],
+) -> List[tuple[str, Dict[str, Any]]]:
     packet = (
         email_timeline_handoff.get("claim_support_temporal_handoff")
         if isinstance(email_timeline_handoff.get("claim_support_temporal_handoff"), dict)
@@ -32,7 +34,11 @@ def _topic_summary_items(email_timeline_handoff: Dict[str, Any]) -> List[tuple[s
         items.append((str(topic), dict(value)))
     items.sort(
         key=lambda item: (
-            int(DEFAULT_EMAIL_AUTHORITY_ENRICHMENT_CATALOG.get("topic_priority", {}).get(str(item[0]), 0)),
+            int(
+                DEFAULT_EMAIL_AUTHORITY_ENRICHMENT_CATALOG.get("topic_priority", {}).get(
+                    str(item[0]), 0
+                )
+            ),
             int(item[1].get("count") or 0),
         ),
         reverse=True,
@@ -98,7 +104,9 @@ def build_email_authority_query_plan(
 ) -> List[Dict[str, Any]]:
     resolved_catalog = merge_email_authority_enrichment_catalog(catalog)
     claim_type = str(email_timeline_handoff.get("claim_type") or "").strip() or "retaliation"
-    claim_element_id = str(email_timeline_handoff.get("claim_element_id") or "").strip() or "causation"
+    claim_element_id = (
+        str(email_timeline_handoff.get("claim_element_id") or "").strip() or "causation"
+    )
     participants = _collect_participants(email_timeline_handoff)
     has_clackamas = any("clackamas.us" in item for item in participants)
     organization_terms = [
@@ -109,7 +117,9 @@ def build_email_authority_query_plan(
     plan: List[Dict[str, Any]] = []
     seen_queries = set()
 
-    def _append(topic: str, query: str, *, rationale: str, authority_families: Optional[List[str]] = None) -> None:
+    def _append(
+        topic: str, query: str, *, rationale: str, authority_families: Optional[List[str]] = None
+    ) -> None:
         text = " ".join(part for part in [query] if str(part or "").strip()).strip()
         if not text:
             return
@@ -124,19 +134,24 @@ def build_email_authority_query_plan(
                 "claim_type": claim_type,
                 "claim_element_id": claim_element_id,
                 "jurisdiction_label": jurisdiction_label,
-                "authority_families": authority_families or ["statute", "regulation", "case_law", "agency_guidance"],
+                "authority_families": authority_families
+                or ["statute", "regulation", "case_law", "agency_guidance"],
                 "rationale": rationale,
             }
         )
 
-    base_parts = [jurisdiction_label, claim_type, claim_element_id] + [term for term in organization_terms if term]
+    base_parts = [jurisdiction_label, claim_type, claim_element_id] + [
+        term for term in organization_terms if term
+    ]
     _append(
         "overview",
         " ".join(base_parts + ["housing authority", "state law", "case law"]),
         rationale="Broad state and case-law sweep anchored to the email-derived claim posture.",
     )
 
-    selected_topics = _topic_summary_items_with_catalog(email_timeline_handoff, catalog=resolved_catalog)[:max_topics]
+    selected_topics = _topic_summary_items_with_catalog(
+        email_timeline_handoff, catalog=resolved_catalog
+    )[:max_topics]
     topic_query_hints = dict(resolved_catalog.get("topic_query_hints") or {})
     topic_hints_map = {
         topic: list(topic_query_hints.get(topic) or [topic.replace("_", " ")])[:3]
@@ -152,7 +167,9 @@ def build_email_authority_query_plan(
             _append(
                 topic,
                 " ".join(
-                    part for part in [jurisdiction_label, *organization_terms, claim_type, hint] if str(part or "").strip()
+                    part
+                    for part in [jurisdiction_label, *organization_terms, claim_type, hint]
+                    if str(part or "").strip()
                 ),
                 rationale=f"Topic-driven authority search for {topic} with {int(payload.get('count') or 0)} email events.",
             )
@@ -180,14 +197,21 @@ def build_seed_authority_catalog_with_catalog(
     *,
     catalog: Dict[str, Any],
 ) -> List[Dict[str, str]]:
-    topics = {topic for topic, _ in _topic_summary_items_with_catalog(email_timeline_handoff, catalog=catalog)}
+    topics = {
+        topic
+        for topic, _ in _topic_summary_items_with_catalog(email_timeline_handoff, catalog=catalog)
+    }
     seed_catalog: List[Dict[str, str]] = []
     seen = set()
     base_seed_authorities = list(catalog.get("base_seed_authorities") or [])
     topic_case_seeds = dict(catalog.get("topic_case_seeds") or {})
     for item in base_seed_authorities:
         topic = str(item.get("topic") or "")
-        if topic and topic not in topics and topic not in {"reasonable_accommodation", "clackamas_process"}:
+        if (
+            topic
+            and topic not in topics
+            and topic not in {"reasonable_accommodation", "clackamas_process"}
+        ):
             continue
         key = str(item.get("citation") or item.get("source_url") or "")
         if key in seen:
@@ -250,7 +274,13 @@ def enrich_email_timeline_authorities(
     )[:max_queries]
 
     query_results: List[Dict[str, Any]] = []
-    total_counts = {"statutes": 0, "regulations": 0, "case_law": 0, "web_archives": 0, "state_web_archives": 0}
+    total_counts = {
+        "statutes": 0,
+        "regulations": 0,
+        "case_law": 0,
+        "web_archives": 0,
+        "state_web_archives": 0,
+    }
     for item in query_plan:
         results = mediator.search_legal_authorities(
             item["query"],
@@ -272,7 +302,11 @@ def enrich_email_timeline_authorities(
                     matches = []
                 if matches:
                     state_archive_results.extend(
-                        [{"domain": domain, **match} for match in matches if isinstance(match, dict)]
+                        [
+                            {"domain": domain, **match}
+                            for match in matches
+                            if isinstance(match, dict)
+                        ]
                     )
         counts = {
             "statutes": len(results.get("statutes") or []),
@@ -300,7 +334,9 @@ def enrich_email_timeline_authorities(
     for item in query_results:
         topic = str(item.get("topic") or "")
         item["seed_matches"] = [
-            authority for authority in seed_authorities if str(authority.get("topic") or "") in {topic, "reasonable_accommodation"}
+            authority
+            for authority in seed_authorities
+            if str(authority.get("topic") or "") in {topic, "reasonable_accommodation"}
         ][:6]
     payload = {
         "status": "success",
@@ -318,14 +354,21 @@ def enrich_email_timeline_authorities(
             "queries_with_hits": sum(
                 1
                 for item in query_results
-                if sum(int(item.get("result_counts", {}).get(key) or 0) for key in total_counts.keys()) > 0
+                if sum(
+                    int(item.get("result_counts", {}).get(key) or 0) for key in total_counts.keys()
+                )
+                > 0
             ),
             "seed_authority_count": len(seed_authorities),
         },
         "catalog_path": str(catalog_path) if catalog_path else "",
     }
 
-    destination_dir = Path(output_dir).expanduser().resolve() if output_dir else source_path.parent / "authority_enrichment"
+    destination_dir = (
+        Path(output_dir).expanduser().resolve()
+        if output_dir
+        else source_path.parent / "authority_enrichment"
+    )
     destination_dir.mkdir(parents=True, exist_ok=True)
     destination = destination_dir / "email_authority_enrichment.json"
     destination.write_text(json.dumps(payload, indent=2), encoding="utf-8")

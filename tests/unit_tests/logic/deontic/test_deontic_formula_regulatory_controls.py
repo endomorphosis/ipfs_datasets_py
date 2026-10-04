@@ -51,7 +51,7 @@ def test_regulatory_control_duties_export_operative_predicates():
 
         assert norm.modality == "O"
         assert norm.action == action
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -148,7 +148,7 @@ def test_data_protection_duties_export_operative_predicates():
 
         assert norm.modality == "O"
         assert norm.action == action
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -238,7 +238,7 @@ def test_evidence_custody_duties_export_operative_predicates():
 
         assert norm.modality == "O"
         assert norm.action == action
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula

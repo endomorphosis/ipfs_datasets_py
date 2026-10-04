@@ -24,11 +24,56 @@ from typing import Any, Dict, List, Optional, Sequence
 
 
 DEFAULT_STATE_CODES: List[str] = [
-    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
-    "HI", "IA", "ID", "IL", "IN", "KS", "KY", "LA", "MA", "MD",
-    "ME", "MI", "MN", "MO", "MS", "MT", "NC", "ND", "NE", "NH",
-    "NJ", "NM", "NV", "NY", "OH", "OK", "OR", "PA", "RI", "SC",
-    "SD", "TN", "TX", "UT", "VA", "VT", "WA", "WI", "WV", "WY",
+    "AL",
+    "AK",
+    "AZ",
+    "AR",
+    "CA",
+    "CO",
+    "CT",
+    "DE",
+    "FL",
+    "GA",
+    "HI",
+    "IA",
+    "ID",
+    "IL",
+    "IN",
+    "KS",
+    "KY",
+    "LA",
+    "MA",
+    "MD",
+    "ME",
+    "MI",
+    "MN",
+    "MO",
+    "MS",
+    "MT",
+    "NC",
+    "ND",
+    "NE",
+    "NH",
+    "NJ",
+    "NM",
+    "NV",
+    "NY",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UT",
+    "VA",
+    "VT",
+    "WA",
+    "WI",
+    "WV",
+    "WY",
     "DC",
 ]
 
@@ -90,8 +135,12 @@ def _download_required_files(repo_id: str, state: str) -> Dict[str, str]:
 
     paths = _state_paths(state)
     return {
-        "canonical": hf_hub_download(repo_id=repo_id, repo_type="dataset", filename=paths["canonical"]),
-        "embeddings": hf_hub_download(repo_id=repo_id, repo_type="dataset", filename=paths["embeddings"]),
+        "canonical": hf_hub_download(
+            repo_id=repo_id, repo_type="dataset", filename=paths["canonical"]
+        ),
+        "embeddings": hf_hub_download(
+            repo_id=repo_id, repo_type="dataset", filename=paths["embeddings"]
+        ),
     }
 
 
@@ -156,7 +205,14 @@ def _build_faiss_from_embeddings(
             "semantic_text": row.get("semantic_text") or "",
             "state_code": canonical_row.get("state_code") or state,
         }
-        for field in ("identifier", "name", "source_id", "agency", "legislation_type", "date_published"):
+        for field in (
+            "identifier",
+            "name",
+            "source_id",
+            "agency",
+            "legislation_type",
+            "date_published",
+        ):
             if field in canonical_row:
                 meta[field] = canonical_row.get(field)
         faiss_rows.append(meta)
@@ -165,7 +221,9 @@ def _build_faiss_from_embeddings(
     vector_count = len(valid_vectors)
     coverage = 0.0 if row_count <= 0 else float(vector_count) / float(row_count)
 
-    def _recompute_from_canonical(target_dimension: int) -> tuple[List[List[float]], List[Dict[str, Any]]]:
+    def _recompute_from_canonical(
+        target_dimension: int,
+    ) -> tuple[List[List[float]], List[Dict[str, Any]]]:
         recomputed_vectors: List[List[float]] = []
         recomputed_meta: List[Dict[str, Any]] = []
         for row in canonical_rows:
@@ -188,7 +246,14 @@ def _build_faiss_from_embeddings(
                 "semantic_text": semantic_text,
                 "state_code": row.get("state_code") or state,
             }
-            for field in ("identifier", "name", "source_id", "agency", "legislation_type", "date_published"):
+            for field in (
+                "identifier",
+                "name",
+                "source_id",
+                "agency",
+                "legislation_type",
+                "date_published",
+            ):
                 if field in row:
                     meta[field] = row.get(field)
             recomputed_meta.append(meta)
@@ -273,7 +338,8 @@ def _rebuild_state(
 
     canonical_rows = [dict(row) for row in pq.read_table(canonical_path).to_pylist()]
     canonical_rows = [
-        row for row in canonical_rows
+        row
+        for row in canonical_rows
         if str(row.get("state_code") or "").strip().upper() in {"", state}
     ]
     canonical_rows, _ = _ensure_join_field_rows(canonical_rows, join_field="ipfs_cid")
@@ -283,7 +349,10 @@ def _rebuild_state(
     cid_rows = _build_cid_index_rows(
         canonical_rows,
         join_field="ipfs_cid",
-        config={"title_fields": ["name", "identifier", "source_id", "official_cite"], "text_fields": ["text", "jsonld", "name", "identifier", "source_id"]},
+        config={
+            "title_fields": ["name", "identifier", "source_id", "official_cite"],
+            "text_fields": ["text", "jsonld", "name", "identifier", "source_id"],
+        },
     )
     bm25_rows = _build_bm25_rows(
         canonical_rows,
@@ -311,9 +380,16 @@ def _rebuild_state(
 
         pq.write_table(pa.Table.from_pylist(cid_rows), cid_path)
         pq.write_table(pa.Table.from_pylist(bm25_rows), bm25_path)
-        pq.write_table(pa.Table.from_pylist(_normalize_rows_for_parquet(kg_entities)), kg_entities_path)
-        pq.write_table(pa.Table.from_pylist(_normalize_rows_for_parquet(kg_relationships)), kg_relationships_path)
-        Path(kg_summary_path).write_text(json.dumps(kg_summary, indent=2, sort_keys=True), encoding="utf-8")
+        pq.write_table(
+            pa.Table.from_pylist(_normalize_rows_for_parquet(kg_entities)), kg_entities_path
+        )
+        pq.write_table(
+            pa.Table.from_pylist(_normalize_rows_for_parquet(kg_relationships)),
+            kg_relationships_path,
+        )
+        Path(kg_summary_path).write_text(
+            json.dumps(kg_summary, indent=2, sort_keys=True), encoding="utf-8"
+        )
 
         row_count, vector_count, vector_source, vector_coverage = _build_faiss_from_embeddings(
             state=state,
@@ -351,7 +427,9 @@ def _rebuild_state(
             )
             uploaded = [repo_path for _, repo_path in upload_map]
         else:
-            target_root = Path(str(artifact_output_root or "").strip() or ".").expanduser().resolve()
+            target_root = (
+                Path(str(artifact_output_root or "").strip() or ".").expanduser().resolve()
+            )
             for local_path, repo_path in upload_map:
                 target_path = (target_root / repo_path).resolve()
                 target_path.parent.mkdir(parents=True, exist_ok=True)

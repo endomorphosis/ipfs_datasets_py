@@ -53,6 +53,7 @@ logger = logging.getLogger(__name__)
 
 class ExtractionMode(str, Enum):
     """Logic extraction formalism mode."""
+
     AUTO = "AUTO"
     FOL = "FOL"  # First-Order Logic
     TDFOL = "TDFOL"  # Temporal Deontic First-Order Logic
@@ -63,6 +64,7 @@ class ExtractionMode(str, Enum):
 
 class ConvergenceReason(str, Enum):
     """Reason for session convergence."""
+
     THRESHOLD_MET = "threshold_met"  # Score reached convergence threshold
     MAX_ROUNDS = "max_rounds"  # Reached maximum number of rounds
     NO_IMPROVEMENT = "no_improvement"  # Last round showed no improvement
@@ -73,10 +75,10 @@ class ConvergenceReason(str, Enum):
 @dataclass
 class ExtractionMetrics:
     """Metrics for a single extraction round.
-    
+
     Tracks quality and performance metrics for each round of extraction
     and refinement.
-    
+
     Attributes:
         num_statements: Number of logical statements extracted
         avg_confidence: Average confidence of statements (0-1)
@@ -87,6 +89,7 @@ class ExtractionMetrics:
         extraction_time: Time spent on extraction in seconds
         critique_time: Time spent on critique in seconds
     """
+
     num_statements: int = 0
     avg_confidence: float = 0.0
     num_entities: int = 0
@@ -95,7 +98,7 @@ class ExtractionMetrics:
     prover_validation_success: float = 0.0
     extraction_time: float = 0.0
     critique_time: float = 0.0
-    
+
     def validate(self) -> None:
         """Validate metric constraints."""
         if self.num_statements < 0:
@@ -119,9 +122,9 @@ class ExtractionMetrics:
 @dataclass
 class RoundResult:
     """Result of a single session round.
-    
+
     Records all data from a single iteration of extraction-critique-optimize.
-    
+
     Attributes:
         round_number: 1-indexed round number
         score: Overall quality score (0-1)
@@ -133,6 +136,7 @@ class RoundResult:
         error: Error message if round failed, None otherwise
         timestamp: When this round completed
     """
+
     round_number: int
     score: float
     dimension_scores: Dict[str, float] = field(default_factory=dict)
@@ -142,7 +146,7 @@ class RoundResult:
     recommendations: List[str] = field(default_factory=list)
     error: Optional[str] = None
     timestamp: datetime = field(default_factory=datetime.utcnow)
-    
+
     def validate(self) -> None:
         """Validate round result constraints."""
         if self.round_number <= 0:
@@ -157,37 +161,35 @@ class RoundResult:
         if self.metrics is not None:
             self.metrics.validate()
         if (self.error is not None) and self.score > 0.0:
-            logger.warning(
-                f"Round {self.round_number} has both error and score={self.score}"
-            )
-    
+            logger.warning(f"Round {self.round_number} has both error and score={self.score}")
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         result = asdict(self, dict_factory=dict)
-        result['timestamp'] = self.timestamp.isoformat()
+        result["timestamp"] = self.timestamp.isoformat()
         if self.metrics:
-            result['metrics'] = asdict(self.metrics)
+            result["metrics"] = asdict(self.metrics)
         return result
-    
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> RoundResult:
         """Create from dictionary."""
         data = dict(data)  # Copy to avoid mutation
-        if isinstance(data.get('timestamp'), str):
-            data['timestamp'] = datetime.fromisoformat(data['timestamp'])
-        if data.get('metrics'):
-            data['metrics'] = ExtractionMetrics(**data['metrics'])
+        if isinstance(data.get("timestamp"), str):
+            data["timestamp"] = datetime.fromisoformat(data["timestamp"])
+        if data.get("metrics"):
+            data["metrics"] = ExtractionMetrics(**data["metrics"])
         return cls(**data)
 
 
 @dataclass
 class LogicSessionConfig:
     """Configuration for a logic extraction session.
-    
+
     Strongly-typed configuration for logic theorem optimization sessions.
     All fields have proper type hints, constraints are validated, and
     the schema is compatible with the broader optimizer framework.
-    
+
     Attributes:
         max_rounds: Maximum rounds of extraction and refinement (1-1000)
         convergence_threshold: Score needed to converge (0-1)
@@ -201,6 +203,7 @@ class LogicSessionConfig:
         learning_rate: Learning rate for adaptation (0-1)
         seed: Random seed for reproducibility
     """
+
     max_rounds: int = 10
     convergence_threshold: float = 0.85
     extraction_mode: ExtractionMode = ExtractionMode.AUTO
@@ -212,7 +215,7 @@ class LogicSessionConfig:
     cache_max_size: int = 100  # MB
     learning_rate: float = 0.1
     seed: Optional[int] = None
-    
+
     def validate(self) -> None:
         """Validate all field constraints."""
         if not (1 <= self.max_rounds <= 1000):
@@ -241,29 +244,29 @@ class LogicSessionConfig:
             raise ValueError("learning_rate must be in [0, 1]")
         if self.seed is not None and not isinstance(self.seed, int):
             raise ValueError("seed must be an integer or None")
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         data = asdict(self)
-        data['extraction_mode'] = self.extraction_mode.value
+        data["extraction_mode"] = self.extraction_mode.value
         return data
-    
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> LogicSessionConfig:
         """Create from dictionary."""
         data = dict(data)  # Copy to avoid mutation
-        if isinstance(data.get('extraction_mode'), str):
-            data['extraction_mode'] = ExtractionMode(data['extraction_mode'])
+        if isinstance(data.get("extraction_mode"), str):
+            data["extraction_mode"] = ExtractionMode(data["extraction_mode"])
         return cls(**data)
 
 
 @dataclass
 class LogicSessionResult:
     """Result of a complete logic extraction session.
-    
+
     Comprehensive result schema for a single extraction-critique-optimize
     session. Includes all metrics, history, and outcome information.
-    
+
     Attributes:
         session_id: Unique session identifier
         success: Whether session completed successfully
@@ -283,6 +286,7 @@ class LogicSessionResult:
         created_at: When session was created
         completed_at: When session completed
     """
+
     session_id: str
     success: bool
     converged: bool
@@ -300,7 +304,7 @@ class LogicSessionResult:
     config: Optional[Dict[str, Any]] = None
     created_at: datetime = field(default_factory=datetime.utcnow)
     completed_at: Optional[datetime] = None
-    
+
     def validate(self) -> None:
         """Validate result constraints."""
         if not self.session_id:
@@ -327,96 +331,80 @@ class LogicSessionResult:
         for round_result in self.round_results:
             round_result.validate()
         if self.converged and self.convergence_reason is None:
-            raise ValueError(
-                "convergence_reason must be set when converged=True"
-            )
+            raise ValueError("convergence_reason must be set when converged=True")
         if not self.converged and self.convergence_reason is not None:
-            raise ValueError(
-                "convergence_reason should be None when converged=False"
-            )
-    
+            raise ValueError("convergence_reason should be None when converged=False")
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         data = {
-            'session_id': self.session_id,
-            'success': self.success,
-            'converged': self.converged,
-            'convergence_reason': (
-                self.convergence_reason.value
-                if self.convergence_reason
-                else None
+            "session_id": self.session_id,
+            "success": self.success,
+            "converged": self.converged,
+            "convergence_reason": (
+                self.convergence_reason.value if self.convergence_reason else None
             ),
-            'num_rounds': self.num_rounds,
-            'final_score': self.final_score,
-            'best_score': self.best_score,
-            'improvement': self.improvement,
-            'total_time': self.total_time,
-            'round_results': [r.to_dict() for r in self.round_results],
-            'final_extraction': self.final_extraction,
-            'final_critic_score': self.final_critic_score,
-            'errors': self.errors,
-            'warnings': self.warnings,
-            'config': self.config,
-            'created_at': self.created_at.isoformat(),
-            'completed_at': (
-                self.completed_at.isoformat()
-                if self.completed_at
-                else None
-            ),
+            "num_rounds": self.num_rounds,
+            "final_score": self.final_score,
+            "best_score": self.best_score,
+            "improvement": self.improvement,
+            "total_time": self.total_time,
+            "round_results": [r.to_dict() for r in self.round_results],
+            "final_extraction": self.final_extraction,
+            "final_critic_score": self.final_critic_score,
+            "errors": self.errors,
+            "warnings": self.warnings,
+            "config": self.config,
+            "created_at": self.created_at.isoformat(),
+            "completed_at": (self.completed_at.isoformat() if self.completed_at else None),
         }
         return data
-    
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> LogicSessionResult:
         """Create from dictionary."""
         data = dict(data)  # Copy to avoid mutation
-        
+
         # Parse datetime fields
-        if isinstance(data.get('created_at'), str):
-            data['created_at'] = datetime.fromisoformat(data['created_at'])
-        if isinstance(data.get('completed_at'), str):
-            data['completed_at'] = datetime.fromisoformat(data['completed_at'])
-        
+        if isinstance(data.get("created_at"), str):
+            data["created_at"] = datetime.fromisoformat(data["created_at"])
+        if isinstance(data.get("completed_at"), str):
+            data["completed_at"] = datetime.fromisoformat(data["completed_at"])
+
         # Parse convergence reason enum
-        if isinstance(data.get('convergence_reason'), str):
-            data['convergence_reason'] = ConvergenceReason(
-                data['convergence_reason']
-            )
-        
+        if isinstance(data.get("convergence_reason"), str):
+            data["convergence_reason"] = ConvergenceReason(data["convergence_reason"])
+
         # Parse round results
-        if data.get('round_results'):
-            data['round_results'] = [
-                RoundResult.from_dict(r) for r in data['round_results']
-            ]
-        
+        if data.get("round_results"):
+            data["round_results"] = [RoundResult.from_dict(r) for r in data["round_results"]]
+
         return cls(**data)
-    
+
     def get_summary(self) -> Dict[str, Any]:
         """Get a brief summary of session results.
-        
+
         Returns:
             Dictionary with key metrics for quick review
         """
         if not self.success:
             return {
-                'success': False,
-                'num_rounds': self.num_rounds,
-                'total_time': self.total_time,
-                'errors': self.errors,
+                "success": False,
+                "num_rounds": self.num_rounds,
+                "total_time": self.total_time,
+                "errors": self.errors,
             }
-        
+
         return {
-            'success': True,
-            'converged': self.converged,
-            'convergence_reason': (
-                self.convergence_reason.value
-                if self.convergence_reason
-                else None
+            "success": True,
+            "converged": self.converged,
+            "convergence_reason": (
+                self.convergence_reason.value if self.convergence_reason else None
             ),
-            'num_rounds': self.num_rounds,
-            'final_score': self.final_score,
-            'best_score': self.best_score,
-            'improvement': self.improvement,
-            'total_time': self.total_time,
-            'avg_round_time': self.total_time / self.num_rounds,
+            "num_rounds": self.num_rounds,
+            "final_score": self.final_score,
+            "best_score": self.best_score,
+            "improvement": self.improvement,
+            "total_time": self.total_time,
+            "avg_round_time": self.total_time / self.num_rounds,
         }

@@ -159,25 +159,27 @@ try:
         make_binary_rule,
         make_unary_rule,
     )
-    
+
     from .dcec_english_grammar import (
         DCECEnglishGrammar,
         create_dcec_grammar,
     )
-    
-    __all__.extend([
-        "GrammarEngine",
-        "Category",
-        "GrammarRule",
-        "LexicalEntry",
-        "ParseNode",
-        "CompositeGrammar",
-        "make_binary_rule",
-        "make_unary_rule",
-        "DCECEnglishGrammar",
-        "create_dcec_grammar",
-    ])
-    
+
+    __all__.extend(
+        [
+            "GrammarEngine",
+            "Category",
+            "GrammarRule",
+            "LexicalEntry",
+            "ParseNode",
+            "CompositeGrammar",
+            "make_binary_rule",
+            "make_unary_rule",
+            "DCECEnglishGrammar",
+            "create_dcec_grammar",
+        ]
+    )
+
     GRAMMAR_AVAILABLE = True
 except ImportError:
     GRAMMAR_AVAILABLE = False
@@ -200,7 +202,7 @@ try:
         create_prover,
         create_cognitive_prover,
     )
-    
+
     from .modal_tableaux import (
         TableauNode,
         ModalTableau,
@@ -210,31 +212,33 @@ try:
         create_tableau_prover,
         create_resolution_prover,
     )
-    
-    __all__.extend([
-        "ShadowProver",
-        "KProver",
-        "S4Prover",
-        "S5Prover",
-        "CognitiveCalculusProver",
-        "ModalLogic",
-        "ProofStatus",
-        "ProofStep",
-        "ProofTree",
-        "ProblemFile",
-        "ModalOperator",
-        "ProblemReader",
-        "create_prover",
-        "create_cognitive_prover",
-        "TableauNode",
-        "ModalTableau",
-        "TableauProver",
-        "ResolutionProver",
-        "NodeStatus",
-        "create_tableau_prover",
-        "create_resolution_prover",
-    ])
-    
+
+    __all__.extend(
+        [
+            "ShadowProver",
+            "KProver",
+            "S4Prover",
+            "S5Prover",
+            "CognitiveCalculusProver",
+            "ModalLogic",
+            "ProofStatus",
+            "ProofStep",
+            "ProofTree",
+            "ProblemFile",
+            "ModalOperator",
+            "ProblemReader",
+            "create_prover",
+            "create_cognitive_prover",
+            "TableauNode",
+            "ModalTableau",
+            "TableauProver",
+            "ResolutionProver",
+            "NodeStatus",
+            "create_tableau_prover",
+            "create_resolution_prover",
+        ]
+    )
+
     SHADOWPROVER_AVAILABLE = True
 except ImportError:
     SHADOWPROVER_AVAILABLE = False
@@ -249,16 +253,18 @@ try:
         parse_problem_file,
         parse_problem_string,
     )
-    
-    __all__.extend([
-        "TPTPParser",
-        "CustomProblemParser",
-        "ProblemParser",
-        "TPTPFormula",
-        "parse_problem_file",
-        "parse_problem_string",
-    ])
-    
+
+    __all__.extend(
+        [
+            "TPTPParser",
+            "CustomProblemParser",
+            "ProblemParser",
+            "TPTPFormula",
+            "parse_problem_file",
+            "parse_problem_string",
+        ]
+    )
+
     PROBLEM_PARSER_AVAILABLE = True
 except ImportError:
     PROBLEM_PARSER_AVAILABLE = False
@@ -271,7 +277,7 @@ try:
         get_global_cached_prover,
         HAVE_CACHE,
     )
-    
+
     from .cec_zkp_integration import (
         ProvingMethod,
         UnifiedCECProofResult,
@@ -279,19 +285,21 @@ try:
         create_hybrid_prover,
         HAVE_ZKP,
     )
-    
-    __all__.extend([
-        "CECCachedProofResult",
-        "CachedTheoremProver",
-        "get_global_cached_prover",
-        "HAVE_CACHE",
-        "ProvingMethod",
-        "UnifiedCECProofResult",
-        "ZKPCECProver",
-        "create_hybrid_prover",
-        "HAVE_ZKP",
-    ])
-    
+
+    __all__.extend(
+        [
+            "CECCachedProofResult",
+            "CachedTheoremProver",
+            "get_global_cached_prover",
+            "HAVE_CACHE",
+            "ProvingMethod",
+            "UnifiedCECProofResult",
+            "ZKPCECProver",
+            "create_hybrid_prover",
+            "HAVE_ZKP",
+        ]
+    )
+
     CACHING_AVAILABLE = True
     ZKP_AVAILABLE = HAVE_ZKP
 except ImportError as e:
@@ -305,8 +313,9 @@ __version__ = "1.1.0"
 def tokenize_dcec(expression: str):
     """Tokenize a DCEC expression string into a list of tokens."""
     import re
+
     # Simple tokenizer: split on whitespace and parentheses
-    tokens = re.findall(r'[()]|[^\s()]+', expression)
+    tokens = re.findall(r"[()]|[^\s()]+", expression)
     return tokens
 
 
@@ -316,6 +325,7 @@ __all__.append("tokenize_dcec")
 # Export InferenceRule from inference_rules for Phase 4B
 try:
     from .inference_rules.base import InferenceRule
+
     __all__.append("InferenceRule")
 except ImportError:
     pass

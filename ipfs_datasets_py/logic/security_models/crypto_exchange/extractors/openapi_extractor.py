@@ -10,7 +10,13 @@ class OpenAPIExtractor:
 
     def extract(self, spec: Mapping[str, Any]) -> dict[str, Any]:
         operations: list[dict[str, Any]] = []
-        for path, methods in spec.get('paths', {}).items():
+        for path, methods in spec.get("paths", {}).items():
             for method, definition in methods.items():
-                operations.append({'path': path, 'method': method.lower(), 'operation_id': definition.get('operationId', '')})
-        return {'operations': operations}
+                operations.append(
+                    {
+                        "path": path,
+                        "method": method.lower(),
+                        "operation_id": definition.get("operationId", ""),
+                    }
+                )
+        return {"operations": operations}

@@ -52,10 +52,7 @@ def repo_relative_pathspec(path: Path, *, repo_root: Path) -> str:
 
 
 def _normalized_pathspecs(paths: Sequence[str]) -> list[str]:
-    return [
-        path[2:] if path.startswith("./") else path
-        for path in unique_normalized_paths(paths)
-    ]
+    return [path[2:] if path.startswith("./") else path for path in unique_normalized_paths(paths)]
 
 
 def safe_auto_commit_pathspecs(
@@ -76,8 +73,7 @@ def safe_auto_commit_pathspecs(
         if normalized.startswith("/") or ".." in Path(normalized).parts:
             continue
         allowed = normalized in exact_paths or any(
-            normalized == prefix or normalized.startswith(prefix + "/")
-            for prefix in prefixes
+            normalized == prefix or normalized.startswith(prefix + "/") for prefix in prefixes
         )
         if allowed and normalized not in seen:
             seen.add(normalized)
@@ -165,7 +161,12 @@ def auto_commit_paths(
         allowed_exact_paths=config.allowed_exact_paths,
     )
     if not dirty_paths:
-        return {"attempted": True, "committed": False, "skipped_reason": "clean", "branch": branch_name}
+        return {
+            "attempted": True,
+            "committed": False,
+            "skipped_reason": "clean",
+            "branch": branch_name,
+        }
 
     if write_status_fn is not None:
         write_status_fn(

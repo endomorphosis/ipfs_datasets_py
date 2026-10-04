@@ -23,22 +23,22 @@ from ipfs_datasets_py.logic.security_models.crypto_exchange.reports.xaman_proof_
 
 
 def _load_json(path: Path) -> dict[str, object]:
-    return json.loads(path.read_text(encoding='utf-8'))
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def _write_json(path: Path, payload: dict[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
-        json.dumps(payload, indent=2, sort_keys=True) + '\n',
-        encoding='utf-8',
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
     )
 
 
 def generate(repo_root: Path) -> dict[str, object]:
     model_payload = _load_json(repo_root / MODEL_PATH)
-    model_cid = (repo_root / MODEL_CID_PATH).read_text(encoding='utf-8').strip()
+    model_cid = (repo_root / MODEL_CID_PATH).read_text(encoding="utf-8").strip()
     environment_probe = _load_json(repo_root / ENVIRONMENT_PROBE_PATH)
-    lean_source = (repo_root / PROOF_KERNEL_PATH).read_text(encoding='utf-8')
+    lean_source = (repo_root / PROOF_KERNEL_PATH).read_text(encoding="utf-8")
     report = build_xaman_proof_consumer_report(
         model_payload=model_payload,
         model_cid=model_cid,
@@ -52,22 +52,22 @@ def generate(repo_root: Path) -> dict[str, object]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        '--repo-root',
+        "--repo-root",
         default=str(ROOT_DIR),
-        help='Repository root containing security_ir_artifacts.',
+        help="Repository root containing security_ir_artifacts.",
     )
     args = parser.parse_args(argv)
     repo_root = Path(args.repo_root).resolve()
     report = generate(repo_root)
     print(
-        'Wrote '
-        f'{PROOF_CONSUMER_REPORT_PATH} '
-        f'({report["summary"]["accepted_fixture_count"]} accepted, '
-        f'{report["summary"]["rejected_fixture_count"]} rejected, '
-        f'artifact {report["artifact_cid"]})'
+        "Wrote "
+        f"{PROOF_CONSUMER_REPORT_PATH} "
+        f"({report['summary']['accepted_fixture_count']} accepted, "
+        f"{report['summary']['rejected_fixture_count']} rejected, "
+        f"artifact {report['artifact_cid']})"
     )
     return 0
 
 
-if __name__ == '__main__':  # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(main())

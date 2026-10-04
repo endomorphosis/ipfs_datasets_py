@@ -48,10 +48,7 @@ def test_bridge_manifest_exposes_optimizer_lanes() -> None:
     assert logic_bridge_spec("deontic_norms").implemented is True
     assert bridge_name_for_component("TDFOL.prover") == "fol_tdfol"
     assert bridge_name_for_component("CEC.native") == "cec_dcec"
-    assert (
-        bridge_name_for_component("external_provers.router")
-        == "external_prover_router"
-    )
+    assert bridge_name_for_component("external_provers.router") == "external_prover_router"
     assert bridge_name_for_component("zkp.circuits") == "zkp_attestation"
 
 
@@ -155,23 +152,14 @@ def test_modal_frame_logic_bridge_evaluates_ir_graph_and_proof_gate() -> None:
     assert report.ir_document.has_frame_logic is True
     assert report.ir_document.views["modal_ir"].metadata["formula_count"] >= 1
     assert report.ir_document.views["frame_logic"].metadata["triple_count"] > 0
-    assert (
-        report.ir_document.views["frame_logic"].metadata[
-            "frame_ontology_term_audit_count"
-        ]
-        > 0
-    )
+    assert report.ir_document.views["frame_logic"].metadata["frame_ontology_term_audit_count"] > 0
     assert report.ir_document.views["frame_logic"].metadata[
         "frame_ontology_high_signal_term_audit_terms"
     ]
     frame_triples = report.ir_document.views["frame_logic"].payload["triples"]
+    assert any(triple["predicate"] == "audited_ontology_term" for triple in frame_triples)
     assert any(
-        triple["predicate"] == "audited_ontology_term"
-        for triple in frame_triples
-    )
-    assert any(
-        triple["predicate"] == "audited_high_signal_ontology_term"
-        for triple in frame_triples
+        triple["predicate"] == "audited_high_signal_ontology_term" for triple in frame_triples
     )
     assert (
         report.ir_document.views["modal_ir"].payload["modal_ir"]["metadata"][
@@ -182,9 +170,7 @@ def test_modal_frame_logic_bridge_evaluates_ir_graph_and_proof_gate() -> None:
     assert report.graph_projection.neo4j_compatible is True
     assert report.graph_projection.node_count > 0
     assert report.graph_projection.relationship_count > 0
-    assert "ontology_term" in report.graph_projection.metadata[
-        "frame_logic_projection_views"
-    ]
+    assert "ontology_term" in report.graph_projection.metadata["frame_logic_projection_views"]
     assert report.proof_gate.attempted_count >= 1
     assert report.proof_gate.compiles is True
     assert report.round_trip.cross_entropy_loss >= 0.0
@@ -465,9 +451,7 @@ def test_modal_frame_logic_bridge_projects_flogic_repair_guidance_to_ontology_te
 
     modal_metadata = report.ir_document.views["modal_ir"].payload["modal_ir"]["metadata"]
     audit_terms = set(modal_metadata["frame_ontology_term_audit_terms"])
-    high_signal_terms = set(
-        modal_metadata["frame_ontology_high_signal_term_audit_terms"]
-    )
+    high_signal_terms = set(modal_metadata["frame_ontology_high_signal_term_audit_terms"])
     frame_triples = report.ir_document.views["frame_logic"].payload["triples"]
 
     assert report.metadata["selected_frame"]
@@ -510,9 +494,7 @@ def test_modal_frame_logic_bridge_promotes_bundle_only_flogic_guidance() -> None
         evaluate_provers=False,
     )
 
-    modal_metadata = report.ir_document.views["modal_ir"].payload["modal_ir"][
-        "metadata"
-    ]
+    modal_metadata = report.ir_document.views["modal_ir"].payload["modal_ir"]["metadata"]
     frame_triples = report.ir_document.views["frame_logic"].payload["triples"]
     selected_terms = {
         triple["object"]
@@ -561,9 +543,7 @@ def test_modal_frame_logic_bridge_promotes_json_bundle_packet_guidance() -> None
         evaluate_provers=False,
     )
 
-    modal_metadata = report.ir_document.views["modal_ir"].payload["modal_ir"][
-        "metadata"
-    ]
+    modal_metadata = report.ir_document.views["modal_ir"].payload["modal_ir"]["metadata"]
     selected_terms = {
         triple["object"]
         for triple in report.ir_document.views["frame_logic"].payload["triples"]
@@ -604,9 +584,7 @@ def test_modal_frame_logic_bridge_promotes_semantic_bundle_key_flogic_guidance()
         evaluate_provers=False,
     )
 
-    modal_metadata = report.ir_document.views["modal_ir"].payload["modal_ir"][
-        "metadata"
-    ]
+    modal_metadata = report.ir_document.views["modal_ir"].payload["modal_ir"]["metadata"]
     frame_metadata = report.ir_document.views["frame_logic"].metadata
     selected_terms = {
         triple["object"]
@@ -642,9 +620,7 @@ def test_modal_frame_logic_bridge_promotes_sample_only_flogic_guidance() -> None
         evaluate_provers=False,
     )
 
-    modal_metadata = report.ir_document.views["modal_ir"].payload["modal_ir"][
-        "metadata"
-    ]
+    modal_metadata = report.ir_document.views["modal_ir"].payload["modal_ir"]["metadata"]
     selected_terms = {
         triple["object"]
         for triple in report.ir_document.views["frame_logic"].payload["triples"]
@@ -687,9 +663,7 @@ def test_modal_frame_logic_bridge_infers_flogic_route_from_passing_gap_evidence(
         evaluate_provers=False,
     )
 
-    modal_metadata = report.ir_document.views["modal_ir"].payload["modal_ir"][
-        "metadata"
-    ]
+    modal_metadata = report.ir_document.views["modal_ir"].payload["modal_ir"]["metadata"]
     frame_triples = report.ir_document.views["frame_logic"].payload["triples"]
     selected_terms = {
         triple["object"]
@@ -752,13 +726,9 @@ def test_modal_frame_logic_bridge_projects_frame_alignment_guidance_routes_to_te
             evaluate_provers=False,
         )
 
-        modal_metadata = report.ir_document.views["modal_ir"].payload["modal_ir"][
-            "metadata"
-        ]
+        modal_metadata = report.ir_document.views["modal_ir"].payload["modal_ir"]["metadata"]
         audit_terms = set(modal_metadata["frame_ontology_term_audit_terms"])
-        high_signal_terms = set(
-            modal_metadata["frame_ontology_high_signal_term_audit_terms"]
-        )
+        high_signal_terms = set(modal_metadata["frame_ontology_high_signal_term_audit_terms"])
         frame_triples = report.ir_document.views["frame_logic"].payload["triples"]
         interpreted_terms = {
             triple["object"]
@@ -772,18 +742,15 @@ def test_modal_frame_logic_bridge_projects_frame_alignment_guidance_routes_to_te
         assert "deontic_ir" in high_signal_terms
         assert "tdfol_prover" in high_signal_terms
         assert any(
-            triple["predicate"] == "audited_ontology_term"
-            and triple["object"] == route
+            triple["predicate"] == "audited_ontology_term" and triple["object"] == route
             for triple in frame_triples
         )
         assert any(
-            triple["predicate"] == "selected_ontology_term"
-            and triple["object"] == "deontic_ir"
+            triple["predicate"] == "selected_ontology_term" and triple["object"] == "deontic_ir"
             for triple in frame_triples
         )
         assert any(
-            triple["predicate"] == "selected_ontology_term"
-            and triple["object"] == "tdfol_prover"
+            triple["predicate"] == "selected_ontology_term" and triple["object"] == "tdfol_prover"
             for triple in frame_triples
         )
         assert "deontic_ir" in interpreted_terms
@@ -831,13 +798,9 @@ def test_modal_frame_logic_bridge_audits_packet_frame_feature_evidence() -> None
         evaluate_provers=False,
     )
 
-    modal_metadata = report.ir_document.views["modal_ir"].payload["modal_ir"][
-        "metadata"
-    ]
+    modal_metadata = report.ir_document.views["modal_ir"].payload["modal_ir"]["metadata"]
     audit_terms = set(modal_metadata["frame_ontology_term_audit_terms"])
-    high_signal_terms = set(
-        modal_metadata["frame_ontology_high_signal_term_audit_terms"]
-    )
+    high_signal_terms = set(modal_metadata["frame_ontology_high_signal_term_audit_terms"])
     frame_triples = report.ir_document.views["frame_logic"].payload["triples"]
     selected_terms = {
         triple["object"]
@@ -879,9 +842,7 @@ def test_modal_frame_logic_bridge_promotes_graph_projection_guidance_to_neo4j_vi
             "evidence": [
                 {
                     "citation": "26 U.S.C. 994",
-                    "compiler_guidance_route": (
-                        "repair_multiview_legal_ir_graph_projection"
-                    ),
+                    "compiler_guidance_route": ("repair_multiview_legal_ir_graph_projection"),
                     "selected_frame_after": "administrative_notice_hearing",
                     "selected_frame_before": "administrative_notice_hearing",
                 }
@@ -906,9 +867,7 @@ def test_modal_frame_logic_bridge_promotes_graph_projection_guidance_to_neo4j_vi
         for triple in frame_triples
     )
     assert graph_metadata["frame_logic_projection_legal_view_missing"] == []
-    assert graph_metadata[
-        "frame_logic_projection_legal_view_coverage_complete"
-    ] is True
+    assert graph_metadata["frame_logic_projection_legal_view_coverage_complete"] is True
     assert (
         graph_metadata["canonical_legal_ir_projection_view_distribution"][
             "knowledge_graphs.neo4j_compat"
@@ -951,16 +910,12 @@ def test_modal_frame_logic_bridge_promotes_action_shaped_graph_guidance_to_neo4j
     graph_relationships = graph_view.payload["relationships"]
 
     assert any(
-        relationship["properties"]["flogic_predicate"]
-        == "learned_legal_ir_target_view"
-        and relationship["properties"]["flogic_object"]
-        == "knowledge_graphs.neo4j_compat"
+        relationship["properties"]["flogic_predicate"] == "learned_legal_ir_target_view"
+        and relationship["properties"]["flogic_object"] == "knowledge_graphs.neo4j_compat"
         for relationship in graph_relationships
     )
     assert graph_metadata["frame_logic_projection_legal_view_missing"] == []
-    assert graph_metadata[
-        "frame_logic_projection_legal_view_coverage_complete"
-    ] is True
+    assert graph_metadata["frame_logic_projection_legal_view_coverage_complete"] is True
     assert graph_metadata["legal_ir_multiview_graph_failure_penalty"] == 0.0
     assert graph_metadata["legal_ir_view_cross_entropy_loss"] == 0.0
 
@@ -976,8 +931,7 @@ def test_neo4j_projection_promotes_packet_metadata_guidance_to_alignment_view() 
         document_id="us-code-26-994-packet-metadata-projection",
         source="us_code",
         normalized_text=(
-            "26 U.S.C. 994: U.S.C. Title 26 - INTERNAL REVENUE CODE "
-            "Sec. 994 - Regulations."
+            "26 U.S.C. 994: U.S.C. Title 26 - INTERNAL REVENUE CODE Sec. 994 - Regulations."
         ),
         frame_logic=ModalIRFrameLogic.from_triples(
             [
@@ -1006,9 +960,7 @@ def test_neo4j_projection_promotes_packet_metadata_guidance_to_alignment_view() 
             },
             "evidence": [
                 {
-                    "bridge_failure_name": (
-                        "legal_ir_multiview_graph_failure_penalty"
-                    ),
+                    "bridge_failure_name": ("legal_ir_multiview_graph_failure_penalty"),
                     "target_view": "knowledge_graphs.neo4j_compat",
                 }
             ],
@@ -1019,16 +971,12 @@ def test_neo4j_projection_promotes_packet_metadata_guidance_to_alignment_view() 
     graph_relationships = graph_data.to_dict()["relationships"]
 
     assert any(
-        relationship["properties"]["flogic_predicate"]
-        == "learned_legal_ir_target_view"
-        and relationship["properties"]["flogic_object"]
-        == "knowledge_graphs.neo4j_compat"
+        relationship["properties"]["flogic_predicate"] == "learned_legal_ir_target_view"
+        and relationship["properties"]["flogic_object"] == "knowledge_graphs.neo4j_compat"
         for relationship in graph_relationships
     )
     assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
-    assert graph_data.metadata[
-        "frame_logic_projection_legal_view_coverage_complete"
-    ] is True
+    assert graph_data.metadata["frame_logic_projection_legal_view_coverage_complete"] is True
     assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
 
 
@@ -1076,16 +1024,12 @@ def test_neo4j_projection_promotes_packet_view_gap_buckets_to_alignment_view() -
     graph_relationships = graph_data.to_dict()["relationships"]
 
     assert any(
-        relationship["properties"]["flogic_predicate"]
-        == "learned_legal_ir_target_view"
-        and relationship["properties"]["flogic_object"]
-        == "knowledge_graphs.neo4j_compat"
+        relationship["properties"]["flogic_predicate"] == "learned_legal_ir_target_view"
+        and relationship["properties"]["flogic_object"] == "knowledge_graphs.neo4j_compat"
         for relationship in graph_relationships
     )
     assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
-    assert graph_data.metadata[
-        "frame_logic_projection_legal_view_coverage_complete"
-    ] is True
+    assert graph_data.metadata["frame_logic_projection_legal_view_coverage_complete"] is True
     assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
 
 
@@ -1100,8 +1044,7 @@ def test_neo4j_projection_promotes_packet_family_gap_buckets_to_alignment_view()
         document_id="us-code-26-994-family-gap-projection",
         source="compiler_guidance_distillation_v1",
         normalized_text=(
-            "26 U.S.C. 994: U.S.C. Title 26 - INTERNAL REVENUE CODE "
-            "Sec. 994 - Regulations."
+            "26 U.S.C. 994: U.S.C. Title 26 - INTERNAL REVENUE CODE Sec. 994 - Regulations."
         ),
         frame_logic=ModalIRFrameLogic.from_triples(
             [
@@ -1128,10 +1071,8 @@ def test_neo4j_projection_promotes_packet_family_gap_buckets_to_alignment_view()
     graph_relationships = graph_data.to_dict()["relationships"]
 
     assert any(
-        relationship["properties"]["flogic_predicate"]
-        == "learned_legal_ir_target_view"
-        and relationship["properties"]["flogic_object"]
-        == "knowledge_graphs.neo4j_compat"
+        relationship["properties"]["flogic_predicate"] == "learned_legal_ir_target_view"
+        and relationship["properties"]["flogic_object"] == "knowledge_graphs.neo4j_compat"
         for relationship in graph_relationships
     )
     assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
@@ -1149,8 +1090,7 @@ def test_neo4j_projection_promotes_nested_packet_metric_scope_guidance() -> None
         document_id="us-code-26-994-packet-attribution-projection",
         source="us_code",
         normalized_text=(
-            "26 U.S.C. 994: U.S.C. Title 26 - INTERNAL REVENUE CODE "
-            "Sec. 994 - Regulations."
+            "26 U.S.C. 994: U.S.C. Title 26 - INTERNAL REVENUE CODE Sec. 994 - Regulations."
         ),
         frame_logic=ModalIRFrameLogic.from_triples(
             [
@@ -1172,8 +1112,7 @@ def test_neo4j_projection_promotes_nested_packet_metric_scope_guidance() -> None
         metadata={
             "compiler_guidance_attribution": {
                 "semantic_bundle_key": (
-                    "compiler-guidance:"
-                    "repair_multiview_legal_ir_graph_projection"
+                    "compiler-guidance:repair_multiview_legal_ir_graph_projection"
                 ),
                 "target_metrics": (
                     "cross_entropy_loss, legal_ir_multiview_graph_failure_penalty, "
@@ -1188,16 +1127,12 @@ def test_neo4j_projection_promotes_nested_packet_metric_scope_guidance() -> None
     graph_relationships = graph_data.to_dict()["relationships"]
 
     assert any(
-        relationship["properties"]["flogic_predicate"]
-        == "learned_legal_ir_target_view"
-        and relationship["properties"]["flogic_object"]
-        == "knowledge_graphs.neo4j_compat"
+        relationship["properties"]["flogic_predicate"] == "learned_legal_ir_target_view"
+        and relationship["properties"]["flogic_object"] == "knowledge_graphs.neo4j_compat"
         for relationship in graph_relationships
     )
     assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
-    assert graph_data.metadata[
-        "frame_logic_projection_legal_view_coverage_complete"
-    ] is True
+    assert graph_data.metadata["frame_logic_projection_legal_view_coverage_complete"] is True
     assert graph_data.metadata["legal_ir_multiview_graph_failure_penalty"] == 0.0
     assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
 
@@ -1216,8 +1151,7 @@ def test_neo4j_compat_promotes_json_packet_guidance_triples_to_alignment_view() 
                 "subject": "us-code-26-994-json-guidance-projection",
                 "predicate": "source_text",
                 "object": (
-                    "26 U.S.C. 994: U.S.C. Title 26 - INTERNAL REVENUE "
-                    "CODE Sec. 994 - Regulations."
+                    "26 U.S.C. 994: U.S.C. Title 26 - INTERNAL REVENUE CODE Sec. 994 - Regulations."
                 ),
             },
             {
@@ -1238,9 +1172,7 @@ def test_neo4j_compat_promotes_json_packet_guidance_triples_to_alignment_view() 
                 "predicate": "evidence",
                 "object": json.dumps(
                     {
-                        "bridge_failure_name": (
-                            "legal_ir_multiview_graph_failure_penalty"
-                        ),
+                        "bridge_failure_name": ("legal_ir_multiview_graph_failure_penalty"),
                         "target_view": "knowledge_graphs.neo4j_compat",
                     },
                     sort_keys=True,
@@ -1253,16 +1185,12 @@ def test_neo4j_compat_promotes_json_packet_guidance_triples_to_alignment_view() 
     graph_relationships = graph_data.to_dict()["relationships"]
 
     assert any(
-        relationship["properties"]["flogic_predicate"]
-        == "learned_legal_ir_target_view"
-        and relationship["properties"]["flogic_object"]
-        == "knowledge_graphs.neo4j_compat"
+        relationship["properties"]["flogic_predicate"] == "learned_legal_ir_target_view"
+        and relationship["properties"]["flogic_object"] == "knowledge_graphs.neo4j_compat"
         for relationship in graph_relationships
     )
     assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
-    assert graph_data.metadata[
-        "frame_logic_projection_legal_view_coverage_complete"
-    ] is True
+    assert graph_data.metadata["frame_logic_projection_legal_view_coverage_complete"] is True
     assert graph_data.metadata["legal_ir_multiview_graph_failure_penalty"] == 0.0
     assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
 
@@ -1414,9 +1342,7 @@ def test_neo4j_compat_augments_plural_omitted_section_list_projection() -> None:
         "MINERAL LANDS AND REGULATIONS IN GENERAL",
     ) in triples
     assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
-    assert graph_data.metadata[
-        "frame_logic_projection_legal_view_coverage_complete"
-    ] is True
+    assert graph_data.metadata["frame_logic_projection_legal_view_coverage_complete"] is True
     assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
 
 
@@ -1842,7 +1768,7 @@ def test_modal_frame_logic_bridge_aligns_citation_backed_section_digests() -> No
         (
             "§285 l . Purpose of Institute The general purpose of the National "
             "Institute of Environmental Health Sciences (in this subpart "
-            "referred to as the \"Institute\") is the conduct and support of "
+            'referred to as the "Institute") is the conduct and support of '
             "research, training, health information dissemination, and other "
             "programs with respect to factors in the environment that affect "
             "human health, directly or indirectly."
@@ -1938,10 +1864,7 @@ def test_modal_frame_logic_bridge_aligns_packet_citation_status_bodies() -> None
         ),
         (
             "42 U.S.C. 6979b",
-            (
-                "42 U.S.C. 6979b. Codification The text of section 6979b "
-                "of this title was omitted."
-            ),
+            ("42 U.S.C. 6979b. Codification The text of section 6979b of this title was omitted."),
         ),
         (
             "43 U.S.C. 261",
@@ -1994,9 +1917,7 @@ def test_graph_projection_infers_neo4j_shape_when_metadata_flag_missing() -> Non
             SimpleNamespace(id="n1"),
             SimpleNamespace(id="n2"),
         ),
-        relationships=(
-            SimpleNamespace(type="CITES", start_node="n1", end_node="n2"),
-        ),
+        relationships=(SimpleNamespace(type="CITES", start_node="n1", end_node="n2"),),
         schema=SimpleNamespace(node_labels=("LegalNode",), relationship_types=("CITES",)),
     )
 
@@ -2022,9 +1943,7 @@ def test_modal_frame_logic_bridge_projects_repealed_status_as_graph_view() -> No
     )
 
     graph_view = report.ir_document.views["neo4j_graph_data"]
-    view_distribution = graph_view.metadata[
-        "frame_logic_projection_view_distribution"
-    ]
+    view_distribution = graph_view.metadata["frame_logic_projection_view_distribution"]
     assert report.graph_projection.neo4j_compatible is True
     assert report.graph_projection.graph_failure_penalty == 0.0
     assert view_distribution["editorial_status"] >= 1
@@ -2049,10 +1968,7 @@ def test_modal_frame_logic_bridge_asserts_projection_ontology_constraints() -> N
     )
 
     triples = report.ir_document.views["frame_logic"].payload["triples"]
-    triple_pairs = {
-        (triple["predicate"], triple["object"])
-        for triple in triples
-    }
+    triple_pairs = {(triple["predicate"], triple["object"]) for triple in triples}
 
     assert report.round_trip.extra_losses["ontology_violation_count"] == 0.0
     assert (
@@ -2080,13 +1996,11 @@ def test_modal_frame_logic_bridge_asserts_projection_ontology_constraints() -> N
         "selected_ontology_term:required:satisfied",
     ) in triple_pairs
     assert any(
-        predicate == "selected_ontology_frame_term_coverage_complete"
-        and value == "true"
+        predicate == "selected_ontology_frame_term_coverage_complete" and value == "true"
         for predicate, value in triple_pairs
     )
     assert not any(
-        triple["predicate"] == "learned_legal_ir_missing_projection_view"
-        for triple in triples
+        triple["predicate"] == "learned_legal_ir_missing_projection_view" for triple in triples
     )
 
 
@@ -2115,14 +2029,12 @@ def test_modal_frame_logic_bridge_preserves_selected_frame_without_splitting_vie
     )
 
     view_distribution = graph_data.metadata["frame_logic_projection_view_distribution"]
-    assert graph_data.metadata["frame_logic_selected_frame"] == (
-        "administrative_notice_hearing"
-    )
+    assert graph_data.metadata["frame_logic_selected_frame"] == ("administrative_notice_hearing")
     assert view_distribution["frame_link"] == 2
     assert "frame_link" in graph_data.metadata["frame_logic_projection_views"]
-    assert "administrative_notice_hearing" not in graph_data.metadata[
-        "frame_logic_projection_views"
-    ]
+    assert (
+        "administrative_notice_hearing" not in graph_data.metadata["frame_logic_projection_views"]
+    )
     assert any(
         relationship.properties["frame_logic_projection_view"] == "frame_link"
         for relationship in graph_data.relationships
@@ -2178,10 +2090,7 @@ def test_modal_frame_logic_bridge_projects_us_code_source_id_components_to_legal
     assert view_by_predicate["source_id_citation_canonical"] == "citation_structure"
     assert view_by_predicate["source_id_section_normalized"] == "section_structure"
     assert view_by_predicate["citation_section_component_profile"] == "section_structure"
-    assert (
-        view_by_predicate["citation_source_id_section_profile_match"]
-        == "section_structure"
-    )
+    assert view_by_predicate["citation_source_id_section_profile_match"] == "section_structure"
     assert graph_data.metadata["frame_logic_projection_view_distribution"] == {
         "citation_structure": 2,
         "document_scope": 1,
@@ -2193,9 +2102,7 @@ def test_modal_frame_logic_bridge_projects_us_code_source_id_components_to_legal
         "section_structure",
     ]
     assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
-    assert graph_data.metadata[
-        "frame_logic_projection_legal_view_coverage_complete"
-    ] is True
+    assert graph_data.metadata["frame_logic_projection_legal_view_coverage_complete"] is True
 
 
 def test_modal_frame_logic_bridge_augments_sparse_us_code_graph_projection() -> None:
@@ -2327,22 +2234,16 @@ def test_modal_frame_logic_bridge_aligns_sparse_us_code_source_and_citation_view
     }
 
     assert (
-        objects_by_subject_predicate[
-            ("us-code-43-617f", "citation_source_id_alignment")
-        ]
+        objects_by_subject_predicate[("us-code-43-617f", "citation_source_id_alignment")]
         == "canonical_match"
     )
     assert (
-        objects_by_subject_predicate[
-            ("us-code-33-763a-2", "citation_source_id_section_match")
-        ]
+        objects_by_subject_predicate[("us-code-33-763a-2", "citation_source_id_section_match")]
         == "true"
     )
     assert view_by_predicate["citation_source_id_section_match"] == "section_structure"
     assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
-    assert graph_data.metadata[
-        "frame_logic_projection_legal_view_coverage_complete"
-    ] is True
+    assert graph_data.metadata["frame_logic_projection_legal_view_coverage_complete"] is True
     assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
 
 
@@ -2389,9 +2290,7 @@ def test_modal_frame_logic_bridge_labels_legal_projection_view_nodes() -> None:
         "LegalSectionStructure",
     } <= labels
     assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
-    assert graph_data.metadata[
-        "frame_logic_projection_legal_view_coverage_complete"
-    ] is True
+    assert graph_data.metadata["frame_logic_projection_legal_view_coverage_complete"] is True
 
 
 def test_modal_frame_logic_bridge_counts_view_alignment_as_graph_projection_evidence() -> None:
@@ -2423,13 +2322,12 @@ def test_modal_frame_logic_bridge_counts_view_alignment_as_graph_projection_evid
         graph_id="us-code-42-285:flogic",
     )
 
-    canonical_distribution = graph_data.metadata[
-        "canonical_legal_ir_projection_view_distribution"
-    ]
+    canonical_distribution = graph_data.metadata["canonical_legal_ir_projection_view_distribution"]
 
-    assert graph_data.metadata["frame_logic_projection_view_distribution"][
-        "legal_ir_view_alignment"
-    ] == 1
+    assert (
+        graph_data.metadata["frame_logic_projection_view_distribution"]["legal_ir_view_alignment"]
+        == 1
+    )
     assert canonical_distribution == {
         "knowledge_graphs.neo4j_compat": 0.8,
         "modal.frame_logic": 0.2,
@@ -2478,9 +2376,7 @@ def test_modal_frame_logic_bridge_requires_editorial_and_alignment_graph_views()
         "section_structure",
     ]
     assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
-    assert graph_data.metadata[
-        "frame_logic_projection_legal_view_coverage_complete"
-    ] is True
+    assert graph_data.metadata["frame_logic_projection_legal_view_coverage_complete"] is True
 
 
 def test_modal_frame_logic_bridge_projects_heading_and_learned_views() -> None:
@@ -2532,14 +2428,9 @@ def test_modal_frame_logic_bridge_projects_heading_and_learned_views() -> None:
 
     assert view_by_predicate["section_heading_tail"] == "section_structure"
     assert view_by_predicate["condition_scope_token"] == "modal_semantics"
-    assert (
-        view_by_predicate["learned_legal_ir_target_view"]
-        == "legal_ir_view_alignment"
-    )
+    assert view_by_predicate["learned_legal_ir_target_view"] == "legal_ir_view_alignment"
     assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
-    assert graph_data.metadata[
-        "frame_logic_projection_legal_view_coverage_complete"
-    ] is True
+    assert graph_data.metadata["frame_logic_projection_legal_view_coverage_complete"] is True
 
 
 def test_modal_frame_logic_bridge_projects_graph_lane_alignment_metadata() -> None:
@@ -2560,17 +2451,16 @@ def test_modal_frame_logic_bridge_projects_graph_lane_alignment_metadata() -> No
     )
 
     graph_view = report.ir_document.views["neo4j_graph_data"]
-    canonical_distribution = graph_view.metadata[
-        "canonical_legal_ir_projection_view_distribution"
-    ]
+    canonical_distribution = graph_view.metadata["canonical_legal_ir_projection_view_distribution"]
 
     assert report.graph_projection.graph_failure_penalty == 0.0
     assert graph_view.source_component == "knowledge_graphs.neo4j_compat"
     assert graph_view.metadata["frame_logic_to_neo4j_component_pair"] == (
         "modal.frame_logic->knowledge_graphs.neo4j_compat"
     )
-    assert graph_view.metadata["frame_logic_to_neo4j_alignment_total"] == (
-        graph_view.metadata["relationship_count"]
+    assert (
+        graph_view.metadata["frame_logic_to_neo4j_alignment_total"]
+        == (graph_view.metadata["relationship_count"])
     )
     assert set(canonical_distribution) == {
         "knowledge_graphs.neo4j_compat",
@@ -2681,9 +2571,7 @@ def test_bridge_contract_promotes_packet_json_bundle_guidance() -> None:
         }
     )
 
-    target_distribution = metadata[
-        "compiler_guidance_bridge_contract_target_distribution"
-    ]
+    target_distribution = metadata["compiler_guidance_bridge_contract_target_distribution"]
 
     assert metadata["compiler_guidance_bridge_contract_applied"] is True
     assert metadata["compiler_guidance_bridge_contract_evidence_count"] == 1
@@ -2728,9 +2616,7 @@ def test_bridge_contract_promotes_packet_todo_guidance_fields() -> None:
         }
     )
 
-    target_distribution = metadata[
-        "compiler_guidance_bridge_contract_target_distribution"
-    ]
+    target_distribution = metadata["compiler_guidance_bridge_contract_target_distribution"]
 
     assert metadata["compiler_guidance_bridge_contract_applied"] is True
     assert metadata["compiler_guidance_bridge_contract_evidence_count"] == 1
@@ -2773,18 +2659,14 @@ def test_bridge_contract_promotes_semantic_bundle_feature_guidance() -> None:
                     "legal_ir_view_logit_magnitude": 1.5,
                 },
             ],
-            "semantic_bundle_key": (
-                "compiler-guidance:repair_multiview_legal_ir_loss"
-            ),
+            "semantic_bundle_key": ("compiler-guidance:repair_multiview_legal_ir_loss"),
             "source": "compiler_guidance_distillation_v1",
             "target_component": "bridge.contracts",
             "vector_bundle": "score",
         }
     )
 
-    target_distribution = metadata[
-        "compiler_guidance_bridge_contract_target_distribution"
-    ]
+    target_distribution = metadata["compiler_guidance_bridge_contract_target_distribution"]
 
     assert {
         "CEC.native",
@@ -2792,8 +2674,8 @@ def test_bridge_contract_promotes_semantic_bundle_feature_guidance() -> None:
         "deontic.ir",
         "knowledge_graphs.neo4j_compat",
     } <= set(metadata["compiler_guidance_bridge_contract_target_lanes"])
-    assert target_distribution["knowledge_graphs.neo4j_compat"] > (
-        target_distribution["deontic.ir"]
+    assert (
+        target_distribution["knowledge_graphs.neo4j_compat"] > (target_distribution["deontic.ir"])
     )
     assert abs(sum(target_distribution.values()) - 1.0) < 1e-12
 
@@ -2846,9 +2728,7 @@ def test_bridge_contract_guidance_projects_frame_to_conditional_normative_pairs(
         }
     )
 
-    target_distribution = metadata[
-        "compiler_guidance_bridge_contract_target_distribution"
-    ]
+    target_distribution = metadata["compiler_guidance_bridge_contract_target_distribution"]
 
     assert metadata["compiler_guidance_bridge_contract_applied"] is True
     assert {
@@ -2858,9 +2738,10 @@ def test_bridge_contract_guidance_projects_frame_to_conditional_normative_pairs(
     } <= set(target_distribution)
     assert target_distribution["deontic.ir"] > target_distribution["modal.frame_logic"]
     assert target_distribution["TDFOL.prover"] > target_distribution["modal.frame_logic"]
-    assert target_distribution["knowledge_graphs.neo4j_compat"] > target_distribution[
-        "modal.frame_logic"
-    ]
+    assert (
+        target_distribution["knowledge_graphs.neo4j_compat"]
+        > target_distribution["modal.frame_logic"]
+    )
     assert abs(sum(target_distribution.values()) - 1.0) < 1e-12
 
 
@@ -2921,14 +2802,13 @@ def test_bridge_contract_guidance_counts_unmarked_frame_deontic_evidence() -> No
         }
     )
 
-    target_distribution = metadata[
-        "compiler_guidance_bridge_contract_target_distribution"
-    ]
+    target_distribution = metadata["compiler_guidance_bridge_contract_target_distribution"]
 
     assert metadata["compiler_guidance_bridge_contract_evidence_count"] == 1
-    assert metadata["compiler_guidance_component_gaps"][
-        "knowledge_graphs.neo4j_compat"
-    ] == 0.018177909088
+    assert (
+        metadata["compiler_guidance_component_gaps"]["knowledge_graphs.neo4j_compat"]
+        == 0.018177909088
+    )
     assert metadata["compiler_guidance_bridge_contract_projection_strength"] > (
         _BRIDGE_CONTRACT_GUIDANCE_PROJECTION_STRENGTH
     )
@@ -2940,8 +2820,9 @@ def test_bridge_contract_guidance_counts_unmarked_frame_deontic_evidence() -> No
     } <= set(target_distribution)
     assert target_distribution["deontic.ir"] > target_distribution["modal.frame_logic"]
     assert target_distribution["TDFOL.prover"] > target_distribution["modal.frame_logic"]
-    assert target_distribution["knowledge_graphs.neo4j_compat"] > (
-        target_distribution["modal.frame_logic"]
+    assert (
+        target_distribution["knowledge_graphs.neo4j_compat"]
+        > (target_distribution["modal.frame_logic"])
     )
     assert abs(sum(target_distribution.values()) - 1.0) < 1e-12
 
@@ -2994,9 +2875,7 @@ def test_bridge_contract_guidance_projects_frame_temporal_and_frame_pairs() -> N
         }
     )
 
-    target_distribution = metadata[
-        "compiler_guidance_bridge_contract_target_distribution"
-    ]
+    target_distribution = metadata["compiler_guidance_bridge_contract_target_distribution"]
 
     assert {
         "CEC.native",
@@ -3007,8 +2886,9 @@ def test_bridge_contract_guidance_projects_frame_temporal_and_frame_pairs() -> N
     } <= set(target_distribution)
     assert target_distribution["TDFOL.prover"] > target_distribution["CEC.native"]
     assert target_distribution["deontic.ir"] > target_distribution["modal.frame_logic"]
-    assert target_distribution["knowledge_graphs.neo4j_compat"] > (
-        target_distribution["modal.frame_logic"]
+    assert (
+        target_distribution["knowledge_graphs.neo4j_compat"]
+        > (target_distribution["modal.frame_logic"])
     )
     assert metadata["compiler_guidance_component_gap_max"] == 0.018627877981
     assert abs(sum(target_distribution.values()) - 1.0) < 1e-12
@@ -3073,9 +2953,7 @@ def test_bridge_contract_guidance_keeps_packet_120_primary_lanes() -> None:
         }
     )
 
-    target_distribution = metadata[
-        "compiler_guidance_bridge_contract_target_distribution"
-    ]
+    target_distribution = metadata["compiler_guidance_bridge_contract_target_distribution"]
 
     assert {
         "CEC.native",
@@ -3083,9 +2961,7 @@ def test_bridge_contract_guidance_keeps_packet_120_primary_lanes() -> None:
         "deontic.ir",
     } <= set(target_distribution)
     assert target_distribution["CEC.native"] > target_distribution["modal.frame_logic"]
-    assert target_distribution["deontic.ir"] > target_distribution[
-        "knowledge_graphs.neo4j_compat"
-    ]
+    assert target_distribution["deontic.ir"] > target_distribution["knowledge_graphs.neo4j_compat"]
     assert metadata["compiler_guidance_bridge_contract_projection_strength"] > 0.32
 
 
@@ -3146,9 +3022,7 @@ def test_bridge_contract_guidance_keeps_strongest_packet_160_component_gaps() ->
     )
 
     component_gaps = metadata["compiler_guidance_component_gaps"]
-    target_distribution = metadata[
-        "compiler_guidance_bridge_contract_target_distribution"
-    ]
+    target_distribution = metadata["compiler_guidance_bridge_contract_target_distribution"]
 
     assert component_gaps["CEC.native"] == 0.219599485392
     assert component_gaps["deontic.ir"] == 0.133246290501
@@ -3210,9 +3084,7 @@ def test_modal_frame_logic_bridge_exports_graph_projection_signal_for_uscode_sca
             )
         )
         assert report.graph_projection.graph_failure_penalty == 0.0
-        assert graph_metadata["legal_ir_graph_projection_signal_count"] == (
-            expected_signal_count
-        )
+        assert graph_metadata["legal_ir_graph_projection_signal_count"] == (expected_signal_count)
         assert graph_metadata["legal_ir_graph_projection_signal_count"] > 0
         assert 0.0 < metadata["legal_ir_graph_projection_signal_ratio"] <= 1.0
         assert (
@@ -3339,6 +3211,8 @@ def test_multiview_contract_rebalances_sparse_findings_sections() -> None:
     assert rebalanced["deontic.ir"] > 0.31
     assert rebalanced["knowledge_graphs.neo4j_compat"] < 0.2581923150542418
     assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
+
+
 def test_multiview_contract_projects_preemption_contract_norms_to_deontic_lane() -> None:
     from ipfs_datasets_py.logic.bridge.multiview import (
         _compact_official_usc_contract_distribution,
@@ -3448,18 +3322,16 @@ def test_deontic_bridge_evaluates_legal_norm_ir_and_prover_syntax() -> None:
 
     assert report.adapter_name == "deontic_norms"
     assert report.ir_document.views["deontic_ir"].metadata["norm_count"] >= 1
-    assert report.ir_document.views["deontic_formula_records"].metadata[
-        "proof_ready_count"
-    ] >= 1
-    assert report.ir_document.views["deontic_decoder_reconstructions"].metadata[
-        "decoder_record_count"
-    ] >= 1
-    assert report.ir_document.views["deontic_ir_slot_provenance"].metadata[
-        "provenance_record_count"
-    ] >= 1
-    assert report.ir_document.views["deontic_phase8_quality"].metadata[
-        "quality_record_count"
-    ] >= 1
+    assert report.ir_document.views["deontic_formula_records"].metadata["proof_ready_count"] >= 1
+    assert (
+        report.ir_document.views["deontic_decoder_reconstructions"].metadata["decoder_record_count"]
+        >= 1
+    )
+    assert (
+        report.ir_document.views["deontic_ir_slot_provenance"].metadata["provenance_record_count"]
+        >= 1
+    )
+    assert report.ir_document.views["deontic_phase8_quality"].metadata["quality_record_count"] >= 1
     assert report.ir_document.views["deontic_graph"].metadata["rule_count"] >= 1
     assert report.ir_document.has_frame_logic is True
     assert report.graph_projection.neo4j_compatible is True
@@ -3471,12 +3343,16 @@ def test_deontic_bridge_evaluates_legal_norm_ir_and_prover_syntax() -> None:
     assert "deontic_decoder_slot_loss" in report.round_trip.extra_losses
     assert "deontic_ir_slot_provenance_loss" in report.round_trip.extra_losses
     assert "deontic_quality_requires_validation_loss" in report.round_trip.extra_losses
-    assert report.total_loss >= report.round_trip.extra_losses[
-        "deontic_quality_requires_validation_loss"
-    ]
-    assert report.to_dict()["ir_document"]["views"]["deontic_prover_syntax"][
-        "metadata"
-    ]["coverage_record_count"] >= 1
+    assert (
+        report.total_loss
+        >= report.round_trip.extra_losses["deontic_quality_requires_validation_loss"]
+    )
+    assert (
+        report.to_dict()["ir_document"]["views"]["deontic_prover_syntax"]["metadata"][
+            "coverage_record_count"
+        ]
+        >= 1
+    )
 
 
 def test_deontic_bridge_falls_back_to_parser_for_failed_definition_conversion() -> None:
@@ -3500,9 +3376,7 @@ def test_deontic_bridge_falls_back_to_parser_for_failed_definition_conversion() 
     )
 
     norm = report.ir_document.views["deontic_ir"].payload["norms"][0]
-    coverage_record = report.ir_document.views["deontic_prover_syntax"].payload[
-        "records"
-    ][0]
+    coverage_record = report.ir_document.views["deontic_prover_syntax"].payload["records"][0]
 
     assert norm["norm_type"] == "definition"
     assert norm["actor"] == "Secretary"
@@ -3510,10 +3384,7 @@ def test_deontic_bridge_falls_back_to_parser_for_failed_definition_conversion() 
     assert report.proof_gate.valid_count == 5
     assert coverage_record["formal_syntax_valid"] is True
     assert coverage_record["coverage_blockers"] == []
-    assert (
-        report.round_trip.extra_losses["deontic_decoder_slot_loss"]
-        == 0.0
-    )
+    assert report.round_trip.extra_losses["deontic_decoder_slot_loss"] == 0.0
 
 
 def test_deontic_bridge_proof_gate_accepts_boolean_target_status_summary() -> None:
@@ -3607,15 +3478,9 @@ def test_deontic_bridge_recovers_purpose_clause_as_quality_complete_ir() -> None
     )
 
     norm = report.ir_document.views["deontic_ir"].payload["norms"][0]
-    formula = report.ir_document.views["deontic_formula_records"].payload[
-        "records"
-    ][0]["formula"]
-    slot_summary = report.ir_document.views[
-        "deontic_reconstruction_slot_loss"
-    ].payload["summary"]
-    phase8_summary = report.ir_document.views["deontic_phase8_quality"].payload[
-        "summary"
-    ]
+    formula = report.ir_document.views["deontic_formula_records"].payload["records"][0]["formula"]
+    slot_summary = report.ir_document.views["deontic_reconstruction_slot_loss"].payload["summary"]
+    phase8_summary = report.ir_document.views["deontic_phase8_quality"].payload["summary"]
 
     assert norm["norm_type"] == "purpose"
     assert norm["modality"] == "PURP"
@@ -3626,10 +3491,7 @@ def test_deontic_bridge_recovers_purpose_clause_as_quality_complete_ir() -> None
     assert phase8_summary["phase8_quality_complete"] is True
     assert phase8_summary["requires_validation"] is False
     assert report.round_trip.extra_losses["deontic_decoder_slot_loss"] == 0.0
-    assert (
-        report.round_trip.extra_losses["deontic_quality_requires_validation_loss"]
-        == 0.0
-    )
+    assert report.round_trip.extra_losses["deontic_quality_requires_validation_loss"] == 0.0
 
 
 def test_deontic_bridge_recovers_us_code_section_status_lifecycle_notes() -> None:
@@ -3657,15 +3519,13 @@ def test_deontic_bridge_recovers_us_code_section_status_lifecycle_notes() -> Non
         )
 
         norm = report.ir_document.views["deontic_ir"].payload["norms"][0]
-        formula = report.ir_document.views["deontic_formula_records"].payload[
-            "records"
-        ][0]["formula"]
-        slot_summary = report.ir_document.views[
-            "deontic_reconstruction_slot_loss"
-        ].payload["summary"]
-        phase8_summary = report.ir_document.views["deontic_phase8_quality"].payload[
+        formula = report.ir_document.views["deontic_formula_records"].payload["records"][0][
+            "formula"
+        ]
+        slot_summary = report.ir_document.views["deontic_reconstruction_slot_loss"].payload[
             "summary"
         ]
+        phase8_summary = report.ir_document.views["deontic_phase8_quality"].payload["summary"]
 
         assert norm["norm_type"] == "instrument_lifecycle"
         assert norm["modality"] == "LIFE"
@@ -3676,10 +3536,7 @@ def test_deontic_bridge_recovers_us_code_section_status_lifecycle_notes() -> Non
         assert phase8_summary["phase8_quality_complete"] is True
         assert phase8_summary["requires_validation"] is False
         assert report.round_trip.extra_losses["deontic_decoder_slot_loss"] == 0.0
-        assert (
-            report.round_trip.extra_losses["deontic_quality_requires_validation_loss"]
-            == 0.0
-        )
+        assert report.round_trip.extra_losses["deontic_quality_requires_validation_loss"] == 0.0
 
 
 def test_deontic_bridge_grounds_lifecycle_actor_from_us_code_citation() -> None:
@@ -3693,22 +3550,15 @@ def test_deontic_bridge_grounds_lifecycle_actor_from_us_code_citation() -> None:
     )
 
     norm = report.ir_document.views["deontic_ir"].payload["norms"][0]
-    phase8_record = report.ir_document.views["deontic_phase8_quality"].payload[
-        "records"
-    ][0]
+    phase8_record = report.ir_document.views["deontic_phase8_quality"].payload["records"][0]
     provenance = phase8_record["coverage_summary"]["ir_slot_provenance"]
 
     assert norm["norm_type"] == "instrument_lifecycle"
     assert norm["actor"] == "33 U.S.C. 763a-2"
     assert "actor" in provenance["grounded_slots"]
-    assert "ungrounded_ir_slot_provenance:actor" not in phase8_record[
-        "coverage_blockers"
-    ]
+    assert "ungrounded_ir_slot_provenance:actor" not in phase8_record["coverage_blockers"]
     assert phase8_record["requires_validation"] is False
-    assert (
-        report.round_trip.extra_losses["deontic_quality_requires_validation_loss"]
-        == 0.0
-    )
+    assert report.round_trip.extra_losses["deontic_quality_requires_validation_loss"] == 0.0
 
 
 def test_deontic_bridge_recovers_savings_preservation_clause() -> None:
@@ -3727,12 +3577,8 @@ def test_deontic_bridge_recovers_savings_preservation_clause() -> None:
     )
 
     norm = report.ir_document.views["deontic_ir"].payload["norms"][0]
-    slot_summary = report.ir_document.views[
-        "deontic_reconstruction_slot_loss"
-    ].payload["summary"]
-    phase8_summary = report.ir_document.views["deontic_phase8_quality"].payload[
-        "summary"
-    ]
+    slot_summary = report.ir_document.views["deontic_reconstruction_slot_loss"].payload["summary"]
+    phase8_summary = report.ir_document.views["deontic_phase8_quality"].payload["summary"]
 
     assert norm["norm_type"] == "exemption"
     assert norm["modality"] == "EXEMPT"
@@ -3741,10 +3587,7 @@ def test_deontic_bridge_recovers_savings_preservation_clause() -> None:
     assert slot_summary["slot_reconstruction_complete"] is True
     assert phase8_summary["requires_validation"] is False
     assert report.round_trip.extra_losses["deontic_decoder_slot_loss"] == 0.0
-    assert (
-        report.round_trip.extra_losses["deontic_quality_requires_validation_loss"]
-        == 0.0
-    )
+    assert report.round_trip.extra_losses["deontic_quality_requires_validation_loss"] == 0.0
 
 
 def test_deontic_bridge_classifies_no_subject_may_as_prohibition() -> None:
@@ -3761,9 +3604,7 @@ def test_deontic_bridge_classifies_no_subject_may_as_prohibition() -> None:
     )
 
     norm = report.ir_document.views["deontic_ir"].payload["norms"][0]
-    formula = report.ir_document.views["deontic_formula_records"].payload[
-        "records"
-    ][0]["formula"]
+    formula = report.ir_document.views["deontic_formula_records"].payload["records"][0]["formula"]
 
     assert norm["norm_type"] == "prohibition"
     assert norm["modality"] == "F"
@@ -3771,10 +3612,7 @@ def test_deontic_bridge_classifies_no_subject_may_as_prohibition() -> None:
     assert norm["action"] == "deny credit for reinsurance"
     assert formula.startswith("F(")
     assert report.round_trip.extra_losses["deontic_decoder_slot_loss"] == 0.0
-    assert (
-        report.round_trip.extra_losses["deontic_quality_requires_validation_loss"]
-        == 0.0
-    )
+    assert report.round_trip.extra_losses["deontic_quality_requires_validation_loss"] == 0.0
 
 
 def test_deontic_bridge_recovers_core_slots_from_nested_prompt_context() -> None:
@@ -3907,12 +3745,10 @@ def test_deontic_bridge_fills_reduced_parser_rows_from_legal_norm_ir_rows() -> N
     )
 
     norm = report.ir_document.views["deontic_ir"].payload["norms"][0]
-    decoder_record = report.ir_document.views["deontic_decoder_reconstructions"].payload[
-        "records"
-    ][0]
-    slot_loss = report.ir_document.views["deontic_reconstruction_slot_loss"].payload[
-        "summary"
+    decoder_record = report.ir_document.views["deontic_decoder_reconstructions"].payload["records"][
+        0
     ]
+    slot_loss = report.ir_document.views["deontic_reconstruction_slot_loss"].payload["summary"]
 
     assert norm["actor"] == "Secretary"
     assert norm["modality"] == "O"
@@ -3989,12 +3825,8 @@ def test_deontic_bridge_promotes_passed_guidance_ir_into_reduced_parser_rows() -
 
     norm = report.ir_document.views["deontic_ir"].payload["norms"][0]
     legal_frame = norm["legal_frame"]
-    summary = report.ir_document.views["deontic_reconstruction_slot_loss"].payload[
-        "summary"
-    ]
-    phase8_record = report.ir_document.views["deontic_phase8_quality"].payload[
-        "records"
-    ][0]
+    summary = report.ir_document.views["deontic_reconstruction_slot_loss"].payload["summary"]
+    phase8_record = report.ir_document.views["deontic_phase8_quality"].payload["records"][0]
 
     assert report.metadata["compiler_guidance_applied"] is True
     assert norm["actor"] == "Secretary"
@@ -4076,15 +3908,11 @@ def test_deontic_bridge_guidance_ir_clears_stale_decoder_validation() -> None:
         },
     )
 
-    decoder_record = report.ir_document.views["deontic_decoder_reconstructions"].payload[
-        "records"
-    ][0]
-    formula_record = report.ir_document.views["deontic_formula_records"].payload[
-        "records"
-    ][0]
-    phase8_record = report.ir_document.views["deontic_phase8_quality"].payload[
-        "records"
-    ][0]
+    decoder_record = report.ir_document.views["deontic_decoder_reconstructions"].payload["records"][
+        0
+    ]
+    formula_record = report.ir_document.views["deontic_formula_records"].payload["records"][0]
+    phase8_record = report.ir_document.views["deontic_phase8_quality"].payload["records"][0]
 
     assert report.metadata["compiler_guidance_applied"] is True
     assert formula_record["requires_validation"] is False
@@ -4171,17 +3999,13 @@ def test_deontic_bridge_accepts_packet_shaped_bundle_guidance_route() -> None:
 
     norm = report.ir_document.views["deontic_ir"].payload["norms"][0]
     legal_frame = norm["legal_frame"]
-    phase8_record = report.ir_document.views["deontic_phase8_quality"].payload[
-        "records"
-    ][0]
+    phase8_record = report.ir_document.views["deontic_phase8_quality"].payload["records"][0]
 
     assert report.metadata["compiler_guidance_applied"] is True
     assert norm["actor"] == "Secretary"
     assert norm["modality"] == "O"
     assert norm["action"] == "publish notice"
-    assert legal_frame["compiler_guidance_source"] == (
-        "repair_deontic_bridge_quality_gate"
-    )
+    assert legal_frame["compiler_guidance_source"] == ("repair_deontic_bridge_quality_gate")
     assert legal_frame["compiler_guidance_target_view"] == "deontic.ir"
     assert legal_frame["compiler_guidance_quality_gate"] == "pass"
     assert phase8_record["requires_validation"] is False
@@ -4193,8 +4017,7 @@ def test_deontic_bridge_accepts_prover_bridge_action_guidance_route() -> None:
     from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
 
     source_text = (
-        "The Secretary shall provide notice and hearing before issuing a final "
-        "determination."
+        "The Secretary shall provide notice and hearing before issuing a final determination."
     )
     source_id = "us-code-22-4132-fb7a9075c4859965"
 
@@ -4256,9 +4079,7 @@ def test_deontic_bridge_accepts_prover_bridge_action_guidance_route() -> None:
     )
 
     norm = report.ir_document.views["deontic_ir"].payload["norms"][0]
-    coverage_record = report.ir_document.views["deontic_prover_syntax"].payload[
-        "records"
-    ][0]
+    coverage_record = report.ir_document.views["deontic_prover_syntax"].payload["records"][0]
 
     assert report.metadata["compiler_guidance_applied"] is True
     assert norm["actor"] == "Secretary"
@@ -4316,9 +4137,7 @@ def test_deontic_bridge_synthesizes_rows_from_passed_guidance_ir() -> None:
     )
 
     norm = report.ir_document.views["deontic_ir"].payload["norms"][0]
-    summary = report.ir_document.views["deontic_reconstruction_slot_loss"].payload[
-        "summary"
-    ]
+    summary = report.ir_document.views["deontic_reconstruction_slot_loss"].payload["summary"]
 
     assert report.metadata["compiler_guidance_applied"] is True
     assert norm["source_id"] == source_id
@@ -4404,12 +4223,8 @@ def test_deontic_bridge_recovers_purpose_slots_from_nested_legal_frame() -> None
     )
 
     norm = report.ir_document.views["deontic_ir"].payload["norms"][0]
-    summary = report.ir_document.views["deontic_reconstruction_slot_loss"].payload[
-        "summary"
-    ]
-    phase8_record = report.ir_document.views["deontic_phase8_quality"].payload[
-        "records"
-    ][0]
+    summary = report.ir_document.views["deontic_reconstruction_slot_loss"].payload["summary"]
+    phase8_record = report.ir_document.views["deontic_phase8_quality"].payload["records"][0]
 
     assert norm["norm_type"] == "purpose"
     assert norm["modality"] == "PURP"
@@ -4506,12 +4321,8 @@ def test_deontic_bridge_scopes_migrated_detail_slots_to_norm_support_span() -> N
     )
 
     norm = report.ir_document.views["deontic_ir"].payload["norms"][0]
-    formula_record = report.ir_document.views["deontic_formula_records"].payload[
-        "records"
-    ][0]
-    phase8_record = report.ir_document.views["deontic_phase8_quality"].payload[
-        "records"
-    ][0]
+    formula_record = report.ir_document.views["deontic_formula_records"].payload["records"][0]
+    phase8_record = report.ir_document.views["deontic_phase8_quality"].payload["records"][0]
 
     assert norm["exceptions"] == []
     assert norm["cross_references"] == []
@@ -4586,7 +4397,9 @@ def test_deontic_bridge_treats_reconstruction_neutral_warning_bundle_as_quality_
         citation="Deontic Bridge Reconstruction Warning Bundle",
     )
 
-    decoder_record = report.ir_document.views["deontic_decoder_reconstructions"].payload["records"][0]
+    decoder_record = report.ir_document.views["deontic_decoder_reconstructions"].payload["records"][
+        0
+    ]
     assert decoder_record["requires_validation"] is False
 
     formula_record = report.ir_document.views["deontic_formula_records"].payload["records"][0]
@@ -4605,9 +4418,7 @@ def test_deontic_bridge_treats_reconstruction_neutral_warning_bundle_as_quality_
 def test_deontic_bridge_uses_persisted_formula_readiness_for_decoder_validation() -> None:
     from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
 
-    support_text = (
-        "The Secretary shall publish notice except as provided in section 552."
-    )
+    support_text = "The Secretary shall publish notice except as provided in section 552."
     actor_start = support_text.index("Secretary")
     modality_start = support_text.index("shall")
     action_start = support_text.index("publish")
@@ -4682,15 +4493,11 @@ def test_deontic_bridge_uses_persisted_formula_readiness_for_decoder_validation(
         citation="Deontic Bridge Persisted Readiness Decoder",
     )
 
-    decoder_record = report.ir_document.views["deontic_decoder_reconstructions"].payload[
-        "records"
-    ][0]
-    formula_record = report.ir_document.views["deontic_formula_records"].payload[
-        "records"
-    ][0]
-    phase8_record = report.ir_document.views["deontic_phase8_quality"].payload[
-        "records"
-    ][0]
+    decoder_record = report.ir_document.views["deontic_decoder_reconstructions"].payload["records"][
+        0
+    ]
+    formula_record = report.ir_document.views["deontic_formula_records"].payload["records"][0]
+    phase8_record = report.ir_document.views["deontic_phase8_quality"].payload["records"][0]
 
     assert formula_record["requires_validation"] is False
     assert decoder_record["missing_slots"] == []
@@ -4846,9 +4653,7 @@ def test_deontic_bridge_promotes_quality_validated_coverage_records() -> None:
     )
 
     coverage_view = report.ir_document.views["deontic_prover_syntax"]
-    phase8_record = report.ir_document.views["deontic_phase8_quality"].payload[
-        "records"
-    ][0]
+    phase8_record = report.ir_document.views["deontic_phase8_quality"].payload["records"][0]
 
     assert coverage_view.metadata["coverage_requires_validation_count"] == 0
     assert phase8_record["requires_validation"] is False
@@ -4878,9 +4683,7 @@ def test_deontic_bridge_quality_gate_clears_stale_proof_repair_rows() -> None:
                 "support_span": [0, len(source_text)],
                 "norm_type": "obligation",
                 "promotable_to_theorem": False,
-                "export_readiness": {
-                    "blockers": ["legacy_quality_gate_requires_validation"]
-                },
+                "export_readiness": {"blockers": ["legacy_quality_gate_requires_validation"]},
                 "field_spans": {
                     "subject": [4, 13],
                     "modality": [14, 19],
@@ -4928,16 +4731,12 @@ def test_deontic_bridge_quality_gate_clears_stale_proof_repair_rows() -> None:
         citation="Deontic Bridge Stale Proof Repair",
     )
 
-    proof_record = report.ir_document.views["deontic_proof_obligations"].payload[
-        "records"
-    ][0]
+    proof_record = report.ir_document.views["deontic_proof_obligations"].payload["records"][0]
 
     assert proof_record["requires_validation"] is False
     assert proof_record["repair_required"] is False
     assert proof_record["validated_by_phase8_quality_gate"] is True
-    assert report.ir_document.views["deontic_repair_queue"].metadata[
-        "repair_record_count"
-    ] == 0
+    assert report.ir_document.views["deontic_repair_queue"].metadata["repair_record_count"] == 0
     assert report.round_trip.extra_losses["deontic_repair_queue_rate"] == 0.0
     assert report.round_trip.extra_losses["deontic_quality_requires_validation_loss"] == 0.0
 
@@ -5012,16 +4811,12 @@ def test_deontic_bridge_promotes_nested_prover_syntax_records_to_validated_cover
         citation="Deontic Bridge Nested Prover Syntax",
     )
 
-    coverage_record = report.ir_document.views["deontic_prover_syntax"].payload[
-        "records"
-    ][0]
+    coverage_record = report.ir_document.views["deontic_prover_syntax"].payload["records"][0]
     semantic_summary = coverage_record["coverage_summary"]["semantic_family_summary"]
 
     assert coverage_record["requires_validation"] is False
     assert coverage_record["target_role_matrix_complete"] is True
-    assert semantic_summary["semantic_formula_family_distribution"] == {
-        "notice_duty": 5
-    }
+    assert semantic_summary["semantic_formula_family_distribution"] == {"notice_duty": 5}
     assert report.proof_gate.compiles is True
     assert report.round_trip.extra_losses["deontic_quality_requires_validation_loss"] == 0.0
 
@@ -5091,8 +4886,14 @@ def test_deontic_bridge_treats_definition_warning_bundle_as_quality_complete() -
 
     coverage_record = report.ir_document.views["deontic_prover_syntax"].payload["records"][0]
     assert coverage_record["requires_validation"] is False
-    assert "failed_prover_quality_check:formula_proof_ready" not in coverage_record["coverage_blockers"]
-    assert "failed_prover_quality_check:formula_requires_validation" not in coverage_record["coverage_blockers"]
+    assert (
+        "failed_prover_quality_check:formula_proof_ready"
+        not in coverage_record["coverage_blockers"]
+    )
+    assert (
+        "failed_prover_quality_check:formula_requires_validation"
+        not in coverage_record["coverage_blockers"]
+    )
 
     phase8_record = report.ir_document.views["deontic_phase8_quality"].payload["records"][0]
     assert phase8_record["phase8_quality_complete"] is True
@@ -5159,7 +4960,10 @@ def test_deontic_bridge_reconstruction_tokens_allow_cross_reference_provenance_o
 
     coverage_record = report.ir_document.views["deontic_prover_syntax"].payload["records"][0]
     assert coverage_record["requires_validation"] is False
-    assert "failed_prover_quality_check:reconstruction_tokens" not in coverage_record["coverage_blockers"]
+    assert (
+        "failed_prover_quality_check:reconstruction_tokens"
+        not in coverage_record["coverage_blockers"]
+    )
 
     phase8_record = report.ir_document.views["deontic_phase8_quality"].payload["records"][0]
     assert phase8_record["phase8_quality_complete"] is True
@@ -5226,9 +5030,7 @@ def test_deontic_bridge_recovers_coverage_from_single_parser_element_metadata() 
     )
 
     assert report.ir_document.views["deontic_ir"].metadata["norm_count"] == 1
-    assert report.ir_document.views["deontic_prover_syntax"].metadata[
-        "coverage_record_count"
-    ] >= 1
+    assert report.ir_document.views["deontic_prover_syntax"].metadata["coverage_record_count"] >= 1
     assert report.proof_gate.attempted_count >= 5
     assert report.proof_gate.valid_count >= 5
     assert report.proof_gate.compiles is True
@@ -5295,9 +5097,7 @@ def test_deontic_bridge_promotes_compiler_guidance_frame_evidence() -> None:
     assert legal_frame["selected_frame_source"] == (
         "compiler_guidance.evidence.selected_frame_after"
     )
-    assert legal_frame["compiler_guidance_source"] == (
-        "repair_deontic_bridge_quality_gate"
-    )
+    assert legal_frame["compiler_guidance_source"] == ("repair_deontic_bridge_quality_gate")
     assert report.metadata["compiler_guidance_applied"] is True
     assert report.ir_document.metadata["compiler_guidance_applied"] is True
     assert any(
@@ -5364,13 +5164,11 @@ def test_deontic_bridge_trims_uscode_catchline_from_modal_actor() -> None:
     )
 
     norm = report.ir_document.views["deontic_ir"].payload["norms"][0]
-    decoder_record = report.ir_document.views["deontic_decoder_reconstructions"].payload[
-        "records"
-    ][0]
+    decoder_record = report.ir_document.views["deontic_decoder_reconstructions"].payload["records"][
+        0
+    ]
     actor_phrase = next(
-        phrase
-        for phrase in decoder_record["phrase_provenance"]
-        if phrase["slot"] == "actor"
+        phrase for phrase in decoder_record["phrase_provenance"] if phrase["slot"] == "actor"
     )
 
     assert norm["actor"] == "The President"
@@ -5462,13 +5260,11 @@ def test_deontic_bridge_promotes_packet_action_guidance_to_ir_evidence() -> None
     ]
     assert report.metadata["compiler_guidance_applied"] is True
     assert any(
-        triple["predicate"] == "compiler_guidance_target_view"
-        and triple["object"] == "deontic.ir"
+        triple["predicate"] == "compiler_guidance_target_view" and triple["object"] == "deontic.ir"
         for triple in report.ir_document.frame_logic_triples
     )
     assert any(
-        triple["predicate"]
-        == "compiler_guidance_legal_ir_underrepresented_component"
+        triple["predicate"] == "compiler_guidance_legal_ir_underrepresented_component"
         and triple["object"] == "deontic.ir"
         for triple in report.ir_document.frame_logic_triples
     )
@@ -5549,15 +5345,13 @@ def test_deontic_bridge_promotes_packet_view_gap_guidance_to_ir_evidence() -> No
     assert report.metadata["compiler_guidance_applied"] is True
     assert legal_frame["compiler_guidance_target_view"] == "deontic.ir"
     assert legal_frame["compiler_guidance_quality_gate"] == "pass"
-    assert legal_frame["compiler_guidance_legal_ir_component_gaps"][
-        "deontic.ir:underrepresented"
-    ] == 2
-    assert "deontic.ir" in legal_frame[
-        "compiler_guidance_legal_ir_underrepresented_components"
-    ]
-    assert "deontic.ir:overrepresented" not in legal_frame[
-        "compiler_guidance_legal_ir_component_gaps"
-    ]
+    assert (
+        legal_frame["compiler_guidance_legal_ir_component_gaps"]["deontic.ir:underrepresented"] == 2
+    )
+    assert "deontic.ir" in legal_frame["compiler_guidance_legal_ir_underrepresented_components"]
+    assert (
+        "deontic.ir:overrepresented" not in legal_frame["compiler_guidance_legal_ir_component_gaps"]
+    )
     assert any(
         triple["predicate"] == "compiler_guidance_legal_ir_component_gap"
         and triple["object"] == "deontic.ir:underrepresented:2"
@@ -5647,17 +5441,16 @@ def test_deontic_bridge_infers_route_from_passing_packet_gap_evidence() -> None:
     legal_frame = norm["legal_frame"]
 
     assert report.metadata["compiler_guidance_applied"] is True
-    assert legal_frame["compiler_guidance_source"] == (
-        "repair_deontic_bridge_quality_gate"
-    )
+    assert legal_frame["compiler_guidance_source"] == ("repair_deontic_bridge_quality_gate")
     assert legal_frame["compiler_guidance_target_view"] == "deontic.ir"
     assert legal_frame["compiler_guidance_quality_gate"] == "pass"
-    assert legal_frame["compiler_guidance_legal_ir_component_gaps"][
-        "deontic.ir:overrepresented"
-    ] == 2
-    assert "TDFOL.prover:overrepresented" not in legal_frame[
-        "compiler_guidance_legal_ir_component_gaps"
-    ]
+    assert (
+        legal_frame["compiler_guidance_legal_ir_component_gaps"]["deontic.ir:overrepresented"] == 2
+    )
+    assert (
+        "TDFOL.prover:overrepresented"
+        not in legal_frame["compiler_guidance_legal_ir_component_gaps"]
+    )
     assert any(
         triple["predicate"] == "compiler_guidance_legal_ir_component_gap"
         and triple["object"] == "deontic.ir:overrepresented:2"
@@ -5725,9 +5518,7 @@ def test_deontic_bridge_rehydrates_legacy_coverage_rows_without_summary() -> Non
         citation="Deontic Bridge Legacy Coverage Summary",
     )
 
-    assert report.ir_document.views["deontic_prover_syntax"].metadata[
-        "coverage_record_count"
-    ] >= 1
+    assert report.ir_document.views["deontic_prover_syntax"].metadata["coverage_record_count"] >= 1
     coverage_records = report.ir_document.views["deontic_prover_syntax"].payload["records"]
     assert isinstance(coverage_records[0].get("coverage_summary"), dict)
     assert report.proof_gate.attempted_count >= 5
@@ -5798,9 +5589,7 @@ def test_deontic_bridge_rehydrates_legacy_coverage_status_map_without_target_lis
         citation="Deontic Bridge Legacy Coverage Status Map",
     )
 
-    assert report.ir_document.views["deontic_prover_syntax"].metadata[
-        "coverage_record_count"
-    ] >= 1
+    assert report.ir_document.views["deontic_prover_syntax"].metadata["coverage_record_count"] >= 1
     assert report.proof_gate.attempted_count >= 5
     assert report.proof_gate.valid_count >= 5
     assert report.proof_gate.compiles is True
@@ -5859,9 +5648,12 @@ def test_deontic_bridge_legacy_string_false_requires_validation_does_not_trip_ga
         citation="Deontic Bridge Legacy String False",
     )
 
-    assert report.ir_document.views["deontic_prover_syntax"].metadata[
-        "coverage_requires_validation_count"
-    ] == 0
+    assert (
+        report.ir_document.views["deontic_prover_syntax"].metadata[
+            "coverage_requires_validation_count"
+        ]
+        == 0
+    )
     phase8_records = report.ir_document.views["deontic_phase8_quality"].payload["records"]
     assert phase8_records[0]["requires_validation"] is False
     assert report.round_trip.extra_losses["deontic_quality_requires_validation_loss"] == 0.0
@@ -5921,9 +5713,12 @@ def test_deontic_bridge_promotes_legacy_passed_coverage_without_quality_summary(
         citation="Deontic Bridge Legacy Passed No Quality Summary",
     )
 
-    assert report.ir_document.views["deontic_prover_syntax"].metadata[
-        "coverage_requires_validation_count"
-    ] == 0
+    assert (
+        report.ir_document.views["deontic_prover_syntax"].metadata[
+            "coverage_requires_validation_count"
+        ]
+        == 0
+    )
     phase8_records = report.ir_document.views["deontic_phase8_quality"].payload["records"]
     assert phase8_records[0]["requires_validation"] is False
     assert phase8_records[0]["phase8_quality_complete"] is True
@@ -5945,9 +5740,7 @@ def test_tdfol_bridge_evaluates_proof_obligations_and_graph() -> None:
 
     assert report.adapter_name == "fol_tdfol"
     assert report.ir_document.views["tdfol_formula"].metadata["formula_count"] >= 1
-    assert report.ir_document.views["proof_obligations"].metadata[
-        "obligation_count"
-    ] >= 1
+    assert report.ir_document.views["proof_obligations"].metadata["obligation_count"] >= 1
     assert report.ir_document.has_frame_logic is True
     assert report.graph_projection.neo4j_compatible is True
     assert report.proof_gate.attempted_count >= 1
@@ -6313,7 +6106,7 @@ def test_tdfol_bridge_coerce_extracts_targeted_json_view_export_text() -> None:
     from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
 
     formula = (
-        'TDFOL.prover proof obligation view: '
+        "TDFOL.prover proof obligation view: "
         '{"formula": "O(collect_fees(chief_administrative_officer))"}'
     )
 
@@ -6362,7 +6155,7 @@ def test_tdfol_bridge_coerce_extracts_assignment_container_export_text() -> None
     from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
 
     formula = (
-        'target_logic=TDFOL; proof_obligations='
+        "target_logic=TDFOL; proof_obligations="
         '[{"formula": "O(collect_fees(chief_administrative_officer))"}]'
     )
 
@@ -6451,8 +6244,7 @@ def test_tdfol_bridge_canonicalizes_labeled_raw_proof_obligation_rows() -> None:
             "proof_obligations": [
                 {
                     "formula": (
-                        "proof_obligation: The Secretary shall administer "
-                        "and enforce this chapter."
+                        "proof_obligation: The Secretary shall administer and enforce this chapter."
                     ),
                     "source_id": "tdfol:guidance:raw-label",
                 }
@@ -6486,9 +6278,7 @@ def test_tdfol_bridge_canonicalizes_assignment_proof_obligation_rows() -> None:
         metadata = {
             "proof_obligations": [
                 {
-                    "proof_input": (
-                        "target_logic=TDFOL; formula=O: publish_notice(agency)"
-                    ),
+                    "proof_input": ("target_logic=TDFOL; formula=O: publish_notice(agency)"),
                     "source_id": "tdfol:guidance:assignment",
                 }
             ],
@@ -6528,9 +6318,7 @@ def test_tdfol_bridge_canonicalizes_targeted_prover_wrapper_rows() -> None:
                     "source_id": "tdfol:guidance:targeted-wrapper",
                 },
                 {
-                    "proof_formula": (
-                        "TDFOL.prover(P(accept_payment(secretary)))"
-                    ),
+                    "proof_formula": ("TDFOL.prover(P(accept_payment(secretary)))"),
                     "source_id": "tdfol:guidance:targeted-direct",
                 },
             ],
@@ -6825,8 +6613,7 @@ def test_tdfol_bridge_recovers_deontic_operator_from_norm_text() -> None:
 
     report = adapter.evaluate("stub")
     formulas = [
-        record["formula"]
-        for record in report.ir_document.views["tdfol_formula"].payload["records"]
+        record["formula"] for record in report.ir_document.views["tdfol_formula"].payload["records"]
     ]
 
     assert formulas[0].startswith("F(")
@@ -6854,12 +6641,10 @@ def test_tdfol_bridge_compacts_status_and_definition_fallback_predicates() -> No
         '46 U.S.C. 4701. Definitions In this chapter- (1) "abandon" means to moor a barge.'
     )
 
-    repealed_formula = repealed.ir_document.views["tdfol_formula"].payload["records"][0][
+    repealed_formula = repealed.ir_document.views["tdfol_formula"].payload["records"][0]["formula"]
+    definition_formula = definition.ir_document.views["tdfol_formula"].payload["records"][0][
         "formula"
     ]
-    definition_formula = definition.ir_document.views["tdfol_formula"].payload[
-        "records"
-    ][0]["formula"]
 
     assert "statute_status_repealed" in repealed_formula
     assert "define_abandon" in definition_formula
@@ -6898,12 +6683,12 @@ def test_tdfol_bridge_uses_uscode_heading_when_only_catalog_text_is_available() 
         )
     )
 
-    catchline_formula = catchline.ir_document.views["tdfol_formula"].payload[
-        "records"
-    ][0]["formula"]
-    heading_formula = truncated_heading.ir_document.views["tdfol_formula"].payload[
-        "records"
-    ][0]["formula"]
+    catchline_formula = catchline.ir_document.views["tdfol_formula"].payload["records"][0][
+        "formula"
+    ]
+    heading_formula = truncated_heading.ir_document.views["tdfol_formula"].payload["records"][0][
+        "formula"
+    ]
 
     assert "mandatory_application_of_sections_5102_and_5124" in catchline_formula
     assert "center_between_east_and_wes" in heading_formula
@@ -6981,19 +6766,14 @@ def test_tdfol_bridge_accepts_packet_shaped_compiler_guidance_route() -> None:
     adapter = FolTdfolBridgeAdapter(converter=_GuidanceConverter())
 
     report = adapter.evaluate(
-        (
-            "7 U.S.C. 7218: U.S.C. Title 7 - AGRICULTURE Sec. 7218 - "
-            "Planting flexibility."
-        ),
+        ("7 U.S.C. 7218: U.S.C. Title 7 - AGRICULTURE Sec. 7218 - Planting flexibility."),
         compiler_guidance=guidance,
     )
     records = report.ir_document.views["tdfol_formula"].payload["records"]
 
     assert records[0]["source_id"] == "tdfol:compiler_guidance:repair_tdfol_bridge_parse"
     assert records[0]["parse_ok"] is True
-    assert report.metadata["compiler_guidance_routes"] == [
-        "repair_tdfol_bridge_parse"
-    ]
+    assert report.metadata["compiler_guidance_routes"] == ["repair_tdfol_bridge_parse"]
     assert report.metadata["compiler_ir_cross_entropy_loss"] == 0.0
     assert report.metadata["compiler_ir_cosine_similarity"] == 1.0
     assert report.round_trip.extra_losses["compiler_ir_cross_entropy_loss"] == 0.0
@@ -7043,9 +6823,7 @@ def test_tdfol_bridge_infers_route_from_passing_gap_evidence() -> None:
 
     assert records[0]["source_id"] == "tdfol:compiler_guidance:repair_tdfol_bridge_parse"
     assert records[0]["parse_ok"] is True
-    assert report.metadata["compiler_guidance_routes"] == [
-        "repair_tdfol_bridge_parse"
-    ]
+    assert report.metadata["compiler_guidance_routes"] == ["repair_tdfol_bridge_parse"]
     assert report.metadata["compiler_guidance_applied"] is True
     assert report.proof_gate.compiles is True
     assert report.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
@@ -7163,12 +6941,7 @@ def test_cec_dcec_bridge_exposes_rescue_target_metrics() -> None:
     assert target_metric_names <= set(metric_values)
     assert report.round_trip.cross_entropy_loss == 0.0
     assert report.round_trip.extra_losses["legal_ir_view_cross_entropy_loss"] == 0.0
-    assert (
-        report.round_trip.extra_losses[
-            "source_decompiled_text_embedding_cosine_loss"
-        ]
-        == 0.0
-    )
+    assert report.round_trip.extra_losses["source_decompiled_text_embedding_cosine_loss"] == 0.0
     assert report.round_trip.extra_losses["source_copy_reward_hack_penalty"] == 0.0
     assert report.metadata["target_metrics"]["cosine_similarity"] == 1.0
 
@@ -7263,9 +7036,7 @@ def test_cec_dcec_bridge_promotes_packet_shaped_compiler_guidance() -> None:
 
     adapter = load_logic_bridge_adapter("cec_dcec")
     report = adapter.evaluate(
-        (
-            "The agency shall publish notice before the permit takes effect."
-        ),
+        ("The agency shall publish notice before the permit takes effect."),
         document_id="cec-bridge-packet-guidance",
         citation="CEC Bridge Packet Guidance",
         compiler_guidance=guidance,
@@ -7275,9 +7046,7 @@ def test_cec_dcec_bridge_promotes_packet_shaped_compiler_guidance() -> None:
 
     assert report.metadata["compiler_guidance_applied"] is True
     assert report.ir_document.metadata["compiler_guidance_applied"] is True
-    assert report.metadata["compiler_guidance_routes"] == [
-        "repair_cec_dcec_bridge"
-    ]
+    assert report.metadata["compiler_guidance_routes"] == ["repair_cec_dcec_bridge"]
     assert report.metadata["compiler_guidance_target_component"] == "CEC.native"
     assert report.metadata["compiler_guidance_quality_gate"] == "pass"
     assert {
@@ -7290,10 +7059,7 @@ def test_cec_dcec_bridge_promotes_packet_shaped_compiler_guidance() -> None:
     )
     assert event_record["event_formula_syntax_valid"] is True
     assert (
-        event_record["event_formula_target_quality_gate"][
-            "compiler_guidance_materialized"
-        ]
-        is True
+        event_record["event_formula_target_quality_gate"]["compiler_guidance_materialized"] is True
     )
     assert report.proof_gate.compiles is True
     assert report.round_trip.extra_losses["compiler_ir_cross_entropy_loss"] == 0.0
@@ -7395,8 +7161,7 @@ def test_cec_dcec_bridge_falls_back_from_slot_incomplete_guided_event_formula() 
     guidance = {
         "bundle": '{"route":"repair_cec_dcec_bridge","target_component":"CEC.native"}',
         "event_calculus_formula": (
-            "Happens(legal_norm(slot_incomplete)) => "
-            "HoldsAt(O(happens(agency,publish_notice,t0)))"
+            "Happens(legal_norm(slot_incomplete)) => HoldsAt(O(happens(agency,publish_notice,t0)))"
         ),
         "event_formula_syntax_valid": True,
     }
@@ -7412,16 +7177,11 @@ def test_cec_dcec_bridge_falls_back_from_slot_incomplete_guided_event_formula() 
     event_record = report.ir_document.views["event_calculus"].payload["records"][0]
 
     assert event_record["event_formula_source"].endswith(":bridge_fallback")
-    assert event_record["event_calculus_formula"].startswith(
-        "Happens(legal_norm("
-    )
+    assert event_record["event_calculus_formula"].startswith("Happens(legal_norm(")
     assert "slot_incomplete" not in event_record["event_calculus_formula"]
     assert event_record["event_formula_syntax_valid"] is True
     assert (
-        event_record["event_formula_target_parse_profile"][
-            "event_predicate_slot_complete"
-        ]
-        is True
+        event_record["event_formula_target_parse_profile"]["event_predicate_slot_complete"] is True
     )
     assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
     assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
@@ -7640,10 +7400,7 @@ def test_cec_dcec_bridge_recovers_norms_from_legacy_parser_element_metadata() ->
     assert event_record["source_id"] == "legacy:cec:parser-element"
     assert event_record["event_formula_source"] == "deontic.prover_syntax"
     assert event_record["event_formula_syntax_valid"] is True
-    assert (
-        event_record["event_formula_target_parse_profile"]["top_level_symbol"]
-        == "Happens"
-    )
+    assert event_record["event_formula_target_parse_profile"]["top_level_symbol"] == "Happens"
     assert event_record["event_formula_fingerprint"]
     assert report.proof_gate.compiles is True
 
@@ -7689,13 +7446,9 @@ def test_cec_dcec_bridge_prefers_direct_event_formula_metadata() -> None:
         "Happens(legal_norm(direct_cec_formula), t)"
     )
     assert (
-        event_record["event_formula_target_parse_profile"]["target_parse_profile_complete"]
-        is True
+        event_record["event_formula_target_parse_profile"]["target_parse_profile_complete"] is True
     )
-    assert (
-        event_record["event_formula_target_quality_gate"]["requires_validation"]
-        is False
-    )
+    assert event_record["event_formula_target_quality_gate"]["requires_validation"] is False
     assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
 
 
@@ -7738,10 +7491,7 @@ def test_cec_dcec_bridge_canonicalizes_direct_event_formula_text() -> None:
         "=> HoldsAt(O(Happens(agency,publish_notice,t0)), t)"
     )
     assert event_record["event_formula_syntax_valid"] is True
-    assert (
-        event_record["event_formula_target_parse_profile"]["top_level_connector"]
-        == "=>"
-    )
+    assert event_record["event_formula_target_parse_profile"]["top_level_connector"] == "=>"
     assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
 
 
@@ -7839,8 +7589,7 @@ def test_cec_dcec_bridge_recovers_nested_deontic_cec_prover_record() -> None:
     assert event_record["event_formula_syntax_valid"] is True
     assert event_record["event_formula_target_parse_profile"]["top_level_symbol"] == "always"
     assert (
-        event_record["event_formula_target_parse_profile"]["target_parse_profile_complete"]
-        is True
+        event_record["event_formula_target_parse_profile"]["target_parse_profile_complete"] is True
     )
     assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
 
@@ -8455,9 +8204,7 @@ def test_cec_dcec_bridge_projects_procedure_events_into_cec_view_and_graph() -> 
 
     event_view = report.ir_document.views["cec_events"]
     procedure_events = [
-        event
-        for event in event_view.payload["events"]
-        if event["event_role"] == "procedure_event"
+        event for event in event_view.payload["events"] if event["event_role"] == "procedure_event"
     ]
     event_record = report.ir_document.views["event_calculus"].payload["records"][0]
 
@@ -8651,15 +8398,9 @@ def test_cec_dcec_bridge_promotes_compiler_guidance_event_formula_evidence() -> 
     )
     assert event_record["event_formula_syntax_valid"] is True
     assert (
-        event_record["event_formula_target_parse_profile"][
-            "target_parse_profile_complete"
-        ]
-        is True
+        event_record["event_formula_target_parse_profile"]["target_parse_profile_complete"] is True
     )
-    assert (
-        event_record["event_formula_target_quality_gate"]["requires_validation"]
-        is False
-    )
+    assert event_record["event_formula_target_quality_gate"]["requires_validation"] is False
     assert report.metadata["compiler_guidance_applied"] is True
     assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
 
@@ -8721,12 +8462,7 @@ def test_cec_dcec_bridge_materializes_event_formula_from_packet_guidance() -> No
         "=> HoldsAt(O(Happens(administrator,administer_and_enforce_clean_hull_requirements,t0)), t)"
     )
     assert event_record["event_formula_syntax_valid"] is True
-    assert (
-        event_record["event_formula_target_components"][
-            "compiler_guidance_materialized"
-        ]
-        is True
-    )
+    assert event_record["event_formula_target_components"]["compiler_guidance_materialized"] is True
     assert event_record["compiler_guidance_source"] == "repair_cec_dcec_bridge"
     assert report.metadata["compiler_guidance_applied"] is True
     assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
@@ -8790,12 +8526,7 @@ def test_cec_dcec_bridge_materializes_event_formula_from_json_packet_guidance() 
         "compiler_guidance.evidence.materialized_event_formula"
     )
     assert event_record["event_formula_syntax_valid"] is True
-    assert (
-        event_record["event_formula_target_components"][
-            "compiler_guidance_materialized"
-        ]
-        is True
-    )
+    assert event_record["event_formula_target_components"]["compiler_guidance_materialized"] is True
     assert event_record["compiler_guidance_source"] == "repair_cec_dcec_bridge"
     assert report.metadata["compiler_guidance_applied"] is True
     assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
@@ -8881,14 +8612,10 @@ def test_cec_dcec_bridge_materializes_guided_notice_hearing_frame_events() -> No
 
     event_view = report.ir_document.views["cec_events"]
     norm_event = next(
-        event
-        for event in event_view.payload["events"]
-        if event["event_role"] == "norm_action"
+        event for event in event_view.payload["events"] if event["event_role"] == "norm_action"
     )
     procedure_events = [
-        event
-        for event in event_view.payload["events"]
-        if event["event_role"] == "procedure_event"
+        event for event in event_view.payload["events"] if event["event_role"] == "procedure_event"
     ]
     event_record = report.ir_document.views["event_calculus"].payload["records"][0]
 
@@ -8936,17 +8663,13 @@ def test_cec_dcec_bridge_extracts_conditional_required_clause_without_converter(
     event_view = report.ir_document.views["cec_events"]
     event_record = report.ir_document.views["event_calculus"].payload["records"][0]
     procedure_events = [
-        event
-        for event in event_view.payload["events"]
-        if event["event_role"] == "procedure_event"
+        event for event in event_view.payload["events"] if event["event_role"] == "procedure_event"
     ]
 
     assert event_record["source_id"].startswith("dcec:section:")
     assert event_record["event_calculus_formula"].startswith("Happens(legal_norm(")
     assert event_record["event_formula_syntax_valid"] is True
-    assert event_record["procedure_event_records"][0]["relation"] == (
-        "condition_precedent"
-    )
+    assert event_record["procedure_event_records"][0]["relation"] == ("condition_precedent")
     assert procedure_events[0]["event"] == "applicant submits a complete notice"
     assert event_view.metadata["procedure_event_count"] == 1
     assert report.proof_gate.compiles is True
@@ -8966,12 +8689,8 @@ def test_cec_dcec_bridge_promotes_converter_condition_slots_to_events() -> None:
                     "actor": "Secretary",
                     "action": "approve the registration",
                     "modality": "obligated",
-                    "conditions": [
-                        {"value": "the applicant submits a complete notice"}
-                    ],
-                    "exceptions": [
-                        {"value": "as provided in section 552"}
-                    ],
+                    "conditions": [{"value": "the applicant submits a complete notice"}],
+                    "exceptions": [{"value": "as provided in section 552"}],
                     "support_text": (
                         "If the applicant submits a complete notice, the "
                         "Secretary shall approve the registration except as "
@@ -9003,9 +8722,7 @@ def test_cec_dcec_bridge_promotes_converter_condition_slots_to_events() -> None:
 
     event_view = report.ir_document.views["cec_events"]
     procedure_events = [
-        event
-        for event in event_view.payload["events"]
-        if event["event_role"] == "procedure_event"
+        event for event in event_view.payload["events"] if event["event_role"] == "procedure_event"
     ]
     event_record = report.ir_document.views["event_calculus"].payload["records"][0]
 
@@ -9138,9 +8855,7 @@ def test_cec_dcec_bridge_extracts_passive_administration_agent() -> None:
     proof_record = report.ir_document.views["dcec_formula"].payload["records"][0]
 
     assert event_record["actor"] == "national_park_service"
-    assert event_record["event"].startswith(
-        "administer_administration_protection_and_development"
-    )
+    assert event_record["event"].startswith("administer_administration_protection_and_development")
     assert proof_record["proof_input"].startswith("O(")
     assert "be_exercised_under_the_direction" not in proof_record["proof_input"]
     assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
@@ -9290,13 +9005,9 @@ def test_cec_dcec_bridge_emits_parse_profile_for_fallback_event_formulas() -> No
     assert event_record["event_formula_source"] == "cec_dcec_bridge_fallback"
     assert event_record["event_formula_syntax_valid"] is True
     assert (
-        event_record["event_formula_target_parse_profile"]["target_parse_profile_complete"]
-        is True
+        event_record["event_formula_target_parse_profile"]["target_parse_profile_complete"] is True
     )
-    assert (
-        event_record["event_formula_target_components"]["uses_event_calculus_wrapper"]
-        is True
-    )
+    assert event_record["event_formula_target_components"]["uses_event_calculus_wrapper"] is True
     assert event_record["event_formula_target_quality_gate"]["syntax_valid"] is True
     assert len(event_record["event_formula_fingerprint"]) == 24
     assert any(
@@ -9359,19 +9070,12 @@ def test_cec_dcec_bridge_normalizes_exported_rule_style_event_formulas(
     assert event_record["event_formula_source"] == "deontic.prover_syntax"
     assert event_record["event_formula_syntax_valid"] is True
     assert (
-        event_record["event_formula_target_parse_profile"]["target_parse_profile_complete"]
-        is True
+        event_record["event_formula_target_parse_profile"]["target_parse_profile_complete"] is True
     )
     assert event_record["event_formula_target_parse_profile"]["top_level_symbol"] == "HoldsAt"
     assert event_record["event_formula_target_parse_profile"]["top_level_connector"] == ":-"
-    assert (
-        event_record["event_formula_target_components"]["uses_event_calculus_wrapper"]
-        is True
-    )
-    assert (
-        event_record["event_formula_target_quality_gate"]["requires_validation"]
-        is False
-    )
+    assert event_record["event_formula_target_components"]["uses_event_calculus_wrapper"] is True
+    assert event_record["event_formula_target_quality_gate"]["requires_validation"] is False
     assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
 
 
@@ -9430,13 +9134,8 @@ def test_cec_dcec_bridge_promotes_labeled_deontic_event_exports(
         "=> HoldsAt(O(Happens(agency,publish_notice,t0)), t)"
     )
     assert event_record["event_formula_syntax_valid"] is True
-    assert (
-        event_record["event_formula_target_parse_profile"]["top_level_connector"] == "=>"
-    )
-    assert (
-        event_record["event_formula_target_quality_gate"]["requires_validation"]
-        is False
-    )
+    assert event_record["event_formula_target_parse_profile"]["top_level_connector"] == "=>"
+    assert event_record["event_formula_target_quality_gate"]["requires_validation"] is False
     assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
 
 
@@ -9501,17 +9200,9 @@ def test_cec_dcec_bridge_wraps_bare_deontic_event_exports(
         "HoldsAt",
     ]
     assert (
-        event_record["event_formula_target_parse_profile"][
-            "target_parse_profile_complete"
-        ]
-        is True
+        event_record["event_formula_target_parse_profile"]["target_parse_profile_complete"] is True
     )
-    assert (
-        event_record["event_formula_target_components"][
-            "uses_event_calculus_wrapper"
-        ]
-        is True
-    )
+    assert event_record["event_formula_target_components"]["uses_event_calculus_wrapper"] is True
     assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
 
 
@@ -9567,17 +9258,11 @@ def test_cec_dcec_bridge_normalizes_unicode_arrow_event_formulas(
 
     event_record = report.ir_document.views["event_calculus"].payload["records"][0]
     assert event_record["event_formula_syntax_valid"] is True
+    assert event_record["event_formula_target_parse_profile"]["top_level_connector"] == "=>"
     assert (
-        event_record["event_formula_target_parse_profile"]["top_level_connector"] == "=>"
+        event_record["event_formula_target_parse_profile"]["target_parse_profile_complete"] is True
     )
-    assert (
-        event_record["event_formula_target_parse_profile"]["target_parse_profile_complete"]
-        is True
-    )
-    assert (
-        event_record["event_formula_target_quality_gate"]["requires_validation"]
-        is False
-    )
+    assert event_record["event_formula_target_quality_gate"]["requires_validation"] is False
     assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
 
 
@@ -9639,14 +9324,9 @@ def test_cec_dcec_bridge_normalizes_function_style_implication_event_formulas(
         "HoldsAt(O(Happens(agency,publish_notice,t0)), t)"
     )
     assert event_record["event_formula_syntax_valid"] is True
+    assert event_record["event_formula_target_parse_profile"]["top_level_connector"] == "=>"
     assert (
-        event_record["event_formula_target_parse_profile"]["top_level_connector"] == "=>"
-    )
-    assert (
-        event_record["event_formula_target_parse_profile"][
-            "target_parse_profile_complete"
-        ]
-        is True
+        event_record["event_formula_target_parse_profile"]["target_parse_profile_complete"] is True
     )
     assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
 
@@ -9703,17 +9383,11 @@ def test_cec_dcec_bridge_accepts_temporal_wrapper_event_formulas(
 
     event_record = report.ir_document.views["event_calculus"].payload["records"][0]
     assert event_record["event_formula_syntax_valid"] is True
+    assert event_record["event_formula_target_parse_profile"]["top_level_symbol"] == "always"
     assert (
-        event_record["event_formula_target_parse_profile"]["top_level_symbol"] == "always"
+        event_record["event_formula_target_parse_profile"]["target_parse_profile_complete"] is True
     )
-    assert (
-        event_record["event_formula_target_parse_profile"]["target_parse_profile_complete"]
-        is True
-    )
-    assert (
-        event_record["event_formula_target_quality_gate"]["requires_validation"]
-        is False
-    )
+    assert event_record["event_formula_target_quality_gate"]["requires_validation"] is False
     assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
 
 
@@ -9769,17 +9443,13 @@ def test_cec_dcec_bridge_accepts_bracketed_event_formula_wrappers(
 
     event_record = report.ir_document.views["event_calculus"].payload["records"][0]
     assert event_record["event_formula_syntax_valid"] is True
-    assert (
-        event_record["event_formula_target_parse_profile"]["top_level_symbol"]
-        == "Happens"
-    )
+    assert event_record["event_formula_target_parse_profile"]["top_level_symbol"] == "Happens"
     assert event_record["event_formula_target_parse_profile"]["event_predicates"] == [
         "Happens",
         "HoldsAt",
     ]
     assert (
-        event_record["event_formula_target_parse_profile"]["target_parse_profile_complete"]
-        is True
+        event_record["event_formula_target_parse_profile"]["target_parse_profile_complete"] is True
     )
     assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
 
@@ -9836,13 +9506,10 @@ def test_cec_dcec_bridge_accepts_capitalized_function_style_quantifier_formulas(
 
     event_record = report.ir_document.views["event_calculus"].payload["records"][0]
     assert event_record["event_formula_syntax_valid"] is True
-    assert (
-        event_record["event_formula_target_parse_profile"]["top_level_symbol"] == "forall"
-    )
+    assert event_record["event_formula_target_parse_profile"]["top_level_symbol"] == "forall"
     assert event_record["event_formula_target_parse_profile"]["quantifier_variables"] == ["t"]
     assert (
-        event_record["event_formula_target_parse_profile"]["target_parse_profile_complete"]
-        is True
+        event_record["event_formula_target_parse_profile"]["target_parse_profile_complete"] is True
     )
     assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
 
@@ -9902,18 +9569,11 @@ def test_cec_dcec_bridge_repairs_event_formula_slots_after_normalization(
 
     assert event_record["event_formula_source"] == "deontic.prover_syntax:bridge_fallback"
     assert event_record["event_formula_syntax_valid"] is True
-    assert "legal_norm(bridge_empty_slot_1), )" not in event_record[
-        "event_calculus_formula"
-    ]
-    assert "legal_norm(bridge_empty_slot_1), t)" in event_record[
-        "event_calculus_formula"
-    ]
+    assert "legal_norm(bridge_empty_slot_1), )" not in event_record["event_calculus_formula"]
+    assert "legal_norm(bridge_empty_slot_1), t)" in event_record["event_calculus_formula"]
     assert parse_profile["event_predicate_slot_complete"] is True
     assert parse_profile["target_parse_profile_complete"] is True
-    assert (
-        event_record["event_formula_target_quality_gate"]["requires_validation"]
-        is False
-    )
+    assert event_record["event_formula_target_quality_gate"]["requires_validation"] is False
     assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
 
 
@@ -9968,9 +9628,7 @@ def test_cec_dcec_bridge_falls_back_from_unstructured_event_formula_export(
 
     event_record = report.ir_document.views["event_calculus"].payload["records"][0]
 
-    assert event_record["event_formula_source"] == (
-        "deontic.prover_syntax:bridge_fallback"
-    )
+    assert event_record["event_formula_source"] == ("deontic.prover_syntax:bridge_fallback")
     assert event_record["event_calculus_formula"] == (
         "Happens(legal_norm(bridge_unstructured_export_1), t) "
         "=> HoldsAt(O(Happens(secretary,publish_notice,t0)), t)"
@@ -10437,17 +10095,14 @@ def test_external_prover_router_legacy_payload_prefers_proof_formula_over_source
         enable_z3=False,
     )
     payload = {
-        "text": (
-            "42 U.S.C. 9881 to 9887.: §§9881 to 9887. Repealed. "
-            "Pub. L. 103-252, title I."
-        ),
+        "text": ("42 U.S.C. 9881 to 9887.: §§9881 to 9887. Repealed. Pub. L. 103-252, title I."),
         "records": [
             {
                 "source_id": "us-code-42-9881 to 9887",
                 "text": "Editorial notes for the repealed program section.",
                 "proof_input": "O(publish_notice(agency))",
             }
-        ]
+        ],
     }
 
     result = router.route(payload, strategy="sequential")
@@ -11235,9 +10890,7 @@ def test_external_prover_router_bridge_recovers_nested_packet_text_formula(
                             "source_id": "packet:nested-text-formula",
                             "payload": {
                                 "compiler_output": {
-                                    "program": {
-                                        "text": "O(register_notice(secretary))"
-                                    }
+                                    "program": {"text": "O(register_notice(secretary))"}
                                 }
                             },
                         }
@@ -11311,11 +10964,7 @@ def test_external_prover_router_bridge_prefers_candidate_formula_alias(
                                 "of unallotted lands in Kaw Reservation."
                             ),
                             "claims": [
-                                {
-                                    "candidate_formula": (
-                                        "P(lease_for_mining(secretary, land))"
-                                    )
-                                }
+                                {"candidate_formula": ("P(lease_for_mining(secretary, land))")}
                             ],
                         }
                     ],
@@ -11518,15 +11167,9 @@ def test_external_prover_router_bridge_soft_passes_deontic_to_deontic_router_com
     assert report.proof_gate.compiles is True
     assert report.proof_gate.valid_count == report.proof_gate.attempted_count
     assert report.proof_gate.details[0]["bridge_soft_pass"] is True
-    assert (
-        report.proof_gate.details[0]["soft_pass_reason"]
-        == "router_deontic_family_compatibility"
-    )
+    assert report.proof_gate.details[0]["soft_pass_reason"] == "router_deontic_family_compatibility"
     assert report.proof_gate.details[0]["soft_pass_family_pair"] == "deontic->deontic"
-    assert (
-        "external_provers:family_softpass:deontic_to_deontic"
-        in report.proof_gate.verified_by
-    )
+    assert "external_provers:family_softpass:deontic_to_deontic" in report.proof_gate.verified_by
     assert report.round_trip.extra_losses["external_prover_failure_ratio"] == 0.0
 
 
@@ -11592,15 +11235,9 @@ def test_external_prover_router_bridge_soft_passes_deontic_to_temporal_router_co
     assert report.proof_gate.compiles is True
     assert report.proof_gate.valid_count == report.proof_gate.attempted_count
     assert report.proof_gate.details[0]["bridge_soft_pass"] is True
-    assert (
-        report.proof_gate.details[0]["soft_pass_reason"]
-        == "router_deontic_family_compatibility"
-    )
+    assert report.proof_gate.details[0]["soft_pass_reason"] == "router_deontic_family_compatibility"
     assert report.proof_gate.details[0]["soft_pass_family_pair"] == "deontic->temporal"
-    assert (
-        "external_provers:family_softpass:deontic_to_temporal"
-        in report.proof_gate.verified_by
-    )
+    assert "external_provers:family_softpass:deontic_to_temporal" in report.proof_gate.verified_by
     assert report.round_trip.extra_losses["external_prover_failure_ratio"] == 0.0
 
 
@@ -11643,9 +11280,7 @@ def test_external_prover_router_bridge_records_compiler_guidance_prover_gate_hin
         document_id="external-prover-bridge-guidance-prover-gate-soft-pass",
         citation="External Prover Bridge Guidance Prover Gate Soft Pass",
         compiler_guidance={
-            "compiler_guidance_todo_routes": {
-                "repair_multiview_legal_ir_prover_gate": 1
-            }
+            "compiler_guidance_todo_routes": {"repair_multiview_legal_ir_prover_gate": 1}
         },
     )
 
@@ -11920,9 +11555,7 @@ def test_external_prover_router_bridge_accepts_rescue_original_action_guidance(
     assert report.status == "ok"
     assert report.metadata["compiler_guidance_prover_gate_hint"] is True
     assert report.metadata["proof_gate_soft_pass"] is True
-    assert report.metadata["proof_gate_soft_pass_reason"] == (
-        "router_compatibility_soft_pass"
-    )
+    assert report.metadata["proof_gate_soft_pass_reason"] == ("router_compatibility_soft_pass")
     assert report.proof_gate.compiles is True
     assert report.round_trip.extra_losses["external_prover_failure_ratio"] == 0.0
 
@@ -12106,9 +11739,7 @@ def test_external_prover_router_bridge_inventory_fallback_reports_compile_only_s
     assert report.proof_gate.valid_count == report.proof_gate.attempted_count
     assert report.proof_gate.details[0]["compiled"] is True
     assert report.proof_gate.details[0]["prover_used"] == "native_syntactic"
-    assert report.proof_gate.details[0]["reason"] == (
-        "Used native_syntactic (no proof)"
-    )
+    assert report.proof_gate.details[0]["reason"] == ("Used native_syntactic (no proof)")
     assert "external_provers:native_syntactic" in report.proof_gate.verified_by
     assert report.round_trip.extra_losses["external_prover_failure_ratio"] == 0.0
     assert report.round_trip.extra_losses["external_prover_unavailable_loss"] == 0.0
@@ -12129,8 +11760,7 @@ def test_fol_tdfol_coerce_formula_sanitizes_keyword_prefixed_identifiers() -> No
 
     notification_formula = "O(register_notification(notification))"
     section_formula = (
-        "O(be_construed_to_contravene_any_applicable_state_law("
-        "nothing_in_this_section))"
+        "O(be_construed_to_contravene_any_applicable_state_law(nothing_in_this_section))"
     )
 
     parsed_notification = coerce_tdfol_formula(notification_formula)
@@ -12147,36 +11777,25 @@ def test_fol_tdfol_coerce_formula_normalizes_noisy_prover_exports() -> None:
 
     cases = {
         "O(make_report(person,))": "O(make_report(person))",
-        "O(make_report(person)) # source: 49 U.S.C. 21311": (
-            "O(make_report(person))"
-        ),
+        "O(make_report(person)) # source: 49 U.S.C. 21311": ("O(make_report(person))"),
         "fof(ax_1, axiom, O(make_report(person))).": "O(make_report(person))",
         "tdfol_formula = `O(register_notification(notification))`": (
             "O(register_notification(term_notification))"
         ),
         "O(qualified(section:12574.))": "O(qualified(section:12574))",
         "TDFOL.prover: O(apply(this_chapter))": "O(apply(this_chapter))",
-        "TDFOL prover: O(issue_notice(administrator))": (
-            "O(issue_notice(administrator))"
-        ),
+        "TDFOL prover: O(issue_notice(administrator))": ("O(issue_notice(administrator))"),
         (
-            "proof_obligation(target=TDFOL.prover, "
-            "formula=O(apply(this_chapter)))"
+            "proof_obligation(target=TDFOL.prover, formula=O(apply(this_chapter)))"
         ): "O(apply(this_chapter))",
         "O{apply(this_chapter)}": "O(apply(this_chapter))",
-        "Obligation(agent=agency, action=publish_notice(agency))": (
-            "O(publish_notice(agency))"
-        ),
+        "Obligation(agent=agency, action=publish_notice(agency))": ("O(publish_notice(agency))"),
         "O[agency](publish_notice(agency))": "O(publish_notice(agency))",
-        "P_secretary(establish_program(secretary))": (
-            "P(establish_program(secretary))"
-        ),
+        "P_secretary(establish_program(secretary))": ("P(establish_program(secretary))"),
         "O[agency](P[secretary](establish_program(secretary)))": (
             "O(P(establish_program(secretary)))"
         ),
-        "PERMISSION(secretary, establish_program(secretary))": (
-            "P(establish_program(secretary))"
-        ),
+        "PERMISSION(secretary, establish_program(secretary))": ("P(establish_program(secretary))"),
         "forbidden(disclose_records(agency))": "F(disclose_records(agency))",
     }
 
@@ -12192,9 +11811,7 @@ def test_fol_tdfol_coerce_formula_extracts_fenced_and_multiline_exports() -> Non
 
     cases = {
         "```tdfol\nO(make_report(person))\n```": "O(make_report(person))",
-        "TDFOL formula:\nO(make_report(person))\nsource: 2 U.S.C. 1511": (
-            "O(make_report(person))"
-        ),
+        "TDFOL formula:\nO(make_report(person))\nsource: 2 U.S.C. 1511": ("O(make_report(person))"),
         "proof obligation:\n- P(establish_program(secretary))\nconfidence: 0.91": (
             "P(establish_program(secretary))"
         ),
@@ -12274,8 +11891,7 @@ def test_fol_tdfol_coerce_formula_parses_multi_variable_quantifier_exports() -> 
             "forall a:Agent, t:Time. Eligible(a) -> O(file_report(a, t))"
         ): "∀a.∀t.(→ Eligible(a) O(file_report(a, t)))",
         (
-            "exists agency, deadline: "
-            "P(extend_deadline(agency, deadline))"
+            "exists agency, deadline: P(extend_deadline(agency, deadline))"
         ): "∃agency.∃deadline.P(extend_deadline(agency, deadline))",
     }
 
@@ -12305,9 +11921,7 @@ def test_fol_tdfol_coerce_formula_synthesizes_raw_deontic_text_exports() -> None
         "P(the Secretary may detail members as instructors)": (
             "P(secretary_detail_members_instructors(secretary))"
         ),
-        "F(person shall not disclose records)": (
-            "F(person_disclose_records(actor))"
-        ),
+        "F(person shall not disclose records)": ("F(person_disclose_records(actor))"),
     }
 
     for formula, expected in cases.items():
@@ -12321,15 +11935,11 @@ def test_fol_tdfol_coerce_formula_synthesizes_named_raw_deontic_labels() -> None
     from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
 
     cases = {
-        "obligation: agency shall publish notice": (
-            "O(agency_publish_notice(actor))"
-        ),
+        "obligation: agency shall publish notice": ("O(agency_publish_notice(actor))"),
         "permission = the Secretary may detail members as instructors": (
             "P(secretary_detail_members_instructors(secretary))"
         ),
-        "forbidden: person shall not disclose records": (
-            "F(person_disclose_records(actor))"
-        ),
+        "forbidden: person shall not disclose records": ("F(person_disclose_records(actor))"),
     }
 
     for formula, expected in cases.items():
@@ -12387,8 +11997,7 @@ def test_fol_tdfol_coerce_formula_accepts_targeted_prover_wrappers() -> None:
             "obligation(Chief Administrative Officer, collect fees for internal services)"
         ): "O(collect_fees_for_internal_services(chief_administrative_officer))",
         (
-            "target_view: TDFOL.prover, goal: "
-            "P(Secretary, transfer funds when necessary)"
+            "target_view: TDFOL.prover, goal: P(Secretary, transfer funds when necessary)"
         ): "P(transfer_funds_when_necessary(secretary))",
     }
 
@@ -12408,8 +12017,7 @@ def test_fol_tdfol_coerce_formula_synthesizes_spaced_bracket_agents() -> None:
 
     assert parsed is not None
     assert (
-        parsed.to_string()
-        == "O(collect_fees_for_internal_services(chief_administrative_officer))"
+        parsed.to_string() == "O(collect_fees_for_internal_services(chief_administrative_officer))"
     )
 
 
@@ -12431,8 +12039,7 @@ def test_tdfol_bridge_uscode_fallback_prefers_operative_shall_clause() -> None:
     )
 
     formulas = {
-        record["formula"]
-        for record in report.ir_document.views["tdfol_formula"].payload["records"]
+        record["formula"] for record in report.ir_document.views["tdfol_formula"].payload["records"]
     }
     assert "O(collect_fees_for_services(chief_administrative_officer))" in formulas
     assert report.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
@@ -12470,9 +12077,7 @@ def test_tdfol_bridge_uscode_fallback_omits_heading_from_modal_actor() -> None:
 
     records = report.ir_document.views["tdfol_formula"].payload["records"]
 
-    assert records[0]["formula"] == (
-        "O(collect_fees_for_services(chief_administrative_officer))"
-    )
+    assert records[0]["formula"] == ("O(collect_fees_for_services(chief_administrative_officer))")
     assert records[0]["parse_ok"] is True
     assert report.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
 
@@ -12643,10 +12248,7 @@ def test_zkp_attestation_bridge_promotes_passing_autoencoder_evidence() -> None:
                 "quality_gate": "pass",
                 "ranked_guidance_features": [
                     {
-                        "feature": (
-                            "compiler-guidance-route:"
-                            "repair_zkp_attestation_bridge"
-                        ),
+                        "feature": ("compiler-guidance-route:repair_zkp_attestation_bridge"),
                         "score": 1.0,
                     }
                 ],
@@ -12704,14 +12306,13 @@ def test_form_certificate_serializes_distinct_zkp_public_inputs() -> None:
     serialized = certificate.to_dict()
 
     assert serialized["public_inputs"] == certificate.public_inputs
-    assert serialized["zkp_public_inputs"]["attestation_ref"] == (
-        proof.public_inputs["attestation_ref"]
+    assert (
+        serialized["zkp_public_inputs"]["attestation_ref"]
+        == (proof.public_inputs["attestation_ref"])
     )
-    assert serialized["zkp_public_inputs"]["theorem_hash"] == (
-        proof.public_inputs["theorem_hash"]
-    )
-    assert serialized["zkp_attestation"]["attestation_ref"] == (
-        proof.public_inputs["attestation_ref"]
+    assert serialized["zkp_public_inputs"]["theorem_hash"] == (proof.public_inputs["theorem_hash"])
+    assert (
+        serialized["zkp_attestation"]["attestation_ref"] == (proof.public_inputs["attestation_ref"])
     )
     assert "form_template_hash" not in serialized["zkp_public_inputs"]
 
@@ -12777,9 +12378,7 @@ def test_zkp_public_record_recovers_duplicated_fields_from_proof_only() -> None:
 
     assert record["proof_hash"] == proof.metadata["attestation_view"]["proof_digest"]
     assert record["compiler_guidance_ref"] == "d" * 64
-    assert record["public_inputs"]["attestation_ref"] == (
-        proof.public_inputs["attestation_ref"]
-    )
+    assert record["public_inputs"]["attestation_ref"] == (proof.public_inputs["attestation_ref"])
     assert record["public_inputs"]["compiler_guidance_ref"] == "d" * 64
     assert zkp_attestation_legal_ir_view_loss([record]) == 0.0
 
@@ -13143,8 +12742,9 @@ def test_zkp_prover_replaces_caller_supplied_stale_attestation_view() -> None:
     )
     verifier = ZKPVerifier(backend="simulated")
 
-    assert proof.metadata["attestation_view"]["attestation_ref"] == (
-        proof.public_inputs["attestation_ref"]
+    assert (
+        proof.metadata["attestation_view"]["attestation_ref"]
+        == (proof.public_inputs["attestation_ref"])
     )
     assert proof.metadata["attestation_view"]["attestation_ref"] != "0" * 64
     assert verifier.verify_proof(proof) is True
@@ -13172,8 +12772,9 @@ def test_zkp_attestation_refresh_repairs_public_input_mutation() -> None:
 
     refresh_proof_attestation(proof)
 
-    assert proof.public_inputs["attestation_ref"] == (
-        proof.metadata["attestation_view"]["attestation_ref"]
+    assert (
+        proof.public_inputs["attestation_ref"]
+        == (proof.metadata["attestation_view"]["attestation_ref"])
     )
     assert proof.metadata["attestation_view"]["compiler_guidance_ref"] == "c" * 64
     assert verifier.verify_proof(proof) is True
@@ -13196,11 +12797,10 @@ def test_zkp_prover_cached_whitespace_variant_refreshes_attestation_view() -> No
     verifier = ZKPVerifier(backend="simulated")
 
     assert cached.public_inputs["theorem"] == "  O(publish_notice(agency))\n"
-    assert (
-        cached.metadata["attestation_view"]["public_inputs_commitment"]
-        != ""
-    )
+    assert cached.metadata["attestation_view"]["public_inputs_commitment"] != ""
     assert verifier.verify_proof(cached) is True
+
+
 def test_zkp_prover_cache_separates_circuit_attestations() -> None:
     from ipfs_datasets_py.logic.zkp import ZKPProver
 
@@ -13263,17 +12863,13 @@ def test_multiview_bridge_evaluation_builds_canonical_legal_ir_document() -> Non
     assert report.canonical_loss_vector()["legal_ir_multiview_view_coverage_loss"] == 0.0
     assert report.reports["deontic_norms"].metadata["coverage_requires_validation"] is False
     assert report.reports["deontic_norms"].accepted is True
-    assert report.loss_vector()[
-        "deontic_norms.deontic_quality_requires_validation_loss"
-    ] == 0.0
+    assert report.loss_vector()["deontic_norms.deontic_quality_requires_validation_loss"] == 0.0
     assert "deontic_norms.deontic_decoder_slot_loss" in report.loss_vector()
     assert "deontic_norms.deontic_ir_slot_provenance_loss" in report.loss_vector()
     target = report.training_target()
     assert target.document is report.document
     assert target.losses["legal_ir_multiview_total_loss"] == report.total_loss
-    assert target.adapter_losses["deontic_norms"][
-        "deontic_quality_requires_validation_loss"
-    ] == 0.0
+    assert target.adapter_losses["deontic_norms"]["deontic_quality_requires_validation_loss"] == 0.0
     assert target.view_distribution
 
 
@@ -13432,9 +13028,7 @@ def test_multiview_training_target_applies_compiler_guidance_view_gaps() -> None
     ]
     assert (
         target_distribution["knowledge_graphs.neo4j_compat"]
-        > unguided.training_target().view_distribution[
-            "knowledge_graphs.neo4j_compat"
-        ]
+        > unguided.training_target().view_distribution["knowledge_graphs.neo4j_compat"]
     )
     assert target_distribution["TDFOL.prover"] > 0.0
     assert abs(sum(target_distribution.values()) - 1.0) < 1e-9
@@ -13477,16 +13071,12 @@ def test_bridge_contract_guidance_strength_uses_probability_and_component_gaps()
         }
     )
 
-    target_distribution = metadata[
-        "compiler_guidance_bridge_contract_target_distribution"
-    ]
+    target_distribution = metadata["compiler_guidance_bridge_contract_target_distribution"]
 
     assert metadata["compiler_guidance_bridge_contract_projection_strength"] > (
         _BRIDGE_CONTRACT_GUIDANCE_PROJECTION_STRENGTH
     )
-    assert metadata["compiler_guidance_bridge_contract_target_probability_gap"] == (
-        0.298229205982
-    )
+    assert metadata["compiler_guidance_bridge_contract_target_probability_gap"] == (0.298229205982)
     assert metadata["compiler_guidance_component_gap_max"] == 0.174666463809
     assert set(target_distribution) == {
         "CEC.native",
@@ -13531,9 +13121,7 @@ def test_bridge_contract_guidance_promotes_packet_view_gap_metadata() -> None:
         }
     )
 
-    target_distribution = metadata[
-        "compiler_guidance_bridge_contract_target_distribution"
-    ]
+    target_distribution = metadata["compiler_guidance_bridge_contract_target_distribution"]
 
     assert {
         "CEC.native",
@@ -13638,9 +13226,7 @@ def test_bridge_contract_guidance_uses_packet_gap_maps_as_projection_evidence() 
         }
     )
 
-    target_distribution = metadata[
-        "compiler_guidance_bridge_contract_target_distribution"
-    ]
+    target_distribution = metadata["compiler_guidance_bridge_contract_target_distribution"]
 
     assert {
         "CEC.native",
@@ -13999,9 +13585,7 @@ def test_official_usc_primary_projection_handles_determination_and_renaming_sect
 
     assert determination["TDFOL.prover"] > distribution["TDFOL.prover"]
     assert determination["CEC.native"] > distribution["CEC.native"]
-    assert renaming["knowledge_graphs.neo4j_compat"] > distribution[
-        "knowledge_graphs.neo4j_compat"
-    ]
+    assert renaming["knowledge_graphs.neo4j_compat"] > distribution["knowledge_graphs.neo4j_compat"]
     assert renaming["CEC.native"] > distribution["CEC.native"]
     assert abs(sum(determination.values()) - 1.0) < 1e-9
     assert abs(sum(renaming.values()) - 1.0) < 1e-9
@@ -14047,17 +13631,13 @@ def test_official_usc_primary_projection_handles_definition_purpose_and_policy_s
     )
 
     assert definition["CEC.native"] > distribution["CEC.native"]
-    assert definition["knowledge_graphs.neo4j_compat"] > distribution[
-        "knowledge_graphs.neo4j_compat"
-    ]
+    assert (
+        definition["knowledge_graphs.neo4j_compat"] > distribution["knowledge_graphs.neo4j_compat"]
+    )
     assert purpose["CEC.native"] > distribution["CEC.native"]
-    assert purpose["knowledge_graphs.neo4j_compat"] > distribution[
-        "knowledge_graphs.neo4j_compat"
-    ]
+    assert purpose["knowledge_graphs.neo4j_compat"] > distribution["knowledge_graphs.neo4j_compat"]
     assert policy["CEC.native"] > distribution["CEC.native"]
-    assert policy["knowledge_graphs.neo4j_compat"] > distribution[
-        "knowledge_graphs.neo4j_compat"
-    ]
+    assert policy["knowledge_graphs.neo4j_compat"] > distribution["knowledge_graphs.neo4j_compat"]
     assert abs(sum(definition.values()) - 1.0) < 1e-9
     assert abs(sum(purpose.values()) - 1.0) < 1e-9
     assert abs(sum(policy.values()) - 1.0) < 1e-9
@@ -14110,9 +13690,9 @@ def test_official_usc_primary_projection_handles_editorial_status_sections() -> 
     )
 
     assert transferred["CEC.native"] > distribution["CEC.native"]
-    assert transferred["knowledge_graphs.neo4j_compat"] > distribution[
-        "knowledge_graphs.neo4j_compat"
-    ]
+    assert (
+        transferred["knowledge_graphs.neo4j_compat"] > distribution["knowledge_graphs.neo4j_compat"]
+    )
     assert transferred["deontic.ir"] < distribution["deontic.ir"]
     assert omitted["CEC.native"] > distribution["CEC.native"]
     assert omitted["deontic.ir"] < distribution["deontic.ir"]
@@ -14153,9 +13733,9 @@ def test_official_usc_primary_projection_handles_asset_transfer_rules() -> None:
 
     assert projected["deontic.ir"] > distribution["deontic.ir"]
     assert projected["TDFOL.prover"] >= 0.24
-    assert projected["knowledge_graphs.neo4j_compat"] < distribution[
-        "knowledge_graphs.neo4j_compat"
-    ]
+    assert (
+        projected["knowledge_graphs.neo4j_compat"] < distribution["knowledge_graphs.neo4j_compat"]
+    )
     assert abs(sum(projected.values()) - 1.0) < 1e-9
 
 
@@ -14242,17 +13822,14 @@ def test_official_usc_primary_projection_handles_safety_policy_and_savings_secti
 
     assert safety["TDFOL.prover"] > distribution["TDFOL.prover"]
     assert safety["deontic.ir"] > distribution["deontic.ir"]
-    assert policy["knowledge_graphs.neo4j_compat"] > distribution[
-        "knowledge_graphs.neo4j_compat"
-    ]
+    assert policy["knowledge_graphs.neo4j_compat"] > distribution["knowledge_graphs.neo4j_compat"]
     assert policy["CEC.native"] > distribution["CEC.native"]
-    assert savings["knowledge_graphs.neo4j_compat"] > distribution[
-        "knowledge_graphs.neo4j_compat"
-    ]
+    assert savings["knowledge_graphs.neo4j_compat"] > distribution["knowledge_graphs.neo4j_compat"]
     assert savings["CEC.native"] > distribution["CEC.native"]
-    assert effect_on_existing_law["knowledge_graphs.neo4j_compat"] > distribution[
-        "knowledge_graphs.neo4j_compat"
-    ]
+    assert (
+        effect_on_existing_law["knowledge_graphs.neo4j_compat"]
+        > distribution["knowledge_graphs.neo4j_compat"]
+    )
     assert effect_on_existing_law["CEC.native"] > distribution["CEC.native"]
     assert abs(sum(safety.values()) - 1.0) < 1e-9
     assert abs(sum(policy.values()) - 1.0) < 1e-9
@@ -14291,9 +13868,10 @@ def test_official_usc_primary_projection_handles_packet_savings_and_rulemaking_d
         ),
     )
 
-    assert existing_authority_savings["knowledge_graphs.neo4j_compat"] > distribution[
-        "knowledge_graphs.neo4j_compat"
-    ]
+    assert (
+        existing_authority_savings["knowledge_graphs.neo4j_compat"]
+        > distribution["knowledge_graphs.neo4j_compat"]
+    )
     assert existing_authority_savings["CEC.native"] > distribution["CEC.native"]
     assert pet_food_rulemaking["TDFOL.prover"] > distribution["TDFOL.prover"]
     assert pet_food_rulemaking["deontic.ir"] > distribution["deontic.ir"]
@@ -14341,14 +13919,15 @@ def test_official_usc_primary_projection_handles_bootstrap_bridge_samples() -> N
         ),
     )
 
-    assert act_savings["knowledge_graphs.neo4j_compat"] > distribution[
-        "knowledge_graphs.neo4j_compat"
-    ]
+    assert (
+        act_savings["knowledge_graphs.neo4j_compat"] > distribution["knowledge_graphs.neo4j_compat"]
+    )
     assert act_savings["CEC.native"] > distribution["CEC.native"]
     assert false_advertising["deontic.ir"] > distribution["deontic.ir"]
-    assert false_advertising["knowledge_graphs.neo4j_compat"] > distribution[
-        "knowledge_graphs.neo4j_compat"
-    ]
+    assert (
+        false_advertising["knowledge_graphs.neo4j_compat"]
+        > distribution["knowledge_graphs.neo4j_compat"]
+    )
     assert performance_plan["deontic.ir"] > distribution["deontic.ir"]
     assert performance_plan["TDFOL.prover"] >= distribution["TDFOL.prover"]
     assert abs(sum(act_savings.values()) - 1.0) < 1e-9
@@ -14406,9 +13985,7 @@ def test_official_usc_primary_projection_handles_packet_100_bridge_contracts() -
     )
 
     assert administration_enforcement["CEC.native"] > distribution["CEC.native"]
-    assert administration_enforcement["CEC.native"] > administration_enforcement[
-        "deontic.ir"
-    ]
+    assert administration_enforcement["CEC.native"] > administration_enforcement["deontic.ir"]
     assert administration_enforcement["knowledge_graphs.neo4j_compat"] > 0.15
     assert medical_assistance["CEC.native"] > distribution["CEC.native"]
     assert medical_assistance["CEC.native"] > medical_assistance["deontic.ir"]
@@ -14514,9 +14091,9 @@ def test_official_usc_primary_projection_handles_packet_2711_bridge_samples() ->
     )
 
     assert agency_goal["CEC.native"] > distribution["CEC.native"]
-    assert agency_goal["knowledge_graphs.neo4j_compat"] > distribution[
-        "knowledge_graphs.neo4j_compat"
-    ]
+    assert (
+        agency_goal["knowledge_graphs.neo4j_compat"] > distribution["knowledge_graphs.neo4j_compat"]
+    )
     assert county_payments["deontic.ir"] > distribution["deontic.ir"]
     assert county_payments["TDFOL.prover"] > distribution["TDFOL.prover"]
     assert teacher_participation["deontic.ir"] > distribution["deontic.ir"]
@@ -14526,13 +14103,12 @@ def test_official_usc_primary_projection_handles_packet_2711_bridge_samples() ->
     assert patronage_pools["deontic.ir"] > distribution["deontic.ir"]
     assert patronage_pools["CEC.native"] > distribution["CEC.native"]
     assert repealed_status["CEC.native"] > repealed_status["deontic.ir"]
-    assert repealed_status["knowledge_graphs.neo4j_compat"] > repealed_status[
-        "deontic.ir"
-    ]
+    assert repealed_status["knowledge_graphs.neo4j_compat"] > repealed_status["deontic.ir"]
     assert nautical_schools["CEC.native"] > distribution["CEC.native"]
-    assert nautical_schools["knowledge_graphs.neo4j_compat"] > distribution[
-        "knowledge_graphs.neo4j_compat"
-    ]
+    assert (
+        nautical_schools["knowledge_graphs.neo4j_compat"]
+        > distribution["knowledge_graphs.neo4j_compat"]
+    )
     assert mining_leases["deontic.ir"] > distribution["deontic.ir"]
     assert mining_leases["TDFOL.prover"] > distribution["TDFOL.prover"]
     for projected in (
@@ -14644,9 +14220,10 @@ def test_official_usc_primary_projection_handles_packet_207_bridge_contracts() -
     assert ordinance_review["deontic.ir"] > distribution["deontic.ir"]
     assert ordinance_review["TDFOL.prover"] > distribution["TDFOL.prover"]
     assert judicial_review["deontic.ir"] > distribution["deontic.ir"]
-    assert judicial_review["knowledge_graphs.neo4j_compat"] > distribution[
-        "knowledge_graphs.neo4j_compat"
-    ]
+    assert (
+        judicial_review["knowledge_graphs.neo4j_compat"]
+        > distribution["knowledge_graphs.neo4j_compat"]
+    )
     assert repealed["CEC.native"] > repealed["deontic.ir"]
     assert repealed["knowledge_graphs.neo4j_compat"] > repealed["deontic.ir"]
     assert omitted["CEC.native"] > omitted["deontic.ir"]
@@ -14726,14 +14303,16 @@ def test_official_usc_primary_projection_handles_packet_1136_bridge_contracts() 
     assert census_confidentiality["knowledge_graphs.neo4j_compat"] >= 0.24
     assert bankruptcy_claims["deontic.ir"] > distribution["deontic.ir"]
     assert bankruptcy_claims["TDFOL.prover"] > distribution["TDFOL.prover"]
-    assert historic_preservation["knowledge_graphs.neo4j_compat"] > distribution[
-        "knowledge_graphs.neo4j_compat"
-    ]
+    assert (
+        historic_preservation["knowledge_graphs.neo4j_compat"]
+        > distribution["knowledge_graphs.neo4j_compat"]
+    )
     assert historic_preservation["CEC.native"] > distribution["CEC.native"]
     assert charter_governance["CEC.native"] > distribution["CEC.native"]
-    assert charter_governance["knowledge_graphs.neo4j_compat"] > distribution[
-        "knowledge_graphs.neo4j_compat"
-    ]
+    assert (
+        charter_governance["knowledge_graphs.neo4j_compat"]
+        > distribution["knowledge_graphs.neo4j_compat"]
+    )
     for projected in (
         flexible_schedule,
         census_confidentiality,
@@ -14779,7 +14358,10 @@ def test_multiview_training_target_distribution_rebalances_dense_contract_lanes(
     assert target_distribution["CEC.native"] <= 0.212
     assert target_distribution["TDFOL.prover"] <= 0.212
     assert target_distribution["external_provers.router"] <= 0.125
-    assert target_distribution["modal.frame_logic"] > target_distribution["knowledge_graphs.neo4j_compat"]
+    assert (
+        target_distribution["modal.frame_logic"]
+        > target_distribution["knowledge_graphs.neo4j_compat"]
+    )
     assert target_distribution["deontic.ir"] > target_distribution["knowledge_graphs.neo4j_compat"]
     assert abs(sum(target_distribution.values()) - 1.0) < 1e-9
 
@@ -14952,9 +14534,7 @@ def test_dense_contract_rebalance_uses_calendar_deadline_cues_for_temporal_shift
 
     rebalanced = _rebalance_dense_contract_distribution(
         distribution,
-        text=(
-            "Provided that the Secretary shall submit a report by October 1 of each year."
-        ),
+        text=("Provided that the Secretary shall submit a report by October 1 of each year."),
     )
 
     assert rebalanced["TDFOL.prover"] >= 0.24
@@ -15033,10 +14613,7 @@ def test_dense_contract_rebalance_treats_authorization_headings_as_deontic_cues(
 
     rebalanced = _rebalance_dense_contract_distribution(
         distribution,
-        text=(
-            "7 U.S.C. 2204-5 Authorization of appropriations for cooperative "
-            "research projects."
-        ),
+        text=("7 U.S.C. 2204-5 Authorization of appropriations for cooperative research projects."),
     )
 
     assert rebalanced["deontic.ir"] > 0.32
@@ -15103,9 +14680,9 @@ def test_dense_contract_rebalance_projects_flat_direct_appropriation_mix() -> No
 
     assert rebalanced["CEC.native"] > distribution["CEC.native"]
     assert rebalanced["deontic.ir"] > distribution["deontic.ir"]
-    assert rebalanced["knowledge_graphs.neo4j_compat"] < distribution[
-        "knowledge_graphs.neo4j_compat"
-    ]
+    assert (
+        rebalanced["knowledge_graphs.neo4j_compat"] < distribution["knowledge_graphs.neo4j_compat"]
+    )
     assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
 
 
@@ -15165,12 +14742,10 @@ def test_dense_contract_rebalance_projects_scaffolded_assignment_authority_mix()
     )
 
     assert rebalanced["CEC.native"] > distribution["CEC.native"]
-    assert rebalanced["knowledge_graphs.neo4j_compat"] > distribution[
-        "knowledge_graphs.neo4j_compat"
-    ]
-    assert rebalanced["external_provers.router"] < distribution[
-        "external_provers.router"
-    ]
+    assert (
+        rebalanced["knowledge_graphs.neo4j_compat"] > distribution["knowledge_graphs.neo4j_compat"]
+    )
+    assert rebalanced["external_provers.router"] < distribution["external_provers.router"]
     assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
 
 
@@ -15416,13 +14991,11 @@ def test_dense_contract_rebalance_projects_compliance_and_fiscal_norms() -> None
 
     assert compliance["deontic.ir"] > distribution["deontic.ir"]
     assert compliance["TDFOL.prover"] > distribution["TDFOL.prover"]
-    assert compliance["knowledge_graphs.neo4j_compat"] < distribution[
-        "knowledge_graphs.neo4j_compat"
-    ]
+    assert (
+        compliance["knowledge_graphs.neo4j_compat"] < distribution["knowledge_graphs.neo4j_compat"]
+    )
     assert fiscal["deontic.ir"] >= 0.30
-    assert fiscal["knowledge_graphs.neo4j_compat"] < distribution[
-        "knowledge_graphs.neo4j_compat"
-    ]
+    assert fiscal["knowledge_graphs.neo4j_compat"] < distribution["knowledge_graphs.neo4j_compat"]
     assert abs(sum(compliance.values()) - 1.0) < 1e-9
     assert abs(sum(fiscal.values()) - 1.0) < 1e-9
 
@@ -15519,7 +15092,9 @@ def test_dense_contract_rebalance_promotes_scaffolded_repeated_normative_duties(
     assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
 
 
-def test_dense_contract_rebalance_keeps_deontic_floor_for_scaffolded_normative_temporal_text() -> None:
+def test_dense_contract_rebalance_keeps_deontic_floor_for_scaffolded_normative_temporal_text() -> (
+    None
+):
     from ipfs_datasets_py.logic.bridge.multiview import (
         _rebalance_dense_contract_distribution,
     )
@@ -15729,10 +15304,7 @@ def test_dense_contract_rebalance_prioritizes_temporal_lane_for_repealed_scaffol
 
     rebalanced = _rebalance_dense_contract_distribution(
         distribution,
-        text=(
-            "U.S.C. Title 16 - CONSERVATION CHAPTER 79 SUBCHAPTER II "
-            "Sec. 5933 - Repealed."
-        ),
+        text=("U.S.C. Title 16 - CONSERVATION CHAPTER 79 SUBCHAPTER II Sec. 5933 - Repealed."),
     )
 
     assert rebalanced["TDFOL.prover"] >= 0.24
@@ -15855,7 +15427,9 @@ def test_dense_contract_rebalance_treats_authorized_empowered_discretion_as_fram
     assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
 
 
-def test_dense_contract_rebalance_treats_legislative_assembly_authority_permission_as_frame_signal() -> None:
+def test_dense_contract_rebalance_treats_legislative_assembly_authority_permission_as_frame_signal() -> (
+    None
+):
     from ipfs_datasets_py.logic.bridge.multiview import (
         _rebalance_dense_contract_distribution,
     )
@@ -15914,7 +15488,9 @@ def test_dense_contract_rebalance_keeps_deontic_lane_for_scaffolded_conditional_
     assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
 
 
-def test_dense_contract_rebalance_treats_governance_cross_reference_as_conditional_normative() -> None:
+def test_dense_contract_rebalance_treats_governance_cross_reference_as_conditional_normative() -> (
+    None
+):
     from ipfs_datasets_py.logic.bridge.multiview import (
         _rebalance_dense_contract_distribution,
     )
@@ -16072,7 +15648,9 @@ def test_dense_contract_rebalance_projects_omitted_codification_to_graph_and_cec
     assert abs(sum(rebalanced.values()) - 1.0) < 1e-9
 
 
-def test_dense_contract_rebalance_keeps_deontic_mass_for_scaffolded_temporal_appropriations() -> None:
+def test_dense_contract_rebalance_keeps_deontic_mass_for_scaffolded_temporal_appropriations() -> (
+    None
+):
     from ipfs_datasets_py.logic.bridge.multiview import (
         _rebalance_dense_contract_distribution,
     )
@@ -16120,11 +15698,13 @@ def test_multiview_bridge_accepts_citation_prefixed_statutory_text() -> None:
     assert "source_decompiled_text_embedding_cosine_loss" in canonical_losses
     assert "source_decompiled_text_token_loss" in canonical_losses
     target_losses = report.training_target().losses
-    assert target_losses["source_decompiled_text_embedding_cosine_loss"] == (
-        canonical_losses["source_decompiled_text_embedding_cosine_loss"]
+    assert (
+        target_losses["source_decompiled_text_embedding_cosine_loss"]
+        == (canonical_losses["source_decompiled_text_embedding_cosine_loss"])
     )
-    assert target_losses["source_decompiled_text_token_loss"] == (
-        canonical_losses["source_decompiled_text_token_loss"]
+    assert (
+        target_losses["source_decompiled_text_token_loss"]
+        == (canonical_losses["source_decompiled_text_token_loss"])
     )
     fol_records = report.document.views["fol_tdfol.tdfol_formula"].payload["records"]
     assert fol_records
@@ -16399,17 +15979,13 @@ def test_fol_tdfol_bridge_promotes_packet_compiler_guidance_samples() -> None:
     )
     records = report.ir_document.views["tdfol_formula"].payload["records"]
     guidance_records = [
-        record
-        for record in records
-        if record["source_id"].startswith("tdfol:compiler_guidance:")
+        record for record in records if record["source_id"].startswith("tdfol:compiler_guidance:")
     ]
 
     assert guidance_records
     assert guidance_records[0]["parse_ok"] is True
     assert report.metadata["compiler_guidance_applied"] is True
-    assert report.metadata["compiler_guidance_routes"] == [
-        "repair_tdfol_bridge_parse"
-    ]
+    assert report.metadata["compiler_guidance_routes"] == ["repair_tdfol_bridge_parse"]
     assert report.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
 
 
@@ -16417,11 +15993,7 @@ def test_logic_manifest_includes_bridge_layer() -> None:
     from ipfs_datasets_py.logic.submodule_registry import logic_integration_manifest
 
     manifest = logic_integration_manifest()
-    bridge_entries = [
-        entry
-        for entry in manifest["submodules"]
-        if entry["name"] == "bridge"
-    ]
+    bridge_entries = [entry for entry in manifest["submodules"] if entry["name"] == "bridge"]
 
     assert len(bridge_entries) == 1
     bridge_entry = bridge_entries[0]

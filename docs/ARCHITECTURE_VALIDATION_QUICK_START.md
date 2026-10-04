@@ -377,9 +377,9 @@ Edit `architecture_validation_script.py`:
 
 ```python
 # Line count thresholds
-self.IDEAL_LINE_COUNT = 100      # Change to 80 for stricter
+self.IDEAL_LINE_COUNT = 100  # Change to 80 for stricter
 self.ACCEPTABLE_LINE_COUNT = 150  # Change to 120 for stricter
-self.MAX_LINE_COUNT = 200         # Change to 150 for stricter
+self.MAX_LINE_COUNT = 200  # Change to 150 for stricter
 
 # Complexity threshold
 if complexity_score > 30:  # Change to 20 for stricter
@@ -392,9 +392,10 @@ if complexity_score > 30:  # Change to 20 for stricter
 def check_custom_pattern(self, content: str) -> bool:
     """Check for custom architectural pattern."""
     # Example: Check for async/await usage
-    has_async = 'async def' in content
-    has_await = 'await ' in content
+    has_async = "async def" in content
+    has_await = "await " in content
     return has_async and has_await
+
 
 # In analyze_tool_file:
 has_async_await = self.check_custom_pattern(content)

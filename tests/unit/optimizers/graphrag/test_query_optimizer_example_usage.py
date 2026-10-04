@@ -24,7 +24,9 @@ def _install_example_usage_fakes(monkeypatch, qo):
             return {"tracked": True}
 
     class _FakeUnifiedOptimizer:
-        def __init__(self, rewriter=None, budget_manager=None, base_optimizer=None, graph_info=None):
+        def __init__(
+            self, rewriter=None, budget_manager=None, base_optimizer=None, graph_info=None
+        ):
             self.rewriter = rewriter
             self.budget_manager = budget_manager
             self.base_optimizer = base_optimizer
@@ -154,7 +156,9 @@ def test_example_usage_survives_budget_allocate_failure_with_fallback(monkeypatc
             return {"tracked": True}
 
     class _FallbackUnifiedOptimizer:
-        def __init__(self, rewriter=None, budget_manager=None, base_optimizer=None, graph_info=None):
+        def __init__(
+            self, rewriter=None, budget_manager=None, base_optimizer=None, graph_info=None
+        ):
             self.rewriter = rewriter
             self.budget_manager = budget_manager
             self.base_optimizer = base_optimizer

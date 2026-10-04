@@ -3,14 +3,19 @@
 Tests for the FileContent class from utils.filesystem module.
 Converted from unittest to pytest format while preserving all test logic.
 """
+
 import pytest
 from pathlib import Path
 import os
 
 # Make sure the input file and documentation file exist.
 cwd = os.getcwd()
-assert os.path.exists(f'{cwd}/utils/filesystem.py'), "utils/filesystem.py does not exist at the specified directory."
-assert os.path.exists(f'{cwd}/utils/filesystem_stubs.md'), "Documentation for utils/filesystem.py does not exist at the specified directory."
+assert os.path.exists(f"{cwd}/utils/filesystem.py"), (
+    "utils/filesystem.py does not exist at the specified directory."
+)
+assert os.path.exists(f"{cwd}/utils/filesystem_stubs.md"), (
+    "Documentation for utils/filesystem.py does not exist at the specified directory."
+)
 
 from utils.filesystem import FileContent
 
@@ -43,8 +48,10 @@ class TestFileContentInitialization:
         THEN expect instance is created without exceptions
         """
         file_content = FileContent(HELLO_WORLD_BYTES)
-        
-        assert isinstance(file_content, FileContent), f"Expected FileContent instance, got {type(file_content)}"
+
+        assert isinstance(file_content, FileContent), (
+            f"Expected FileContent instance, got {type(file_content)}"
+        )
 
     def test_when_valid_raw_content_provided_then_sets_binary_content(self):
         """
@@ -53,8 +60,10 @@ class TestFileContentInitialization:
         THEN expect as_binary property equals original bytes
         """
         file_content = FileContent(HELLO_WORLD_BYTES)
-        
-        assert file_content.as_binary == HELLO_WORLD_BYTES, f"Expected {HELLO_WORLD_BYTES}, got {file_content.as_binary}"
+
+        assert file_content.as_binary == HELLO_WORLD_BYTES, (
+            f"Expected {HELLO_WORLD_BYTES}, got {file_content.as_binary}"
+        )
 
     def test_when_default_encoding_used_then_sets_utf8_encoding(self):
         """
@@ -63,8 +72,10 @@ class TestFileContentInitialization:
         THEN expect encoding attribute equals default encoding
         """
         file_content = FileContent(HELLO_WORLD_BYTES)
-        
-        assert file_content.encoding == DEFAULT_ENCODING, f"Expected {DEFAULT_ENCODING}, got {file_content.encoding}"
+
+        assert file_content.encoding == DEFAULT_ENCODING, (
+            f"Expected {DEFAULT_ENCODING}, got {file_content.encoding}"
+        )
 
     def test_when_valid_raw_content_provided_then_detects_mime_type(self):
         """
@@ -73,7 +84,7 @@ class TestFileContentInitialization:
         THEN expect mime_type attribute is detected and not None
         """
         file_content = FileContent(HELLO_WORLD_BYTES)
-        
+
         assert file_content.mime_type is not None, f"Expected mime_type to be detected, got None"
 
     def test_when_valid_raw_content_provided_then_calculates_size(self):
@@ -83,8 +94,10 @@ class TestFileContentInitialization:
         THEN expect size attribute equals content byte length
         """
         file_content = FileContent(HELLO_WORLD_BYTES)
-        
-        assert file_content.size == HELLO_WORLD_SIZE, f"Expected {HELLO_WORLD_SIZE}, got {file_content.size}"
+
+        assert file_content.size == HELLO_WORLD_SIZE, (
+            f"Expected {HELLO_WORLD_SIZE}, got {file_content.size}"
+        )
 
     def test_when_valid_raw_content_provided_then_enables_text_conversion(self):
         """
@@ -93,8 +106,10 @@ class TestFileContentInitialization:
         THEN expect text_content attribute is available as string
         """
         file_content = FileContent(HELLO_WORLD_BYTES)
-        
-        assert isinstance(file_content.text_content, str), f"Expected str type, got {type(file_content.text_content)}"
+
+        assert isinstance(file_content.text_content, str), (
+            f"Expected str type, got {type(file_content.text_content)}"
+        )
 
 
 @pytest.mark.unit
@@ -112,8 +127,10 @@ class TestFileContentCustomEncoding:
         THEN expect encoding attribute equals provided encoding
         """
         file_content = FileContent(HELLO_WORLD_BYTES, encoding=CUSTOM_ENCODING)
-        
-        assert file_content.encoding == CUSTOM_ENCODING, f"Expected {CUSTOM_ENCODING}, got {file_content.encoding}"
+
+        assert file_content.encoding == CUSTOM_ENCODING, (
+            f"Expected {CUSTOM_ENCODING}, got {file_content.encoding}"
+        )
 
     def test_when_custom_encoding_provided_then_creates_instance(self):
         """
@@ -122,8 +139,10 @@ class TestFileContentCustomEncoding:
         THEN expect instance is created without exceptions
         """
         file_content = FileContent(HELLO_WORLD_BYTES, encoding=CUSTOM_ENCODING)
-        
-        assert isinstance(file_content, FileContent), f"Expected FileContent instance, got {type(file_content)}"
+
+        assert isinstance(file_content, FileContent), (
+            f"Expected FileContent instance, got {type(file_content)}"
+        )
 
 
 @pytest.mark.unit
@@ -141,9 +160,11 @@ class TestFileContentExplicitMimeType:
         THEN expect mime_type attribute equals provided mime type
         """
         file_content = FileContent(HELLO_WORLD_BYTES, mime_type=TEST_EXPLICIT_MIME_TYPE)
-        
-        assert file_content.mime_type == TEST_EXPLICIT_MIME_TYPE, f"Expected {TEST_EXPLICIT_MIME_TYPE}, got {file_content.mime_type}"
-        
+
+        assert file_content.mime_type == TEST_EXPLICIT_MIME_TYPE, (
+            f"Expected {TEST_EXPLICIT_MIME_TYPE}, got {file_content.mime_type}"
+        )
+
         assert file_content.mime_type == "text/plain"
 
     def test_init_with_empty_raw_content(self):
@@ -161,9 +182,9 @@ class TestFileContentExplicitMimeType:
             - text_content == ""
         """
         empty_raw_content = b""
-        
+
         file_content = FileContent(empty_raw_content)
-        
+
         assert file_content.size == 0
         assert file_content.text_content == ""
 
@@ -191,7 +212,7 @@ class TestFileContentExplicitMimeType:
         """
         valid_raw_content = b"Hello, World!"
         invalid_encoding = "nonexistent-encoding"
-        
+
         with pytest.raises(LookupError):
             FileContent(valid_raw_content, encoding=invalid_encoding)
 
@@ -212,10 +233,10 @@ class TestFileContentAsBinary:
             - No modification or copying of the original content
         """
         specific_raw_content = b"test content for binary access"
-        
+
         file_content = FileContent(specific_raw_content)
         binary_result = file_content.as_binary
-        
+
         assert binary_result is specific_raw_content
         assert isinstance(binary_result, bytes)
 
@@ -230,10 +251,10 @@ class TestFileContentAsBinary:
             - Type == bytes
         """
         empty_content = b""
-        
+
         file_content = FileContent(empty_content)
         binary_result = file_content.as_binary
-        
+
         assert binary_result == b""
         assert isinstance(binary_result, bytes)
 
@@ -249,21 +270,21 @@ class TestFileContentAsBinary:
             - Multiple accesses complete without memory leaks
         """
         large_content = b"x" * (5 * 1024 * 1024)  # 5MB
-        
+
         file_content = FileContent(large_content)
-        
+
         # First access
         binary_result1 = file_content.as_binary
         # Second access
         binary_result2 = file_content.as_binary
         # Third access
         binary_result3 = file_content.as_binary
-        
+
         # Content equality check
         assert binary_result1 == large_content
         assert binary_result2 == large_content
         assert binary_result3 == large_content
-        
+
         # Object reference check
         assert binary_result1 is binary_result2
         assert binary_result2 is binary_result3
@@ -280,17 +301,17 @@ class TestFileContentAsBinary:
             - Subsequent calls to as_binary return original content
         """
         specific_raw_content = b"test content for binary access"
-        
+
         file_content = FileContent(specific_raw_content)
         binary_result = file_content.as_binary
-        
+
         # Attempt to create a modified version (this doesn't modify the original bytes object)
         modified_binary = binary_result[5:] + b" modified"
-        
+
         # Verify original content is unchanged
         assert file_content.as_binary == specific_raw_content
         assert file_content.as_binary != modified_binary
-        
+
         # Verify subsequent calls return original content
         subsequent_result = file_content.as_binary
         assert subsequent_result == specific_raw_content
@@ -314,11 +335,11 @@ class TestFileContentGetAsText:
             - Uses the instance's default encoding
             - No encoding errors occur
         """
-        utf8_text_bytes = "Hello, 世界".encode('utf-8')
-        
+        utf8_text_bytes = "Hello, 世界".encode("utf-8")
+
         file_content = FileContent(utf8_text_bytes)
         result = file_content.get_as_text()
-        
+
         assert result == "Hello, 世界"
         assert isinstance(result, str)
 
@@ -335,12 +356,14 @@ class TestFileContentGetAsText:
             - Returned string == "café"
             - Instance's default encoding unchanged
         """
-        latin1_text_bytes = "café".encode('latin-1')
+        latin1_text_bytes = "café".encode("latin-1")
         custom_encoding = "latin-1"
-        
-        file_content = FileContent(latin1_text_bytes, encoding="utf-8")  # Different default encoding
+
+        file_content = FileContent(
+            latin1_text_bytes, encoding="utf-8"
+        )  # Different default encoding
         result = file_content.get_as_text(encoding=custom_encoding)
-        
+
         assert result == "café"
         assert file_content.encoding == "utf-8"  # Verify default encoding unchanged
 
@@ -354,11 +377,11 @@ class TestFileContentGetAsText:
         WHEN get_as_text is called with invalid encoding name
         THEN expect LookupError to be raised
         """
-        utf8_text_bytes = "Hello, 世界".encode('utf-8')
+        utf8_text_bytes = "Hello, 世界".encode("utf-8")
         invalid_encoding = "nonexistent-encoding-name"
-        
+
         file_content = FileContent(utf8_text_bytes)
-        
+
         with pytest.raises(LookupError):
             file_content.get_as_text(encoding=invalid_encoding)
 
@@ -374,7 +397,7 @@ class TestFileContentGetAsText:
         """
         binary_content = b"\x89PNG\r\n\x1a\n"
         custom_encoding = "utf-32"
-        
+
         file_content = FileContent(binary_content)
 
         with pytest.raises(ValueError):
@@ -391,10 +414,10 @@ class TestFileContentGetAsText:
             - No exceptions raised
         """
         empty_content = b""
-        
+
         file_content = FileContent(empty_content)
         result = file_content.get_as_text()
-        
+
         assert result == ""
         assert isinstance(result, str)
 
@@ -410,20 +433,20 @@ class TestFileContentGetAsText:
             - No state changes between calls
             - Each call returns the same object reference (using is)
         """
-        utf8_text_bytes = "Hello, 世界".encode('utf-8')
+        utf8_text_bytes = "Hello, 世界".encode("utf-8")
         custom_encoding = "utf-8"
-        
+
         file_content = FileContent(utf8_text_bytes)
-        
+
         result1 = file_content.get_as_text(encoding=custom_encoding)
         result2 = file_content.get_as_text(encoding=custom_encoding)
         result3 = file_content.get_as_text(encoding=custom_encoding)
-        
+
         # Content equality
         assert result1 == result2
         assert result2 == result3
         assert result1 == "Hello, 世界"
-        
+
         # Object reference equality (strings with same content may be interned)
         assert result1 is result2
         assert result2 is result3
@@ -440,13 +463,13 @@ class TestFileContentGetAsText:
             - Instance's default encoding is used
             - Same result as calling without encoding parameter
         """
-        utf8_text_bytes = "Hello, 世界".encode('utf-8')
+        utf8_text_bytes = "Hello, 世界".encode("utf-8")
         none_encoding = None
-        
+
         file_content = FileContent(utf8_text_bytes)
-        
+
         result_with_none = file_content.get_as_text(encoding=none_encoding)
         result_without_param = file_content.get_as_text()
-        
+
         assert result_with_none == result_without_param
         assert result_with_none == "Hello, 世界"

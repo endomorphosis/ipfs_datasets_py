@@ -54,7 +54,7 @@ class TestRoundsCompleted:
 
     def test_rounds_completed_positive(self, mediator):
         """Test rounds count with history."""
-        
+
         mediator._history = [
             {"score": 0.5},
             {"score": 0.6},
@@ -64,13 +64,13 @@ class TestRoundsCompleted:
 
     def test_rounds_completed_single(self, mediator):
         """Test with single round."""
-        
+
         mediator._history = [{"score": 0.5}]
         assert mediator.rounds_completed() == 1
 
     def test_rounds_completed_empty(self, mediator):
         """Test with no history."""
-        
+
         mediator._history = []
         assert mediator.rounds_completed() == 0
 
@@ -80,7 +80,7 @@ class TestHasConverged:
 
     def test_has_converged_true(self, mediator):
         """Test convergence detection when converged."""
-        
+
         mediator._history = [
             {"score": 0.5},
             {"score": 0.501},  # Delta < 0.01
@@ -91,7 +91,7 @@ class TestHasConverged:
 
     def test_has_converged_false(self, mediator):
         """Test convergence detection when not converged."""
-        
+
         mediator._history = [
             {"score": 0.5},
             {"score": 0.6},  # Delta > 0.01
@@ -101,13 +101,13 @@ class TestHasConverged:
 
     def test_has_converged_insufficient_history(self, mediator):
         """Test with insufficient history."""
-        
+
         mediator._history = [{"score": 0.5}]
         assert not mediator.has_converged()
 
     def test_has_converged_empty(self, mediator):
         """Test with empty history."""
-        
+
         mediator._history = []
         assert not mediator.has_converged()
 
@@ -117,7 +117,7 @@ class TestRefinementEfficiency:
 
     def test_refinement_efficiency_positive(self, mediator):
         """Test efficiency calculation with improvement."""
-        
+
         mediator._history = [
             {"score": 0.5},  # Start
             {"score": 0.6},
@@ -129,14 +129,14 @@ class TestRefinementEfficiency:
 
     def test_refinement_efficiency_no_actions(self, mediator):
         """Test efficiency with no actions."""
-        
+
         mediator._history = [{"score": 0.5}]
         mediator._action_counts = {}
         assert mediator.refinement_efficiency() == 0.0
 
     def test_refinement_efficiency_no_improvement(self, mediator):
         """Test efficiency with no score change."""
-        
+
         mediator._history = [
             {"score": 0.5},
             {"score": 0.5},
@@ -150,7 +150,7 @@ class TestScoreChangePerRound:
 
     def test_score_change_per_round_positive(self, mediator):
         """Test average score change calculation."""
-        
+
         mediator._history = [
             {"score": 0.5},
             {"score": 0.6},  # Delta 0.1
@@ -163,7 +163,7 @@ class TestScoreChangePerRound:
 
     def test_score_change_per_round_single_change(self, mediator):
         """Test with single round transition."""
-        
+
         mediator._history = [
             {"score": 0.5},
             {"score": 0.7},
@@ -172,7 +172,7 @@ class TestScoreChangePerRound:
 
     def test_score_change_per_round_insufficient(self, mediator):
         """Test with insufficient history."""
-        
+
         mediator._history = [{"score": 0.5}]
         assert mediator.score_change_per_round() == 0.0
 
@@ -182,7 +182,7 @@ class TestActionImpact:
 
     def test_action_impact_positive(self, mediator):
         """Test impact calculation for an action."""
-        
+
         mediator._action_counts = {
             "add_entity": 5,
             "merge_entities": 3,
@@ -193,13 +193,13 @@ class TestActionImpact:
 
     def test_action_impact_absent_action(self, mediator):
         """Test impact for non-existent action."""
-        
+
         mediator._action_counts = {"add_entity": 3}
         assert mediator.action_impact("unknown_action") == 0.0
 
     def test_action_impact_no_actions(self, mediator):
         """Test impact with no recorded actions."""
-        
+
         mediator._action_counts = {}
         assert mediator.action_impact("any_action") == 0.0
 
@@ -209,7 +209,7 @@ class TestMostProductiveRound:
 
     def test_most_productive_round_found(self, mediator):
         """Test finding most productive round."""
-        
+
         mediator._history = [
             {"score": 0.5},
             {"score": 0.6},  # Improvement 0.1
@@ -221,7 +221,7 @@ class TestMostProductiveRound:
 
     def test_most_productive_round_first(self, mediator):
         """Test when most productive is first round."""
-        
+
         mediator._history = [
             {"score": 0.5},
             {"score": 0.8},  # First big jump
@@ -231,7 +231,7 @@ class TestMostProductiveRound:
 
     def test_most_productive_round_no_improvement(self, mediator):
         """Test when no improvement occurs."""
-        
+
         mediator._history = [
             {"score": 0.5},
             {"score": 0.4},
@@ -241,7 +241,7 @@ class TestMostProductiveRound:
 
     def test_most_productive_round_insufficient(self, mediator):
         """Test with insufficient history."""
-        
+
         mediator._history = [{"score": 0.5}]
         assert mediator.most_productive_round() == -1
 
@@ -251,7 +251,7 @@ class TestRefinementStagnationRounds:
 
     def test_stagnation_rounds_found(self, mediator):
         """Test detecting stagnation at end."""
-        
+
         mediator._history = [
             {"score": 0.5},
             {"score": 0.7},  # Improvement
@@ -264,7 +264,7 @@ class TestRefinementStagnationRounds:
 
     def test_stagnation_rounds_none(self, mediator):
         """Test when no end stagnation."""
-        
+
         mediator._history = [
             {"score": 0.5},
             {"score": 0.6},
@@ -274,7 +274,7 @@ class TestRefinementStagnationRounds:
 
     def test_stagnation_rounds_all(self, mediator):
         """Test when all rounds stagnant."""
-        
+
         mediator._history = [
             {"score": 0.5},
             {"score": 0.5},
@@ -285,7 +285,7 @@ class TestRefinementStagnationRounds:
 
     def test_stagnation_rounds_insufficient(self, mediator):
         """Test with insufficient history."""
-        
+
         mediator._history = [{"score": 0.5}]
         assert mediator.refinement_stagnation_rounds() == 0
 
@@ -295,7 +295,7 @@ class TestScoreVolatility:
 
     def test_score_volatility_positive(self, mediator):
         """Test volatility calculation."""
-        
+
         mediator._history = [
             {"score": 0.5},  # Mean = 0.6, variance = 0.04
             {"score": 0.7},
@@ -307,7 +307,7 @@ class TestScoreVolatility:
 
     def test_score_volatility_no_variation(self, mediator):
         """Test volatility when scores identical."""
-        
+
         mediator._history = [
             {"score": 0.5},
             {"score": 0.5},
@@ -317,7 +317,7 @@ class TestScoreVolatility:
 
     def test_score_volatility_insufficient(self, mediator):
         """Test with insufficient data."""
-        
+
         mediator._history = [{"score": 0.5}]
         assert mediator.score_volatility() == 0.0
 
@@ -327,7 +327,7 @@ class TestRefinementTrajectory:
 
     def test_trajectory_improving(self, mediator):
         """Test improving trajectory."""
-        
+
         mediator._history = [
             {"score": 0.5},
             {"score": 0.6},
@@ -337,7 +337,7 @@ class TestRefinementTrajectory:
 
     def test_trajectory_degrading(self, mediator):
         """Test degrading trajectory."""
-        
+
         mediator._history = [
             {"score": 0.8},
             {"score": 0.7},
@@ -347,7 +347,7 @@ class TestRefinementTrajectory:
 
     def test_trajectory_stable(self, mediator):
         """Test stable trajectory."""
-        
+
         mediator._history = [
             {"score": 0.6},
             {"score": 0.61},
@@ -357,7 +357,7 @@ class TestRefinementTrajectory:
 
     def test_trajectory_volatile(self, mediator):
         """Test volatile trajectory."""
-        
+
         mediator._history = [
             {"score": 0.5},
             {"score": 0.9},
@@ -369,7 +369,7 @@ class TestRefinementTrajectory:
 
     def test_trajectory_unknown(self, mediator):
         """Test unknown trajectory."""
-        
+
         mediator._history = [{"score": 0.5}]
         assert mediator.refinement_trajectory() == "unknown"
 
@@ -380,7 +380,7 @@ class TestBatch201Integration:
 
     def test_complete_refinement_analysis(self, mediator):
         """Test analyzing a complete refinement session."""
-        
+
         mediator._history = [
             {"score": 0.5},
             {"score": 0.6},
@@ -393,7 +393,7 @@ class TestBatch201Integration:
             "merge_entities": 5,
             "refine_properties": 8,
         }
-        
+
         # All analysis methods should work together
         assert mediator.total_refinements() == 23
         assert mediator.rounds_completed() == 5
@@ -405,7 +405,7 @@ class TestBatch201Integration:
 
     def test_stagnant_session_analysis(self, mediator):
         """Test analyzing stagnant refinement session."""
-        
+
         mediator._history = [
             {"score": 0.7},
             {"score": 0.8},  # Initial improvement
@@ -414,7 +414,7 @@ class TestBatch201Integration:
             {"score": 0.8001},
         ]
         mediator._action_counts = {"update": 50}
-        
+
         # Should detect stagnation and low efficiency
         stagnation = mediator.refinement_stagnation_rounds(threshold=0.001)
         assert stagnation == 3  # Last 3 rounds are stagnant

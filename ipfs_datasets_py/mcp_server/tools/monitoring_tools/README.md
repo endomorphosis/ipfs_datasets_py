@@ -13,9 +13,7 @@ the monitoring subsystem.
 ## Usage
 
 ```python
-from ipfs_datasets_py.mcp_server.tools.monitoring_tools import (
-    check_health, get_system_metrics
-)
+from ipfs_datasets_py.mcp_server.tools.monitoring_tools import check_health, get_system_metrics
 
 # Health check
 health = await check_health()
@@ -30,14 +28,15 @@ metrics = await get_system_metrics(include=["cpu", "memory", "disk", "network"])
 
 ```python
 from ipfs_datasets_py.mcp_server.tools.monitoring_tools import (
-    get_metrics_history, set_alert_threshold
+    get_metrics_history,
+    set_alert_threshold,
 )
 
 # Get last 24h of metrics
 history = await get_metrics_history(
     metric="cpu_percent",
     hours=24,
-    resolution="5m"         # 5-minute buckets
+    resolution="5m",  # 5-minute buckets
 )
 
 # Set an alert threshold
@@ -45,7 +44,7 @@ await set_alert_threshold(
     metric="memory_percent",
     threshold=85.0,
     action="discord",
-    webhook_url="https://discord.com/api/webhooks/..."
+    webhook_url="https://discord.com/api/webhooks/...",
 )
 ```
 

@@ -7,16 +7,18 @@ Generates comprehensive documentation from Python source code.
 from typing import Dict, Any, Optional, List
 
 
-def documentation_generator(input_path: str,
-                          output_path: str = "docs",
-                          docstring_style: str = "google",
-                          ignore_patterns: Optional[List[str]] = None,
-                          include_inheritance: bool = True,
-                          include_examples: bool = True,
-                          include_source_links: bool = True,
-                          format_type: str = "markdown",
-                          format: Optional[str] = None,
-                          include_private: bool = True) -> Dict[str, Any]:
+def documentation_generator(
+    input_path: str,
+    output_path: str = "docs",
+    docstring_style: str = "google",
+    ignore_patterns: Optional[List[str]] = None,
+    include_inheritance: bool = True,
+    include_examples: bool = True,
+    include_source_links: bool = True,
+    format_type: str = "markdown",
+    format: Optional[str] = None,
+    include_private: bool = True,
+) -> Dict[str, Any]:
     """
     Generate comprehensive documentation from Python source code.
 
@@ -46,23 +48,20 @@ def documentation_generator(input_path: str,
                 "input_path": input_path,
                 "output_path": output_path,
                 "format_type": final_format,
-                "files_generated": [f"{output_path}/documentation.{final_format}"]
+                "files_generated": [f"{output_path}/documentation.{final_format}"],
             },
             "metadata": {
                 "tool": "documentation_generator",
                 "input_path": input_path,
                 "output_path": output_path,
                 "format_type": final_format,
-                "include_private": include_private
-            }
+                "include_private": include_private,
+            },
         }
     except Exception as e:
         return {
             "success": False,
             "error": "generation_error",
             "message": str(e),
-            "metadata": {
-                "tool": "documentation_generator",
-                "input_path": input_path
-            }
+            "metadata": {"tool": "documentation_generator", "input_path": input_path},
         }

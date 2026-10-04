@@ -48,7 +48,9 @@ def _write_manifest(path: Path, manifest: Dict[str, Any]) -> None:
 def _private_axioms(row: Dict[str, Any]) -> List[str]:
     frame_logic_id = ""
     try:
-        frame_logic_id = str(json.loads(_compact(row.get("frame_logic_json"))).get("object_id") or "")
+        frame_logic_id = str(
+            json.loads(_compact(row.get("frame_logic_json"))).get("object_id") or ""
+        )
     except Exception:
         frame_logic_id = ""
     return [
@@ -61,12 +63,18 @@ def _private_axioms(row: Dict[str, Any]) -> List[str]:
 
 
 def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Reissue existing logic-proof parquet ZKP certificates with another backend.")
+    parser = argparse.ArgumentParser(
+        description="Reissue existing logic-proof parquet ZKP certificates with another backend."
+    )
     parser.add_argument("--input", required=True, help="Existing logic-proof parquet.")
     parser.add_argument("--output-root", required=True, help="Output directory.")
-    parser.add_argument("--zkp-backend", default="groth16", choices=["groth16", "simulated"], help="ZKP backend.")
+    parser.add_argument(
+        "--zkp-backend", default="groth16", choices=["groth16", "simulated"], help="ZKP backend."
+    )
     parser.add_argument("--zkp-circuit-version", type=int, default=1, help="ZKP circuit version.")
-    parser.add_argument("--checkpoint-every", type=int, default=25, help="Write checkpoints every N rows.")
+    parser.add_argument(
+        "--checkpoint-every", type=int, default=25, help="Write checkpoints every N rows."
+    )
     parser.add_argument("--limit", type=int, default=0, help="Optional row limit.")
     parser.add_argument("--no-resume", action="store_true", help="Ignore existing output parquet.")
     parser.add_argument("--json", action="store_true", help="Print final manifest JSON.")
@@ -89,7 +97,9 @@ def main() -> int:
     completed: set[str] = set()
     if output_path.exists() and not args.no_resume:
         out_rows = _load_existing(output_path)
-        completed = {_compact(row.get("ipfs_cid")) for row in out_rows if _compact(row.get("ipfs_cid"))}
+        completed = {
+            _compact(row.get("ipfs_cid")) for row in out_rows if _compact(row.get("ipfs_cid"))
+        }
 
     backend = str(args.zkp_backend or "groth16").lower()
     circuit_version = int(args.zkp_circuit_version or 1)
@@ -177,7 +187,9 @@ def main() -> int:
             since_checkpoint = 0
 
     _write_parquet(output_path, out_rows)
-    final_manifest = manifest("complete" if not failures and len(completed) == len(source_rows) else "partial")
+    final_manifest = manifest(
+        "complete" if not failures and len(completed) == len(source_rows) else "partial"
+    )
     _write_manifest(manifest_path, final_manifest)
     if args.json:
         print(json.dumps(final_manifest, indent=2))

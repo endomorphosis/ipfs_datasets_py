@@ -41,21 +41,19 @@ git submodule update --init ipfs_accelerate_py
 from ipfs_datasets_py.accelerate_integration import (
     AccelerateManager,
     is_accelerate_available,
-    get_accelerate_status
+    get_accelerate_status,
 )
 
 # Check if accelerate is available
 if is_accelerate_available():
     print("Accelerate is available!")
-    
+
     # Create manager
     manager = AccelerateManager()
-    
+
     # Run inference
     result = manager.run_inference(
-        model_name="bert-base-uncased",
-        input_data="Hello world",
-        task_type="embedding"
+        model_name="bert-base-uncased", input_data="Hello world", task_type="embedding"
     )
     print(result)
 else:
@@ -67,10 +65,7 @@ else:
 ### Distributed Compute
 
 ```python
-from ipfs_datasets_py.accelerate_integration import (
-    AccelerateManager,
-    DistributedComputeCoordinator
-)
+from ipfs_datasets_py.accelerate_integration import AccelerateManager, DistributedComputeCoordinator
 
 # Initialize manager with distributed compute
 manager = AccelerateManager(enable_distributed=True)
@@ -84,7 +79,7 @@ task = coordinator.submit_task(
     task_id="task-001",
     model_name="bert-base-uncased",
     input_data="Process this text",
-    task_type="inference"
+    task_type="inference",
 )
 
 # Check task status
@@ -98,7 +93,7 @@ print(f"Task status: {status}")
 from ipfs_datasets_py.accelerate_integration import (
     get_compute_backend,
     HardwareType,
-    detect_available_hardware
+    detect_available_hardware,
 )
 
 # Detect available hardware
@@ -146,7 +141,7 @@ from ipfs_datasets_py.accelerate_integration import is_accelerate_available
 embeddings = create_embeddings(
     texts=["text1", "text2"],
     model_name="sentence-transformers/all-MiniLM-L6-v2",
-    use_accelerate=is_accelerate_available()
+    use_accelerate=is_accelerate_available(),
 )
 ```
 
@@ -252,6 +247,7 @@ Check the status:
 
 ```python
 from ipfs_datasets_py.accelerate_integration import get_accelerate_status
+
 print(get_accelerate_status())
 ```
 
@@ -266,6 +262,7 @@ Enable performance logging:
 
 ```python
 import logging
+
 logging.basicConfig(level=logging.DEBUG)
 ```
 

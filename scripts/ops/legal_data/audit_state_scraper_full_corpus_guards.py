@@ -166,7 +166,8 @@ def _is_full_corpus_guard(source: str, node: ast.AST) -> bool:
         or "max_statutesisNone" in text
         or "limitisNone" in text
         or "return_threshold<" in text
-        or "len(" in text and ">=return_threshold" in text
+        or "len(" in text
+        and ">=return_threshold" in text
     )
 
 
@@ -188,7 +189,9 @@ def _safe_unbounded_api_return(source: str, node: ast.Return) -> bool:
     if detail != "returnapi_statutes":
         return False
     function = getattr(node, "_parent", None)
-    while function is not None and not isinstance(function, (ast.AsyncFunctionDef, ast.FunctionDef)):
+    while function is not None and not isinstance(
+        function, (ast.AsyncFunctionDef, ast.FunctionDef)
+    ):
         function = getattr(function, "_parent", None)
     if function is None:
         return False
@@ -265,7 +268,12 @@ def audit_file(*, state: str, path: Path, repo_root: Path) -> list[Finding]:
         stripped = line.strip()
         if not stripped or stripped.startswith("#"):
             continue
-        if "section_name" in stripped or "full_text" in stripped or "[:1200]" in stripped or "[:14000]" in stripped:
+        if (
+            "section_name" in stripped
+            or "full_text" in stripped
+            or "[:1200]" in stripped
+            or "[:14000]" in stripped
+        ):
             continue
         if hard_slice_re.search(stripped) and not _line_has_full_corpus_branch(stripped):
             findings.append(
@@ -292,10 +300,14 @@ def audit_file(*, state: str, path: Path, repo_root: Path) -> list[Finding]:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--states", default=DEFAULT_STATE_LIST, help="Comma-separated states or 'all'.")
+    parser.add_argument(
+        "--states", default=DEFAULT_STATE_LIST, help="Comma-separated states or 'all'."
+    )
     parser.add_argument("--repo-root", default="", help="Repository root override.")
     parser.add_argument("--json", action="store_true", help="Emit JSON report.")
-    parser.add_argument("--fail-on-warnings", action="store_true", help="Exit nonzero for warning findings too.")
+    parser.add_argument(
+        "--fail-on-warnings", action="store_true", help="Exit nonzero for warning findings too."
+    )
     return parser.parse_args()
 
 
@@ -321,7 +333,9 @@ def main() -> int:
     error_count = sum(1 for item in findings if item.severity == "error")
     warning_count = sum(1 for item in findings if item.severity == "warning")
     report = {
-        "status": "fail" if error_count or (warning_count and args.fail_on_warnings) or missing else "pass",
+        "status": "fail"
+        if error_count or (warning_count and args.fail_on_warnings) or missing
+        else "pass",
         "states_checked": len(requested_states) - len(missing),
         "missing_states": missing,
         "error_count": error_count,
@@ -338,7 +352,9 @@ def main() -> int:
         print(f"errors: {error_count}")
         print(f"warnings: {warning_count}")
         for item in findings:
-            print(f"{item.severity.upper()} {item.state} {item.path}:{item.line} {item.kind}: {item.detail}")
+            print(
+                f"{item.severity.upper()} {item.state} {item.path}:{item.line} {item.kind}: {item.detail}"
+            )
 
     if missing or error_count:
         return 1

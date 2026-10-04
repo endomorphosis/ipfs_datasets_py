@@ -30,7 +30,7 @@ from types_ import Logger, TypedDict
 class _BatchProcessorResources(TypedDict):
     """
     TypedDict for BatchProcessor resources.
-    
+
     Attributes:
         processing_pipeline: Instance of ProcessingPipeline.
         error_monitor: Instance of ErrorMonitor.
@@ -38,6 +38,7 @@ class _BatchProcessorResources(TypedDict):
         security_monitor: Instance of SecurityMonitor.
         logger: Logger instance.
     """
+
     processing_pipeline: ProcessingPipeline
     error_monitor: ErrorMonitor
     resource_monitor: ResourceMonitor
@@ -63,19 +64,16 @@ def make_batch_processor() -> BatchProcessor:
         An instance of BatchProcessor.
     """
 
-
-
     resources: _BatchProcessorResources = {
-        'processing_pipeline': make_processing_pipeline(),
-        'error_monitor': make_error_monitor(),
-        'resource_monitor': make_resource_monitor(),
-        'security_monitor': make_security_monitor(),
+        "processing_pipeline": make_processing_pipeline(),
+        "error_monitor": make_error_monitor(),
+        "resource_monitor": make_resource_monitor(),
+        "security_monitor": make_security_monitor(),
         "logger": logger,
         "processing_result": ProcessingResult,
         "batch_result": BatchResult,
         "get_output_path": get_output_path,
         "resolve_paths": resolve_paths,
-
         # Builtins
         "gc_collect": gc.collect,
         "concurrent_futures_ThreadPoolExecutor": concurrent.futures.ThreadPoolExecutor,

@@ -6,6 +6,7 @@ Test data factory for generating FFmpegWrapper instances and test data.
 Provides methods to create valid baseline data, invalid variations, and edge cases
 for comprehensive testing of the FFmpegWrapper class validation logic.
 """
+
 from typing import Dict, Any, Optional, Callable
 from pathlib import Path
 import tempfile
@@ -16,23 +17,23 @@ from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpe
 class FFmpegWrapperTestDataFactory:
     """
     Test data factory for generating FFmpegWrapper instances and test data.
-    
+
     Provides methods to create valid baseline data, invalid variations, and edge cases
     for comprehensive testing of the FFmpegWrapper class validation logic.
-    
+
     Examples:
         >>> # Create an FFmpegWrapper instance for testing
         >>> wrapper = FFmpegWrapperTestDataFactory.create_wrapper_instance()
-        >>> 
+        >>>
         >>> # Get conversion test data
         >>> conversion_data = FFmpegWrapperTestDataFactory.create_conversion_test_data()
         >>> basic_test = conversion_data['basic_conversion']
         >>> input_path = basic_test['input_path']  # "/path/to/input.mp4"
-        >>> 
+        >>>
         >>> # Get expected response structures
         >>> responses = FFmpegWrapperTestDataFactory.create_expected_success_responses()
         >>> success_response = responses['basic_success']  # {"status": "success", ...}
-        >>> 
+        >>>
         >>> # Create wrapper with custom settings
         >>> custom_wrapper = FFmpegWrapperTestDataFactory.create_wrapper_instance(
         ...     default_output_dir="/custom/path",
@@ -44,51 +45,45 @@ class FFmpegWrapperTestDataFactory:
     def create_valid_initialization_data(cls) -> Dict[str, Any]:
         """
         Create valid initialization parameters for FFmpegWrapper.
-        
+
         Returns:
             Dict[str, Any]: Dictionary with valid initialization parameters.
                 Keys:
                 - 'default_output_dir': str - Temporary directory path for output files
                 - 'enable_logging': bool - Enable detailed logging (True)
-                
+
         Examples:
             >>> factory = FFmpegWrapperTestDataFactory()
             >>> init_data = factory.create_valid_initialization_data()
             >>> init_data['enable_logging']
             True
         """
-        return {
-            "default_output_dir": tempfile.gettempdir(),
-            "enable_logging": True
-        }
+        return {"default_output_dir": tempfile.gettempdir(), "enable_logging": True}
 
     @classmethod
     def create_minimal_initialization_data(cls) -> Dict[str, Any]:
         """
         Create minimal initialization parameters for FFmpegWrapper.
-        
+
         Returns:
             Dict[str, Any]: Dictionary with minimal initialization parameters.
                 Keys:
                 - 'default_output_dir': None - No default output directory specified
                 - 'enable_logging': bool - Disable logging (False)
-                
+
         Examples:
             >>> factory = FFmpegWrapperTestDataFactory()
             >>> minimal_data = factory.create_minimal_initialization_data()
             >>> minimal_data['enable_logging']
             False
         """
-        return {
-            "default_output_dir": None,
-            "enable_logging": False
-        }
+        return {"default_output_dir": None, "enable_logging": False}
 
     @classmethod
     def create_conversion_test_data(cls) -> Dict[str, Dict[str, Any]]:
         """
         Create test data for video conversion operations.
-        
+
         Returns:
             Dict[str, Dict[str, Any]]: Dictionary with conversion test scenarios.
                 Keys:
@@ -109,16 +104,12 @@ class FFmpegWrapperTestDataFactory:
             "basic_conversion": {
                 "input_path": "/path/to/input.mp4",
                 "output_path": "/path/to/output.avi",
-                "kwargs": {}
+                "kwargs": {},
             },
             "quality_conversion": {
                 "input_path": "/path/to/input.mov",
                 "output_path": "/path/to/output.mp4",
-                "kwargs": {
-                    "video_codec": "libx264",
-                    "video_bitrate": "1M",
-                    "audio_codec": "aac"
-                }
+                "kwargs": {"video_codec": "libx264", "video_bitrate": "1M", "audio_codec": "aac"},
             },
             "resolution_conversion": {
                 "input_path": "/path/to/input.mkv",
@@ -126,33 +117,26 @@ class FFmpegWrapperTestDataFactory:
                 "kwargs": {
                     "resolution": "1280x720",
                     "video_bitrate": "2M",
-                    "audio_bitrate": "128k"
-                }
+                    "audio_bitrate": "128k",
+                },
             },
             "codec_conversion": {
                 "input_path": "/path/to/input.avi",
                 "output_path": "/path/to/output.webm",
-                "kwargs": {
-                    "video_codec": "vp9",
-                    "audio_codec": "opus",
-                    "crf": 23
-                }
+                "kwargs": {"video_codec": "vp9", "audio_codec": "opus", "crf": 23},
             },
             "preset_conversion": {
                 "input_path": "/path/to/input.mp4",
                 "output_path": "/path/to/output.mp4",
-                "kwargs": {
-                    "preset": "medium",
-                    "crf": 18
-                }
-            }
+                "kwargs": {"preset": "medium", "crf": 18},
+            },
         }
 
     @classmethod
     def create_invalid_conversion_data(cls) -> Dict[str, Dict[str, Any]]:
         """
         Create invalid conversion test data for error testing.
-        
+
         Returns:
             Dict[str, Dict[str, Any]]: Dictionary with invalid conversion scenarios.
                 Keys:
@@ -169,35 +153,35 @@ class FFmpegWrapperTestDataFactory:
             "empty_input_path": {
                 "input_path": "",
                 "output_path": "/path/to/output.mp4",
-                "kwargs": {}
+                "kwargs": {},
             },
             "empty_output_path": {
                 "input_path": "/path/to/input.mp4",
                 "output_path": "",
-                "kwargs": {}
+                "kwargs": {},
             },
             "none_input_path": {
                 "input_path": None,
                 "output_path": "/path/to/output.mp4",
-                "kwargs": {}
+                "kwargs": {},
             },
             "none_output_path": {
                 "input_path": "/path/to/input.mp4",
                 "output_path": None,
-                "kwargs": {}
+                "kwargs": {},
             },
             "nonexistent_input": {
                 "input_path": "/nonexistent/file.mp4",
                 "output_path": "/path/to/output.mp4",
-                "kwargs": {}
-            }
+                "kwargs": {},
+            },
         }
 
     @classmethod
     def create_expected_success_responses(cls) -> Dict[str, Dict[str, Any]]:
         """
         Create expected success response structures.
-        
+
         Returns:
             Dict[str, Dict[str, Any]]: Dictionary with expected success responses.
                 Keys:
@@ -216,7 +200,7 @@ class FFmpegWrapperTestDataFactory:
                 "status": "success",
                 "input_path": "/path/to/input.mp4",
                 "output_path": "/path/to/output.avi",
-                "message": "Video conversion completed"
+                "message": "Video conversion completed",
             },
             "conversion_with_metadata": {
                 "status": "success",
@@ -225,15 +209,15 @@ class FFmpegWrapperTestDataFactory:
                 "message": "Video conversion completed",
                 "duration": 120.5,
                 "input_metadata": {"codec": "h264", "resolution": "1920x1080"},
-                "output_metadata": {"codec": "h264", "resolution": "1280x720"}
-            }
+                "output_metadata": {"codec": "h264", "resolution": "1280x720"},
+            },
         }
 
     @classmethod
     def create_expected_error_responses(cls) -> Dict[str, Dict[str, Any]]:
         """
         Create expected error response structures.
-        
+
         Returns:
             Dict[str, Dict[str, Any]]: Dictionary with expected error responses.
                 Keys:
@@ -245,29 +229,17 @@ class FFmpegWrapperTestDataFactory:
                 - 'invalid_format': Dict - Error when format is unsupported
         """
         return {
-            "ffmpeg_unavailable": {
-                "status": "error",
-                "error": "FFmpeg not available"
-            },
-            "file_not_found": {
-                "status": "error",
-                "error": "Input file not found"
-            },
-            "permission_error": {
-                "status": "error",
-                "error": "Permission denied"
-            },
-            "invalid_format": {
-                "status": "error",
-                "error": "Unsupported format"
-            }
+            "ffmpeg_unavailable": {"status": "error", "error": "FFmpeg not available"},
+            "file_not_found": {"status": "error", "error": "Input file not found"},
+            "permission_error": {"status": "error", "error": "Permission denied"},
+            "invalid_format": {"status": "error", "error": "Unsupported format"},
         }
 
     @classmethod
     def create_audio_extraction_test_data(cls) -> Dict[str, Dict[str, Any]]:
         """
         Create test data for audio extraction operations.
-        
+
         Returns:
             Dict[str, Dict[str, Any]]: Dictionary with audio extraction test scenarios.
                 Keys:
@@ -281,7 +253,7 @@ class FFmpegWrapperTestDataFactory:
                   - 'kwargs': Dict - Contains audio_codec, sample_rate, normalize
                 - 'specific_track_extraction': Dict - Extract specific audio track
                   - 'kwargs': Dict - Contains track_index, audio_codec, audio_bitrate
-                  
+
         Examples:
             >>> factory = FFmpegWrapperTestDataFactory()
             >>> audio_data = factory.create_audio_extraction_test_data()
@@ -292,33 +264,25 @@ class FFmpegWrapperTestDataFactory:
             "basic_audio_extraction": {
                 "input_path": "/path/to/video.mp4",
                 "output_path": "/path/to/audio.mp3",
-                "kwargs": {}
+                "kwargs": {},
             },
             "high_quality_extraction": {
                 "input_path": "/path/to/video.mkv",
                 "output_path": "/path/to/audio.flac",
-                "kwargs": {
-                    "audio_codec": "flac",
-                    "sample_rate": 96000,
-                    "normalize": True
-                }
+                "kwargs": {"audio_codec": "flac", "sample_rate": 96000, "normalize": True},
             },
             "specific_track_extraction": {
                 "input_path": "/path/to/multilang.mp4",
                 "output_path": "/path/to/audio.aac",
-                "kwargs": {
-                    "track_index": 1,
-                    "audio_codec": "aac",
-                    "audio_bitrate": "320k"
-                }
-            }
+                "kwargs": {"track_index": 1, "audio_codec": "aac", "audio_bitrate": "320k"},
+            },
         }
 
     @classmethod
     def create_thumbnail_generation_test_data(cls) -> Dict[str, Dict[str, Any]]:
         """
         Create test data for thumbnail generation operations.
-        
+
         Returns:
             Dict[str, Dict[str, Any]]: Dictionary with thumbnail generation test scenarios.
                 Keys:
@@ -332,7 +296,7 @@ class FFmpegWrapperTestDataFactory:
                 - 'high_quality_thumbnail': Dict - High quality thumbnail
                   - 'output_path': str - WebP thumbnail output
                   - 'kwargs': Dict - Contains timestamp, quality, smart_frame
-                  
+
         Examples:
             >>> factory = FFmpegWrapperTestDataFactory()
             >>> thumb_data = factory.create_thumbnail_generation_test_data()
@@ -343,36 +307,28 @@ class FFmpegWrapperTestDataFactory:
             "basic_thumbnail": {
                 "input_path": "/path/to/video.mp4",
                 "output_path": "/path/to/thumb.jpg",
-                "kwargs": {}
+                "kwargs": {},
             },
             "custom_time_thumbnail": {
                 "input_path": "/path/to/video.avi",
                 "output_path": "/path/to/thumb.png",
-                "kwargs": {
-                    "timestamp": "00:02:30",
-                    "width": 640,
-                    "height": 360
-                }
+                "kwargs": {"timestamp": "00:02:30", "width": 640, "height": 360},
             },
             "high_quality_thumbnail": {
                 "input_path": "/path/to/video.mkv",
                 "output_path": "/path/to/thumb.webp",
-                "kwargs": {
-                    "timestamp": "25%",
-                    "quality": 95,
-                    "smart_frame": True
-                }
-            }
+                "kwargs": {"timestamp": "25%", "quality": 95, "smart_frame": True},
+            },
         }
 
     @classmethod
     def create_wrapper_instance(cls, **overrides) -> FFmpegWrapper:
         """
         Create an FFmpegWrapper instance with optional overrides.
-        
+
         Args:
             **overrides: Parameters to override in the initialization.
-            
+
         Returns:
             FFmpegWrapper: Configured FFmpegWrapper instance.
         """
@@ -384,10 +340,10 @@ class FFmpegWrapperTestDataFactory:
     def create_minimal_wrapper_instance(cls, **overrides) -> FFmpegWrapper:
         """
         Create a minimal FFmpegWrapper instance with optional overrides.
-        
+
         Args:
             **overrides: Parameters to override in the minimal initialization.
-            
+
         Returns:
             FFmpegWrapper: Minimal FFmpegWrapper instance.
         """
@@ -399,7 +355,7 @@ class FFmpegWrapperTestDataFactory:
     def create_output_directories(cls) -> Dict[str, str]:
         """
         Create test output directories for different scenarios.
-        
+
         Returns:
             Dict[str, str]: Dictionary with output directory paths.
                 Keys:
@@ -415,14 +371,14 @@ class FFmpegWrapperTestDataFactory:
             "custom_dir": "/tmp/ffmpeg_test_output",
             "nested_dir": "/tmp/test/nested/output",
             "relative_dir": "./output",
-            "home_dir": "~/ffmpeg_output"
+            "home_dir": "~/ffmpeg_output",
         }
 
     @classmethod
     def create_invalid_initialization_data(cls) -> Dict[str, Dict[str, Any]]:
         """
         Create invalid initialization data for error testing.
-        
+
         Returns:
             Dict[str, Dict[str, Any]]: Dictionary with invalid initialization scenarios.
                 Keys:
@@ -435,7 +391,7 @@ class FFmpegWrapperTestDataFactory:
                 - 'nonexistent_output_dir': Dict - Directory that doesn't exist
                   - 'default_output_dir': str - Path to nonexistent directory
                   - 'enable_logging': bool - Valid logging setting
-                  
+
         Examples:
             >>> factory = FFmpegWrapperTestDataFactory()
             >>> invalid_data = factory.create_invalid_initialization_data()
@@ -443,25 +399,19 @@ class FFmpegWrapperTestDataFactory:
             123
         """
         return {
-            "invalid_output_dir_type": {
-                "default_output_dir": 123,
-                "enable_logging": True
-            },
-            "invalid_logging_type": {
-                "default_output_dir": "/tmp",
-                "enable_logging": "true"
-            },
+            "invalid_output_dir_type": {"default_output_dir": 123, "enable_logging": True},
+            "invalid_logging_type": {"default_output_dir": "/tmp", "enable_logging": "true"},
             "nonexistent_output_dir": {
                 "default_output_dir": "/nonexistent/directory/path",
-                "enable_logging": True
-            }
+                "enable_logging": True,
+            },
         }
 
     @classmethod
     def create_edge_case_paths(cls) -> Dict[str, str]:
         """
         Create edge case file paths for testing.
-        
+
         Returns:
             Dict[str, str]: Dictionary with edge case file paths.
                 Keys:
@@ -473,7 +423,7 @@ class FFmpegWrapperTestDataFactory:
                 - 'special_chars': str - Path with special characters (@#$%^&*())
                 - 'relative_input': str - Relative input path ("./relative/input.mp4")
                 - 'relative_output': str - Relative output path ("./relative/output.avi")
-                
+
         Examples:
             >>> factory = FFmpegWrapperTestDataFactory()
             >>> edge_paths = factory.create_edge_case_paths()
@@ -488,14 +438,14 @@ class FFmpegWrapperTestDataFactory:
             "very_long_path": "/very/long/path/" + "a" * 200 + "/file.mp4",
             "special_chars": "/path/file@#$%^&*().mp4",
             "relative_input": "./relative/input.mp4",
-            "relative_output": "./relative/output.avi"
+            "relative_output": "./relative/output.avi",
         }
 
     @classmethod
     def create_conversion_kwargs_variations(cls) -> Dict[str, Dict[str, Any]]:
         """
         Create different kwargs variations for conversion testing.
-        
+
         Returns:
             Dict[str, Dict[str, Any]]: Dictionary with kwargs variations.
                 Keys:
@@ -520,7 +470,7 @@ class FFmpegWrapperTestDataFactory:
                   - 'framerate': str - Frame rate ("30")
                   - 'crf': int - Quality setting (23)
                   - 'preset': str - Encoding preset ("medium")
-                  
+
         Examples:
             >>> factory = FFmpegWrapperTestDataFactory()
             >>> kwargs_variations = factory.create_conversion_kwargs_variations()
@@ -529,29 +479,16 @@ class FFmpegWrapperTestDataFactory:
         """
         return {
             "empty_kwargs": {},
-            "video_only": {
-                "video_codec": "libx264",
-                "video_bitrate": "2M"
-            },
-            "audio_only": {
-                "audio_codec": "aac",
-                "audio_bitrate": "192k"
-            },
-            "quality_focused": {
-                "crf": 18,
-                "preset": "slow"
-            },
-            "size_focused": {
-                "video_bitrate": "500k",
-                "audio_bitrate": "96k",
-                "preset": "fast"
-            },
+            "video_only": {"video_codec": "libx264", "video_bitrate": "2M"},
+            "audio_only": {"audio_codec": "aac", "audio_bitrate": "192k"},
+            "quality_focused": {"crf": 18, "preset": "slow"},
+            "size_focused": {"video_bitrate": "500k", "audio_bitrate": "96k", "preset": "fast"},
             "advanced_options": {
                 "video_codec": "libx265",
                 "audio_codec": "opus",
                 "resolution": "1920x1080",
                 "framerate": "30",
                 "crf": 23,
-                "preset": "medium"
-            }
+                "preset": "medium",
+            },
         }

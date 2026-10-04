@@ -47,11 +47,9 @@ class NeighborPage:
 class GraphBackend(Protocol):
     """Backend adapter interface for executing graph IR."""
 
-    def get_entity_headers(self, entity_ids: Sequence[str]) -> dict[str, EntityHeader]:
-        ...
+    def get_entity_headers(self, entity_ids: Sequence[str]) -> dict[str, EntityHeader]: ...
 
-    def seed_exists(self, entity_id: str) -> bool:
-        ...
+    def seed_exists(self, entity_id: str) -> bool: ...
 
     def scan_type(
         self,
@@ -61,8 +59,7 @@ class GraphBackend(Protocol):
         limit: int = 100,
         cursor: str | None = None,
         shard_hints: Sequence[str] | None = None,
-    ) -> ScanPage:
-        ...
+    ) -> ScanPage: ...
 
     def neighbors(
         self,
@@ -72,5 +69,4 @@ class GraphBackend(Protocol):
         direction: Direction = "both",
         limit: int = 1000,
         cursor: str | None = None,
-    ) -> NeighborPage:
-        ...
+    ) -> NeighborPage: ...

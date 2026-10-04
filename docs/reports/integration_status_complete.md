@@ -235,21 +235,21 @@ from ipfs_datasets_py.processors.file_converter import (
     convert_file_sync,
     extract_knowledge_graph_sync,
     generate_summary_sync,
-    generate_embeddings_sync
+    generate_embeddings_sync,
 )
 
 # Convert file
-result = convert_file_sync('document.pdf')
+result = convert_file_sync("document.pdf")
 
 # Extract knowledge graph
-kg = extract_knowledge_graph_sync('paper.pdf')
+kg = extract_knowledge_graph_sync("paper.pdf")
 print(f"Entities: {kg['entity_count']}")
 
 # Generate summary
-summary = generate_summary_sync('report.docx')
+summary = generate_summary_sync("report.docx")
 
 # Generate embeddings
-embeddings = generate_embeddings_sync('corpus.zip', enable_ipfs=True)
+embeddings = generate_embeddings_sync("corpus.zip", enable_ipfs=True)
 ```
 
 ### CLI
@@ -274,12 +274,12 @@ file-converter embed corpus.zip --ipfs
 ```python
 from ipfs_datasets_py.mcp_server.tools.file_converter_tools import (
     convert_file_tool,
-    extract_knowledge_graph_tool
+    extract_knowledge_graph_tool,
 )
 
 # Use in MCP context
-result = await convert_file_tool('document.pdf')
-kg = await extract_knowledge_graph_tool('paper.pdf')
+result = await convert_file_tool("document.pdf")
+kg = await extract_knowledge_graph_tool("paper.pdf")
 ```
 
 ### Dashboard (JavaScript SDK)

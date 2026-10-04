@@ -3,6 +3,7 @@
 Defines latency budget thresholds and raises a structured error when they are
 exceeded.
 """
+
 from __future__ import annotations
 
 import sys

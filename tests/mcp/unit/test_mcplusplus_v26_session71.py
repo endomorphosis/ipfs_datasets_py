@@ -33,6 +33,7 @@ class TestMergeResult(unittest.TestCase):
 
     def _make_delegation(self, cid: str):
         from ipfs_datasets_py.mcp_server.ucan_delegation import Delegation, Capability
+
         cap = Capability(resource="resource:test", ability="action/test")
         return Delegation(
             cid=cid,
@@ -44,6 +45,7 @@ class TestMergeResult(unittest.TestCase):
     def test_merge_returns_merge_result_instance(self):
         """merge() returns a MergeResult, not a bare int."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager, MergeResult
+
         src = DelegationManager()
         src.add(self._make_delegation("bafyMR001"))
         dst = DelegationManager()
@@ -53,6 +55,7 @@ class TestMergeResult(unittest.TestCase):
     def test_merge_result_added_count(self):
         """MergeResult.added_count reflects delegations added."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         src = DelegationManager()
         src.add(self._make_delegation("bafyMR002"))
         src.add(self._make_delegation("bafyMR003"))
@@ -63,6 +66,7 @@ class TestMergeResult(unittest.TestCase):
     def test_merge_result_conflict_count(self):
         """MergeResult.conflict_count counts revoked CIDs skipped."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         src = DelegationManager()
         src.add(self._make_delegation("bafyMRConflict"))
         dst = DelegationManager()
@@ -76,6 +80,7 @@ class TestMergeResult(unittest.TestCase):
     def test_merge_result_revocations_copied(self):
         """MergeResult.revocations_copied counts when copy_revocations=True."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         src = DelegationManager()
         src.add(self._make_delegation("bafyMRRev001"))
         src._revocation.revoke("bafyMRRev001")
@@ -88,6 +93,7 @@ class TestMergeResult(unittest.TestCase):
     def test_merge_result_revocations_not_copied_by_default(self):
         """revocations_copied is 0 when copy_revocations=False (default)."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         src = DelegationManager()
         src.add(self._make_delegation("bafyMRRev002"))
         src._revocation.revoke("bafyMRRev002")
@@ -100,6 +106,7 @@ class TestMergeResult(unittest.TestCase):
     def test_merge_result_int_conversion(self):
         """int(MergeResult) returns added_count for backward compat."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         src = DelegationManager()
         src.add(self._make_delegation("bafyMRInt001"))
         dst = DelegationManager()
@@ -109,6 +116,7 @@ class TestMergeResult(unittest.TestCase):
     def test_merge_result_equality_with_int(self):
         """MergeResult == int compares added_count."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         src = DelegationManager()
         src.add(self._make_delegation("bafyMREq001"))
         dst = DelegationManager()
@@ -118,11 +126,13 @@ class TestMergeResult(unittest.TestCase):
     def test_merge_result_in_all(self):
         """MergeResult is exported from ucan_delegation.__all__."""
         from ipfs_datasets_py.mcp_server import ucan_delegation
+
         self.assertIn("MergeResult", ucan_delegation.__all__)
 
     def test_dry_run_still_returns_merge_plan(self):
         """dry_run=True still returns a MergePlan, not MergeResult."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager, MergePlan
+
         src = DelegationManager()
         src.add(self._make_delegation("bafyMRDry001"))
         dst = DelegationManager()
@@ -132,6 +142,7 @@ class TestMergeResult(unittest.TestCase):
     def test_merge_result_empty_merge(self):
         """Merging empty source yields MergeResult(0, 0, 0)."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager, MergeResult
+
         src = DelegationManager()
         dst = DelegationManager()
         result = dst.merge(src)
@@ -149,6 +160,7 @@ class TestIPFSReloadResultSuccessRate(unittest.TestCase):
 
     def _make_result(self, count, pin_results):
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import IPFSReloadResult
+
         return IPFSReloadResult(count=count, pin_results=pin_results)
 
     def test_all_success(self):
@@ -196,6 +208,7 @@ class TestPubSubBusSubscribeId(unittest.TestCase):
 
     def setUp(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus
+
         self.bus = PubSubBus()
 
     def test_subscribe_returns_int(self):
@@ -263,6 +276,7 @@ class TestComplianceCheckerRotateBak(unittest.TestCase):
     def test_rotate_noop_when_no_bak(self):
         """rotate_bak is a no-op when <path>.bak does not exist."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "rules.enc")
             # Should not raise
@@ -271,6 +285,7 @@ class TestComplianceCheckerRotateBak(unittest.TestCase):
     def test_rotate_bak_renames_to_bak1(self):
         """Existing .bak is renamed to .bak.1."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "rules.enc")
             bak = path + ".bak"
@@ -286,6 +301,7 @@ class TestComplianceCheckerRotateBak(unittest.TestCase):
     def test_rotate_shifts_chain(self):
         """.bak moves to .bak.1, .bak.1 moves to .bak.2 on each rotation."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "rules.enc")
             bak = path + ".bak"
@@ -307,6 +323,7 @@ class TestComplianceCheckerRotateBak(unittest.TestCase):
     def test_rotate_evicts_oldest_beyond_max_keep(self):
         """Files beyond max_keep are deleted."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "rules.enc")
             bak = path + ".bak"
@@ -327,6 +344,7 @@ class TestComplianceCheckerRotateBak(unittest.TestCase):
     def test_rotate_max_keep_one(self):
         """max_keep=1 keeps only .bak.1; rotated content replaces immediately."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "rules.enc")
             bak = path + ".bak"
@@ -340,6 +358,7 @@ class TestComplianceCheckerRotateBak(unittest.TestCase):
     def test_rotate_frees_bak_slot(self):
         """After rotate_bak the .bak slot is free for a new backup."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "rules.enc")
             bak = path + ".bak"
@@ -361,6 +380,7 @@ class TestE2ESession71(unittest.TestCase):
 
     def _make_delegation(self, cid: str):
         from ipfs_datasets_py.mcp_server.ucan_delegation import Delegation, Capability
+
         cap = Capability(resource="resource:e2e", ability="action/e2e")
         return Delegation(
             cid=cid,
@@ -372,6 +392,7 @@ class TestE2ESession71(unittest.TestCase):
     def test_merge_result_and_audit_combined(self):
         """MergeResult + audit_log work together."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager, MergeResult
+
         src = DelegationManager()
         src.add(self._make_delegation("bafyE2E001"))
         src.add(self._make_delegation("bafyE2E002"))
@@ -385,6 +406,7 @@ class TestE2ESession71(unittest.TestCase):
     def test_subscribe_id_and_unsubscribe(self):
         """subscribe returns ID; unsubscribe_by_id removes handler."""
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus
+
         bus = PubSubBus()
         received = []
         handler = lambda t, p: received.append(p)
@@ -399,6 +421,7 @@ class TestE2ESession71(unittest.TestCase):
     def test_success_rate_with_partial_failures(self):
         """success_rate reflects partial pin failures."""
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import IPFSReloadResult
+
         r = IPFSReloadResult(count=4, pin_results={"a": "c1", "b": None, "c": "c3", "d": None})
         self.assertAlmostEqual(r.success_rate, 0.5)
         self.assertEqual(r.total_failed, 2)
@@ -406,6 +429,7 @@ class TestE2ESession71(unittest.TestCase):
     def test_rotate_bak_and_bak_path_combined(self):
         """rotate_bak + bak_path work together."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "combined.enc")
             bak = ComplianceChecker.bak_path(path)

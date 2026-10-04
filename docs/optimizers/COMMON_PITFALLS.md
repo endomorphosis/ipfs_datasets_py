@@ -66,15 +66,15 @@ ontology = {
             "name": "Alice",
             "type": "Person",
             "description": "Main character",
-            "attributes": {}
+            "attributes": {},
         },
         {
             "id": "person_bob",
             "name": "Bob",
             "type": "Person",
             "description": "Secondary character",
-            "attributes": {}
-        }
+            "attributes": {},
+        },
     ],
     "relationships": [
         {
@@ -82,14 +82,10 @@ ontology = {
             "source": "person_alice",
             "target": "person_bob",
             "relation_type": "knows",
-            "weight": 0.8
+            "weight": 0.8,
         }
     ],
-    "metadata": {
-        "created": "2026-02-21",
-        "version": 1,
-        "domain": "storytelling"
-    }
+    "metadata": {"created": "2026-02-21", "version": 1, "domain": "storytelling"},
 }
 ```
 
@@ -212,6 +208,7 @@ except ImportError:
 - Check available imports:
   ```python
   from ipfs_datasets_py.optimizers.graphrag.query_optimizer import HAVE_PSUTIL, HAVE_NUMPY
+
   if not HAVE_PSUTIL:
       print("Warning: Install psutil for performance monitoring")
   ```
@@ -243,10 +240,7 @@ print(optimizer.ontology)  # ← Attribute doesn't exist!
 **Solution**:
 ```python
 # ✅ CORRECT: Use OntologyHarness to manage lifecycle
-harness = OntologyHarness(
-    config=OntologyGenerationContext(...),
-    max_retries=3
-)
+harness = OntologyHarness(config=OntologyGenerationContext(...), max_retries=3)
 
 sessions = harness.run_sessions(data_sources)
 
@@ -281,13 +275,13 @@ Queries with many entities or high traversal depth can explode in complexity. Th
 # ❌ WRONG: Query requesting 1000+ entity paths
 query = {
     "entities": list(range(1000)),  # Too many!
-    "depth": 10  # Too deep!
+    "depth": 10,  # Too deep!
 }
 
 # ❌ WRONG: Unbounded traversal
 query = {
     "relationships": ["*"],  # Match all relationship types
-    "depth": "unbounded"
+    "depth": "unbounded",
 }
 ```
 
@@ -297,7 +291,7 @@ query = {
 query = {
     "entities": ["entity_1", "entity_2", "entity_5"],  # Few entities
     "relationships": ["knows", "related_to"],  # Specific types
-    "depth": 3  # Limited traversal
+    "depth": 3,  # Limited traversal
 }
 
 # Or use the optimizer with timeouts
@@ -313,6 +307,7 @@ optimized_plan = optimizer.optimize_query(query)
 - Monitor elapsed time in logs:
   ```python
   import logging
+
   logging.basicConfig(level=logging.DEBUG)
   # Now you'll see timing logs
   ```
@@ -339,18 +334,18 @@ All entities were filtered out
 validator = OntologyValidator(ontology)
 
 entities_exist = all(
-    entity_id in [e["id"] for e in ontology["entities"]]
-    for entity_id in query["entities"]
+    entity_id in [e["id"] for e in ontology["entities"]] for entity_id in query["entities"]
 )
 print(f"All entities exist: {entities_exist}")
 
 # Then, use explicit debugging
 from ipfs_datasets_py.optimizers.graphrag import QueryMetricsCollector
+
 metrics = QueryMetricsCollector()
 
 plan = optimizer.optimize_query(query)
 print(f"Plan steps: {len(plan.get('steps', []))}")
-if not plan.get('steps'):
+if not plan.get("steps"):
     print("DEBUG: No steps in plan. Check entities and relationships.")
 ```
 
@@ -386,7 +381,7 @@ Different validation levels have different strictness. `PARANOID` can fail on le
 for file in files:
     result = validator.validate(
         file,
-        level=ValidationLevel.PARANOID  # Gives false positives
+        level=ValidationLevel.PARANOID,  # Gives false positives
     )
     if not result.passed:
         fail_file()
@@ -394,7 +389,7 @@ for file in files:
 # ❌ WRONG: Using BASIC and missing issues
 result = validator.validate(
     file,
-    level=ValidationLevel.BASIC  # Misses type errors!
+    level=ValidationLevel.BASIC,  # Misses type errors!
 )
 ```
 
@@ -403,7 +398,7 @@ result = validator.validate(
 # ✅ CORRECT: Use STANDARD for most cases
 result = validator.validate(
     file,
-    level=ValidationLevel.STANDARD  # Balanced approach
+    level=ValidationLevel.STANDARD,  # Balanced approach
 )
 
 if not result.passed:
@@ -449,7 +444,7 @@ from ipfs_datasets_py.optimizers.agentic.validation import (
     OptimizationValidator,
     HAVE_MYPY,
     HAVE_PYTEST,
-    HAVE_PERFORMANCE_VALIDATOR
+    HAVE_PERFORMANCE_VALIDATOR,
 )
 
 if not HAVE_MYPY:
@@ -477,13 +472,11 @@ Python logging defaults to WARNING level; INFO and DEBUG messages are suppressed
 import logging
 
 # Enable DEBUG logging for optimizers
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s [%(levelname)s] %(name)s: %(message)s'
-)
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 
 # Now optimizer logs will show
 from ipfs_datasets_py.optimizers.graphrag import OntologyOptimizer
+
 optimizer = OntologyOptimizer()
 # Logs will print to console
 ```
@@ -496,9 +489,7 @@ logger = logging.getLogger("ipfs_datasets_py.optimizers.graphrag")
 logger.setLevel(logging.DEBUG)
 
 handler = logging.StreamHandler()
-handler.setFormatter(
-    logging.Formatter('%(asctime)s [%(levelname)s]: %(message)s')
-)
+handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s]: %(message)s"))
 logger.addHandler(handler)
 ```
 
@@ -532,20 +523,22 @@ Access structured log fields properly:
 import logging
 import json
 
+
 # Set up JSON formatting to capture extra fields
 class JSONFormatter(logging.Formatter):
     def format(self, record):
         log_data = {
-            'message': record.getMessage(),
-            'level': record.levelname,
-            'logger': record.name,
+            "message": record.getMessage(),
+            "level": record.levelname,
+            "logger": record.name,
         }
         # Capture extra fields
-        if hasattr(record, 'batch_id'):
-            log_data['batch_id'] = record.batch_id
-        if hasattr(record, 'session_count'):
-            log_data['session_count'] = record.session_count
+        if hasattr(record, "batch_id"):
+            log_data["batch_id"] = record.batch_id
+        if hasattr(record, "session_count"):
+            log_data["session_count"] = record.session_count
         return json.dumps(log_data)
+
 
 # Apply formatter
 handler = logging.StreamHandler()
@@ -603,9 +596,9 @@ for dataset in datasets:
 harness = OntologyHarness(
     config=OntologyGenerationContext(
         max_entities_per_session=500,  # Limit session ontology size
-        cleanup_after_session=True,     # Free memory
+        cleanup_after_session=True,  # Free memory
     ),
-    max_parallel_sessions=2  # Don't spawn too many
+    max_parallel_sessions=2,  # Don't spawn too many
 )
 
 # Or manually manage memory
@@ -643,7 +636,7 @@ Traversal depth of 5+ with many entities creates exponential complexity.
 query = {
     "entities": ["e1", "e2"],
     "depth": 2,  # Not 5+
-    "timeout_seconds": 10
+    "timeout_seconds": 10,
 }
 
 # Or optimize the query plan first
@@ -688,11 +681,7 @@ Each ValidationLevel skips different checks. Not understanding the differences c
 # PARANOID: Everything + additional security analysis + style checks
 
 # For production code:
-result = validator.validate(
-    code,
-    level=ValidationLevel.STRICT,
-    parallel=True
-)
+result = validator.validate(code, level=ValidationLevel.STRICT, parallel=True)
 
 # Check results
 if not result.passed:
@@ -722,16 +711,11 @@ TokenMasker is optional and must be explicitly enabled. Many integrations skip i
 **Solution**:
 ```python
 # ✅ CORRECT: Always use TokenMasker
-from ipfs_datasets_py.optimizers.agentic.validation import (
-    TokenMasker,
-    InputSanitizer
-)
+from ipfs_datasets_py.optimizers.agentic.validation import TokenMasker, InputSanitizer
 
 # Initialize before any logging
 token_masker = TokenMasker(
-    mask_openai_tokens=True,
-    mask_anthropic_tokens=True,
-    mask_github_tokens=True
+    mask_openai_tokens=True, mask_anthropic_tokens=True, mask_github_tokens=True
 )
 
 sanitizer = InputSanitizer(token_masker=token_masker)
@@ -808,12 +792,12 @@ np.random.seed(42)
 # Or use hypothesis settings in property-based tests
 from hypothesis import settings, HealthCheck
 
+
 @settings(
     suppress_health_check=[HealthCheck.too_slow],
-    deadline=None  # Disable timeout
+    deadline=None,  # Disable timeout
 )
-def test_my_property(self, data):
-    ...
+def test_my_property(self, data): ...
 ```
 
 **Prevention**:
@@ -835,6 +819,7 @@ When something breaks, investigate in this order:
 2. **Validate inputs**: Use validator before optimizer
    ```python
    from ipfs_datasets_py.optimizers.graphrag import OntologyValidator
+
    validator = OntologyValidator(ontology)
    errors = validator.validate_ontology()
    ```
@@ -842,6 +827,7 @@ When something breaks, investigate in this order:
 3. **Check dependencies**: Verify optional packages
    ```python
    from ipfs_datasets_py.optimizers.graphrag.query_optimizer import HAVE_PSUTIL
+
    print(f"psutil available: {HAVE_PSUTIL}")
    ```
 
@@ -850,6 +836,7 @@ When something breaks, investigate in this order:
 5. **Check resource usage**: Memory, CPU, disk
    ```python
    from ipfs_datasets_py.optimizers.graphrag import QueryMetricsCollector
+
    health = collector.get_health_check()
    print(f"Memory: {health['memory_usage_bytes']} bytes")
    ```

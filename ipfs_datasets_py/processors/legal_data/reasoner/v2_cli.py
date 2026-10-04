@@ -68,7 +68,9 @@ def run_v2_cli(
                     "status": "ok",
                     "norm_count": len((result.get("ir").norms if result.get("ir") else {})),
                     "frame_count": len((result.get("ir").frames if result.get("ir") else {})),
-                    "optimizer_applied": bool((result.get("optimizer_report") or {}).get("applied")),
+                    "optimizer_applied": bool(
+                        (result.get("optimizer_report") or {}).get("applied")
+                    ),
                     "kg_applied": bool((result.get("kg_report") or {}).get("applied")),
                     "prover_applied": bool((result.get("prover_report") or {}).get("applied")),
                     "dcec_formula_count": len(result.get("dcec") or []),
@@ -103,15 +105,23 @@ def run_v2_cli(
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(description="Run hybrid legal V2 pipeline for one or more CNL sentences.")
+    p = argparse.ArgumentParser(
+        description="Run hybrid legal V2 pipeline for one or more CNL sentences."
+    )
     p.add_argument("--sentence", action="append", default=[], help="CNL sentence (repeatable).")
-    p.add_argument("--input-jsonl", default="", help="Optional JSONL input containing sentence records.")
-    p.add_argument("--sentence-field", default="sentence", help="JSONL field name that contains sentence text.")
+    p.add_argument(
+        "--input-jsonl", default="", help="Optional JSONL input containing sentence records."
+    )
+    p.add_argument(
+        "--sentence-field", default="sentence", help="JSONL field name that contains sentence text."
+    )
     p.add_argument("--jurisdiction", default="us/federal", help="Jurisdiction label.")
     p.add_argument("--disable-optimizer", action="store_true", help="Disable optimizer hook.")
     p.add_argument("--disable-kg", action="store_true", help="Disable KG hook.")
     p.add_argument("--disable-prover", action="store_true", help="Disable prover hook.")
-    p.add_argument("--prover-backend-id", default="mock_smt", help="Prover backend ID for default registry.")
+    p.add_argument(
+        "--prover-backend-id", default="mock_smt", help="Prover backend ID for default registry."
+    )
     p.add_argument("--output-json", default="", help="Optional output JSON path.")
     p.add_argument("--pretty", action="store_true", help="Pretty-print JSON output.")
     return p
@@ -126,7 +136,9 @@ def main(argv: List[str] | None = None) -> int:
         sentences.extend(_load_sentences_from_jsonl(Path(args.input_jsonl), args.sentence_field))
 
     if not sentences:
-        parser.error("Provide at least one --sentence or --input-jsonl with valid sentence records.")
+        parser.error(
+            "Provide at least one --sentence or --input-jsonl with valid sentence records."
+        )
 
     payload = run_v2_cli(
         sentences=sentences,

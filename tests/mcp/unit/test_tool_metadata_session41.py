@@ -10,6 +10,7 @@ Covers:
 - get_tool_metadata() by function and by name
 - Module constants (RUNTIME_FASTAPI, RUNTIME_TRIO, RUNTIME_AUTO)
 """
+
 import pytest
 from unittest.mock import MagicMock
 
@@ -29,6 +30,7 @@ from ipfs_datasets_py.mcp_server.tool_metadata import (
 # Module constants
 # ===========================================================================
 
+
 class TestModuleConstants:
     def test_runtime_constants_defined(self):
         assert RUNTIME_FASTAPI == "fastapi"
@@ -40,8 +42,8 @@ class TestModuleConstants:
 # ToolMetadata
 # ===========================================================================
 
-class TestToolMetadata:
 
+class TestToolMetadata:
     def test_minimal_construction(self):
         meta = ToolMetadata(name="test_tool")
         assert meta.name == "test_tool"
@@ -132,8 +134,8 @@ class TestToolMetadata:
 # ToolMetadataRegistry
 # ===========================================================================
 
-class TestToolMetadataRegistry:
 
+class TestToolMetadataRegistry:
     def _make_registry(self) -> ToolMetadataRegistry:
         r = ToolMetadataRegistry()
         return r
@@ -218,6 +220,7 @@ class TestToolMetadataRegistry:
     def test_reregister_different_runtime_logs_warning(self, caplog):
         """Re-registering a tool with a different runtime should log a warning."""
         import logging
+
         r = self._make_registry()
         r.register(ToolMetadata(name="my_tool", runtime=RUNTIME_FASTAPI))
         with caplog.at_level(logging.WARNING, logger="ipfs_datasets_py.mcp_server.tool_metadata"):
@@ -229,8 +232,8 @@ class TestToolMetadataRegistry:
 # get_registry() global accessor
 # ===========================================================================
 
-class TestGetRegistry:
 
+class TestGetRegistry:
     def test_get_registry_returns_instance(self):
         registry = get_registry()
         assert isinstance(registry, ToolMetadataRegistry)
@@ -246,10 +249,11 @@ class TestGetRegistry:
 # tool_metadata() decorator
 # ===========================================================================
 
-class TestToolMetadataDecorator:
 
+class TestToolMetadataDecorator:
     def test_decorator_registers_tool(self):
         """@tool_metadata() should register the function in the global registry."""
+
         # Use a unique name to avoid collisions with other tests
         @tool_metadata(runtime=RUNTIME_AUTO, category="test_cat_41")
         def my_decorated_tool_41():
@@ -298,6 +302,7 @@ class TestToolMetadataDecorator:
 
     def test_decorator_preserves_function(self):
         """The decorated function should remain callable."""
+
         @tool_metadata()
         def callable_tool_41():
             return "result"
@@ -318,8 +323,8 @@ class TestToolMetadataDecorator:
 # get_tool_metadata()
 # ===========================================================================
 
-class TestGetToolMetadata:
 
+class TestGetToolMetadata:
     def test_get_by_name_string(self):
         @tool_metadata(category="test_lookup")
         def lookup_tool_by_name_41():
@@ -344,6 +349,7 @@ class TestGetToolMetadata:
 
     def test_get_by_function_via_attribute(self):
         """get_tool_metadata returns _mcp_metadata attribute if set."""
+
         @tool_metadata()
         def tool_with_attr_41():
             pass
@@ -358,8 +364,8 @@ class TestGetToolMetadata:
 # Edge cases for 100% coverage
 # ===========================================================================
 
-class TestEdgeCases:
 
+class TestEdgeCases:
     def test_validate_complete_empty_name(self):
         """An empty name string should produce a 'name is required' warning."""
         # Bypass frozen dataclass restriction with object.__new__
@@ -382,9 +388,11 @@ class TestEdgeCases:
 
     def test_get_tool_metadata_fallback_registry_lookup(self):
         """get_tool_metadata(func_without_attr) should fall back to registry lookup."""
+
         # A plain function without _mcp_metadata attribute
         def plain_function_for_test_41():
             pass
+
         # Register it manually in the global registry
         get_registry().register(ToolMetadata(name="plain_function_for_test_41"))
         result = get_tool_metadata(plain_function_for_test_41)

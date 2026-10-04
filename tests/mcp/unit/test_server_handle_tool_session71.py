@@ -7,6 +7,7 @@ Targets previously-uncovered paths in IPFSDatasetsMCPServer:
   • start_stdio_server / start_server function-level error paths (KeyboardInterrupt, ServerStartupError, generic)
   • Args pydantic model / from_namespace helper
 """
+
 from __future__ import annotations
 
 import sys
@@ -23,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 # Minimal MCP stub ─ must be injected BEFORE importing server.py
 # ---------------------------------------------------------------------------
 
+
 def _inject_mcp_stub():
     mcp_mod = types.ModuleType("mcp")
     mcp_mod.FastMCP = MagicMock
@@ -36,13 +38,18 @@ def _inject_mcp_stub():
 
 _inject_mcp_stub()
 
-from ipfs_datasets_py.mcp_server.server import IPFSDatasetsMCPServer, start_stdio_server, start_server
+from ipfs_datasets_py.mcp_server.server import (
+    IPFSDatasetsMCPServer,
+    start_stdio_server,
+    start_server,
+)
 from ipfs_datasets_py.mcp_server.exceptions import ServerStartupError
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_server() -> IPFSDatasetsMCPServer:
     """Return a server instance with mcp + p2p stubbed out."""
@@ -59,8 +66,8 @@ def _make_server() -> IPFSDatasetsMCPServer:
 # _wrap_tool_with_error_reporting
 # ===========================================================================
 
-class TestWrapToolWithErrorReporting:
 
+class TestWrapToolWithErrorReporting:
     def _server_with_error_reporting(self) -> IPFSDatasetsMCPServer:
         srv = _make_server()
         return srv
@@ -68,6 +75,7 @@ class TestWrapToolWithErrorReporting:
     async def test_async_wrapper_success(self):
         """async_wrapper must return value on success."""
         import inspect
+
         srv = self._server_with_error_reporting()
 
         async def my_tool(x: int):
@@ -92,6 +100,7 @@ class TestWrapToolWithErrorReporting:
     def test_sync_wrapper_success(self):
         """sync_wrapper must return value on success."""
         import inspect
+
         srv = self._server_with_error_reporting()
 
         def sync_tool(y: str):
@@ -127,11 +136,12 @@ class TestWrapToolWithErrorReporting:
 # _initialize_error_reporting
 # ===========================================================================
 
-class TestInitializeErrorReporting:
 
+class TestInitializeErrorReporting:
     def test_error_reporting_available_flag_set_false_when_import_fails(self):
         """When error_reporter import fails, ERROR_REPORTING_AVAILABLE stays False."""
         import ipfs_datasets_py.mcp_server.server as srv_mod
+
         # The module-level ERROR_REPORTING_AVAILABLE is already determined at import time.
         # We can confirm the attribute exists and is a bool.
         assert isinstance(srv_mod.ERROR_REPORTING_AVAILABLE, bool)
@@ -145,9 +155,12 @@ class TestInitializeErrorReporting:
     def test_initialize_error_reporting_with_mock_reporter(self):
         """When error_reporter is present, _initialize_error_reporting stores it."""
         import ipfs_datasets_py.mcp_server.server as srv_mod
+
         fake_reporter = MagicMock()
-        with patch.object(srv_mod, "ERROR_REPORTING_AVAILABLE", True), \
-             patch.object(srv_mod, "error_reporter", fake_reporter, create=True):
+        with (
+            patch.object(srv_mod, "ERROR_REPORTING_AVAILABLE", True),
+            patch.object(srv_mod, "error_reporter", fake_reporter, create=True),
+        ):
             srv = _make_server()
             srv._initialize_error_reporting()
             # No assertion — just must not raise
@@ -157,17 +170,19 @@ class TestInitializeErrorReporting:
 # start_stdio_server function-level
 # ===========================================================================
 
-class TestStartStdioServerFunction:
 
+class TestStartStdioServerFunction:
     def _patch_anyio_run(self, side_effect=None):
         """Return a context manager that patches anyio.run inside server module."""
         import ipfs_datasets_py.mcp_server.server as srv_mod
+
         mock = MagicMock(side_effect=side_effect)
         return patch.object(srv_mod, "anyio", MagicMock(run=mock)), mock
 
     def test_keyboard_interrupt_handled_silently(self):
         """KeyboardInterrupt must not propagate out of start_stdio_server."""
         import ipfs_datasets_py.mcp_server.server as srv_mod
+
         fake_anyio = MagicMock()
         fake_anyio.run.side_effect = KeyboardInterrupt()
         with patch.object(srv_mod, "anyio", fake_anyio):
@@ -177,6 +192,7 @@ class TestStartStdioServerFunction:
     def test_server_startup_error_handled(self):
         """ServerStartupError must be caught and not re-raised by start_stdio_server."""
         import ipfs_datasets_py.mcp_server.server as srv_mod
+
         fake_anyio = MagicMock()
         fake_anyio.run.side_effect = ServerStartupError("port in use")
         with patch.object(srv_mod, "anyio", fake_anyio):
@@ -185,6 +201,7 @@ class TestStartStdioServerFunction:
     def test_generic_exception_handled(self):
         """An unexpected exception must be caught gracefully."""
         import ipfs_datasets_py.mcp_server.server as srv_mod
+
         fake_anyio = MagicMock()
         fake_anyio.run.side_effect = RuntimeError("unexpected")
         with patch.object(srv_mod, "anyio", fake_anyio):
@@ -193,11 +210,14 @@ class TestStartStdioServerFunction:
     def test_with_ipfs_kit_mcp_url(self):
         """Providing ipfs_kit_mcp_url sets configs attributes."""
         import ipfs_datasets_py.mcp_server.server as srv_mod
+
         fake_anyio = MagicMock()
         # Make run a no-op
         fake_anyio.run.return_value = None
-        with patch.object(srv_mod, "anyio", fake_anyio), \
-             patch.object(srv_mod, "configs", MagicMock()) as mock_configs:
+        with (
+            patch.object(srv_mod, "anyio", fake_anyio),
+            patch.object(srv_mod, "configs", MagicMock()) as mock_configs,
+        ):
             start_stdio_server(ipfs_kit_mcp_url="http://localhost:5001")
             assert mock_configs.ipfs_kit_mcp_url == "http://localhost:5001"
             assert mock_configs.ipfs_kit_integration == "mcp"
@@ -207,11 +227,12 @@ class TestStartStdioServerFunction:
 # start_server function-level
 # ===========================================================================
 
-class TestStartServerFunction:
 
+class TestStartServerFunction:
     def test_keyboard_interrupt_handled(self):
         """KeyboardInterrupt must not propagate out of start_server."""
         import ipfs_datasets_py.mcp_server.server as srv_mod
+
         fake_anyio = MagicMock()
         fake_anyio.run.side_effect = KeyboardInterrupt()
         with patch.object(srv_mod, "anyio", fake_anyio):
@@ -220,6 +241,7 @@ class TestStartServerFunction:
     def test_server_startup_error_handled(self):
         """ServerStartupError must be caught and not re-raised by start_server."""
         import ipfs_datasets_py.mcp_server.server as srv_mod
+
         fake_anyio = MagicMock()
         fake_anyio.run.side_effect = ServerStartupError("bind failed")
         with patch.object(srv_mod, "anyio", fake_anyio):
@@ -228,6 +250,7 @@ class TestStartServerFunction:
     def test_generic_exception_handled(self):
         """Unexpected exception must be caught gracefully."""
         import ipfs_datasets_py.mcp_server.server as srv_mod
+
         fake_anyio = MagicMock()
         fake_anyio.run.side_effect = OSError("port unavailable")
         with patch.object(srv_mod, "anyio", fake_anyio):

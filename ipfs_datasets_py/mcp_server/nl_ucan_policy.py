@@ -63,6 +63,7 @@ from typing import Any, Dict, List, NamedTuple, Optional, Tuple
 try:
     from multiformats import CID as _CID
     from multiformats import multihash as _multihash
+
     _MULTIFORMATS_AVAILABLE = True
 except ImportError:  # pragma: no cover
     _MULTIFORMATS_AVAILABLE = False
@@ -81,6 +82,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Utilities
 # ---------------------------------------------------------------------------
+
 
 def _make_policy_cid(text: str) -> str:
     """Return a CIDv1 content identifier for *text* (UTF-8 encoded).
@@ -122,6 +124,7 @@ def _make_policy_cid(text: str) -> str:
 # Data containers
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class NLPolicySource:
     """Stores an NL policy string together with its content CID.
@@ -162,9 +165,7 @@ class CompiledUCANPolicy:
 
     policy: PolicyObject
     source_cid: str
-    compiled_at: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
-    )
+    compiled_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     compiler_version: str = "v1"
     metadata: Dict[str, Any] = field(default_factory=dict)
 
@@ -331,6 +332,7 @@ def _fallback_parse_nl_policy(nl_text: str) -> List[PolicyClause]:
 # Logic-module integration
 # ---------------------------------------------------------------------------
 
+
 def _try_logic_module_compile(nl_text: str) -> Optional[List[PolicyClause]]:
     """Attempt to compile *nl_text* via the ``ipfs_datasets_py.logic`` module.
 
@@ -390,6 +392,7 @@ def _try_logic_module_compile(nl_text: str) -> Optional[List[PolicyClause]]:
 # ---------------------------------------------------------------------------
 # Compiler
 # ---------------------------------------------------------------------------
+
 
 class NLUCANPolicyCompiler:
     """Compiles natural-language policy strings into UCAN-aligned PolicyObjects.
@@ -493,8 +496,7 @@ class NLUCANPolicyCompiler:
             return compiled, False
 
         logger.info(
-            "Policy source CID mismatch — recompiling. "
-            "old=%s new=%s",
+            "Policy source CID mismatch — recompiling. old=%s new=%s",
             compiled.source_cid[:12],
             source.source_cid[:12],
         )
@@ -518,6 +520,7 @@ class NLUCANPolicyCompiler:
 # ---------------------------------------------------------------------------
 # Policy registry (multi-policy store)
 # ---------------------------------------------------------------------------
+
 
 class PolicyRegistry:
     """Stores named NL policies and their compiled counterparts.
@@ -623,6 +626,7 @@ def get_policy_registry() -> PolicyRegistry:
 # ---------------------------------------------------------------------------
 # Policy Gate
 # ---------------------------------------------------------------------------
+
 
 class UCANPolicyGate:
     """Middleware that evaluates MCP tool intents through registered NL policies.
@@ -746,6 +750,7 @@ class UCANPolicyGate:
                 if clause.clause_type != "prohibition":
                     continue
                 from .temporal_policy import _clause_matches  # noqa: PLC0415
+
                 if _clause_matches(clause, effective_actor, intent.tool, resource, eval_time):
                     return DecisionObject(
                         decision="deny",
@@ -821,6 +826,7 @@ class FilePolicyStore:
         reconstructed on :meth:`load`.
         """
         import os
+
         policies: Dict[str, Any] = {}
         for name in self._registry.list_names():
             compiled = self._registry._compiled.get(name)
@@ -1051,7 +1057,9 @@ class FilePolicyStore:
             try:
                 plaintext = AESGCM(key).decrypt(nonce, ciphertext, None)
             except InvalidTag:
-                logger.warning("Encrypted policy store %s: decryption failed (wrong password?)", enc_path)
+                logger.warning(
+                    "Encrypted policy store %s: decryption failed (wrong password?)", enc_path
+                )
                 return 0
             except Exception as exc:
                 logger.warning("Encrypted policy store %s: error: %s", enc_path, exc)
@@ -1100,6 +1108,7 @@ class FilePolicyStore:
 # ---------------------------------------------------------------------------
 # Async policy registration (session 56)
 # ---------------------------------------------------------------------------
+
 
 class AsyncPolicyRegistrar:
     """Register multiple NL policies concurrently using *anyio* task groups.
@@ -1456,6 +1465,7 @@ class IPFSPolicyStore(FilePolicyStore):
             return self._ipfs_client
         try:
             from ipfs_kit_py import ipfs_kit  # noqa: PLC0415
+
             return ipfs_kit()
         except Exception:
             return None

@@ -14,6 +14,7 @@ Tests cover:
 - OntologyPipeline.rounds_without_improvement()
 - LogicValidator.most_connected_node(ontology)
 """
+
 from __future__ import annotations
 
 import math
@@ -42,6 +43,7 @@ from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_result(
     confidences: list[float] | None = None,
     rel_confidences: list[float] | None = None,
@@ -59,7 +61,7 @@ def _make_result(
                 Relationship(
                     id=f"r{i}",
                     source_id=f"e{i}",
-                    target_id=f"e{(i+1) % len(entities)}",
+                    target_id=f"e{(i + 1) % len(entities)}",
                     type="related_to",
                     confidence=c,
                 )
@@ -132,6 +134,7 @@ def ontology_builder(ontology_dict_factory):
 # OntologyOptimizer.score_iqr
 # ---------------------------------------------------------------------------
 
+
 class TestScoreIqr:
     def test_empty_history_returns_zero(self):
         opt = OntologyOptimizer()
@@ -164,6 +167,7 @@ class TestScoreIqr:
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.history_rolling_std
 # ---------------------------------------------------------------------------
+
 
 class TestHistoryRollingStd:
     def test_empty_history_returns_empty(self):
@@ -208,14 +212,19 @@ class TestHistoryRollingStd:
 # OntologyCritic.dimension_iqr
 # ---------------------------------------------------------------------------
 
+
 class TestDimensionIqr:
     def setup_method(self):
         self.critic = OntologyCritic()
 
     def test_uniform_dims_iqr_zero(self):
         score = _make_critic_score(
-            completeness=0.5, consistency=0.5, clarity=0.5,
-            granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+            completeness=0.5,
+            consistency=0.5,
+            clarity=0.5,
+            granularity=0.5,
+            relationship_coherence=0.5,
+            domain_alignment=0.5,
         )
         assert self.critic.dimension_iqr(score) == pytest.approx(0.0)
 
@@ -223,8 +232,12 @@ class TestDimensionIqr:
         # dims sorted = [0.0, 0.2, 0.5, 0.7, 0.9, 1.0]
         # n=6, q1_idx=1→0.2, q3_idx=4→0.9 → IQR=0.7
         score = _make_critic_score(
-            completeness=1.0, consistency=0.0, clarity=0.5,
-            granularity=0.2, relationship_coherence=0.9, domain_alignment=0.7,
+            completeness=1.0,
+            consistency=0.0,
+            clarity=0.5,
+            granularity=0.2,
+            relationship_coherence=0.9,
+            domain_alignment=0.7,
         )
         assert self.critic.dimension_iqr(score) == pytest.approx(0.7, abs=1e-9)
 
@@ -241,21 +254,30 @@ class TestDimensionIqr:
 # OntologyCritic.dimension_coefficient_of_variation
 # ---------------------------------------------------------------------------
 
+
 class TestDimensionCoefficientOfVariation:
     def setup_method(self):
         self.critic = OntologyCritic()
 
     def test_uniform_dims_cv_zero(self):
         score = _make_critic_score(
-            completeness=0.7, consistency=0.7, clarity=0.7,
-            granularity=0.7, relationship_coherence=0.7, domain_alignment=0.7,
+            completeness=0.7,
+            consistency=0.7,
+            clarity=0.7,
+            granularity=0.7,
+            relationship_coherence=0.7,
+            domain_alignment=0.7,
         )
         assert self.critic.dimension_coefficient_of_variation(score) == pytest.approx(0.0)
 
     def test_zero_mean_returns_zero(self):
         score = _make_critic_score(
-            completeness=0.0, consistency=0.0, clarity=0.0,
-            granularity=0.0, relationship_coherence=0.0, domain_alignment=0.0,
+            completeness=0.0,
+            consistency=0.0,
+            clarity=0.0,
+            granularity=0.0,
+            relationship_coherence=0.0,
+            domain_alignment=0.0,
         )
         assert self.critic.dimension_coefficient_of_variation(score) == 0.0
 
@@ -270,23 +292,31 @@ class TestDimensionCoefficientOfVariation:
     def test_higher_spread_higher_cv(self):
         # Low spread
         s_low = _make_critic_score(
-            completeness=0.5, consistency=0.5, clarity=0.5,
-            granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+            completeness=0.5,
+            consistency=0.5,
+            clarity=0.5,
+            granularity=0.5,
+            relationship_coherence=0.5,
+            domain_alignment=0.5,
         )
         # High spread
         s_high = _make_critic_score(
-            completeness=0.1, consistency=0.9, clarity=0.2,
-            granularity=0.8, relationship_coherence=0.3, domain_alignment=0.7,
+            completeness=0.1,
+            consistency=0.9,
+            clarity=0.2,
+            granularity=0.8,
+            relationship_coherence=0.3,
+            domain_alignment=0.7,
         )
-        assert (
-            self.critic.dimension_coefficient_of_variation(s_high)
-            > self.critic.dimension_coefficient_of_variation(s_low)
-        )
+        assert self.critic.dimension_coefficient_of_variation(
+            s_high
+        ) > self.critic.dimension_coefficient_of_variation(s_low)
 
 
 # ---------------------------------------------------------------------------
 # OntologyGenerator.entity_confidence_geometric_mean
 # ---------------------------------------------------------------------------
+
 
 class TestEntityConfidenceGeometricMean:
     def setup_method(self):
@@ -327,6 +357,7 @@ class TestEntityConfidenceGeometricMean:
 # ---------------------------------------------------------------------------
 # OntologyGenerator.entity_confidence_harmonic_mean
 # ---------------------------------------------------------------------------
+
 
 class TestEntityConfidenceHarmonicMean:
     def setup_method(self):
@@ -369,6 +400,7 @@ class TestEntityConfidenceHarmonicMean:
 # ---------------------------------------------------------------------------
 # OntologyGenerator.relationship_confidence_iqr
 # ---------------------------------------------------------------------------
+
 
 class TestRelationshipConfidenceIqr:
     def setup_method(self):
@@ -417,6 +449,7 @@ class TestRelationshipConfidenceIqr:
 # OntologyLearningAdapter.feedback_iqr
 # ---------------------------------------------------------------------------
 
+
 class TestFeedbackIqr:
     def test_empty_feedback_returns_zero(self):
         adapter = OntologyLearningAdapter(domain="test")
@@ -448,6 +481,7 @@ class TestFeedbackIqr:
 # ---------------------------------------------------------------------------
 # OntologyPipeline.best_score_improvement
 # ---------------------------------------------------------------------------
+
 
 class TestBestScoreImprovement:
     def test_empty_returns_zero(self):
@@ -485,6 +519,7 @@ class TestBestScoreImprovement:
 # OntologyPipeline.rounds_without_improvement
 # ---------------------------------------------------------------------------
 
+
 class TestRoundsWithoutImprovement:
     def test_empty_returns_zero(self):
         pipeline = OntologyPipeline()
@@ -518,6 +553,7 @@ class TestRoundsWithoutImprovement:
 # ---------------------------------------------------------------------------
 # LogicValidator.most_connected_node
 # ---------------------------------------------------------------------------
+
 
 class TestMostConnectedNode:
     def setup_method(self):

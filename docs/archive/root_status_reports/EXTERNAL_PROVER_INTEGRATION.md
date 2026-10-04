@@ -155,12 +155,7 @@ The `ProverRouter` class provides intelligent prover selection and coordination:
 ```python
 from ipfs_datasets_py.logic.external_provers import ProverRouter, ProverStrategy
 
-router = ProverRouter(
-    enable_z3=True,
-    enable_cvc5=True,
-    enable_lean=True,
-    enable_coq=True
-)
+router = ProverRouter(enable_z3=True, enable_cvc5=True, enable_lean=True, enable_coq=True)
 
 # Automatic selection
 result = router.prove(formula, strategy=ProverStrategy.AUTO)
@@ -238,9 +233,9 @@ print(f"Results: {list(result.all_results.keys())}")
 from ipfs_datasets_py.logic.integration import NeurosymbolicReasoner
 
 reasoner = NeurosymbolicReasoner(
-    enable_native=True,   # TDFOL + CEC (127 rules)
-    enable_modal=True,    # Modal provers
-    enable_z3=True,       # Z3 SMT solver
+    enable_native=True,  # TDFOL + CEC (127 rules)
+    enable_modal=True,  # Modal provers
+    enable_z3=True,  # Z3 SMT solver
 )
 
 # System automatically chooses best prover

@@ -294,13 +294,13 @@ from ipfs_datasets_py.data_transformation.multimedia import FFmpegWrapper
 
 # Different APIs for each
 pdf_proc = PDFProcessor()
-result1 = await pdf_proc.process_pdf('doc.pdf')  # Different method names
+result1 = await pdf_proc.process_pdf("doc.pdf")  # Different method names
 
 web_proc = WebsiteGraphRAGProcessor()
-result2 = await web_proc.process_website('https://example.com')  # Different format
+result2 = await web_proc.process_website("https://example.com")  # Different format
 
 ffmpeg = FFmpegWrapper()
-result3 = await ffmpeg.convert('video.mp4')  # Different result structure
+result3 = await ffmpeg.convert("video.mp4")  # Different result structure
 ```
 
 ### After Refactoring
@@ -312,15 +312,15 @@ from ipfs_datasets_py.processors import UniversalProcessor
 processor = UniversalProcessor()
 
 # Automatic routing, consistent results
-result1 = await processor.process('doc.pdf')
-result2 = await processor.process('https://example.com')
-result3 = await processor.process('video.mp4')
+result1 = await processor.process("doc.pdf")
+result2 = await processor.process("https://example.com")
+result3 = await processor.process("video.mp4")
 
 # All results have same structure:
 for result in [result1, result2, result3]:
     print(result.knowledge_graph)  # Always present
-    print(result.vectors)          # Always present
-    print(result.metadata)         # Always present
+    print(result.vectors)  # Always present
+    print(result.metadata)  # Always present
 ```
 
 ### Key Improvements

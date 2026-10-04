@@ -96,8 +96,12 @@ from ipfs_datasets_py.data_transformation.dataset_serialization import DatasetSe
 **✅ New:**
 ```python
 from ipfs_datasets_py.data_transformation.serialization.car_conversion import DataInterchangeUtils
-from ipfs_datasets_py.data_transformation.serialization.jsonl_to_parquet import convert_jsonl_to_parquet
-from ipfs_datasets_py.data_transformation.serialization.dataset_serialization import DatasetSerializer
+from ipfs_datasets_py.data_transformation.serialization.jsonl_to_parquet import (
+    convert_jsonl_to_parquet,
+)
+from ipfs_datasets_py.data_transformation.serialization.dataset_serialization import (
+    DatasetSerializer,
+)
 ```
 
 **Note:** Old imports will work with deprecation warnings until v2.0.0
@@ -117,7 +121,9 @@ from ipfs_datasets_py.data_transformation.ipld import IPLDKnowledgeGraph
 ```python
 from ipfs_datasets_py.processors.graphrag_processor import GraphRAGProcessor
 from ipfs_datasets_py.processors.website_graphrag_processor import WebsiteGraphRAGProcessor
-from ipfs_datasets_py.processors.advanced_graphrag_website_processor import AdvancedGraphRAGWebsiteProcessor
+from ipfs_datasets_py.processors.advanced_graphrag_website_processor import (
+    AdvancedGraphRAGWebsiteProcessor,
+)
 ```
 
 **✅ New (Unified):**

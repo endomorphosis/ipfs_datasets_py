@@ -95,4 +95,9 @@ def test_agentic_cycle_stops_when_improvement_stalls():
 
     assert state.current_round < 50
     assert len(state.refinement_history) == state.current_round
-    assert state.metadata["score_trend"] in {"stable", "improving", "insufficient_data", "degrading"}
+    assert state.metadata["score_trend"] in {
+        "stable",
+        "improving",
+        "insufficient_data",
+        "degrading",
+    }

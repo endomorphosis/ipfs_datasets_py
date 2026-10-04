@@ -23,6 +23,7 @@ try:
         ServerStartupError,
         ConfigurationError,
     )
+
     EXCEPTIONS_AVAILABLE = True
 except ImportError:
     EXCEPTIONS_AVAILABLE = False
@@ -32,25 +33,30 @@ except ImportError:
 # Import error reporting if available
 try:
     from ipfs_datasets_py.error_reporting import install_error_handlers
+
     ERROR_REPORTING_AVAILABLE = True
 except ImportError:
     ERROR_REPORTING_AVAILABLE = False
 
+
 def main():
     """Main entry point for the MCP server."""
-    parser = argparse.ArgumentParser(description='IPFS Datasets MCP Server')
-    parser.add_argument('--host', default='127.0.0.1', help='Host to bind to (HTTP mode only)')
-    parser.add_argument('--port', type=int, default=3002, help='Port to bind to (HTTP mode only)')
-    parser.add_argument('--config', help='Path to configuration file')
-    parser.add_argument('--debug', action='store_true', help='Enable debug logging')
-    parser.add_argument('--stdio', action='store_true', help='Run in stdio mode (default for VS Code)')
-    parser.add_argument('--http', action='store_true', help='Run in HTTP mode with Hypercorn+Trio')
+    parser = argparse.ArgumentParser(description="IPFS Datasets MCP Server")
+    parser.add_argument("--host", default="127.0.0.1", help="Host to bind to (HTTP mode only)")
+    parser.add_argument("--port", type=int, default=3002, help="Port to bind to (HTTP mode only)")
+    parser.add_argument("--config", help="Path to configuration file")
+    parser.add_argument("--debug", action="store_true", help="Enable debug logging")
+    parser.add_argument(
+        "--stdio", action="store_true", help="Run in stdio mode (default for VS Code)"
+    )
+    parser.add_argument("--http", action="store_true", help="Run in HTTP mode with Hypercorn+Trio")
 
     args = parser.parse_args()
 
     # Configure logging level
     if args.debug:
         import logging
+
         logging.basicConfig(level=logging.DEBUG)
 
     # Install error handlers if available
@@ -93,7 +99,9 @@ def main():
                 hconfig.worker_class = "trio"
                 hconfig.loglevel = log_level
                 hconfig.accesslog = "-"
-                print(f"🚀 Starting IPFS Datasets MCP++ on {args.host}:{args.port} (Hypercorn+Trio)")
+                print(
+                    f"🚀 Starting IPFS Datasets MCP++ on {args.host}:{args.port} (Hypercorn+Trio)"
+                )
                 trio.run(hypercorn_serve, fastapi_app, hconfig)
                 return True
 
@@ -124,24 +132,28 @@ def main():
     except ServerStartupError as e:
         print(f"Server startup error: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
     except ConfigurationError as e:
         print(f"Configuration error: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
     except (ImportError, ModuleNotFoundError) as e:
         print(f"Required module not available: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
     except Exception as e:
         print(f"Error starting server: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

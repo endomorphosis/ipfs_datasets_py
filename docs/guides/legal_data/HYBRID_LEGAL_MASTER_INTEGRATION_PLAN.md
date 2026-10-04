@@ -101,12 +101,15 @@ Atom             = "{" "op" ":" "atom" "," "pred" ":" String "," "args" ":" "[" 
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
+
 @dataclass(frozen=True)
 class CanonicalId:
     namespace: str
     value: str
+
     def ref(self) -> str:
         return f"{self.namespace}:{self.value}"
+
 
 @dataclass
 class SourceRef:
@@ -114,11 +117,13 @@ class SourceRef:
     sentence_text: str
     sentence_span: Optional[str] = None
 
+
 @dataclass
 class Entity:
     id: CanonicalId
     type_name: str
     attrs: Dict[str, Any] = field(default_factory=dict)
+
 
 @dataclass
 class Frame:
@@ -128,12 +133,14 @@ class Frame:
     roles: Dict[str, str] = field(default_factory=dict)
     attrs: Dict[str, Any] = field(default_factory=dict)
 
+
 @dataclass
 class TemporalExpr:
     kind: str
     start: Optional[str] = None
     end: Optional[str] = None
     duration: Optional[str] = None
+
 
 @dataclass
 class TemporalConstraint:
@@ -142,16 +149,19 @@ class TemporalConstraint:
     expr: TemporalExpr
     anchor_ref: Optional[str] = None
 
+
 @dataclass
 class Atom:
     pred: str
     args: List[str] = field(default_factory=list)
+
 
 @dataclass
 class ConditionNode:
     op: str
     atom: Optional[Atom] = None
     children: List["ConditionNode"] = field(default_factory=list)
+
 
 @dataclass
 class Norm:
@@ -164,6 +174,7 @@ class Norm:
     priority: int = 0
     source_ref: Optional[str] = None
 
+
 @dataclass
 class Rule:
     id: CanonicalId
@@ -171,6 +182,7 @@ class Rule:
     consequent: Atom
     mode: str = "strict"
     source_ref: Optional[str] = None
+
 
 @dataclass
 class LegalIR:

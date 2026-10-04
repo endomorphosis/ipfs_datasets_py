@@ -13,6 +13,7 @@ Tools
 - ``audit_log_recent``       — return recent audit log entries
 - ``audit_log_stats``        — return audit log statistics
 """
+
 from __future__ import annotations
 
 import logging
@@ -25,19 +26,23 @@ logger = logging.getLogger(__name__)
 # helpers
 # ---------------------------------------------------------------------------
 
+
 def _get_manager():
     from ipfs_datasets_py.mcp_server.ucan_delegation import get_delegation_manager
+
     return get_delegation_manager()
 
 
 def _get_audit_log():
     from ipfs_datasets_py.mcp_server.policy_audit_log import get_audit_log
+
     return get_audit_log()
 
 
 # ---------------------------------------------------------------------------
 # delegation tools
 # ---------------------------------------------------------------------------
+
 
 def delegation_add_token(
     issuer: str,
@@ -70,10 +75,13 @@ def delegation_add_token(
     dict with ``cid`` of the newly-added token.
     """
     import time
+
     try:
         from ipfs_datasets_py.mcp_server.ucan_delegation import (
-            DelegationToken, Capability,
+            DelegationToken,
+            Capability,
         )
+
         mgr = _get_manager()
         cap = Capability(resource=resource, ability=ability)
         now = time.time()
@@ -196,6 +204,7 @@ def delegation_get_metrics(**kwargs: Any) -> Dict[str, Any]:
 # audit log tools
 # ---------------------------------------------------------------------------
 
+
 def audit_log_recent(n: int = 20, **kwargs: Any) -> Dict[str, Any]:
     """Return the *n* most recent audit log entries.
 
@@ -238,6 +247,7 @@ def audit_log_stats(**kwargs: Any) -> Dict[str, Any]:
 # Tool registry for MCP server discovery
 # ---------------------------------------------------------------------------
 
+
 def delegation_chain_ascii(leaf_cid: str, **kwargs: Any) -> Dict[str, Any]:
     """CI145: Return an ASCII tree visualisation of a UCAN delegation chain.
 
@@ -258,6 +268,7 @@ def delegation_chain_ascii(leaf_cid: str, **kwargs: Any) -> Dict[str, Any]:
         except Exception as exc:
             return {"status": "error", "error": f"chain build failed: {exc}"}
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationChain
+
         dc = DelegationChain(tokens=chain)
         return {
             "status": "ok",

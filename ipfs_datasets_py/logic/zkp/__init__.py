@@ -36,18 +36,18 @@ Use Cases (Educational Only):
 
 Example:
     >>> from ipfs_datasets_py.logic.zkp import SimulatedZKPProver, SimulatedZKPVerifier
-    >>> 
+    >>>
     >>> # SIMULATION - NOT cryptographically secure!
     >>> prover = SimulatedZKPProver()
     >>> proof = prover.generate_proof(
     ...     theorem="Q",
     ...     private_axioms=["P", "P -> Q"]
     ... )
-    >>> 
+    >>>
     >>> # Verify mock proof
     >>> verifier = SimulatedZKPVerifier()
     >>> assert verifier.verify_proof(proof)  # Mock verification
-    >>> 
+    >>>
     >>> print("⚠️  This is a SIMULATION - not cryptographically secure!")
 
 Performance (Simulation):
@@ -67,28 +67,28 @@ import importlib
 import warnings
 
 __all__ = [
-    'ZKPProof',  # Kept for backward compatibility
-    'SimulatedZKPProof',  # New name reflecting simulation
-    'ZKPProver',  # Deprecated - use SimulatedZKPProver
-    'SimulatedZKPProver',  # Correct name
-    'ZKPVerifier',  # Deprecated - use SimulatedZKPVerifier
-    'SimulatedZKPVerifier',  # Correct name
-    'ZKPCircuit',  # Deprecated - use SimulatedZKPCircuit
-    'SimulatedZKPCircuit',  # Correct name
-    'BooleanCircuit',  # Alias for ZKPCircuit (backward compatibility with docs)
-    'ZKPError',
-    'create_implication_circuit',
-    'build_proof_attestation_view',
-    'attestation_view_matches_proof',
-    'compiler_guidance_contract_from_metadata',
-    'compiler_guidance_ref_from_metadata',
-    'complete_zkp_attestation_record',
-    'decode_simulated_proof_layout',
-    'proof_attestation_view_from_proof_dict',
-    'proof_digest_from_proof_dict',
-    'proof_public_inputs_from_proof_dict',
-    'refresh_proof_attestation',
-    'zkp_attestation_legal_ir_view_loss',
+    "ZKPProof",  # Kept for backward compatibility
+    "SimulatedZKPProof",  # New name reflecting simulation
+    "ZKPProver",  # Deprecated - use SimulatedZKPProver
+    "SimulatedZKPProver",  # Correct name
+    "ZKPVerifier",  # Deprecated - use SimulatedZKPVerifier
+    "SimulatedZKPVerifier",  # Correct name
+    "ZKPCircuit",  # Deprecated - use SimulatedZKPCircuit
+    "SimulatedZKPCircuit",  # Correct name
+    "BooleanCircuit",  # Alias for ZKPCircuit (backward compatibility with docs)
+    "ZKPError",
+    "create_implication_circuit",
+    "build_proof_attestation_view",
+    "attestation_view_matches_proof",
+    "compiler_guidance_contract_from_metadata",
+    "compiler_guidance_ref_from_metadata",
+    "complete_zkp_attestation_record",
+    "decode_simulated_proof_layout",
+    "proof_attestation_view_from_proof_dict",
+    "proof_digest_from_proof_dict",
+    "proof_public_inputs_from_proof_dict",
+    "refresh_proof_attestation",
+    "zkp_attestation_legal_ir_view_loss",
 ]
 
 _SIMULATION_WARNING = (
@@ -107,20 +107,21 @@ def _warn_once() -> None:
     _WARNED = True
     warnings.warn(_SIMULATION_WARNING, UserWarning, stacklevel=3)
 
+
 # Version
-__version__ = '0.1.0'
+__version__ = "0.1.0"
 
 
 @dataclass
 class ZKPProof:
     """
     SIMULATED Zero-Knowledge Proof - Educational/Demo Only.
-    
+
     ⚠️  WARNING: This is NOT a cryptographically secure proof!
     It uses simple hash-based commitments for demonstration purposes.
-    
+
     For production ZKP, integrate py_ecc library with real zkSNARKs.
-    
+
     Attributes:
         proof_data: Mock proof data (hash-based, not cryptographic)
         public_inputs: Public information (theorem statement)
@@ -128,6 +129,7 @@ class ZKPProof:
         timestamp: When proof was generated
         size_bytes: Size of proof in bytes
     """
+
     proof_data: bytes
     public_inputs: Dict[str, Any]
     metadata: Dict[str, Any]
@@ -142,31 +144,32 @@ class ZKPProof:
         proof_system = str(metadata.get("proof_system") or "").lower()
         if not backend or "simulated" in backend or "simulated" in proof_system:
             _warn_once()
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert proof to dictionary format."""
         return {
-            'proof_data': self.proof_data.hex(),
-            'public_inputs': self.public_inputs,
-            'metadata': self.metadata,
-            'timestamp': self.timestamp,
-            'size_bytes': self.size_bytes,
+            "proof_data": self.proof_data.hex(),
+            "public_inputs": self.public_inputs,
+            "metadata": self.metadata,
+            "timestamp": self.timestamp,
+            "size_bytes": self.size_bytes,
         }
-    
+
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'ZKPProof':
+    def from_dict(cls, data: Dict[str, Any]) -> "ZKPProof":
         """Create proof from dictionary format."""
         return cls(
-            proof_data=bytes.fromhex(data['proof_data']),
-            public_inputs=data['public_inputs'],
-            metadata=data['metadata'],
-            timestamp=data['timestamp'],
-            size_bytes=data['size_bytes'],
+            proof_data=bytes.fromhex(data["proof_data"]),
+            public_inputs=data["public_inputs"],
+            metadata=data["metadata"],
+            timestamp=data["timestamp"],
+            size_bytes=data["size_bytes"],
         )
 
 
 class ZKPError(Exception):
     """Exception raised for ZKP-related errors."""
+
     pass
 
 

@@ -48,6 +48,7 @@ from .flogic_types import FLogicClass, FLogicFrame, FLogicOntology, FLogicStatus
 # Optional ZKP module
 try:
     from .. import zkp as _zkp  # type: ignore
+
     _HAVE_ZKP = True
 except ImportError:
     _zkp = None  # type: ignore
@@ -112,7 +113,9 @@ class ZKPFLogicResult:
             goal=cached.goal,
             status=cached.status,
             bindings=list(cached.bindings),
-            method=FLogicProvingMethod.CACHED if cached.from_cache else FLogicProvingMethod.STANDARD,
+            method=FLogicProvingMethod.CACHED
+            if cached.from_cache
+            else FLogicProvingMethod.STANDARD,
             proof_time=cached.execution_time,
             from_cache=cached.from_cache,
             error_message=cached.error_message,
@@ -277,8 +280,9 @@ class ZKPFLogicProver:
     ) -> List[ZKPFLogicResult]:
         """Execute multiple goals and return one :class:`ZKPFLogicResult` per goal."""
         return [
-            self.query(g, prefer_zkp=prefer_zkp,
-                       private_ontology=private_ontology, use_cache=use_cache)
+            self.query(
+                g, prefer_zkp=prefer_zkp, private_ontology=private_ontology, use_cache=use_cache
+            )
             for g in goals
         ]
 
@@ -314,9 +318,7 @@ class ZKPFLogicProver:
         # When private_ontology=True we commit to the hash rather than the
         # raw program text, so the witness remains verifiable without leaking
         # the full ontology to verifiers.
-        witness = {
-            "axioms": [ontology_hash if private_ontology else self._ergo.get_program()]
-        }
+        witness = {"axioms": [ontology_hash if private_ontology else self._ergo.get_program()]}
 
         zkp_proof = self._zkp_prover.prove(statement, witness)
         is_valid = self._zkp_verifier.verify_proof(zkp_proof)
@@ -346,9 +348,7 @@ class ZKPFLogicProver:
             "zkp_attempts": self._zkp_attempts,
             "zkp_successes": self._zkp_successes,
             "zkp_success_rate": (
-                self._zkp_successes / self._zkp_attempts
-                if self._zkp_attempts > 0
-                else 0.0
+                self._zkp_successes / self._zkp_attempts if self._zkp_attempts > 0 else 0.0
             ),
             "standard_queries": self._standard_queries,
         }

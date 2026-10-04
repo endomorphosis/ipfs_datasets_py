@@ -55,6 +55,7 @@ CID = str
 # TypedDicts — structured dict shapes returned by public APIs
 # ---------------------------------------------------------------------------
 
+
 class GraphStats(TypedDict, total=False):
     """Return type of :meth:`GraphEngine.get_stats` and similar methods."""
 
@@ -107,6 +108,7 @@ class QuerySummary(TypedDict, total=False):
 # ---------------------------------------------------------------------------
 # Protocols — structural interfaces
 # ---------------------------------------------------------------------------
+
 
 class StorageBackend(Protocol):
     """

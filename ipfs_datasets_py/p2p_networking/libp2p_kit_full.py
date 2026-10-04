@@ -26,6 +26,7 @@ import numpy as np
 # Defer imports for optional dependencies
 try:
     from multiaddr import Multiaddr
+
     # import py_libp2p # Commented out due to import issues
     # import py_libp2p.crypto.rsa as rsa # Commented out due to import issues
     # from py_libp2p.peer.peerinfo import PeerInfo # Commented out due to import issues
@@ -38,6 +39,7 @@ try:
     LIBP2P_AVAILABLE = False
 except ImportError:
     LIBP2P_AVAILABLE = False
+
     # Create stub classes for type checking
     class Multiaddr:
         pass
@@ -75,15 +77,17 @@ class NodeRole(Enum):
         CLIENT (str): Read-only consumer that only accesses data without storing,
             coordinating, or processing. Minimal network participation role.
     """
+
     COORDINATOR = "coordinator"  # Coordinates dataset distribution and search
-    WORKER = "worker"            # Stores and processes dataset fragments
-    HYBRID = "hybrid"            # Both coordinator and worker roles
-    CLIENT = "client"            # Only consumes data, doesn't store or coordinate
+    WORKER = "worker"  # Stores and processes dataset fragments
+    HYBRID = "hybrid"  # Both coordinator and worker roles
+    CLIENT = "client"  # Only consumes data, doesn't store or coordinate
 
 
 @dataclass
 class ShardMetadata:
     """Metadata for a dataset shard."""
+
     shard_id: str
     dataset_id: str
     shard_index: int
@@ -101,6 +105,7 @@ class ShardMetadata:
 @dataclass
 class DatasetMetadata:
     """Metadata for a distributed dataset."""
+
     dataset_id: str
     name: str
     description: str
@@ -118,6 +123,7 @@ class DatasetMetadata:
 
 class NetworkProtocol(Enum):
     """Protocol identifiers for different p2p operations."""
+
     SHARD_DISCOVERY = "/ipfs_datasets/shard/1.0.0"
     SHARD_TRANSFER = "/ipfs_datasets/transfer/1.0.0"
     SHARD_SYNC = "/ipfs_datasets/sync/1.0.0"
@@ -128,21 +134,25 @@ class NetworkProtocol(Enum):
 
 class P2PError(Exception):
     """Base exception for P2P operations."""
+
     pass
 
 
 class LibP2PNotAvailableError(P2PError):
     """Raised when libp2p is not available."""
+
     pass
 
 
 class NodeConnectionError(P2PError):
     """Raised when a connection to a peer fails."""
+
     pass
 
 
 class ShardTransferError(P2PError):
     """Raised when there's an error transferring a shard."""
+
     pass
 
 
@@ -160,7 +170,7 @@ class LibP2PNode:
         private_key_path: Optional[str] = None,
         listen_addresses: Optional[List[str]] = None,
         bootstrap_peers: Optional[List[str]] = None,
-        role: NodeRole = NodeRole.HYBRID
+        role: NodeRole = NodeRole.HYBRID,
     ):
         """
         Initialize the libp2p node.
@@ -177,8 +187,7 @@ class LibP2PNode:
         """
         if not LIBP2P_AVAILABLE:
             raise LibP2PNotAvailableError(
-                "LibP2P dependencies are not installed. "
-                "Install them with: pip install py-libp2p"
+                "LibP2P dependencies are not installed. Install them with: pip install py-libp2p"
             )
 
         self.node_id = node_id or f"node-{random.randint(10000, 99999)}"
@@ -203,15 +212,12 @@ class LibP2PNode:
 
     def _register_default_handlers(self):
         """Register default protocol handlers."""
-        self.register_protocol_handler(
-            NetworkProtocol.NODE_DISCOVERY,
-            self._handle_node_discovery
-        )
+        self.register_protocol_handler(NetworkProtocol.NODE_DISCOVERY, self._handle_node_discovery)
 
     def register_protocol_handler(
         self,
         protocol: NetworkProtocol,
-        handler: Callable[["INetStream"], None]  # Use forward reference
+        handler: Callable[["INetStream"], None],  # Use forward reference
     ):
         """
         Register a handler for a specific protocol.
@@ -222,7 +228,7 @@ class LibP2PNode:
         """
         self.protocol_handlers[protocol.value] = handler
 
-    async def _handle_node_discovery(self, stream: 'INetStream'):
+    async def _handle_node_discovery(self, stream: "INetStream"):
         """
         Handle node discovery protocol.
 
@@ -231,14 +237,18 @@ class LibP2PNode:
         """
         peer_id = stream.muxed_conn.peer_id
         self.peers.add(str(peer_id))
-        await stream.write(json.dumps({
-            "node_id": self.node_id,
-            "role": self.role.value,
-            "protocols": list(self.protocol_handlers.keys())
-        }).encode())
+        await stream.write(
+            json.dumps(
+                {
+                    "node_id": self.node_id,
+                    "role": self.role.value,
+                    "protocols": list(self.protocol_handlers.keys()),
+                }
+            ).encode()
+        )
         await stream.close()
 
-    def _load_or_create_key_pair(self) -> 'KeyPair':
+    def _load_or_create_key_pair(self) -> "KeyPair":
         """
         Load or create RSA key pair for the node.
 
@@ -277,10 +287,7 @@ class LibP2PNode:
         key_pair = self._load_or_create_key_pair()
 
         # Get default network with our key
-        network = get_default_network(
-            key_pair,
-            [Multiaddr(addr) for addr in self.listen_addresses]
-        )
+        network = get_default_network(key_pair, [Multiaddr(addr) for addr in self.listen_addresses])
 
         # Create host
         self.host = BasicHost(network)
@@ -339,10 +346,7 @@ class LibP2PNode:
             raise NodeConnectionError(f"Failed to connect to peer: {str(e)}")
 
     async def send_message(
-        self,
-        peer_id: str,
-        protocol: NetworkProtocol,
-        data: Dict[str, Any]
+        self, peer_id: str, protocol: NetworkProtocol, data: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
         Send a message to a peer.
@@ -360,10 +364,7 @@ class LibP2PNode:
         """
         try:
             # Open stream to peer
-            stream = await self.host.new_stream(
-                PeerID.from_base58(peer_id),
-                [protocol.value]
-            )
+            stream = await self.host.new_stream(PeerID.from_base58(peer_id), [protocol.value])
 
             # Send data
             await stream.write(json.dumps(data).encode())
@@ -394,9 +395,7 @@ class LibP2PNode:
         for peer_id in list(self.peers):
             try:
                 response = await self.send_message(
-                    peer_id,
-                    NetworkProtocol.NODE_DISCOVERY,
-                    {"action": "get_peers"}
+                    peer_id, NetworkProtocol.NODE_DISCOVERY, {"action": "get_peers"}
                 )
                 if "peers" in response:
                     discovered.update(response["peers"])
@@ -441,7 +440,7 @@ class DatasetShardManager:
         self,
         node: LibP2PNode,
         storage_dir: str,
-        shard_size: int = 10000  # Records per shard
+        shard_size: int = 10000,  # Records per shard
     ):
         """
         Initialize the shard manager.
@@ -513,23 +512,17 @@ class DatasetShardManager:
     def _register_protocol_handlers(self):
         """Register protocol handlers for shard management."""
         self.node.register_protocol_handler(
-            NetworkProtocol.SHARD_DISCOVERY,
-            self._handle_shard_discovery
+            NetworkProtocol.SHARD_DISCOVERY, self._handle_shard_discovery
         )
         self.node.register_protocol_handler(
-            NetworkProtocol.SHARD_TRANSFER,
-            self._handle_shard_transfer
+            NetworkProtocol.SHARD_TRANSFER, self._handle_shard_transfer
         )
+        self.node.register_protocol_handler(NetworkProtocol.SHARD_SYNC, self._handle_shard_sync)
         self.node.register_protocol_handler(
-            NetworkProtocol.SHARD_SYNC,
-            self._handle_shard_sync
-        )
-        self.node.register_protocol_handler(
-            NetworkProtocol.METADATA_SYNC,
-            self._handle_metadata_sync
+            NetworkProtocol.METADATA_SYNC, self._handle_metadata_sync
         )
 
-    async def _handle_shard_discovery(self, stream: 'INetStream'):
+    async def _handle_shard_discovery(self, stream: "INetStream"):
         """
         Handle shard discovery protocol.
 
@@ -546,7 +539,8 @@ class DatasetShardManager:
             dataset_id = request.get("dataset_id")
             if dataset_id and dataset_id in self.datasets:
                 response["shards"] = [
-                    shard.__dict__ for shard_id, shard in self.shards.items()
+                    shard.__dict__
+                    for shard_id, shard in self.shards.items()
                     if shard.dataset_id == dataset_id
                 ]
             else:
@@ -564,7 +558,7 @@ class DatasetShardManager:
         await stream.write(json.dumps(response).encode())
         await stream.close()
 
-    async def _handle_shard_transfer(self, stream: 'INetStream'):
+    async def _handle_shard_transfer(self, stream: "INetStream"):
         """
         Handle shard transfer protocol.
 
@@ -629,7 +623,11 @@ class DatasetShardManager:
                             self._save_metadata(dataset)
 
                         # Notify of successful transfer
-                        return await stream.write(json.dumps({"status": "success", "message": "Shard transferred"}).encode())
+                        return await stream.write(
+                            json.dumps(
+                                {"status": "success", "message": "Shard transferred"}
+                            ).encode()
+                        )
 
             elif request.get("action") == "transfer_shard":
                 # Handle the case where we're sending a shard to another node
@@ -671,7 +669,7 @@ class DatasetShardManager:
         finally:
             await stream.close()
 
-    async def _handle_shard_sync(self, stream: 'INetStream'):
+    async def _handle_shard_sync(self, stream: "INetStream"):
         """
         Handle shard synchronization protocol.
 
@@ -693,7 +691,10 @@ class DatasetShardManager:
                 else:
                     # Check if we have this shard
                     if shard_id not in self.shards:
-                        response = {"status": "error", "message": f"Shard {shard_id} not found locally"}
+                        response = {
+                            "status": "error",
+                            "message": f"Shard {shard_id} not found locally",
+                        }
                     else:
                         # Get the local shard
                         local_shard = self.shards[shard_id]
@@ -715,14 +716,22 @@ class DatasetShardManager:
                                 dataset_id = updated_shard.dataset_id
                                 if dataset_id in self.datasets:
                                     dataset = self.datasets[dataset_id]
-                                    record_diff = updated_shard.record_count - local_shard.record_count
+                                    record_diff = (
+                                        updated_shard.record_count - local_shard.record_count
+                                    )
                                     dataset.total_records += record_diff
                                     dataset.modified_time = time.time()
                                     self._save_metadata(dataset)
 
-                            response = {"status": "success", "message": "Shard metadata synchronized"}
+                            response = {
+                                "status": "success",
+                                "message": "Shard metadata synchronized",
+                            }
                         else:
-                            response = {"status": "unchanged", "message": "Local shard is newer or identical"}
+                            response = {
+                                "status": "unchanged",
+                                "message": "Local shard is newer or identical",
+                            }
 
             elif request.get("action") == "get_shard_timestamp":
                 shard_id = request.get("shard_id")
@@ -733,7 +742,7 @@ class DatasetShardManager:
                         response = {
                             "status": "success",
                             "shard_id": shard_id,
-                            "modified_time": self.shards[shard_id].modified_time
+                            "modified_time": self.shards[shard_id].modified_time,
                         }
                     else:
                         response = {"status": "not_found", "message": f"Shard {shard_id} not found"}
@@ -750,14 +759,10 @@ class DatasetShardManager:
                 else:
                     # List all shards
                     shards = {
-                        shard_id: shard.modified_time
-                        for shard_id, shard in self.shards.items()
+                        shard_id: shard.modified_time for shard_id, shard in self.shards.items()
                     }
 
-                response = {
-                    "status": "success",
-                    "shards": shards
-                }
+                response = {"status": "success", "shards": shards}
 
             # Send response
             await stream.write(json.dumps(response).encode())
@@ -770,7 +775,7 @@ class DatasetShardManager:
         finally:
             await stream.close()
 
-    async def _handle_metadata_sync(self, stream: 'INetStream'):
+    async def _handle_metadata_sync(self, stream: "INetStream"):
         """
         Handle metadata synchronization protocol.
 
@@ -801,7 +806,8 @@ class DatasetShardManager:
                         if updated_dataset.modified_time > local_dataset.modified_time:
                             # Keep track of previously unknown shards
                             new_shard_ids = [
-                                shard_id for shard_id in updated_dataset.shard_ids
+                                shard_id
+                                for shard_id in updated_dataset.shard_ids
                                 if shard_id not in local_dataset.shard_ids
                             ]
 
@@ -813,11 +819,14 @@ class DatasetShardManager:
                             response = {
                                 "status": "success",
                                 "message": "Dataset metadata synchronized",
-                                "new_shard_ids": new_shard_ids
+                                "new_shard_ids": new_shard_ids,
                             }
                         else:
                             # Our version is newer or identical
-                            response = {"status": "unchanged", "message": "Local dataset is newer or identical"}
+                            response = {
+                                "status": "unchanged",
+                                "message": "Local dataset is newer or identical",
+                            }
                     else:
                         # This is a new dataset for us
                         self.datasets[dataset_id] = updated_dataset
@@ -825,7 +834,7 @@ class DatasetShardManager:
                         response = {
                             "status": "success",
                             "message": "New dataset added",
-                            "new_shard_ids": updated_dataset.shard_ids
+                            "new_shard_ids": updated_dataset.shard_ids,
                         }
 
             elif request.get("action") == "get_dataset_timestamp":
@@ -838,10 +847,13 @@ class DatasetShardManager:
                             "status": "success",
                             "dataset_id": dataset_id,
                             "modified_time": self.datasets[dataset_id].modified_time,
-                            "shard_count": self.datasets[dataset_id].shard_count
+                            "shard_count": self.datasets[dataset_id].shard_count,
                         }
                     else:
-                        response = {"status": "not_found", "message": f"Dataset {dataset_id} not found"}
+                        response = {
+                            "status": "not_found",
+                            "message": f"Dataset {dataset_id} not found",
+                        }
 
             elif request.get("action") == "list_datasets_with_timestamps":
                 # List all datasets with timestamps
@@ -849,15 +861,12 @@ class DatasetShardManager:
                     dataset_id: {
                         "modified_time": dataset.modified_time,
                         "shard_count": dataset.shard_count,
-                        "name": dataset.name
+                        "name": dataset.name,
                     }
                     for dataset_id, dataset in self.datasets.items()
                 }
 
-                response = {
-                    "status": "success",
-                    "datasets": datasets
-                }
+                response = {"status": "success", "datasets": datasets}
 
             # Send response
             await stream.write(json.dumps(response).encode())
@@ -877,7 +886,7 @@ class DatasetShardManager:
         schema: Optional[Dict[str, Any]] = None,
         vector_dimensions: Optional[int] = None,
         format: str = "parquet",
-        tags: Optional[List[str]] = None
+        tags: Optional[List[str]] = None,
     ) -> DatasetMetadata:
         """
         Create a new distributed dataset.
@@ -908,7 +917,7 @@ class DatasetShardManager:
                 specifying column names, data types, and validation rules. If None, the
                 schema will be inferred from the first data added. Defaults to None.
             vector_dimensions (Optional[int], optional): Number of dimensions for vector
-                embeddings if this is a vector dataset (e.g., for ML embeddings or 
+                embeddings if this is a vector dataset (e.g., for ML embeddings or
                 similarity search). Only required for vector-based datasets. Defaults to None.
             format (str, optional): Storage format for the dataset. Supported formats
                 include 'parquet' (default), 'arrow', and other columnar formats.
@@ -955,7 +964,7 @@ class DatasetShardManager:
             vector_dimensions=vector_dimensions,
             format=format,
             tags=tags or [],
-            coordinator_id=self.node.node_id
+            coordinator_id=self.node.node_id,
         )
 
         # Save dataset metadata
@@ -965,12 +974,7 @@ class DatasetShardManager:
         return dataset
 
     def create_shard(
-        self,
-        dataset_id: str,
-        data: Any,
-        cid: str,
-        record_count: int,
-        format: str = "parquet"
+        self, dataset_id: str, data: Any, cid: str, record_count: int, format: str = "parquet"
     ) -> ShardMetadata:
         """
         Create a new shard for a dataset.
@@ -1005,7 +1009,7 @@ class DatasetShardManager:
             vector_dimensions=dataset.vector_dimensions,
             schema=dataset.schema,
             format=format,
-            node_ids=[self.node.node_id]
+            node_ids=[self.node.node_id],
         )
 
         # Save shard data
@@ -1026,10 +1030,7 @@ class DatasetShardManager:
         return shard
 
     async def distribute_shard(
-        self,
-        shard_id: str,
-        target_nodes: Optional[List[str]] = None,
-        replication_factor: int = 3
+        self, shard_id: str, target_nodes: Optional[List[str]] = None, replication_factor: int = 3
     ) -> List[str]:
         """
         Distribute a shard to other nodes.
@@ -1075,8 +1076,8 @@ class DatasetShardManager:
                         "action": "accept_shard",
                         "shard_id": shard_id,
                         "dataset_id": shard.dataset_id,
-                        "cid": shard.cid
-                    }
+                        "cid": shard.cid,
+                    },
                 )
 
                 if response.get("status") == "accepted":
@@ -1095,9 +1096,7 @@ class DatasetShardManager:
         return successful_transfers
 
     async def find_dataset_shards(
-        self,
-        dataset_id: str,
-        include_metadata: bool = True
+        self, dataset_id: str, include_metadata: bool = True
     ) -> Dict[str, Any]:
         """
         Find all shards for a dataset across the network.
@@ -1127,10 +1126,7 @@ class DatasetShardManager:
                 response = await self.node.send_message(
                     peer_id,
                     NetworkProtocol.SHARD_DISCOVERY,
-                    {
-                        "action": "list_shards",
-                        "dataset_id": dataset_id
-                    }
+                    {"action": "list_shards", "dataset_id": dataset_id},
                 )
 
                 if "shards" in response:
@@ -1155,16 +1151,13 @@ class DatasetShardManager:
             "dataset": dataset.__dict__,
             "total_shards_found": len(all_shards),
             "shard_locations": {
-                shard_id: list(nodes)
-                for shard_id, nodes in shard_locations.items()
-            }
+                shard_id: list(nodes) for shard_id, nodes in shard_locations.items()
+            },
         }
 
         if include_metadata:
             result["shards"] = [
-                self.shards[shard_id].__dict__
-                for shard_id in all_shards
-                if shard_id in self.shards
+                self.shards[shard_id].__dict__ for shard_id in all_shards if shard_id in self.shards
             ]
 
         return result
@@ -1179,10 +1172,7 @@ class FederatedSearchManager:
     """
 
     def __init__(
-        self,
-        node: LibP2PNode,
-        shard_manager: DatasetShardManager,
-        result_limit: int = 100
+        self, node: LibP2PNode, shard_manager: DatasetShardManager, result_limit: int = 100
     ):
         """
         Initialize the federated search manager.
@@ -1199,11 +1189,10 @@ class FederatedSearchManager:
         # Register protocol handler
         if node.running:
             self.node.register_protocol_handler(
-                NetworkProtocol.FEDERATED_SEARCH,
-                self._handle_federated_search
+                NetworkProtocol.FEDERATED_SEARCH, self._handle_federated_search
             )
 
-    async def _handle_federated_search(self, stream: 'INetStream'):
+    async def _handle_federated_search(self, stream: "INetStream"):
         """
         Handle federated search protocol.
 
@@ -1245,7 +1234,7 @@ class FederatedSearchManager:
         query_vector: np.ndarray,
         top_k: int = 10,
         distance_threshold: Optional[float] = None,
-        include_metadata: bool = True
+        include_metadata: bool = True,
     ) -> Dict[str, Any]:
         """
         Perform a federated vector search across the dataset.
@@ -1262,8 +1251,7 @@ class FederatedSearchManager:
         """
         # Find dataset shards
         dataset_info = await self.shard_manager.find_dataset_shards(
-            dataset_id,
-            include_metadata=True
+            dataset_id, include_metadata=True
         )
 
         # Convert query vector to a list for serialization
@@ -1288,8 +1276,8 @@ class FederatedSearchManager:
                         "vector": query_vector_list,
                         "top_k": top_k,
                         "distance_threshold": distance_threshold,
-                        "include_metadata": include_metadata
-                    }
+                        "include_metadata": include_metadata,
+                    },
                 )
 
                 if response.get("status") == "success" and "results" in response:
@@ -1306,19 +1294,15 @@ class FederatedSearchManager:
             "query": {
                 "dataset_id": dataset_id,
                 "top_k": top_k,
-                "distance_threshold": distance_threshold
+                "distance_threshold": distance_threshold,
             },
             "total_results": len(all_results),
             "results": limited_results,
-            "nodes_queried": list(nodes_with_shards)
+            "nodes_queried": list(nodes_with_shards),
         }
 
     async def keyword_search(
-        self,
-        dataset_id: str,
-        query: str,
-        top_k: int = 10,
-        include_metadata: bool = True
+        self, dataset_id: str, query: str, top_k: int = 10, include_metadata: bool = True
     ) -> Dict[str, Any]:
         """
         Perform a federated keyword search across the dataset.
@@ -1334,8 +1318,7 @@ class FederatedSearchManager:
         """
         # Find dataset shards
         dataset_info = await self.shard_manager.find_dataset_shards(
-            dataset_id,
-            include_metadata=True
+            dataset_id, include_metadata=True
         )
 
         # Track all nodes that have shards for this dataset
@@ -1356,8 +1339,8 @@ class FederatedSearchManager:
                         "query_type": "keyword",
                         "query": query,
                         "top_k": top_k,
-                        "include_metadata": include_metadata
-                    }
+                        "include_metadata": include_metadata,
+                    },
                 )
 
                 if response.get("status") == "success" and "results" in response:
@@ -1371,14 +1354,10 @@ class FederatedSearchManager:
         limited_results = all_results[:top_k]
 
         return {
-            "query": {
-                "dataset_id": dataset_id,
-                "query": query,
-                "top_k": top_k
-            },
+            "query": {"dataset_id": dataset_id, "query": query, "top_k": top_k},
             "total_results": len(all_results),
             "results": limited_results,
-            "nodes_queried": list(nodes_with_shards)
+            "nodes_queried": list(nodes_with_shards),
         }
 
 
@@ -1397,7 +1376,7 @@ class DistributedDatasetManager:
         listen_addresses: Optional[List[str]] = None,
         bootstrap_peers: Optional[List[str]] = None,
         role: NodeRole = NodeRole.HYBRID,
-        auto_start: bool = True
+        auto_start: bool = True,
     ):
         """
         Initialize the distributed dataset manager.
@@ -1415,18 +1394,16 @@ class DistributedDatasetManager:
             private_key_path=private_key_path,
             listen_addresses=listen_addresses,
             bootstrap_peers=bootstrap_peers,
-            role=role
+            role=role,
         )
 
         # Create component managers
         self.shard_manager = DatasetShardManager(
-            node=self.node,
-            storage_dir=os.path.join(storage_dir, "shards")
+            node=self.node, storage_dir=os.path.join(storage_dir, "shards")
         )
 
         self.search_manager = FederatedSearchManager(
-            node=self.node,
-            shard_manager=self.shard_manager
+            node=self.node, shard_manager=self.shard_manager
         )
 
         # Event loop thread
@@ -1469,7 +1446,7 @@ class DistributedDatasetManager:
         schema: Optional[Dict[str, Any]] = None,
         vector_dimensions: Optional[int] = None,
         format: str = "parquet",
-        tags: Optional[List[str]] = None
+        tags: Optional[List[str]] = None,
     ) -> DatasetMetadata:
         """
         Create a new distributed dataset.
@@ -1491,7 +1468,7 @@ class DistributedDatasetManager:
             schema=schema,
             vector_dimensions=vector_dimensions,
             format=format,
-            tags=tags
+            tags=tags,
         )
 
     async def shard_dataset(
@@ -1501,7 +1478,7 @@ class DistributedDatasetManager:
         format: str = "parquet",
         shard_size: int = 10000,
         replication_factor: int = 3,
-        use_consistent_hashing: bool = True
+        use_consistent_hashing: bool = True,
     ) -> List[ShardMetadata]:
         """
         Shard a dataset and distribute it across the network.
@@ -1546,7 +1523,9 @@ class DistributedDatasetManager:
         elif hasattr(data, "to_pandas"):  # Handle HuggingFace datasets
             df = data.to_pandas()
         else:
-            raise ValueError("Unsupported data format. Provide DataFrame, Arrow Table, or list of dicts")
+            raise ValueError(
+                "Unsupported data format. Provide DataFrame, Arrow Table, or list of dicts"
+            )
 
         total_records = len(df)
         logging.info(f"Sharding dataset with {total_records} records, shard size {shard_size}")
@@ -1610,7 +1589,7 @@ class DistributedDatasetManager:
                     data=None,  # We're not storing the actual data here
                     cid=fake_cid,
                     record_count=shard_record_count,
-                    format=format
+                    format=format,
                 )
 
                 shard_metadata_list.append(shard)
@@ -1634,11 +1613,12 @@ class DistributedDatasetManager:
 
                     # Distribute the shard
                     successful_transfers = await self.shard_manager.distribute_shard(
-                        shard_id=shard.shard_id,
-                        target_nodes=target_nodes
+                        shard_id=shard.shard_id, target_nodes=target_nodes
                     )
 
-                    logging.info(f"Distributed shard {shard.shard_id} to {len(successful_transfers)} nodes")
+                    logging.info(
+                        f"Distributed shard {shard.shard_id} to {len(successful_transfers)} nodes"
+                    )
                     created_shards.append(shard)
 
         logging.info(f"Created and distributed {len(created_shards)} shards")
@@ -1649,7 +1629,7 @@ class DistributedDatasetManager:
         dataset_id: str,
         query_vector: np.ndarray,
         top_k: int = 10,
-        distance_threshold: Optional[float] = None
+        distance_threshold: Optional[float] = None,
     ) -> Dict[str, Any]:
         """
         Perform a federated vector search across the distributed dataset.
@@ -1667,15 +1647,10 @@ class DistributedDatasetManager:
             dataset_id=dataset_id,
             query_vector=query_vector,
             top_k=top_k,
-            distance_threshold=distance_threshold
+            distance_threshold=distance_threshold,
         )
 
-    async def keyword_search(
-        self,
-        dataset_id: str,
-        query: str,
-        top_k: int = 10
-    ) -> Dict[str, Any]:
+    async def keyword_search(self, dataset_id: str, query: str, top_k: int = 10) -> Dict[str, Any]:
         """
         Perform a federated keyword search across the distributed dataset.
 
@@ -1688,9 +1663,7 @@ class DistributedDatasetManager:
             Dict: Search results from across the network
         """
         return await self.search_manager.keyword_search(
-            dataset_id=dataset_id,
-            query=query,
-            top_k=top_k
+            dataset_id=dataset_id, query=query, top_k=top_k
         )
 
     async def get_network_status(self) -> Dict[str, Any]:
@@ -1723,7 +1696,7 @@ class DistributedDatasetManager:
             "shards_by_dataset": {
                 dataset_id: [s.__dict__ for s in shards]
                 for dataset_id, shards in shards_by_dataset.items()
-            }
+            },
         }
 
     async def sync_with_network(self) -> Dict[str, Any]:
@@ -1754,7 +1727,7 @@ class DistributedDatasetManager:
             "datasets_updated": 0,
             "datasets_added": 0,
             "shards_updated": 0,
-            "shards_added": 0
+            "shards_added": 0,
         }
 
         # Sync with each peer
@@ -1764,7 +1737,7 @@ class DistributedDatasetManager:
                 remote_datasets_response = await self.node.send_message(
                     peer_id,
                     NetworkProtocol.METADATA_SYNC,
-                    {"action": "list_datasets_with_timestamps"}
+                    {"action": "list_datasets_with_timestamps"},
                 )
 
                 if remote_datasets_response.get("status") != "success":
@@ -1777,7 +1750,10 @@ class DistributedDatasetManager:
                     remote_timestamp = dataset_info.get("modified_time", 0)
 
                     # If we don't have this dataset or our version is older
-                    if dataset_id not in local_datasets or remote_timestamp > local_datasets[dataset_id]:
+                    if (
+                        dataset_id not in local_datasets
+                        or remote_timestamp > local_datasets[dataset_id]
+                    ):
                         # Request full dataset metadata
                         dataset_response = await self.node.send_message(
                             peer_id,
@@ -1785,8 +1761,10 @@ class DistributedDatasetManager:
                             {
                                 "action": "sync_dataset",
                                 "dataset_id": dataset_id,
-                                "metadata": self.shard_manager.datasets[dataset_id].__dict__ if dataset_id in self.shard_manager.datasets else None
-                            }
+                                "metadata": self.shard_manager.datasets[dataset_id].__dict__
+                                if dataset_id in self.shard_manager.datasets
+                                else None,
+                            },
                         )
 
                         if dataset_response.get("status") == "success":
@@ -1804,20 +1782,21 @@ class DistributedDatasetManager:
                                         shard_response = await self.node.send_message(
                                             peer_id,
                                             NetworkProtocol.SHARD_TRANSFER,
-                                            {
-                                                "action": "transfer_shard",
-                                                "shard_id": shard_id
-                                            }
+                                            {"action": "transfer_shard", "shard_id": shard_id},
                                         )
 
                                         if shard_response.get("status") == "success":
                                             results["shards_added"] += 1
                                     except Exception as e:
-                                        logging.error(f"Error transferring shard {shard_id}: {str(e)}")
+                                        logging.error(
+                                            f"Error transferring shard {shard_id}: {str(e)}"
+                                        )
 
                 # Sync our local shards with remote peer
                 for dataset_id, dataset in self.shard_manager.datasets.items():
-                    local_shards = [s for s in self.shard_manager.shards.values() if s.dataset_id == dataset_id]
+                    local_shards = [
+                        s for s in self.shard_manager.shards.values() if s.dataset_id == dataset_id
+                    ]
 
                     for shard in local_shards:
                         # Get remote shard timestamp
@@ -1825,10 +1804,7 @@ class DistributedDatasetManager:
                             shard_timestamp_response = await self.node.send_message(
                                 peer_id,
                                 NetworkProtocol.SHARD_SYNC,
-                                {
-                                    "action": "get_shard_timestamp",
-                                    "shard_id": shard.shard_id
-                                }
+                                {"action": "get_shard_timestamp", "shard_id": shard.shard_id},
                             )
 
                             remote_timestamp = 0
@@ -1836,21 +1812,26 @@ class DistributedDatasetManager:
                                 remote_timestamp = shard_timestamp_response.get("modified_time", 0)
 
                             # If remote version is older or not found, sync our version
-                            if shard_timestamp_response.get("status") == "not_found" or shard.modified_time > remote_timestamp:
+                            if (
+                                shard_timestamp_response.get("status") == "not_found"
+                                or shard.modified_time > remote_timestamp
+                            ):
                                 sync_response = await self.node.send_message(
                                     peer_id,
                                     NetworkProtocol.SHARD_SYNC,
                                     {
                                         "action": "sync_shard",
                                         "shard_id": shard.shard_id,
-                                        "metadata": shard.__dict__
-                                    }
+                                        "metadata": shard.__dict__,
+                                    },
                                 )
 
                                 if sync_response.get("status") == "success":
                                     results["shards_updated"] += 1
                         except Exception as e:
-                            logging.error(f"Error syncing shard {shard.shard_id} with peer {peer_id}: {str(e)}")
+                            logging.error(
+                                f"Error syncing shard {shard.shard_id} with peer {peer_id}: {str(e)}"
+                            )
 
                 results["peers_synced"] += 1
 
@@ -1859,7 +1840,9 @@ class DistributedDatasetManager:
 
         return results
 
-    async def rebalance_shards(self, dataset_id: Optional[str] = None, target_replication: Optional[int] = None) -> Dict[str, Any]:
+    async def rebalance_shards(
+        self, dataset_id: Optional[str] = None, target_replication: Optional[int] = None
+    ) -> Dict[str, Any]:
         """
         Rebalance shards across nodes to ensure proper distribution and replication.
 
@@ -1878,7 +1861,7 @@ class DistributedDatasetManager:
             return {
                 "status": "insufficient_nodes",
                 "message": "At least 2 nodes are required for rebalancing",
-                "shards_rebalanced": 0
+                "shards_rebalanced": 0,
             }
 
         # Determine datasets to rebalance
@@ -1890,7 +1873,7 @@ class DistributedDatasetManager:
                 return {
                     "status": "dataset_not_found",
                     "message": f"Dataset {dataset_id} not found",
-                    "shards_rebalanced": 0
+                    "shards_rebalanced": 0,
                 }
         else:
             datasets_to_rebalance = list(self.shard_manager.datasets.values())
@@ -1906,14 +1889,15 @@ class DistributedDatasetManager:
 
             # Get all shards for this dataset
             dataset_shards = [
-                shard for shard in self.shard_manager.shards.values()
+                shard
+                for shard in self.shard_manager.shards.values()
                 if shard.dataset_id == current_dataset_id
             ]
 
             dataset_results = {
                 "total_shards": len(dataset_shards),
                 "rebalanced_shards": 0,
-                "failed_shards": 0
+                "failed_shards": 0,
             }
 
             # Analyze shard distribution
@@ -1924,18 +1908,21 @@ class DistributedDatasetManager:
                 # If under-replicated, add more replicas
                 if current_replication < dataset_replication:
                     # Find nodes that don't have this shard
-                    candidate_nodes = [node for node in available_nodes if node not in current_nodes]
+                    candidate_nodes = [
+                        node for node in available_nodes if node not in current_nodes
+                    ]
 
                     if candidate_nodes:
                         # Calculate how many more replicas we need
-                        additional_replicas = min(dataset_replication - current_replication, len(candidate_nodes))
+                        additional_replicas = min(
+                            dataset_replication - current_replication, len(candidate_nodes)
+                        )
                         target_nodes = random.sample(candidate_nodes, additional_replicas)
 
                         try:
                             # Distribute the shard to new nodes
                             successful_transfers = await self.shard_manager.distribute_shard(
-                                shard_id=shard.shard_id,
-                                target_nodes=target_nodes
+                                shard_id=shard.shard_id, target_nodes=target_nodes
                             )
 
                             if successful_transfers:
@@ -1950,5 +1937,5 @@ class DistributedDatasetManager:
         return {
             "status": "success",
             "total_shards_rebalanced": total_shards_rebalanced,
-            "datasets": rebalance_results
+            "datasets": rebalance_results,
         }

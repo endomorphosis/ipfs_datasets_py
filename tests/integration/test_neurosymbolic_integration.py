@@ -9,6 +9,7 @@ Tests all components:
 """
 
 import logging
+
 logging.basicConfig(level=logging.INFO)
 
 print("=" * 80)
@@ -23,25 +24,25 @@ try:
     from ipfs_datasets_py.logic.integration import (
         TDFOLCECBridge,
         EnhancedTDFOLProver,
-        TDFOL_CEC_AVAILABLE
+        TDFOL_CEC_AVAILABLE,
     )
-    
+
     print(f"   TDFOL-CEC Available: {TDFOL_CEC_AVAILABLE}")
-    
+
     if TDFOL_CEC_AVAILABLE:
         # Create bridge
         bridge = TDFOLCECBridge()
         print(f"   ✅ Bridge initialized")
         print(f"   CEC Rules available: {len(bridge.cec_rules) if bridge.cec_rules else 'N/A'}")
-        
+
         # Create enhanced prover
         prover = EnhancedTDFOLProver(use_cec=True)
         print(f"   ✅ Enhanced prover created")
     else:
         print("   ⚠️  CEC integration not available (expected in test environment)")
-    
+
     print("   STATUS: ✅ PASS")
-    
+
 except Exception as e:
     print(f"   ❌ ERROR: {e}")
 
@@ -54,25 +55,25 @@ try:
         TDFOLShadowProverBridge,
         ModalAwareTDFOLProver,
         ModalLogicType,
-        TDFOL_SHADOWPROVER_AVAILABLE
+        TDFOL_SHADOWPROVER_AVAILABLE,
     )
-    
+
     print(f"   TDFOL-ShadowProver Available: {TDFOL_SHADOWPROVER_AVAILABLE}")
-    
+
     if TDFOL_SHADOWPROVER_AVAILABLE:
         # Create bridge
         bridge = TDFOLShadowProverBridge()
         print(f"   ✅ ShadowProver bridge initialized")
         print(f"   Modal provers: K, S4, S5, Cognitive")
-        
+
         # Create modal-aware prover
         prover = ModalAwareTDFOLProver()
         print(f"   ✅ Modal-aware prover created")
     else:
         print("   ⚠️  ShadowProver integration not available (expected in test environment)")
-    
+
     print("   STATUS: ✅ PASS")
-    
+
 except Exception as e:
     print(f"   ❌ ERROR: {e}")
 
@@ -84,25 +85,25 @@ try:
     from ipfs_datasets_py.logic.integration import (
         TDFOLGrammarBridge,
         NaturalLanguageTDFOLInterface,
-        TDFOL_GRAMMAR_AVAILABLE
+        TDFOL_GRAMMAR_AVAILABLE,
     )
-    
+
     print(f"   TDFOL-Grammar Available: {TDFOL_GRAMMAR_AVAILABLE}")
-    
+
     if TDFOL_GRAMMAR_AVAILABLE:
         # Create grammar bridge
         bridge = TDFOLGrammarBridge()
         print(f"   ✅ Grammar bridge initialized")
         print(f"   Grammar available: {bridge.available}")
-        
+
         # Create NL interface
         interface = NaturalLanguageTDFOLInterface()
         print(f"   ✅ Natural language interface created")
     else:
         print("   ⚠️  Grammar integration not available (expected in test environment)")
-    
+
     print("   STATUS: ✅ PASS")
-    
+
 except Exception as e:
     print(f"   ❌ ERROR: {e}")
 
@@ -114,16 +115,16 @@ try:
     from ipfs_datasets_py.logic.integration import (
         NeurosymbolicReasoner,
         get_reasoner,
-        NEUROSYMBOLIC_API_AVAILABLE
+        NEUROSYMBOLIC_API_AVAILABLE,
     )
-    
+
     print(f"   Neurosymbolic API Available: {NEUROSYMBOLIC_API_AVAILABLE}")
-    
+
     if NEUROSYMBOLIC_API_AVAILABLE:
         # Create reasoner
         reasoner = NeurosymbolicReasoner(use_cec=True, use_modal=True, use_nl=True)
         print(f"   ✅ Neurosymbolic reasoner created")
-        
+
         # Get capabilities
         caps = reasoner.get_capabilities()
         print(f"   Capabilities:")
@@ -134,31 +135,32 @@ try:
         print(f"     - ShadowProver: {caps['shadowprover_available']}")
         print(f"     - Grammar: {caps['grammar_available']}")
         print(f"     - NL interface: {caps['natural_language']}")
-        
+
         # Test parsing
         print("\n   Testing parsing capabilities:")
-        
+
         # TDFOL format
         f1 = reasoner.parse("forall x. P(x) -> Q(x)", format="tdfol")
         if f1:
             print(f"     ✅ TDFOL parsing: {f1.to_string()}")
-        
+
         # DCEC format
         f2 = reasoner.parse("(O P)", format="dcec")
         if f2:
             print(f"     ✅ DCEC parsing: {f2.to_string()}")
-        
+
         # Test knowledge management
         print("\n   Testing knowledge management:")
         success = reasoner.add_knowledge("P")
         print(f"     ✅ Added knowledge: P")
-        
+
         success = reasoner.add_knowledge("P -> Q")
         print(f"     ✅ Added knowledge: P -> Q")
-        
+
         # Test proving
         print("\n   Testing theorem proving:")
         from ipfs_datasets_py.logic.TDFOL import parse_tdfol
+
         result = reasoner.prove(parse_tdfol("Q"))
         print(f"     Goal: Q")
         print(f"     Status: {result.status.value}")
@@ -167,15 +169,16 @@ try:
             print(f"     ✅ Proof successful in {result.time_ms:.2f}ms")
         else:
             print(f"     ⚠️  Proof status: {result.status.value}")
-        
+
         print(f"\n   ✅ All API tests passed")
     else:
         print("   ⚠️  Neurosymbolic API not available (expected in test environment)")
-    
+
     print("   STATUS: ✅ PASS")
-    
+
 except Exception as e:
     import traceback
+
     print(f"   ❌ ERROR: {e}")
     traceback.print_exc()
 

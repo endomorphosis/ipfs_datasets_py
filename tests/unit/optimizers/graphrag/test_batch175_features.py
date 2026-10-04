@@ -9,6 +9,7 @@ Methods under test:
   - LogicValidator.isolated_node_count(ontology)
   - OntologyCritic.dimension_weighted_sum(score, weights)
 """
+
 import pytest
 
 
@@ -24,26 +25,33 @@ def _push_opt(o, avg):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
 def _push_feedback(adapter, score):
     from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import FeedbackRecord
+
     adapter._feedback.append(FeedbackRecord(final_score=score))
 
 
 def _make_entity(eid, etype="T", confidence=0.5):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type=etype, text=eid, confidence=confidence)
 
 
 def _make_result(entities, rels=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities, relationships=rels or [], confidence=1.0, metadata={}, errors=[]
     )
@@ -51,6 +59,7 @@ def _make_result(entities, rels=None):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
@@ -70,14 +79,20 @@ class _FakeOntology:
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
 def _make_score(**kwargs):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     defaults = dict(
-        completeness=0.5, consistency=0.5, clarity=0.5,
-        granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+        completeness=0.5,
+        consistency=0.5,
+        clarity=0.5,
+        granularity=0.5,
+        relationship_coherence=0.5,
+        domain_alignment=0.5,
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -85,10 +100,12 @@ def _make_score(**kwargs):
 
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
 # ── OntologyOptimizer.score_trend_strength ────────────────────────────────────
+
 
 class TestScoreTrendStrength:
     def test_empty_returns_zero(self):
@@ -121,6 +138,7 @@ class TestScoreTrendStrength:
 
 # ── OntologyLearningAdapter.feedback_volatility ───────────────────────────────
 
+
 class TestFeedbackVolatility:
     def test_empty_returns_zero(self):
         a = _make_adapter()
@@ -148,6 +166,7 @@ class TestFeedbackVolatility:
 
 # ── OntologyLearningAdapter.feedback_trend_direction ─────────────────────────
 
+
 class TestFeedbackTrendDirection:
     def test_empty_returns_flat(self):
         a = _make_adapter()
@@ -173,6 +192,7 @@ class TestFeedbackTrendDirection:
 
 # ── OntologyGenerator.entity_type_entropy ────────────────────────────────────
 
+
 class TestEntityTypeEntropy:
     def test_empty_returns_zero(self):
         gen = _make_generator()
@@ -185,8 +205,12 @@ class TestEntityTypeEntropy:
 
     def test_equal_types_max_entropy(self):
         gen = _make_generator()
-        entities = [_make_entity("e1", "A"), _make_entity("e2", "B"),
-                    _make_entity("e3", "C"), _make_entity("e4", "D")]
+        entities = [
+            _make_entity("e1", "A"),
+            _make_entity("e2", "B"),
+            _make_entity("e3", "C"),
+            _make_entity("e4", "D"),
+        ]
         entropy = gen.entity_type_entropy(_make_result(entities))
         # 4 equal types → log2(4) = 2.0
         assert entropy == pytest.approx(2.0)
@@ -198,6 +222,7 @@ class TestEntityTypeEntropy:
 
 
 # ── LogicValidator.root_node_count ────────────────────────────────────────────
+
 
 class TestRootNodeCount:
     def test_no_rels_returns_zero(self):
@@ -222,9 +247,11 @@ class TestRootNodeCount:
 
 # ── LogicValidator.isolated_node_count ───────────────────────────────────────
 
+
 class TestIsolatedNodeCount:
     def _entity(self, eid):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
         return Entity(id=eid, type="T", text=eid)
 
     def test_no_entities_attr_returns_zero(self):
@@ -247,6 +274,7 @@ class TestIsolatedNodeCount:
 
 
 # ── OntologyCritic.dimension_weighted_sum ────────────────────────────────────
+
 
 class TestDimensionWeightedSum:
     def test_equal_weights_equals_sum(self):

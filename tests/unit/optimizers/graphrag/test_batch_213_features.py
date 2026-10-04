@@ -8,11 +8,13 @@ Methods under test:
   - OntologyPipeline.run_score_autocorrelation(lag)
   - LogicValidator.clustering_coefficient_approx(ontology)
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 # ── helpers ───────────────────────────────────────────────────────────────────
+
 
 class _FakeEntry:
     def __init__(self, avg):
@@ -25,18 +27,26 @@ def _push_opt(o, avg):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
 def _make_critic_direct():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic.__new__(OntologyCritic)
 
 
-def _make_critic_score(completeness=0.8, consistency=0.7, clarity=0.6,
-                        granularity=0.5, relationship_coherence=0.4,
-                        domain_alignment=0.3):
+def _make_critic_score(
+    completeness=0.8,
+    consistency=0.7,
+    clarity=0.6,
+    granularity=0.5,
+    relationship_coherence=0.4,
+    domain_alignment=0.3,
+):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     return CriticScore(
         completeness=completeness,
         consistency=consistency,
@@ -49,11 +59,13 @@ def _make_critic_score(completeness=0.8, consistency=0.7, clarity=0.6,
 
 def _make_entity(eid, confidence=1.0, entity_type="T"):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type=entity_type, text=eid, confidence=confidence)
 
 
 def _make_result(entities=None, relationships=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities or [],
         relationships=relationships or [],
@@ -63,21 +75,27 @@ def _make_result(entities=None, relationships=None):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
 def _push_feedback(a, score):
     from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import FeedbackRecord
+
     a._feedback.append(FeedbackRecord(final_score=score))
 
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -89,6 +107,7 @@ def _push_run(p, score_val):
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
@@ -97,15 +116,14 @@ def ontology_builder(ontology_dict_factory):
     def _build(entity_ids, edge_pairs):
         ontology = ontology_dict_factory(entity_count=0, relationship_count=0)
         ontology["entities"] = [{"id": eid} for eid in entity_ids]
-        ontology["relationships"] = [
-            {"source": s, "target": t} for s, t in edge_pairs
-        ]
+        ontology["relationships"] = [{"source": s, "target": t} for s, t in edge_pairs]
         return ontology
 
     return _build
 
 
 # ── OntologyOptimizer.score_zscore_outliers ──────────────────────────────────
+
 
 class TestScoreZscoreOutliers:
     def test_empty_returns_empty(self):
@@ -161,13 +179,14 @@ class TestScoreZscoreOutliers:
         # so z of outliers > 2.0; z of outlier ≈ sqrt(k/(1+outlier fraction)))
         for _ in range(10):
             _push_opt(o, 0.5)
-        _push_opt(o, -1000.0)   # low outlier
-        _push_opt(o, 1000.0)    # high outlier
+        _push_opt(o, -1000.0)  # low outlier
+        _push_opt(o, 1000.0)  # high outlier
         result = o.score_zscore_outliers(threshold=2.0)
         assert len(result) >= 2
 
 
 # ── OntologyCritic.dimension_weighted_std ────────────────────────────────────
+
 
 class TestDimensionWeightedStd:
     def test_uniform_returns_zero(self):
@@ -212,6 +231,7 @@ class TestDimensionWeightedStd:
 
 
 # ── OntologyGenerator.entity_confidence_weighted_mean ────────────────────────
+
 
 class TestEntityConfidenceWeightedMean:
     def test_empty_returns_zero(self):
@@ -285,6 +305,7 @@ class TestEntityConfidenceWeightedMean:
 
 # ── OntologyLearningAdapter.feedback_decay_mean ──────────────────────────────
 
+
 class TestFeedbackDecayMean:
     def test_empty_returns_zero(self):
         a = _make_adapter()
@@ -297,8 +318,8 @@ class TestFeedbackDecayMean:
 
     def test_decay_weights_recency(self):
         a = _make_adapter()
-        _push_feedback(a, 0.0)   # old
-        _push_feedback(a, 1.0)   # recent
+        _push_feedback(a, 0.0)  # old
+        _push_feedback(a, 1.0)  # recent
         # decay=0.9: weights=[0.9^1, 0.9^0] = [0.9, 1.0]
         # mean = (0.9*0.0 + 1.0*1.0) / 1.9 = 1.0/1.9 ≈ 0.526
         result = a.feedback_decay_mean(decay=0.9)
@@ -341,6 +362,7 @@ class TestFeedbackDecayMean:
 
 
 # ── OntologyPipeline.run_score_autocorrelation ────────────────────────────────
+
 
 class TestRunScoreAutocorrelation:
     def test_empty_returns_zero(self):
@@ -401,6 +423,7 @@ class TestRunScoreAutocorrelation:
 
 
 # ── LogicValidator.clustering_coefficient_approx ─────────────────────────────
+
 
 class TestClusteringCoefficientApprox:
     def test_empty_returns_zero(self):

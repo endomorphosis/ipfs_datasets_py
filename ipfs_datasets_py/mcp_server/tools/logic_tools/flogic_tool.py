@@ -35,6 +35,7 @@ try:
         FLogicFrame,
         FLogicStatus,
     )
+
     _FLOGIC_AVAILABLE = True
 except Exception as _flogic_err:
     logger.warning("F-logic module not available: %s", _flogic_err)
@@ -205,9 +206,11 @@ async def flogic_check_consistency(
     #       module level (tracked separately).
     import importlib.util as _ilu
     import sys as _sys
+
     _mod_name = "ipfs_datasets_py.logic.flogic_optimizer"
     if _mod_name not in _sys.modules:
         import pathlib as _pl
+
         _path = (
             _pl.Path(__file__).resolve().parents[4]
             / "ipfs_datasets_py"
@@ -284,6 +287,7 @@ async def flogic_normalize_term(
             get_global_normalizer,
             _SYMAI_AVAILABLE,
         )
+
         norm = get_global_normalizer()
     except Exception as exc:
         logger.warning("SemanticNormalizer unavailable: %s", exc)
@@ -297,11 +301,13 @@ async def flogic_normalize_term(
             canonical = norm.normalize_goal(t)
         else:
             canonical = norm.normalize_term(t)
-        results.append({
-            "input": t,
-            "canonical": canonical,
-            "changed": canonical != t,
-        })
+        results.append(
+            {
+                "input": t,
+                "canonical": canonical,
+                "changed": canonical != t,
+            }
+        )
 
     return {
         "success": True,

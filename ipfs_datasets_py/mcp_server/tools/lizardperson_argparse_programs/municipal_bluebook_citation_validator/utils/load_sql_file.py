@@ -1,5 +1,6 @@
 from pathlib import Path
 
+
 def load_sql_file(path: str | Path, encoding="utf-8") -> str:
     """
     Load and return the contents of a SQL file as a string.

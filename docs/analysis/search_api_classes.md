@@ -43,12 +43,7 @@ print(install_status)
 # }
 
 # Configure settings
-config = api._config(
-    timeout=60,
-    max_count=15,
-    default_lang="en",
-    default_country="US"
-)
+config = api._config(timeout=60, max_count=15, default_lang="en", default_country="US")
 
 # Queue operations
 api._queue("search", query="machine learning", count=10)
@@ -74,17 +69,17 @@ api = OpenVerseSearchAPI(api_key="your_api_key")  # Optional
 
 # Verify installation
 install_info = api._install()
-if install_info['status'] != 'success':
+if install_info["status"] != "success":
     print("Missing dependencies:")
-    for dep, info in install_info['dependencies'].items():
-        if not info['installed']:
+    for dep, info in install_info["dependencies"].items():
+        if not info["installed"]:
             print(f"  - {dep}: {info['install_command']}")
 
 # Configure
 api._config(
     max_results=100,
     timeout=30,
-    default_license_type="cc0"  # Public domain only
+    default_license_type="cc0",  # Public domain only
 )
 
 # Queue searches
@@ -107,17 +102,13 @@ api = SerpStackSearchAPI(api_key="your_api_key")
 
 # Check ready status
 install_info = api._install()
-if not install_info.get('ready'):
+if not install_info.get("ready"):
     print("Setup required:")
-    for step, instruction in install_info['instructions'].items():
+    for step, instruction in install_info["instructions"].items():
         print(f"  {step}. {instruction}")
 
 # Configure
-api._config(
-    default_engine="google",
-    max_results=100,
-    timeout=30
-)
+api._config(default_engine="google", max_results=100, timeout=30)
 
 # Queue multiple engine searches
 api._queue("search", query="python tutorials", engine="google", num=10)
@@ -139,26 +130,10 @@ Verifies dependencies and provides installation instructions.
 ```python
 {
     "status": "success" | "incomplete",
-    "dependencies": {
-        "package_name": {
-            "installed": bool,
-            "required": bool,
-            "install_command": str
-        }
-    },
-    "environment_variables": {
-        "VAR_NAME": {
-            "set": bool,
-            "required": bool,
-            "description": str
-        }
-    },
-    "instructions": {
-        "1": "First step...",
-        "2": "Second step...",
-        "3": "Third step..."
-    },
-    "ready": bool  # All dependencies met
+    "dependencies": {"package_name": {"installed": bool, "required": bool, "install_command": str}},
+    "environment_variables": {"VAR_NAME": {"set": bool, "required": bool, "description": str}},
+    "instructions": {"1": "First step...", "2": "Second step...", "3": "Third step..."},
+    "ready": bool,  # All dependencies met
 }
 ```
 
@@ -200,10 +175,10 @@ Queues operations for batch processing.
         "operation": str,
         "params": {...},
         "queued_at": str,
-        "status": "queued"
+        "status": "queued",
     },
     "queue_length": int,
-    "message": str
+    "message": str,
 }
 ```
 
@@ -214,6 +189,7 @@ All search functions now include comprehensive input validation:
 ```python
 import asyncio
 from ipfs_datasets_py.mcp_server.tools.web_archive_tools.brave_search import search_brave
+
 
 async def example():
     # Invalid count - will return detailed error
@@ -229,6 +205,7 @@ async def example():
     #     "help": "Set count parameter between 1 and 20"
     # }
 
+
 asyncio.run(example())
 ```
 
@@ -240,10 +217,8 @@ All functions provide detailed error messages for language models:
 {
     "status": "error",
     "error": "Human-readable error message",
-    "validation": {
-        "parameter_name": "Validation rule description"
-    },
-    "help": "Specific guidance on how to fix the error"
+    "validation": {"parameter_name": "Validation rule description"},
+    "help": "Specific guidance on how to fix the error",
 }
 ```
 
@@ -269,28 +244,21 @@ Search Creative Commons licensed media:
 from ipfs_datasets_py.mcp_server.tools.web_archive_tools import (
     search_openverse_images,
     search_openverse_audio,
-    batch_search_openverse
+    batch_search_openverse,
 )
 
 # Search CC images
 result = await search_openverse_images(
     query="nature photography",
     license_type="cc0",  # Public domain
-    page_size=20
+    page_size=20,
 )
 
 # Search CC audio
-result = await search_openverse_audio(
-    query="classical music",
-    source="jamendo",
-    page_size=10
-)
+result = await search_openverse_audio(query="classical music", source="jamendo", page_size=10)
 
 # Batch search
-result = await batch_search_openverse(
-    queries=["nature", "technology", "art"],
-    search_type="images"
-)
+result = await batch_search_openverse(queries=["nature", "technology", "art"], search_type="images")
 ```
 
 ### SerpStack API
@@ -301,31 +269,20 @@ Multi-engine search results:
 from ipfs_datasets_py.mcp_server.tools.web_archive_tools import (
     search_serpstack,
     search_serpstack_images,
-    batch_search_serpstack
+    batch_search_serpstack,
 )
 
 # Search with Google
 result = await search_serpstack(
-    query="machine learning",
-    engine="google",
-    num=10,
-    location="United States"
+    query="machine learning", engine="google", num=10, location="United States"
 )
 
 # Search with Bing
-result = await search_serpstack(
-    query="deep learning",
-    engine="bing",
-    num=10
-)
+result = await search_serpstack(query="deep learning", engine="bing", num=10)
 
 # Batch search across engines
 queries = ["python", "javascript", "rust"]
-result = await batch_search_serpstack(
-    queries=queries,
-    engine="google",
-    num=5
-)
+result = await batch_search_serpstack(queries=queries, engine="google", num=5)
 ```
 
 ## Complete Example
@@ -335,35 +292,37 @@ import asyncio
 from ipfs_datasets_py.mcp_server.tools.web_archive_tools import (
     BraveSearchAPI,
     OpenVerseSearchAPI,
-    SerpStackSearchAPI
+    SerpStackSearchAPI,
 )
+
 
 async def complete_workflow():
     # Initialize APIs
     brave = BraveSearchAPI()
     openverse = OpenVerseSearchAPI()
     serpstack = SerpStackSearchAPI()
-    
+
     # Check installations
     print("Checking installations...")
     for api, name in [(brave, "Brave"), (openverse, "OpenVerse"), (serpstack, "SerpStack")]:
         status = api._install()
         print(f"{name}: {'✓ Ready' if status.get('ready') else '⚠ Setup needed'}")
-    
+
     # Configure all APIs
     brave._config(timeout=60, max_count=15)
     openverse._config(max_results=50)
     serpstack._config(default_engine="google")
-    
+
     # Queue operations
     brave._queue("search", query="AI datasets", count=10)
     openverse._queue("search_images", query="data visualization", page_size=20)
     serpstack._queue("search", query="open datasets", engine="google", num=10)
-    
+
     # Check queue status
     print(f"\nBrave queue: {brave.get_queue_status()['queue_length']} operations")
     print(f"OpenVerse queue: {openverse.get_queue_status()['queue_length']} operations")
     print(f"SerpStack queue: {serpstack.get_queue_status()['queue_length']} operations")
+
 
 asyncio.run(complete_workflow())
 ```

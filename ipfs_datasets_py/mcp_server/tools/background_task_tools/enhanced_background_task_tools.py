@@ -5,6 +5,7 @@ Business logic is in ipfs_datasets_py.tasks.background_task_engine (via the
 local background_task_engine.py shim).  Each function below replaces a class
 that previously extended EnhancedBaseMCPTool.
 """
+
 from __future__ import annotations
 
 import logging
@@ -25,6 +26,7 @@ _task_manager = MockTaskManager()
 # ---------------------------------------------------------------------------
 # 1.  manage_background_task  (was EnhancedBackgroundTaskTool)
 # ---------------------------------------------------------------------------
+
 
 async def manage_background_task(
     action: str = "create",
@@ -52,50 +54,91 @@ async def manage_background_task(
                 estimated_duration=cfg.get("timeout", 300),
             )
             logger.info("Background task created: %s (type: %s)", new_id, task_type)
-            return {"status": "success", "task_id": new_id, "task_type": task_type,
-                    "message": "Background task created successfully"}
+            return {
+                "status": "success",
+                "task_id": new_id,
+                "task_type": task_type,
+                "message": "Background task created successfully",
+            }
 
         elif action == "get":
             if not task_id:
-                return {"status": "error", "error": "task_id is required for get action", "code": "MISSING_TASK_ID"}
+                return {
+                    "status": "error",
+                    "error": "task_id is required for get action",
+                    "code": "MISSING_TASK_ID",
+                }
             task = await _task_manager.get_task(task_id)
             if not task:
                 return {"status": "error", "error": "Task not found", "code": "TASK_NOT_FOUND"}
-            return {"status": "success", "task": task.to_dict(), "message": "Task retrieved successfully"}
+            return {
+                "status": "success",
+                "task": task.to_dict(),
+                "message": "Task retrieved successfully",
+            }
 
         elif action == "list":
             tasks = await _task_manager.list_tasks(**(filters or {}))
-            return {"status": "success", "tasks": [t.to_dict() for t in tasks],
-                    "count": len(tasks), "message": f"Found {len(tasks)} tasks"}
+            return {
+                "status": "success",
+                "tasks": [t.to_dict() for t in tasks],
+                "count": len(tasks),
+                "message": f"Found {len(tasks)} tasks",
+            }
 
         elif action == "cancel":
             if not task_id:
-                return {"status": "error", "error": "task_id is required for cancel action", "code": "MISSING_TASK_ID"}
+                return {
+                    "status": "error",
+                    "error": "task_id is required for cancel action",
+                    "code": "MISSING_TASK_ID",
+                }
             cancelled = await _task_manager.cancel_task(task_id)
             if not cancelled:
-                return {"status": "error", "error": "Task not found or cannot be cancelled", "code": "CANCEL_FAILED"}
-            return {"status": "success", "task_id": task_id, "message": "Task cancelled successfully"}
+                return {
+                    "status": "error",
+                    "error": "Task not found or cannot be cancelled",
+                    "code": "CANCEL_FAILED",
+                }
+            return {
+                "status": "success",
+                "task_id": task_id,
+                "message": "Task cancelled successfully",
+            }
 
         elif action == "cleanup":
             opts = task_config or {}
             max_age = opts.get("max_age_hours", 24)
             cleaned = await _task_manager.cleanup_completed_tasks(max_age_hours=max_age)
-            return {"status": "success", "cleaned_up": len(cleaned), "task_ids": cleaned,
-                    "message": f"Cleaned up {len(cleaned)} completed tasks"}
+            return {
+                "status": "success",
+                "cleaned_up": len(cleaned),
+                "task_ids": cleaned,
+                "message": f"Cleaned up {len(cleaned)} completed tasks",
+            }
 
         else:
-            return {"status": "error", "error": f"Unknown action: {action}", "code": "UNKNOWN_ACTION",
-                    "valid_actions": ["create", "get", "list", "cancel", "cleanup"]}
+            return {
+                "status": "error",
+                "error": f"Unknown action: {action}",
+                "code": "UNKNOWN_ACTION",
+                "valid_actions": ["create", "get", "list", "cancel", "cleanup"],
+            }
 
     except Exception as exc:
         logger.error("Background task operation error: %s", exc)
-        return {"status": "error", "error": "Background task operation failed",
-                "code": "OPERATION_FAILED", "message": str(exc)}
+        return {
+            "status": "error",
+            "error": "Background task operation failed",
+            "code": "OPERATION_FAILED",
+            "message": str(exc),
+        }
 
 
 # ---------------------------------------------------------------------------
 # 2.  get_task_status  (was EnhancedTaskStatusTool)
 # ---------------------------------------------------------------------------
+
 
 async def get_task_status(
     task_id: Optional[str] = None,
@@ -141,9 +184,17 @@ async def get_task_status(
                 "task_ids": [t.to_dict().get("task_id") for t in tasks],
             }
 
-        return {"status": "success", **response_data, "message": "Task status retrieved successfully"}
+        return {
+            "status": "success",
+            **response_data,
+            "message": "Task status retrieved successfully",
+        }
 
     except Exception as exc:
         logger.error("Task status retrieval error: %s", exc)
-        return {"status": "error", "error": "Task status retrieval failed",
-                "code": "STATUS_FAILED", "message": str(exc)}
+        return {
+            "status": "error",
+            "error": "Task status retrieval failed",
+            "code": "STATUS_FAILED",
+            "message": str(exc),
+        }

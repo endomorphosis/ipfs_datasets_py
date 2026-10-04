@@ -86,4 +86,3 @@ class TestRunScoreVelocitySkewness:
         _set_run_history(pipeline, [0.0, 0.1, 0.2, 0.7])
 
         assert pipeline.run_score_velocity_skewness() > 0.0
-

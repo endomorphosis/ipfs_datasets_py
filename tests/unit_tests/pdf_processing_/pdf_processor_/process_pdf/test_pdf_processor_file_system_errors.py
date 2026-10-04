@@ -16,6 +16,7 @@ from unittest.mock import patch, mock_open
 
 from ipfs_datasets_py.pdf_processing.pdf_processor import PDFProcessor
 
+
 @pytest.fixture
 def valid_file_path(tmp_path: Path) -> str:
     """Generate a valid file path for testing."""
@@ -54,47 +55,48 @@ def no_permissions_file_path(tmp_path: Path):
 
 @pytest.fixture
 def test_scenarios(
-        unreachable_network_path,
-        nonexistent_file_path,
-        no_permissions_file_path,
-        locked_pdf_file
-        ):
+    unreachable_network_path, nonexistent_file_path, no_permissions_file_path, locked_pdf_file
+):
     """Store test paths."""
     return {
-        'unreachable_network': unreachable_network_path,
-        'nonexistent_file': nonexistent_file_path,
-        'no_permissions': no_permissions_file_path,
-        'locked_file': locked_pdf_file
+        "unreachable_network": unreachable_network_path,
+        "nonexistent_file": nonexistent_file_path,
+        "no_permissions": no_permissions_file_path,
+        "locked_file": locked_pdf_file,
     }
+
 
 @pytest.fixture
 def expected_permission_denied_message() -> str:
     """Expected error message for permission denied."""
     return "Insufficient permissions to read PDF file"
 
+
 @pytest.fixture
 def expected_locked_file_message() -> str:
     """Expected error message for locked file."""
     return "PDF file is locked by another process"
+
 
 @pytest.fixture
 def expected_file_not_found_message() -> str:
     """Expected error message for file not found."""
     return "does not exist"
 
+
 @pytest.fixture
 def expected_error_messages(
     expected_permission_denied_message,
     expected_locked_file_message,
     expected_file_not_found_message,
-    ) -> dict:
+) -> dict:
     """Aggregate expected error messages for file system errors."""
     return {
-        'no_permissions': expected_permission_denied_message,
-        'locked_file': expected_locked_file_message,
-        'nonexistent_file': expected_file_not_found_message,
-        'unreachable_network': expected_file_not_found_message,
-        'file_deleted_during_processing': expected_file_not_found_message,
+        "no_permissions": expected_permission_denied_message,
+        "locked_file": expected_locked_file_message,
+        "nonexistent_file": expected_file_not_found_message,
+        "unreachable_network": expected_file_not_found_message,
+        "file_deleted_during_processing": expected_file_not_found_message,
     }
 
 
@@ -106,17 +108,21 @@ def mock_open_with_deletion(tmp_path: Path):
     This simulates a file being deleted during processing.
     """
     original_open = open
+
     def mock_open_with_deletion(*args, **kwargs):
         if args[0] == tmp_path:
             # Delete the file before opening
             tmp_path.unlink()
             raise FileNotFoundError(f"No such file: {tmp_path}")
         return original_open(*args, **kwargs)
+
     return mock_open_with_deletion
+
 
 @pytest.fixture
 def expected_status_error():
     return "error"
+
 
 class TestProcessPdfFileSystemNonFatalErrors:
     """
@@ -134,12 +140,12 @@ class TestProcessPdfFileSystemNonFatalErrors:
 
     @pytest.mark.asyncio
     async def test_when_file_deleted_during_processing_then_returns_error_status(
-        self, 
-        real_pdf_processor_defaults, 
+        self,
+        real_pdf_processor_defaults,
         valid_file_path,
         valid_metadata,
         mock_open_with_deletion,
-        expected_status_error
+        expected_status_error,
     ):
         """
         GIVEN a file that gets deleted during processing
@@ -149,17 +155,13 @@ class TestProcessPdfFileSystemNonFatalErrors:
         with patch("builtins.open", side_effect=mock_open_with_deletion):
             result = await real_pdf_processor_defaults.process_pdf(valid_file_path, valid_metadata)
 
-        assert result['status'] == expected_status_error, \
+        assert result["status"] == expected_status_error, (
             f"Expected status to be error, got {result['status']} instead."
-
+        )
 
     @pytest.mark.asyncio
     async def test_when_file_deleted_during_processing_then_error_message_contains_file_path(
-        self, 
-        real_pdf_processor_defaults, 
-        valid_file_path,
-        valid_metadata,
-        mock_open_with_deletion
+        self, real_pdf_processor_defaults, valid_file_path, valid_metadata, mock_open_with_deletion
     ):
         """
         GIVEN a file that gets deleted during processing
@@ -169,23 +171,27 @@ class TestProcessPdfFileSystemNonFatalErrors:
         with patch("builtins.open", side_effect=mock_open_with_deletion):
             result = await real_pdf_processor_defaults.process_pdf(valid_file_path, valid_metadata)
 
-        assert valid_file_path in result['error'], \
+        assert valid_file_path in result["error"], (
             f"Expected error message to contain '{valid_file_path}', got '{result['error']}' instead."
+        )
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("scenario", [
-        'no_permissions',
-        'unreachable_network',
-        'locked_file',
-        'nonexistent_file',
-    ])
+    @pytest.mark.parametrize(
+        "scenario",
+        [
+            "no_permissions",
+            "unreachable_network",
+            "locked_file",
+            "nonexistent_file",
+        ],
+    )
     async def test_when_file_encounters_bad_file_error_on_opening_then_returns_error_status(
-        self, 
-        scenario, 
-        real_pdf_processor_defaults: PDFProcessor, 
-        test_scenarios, 
-        valid_metadata, 
-        expected_status_error
+        self,
+        scenario,
+        real_pdf_processor_defaults: PDFProcessor,
+        test_scenarios,
+        valid_metadata,
+        expected_status_error,
     ):
         """
         GIVEN a file that encounters a file system error
@@ -196,24 +202,27 @@ class TestProcessPdfFileSystemNonFatalErrors:
 
         result = await real_pdf_processor_defaults.process_pdf(bad_file, valid_metadata)
 
-        assert result['status'] == expected_status_error, \
+        assert result["status"] == expected_status_error, (
             f"Expected status to be error, got {result['status']} instead."
-
+        )
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("scenario", [
-        'no_permissions',
-        'unreachable_network',
-        #'locked_file', FIXME locking it via open('w') doesn't actually lock the file.
-        'nonexistent_file',
-    ])
+    @pytest.mark.parametrize(
+        "scenario",
+        [
+            "no_permissions",
+            "unreachable_network",
+            #'locked_file', FIXME locking it via open('w') doesn't actually lock the file.
+            "nonexistent_file",
+        ],
+    )
     async def test_when_file_encounters_bad_file_on_opening_then_returns_error_status(
-        self, 
-        scenario, 
-        real_pdf_processor_defaults, 
+        self,
+        scenario,
+        real_pdf_processor_defaults,
         test_scenarios,
-        expected_error_messages, 
-        valid_metadata
+        expected_error_messages,
+        valid_metadata,
     ):
         """
         GIVEN a file that encounters a file system error
@@ -225,6 +234,6 @@ class TestProcessPdfFileSystemNonFatalErrors:
 
         result = await real_pdf_processor_defaults.process_pdf(bad_file, valid_metadata)
 
-        assert error_msg in result['error'], \
+        assert error_msg in result["error"], (
             f"Expected error message to contain '{error_msg}', got '{result['error']}' instead."
-
+        )

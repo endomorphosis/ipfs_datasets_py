@@ -12,7 +12,7 @@ from tests._test_utils import (
     raise_on_bad_callable_code_quality,
     get_ast_tree,
     BadDocumentationError,
-    BadSignatureError
+    BadSignatureError,
 )
 
 work_dir = os.path.abspath(os.path.dirname(__file__))
@@ -25,8 +25,12 @@ file_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/batch_proces
 md_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/batch_processor_stubs.md")
 
 # Make sure the input file and documentation file exist.
-assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
-assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+assert os.path.exists(file_path), (
+    f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
+)
+assert os.path.exists(md_path), (
+    f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+)
 
 import pytest
 import json
@@ -47,7 +51,7 @@ from ipfs_datasets_py.pdf_processing.batch_processor import (
     BatchProcessor,
     ProcessingJob,
     BatchJobResult,
-    BatchStatus
+    BatchStatus,
 )
 
 import pytest
@@ -57,11 +61,17 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 from ipfs_datasets_py.pdf_processing.batch_processor import (
-    BatchProcessor, ProcessingJob, BatchJobResult, BatchStatus
+    BatchProcessor,
+    ProcessingJob,
+    BatchJobResult,
+    BatchStatus,
 )
 from .conftest import (
-    SAMPLE_BATCH_SIZE, SUCCESSFUL_JOBS_COUNT, FAILED_JOBS_COUNT, 
-    PENDING_JOBS_COUNT, PROCESSING_TIME_FAST
+    SAMPLE_BATCH_SIZE,
+    SUCCESSFUL_JOBS_COUNT,
+    FAILED_JOBS_COUNT,
+    PENDING_JOBS_COUNT,
+    PROCESSING_TIME_FAST,
 )
 
 
@@ -103,23 +113,26 @@ class TestBatchProcessorBatchOperations:
             total_processing_time=50.0,
             average_job_time=50.0,
             throughput=0.0,
-            resource_usage={}
+            resource_usage={},
         )
         processor.active_batches[batch_id] = batch_status
-        
+
         # Add target jobs to queue
         target_jobs = [
-            ProcessingJob(job_id=f"job_{i}", pdf_path=f"/doc_{i}.pdf", 
-                         metadata={'batch_id': batch_id}) for i in range(PENDING_JOBS_COUNT)
+            ProcessingJob(
+                job_id=f"job_{i}", pdf_path=f"/doc_{i}.pdf", metadata={"batch_id": batch_id}
+            )
+            for i in range(PENDING_JOBS_COUNT)
         ]
-        
+
         # Add other batch job
-        other_job = ProcessingJob(job_id="other_job", pdf_path="/other.pdf",
-                                metadata={'batch_id': "other_batch"})
-        
+        other_job = ProcessingJob(
+            job_id="other_job", pdf_path="/other.pdf", metadata={"batch_id": "other_batch"}
+        )
+
         for job in target_jobs + [other_job]:
             processor.job_queue.put(job)
-            
+
         return processor, batch_id, batch_status
 
     @pytest.mark.asyncio
@@ -153,11 +166,11 @@ class TestBatchProcessorBatchOperations:
         """
         processor, batch_id, batch_status = cancel_batch_setup
         await processor.cancel_batch(batch_id)
-        
+
         remaining_jobs = []
         while not processor.job_queue.empty():
             remaining_jobs.append(processor.job_queue.get())
-        
+
         assert len(remaining_jobs) == 1
 
     @pytest.mark.asyncio
@@ -169,12 +182,12 @@ class TestBatchProcessorBatchOperations:
         """
         processor, batch_id, batch_status = cancel_batch_setup
         await processor.cancel_batch(batch_id)
-        
+
         remaining_jobs = []
         while not processor.job_queue.empty():
             remaining_jobs.append(processor.job_queue.get())
-        
-        assert remaining_jobs[0].metadata['batch_id'] == "other_batch"
+
+        assert remaining_jobs[0].metadata["batch_id"] == "other_batch"
 
     @pytest.mark.asyncio
     async def test_cancel_batch_nonexistent_returns_false(self, processor):
@@ -202,7 +215,7 @@ class TestBatchProcessorBatchOperations:
             total_processing_time=300.0,
             average_job_time=PROCESSING_TIME_FAST * 10,
             throughput=0.2,
-            resource_usage={}
+            resource_usage={},
         )
         processor.active_batches[batch_id] = batch_status
         return processor, batch_id, batch_status
@@ -231,230 +244,230 @@ class TestBatchProcessorBatchOperations:
         assert batch_status.end_time == original_end_time
 
     @pytest.mark.asyncio
-    async def test_export_batch_results_json_creates_file(self, processor, sample_batch_with_results):
+    async def test_export_batch_results_json_creates_file(
+        self, processor, sample_batch_with_results
+    ):
         """
         GIVEN a batch with completed and failed results
         WHEN export_batch_results is called with JSON format
         THEN it should create JSON file with complete batch data
         """
         batch_id, batch_status, completed_results, failed_results = sample_batch_with_results
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             output_path = Path(temp_dir) / "batch_export.json"
-            
+
             export_path = await processor.export_batch_results(
-                batch_id=batch_id,
-                format="json",
-                output_path=str(output_path)
+                batch_id=batch_id, format="json", output_path=str(output_path)
             )
-            
+
             assert export_path == str(output_path)
             assert output_path.exists()
 
     @pytest.mark.asyncio
-    async def test_export_batch_results_json_includes_batch_metadata(self, processor, sample_batch_with_results):
+    async def test_export_batch_results_json_includes_batch_metadata(
+        self, processor, sample_batch_with_results
+    ):
         """
         GIVEN a batch with completed and failed results
         WHEN export_batch_results is called with JSON format
         THEN it should include batch metadata in the export
         """
         batch_id, batch_status, completed_results, failed_results = sample_batch_with_results
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             output_path = Path(temp_dir) / "batch_export.json"
-            
+
             await processor.export_batch_results(
-                batch_id=batch_id,
-                format="json",
-                output_path=str(output_path)
+                batch_id=batch_id, format="json", output_path=str(output_path)
             )
-            
-            with open(output_path, 'r') as f:
+
+            with open(output_path, "r") as f:
                 data = json.load(f)
-            
-            assert data['batch_id'] == batch_id
-            assert data['batch_status']['total_jobs'] == SAMPLE_BATCH_SIZE
+
+            assert data["batch_id"] == batch_id
+            assert data["batch_status"]["total_jobs"] == SAMPLE_BATCH_SIZE
 
     @pytest.mark.asyncio
-    async def test_export_batch_results_json_includes_job_counts(self, processor, sample_batch_with_results):
+    async def test_export_batch_results_json_includes_job_counts(
+        self, processor, sample_batch_with_results
+    ):
         """
         GIVEN a batch with completed and failed results
         WHEN export_batch_results is called with JSON format
         THEN it should include job counts in hierarchical structure
         """
         batch_id, batch_status, completed_results, failed_results = sample_batch_with_results
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             output_path = Path(temp_dir) / "batch_export.json"
-            
+
             await processor.export_batch_results(
-                batch_id=batch_id,
-                format="json",
-                output_path=str(output_path)
+                batch_id=batch_id, format="json", output_path=str(output_path)
             )
-            
-            with open(output_path, 'r') as f:
+
+            with open(output_path, "r") as f:
                 data = json.load(f)
-            
-            assert data['batch_status']['completed_jobs'] == SUCCESSFUL_JOBS_COUNT
-            assert data['batch_status']['failed_jobs'] == FAILED_JOBS_COUNT
+
+            assert data["batch_status"]["completed_jobs"] == SUCCESSFUL_JOBS_COUNT
+            assert data["batch_status"]["failed_jobs"] == FAILED_JOBS_COUNT
 
     @pytest.mark.asyncio
-    async def test_export_batch_results_json_includes_completed_jobs(self, processor, sample_batch_with_results):
+    async def test_export_batch_results_json_includes_completed_jobs(
+        self, processor, sample_batch_with_results
+    ):
         """
         GIVEN a batch with completed and failed results
         WHEN export_batch_results is called with JSON format
         THEN it should include completed job details
         """
         batch_id, batch_status, completed_results, failed_results = sample_batch_with_results
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             output_path = Path(temp_dir) / "batch_export.json"
-            
+
             await processor.export_batch_results(
-                batch_id=batch_id,
-                format="json",
-                output_path=str(output_path)
+                batch_id=batch_id, format="json", output_path=str(output_path)
             )
-            
-            with open(output_path, 'r') as f:
+
+            with open(output_path, "r") as f:
                 data = json.load(f)
-            
-            assert len(data['completed_jobs']) == SUCCESSFUL_JOBS_COUNT
+
+            assert len(data["completed_jobs"]) == SUCCESSFUL_JOBS_COUNT
 
     @pytest.mark.asyncio
-    async def test_export_batch_results_json_includes_failed_jobs(self, processor, sample_batch_with_results):
+    async def test_export_batch_results_json_includes_failed_jobs(
+        self, processor, sample_batch_with_results
+    ):
         """
         GIVEN a batch with completed and failed results
         WHEN export_batch_results is called with JSON format
         THEN it should include failed job details
         """
         batch_id, batch_status, completed_results, failed_results = sample_batch_with_results
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             output_path = Path(temp_dir) / "batch_export.json"
-            
+
             await processor.export_batch_results(
-                batch_id=batch_id,
-                format="json",
-                output_path=str(output_path)
+                batch_id=batch_id, format="json", output_path=str(output_path)
             )
-            
-            with open(output_path, 'r') as f:
+
+            with open(output_path, "r") as f:
                 data = json.load(f)
-            
-            assert len(data['failed_jobs']) == FAILED_JOBS_COUNT
+
+            assert len(data["failed_jobs"]) == FAILED_JOBS_COUNT
 
     @pytest.mark.asyncio
-    async def test_export_batch_results_json_completed_job_status(self, processor, sample_batch_with_results):
+    async def test_export_batch_results_json_completed_job_status(
+        self, processor, sample_batch_with_results
+    ):
         """
         GIVEN a batch with completed and failed results
         WHEN export_batch_results is called with JSON format
         THEN completed jobs should have correct status
         """
         batch_id, batch_status, completed_results, failed_results = sample_batch_with_results
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             output_path = Path(temp_dir) / "batch_export.json"
-            
+
             await processor.export_batch_results(
-                batch_id=batch_id,
-                format="json",
-                output_path=str(output_path)
+                batch_id=batch_id, format="json", output_path=str(output_path)
             )
-            
-            with open(output_path, 'r') as f:
+
+            with open(output_path, "r") as f:
                 data = json.load(f)
-            
-            completed_job = data['completed_jobs'][0]
-            assert completed_job['status'] == 'completed'
+
+            completed_job = data["completed_jobs"][0]
+            assert completed_job["status"] == "completed"
 
     @pytest.mark.asyncio
-    async def test_export_batch_results_json_failed_job_status(self, processor, sample_batch_with_results):
+    async def test_export_batch_results_json_failed_job_status(
+        self, processor, sample_batch_with_results
+    ):
         """
         GIVEN a batch with completed and failed results
         WHEN export_batch_results is called with JSON format
         THEN failed jobs should have correct status
         """
         batch_id, batch_status, completed_results, failed_results = sample_batch_with_results
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             output_path = Path(temp_dir) / "batch_export.json"
-            
+
             await processor.export_batch_results(
-                batch_id=batch_id,
-                format="json",
-                output_path=str(output_path)
+                batch_id=batch_id, format="json", output_path=str(output_path)
             )
-            
-            with open(output_path, 'r') as f:
+
+            with open(output_path, "r") as f:
                 data = json.load(f)
-            
-            failed_job = data['failed_jobs'][0]
-            assert failed_job['status'] == 'failed'
+
+            failed_job = data["failed_jobs"][0]
+            assert failed_job["status"] == "failed"
 
     @pytest.mark.asyncio
-    async def test_export_batch_results_json_failed_job_error_message(self, processor, sample_batch_with_results):
+    async def test_export_batch_results_json_failed_job_error_message(
+        self, processor, sample_batch_with_results
+    ):
         """
         GIVEN a batch with completed and failed results
         WHEN export_batch_results is called with JSON format
         THEN failed jobs should include error messages
         """
         batch_id, batch_status, completed_results, failed_results = sample_batch_with_results
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             output_path = Path(temp_dir) / "batch_export.json"
-            
+
             await processor.export_batch_results(
-                batch_id=batch_id,
-                format="json",
-                output_path=str(output_path)
+                batch_id=batch_id, format="json", output_path=str(output_path)
             )
-            
-            with open(output_path, 'r') as f:
+
+            with open(output_path, "r") as f:
                 data = json.load(f)
-            
-            failed_job = data['failed_jobs'][0]
-            assert 'error_message' in failed_job
+
+            failed_job = data["failed_jobs"][0]
+            assert "error_message" in failed_job
 
     @pytest.mark.asyncio
-    async def test_export_batch_results_csv_returns_correct_path(self, processor, sample_batch_with_results):
+    async def test_export_batch_results_csv_returns_correct_path(
+        self, processor, sample_batch_with_results
+    ):
         """
         GIVEN a batch with job results
         WHEN export_batch_results is called with CSV format
         THEN it should return the correct output path
         """
         batch_id, batch_status, completed_results, failed_results = sample_batch_with_results
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             output_path = Path(temp_dir) / "batch_export.csv"
-            
+
             export_path = await processor.export_batch_results(
-                batch_id=batch_id,
-                format="csv",
-                output_path=str(output_path)
+                batch_id=batch_id, format="csv", output_path=str(output_path)
             )
-            
+
             assert export_path == str(output_path)
 
     @pytest.mark.asyncio
-    async def test_export_batch_results_csv_creates_file(self, processor, sample_batch_with_results):
+    async def test_export_batch_results_csv_creates_file(
+        self, processor, sample_batch_with_results
+    ):
         """
         GIVEN a batch with job results
         WHEN export_batch_results is called with CSV format
         THEN it should create CSV file with flattened job result data
         """
         batch_id, batch_status, completed_results, failed_results = sample_batch_with_results
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             output_path = Path(temp_dir) / "batch_export.csv"
-            
+
             await processor.export_batch_results(
-                batch_id=batch_id,
-                format="csv",
-                output_path=str(output_path)
+                batch_id=batch_id, format="csv", output_path=str(output_path)
             )
-            
+
             assert output_path.exists()
 
     @pytest.mark.asyncio
@@ -465,193 +478,194 @@ class TestBatchProcessorBatchOperations:
         THEN it should include all job results in tabular format
         """
         batch_id, batch_status, completed_results, failed_results = sample_batch_with_results
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             output_path = Path(temp_dir) / "batch_export.csv"
-            
+
             await processor.export_batch_results(
-                batch_id=batch_id,
-                format="csv",
-                output_path=str(output_path)
+                batch_id=batch_id, format="csv", output_path=str(output_path)
             )
-            
-            with open(output_path, 'r') as f:
+
+            with open(output_path, "r") as f:
                 reader = csv.DictReader(f)
                 rows = list(reader)
-            
+
             assert len(rows) == SAMPLE_BATCH_SIZE
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("expected_header", [
-        'job_id', 'status', 'processing_time', 'entity_count', 
-        'relationship_count', 'chunk_count', 'error_message'
-    ])
-    async def test_export_batch_results_csv_has_required_headers(self, processor, sample_batch_with_results, expected_header):
+    @pytest.mark.parametrize(
+        "expected_header",
+        [
+            "job_id",
+            "status",
+            "processing_time",
+            "entity_count",
+            "relationship_count",
+            "chunk_count",
+            "error_message",
+        ],
+    )
+    async def test_export_batch_results_csv_has_required_headers(
+        self, processor, sample_batch_with_results, expected_header
+    ):
         """
         GIVEN a batch with job results
         WHEN export_batch_results is called with CSV format
         THEN it should provide headers for all result fields
         """
         batch_id, batch_status, completed_results, failed_results = sample_batch_with_results
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             output_path = Path(temp_dir) / "batch_export.csv"
-            
+
             await processor.export_batch_results(
-                batch_id=batch_id,
-                format="csv",
-                output_path=str(output_path)
+                batch_id=batch_id, format="csv", output_path=str(output_path)
             )
-            
-            with open(output_path, 'r') as f:
+
+            with open(output_path, "r") as f:
                 reader = csv.DictReader(f)
                 rows = list(reader)
-            
+
             headers = rows[0].keys()
             assert expected_header in headers
 
     @pytest.mark.asyncio
-    async def test_export_batch_results_csv_completed_job_count(self, processor, sample_batch_with_results):
+    async def test_export_batch_results_csv_completed_job_count(
+        self, processor, sample_batch_with_results
+    ):
         """
         GIVEN a batch with job results
         WHEN export_batch_results is called with CSV format
         THEN it should include completed jobs
         """
         batch_id, batch_status, completed_results, failed_results = sample_batch_with_results
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             output_path = Path(temp_dir) / "batch_export.csv"
-            
+
             await processor.export_batch_results(
-                batch_id=batch_id,
-                format="csv",
-                output_path=str(output_path)
+                batch_id=batch_id, format="csv", output_path=str(output_path)
             )
-            
-            with open(output_path, 'r') as f:
+
+            with open(output_path, "r") as f:
                 reader = csv.DictReader(f)
                 rows = list(reader)
-            
-            completed_rows = [r for r in rows if r['status'] == 'completed']
+
+            completed_rows = [r for r in rows if r["status"] == "completed"]
             assert len(completed_rows) == SUCCESSFUL_JOBS_COUNT
 
     @pytest.mark.asyncio
-    async def test_export_batch_results_csv_failed_job_count(self, processor, sample_batch_with_results):
+    async def test_export_batch_results_csv_failed_job_count(
+        self, processor, sample_batch_with_results
+    ):
         """
         GIVEN a batch with job results
         WHEN export_batch_results is called with CSV format
         THEN it should include failed jobs
         """
         batch_id, batch_status, completed_results, failed_results = sample_batch_with_results
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             output_path = Path(temp_dir) / "batch_export.csv"
-            
+
             await processor.export_batch_results(
-                batch_id=batch_id,
-                format="csv",
-                output_path=str(output_path)
+                batch_id=batch_id, format="csv", output_path=str(output_path)
             )
-            
-            with open(output_path, 'r') as f:
+
+            with open(output_path, "r") as f:
                 reader = csv.DictReader(f)
                 rows = list(reader)
-            
-            failed_rows = [r for r in rows if r['status'] == 'failed']
+
+            failed_rows = [r for r in rows if r["status"] == "failed"]
             assert len(failed_rows) == FAILED_JOBS_COUNT
 
     @pytest.mark.asyncio
-    async def test_export_batch_results_default_filename_has_timestamp(self, processor, sample_batch_with_results):
+    async def test_export_batch_results_default_filename_has_timestamp(
+        self, processor, sample_batch_with_results
+    ):
         """
         GIVEN a batch with results and no output_path specified
         WHEN export_batch_results is called
         THEN it should generate timestamped filename automatically
         """
         batch_id, _, _, _ = sample_batch_with_results
-        
-        with patch('pathlib.Path.cwd') as mock_cwd:
+
+        with patch("pathlib.Path.cwd") as mock_cwd:
             with tempfile.TemporaryDirectory() as temp_dir:
                 mock_cwd.return_value = Path(temp_dir)
-                
-                export_path = await processor.export_batch_results(
-                    batch_id=batch_id,
-                    format="json"
-                )
-                
+
+                export_path = await processor.export_batch_results(batch_id=batch_id, format="json")
+
                 assert batch_id in export_path
 
     @pytest.mark.asyncio
-    async def test_export_batch_results_default_filename_has_extension(self, processor, sample_batch_with_results):
+    async def test_export_batch_results_default_filename_has_extension(
+        self, processor, sample_batch_with_results
+    ):
         """
         GIVEN a batch with results and no output_path specified
         WHEN export_batch_results is called
         THEN it should use appropriate file extension for format
         """
         batch_id, _, _, _ = sample_batch_with_results
-        
-        with patch('pathlib.Path.cwd') as mock_cwd:
+
+        with patch("pathlib.Path.cwd") as mock_cwd:
             with tempfile.TemporaryDirectory() as temp_dir:
                 mock_cwd.return_value = Path(temp_dir)
-                
-                export_path = await processor.export_batch_results(
-                    batch_id=batch_id,
-                    format="json"
-                )
-                
-                assert export_path.endswith('.json')
+
+                export_path = await processor.export_batch_results(batch_id=batch_id, format="json")
+
+                assert export_path.endswith(".json")
 
     @pytest.mark.asyncio
-    async def test_export_batch_results_default_filename_file_exists(self, processor, sample_batch_with_results):
+    async def test_export_batch_results_default_filename_file_exists(
+        self, processor, sample_batch_with_results
+    ):
         """
         GIVEN a batch with results and no output_path specified
         WHEN export_batch_results is called
         THEN it should create file in current directory
         """
         batch_id, _, _, _ = sample_batch_with_results
-        
-        with patch('pathlib.Path.cwd') as mock_cwd:
+
+        with patch("pathlib.Path.cwd") as mock_cwd:
             with tempfile.TemporaryDirectory() as temp_dir:
                 mock_cwd.return_value = Path(temp_dir)
-                
-                export_path = await processor.export_batch_results(
-                    batch_id=batch_id,
-                    format="json"
-                )
-                
+
+                export_path = await processor.export_batch_results(batch_id=batch_id, format="json")
+
                 assert Path(export_path).exists()
 
     @pytest.mark.asyncio
-    async def test_export_batch_results_invalid_format_raises_error(self, processor, sample_batch_with_results):
+    async def test_export_batch_results_invalid_format_raises_error(
+        self, processor, sample_batch_with_results
+    ):
         """
         GIVEN a batch with results
         WHEN export_batch_results is called with unsupported format
         THEN it should raise ValueError for unsupported format
         """
         batch_id, _, _, _ = sample_batch_with_results
-        
+
         with pytest.raises(ValueError) as exc_info:
-            await processor.export_batch_results(
-                batch_id=batch_id,
-                format="xml"
-            )
-        
+            await processor.export_batch_results(batch_id=batch_id, format="xml")
+
         assert "format" in str(exc_info.value).lower()
 
     @pytest.mark.asyncio
-    async def test_export_batch_results_invalid_format_mentions_supported(self, processor, sample_batch_with_results):
+    async def test_export_batch_results_invalid_format_mentions_supported(
+        self, processor, sample_batch_with_results
+    ):
         """
         GIVEN a batch with results
         WHEN export_batch_results is called with unsupported format
         THEN it should indicate supported formats in error message
         """
         batch_id, _, _, _ = sample_batch_with_results
-        
+
         with pytest.raises(ValueError) as exc_info:
-            await processor.export_batch_results(
-                batch_id=batch_id,
-                format="xml"
-            )
-        
+            await processor.export_batch_results(batch_id=batch_id, format="xml")
+
         error_msg = str(exc_info.value).lower()
         assert "json" in error_msg or "csv" in error_msg or "supported" in error_msg
 
@@ -663,11 +677,8 @@ class TestBatchProcessorBatchOperations:
         THEN it should raise ValueError indicating batch not found
         """
         with pytest.raises(ValueError) as exc_info:
-            await processor.export_batch_results(
-                batch_id="nonexistent_batch",
-                format="json"
-            )
-        
+            await processor.export_batch_results(batch_id="nonexistent_batch", format="json")
+
         assert "batch" in str(exc_info.value).lower()
 
     @pytest.mark.asyncio
@@ -678,26 +689,23 @@ class TestBatchProcessorBatchOperations:
         THEN it should provide clear error message
         """
         with pytest.raises(ValueError) as exc_info:
-            await processor.export_batch_results(
-                batch_id="nonexistent_batch",
-                format="json"
-            )
-        
+            await processor.export_batch_results(batch_id="nonexistent_batch", format="json")
+
         assert "not found" in str(exc_info.value).lower()
 
     @pytest.mark.asyncio
-    async def test_export_batch_results_permission_error_raises(self, processor, sample_batch_with_results):
+    async def test_export_batch_results_permission_error_raises(
+        self, processor, sample_batch_with_results
+    ):
         """
         GIVEN invalid output path with no write permissions
         WHEN export_batch_results is called
         THEN it should raise PermissionError for inaccessible location
         """
         batch_id, _, _, _ = sample_batch_with_results
-        
-        with patch('builtins.open', side_effect=PermissionError("Permission denied")):
+
+        with patch("builtins.open", side_effect=PermissionError("Permission denied")):
             with pytest.raises(PermissionError):
                 await processor.export_batch_results(
-                    batch_id=batch_id,
-                    format="json",
-                    output_path="/root/restricted.json"
+                    batch_id=batch_id, format="json", output_path="/root/restricted.json"
                 )

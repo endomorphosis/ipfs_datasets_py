@@ -20,6 +20,7 @@ from unittest.mock import MagicMock, patch, PropertyMock
 
 import pytest
 
+
 # ─────────────────────────────────────────────────────────────────────────────
 # JSON-LD validation
 # ─────────────────────────────────────────────────────────────────────────────
@@ -28,6 +29,7 @@ class TestSchemaValidatorWithJsonschema:
 
     def _make(self):
         from ipfs_datasets_py.knowledge_graphs.jsonld.validation import SchemaValidator
+
         return SchemaValidator()
 
     def test_valid_data_passes(self):
@@ -49,7 +51,11 @@ class TestSchemaValidatorWithJsonschema:
     def test_required_property_missing(self):
         """GIVEN missing required property WHEN validated THEN error recorded."""
         sv = self._make()
-        schema = {"type": "object", "required": ["name"], "properties": {"name": {"type": "string"}}}
+        schema = {
+            "type": "object",
+            "required": ["name"],
+            "properties": {"name": {"type": "string"}},
+        }
         result = sv.validate({}, schema)
         assert not result.valid
 
@@ -83,6 +89,7 @@ class TestSchemaValidatorWithoutJsonschema:
         """GIVEN jsonschema absent WHEN validated THEN valid=True with warning."""
         from ipfs_datasets_py.knowledge_graphs.jsonld.validation import SchemaValidator
         import ipfs_datasets_py.knowledge_graphs.jsonld.validation as mod
+
         with patch.object(mod, "HAVE_JSONSCHEMA", False):
             sv = SchemaValidator()
             result = sv.validate({"key": "value"}, {"type": "object"})
@@ -95,6 +102,7 @@ class TestSHACLValidator:
 
     def _make(self):
         from ipfs_datasets_py.knowledge_graphs.jsonld.validation import SHACLValidator
+
         return SHACLValidator()
 
     def test_no_shape_returns_warning(self):
@@ -393,6 +401,7 @@ class TestSemanticValidator:
 
     def _make(self):
         from ipfs_datasets_py.knowledge_graphs.jsonld.validation import SemanticValidator
+
         return SemanticValidator()
 
     def test_both_pass_returns_valid(self):
@@ -436,6 +445,7 @@ class TestSemanticValidator:
 def _make_tracker_with_chain():
     """Build a 3-node tracker: ds1 → transform1 → ds2."""
     from ipfs_datasets_py.knowledge_graphs.lineage.core import LineageTracker
+
     t = LineageTracker()
     t.track_node("ds1", node_type="dataset", metadata={"system": "A"})
     t.track_node("transform1", node_type="transformation", metadata={"system": "B"})
@@ -451,6 +461,7 @@ class TestLineageMetrics:
     def test_compute_basic_stats_keys(self):
         """GIVEN chain graph WHEN compute_basic_stats THEN expected keys present."""
         from ipfs_datasets_py.knowledge_graphs.lineage.metrics import LineageMetrics
+
         t = _make_tracker_with_chain()
         lm = LineageMetrics(t.graph)
         stats = lm.compute_basic_stats()
@@ -462,6 +473,7 @@ class TestLineageMetrics:
     def test_compute_node_metrics_absent_returns_empty(self):
         """GIVEN nonexistent node_id WHEN compute_node_metrics THEN returns empty dict."""
         from ipfs_datasets_py.knowledge_graphs.lineage.metrics import LineageMetrics
+
         t = _make_tracker_with_chain()
         lm = LineageMetrics(t.graph)
         result = lm.compute_node_metrics("nonexistent")
@@ -470,6 +482,7 @@ class TestLineageMetrics:
     def test_compute_node_metrics_root_node(self):
         """GIVEN root node WHEN compute_node_metrics THEN in_degree=0, out_degree=1."""
         from ipfs_datasets_py.knowledge_graphs.lineage.metrics import LineageMetrics
+
         t = _make_tracker_with_chain()
         lm = LineageMetrics(t.graph)
         m = lm.compute_node_metrics("ds1")
@@ -479,6 +492,7 @@ class TestLineageMetrics:
     def test_find_root_nodes(self):
         """GIVEN chain graph WHEN find_root_nodes THEN returns ['ds1']."""
         from ipfs_datasets_py.knowledge_graphs.lineage.metrics import LineageMetrics
+
         t = _make_tracker_with_chain()
         lm = LineageMetrics(t.graph)
         roots = lm.find_root_nodes()
@@ -487,6 +501,7 @@ class TestLineageMetrics:
     def test_find_leaf_nodes(self):
         """GIVEN chain graph WHEN find_leaf_nodes THEN returns ['ds2']."""
         from ipfs_datasets_py.knowledge_graphs.lineage.metrics import LineageMetrics
+
         t = _make_tracker_with_chain()
         lm = LineageMetrics(t.graph)
         leaves = lm.find_leaf_nodes()
@@ -495,6 +510,7 @@ class TestLineageMetrics:
     def test_compute_path_statistics_returns_stats(self):
         """GIVEN chain graph WHEN compute_path_statistics THEN min/max/avg path length present."""
         from ipfs_datasets_py.knowledge_graphs.lineage.metrics import LineageMetrics
+
         t = _make_tracker_with_chain()
         lm = LineageMetrics(t.graph)
         stats = lm.compute_path_statistics()
@@ -507,6 +523,7 @@ class TestLineageMetrics:
         """GIVEN empty graph WHEN compute_path_statistics THEN zeros returned."""
         from ipfs_datasets_py.knowledge_graphs.lineage.core import LineageTracker
         from ipfs_datasets_py.knowledge_graphs.lineage.metrics import LineageMetrics
+
         t = LineageTracker()
         lm = LineageMetrics(t.graph)
         stats = lm.compute_path_statistics()
@@ -519,6 +536,7 @@ class TestImpactAnalyzer:
     def test_analyze_downstream_impact_keys(self):
         """GIVEN chain WHEN analyze_downstream_impact THEN expected keys."""
         from ipfs_datasets_py.knowledge_graphs.lineage.metrics import ImpactAnalyzer
+
         t = _make_tracker_with_chain()
         ia = ImpactAnalyzer(t)
         result = ia.analyze_downstream_impact("ds1", max_depth=3)
@@ -530,6 +548,7 @@ class TestImpactAnalyzer:
     def test_analyze_upstream_dependencies_keys(self):
         """GIVEN chain WHEN analyze_upstream_dependencies for leaf THEN expected keys."""
         from ipfs_datasets_py.knowledge_graphs.lineage.metrics import ImpactAnalyzer
+
         t = _make_tracker_with_chain()
         ia = ImpactAnalyzer(t)
         result = ia.analyze_upstream_dependencies("ds2")
@@ -541,6 +560,7 @@ class TestImpactAnalyzer:
     def test_find_critical_nodes_returns_list(self):
         """GIVEN graph WHEN find_critical_nodes THEN list returned."""
         from ipfs_datasets_py.knowledge_graphs.lineage.metrics import ImpactAnalyzer
+
         t = _make_tracker_with_chain()
         ia = ImpactAnalyzer(t)
         critical = ia.find_critical_nodes()
@@ -553,6 +573,7 @@ class TestDependencyAnalyzer:
     def test_detect_circular_no_cycles(self):
         """GIVEN acyclic graph WHEN detect_circular_dependencies THEN empty list."""
         from ipfs_datasets_py.knowledge_graphs.lineage.metrics import DependencyAnalyzer
+
         t = _make_tracker_with_chain()
         da = DependencyAnalyzer(t)
         assert da.detect_circular_dependencies() == []
@@ -561,6 +582,7 @@ class TestDependencyAnalyzer:
         """GIVEN cyclic graph WHEN detect_circular_dependencies THEN cycle(s) returned."""
         from ipfs_datasets_py.knowledge_graphs.lineage.core import LineageTracker
         from ipfs_datasets_py.knowledge_graphs.lineage.metrics import DependencyAnalyzer
+
         t = LineageTracker()
         t.track_node("a", node_type="dataset", metadata={})
         t.track_node("b", node_type="dataset", metadata={})
@@ -573,6 +595,7 @@ class TestDependencyAnalyzer:
     def test_find_dependency_chains_upstream(self):
         """GIVEN chain graph WHEN find_dependency_chains upstream THEN chains contain ds1."""
         from ipfs_datasets_py.knowledge_graphs.lineage.metrics import DependencyAnalyzer
+
         t = _make_tracker_with_chain()
         da = DependencyAnalyzer(t)
         chains = da.find_dependency_chains("ds2", direction="upstream")
@@ -582,6 +605,7 @@ class TestDependencyAnalyzer:
     def test_find_dependency_chains_downstream(self):
         """GIVEN chain graph WHEN find_dependency_chains downstream from root THEN chains contain ds2."""
         from ipfs_datasets_py.knowledge_graphs.lineage.metrics import DependencyAnalyzer
+
         t = _make_tracker_with_chain()
         da = DependencyAnalyzer(t)
         chains = da.find_dependency_chains("ds1", direction="downstream")
@@ -590,6 +614,7 @@ class TestDependencyAnalyzer:
     def test_compute_dependency_depth_leaf(self):
         """GIVEN leaf node WHEN compute_dependency_depth THEN depth >= 2."""
         from ipfs_datasets_py.knowledge_graphs.lineage.metrics import DependencyAnalyzer
+
         t = _make_tracker_with_chain()
         da = DependencyAnalyzer(t)
         depth = da.compute_dependency_depth("ds2")
@@ -598,6 +623,7 @@ class TestDependencyAnalyzer:
     def test_compute_dependency_depth_root(self):
         """GIVEN root node WHEN compute_dependency_depth THEN depth == 0."""
         from ipfs_datasets_py.knowledge_graphs.lineage.metrics import DependencyAnalyzer
+
         t = _make_tracker_with_chain()
         da = DependencyAnalyzer(t)
         depth = da.compute_dependency_depth("ds1")
@@ -612,6 +638,7 @@ class TestSemanticAnalyzer:
 
     def _make_tracker(self):
         from ipfs_datasets_py.knowledge_graphs.lineage.core import LineageTracker
+
         t = LineageTracker()
         t.track_node("n1", node_type="dataset", entity_id="e1", metadata={"color": "red"})
         t.track_node("n2", node_type="dataset", entity_id="e1", metadata={"color": "red"})
@@ -622,6 +649,7 @@ class TestSemanticAnalyzer:
     def test_same_type_boosts_similarity(self):
         """GIVEN two dataset nodes WHEN calculate_semantic_similarity THEN score > 0."""
         from ipfs_datasets_py.knowledge_graphs.lineage.enhanced import SemanticAnalyzer
+
         t = self._make_tracker()
         sa = SemanticAnalyzer()
         n1 = t.graph.get_node("n1")
@@ -632,6 +660,7 @@ class TestSemanticAnalyzer:
     def test_same_entity_id_boosts_similarity(self):
         """GIVEN both nodes share entity_id WHEN similarity THEN score >= 0.6."""
         from ipfs_datasets_py.knowledge_graphs.lineage.enhanced import SemanticAnalyzer
+
         t = self._make_tracker()
         sa = SemanticAnalyzer()
         n1 = t.graph.get_node("n1")
@@ -642,6 +671,7 @@ class TestSemanticAnalyzer:
     def test_different_type_lowers_similarity(self):
         """GIVEN dataset vs transformation WHEN similarity THEN score < same-type score."""
         from ipfs_datasets_py.knowledge_graphs.lineage.enhanced import SemanticAnalyzer
+
         t = self._make_tracker()
         sa = SemanticAnalyzer()
         n1 = t.graph.get_node("n1")
@@ -652,6 +682,7 @@ class TestSemanticAnalyzer:
     def test_detect_semantic_patterns(self):
         """GIVEN graph with outgoing edge WHEN detect_semantic_patterns THEN dict returned."""
         from ipfs_datasets_py.knowledge_graphs.lineage.enhanced import SemanticAnalyzer
+
         t = self._make_tracker()
         sa = SemanticAnalyzer()
         patterns = sa.detect_semantic_patterns(t.graph, "n1")
@@ -660,6 +691,7 @@ class TestSemanticAnalyzer:
     def test_categorize_relationship(self):
         """GIVEN relationship type string WHEN categorize_relationship THEN non-empty string."""
         from ipfs_datasets_py.knowledge_graphs.lineage.enhanced import SemanticAnalyzer
+
         sa = SemanticAnalyzer()
         cat = sa.categorize_relationship("derived_from")
         assert isinstance(cat, str)
@@ -671,16 +703,30 @@ class TestBoundaryDetector:
 
     def _make_nodes(self, meta1, meta2, time_delta=0):
         from ipfs_datasets_py.knowledge_graphs.lineage.core import LineageNode
+
         ts = time.time()
-        n1 = LineageNode(node_id="a", node_type="dataset", entity_id=None,
-                         record_type=None, metadata=meta1, timestamp=ts)
-        n2 = LineageNode(node_id="b", node_type="dataset", entity_id=None,
-                         record_type=None, metadata=meta2, timestamp=ts + time_delta)
+        n1 = LineageNode(
+            node_id="a",
+            node_type="dataset",
+            entity_id=None,
+            record_type=None,
+            metadata=meta1,
+            timestamp=ts,
+        )
+        n2 = LineageNode(
+            node_id="b",
+            node_type="dataset",
+            entity_id=None,
+            record_type=None,
+            metadata=meta2,
+            timestamp=ts + time_delta,
+        )
         return n1, n2
 
     def test_system_boundary_detected(self):
         """GIVEN different system values WHEN detect_boundary THEN returns 'system'."""
         from ipfs_datasets_py.knowledge_graphs.lineage.enhanced import BoundaryDetector
+
         n1, n2 = self._make_nodes({"system": "PROD"}, {"system": "TEST"})
         bd = BoundaryDetector()
         assert bd.detect_boundary(n1, n2) == "system"
@@ -688,6 +734,7 @@ class TestBoundaryDetector:
     def test_organization_boundary_detected(self):
         """GIVEN different organization values WHEN detect_boundary THEN returns 'organization'."""
         from ipfs_datasets_py.knowledge_graphs.lineage.enhanced import BoundaryDetector
+
         n1, n2 = self._make_nodes({"organization": "OrgA"}, {"organization": "OrgB"})
         bd = BoundaryDetector()
         assert bd.detect_boundary(n1, n2) == "organization"
@@ -695,6 +742,7 @@ class TestBoundaryDetector:
     def test_format_boundary_detected(self):
         """GIVEN different format values WHEN detect_boundary THEN returns 'format'."""
         from ipfs_datasets_py.knowledge_graphs.lineage.enhanced import BoundaryDetector
+
         n1, n2 = self._make_nodes({"format": "csv"}, {"format": "parquet"})
         bd = BoundaryDetector()
         assert bd.detect_boundary(n1, n2) == "format"
@@ -702,6 +750,7 @@ class TestBoundaryDetector:
     def test_temporal_boundary_detected(self):
         """GIVEN timestamps >1 day apart WHEN detect_boundary THEN returns 'temporal'."""
         from ipfs_datasets_py.knowledge_graphs.lineage.enhanced import BoundaryDetector
+
         n1, n2 = self._make_nodes({}, {}, time_delta=90000)  # 25 hours
         bd = BoundaryDetector()
         assert bd.detect_boundary(n1, n2) == "temporal"
@@ -709,6 +758,7 @@ class TestBoundaryDetector:
     def test_no_boundary_when_same(self):
         """GIVEN same metadata WHEN detect_boundary THEN returns None (or temporal if close)."""
         from ipfs_datasets_py.knowledge_graphs.lineage.enhanced import BoundaryDetector
+
         n1, n2 = self._make_nodes({"system": "A"}, {"system": "A"}, time_delta=1)
         bd = BoundaryDetector()
         result = bd.detect_boundary(n1, n2)
@@ -717,24 +767,28 @@ class TestBoundaryDetector:
     def test_classify_risk_organization_is_high(self):
         """GIVEN 'organization' boundary WHEN classify_boundary_risk THEN 'high'."""
         from ipfs_datasets_py.knowledge_graphs.lineage.enhanced import BoundaryDetector
+
         bd = BoundaryDetector()
         assert bd.classify_boundary_risk("organization") == "high"
 
     def test_classify_risk_security_is_high(self):
         """GIVEN 'security' boundary WHEN classify_boundary_risk THEN 'high'."""
         from ipfs_datasets_py.knowledge_graphs.lineage.enhanced import BoundaryDetector
+
         bd = BoundaryDetector()
         assert bd.classify_boundary_risk("security") == "high"
 
     def test_classify_risk_system_is_medium(self):
         """GIVEN 'system' boundary WHEN classify_boundary_risk THEN 'medium'."""
         from ipfs_datasets_py.knowledge_graphs.lineage.enhanced import BoundaryDetector
+
         bd = BoundaryDetector()
         assert bd.classify_boundary_risk("system") == "medium"
 
     def test_classify_risk_temporal_is_low(self):
         """GIVEN 'temporal' boundary WHEN classify_boundary_risk THEN 'low'."""
         from ipfs_datasets_py.knowledge_graphs.lineage.enhanced import BoundaryDetector
+
         bd = BoundaryDetector()
         assert bd.classify_boundary_risk("temporal") == "low"
 
@@ -745,6 +799,7 @@ class TestConfidenceScorer:
     def test_path_confidence_single_node(self):
         """GIVEN path with one node WHEN calculate_path_confidence THEN returns 1.0."""
         from ipfs_datasets_py.knowledge_graphs.lineage.enhanced import ConfidenceScorer
+
         t = _make_tracker_with_chain()
         cs = ConfidenceScorer()
         assert cs.calculate_path_confidence(t.graph, ["ds1"]) == 1.0
@@ -752,6 +807,7 @@ class TestConfidenceScorer:
     def test_path_confidence_multi_hop(self):
         """GIVEN 3-node path with default confidence WHEN calculate_path_confidence THEN 1.0."""
         from ipfs_datasets_py.knowledge_graphs.lineage.enhanced import ConfidenceScorer
+
         t = _make_tracker_with_chain()
         cs = ConfidenceScorer()
         # Default edge confidence = 1.0, so product = 1.0
@@ -761,6 +817,7 @@ class TestConfidenceScorer:
     def test_propagate_confidence_root_has_1(self):
         """GIVEN root node WHEN propagate_confidence THEN root confidence = 1.0."""
         from ipfs_datasets_py.knowledge_graphs.lineage.enhanced import ConfidenceScorer
+
         t = _make_tracker_with_chain()
         cs = ConfidenceScorer()
         scores = cs.propagate_confidence(t, "ds1", max_hops=2)
@@ -769,6 +826,7 @@ class TestConfidenceScorer:
     def test_propagate_confidence_includes_downstream(self):
         """GIVEN chain WHEN propagate_confidence THEN downstream nodes included."""
         from ipfs_datasets_py.knowledge_graphs.lineage.enhanced import ConfidenceScorer
+
         t = _make_tracker_with_chain()
         cs = ConfidenceScorer()
         scores = cs.propagate_confidence(t, "ds1", max_hops=2)
@@ -783,8 +841,11 @@ class TestConfidenceScorer:
 def mock_driver():
     """Create an IPFSDriver with mocked RouterDeps and IPLDBackend."""
     from ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver import IPFSDriver
-    with patch("ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver.RouterDeps") as rd, \
-         patch("ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver.IPLDBackend") as be:
+
+    with (
+        patch("ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver.RouterDeps") as rd,
+        patch("ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver.IPLDBackend") as be,
+    ):
         rd.return_value = MagicMock()
         be.return_value = MagicMock()
         driver = IPFSDriver("ipfs://localhost:5001", auth=("user", "token"))
@@ -802,22 +863,29 @@ class TestIPFSDriverInit:
     def test_embedded_mode_parsed(self):
         """GIVEN ipfs+embedded:// URI WHEN driver created THEN mode=embedded."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver import IPFSDriver
-        with patch("ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver.RouterDeps"), \
-             patch("ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver.IPLDBackend"):
+
+        with (
+            patch("ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver.RouterDeps"),
+            patch("ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver.IPLDBackend"),
+        ):
             d = IPFSDriver("ipfs+embedded:///./data")
             assert d._mode == "embedded"
 
     def test_invalid_scheme_raises(self):
         """GIVEN unsupported URI scheme WHEN driver created THEN ValueError raised."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver import IPFSDriver
-        with patch("ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver.RouterDeps"), \
-             patch("ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver.IPLDBackend"):
+
+        with (
+            patch("ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver.RouterDeps"),
+            patch("ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver.IPLDBackend"),
+        ):
             with pytest.raises(ValueError, match="Unsupported URI scheme"):
                 IPFSDriver("bolt://localhost:7687")
 
     def test_have_deps_false_raises_import_error(self):
         """GIVEN HAVE_DEPS=False WHEN IPFSDriver created THEN ImportError raised."""
         import ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver as mod
+
         with patch.object(mod, "HAVE_DEPS", False):
             with pytest.raises(ImportError):
                 mod.IPFSDriver("ipfs://localhost:5001")
@@ -829,6 +897,7 @@ class TestIPFSDriverSession:
     def test_session_returns_ipfs_session(self, mock_driver):
         """GIVEN open driver WHEN session() THEN IPFSSession returned."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.session import IPFSSession
+
         sess = mock_driver.session()
         assert isinstance(sess, IPFSSession)
 
@@ -864,8 +933,11 @@ class TestIPFSDriverLifecycle:
     def test_context_manager_closes(self):
         """GIVEN driver used as context manager WHEN exited THEN closed."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver import IPFSDriver
-        with patch("ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver.RouterDeps"), \
-             patch("ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver.IPLDBackend"):
+
+        with (
+            patch("ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver.RouterDeps"),
+            patch("ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver.IPLDBackend"),
+        ):
             with IPFSDriver("ipfs://localhost:5001") as d:
                 assert not d.closed
             assert d.closed
@@ -883,8 +955,11 @@ class TestIPFSDriverLifecycle:
     def test_verify_authentication_without_auth(self):
         """GIVEN driver without auth WHEN verify_authentication THEN False."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver import IPFSDriver
-        with patch("ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver.RouterDeps"), \
-             patch("ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver.IPLDBackend"):
+
+        with (
+            patch("ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver.RouterDeps"),
+            patch("ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver.IPLDBackend"),
+        ):
             d = IPFSDriver("ipfs://localhost:5001", auth=None)
             assert d.verify_authentication() is False
 
@@ -915,8 +990,11 @@ class TestGraphDatabase:
     def test_driver_factory_returns_ipfs_driver(self):
         """GIVEN GraphDatabase.driver() call WHEN mocked THEN IPFSDriver returned."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver import GraphDatabase, IPFSDriver
-        with patch("ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver.RouterDeps"), \
-             patch("ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver.IPLDBackend"):
+
+        with (
+            patch("ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver.RouterDeps"),
+            patch("ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver.IPLDBackend"),
+        ):
             d = GraphDatabase.driver("ipfs://localhost:5001", auth=("u", "t"))
             assert isinstance(d, IPFSDriver)
             d.close()
@@ -924,13 +1002,17 @@ class TestGraphDatabase:
     def test_close_all_drivers_no_error(self):
         """GIVEN close_all_drivers() call WHEN invoked THEN no exception raised."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver import GraphDatabase
+
         GraphDatabase.close_all_drivers()  # should be no-op
 
     def test_create_driver_function(self):
         """GIVEN create_driver convenience function WHEN called THEN IPFSDriver returned."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver import create_driver, IPFSDriver
-        with patch("ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver.RouterDeps"), \
-             patch("ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver.IPLDBackend"):
+
+        with (
+            patch("ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver.RouterDeps"),
+            patch("ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver.IPLDBackend"),
+        ):
             d = create_driver("ipfs://localhost:5001", auth=("u", "t"))
             assert isinstance(d, IPFSDriver)
             d.close()
@@ -944,11 +1026,13 @@ class TestReasoningHelpersInferPathRelation:
 
     def _get_mixin(self):
         from ipfs_datasets_py.knowledge_graphs.reasoning.helpers import ReasoningHelpersMixin
+
         return ReasoningHelpersMixin()
 
     def test_support_relation(self):
         """GIVEN ['support'] WHEN _infer_path_relation THEN SUPPORTING."""
         from ipfs_datasets_py.knowledge_graphs.reasoning.types import InformationRelationType
+
         m = self._get_mixin()
         result = m._infer_path_relation(["support"])
         assert result == InformationRelationType.SUPPORTING
@@ -956,6 +1040,7 @@ class TestReasoningHelpersInferPathRelation:
     def test_contradict_relation(self):
         """GIVEN ['contradict'] WHEN _infer_path_relation THEN CONTRADICTING."""
         from ipfs_datasets_py.knowledge_graphs.reasoning.types import InformationRelationType
+
         m = self._get_mixin()
         result = m._infer_path_relation(["contradict"])
         assert result == InformationRelationType.CONTRADICTING
@@ -963,6 +1048,7 @@ class TestReasoningHelpersInferPathRelation:
     def test_elaborate_relation(self):
         """GIVEN ['elaborat'] WHEN _infer_path_relation THEN ELABORATING."""
         from ipfs_datasets_py.knowledge_graphs.reasoning.types import InformationRelationType
+
         m = self._get_mixin()
         result = m._infer_path_relation(["elaborating"])
         assert result == InformationRelationType.ELABORATING
@@ -970,6 +1056,7 @@ class TestReasoningHelpersInferPathRelation:
     def test_prerequisite_relation(self):
         """GIVEN ['require'] WHEN _infer_path_relation THEN PREREQUISITE."""
         from ipfs_datasets_py.knowledge_graphs.reasoning.types import InformationRelationType
+
         m = self._get_mixin()
         result = m._infer_path_relation(["require"])
         assert result == InformationRelationType.PREREQUISITE
@@ -977,6 +1064,7 @@ class TestReasoningHelpersInferPathRelation:
     def test_consequence_relation(self):
         """GIVEN ['result'] WHEN _infer_path_relation THEN CONSEQUENCE."""
         from ipfs_datasets_py.knowledge_graphs.reasoning.types import InformationRelationType
+
         m = self._get_mixin()
         result = m._infer_path_relation(["result"])
         assert result == InformationRelationType.CONSEQUENCE
@@ -984,6 +1072,7 @@ class TestReasoningHelpersInferPathRelation:
     def test_default_complementary(self):
         """GIVEN unknown relation WHEN _infer_path_relation THEN COMPLEMENTARY."""
         from ipfs_datasets_py.knowledge_graphs.reasoning.types import InformationRelationType
+
         m = self._get_mixin()
         result = m._infer_path_relation(["unknown_relation"])
         assert result == InformationRelationType.COMPLEMENTARY
@@ -991,6 +1080,7 @@ class TestReasoningHelpersInferPathRelation:
     def test_empty_relations_complementary(self):
         """GIVEN empty list WHEN _infer_path_relation THEN COMPLEMENTARY."""
         from ipfs_datasets_py.knowledge_graphs.reasoning.types import InformationRelationType
+
         m = self._get_mixin()
         result = m._infer_path_relation([])
         assert result == InformationRelationType.COMPLEMENTARY
@@ -1002,6 +1092,7 @@ class TestGenerateLLMAnswer:
     def _get_reasoner(self):
         """Build a CrossDocumentReasoner with all optionals mocked out."""
         from ipfs_datasets_py.knowledge_graphs.reasoning.cross_document import CrossDocumentReasoner
+
         r = CrossDocumentReasoner.__new__(CrossDocumentReasoner)
         r.llm_service = None
         r._default_llm_router = None
@@ -1014,8 +1105,11 @@ class TestGenerateLLMAnswer:
         r = self._get_reasoner()
         with patch.dict(os.environ, {}, clear=True):
             # Remove any LLM keys that might be set
-            env = {k: v for k, v in os.environ.items()
-                   if k not in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY")}
+            env = {
+                k: v
+                for k, v in os.environ.items()
+                if k not in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY")
+            }
             with patch.dict(os.environ, env, clear=True):
                 answer, conf = r._generate_llm_answer("prompt text", "my query")
         assert isinstance(answer, str)
@@ -1029,8 +1123,11 @@ class TestGenerateLLMAnswer:
         mock_router.route_request.return_value = "Router answer text here"
         r.llm_service = mock_router
         with patch.dict(os.environ, {}, clear=True):
-            env = {k: v for k, v in os.environ.items()
-                   if k not in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY")}
+            env = {
+                k: v
+                for k, v in os.environ.items()
+                if k not in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY")
+            }
             with patch.dict(os.environ, env, clear=True):
                 answer, conf = r._generate_llm_answer("prompt", "query")
         assert "Router answer" in answer
@@ -1040,10 +1137,12 @@ class TestGenerateLLMAnswer:
         """GIVEN OPENAI_API_KEY set but openai=None WHEN _generate_llm_answer THEN falls through."""
         r = self._get_reasoner()
         import ipfs_datasets_py.knowledge_graphs.reasoning.cross_document as parent_mod
-        with patch.object(parent_mod, "openai", None), \
-             patch.dict(os.environ, {"OPENAI_API_KEY": "fake-key"}):
-            env = {k: v for k, v in os.environ.items()
-                   if k not in ("ANTHROPIC_API_KEY",)}
+
+        with (
+            patch.object(parent_mod, "openai", None),
+            patch.dict(os.environ, {"OPENAI_API_KEY": "fake-key"}),
+        ):
+            env = {k: v for k, v in os.environ.items() if k not in ("ANTHROPIC_API_KEY",)}
             env["OPENAI_API_KEY"] = "fake-key"
             with patch.dict(os.environ, env, clear=True):
                 answer, conf = r._generate_llm_answer("prompt", "query")
@@ -1054,9 +1153,12 @@ class TestGenerateLLMAnswer:
         """GIVEN ANTHROPIC_API_KEY set but anthropic=None WHEN _generate_llm_answer THEN falls through."""
         r = self._get_reasoner()
         import ipfs_datasets_py.knowledge_graphs.reasoning.cross_document as parent_mod
-        with patch.object(parent_mod, "anthropic", None), \
-             patch.object(parent_mod, "openai", None), \
-             patch.dict(os.environ, {}, clear=True):
+
+        with (
+            patch.object(parent_mod, "anthropic", None),
+            patch.object(parent_mod, "openai", None),
+            patch.dict(os.environ, {}, clear=True),
+        ):
             env = {"ANTHROPIC_API_KEY": "fake-key"}
             with patch.dict(os.environ, env, clear=True):
                 answer, conf = r._generate_llm_answer("prompt", "query")
@@ -1068,6 +1170,7 @@ class TestGetLLMRouter:
 
     def _get_reasoner(self):
         from ipfs_datasets_py.knowledge_graphs.reasoning.cross_document import CrossDocumentReasoner
+
         r = CrossDocumentReasoner.__new__(CrossDocumentReasoner)
         r.llm_service = None
         r._default_llm_router = None
@@ -1077,6 +1180,7 @@ class TestGetLLMRouter:
         """GIVEN LLMRouter=None WHEN _get_llm_router THEN None returned."""
         r = self._get_reasoner()
         import ipfs_datasets_py.knowledge_graphs.reasoning.cross_document as parent_mod
+
         with patch.object(parent_mod, "LLMRouter", None):
             result = r._get_llm_router()
         assert result is None
@@ -1096,6 +1200,7 @@ class TestGetLLMRouter:
         mock_router = MagicMock()
         r._default_llm_router = mock_router
         import ipfs_datasets_py.knowledge_graphs.reasoning.cross_document as parent_mod
+
         with patch.object(parent_mod, "LLMRouter", None):
             result = r._get_llm_router()
         assert result is mock_router
@@ -1104,6 +1209,7 @@ class TestGetLLMRouter:
         """GIVEN LLMRouter() raises Exception WHEN _get_llm_router THEN None returned."""
         r = self._get_reasoner()
         import ipfs_datasets_py.knowledge_graphs.reasoning.cross_document as parent_mod
+
         failing_router = MagicMock(side_effect=RuntimeError("cannot connect"))
         with patch.object(parent_mod, "LLMRouter", failing_router):
             result = r._get_llm_router()
@@ -1119,6 +1225,7 @@ class TestLineageVisualizerPlotly:
     def _make_visualizer_with_nodes(self):
         from ipfs_datasets_py.knowledge_graphs.lineage.core import LineageTracker
         from ipfs_datasets_py.knowledge_graphs.lineage.visualization import LineageVisualizer
+
         t = LineageTracker()
         t.track_node("a", node_type="dataset", metadata={})
         t.track_node("b", node_type="transformation", metadata={})
@@ -1130,6 +1237,7 @@ class TestLineageVisualizerPlotly:
     def test_render_plotly_raises_if_plotly_unavailable(self):
         """GIVEN plotly not available WHEN render_plotly THEN ImportError raised."""
         import ipfs_datasets_py.knowledge_graphs.lineage.visualization as mod
+
         vis = self._make_visualizer_with_nodes()
         with patch.object(mod, "PLOTLY_AVAILABLE", False):
             with pytest.raises(ImportError, match="[Pp]lotly"):
@@ -1138,6 +1246,7 @@ class TestLineageVisualizerPlotly:
     def test_render_plotly_with_mocked_plotly(self):
         """GIVEN mocked plotly WHEN render_plotly THEN returns HTML string."""
         import ipfs_datasets_py.knowledge_graphs.lineage.visualization as mod
+
         vis = self._make_visualizer_with_nodes()
         mock_go = MagicMock()
         mock_fig = MagicMock()
@@ -1146,15 +1255,18 @@ class TestLineageVisualizerPlotly:
         mock_go.Figure.return_value = mock_fig
         mock_go.Layout.return_value = MagicMock()
         _pos = {"a": (0.0, 0.1), "b": (0.2, 0.3), "c": (0.4, 0.5)}
-        with patch.object(mod, "PLOTLY_AVAILABLE", True), \
-             patch.object(mod, "go", mock_go), \
-             patch("networkx.spring_layout", return_value=_pos):
+        with (
+            patch.object(mod, "PLOTLY_AVAILABLE", True),
+            patch.object(mod, "go", mock_go),
+            patch("networkx.spring_layout", return_value=_pos),
+        ):
             result = vis.render_plotly()
         assert result == "<html>graph</html>"
 
     def test_render_plotly_with_output_path(self, tmp_path):
         """GIVEN mocked plotly and output_path WHEN render_plotly THEN returns None."""
         import ipfs_datasets_py.knowledge_graphs.lineage.visualization as mod
+
         vis = self._make_visualizer_with_nodes()
         outfile = str(tmp_path / "lineage.html")
         mock_go = MagicMock()
@@ -1164,9 +1276,11 @@ class TestLineageVisualizerPlotly:
         mock_go.Figure.return_value = mock_fig
         mock_go.Layout.return_value = MagicMock()
         _pos = {"a": (0.0, 0.1), "b": (0.2, 0.3), "c": (0.4, 0.5)}
-        with patch.object(mod, "PLOTLY_AVAILABLE", True), \
-             patch.object(mod, "go", mock_go), \
-             patch("networkx.spring_layout", return_value=_pos):
+        with (
+            patch.object(mod, "PLOTLY_AVAILABLE", True),
+            patch.object(mod, "go", mock_go),
+            patch("networkx.spring_layout", return_value=_pos),
+        ):
             result = vis.render_plotly(output_path=outfile)
         assert result is None
         mock_fig.write_html.assert_called_once_with(outfile)
@@ -1175,6 +1289,7 @@ class TestLineageVisualizerPlotly:
         """GIVEN 'plotly' renderer WHEN visualize_lineage THEN plotly render called."""
         from ipfs_datasets_py.knowledge_graphs.lineage.core import LineageTracker
         import ipfs_datasets_py.knowledge_graphs.lineage.visualization as mod
+
         t = LineageTracker()
         t.track_node("x", node_type="dataset", metadata={})
         mock_go = MagicMock()
@@ -1184,8 +1299,10 @@ class TestLineageVisualizerPlotly:
         mock_go.Figure.return_value = mock_fig
         mock_go.Layout.return_value = MagicMock()
         _pos = {"x": (0.0, 0.0)}
-        with patch.object(mod, "PLOTLY_AVAILABLE", True), \
-             patch.object(mod, "go", mock_go), \
-             patch("networkx.spring_layout", return_value=_pos):
+        with (
+            patch.object(mod, "PLOTLY_AVAILABLE", True),
+            patch.object(mod, "go", mock_go),
+            patch("networkx.spring_layout", return_value=_pos),
+        ):
             result = mod.visualize_lineage(t, renderer="plotly")
         assert result == "<html></html>"

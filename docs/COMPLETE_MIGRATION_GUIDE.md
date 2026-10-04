@@ -70,7 +70,7 @@ from ipfs_datasets_py.data_transformation.ipld import (
     IPLDKnowledgeGraph,
     IPLDVectorStore,
     create_dag_node,
-    parse_dag_node
+    parse_dag_node,
 )
 
 # ✅ NEW (current)
@@ -79,7 +79,7 @@ from ipfs_datasets_py.processors.storage.ipld import (
     IPLDKnowledgeGraph,
     IPLDVectorStore,
     create_dag_node,
-    parse_dag_node
+    parse_dag_node,
 )
 ```
 
@@ -95,7 +95,7 @@ from ipfs_datasets_py.processors.storage.ipld import (
 # ❌ OLD (deprecated)
 from ipfs_datasets_py.data_transformation.serialization import (
     DatasetSerializer,
-    DataInterchangeUtils
+    DataInterchangeUtils,
 )
 from ipfs_datasets_py.data_transformation.car_conversion import DataInterchangeUtils
 from ipfs_datasets_py.data_transformation.jsonl_to_parquet import convert_jsonl
@@ -104,7 +104,7 @@ from ipfs_datasets_py.data_transformation.jsonl_to_parquet import convert_jsonl
 from ipfs_datasets_py.processors.serialization import (
     DatasetSerializer,
     DataInterchangeUtils,
-    convert_jsonl
+    convert_jsonl,
 )
 ```
 
@@ -337,30 +337,34 @@ After migration, verify:
 # test_migration.py
 """Test that migration is complete."""
 
+
 def test_new_imports():
     """Test that new imports work."""
     from ipfs_datasets_py.processors.storage.ipld import IPLDStorage
     from ipfs_datasets_py.processors.serialization import DatasetSerializer
     from ipfs_datasets_py.processors.ipfs.formats import get_cid
     from ipfs_datasets_py.processors.auth.ucan import UCAN
-    
+
     print("✅ All new imports work!")
+
 
 def test_no_old_imports():
     """Ensure code doesn't use old imports."""
     import warnings
+
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always", DeprecationWarning)
-        
+
         # Your import statements here
         # If any use old paths, warnings will be recorded
-        
+
         if len(w) > 0:
             print(f"⚠️  Found {len(w)} deprecation warnings")
             for warning in w:
                 print(f"   - {warning.message}")
         else:
             print("✅ No deprecated imports found!")
+
 
 if __name__ == "__main__":
     test_new_imports()

@@ -4,6 +4,7 @@
 Test file for python_api.py
 Generated automatically by test generator at 2025-05-25 23:22:30
 """
+
 import unittest
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import os
@@ -13,9 +14,10 @@ from configs import configs, Configs
 from logger import logger
 # Test classes
 
+
 class TestClassPythonAPI(unittest.TestCase):
     """Unit tests for the PythonAPI class
-    Class docstring: 
+    Class docstring:
     Python API for the Omni-Converter.
     This class provides methods for programmatically using the Omni-Converter functionality,
     including single file conversion, batch processing, and configuration management.
@@ -68,7 +70,7 @@ class TestClassPythonAPI(unittest.TestCase):
         # Convert multiple files to text.
         # Args:
         #     file_paths: list of file paths to convert, or a directory to recursively process.
-        #     output_dir: Directory to write output files to. 
+        #     output_dir: Directory to write output files to.
         #         If None, text is still extracted but not written to files.
         #     options: Conversion options. If None, default options are used.
         #     show_progress: Whether to show a progress bar (if in interactive environment). # TODO Implement.
@@ -120,9 +122,10 @@ class TestClassPythonAPI(unittest.TestCase):
         # Method takes args: self
         raise NotImplementedError("Test for _get_default_options has not been written.")
 
+
 class TestClassConvert(unittest.TestCase):
     """Unit tests for the Convert class
-    Class docstring: 
+    Class docstring:
     Public class for object-oriented access to the Omni-Converter.
     Similar to Pathlib's Path class, this class provides a simple interface.
     """
@@ -171,6 +174,7 @@ class TestClassConvert(unittest.TestCase):
         # Args:
         # Method takes args: self, path, output_path, options
         raise NotImplementedError("Test for convert has not been written.")
+
 
 if __name__ == "__main__":
     unittest.main()

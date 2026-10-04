@@ -67,8 +67,20 @@ def test_complex_mens_rea_phrases_are_source_grounded_parser_slots():
         assert element["action"] == [action]
         assert element["action_verb"] == action_verb
         assert element["action_object"] == action_object
-        assert element["text"][element["field_spans"]["mental_state"][0]:element["field_spans"]["mental_state"][1]] == mental_state
-        assert element["text"][element["field_spans"]["action"][0]:element["field_spans"]["action"][1]] == action
+        assert (
+            element["text"][
+                element["field_spans"]["mental_state"][0] : element["field_spans"]["mental_state"][
+                    1
+                ]
+            ]
+            == mental_state
+        )
+        assert (
+            element["text"][
+                element["field_spans"]["action"][0] : element["field_spans"]["action"][1]
+            ]
+            == action
+        )
         assert element["llm_repair"]["required"] is False
 
         norm = LegalNormIR.from_parser_element(element)

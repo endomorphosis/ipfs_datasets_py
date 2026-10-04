@@ -51,41 +51,33 @@ from ipfs_datasets_py.processors.graphrag_processor import GraphRAGProcessor
 processor = GraphRAGProcessor(
     vector_store=my_vector_store,
     knowledge_graph=my_kg,
-    embedding_model="sentence-transformers/all-MiniLM-L6-v2"
+    embedding_model="sentence-transformers/all-MiniLM-L6-v2",
 )
 
 # Query the graph
-results = processor.query(
-    query_text="What is machine learning?",
-    top_k=10
-)
+results = processor.query(query_text="What is machine learning?", top_k=10)
 ```
 
 **AFTER (Unified):**
 ```python
 from ipfs_datasets_py.processors.graphrag.unified_graphrag import (
     UnifiedGraphRAGProcessor,
-    GraphRAGConfiguration
+    GraphRAGConfiguration,
 )
 
 # Configure the processor
 config = GraphRAGConfiguration(
     processing_mode="balanced",  # fast, balanced, quality, comprehensive
-    enable_comprehensive_search=True
+    enable_comprehensive_search=True,
 )
 
 # Initialize
 processor = UnifiedGraphRAGProcessor(
-    config=config,
-    vector_store=my_vector_store,
-    knowledge_graph=my_kg
+    config=config, vector_store=my_vector_store, knowledge_graph=my_kg
 )
 
 # Query the graph (now async)
-results = await processor.process_query(
-    query="What is machine learning?",
-    top_k=10
-)
+results = await processor.process_query(query="What is machine learning?", top_k=10)
 ```
 
 **Key Changes:**
@@ -102,23 +94,17 @@ results = await processor.process_query(
 ```python
 from ipfs_datasets_py.processors.website_graphrag_processor import (
     WebsiteGraphRAGProcessor,
-    WebsiteProcessingConfig
+    WebsiteProcessingConfig,
 )
 
 # Configure for website processing
 config = WebsiteProcessingConfig(
-    archive_services=['ia', 'is'],
-    crawl_depth=2,
-    include_media=True,
-    enable_graphrag=True
+    archive_services=["ia", "is"], crawl_depth=2, include_media=True, enable_graphrag=True
 )
 
 # Process website
 processor = WebsiteGraphRAGProcessor(config=config)
-graphrag_system = await processor.process_website(
-    url="https://example.com",
-    output_dir="output/"
-)
+graphrag_system = await processor.process_website(url="https://example.com", output_dir="output/")
 
 # Query the result
 results = graphrag_system.query("What is this website about?")
@@ -129,7 +115,7 @@ results = graphrag_system.query("What is this website about?")
 from ipfs_datasets_py.processors.graphrag.unified_graphrag import (
     UnifiedGraphRAGProcessor,
     GraphRAGConfiguration,
-    GraphRAGResult
+    GraphRAGResult,
 )
 
 # Configure with web archiving enabled
@@ -140,19 +126,17 @@ config = GraphRAGConfiguration(
     max_depth=2,
     enable_audio_transcription=False,  # Optional media processing
     enable_video_processing=False,
-    output_directory="output/"
+    output_directory="output/",
 )
 
 # Process website
 processor = UnifiedGraphRAGProcessor(config=config)
-result: GraphRAGResult = await processor.process_website(
-    url="https://example.com"
-)
+result: GraphRAGResult = await processor.process_website(url="https://example.com")
 
 # Query the knowledge graph
 query_results = await processor.process_query(
     query="What is this website about?",
-    context=result  # Pass result for context
+    context=result,  # Pass result for context
 )
 ```
 
@@ -170,7 +154,7 @@ query_results = await processor.process_query(
 ```python
 from ipfs_datasets_py.processors.advanced_graphrag_website_processor import (
     AdvancedGraphRAGWebsiteProcessor,
-    AdvancedProcessingConfig
+    AdvancedProcessingConfig,
 )
 
 # Advanced configuration
@@ -178,21 +162,18 @@ config = AdvancedProcessingConfig(
     enable_multi_pass_extraction=True,
     quality_threshold=0.7,
     enable_domain_patterns=True,
-    optimization_level="aggressive"
+    optimization_level="aggressive",
 )
 
 processor = AdvancedGraphRAGWebsiteProcessor(config=config)
-result = await processor.process_website_advanced(
-    url="https://example.com",
-    deep_analysis=True
-)
+result = await processor.process_website_advanced(url="https://example.com", deep_analysis=True)
 ```
 
 **AFTER (Unified):**
 ```python
 from ipfs_datasets_py.processors.graphrag.unified_graphrag import (
     UnifiedGraphRAGProcessor,
-    GraphRAGConfiguration
+    GraphRAGConfiguration,
 )
 
 # Unified configuration with advanced features
@@ -202,13 +183,11 @@ config = GraphRAGConfiguration(
     content_quality_threshold=0.7,
     enable_adaptive_optimization=True,
     enable_web_archiving=True,
-    max_depth=3  # Deep analysis
+    max_depth=3,  # Deep analysis
 )
 
 processor = UnifiedGraphRAGProcessor(config=config)
-result = await processor.process_website(
-    url="https://example.com"
-)
+result = await processor.process_website(url="https://example.com")
 
 # Access quality metrics
 print(f"Quality score: {result.content_metadata.get('quality_score', 0)}")
@@ -303,10 +282,11 @@ result = await processor.process_website("https://example.com")
 processor = GraphRAGProcessor(vector_store=vs)
 for url in urls:
     result = processor.process(url)
-    
+
 # NEW (with async)
 config = GraphRAGConfiguration(processing_mode="fast")
 processor = UnifiedGraphRAGProcessor(config=config)
+
 
 async def process_batch(urls):
     results = []
@@ -314,6 +294,7 @@ async def process_batch(urls):
         for url in urls:
             tg.start_soon(processor.process_website, url)
     return results
+
 
 results = await process_batch(urls)
 ```
@@ -331,7 +312,7 @@ config = GraphRAGConfiguration(
     max_depth=3,
     content_quality_threshold=0.8,
     enable_web_archiving=True,
-    enable_multi_pass_extraction=True
+    enable_multi_pass_extraction=True,
 )
 processor = UnifiedGraphRAGProcessor(config=config)
 ```
@@ -349,10 +330,11 @@ import warnings
 from ipfs_datasets_py.processors.graphrag_processor import DeprecatedGraphRAGWarning
 
 # Suppress for testing (NOT recommended for production)
-warnings.filterwarnings('ignore', category=DeprecatedGraphRAGWarning)
+warnings.filterwarnings("ignore", category=DeprecatedGraphRAGWarning)
 
 # Your old code here
 from ipfs_datasets_py.processors.graphrag_processor import GraphRAGProcessor
+
 processor = GraphRAGProcessor()
 ```
 
@@ -363,22 +345,25 @@ processor = GraphRAGProcessor()
 ```python
 import warnings
 
+
 def test_with_old_processor():
     """Test with deprecated processor (verify warnings appear)"""
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
-        
+
         from ipfs_datasets_py.processors.graphrag_processor import GraphRAGProcessor
+
         processor = GraphRAGProcessor()
-        
+
         # Should have at least one deprecation warning
         assert len(w) >= 1
         assert issubclass(w[0].category, DeprecationWarning)
 
+
 def test_with_new_processor():
     """Test with unified processor (no warnings)"""
     from ipfs_datasets_py.processors.graphrag.unified_graphrag import UnifiedGraphRAGProcessor
-    
+
     processor = UnifiedGraphRAGProcessor()
     # No warnings expected
 ```
@@ -403,12 +388,9 @@ result = await unified_processor.process_website("https://example.com")
 
 # Enhance with LLM reasoning
 llm_integration = GraphRAGIntegration(
-    knowledge_graph=result.knowledge_graph,
-    vector_store=unified_processor.vector_store
+    knowledge_graph=result.knowledge_graph, vector_store=unified_processor.vector_store
 )
-enhanced_results = llm_integration.query_with_reasoning(
-    "Explain the main concepts on this website"
-)
+enhanced_results = llm_integration.query_with_reasoning("Explain the main concepts on this website")
 ```
 
 #### 2. Logic-Enhanced Queries (NeurosymbolicGraphRAG)
@@ -424,7 +406,7 @@ result = await unified_processor.process_document("contract.pdf")
 # Add logic reasoning for contract analysis
 neurosymbolic = NeurosymbolicGraphRAG(
     knowledge_graph=result.knowledge_graph,
-    logic_engine="tdfol"  # Time-dependent first-order logic
+    logic_engine="tdfol",  # Time-dependent first-order logic
 )
 legal_analysis = neurosymbolic.analyze_contract(result)
 ```
@@ -436,13 +418,10 @@ The unified processor has built-in IPLD support:
 ```python
 from ipfs_datasets_py.processors.graphrag.unified_graphrag import (
     UnifiedGraphRAGProcessor,
-    GraphRAGConfiguration
+    GraphRAGConfiguration,
 )
 
-config = GraphRAGConfiguration(
-    processing_mode="comprehensive",
-    output_directory="ipld_output"
-)
+config = GraphRAGConfiguration(processing_mode="comprehensive", output_directory="ipld_output")
 
 processor = UnifiedGraphRAGProcessor(config=config)
 result = await processor.process_website("https://example.com")
@@ -453,6 +432,7 @@ print(f"Knowledge graph stored at: {ipld_cid}")
 
 # Can retrieve later
 from ipfs_datasets_py.data_transformation.ipld import IPLDStorage
+
 storage = IPLDStorage()
 kg = storage.get_knowledge_graph(ipld_cid)
 ```
@@ -496,6 +476,7 @@ result = await processor.process_website("https://example.com")
 
 # Or use anyio.run() if not in async context
 import anyio
+
 result = anyio.run(processor.process_website, "https://example.com")
 ```
 
@@ -603,7 +584,9 @@ A: Yes, during the migration period. But aim to consolidate to unified processor
 ```python
 from ipfs_datasets_py.processors.graphrag_processor import GraphRAGProcessor
 from ipfs_datasets_py.processors.website_graphrag_processor import WebsiteGraphRAGProcessor
-from ipfs_datasets_py.processors.advanced_graphrag_website_processor import AdvancedGraphRAGWebsiteProcessor
+from ipfs_datasets_py.processors.advanced_graphrag_website_processor import (
+    AdvancedGraphRAGWebsiteProcessor,
+)
 
 # Different processors for different tasks
 basic_processor = GraphRAGProcessor()
@@ -620,37 +603,34 @@ advanced_result = await advanced_processor.process_website_advanced("https://exa
 ```python
 from ipfs_datasets_py.processors.graphrag.unified_graphrag import (
     UnifiedGraphRAGProcessor,
-    GraphRAGConfiguration
+    GraphRAGConfiguration,
 )
+
 
 # Single processor with different modes
 async def process_all():
     # Fast mode for quick queries
-    fast_processor = UnifiedGraphRAGProcessor(
-        config=GraphRAGConfiguration(processing_mode="fast")
-    )
+    fast_processor = UnifiedGraphRAGProcessor(config=GraphRAGConfiguration(processing_mode="fast"))
     basic_result = await fast_processor.process_query("What is AI?")
-    
+
     # Balanced mode for websites
     balanced_processor = UnifiedGraphRAGProcessor(
-        config=GraphRAGConfiguration(
-            processing_mode="balanced",
-            enable_web_archiving=True
-        )
+        config=GraphRAGConfiguration(processing_mode="balanced", enable_web_archiving=True)
     )
     web_result = await balanced_processor.process_website("https://example.com")
-    
+
     # Quality mode for advanced processing
     advanced_processor = UnifiedGraphRAGProcessor(
         config=GraphRAGConfiguration(
             processing_mode="quality",
             enable_multi_pass_extraction=True,
-            enable_adaptive_optimization=True
+            enable_adaptive_optimization=True,
         )
     )
     advanced_result = await advanced_processor.process_website("https://example.com")
-    
+
     return basic_result, web_result, advanced_result
+
 
 results = anyio.run(process_all)
 ```

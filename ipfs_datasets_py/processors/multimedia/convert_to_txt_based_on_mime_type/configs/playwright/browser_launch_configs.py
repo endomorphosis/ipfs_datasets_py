@@ -1,5 +1,3 @@
-
-
 from typing import Dict, List, Optional, Union
 from pathlib import Path
 from pydantic import BaseModel, Field
@@ -11,14 +9,14 @@ class BrowserLaunchConfigs(BaseModel):
     """
     Configuration for launching a browser instance in Playwright.
     See: https://playwright.dev/python/docs/api/class-browsertype
-    
+
     Attributes:
-        args: Additional arguments to pass to the browser instance. 
+        args: Additional arguments to pass to the browser instance.
               Warning: Use custom browser args at your own risk.
-        channel: Browser distribution channel. Use 'chromium' for new headless mode. 
+        channel: Browser distribution channel. Use 'chromium' for new headless mode.
                  Other options include chrome variants and msedge variants.
         chromium_sandbox: Enable Chromium sandboxing.
-        devtools: Deprecated. Use debugging tools instead. 
+        devtools: Deprecated. Use debugging tools instead.
                   Chromium-only option to auto-open Developer Tools panel for each tab.
         downloads_path: Directory for accepted downloads. Temporary directory is created if not specified.
         env: Environment variables visible to the browser.
@@ -34,7 +32,7 @@ class BrowserLaunchConfigs(BaseModel):
         timeout: Maximum time in milliseconds to wait for browser instance to start.
         traces_dir: Directory where traces are saved.
     """
-    
+
     args: Optional[List[str]] = None
     channel: Optional[str] = None
     chromium_sandbox: Optional[bool] = False

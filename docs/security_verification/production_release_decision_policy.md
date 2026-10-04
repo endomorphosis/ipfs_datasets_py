@@ -196,11 +196,11 @@ from ipfs_datasets_py.logic.security_models.crypto_exchange.release_policy impor
     security_decision_outcomes,
 )
 
-decision = classify_release_consumer_outcome(proof_report, release_gate='blocking')
-if not decision['secure_for_release']:
+decision = classify_release_consumer_outcome(proof_report, release_gate="blocking")
+if not decision["secure_for_release"]:
     # decision['outcome'] is one of disprove/unknown/not-modeled/stale-evidence/
     # missing-solver/blocked-production; treat the claim as non-secure.
-    reject_release(decision['reasons'])
+    reject_release(decision["reasons"])
 ```
 
 `classify_release_consumer_outcome` fails closed: a missing proof report

@@ -12,6 +12,7 @@ and managing IPFS Datasets Python operations, including:
 
 The dashboard uses Flask for the backend web server and Chart.js for visualization.
 """
+
 import logging
 import os
 import platform
@@ -30,22 +31,35 @@ from typing import Dict, List, Any, Optional, Union, Callable
 # Web server
 try:
     from flask import (
-        Flask, render_template, jsonify, request, Response,
-        send_from_directory, redirect, url_for
+        Flask,
+        render_template,
+        jsonify,
+        request,
+        Response,
+        send_from_directory,
+        redirect,
+        url_for,
     )
+
     FLASK_AVAILABLE = True
 except ImportError:
     FLASK_AVAILABLE = False
 
 # Import monitoring system
 from ipfs_datasets_py.monitoring import (
-    MonitoringSystem, get_logger, get_metrics_registry,
-    MonitoringConfig, LoggerConfig, MetricsConfig, LogLevel
+    MonitoringSystem,
+    get_logger,
+    get_metrics_registry,
+    MonitoringConfig,
+    LoggerConfig,
+    MetricsConfig,
+    LogLevel,
 )
 
 # Optional imports for extra functionality
 try:
     import psutil
+
     PSUTIL_AVAILABLE = True
 except ImportError:
     PSUTIL_AVAILABLE = False
@@ -97,6 +111,7 @@ class DashboardConfig:
         password (Optional[str]): Password for dashboard authentication. Defaults to None.
         monitoring_config (Optional[MonitoringConfig]): Configuration for monitoring features. Defaults to None.
     """
+
     enabled: bool = True
     host: str = DEFAULT_HOST
     port: int = DEFAULT_PORT
@@ -116,14 +131,14 @@ class AdminDashboard:
     _instance = None
 
     @classmethod
-    def get_instance(cls) -> 'AdminDashboard':
+    def get_instance(cls) -> "AdminDashboard":
         """Get the singleton instance."""
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
 
     @classmethod
-    def initialize(cls, config: Optional[DashboardConfig] = None) -> 'AdminDashboard':
+    def initialize(cls, config: Optional[DashboardConfig] = None) -> "AdminDashboard":
         """Initialize the admin dashboard.
 
         Args:
@@ -152,7 +167,7 @@ class AdminDashboard:
             "platform": platform.platform(),
             "python_version": platform.python_version(),
             "start_time": datetime.now().isoformat(),
-            "ipfs_datasets_version": "0.1.0"  # TODO: Get actual version
+            "ipfs_datasets_version": "0.1.0",  # TODO: Get actual version
         }
 
         # Initialize data directory
@@ -199,17 +214,16 @@ class AdminDashboard:
 
         # Initialize Flask app
         self.app = Flask(
-            __name__,
-            template_folder=DEFAULT_TEMPLATES_DIR,
-            static_folder=DEFAULT_STATIC_DIR
+            __name__, template_folder=DEFAULT_TEMPLATES_DIR, static_folder=DEFAULT_STATIC_DIR
         )
 
         # Set up routes
         self._setup_routes()
-        
+
         # Register patent dashboard routes
         try:
             from ipfs_datasets_py.patent_dashboard import register_patent_routes
+
             register_patent_routes(self.app)
         except Exception as e:
             self.logger.warning(f"Could not register patent dashboard routes: {e}")
@@ -536,7 +550,6 @@ class AdminDashboard:
     <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 </body>
 </html>""",
-
             "login.html": """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -569,7 +582,6 @@ class AdminDashboard:
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
 </body>
 </html>""",
-
             "error.html": """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -598,13 +610,13 @@ class AdminDashboard:
         </div>
     </div>
 </body>
-</html>"""
+</html>""",
         }
 
         # Write template files
         for filename, content in templates.items():
             file_path = os.path.join(DEFAULT_TEMPLATES_DIR, filename)
-            with open(file_path, 'w') as f:
+            with open(file_path, "w") as f:
                 f.write(content)
 
     def _create_default_static_files(self) -> None:
@@ -725,7 +737,6 @@ body {
 .card {
     margin-bottom: 15px;
 }""",
-
             "css/login.css": """html,
 body {
     height: 100%;
@@ -774,7 +785,7 @@ body {
     margin-bottom: 10px;
     border-top-left-radius: 0;
     border-top-right-radius: 0;
-}"""
+}""",
         }
 
         # JavaScript files
@@ -914,14 +925,14 @@ function fetchUpdatedData() {
             "css/bootstrap.min.css": "/* Bootstrap CSS would be here */",
             "js/jquery.min.js": "/* jQuery would be here */",
             "js/bootstrap.bundle.min.js": "/* Bootstrap JS would be here */",
-            "js/chart.min.js": "/* Chart.js would be here */"
+            "js/chart.min.js": "/* Chart.js would be here */",
         }
 
         # Write all static files
         for filename, content in {**css_files, **js_files, **library_files}.items():
             file_path = os.path.join(DEFAULT_STATIC_DIR, filename)
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
-            with open(file_path, 'w') as f:
+            with open(file_path, "w") as f:
                 f.write(content)
 
     def _setup_routes(self) -> None:
@@ -929,13 +940,13 @@ function fetchUpdatedData() {
         if not self.app:
             return
 
-        @self.app.route('/')
+        @self.app.route("/")
         def index():
             """Render the main dashboard page."""
             # Check authentication if required
             if self.config.require_auth:
                 if not self._check_auth():
-                    return redirect(url_for('login'))
+                    return redirect(url_for("login"))
 
             # Get monitoring data
             metrics_registry = get_metrics_registry()
@@ -948,8 +959,10 @@ function fetchUpdatedData() {
                         "name": m.name,
                         "type": m.type.value,
                         "value": m.value,
-                        "timestamp": datetime.fromtimestamp(m.timestamp).strftime('%Y-%m-%d %H:%M:%S'),
-                        "labels": m.labels
+                        "timestamp": datetime.fromtimestamp(m.timestamp).strftime(
+                            "%Y-%m-%d %H:%M:%S"
+                        ),
+                        "labels": m.labels,
                     }
                     for m in instances.values()
                 ]
@@ -957,8 +970,10 @@ function fetchUpdatedData() {
             # Get active operations
             operations = [op.to_dict() for op in metrics_registry.operations.values()]
             for op in operations:
-                if op['start_time']:
-                    op['start_time'] = datetime.fromtimestamp(op['start_time']).strftime('%Y-%m-%d %H:%M:%S')
+                if op["start_time"]:
+                    op["start_time"] = datetime.fromtimestamp(op["start_time"]).strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    )
 
             # Get system stats
             system_stats = self._get_system_stats()
@@ -972,7 +987,7 @@ function fetchUpdatedData() {
                     "id": "QmYourNodeId",
                     "status": "online",
                     "address": "/ip4/127.0.0.1/tcp/4001",
-                    "last_seen": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    "last_seen": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 }
             ]
 
@@ -992,30 +1007,30 @@ function fetchUpdatedData() {
                 "system_stats": system_stats,
                 "node_info": self.node_info,
                 "uptime": uptime,
-                "last_updated": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "refresh_interval": self.config.refresh_interval,
                 "dashboard_config": dashboard_config,
-                "monitoring_config": monitoring_config
+                "monitoring_config": monitoring_config,
             }
 
-            return render_template('index.html', **dashboard_data)
+            return render_template("index.html", **dashboard_data)
 
-        @self.app.route('/login', methods=['GET', 'POST'])
+        @self.app.route("/login", methods=["GET", "POST"])
         def login():
             """Handle login."""
-            if request.method == 'POST':
-                username = request.form['username']
-                password = request.form['password']
+            if request.method == "POST":
+                username = request.form["username"]
+                password = request.form["password"]
 
                 if username == self.config.username and password == self.config.password:
                     # In a real implementation, we would use a session or JWT
-                    return redirect(url_for('index'))
+                    return redirect(url_for("index"))
                 else:
-                    return render_template('login.html', error="Invalid credentials")
+                    return render_template("login.html", error="Invalid credentials")
 
-            return render_template('login.html')
+            return render_template("login.html")
 
-        @self.app.route('/api/metrics')
+        @self.app.route("/api/metrics")
         def api_metrics():
             """Return metrics data as JSON."""
             metrics_registry = get_metrics_registry()
@@ -1029,14 +1044,14 @@ function fetchUpdatedData() {
                         "type": m.type.value,
                         "value": m.value,
                         "timestamp": m.timestamp,
-                        "labels": m.labels
+                        "labels": m.labels,
                     }
                     for m in instances.values()
                 ]
 
             return jsonify({"metrics": metrics})
 
-        @self.app.route('/api/operations')
+        @self.app.route("/api/operations")
         def api_operations():
             """Return operations data as JSON."""
             metrics_registry = get_metrics_registry()
@@ -1044,23 +1059,25 @@ function fetchUpdatedData() {
 
             return jsonify({"operations": operations})
 
-        @self.app.route('/api/logs')
+        @self.app.route("/api/logs")
         def api_logs():
             """Return recent logs as JSON."""
             logs = self._get_recent_logs()
 
             return jsonify({"logs": logs})
 
-        @self.app.route('/api/system')
+        @self.app.route("/api/system")
         def api_system():
             """Return system stats as JSON."""
             system_stats = self._get_system_stats()
 
-            return jsonify({
-                "system_stats": system_stats,
-                "node_info": self.node_info,
-                "uptime": int(time.time() - self.start_time)
-            })
+            return jsonify(
+                {
+                    "system_stats": system_stats,
+                    "node_info": self.node_info,
+                    "uptime": int(time.time() - self.start_time),
+                }
+            )
 
     def _get_system_stats(self) -> Dict[str, Any]:
         """Get system statistics."""
@@ -1071,7 +1088,7 @@ function fetchUpdatedData() {
             "memory_percent": 0,
             "disk_used": "0 GB",
             "disk_total": "0 GB",
-            "disk_percent": 0
+            "disk_percent": 0,
         }
 
         if PSUTIL_AVAILABLE:
@@ -1086,7 +1103,7 @@ function fetchUpdatedData() {
                 stats["memory_percent"] = memory.percent
 
                 # Disk
-                disk = psutil.disk_usage('/')
+                disk = psutil.disk_usage("/")
                 stats["disk_used"] = f"{disk.used / (1024 * 1024 * 1024):.2f} GB"
                 stats["disk_total"] = f"{disk.total / (1024 * 1024 * 1024):.2f} GB"
                 stats["disk_percent"] = disk.percent
@@ -1103,30 +1120,34 @@ function fetchUpdatedData() {
             log_file = MonitoringSystem.get_instance().config.logger.file_path
 
             if log_file and os.path.exists(log_file):
-                with open(log_file, 'r') as f:
+                with open(log_file, "r") as f:
                     # Read last N lines
-                    lines = f.readlines()[-self.config.max_log_lines:]
+                    lines = f.readlines()[-self.config.max_log_lines :]
 
                     for line in lines:
                         # Parse log line (very basic parsing, would need to be improved)
-                        parts = line.strip().split(' - ', 3)
+                        parts = line.strip().split(" - ", 3)
                         if len(parts) >= 4:
                             timestamp, name, level, message = parts
-                            logs.append({
-                                "timestamp": timestamp,
-                                "name": name,
-                                "level": level,
-                                "message": message
-                            })
+                            logs.append(
+                                {
+                                    "timestamp": timestamp,
+                                    "name": name,
+                                    "level": level,
+                                    "message": message,
+                                }
+                            )
         except Exception as e:
             self.logger.warning(f"Error reading logs: {str(e)}")
             # Add the error as a log entry
-            logs.append({
-                "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                "name": "admin_dashboard",
-                "level": "ERROR",
-                "message": f"Error reading log file: {str(e)}"
-            })
+            logs.append(
+                {
+                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "name": "admin_dashboard",
+                    "level": "ERROR",
+                    "message": f"Error reading log file: {str(e)}",
+                }
+            )
 
         return logs
 
@@ -1156,10 +1177,7 @@ function fetchUpdatedData() {
 
         # Start the server in a separate thread
         self.running = True
-        self.server_thread = threading.Thread(
-            target=self._run_server,
-            daemon=True
-        )
+        self.server_thread = threading.Thread(target=self._run_server, daemon=True)
         self.server_thread.start()
 
         # Open browser if configured
@@ -1178,7 +1196,7 @@ function fetchUpdatedData() {
                 port=self.config.port,
                 debug=False,
                 use_reloader=False,
-                threaded=True
+                threaded=True,
             )
         except Exception as e:
             self.logger.error(f"Error running admin dashboard server: {str(e)}")
@@ -1219,7 +1237,7 @@ function fetchUpdatedData() {
             "initialized": self.initialized,
             "host": self.config.host,
             "port": self.config.port,
-            "uptime": time.time() - self.start_time if self.running else 0
+            "uptime": time.time() - self.start_time if self.running else 0,
         }
 
 
@@ -1264,7 +1282,6 @@ def get_dashboard_status() -> Dict[str, Any]:
     return dashboard.get_status()
 
 
-
 def example_main():
     # Example usage
     from ipfs_datasets_py.monitoring import MonitoringConfig, LoggerConfig, MetricsConfig, LogLevel
@@ -1273,16 +1290,9 @@ def example_main():
     monitoring_config = MonitoringConfig(
         enabled=True,
         logger=LoggerConfig(
-            name="ipfs_datasets",
-            level=LogLevel.DEBUG,
-            file_path="ipfs_datasets.log",
-            console=True
+            name="ipfs_datasets", level=LogLevel.DEBUG, file_path="ipfs_datasets.log", console=True
         ),
-        metrics=MetricsConfig(
-            enabled=True,
-            system_metrics=True,
-            collect_interval=5
-        )
+        metrics=MetricsConfig(enabled=True, system_metrics=True, collect_interval=5),
     )
 
     # Configure and start dashboard
@@ -1292,7 +1302,7 @@ def example_main():
         port=8888,
         refresh_interval=5,
         open_browser=True,
-        monitoring_config=monitoring_config
+        monitoring_config=monitoring_config,
     )
 
     # Start dashboard

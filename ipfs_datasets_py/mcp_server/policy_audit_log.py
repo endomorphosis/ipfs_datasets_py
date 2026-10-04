@@ -27,6 +27,7 @@ Usage::
     )
     print(log.recent(n=5))
 """
+
 from __future__ import annotations
 
 import json
@@ -68,6 +69,7 @@ class AuditEntry:
     extra:
         Any additional metadata supplied by the caller.
     """
+
     timestamp: float
     policy_cid: str
     intent_cid: str
@@ -230,8 +232,7 @@ class PolicyAuditLog:
             tool=tool,
             justification=getattr(decision_obj, "justification", ""),
             obligations=[
-                getattr(o, "type", str(o))
-                for o in getattr(decision_obj, "obligations", [])
+                getattr(o, "type", str(o)) for o in getattr(decision_obj, "obligations", [])
             ],
             extra=extra or {},
         )

@@ -104,15 +104,19 @@ data is ever interpolated directly into SQL strings. See:
 ### Before (deprecated)
 
 ```python
-from ipfs_datasets_py.mcp_server.tools.lizardperson_argparse_programs \
-    .municipal_bluebook_citation_validator import CitationValidator
+from ipfs_datasets_py.mcp_server.tools.lizardperson_argparse_programs.municipal_bluebook_citation_validator import (
+    CitationValidator,
+)
 ```
 
 ### After (canonical)
 
 ```python
 from ipfs_datasets_py.processors.legal_scrapers.bluebook_citation_validator import (
-    CitationValidator, ValidatorConfig, StratifiedSampler, ResultsAnalyzer,
+    CitationValidator,
+    ValidatorConfig,
+    StratifiedSampler,
+    ResultsAnalyzer,
     generate_validation_report,
 )
 ```

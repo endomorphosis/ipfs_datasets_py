@@ -81,7 +81,11 @@ def _code_links(html: str, base_url: str, pattern: re.Pattern[str]) -> List[Tupl
     return links
 
 
-def _discover_urls(*, workers: int = 8) -> Tuple[List[Tuple[str, str]], List[Tuple[str, str]], List[Tuple[str, str]], List[Dict[str, str]]]:
+def _discover_urls(
+    *, workers: int = 8
+) -> Tuple[
+    List[Tuple[str, str]], List[Tuple[str, str]], List[Tuple[str, str]], List[Dict[str, str]]
+]:
     root_html = _fetch(BASE_URL)
     titles = [(label, url) for label, url in _code_links(root_html, BASE_URL, TITLE_RE)]
     chapters: List[Tuple[str, str]] = []
@@ -92,7 +96,10 @@ def _discover_urls(*, workers: int = 8) -> Tuple[List[Tuple[str, str]], List[Tup
         return _code_links(_fetch(url), url, pattern)
 
     with ThreadPoolExecutor(max_workers=max(1, int(workers))) as executor:
-        future_map = {executor.submit(_links_for, title_url, CHAPTER_RE): title_url for _title_label, title_url in titles}
+        future_map = {
+            executor.submit(_links_for, title_url, CHAPTER_RE): title_url
+            for _title_label, title_url in titles
+        }
         for future in as_completed(future_map):
             title_url = future_map[future]
             try:
@@ -107,7 +114,10 @@ def _discover_urls(*, workers: int = 8) -> Tuple[List[Tuple[str, str]], List[Tup
     sections: List[Tuple[str, str]] = []
     seen_sections = set()
     with ThreadPoolExecutor(max_workers=max(1, int(workers))) as executor:
-        future_map = {executor.submit(_links_for, chapter_url, SECTION_RE): chapter_url for _chapter_label, chapter_url in chapters}
+        future_map = {
+            executor.submit(_links_for, chapter_url, SECTION_RE): chapter_url
+            for _chapter_label, chapter_url in chapters
+        }
         for future in as_completed(future_map):
             chapter_url = future_map[future]
             try:
@@ -138,7 +148,9 @@ def _extract_page(label: str, url: str) -> Dict[str, Any]:
     page_title = _text(title_tag.get_text(" ", strip=True) if title_tag else label)
     h1 = soup.find("h1")
     heading = _text(h1.get_text(" ", strip=True) if h1 else label)
-    article = soup.select_one("article") or soup.select_one(".node__content") or soup.select_one("main")
+    article = (
+        soup.select_one("article") or soup.select_one(".node__content") or soup.select_one("main")
+    )
     text = _text(article.get_text("\n", strip=True) if article else soup.get_text("\n", strip=True))
     title_no, chapter_no, section_no = _path_parts(url)
     document_bytes = html.encode("utf-8")
@@ -187,11 +199,19 @@ def _write_parquet(path: Path, rows: List[Dict[str, Any]]) -> None:
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Scrape current Portland City Code section pages.")
-    parser.add_argument("--output-root", default="workspace/municipal_common_crawl_laws/portland_gov_code_current")
+    parser.add_argument(
+        "--output-root", default="workspace/municipal_common_crawl_laws/portland_gov_code_current"
+    )
     parser.add_argument("--workers", type=int, default=8)
-    parser.add_argument("--limit", type=int, default=0, help="Optional section limit for smoke tests.")
-    parser.add_argument("--include-chapters", action="store_true", help="Also scrape chapter landing pages.")
-    parser.add_argument("--include-titles", action="store_true", help="Also scrape title landing pages.")
+    parser.add_argument(
+        "--limit", type=int, default=0, help="Optional section limit for smoke tests."
+    )
+    parser.add_argument(
+        "--include-chapters", action="store_true", help="Also scrape chapter landing pages."
+    )
+    parser.add_argument(
+        "--include-titles", action="store_true", help="Also scrape title landing pages."
+    )
     parser.add_argument("--json", action="store_true")
     return parser.parse_args()
 
@@ -213,7 +233,9 @@ def main() -> int:
     rows: List[Dict[str, Any]] = []
     errors: List[Dict[str, str]] = list(discovery_errors)
     with ThreadPoolExecutor(max_workers=max(1, int(args.workers))) as executor:
-        future_map = {executor.submit(_extract_page, label, url): (label, url) for label, url in targets}
+        future_map = {
+            executor.submit(_extract_page, label, url): (label, url) for label, url in targets
+        }
         for future in as_completed(future_map):
             label, url = future_map[future]
             try:
@@ -221,7 +243,14 @@ def main() -> int:
             except Exception as exc:
                 errors.append({"url": url, "label": label, "error": f"{type(exc).__name__}: {exc}"})
 
-    rows.sort(key=lambda row: (str(row.get("title_number") or ""), str(row.get("chapter_number") or ""), str(row.get("section_number") or ""), str(row.get("url") or "")))
+    rows.sort(
+        key=lambda row: (
+            str(row.get("title_number") or ""),
+            str(row.get("chapter_number") or ""),
+            str(row.get("section_number") or ""),
+            str(row.get("url") or ""),
+        )
+    )
     _write_parquet(output_root / "pages.parquet", rows)
     manifest = {
         "source": BASE_URL,
@@ -235,7 +264,9 @@ def main() -> int:
         "error_count": len(errors),
         "errors": errors[:50],
     }
-    (output_root / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
+    (output_root / "manifest.json").write_text(
+        json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
     if args.json:
         print(json.dumps(manifest, indent=2, ensure_ascii=False))
     else:

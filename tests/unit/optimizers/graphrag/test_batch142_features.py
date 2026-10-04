@@ -7,6 +7,7 @@ Methods under test:
   - LogicValidator.relationship_count(ontology)
   - LogicValidator.entity_to_relationship_ratio(ontology)
 """
+
 import pytest
 from unittest.mock import MagicMock
 
@@ -15,8 +16,12 @@ from unittest.mock import MagicMock
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
@@ -33,18 +38,20 @@ def _push_adapter(a, *scores):
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
 def _ont(num_entities=3, num_rels=2):
     ents = [{"id": f"e{i}", "type": "T"} for i in range(num_entities)]
-    rels = [{"source_id": f"e{i}", "target_id": f"e{i+1}"} for i in range(num_rels)]
+    rels = [{"source_id": f"e{i}", "target_id": f"e{i + 1}"} for i in range(num_rels)]
     return {"entities": ents, "relationships": rels}
 
 
 # ---------------------------------------------------------------------------
 # OntologyLearningAdapter.worst_n_feedback
 # ---------------------------------------------------------------------------
+
 
 class TestWorstNFeedback:
     @pytest.mark.parametrize(
@@ -68,6 +75,7 @@ class TestWorstNFeedback:
 # ---------------------------------------------------------------------------
 # OntologyLearningAdapter.feedback_score_range
 # ---------------------------------------------------------------------------
+
 
 class TestFeedbackScoreRange:
     @pytest.mark.parametrize(
@@ -95,6 +103,7 @@ class TestFeedbackScoreRange:
 # LogicValidator.entity_count
 # ---------------------------------------------------------------------------
 
+
 class TestEntityCount:
     @pytest.mark.parametrize(
         "ontology,expected",
@@ -117,6 +126,7 @@ class TestEntityCount:
 # LogicValidator.relationship_count
 # ---------------------------------------------------------------------------
 
+
 class TestRelationshipCount:
     @pytest.mark.parametrize(
         "ontology,expected",
@@ -134,6 +144,7 @@ class TestRelationshipCount:
 # ---------------------------------------------------------------------------
 # LogicValidator.entity_to_relationship_ratio
 # ---------------------------------------------------------------------------
+
 
 class TestEntityToRelationshipRatio:
     @pytest.mark.parametrize(

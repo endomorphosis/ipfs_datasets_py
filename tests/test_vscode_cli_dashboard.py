@@ -14,7 +14,7 @@ Tests the full scope of VSCode CLI tooling including:
 
 Usage:
     python -m pytest tests/test_vscode_cli_dashboard.py -v -s
-    
+
     # With headed browser (to see the browser)
     python -m pytest tests/test_vscode_cli_dashboard.py -v -s --headed
 """
@@ -37,6 +37,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 try:
     from playwright.async_api import async_playwright, Page, Browser, BrowserContext, expect
+
     PLAYWRIGHT_AVAILABLE = True
 except ImportError:
     PLAYWRIGHT_AVAILABLE = False
@@ -50,16 +51,16 @@ logger = logging.getLogger(__name__)
 class VSCodeCLIDashboardTester:
     """
     Tests VSCode CLI integration in the MCP Dashboard.
-    
+
     This class tests all VSCode CLI features accessible through the dashboard:
     - Tool discovery and listing
     - Status checking
     - Installation
-    - Command execution  
+    - Command execution
     - Extension management
     - Tunnel setup and GitHub authentication
     """
-    
+
     def __init__(self, base_url: str = "http://127.0.0.1:8899"):
         self.base_url = base_url
         self.screenshots_dir = Path("test_screenshots/vscode_cli")
@@ -68,59 +69,60 @@ class VSCodeCLIDashboardTester:
             "screenshots": [],
             "interactions": [],
             "tools_tested": [],
-            "errors": []
+            "errors": [],
         }
-        
+
     async def take_screenshot(self, page: Page, name: str, description: str = "") -> str:
         """Take a screenshot and save it with metadata."""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"{name}_{timestamp}.png"
         filepath = self.screenshots_dir / filename
-        
+
         await page.screenshot(path=str(filepath), full_page=True)
-        
+
         screenshot_info = {
             "filename": filename,
             "path": str(filepath),
             "description": description,
             "timestamp": timestamp,
-            "url": page.url
+            "url": page.url,
         }
         self.test_results["screenshots"].append(screenshot_info)
-        
+
         logger.info(f"📸 Screenshot saved: {filename} - {description}")
         return str(filepath)
-    
+
     async def test_dashboard_loads(self, page: Page) -> bool:
         """Test that the MCP dashboard loads successfully."""
         logger.info("Testing dashboard loads...")
-        
+
         try:
             await page.goto(self.base_url, wait_until="networkidle", timeout=30000)
-            await self.take_screenshot(page, "01_dashboard_loaded", "MCP Dashboard loaded successfully")
-            
+            await self.take_screenshot(
+                page, "01_dashboard_loaded", "MCP Dashboard loaded successfully"
+            )
+
             # Check for essential elements
             await page.wait_for_selector("body", timeout=5000)
-            
-            self.test_results["interactions"].append({
-                "test": "dashboard_loads",
-                "status": "passed",
-                "timestamp": datetime.now().isoformat()
-            })
+
+            self.test_results["interactions"].append(
+                {
+                    "test": "dashboard_loads",
+                    "status": "passed",
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to load dashboard: {e}")
-            self.test_results["errors"].append({
-                "test": "dashboard_loads",
-                "error": str(e)
-            })
+            self.test_results["errors"].append({"test": "dashboard_loads", "error": str(e)})
             return False
-    
+
     async def test_tool_categories_visible(self, page: Page) -> bool:
         """Test that tool categories are visible and VSCode tools are listed."""
         logger.info("Testing tool categories visibility...")
-        
+
         try:
             # Look for tools section or categories
             # Try multiple possible selectors
@@ -131,9 +133,9 @@ class VSCodeCLIDashboardTester:
                 "text=development_tools",
                 "[data-category='development']",
                 ".tool-category",
-                ".category-development"
+                ".category-development",
             ]
-            
+
             found = False
             for selector in selectors_to_try:
                 try:
@@ -143,28 +145,27 @@ class VSCodeCLIDashboardTester:
                     break
                 except:
                     continue
-            
+
             await self.take_screenshot(page, "02_tool_categories", "Tool categories in dashboard")
-            
-            self.test_results["interactions"].append({
-                "test": "tool_categories_visible",
-                "status": "passed" if found else "partial",
-                "timestamp": datetime.now().isoformat()
-            })
+
+            self.test_results["interactions"].append(
+                {
+                    "test": "tool_categories_visible",
+                    "status": "passed" if found else "partial",
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to find tool categories: {e}")
-            self.test_results["errors"].append({
-                "test": "tool_categories_visible",
-                "error": str(e)
-            })
+            self.test_results["errors"].append({"test": "tool_categories_visible", "error": str(e)})
             return False
-    
+
     async def test_vscode_cli_status_tool(self, page: Page) -> bool:
         """Test VSCode CLI status tool discovery and execution."""
         logger.info("Testing VSCode CLI status tool...")
-        
+
         try:
             # Look for VSCode CLI status tool
             vscode_tool_selectors = [
@@ -173,7 +174,7 @@ class VSCodeCLIDashboardTester:
                 "[data-tool='vscode_cli_status']",
                 "button:has-text('vscode')",
             ]
-            
+
             found_tool = False
             for selector in vscode_tool_selectors:
                 try:
@@ -184,17 +185,17 @@ class VSCodeCLIDashboardTester:
                     break
                 except:
                     continue
-            
+
             await self.take_screenshot(page, "03_vscode_status_tool", "VSCode CLI Status tool")
-            
+
             # Try to execute the tool
             execute_selectors = [
                 "button:has-text('Execute')",
                 "button:has-text('Run')",
                 "[data-action='execute']",
-                "input[type='submit']"
+                "input[type='submit']",
             ]
-            
+
             for selector in execute_selectors:
                 try:
                     await page.click(selector, timeout=2000)
@@ -202,29 +203,30 @@ class VSCodeCLIDashboardTester:
                     break
                 except:
                     continue
-            
-            await self.take_screenshot(page, "04_vscode_status_executed", "VSCode CLI Status tool executed")
-            
+
+            await self.take_screenshot(
+                page, "04_vscode_status_executed", "VSCode CLI Status tool executed"
+            )
+
             self.test_results["tools_tested"].append("vscode_cli_status")
-            self.test_results["interactions"].append({
-                "test": "vscode_cli_status_tool",
-                "status": "passed" if found_tool else "partial",
-                "timestamp": datetime.now().isoformat()
-            })
+            self.test_results["interactions"].append(
+                {
+                    "test": "vscode_cli_status_tool",
+                    "status": "passed" if found_tool else "partial",
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to test VSCode CLI status tool: {e}")
-            self.test_results["errors"].append({
-                "test": "vscode_cli_status_tool",
-                "error": str(e)
-            })
+            self.test_results["errors"].append({"test": "vscode_cli_status_tool", "error": str(e)})
             return False
-    
+
     async def test_vscode_cli_install_tool(self, page: Page) -> bool:
         """Test VSCode CLI install tool visibility."""
         logger.info("Testing VSCode CLI install tool...")
-        
+
         try:
             # Look for install tool
             install_selectors = [
@@ -232,7 +234,7 @@ class VSCodeCLIDashboardTester:
                 "text=VSCode CLI Install",
                 "[data-tool='vscode_cli_install']",
             ]
-            
+
             found_tool = False
             for selector in install_selectors:
                 try:
@@ -242,35 +244,39 @@ class VSCodeCLIDashboardTester:
                     break
                 except:
                     continue
-            
+
             await self.take_screenshot(page, "05_vscode_install_tool", "VSCode CLI Install tool")
-            
+
             self.test_results["tools_tested"].append("vscode_cli_install")
-            self.test_results["interactions"].append({
-                "test": "vscode_cli_install_tool",
-                "status": "passed" if found_tool else "partial",
-                "timestamp": datetime.now().isoformat()
-            })
+            self.test_results["interactions"].append(
+                {
+                    "test": "vscode_cli_install_tool",
+                    "status": "passed" if found_tool else "partial",
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to test VSCode CLI install tool: {e}")
-            await self.take_screenshot(page, "05_vscode_install_error", "Error finding install tool")
+            await self.take_screenshot(
+                page, "05_vscode_install_error", "Error finding install tool"
+            )
             return False
-    
+
     async def test_vscode_extensions_tool(self, page: Page) -> bool:
         """Test VSCode extensions management tool."""
         logger.info("Testing VSCode extensions tool...")
-        
+
         try:
             # Look for extensions tool
             ext_selectors = [
                 "text=vscode_cli_extensions",
                 "text=VSCode Extensions",
                 "[data-tool='vscode_cli_extensions']",
-                "text=vscode_cli_list_extensions"
+                "text=vscode_cli_list_extensions",
             ]
-            
+
             found_tool = False
             for selector in ext_selectors:
                 try:
@@ -280,35 +286,41 @@ class VSCodeCLIDashboardTester:
                     break
                 except:
                     continue
-            
-            await self.take_screenshot(page, "06_vscode_extensions_tool", "VSCode extensions management tool")
-            
+
+            await self.take_screenshot(
+                page, "06_vscode_extensions_tool", "VSCode extensions management tool"
+            )
+
             self.test_results["tools_tested"].append("vscode_cli_extensions")
-            self.test_results["interactions"].append({
-                "test": "vscode_extensions_tool",
-                "status": "passed" if found_tool else "partial",
-                "timestamp": datetime.now().isoformat()
-            })
+            self.test_results["interactions"].append(
+                {
+                    "test": "vscode_extensions_tool",
+                    "status": "passed" if found_tool else "partial",
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to test VSCode extensions tool: {e}")
-            await self.take_screenshot(page, "06_vscode_extensions_error", "Error finding extensions tool")
+            await self.take_screenshot(
+                page, "06_vscode_extensions_error", "Error finding extensions tool"
+            )
             return False
-    
+
     async def test_vscode_tunnel_tool(self, page: Page) -> bool:
         """Test VSCode tunnel management tool including GitHub auth."""
         logger.info("Testing VSCode tunnel tool and GitHub authentication...")
-        
+
         try:
             # Look for tunnel tool
             tunnel_selectors = [
                 "text=vscode_cli_tunnel",
                 "text=VSCode Tunnel",
                 "[data-tool='vscode_cli_tunnel']",
-                "text=vscode_cli_tunnel_login"
+                "text=vscode_cli_tunnel_login",
             ]
-            
+
             found_tool = False
             for selector in tunnel_selectors:
                 try:
@@ -318,45 +330,51 @@ class VSCodeCLIDashboardTester:
                     break
                 except:
                     continue
-            
-            await self.take_screenshot(page, "07_vscode_tunnel_tool", "VSCode tunnel management tool")
-            
+
+            await self.take_screenshot(
+                page, "07_vscode_tunnel_tool", "VSCode tunnel management tool"
+            )
+
             # Look for GitHub auth options
             auth_selectors = [
                 "text=github",
                 "text=GitHub",
                 "select[name='provider']",
-                "input[name='provider']"
+                "input[name='provider']",
             ]
-            
+
             for selector in auth_selectors:
                 try:
                     element = await page.query_selector(selector)
                     if element:
                         logger.info(f"Found GitHub auth option: {selector}")
-                        await self.take_screenshot(page, "08_github_auth_option", "GitHub authentication option visible")
+                        await self.take_screenshot(
+                            page, "08_github_auth_option", "GitHub authentication option visible"
+                        )
                         break
                 except:
                     continue
-            
+
             self.test_results["tools_tested"].append("vscode_cli_tunnel")
-            self.test_results["interactions"].append({
-                "test": "vscode_tunnel_tool",
-                "status": "passed" if found_tool else "partial",
-                "timestamp": datetime.now().isoformat(),
-                "github_auth": "visible"
-            })
+            self.test_results["interactions"].append(
+                {
+                    "test": "vscode_tunnel_tool",
+                    "status": "passed" if found_tool else "partial",
+                    "timestamp": datetime.now().isoformat(),
+                    "github_auth": "visible",
+                }
+            )
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to test VSCode tunnel tool: {e}")
             await self.take_screenshot(page, "07_vscode_tunnel_error", "Error finding tunnel tool")
             return False
-    
+
     async def test_vscode_execute_tool(self, page: Page) -> bool:
         """Test VSCode CLI execute tool for arbitrary commands."""
         logger.info("Testing VSCode CLI execute tool...")
-        
+
         try:
             # Look for execute tool
             execute_selectors = [
@@ -364,7 +382,7 @@ class VSCodeCLIDashboardTester:
                 "text=VSCode Execute",
                 "[data-tool='vscode_cli_execute']",
             ]
-            
+
             found_tool = False
             for selector in execute_selectors:
                 try:
@@ -374,16 +392,18 @@ class VSCodeCLIDashboardTester:
                     break
                 except:
                     continue
-            
-            await self.take_screenshot(page, "09_vscode_execute_tool", "VSCode CLI execute command tool")
-            
+
+            await self.take_screenshot(
+                page, "09_vscode_execute_tool", "VSCode CLI execute command tool"
+            )
+
             # Look for command input field
             input_selectors = [
                 "input[name='command']",
                 "textarea[name='command']",
-                "[data-field='command']"
+                "[data-field='command']",
             ]
-            
+
             for selector in input_selectors:
                 try:
                     element = await page.query_selector(selector)
@@ -391,69 +411,76 @@ class VSCodeCLIDashboardTester:
                         logger.info(f"Found command input field: {selector}")
                         # Try to fill it with a test command
                         await page.fill(selector, '["--version"]')
-                        await self.take_screenshot(page, "10_command_input_filled", "Command input filled with --version")
+                        await self.take_screenshot(
+                            page, "10_command_input_filled", "Command input filled with --version"
+                        )
                         break
                 except:
                     continue
-            
+
             self.test_results["tools_tested"].append("vscode_cli_execute")
-            self.test_results["interactions"].append({
-                "test": "vscode_execute_tool",
-                "status": "passed" if found_tool else "partial",
-                "timestamp": datetime.now().isoformat()
-            })
+            self.test_results["interactions"].append(
+                {
+                    "test": "vscode_execute_tool",
+                    "status": "passed" if found_tool else "partial",
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to test VSCode CLI execute tool: {e}")
-            await self.take_screenshot(page, "09_vscode_execute_error", "Error finding execute tool")
+            await self.take_screenshot(
+                page, "09_vscode_execute_error", "Error finding execute tool"
+            )
             return False
-    
+
     async def test_tool_api_endpoints(self, page: Page) -> bool:
         """Test that API endpoints for VSCode CLI tools are accessible."""
         logger.info("Testing VSCode CLI tool API endpoints...")
-        
+
         try:
             # Navigate to API status page
             api_url = f"{self.base_url}/api/mcp/tools"
             await page.goto(api_url, wait_until="networkidle", timeout=10000)
-            
-            await self.take_screenshot(page, "11_api_tools_endpoint", "API tools endpoint showing available tools")
-            
+
+            await self.take_screenshot(
+                page, "11_api_tools_endpoint", "API tools endpoint showing available tools"
+            )
+
             # Check page content
             content = await page.content()
-            
+
             # Check if VSCode CLI tools are in the response
             vscode_tools = [
                 "vscode_cli_status",
                 "vscode_cli_install",
                 "vscode_cli_execute",
                 "vscode_cli_extensions",
-                "vscode_cli_tunnel"
+                "vscode_cli_tunnel",
             ]
-            
+
             found_tools = []
             for tool in vscode_tools:
                 if tool in content:
                     found_tools.append(tool)
                     logger.info(f"✓ Found tool in API: {tool}")
-            
-            self.test_results["interactions"].append({
-                "test": "tool_api_endpoints",
-                "status": "passed",
-                "tools_found": found_tools,
-                "timestamp": datetime.now().isoformat()
-            })
+
+            self.test_results["interactions"].append(
+                {
+                    "test": "tool_api_endpoints",
+                    "status": "passed",
+                    "tools_found": found_tools,
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
             return len(found_tools) > 0
-            
+
         except Exception as e:
             logger.error(f"Failed to test API endpoints: {e}")
-            self.test_results["errors"].append({
-                "test": "tool_api_endpoints",
-                "error": str(e)
-            })
+            self.test_results["errors"].append({"test": "tool_api_endpoints", "error": str(e)})
             return False
-    
+
     async def generate_test_report(self) -> Dict[str, Any]:
         """Generate a comprehensive test report."""
         report = {
@@ -465,24 +492,24 @@ class VSCodeCLIDashboardTester:
                 "total_interactions": len(self.test_results["interactions"]),
                 "tools_tested": len(self.test_results["tools_tested"]),
                 "errors": len(self.test_results["errors"]),
-                "screenshots_directory": str(self.screenshots_dir)
-            }
+                "screenshots_directory": str(self.screenshots_dir),
+            },
         }
-        
+
         # Save report to file
         report_path = self.screenshots_dir / "test_report.json"
         with open(report_path, "w") as f:
             json.dump(report, f, indent=2)
-        
-        logger.info(f"\n{'='*80}")
+
+        logger.info(f"\n{'=' * 80}")
         logger.info("Test Report Summary:")
         logger.info(f"  Screenshots: {report['summary']['total_screenshots']}")
         logger.info(f"  Interactions: {report['summary']['total_interactions']}")
         logger.info(f"  Tools Tested: {', '.join(self.test_results['tools_tested'])}")
         logger.info(f"  Errors: {report['summary']['errors']}")
         logger.info(f"  Report saved to: {report_path}")
-        logger.info(f"{'='*80}\n")
-        
+        logger.info(f"{'=' * 80}\n")
+
         return report
 
 
@@ -490,7 +517,7 @@ class VSCodeCLIDashboardTester:
 async def test_vscode_cli_dashboard_integration():
     """
     Main test function for VSCode CLI dashboard integration.
-    
+
     This test:
     1. Starts a browser
     2. Navigates to the MCP dashboard
@@ -499,18 +526,20 @@ async def test_vscode_cli_dashboard_integration():
     5. Generates a comprehensive report
     """
     logger.info("Starting VSCode CLI Dashboard Integration Test...")
-    
+
     tester = VSCodeCLIDashboardTester()
-    
+
     async with async_playwright() as p:
         # Launch browser (headless=False to see the browser)
         browser = await p.chromium.launch(headless=True)
         context = await browser.new_context(
             viewport={"width": 1920, "height": 1080},
-            record_video_dir=str(tester.screenshots_dir / "videos") if os.getenv("RECORD_VIDEO") else None
+            record_video_dir=str(tester.screenshots_dir / "videos")
+            if os.getenv("RECORD_VIDEO")
+            else None,
         )
         page = await context.new_page()
-        
+
         try:
             # Run all tests
             await tester.test_dashboard_loads(page)
@@ -521,16 +550,17 @@ async def test_vscode_cli_dashboard_integration():
             await tester.test_vscode_tunnel_tool(page)
             await tester.test_vscode_execute_tool(page)
             await tester.test_tool_api_endpoints(page)
-            
+
             # Generate report
             report = await tester.generate_test_report()
-            
+
             # Assert that we found at least some tools
-            assert len(tester.test_results["tools_tested"]) > 0, \
+            assert len(tester.test_results["tools_tested"]) > 0, (
                 "No VSCode CLI tools were found in the dashboard"
-            
+            )
+
             logger.info("✅ All tests completed successfully!")
-            
+
         except Exception as e:
             logger.error(f"❌ Test failed: {e}")
             await tester.take_screenshot(page, "99_test_failure", f"Test failed: {str(e)}")

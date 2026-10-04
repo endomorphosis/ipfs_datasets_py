@@ -103,7 +103,7 @@ result = processor.process(
     input_data,
     max_retries=5,
     use_multiple=True,  # Aggregate multiple processors
-    timeout=30
+    timeout=30,
 )
 ```
 
@@ -112,13 +112,14 @@ result = processor.process(
 class MyProcessor:
     def can_handle(self, context):
         return context.get_format() == "custom"
-    
+
     def process(self, context):
         # Your logic
         return ProcessingResult(...)
-    
+
     def get_capabilities(self):
         return {"formats": ["custom"]}
+
 
 processor.register_processor(MyProcessor(), priority=20)
 result = processor.process("data.custom")  # Automatic routing

@@ -36,7 +36,7 @@ class GraphEngine:
     Phase 3: Advanced algorithms (shortest path, centrality, etc.)
     """
 
-    def __init__(self, storage_backend: Optional['IPLDBackend'] = None):
+    def __init__(self, storage_backend: Optional["IPLDBackend"] = None):
         """
         Initialize the graph engine.
 
@@ -52,9 +52,7 @@ class GraphEngine:
         logger.debug("GraphEngine initialized (persistence=%s)", self._enable_persistence)
 
     def create_node(
-        self,
-        labels: Optional[List[str]] = None,
-        properties: Optional[Dict[str, Any]] = None
+        self, labels: Optional[List[str]] = None, properties: Optional[Dict[str, Any]] = None
     ) -> Node:
         """
         Create a new node.
@@ -75,11 +73,7 @@ class GraphEngine:
         # Generate node ID (Phase 1: simple counter, Phase 3: CID-based)
         node_id = self._generate_node_id()
 
-        node = Node(
-            node_id=node_id,
-            labels=labels or [],
-            properties=properties or {}
-        )
+        node = Node(node_id=node_id, labels=labels or [], properties=properties or {})
 
         # Store in cache
         self._node_cache[node_id] = node
@@ -87,11 +81,7 @@ class GraphEngine:
         # Persist to IPLD storage if available
         if self._enable_persistence and self.storage:
             try:
-                node_data = {
-                    "id": node_id,
-                    "labels": labels or [],
-                    "properties": properties or {}
-                }
+                node_data = {"id": node_id, "labels": labels or [], "properties": properties or {}}
                 cid = self.storage.store(node_data, pin=True, codec="dag-json")
                 # Store CID mapping for retrieval
                 self._node_cache[f"cid:{node_id}"] = cid
@@ -128,7 +118,7 @@ class GraphEngine:
                     node = Node(
                         node_id=node_data["id"],
                         labels=node_data.get("labels", []),
-                        properties=node_data.get("properties", {})
+                        properties=node_data.get("properties", {}),
                     )
                     # Cache the loaded node
                     self._node_cache[node_id] = node
@@ -140,11 +130,7 @@ class GraphEngine:
         logger.debug("Node not found: %s", node_id)
         return None
 
-    def update_node(
-        self,
-        node_id: str,
-        properties: Dict[str, Any]
-    ) -> Optional[Node]:
+    def update_node(self, node_id: str, properties: Dict[str, Any]) -> Optional[Node]:
         """
         Update node properties.
 
@@ -167,11 +153,7 @@ class GraphEngine:
         # Update in IPLD storage if persistence is enabled
         if self._enable_persistence and self.storage:
             try:
-                node_data = {
-                    "id": node_id,
-                    "labels": node._labels,
-                    "properties": node._properties
-                }
+                node_data = {"id": node_id, "labels": node._labels, "properties": node._properties}
                 cid = self.storage.store(node_data, pin=True, codec="dag-json")
                 self._node_cache[f"cid:{node_id}"] = cid
                 logger.debug("Node %s updated in storage (CID: %s)", node_id, cid)
@@ -210,7 +192,7 @@ class GraphEngine:
         rel_type: str,
         start_node: str,
         end_node: str,
-        properties: Optional[Dict[str, Any]] = None
+        properties: Optional[Dict[str, Any]] = None,
     ) -> Relationship:
         """
         Create a relationship between two nodes.
@@ -231,7 +213,7 @@ class GraphEngine:
             rel_type=rel_type,
             start_node=start_node,
             end_node=end_node,
-            properties=properties or {}
+            properties=properties or {},
         )
 
         self._relationship_cache[rel_id] = relationship
@@ -244,7 +226,7 @@ class GraphEngine:
                     "type": rel_type,
                     "start_node": start_node,
                     "end_node": end_node,
-                    "properties": properties or {}
+                    "properties": properties or {},
                 }
                 cid = self.storage.store(rel_data, pin=True, codec="dag-json")
                 self._relationship_cache[f"cid:{rel_id}"] = cid
@@ -278,7 +260,7 @@ class GraphEngine:
         self,
         labels: Optional[List[str]] = None,
         properties: Optional[Dict[str, Any]] = None,
-        limit: Optional[int] = None
+        limit: Optional[int] = None,
     ) -> List[Node]:
         """Find nodes matching criteria."""
         results = []
@@ -411,11 +393,13 @@ class GraphEngine:
     def _generate_node_id(self) -> str:
         """Generate a unique node ID."""
         import uuid
+
         return f"node-{uuid.uuid4().hex[:12]}"
 
     def _generate_relationship_id(self) -> str:
         """Generate a unique relationship ID."""
         import uuid
+
         return f"rel-{uuid.uuid4().hex[:12]}"
 
     def _persist_imported_node(self, node: Node) -> None:
@@ -465,23 +449,23 @@ class GraphEngine:
             nodes = []
             for key, value in self._node_cache.items():
                 if not key.startswith("cid:") and isinstance(value, Node):
-                    nodes.append({
-                        "id": value._id,
-                        "labels": value._labels,
-                        "properties": value._properties
-                    })
+                    nodes.append(
+                        {"id": value._id, "labels": value._labels, "properties": value._properties}
+                    )
 
             # Extract relationships (exclude CID mappings)
             relationships = []
             for key, value in self._relationship_cache.items():
                 if not key.startswith("cid:") and isinstance(value, Relationship):
-                    relationships.append({
-                        "id": value._id,
-                        "type": value._type,
-                        "start_node": value._start_node,
-                        "end_node": value._end_node,
-                        "properties": value._properties
-                    })
+                    relationships.append(
+                        {
+                            "id": value._id,
+                            "type": value._type,
+                            "start_node": value._start_node,
+                            "end_node": value._end_node,
+                            "properties": value._properties,
+                        }
+                    )
 
             cid = self.storage.store_graph(
                 nodes=nodes,
@@ -489,13 +473,15 @@ class GraphEngine:
                 metadata={
                     "node_count": len(nodes),
                     "relationship_count": len(relationships),
-                    "version": "1.0"
-                }
+                    "version": "1.0",
+                },
             )
 
             logger.info(
                 "Graph saved with CID: %s (%d nodes, %d relationships)",
-                cid, len(nodes), len(relationships)
+                cid,
+                len(nodes),
+                len(relationships),
             )
             return cid
         except (StorageError, AttributeError, KeyError, TypeError, ValueError) as e:
@@ -520,7 +506,7 @@ class GraphEngine:
                 node = Node(
                     node_id=node_data["id"],
                     labels=node_data.get("labels", []),
-                    properties=node_data.get("properties", {})
+                    properties=node_data.get("properties", {}),
                 )
                 self._node_cache[node.id] = node
 
@@ -531,13 +517,15 @@ class GraphEngine:
                     rel_type=rel_data["type"],
                     start_node=rel_data["start_node"],
                     end_node=rel_data["end_node"],
-                    properties=rel_data.get("properties", {})
+                    properties=rel_data.get("properties", {}),
                 )
                 self._relationship_cache[rel.id] = rel
 
             logger.info(
                 "Graph loaded from CID: %s (%d nodes, %d relationships)",
-                root_cid, len(self._node_cache), len(self._relationship_cache)
+                root_cid,
+                len(self._node_cache),
+                len(self._relationship_cache),
             )
             return True
         except (StorageError, AttributeError, KeyError, TypeError, ValueError) as e:
@@ -550,10 +538,7 @@ class GraphEngine:
             return False
 
     def get_relationships(
-        self,
-        node_id: str,
-        direction: str = "out",
-        rel_type: Optional[str] = None
+        self, node_id: str, direction: str = "out", rel_type: Optional[str] = None
     ) -> List[Relationship]:
         """Get relationships for a node with optional filtering."""
         results = []
@@ -584,15 +569,15 @@ class GraphEngine:
 
         logger.debug(
             "Found %d relationships for node %s (direction=%s, type=%s)",
-            len(results), node_id, direction, rel_type
+            len(results),
+            node_id,
+            direction,
+            rel_type,
         )
         return results
 
     def traverse_pattern(
-        self,
-        start_nodes: List[Node],
-        pattern: List[Dict[str, Any]],
-        limit: Optional[int] = None
+        self, start_nodes: List[Node], pattern: List[Dict[str, Any]], limit: Optional[int] = None
     ) -> List[Dict[str, Any]]:
         """Traverse a graph pattern starting from given nodes."""
         results = []
@@ -611,7 +596,7 @@ class GraphEngine:
                         rels = self.get_relationships(
                             last_node.id,
                             direction=step.get("direction", "out"),
-                            rel_type=step.get("rel_type")
+                            rel_type=step.get("rel_type"),
                         )
 
                         for rel in rels:
@@ -657,7 +642,7 @@ class GraphEngine:
         start_node_id: str,
         end_node_id: str,
         max_depth: int = 5,
-        rel_type: Optional[str] = None
+        rel_type: Optional[str] = None,
     ) -> List[List[Relationship]]:
         """Find paths between two nodes."""
         paths = []
@@ -686,10 +671,7 @@ class GraphEngine:
                 new_visited.add(target_id)
                 queue.append((target_id, path + [rel], new_visited))
 
-        logger.debug(
-            "Found %d paths from %s to %s",
-            len(paths), start_node_id, end_node_id
-        )
+        logger.debug("Found %d paths from %s to %s", len(paths), start_node_id, end_node_id)
         return paths
 
 

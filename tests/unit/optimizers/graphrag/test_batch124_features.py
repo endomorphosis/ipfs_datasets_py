@@ -6,6 +6,7 @@ Methods under test:
   - OntologyOptimizer.first_entry_above(threshold)
   - OntologyOptimizer.last_entry_above(threshold)
 """
+
 import pytest
 
 
@@ -13,8 +14,10 @@ import pytest
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
@@ -35,6 +38,7 @@ def _push(opt, avg):
 # OntologyOptimizer.history_slice
 # ---------------------------------------------------------------------------
 
+
 class TestHistorySlice:
     @pytest.mark.parametrize(
         "scores,start,end,expected_len,expected_first",
@@ -44,9 +48,7 @@ class TestHistorySlice:
             ([0.1, 0.2, 0.3], 1, 3, 2, 0.2),
         ],
     )
-    def test_history_slice_scenarios(
-        self, scores, start, end, expected_len, expected_first
-    ):
+    def test_history_slice_scenarios(self, scores, start, end, expected_len, expected_first):
         o = _make_optimizer()
         for v in scores:
             _push(o, v)
@@ -64,6 +66,7 @@ class TestHistorySlice:
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.score_above_count
 # ---------------------------------------------------------------------------
+
 
 class TestScoreAboveCount:
     @pytest.mark.parametrize(
@@ -85,6 +88,7 @@ class TestScoreAboveCount:
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.first_entry_above
 # ---------------------------------------------------------------------------
+
 
 class TestFirstEntryAbove:
     def test_empty_returns_none(self):
@@ -108,6 +112,7 @@ class TestFirstEntryAbove:
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.last_entry_above
 # ---------------------------------------------------------------------------
+
 
 class TestLastEntryAbove:
     @pytest.mark.parametrize(

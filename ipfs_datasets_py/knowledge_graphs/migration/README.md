@@ -28,11 +28,7 @@ Export knowledge graphs from Neo4j databases:
 from ipfs_datasets_py.knowledge_graphs.migration import Neo4jExporter
 
 # Connect to Neo4j
-exporter = Neo4jExporter(
-    uri="bolt://localhost:7687",
-    user="neo4j",
-    password="password"
-)
+exporter = Neo4jExporter(uri="bolt://localhost:7687", user="neo4j", password="password")
 
 # Export to JSON
 exporter.export_to_json("neo4j_export.json")
@@ -117,10 +113,7 @@ from ipfs_datasets_py.knowledge_graphs.migration import IntegrityVerifier
 verifier = IntegrityVerifier()
 
 # Verify migration
-is_valid, errors = verifier.verify(
-    source="neo4j_export.json",
-    target_cid=cid
-)
+is_valid, errors = verifier.verify(source="neo4j_export.json", target_cid=cid)
 
 if is_valid:
     print("Migration successful!")
@@ -130,10 +123,7 @@ else:
         print(f"  - {error}")
 
 # Detailed comparison
-report = verifier.detailed_verification(
-    source="neo4j_export.json",
-    target_cid=cid
-)
+report = verifier.detailed_verification(source="neo4j_export.json", target_cid=cid)
 print(f"Entity match: {report['entities_match']:.1%}")
 print(f"Relationship match: {report['relationships_match']:.1%}")
 ```
@@ -158,21 +148,16 @@ converter = FormatConverter()
 converter.json_to_csv(
     input_file="graph.json",
     entities_output="entities.csv",
-    relationships_output="relationships.csv"
+    relationships_output="relationships.csv",
 )
 
 # Convert CSV to JSON
 converter.csv_to_json(
-    entities_file="entities.csv",
-    relationships_file="relationships.csv",
-    output_file="graph.json"
+    entities_file="entities.csv", relationships_file="relationships.csv", output_file="graph.json"
 )
 
 # Convert to Cypher statements
-converter.to_cypher(
-    input_file="graph.json",
-    output_file="graph.cypher"
-)
+converter.to_cypher(input_file="graph.json", output_file="graph.cypher")
 ```
 
 **Supported Formats:**
@@ -194,15 +179,11 @@ from ipfs_datasets_py.knowledge_graphs.migration import (
     Neo4jExporter,
     SchemaChecker,
     IPFSImporter,
-    IntegrityVerifier
+    IntegrityVerifier,
 )
 
 # Step 1: Export from Neo4j
-exporter = Neo4jExporter(
-    uri="bolt://localhost:7687",
-    user="neo4j",
-    password="password"
-)
+exporter = Neo4jExporter(uri="bolt://localhost:7687", user="neo4j", password="password")
 exporter.export_to_json("neo4j_export.json")
 
 # Step 2: Validate schema
@@ -219,10 +200,7 @@ print(f"Graph stored at: {cid}")
 
 # Step 4: Verify integrity
 verifier = IntegrityVerifier()
-is_valid, errors = verifier.verify(
-    source="neo4j_export.json",
-    target_cid=cid
-)
+is_valid, errors = verifier.verify(source="neo4j_export.json", target_cid=cid)
 
 if is_valid:
     print("✅ Migration successful!")
@@ -237,15 +215,11 @@ else:
 exporter = Neo4jExporter(uri="bolt://localhost:7687", user="neo4j", password="pwd")
 
 # Filter by labels
-exporter.export_filtered(
-    output_file="persons_and_orgs.json",
-    labels=["Person", "Organization"]
-)
+exporter.export_filtered(output_file="persons_and_orgs.json", labels=["Person", "Organization"])
 
 # Filter by properties
 exporter.export_filtered(
-    output_file="high_confidence.json",
-    property_filter={"confidence": {"$gte": 0.8}}
+    output_file="high_confidence.json", property_filter={"confidence": {"$gte": 0.8}}
 )
 ```
 
@@ -259,8 +233,8 @@ batch_size = 1000
 for batch_num, batch_data in exporter.stream_export(batch_size=batch_size):
     # Process each batch
     batch_file = f"batch_{batch_num}.json"
-    json.dump(batch_data, open(batch_file, 'w'))
-    
+    json.dump(batch_data, open(batch_file, "w"))
+
     # Import batch to IPFS
     cid = importer.import_from_json(batch_file)
     print(f"Batch {batch_num} stored at: {cid}")
@@ -274,16 +248,13 @@ from ipfs_datasets_py.knowledge_graphs.migration import FormatConverter
 converter = FormatConverter()
 
 # Neo4j dump to JSON
-converter.cypher_to_json(
-    input_file="neo4j_dump.cypher",
-    output_file="graph.json"
-)
+converter.cypher_to_json(input_file="neo4j_dump.cypher", output_file="graph.json")
 
 # JSON to CSV for analysis
 converter.json_to_csv(
     input_file="graph.json",
     entities_output="entities.csv",
-    relationships_output="relationships.csv"
+    relationships_output="relationships.csv",
 )
 
 # CSV to IPFS
@@ -302,10 +273,7 @@ initial_cid = importer.import_from_json("initial_export.json")
 
 # Later: Export only changed entities
 last_timestamp = "2026-02-17T00:00:00Z"
-exporter.export_incremental(
-    output_file="incremental_export.json",
-    since=last_timestamp
-)
+exporter.export_incremental(output_file="incremental_export.json", since=last_timestamp)
 
 # Merge with existing graph
 kg_initial = importer.retrieve(initial_cid)
@@ -347,10 +315,7 @@ updated_cid = importer.store(kg_initial)
 
 ```python
 # Use batch processing for large graphs
-exporter.export_batched(
-    output_dir="batches/",
-    batch_size=1000
-)
+exporter.export_batched(output_dir="batches/", batch_size=1000)
 
 # Parallel import of batches
 from concurrent.futures import ProcessPoolExecutor
@@ -360,7 +325,7 @@ with ProcessPoolExecutor(max_workers=4) as executor:
     for batch_file in glob.glob("batches/*.json"):
         future = executor.submit(importer.import_from_json, batch_file)
         futures.append(future)
-    
+
     cids = [f.result() for f in futures]
 ```
 
@@ -387,16 +352,12 @@ is_compatible, issues = checker.check_compatibility("export.json")
 if not is_compatible:
     # Option 1: Fix manually
     for issue in issues:
-        if issue['type'] == 'property_conflict':
+        if issue["type"] == "property_conflict":
             # Rename conflicting property
             pass
-    
+
     # Option 2: Use migration config
-    config = {
-        "property_mappings": {
-            "old_name": "new_name"
-        }
-    }
+    config = {"property_mappings": {"old_name": "new_name"}}
     converter.apply_config(config)
 ```
 
@@ -437,6 +398,7 @@ converter.json_to_csv("graph.json", "entities.csv", "rels.csv")
 
 # Convert to target format using external tools
 import networkx as nx
+
 G = nx.read_edgelist("rels.csv")
 nx.write_graphml(G, "graph.graphml")
 ```

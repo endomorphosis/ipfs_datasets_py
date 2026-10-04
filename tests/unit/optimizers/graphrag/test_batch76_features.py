@@ -25,6 +25,7 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipel
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _entity(eid="e1", etype="Person", text="Alice", conf=0.9):
     return Entity(id=eid, type=etype, text=text, confidence=conf)
 
@@ -38,7 +39,14 @@ def _result(*entities, rels=None):
 
 
 def _score(**kw):
-    defaults = dict(completeness=0.7, consistency=0.8, clarity=0.6, granularity=0.5, relationship_coherence=0.9, domain_alignment=0.9)
+    defaults = dict(
+        completeness=0.7,
+        consistency=0.8,
+        clarity=0.6,
+        granularity=0.5,
+        relationship_coherence=0.9,
+        domain_alignment=0.9,
+    )
     defaults.update(kw)
     return CriticScore(**defaults)
 
@@ -46,6 +54,7 @@ def _score(**kw):
 # ---------------------------------------------------------------------------
 # OntologyGenerator.merge_results
 # ---------------------------------------------------------------------------
+
 
 class TestMergeResults:
     def test_empty_returns_empty_result(self):
@@ -92,6 +101,7 @@ class TestMergeResults:
 # EntityExtractionResult.highest_confidence_entity
 # ---------------------------------------------------------------------------
 
+
 class TestHighestConfidenceEntity:
     def test_empty_returns_none(self):
         r = _result()
@@ -119,6 +129,7 @@ class TestHighestConfidenceEntity:
 # Entity.to_text
 # ---------------------------------------------------------------------------
 
+
 class TestEntityToText:
     def test_returns_string(self):
         e = _entity()
@@ -145,6 +156,7 @@ class TestEntityToText:
 # OntologyPipeline.summary
 # ---------------------------------------------------------------------------
 
+
 class TestPipelineSummary:
     def test_returns_string(self):
         assert isinstance(OntologyPipeline().summary(), str)
@@ -163,6 +175,7 @@ class TestPipelineSummary:
 # ---------------------------------------------------------------------------
 # OntologyCritic.dimension_report
 # ---------------------------------------------------------------------------
+
 
 class TestDimensionReport:
     def test_returns_string(self):

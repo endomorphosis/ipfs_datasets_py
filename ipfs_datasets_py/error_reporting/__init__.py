@@ -12,10 +12,10 @@ from .github_issue_client import GitHubIssueClient
 from .error_handler import install_error_handlers, uninstall_error_handlers, get_recent_logs
 
 __all__ = [
-    'ErrorReporter',
-    'get_global_error_reporter',
-    'GitHubIssueClient',
-    'install_error_handlers',
-    'uninstall_error_handlers',
-    'get_recent_logs',
+    "ErrorReporter",
+    "get_global_error_reporter",
+    "GitHubIssueClient",
+    "install_error_handlers",
+    "uninstall_error_handlers",
+    "get_recent_logs",
 ]

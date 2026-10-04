@@ -14,7 +14,7 @@ from tests._test_utils import (
     raise_on_bad_callable_code_quality,
     get_ast_tree,
     BadDocumentationError,
-    BadSignatureError
+    BadSignatureError,
 )
 
 from ipfs_datasets_py.pdf_processing.llm_optimizer import (
@@ -22,10 +22,12 @@ from ipfs_datasets_py.pdf_processing.llm_optimizer import (
     LLMOptimizer,
     TextProcessor,
     LLMChunk,
-    LLMDocument
+    LLMDocument,
 )
 
-from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk.llm_chunk_factory import LLMChunkTestDataFactory
+from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk.llm_chunk_factory import (
+    LLMChunkTestDataFactory,
+)
 
 work_dir = os.path.abspath(os.path.dirname(__file__))
 while not os.path.exists(os.path.join(work_dir, "__pyproject.toml")):
@@ -37,8 +39,12 @@ file_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/llm_optimize
 md_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/llm_optimizer_stubs.md")
 
 # Make sure the input file and documentation file exist.
-assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
-assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+assert os.path.exists(file_path), (
+    f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
+)
+assert os.path.exists(md_path), (
+    f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+)
 
 # Check if each classes methods are accessible:
 assert LLMOptimizer._initialize_models
@@ -74,8 +80,6 @@ except ImportError as e:
     raise ImportError(f"Failed to import necessary modules: {e}")
 
 
-
-
 class TestLLMChunkSemanticTypeClassification:
     """Test LLMChunk semantic type classification and validation."""
 
@@ -86,8 +90,8 @@ class TestLLMChunkSemanticTypeClassification:
         THEN expect all valid types accepted without error
         """
         # Given - valid semantic types from the documentation
-        valid_types = ['text', 'table', 'figure_caption', 'header', 'mixed']
-        
+        valid_types = ["text", "table", "figure_caption", "header", "mixed"]
+
         # When/Then - all should be accepted
         for semantic_type in valid_types:
             chunk = LLMChunkTestDataFactory.create_chunk_instance(semantic_types=semantic_type)
@@ -114,13 +118,13 @@ class TestLLMChunkSemanticTypeClassification:
         """
         # Given - invalid semantic types
         potentially_invalid_types = [
-            123, 
-            None, 
-            ['text'], 
-            {'text': 'value'}, 
+            123,
+            None,
+            ["text"],
+            {"text": "value"},
             {"text"},
         ]
-        
+
         # When/Then - each should raise ValidationError
         for semantic_type in potentially_invalid_types:
             with pytest.raises(ValueError):
@@ -135,18 +139,25 @@ class TestLLMChunkSemanticTypeClassification:
         """
         # Given - different case variations
         valid_case_variations = {
-            'text': ['text', 'TEXT', 'Text', 'tEXt'],
-            'table': ['table', 'TABLE', 'Table', 'tABle'],
-            'figure_caption': ['figure_caption', 'FIGURE_CAPTION', 'Figure_Caption', 'fIGURE_cAPTION'],
-            'header': ['header', 'HEADER', 'Header', 'hEAder'],
-            'mixed': ['mixed', 'MIXED', 'Mixed', 'mIXed']
+            "text": ["text", "TEXT", "Text", "tEXt"],
+            "table": ["table", "TABLE", "Table", "tABle"],
+            "figure_caption": [
+                "figure_caption",
+                "FIGURE_CAPTION",
+                "Figure_Caption",
+                "fIGURE_cAPTION",
+            ],
+            "header": ["header", "HEADER", "Header", "hEAder"],
+            "mixed": ["mixed", "MIXED", "Mixed", "mIXed"],
         }
-        
+
         # When/Then - case-sensitive version of valid types should be normalized and accepted
         for type_mappings in valid_case_variations.items():
             for valid_type, type_mappings in type_mappings.items():
                 for valid_variant in type_mappings:
-                    chunk = LLMChunkTestDataFactory.create_chunk_instance(semantic_types=valid_variant)
+                    chunk = LLMChunkTestDataFactory.create_chunk_instance(
+                        semantic_types=valid_variant
+                    )
                     assert chunk.semantic_types == valid_type
 
     def test_semantic_types_case_sensitivity_of_valid_types(self):
@@ -157,8 +168,9 @@ class TestLLMChunkSemanticTypeClassification:
             - Each should raise ValidationError
         """
         import faker
+
         fake = faker.Faker()
-        valid_types = ['text', 'table', 'figure_caption', 'header', 'mixed']
+        valid_types = ["text", "table", "figure_caption", "header", "mixed"]
 
         invalid_types = {
             fake.word(),
@@ -170,7 +182,7 @@ class TestLLMChunkSemanticTypeClassification:
             fake.catch_phrase(),
             fake.file_extension(),
             fake.domain_word(),
-            fake.currency_code()
+            fake.currency_code(),
         }
         for valid_type in valid_types:
             invalid_types.discard(valid_type.upper())
@@ -188,7 +200,6 @@ class TestLLMChunkSemanticTypeClassification:
         """
         with pytest.raises(ValueError):
             _ = LLMChunkTestDataFactory.create_chunk_instance(semantic_types="")
-
 
 
 if __name__ == "__main__":

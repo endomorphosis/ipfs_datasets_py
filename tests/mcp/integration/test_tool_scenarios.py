@@ -4,6 +4,7 @@ Phase B3: End-to-end scenario integration tests for the MCP server.
 Each test simulates a realistic multi-step workflow, exercising several
 tool categories in sequence via :class:`HierarchicalToolManager`.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -16,6 +17,7 @@ import pytest
 # Guard: monitoring.py requires psutil
 try:
     import psutil  # noqa: F401
+
     PSUTIL_AVAILABLE = True
 except ImportError:
     PSUTIL_AVAILABLE = False
@@ -24,6 +26,7 @@ except ImportError:
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_manager(extra_tools: Dict[str, Any] | None = None):
     """Return a HierarchicalToolManager wired with mock tools."""
@@ -37,19 +40,29 @@ def _make_manager(extra_tools: Dict[str, Any] | None = None):
     manager._discovered_categories = True
 
     defaults: Dict[str, Any] = {
-        "dataset_tools/load_dataset":          lambda **kw: {"success": True, "dataset_id": "ds1", "rows": 10},
-        "embedding_tools/generate_embedding":  lambda **kw: {"success": True, "embedding": [0.1] * 4},
-        "search_tools/semantic_search":        lambda **kw: {"success": True, "results": ["r1", "r2"]},
-        "graph_tools/graph_create":            lambda **kw: {"success": True, "graph_id": "g1"},
-        "graph_tools/graph_add_entity":        lambda **kw: {"success": True},
-        "graph_tools/graph_query_cypher":      lambda **kw: {"success": True, "results": []},
-        "monitoring_tools/get_metrics":        lambda **kw: {"success": True, "metrics": {}},
-        "cache_tools/get_cache_stats":         lambda **kw: {"success": True, "stats": {}},
-        "pdf_tools/pdf_extract_text":          lambda **kw: {"success": True, "text": "Sample PDF text."},
-        "pdf_tools/pdf_extract_entities":      lambda **kw: {"success": True, "entities": ["Alice", "Bob"]},
-        "storage_tools/store_data":            lambda **kw: {"success": True, "storage_id": "s1"},
-        "provenance_tools/record_provenance":  lambda **kw: {"success": True, "provenance_id": "p1"},
-        "failing_category/failing_tool":       None,  # placeholder; set per-test
+        "dataset_tools/load_dataset": lambda **kw: {
+            "success": True,
+            "dataset_id": "ds1",
+            "rows": 10,
+        },
+        "embedding_tools/generate_embedding": lambda **kw: {
+            "success": True,
+            "embedding": [0.1] * 4,
+        },
+        "search_tools/semantic_search": lambda **kw: {"success": True, "results": ["r1", "r2"]},
+        "graph_tools/graph_create": lambda **kw: {"success": True, "graph_id": "g1"},
+        "graph_tools/graph_add_entity": lambda **kw: {"success": True},
+        "graph_tools/graph_query_cypher": lambda **kw: {"success": True, "results": []},
+        "monitoring_tools/get_metrics": lambda **kw: {"success": True, "metrics": {}},
+        "cache_tools/get_cache_stats": lambda **kw: {"success": True, "stats": {}},
+        "pdf_tools/pdf_extract_text": lambda **kw: {"success": True, "text": "Sample PDF text."},
+        "pdf_tools/pdf_extract_entities": lambda **kw: {
+            "success": True,
+            "entities": ["Alice", "Bob"],
+        },
+        "storage_tools/store_data": lambda **kw: {"success": True, "storage_id": "s1"},
+        "provenance_tools/record_provenance": lambda **kw: {"success": True, "provenance_id": "p1"},
+        "failing_category/failing_tool": None,  # placeholder; set per-test
     }
     if extra_tools:
         defaults.update(extra_tools)
@@ -71,6 +84,7 @@ def _make_manager(extra_tools: Dict[str, Any] | None = None):
 # Scenario 1: Dataset → embed → index → search
 # ---------------------------------------------------------------------------
 
+
 class TestDatasetSearchPipeline:
     """Scenario: load a dataset, embed records, index them, and run semantic search."""
 
@@ -86,12 +100,15 @@ class TestDatasetSearchPipeline:
         step1 = await manager.dispatch("dataset_tools", "load_dataset", params={"source": "squad"})
         assert step1["success"] is True, f"load_dataset failed: {step1}"
 
-        step2 = await manager.dispatch("embedding_tools", "generate_embedding", params={"text": "what is AI?"})
+        step2 = await manager.dispatch(
+            "embedding_tools", "generate_embedding", params={"text": "what is AI?"}
+        )
         assert step2["success"] is True
         assert "embedding" in step2
 
         step3 = await manager.dispatch(
-            "search_tools", "semantic_search",
+            "search_tools",
+            "semantic_search",
             params={"query": "what is AI?", "embedding": step2["embedding"]},
         )
         assert step3["success"] is True
@@ -106,12 +123,15 @@ class TestDatasetSearchPipeline:
         """
         manager = _make_manager()
 
-        load_result = await manager.dispatch("dataset_tools", "load_dataset", params={"source": "imdb"})
+        load_result = await manager.dispatch(
+            "dataset_tools", "load_dataset", params={"source": "imdb"}
+        )
         dataset_id = load_result.get("dataset_id")
         assert dataset_id is not None
 
         embed_result = await manager.dispatch(
-            "embedding_tools", "generate_embedding",
+            "embedding_tools",
+            "generate_embedding",
             params={"dataset_id": dataset_id, "text": "review"},
         )
         assert embed_result["success"] is True
@@ -120,6 +140,7 @@ class TestDatasetSearchPipeline:
 # ---------------------------------------------------------------------------
 # Scenario 2: PDF → entity extraction → graph build → Cypher query
 # ---------------------------------------------------------------------------
+
 
 class TestGraphKnowledgeExtraction:
     """Scenario: extract entities from a PDF, build a knowledge graph, and query it."""
@@ -141,7 +162,9 @@ class TestGraphKnowledgeExtraction:
         )
 
         # Step 1: extract text
-        text_result = await manager.dispatch("pdf_tools", "pdf_extract_text", params={"pdf_path": "/tmp/test.pdf"})
+        text_result = await manager.dispatch(
+            "pdf_tools", "pdf_extract_text", params={"pdf_path": "/tmp/test.pdf"}
+        )
         assert text_result["success"] is True
         assert "text" in text_result
 
@@ -154,21 +177,25 @@ class TestGraphKnowledgeExtraction:
         assert len(entities) >= 1
 
         # Step 3: create graph
-        graph_result = await manager.dispatch("graph_tools", "graph_create", params={"name": "pdf_kg"})
+        graph_result = await manager.dispatch(
+            "graph_tools", "graph_create", params={"name": "pdf_kg"}
+        )
         assert graph_result["success"] is True
         graph_id = graph_result["graph_id"]
 
         # Step 4: add entities to graph
         for entity in entities:
             add_result = await manager.dispatch(
-                "graph_tools", "graph_add_entity",
+                "graph_tools",
+                "graph_add_entity",
                 params={"graph_id": graph_id, "entity_name": entity},
             )
             assert add_result["success"] is True
 
         # Step 5: query graph
         query_result = await manager.dispatch(
-            "graph_tools", "graph_query_cypher",
+            "graph_tools",
+            "graph_query_cypher",
             params={"graph_id": graph_id, "query": "MATCH (e:Entity) RETURN e"},
         )
         assert query_result["success"] is True
@@ -178,6 +205,7 @@ class TestGraphKnowledgeExtraction:
 # ---------------------------------------------------------------------------
 # Scenario 3: Parallel dispatch → caching → verify
 # ---------------------------------------------------------------------------
+
 
 class TestParallelDispatchWithCaching:
     """Scenario: fan-out several tool calls in parallel, verify results arrive in order."""
@@ -194,8 +222,8 @@ class TestParallelDispatchWithCaching:
         calls = [
             {"category": "dataset_tools", "tool": "load_dataset", "params": {"source": "s1"}},
             {"category": "dataset_tools", "tool": "load_dataset", "params": {"source": "s2"}},
-            {"category": "search_tools",  "tool": "semantic_search", "params": {"query": "q1"}},
-            {"category": "cache_tools",   "tool": "get_cache_stats",  "params": {}},
+            {"category": "search_tools", "tool": "semantic_search", "params": {"query": "q1"}},
+            {"category": "cache_tools", "tool": "get_cache_stats", "params": {}},
         ]
 
         results = await manager.dispatch_parallel(calls, return_exceptions=True)
@@ -225,9 +253,9 @@ class TestParallelDispatchWithCaching:
         manager.categories["failing_category"] = cat
 
         calls = [
-            {"category": "dataset_tools",     "tool": "load_dataset", "params": {"source": "ok"}},
-            {"category": "failing_category",  "tool": "failing_tool",  "params": {}},
-            {"category": "cache_tools",       "tool": "get_cache_stats", "params": {}},
+            {"category": "dataset_tools", "tool": "load_dataset", "params": {"source": "ok"}},
+            {"category": "failing_category", "tool": "failing_tool", "params": {}},
+            {"category": "cache_tools", "tool": "get_cache_stats", "params": {}},
         ]
 
         results = await manager.dispatch_parallel(calls, return_exceptions=True)
@@ -241,6 +269,7 @@ class TestParallelDispatchWithCaching:
 # ---------------------------------------------------------------------------
 # Scenario 4: Monitoring pipeline — track calls → percentiles → alert check
 # ---------------------------------------------------------------------------
+
 
 class TestMonitoringPipeline:
     """Scenario: emit tool-execution metrics and verify histogram percentiles."""
@@ -310,6 +339,7 @@ class TestMonitoringPipeline:
 # Scenario 5: Provenance + storage pipeline
 # ---------------------------------------------------------------------------
 
+
 class TestProvenanceStoragePipeline:
     """Scenario: store data + record provenance → retrieve both → verify linkage."""
 
@@ -323,14 +353,16 @@ class TestProvenanceStoragePipeline:
         manager = _make_manager()
 
         store_result = await manager.dispatch(
-            "storage_tools", "store_data",
+            "storage_tools",
+            "store_data",
             params={"data": {"key": "value"}, "collection": "test_collection"},
         )
         assert store_result["success"] is True
         storage_id = store_result.get("storage_id", "s1")
 
         provenance_result = await manager.dispatch(
-            "provenance_tools", "record_provenance",
+            "provenance_tools",
+            "record_provenance",
             params={"resource_id": storage_id, "action": "store", "actor": "test_scenario"},
         )
         assert provenance_result["success"] is True

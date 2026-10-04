@@ -17,7 +17,9 @@ class RemoteQueue:
     multiaddr: str
 
 
-async def submit_task(*, remote: RemoteQueue, task_type: str, model_name: str, payload: Dict[str, Any]) -> str:
+async def submit_task(
+    *, remote: RemoteQueue, task_type: str, model_name: str, payload: Dict[str, Any]
+) -> str:
     module = importlib.import_module("ipfs_accelerate_py.p2p_tasks.client")
     ARemoteQueue = getattr(module, "RemoteQueue")
     a_submit_task = getattr(module, "submit_task")
@@ -50,10 +52,14 @@ async def get_task(*, remote: RemoteQueue, task_id: str) -> Optional[Dict[str, A
     ARemoteQueue = getattr(module, "RemoteQueue")
     a_get_task = getattr(module, "get_task")
 
-    return await a_get_task(remote=ARemoteQueue(peer_id=remote.peer_id, multiaddr=remote.multiaddr), task_id=task_id)
+    return await a_get_task(
+        remote=ARemoteQueue(peer_id=remote.peer_id, multiaddr=remote.multiaddr), task_id=task_id
+    )
 
 
-async def wait_task(*, remote: RemoteQueue, task_id: str, timeout_s: float = 60.0) -> Optional[Dict[str, Any]]:
+async def wait_task(
+    *, remote: RemoteQueue, task_id: str, timeout_s: float = 60.0
+) -> Optional[Dict[str, Any]]:
     module = importlib.import_module("ipfs_accelerate_py.p2p_tasks.client")
     ARemoteQueue = getattr(module, "RemoteQueue")
     a_wait_task = getattr(module, "wait_task")
@@ -65,7 +71,9 @@ async def wait_task(*, remote: RemoteQueue, task_id: str, timeout_s: float = 60.
     )
 
 
-async def get_capabilities(*, remote: RemoteQueue, timeout_s: float = 10.0, detail: bool = False) -> Dict[str, Any]:
+async def get_capabilities(
+    *, remote: RemoteQueue, timeout_s: float = 10.0, detail: bool = False
+) -> Dict[str, Any]:
     module = importlib.import_module("ipfs_accelerate_py.p2p_tasks.client")
     ARemoteQueue = getattr(module, "RemoteQueue")
     a_get_capabilities = getattr(module, "get_capabilities")
@@ -77,7 +85,9 @@ async def get_capabilities(*, remote: RemoteQueue, timeout_s: float = 10.0, deta
     )
 
 
-def get_capabilities_sync(*, remote: RemoteQueue, timeout_s: float = 10.0, detail: bool = False) -> Dict[str, Any]:
+def get_capabilities_sync(
+    *, remote: RemoteQueue, timeout_s: float = 10.0, detail: bool = False
+) -> Dict[str, Any]:
     module = importlib.import_module("ipfs_accelerate_py.p2p_tasks.client")
     ARemoteQueue = getattr(module, "RemoteQueue")
     a_get_capabilities_sync = getattr(module, "get_capabilities_sync")
@@ -89,7 +99,13 @@ def get_capabilities_sync(*, remote: RemoteQueue, timeout_s: float = 10.0, detai
     )
 
 
-async def call_tool(*, remote: RemoteQueue, tool_name: str, args: Optional[Dict[str, Any]] = None, timeout_s: float = 30.0) -> Dict[str, Any]:
+async def call_tool(
+    *,
+    remote: RemoteQueue,
+    tool_name: str,
+    args: Optional[Dict[str, Any]] = None,
+    timeout_s: float = 30.0,
+) -> Dict[str, Any]:
     module = importlib.import_module("ipfs_accelerate_py.p2p_tasks.client")
     ARemoteQueue = getattr(module, "RemoteQueue")
     a_call_tool = getattr(module, "call_tool")
@@ -102,7 +118,13 @@ async def call_tool(*, remote: RemoteQueue, tool_name: str, args: Optional[Dict[
     )
 
 
-def call_tool_sync(*, remote: RemoteQueue, tool_name: str, args: Optional[Dict[str, Any]] = None, timeout_s: float = 30.0) -> Dict[str, Any]:
+def call_tool_sync(
+    *,
+    remote: RemoteQueue,
+    tool_name: str,
+    args: Optional[Dict[str, Any]] = None,
+    timeout_s: float = 30.0,
+) -> Dict[str, Any]:
     module = importlib.import_module("ipfs_accelerate_py.p2p_tasks.client")
     ARemoteQueue = getattr(module, "RemoteQueue")
     a_call_tool_sync = getattr(module, "call_tool_sync")
@@ -164,7 +186,12 @@ def cache_has_sync(*, remote: RemoteQueue, key: str, timeout_s: float = 10.0) ->
 
 
 async def cache_set(
-    *, remote: RemoteQueue, key: str, value: Any, ttl_s: float | None = None, timeout_s: float = 10.0
+    *,
+    remote: RemoteQueue,
+    key: str,
+    value: Any,
+    ttl_s: float | None = None,
+    timeout_s: float = 10.0,
 ) -> Dict[str, Any]:
     module = importlib.import_module("ipfs_accelerate_py.p2p_tasks.client")
     ARemoteQueue = getattr(module, "RemoteQueue")
@@ -180,7 +207,12 @@ async def cache_set(
 
 
 def cache_set_sync(
-    *, remote: RemoteQueue, key: str, value: Any, ttl_s: float | None = None, timeout_s: float = 10.0
+    *,
+    remote: RemoteQueue,
+    key: str,
+    value: Any,
+    ttl_s: float | None = None,
+    timeout_s: float = 10.0,
 ) -> Dict[str, Any]:
     module = importlib.import_module("ipfs_accelerate_py.p2p_tasks.client")
     ARemoteQueue = getattr(module, "RemoteQueue")
@@ -193,6 +225,7 @@ def cache_set_sync(
         ttl_s=ttl_s,
         timeout_s=float(timeout_s),
     )
+
 
 __all__ = [
     "RemoteQueue",

@@ -49,9 +49,9 @@ First, we need to set up the audit logging system and metrics collectors:
 ```python
 from ipfs_datasets_py.audit.audit_logger import AuditLogger, AuditLevel, AuditCategory
 from ipfs_datasets_py.audit.audit_visualization import (
-    AuditMetricsAggregator, 
-    AuditVisualizer, 
-    setup_audit_visualization
+    AuditMetricsAggregator,
+    AuditVisualizer,
+    setup_audit_visualization,
 )
 from ipfs_datasets_py.rag.rag_query_optimizer import QueryMetricsCollector
 
@@ -104,7 +104,7 @@ dashboard_path = generate_integrated_dashboard(
     title="Security and Performance Dashboard",
     include_performance=True,
     include_security=True,
-    theme="light"  # or "dark"
+    theme="light",  # or "dark"
 )
 
 print(f"Integrated dashboard generated at: {dashboard_path}")
@@ -124,7 +124,7 @@ timeline_fig = create_query_audit_timeline(
     output_file="combined_timeline.png",
     hours_back=24,  # Show last 24 hours
     theme="light",  # or "dark"
-    figsize=(12, 8)  # Width, height in inches
+    figsize=(12, 8),  # Width, height in inches
 )
 
 if timeline_fig:
@@ -144,7 +144,7 @@ dashboard = RAGQueryDashboard(
     dashboard_dir="./dashboard",
     theme="dark",
     auto_refresh=True,
-    refresh_interval=60  # seconds
+    refresh_interval=60,  # seconds
 )
 
 # Generate integrated dashboard with audit metrics
@@ -152,15 +152,11 @@ dashboard.generate_integrated_dashboard(
     output_file="./dashboard/dashboard.html",
     audit_metrics_aggregator=metrics_aggregator,
     audit_logger=audit_logger,
-    title="Real-time Security and Performance Monitor"
+    title="Real-time Security and Performance Monitor",
 )
 
 # Launch interactive dashboard server
-dashboard.launch_dashboard(
-    port=8050,
-    open_browser=True,
-    title="Interactive Monitoring Dashboard"
-)
+dashboard.launch_dashboard(port=8050, open_browser=True, title="Interactive Monitoring Dashboard")
 ```
 
 ## Adding Simulated Data for Testing
@@ -172,33 +168,38 @@ import time
 import random
 import datetime
 
+
 def generate_test_data(audit_logger, query_metrics, duration_minutes=10):
     """Generate test data for visualization demonstration."""
     print(f"Generating {duration_minutes} minutes of simulated data...")
-    
+
     # Categories and levels for audit events
     categories = [
-        AuditCategory.AUTHENTICATION, 
+        AuditCategory.AUTHENTICATION,
         AuditCategory.DATA_ACCESS,
         AuditCategory.DATA_MODIFICATION,
-        AuditCategory.SECURITY
+        AuditCategory.SECURITY,
     ]
-    
-    levels = [
-        AuditLevel.INFO,
-        AuditLevel.WARNING,
-        AuditLevel.ERROR
-    ]
-    
+
+    levels = [AuditLevel.INFO, AuditLevel.WARNING, AuditLevel.ERROR]
+
     actions = [
-        "login", "read", "write", "update", "delete", "search", 
-        "transform", "export", "verify", "scan"
+        "login",
+        "read",
+        "write",
+        "update",
+        "delete",
+        "search",
+        "transform",
+        "export",
+        "verify",
+        "scan",
     ]
-    
+
     # Timespan for data generation
     start_time = time.time() - (duration_minutes * 60)
     end_time = time.time()
-    
+
     # Generate audit events
     timestamp = start_time
     while timestamp < end_time:
@@ -208,7 +209,7 @@ def generate_test_data(audit_logger, query_metrics, duration_minutes=10):
         action = random.choice(actions)
         user = f"user{random.randint(1, 5)}"
         resource = f"resource{random.randint(1, 10)}"
-        
+
         event_id = audit_logger.log(
             level=level,
             category=category,
@@ -219,43 +220,41 @@ def generate_test_data(audit_logger, query_metrics, duration_minutes=10):
             timestamp=datetime.datetime.fromtimestamp(timestamp).isoformat(),
             details={
                 "ip_address": f"192.168.1.{random.randint(1, 255)}",
-                "session_id": f"session-{random.randint(1000, 9999)}"
-            }
+                "session_id": f"session-{random.randint(1000, 9999)}",
+            },
         )
-        
+
         # Add a query metric (less frequently than audit events)
         if random.random() < 0.3:  # 30% chance of adding a query
             query_params = {
                 "query_text": f"Sample query {random.randint(1, 100)}",
                 "max_results": random.randint(5, 20),
-                "max_depth": random.randint(1, 3)
+                "max_depth": random.randint(1, 3),
             }
-            
-            query_metrics.start_query_tracking(
-                query_params=query_params,
-                timestamp=timestamp
-            )
-            
+
+            query_metrics.start_query_tracking(query_params=query_params, timestamp=timestamp)
+
             # Add phase timing
             with query_metrics.time_phase("vector_search"):
                 # Simulate work by waiting
                 time.sleep(0.01)
-                
+
             with query_metrics.time_phase("graph_traversal"):
                 # Simulate work by waiting
                 time.sleep(0.01)
-            
+
             # End query tracking
             query_metrics.end_query_tracking(
                 results_count=random.randint(1, query_params["max_results"]),
                 quality_score=random.random(),
-                timestamp=timestamp + random.random() * 2  # 0-2 seconds for query execution
+                timestamp=timestamp + random.random() * 2,  # 0-2 seconds for query execution
             )
-        
+
         # Move forward in time
         timestamp += random.random() * 60  # 0-60 seconds between events
-    
+
     print(f"Generated data spanning {duration_minutes} minutes")
+
 
 # Generate test data
 generate_test_data(audit_logger, query_metrics, duration_minutes=60)
@@ -296,11 +295,11 @@ Here's a complete example that sets up the visualization system, generates test 
 ```python
 from ipfs_datasets_py.audit.audit_logger import AuditLogger, AuditLevel, AuditCategory
 from ipfs_datasets_py.audit.audit_visualization import (
-    AuditMetricsAggregator, 
+    AuditMetricsAggregator,
     AuditVisualizer,
     setup_audit_visualization,
     generate_integrated_dashboard,
-    create_query_audit_timeline
+    create_query_audit_timeline,
 )
 from ipfs_datasets_py.rag.rag_query_optimizer import QueryMetricsCollector
 import time
@@ -321,34 +320,39 @@ metrics_aggregator, visualizer = setup_audit_visualization(audit_logger)
 # Create a query metrics collector for tracking query performance
 query_metrics = QueryMetricsCollector()
 
+
 # Generate test data function
 def generate_test_data(audit_logger, query_metrics, duration_minutes=10):
     """Generate test data for visualization demonstration."""
     print(f"Generating {duration_minutes} minutes of simulated data...")
-    
+
     # Categories and levels for audit events
     categories = [
-        AuditCategory.AUTHENTICATION, 
+        AuditCategory.AUTHENTICATION,
         AuditCategory.DATA_ACCESS,
         AuditCategory.DATA_MODIFICATION,
-        AuditCategory.SECURITY
+        AuditCategory.SECURITY,
     ]
-    
-    levels = [
-        AuditLevel.INFO,
-        AuditLevel.WARNING,
-        AuditLevel.ERROR
-    ]
-    
+
+    levels = [AuditLevel.INFO, AuditLevel.WARNING, AuditLevel.ERROR]
+
     actions = [
-        "login", "read", "write", "update", "delete", "search", 
-        "transform", "export", "verify", "scan"
+        "login",
+        "read",
+        "write",
+        "update",
+        "delete",
+        "search",
+        "transform",
+        "export",
+        "verify",
+        "scan",
     ]
-    
+
     # Timespan for data generation
     start_time = time.time() - (duration_minutes * 60)
     end_time = time.time()
-    
+
     # Generate audit events
     timestamp = start_time
     while timestamp < end_time:
@@ -358,7 +362,7 @@ def generate_test_data(audit_logger, query_metrics, duration_minutes=10):
         action = random.choice(actions)
         user = f"user{random.randint(1, 5)}"
         resource = f"resource{random.randint(1, 10)}"
-        
+
         event_id = audit_logger.log(
             level=level,
             category=category,
@@ -369,43 +373,41 @@ def generate_test_data(audit_logger, query_metrics, duration_minutes=10):
             timestamp=datetime.datetime.fromtimestamp(timestamp).isoformat(),
             details={
                 "ip_address": f"192.168.1.{random.randint(1, 255)}",
-                "session_id": f"session-{random.randint(1000, 9999)}"
-            }
+                "session_id": f"session-{random.randint(1000, 9999)}",
+            },
         )
-        
+
         # Add a query metric (less frequently than audit events)
         if random.random() < 0.3:  # 30% chance of adding a query
             query_params = {
                 "query_text": f"Sample query {random.randint(1, 100)}",
                 "max_results": random.randint(5, 20),
-                "max_depth": random.randint(1, 3)
+                "max_depth": random.randint(1, 3),
             }
-            
-            query_metrics.start_query_tracking(
-                query_params=query_params,
-                timestamp=timestamp
-            )
-            
+
+            query_metrics.start_query_tracking(query_params=query_params, timestamp=timestamp)
+
             # Add phase timing
             with query_metrics.time_phase("vector_search"):
                 # Simulate work by waiting
                 time.sleep(0.01)
-                
+
             with query_metrics.time_phase("graph_traversal"):
                 # Simulate work by waiting
                 time.sleep(0.01)
-            
+
             # End query tracking
             query_metrics.end_query_tracking(
                 results_count=random.randint(1, query_params["max_results"]),
                 quality_score=random.random(),
-                timestamp=timestamp + random.random() * 2  # 0-2 seconds for query execution
+                timestamp=timestamp + random.random() * 2,  # 0-2 seconds for query execution
             )
-        
+
         # Move forward in time
         timestamp += random.random() * 60  # 0-60 seconds between events
-    
+
     print(f"Generated data spanning {duration_minutes} minutes")
+
 
 # Generate test data for 60 minutes
 generate_test_data(audit_logger, query_metrics, duration_minutes=60)
@@ -426,7 +428,7 @@ dashboard_path = generate_integrated_dashboard(
     title="Security and Performance Dashboard",
     include_performance=True,
     include_security=True,
-    theme="light"
+    theme="light",
 )
 
 # Generate the combined timeline visualization
@@ -436,7 +438,7 @@ timeline_fig = create_query_audit_timeline(
     output_file=f"{output_dir}/combined_timeline.png",
     hours_back=1,
     theme="light",
-    figsize=(12, 8)
+    figsize=(12, 8),
 )
 
 print(f"All visualizations and dashboard created in {output_dir}/")
@@ -457,7 +459,7 @@ timeline_fig = create_query_audit_timeline(
     query_metrics_collector=query_metrics,
     audit_metrics=metrics_aggregator,
     output_file=None,  # Don't save yet
-    hours_back=24
+    hours_back=24,
 )
 
 # Customize the figure
@@ -466,31 +468,35 @@ if timeline_fig:
     axes = timeline_fig.get_axes()
     primary_ax = axes[0]  # Query duration axis
     secondary_ax = axes[1]  # Audit events axis
-    
+
     # Customize titles and labels
     timeline_fig.suptitle("Custom Security and Performance Timeline", fontsize=16)
     primary_ax.set_title("Query Performance Impact Analysis", fontsize=14)
-    primary_ax.set_ylabel("Query Duration (seconds)", color='#1f77b4', fontsize=12)
-    secondary_ax.set_ylabel("Security Events", color='#d62728', fontsize=12)
-    
+    primary_ax.set_ylabel("Query Duration (seconds)", color="#1f77b4", fontsize=12)
+    secondary_ax.set_ylabel("Security Events", color="#d62728", fontsize=12)
+
     # Add a grid
     primary_ax.grid(True, alpha=0.3)
-    
+
     # Add annotations for important events
-    highest_point_idx = max(range(len(primary_ax.lines[0].get_ydata())), 
-                          key=lambda i: primary_ax.lines[0].get_ydata()[i])
+    highest_point_idx = max(
+        range(len(primary_ax.lines[0].get_ydata())),
+        key=lambda i: primary_ax.lines[0].get_ydata()[i],
+    )
     x_data = primary_ax.lines[0].get_xdata()
     y_data = primary_ax.lines[0].get_ydata()
-    
+
     if len(x_data) > highest_point_idx:
-        primary_ax.annotate('Performance spike',
-                         xy=(x_data[highest_point_idx], y_data[highest_point_idx]),
-                         xytext=(x_data[highest_point_idx], y_data[highest_point_idx] + 0.5),
-                         arrowprops=dict(facecolor='black', shrink=0.05, width=1.5, headwidth=8),
-                         ha='center')
-    
+        primary_ax.annotate(
+            "Performance spike",
+            xy=(x_data[highest_point_idx], y_data[highest_point_idx]),
+            xytext=(x_data[highest_point_idx], y_data[highest_point_idx] + 0.5),
+            arrowprops=dict(facecolor="black", shrink=0.05, width=1.5, headwidth=8),
+            ha="center",
+        )
+
     # Save the customized figure
-    timeline_fig.savefig("customized_timeline.png", dpi=300, bbox_inches='tight')
+    timeline_fig.savefig("customized_timeline.png", dpi=300, bbox_inches="tight")
     print("Customized timeline saved to customized_timeline.png")
 ```
 
@@ -502,34 +508,36 @@ You can generate reports programmatically for automation:
 import datetime
 import os
 
+
 def generate_security_report(start_date, end_date, output_dir="security_reports"):
     """Generate a comprehensive security report for the specified time period."""
     os.makedirs(output_dir, exist_ok=True)
-    
+
     # Format dates for filenames
     start_str = start_date.strftime("%Y%m%d")
     end_str = end_date.strftime("%Y%m%d")
     report_name = f"security_report_{start_str}_to_{end_str}"
-    
+
     # Create visualizer with time period filter
     report_aggregator = AuditMetricsAggregator()
     report_visualizer = AuditVisualizer(report_aggregator)
-    
+
     # Get events for the time period
     all_events = audit_logger.get_events(
-        start_time=start_date.isoformat(),
-        end_time=end_date.isoformat()
+        start_time=start_date.isoformat(), end_time=end_date.isoformat()
     )
-    
+
     # Process events for this report
     for event in all_events:
         report_aggregator.process_event(event)
-    
+
     # Generate visualizations
-    report_visualizer.plot_events_by_category(output_file=f"{output_dir}/{report_name}_categories.png")
+    report_visualizer.plot_events_by_category(
+        output_file=f"{output_dir}/{report_name}_categories.png"
+    )
     report_visualizer.plot_events_by_level(output_file=f"{output_dir}/{report_name}_levels.png")
     report_visualizer.plot_event_timeline(output_file=f"{output_dir}/{report_name}_timeline.png")
-    
+
     # Generate dashboard
     dashboard_path = generate_integrated_dashboard(
         output_file=f"{output_dir}/{report_name}_dashboard.html",
@@ -538,11 +546,12 @@ def generate_security_report(start_date, end_date, output_dir="security_reports"
         query_metrics_collector=query_metrics,
         title=f"Security Report {start_str} to {end_str}",
         include_performance=True,
-        include_security=True
+        include_security=True,
     )
-    
+
     print(f"Security report generated at {output_dir}/{report_name}_dashboard.html")
     return dashboard_path
+
 
 # Generate a report for the last 30 days
 end_date = datetime.datetime.now()

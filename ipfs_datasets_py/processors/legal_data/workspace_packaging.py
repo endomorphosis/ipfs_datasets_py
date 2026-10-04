@@ -48,8 +48,16 @@ def _is_zkp_certificate(certificate: Mapping[str, Any]) -> bool:
 def _extract_zkp_proof_certificates(metadata: Mapping[str, Any]) -> List[Dict[str, Any]]:
     formal_logic = dict(metadata.get("formal_logic") or {})
     proof_store = dict(formal_logic.get("proof_store") or {})
-    certificates = [dict(item) for item in list(proof_store.get("certificates") or []) if isinstance(item, Mapping)]
-    explicit = [dict(item) for item in list(formal_logic.get("zkp_proof_certificates") or []) if isinstance(item, Mapping)]
+    certificates = [
+        dict(item)
+        for item in list(proof_store.get("certificates") or [])
+        if isinstance(item, Mapping)
+    ]
+    explicit = [
+        dict(item)
+        for item in list(formal_logic.get("zkp_proof_certificates") or [])
+        if isinstance(item, Mapping)
+    ]
     by_id: Dict[str, Dict[str, Any]] = {}
     for certificate in explicit + certificates:
         if not _is_zkp_certificate(certificate):
@@ -91,8 +99,7 @@ def _write_rows_to_parquet(rows: Sequence[Dict[str, Any]], output_path: Path) ->
                     seen.add(name)
                     field_names.append(name)
         normalized_rows = [
-            _normalize_parquet_row({name: row.get(name) for name in field_names})
-            for row in rows
+            _normalize_parquet_row({name: row.get(name) for name in field_names}) for row in rows
         ]
     else:
         normalized_rows = [{"_empty": True}]
@@ -175,7 +182,9 @@ class WorkspaceDatasetPackager:
     ) -> Dict[str, Any]:
         dataset_payload = dataset.to_dict() if hasattr(dataset, "to_dict") else dict(dataset)
         output_root = Path(output_dir)
-        bundle_name = package_name or str(dataset_payload.get("dataset_id") or "workspace_dataset_bundle")
+        bundle_name = package_name or str(
+            dataset_payload.get("dataset_id") or "workspace_dataset_bundle"
+        )
         legacy_layout = package_name is None
         bundle_dir = output_root if legacy_layout else output_root / _safe_identifier(bundle_name)
         parquet_dir = bundle_dir if legacy_layout else bundle_dir / "parquet"
@@ -184,13 +193,33 @@ class WorkspaceDatasetPackager:
         if include_car:
             car_dir.mkdir(parents=True, exist_ok=True)
 
-        documents = [dict(item) for item in list(dataset_payload.get("documents") or []) if isinstance(item, dict)]
-        collections = [dict(item) for item in list(dataset_payload.get("collections") or []) if isinstance(item, dict)]
+        documents = [
+            dict(item)
+            for item in list(dataset_payload.get("documents") or [])
+            if isinstance(item, dict)
+        ]
+        collections = [
+            dict(item)
+            for item in list(dataset_payload.get("collections") or [])
+            if isinstance(item, dict)
+        ]
         knowledge_graph = dict(dataset_payload.get("knowledge_graph") or {})
-        bm25_documents = [dict(item) for item in list((dataset_payload.get("bm25_index") or {}).get("documents") or []) if isinstance(item, dict)]
-        vector_items = [dict(item) for item in list((dataset_payload.get("vector_index") or {}).get("items") or []) if isinstance(item, dict)]
+        bm25_documents = [
+            dict(item)
+            for item in list((dataset_payload.get("bm25_index") or {}).get("documents") or [])
+            if isinstance(item, dict)
+        ]
+        vector_items = [
+            dict(item)
+            for item in list((dataset_payload.get("vector_index") or {}).get("items") or [])
+            if isinstance(item, dict)
+        ]
         metadata = dict(dataset_payload.get("metadata") or {})
-        formal_summary = dict(metadata.get("formal_logic_summary") or (metadata.get("formal_logic") or {}).get("summary") or {})
+        formal_summary = dict(
+            metadata.get("formal_logic_summary")
+            or (metadata.get("formal_logic") or {}).get("summary")
+            or {}
+        )
         zkp_proof_certificates = _extract_zkp_proof_certificates(metadata)
         zkp_proof_certificate_ids = [
             str(item.get("certificate_id") or "")
@@ -222,13 +251,21 @@ class WorkspaceDatasetPackager:
             (
                 "knowledge_graph_entities",
                 "knowledge_graph",
-                [dict(item) for item in list(knowledge_graph.get("entities") or []) if isinstance(item, dict)],
+                [
+                    dict(item)
+                    for item in list(knowledge_graph.get("entities") or [])
+                    if isinstance(item, dict)
+                ],
                 ["dataset_core"],
             ),
             (
                 "knowledge_graph_relationships",
                 "knowledge_graph",
-                [dict(item) for item in list(knowledge_graph.get("relationships") or []) if isinstance(item, dict)],
+                [
+                    dict(item)
+                    for item in list(knowledge_graph.get("relationships") or [])
+                    if isinstance(item, dict)
+                ],
                 ["knowledge_graph_entities"],
             ),
             ("bm25_documents", "bm25_index", bm25_documents, ["documents"]),
@@ -251,7 +288,9 @@ class WorkspaceDatasetPackager:
             )
             if include_car:
                 car_path = car_dir / f"{piece_id}.car"
-                piece.root_cid = str(self._car_utils.parquet_to_car(str(parquet_path), str(car_path)))
+                piece.root_cid = str(
+                    self._car_utils.parquet_to_car(str(parquet_path), str(car_path))
+                )
                 piece.car_path = str(car_path.relative_to(bundle_dir))
             pieces.append(piece)
 
@@ -296,28 +335,44 @@ class WorkspaceDatasetPackager:
                 "document_count": len(documents),
                 "collection_count": len(collections),
                 "knowledge_graph_entity_count": len(list(knowledge_graph.get("entities") or [])),
-                "knowledge_graph_relationship_count": len(list(knowledge_graph.get("relationships") or [])),
+                "knowledge_graph_relationship_count": len(
+                    list(knowledge_graph.get("relationships") or [])
+                ),
                 "bm25_document_count": len(bm25_documents),
                 "vector_document_count": len(vector_items),
-                "formal_logic_processed_document_count": int(formal_summary.get("processed_document_count") or 0),
+                "formal_logic_processed_document_count": int(
+                    formal_summary.get("processed_document_count") or 0
+                ),
                 "deontic_statement_count": int(formal_summary.get("deontic_statement_count") or 0),
                 "temporal_formula_count": int(formal_summary.get("temporal_formula_count") or 0),
-                "first_order_formula_count": int(formal_summary.get("first_order_formula_count") or 0),
+                "first_order_formula_count": int(
+                    formal_summary.get("first_order_formula_count") or 0
+                ),
                 "dcec_formula_count": int(formal_summary.get("dcec_formula_count") or 0),
                 "frame_logic_count": int(formal_summary.get("frame_count") or 0),
                 "proof_count": int(formal_summary.get("proof_count") or 0),
                 "proof_certificate_count": int(formal_summary.get("proof_certificate_count") or 0),
-                "zkp_certificate_count": int(formal_summary.get("zkp_certificate_count") or len(zkp_proof_certificates)),
-                "zkp_proof_certificate_ids": list(formal_summary.get("zkp_proof_certificate_ids") or zkp_proof_certificate_ids),
+                "zkp_certificate_count": int(
+                    formal_summary.get("zkp_certificate_count") or len(zkp_proof_certificates)
+                ),
+                "zkp_proof_certificate_ids": list(
+                    formal_summary.get("zkp_proof_certificate_ids") or zkp_proof_certificate_ids
+                ),
                 "zkp_backend": str(formal_summary.get("zkp_backend") or ""),
                 "zkp_available": bool(formal_summary.get("zkp_available")),
                 "logic_systems": _jsonable(dict(formal_summary.get("logic_systems") or {})),
             },
         }
 
-        manifest_json_path = bundle_dir / ("manifest.json" if legacy_layout else "bundle_manifest.json")
-        manifest_json_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-        manifest_parquet_path = parquet_dir / ("manifest.parquet" if legacy_layout else "bundle_manifest.parquet")
+        manifest_json_path = bundle_dir / (
+            "manifest.json" if legacy_layout else "bundle_manifest.json"
+        )
+        manifest_json_path.write_text(
+            json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
+        manifest_parquet_path = parquet_dir / (
+            "manifest.parquet" if legacy_layout else "bundle_manifest.parquet"
+        )
         _write_rows_to_parquet(
             [
                 {
@@ -335,11 +390,15 @@ class WorkspaceDatasetPackager:
         manifest_root_cid = ""
         if include_car:
             manifest_car = car_dir / ("manifest.car" if legacy_layout else "bundle_manifest.car")
-            manifest_root_cid = str(self._car_utils.parquet_to_car(str(manifest_parquet_path), str(manifest_car)))
+            manifest_root_cid = str(
+                self._car_utils.parquet_to_car(str(manifest_parquet_path), str(manifest_car))
+            )
             manifest_car_path = str(manifest_car.relative_to(bundle_dir))
             manifest["manifest_root_cid"] = manifest_root_cid
             manifest["manifest_car_path"] = manifest_car_path
-            manifest_json_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+            manifest_json_path.write_text(
+                json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+            )
 
         return {
             "bundle_dir": str(bundle_dir),
@@ -374,7 +433,11 @@ class WorkspaceDatasetPackager:
         piece_ids: Optional[Sequence[str]] = None,
         manifest: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, List[Dict[str, Any]]]:
-        bundle_dir, manifest_payload = self._resolve_manifest(manifest_path) if manifest is None else (Path(manifest_path), manifest)
+        bundle_dir, manifest_payload = (
+            self._resolve_manifest(manifest_path)
+            if manifest is None
+            else (Path(manifest_path), manifest)
+        )
         piece_map = {
             str(piece.get("piece_id") or ""): dict(piece)
             for piece in list(manifest_payload.get("pieces") or [])
@@ -398,17 +461,27 @@ class WorkspaceDatasetPackager:
         metadata = _parse_possible_json(dataset_core.get("metadata_json")) or {}
         return {
             "dataset_id": str(dataset_core.get("dataset_id") or manifest.get("dataset_id") or ""),
-            "workspace_id": str(dataset_core.get("workspace_id") or manifest.get("workspace_id") or ""),
-            "workspace_name": str(dataset_core.get("workspace_name") or manifest.get("workspace_name") or ""),
-            "source_type": str(dataset_core.get("source_type") or manifest.get("source_type") or "workspace"),
+            "workspace_id": str(
+                dataset_core.get("workspace_id") or manifest.get("workspace_id") or ""
+            ),
+            "workspace_name": str(
+                dataset_core.get("workspace_name") or manifest.get("workspace_name") or ""
+            ),
+            "source_type": str(
+                dataset_core.get("source_type") or manifest.get("source_type") or "workspace"
+            ),
             "input_type": str(manifest.get("input_type") or ""),
             "input_type_resolution": str(manifest.get("input_type_resolution") or ""),
             "documents": _restore_rows(rows_by_piece.get("documents") or []),
             "collections": _restore_rows(rows_by_piece.get("collections") or []),
-            "zkp_proof_certificates": _restore_rows(rows_by_piece.get("zkp_proof_certificates") or []),
+            "zkp_proof_certificates": _restore_rows(
+                rows_by_piece.get("zkp_proof_certificates") or []
+            ),
             "knowledge_graph": {
                 "entities": _restore_rows(rows_by_piece.get("knowledge_graph_entities") or []),
-                "relationships": _restore_rows(rows_by_piece.get("knowledge_graph_relationships") or []),
+                "relationships": _restore_rows(
+                    rows_by_piece.get("knowledge_graph_relationships") or []
+                ),
             },
             "bm25_index": {
                 "backend": "local_bm25",
@@ -425,8 +498,15 @@ class WorkspaceDatasetPackager:
             },
         }
 
-    def _load_collection_overview(self, bundle_dir: Path, manifest: Mapping[str, Any]) -> List[Dict[str, Any]]:
-        rows = self.load_package_components(bundle_dir, piece_ids=["collections"], manifest=dict(manifest)).get("collections") or []
+    def _load_collection_overview(
+        self, bundle_dir: Path, manifest: Mapping[str, Any]
+    ) -> List[Dict[str, Any]]:
+        rows = (
+            self.load_package_components(
+                bundle_dir, piece_ids=["collections"], manifest=dict(manifest)
+            ).get("collections")
+            or []
+        )
         collections = _restore_rows(rows)
         overview: List[Dict[str, Any]] = []
         for collection in collections:
@@ -457,10 +537,14 @@ class WorkspaceDatasetPackager:
             "document_count": int(summary.get("document_count") or 0),
             "collection_count": int(summary.get("collection_count") or 0),
             "knowledge_graph_entity_count": int(summary.get("knowledge_graph_entity_count") or 0),
-            "knowledge_graph_relationship_count": int(summary.get("knowledge_graph_relationship_count") or 0),
+            "knowledge_graph_relationship_count": int(
+                summary.get("knowledge_graph_relationship_count") or 0
+            ),
             "bm25_document_count": int(summary.get("bm25_document_count") or 0),
             "vector_document_count": int(summary.get("vector_document_count") or 0),
-            "formal_logic_processed_document_count": int(summary.get("formal_logic_processed_document_count") or 0),
+            "formal_logic_processed_document_count": int(
+                summary.get("formal_logic_processed_document_count") or 0
+            ),
             "deontic_statement_count": int(summary.get("deontic_statement_count") or 0),
             "temporal_formula_count": int(summary.get("temporal_formula_count") or 0),
             "first_order_formula_count": int(summary.get("first_order_formula_count") or 0),
@@ -498,7 +582,9 @@ class WorkspaceDatasetPackager:
             "knowledge_graph_relationship_count": summary.get("knowledge_graph_relationship_count"),
             "bm25_document_count": summary.get("bm25_document_count"),
             "vector_document_count": summary.get("vector_document_count"),
-            "formal_logic_processed_document_count": summary.get("formal_logic_processed_document_count"),
+            "formal_logic_processed_document_count": summary.get(
+                "formal_logic_processed_document_count"
+            ),
             "deontic_statement_count": summary.get("deontic_statement_count"),
             "temporal_formula_count": summary.get("temporal_formula_count"),
             "first_order_formula_count": summary.get("first_order_formula_count"),
@@ -582,7 +668,11 @@ def render_packaged_workspace_report(
         f"Vector Documents: {int(inspection.get('vector_document_count') or 0)}",
         f"Piece Count: {int(inspection.get('piece_count') or 0)}",
     ]
-    collection_overview = [dict(item) for item in list(inspection.get("collection_overview") or []) if isinstance(item, Mapping)]
+    collection_overview = [
+        dict(item)
+        for item in list(inspection.get("collection_overview") or [])
+        if isinstance(item, Mapping)
+    ]
     if collection_overview:
         lines.append("Collection Overview:")
         for item in collection_overview:
@@ -696,11 +786,17 @@ def export_packaged_workspace_hf_records_parquet(
         if str(piece.get("piece_id") or "")
     ]
     for piece_id in ordered_piece_ids:
-        rows = [dict(row) for row in list(rows_by_piece.get(piece_id) or []) if isinstance(row, Mapping)]
+        rows = [
+            dict(row) for row in list(rows_by_piece.get(piece_id) or []) if isinstance(row, Mapping)
+        ]
         section_counts[piece_id] = len(rows)
         for index, row in enumerate(rows, start=1):
             metadata = row.get("metadata")
-            metadata_json = metadata if isinstance(metadata, str) else json.dumps(_jsonable(metadata or {}), sort_keys=True)
+            metadata_json = (
+                metadata
+                if isinstance(metadata, str)
+                else json.dumps(_jsonable(metadata or {}), sort_keys=True)
+            )
             hf_rows.append(
                 {
                     "dataset_id": dataset_id,

@@ -91,9 +91,10 @@ class SimulatedBackend:
             circuit_version=circuit_version,
         )
 
-
         output_metadata = {**metadata_dict}
-        output_metadata.setdefault("simulated_proof_layout", self._simulated_proof_layout_metadata())
+        output_metadata.setdefault(
+            "simulated_proof_layout", self._simulated_proof_layout_metadata()
+        )
         public_inputs = {
             "theorem": theorem,
             "theorem_hash": theorem_hash_hex(theorem),
@@ -118,7 +119,9 @@ class SimulatedBackend:
             },
         )
         public_inputs["attestation_ref"] = attestation_view["attestation_ref"]
-        public_inputs["attestation_view_version"] = int(attestation_view["attestation_view_version"])
+        public_inputs["attestation_view_version"] = int(
+            attestation_view["attestation_view_version"]
+        )
         # Caller metadata can be replayed from serialized LegalIR records.
         # Always publish the backend-derived view so verification and bridge
         # losses use the fresh commitment for this proof.
@@ -155,9 +158,9 @@ class SimulatedBackend:
             return False
 
         # Check metadata sanity (if present)
-        if hasattr(proof, 'metadata') and isinstance(proof.metadata, dict):
+        if hasattr(proof, "metadata") and isinstance(proof.metadata, dict):
             # Verify proof_system field exists (for clarity)
-            if 'proof_system' not in proof.metadata:
+            if "proof_system" not in proof.metadata:
                 return False
 
             if (
@@ -180,7 +183,9 @@ class SimulatedBackend:
             {
                 "theorem": normalized_theorem,
                 "num_axioms": len(normalized_axioms),
-                "axiom_hashes": [hashlib.sha256(a.encode("utf-8")).hexdigest() for a in normalized_axioms],
+                "axiom_hashes": [
+                    hashlib.sha256(a.encode("utf-8")).hexdigest() for a in normalized_axioms
+                ],
             },
             sort_keys=True,
         )

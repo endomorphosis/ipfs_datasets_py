@@ -66,8 +66,12 @@ class HawaiiScraper(BaseStateScraper):
         """
         limit = self._effective_scrape_limit(max_statutes, default=160)
         return_threshold = limit if limit is not None else 1000000
-        seeded = await self._scrape_seed_sections(code_name, max_statutes=min(8, max(1, return_threshold)))
-        archival_stubs = await self._scrape_archived_section_stubs(code_name, max_statutes=max(10, return_threshold))
+        seeded = await self._scrape_seed_sections(
+            code_name, max_statutes=min(8, max(1, return_threshold))
+        )
+        archival_stubs = await self._scrape_archived_section_stubs(
+            code_name, max_statutes=max(10, return_threshold)
+        )
 
         merged: List[NormalizedStatute] = []
         merged_keys = set()
@@ -83,7 +87,9 @@ class HawaiiScraper(BaseStateScraper):
         _merge(seeded)
         _merge(archival_stubs)
         if len(merged) >= return_threshold:
-            archival = await self._scrape_archived_hrscurrent(code_name, max_statutes=max(10, return_threshold))
+            archival = await self._scrape_archived_hrscurrent(
+                code_name, max_statutes=max(10, return_threshold)
+            )
             if archival:
                 if limit is None:
                     return archival
@@ -156,7 +162,9 @@ class HawaiiScraper(BaseStateScraper):
             if len(merged) > len(best):
                 best = list(merged)
             if len(statutes) >= return_threshold:
-                return (list(merged) if len(merged) >= return_threshold else statutes)[:return_threshold]
+                return (list(merged) if len(merged) >= return_threshold else statutes)[
+                    :return_threshold
+                ]
 
         if len(merged) > len(best):
             best = list(merged)
@@ -171,7 +179,9 @@ class HawaiiScraper(BaseStateScraper):
             return default
         return value.strip().lower() in {"1", "true", "yes", "on"}
 
-    async def _scrape_seed_sections(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def _scrape_seed_sections(
+        self, code_name: str, max_statutes: int
+    ) -> List[NormalizedStatute]:
         statutes: List[NormalizedStatute] = []
         for section_url in self._SEED_SECTION_URLS[: max(1, int(max_statutes or 1))]:
             statute = await self._build_statute_from_section_url(
@@ -183,7 +193,9 @@ class HawaiiScraper(BaseStateScraper):
                 statutes.append(statute)
         return statutes
 
-    def _build_emergency_statute_stubs(self, code_name: str, count: int = 30) -> List[NormalizedStatute]:
+    def _build_emergency_statute_stubs(
+        self, code_name: str, count: int = 30
+    ) -> List[NormalizedStatute]:
         out: List[NormalizedStatute] = []
         for idx in range(1, max(1, int(count)) + 1):
             section_number = f"1-{idx:03d}"
@@ -206,7 +218,9 @@ class HawaiiScraper(BaseStateScraper):
             )
         return out
 
-    async def _scrape_archived_section_stubs(self, code_name: str, max_statutes: int = 120) -> List[NormalizedStatute]:
+    async def _scrape_archived_section_stubs(
+        self, code_name: str, max_statutes: int = 120
+    ) -> List[NormalizedStatute]:
         cdx_url = (
             "https://web.archive.org/cdx/search/cdx?url=www.capitol.hawaii.gov/hrscurrent/*/HRS_*"
             "&output=json&filter=statuscode:200&collapse=digest"
@@ -239,7 +253,7 @@ class HawaiiScraper(BaseStateScraper):
                 continue
             seen.add(key)
 
-            encoded = urllib.parse.quote(original, safe=':/?=&%.-_')
+            encoded = urllib.parse.quote(original, safe=":/?=&%.-_")
             source_url = f"https://web.archive.org/web/{ts}/{encoded}"
             out.append(
                 NormalizedStatute(
@@ -290,7 +304,9 @@ class HawaiiScraper(BaseStateScraper):
                 pass
         return []
 
-    async def _scrape_archived_hrscurrent(self, code_name: str, max_statutes: int = 20) -> List[NormalizedStatute]:
+    async def _scrape_archived_hrscurrent(
+        self, code_name: str, max_statutes: int = 20
+    ) -> List[NormalizedStatute]:
         """Scrape archived HRS section pages from Wayback when live site is blocked."""
         headers = {"User-Agent": "Mozilla/5.0"}
         statutes: List[NormalizedStatute] = []
@@ -367,7 +383,9 @@ class HawaiiScraper(BaseStateScraper):
                 for section_url in section_urls:
                     if len(statutes) >= max_statutes:
                         break
-                    statute = await self._build_statute_from_section_url(code_name, section_url, headers)
+                    statute = await self._build_statute_from_section_url(
+                        code_name, section_url, headers
+                    )
                     if statute is None:
                         continue
                     statutes.append(statute)
@@ -428,14 +446,18 @@ class HawaiiScraper(BaseStateScraper):
         for candidate in candidates:
             for _ in range(4):
                 try:
-                    payload = await self._request_bytes_direct(candidate, headers=headers, timeout=timeout)
+                    payload = await self._request_bytes_direct(
+                        candidate, headers=headers, timeout=timeout
+                    )
                     if payload:
                         return payload.decode("utf-8", errors="replace")
                 except Exception:
                     await asyncio.sleep(0.6)
                     continue
             try:
-                payload = await self._fetch_page_content_with_archival_fallback(candidate, timeout_seconds=timeout)
+                payload = await self._fetch_page_content_with_archival_fallback(
+                    candidate, timeout_seconds=timeout
+                )
                 if payload:
                     return payload.decode("utf-8", errors="replace")
             except Exception:
@@ -449,7 +471,9 @@ class HawaiiScraper(BaseStateScraper):
 
         def _request() -> bytes:
             try:
-                req = urllib.request.Request(str(url), headers=headers or {"User-Agent": "Mozilla/5.0"})
+                req = urllib.request.Request(
+                    str(url), headers=headers or {"User-Agent": "Mozilla/5.0"}
+                )
                 with urllib.request.urlopen(req, timeout=max(1, int(timeout or 45))) as resp:
                     status = int(getattr(resp, "status", 200) or 200)
                     if status != 200:
@@ -459,12 +483,16 @@ class HawaiiScraper(BaseStateScraper):
                 return b""
 
         try:
-            payload = await asyncio.wait_for(asyncio.to_thread(_request), timeout=max(2, int(timeout or 45)) + 2)
+            payload = await asyncio.wait_for(
+                asyncio.to_thread(_request), timeout=max(2, int(timeout or 45)) + 2
+            )
         except TimeoutError:
             payload = b""
         self._record_fetch_event(provider="requests_direct", success=bool(payload))
         if payload:
-            await self._cache_successful_page_fetch(url=url, payload=payload, provider="requests_direct")
+            await self._cache_successful_page_fetch(
+                url=url, payload=payload, provider="requests_direct"
+            )
         return payload
 
     async def _build_statute_from_section_url(

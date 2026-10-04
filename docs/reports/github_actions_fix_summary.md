@@ -99,6 +99,7 @@ The PDF Processing Pipeline CI/CD workflow was failing with multiple issues:
 # Added import guard
 try:
     import networkx as nx
+
     NETWORKX_AVAILABLE = True
 except ImportError:
     NETWORKX_AVAILABLE = False

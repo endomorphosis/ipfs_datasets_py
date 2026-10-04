@@ -28,6 +28,7 @@ import pytest
 # Section 1 — TDFOLShadowProverBridge: prove_with_tableaux success path
 # ---------------------------------------------------------------------------
 
+
 class TestProveWithTableauxSuccess:
     """Cover lines 384-397 (proof_steps loop) and 414-416 (exception)."""
 
@@ -35,10 +36,12 @@ class TestProveWithTableauxSuccess:
         from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
             TDFOLShadowProverBridge,
         )
+
         return TDFOLShadowProverBridge()
 
     def _make_formula(self):
         from ipfs_datasets_py.logic.TDFOL.tdfol_core import Predicate, create_permission
+
         return create_permission(Predicate("Pay", ()))
 
     def test_prove_with_tableaux_success_builds_proof_steps(self):
@@ -62,8 +65,10 @@ class TestProveWithTableauxSuccess:
         mock_prover_inst = MagicMock()
         mock_prover_inst.prove.return_value = (True, mock_tableau)
 
-        with patch.object(bmod, "modal_tableaux") as mock_mt, \
-                patch.object(bridge, "_tdfol_to_modal_format", return_value="P(Pay)"):
+        with (
+            patch.object(bmod, "modal_tableaux") as mock_mt,
+            patch.object(bridge, "_tdfol_to_modal_format", return_value="P(Pay)"),
+        ):
             mock_mt.TableauProver.return_value = mock_prover_inst
             result = bridge.prove_with_tableaux(formula, timeout_ms=500)
 
@@ -81,8 +86,10 @@ class TestProveWithTableauxSuccess:
         bridge = self._make_bridge()
         formula = self._make_formula()
 
-        with patch.object(bmod, "modal_tableaux") as mock_mt, \
-                patch.object(bridge, "_tdfol_to_modal_format", return_value="P(Pay)"):
+        with (
+            patch.object(bmod, "modal_tableaux") as mock_mt,
+            patch.object(bridge, "_tdfol_to_modal_format", return_value="P(Pay)"),
+        ):
             mock_mt.TableauProver.side_effect = RuntimeError("tableaux engine crash")
             result = bridge.prove_with_tableaux(formula, timeout_ms=500)
 
@@ -94,6 +101,7 @@ class TestProveWithTableauxSuccess:
 # Section 2 — TDFOLShadowProverBridge: _modal_logic_type_to_enum K fallback
 # ---------------------------------------------------------------------------
 
+
 class TestModalLogicTypeToEnumKFallback:
     """Cover line 488 — K fallback branch."""
 
@@ -103,7 +111,8 @@ class TestModalLogicTypeToEnumKFallback:
         THEN shadow_prover.ModalLogic.K is returned (line 488)."""
         import ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge as bmod
         from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
-            TDFOLShadowProverBridge, ModalLogicType,
+            TDFOLShadowProverBridge,
+            ModalLogicType,
         )
 
         bridge = TDFOLShadowProverBridge()
@@ -120,6 +129,7 @@ class TestModalLogicTypeToEnumKFallback:
 # Section 3 — ModalAwareTDFOLProver: init without shadow available (line 512)
 # ---------------------------------------------------------------------------
 
+
 class TestModalAwareTDFOLProverInit:
     """Cover line 512 (shadow not available) and lines 561/576 (recursive has_ops)."""
 
@@ -128,16 +138,22 @@ class TestModalAwareTDFOLProverInit:
         WHEN ModalAwareTDFOLProver is initialized,
         THEN line 512 log message is emitted."""
         from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
-            TDFOLShadowProverBridge, ModalAwareTDFOLProver,
+            TDFOLShadowProverBridge,
+            ModalAwareTDFOLProver,
         )
 
-        with patch.object(TDFOLShadowProverBridge, "_check_availability", return_value=False), \
-                patch.object(TDFOLShadowProverBridge, "__init__", return_value=None) as mock_init:
+        with (
+            patch.object(TDFOLShadowProverBridge, "_check_availability", return_value=False),
+            patch.object(TDFOLShadowProverBridge, "__init__", return_value=None) as mock_init,
+        ):
             # Patch available attribute directly via class
             bridge_instance = MagicMock()
             bridge_instance.available = False
-            with patch("ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge."
-                       "TDFOLShadowProverBridge", return_value=bridge_instance):
+            with patch(
+                "ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge."
+                "TDFOLShadowProverBridge",
+                return_value=bridge_instance,
+            ):
                 prover = ModalAwareTDFOLProver()
         # Line 512 covered — bridge not available
         assert not prover.shadow_bridge.available
@@ -150,7 +166,10 @@ class TestModalAwareTDFOLProverInit:
             ModalAwareTDFOLProver,
         )
         from ipfs_datasets_py.logic.TDFOL.tdfol_core import (
-            Predicate, create_permission, create_conjunction, create_always,
+            Predicate,
+            create_permission,
+            create_conjunction,
+            create_always,
         )
 
         prover = ModalAwareTDFOLProver()
@@ -171,7 +190,10 @@ class TestModalAwareTDFOLProverInit:
             ModalAwareTDFOLProver,
         )
         from ipfs_datasets_py.logic.TDFOL.tdfol_core import (
-            Predicate, create_obligation, create_conjunction, create_negation,
+            Predicate,
+            create_obligation,
+            create_conjunction,
+            create_negation,
             create_always,
         )
 
@@ -188,10 +210,14 @@ class TestModalAwareTDFOLProverInit:
         """GIVEN shadow bridge returns PROVED, ModalAwareTDFOLProver.prove returns it directly
         (covers line 543)."""
         from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
-            ModalAwareTDFOLProver, ProofStatus, ProofResult,
+            ModalAwareTDFOLProver,
+            ProofStatus,
+            ProofResult,
         )
         from ipfs_datasets_py.logic.TDFOL.tdfol_core import (
-            Predicate, create_obligation, create_always,
+            Predicate,
+            create_obligation,
+            create_always,
         )
 
         prover = ModalAwareTDFOLProver()
@@ -212,6 +238,7 @@ class TestModalAwareTDFOLProverInit:
 # Section 4 — TDFOLGrammarBridge: _fallback_parse dcec_str path (222-225)
 # ---------------------------------------------------------------------------
 
+
 class TestGrammarBridgeFallbackParsePaths:
     """Cover lines 222-225, 236-239, 248-249, 264, 271-272, 311-313, 344-352."""
 
@@ -219,6 +246,7 @@ class TestGrammarBridgeFallbackParsePaths:
         from ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge import (
             TDFOLGrammarBridge,
         )
+
         return TDFOLGrammarBridge()
 
     def test_fallback_parse_dcec_str_path(self):
@@ -231,8 +259,10 @@ class TestGrammarBridgeFallbackParsePaths:
         bridge = self._bridge()
         mock_formula = create_permission(Predicate("Pay", ()))
 
-        with patch.object(gmod, "nl_converter") as mock_nc, \
-                patch.object(gmod, "parse_dcec", return_value=mock_formula):
+        with (
+            patch.object(gmod, "nl_converter") as mock_nc,
+            patch.object(gmod, "parse_dcec", return_value=mock_formula),
+        ):
             mock_nc.convert_to_dcec.return_value = "O(Pay)"
             result = bridge._fallback_parse("employer must pay wages")
 
@@ -247,10 +277,16 @@ class TestGrammarBridgeFallbackParsePaths:
         bridge = self._bridge()
 
         # nl_converter raises → skip to CEC parser attempt → CEC also raises
-        with patch.object(gmod, "nl_converter") as mock_nc, \
-                patch.dict("sys.modules",
-                           {"ipfs_datasets_py.logic.CEC.native": None,
-                            "ipfs_datasets_py.logic.CEC.native.parse_dcec_string": None}):
+        with (
+            patch.object(gmod, "nl_converter") as mock_nc,
+            patch.dict(
+                "sys.modules",
+                {
+                    "ipfs_datasets_py.logic.CEC.native": None,
+                    "ipfs_datasets_py.logic.CEC.native.parse_dcec_string": None,
+                },
+            ),
+        ):
             mock_nc.convert_to_dcec.side_effect = RuntimeError("nl error")
             result = bridge._fallback_parse("legal obligation text")
 
@@ -266,11 +302,17 @@ class TestGrammarBridgeFallbackParsePaths:
 
         bridge = self._bridge()
 
-        with patch.object(gmod, "nl_converter") as mock_nc, \
-                patch.dict("sys.modules",
-                           {"ipfs_datasets_py.logic.TDFOL.tdfol_parser": MagicMock(
-                               parse_tdfol_safe=MagicMock(side_effect=RuntimeError("parse fail"))
-                           )}):
+        with (
+            patch.object(gmod, "nl_converter") as mock_nc,
+            patch.dict(
+                "sys.modules",
+                {
+                    "ipfs_datasets_py.logic.TDFOL.tdfol_parser": MagicMock(
+                        parse_tdfol_safe=MagicMock(side_effect=RuntimeError("parse fail"))
+                    )
+                },
+            ),
+        ):
             mock_nc.convert_to_dcec.return_value = ""
             result = bridge._fallback_parse("PartiallyValid text")
 
@@ -311,11 +353,11 @@ class TestGrammarBridgeFallbackParsePaths:
         WHEN formula_to_natural_language is called,
         THEN exception is caught (lines 311-313) and to_string() fallback is returned."""
         from ipfs_datasets_py.logic.TDFOL.tdfol_core import Predicate, create_permission
+
         bridge = self._bridge()
         formula = create_permission(Predicate("Pay", ()))
 
-        with patch.dict("sys.modules",
-                        {"ipfs_datasets_py.logic.TDFOL.tdfol_converter": None}):
+        with patch.dict("sys.modules", {"ipfs_datasets_py.logic.TDFOL.tdfol_converter": None}):
             result = bridge.formula_to_natural_language(formula)
 
         # Fallback returns formula.to_string(pretty=True)
@@ -331,8 +373,9 @@ class TestGrammarBridgeFallbackParsePaths:
         if not bridge.dcec_grammar:
             pytest.skip("dcec_grammar not initialized")
 
-        with patch.object(bridge.dcec_grammar, "formula_to_english",
-                          return_value="it is obligatory to pay"):
+        with patch.object(
+            bridge.dcec_grammar, "formula_to_english", return_value="it is obligatory to pay"
+        ):
             result = bridge._dcec_to_natural_language("O(Pay)", "casual")
 
         assert isinstance(result, str)
@@ -346,8 +389,9 @@ class TestGrammarBridgeFallbackParsePaths:
         if not bridge.dcec_grammar:
             pytest.skip("dcec_grammar not initialized")
 
-        with patch.object(bridge.dcec_grammar, "formula_to_english",
-                          return_value="it is obligatory to pay"):
+        with patch.object(
+            bridge.dcec_grammar, "formula_to_english", return_value="it is obligatory to pay"
+        ):
             result = bridge._dcec_to_natural_language("O(Pay)", "technical")
 
         assert isinstance(result, str)
@@ -362,8 +406,11 @@ class TestGrammarBridgeFallbackParsePaths:
         if not bridge.dcec_grammar:
             pytest.skip("dcec_grammar not initialized")
 
-        with patch.object(bridge.dcec_grammar, "formula_to_english",
-                          return_value="{'type': 'unknown', 'value': 'O(Pay)'}"):
+        with patch.object(
+            bridge.dcec_grammar,
+            "formula_to_english",
+            return_value="{'type': 'unknown', 'value': 'O(Pay)'}",
+        ):
             result = bridge._dcec_to_natural_language("O(Pay)", "formal")
 
         # Template-based fallback should produce something
@@ -374,6 +421,7 @@ class TestGrammarBridgeFallbackParsePaths:
         WHEN analyze_parse_quality is called,
         THEN result['success']=True, result['method']='grammar' (lines 496-498)."""
         from ipfs_datasets_py.logic.TDFOL.tdfol_core import Predicate, create_permission
+
         bridge = self._bridge()
         mock_formula = create_permission(Predicate("Pay", ()))
 
@@ -389,7 +437,8 @@ class TestGrammarBridgeFallbackParsePaths:
         WHEN NaturalLanguageTDFOLInterface is initialized,
         THEN line 536 log is emitted (limited mode)."""
         from ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge import (
-            TDFOLGrammarBridge, NaturalLanguageTDFOLInterface,
+            TDFOLGrammarBridge,
+            NaturalLanguageTDFOLInterface,
         )
 
         with patch.object(TDFOLGrammarBridge, "_check_availability", return_value=False):
@@ -430,6 +479,7 @@ class TestGrammarBridgeFallbackParsePaths:
 # Section 5 — ProverInstaller: apt/sudo installation paths
 # ---------------------------------------------------------------------------
 
+
 class TestProverInstallerAptPaths:
     """Cover lines 117-129, 131-147, 150-155, 177."""
 
@@ -449,9 +499,11 @@ class TestProverInstallerAptPaths:
                 return f"/usr/bin/{cmd}"
             return None
 
-        with patch.object(pm, "_which", side_effect=which_fn), \
-                patch.object(pm, "_run", return_value=0), \
-                patch("os.geteuid", return_value=0):
+        with (
+            patch.object(pm, "_which", side_effect=which_fn),
+            patch.object(pm, "_run", return_value=0),
+            patch("os.geteuid", return_value=0),
+        ):
             result = pm.ensure_coq(yes=True, strict=False)
 
         assert result is True
@@ -473,10 +525,12 @@ class TestProverInstallerAptPaths:
         mock_proc = MagicMock()
         mock_proc.returncode = 0
 
-        with patch.object(pm, "_which", side_effect=which_fn), \
-                patch.object(pm, "_run", return_value=0), \
-                patch("os.geteuid", return_value=1000), \
-                patch("subprocess.run", return_value=mock_proc):
+        with (
+            patch.object(pm, "_which", side_effect=which_fn),
+            patch.object(pm, "_run", return_value=0),
+            patch("os.geteuid", return_value=1000),
+            patch("subprocess.run", return_value=mock_proc),
+        ):
             result = pm.ensure_coq(yes=True, strict=False)
 
         assert result is True
@@ -490,11 +544,12 @@ class TestProverInstallerAptPaths:
         def which_fn(cmd):
             return None if cmd == "coqc" else f"/usr/bin/{cmd}"
 
-        with patch.object(pm, "_which", side_effect=which_fn), \
-                patch.object(pm, "_run", return_value=1), \
-                patch("os.geteuid", return_value=1000), \
-                patch("subprocess.run",
-                      side_effect=subprocess.TimeoutExpired(["sudo"], 5)):
+        with (
+            patch.object(pm, "_which", side_effect=which_fn),
+            patch.object(pm, "_run", return_value=1),
+            patch("os.geteuid", return_value=1000),
+            patch("subprocess.run", side_effect=subprocess.TimeoutExpired(["sudo"], 5)),
+        ):
             result = pm.ensure_coq(yes=True, strict=False)
 
         assert result is False
@@ -510,8 +565,10 @@ class TestProverInstallerAptPaths:
                 return None
             return f"/usr/bin/{cmd}"
 
-        with patch.object(pm, "_which", side_effect=which_fn), \
-                patch("os.geteuid", return_value=1000):
+        with (
+            patch.object(pm, "_which", side_effect=which_fn),
+            patch("os.geteuid", return_value=1000),
+        ):
             result = pm.ensure_coq(yes=True, strict=False)
 
         assert result is False
@@ -525,9 +582,11 @@ class TestProverInstallerAptPaths:
         def which_fn(cmd):
             return None if cmd == "coqc" else f"/usr/bin/{cmd}"
 
-        with patch.object(pm, "_which", side_effect=which_fn), \
-                patch("os.geteuid", return_value=1000), \
-                patch("subprocess.run", side_effect=RuntimeError("sudo crash")):
+        with (
+            patch.object(pm, "_which", side_effect=which_fn),
+            patch("os.geteuid", return_value=1000),
+            patch("subprocess.run", side_effect=RuntimeError("sudo crash")),
+        ):
             with pytest.raises(RuntimeError, match="sudo crash"):
                 pm.ensure_coq(yes=True, strict=True)
 
@@ -549,10 +608,12 @@ class TestProverInstallerAptPaths:
         mock_proc = MagicMock()
         mock_proc.returncode = 1  # sudo -n true fails → _sudo_non_interactive_ok=False
 
-        with patch.object(pm, "_which", side_effect=which_fn), \
-                patch.object(pm, "_run", return_value=1), \
-                patch("os.geteuid", return_value=1000), \
-                patch("subprocess.run", return_value=mock_proc):
+        with (
+            patch.object(pm, "_which", side_effect=which_fn),
+            patch.object(pm, "_run", return_value=1),
+            patch("os.geteuid", return_value=1000),
+            patch("subprocess.run", return_value=mock_proc),
+        ):
             result = pm.ensure_coq(yes=True, strict=False)
 
         assert result is False
@@ -562,13 +623,16 @@ class TestProverInstallerAptPaths:
 # Section 6 — CaselawBulkProcessor: JSON loading, converter, date ValueError
 # ---------------------------------------------------------------------------
 
+
 class TestCaselawBulkProcessorCoveragePaths:
     """Cover lines 225-229, 388-393, 548, 694-695, 757-758."""
 
     def _processor(self):
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-            CaselawBulkProcessor, BulkProcessingConfig,
+            CaselawBulkProcessor,
+            BulkProcessingConfig,
         )
+
         cfg = BulkProcessingConfig(output_directory="/tmp/test_caselaw_session20")
         return CaselawBulkProcessor(config=cfg)
 
@@ -591,17 +655,13 @@ class TestCaselawBulkProcessorCoveragePaths:
             "metadata": {"source": "test"},
         }
 
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False
-        ) as tmp:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as tmp:
             json.dump(payload, tmp)
             tmppath = tmp.name
 
         try:
             loop = asyncio.new_event_loop()
-            doc = loop.run_until_complete(
-                proc._load_document_metadata(Path(tmppath))
-            )
+            doc = loop.run_until_complete(proc._load_document_metadata(Path(tmppath)))
             loop.close()
         finally:
             os.unlink(tmppath)
@@ -638,8 +698,10 @@ class TestCaselawBulkProcessorCoveragePaths:
         mock_result = MagicMock()
         mock_result.success = True
         from ipfs_datasets_py.logic.TDFOL.tdfol_core import (
-            Predicate, create_obligation,
+            Predicate,
+            create_obligation,
         )
+
         mock_result.formulas = [create_obligation(Predicate("Pay", ()))]
 
         # Inject a real logic_converter mock
@@ -678,7 +740,8 @@ class TestCaselawBulkProcessorCoveragePaths:
             CaselawDocument,
         )
         from ipfs_datasets_py.logic.TDFOL.tdfol_core import (
-            Predicate, create_obligation,
+            Predicate,
+            create_obligation,
         )
 
         proc = self._processor()
@@ -716,7 +779,8 @@ class TestCaselawBulkProcessorCoveragePaths:
         WHEN called with directories and output_dir,
         THEN creates processor and calls process_caselaw_corpus (lines 757-758)."""
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-            process_caselaw_bulk, ProcessingStats,
+            process_caselaw_bulk,
+            ProcessingStats,
         )
 
         mock_stats = MagicMock(spec=ProcessingStats)
@@ -745,6 +809,7 @@ class TestCaselawBulkProcessorCoveragePaths:
 # Section 7 — integration/__init__.py: autoconfigure_engine_env (lines 80-82)
 # ---------------------------------------------------------------------------
 
+
 class TestIntegrationInitAutoconfigure:
     """Cover lines 80-82 and 266-267."""
 
@@ -759,10 +824,13 @@ class TestIntegrationInitAutoconfigure:
 
         mock_env_mod = MagicMock()
 
-        with patch.dict("sys.modules", {
-            "symai": mock_symai,
-            "ipfs_datasets_py.utils.engine_env": mock_env_mod,
-        }):
+        with patch.dict(
+            "sys.modules",
+            {
+                "symai": mock_symai,
+                "ipfs_datasets_py.utils.engine_env": mock_env_mod,
+            },
+        ):
             intg_mod.enable_symbolicai()
 
         # autoconfigure_engine_env should have been called if the import succeeded
@@ -791,6 +859,7 @@ class TestIntegrationInitAutoconfigure:
 # ---------------------------------------------------------------------------
 # Section 8 — TDFOLCECBridge: ImportError and unavailable paths
 # ---------------------------------------------------------------------------
+
 
 class TestTDFOLCECBridgeImportPaths:
     """Cover lines 35-36, 54-55, 99-102 in tdfol_cec_bridge."""
@@ -840,6 +909,7 @@ class TestTDFOLCECBridgeImportPaths:
 # Section 9 — TDFOLCECBridge: axioms parsing and prove paths (233, 246-307)
 # ---------------------------------------------------------------------------
 
+
 class TestTDFOLCECBridgeProvePaths:
     """Cover lines 233, 246-307, 350-351, 382, 414."""
 
@@ -847,10 +917,12 @@ class TestTDFOLCECBridgeProvePaths:
         from ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge import (
             TDFOLCECBridge,
         )
+
         return TDFOLCECBridge()
 
     def _formula(self):
         from ipfs_datasets_py.logic.TDFOL.tdfol_core import Predicate, create_obligation
+
         return create_obligation(Predicate("Pay", ()))
 
     def test_prove_with_cec_proved_path(self):
@@ -860,7 +932,8 @@ class TestTDFOLCECBridgeProvePaths:
         import ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge as cmod
         import ipfs_datasets_py.logic.CEC.native.dcec_parsing as dcec_mod
         from ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge import (
-            TDFOLCECBridge, ProofStatus,
+            TDFOLCECBridge,
+            ProofStatus,
         )
 
         bridge = self._bridge()
@@ -881,9 +954,10 @@ class TestTDFOLCECBridgeProvePaths:
         mock_prover_core.Prover.return_value = mock_prover
         mock_prover_core.ProofResult.PROVED = proved_sentinel
 
-        with patch.object(cmod, "prover_core", mock_prover_core), \
-                patch.object(dcec_mod, "parse_dcec_formula", create=True,
-                             return_value=MagicMock()):
+        with (
+            patch.object(cmod, "prover_core", mock_prover_core),
+            patch.object(dcec_mod, "parse_dcec_formula", create=True, return_value=MagicMock()),
+        ):
             result = bridge.prove_with_cec(formula, axioms=[])
 
         assert result.status == ProofStatus.PROVED
@@ -895,7 +969,8 @@ class TestTDFOLCECBridgeProvePaths:
         import ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge as cmod
         import ipfs_datasets_py.logic.CEC.native.dcec_parsing as dcec_mod
         from ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge import (
-            TDFOLCECBridge, ProofStatus,
+            TDFOLCECBridge,
+            ProofStatus,
         )
 
         bridge = self._bridge()
@@ -917,9 +992,10 @@ class TestTDFOLCECBridgeProvePaths:
         mock_prover_core.ProofResult.PROVED = proved_obj
         mock_prover_core.ProofResult.DISPROVED = disproved_obj
 
-        with patch.object(cmod, "prover_core", mock_prover_core), \
-                patch.object(dcec_mod, "parse_dcec_formula", create=True,
-                             return_value=MagicMock()):
+        with (
+            patch.object(cmod, "prover_core", mock_prover_core),
+            patch.object(dcec_mod, "parse_dcec_formula", create=True, return_value=MagicMock()),
+        ):
             result = bridge.prove_with_cec(formula, axioms=[])
 
         assert result.status == ProofStatus.DISPROVED
@@ -938,8 +1014,9 @@ class TestTDFOLCECBridgeProvePaths:
 
         formula = self._formula()
 
-        with patch.object(bridge, "get_applicable_cec_rules",
-                          side_effect=RuntimeError("rules error")):
+        with patch.object(
+            bridge, "get_applicable_cec_rules", side_effect=RuntimeError("rules error")
+        ):
             try:
                 rules = bridge.get_applicable_cec_rules(formula)
             except Exception:
@@ -967,6 +1044,7 @@ class TestTDFOLCECBridgeProvePaths:
 # ---------------------------------------------------------------------------
 # Section 10 — domain/__init__.py ImportError fallbacks
 # ---------------------------------------------------------------------------
+
 
 class TestDomainInitImportErrorFallbacks:
     """Cover lines 17-18, 22-23, 27-28 in domain/__init__.py."""

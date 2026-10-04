@@ -69,7 +69,7 @@ from symai import Symbol
 # Syntactic mode (literal operations)
 sym_syn = Symbol("All cats are animals")
 
-# Semantic mode (neuro-symbolic operations) 
+# Semantic mode (neuro-symbolic operations)
 sym_sem = Symbol("All cats are animals", semantic=True)
 ```
 
@@ -90,16 +90,13 @@ Design by Contract principles for validation:
 from symai.strategy import contract
 from symai.models import LLMDataModel
 
-@contract(
-    pre_remedy=True,
-    post_remedy=True,
-    accumulate_errors=True
-)
+
+@contract(pre_remedy=True, post_remedy=True, accumulate_errors=True)
 class LogicValidator(Expression):
     def pre(self, input_data):
         # Validate input logic statements
         return True
-    
+
     def post(self, output_data):
         # Validate generated FOL formulas
         return True
@@ -110,6 +107,7 @@ Extensible expression system for complex operations:
 
 ```python
 from symai import Expression
+
 
 class FOLConverter(Expression):
     def forward(self, text_input):
@@ -165,30 +163,27 @@ from symai import Symbol, Expression
 from symai.strategy import contract
 from ..mcp_server.tools.dataset_tools.logic_utils import extract_predicates
 
+
 class SymbolicFOLBridge:
     """Bridge between SymbolicAI and our FOL system."""
-    
+
     def __init__(self):
         self.fol_converter = None
         self.predicate_extractor = extract_predicates
-    
+
     def create_semantic_symbol(self, text: str) -> Symbol:
         """Create a semantic symbol from natural language text."""
         return Symbol(text, semantic=True)
-    
+
     def extract_logical_components(self, symbol: Symbol) -> dict:
         """Extract logical components using SymbolicAI's semantic analysis."""
         # Use SymbolicAI to identify logical components
         quantifiers = symbol.query("Extract quantifiers like 'all', 'some', 'every'")
         predicates = symbol.query("Extract predicates and relationships")
         entities = symbol.query("Extract entities and objects")
-        
-        return {
-            "quantifiers": quantifiers,
-            "predicates": predicates, 
-            "entities": entities
-        }
-    
+
+        return {"quantifiers": quantifiers, "predicates": predicates, "entities": entities}
+
     def semantic_to_fol(self, symbol: Symbol) -> str:
         """Convert semantic symbol to FOL formula."""
         components = self.extract_logical_components(symbol)
@@ -204,44 +199,50 @@ Extend SymbolicAI with custom logic-specific primitives:
 from symai import Symbol
 from symai.ops.primitives import Primitive
 
+
 class LogicPrimitives(Primitive):
     """Custom primitives for logical operations."""
-    
+
     def to_fol(self, output_format: str = "symbolic") -> Symbol:
         """Convert natural language to First-Order Logic."""
+
         @core.interpret(prompt="Convert to first-order logic formula:")
         def _convert_to_fol(text):
             pass
-        
+
         result = _convert_to_fol(self)
         return self._to_type(result)
-    
+
     def extract_quantifiers(self) -> Symbol:
         """Extract quantifiers from text."""
+
         @core.interpret(prompt="Extract universal and existential quantifiers:")
         def _extract_quantifiers(text):
             pass
-            
+
         result = _extract_quantifiers(self)
         return self._to_type(result)
-    
-    def logical_and(self, other: 'Symbol') -> Symbol:
+
+    def logical_and(self, other: "Symbol") -> Symbol:
         """Semantic logical conjunction."""
-        @core.logic(operator='and')
+
+        @core.logic(operator="and")
         def _logical_and(a: str, b: str):
             pass
-            
+
         result = _logical_and(self, other)
         return self._to_type(result)
-    
-    def implies(self, other: 'Symbol') -> Symbol:
+
+    def implies(self, other: "Symbol") -> Symbol:
         """Logical implication."""
+
         @core.interpret(prompt="Express logical implication 'if A then B':")
         def _implies(premise, conclusion):
             pass
-            
+
         result = _implies(self, other)
         return self._to_type(result)
+
 
 # Extend Symbol class with logic primitives
 Symbol.__bases__ += (LogicPrimitives,)
@@ -257,17 +258,21 @@ from symai.strategy import contract
 from symai.models import LLMDataModel
 from pydantic import Field, field_validator
 
+
 class FOLInput(LLMDataModel):
     text: str = Field(description="Natural language text to convert to FOL")
     domain_predicates: list = Field(default=[], description="Domain-specific predicates")
-    confidence_threshold: float = Field(default=0.7, description="Minimum confidence for conversion")
+    confidence_threshold: float = Field(
+        default=0.7, description="Minimum confidence for conversion"
+    )
+
 
 class FOLOutput(LLMDataModel):
     fol_formula: str = Field(description="Generated First-Order Logic formula")
     confidence: float = Field(description="Confidence score of the conversion")
     logical_components: dict = Field(description="Extracted logical components")
-    
-    @field_validator('fol_formula')
+
+    @field_validator("fol_formula")
     def validate_fol_syntax(cls, v):
         # Validate FOL syntax
         if not v or len(v.strip()) == 0:
@@ -275,26 +280,22 @@ class FOLOutput(LLMDataModel):
         # Add more sophisticated FOL syntax validation
         return v
 
-@contract(
-    pre_remedy=True,
-    post_remedy=True,
-    accumulate_errors=True,
-    verbose=True
-)
+
+@contract(pre_remedy=True, post_remedy=True, accumulate_errors=True, verbose=True)
 class ContractedFOLConverter(Expression):
     prompt = """
     Convert natural language statements into formal First-Order Logic (FOL) formulas.
-    
+
     Instructions:
     1. Identify quantifiers (∀ for universal, ∃ for existential)
     2. Extract predicates and their relationships
     3. Determine logical connectives (∧, ∨, →, ¬)
     4. Structure the formula with proper syntax
     5. Ensure logical consistency
-    
+
     Output a well-formed FOL formula.
     """
-    
+
     def pre(self, input_data: FOLInput) -> bool:
         """Validate input before processing."""
         if not input_data.text or len(input_data.text.strip()) < 3:
@@ -302,33 +303,35 @@ class ContractedFOLConverter(Expression):
         if input_data.confidence_threshold < 0.1 or input_data.confidence_threshold > 1.0:
             return False
         return True
-    
+
     def post(self, output: FOLOutput) -> bool:
         """Validate output after generation."""
         if output.confidence < 0.5:
             return False
-        if not output.fol_formula or "∀" not in output.fol_formula and "∃" not in output.fol_formula:
+        if (
+            not output.fol_formula
+            or "∀" not in output.fol_formula
+            and "∃" not in output.fol_formula
+        ):
             return False
         return True
-    
+
     def forward(self, input_data: FOLInput) -> FOLOutput:
         """Generate FOL formula from natural language."""
         # Create semantic symbol
         text_symbol = Symbol(input_data.text, semantic=True)
-        
+
         # Extract logical components
         components = text_symbol.extract_logical_components()
-        
+
         # Generate FOL formula
         fol_formula = text_symbol.to_fol()
-        
+
         # Calculate confidence (placeholder logic)
         confidence = 0.85  # Would be calculated based on extraction quality
-        
+
         return FOLOutput(
-            fol_formula=fol_formula.value,
-            confidence=confidence,
-            logical_components=components
+            fol_formula=fol_formula.value, confidence=confidence, logical_components=components
         )
 ```
 
@@ -343,52 +346,55 @@ from symai import Symbol
 from ..logic_integration.symbolic_fol_bridge import SymbolicFOLBridge
 from ..logic_integration.symbolic_contracts import ContractedFOLConverter
 
+
 async def enhanced_text_to_fol(
     text_input: str,
     output_format: str = "json",
     confidence_threshold: float = 0.7,
     use_symbolic_ai: bool = True,
-    domain_predicates: list = None
+    domain_predicates: list = None,
 ) -> dict:
     """
     Enhanced FOL conversion using SymbolicAI integration.
-    
+
     Args:
         text_input: Natural language text to convert
         output_format: Output format (json, prolog, tptp, symbolic)
         confidence_threshold: Minimum confidence for conversion
         use_symbolic_ai: Whether to use SymbolicAI enhancement
         domain_predicates: Domain-specific predicates to consider
-    
+
     Returns:
         Enhanced FOL conversion result with semantic analysis
     """
-    
+
     result = {
         "status": "success",
         "fol_formulas": [],
         "semantic_analysis": {},
         "confidence_scores": {},
-        "logical_reasoning": {}
+        "logical_reasoning": {},
     }
-    
+
     try:
         if use_symbolic_ai:
             # Use SymbolicAI for enhanced conversion
             bridge = SymbolicFOLBridge()
             converter = ContractedFOLConverter()
-            
+
             # Create semantic symbol
             semantic_symbol = bridge.create_semantic_symbol(text_input)
-            
+
             # Semantic analysis
             result["semantic_analysis"] = {
                 "entities": semantic_symbol.query("Extract all entities and objects"),
                 "relationships": semantic_symbol.query("Extract relationships between entities"),
                 "temporal_aspects": semantic_symbol.query("Extract temporal information"),
-                "modal_aspects": semantic_symbol.query("Extract modal information (must, can, should)")
+                "modal_aspects": semantic_symbol.query(
+                    "Extract modal information (must, can, should)"
+                ),
             }
-            
+
             # Enhanced logical reasoning
             if "and" in text_input.lower():
                 # Split compound statements
@@ -398,7 +404,7 @@ async def enhanced_text_to_fol(
                     part_symbol = Symbol(part, semantic=True)
                     part_fol = part_symbol.to_fol()
                     combined_logic.append(part_fol.value)
-                
+
                 # Combine using logical conjunction
                 if len(combined_logic) > 1:
                     final_formula = " ∧ ".join(f"({formula})" for formula in combined_logic)
@@ -408,64 +414,65 @@ async def enhanced_text_to_fol(
                 # Single statement conversion
                 fol_symbol = semantic_symbol.to_fol()
                 final_formula = fol_symbol.value
-            
+
             # Validate using contracts
             from ..logic_integration.symbolic_contracts import FOLInput, FOLOutput
+
             input_data = FOLInput(
                 text=text_input,
                 domain_predicates=domain_predicates or [],
-                confidence_threshold=confidence_threshold
+                confidence_threshold=confidence_threshold,
             )
-            
+
             contracted_result = converter(input_data)
-            
-            result["fol_formulas"].append({
-                "fol_formula": contracted_result.fol_formula,
-                "confidence": contracted_result.confidence,
-                "method": "symbolic_ai_enhanced",
-                "logical_components": contracted_result.logical_components
-            })
-            
+
+            result["fol_formulas"].append(
+                {
+                    "fol_formula": contracted_result.fol_formula,
+                    "confidence": contracted_result.confidence,
+                    "method": "symbolic_ai_enhanced",
+                    "logical_components": contracted_result.logical_components,
+                }
+            )
+
             result["logical_reasoning"] = {
                 "intermediate_steps": semantic_symbol.query("Show reasoning steps"),
                 "assumptions": semantic_symbol.query("Identify implicit assumptions"),
-                "scope": semantic_symbol.query("Determine scope of quantifiers")
+                "scope": semantic_symbol.query("Determine scope of quantifiers"),
             }
-            
+
         else:
             # Fallback to original implementation
             from .text_to_fol import text_to_fol as original_text_to_fol
+
             fallback_result = await original_text_to_fol(
                 text_input=text_input,
                 output_format=output_format,
-                confidence_threshold=confidence_threshold
+                confidence_threshold=confidence_threshold,
             )
             result.update(fallback_result)
-        
+
         # Format output according to requested format
         if output_format != "json":
             result = _format_enhanced_output(result, output_format)
-            
+
     except Exception as e:
-        result = {
-            "status": "error",
-            "error": str(e),
-            "fallback_used": True
-        }
-        
+        result = {"status": "error", "error": str(e), "fallback_used": True}
+
         # Fallback to original implementation on error
         try:
             from .text_to_fol import text_to_fol as original_text_to_fol
+
             fallback_result = await original_text_to_fol(
                 text_input=text_input,
                 output_format=output_format,
-                confidence_threshold=confidence_threshold
+                confidence_threshold=confidence_threshold,
             )
             result.update(fallback_result)
             result["status"] = "success_with_fallback"
         except Exception as fallback_error:
             result["fallback_error"] = str(fallback_error)
-    
+
     return result
 ```
 
@@ -477,25 +484,26 @@ Create an interactive interface for FOL construction using SymbolicAI:
 from symai import Symbol, Expression
 from typing import List, Dict, Optional
 
+
 class InteractiveFOLConstructor:
     """Interactive First-Order Logic construction using SymbolicAI."""
-    
+
     def __init__(self):
         self.session_symbols = []
         self.current_domain = {}
         self.logic_history = []
-    
+
     def add_statement(self, natural_language: str) -> Symbol:
         """Add a natural language statement to the session."""
         symbol = Symbol(natural_language, semantic=True)
         self.session_symbols.append(symbol)
         return symbol
-    
+
     def combine_statements(self, operator: str = "and") -> Symbol:
         """Combine multiple statements using logical operators."""
         if len(self.session_symbols) < 2:
             raise ValueError("Need at least 2 statements to combine")
-        
+
         result = self.session_symbols[0]
         for symbol in self.session_symbols[1:]:
             if operator.lower() == "and":
@@ -506,95 +514,101 @@ class InteractiveFOLConstructor:
                 result = result.implies(symbol)
             else:
                 raise ValueError(f"Unsupported operator: {operator}")
-        
+
         return result
-    
+
     def analyze_logical_structure(self) -> Dict:
         """Analyze the logical structure of current statements."""
         if not self.session_symbols:
             return {"error": "No statements to analyze"}
-        
+
         combined = self.combine_statements("and")
-        
+
         analysis = {
             "entities": combined.query("List all entities mentioned"),
             "predicates": combined.query("List all predicates and properties"),
             "quantifiers": combined.query("Identify all quantifiers"),
             "logical_connectives": combined.query("Identify logical connectives"),
             "implications": combined.query("Identify causal or implication relationships"),
-            "consistency": combined.query("Check for logical consistency")
+            "consistency": combined.query("Check for logical consistency"),
         }
-        
+
         return analysis
-    
+
     def generate_fol_incrementally(self) -> List[str]:
         """Generate FOL formulas incrementally for each statement."""
         fol_formulas = []
-        
+
         for i, symbol in enumerate(self.session_symbols):
             fol = symbol.to_fol()
-            fol_formulas.append({
-                "statement_index": i,
-                "natural_language": symbol.value,
-                "fol_formula": fol.value,
-                "confidence": symbol.query("Rate confidence of this conversion from 0-1")
-            })
-        
+            fol_formulas.append(
+                {
+                    "statement_index": i,
+                    "natural_language": symbol.value,
+                    "fol_formula": fol.value,
+                    "confidence": symbol.query("Rate confidence of this conversion from 0-1"),
+                }
+            )
+
         return fol_formulas
-    
+
     def suggest_next_statement(self, context: str = "") -> str:
         """Suggest logical next statements based on current context."""
         if not self.session_symbols:
             return "Start by adding a logical statement or premise."
-        
+
         combined = self.combine_statements("and")
         suggestion = combined.query(
             f"Given the current logical statements, what would be a logical next statement to add? Context: {context}"
         )
-        
-        return suggestion.value if hasattr(suggestion, 'value') else str(suggestion)
-    
+
+        return suggestion.value if hasattr(suggestion, "value") else str(suggestion)
+
     def validate_consistency(self) -> Dict:
         """Validate logical consistency of all statements."""
         if len(self.session_symbols) < 2:
             return {"status": "insufficient_data", "message": "Need at least 2 statements"}
-        
+
         combined = self.combine_statements("and")
-        
+
         consistency_check = combined.query(
             "Analyze these statements for logical consistency. Are there any contradictions?"
         )
-        
+
         return {
             "status": "analyzed",
-            "consistency_analysis": consistency_check.value if hasattr(consistency_check, 'value') else str(consistency_check),
-            "recommendations": combined.query("Suggest improvements for logical consistency")
+            "consistency_analysis": consistency_check.value
+            if hasattr(consistency_check, "value")
+            else str(consistency_check),
+            "recommendations": combined.query("Suggest improvements for logical consistency"),
         }
-    
+
     def export_session(self, format: str = "json") -> Dict:
         """Export the current session in various formats."""
         fol_formulas = self.generate_fol_incrementally()
         analysis = self.analyze_logical_structure()
-        
+
         session_data = {
             "statements": [symbol.value for symbol in self.session_symbols],
             "fol_formulas": fol_formulas,
             "logical_analysis": analysis,
-            "combined_fol": self.combine_statements("and").to_fol().value if self.session_symbols else "",
+            "combined_fol": self.combine_statements("and").to_fol().value
+            if self.session_symbols
+            else "",
             "session_metadata": {
                 "total_statements": len(self.session_symbols),
                 "domain": self.current_domain,
-                "timestamp": None  # Would add actual timestamp
-            }
+                "timestamp": None,  # Would add actual timestamp
+            },
         }
-        
+
         if format.lower() == "prolog":
             session_data["prolog_format"] = self._convert_to_prolog(session_data)
         elif format.lower() == "tptp":
             session_data["tptp_format"] = self._convert_to_tptp(session_data)
-        
+
         return session_data
-    
+
     def _convert_to_prolog(self, session_data: Dict) -> List[str]:
         """Convert FOL formulas to Prolog format."""
         # Implementation for Prolog conversion
@@ -604,7 +618,7 @@ class InteractiveFOLConstructor:
             prolog_statement = self._fol_to_prolog(formula_data["fol_formula"])
             prolog_statements.append(prolog_statement)
         return prolog_statements
-    
+
     def _convert_to_tptp(self, session_data: Dict) -> List[str]:
         """Convert FOL formulas to TPTP format."""
         # Implementation for TPTP conversion
@@ -613,11 +627,16 @@ class InteractiveFOLConstructor:
             tptp_statement = f"fof(statement_{i}, axiom, {formula_data['fol_formula']})."
             tptp_statements.append(tptp_statement)
         return tptp_statements
-    
+
     def _fol_to_prolog(self, fol_formula: str) -> str:
         """Convert a single FOL formula to Prolog syntax."""
         # Placeholder implementation - would need proper FOL to Prolog conversion
-        return fol_formula.replace("∀", "forall").replace("∃", "exists").replace("∧", ",").replace("∨", ";")
+        return (
+            fol_formula.replace("∀", "forall")
+            .replace("∃", "exists")
+            .replace("∧", ",")
+            .replace("∨", ";")
+        )
 ```
 
 ### Phase 3: Advanced Features (Weeks 5-6)
@@ -630,75 +649,77 @@ Extend the system to handle modal logic and temporal logic:
 from symai import Symbol, Expression
 from symai.strategy import contract
 
+
 class ModalLogicSymbol(Symbol):
     """Extended Symbol with modal logic capabilities."""
-    
-    def necessarily(self) -> 'ModalLogicSymbol':
+
+    def necessarily(self) -> "ModalLogicSymbol":
         """Apply necessity operator (□)."""
         modal_symbol = self.query("Express this as a necessary truth using modal logic")
         return ModalLogicSymbol(f"□({modal_symbol})", semantic=True)
-    
-    def possibly(self) -> 'ModalLogicSymbol':
+
+    def possibly(self) -> "ModalLogicSymbol":
         """Apply possibility operator (◇)."""
         modal_symbol = self.query("Express this as a possible truth using modal logic")
         return ModalLogicSymbol(f"◇({modal_symbol})", semantic=True)
-    
-    def obligation(self) -> 'ModalLogicSymbol':
+
+    def obligation(self) -> "ModalLogicSymbol":
         """Apply deontic obligation operator (O)."""
         deontic_symbol = self.query("Express this as a moral or legal obligation")
         return ModalLogicSymbol(f"O({deontic_symbol})", semantic=True)
-    
-    def permission(self) -> 'ModalLogicSymbol':
+
+    def permission(self) -> "ModalLogicSymbol":
         """Apply deontic permission operator (P)."""
         deontic_symbol = self.query("Express this as a permission")
         return ModalLogicSymbol(f"P({deontic_symbol})", semantic=True)
-    
-    def temporal_always(self) -> 'ModalLogicSymbol':
+
+    def temporal_always(self) -> "ModalLogicSymbol":
         """Apply temporal 'always' operator (G)."""
         temporal_symbol = self.query("Express this as something that is always true")
         return ModalLogicSymbol(f"G({temporal_symbol})", semantic=True)
-    
-    def temporal_eventually(self) -> 'ModalLogicSymbol':
+
+    def temporal_eventually(self) -> "ModalLogicSymbol":
         """Apply temporal 'eventually' operator (F)."""
         temporal_symbol = self.query("Express this as something that will eventually be true")
         return ModalLogicSymbol(f"F({temporal_symbol})", semantic=True)
 
+
 class AdvancedLogicConverter:
     """Advanced logic converter supporting multiple logic types."""
-    
+
     def __init__(self):
         self.supported_logics = ["fol", "modal", "temporal", "deontic", "epistemic"]
-    
+
     def detect_logic_type(self, text: str) -> str:
         """Detect the type of logic needed for the text."""
         symbol = Symbol(text, semantic=True)
-        
+
         logic_indicators = symbol.query(
             "What type of logic is most appropriate for this statement? "
             "Options: first-order logic, modal logic, temporal logic, deontic logic, epistemic logic"
         )
-        
+
         # Map response to logic type
         logic_type_mapping = {
             "first-order": "fol",
-            "modal": "modal", 
+            "modal": "modal",
             "temporal": "temporal",
             "deontic": "deontic",
-            "epistemic": "epistemic"
+            "epistemic": "epistemic",
         }
-        
+
         detected_type = "fol"  # default
         for key, value in logic_type_mapping.items():
             if key in logic_indicators.value.lower():
                 detected_type = value
                 break
-        
+
         return detected_type
-    
+
     def convert_to_appropriate_logic(self, text: str) -> Dict:
         """Convert text to the most appropriate logic formalism."""
         logic_type = self.detect_logic_type(text)
-        
+
         if logic_type == "modal":
             return self._convert_to_modal_logic(text)
         elif logic_type == "temporal":
@@ -709,63 +730,63 @@ class AdvancedLogicConverter:
             return self._convert_to_epistemic_logic(text)
         else:
             return self._convert_to_fol(text)
-    
+
     def _convert_to_modal_logic(self, text: str) -> Dict:
         """Convert text to modal logic."""
         symbol = ModalLogicSymbol(text, semantic=True)
-        
+
         # Determine modal operator needed
         modal_type = symbol.query(
             "Does this express necessity, possibility, or something else? "
             "Respond with: necessity, possibility, or neither"
         )
-        
+
         if "necessity" in modal_type.value.lower():
             modal_formula = symbol.necessarily()
         elif "possibility" in modal_type.value.lower():
             modal_formula = symbol.possibly()
         else:
             modal_formula = symbol
-        
+
         return {
             "logic_type": "modal",
             "formula": modal_formula.value,
             "modal_operator": modal_type.value,
-            "confidence": 0.8
+            "confidence": 0.8,
         }
-    
+
     def _convert_to_temporal_logic(self, text: str) -> Dict:
         """Convert text to temporal logic."""
         symbol = ModalLogicSymbol(text, semantic=True)
-        
+
         temporal_type = symbol.query(
             "Does this express something that is always true, eventually true, or something else? "
             "Respond with: always, eventually, or neither"
         )
-        
+
         if "always" in temporal_type.value.lower():
             temporal_formula = symbol.temporal_always()
         elif "eventually" in temporal_type.value.lower():
             temporal_formula = symbol.temporal_eventually()
         else:
             temporal_formula = symbol
-        
+
         return {
             "logic_type": "temporal",
             "formula": temporal_formula.value,
             "temporal_operator": temporal_type.value,
-            "confidence": 0.8
+            "confidence": 0.8,
         }
-    
+
     def _convert_to_deontic_logic(self, text: str) -> Dict:
         """Convert text to deontic logic."""
         symbol = ModalLogicSymbol(text, semantic=True)
-        
+
         deontic_type = symbol.query(
             "Does this express an obligation, permission, prohibition, or something else? "
             "Respond with: obligation, permission, prohibition, or neither"
         )
-        
+
         if "obligation" in deontic_type.value.lower():
             deontic_formula = symbol.obligation()
         elif "permission" in deontic_type.value.lower():
@@ -776,36 +797,36 @@ class AdvancedLogicConverter:
             deontic_formula = ModalLogicSymbol(f"¬{permission.value}", semantic=True)
         else:
             deontic_formula = symbol
-        
+
         return {
             "logic_type": "deontic",
             "formula": deontic_formula.value,
             "deontic_operator": deontic_type.value,
-            "confidence": 0.8
+            "confidence": 0.8,
         }
-    
+
     def _convert_to_epistemic_logic(self, text: str) -> Dict:
         """Convert text to epistemic logic."""
         symbol = ModalLogicSymbol(text, semantic=True)
-        
+
         # Epistemic logic often uses modal operators for necessity and possibility of knowledge
         knowledge_type = symbol.query(
             "Does this express something that is known, unknown, or something else? "
             "Respond with: known, unknown, or neither"
         )
-        
+
         if "known" in knowledge_type.value.lower():
             epistemic_formula = symbol.necessarily()  # What is known is necessarily the case
         elif "unknown" in knowledge_type.value.lower():
             epistemic_formula = symbol.possibly()  # What is unknown may possibly be the case
         else:
             epistemic_formula = symbol
-        
+
         return {
             "logic_type": "epistemic",
             "formula": epistemic_formula.value,
             "epistemic_operator": knowledge_type.value,
-            "confidence": 0.8
+            "confidence": 0.8,
         }
 ```
 
@@ -817,23 +838,24 @@ Add verification and basic proof support:
 from symai import Symbol, Expression
 from typing import List, Dict, Optional
 
+
 class LogicVerifier:
     """Verify and reason about logical formulas using SymbolicAI."""
-    
+
     def __init__(self):
         self.known_axioms = []
         self.proof_rules = self._initialize_proof_rules()
-    
+
     def verify_formula_syntax(self, formula: str, logic_type: str = "fol") -> Dict:
         """Verify the syntax of a logical formula."""
         formula_symbol = Symbol(formula, semantic=True)
-        
+
         syntax_check = formula_symbol.query(
             f"Is this a syntactically correct {logic_type} formula? "
             f"Check for proper quantifier binding, balanced parentheses, "
             f"and correct operator usage. Respond with: valid, invalid, or uncertain"
         )
-        
+
         if "valid" in syntax_check.value.lower():
             return {"status": "valid", "message": "Formula syntax is correct"}
         elif "invalid" in syntax_check.value.lower():
@@ -841,53 +863,55 @@ class LogicVerifier:
             return {"status": "invalid", "errors": errors.value}
         else:
             return {"status": "uncertain", "message": "Could not determine syntax validity"}
-    
+
     def check_satisfiability(self, formula: str) -> Dict:
         """Check if a formula is satisfiable."""
         formula_symbol = Symbol(formula, semantic=True)
-        
+
         satisfiability = formula_symbol.query(
             "Is this logical formula satisfiable? Can you find values that make it true? "
             "Provide a brief explanation and example if possible."
         )
-        
+
         return {
             "analysis": satisfiability.value,
-            "satisfiable": "satisfiable" in satisfiability.value.lower() and "not" not in satisfiability.value.lower()
+            "satisfiable": "satisfiable" in satisfiability.value.lower()
+            and "not" not in satisfiability.value.lower(),
         }
-    
+
     def check_validity(self, formula: str) -> Dict:
         """Check if a formula is valid (tautology)."""
         formula_symbol = Symbol(formula, semantic=True)
-        
+
         validity = formula_symbol.query(
             "Is this logical formula valid (always true regardless of interpretation)? "
             "Provide reasoning for your answer."
         )
-        
+
         return {
             "analysis": validity.value,
-            "valid": "valid" in validity.value.lower() and "not" not in validity.value.lower()
+            "valid": "valid" in validity.value.lower() and "not" not in validity.value.lower(),
         }
-    
+
     def find_logical_consequences(self, premises: List[str], conclusion: str = None) -> Dict:
         """Find logical consequences of given premises."""
         premises_text = "; ".join(premises)
         premises_symbol = Symbol(premises_text, semantic=True)
-        
+
         if conclusion:
             # Check if conclusion follows from premises
             entailment_check = premises_symbol.query(
                 f"Do these premises logically entail the conclusion: '{conclusion}'? "
                 f"Provide step-by-step reasoning."
             )
-            
+
             return {
                 "type": "entailment_check",
                 "premises": premises,
                 "conclusion": conclusion,
-                "entails": "entails" in entailment_check.value.lower() or "follows" in entailment_check.value.lower(),
-                "reasoning": entailment_check.value
+                "entails": "entails" in entailment_check.value.lower()
+                or "follows" in entailment_check.value.lower(),
+                "reasoning": entailment_check.value,
             }
         else:
             # Find consequences
@@ -895,60 +919,59 @@ class LogicVerifier:
                 "What are some logical consequences that follow from these premises? "
                 "List 3-5 interesting conclusions that can be derived."
             )
-            
+
             return {
                 "type": "consequence_generation",
                 "premises": premises,
-                "consequences": consequences.value
+                "consequences": consequences.value,
             }
-    
+
     def generate_counterexample(self, formula: str) -> Dict:
         """Generate a counterexample for an invalid formula."""
         formula_symbol = Symbol(formula, semantic=True)
-        
+
         counterexample = formula_symbol.query(
             "If this formula is not valid, provide a counterexample - "
             "an interpretation that makes the formula false. "
             "If it is valid, explain why no counterexample exists."
         )
-        
-        return {
-            "formula": formula,
-            "counterexample_analysis": counterexample.value
-        }
-    
+
+        return {"formula": formula, "counterexample_analysis": counterexample.value}
+
     def simplify_formula(self, formula: str) -> Dict:
         """Simplify a logical formula."""
         formula_symbol = Symbol(formula, semantic=True)
-        
+
         simplified = formula_symbol.query(
             "Simplify this logical formula by applying logical equivalences. "
             "Show the step-by-step simplification process."
         )
-        
+
         return {
             "original": formula,
             "simplified": simplified.value,
-            "simplification_steps": formula_symbol.query("List the logical rules used in simplification")
+            "simplification_steps": formula_symbol.query(
+                "List the logical rules used in simplification"
+            ),
         }
-    
+
     def convert_to_cnf(self, formula: str) -> Dict:
         """Convert formula to Conjunctive Normal Form."""
         formula_symbol = Symbol(formula, semantic=True)
-        
+
         cnf = formula_symbol.query(
             "Convert this logical formula to Conjunctive Normal Form (CNF). "
             "Show each step of the conversion process including: "
             "1) Eliminate implications, 2) Move negations inward, "
             "3) Distribute disjunctions over conjunctions."
         )
-        
+
         return {
             "original": formula,
             "cnf": cnf.value,
-            "conversion_process": formula_symbol.query("Explain each step of the CNF conversion")
+            "conversion_process": formula_symbol.query("Explain each step of the CNF conversion"),
         }
-    
+
     def _initialize_proof_rules(self) -> Dict:
         """Initialize basic proof rules for logical reasoning."""
         return {
@@ -957,7 +980,7 @@ class LogicVerifier:
             "universal_instantiation": "From ∀x P(x), infer P(a) for any a",
             "existential_generalization": "From P(a), infer ∃x P(x)",
             "de_morgan": "¬(P ∧ Q) ≡ (¬P ∨ ¬Q), ¬(P ∨ Q) ≡ (¬P ∧ ¬Q)",
-            "distribution": "P ∧ (Q ∨ R) ≡ (P ∧ Q) ∨ (P ∧ R)"
+            "distribution": "P ∧ (Q ∨ R) ≡ (P ∧ Q) ∨ (P ∧ R)",
         }
 ```
 
@@ -974,7 +997,7 @@ async def enhanced_mcp_text_to_fol(
     confidence_threshold: float = 0.7,
     use_symbolic_ai: bool = True,
     domain_predicates: Optional[List[str]] = None,
-    interactive_mode: bool = False
+    interactive_mode: bool = False,
 ) -> dict:
     """
     Enhanced MCP tool for text to FOL conversion with SymbolicAI integration.
@@ -983,19 +1006,19 @@ async def enhanced_mcp_text_to_fol(
         if use_symbolic_ai:
             from ..logic_integration.symbolic_fol_bridge import SymbolicFOLBridge
             from ..logic_integration.interactive_fol_constructor import InteractiveFOLConstructor
-            
+
             if interactive_mode:
                 constructor = InteractiveFOLConstructor()
                 constructor.add_statement(text_input)
-                
+
                 result = {
                     "status": "success",
                     "interactive_session": constructor.export_session(output_format),
                     "suggestions": {
                         "next_statement": constructor.suggest_next_statement(),
-                        "consistency_check": constructor.validate_consistency()
+                        "consistency_check": constructor.validate_consistency(),
                     },
-                    "enhanced_analysis": constructor.analyze_logical_structure()
+                    "enhanced_analysis": constructor.analyze_logical_structure(),
                 }
             else:
                 # Use enhanced conversion
@@ -1004,42 +1027,43 @@ async def enhanced_mcp_text_to_fol(
                     output_format=output_format,
                     confidence_threshold=confidence_threshold,
                     use_symbolic_ai=True,
-                    domain_predicates=domain_predicates
+                    domain_predicates=domain_predicates,
                 )
         else:
             # Use original implementation
             from .text_to_fol import text_to_fol
+
             result = await text_to_fol(
                 text_input=text_input,
                 output_format=output_format,
-                confidence_threshold=confidence_threshold
+                confidence_threshold=confidence_threshold,
             )
-        
+
         return result
-        
+
     except Exception as e:
         return {
             "status": "error",
             "error": str(e),
-            "message": "Failed to convert text to FOL using enhanced method"
+            "message": "Failed to convert text to FOL using enhanced method",
         }
+
 
 # Add new MCP tools for SymbolicAI features
 async def mcp_interactive_logic_builder(
-    initial_statement: str = "",
-    session_id: Optional[str] = None
+    initial_statement: str = "", session_id: Optional[str] = None
 ) -> dict:
     """
     MCP tool for interactive logic construction.
     """
     try:
         from ..logic_integration.interactive_fol_constructor import InteractiveFOLConstructor
-        
+
         constructor = InteractiveFOLConstructor()
-        
+
         if initial_statement:
             constructor.add_statement(initial_statement)
-        
+
         return {
             "status": "success",
             "session_id": session_id or "default",
@@ -1048,32 +1072,28 @@ async def mcp_interactive_logic_builder(
             "analysis": constructor.analyze_logical_structure(),
             "actions": [
                 "add_statement",
-                "combine_statements", 
+                "combine_statements",
                 "analyze_structure",
                 "export_session",
-                "validate_consistency"
-            ]
-        }
-        
-    except Exception as e:
-        return {
-            "status": "error",
-            "error": str(e)
+                "validate_consistency",
+            ],
         }
 
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
 async def mcp_verify_logic_formula(
-    formula: str,
-    logic_type: str = "fol",
-    verification_type: str = "syntax"
+    formula: str, logic_type: str = "fol", verification_type: str = "syntax"
 ) -> dict:
     """
     MCP tool for logic formula verification.
     """
     try:
         from ..logic_integration.logic_verification import LogicVerifier
-        
+
         verifier = LogicVerifier()
-        
+
         if verification_type == "syntax":
             result = verifier.verify_formula_syntax(formula, logic_type)
         elif verification_type == "satisfiability":
@@ -1086,20 +1106,17 @@ async def mcp_verify_logic_formula(
             result = verifier.convert_to_cnf(formula)
         else:
             result = {"error": f"Unknown verification type: {verification_type}"}
-        
+
         return {
             "status": "success",
             "formula": formula,
             "logic_type": logic_type,
             "verification_type": verification_type,
-            "result": result
+            "result": result,
         }
-        
+
     except Exception as e:
-        return {
-            "status": "error",
-            "error": str(e)
-        }
+        return {"status": "error", "error": str(e)}
 ```
 
 #### 4.2 Comprehensive Testing Suite
@@ -1114,182 +1131,179 @@ from ..logic_integration.symbolic_fol_bridge import SymbolicFOLBridge
 from ..logic_integration.symbolic_contracts import ContractedFOLConverter, FOLInput
 from ..logic_integration.interactive_fol_constructor import InteractiveFOLConstructor
 
+
 class TestSymbolicAIIntegration:
     """Test suite for SymbolicAI integration."""
-    
+
     def setup_method(self):
         """Setup test environment."""
         self.bridge = SymbolicFOLBridge()
         self.converter = ContractedFOLConverter()
         self.constructor = InteractiveFOLConstructor()
-    
+
     def test_symbol_creation(self):
         """Test creation of semantic symbols."""
         text = "All cats are animals"
         symbol = self.bridge.create_semantic_symbol(text)
-        
+
         assert isinstance(symbol, Symbol)
         assert symbol.value == text
         # Test that it's in semantic mode
-        assert symbol._semantic if hasattr(symbol, '_semantic') else True
-    
+        assert symbol._semantic if hasattr(symbol, "_semantic") else True
+
     def test_logical_component_extraction(self):
         """Test extraction of logical components."""
         symbol = self.bridge.create_semantic_symbol("All birds can fly and some birds are colorful")
         components = self.bridge.extract_logical_components(symbol)
-        
+
         assert "quantifiers" in components
         assert "predicates" in components
         assert "entities" in components
-    
+
     def test_contracted_fol_conversion(self):
         """Test contract-based FOL conversion."""
-        input_data = FOLInput(
-            text="Every student studies hard",
-            confidence_threshold=0.7
-        )
-        
+        input_data = FOLInput(text="Every student studies hard", confidence_threshold=0.7)
+
         result = self.converter(input_data)
-        
-        assert hasattr(result, 'fol_formula')
-        assert hasattr(result, 'confidence')
+
+        assert hasattr(result, "fol_formula")
+        assert hasattr(result, "confidence")
         assert result.confidence > 0.5
-    
+
     def test_interactive_constructor(self):
         """Test interactive FOL constructor."""
         # Add statements
         stmt1 = "All birds can fly"
         stmt2 = "Tweety is a bird"
-        
+
         self.constructor.add_statement(stmt1)
         self.constructor.add_statement(stmt2)
-        
+
         assert len(self.constructor.session_symbols) == 2
-        
+
         # Test analysis
         analysis = self.constructor.analyze_logical_structure()
         assert "entities" in analysis
         assert "predicates" in analysis
-        
+
         # Test FOL generation
         fol_formulas = self.constructor.generate_fol_incrementally()
         assert len(fol_formulas) == 2
-        
+
         # Test export
         session_data = self.constructor.export_session()
         assert "statements" in session_data
         assert "fol_formulas" in session_data
-    
+
     def test_logical_operators(self):
         """Test SymbolicAI logical operators."""
         symbol1 = Symbol("All cats are animals", semantic=True)
         symbol2 = Symbol("Fluffy is a cat", semantic=True)
-        
+
         # Test logical conjunction
         combined = symbol1 & symbol2
         assert isinstance(combined, Symbol)
-        
+
         # Test that the combination makes logical sense
         # This would need actual SymbolicAI setup to test properly
-    
+
     @pytest.mark.asyncio
     async def test_enhanced_mcp_integration(self):
         """Test enhanced MCP tool integration."""
         from ..enhanced_text_to_fol import enhanced_text_to_fol
-        
+
         result = await enhanced_text_to_fol(
-            text_input="All students study hard",
-            use_symbolic_ai=True,
-            confidence_threshold=0.7
+            text_input="All students study hard", use_symbolic_ai=True, confidence_threshold=0.7
         )
-        
+
         assert result["status"] == "success"
         assert "fol_formulas" in result
         assert "semantic_analysis" in result
         assert "logical_reasoning" in result
-    
+
     def test_modal_logic_extension(self):
         """Test modal logic extensions."""
         from ..modal_logic_extension import ModalLogicSymbol
-        
+
         symbol = ModalLogicSymbol("It will rain tomorrow", semantic=True)
-        
+
         # Test modal operators
         necessary = symbol.necessarily()
         possible = symbol.possibly()
-        
+
         assert "□" in necessary.value or "necessarily" in necessary.value.lower()
         assert "◇" in possible.value or "possibly" in possible.value.lower()
-    
+
     def test_logic_verification(self):
         """Test logic verification capabilities."""
         from ..logic_verification import LogicVerifier
-        
+
         verifier = LogicVerifier()
-        
+
         # Test syntax verification
         valid_formula = "∀x (Cat(x) → Animal(x))"
         syntax_result = verifier.verify_formula_syntax(valid_formula)
-        
+
         assert "status" in syntax_result
-        
+
         # Test satisfiability
         sat_result = verifier.check_satisfiability(valid_formula)
         assert "analysis" in sat_result
         assert "satisfiable" in sat_result
-    
+
     def test_fallback_mechanism(self):
         """Test fallback to original implementation."""
         # This test would verify that if SymbolicAI fails,
         # the system falls back to the original FOL implementation
         pass
-    
+
     def test_performance_comparison(self):
         """Test performance comparison between original and enhanced systems."""
         # This test would compare execution times and accuracy
         # between the original and SymbolicAI-enhanced systems
         pass
 
+
 # Integration test for end-to-end workflow
 class TestEndToEndWorkflow:
     """Test complete workflows using SymbolicAI integration."""
-    
+
     @pytest.mark.asyncio
     async def test_complete_logic_workflow(self):
         """Test a complete logic construction and verification workflow."""
         constructor = InteractiveFOLConstructor()
-        
+
         # Step 1: Add statements
         constructor.add_statement("All birds can fly")
         constructor.add_statement("Penguins are birds")
         constructor.add_statement("Penguins cannot fly")
-        
+
         # Step 2: Analyze consistency
         consistency = constructor.validate_consistency()
         assert "status" in consistency
-        
+
         # Step 3: Generate FOL
         fol_formulas = constructor.generate_fol_incrementally()
         assert len(fol_formulas) == 3
-        
+
         # Step 4: Export and verify
         session_data = constructor.export_session()
         assert session_data["session_metadata"]["total_statements"] == 3
-    
+
     def test_multi_modal_logic_workflow(self):
         """Test workflow involving multiple types of logic."""
         from ..modal_logic_extension import AdvancedLogicConverter
-        
+
         converter = AdvancedLogicConverter()
-        
+
         # Test different logic types
         statements = [
             "Citizens must pay taxes",  # Deontic
             "It is always true that 2+2=4",  # Temporal/Modal
             "All humans are mortal",  # First-order
-            "It is possible that it will rain"  # Modal
+            "It is possible that it will rain",  # Modal
         ]
-        
+
         for statement in statements:
             result = converter.convert_to_appropriate_logic(statement)
             assert "logic_type" in result
@@ -1348,7 +1362,7 @@ SYMBOLIC_AI_CONFIG = {
     "NEUROSYMBOLIC_ENGINE_MAX_TOKENS": 4096,  # Sufficient for complex logic formulas
     "NEUROSYMBOLIC_ENGINE_TEMPERATURE": 0.1,  # Low temperature for consistent reasoning
     "SYMBOLIC_ENGINE": "wolframalpha",  # Optional
-    "SUPPORT_COMMUNITY": False
+    "SUPPORT_COMMUNITY": False,
 }
 ```
 

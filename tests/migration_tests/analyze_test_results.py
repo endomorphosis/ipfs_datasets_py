@@ -13,12 +13,16 @@ import argparse
 from datetime import datetime
 from collections import defaultdict
 
+
 def find_latest_report():
-    reports = glob.glob(os.path.join(os.path.dirname(os.path.abspath(__file__)), "mcp_tools_test_results_*.json"))
+    reports = glob.glob(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "mcp_tools_test_results_*.json")
+    )
     if not reports:
         return None
     # Sort by modification time
     return max(reports, key=os.path.getmtime)
+
 
 def analyze_report(report_path):
     with open(report_path, "r") as f:
@@ -34,7 +38,9 @@ def analyze_report(report_path):
     duration = summary["duration"]
 
     # Group tests by category
-    categories = defaultdict(lambda: {"total": 0, "passed": 0, "failed": 0, "skipped": 0, "error": 0})
+    categories = defaultdict(
+        lambda: {"total": 0, "passed": 0, "failed": 0, "skipped": 0, "error": 0}
+    )
 
     for test_path, tests in report["tests"].items():
         for test in tests:
@@ -61,10 +67,10 @@ def analyze_report(report_path):
     report_lines.append("SUMMARY")
     report_lines.append("-" * 50)
     report_lines.append(f"Total tests: {total}")
-    report_lines.append(f"Passed: {passed} ({passed/total*100:.1f}%)")
-    report_lines.append(f"Failed: {failed} ({failed/total*100:.1f}%)")
-    report_lines.append(f"Skipped: {skipped} ({skipped/total*100:.1f}%)")
-    report_lines.append(f"Error: {error} ({error/total*100:.1f}%)")
+    report_lines.append(f"Passed: {passed} ({passed / total * 100:.1f}%)")
+    report_lines.append(f"Failed: {failed} ({failed / total * 100:.1f}%)")
+    report_lines.append(f"Skipped: {skipped} ({skipped / total * 100:.1f}%)")
+    report_lines.append(f"Error: {error} ({error / total * 100:.1f}%)")
     report_lines.append(f"Time elapsed: {duration:.2f}s")
     report_lines.append("")
     report_lines.append("BREAKDOWN BY TOOL CATEGORY")
@@ -74,7 +80,9 @@ def analyze_report(report_path):
     for category, stats in sorted(categories.items()):
         cat_total = stats["total"]
         cat_passed = stats["passed"]
-        report_lines.append(f"{category}: {cat_passed}/{cat_total} passed ({cat_passed/cat_total*100:.1f}%)")
+        report_lines.append(
+            f"{category}: {cat_passed}/{cat_total} passed ({cat_passed / cat_total * 100:.1f}%)"
+        )
 
     # List failures
     if failed > 0:
@@ -87,12 +95,13 @@ def analyze_report(report_path):
                 if test.get("outcome") == "failed":
                     report_lines.append(f"- {test['nodeid']}")
                     # Extract short error message
-                    error_msg = str(test['call']['longrepr'])
+                    error_msg = str(test["call"]["longrepr"])
                     error_lines = [line for line in error_msg.split("\n") if line.strip()]
                     if error_lines:
                         report_lines.append(f"  Error: {error_lines[-1].strip()}")
 
     return "\n".join(report_lines)
+
 
 def main():
     parser = argparse.ArgumentParser(description="Analyze MCP tools test results")
@@ -115,6 +124,7 @@ def main():
         print(analysis)
 
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

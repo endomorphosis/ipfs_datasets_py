@@ -32,6 +32,7 @@ def ensure_libp2p_installed() -> bool:
     """
     try:
         import libp2p  # noqa: F401
+
         return True
     except ImportError:
         pass
@@ -39,13 +40,22 @@ def ensure_libp2p_installed() -> bool:
     logger.info("libp2p not found — auto-installing from git (py-libp2p@main)...")
     try:
         subprocess.check_call(
-            [sys.executable, "-m", "pip", "install", "--quiet",
-             "libp2p @ git+https://github.com/libp2p/py-libp2p.git@main",
-             "multiaddr", "protobuf>=3.20.0"],
-            stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
+            [
+                sys.executable,
+                "-m",
+                "pip",
+                "install",
+                "--quiet",
+                "libp2p @ git+https://github.com/libp2p/py-libp2p.git@main",
+                "multiaddr",
+                "protobuf>=3.20.0",
+            ],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
             timeout=120,
         )
         import libp2p  # noqa: F401
+
         logger.info("libp2p installed successfully")
         return True
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ImportError) as e:
@@ -57,28 +67,40 @@ async def ensure_libp2p_installed_async() -> bool:
     """Trio-native async version for use within a running Trio context."""
     try:
         import libp2p  # noqa: F401
+
         return True
     except ImportError:
         pass
 
     import trio
+
     logger.info("libp2p not found — async-installing from git (py-libp2p@main)...")
     try:
         result = await trio.run_process(
-            [sys.executable, "-m", "pip", "install", "--quiet",
-             "libp2p @ git+https://github.com/libp2p/py-libp2p.git@main",
-             "multiaddr", "protobuf>=3.20.0"],
-            capture_stdout=True, capture_stderr=True,
+            [
+                sys.executable,
+                "-m",
+                "pip",
+                "install",
+                "--quiet",
+                "libp2p @ git+https://github.com/libp2p/py-libp2p.git@main",
+                "multiaddr",
+                "protobuf>=3.20.0",
+            ],
+            capture_stdout=True,
+            capture_stderr=True,
         )
         if result.returncode != 0:
             logger.error("pip install failed: %s", result.stderr.decode())
             return False
         import libp2p  # noqa: F401
+
         logger.info("libp2p installed successfully (async)")
         return True
     except (OSError, ImportError) as e:
         logger.error("Failed to auto-install libp2p: %s", e)
         return False
+
 
 # Protocol ID per MCP++ spec
 MCP_P2P_PROTOCOL = "/mcp+p2p/1.0.0"
@@ -95,6 +117,7 @@ DEFAULT_BOOTSTRAP_PEERS = [
 @dataclass
 class PeerInfo:
     """Information about a connected P2P peer."""
+
     peer_id: str
     multiaddrs: List[str] = field(default_factory=list)
     protocols: List[str] = field(default_factory=list)
@@ -119,6 +142,7 @@ class P2PMessage:
 
     Wire format: 4-byte big-endian length prefix + JSON payload.
     """
+
     msg_type: str  # "request" | "response" | "notification"
     method: str = ""
     params: Dict[str, Any] = field(default_factory=dict)
@@ -130,16 +154,19 @@ class P2PMessage:
 
     def encode(self) -> bytes:
         """Encode as length-prefixed JSON."""
-        payload = json.dumps({
-            "type": self.msg_type,
-            "method": self.method,
-            "params": self.params,
-            "id": self.msg_id,
-            "result": self.result,
-            "error": self.error,
-            "sender": self.sender_peer_id,
-            "timestamp": self.timestamp,
-        }, separators=(",", ":")).encode("utf-8")
+        payload = json.dumps(
+            {
+                "type": self.msg_type,
+                "method": self.method,
+                "params": self.params,
+                "id": self.msg_id,
+                "result": self.result,
+                "error": self.error,
+                "sender": self.sender_peer_id,
+                "timestamp": self.timestamp,
+            },
+            separators=(",", ":"),
+        ).encode("utf-8")
         length = len(payload).to_bytes(4, "big")
         return length + payload
 
@@ -153,7 +180,7 @@ class P2PMessage:
             raise ValueError(f"Message size {length} exceeds limit {MAX_P2P_MESSAGE_SIZE}")
         if len(data) < 4 + length:
             raise ValueError(f"Incomplete message: expected {length} bytes, got {len(data) - 4}")
-        payload = json.loads(data[4:4 + length].decode("utf-8"))
+        payload = json.loads(data[4 : 4 + length].decode("utf-8"))
         return cls(
             msg_type=payload.get("type", "request"),
             method=payload.get("method", ""),
@@ -186,8 +213,9 @@ class MCPp2pNode:
         trio.run(main)
     """
 
-    def __init__(self, listen_addrs: Optional[List[str]] = None,
-                 bootstrap_peers: Optional[List[str]] = None):
+    def __init__(
+        self, listen_addrs: Optional[List[str]] = None, bootstrap_peers: Optional[List[str]] = None
+    ):
         self._listen_addrs = listen_addrs or ["/ip4/0.0.0.0/tcp/0"]
         self._bootstrap_peers = bootstrap_peers or DEFAULT_BOOTSTRAP_PEERS
         self._host = None
@@ -303,14 +331,18 @@ class MCPp2pNode:
                 try:
                     result = await self._tool_handler(msg.method, msg.params)
                     response = P2PMessage(
-                        msg_type="response", method=msg.method,
-                        msg_id=msg.msg_id, result=result,
+                        msg_type="response",
+                        method=msg.method,
+                        msg_id=msg.msg_id,
+                        result=result,
                         sender_peer_id=self.peer_id,
                     )
                 except Exception as e:
                     response = P2PMessage(
-                        msg_type="response", method=msg.method,
-                        msg_id=msg.msg_id, error=str(e),
+                        msg_type="response",
+                        method=msg.method,
+                        msg_id=msg.msg_id,
+                        error=str(e),
                         sender_peer_id=self.peer_id,
                     )
                 await stream.write(response.encode())
@@ -319,8 +351,9 @@ class MCPp2pNode:
         except Exception as e:
             logger.debug(f"Stream handler error: {e}")
 
-    async def call_tool(self, peer_id: str, method: str,
-                        params: Dict[str, Any], timeout: float = 30.0) -> Any:
+    async def call_tool(
+        self, peer_id: str, method: str, params: Dict[str, Any], timeout: float = 30.0
+    ) -> Any:
         """Call a tool on a remote peer via /mcp+p2p/1.0.0.
 
         Args:
@@ -343,8 +376,11 @@ class MCPp2pNode:
             stream = await self._host.new_stream(target, [MCP_P2P_PROTOCOL])
 
             request = P2PMessage(
-                msg_type="request", method=method, params=params,
-                msg_id=f"{method}_{time.time()}", sender_peer_id=self.peer_id,
+                msg_type="request",
+                method=method,
+                params=params,
+                msg_id=f"{method}_{time.time()}",
+                sender_peer_id=self.peer_id,
             )
             await stream.write(request.encode())
 
@@ -382,11 +418,13 @@ class MCPp2pNode:
                 def add_service(self, zc, type_, name):
                     info = zc.get_service_info(type_, name)
                     if info and info.parsed_addresses():
-                        discovered.append(PeerInfo(
-                            peer_id=name.split(".")[0],
-                            multiaddrs=[f"/ip4/{info.parsed_addresses()[0]}/tcp/{info.port}"],
-                            protocols=[MCP_P2P_PROTOCOL],
-                        ))
+                        discovered.append(
+                            PeerInfo(
+                                peer_id=name.split(".")[0],
+                                multiaddrs=[f"/ip4/{info.parsed_addresses()[0]}/tcp/{info.port}"],
+                                protocols=[MCP_P2P_PROTOCOL],
+                            )
+                        )
 
                 def remove_service(self, zc, type_, name):
                     pass

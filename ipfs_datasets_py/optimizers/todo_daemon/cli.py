@@ -93,7 +93,9 @@ def build_lifecycle_arg_parser(
     ensure.add_argument("--repo-root", default=None)
     ensure.add_argument("--stale-after-seconds", type=float, default=default_stale_after_seconds)
     ensure.add_argument("--startup-wait-seconds", type=float, default=default_startup_wait_seconds)
-    ensure.add_argument("--launch-mode", default=default_launch_mode, choices=tuple(launch_mode_choices))
+    ensure.add_argument(
+        "--launch-mode", default=default_launch_mode, choices=tuple(launch_mode_choices)
+    )
     ensure.add_argument(
         restart_delay_flag,
         dest=restart_delay_dest,
@@ -177,7 +179,9 @@ def run_lifecycle_args(
             "launch_mode": args.launch_mode,
             ensure_restart_kw: restart_delay_seconds,
         }
-        _payload, check, exit_code = _ensure_payload_check_and_exit(ensure_fn(spec, **ensure_kwargs))
+        _payload, check, exit_code = _ensure_payload_check_and_exit(
+            ensure_fn(spec, **ensure_kwargs)
+        )
         json_print(check)
         return exit_code
     if args.command == "stop":

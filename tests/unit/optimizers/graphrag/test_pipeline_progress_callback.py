@@ -4,6 +4,7 @@ Validates that the progress callback is invoked correctly at each pipeline
 stage, that it receives the expected keys, and that callback exceptions are
 silently suppressed.
 """
+
 from __future__ import annotations
 
 from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline

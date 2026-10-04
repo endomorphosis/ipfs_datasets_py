@@ -233,12 +233,12 @@ kg.validate_constraints()  # Check all constraints at once
 budget_manager = BudgetManager()
 
 # Create budget
-budgets = budget_manager.create_preset_budgets('safe')
+budgets = budget_manager.create_preset_budgets("safe")
 
 # Execute with budget tracking
 with budget_manager.track(budgets) as tracker:
     result = engine.execute_cypher(query, budgets=budgets)
-    
+
     if tracker.exceeded:
         print(f"Budget exceeded: {tracker.exceeded_reason}")
 ```
@@ -383,7 +383,7 @@ User Query
 {
     "kg": knowledge_graph.to_dict(),
     "processed": ["file1.txt", "file2.txt", ...],
-    "timestamp": "2026-02-17T20:00:00Z"
+    "timestamp": "2026-02-17T20:00:00Z",
 }
 
 # Recovery on next run
@@ -698,12 +698,12 @@ class CustomBackend:
 def custom_fusion(semantic_results, keyword_results, alpha=0.7):
     """
     Combine results with custom scoring.
-    
+
     Args:
         semantic_results: Vector search results
         keyword_results: Text search results
         alpha: Weight for semantic (0-1)
-    
+
     Returns:
         Fused results with combined scores
     """
@@ -711,33 +711,29 @@ def custom_fusion(semantic_results, keyword_results, alpha=0.7):
     combined = {}
     for result in semantic_results:
         combined[result.id] = alpha * result.score
-    
+
     for result in keyword_results:
         if result.id in combined:
-            combined[result.id] += (1-alpha) * result.score
+            combined[result.id] += (1 - alpha) * result.score
         else:
-            combined[result.id] = (1-alpha) * result.score
-    
+            combined[result.id] = (1 - alpha) * result.score
+
     return sorted(combined.items(), key=lambda x: x[1], reverse=True)
 
+
 # Use custom fusion
-hybrid.fuse_results(
-    semantic_results,
-    keyword_results,
-    strategy='custom',
-    fusion_fn=custom_fusion
-)
+hybrid.fuse_results(semantic_results, keyword_results, strategy="custom", fusion_fn=custom_fusion)
 ```
 
 **Custom Cost Model:**
 ```python
 # Define custom cost model for budget tracking
 cost_model = {
-    'api_call': 0.01,        # $0.01 per API call
-    'embedding': 0.001,      # $0.001 per embedding
-    'vector_search': 0.005,  # $0.005 per search
-    'storage_write': 0.002,  # $0.002 per write
-    'storage_read': 0.0001   # $0.0001 per read
+    "api_call": 0.01,  # $0.01 per API call
+    "embedding": 0.001,  # $0.001 per embedding
+    "vector_search": 0.005,  # $0.005 per search
+    "storage_write": 0.002,  # $0.002 per write
+    "storage_read": 0.0001,  # $0.0001 per read
 }
 
 budget_manager = BudgetManager(cost_model=cost_model)
@@ -748,18 +744,18 @@ budget_manager = BudgetManager(cost_model=cost_model)
 # Fine-tune extraction behavior
 extractor = KnowledgeGraphExtractor(
     extraction_temperature=0.5,  # Signal threshold
-    structure_temperature=0.3,   # Hierarchy depth
-    min_confidence=0.6,          # Quality gate
-    use_spacy=True,              # Enable spaCy NER
-    use_transformers=True,       # Enable transformer models
-    relation_patterns=[          # Custom patterns
+    structure_temperature=0.3,  # Hierarchy depth
+    min_confidence=0.6,  # Quality gate
+    use_spacy=True,  # Enable spaCy NER
+    use_transformers=True,  # Enable transformer models
+    relation_patterns=[  # Custom patterns
         {
             "name": "develops",
             "pattern": r"(\w+)\s+develops?\s+(\w+)",
             "source_type": "person",
-            "target_type": "technology"
+            "target_type": "technology",
         }
-    ]
+    ],
 )
 ```
 
@@ -793,7 +789,7 @@ from ipfs_datasets_py.knowledge_graphs.query import HybridSearchEngine
 
 hybrid = HybridSearchEngine(
     backend=graph_backend,
-    vector_store=faiss_store  # or Qdrant, Pinecone, etc.
+    vector_store=faiss_store,  # or Qdrant, Pinecone, etc.
 )
 results = hybrid.search("machine learning", k=10)
 ```
@@ -801,8 +797,7 @@ results = hybrid.search("machine learning", k=10)
 **GraphRAG (Question Answering):**
 ```python
 result = engine.execute_graphrag(
-    "Who won the Nobel Prize in Physics in 1903?",
-    context={"domain": "science"}
+    "Who won the Nobel Prize in Physics in 1903?", context={"domain": "science"}
 )
 print(result.items[0])  # Answer with evidence chains
 ```

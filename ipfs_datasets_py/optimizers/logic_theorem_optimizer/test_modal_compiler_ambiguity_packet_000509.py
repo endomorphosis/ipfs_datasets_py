@@ -77,7 +77,9 @@ def _adaptive_ranking_for_margin(
     ]
 
 
-def test_packet_000509_temporal_policy_pairs_are_supported_across_compiler_ambiguity_policies() -> None:
+def test_packet_000509_temporal_policy_pairs_are_supported_across_compiler_ambiguity_policies() -> (
+    None
+):
     temporal_family = ModalLogicFamily.TEMPORAL.value
     target_families = (
         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
@@ -153,13 +155,9 @@ def test_compiler_exposes_explicit_ambiguity_for_packet_000509_temporal_margins(
     priority: float,
 ) -> None:
     predicted_family = ModalLogicFamily.TEMPORAL.value
-    expected_type = (
-        f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-    )
+    expected_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
 
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="regex")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="regex"))
     monkeypatch.setattr(
         modal_compiler_module,
         "ranked_modal_families",
@@ -199,11 +197,6 @@ def test_compiler_exposes_explicit_ambiguity_for_packet_000509_temporal_margins(
         f"{predicted_family}->{target_family}"
     )
     assert ambiguity.metadata.get("explicit_ambiguity_type") == expected_type
-    assert (
-        abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin)
-        <= 1e-12
-    )
+    assert abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin) <= 1e-12
     assert abs(float(ambiguity.metadata.get("priority", 0.0)) - priority) <= 1e-12
-    assert abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - priority) <= (
-        1e-12
-    )
+    assert abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - priority) <= (1e-12)

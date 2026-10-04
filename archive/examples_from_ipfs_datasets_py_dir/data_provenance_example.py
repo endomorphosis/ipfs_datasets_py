@@ -15,17 +15,20 @@ from datetime import datetime
 
 # Import provenance components
 from ipfs_datasets_py.analytics.data_provenance_enhanced import (
-    EnhancedProvenanceManager, ProvenanceMetrics
+    EnhancedProvenanceManager,
+    ProvenanceMetrics,
 )
 
 # Import audit components
 try:
     from ipfs_datasets_py.audit.audit_logger import (
-        AuditLogger, AuditEvent, AuditLevel, AuditCategory
+        AuditLogger,
+        AuditEvent,
+        AuditLevel,
+        AuditCategory,
     )
-    from ipfs_datasets_py.audit.handlers import (
-        FileAuditHandler, JSONAuditHandler
-    )
+    from ipfs_datasets_py.audit.handlers import FileAuditHandler, JSONAuditHandler
+
     AUDIT_AVAILABLE = True
 except ImportError:
     AUDIT_AVAILABLE = False
@@ -42,21 +45,14 @@ def setup_audit_logger():
     os.makedirs(audit_dir, exist_ok=True)
 
     # Create audit logger with file and JSON handlers
-    audit_logger = AuditLogger(
-        app_name="DataProvenanceExample",
-        logger_id="demo"
-    )
+    audit_logger = AuditLogger(app_name="DataProvenanceExample", logger_id="demo")
 
     file_handler = FileAuditHandler(
-        log_file=os.path.join(audit_dir, "provenance_audit.log"),
-        rotate_size_mb=10,
-        keep_logs=5
+        log_file=os.path.join(audit_dir, "provenance_audit.log"), rotate_size_mb=10, keep_logs=5
     )
 
     json_handler = JSONAuditHandler(
-        log_file=os.path.join(audit_dir, "provenance_audit.json"),
-        rotate_size_mb=10,
-        keep_logs=5
+        log_file=os.path.join(audit_dir, "provenance_audit.json"), rotate_size_mb=10, keep_logs=5
     )
 
     audit_logger.add_handler(file_handler)
@@ -77,7 +73,7 @@ def simulate_data_processing_pipeline():
         default_agent_id="example_user",
         tracking_level="comprehensive",
         audit_logger=audit_logger,
-        visualization_engine="matplotlib"
+        visualization_engine="matplotlib",
     )
 
     print("=== Starting Data Processing Pipeline with Provenance Tracking ===")
@@ -94,7 +90,7 @@ def simulate_data_processing_pipeline():
         format="csv",
         description="Raw customer demographic data",
         size=1024 * 1024 * 5,  # 5MB
-        hash="sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        hash="sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     )
     print(f"Recorded customer data source: {customer_source_id}")
 
@@ -107,7 +103,7 @@ def simulate_data_processing_pipeline():
         format="sql",
         description="Raw transaction data from sales database",
         size=1024 * 1024 * 50,  # 50MB
-        hash="sha256:7d865e959b2466918c9863afca942d0fb89d7c9ac0c99bafc3749504ded97730"
+        hash="sha256:7d865e959b2466918c9863afca942d0fb89d7c9ac0c99bafc3749504ded97730",
     )
     print(f"Recorded transaction data source: {transaction_source_id}")
 
@@ -121,11 +117,7 @@ def simulate_data_processing_pipeline():
         tool="pandas",
         version="1.5.3",
         input_ids=[customer_data_id],
-        parameters={
-            "dropna": True,
-            "deduplicate": True,
-            "normalize_columns": ["age", "income"]
-        }
+        parameters={"dropna": True, "deduplicate": True, "normalize_columns": ["age", "income"]},
     ) as context:
         # Simulate processing time
         time.sleep(0.5)
@@ -143,15 +135,15 @@ def simulate_data_processing_pipeline():
         schema={"required": ["customer_id", "age", "income", "gender"]},
         validation_rules=[
             {"field": "age", "rule": "range", "min": 18, "max": 100},
-            {"field": "income", "rule": "range", "min": 0}
+            {"field": "income", "rule": "range", "min": 0},
         ],
         pass_count=9800,
         fail_count=200,
         error_samples=[
             {"id": 123, "error": "age out of range: 150"},
-            {"id": 456, "error": "income negative: -500"}
+            {"id": 456, "error": "income negative: -500"},
         ],
-        description="Customer data quality verification"
+        description="Customer data quality verification",
     )
     print(f"Verified customer data quality: {verification_id}")
 
@@ -162,7 +154,7 @@ def simulate_data_processing_pipeline():
         annotation_type="data_quality",
         author="data_analyst",
         tags=["quality_issue", "outliers", "needs_review"],
-        description="Note about data quality issues"
+        description="Note about data quality issues",
     )
     print(f"Added annotation about data quality: {annotation_id}")
 
@@ -176,8 +168,8 @@ def simulate_data_processing_pipeline():
         parameters={
             "remove_duplicates": True,
             "fix_timestamps": True,
-            "currency_conversion": "USD"
-        }
+            "currency_conversion": "USD",
+        },
     ) as context:
         # Simulate processing time
         time.sleep(0.7)
@@ -201,8 +193,8 @@ def simulate_data_processing_pipeline():
         parameters={
             "encoding": "one-hot",
             "scaling": "standard",
-            "feature_selection": "variance_threshold"
-        }
+            "feature_selection": "variance_threshold",
+        },
     ) as context:
         # Simulate processing time
         time.sleep(0.6)
@@ -223,8 +215,8 @@ def simulate_data_processing_pipeline():
         parameters={
             "aggregation": "monthly",
             "create_time_features": True,
-            "outlier_removal": "IQR"
-        }
+            "outlier_removal": "IQR",
+        },
     ) as context:
         # Simulate processing time
         time.sleep(0.8)
@@ -246,11 +238,7 @@ def simulate_data_processing_pipeline():
         description="Merge customer and transaction features",
         merge_keys=["customer_id"],
         merge_strategy="left",
-        parameters={
-            "how": "left",
-            "on": "customer_id",
-            "validate": "1:m"
-        }
+        parameters={"how": "left", "on": "customer_id", "validate": "1:m"},
     )
     print(f"Merged features: {merge_id}")
 
@@ -268,18 +256,12 @@ def simulate_data_processing_pipeline():
             "model": "RandomForestClassifier",
             "n_estimators": 100,
             "max_depth": 10,
-            "min_samples_split": 5
+            "min_samples_split": 5,
         },
-        metrics={
-            "accuracy": 0.87,
-            "precision": 0.83,
-            "recall": 0.79,
-            "f1": 0.81,
-            "auc": 0.91
-        },
+        metrics={"accuracy": 0.87, "precision": 0.83, "recall": 0.79, "f1": 0.81, "auc": 0.91},
         model_size=1024 * 1024 * 2,  # 2MB
         model_hash="sha256:4a3bcf26c6827f188f3c0fa21f15095d075b924b9a3a4f94ba31c41c671ab679",
-        description="Customer churn prediction model training"
+        description="Customer churn prediction model training",
     )
     print(f"Trained model: {training_id}")
 
@@ -295,7 +277,7 @@ def simulate_data_processing_pipeline():
         format="csv",
         description="Test dataset for model evaluation",
         size=1024 * 1024,  # 1MB
-        hash="sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+        hash="sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
     )
 
     # Clean and prepare test data
@@ -303,7 +285,7 @@ def simulate_data_processing_pipeline():
         description="Prepare test data",
         transformation_type="data_preparation",
         input_ids=[test_data_id],
-        parameters={"format": "model_compatible"}
+        parameters={"format": "model_compatible"},
     ) as context:
         # Simulate processing time
         time.sleep(0.3)
@@ -320,12 +302,8 @@ def simulate_data_processing_pipeline():
         model_version="1.0",
         batch_size=64,
         output_type="probabilities",
-        performance_metrics={
-            "latency_ms": 125.3,
-            "throughput": 512,
-            "accuracy": 0.85
-        },
-        description="Churn prediction inference on test data"
+        performance_metrics={"latency_ms": 125.3, "throughput": 512, "accuracy": 0.85},
+        description="Churn prediction inference on test data",
     )
     print(f"Model inference: {inference_id}")
 
@@ -351,7 +329,7 @@ def simulate_data_processing_pipeline():
         file_path=viz_path,
         format="png",
         width=1600,
-        height=1200
+        height=1200,
     )
     print(f"Saved lineage visualization to: {viz_path}")
 
@@ -381,15 +359,21 @@ def simulate_data_processing_pipeline():
     print("Searching for 'quality issues':")
     quality_results = provenance.semantic_search("quality issues", limit=3)
     for i, result in enumerate(quality_results):
-        print(f"  {i+1}. {result['record_type']}: {result['description']} (Score: {result['score']:.2f})")
+        print(
+            f"  {i + 1}. {result['record_type']}: {result['description']} (Score: {result['score']:.2f})"
+        )
 
     print("\nSearching for 'model training':")
     model_results = provenance.semantic_search("model training", limit=3)
     for i, result in enumerate(model_results):
-        print(f"  {i+1}. {result['record_type']}: {result['description']} (Score: {result['score']:.2f})")
+        print(
+            f"  {i + 1}. {result['record_type']}: {result['description']} (Score: {result['score']:.2f})"
+        )
 
     # Export provenance data to JSON
-    provenance_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "provenance_data.json")
+    provenance_file = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "provenance_data.json"
+    )
     json_data = provenance.export_provenance_to_json(provenance_file)
     print(f"\nExported complete provenance data to: {provenance_file}")
 

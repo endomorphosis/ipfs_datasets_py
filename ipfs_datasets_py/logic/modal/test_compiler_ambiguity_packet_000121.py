@@ -174,9 +174,7 @@ def test_compiler_surfaces_packet_000121_explicit_ambiguity_policy_pairs() -> No
         ),
     )
 
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
     threshold = float(compiler.config.modal_adaptive_family_margin)
 
     for sample_id, predicted_family, target_family, family_margin in evidence_cases:
@@ -205,8 +203,7 @@ def test_compiler_surfaces_packet_000121_explicit_ambiguity_policy_pairs() -> No
             modal_ir=_empty_ir(sample_id),
             ranking=ranking,
             family_shares={
-                str(candidate["family"]): float(candidate["share_raw"])
-                for candidate in ranking
+                str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
             },
             predicted_family_source="packet_000121_regression",
         )
@@ -222,9 +219,7 @@ def test_compiler_surfaces_packet_000121_explicit_ambiguity_policy_pairs() -> No
         )
         expected_direction = "contested" if family_margin > 0.0 else "outvoted"
         expected_priority = (
-            threshold - family_margin
-            if family_margin > 0.0
-            else abs(family_margin) + threshold
+            threshold - family_margin if family_margin > 0.0 else abs(family_margin) + threshold
         )
         assert ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
@@ -233,14 +228,8 @@ def test_compiler_surfaces_packet_000121_explicit_ambiguity_policy_pairs() -> No
         assert ambiguity.metadata["adaptive_margin_direction"] == expected_direction
         assert ambiguity.metadata["explicit_ambiguity_type"] == ambiguity.ambiguity_type
         assert ambiguity.metadata["is_explicit_adaptive_ambiguity"] is True
-        assert (
-            abs(float(ambiguity.metadata["family_margin_raw"]) - family_margin)
-            <= 1e-12
-        )
-        assert (
-            abs(float(ambiguity.metadata["adaptive_priority"]) - expected_priority)
-            <= 1e-12
-        )
+        assert abs(float(ambiguity.metadata["family_margin_raw"]) - family_margin) <= 1e-12
+        assert abs(float(ambiguity.metadata["adaptive_priority"]) - expected_priority) <= 1e-12
         assert ambiguity.severity == (
             "requires_rule" if expected_direction == "outvoted" else "review"
         )

@@ -150,10 +150,12 @@ def distance(p1: Point, p2: Point) -> float:
 # Cypher: date(), datetime()
 from datetime import date, datetime
 
+
 def cypher_date(value=None) -> date:
     if value is None:
         return date.today()
     return date.fromisoformat(value)
+
 
 def cypher_datetime(value=None) -> datetime:
     if value is None:
@@ -174,13 +176,13 @@ import math
 import random
 
 MATH_FUNCTIONS = {
-    'abs': abs,
-    'ceil': math.ceil,
-    'floor': math.floor,
-    'round': round,
-    'sqrt': math.sqrt,
-    'sign': lambda x: 1 if x > 0 else (-1 if x < 0 else 0),
-    'rand': random.random,
+    "abs": abs,
+    "ceil": math.ceil,
+    "floor": math.floor,
+    "round": round,
+    "sqrt": math.sqrt,
+    "sign": lambda x: 1 if x > 0 else (-1 if x < 0 else 0),
+    "rand": random.random,
 }
 ```
 
@@ -257,15 +259,15 @@ MATH_FUNCTIONS = {
 ```python
 # context.py
 VOCABULARIES = {
-    'schema': {
-        'Person': 'http://schema.org/Person',
-        'name': 'http://schema.org/name',
-        'email': 'http://schema.org/email',
+    "schema": {
+        "Person": "http://schema.org/Person",
+        "name": "http://schema.org/name",
+        "email": "http://schema.org/email",
         # ... 100+ terms
     },
-    'foaf': {
-        'Person': 'http://xmlns.com/foaf/0.1/Person',
-        'knows': 'http://xmlns.com/foaf/0.1/knows',
+    "foaf": {
+        "Person": "http://xmlns.com/foaf/0.1/Person",
+        "knows": "http://xmlns.com/foaf/0.1/knows",
         # ... 50+ terms
     },
     # ...
@@ -345,20 +347,22 @@ class SHACLValidator:
     def validate(self, data_graph, shapes_graph):
         """Validate RDF data against SHACL shapes"""
         violations = []
-        
+
         for shape in shapes_graph.shapes:
             target_nodes = self._get_target_nodes(shape, data_graph)
-            
+
             for node in target_nodes:
                 for constraint in shape.constraints:
                     if not self._check_constraint(node, constraint):
-                        violations.append(Violation(
-                            severity=constraint.severity,
-                            source_shape=shape,
-                            focus_node=node,
-                            message=constraint.message
-                        ))
-        
+                        violations.append(
+                            Violation(
+                                severity=constraint.severity,
+                                source_shape=shape,
+                                focus_node=node,
+                                message=constraint.message,
+                            )
+                        )
+
         return ValidationReport(violations)
 ```
 

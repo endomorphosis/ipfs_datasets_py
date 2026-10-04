@@ -54,14 +54,17 @@ Using native implementation:
 ```python
 # DON'T DO THIS - Deprecated approach
 import sys
-sys.path.insert(0, 'ipfs_datasets_py/data_transformation/multimedia/omni_converter_mk2')
+
+sys.path.insert(0, "ipfs_datasets_py/data_transformation/multimedia/omni_converter_mk2")
 from omni_converter import convert_file
 
 # or
-sys.path.insert(0, 'ipfs_datasets_py/data_transformation/multimedia/convert_to_txt_based_on_mime_type')
+sys.path.insert(
+    0, "ipfs_datasets_py/data_transformation/multimedia/convert_to_txt_based_on_mime_type"
+)
 from convert_to_txt import convert
 
-result = convert('document.pdf')
+result = convert("document.pdf")
 ```
 
 ### After (Using Native Backend - ✅ Recommended)
@@ -71,15 +74,15 @@ result = convert('document.pdf')
 from ipfs_datasets_py.processors.file_converter import FileConverter
 
 # Automatic backend selection (prefers native)
-converter = FileConverter(backend='auto')
-result = await converter.convert('document.pdf')
+converter = FileConverter(backend="auto")
+result = await converter.convert("document.pdf")
 
 # Or explicitly use native
-converter = FileConverter(backend='native')
-result = await converter.convert('document.pdf')
+converter = FileConverter(backend="native")
+result = await converter.convert("document.pdf")
 
 # Sync version also available
-result = converter.convert_sync('document.pdf')
+result = converter.convert_sync("document.pdf")
 ```
 
 ## What About the Submodule Directories?

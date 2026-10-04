@@ -78,7 +78,7 @@ queue = PriorityTaskQueue(algorithm=SchedulingAlgorithm.PRIORITY_DEADLINE)
 **Priority Inheritance:**
 ```python
 # Boost child task priority to match parent
-queue.inherit_priority('parent_task', 'child_task')
+queue.inherit_priority("parent_task", "child_task")
 ```
 
 **Test Coverage:** 35+ tests covering all scheduling modes and edge cases
@@ -108,15 +108,15 @@ memory = MemoryCacheBackend(max_size=1000, max_memory_mb=100)
 cache = ResultCache(backend=memory, default_ttl=3600)
 
 # Disk cache with persistence
-disk = DiskCacheBackend(Path('/tmp/cache'), max_size=10000)
+disk = DiskCacheBackend(Path("/tmp/cache"), max_size=10000)
 cache = ResultCache(backend=disk, default_ttl=7200)
 ```
 
 **Input-Based Caching:**
 ```python
 # Cache by task ID + inputs for deterministic results
-await cache.put('task_123', result, inputs={'param': 'value'})
-cached = await cache.get('task_123', inputs={'param': 'value'})
+await cache.put("task_123", result, inputs={"param": "value"})
+cached = await cache.get("task_123", inputs={"param": "value"})
 ```
 
 **Test Coverage:** 40+ tests covering all backends and cache operations
@@ -148,45 +148,34 @@ cached = await cache.get('task_123', inputs={'param': 'value'})
 **Template Definition:**
 ```python
 template = WorkflowTemplate(
-    template_id='data_pipeline',
-    name='Data Processing Pipeline',
-    version='1.0.0',
+    template_id="data_pipeline",
+    name="Data Processing Pipeline",
+    version="1.0.0",
     parameters=[
         TemplateParameter(
-            name='source_url',
-            type='string',
-            required=True,
-            validation=r'^https?://.+'
+            name="source_url", type="string", required=True, validation=r"^https?://.+"
         ),
         TemplateParameter(
-            name='output_format',
-            type='string',
-            default='json',
-            validation=r'^(json|csv|parquet)$'
-        )
+            name="output_format", type="string", default="json", validation=r"^(json|csv|parquet)$"
+        ),
     ],
     steps=[
+        {"step_id": "fetch", "action": "fetch_data", "inputs": {"url": "${source_url}"}},
         {
-            'step_id': 'fetch',
-            'action': 'fetch_data',
-            'inputs': {'url': '${source_url}'}
+            "step_id": "transform",
+            "action": "transform",
+            "inputs": {"format": "${output_format}"},
+            "depends_on": ["fetch"],
         },
-        {
-            'step_id': 'transform',
-            'action': 'transform',
-            'inputs': {'format': '${output_format}'},
-            'depends_on': ['fetch']
-        }
-    ]
+    ],
 )
 ```
 
 **Template Instantiation:**
 ```python
-workflow = template.instantiate({
-    'source_url': 'https://example.com/data',
-    'output_format': 'parquet'
-})
+workflow = template.instantiate(
+    {"source_url": "https://example.com/data", "output_format": "parquet"}
+)
 ```
 
 **Template Registry:**
@@ -195,17 +184,17 @@ registry = TemplateRegistry()
 registry.register(template)
 
 # Get latest version
-template = registry.get('data_pipeline')
+template = registry.get("data_pipeline")
 
 # Get specific version
-template = registry.get('data_pipeline', version='1.0.0')
+template = registry.get("data_pipeline", version="1.0.0")
 
 # List all templates
 templates = registry.list_templates()
 
 # Save/load registry
-registry.save_to_file(Path('templates.json'))
-registry.load_from_file(Path('templates.json'))
+registry.save_to_file(Path("templates.json"))
+registry.load_from_file(Path("templates.json"))
 ```
 
 **Test Coverage:** 45+ tests covering all template operations
@@ -283,23 +272,23 @@ All Phase 4 features integrate seamlessly into a cohesive system:
 ```python
 # 1. Define template
 template = WorkflowTemplate(
-    template_id='ml_pipeline',
+    template_id="ml_pipeline",
     parameters=[
-        TemplateParameter(name='dataset_url', type='string', required=True),
-        TemplateParameter(name='model_type', type='string', default='sklearn'),
-        TemplateParameter(name='batch_size', type='number', default=32)
+        TemplateParameter(name="dataset_url", type="string", required=True),
+        TemplateParameter(name="model_type", type="string", default="sklearn"),
+        TemplateParameter(name="batch_size", type="number", default=32),
     ],
     steps=[
-        {'step_id': 'fetch', 'action': 'fetch_dataset', 
-         'inputs': {'url': '${dataset_url}'}},
-        {'step_id': 'preprocess', 'action': 'preprocess_data',
-         'depends_on': ['fetch']},
-        {'step_id': 'train', 'action': 'train_model',
-         'inputs': {'model': '${model_type}', 'batch': '${batch_size}'},
-         'depends_on': ['preprocess']},
-        {'step_id': 'evaluate', 'action': 'evaluate_model',
-         'depends_on': ['train']}
-    ]
+        {"step_id": "fetch", "action": "fetch_dataset", "inputs": {"url": "${dataset_url}"}},
+        {"step_id": "preprocess", "action": "preprocess_data", "depends_on": ["fetch"]},
+        {
+            "step_id": "train",
+            "action": "train_model",
+            "inputs": {"model": "${model_type}", "batch": "${batch_size}"},
+            "depends_on": ["preprocess"],
+        },
+        {"step_id": "evaluate", "action": "evaluate_model", "depends_on": ["train"]},
+    ],
 )
 
 # 2. Register template
@@ -307,11 +296,9 @@ registry = TemplateRegistry()
 registry.register(template)
 
 # 3. Instantiate workflow
-workflow = template.instantiate({
-    'dataset_url': 'https://example.com/mnist.csv',
-    'model_type': 'tensorflow',
-    'batch_size': 64
-})
+workflow = template.instantiate(
+    {"dataset_url": "https://example.com/mnist.csv", "model_type": "tensorflow", "batch_size": 64}
+)
 
 # 4. Create priority queue
 queue = PriorityTaskQueue(algorithm=SchedulingAlgorithm.PRIORITY_DEADLINE)
@@ -321,41 +308,39 @@ await queue.put_task(
     execute_workflow,
     priority=1.0,  # High priority
     deadline=datetime.now() + timedelta(hours=1),
-    kwargs={'workflow': workflow}
+    kwargs={"workflow": workflow},
 )
 
 # 6. Execute with DAG
 dag_executor = WorkflowDAGExecutor(max_concurrent=4)
 
+
 async def cached_step_executor(step):
     # Check cache first
     cache = ResultCache(MemoryCacheBackend())
     cached_result = await cache.get(step.step_id, inputs=step.inputs)
-    
+
     if cached_result:
         return cached_result
-    
+
     # Execute step
     result = await execute_step(step)
-    
+
     # Cache result
     await cache.put(step.step_id, result, ttl=3600, inputs=step.inputs)
-    
+
     return result
 
-result = await dag_executor.execute_workflow(
-    workflow['steps'],
-    cached_step_executor
-)
+
+result = await dag_executor.execute_workflow(workflow["steps"], cached_step_executor)
 
 # 7. Use structured concurrency for parallel batch processing
 executor = StructuredConcurrencyExecutor(max_concurrent=10)
 
 async with executor.runtime_context():
-    batch_results = await executor.execute_parallel([
-        (process_batch, {'batch_id': i})
-        for i in range(10)
-    ])
+    batch_results = await executor.execute_parallel(
+        [(process_batch, {"batch_id": i}) for i in range(10)]
+    )
 ```
 
 ## Production Readiness

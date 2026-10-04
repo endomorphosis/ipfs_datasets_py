@@ -107,7 +107,7 @@ ocr = MultiEngineOCR()
 # Extract text with quality-first strategy
 result = ocr.extract_with_ocr(
     image_data=image_bytes,
-    strategy='quality_first'  # or 'speed_first', 'accuracy_first'
+    strategy="quality_first",  # or 'speed_first', 'accuracy_first'
 )
 
 print(f"Extracted text: {result['text']}")
@@ -127,11 +127,11 @@ processor = LLMOptimizedProcessor()
 # Optimize content for specific LLM
 optimized_content = processor.optimize_for_target_llm(
     pdf_path="document.pdf",
-    target_llm="gpt-4"  # or 'claude-3', 'gemini-pro', 'llama-2'
+    target_llm="gpt-4",  # or 'claude-3', 'gemini-pro', 'llama-2'
 )
 
 # Access optimized chunks
-for chunk in optimized_content['chunks']:
+for chunk in optimized_content["chunks"]:
     print(f"Chunk: {chunk['text'][:100]}...")
     print(f"Context: {chunk['context']}")
     print(f"Entities: {chunk['entities']}")
@@ -163,11 +163,7 @@ integrator = PDFGraphRAGIntegrator()
 # Ingest PDF into GraphRAG system
 result = integrator.ingest_pdf_into_graphrag(
     pdf_path="document.pdf",
-    metadata={
-        "title": "Research Paper",
-        "author": "Dr. Smith",
-        "domain": "AI Research"
-    }
+    metadata={"title": "Research Paper", "author": "Dr. Smith", "domain": "AI Research"},
 )
 
 print(f"Document ID: {result['document_id']}")
@@ -188,7 +184,7 @@ query_engine = PDFGraphRAGQueryEngine(integrator)
 results = query_engine.query_pdf_corpus(
     query="What are the security benefits of content addressing?",
     query_type="cross_document",
-    max_documents=10
+    max_documents=10,
 )
 
 print(f"Answer: {results['answer']}")
@@ -206,33 +202,34 @@ Ingest a PDF document into the GraphRAG system.
 
 ```python
 # Via MCP server
-await mcp_server.call_tool("pdf_ingest_to_graphrag", {
-    "pdf_path": "/path/to/document.pdf",
-    "metadata": {
-        "title": "Document Title",
-        "author": "Author Name"
-    }
-})
+await mcp_server.call_tool(
+    "pdf_ingest_to_graphrag",
+    {
+        "pdf_path": "/path/to/document.pdf",
+        "metadata": {"title": "Document Title", "author": "Author Name"},
+    },
+)
 ```
 
 #### `pdf_query_corpus`
 Query the PDF corpus using GraphRAG capabilities.
 
 ```python
-await mcp_server.call_tool("pdf_query_corpus", {
-    "query": "What are the main findings about AI safety?",
-    "query_type": "hybrid",
-    "max_docs": 10
-})
+await mcp_server.call_tool(
+    "pdf_query_corpus",
+    {
+        "query": "What are the main findings about AI safety?",
+        "query_type": "hybrid",
+        "max_docs": 10,
+    },
+)
 ```
 
 #### `pdf_analyze_relationships`
 Analyze relationships for a specific PDF document.
 
 ```python
-await mcp_server.call_tool("pdf_analyze_relationships", {
-    "document_id": "doc_12345"
-})
+await mcp_server.call_tool("pdf_analyze_relationships", {"document_id": "doc_12345"})
 ```
 
 ## Performance Optimization
@@ -242,15 +239,9 @@ await mcp_server.call_tool("pdf_analyze_relationships", {
 from ipfs_datasets_py.pdf_processing import PDFBatchProcessor
 
 # Process multiple PDFs efficiently
-batch_processor = PDFBatchProcessor(
-    batch_size=10,
-    parallel_workers=4,
-    enable_caching=True
-)
+batch_processor = PDFBatchProcessor(batch_size=10, parallel_workers=4, enable_caching=True)
 
-results = batch_processor.process_pdf_batch([
-    "doc1.pdf", "doc2.pdf", "doc3.pdf"
-])
+results = batch_processor.process_pdf_batch(["doc1.pdf", "doc2.pdf", "doc3.pdf"])
 ```
 
 ### Caching Strategies
@@ -317,17 +308,11 @@ print(f"Entity Extraction Confidence: {quality_metrics['entity_confidence']:.2f}
 ```python
 # Configure OCR engines
 ocr_config = {
-    'surya': {
-        'languages': ['en', 'es', 'fr'],
-        'confidence_threshold': 0.8
+    "surya": {"languages": ["en", "es", "fr"], "confidence_threshold": 0.8},
+    "tesseract": {
+        "config": "--psm 6 -c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
     },
-    'tesseract': {
-        'config': '--psm 6 -c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
-    },
-    'easyocr': {
-        'detector': True,
-        'recognizer': True
-    }
+    "easyocr": {"detector": True, "recognizer": True},
 }
 ```
 
@@ -335,12 +320,12 @@ ocr_config = {
 ```python
 # Configure LLM optimization
 llm_config = {
-    'target_llm': 'gpt-4',
-    'chunk_size': 2000,
-    'chunk_overlap': 200,
-    'enable_entity_linking': True,
-    'enable_cross_references': True,
-    'quality_threshold': 0.8
+    "target_llm": "gpt-4",
+    "chunk_size": 2000,
+    "chunk_overlap": 200,
+    "enable_entity_linking": True,
+    "enable_cross_references": True,
+    "quality_threshold": 0.8,
 }
 ```
 
@@ -348,11 +333,11 @@ llm_config = {
 ```python
 # Configure GraphRAG integration
 graphrag_config = {
-    'enable_cross_document_relations': True,
-    'entity_similarity_threshold': 0.75,
-    'concept_clustering': True,
-    'background_indexing': True,
-    'vector_dimensions': 768
+    "enable_cross_document_relations": True,
+    "entity_similarity_threshold": 0.75,
+    "concept_clustering": True,
+    "background_indexing": True,
+    "vector_dimensions": 768,
 }
 ```
 
@@ -369,6 +354,7 @@ graphrag_config = {
 ```python
 # Enable comprehensive logging
 import logging
+
 logging.basicConfig(level=logging.INFO)
 
 # Monitor processing progress

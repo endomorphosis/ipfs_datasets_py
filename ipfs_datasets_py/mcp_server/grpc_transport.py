@@ -45,6 +45,7 @@ logger = logging.getLogger(__name__)
 
 try:
     import grpc  # type: ignore[import]
+
     GRPC_AVAILABLE = True
 except ImportError:
     grpc = None  # type: ignore[assignment]
@@ -152,8 +153,7 @@ class GRPCTransportAdapter:
         """
         if not GRPC_AVAILABLE:
             raise ImportError(
-                "grpcio is not installed. "
-                "Run `pip install grpcio` to enable the gRPC transport."
+                "grpcio is not installed. Run `pip install grpcio` to enable the gRPC transport."
             )
         logger.info(
             "Starting gRPC transport adapter on %s:%d (stub — no real service registered)",

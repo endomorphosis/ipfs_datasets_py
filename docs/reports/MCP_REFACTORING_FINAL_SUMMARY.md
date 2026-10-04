@@ -185,6 +185,7 @@ as a thin wrapper to expose that functionality through the MCP interface.
 
 from ipfs_datasets_py.core_module import CoreClass
 
+
 async def mcp_tool_function(**kwargs):
     """MCP tool function - delegates to core."""
     core_instance = CoreClass()

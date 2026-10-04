@@ -321,4 +321,7 @@ def test_v2_roundtrip_cnl_generation_preserves_semantics_for_norm_templates() ->
             jurisdiction=case.get("jurisdiction", "us/federal"),
         )
 
-        assert _semantic_signature(ir_roundtrip) == _semantic_signature(ir), (case["id"], regenerated)
+        assert _semantic_signature(ir_roundtrip) == _semantic_signature(ir), (
+            case["id"],
+            regenerated,
+        )

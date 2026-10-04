@@ -519,12 +519,14 @@ If the workflow is still being skipped, check the debug output to see which cond
 2. Add fix generator to `generate_workflow_fix.py`:
 ```python
 def _fix_your_fix_type(self) -> List[Dict[str, Any]]:
-    return [{
-        'file': 'target/file',
-        'action': 'your_action',
-        'description': 'What the fix does',
-        'changes': 'YAML changes',
-    }]
+    return [
+        {
+            "file": "target/file",
+            "action": "your_action",
+            "description": "What the fix does",
+            "changes": "YAML changes",
+        }
+    ]
 ```
 
 3. Add fix applier to `apply_workflow_fix.py`:

@@ -27,6 +27,7 @@ from typing import Dict, List, Optional, Tuple, Union, Any, Iterator, BinaryIO, 
 # Check for optional dependencies
 try:
     import numpy as np
+
     HAVE_NUMPY = True
 except ImportError:
     HAVE_NUMPY = False
@@ -37,12 +38,14 @@ try:
     import pyarrow.csv as csv
     import pyarrow.json as json_pa
     import pyarrow.fs as fs
+
     HAVE_ARROW = True
 except ImportError:
     HAVE_ARROW = False
 
 try:
     from datasets import Dataset, DatasetDict, load_dataset, Features
+
     HAVE_DATASETS = True
 except ImportError:
     HAVE_DATASETS = False
@@ -81,12 +84,12 @@ class StreamingStats:
 
     Usage Example:
         stats = StreamingStats()
-        
+
         # Start timing a batch
         stats.start_batch()
         # ... process batch ...
         stats.end_batch(records=1000, bytes_count=50000)
-        
+
         # Get performance metrics
         metrics = stats.get_throughput()
         print(f"Processing rate: {metrics['records_per_second']:.2f} records/sec")
@@ -166,7 +169,7 @@ class StreamingStats:
             Dict[str, Union[float, int]]: Dictionary containing throughput statistics:
                 - elapsed_seconds (float): Total elapsed time since statistics started
                 - records_per_second (float): Average record processing rate
-                - batches_per_second (float): Average batch processing rate  
+                - batches_per_second (float): Average batch processing rate
                 - total_records (int): Total number of records processed
                 - total_batches (int): Total number of batches processed
                 - bytes_per_second (float): Average data throughput (if bytes tracked)
@@ -191,7 +194,7 @@ class StreamingStats:
             "records_per_second": self.records_processed / elapsed,
             "batches_per_second": self.batches_processed / elapsed,
             "total_records": self.records_processed,
-            "total_batches": self.batches_processed
+            "total_batches": self.batches_processed,
         }
 
         if self.bytes_processed > 0:
@@ -261,15 +264,15 @@ class StreamingCache:
 
     Usage Example:
         cache = StreamingCache(max_size_mb=200, ttl_seconds=600)
-        
+
         # Cache a processed batch
         cache.put("batch_key_001", processed_data)
-        
+
         # Retrieve cached data
         data = cache.get("batch_key_001")
         if data is not None:
             print("Cache hit!")
-        
+
         # Get cache performance metrics
         stats = cache.get_stats()
         print(f"Hit ratio: {stats['hit_ratio']:.2%}")
@@ -326,19 +329,19 @@ class StreamingCache:
 
         Side Effects:
             - Increments hit counter if value is found and valid
-            - Increments miss counter if value is not found or expired  
+            - Increments miss counter if value is not found or expired
             - Updates access time for LRU eviction algorithm
             - Automatically removes expired entries from cache
 
         Example:
             >>> cache = StreamingCache(ttl_seconds=300)
             >>> cache.put("data_key", some_data)
-            >>> 
+            >>>
             >>> # Retrieve data (within TTL)
             >>> data = cache.get("data_key")
             >>> if data is not None:
             ...     print("Cache hit!")
-            >>> 
+            >>>
             >>> # After TTL expiration, returns None
             >>> time.sleep(350)
             >>> expired_data = cache.get("data_key")  # Returns None
@@ -399,7 +402,7 @@ class StreamingCache:
             >>> success = cache.put("batch_001", processed_data)
             >>> if success:
             ...     print("Data cached successfully")
-            >>> 
+            >>>
             >>> # Cache with explicit size
             >>> cache.put("large_array", numpy_array, size_bytes=array.nbytes)
 
@@ -410,22 +413,24 @@ class StreamingCache:
         with self._lock:
             # Estimate size if not provided
             if size_bytes is None:
-                if hasattr(value, 'nbytes'):
+                if hasattr(value, "nbytes"):
                     size_bytes = value.nbytes
                 elif isinstance(value, bytes):
                     size_bytes = len(value)
                 elif isinstance(value, str):
-                    size_bytes = len(value.encode('utf-8'))
+                    size_bytes = len(value.encode("utf-8"))
                 else:
                     try:
-                        size_bytes = len(json.dumps(value).encode('utf-8'))
+                        size_bytes = len(json.dumps(value).encode("utf-8"))
                     except:
                         # If we can't determine size, use a default
                         size_bytes = 1024
 
             # Check if the value is too large for the cache
             if size_bytes > self.max_size_bytes:
-                logger.warning(f"Value of size {size_bytes} bytes is too large for cache (max: {self.max_size_bytes})")
+                logger.warning(
+                    f"Value of size {size_bytes} bytes is too large for cache (max: {self.max_size_bytes})"
+                )
                 return False
 
             # Make room if necessary
@@ -529,11 +534,15 @@ class StreamingCache:
             return {
                 "size_bytes": self.current_size_bytes,
                 "max_size_bytes": self.max_size_bytes,
-                "utilization": self.current_size_bytes / self.max_size_bytes if self.max_size_bytes > 0 else 0,
+                "utilization": self.current_size_bytes / self.max_size_bytes
+                if self.max_size_bytes > 0
+                else 0,
                 "item_count": len(self.cache),
                 "hits": self.hits,
                 "misses": self.misses,
-                "hit_ratio": self.hits / (self.hits + self.misses) if (self.hits + self.misses) > 0 else 0
+                "hit_ratio": self.hits / (self.hits + self.misses)
+                if (self.hits + self.misses) > 0
+                else 0,
             }
 
 
@@ -579,10 +588,10 @@ class PrefetchingQueue:
             for i in range(1000):
                 time.sleep(0.01)  # Simulate I/O delay
                 yield f"item_{i}"
-        
+
         # Create prefetching queue
         prefetch_queue = PrefetchingQueue(slow_data_source(), max_prefetch=5)
-        
+
         # Consume data with improved performance
         for batch in prefetch_queue:
             process_items(batch)
@@ -743,7 +752,7 @@ class StreamingDataLoader:
             cache_enabled=True,
             cache_size_mb=200
         )
-        
+
         # Access performance metrics
         stats = loader.get_stats()
         print(f"Throughput: {stats['throughput']['records_per_second']:.2f} rec/sec")
@@ -755,7 +764,7 @@ class StreamingDataLoader:
         prefetch_batches=2,
         cache_enabled=True,
         cache_size_mb=100,
-        collect_stats=True
+        collect_stats=True,
     ):
         """
         Initialize streaming data loader with performance optimization features.
@@ -952,12 +961,12 @@ class ParquetStreamingLoader(StreamingDataLoader):
             batch_size=50000,
             use_memory_map=True
         )
-        
+
         # Process data in streaming fashion
         for batch in loader.iter_batches():
             processed_batch = process_batch(batch)
             save_results(processed_batch)
-        
+
         # Access performance metrics
         stats = loader.get_stats()
         print(f"Processed {stats['throughput']['total_records']} records")
@@ -978,7 +987,7 @@ class ParquetStreamingLoader(StreamingDataLoader):
         cache_enabled=True,
         cache_size_mb=100,
         collect_stats=True,
-        use_memory_map=True
+        use_memory_map=True,
     ):
         """
         Initialize Parquet streaming loader with advanced optimization features.
@@ -1025,7 +1034,7 @@ class ParquetStreamingLoader(StreamingDataLoader):
             prefetch_batches=prefetch_batches,
             cache_enabled=cache_enabled,
             cache_size_mb=cache_size_mb,
-            collect_stats=collect_stats
+            collect_stats=collect_stats,
         )
 
         if not HAVE_ARROW:
@@ -1041,18 +1050,13 @@ class ParquetStreamingLoader(StreamingDataLoader):
             # Directory of Parquet files (partitioned dataset)
             self.is_directory = True
             self.parquet_dataset = pq.ParquetDataset(
-                parquet_path,
-                filters=filters,
-                use_legacy_dataset=False
+                parquet_path, filters=filters, use_legacy_dataset=False
             )
             self.num_rows = None  # Unknown until we scan the dataset
         else:
             # Single Parquet file
             self.is_directory = False
-            self.parquet_file = pq.ParquetFile(
-                parquet_path,
-                memory_map=use_memory_map
-            )
+            self.parquet_file = pq.ParquetFile(parquet_path, memory_map=use_memory_map)
             self.num_rows = self.parquet_file.metadata.num_rows
 
     def __iter__(self):
@@ -1073,8 +1077,7 @@ class ParquetStreamingLoader(StreamingDataLoader):
 
             for fragment in fragments:
                 for batch in fragment.iter_batches(
-                    batch_size=self.batch_size,
-                    columns=self.columns
+                    batch_size=self.batch_size, columns=self.columns
                 ):
                     self._start_batch_stats()
                     self._end_batch_stats(len(batch))
@@ -1082,8 +1085,7 @@ class ParquetStreamingLoader(StreamingDataLoader):
         else:
             # Single Parquet file
             for batch in self.parquet_file.iter_batches(
-                batch_size=self.batch_size,
-                columns=self.columns
+                batch_size=self.batch_size, columns=self.columns
             ):
                 self._start_batch_stats()
                 self._end_batch_stats(len(batch))
@@ -1182,7 +1184,7 @@ class ParquetStreamingLoader(StreamingDataLoader):
 
         Example:
             >>> loader = ParquetStreamingLoader(
-            ...     "data.parquet", 
+            ...     "data.parquet",
             ...     columns=["id", "value"]
             ... )
             >>> table = loader.to_arrow_table()
@@ -1227,16 +1229,14 @@ class ParquetStreamingLoader(StreamingDataLoader):
             dataset_schema = self.parquet_dataset.schema
             if self.columns:
                 # Filter the schema to only include the requested columns
-                fields = [field for field in dataset_schema
-                         if field.name in self.columns]
+                fields = [field for field in dataset_schema if field.name in self.columns]
                 return pa.schema(fields)
             return dataset_schema
         else:
             file_schema = self.parquet_file.schema_arrow
             if self.columns:
                 # Filter the schema to only include the requested columns
-                fields = [field for field in file_schema
-                         if field.name in self.columns]
+                fields = [field for field in file_schema if field.name in self.columns]
                 return pa.schema(fields)
             return file_schema
 
@@ -1252,17 +1252,19 @@ class ParquetStreamingLoader(StreamingDataLoader):
             "is_directory": self.is_directory,
             "num_rows": self.num_rows,
             "schema": str(self.get_schema()),
-            "memory_mapped": self.use_memory_map and not self.is_directory
+            "memory_mapped": self.use_memory_map and not self.is_directory,
         }
 
         if not self.is_directory:
             # Add more metadata from the file
             file_metadata = self.parquet_file.metadata
-            metadata.update({
-                "num_row_groups": file_metadata.num_row_groups,
-                "created_by": file_metadata.created_by,
-                "file_size_bytes": os.path.getsize(self.parquet_path)
-            })
+            metadata.update(
+                {
+                    "num_row_groups": file_metadata.num_row_groups,
+                    "created_by": file_metadata.created_by,
+                    "file_size_bytes": os.path.getsize(self.parquet_path),
+                }
+            )
 
         return metadata
 
@@ -1332,7 +1334,7 @@ class CSVStreamingLoader(StreamingDataLoader):
     Usage Example:
         # Basic CSV loading
         loader = CSVStreamingLoader("data.csv")
-        
+
         # Advanced CSV loading with custom parsing
         read_opts = pa.csv.ReadOptions(
             encoding="utf-8",
@@ -1344,14 +1346,14 @@ class CSVStreamingLoader(StreamingDataLoader):
             quote_char='"',
             escape_char="\\"
         )
-        
+
         loader = CSVStreamingLoader(
             csv_path="complex_data.csv",
             read_options=read_opts,
             parse_options=parse_opts,
             batch_size=25000
         )
-        
+
         # Process streaming data
         for batch in loader.iter_batches():
             cleaned_batch = validate_and_clean(batch)
@@ -1374,7 +1376,7 @@ class CSVStreamingLoader(StreamingDataLoader):
         prefetch_batches=2,
         cache_enabled=True,
         cache_size_mb=100,
-        collect_stats=True
+        collect_stats=True,
     ):
         """
         Initialize CSV streaming loader with comprehensive parsing configuration.
@@ -1418,7 +1420,7 @@ class CSVStreamingLoader(StreamingDataLoader):
             prefetch_batches=prefetch_batches,
             cache_enabled=cache_enabled,
             cache_size_mb=cache_size_mb,
-            collect_stats=collect_stats
+            collect_stats=collect_stats,
         )
 
         if not HAVE_ARROW:
@@ -1438,13 +1440,10 @@ class CSVStreamingLoader(StreamingDataLoader):
             skip_rows=self.read_options.skip_rows,
             encoding=self.read_options.encoding,
             use_threads=self.read_options.use_threads,
-            skip_rows_after_names=self.read_options.skip_rows_after_names
+            skip_rows_after_names=self.read_options.skip_rows_after_names,
         )
 
-        self.parse_options = parse_options or csv.ParseOptions(
-            delimiter=',',
-            quote_char='"'
-        )
+        self.parse_options = parse_options or csv.ParseOptions(delimiter=",", quote_char='"')
         self.convert_options = convert_options or csv.ConvertOptions()
 
     def __iter__(self):
@@ -1465,7 +1464,7 @@ class CSVStreamingLoader(StreamingDataLoader):
             self.csv_path,
             read_options=self.read_options,
             parse_options=self.parse_options,
-            convert_options=self.convert_options
+            convert_options=self.convert_options,
         ) as reader:
             # Read and yield batches
             batch_reader = reader.read_batch(self.batch_size)
@@ -1506,7 +1505,7 @@ class CSVStreamingLoader(StreamingDataLoader):
             self.csv_path,
             read_options=self.read_options,
             parse_options=self.parse_options,
-            convert_options=self.convert_options
+            convert_options=self.convert_options,
         )
 
     def to_pandas(self):
@@ -1545,7 +1544,7 @@ class CSVStreamingLoader(StreamingDataLoader):
             self.csv_path,
             read_options=self.read_options,
             parse_options=self.parse_options,
-            convert_options=self.convert_options
+            convert_options=self.convert_options,
         ) as reader:
             batch_reader = reader.read_batch(self.batch_size)
             if batch_reader:
@@ -1616,20 +1615,20 @@ class JSONStreamingLoader(StreamingDataLoader):
     Usage Example:
         # Basic JSON loading
         loader = JSONStreamingLoader("logs.jsonl")
-        
+
         # Advanced JSON loading with custom options
         read_opts = pa.json.ReadOptions(
             block_size=4*1024*1024,  # 4MB blocks
             use_threads=True
         )
-        
+
         loader = JSONStreamingLoader(
             json_path="large_dataset.jsonl",
             read_options=read_opts,
             batch_size=20000,
             prefetch_batches=3
         )
-        
+
         # Process streaming JSON data
         for batch in loader.iter_batches():
             normalized_batch = normalize_json_records(batch)
@@ -1651,7 +1650,7 @@ class JSONStreamingLoader(StreamingDataLoader):
         prefetch_batches=2,
         cache_enabled=True,
         cache_size_mb=100,
-        collect_stats=True
+        collect_stats=True,
     ):
         """
         Initialize JSON streaming loader with comprehensive parsing configuration.
@@ -1691,7 +1690,7 @@ class JSONStreamingLoader(StreamingDataLoader):
             prefetch_batches=prefetch_batches,
             cache_enabled=cache_enabled,
             cache_size_mb=cache_size_mb,
-            collect_stats=collect_stats
+            collect_stats=collect_stats,
         )
 
         if not HAVE_ARROW:
@@ -1706,8 +1705,7 @@ class JSONStreamingLoader(StreamingDataLoader):
 
         # Make sure the batch size is set
         self.read_options = json_pa.ReadOptions(
-            block_size=self.read_options.block_size,
-            use_threads=self.read_options.use_threads
+            block_size=self.read_options.block_size, use_threads=self.read_options.use_threads
         )
 
         self.parse_options = parse_options or json_pa.ParseOptions()
@@ -1746,9 +1744,7 @@ class JSONStreamingLoader(StreamingDataLoader):
         """
         # Open the JSON file for streaming
         with json_pa.open_json(
-            self.json_path,
-            read_options=self.read_options,
-            parse_options=self.parse_options
+            self.json_path, read_options=self.read_options, parse_options=self.parse_options
         ) as reader:
             # Read and yield batches
             batch_reader = reader.read_batch(self.batch_size)
@@ -1786,9 +1782,7 @@ class JSONStreamingLoader(StreamingDataLoader):
             MemoryError: If the file is too large to fit in memory
         """
         return json_pa.read_json(
-            self.json_path,
-            read_options=self.read_options,
-            parse_options=self.parse_options
+            self.json_path, read_options=self.read_options, parse_options=self.parse_options
         )
 
     def to_pandas(self):
@@ -1824,9 +1818,7 @@ class JSONStreamingLoader(StreamingDataLoader):
         """
         # Read the first batch to get the schema
         with json_pa.open_json(
-            self.json_path,
-            read_options=self.read_options,
-            parse_options=self.parse_options
+            self.json_path, read_options=self.read_options, parse_options=self.parse_options
         ) as reader:
             batch_reader = reader.read_batch(self.batch_size)
             if batch_reader:
@@ -1905,7 +1897,7 @@ class HuggingFaceStreamingLoader(StreamingDataLoader):
             dataset_split="train",
             columns=["question", "context", "answers"]
         )
-        
+
         # Load with configuration and optimization
         loader = HuggingFaceStreamingLoader(
             dataset_name="c4",
@@ -1915,12 +1907,12 @@ class HuggingFaceStreamingLoader(StreamingDataLoader):
             prefetch_batches=4,
             cache_size_mb=500
         )
-        
+
         # Process streaming data
         for batch in loader.iter_batches():
             processed_batch = preprocess_text_batch(batch)
             train_model_on_batch(processed_batch)
-        
+
         # Use existing dataset object
         existing_dataset = load_dataset("imdb", split="train", streaming=True)
         loader = HuggingFaceStreamingLoader(dataset_object=existing_dataset)
@@ -1943,7 +1935,7 @@ class HuggingFaceStreamingLoader(StreamingDataLoader):
         prefetch_batches=2,
         cache_enabled=True,
         cache_size_mb=100,
-        collect_stats=True
+        collect_stats=True,
     ):
         """
         Initialize HuggingFace streaming loader with comprehensive configuration options.
@@ -1988,7 +1980,7 @@ class HuggingFaceStreamingLoader(StreamingDataLoader):
             prefetch_batches=prefetch_batches,
             cache_enabled=cache_enabled,
             cache_size_mb=cache_size_mb,
-            collect_stats=collect_stats
+            collect_stats=collect_stats,
         )
 
         if not HAVE_DATASETS:
@@ -2005,7 +1997,7 @@ class HuggingFaceStreamingLoader(StreamingDataLoader):
                 dataset_name,
                 dataset_config,
                 split=dataset_split,
-                streaming=True  # Important for memory efficiency
+                streaming=True,  # Important for memory efficiency
             )
         else:
             raise ValueError("Either dataset_name or dataset_object must be provided")
@@ -2146,23 +2138,23 @@ class HuggingFaceStreamingLoader(StreamingDataLoader):
         info = {}
 
         # Add dataset info
-        if hasattr(self.dataset, 'info'):
+        if hasattr(self.dataset, "info"):
             info_obj = self.dataset.info
 
-            if hasattr(info_obj, 'description'):
-                info['description'] = info_obj.description
+            if hasattr(info_obj, "description"):
+                info["description"] = info_obj.description
 
-            if hasattr(info_obj, 'citation'):
-                info['citation'] = info_obj.citation
+            if hasattr(info_obj, "citation"):
+                info["citation"] = info_obj.citation
 
-            if hasattr(info_obj, 'homepage'):
-                info['homepage'] = info_obj.homepage
+            if hasattr(info_obj, "homepage"):
+                info["homepage"] = info_obj.homepage
 
-            if hasattr(info_obj, 'version'):
-                info['version'] = str(info_obj.version)
+            if hasattr(info_obj, "version"):
+                info["version"] = str(info_obj.version)
 
-            if hasattr(info_obj, 'features'):
-                info['features'] = str(info_obj.features)
+            if hasattr(info_obj, "features"):
+                info["features"] = str(info_obj.features)
 
         return info
 
@@ -2226,7 +2218,7 @@ class MemoryMappedVectorLoader:
     Usage Example:
         # Create new memory-mapped vector dataset
         vectors = np.random.random((1000000, 128)).astype(np.float32)
-        
+
         with MemoryMappedVectorLoader(
             file_path="large_vectors.bin",
             dimension=128,
@@ -2234,11 +2226,11 @@ class MemoryMappedVectorLoader:
             mode="w+"
         ) as loader:
             loader.append(vectors)
-            
+
             # Random access to vectors
             vector_100 = loader[100]
             vector_slice = loader[1000:2000]
-        
+
         # Read-only access to existing dataset
         with MemoryMappedVectorLoader(
             file_path="large_vectors.bin",
@@ -2260,9 +2252,9 @@ class MemoryMappedVectorLoader:
         file_path=None,
         dimension=None,
         dtype=np.float32,
-        mode='r',
+        mode="r",
         offset=0,
-        existing_mmap=None
+        existing_mmap=None,
     ):
         """
         Initialize memory-mapped vector loader with flexible configuration options.
@@ -2318,18 +2310,13 @@ class MemoryMappedVectorLoader:
             file_exists = os.path.exists(file_path)
 
             # Create an empty file if it doesn't exist and mode allows writing
-            if not file_exists and mode in ('r+', 'w+'):
-                with open(file_path, 'wb') as f:
+            if not file_exists and mode in ("r+", "w+"):
+                with open(file_path, "wb") as f:
                     # Write an empty placeholder
                     pass
 
             # Create memory map
-            self.memmap = np.memmap(
-                file_path,
-                dtype=dtype,
-                mode=mode,
-                offset=offset
-            )
+            self.memmap = np.memmap(file_path, dtype=dtype, mode=mode, offset=offset)
 
             # If the file exists, try to reshape the memmap
             if file_exists:
@@ -2413,9 +2400,9 @@ class MemoryMappedVectorLoader:
             >>> loader = MemoryMappedVectorLoader("vectors.bin", 128, mode="r+")
             >>> new_vector = np.random.random(128).astype(np.float32)
             >>> loader.append(new_vector)
-            >>> 
+            >>>
             >>> # Append multiple vectors
-            >>> batch_vectors = np.random.random((1000, 128)).astype(np.float32) 
+            >>> batch_vectors = np.random.random((1000, 128)).astype(np.float32)
             >>> loader.append(batch_vectors)
             >>> print(f"Dataset now contains {len(loader)} vectors")
 
@@ -2426,19 +2413,23 @@ class MemoryMappedVectorLoader:
         if self.memmap is None:
             raise RuntimeError("Memory map is not initialized")
 
-        if self.memmap.mode not in ('r+', 'w+'):
+        if self.memmap.mode not in ("r+", "w+"):
             raise RuntimeError("Memory map is read-only")
 
         # Ensure vectors have the right shape
         if len(vectors.shape) == 1:
             # Single vector
             if vectors.shape[0] != self.dimension:
-                raise ValueError(f"Vector dimension {vectors.shape[0]} doesn't match expected dimension {self.dimension}")
+                raise ValueError(
+                    f"Vector dimension {vectors.shape[0]} doesn't match expected dimension {self.dimension}"
+                )
             vectors = vectors.reshape(1, -1)
         else:
             # Multiple vectors
             if vectors.shape[1] != self.dimension:
-                raise ValueError(f"Vector dimension {vectors.shape[1]} doesn't match expected dimension {self.dimension}")
+                raise ValueError(
+                    f"Vector dimension {vectors.shape[1]} doesn't match expected dimension {self.dimension}"
+                )
 
         # Get current number of vectors
         current_len = len(self)
@@ -2447,16 +2438,13 @@ class MemoryMappedVectorLoader:
         new_size = current_len + vectors.shape[0]
 
         # Resize the file
-        fp = np.memmap(self.file_path, dtype=self.dtype, mode='r+')
+        fp = np.memmap(self.file_path, dtype=self.dtype, mode="r+")
         fp.resize(new_size * self.vector_size_bytes)
         del fp
 
         # Re-open the memory map with the new size
         self.memmap = np.memmap(
-            self.file_path,
-            dtype=self.dtype,
-            mode='r+',
-            shape=(new_size, self.dimension)
+            self.file_path, dtype=self.dtype, mode="r+", shape=(new_size, self.dimension)
         )
 
         # Write the new vectors
@@ -2493,7 +2481,7 @@ class MemoryMappedVectorLoader:
 
         Args:
             exc_type: Exception type if an exception occurred
-            exc_val: Exception value if an exception occurred  
+            exc_val: Exception value if an exception occurred
             exc_tb: Exception traceback if an exception occurred
 
         Returns:
@@ -2556,21 +2544,21 @@ class StreamingDataset:
         dataset = StreamingDataset(
             ParquetStreamingLoader("large_dataset.parquet", batch_size=10000)
         )
-        
+
         # Chain transformations with lazy evaluation
         processed = (dataset
             .filter(lambda batch: len(batch) > 0)  # Remove empty batches
             .map(lambda batch: compute_features(batch))  # Add computed columns
             .filter(lambda batch: batch.filter(pc.greater(pc.field("score"), 0.5)))  # Filter rows
         )
-        
+
         # Process results in streaming fashion
         for batch in processed.iter_batches():
             save_to_database(batch)
-        
+
         # Or materialize if memory allows
         result_df = processed.to_pandas()
-        
+
         # Monitor performance
         stats = processed.get_stats()
         print(f"Processed {stats['throughput']['total_records']} records")
@@ -2617,17 +2605,17 @@ class StreamingDataset:
 
         Example:
             >>> dataset = StreamingDataset(loader)
-            >>> 
+            >>>
             >>> # Process without transformation
             >>> for batch in dataset.iter_batches():
             ...     analyze_batch(batch)
-            >>> 
+            >>>
             >>> # Process with custom transformation
             >>> def add_metadata(batch):
             ...     # Add processing timestamp
-            ...     return batch.append_column("processed_at", 
+            ...     return batch.append_column("processed_at",
             ...                               [datetime.now()] * len(batch))
-            >>> 
+            >>>
             >>> for processed_batch in dataset.iter_batches(add_metadata):
             ...     save_batch(processed_batch)
 
@@ -2652,7 +2640,7 @@ class StreamingDataset:
 
         Args:
             function (Callable): Transformation function to apply. For batch-level
-                transformations (batched=True), should take a batch (typically 
+                transformations (batched=True), should take a batch (typically
                 pyarrow.Table) and return a transformed batch. For element-level
                 transformations (batched=False), should take a record dictionary
                 and return a transformed record dictionary.
@@ -2670,16 +2658,16 @@ class StreamingDataset:
             ...     import pyarrow.compute as pc
             ...     total = pc.add(batch["price"], batch["tax"])
             ...     return batch.append_column("total", total)
-            >>> 
+            >>>
             >>> transformed = dataset.map(add_computed_column, batched=True)
-            >>> 
+            >>>
             >>> # Element-level transformation (flexible but slower)
             >>> def normalize_text(record):
             ...     record["text"] = record["text"].lower().strip()
             ...     return record
-            >>> 
+            >>>
             >>> normalized = dataset.map(normalize_text, batched=False)
-            >>> 
+            >>>
             >>> # Chain multiple transformations
             >>> result = (dataset
             ...           .map(add_computed_column, batched=True)
@@ -2692,13 +2680,9 @@ class StreamingDataset:
             expressed efficiently at the batch level.
         """
         if batched:
-            return StreamingDataset(
-                TransformedLoader(self.loader, function)
-            )
+            return StreamingDataset(TransformedLoader(self.loader, function))
         else:
-            return StreamingDataset(
-                ElementwiseTransformedLoader(self.loader, function)
-            )
+            return StreamingDataset(ElementwiseTransformedLoader(self.loader, function))
 
     def filter(self, function, batched=True):
         """
@@ -2727,15 +2711,15 @@ class StreamingDataset:
             >>> def filter_high_scores(batch):
             ...     import pyarrow.compute as pc
             ...     return pc.filter(batch, pc.greater(batch["score"], 0.8))
-            >>> 
+            >>>
             >>> high_score_data = dataset.filter(filter_high_scores, batched=True)
-            >>> 
+            >>>
             >>> # Element-level filtering (flexible but slower)
             >>> def filter_english_only(record):
             ...     return record.get("language", "").lower() == "en"
-            >>> 
+            >>>
             >>> english_data = dataset.filter(filter_english_only, batched=False)
-            >>> 
+            >>>
             >>> # Chain filtering operations
             >>> result = (dataset
             ...           .filter(filter_high_scores, batched=True)
@@ -2752,13 +2736,9 @@ class StreamingDataset:
             complete, as filtering may remove an arbitrary number of elements.
         """
         if batched:
-            return StreamingDataset(
-                FilteredLoader(self.loader, function)
-            )
+            return StreamingDataset(FilteredLoader(self.loader, function))
         else:
-            return StreamingDataset(
-                ElementwiseFilteredLoader(self.loader, function)
-            )
+            return StreamingDataset(ElementwiseFilteredLoader(self.loader, function))
 
     def to_arrow_table(self):
         """
@@ -2767,7 +2747,7 @@ class StreamingDataset:
         Returns:
             pyarrow.Table: The dataset as an Arrow table
         """
-        if hasattr(self.loader, 'to_arrow_table'):
+        if hasattr(self.loader, "to_arrow_table"):
             return self.loader.to_arrow_table()
 
         # Concatenate all batches
@@ -2777,7 +2757,7 @@ class StreamingDataset:
 
         if not batches:
             # Return empty table with schema if possible
-            if hasattr(self.loader, 'get_schema'):
+            if hasattr(self.loader, "get_schema"):
                 return pa.table([], schema=self.loader.get_schema())
             return pa.table([])
 
@@ -2790,7 +2770,7 @@ class StreamingDataset:
         Returns:
             pandas.DataFrame: The dataset as a DataFrame
         """
-        if hasattr(self.loader, 'to_pandas'):
+        if hasattr(self.loader, "to_pandas"):
             return self.loader.to_pandas()
 
         table = self.to_arrow_table()
@@ -2817,7 +2797,7 @@ class StreamingDataset:
             >>> print(f"Cache hit rate: {stats.get('cache_hit_rate', 'N/A'):.2%}")
             >>> print(f"Throughput: {stats.get('throughput_mb_per_sec', 0):.1f} MB/s")
             >>> print(f"Total batches: {stats.get('total_batches', 0)}")
-            >>> 
+            >>>
             >>> # Monitor performance over time
             >>> initial_stats = dataset.get_stats()
             >>> # ... process some data ...
@@ -2870,20 +2850,20 @@ class TransformedLoader:
     Usage Example:
         # Create base loader
         base_loader = ParquetStreamingLoader("data.parquet")
-        
+
         # Define transformation function
         def add_computed_columns(batch):
             # Add computed columns using PyArrow compute functions
             import pyarrow.compute as pc
             new_batch = batch.append_column(
-                "total", 
+                "total",
                 pc.add(batch["quantity"], batch["price"])
             )
             return new_batch
-        
+
         # Create transformed loader
         transformed_loader = TransformedLoader(base_loader, add_computed_columns)
-        
+
         # Process transformed data
         for batch in transformed_loader:
             print(f"Processed batch with {len(batch)} records")
@@ -2926,10 +2906,10 @@ class TransformedLoader:
             >>> def add_features(batch):
             ...     # Add computed columns using PyArrow compute functions
             ...     import pyarrow.compute as pc
-            ...     batch = batch.append_column("length", 
+            ...     batch = batch.append_column("length",
             ...                                 pc.length(batch["text"]))
             ...     return batch
-            >>> 
+            >>>
             >>> loader = TransformedLoader(base_loader, add_features)
             >>> for enhanced_batch in loader:
             ...     # Process enhanced batch with new computed columns
@@ -2993,7 +2973,7 @@ class ElementwiseTransformedLoader:
     Usage Example:
         # Create base loader
         base_loader = JSONStreamingLoader("records.jsonl")
-        
+
         # Define per-record transformation
         def normalize_record(record):
             # Complex per-record transformation
@@ -3004,13 +2984,13 @@ class ElementwiseTransformedLoader:
                 "timestamp": parse_timestamp(record["created_at"])
             }
             return normalized
-        
+
         # Create element-wise transformed loader
         transformed_loader = ElementwiseTransformedLoader(
-            base_loader, 
+            base_loader,
             normalize_record
         )
-        
+
         # Process transformed records
         for batch in transformed_loader:
             print(f"Processed batch with {len(batch)} normalized records")
@@ -3067,7 +3047,7 @@ class ElementwiseTransformedLoader:
             ...     record["is_long"] = record["text_length"] > 100
             ...     record["processed_at"] = datetime.utcnow().isoformat()
             ...     return record
-            >>> 
+            >>>
             >>> loader = ElementwiseTransformedLoader(base_loader, enrich_record)
             >>> for batch in loader:
             ...     # Process enriched records
@@ -3141,12 +3121,12 @@ class FilteredLoader:
     Usage Example:
         # Create base loader
         base_loader = ParquetStreamingLoader("data.parquet")
-        
+
         # Define batch filter function
         def filter_non_empty_batches(batch):
             # Only process batches with data
             return len(batch) > 0
-        
+
         def filter_recent_data(batch):
             # Only process batches with recent timestamps
             import pyarrow.compute as pc
@@ -3154,10 +3134,10 @@ class FilteredLoader:
                 max_timestamp = pc.max(batch["timestamp"])
                 return max_timestamp.as_py() > recent_threshold
             return True
-        
+
         # Create filtered loader
         filtered_loader = FilteredLoader(base_loader, filter_recent_data)
-        
+
         # Process only filtered batches
         for batch in filtered_loader:
             print(f"Processing recent batch with {len(batch)} records")
@@ -3199,12 +3179,12 @@ class FilteredLoader:
         Example:
             >>> def filter_large_batches(batch):
             ...     return len(batch) >= 100  # Only process substantial batches
-            >>> 
+            >>>
             >>> def filter_valid_data(batch):
             ...     import pyarrow.compute as pc
             ...     # Only process batches with no null values in key column
             ...     return pc.sum(pc.is_null(batch["id"])).as_py() == 0
-            >>> 
+            >>>
             >>> filtered_loader = FilteredLoader(base_loader, filter_large_batches)
             >>> for batch in filtered_loader:
             ...     # Process only batches that meet size criteria
@@ -3268,7 +3248,7 @@ class ElementwiseFilteredLoader:
     Usage Example:
         # Create base loader
         base_loader = JSONStreamingLoader("user_data.jsonl")
-        
+
         # Define per-record filter
         def filter_active_users(record):
             # Complex per-record filtering logic
@@ -3277,13 +3257,13 @@ class ElementwiseFilteredLoader:
                 record.get("last_login_days", 999) < 30 and
                 record.get("subscription_status") == "premium"
             )
-        
+
         # Create element-wise filtered loader
         filtered_loader = ElementwiseFilteredLoader(
             base_loader,
             filter_active_users
         )
-        
+
         # Process only filtered records
         for batch in filtered_loader:
             print(f"Processing {len(batch)} active premium users")
@@ -3340,11 +3320,11 @@ class ElementwiseFilteredLoader:
             >>> def filter_english_content(record):
             ...     return (record.get("language", "").lower() == "en" and
             ...             len(record.get("text", "")) > 50)
-            >>> 
+            >>>
             >>> def filter_high_quality(record):
             ...     return (record.get("score", 0) >= 0.8 and
             ...             record.get("verified", False))
-            >>> 
+            >>>
             >>> filtered_loader = ElementwiseFilteredLoader(
             ...     base_loader, filter_english_content
             ... )
@@ -3390,6 +3370,7 @@ class ElementwiseFilteredLoader:
 
 # Factory functions for creating streaming datasets
 
+
 def load_parquet(
     parquet_path,
     columns=None,
@@ -3399,7 +3380,7 @@ def load_parquet(
     cache_enabled=True,
     cache_size_mb=100,
     collect_stats=True,
-    use_memory_map=True
+    use_memory_map=True,
 ):
     """
     Create a streaming dataset from Parquet files with advanced optimization features.
@@ -3448,7 +3429,7 @@ def load_parquet(
     Usage Example:
         # Basic usage with single file
         dataset = load_parquet("data.parquet")
-        
+
         # Advanced usage with partitioned dataset and optimization
         dataset = load_parquet(
             parquet_path="/data/partitioned_dataset/",
@@ -3459,7 +3440,7 @@ def load_parquet(
             cache_size_mb=500,
             use_memory_map=True
         )
-        
+
         # Process with transformations
         for batch in dataset.iter_batches():
             processed = transform_batch(batch)
@@ -3474,10 +3455,11 @@ def load_parquet(
         cache_enabled=cache_enabled,
         cache_size_mb=cache_size_mb,
         collect_stats=collect_stats,
-        use_memory_map=use_memory_map
+        use_memory_map=use_memory_map,
     )
 
     return StreamingDataset(loader)
+
 
 def load_csv(
     csv_path,
@@ -3488,7 +3470,7 @@ def load_csv(
     prefetch_batches=2,
     cache_enabled=True,
     cache_size_mb=100,
-    collect_stats=True
+    collect_stats=True,
 ):
     """
     Create a streaming dataset from CSV files with comprehensive parsing options.
@@ -3534,7 +3516,7 @@ def load_csv(
     Usage Example:
         # Basic CSV loading
         dataset = load_csv("data.csv")
-        
+
         # Advanced CSV loading with custom options
         read_opts = pa.csv.ReadOptions(
             encoding="utf-8",
@@ -3546,7 +3528,7 @@ def load_csv(
             quote_char='"',
             escape_char="\\"
         )
-        
+
         dataset = load_csv(
             csv_path="complex_data.csv",
             read_options=read_opts,
@@ -3554,7 +3536,7 @@ def load_csv(
             batch_size=25000,
             cache_size_mb=200
         )
-        
+
         # Process streaming data
         for batch in dataset.iter_batches():
             cleaned_batch = clean_data(batch)
@@ -3569,10 +3551,11 @@ def load_csv(
         prefetch_batches=prefetch_batches,
         cache_enabled=cache_enabled,
         cache_size_mb=cache_size_mb,
-        collect_stats=collect_stats
+        collect_stats=collect_stats,
     )
 
     return StreamingDataset(loader)
+
 
 def load_json(
     json_path,
@@ -3582,7 +3565,7 @@ def load_json(
     prefetch_batches=2,
     cache_enabled=True,
     cache_size_mb=100,
-    collect_stats=True
+    collect_stats=True,
 ):
     """
     Create a streaming dataset from newline-delimited JSON files.
@@ -3625,20 +3608,20 @@ def load_json(
     Usage Example:
         # Basic JSON loading
         dataset = load_json("data.jsonl")
-        
+
         # Advanced JSON loading with custom options
         read_opts = pa.json.ReadOptions(
             block_size=2*1024*1024,  # 2MB blocks
             use_threads=True
         )
-        
+
         dataset = load_json(
             json_path="large_dataset.jsonl",
             read_options=read_opts,
             batch_size=15000,
             prefetch_batches=4
         )
-        
+
         # Process streaming JSON data
         for batch in dataset.iter_batches():
             normalized_batch = normalize_json_batch(batch)
@@ -3652,10 +3635,11 @@ def load_json(
         prefetch_batches=prefetch_batches,
         cache_enabled=cache_enabled,
         cache_size_mb=cache_size_mb,
-        collect_stats=collect_stats
+        collect_stats=collect_stats,
     )
 
     return StreamingDataset(loader)
+
 
 def load_huggingface(
     dataset_name=None,
@@ -3667,7 +3651,7 @@ def load_huggingface(
     prefetch_batches=2,
     cache_enabled=True,
     cache_size_mb=100,
-    collect_stats=True
+    collect_stats=True,
 ):
     """
     Create a streaming dataset from HuggingFace datasets with efficient memory usage.
@@ -3719,7 +3703,7 @@ def load_huggingface(
             dataset_split="train",
             columns=["question", "context", "answers"]
         )
-        
+
         # Load with configuration and optimization
         dataset = load_huggingface(
             dataset_name="c4",
@@ -3729,12 +3713,12 @@ def load_huggingface(
             prefetch_batches=3,
             cache_size_mb=1000
         )
-        
+
         # Process streaming data
         for batch in dataset.iter_batches():
             processed_batch = preprocess_text(batch)
             train_model_batch(processed_batch)
-        
+
         # Use existing dataset object
         existing_dataset = load_dataset("imdb", split="train", streaming=True)
         dataset = load_huggingface(dataset_object=existing_dataset)
@@ -3749,17 +3733,14 @@ def load_huggingface(
         prefetch_batches=prefetch_batches,
         cache_enabled=cache_enabled,
         cache_size_mb=cache_size_mb,
-        collect_stats=collect_stats
+        collect_stats=collect_stats,
     )
 
     return StreamingDataset(loader)
 
+
 def create_memory_mapped_vectors(
-    file_path,
-    dimension,
-    dtype=np.float32,
-    mode='r+',
-    initial_vectors=None
+    file_path, dimension, dtype=np.float32, mode="r+", initial_vectors=None
 ):
     """
     Create a memory-mapped vector dataset for efficient large-scale vector operations.
@@ -3797,30 +3778,27 @@ def create_memory_mapped_vectors(
     Usage Example:
         # Create new vector dataset with initial data
         vectors = np.random.random((100000, 512)).astype(np.float32)
-        
+
         loader = create_memory_mapped_vectors(
             file_path="embeddings.bin",
             dimension=512,
             dtype=np.float32,
             initial_vectors=vectors
         )
-        
+
         # Add more vectors
         new_vectors = compute_embeddings(new_documents)
         loader.append(new_vectors)
-        
+
         # Efficient random access
         query_vector = loader[42]  # Get single vector
         batch_vectors = loader[1000:2000]  # Get slice
-        
+
         print(f"Dataset contains {len(loader)} vectors")
         loader.close()
     """
     loader = MemoryMappedVectorLoader(
-        file_path=file_path,
-        dimension=dimension,
-        dtype=dtype,
-        mode=mode
+        file_path=file_path, dimension=dimension, dtype=dtype, mode=mode
     )
 
     # Add initial vectors if provided
@@ -3829,12 +3807,8 @@ def create_memory_mapped_vectors(
 
     return loader
 
-def load_memory_mapped_vectors(
-    file_path,
-    dimension,
-    dtype=np.float32,
-    mode='r'
-):
+
+def load_memory_mapped_vectors(file_path, dimension, dtype=np.float32, mode="r"):
     """
     Load an existing memory-mapped vector dataset for efficient access.
 
@@ -3871,22 +3845,19 @@ def load_memory_mapped_vectors(
             dtype=np.float32,
             mode='r'
         )
-        
+
         print(f"Loaded dataset with {len(loader)} vectors")
-        
+
         # Efficient similarity search
         query_vector = get_query_embedding()
         candidate_vectors = loader[search_indices]
         similarities = compute_cosine_similarity(query_vector, candidate_vectors)
-        
+
         # Random access patterns
         random_sample = loader[np.random.choice(len(loader), 1000)]
-        
+
         loader.close()
     """
     return MemoryMappedVectorLoader(
-        file_path=file_path,
-        dimension=dimension,
-        dtype=dtype,
-        mode=mode
+        file_path=file_path, dimension=dimension, dtype=dtype, mode=mode
     )

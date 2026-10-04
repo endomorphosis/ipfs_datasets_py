@@ -144,7 +144,9 @@ async def test_legal_scraper_daemon_runs_bluebook_and_refresh_with_safe_publish_
 
     class _FakeBluebookRun:
         def to_dict(self):
-            return {"summary": {"recovery_count": 2, "recovery_publication": {"published_count": 0}}}
+            return {
+                "summary": {"recovery_count": 2, "recovery_publication": {"published_count": 0}}
+            }
 
     async def _fake_bluebook_runner(**kwargs):
         calls["bluebook"] = kwargs
@@ -163,7 +165,9 @@ async def test_legal_scraper_daemon_runs_bluebook_and_refresh_with_safe_publish_
             states=["MN"],
             output_dir=str(tmp_path),
             bluebook=BluebookDaemonConfig(samples=3, seed_only=True),
-            state_refresh=StateRefreshDaemonConfig(scrape=False, publish_to_hf=False, parallel_workers=7),
+            state_refresh=StateRefreshDaemonConfig(
+                scrape=False, publish_to_hf=False, parallel_workers=7
+            ),
             agentic_corpora=AgenticCorpusDaemonConfig(enabled=False),
         ),
         bluebook_runner=_fake_bluebook_runner,
@@ -317,7 +321,9 @@ async def test_legal_scraper_daemon_resumes_completed_phase(tmp_path):
 
     assert calls == {"bluebook": 1, "refresh": 1}
     assert result["cycles"][0]["phases"]["bluebook"]["resumed_from"].endswith("bluebook_phase.json")
-    assert result["cycles"][0]["phases"]["state_refresh"]["resumed_from"].endswith("state_refresh_phase.json")
+    assert result["cycles"][0]["phases"]["state_refresh"]["resumed_from"].endswith(
+        "state_refresh_phase.json"
+    )
 
 
 @pytest.mark.asyncio
@@ -330,7 +336,11 @@ async def test_legal_scraper_daemon_full_corpus_retries_partial_phase_by_default
         if calls["refresh"] == 1:
             return {
                 "status": "partial_success",
-                "build": {"states": ["MN"], "missing_jsonld_states": ["OR"], "combined_row_count": 3},
+                "build": {
+                    "states": ["MN"],
+                    "missing_jsonld_states": ["OR"],
+                    "combined_row_count": 3,
+                },
                 "scrape_gap_states": [],
                 "build_gap_states": ["OR"],
             }
@@ -392,7 +402,9 @@ async def test_legal_scraper_daemon_can_resume_partial_phase_when_explicit(tmp_p
 
     assert calls["refresh"] == 1
     assert result["cycles"][0]["phases"]["state_refresh"]["status"] == "partial_success"
-    assert result["cycles"][0]["phases"]["state_refresh"]["resumed_from"].endswith("state_refresh_phase.json")
+    assert result["cycles"][0]["phases"]["state_refresh"]["resumed_from"].endswith(
+        "state_refresh_phase.json"
+    )
 
 
 def test_legal_scraper_daemon_configures_fetch_and_search_cache_env(tmp_path, monkeypatch):
@@ -498,7 +510,9 @@ async def test_legal_scraper_daemon_shards_state_admin_agentic_runs_by_state(tmp
 
     monkeypatch.setattr(daemon, "_run_agentic_corpus_subprocess", _fake_subprocess)
 
-    result = await daemon._run_agentic_corpus(corpus="state_admin_rules", cycle_dir=tmp_path / "cycle")
+    result = await daemon._run_agentic_corpus(
+        corpus="state_admin_rules", cycle_dir=tmp_path / "cycle"
+    )
 
     assert result["status"] == "partial_success"
     assert sorted(call[2][0] for call in calls) == ["CT", "NJ"]
@@ -527,7 +541,9 @@ async def test_legal_scraper_daemon_shards_state_admin_agentic_runs_by_state(tmp
     assert handoffs[0]["states"] == ["CT", "NJ"]
     assert handoffs[0]["input_count"] == 2
     assert handoffs[0]["inputs"] == ["/tmp/CT.jsonl", "/tmp/NJ.jsonl"]
-    assert handoffs[0]["recommended_command"][1].endswith("scripts/ops/legal_data/merge_state_admin_recovered_rows.py")
+    assert handoffs[0]["recommended_command"][1].endswith(
+        "scripts/ops/legal_data/merge_state_admin_recovered_rows.py"
+    )
 
 
 def test_legal_scraper_daemon_arg_config_keeps_publish_opt_in(tmp_path):
@@ -686,7 +702,11 @@ def test_legal_scraper_daemon_arg_config_full_corpus_preset(tmp_path):
     assert config.state_refresh.hydrate_timeout_seconds == 60.0
     assert config.state_refresh.publish_to_hf is False
     assert config.agentic_corpora.enabled is True
-    assert config.agentic_corpora.corpora == ["state_laws", "state_admin_rules", "state_court_rules"]
+    assert config.agentic_corpora.corpora == [
+        "state_laws",
+        "state_admin_rules",
+        "state_court_rules",
+    ]
     assert config.agentic_corpora.max_statutes == 0
     assert config.agentic_corpora.archive_warmup_urls == 0
     assert config.agentic_corpora.per_state_timeout_seconds == 86400.0
@@ -714,7 +734,9 @@ def test_legal_scraper_daemon_arg_config_full_corpus_preset(tmp_path):
     assert target_manifest["corpora"]["state_laws"]["hf_dataset_id"] == "justicedao/ipfs_state_laws"
     assert target_manifest["corpora"]["state_laws"]["state_shards"][0]["state"] == "AL"
     assert target_manifest["corpora"]["state_laws"]["state_shards"][-1]["state"] == "DC"
-    assert target_manifest["corpora"]["state_laws"]["state_shards"][-1]["hf_parquet_path"].endswith("STATE-DC.parquet")
+    assert target_manifest["corpora"]["state_laws"]["state_shards"][-1]["hf_parquet_path"].endswith(
+        "STATE-DC.parquet"
+    )
 
 
 def test_legal_scraper_daemon_writes_preflight_artifacts(tmp_path):
@@ -724,8 +746,12 @@ def test_legal_scraper_daemon_writes_preflight_artifacts(tmp_path):
             include_dc=True,
             states=["all"],
             output_dir=str(tmp_path),
-            bluebook=BluebookDaemonConfig(corpora=["state_laws", "state_admin_rules", "state_court_rules"]),
-            state_refresh=StateRefreshDaemonConfig(scrape=True, merge_hf_existing=True, max_statutes=0),
+            bluebook=BluebookDaemonConfig(
+                corpora=["state_laws", "state_admin_rules", "state_court_rules"]
+            ),
+            state_refresh=StateRefreshDaemonConfig(
+                scrape=True, merge_hf_existing=True, max_statutes=0
+            ),
             agentic_corpora=AgenticCorpusDaemonConfig(
                 enabled=True,
                 corpora=["state_laws", "state_admin_rules", "state_court_rules"],
@@ -741,11 +767,18 @@ def test_legal_scraper_daemon_writes_preflight_artifacts(tmp_path):
     assert payload["status"] == "ready"
     assert preflight_path.exists()
     assert target_manifest_path.exists()
-    assert json.loads(preflight_path.read_text(encoding="utf-8"))["target_manifest"]["state_shard_count"] == 153
+    assert (
+        json.loads(preflight_path.read_text(encoding="utf-8"))["target_manifest"][
+            "state_shard_count"
+        ]
+        == 153
+    )
     assert json.loads(target_manifest_path.read_text(encoding="utf-8"))["state_shard_count"] == 153
 
 
-def test_legal_scraper_daemon_preflight_blocks_failed_full_corpus_guard_audit(tmp_path, monkeypatch):
+def test_legal_scraper_daemon_preflight_blocks_failed_full_corpus_guard_audit(
+    tmp_path, monkeypatch
+):
     def _fake_guard_audit(self):
         return {
             "enabled": True,
@@ -757,15 +790,21 @@ def test_legal_scraper_daemon_preflight_blocks_failed_full_corpus_guard_audit(tm
             "findings": [{"state": "MN", "severity": "error", "detail": "return seed_rows"}],
         }
 
-    monkeypatch.setattr(LegalScraperDaemon, "_state_laws_full_corpus_guard_audit", _fake_guard_audit)
+    monkeypatch.setattr(
+        LegalScraperDaemon, "_state_laws_full_corpus_guard_audit", _fake_guard_audit
+    )
     daemon = LegalScraperDaemon(
         LegalScraperDaemonConfig(
             full_corpus=True,
             include_dc=True,
             states=["all"],
             output_dir=str(tmp_path),
-            bluebook=BluebookDaemonConfig(corpora=["state_laws", "state_admin_rules", "state_court_rules"]),
-            state_refresh=StateRefreshDaemonConfig(scrape=True, merge_hf_existing=True, max_statutes=0),
+            bluebook=BluebookDaemonConfig(
+                corpora=["state_laws", "state_admin_rules", "state_court_rules"]
+            ),
+            state_refresh=StateRefreshDaemonConfig(
+                scrape=True, merge_hf_existing=True, max_statutes=0
+            ),
             agentic_corpora=AgenticCorpusDaemonConfig(
                 enabled=True,
                 corpora=["state_laws", "state_admin_rules", "state_court_rules"],
@@ -779,7 +818,10 @@ def test_legal_scraper_daemon_preflight_blocks_failed_full_corpus_guard_audit(tm
     assert preflight["status"] == "blocked"
     assert preflight["invariants"]["state_laws_full_corpus_guard_audit_passed"] is False
     assert preflight["blocking_invariants"] == {"state_laws_full_corpus_guard_audit_passed": False}
-    assert preflight["state_laws_full_corpus_guard_audit"]["findings"][0]["detail"] == "return seed_rows"
+    assert (
+        preflight["state_laws_full_corpus_guard_audit"]["findings"][0]["detail"]
+        == "return seed_rows"
+    )
 
 
 def test_legal_scraper_daemon_preflight_hf_probe_blocks_unreadable_dataset(tmp_path, monkeypatch):
@@ -806,8 +848,12 @@ def test_legal_scraper_daemon_preflight_hf_probe_blocks_unreadable_dataset(tmp_p
             include_dc=True,
             states=["all"],
             output_dir=str(tmp_path),
-            bluebook=BluebookDaemonConfig(corpora=["state_laws", "state_admin_rules", "state_court_rules"]),
-            state_refresh=StateRefreshDaemonConfig(scrape=True, merge_hf_existing=True, max_statutes=0),
+            bluebook=BluebookDaemonConfig(
+                corpora=["state_laws", "state_admin_rules", "state_court_rules"]
+            ),
+            state_refresh=StateRefreshDaemonConfig(
+                scrape=True, merge_hf_existing=True, max_statutes=0
+            ),
             agentic_corpora=AgenticCorpusDaemonConfig(
                 enabled=True,
                 corpora=["state_laws", "state_admin_rules", "state_court_rules"],
@@ -849,7 +895,9 @@ async def test_legal_scraper_daemon_preflight_only_main_writes_without_cycles(tm
 
 
 @pytest.mark.asyncio
-async def test_legal_scraper_daemon_strict_preflight_exits_nonzero_when_blocked(tmp_path, capsys, monkeypatch):
+async def test_legal_scraper_daemon_strict_preflight_exits_nonzero_when_blocked(
+    tmp_path, capsys, monkeypatch
+):
     def _fake_probe(self, hf_datasets):
         return {
             "enabled": True,
@@ -890,7 +938,9 @@ async def test_legal_scraper_daemon_strict_preflight_exits_nonzero_when_blocked(
 
 
 @pytest.mark.asyncio
-async def test_legal_scraper_daemon_require_preflight_ready_blocks_cycles(tmp_path, capsys, monkeypatch):
+async def test_legal_scraper_daemon_require_preflight_ready_blocks_cycles(
+    tmp_path, capsys, monkeypatch
+):
     def _fake_probe(self, hf_datasets):
         return {
             "enabled": True,
@@ -1125,7 +1175,9 @@ async def test_legal_scraper_daemon_full_corpus_marks_missing_state_artifacts_pa
 
 
 @pytest.mark.asyncio
-async def test_legal_scraper_daemon_full_corpus_marks_missing_combined_state_refresh_artifact_partial(tmp_path):
+async def test_legal_scraper_daemon_full_corpus_marks_missing_combined_state_refresh_artifact_partial(
+    tmp_path,
+):
     present_parquet = tmp_path / "STATE-MN.parquet"
     present_parquet.write_bytes(b"PAR1")
     present_parquet_or = tmp_path / "STATE-OR.parquet"
@@ -1299,8 +1351,7 @@ async def test_legal_scraper_daemon_writes_full_corpus_retry_manifest(tmp_path):
     assert retry_payload["merge_handoffs"][0]["input_count"] == 1
     assert retry_payload["merge_handoffs"][0]["inputs"] == ["/tmp/MN_admin.jsonl"]
     assert {
-        (phase.get("phase"), phase.get("corpus"))
-        for phase in retry_payload["retry_phases"]
+        (phase.get("phase"), phase.get("corpus")) for phase in retry_payload["retry_phases"]
     } >= {
         ("agentic_corpora", "state_laws"),
         ("agentic_corpora", "state_admin_rules"),
@@ -1309,7 +1360,9 @@ async def test_legal_scraper_daemon_writes_full_corpus_retry_manifest(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_legal_scraper_daemon_clears_full_corpus_retry_manifest_after_complete_cycle(tmp_path):
+async def test_legal_scraper_daemon_clears_full_corpus_retry_manifest_after_complete_cycle(
+    tmp_path,
+):
     latest_retry_path = tmp_path / "latest_full_corpus_retry.json"
     latest_retry_path.write_text(json.dumps({"status": "needs_retry"}), encoding="utf-8")
     combined_parquet = tmp_path / "state_laws_all_states.parquet"

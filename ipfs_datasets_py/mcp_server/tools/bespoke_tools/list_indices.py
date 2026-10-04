@@ -9,19 +9,18 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
+
 async def list_indices(
-    store_type: Optional[str] = None,
-    include_stats: bool = False,
-    namespace: Optional[str] = None
+    store_type: Optional[str] = None, include_stats: bool = False, namespace: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     List all vector indices across different vector stores.
-    
+
     Args:
         store_type: Filter by store type (faiss, qdrant, elasticsearch, chromadb)
         include_stats: Include statistics for each index
         namespace: Filter by namespace
-        
+
     Returns:
         Dict containing list of indices and their metadata
     """
@@ -43,11 +42,11 @@ async def list_indices(
                 "metadata": {
                     "model": "sentence-transformers/all-MiniLM-L6-v2",
                     "source": "pdf_documents",
-                    "chunk_size": 512
-                }
+                    "chunk_size": 512,
+                },
             },
             {
-                "index_id": "idx_embeddings_002", 
+                "index_id": "idx_embeddings_002",
                 "name": "knowledge_graph_embeddings",
                 "store_type": "qdrant",
                 "dimension": 1024,
@@ -61,8 +60,8 @@ async def list_indices(
                 "metadata": {
                     "model": "text-embedding-ada-002",
                     "source": "entity_relationships",
-                    "chunk_size": 1024
-                }
+                    "chunk_size": 1024,
+                },
             },
             {
                 "index_id": "idx_embeddings_003",
@@ -79,8 +78,8 @@ async def list_indices(
                 "metadata": {
                     "model": "all-mpnet-base-v2",
                     "source": "web_archive",
-                    "chunk_size": 256
-                }
+                    "chunk_size": 256,
+                },
             },
             {
                 "index_id": "idx_embeddings_004",
@@ -97,42 +96,46 @@ async def list_indices(
                 "metadata": {
                     "model": "all-MiniLM-L12-v2",
                     "source": "test_data",
-                    "chunk_size": 128
-                }
-            }
+                    "chunk_size": 128,
+                },
+            },
         ]
-        
+
         # Apply filters
         filtered_indices = mock_indices
-        
+
         if store_type:
             filtered_indices = [idx for idx in filtered_indices if idx["store_type"] == store_type]
-            
+
         if namespace:
             filtered_indices = [idx for idx in filtered_indices if idx["namespace"] == namespace]
-            
+
         # Add statistics if requested
         if include_stats:
             total_vectors = sum(idx["vector_count"] for idx in filtered_indices)
             total_size_mb = sum(idx["size_mb"] for idx in filtered_indices)
             store_type_counts = {}
             status_counts = {}
-            
+
             for idx in filtered_indices:
-                store_type_counts[idx["store_type"]] = store_type_counts.get(idx["store_type"], 0) + 1
+                store_type_counts[idx["store_type"]] = (
+                    store_type_counts.get(idx["store_type"], 0) + 1
+                )
                 status_counts[idx["status"]] = status_counts.get(idx["status"], 0) + 1
-                
+
             stats = {
                 "total_indices": len(filtered_indices),
                 "total_vectors": total_vectors,
                 "total_size_mb": round(total_size_mb, 2),
                 "store_type_distribution": store_type_counts,
                 "status_distribution": status_counts,
-                "avg_vectors_per_index": round(total_vectors / len(filtered_indices), 0) if filtered_indices else 0
+                "avg_vectors_per_index": round(total_vectors / len(filtered_indices), 0)
+                if filtered_indices
+                else 0,
             }
         else:
             stats = None
-            
+
         return {
             "success": True,
             "indices": filtered_indices,
@@ -140,16 +143,12 @@ async def list_indices(
             "filters_applied": {
                 "store_type": store_type,
                 "namespace": namespace,
-                "include_stats": include_stats
+                "include_stats": include_stats,
             },
             "statistics": stats,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to list vector indices: {e}")
-        return {
-            "success": False,
-            "error": str(e),
-            "timestamp": datetime.now().isoformat()
-        }
+        return {"success": False, "error": str(e), "timestamp": datetime.now().isoformat()}

@@ -27,6 +27,7 @@ from ipfs_datasets_py.knowledge_graphs.migration.formats import (
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_graph() -> GraphData:
     nodes = [
         NodeData(id="1", labels=["Person"], properties={"name": "Alice", "age": 30}),
@@ -35,13 +36,9 @@ def _make_graph() -> GraphData:
     ]
     relationships = [
         RelationshipData(
-            id="r1", type="KNOWS", start_node="1", end_node="2",
-            properties={"since": 2020}
+            id="r1", type="KNOWS", start_node="1", end_node="2", properties={"since": 2020}
         ),
-        RelationshipData(
-            id="r2", type="LIVES_IN", start_node="1", end_node="3",
-            properties={}
-        ),
+        RelationshipData(id="r2", type="LIVES_IN", start_node="1", end_node="3", properties={}),
     ]
     return GraphData(nodes=nodes, relationships=relationships)
 
@@ -49,6 +46,7 @@ def _make_graph() -> GraphData:
 # ---------------------------------------------------------------------------
 # CAR format roundtrip tests
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture()
 def tmp_car(tmp_path):
@@ -170,22 +168,24 @@ class TestCARFormat:
 # NOT operator fix tests
 # ---------------------------------------------------------------------------
 
+
 class TestNotOperatorFix:
     """Tests for the NOT operator evaluation fix in expression_evaluator.py."""
 
     @pytest.fixture()
     def executor_with_people(self):
         from ipfs_datasets_py.knowledge_graphs.core.query_executor import (
-            GraphEngine, QueryExecutor,
+            GraphEngine,
+            QueryExecutor,
         )
+
         engine = GraphEngine()
         executor = QueryExecutor(graph_engine=engine)
-        engine.create_node(labels=["Person"],
-                           properties={"name": "Alice", "age": 25, "city": "LA"})
-        engine.create_node(labels=["Person"],
-                           properties={"name": "Bob", "age": 35, "city": "NYC"})
-        engine.create_node(labels=["Person"],
-                           properties={"name": "Charlie", "age": 40, "city": "NYC"})
+        engine.create_node(labels=["Person"], properties={"name": "Alice", "age": 25, "city": "LA"})
+        engine.create_node(labels=["Person"], properties={"name": "Bob", "age": 35, "city": "NYC"})
+        engine.create_node(
+            labels=["Person"], properties={"name": "Charlie", "age": 40, "city": "NYC"}
+        )
         return executor
 
     def test_simple_not_operator(self, executor_with_people):
@@ -207,8 +207,7 @@ class TestNotOperatorFix:
         THEN: Only Alice is returned (Bob and Charlie match the NOT'd condition)
         """
         result = executor_with_people.execute(
-            "MATCH (p:Person) WHERE NOT (p.age > 30 AND p.city = 'NYC') "
-            "RETURN p.name as name"
+            "MATCH (p:Person) WHERE NOT (p.age > 30 AND p.city = 'NYC') RETURN p.name as name"
         )
         names = [r["name"] for r in result if "name" in r]
         assert names == ["Alice"]
@@ -220,8 +219,7 @@ class TestNotOperatorFix:
         THEN: Only Alice is returned
         """
         result = executor_with_people.execute(
-            "MATCH (p:Person) WHERE NOT (p.city = 'NYC' OR p.age < 0) "
-            "RETURN p.name as name"
+            "MATCH (p:Person) WHERE NOT (p.city = 'NYC' OR p.age < 0) RETURN p.name as name"
         )
         names = [r["name"] for r in result if "name" in r]
         assert names == ["Alice"]
@@ -231,6 +229,7 @@ class TestNotOperatorFix:
 # evaluate_compiled_expression unit tests
 # ---------------------------------------------------------------------------
 
+
 class TestCompiledExpressionEval:
     """Unit tests for evaluate_compiled_expression with logical operators."""
 
@@ -238,6 +237,7 @@ class TestCompiledExpressionEval:
         from ipfs_datasets_py.knowledge_graphs.core.expression_evaluator import (
             evaluate_compiled_expression,
         )
+
         return evaluate_compiled_expression(expr, binding)
 
     def test_not_true(self):

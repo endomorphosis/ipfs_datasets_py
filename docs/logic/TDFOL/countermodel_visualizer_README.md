@@ -41,10 +41,10 @@ kripke = KripkeStructure(logic_type=ModalLogicType.K)
 visualizer = CountermodelVisualizer(kripke)
 
 # Expanded with colors
-print(visualizer.render_ascii_enhanced(colors=True, style='expanded'))
+print(visualizer.render_ascii_enhanced(colors=True, style="expanded"))
 
 # Compact without colors
-print(visualizer.render_ascii_enhanced(colors=False, style='compact'))
+print(visualizer.render_ascii_enhanced(colors=False, style="compact"))
 ```
 
 ### 2. Interactive HTML Visualization (4h implementation)
@@ -99,11 +99,11 @@ Specialized rendering focusing on accessibility relations with property highligh
 visualizer = CountermodelVisualizer(kripke)
 
 # Save as DOT format
-visualizer.render_accessibility_graph("graph.dot", format='dot')
+visualizer.render_accessibility_graph("graph.dot", format="dot")
 
 # Can also generate SVG, PNG, PDF (requires Graphviz installed)
-visualizer.render_accessibility_graph("graph.svg", format='svg')
-visualizer.render_accessibility_graph("graph.png", format='png')
+visualizer.render_accessibility_graph("graph.svg", format="svg")
+visualizer.render_accessibility_graph("graph.png", format="png")
 ```
 
 **Rendering to images requires Graphviz:**
@@ -200,18 +200,18 @@ result = tableaux.prove(formula)
 # Extract countermodel if not valid
 if not result.is_valid and result.open_branch:
     countermodel = extract_countermodel(formula, result.open_branch, ModalLogicType.K)
-    
+
     # Use enhanced visualizer
     visualizer = create_visualizer(countermodel.kripke)
-    
+
     # ASCII output
     print(visualizer.render_ascii_enhanced())
-    
+
     # HTML output
     visualizer.render_html_interactive("countermodel.html")
-    
+
     # Graph output
-    visualizer.render_accessibility_graph("graph.svg", format='svg')
+    visualizer.render_accessibility_graph("graph.svg", format="svg")
 ```
 
 ## Dependencies
@@ -340,19 +340,19 @@ result = tableaux.prove(formula)
 if not result.is_valid and result.open_branch:
     # Extract countermodel
     counter = extract_countermodel(formula, result.open_branch, ModalLogicType.K)
-    
+
     # Enhanced visualization
     visualizer = create_visualizer(counter.kripke)
-    
+
     # Show in terminal
-    print(visualizer.render_ascii_enhanced(colors=True, style='expanded'))
-    
+    print(visualizer.render_ascii_enhanced(colors=True, style="expanded"))
+
     # Save interactive HTML
     visualizer.render_html_interactive("countermodel.html")
     print("Open countermodel.html in your browser")
-    
+
     # Save accessibility graph
-    visualizer.render_accessibility_graph("graph.dot", format='dot')
+    visualizer.render_accessibility_graph("graph.dot", format="dot")
     print("Render with: dot -Tsvg graph.dot -o graph.svg")
 ```
 

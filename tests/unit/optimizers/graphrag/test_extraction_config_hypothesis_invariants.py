@@ -42,7 +42,9 @@ def extraction_config_strategy(draw: st.DrawFn) -> ExtractionConfig:
         window_size=draw(st.integers(min_value=1, max_value=20)),
         sentence_window=draw(st.integers(min_value=0, max_value=10)),
         include_properties=draw(st.booleans()),
-        domain_vocab=draw(st.dictionaries(keys=_word, values=st.lists(_word, max_size=4), max_size=4)),
+        domain_vocab=draw(
+            st.dictionaries(keys=_word, values=st.lists(_word, max_size=4), max_size=4)
+        ),
         custom_rules=draw(st.lists(st.tuples(_word, _word), max_size=4)),
         llm_fallback_threshold=llm_fallback_threshold,
         min_entity_length=draw(st.integers(min_value=1, max_value=16)),

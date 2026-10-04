@@ -24,8 +24,7 @@ class ProverBackend(Protocol):
 
     backend_id: str
 
-    def prove(self, theorem: str, assumptions: List[str]) -> ProverResult:
-        ...
+    def prove(self, theorem: str, assumptions: List[str]) -> ProverResult: ...
 
 
 class ProverBackendRegistry:

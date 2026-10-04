@@ -137,7 +137,9 @@ def test_hydrate_statute_text_uses_pdf_processor(monkeypatch):
         return b"%PDF-1.4 fake-pdf-content"
 
     async def _fake_extract_pdf(_pdf_bytes):
-        return "Section 12-1 Definitions. This section contains substantive legal text. " + ("x" * 220)
+        return "Section 12-1 Definitions. This section contains substantive legal text. " + (
+            "x" * 220
+        )
 
     monkeypatch.setattr(scraper, "_fetch_page_content_with_archival_fallback", _fake_fetch)
     monkeypatch.setattr(
@@ -268,7 +270,9 @@ def test_fetch_page_content_skips_object_moved_placeholder(monkeypatch):
         return None
 
     monkeypatch.setattr(scraper, "_fetch_page_content_with_unified_api", _fake_unified_fetch)
-    monkeypatch.setattr(scraper, "_store_page_bytes_in_ipfs_cache", _fake_store_page_bytes_in_ipfs_cache)
+    monkeypatch.setattr(
+        scraper, "_store_page_bytes_in_ipfs_cache", _fake_store_page_bytes_in_ipfs_cache
+    )
     monkeypatch.setattr(
         "ipfs_datasets_py.processors.legal_scrapers.state_scrapers.state_archival_fetch.ArchivalFetchClient",
         _FakeArchivalFetchClient,
@@ -278,12 +282,20 @@ def test_fetch_page_content_skips_object_moved_placeholder(monkeypatch):
         lambda *_args, **_kwargs: _FakeResponse(),
     )
 
-    result = asyncio.run(scraper._fetch_page_content_with_archival_fallback("https://example.gov/code/10-1"))
+    result = asyncio.run(
+        scraper._fetch_page_content_with_archival_fallback("https://example.gov/code/10-1")
+    )
 
     assert b"Actual legal page" in result
     analytics = scraper.get_fetch_analytics_snapshot()
-    assert "unified_scraper" not in analytics["providers"] or analytics["providers"]["unified_scraper"] == 1
-    assert any(name in analytics["providers"] for name in ("requests_direct", "direct", "archival_fallback"))
+    assert (
+        "unified_scraper" not in analytics["providers"]
+        or analytics["providers"]["unified_scraper"] == 1
+    )
+    assert any(
+        name in analytics["providers"]
+        for name in ("requests_direct", "direct", "archival_fallback")
+    )
 
 
 def test_archival_fetch_skips_common_crawl_unless_enabled(monkeypatch):
@@ -377,7 +389,8 @@ def test_filter_strict_full_text_statutes_removes_scaffold_navigation_records():
     valid = {
         "section_number": "9A.32.030",
         "section_name": "Murder in the first degree",
-        "full_text": "Section 9A.32.030. A person is guilty of murder in the first degree when... " + ("x" * 500),
+        "full_text": "Section 9A.32.030. A person is guilty of murder in the first degree when... "
+        + ("x" * 500),
         "source_url": "https://app.leg.wa.gov/RCW/default.aspx?cite=9A.32.030",
     }
 

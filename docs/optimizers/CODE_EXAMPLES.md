@@ -48,7 +48,9 @@ ontology = generator.generate_ontology(
     documents=documents,
     context=context,
 )
-print(f"Ontology has {len(ontology['entities'])} entities and {len(ontology['relationships'])} relationships")
+print(
+    f"Ontology has {len(ontology['entities'])} entities and {len(ontology['relationships'])} relationships"
+)
 ```
 
 **Example 2: Merge ontologies intelligently**
@@ -62,7 +64,7 @@ onto1 = {
     "relationships": [
         {"id": "r1", "source": "alice", "target": "acme", "relation_type": "works_at"}
     ],
-    "metadata": {"version": 1}
+    "metadata": {"version": 1},
 }
 
 onto2 = {
@@ -70,10 +72,8 @@ onto2 = {
         {"id": "bob", "name": "Bob", "type": "Person"},
         {"id": "acme", "name": "Acme Corporation", "type": "Organization"},  # Duplicate!
     ],
-    "relationships": [
-        {"id": "r2", "source": "bob", "target": "acme", "relation_type": "works_at"}
-    ],
-    "metadata": {"version": 1}
+    "relationships": [{"id": "r2", "source": "bob", "target": "acme", "relation_type": "works_at"}],
+    "metadata": {"version": 1},
 }
 
 # Merge intelligently (deduplicates entities, merges properties)
@@ -81,8 +81,8 @@ generator = OntologyGenerator()
 merged = generator._merge_ontologies_safe(onto1, onto2)
 
 print(f"Merged ontology has {len(merged['entities'])} entities (1 dedup)")
-for entity in merged['entities']:
-    if entity['id'] == 'acme':
+for entity in merged["entities"]:
+    if entity["id"] == "acme":
         print(f"Acme entity merged: {entity}")
 ```
 
@@ -97,14 +97,17 @@ from ipfs_datasets_py.optimizers.graphrag import OntologyOptimizer
 # Suppose we have session results from running OntologyHarness
 # Each session has a critic_score with an overall score
 
+
 class MockScore:
     def __init__(self, overall):
         self.overall = overall
+
 
 class MockSession:
     def __init__(self, score):
         self.critic_score = MockScore(overall=score)
         self.critic_scores = [MockScore(overall=score)]
+
 
 # Create mock sessions with varying scores
 sessions = [
@@ -172,7 +175,7 @@ large_batch = [MockSession(0.5 + (i % 100) * 0.005) for i in range(1000)]
 # Parallel analysis
 report = optimizer.analyze_batch_parallel(
     session_results=large_batch,
-    max_workers=8  # Use 8 threads
+    max_workers=8,  # Use 8 threads
 )
 
 print(f"Parallel analysis complete: {len(large_batch)} sessions")
@@ -194,7 +197,7 @@ ontology = {
     "relationships": [
         {"id": "r1", "source": "alice", "target": "acme", "relation_type": "works_at"}
     ],
-    "metadata": {"version": 1}
+    "metadata": {"version": 1},
 }
 
 validator = OntologyValidator(ontology)
@@ -225,15 +228,13 @@ from ipfs_datasets_py.optimizers.graphrag import (
 
 # Configure the refinement context
 context = OntologyGenerationContext(
-    domain="knowledge_graph",
-    extraction_model="heuristic",
-    min_entity_score=0.5
+    domain="knowledge_graph", extraction_model="heuristic", min_entity_score=0.5
 )
 
 # Create harness
 harness = OntologyHarness(
     config=context,
-    max_retries=3  # Retry failed sessions
+    max_retries=3,  # Retry failed sessions
 )
 
 # Run sessions on data sources
@@ -243,10 +244,7 @@ data_sources = [
     "Document 3 content...",
 ]
 
-sessions = harness.run_sessions(
-    data_sources=data_sources,
-    batch_size=5
-)
+sessions = harness.run_sessions(data_sources=data_sources, batch_size=5)
 
 print(f"Ran {len(sessions)} sessions")
 
@@ -269,10 +267,12 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer import LogicTheoremOpti
 optimizer = LogicTheoremOptimizer()
 
 # Generate logical statements from natural language
-statements = optimizer.generate([
-    "All humans are mortal",
-    "Socrates is human",
-])
+statements = optimizer.generate(
+    [
+        "All humans are mortal",
+        "Socrates is human",
+    ]
+)
 
 print(f"Generated {len(statements)} formal statements")
 for stmt in statements:
@@ -291,10 +291,7 @@ print(f"Issues: {critique['issues']}")
 **Example 9: Prove theorems**
 ```python
 # Prove logical theorems
-axioms = [
-    "forall x, human(x) -> mortal(x)",
-    "human(socrates)"
-]
+axioms = ["forall x, human(x) -> mortal(x)", "human(socrates)"]
 
 theorem = "mortal(socrates)"
 
@@ -358,8 +355,8 @@ result = adversarial_optimizer.optimize(task)
 print(f"Generated {len(result['solutions'])} competing solutions")
 print(f"Winner: {result['winner_approach']} (score: {result['winner_score']:.2f})")
 
-for i, solution in enumerate(result['solutions']):
-    print(f"  Solution {i+1}: {solution['approach']} (score: {solution['score']:.2f})")
+for i, solution in enumerate(result["solutions"]):
+    print(f"  Solution {i + 1}: {solution['approach']} (score: {solution['score']:.2f})")
 ```
 
 ### ActorCriticOptimizer
@@ -428,10 +425,7 @@ except RuntimeError as e:
 import logging
 
 # Configure logging to see optimizer operations
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s [%(levelname)s] %(name)s: %(message)s'
-)
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 
 # Now optimizer logs will be visible
 report = optimizer.analyze_batch(sessions)
@@ -441,14 +435,15 @@ report = optimizer.analyze_batch(sessions)
 ```python
 # Extract structured metrics from logs
 metrics = {
-    'batch_id': id(sessions),
-    'session_count': len(sessions),
-    'average_score': report.average_score,
-    'trend': report.trend,
+    "batch_id": id(sessions),
+    "session_count": len(sessions),
+    "average_score": report.average_score,
+    "trend": report.trend,
 }
 
 # Log metrics for analysis
 import json
+
 print(json.dumps(metrics))
 ```
 
@@ -457,6 +452,7 @@ print(json.dumps(metrics))
 # Handle missing optional dependencies
 try:
     from ipfs_datasets_py.optimizers.graphrag.query_optimizer import HAVE_PSUTIL
+
     if not HAVE_PSUTIL:
         print("Warning: psutil not available; performance monitoring disabled")
 except ImportError:
