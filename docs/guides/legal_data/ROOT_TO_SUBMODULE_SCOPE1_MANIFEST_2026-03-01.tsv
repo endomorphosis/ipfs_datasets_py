@@ -1,0 +1,10 @@
+source_path	target_path	action	status	notes
+.vscode/tasks.json	ipfs_datasets_py/.vscode/tasks.json	ownership-transfer	completed	Canonical legal smoke tasks owned by submodule tasks file.
+.vscode/tasks.json	.vscode/tasks.json	refactor	completed	Removed legal smoke task ownership from root; root now retains only workspace-level CC tasks.
+scripts/ops/run_formal_logic_canary_proof_audit_smoke.sh	ipfs_datasets_py/scripts/ops/legal_data/run_formal_logic_canary_proof_audit_smoke.sh	keep-wrapper	completed	Root script is compatibility wrapper only.
+scripts/ops/run_formal_logic_regression_proof_audit_smoke.sh	ipfs_datasets_py/scripts/ops/legal_data/run_formal_logic_regression_proof_audit_smoke.sh	keep-wrapper	completed	Root script is compatibility wrapper only.
+scripts/ops/run_formal_logic_proof_audit_integration_smoke.sh	ipfs_datasets_py/scripts/ops/legal_data/run_formal_logic_proof_audit_integration_smoke.sh	keep-wrapper	completed	Root script is compatibility wrapper only.
+scripts/ops/run_formal_logic_proof_audit_integration_matrix_smoke.sh	ipfs_datasets_py/scripts/ops/legal_data/run_formal_logic_proof_audit_integration_matrix_smoke.sh	keep-wrapper	completed	Root script is compatibility wrapper only.
+scripts/ops/assess_formal_logic_proof_audit_integration_summary.py	ipfs_datasets_py/scripts/ops/legal_data/assess_formal_logic_proof_audit_integration_summary.py	keep-wrapper	completed	Root script is compatibility wrapper only.
+ipfs_datasets_py/scripts/ops/legal_data/README.md	ipfs_datasets_py/scripts/ops/legal_data/README.md	doc-update	completed	Docs now state canonical task ownership in ipfs_datasets_py/.vscode/tasks.json.
+ipfs_datasets_py/docs/guides/legal_data/HYBRID_LEGAL_REASONING_OPERATIONS_RUNBOOK.md	ipfs_datasets_py/docs/guides/legal_data/HYBRID_LEGAL_REASONING_OPERATIONS_RUNBOOK.md	doc-update	completed	Runbook task usage points to submodule workspace tasks.

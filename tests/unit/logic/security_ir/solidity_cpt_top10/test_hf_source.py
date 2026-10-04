@@ -146,9 +146,7 @@ def test_successful_injected_stream_binds_exact_receipt_and_separate_bodies(
     assert result.receipt.source_snapshot_cid == PINNED_SOURCE_SNAPSHOT.cid
     assert result.receipt.config_cid == DEFAULT_ROW_BOUNDS.config_cid
     assert result.receipt.row_ids == tuple(item.row_id for item in result.rows)
-    assert result.receipt.source_body_cids == tuple(
-        item.content_cid for item in result.source_bodies
-    )
+    assert result.receipt.source_body_cids == tuple(item.content_cid for item in result.source_bodies)
     assert all("text" not in item.to_dict() for item in result.rows)
 
 
@@ -224,9 +222,7 @@ def test_quarantine_count_and_messages_remain_bounded(
     assert result.admitted is False
     assert supplied.consumed == 2
     assert len(result.diagnostics) == 2
-    assert all(
-        len(item.message) <= DEFAULT_ROW_BOUNDS.max_diagnostic_chars for item in result.diagnostics
-    )
+    assert all(len(item.message) <= DEFAULT_ROW_BOUNDS.max_diagnostic_chars for item in result.diagnostics)
 
 
 def test_cache_reloads_and_rehashes_every_persisted_body(

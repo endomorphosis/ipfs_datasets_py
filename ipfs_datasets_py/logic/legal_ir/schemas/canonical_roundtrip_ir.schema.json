@@ -1,0 +1,135 @@
+{
+  "$id": "https://schemas.ipfs-datasets.dev/logic/legal-ir/canonical-roundtrip-ir.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Open-vocabulary semantic bottleneck selected by SRT-027. The exact object is canonical DAG-JSON and its CIDv1 is carried by compiler/decompiler envelopes, not injected into this measured {rules:[...]} payload.",
+  "properties": {
+    "rules": {
+      "items": {
+        "$ref": "#/$defs/canonicalRule"
+      },
+      "maxItems": 10000,
+      "minItems": 1,
+      "type": "array"
+    }
+  },
+  "required": [
+    "rules"
+  ],
+  "title": "CanonicalRoundTripIR@1",
+  "type": "object",
+  "x-canonical-cid": {
+    "base": "base32",
+    "codec": "dag-json",
+    "hash": "sha2-256",
+    "scope": "entire_semantic_ir_object",
+    "version": 1
+  },
+  "x-interface": "CanonicalRoundTripIR@1",
+  "x-parity-policy": {
+    "aggregation_order": "repeats_within_case_then_unweighted_macro_average_across_cases",
+    "bootstrap_method": "seeded_percentile_case_cluster_bootstrap",
+    "bootstrap_samples": 10000,
+    "bootstrap_seed": 17291,
+    "comparison": "canonical_minus_selected",
+    "confidence_level": 0.95,
+    "decision_rule": "upper_confidence_bound_lte_noninferiority_margin",
+    "eligibility_gates": [
+      "source_copy_exclusion",
+      "polarity_preservation",
+      "full_coverage"
+    ],
+    "evidence": {
+      "canonical_design_gate_cid": "baguqeerab4top4ljgojms7f7p6y4ksdlivfwhyzxzhynnii4zbrfvw4mqtfq",
+      "remediation_manifest_cid": "baguqeerarr7ebjrzd3argtdekd7er3bqrnvhuzy2ogqzfi7h5nv37dbea52a",
+      "replacement_gate_cid": "baguqeerawhggoyrnacv74kbuq3rhpmz4jikhr3tnv5uahpxcnpghfrwfj6jq",
+      "replacement_report_cid": "baguqeeramdvshi4ynajkvsb72zncgcn2pgvklsglgxwea7za25lndnaf5cga",
+      "srt014_gate_cid": "baguqeeraa7vbts26rxvqujbvgvgplq4xrprcebufol5qqmstc6cbrac2rthq",
+      "srt014_report_cid": "baguqeerakqgerwv6npdlqpgrc3bjzuxqog3hiouey3c4giw5vkdgk2jhfbpq"
+    },
+    "failure_loss": 1.0,
+    "frozen_before_parity_run": true,
+    "frozen_from_report_cid": "baguqeeramdvshi4ynajkvsb72zncgcn2pgvklsglgxwea7za25lndnaf5cga",
+    "frozen_from_report_cids": [
+      "baguqeerakqgerwv6npdlqpgrc3bjzuxqog3hiouey3c4giw5vkdgk2jhfbpq",
+      "baguqeeramdvshi4ynajkvsb72zncgcn2pgvklsglgxwea7za25lndnaf5cga"
+    ],
+    "interface": "CanonicalRoundTripParityPolicy@1",
+    "loss_direction": "lower_is_better",
+    "metric": "end_to_end_loss",
+    "noninferiority_margin": 0.03,
+    "policy_cid": "baguqeera5g5z4yvncxbn3uk4ftqmnxxmmclwpnwjpdshiy52la2o5bzdk27a",
+    "policy_cid_codec": "dag-json",
+    "policy_cid_scope": "document_without_policy_cid",
+    "resampling_unit": "case_after_within_case_repeat_aggregation",
+    "schema_version": "ipfs-datasets.semantic-roundtrip-canonical-parity-policy.v1",
+    "selection": {
+      "implementation_representative_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+      "outcome": "exact_tie",
+      "representative_semantically_superior": false,
+      "selectable_arm_ids": [
+        "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+        "typed_deontic__no_guidance__selective__not_applicable__deterministic"
+      ],
+      "selection_basis": "replacement_bounded_tie_policy"
+    }
+  },
+  "x-schema-version": "ipfs-datasets.canonical-roundtrip-ir.v1",
+  "$defs": {
+    "atom": {
+      "maxLength": 4096,
+      "minLength": 1,
+      "type": "string"
+    },
+    "canonicalRule": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "$ref": "#/$defs/atom"
+        },
+        "actor": {
+          "$ref": "#/$defs/atom"
+        },
+        "conditions": {
+          "$ref": "#/$defs/qualifierArray"
+        },
+        "exceptions": {
+          "$ref": "#/$defs/qualifierArray"
+        },
+        "modality": {
+          "enum": [
+            "O",
+            "P",
+            "F"
+          ],
+          "type": "string"
+        },
+        "object": {
+          "maxLength": 4096,
+          "type": "string"
+        },
+        "temporal": {
+          "$ref": "#/$defs/qualifierArray"
+        }
+      },
+      "required": [
+        "modality",
+        "actor",
+        "action",
+        "object",
+        "conditions",
+        "exceptions",
+        "temporal"
+      ],
+      "type": "object"
+    },
+    "qualifierArray": {
+      "items": {
+        "$ref": "#/$defs/atom"
+      },
+      "maxItems": 1000,
+      "type": "array",
+      "uniqueItems": true
+    }
+  }
+}

@@ -1,0 +1,2115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unified Investigation Dashboard - MCP Enabled</title>
+    
+    <!-- Core CSS -->
+    <link href="{{ url_for('static', filename='admin/css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='admin/css/dashboard.css') }}" rel="stylesheet">
+    
+    <!-- Leaflet CSS for maps (local-first) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/leaflet.css') }}">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/all.min.css') }}">
+    
+    <!-- Investigation-specific styles -->
+    <style>
+        .investigation-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+        
+        .connection-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .connection-status.connected {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .connection-status.disconnected {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .connection-status.error {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        
+        .workflow-progress {
+            display: none;
+            margin-top: 1rem;
+        }
+        
+        .workflow-step {
+            padding: 0.5rem 1rem;
+            margin: 0.25rem 0;
+            border-radius: 0.25rem;
+            border-left: 4px solid #dee2e6;
+        }
+        
+        .workflow-step.running {
+            background-color: #fff3cd;
+            border-left-color: #ffc107;
+        }
+        
+        .workflow-step.completed {
+            background-color: #d4edda;
+            border-left-color: #28a745;
+        }
+        
+        .workflow-step.failed {
+            background-color: #f8d7da;
+            border-left-color: #dc3545;
+        }
+        
+        .investigation-nav {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            margin-bottom: 2rem;
+        }
+        
+        .investigation-nav .nav-link {
+            color: #495057;
+            border-radius: 0.5rem 0.5rem 0 0;
+            margin-right: 0.25rem;
+        }
+        
+        .investigation-nav .nav-link.active {
+            background-color: #fff;
+            border: 1px solid #dee2e6;
+            border-bottom-color: #fff;
+            color: #495057;
+        }
+        
+        .results-container {
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
+        }
+        
+        .entity-card {
+            border: 1px solid #dee2e6;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            background-color: white;
+        }
+        
+        .relationship-graph {
+            min-height: 400px;
+            border: 1px solid #dee2e6;
+            border-radius: 0.5rem;
+            background-color: white;
+        }
+        
+        .timeline-container {
+            min-height: 300px;
+            border: 1px solid #dee2e6;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            background-color: white;
+        }
+        
+        .conflict-alert {
+            border-left: 4px solid #dc3545;
+            background-color: #f8d7da;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 0.25rem;
+        }
+        
+        .deontic-statement {
+            border-left: 4px solid #007bff;
+            background-color: #e3f2fd;
+            padding: 0.75rem;
+            margin: 0.25rem 0;
+            border-radius: 0.25rem;
+        }
+        
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .btn-investigation {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-investigation:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        /* Map-specific styles */
+        .event-marker {
+            border: 2px solid #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        #investigationMap {
+            border-radius: 0.5rem;
+        }
+        
+        .leaflet-popup-content h6 {
+            margin-bottom: 0.5rem;
+            color: #495057;
+        }
+        
+        .leaflet-popup-content p {
+            margin-bottom: 0.25rem;
+            font-size: 0.875rem;
+        }
+        
+        .map-controls {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+        
+        .timeline-controls {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+        
+        .map-statistics {
+            font-size: 0.875rem;
+        }
+        
+        .map-statistics h5, .map-statistics h6 {
+            margin-bottom: 0.25rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Connection Status Indicator -->
+    <div id="connectionStatus" class="connection-status disconnected">
+        <i class="fas fa-circle"></i> Disconnected
+    </div>
+
+    <!-- Header -->
+    <div class="investigation-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h1 class="mb-0">
+                        <i class="fas fa-search-plus"></i>
+                        Unified Investigation Hub
+                    </h1>
+                    <p class="mb-0 mt-2 opacity-75">
+                        Entity-centric analysis platform for data scientists, historians, and lawyers
+                    </p>
+                </div>
+                <div class="col-auto">
+                    <button id="connectBtn" class="btn btn-light">
+                        <i class="fas fa-plug"></i> Connect to MCP Server
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container-fluid">
+        <!-- Navigation Tabs -->
+        <div class="investigation-nav">
+            <ul class="nav nav-tabs" id="investigationTabs">
+                <li class="nav-item">
+                    <a class="nav-link active" id="overview-tab" data-bs-toggle="tab" href="#overview" role="tab">
+                        <i class="fas fa-tachometer-alt"></i> Overview
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="ingestion-tab" data-bs-toggle="tab" href="#ingestion" role="tab">
+                        <i class="fas fa-download"></i> Data Ingestion
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="entities-tab" data-bs-toggle="tab" href="#entities" role="tab">
+                        <i class="fas fa-users"></i> Entity Analysis
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="relationships-tab" data-bs-toggle="tab" href="#relationships" role="tab">
+                        <i class="fas fa-project-diagram"></i> Relationships
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="timeline-tab" data-bs-toggle="tab" href="#timeline" role="tab">
+                        <i class="fas fa-clock"></i> Timeline
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="patterns-tab" data-bs-toggle="tab" href="#patterns" role="tab">
+                        <i class="fas fa-chart-line"></i> Patterns
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="legal-tab" data-bs-toggle="tab" href="#legal" role="tab">
+                        <i class="fas fa-balance-scale"></i> Legal Analysis
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="maps-tab" data-bs-toggle="tab" href="#maps" role="tab">
+                        <i class="fas fa-map-marked-alt"></i> Maps
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="workflows-tab" data-bs-toggle="tab" href="#workflows" role="tab">
+                        <i class="fas fa-cogs"></i> Workflows
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="tab-content" id="investigationTabContent">
+            <!-- Overview Tab -->
+            <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h3 id="corpusSize" class="text-primary">0</h3>
+                                <p class="text-muted">Documents in Corpus</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h3 id="entityCount" class="text-success">0</h3>
+                                <p class="text-muted">Entities Identified</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h3 id="relationshipCount" class="text-info">0</h3>
+                                <p class="text-muted">Relationships Mapped</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Recent Investigation Activity</h5>
+                            </div>
+                            <div class="card-body">
+                                <ul id="recentActivity" class="list-unstyled">
+                                    <li class="text-muted">Connect to MCP server to begin investigation...</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Ingestion Tab -->
+            <div class="tab-pane fade" id="ingestion" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Single Article Ingestion</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="articleIngestionForm">
+                                    <div class="mb-3">
+                                        <label class="form-label">Article URL</label>
+                                        <input type="url" class="form-control" id="articleUrl" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Source Type</label>
+                                        <select class="form-select" id="sourceType">
+                                            <option value="news">News</option>
+                                            <option value="blog">Blog</option>
+                                            <option value="academic">Academic</option>
+                                            <option value="government">Government</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Analysis Type</label>
+                                        <select class="form-select" id="analysisType">
+                                            <option value="comprehensive">Comprehensive</option>
+                                            <option value="basic">Basic</option>
+                                            <option value="entities_only">Entities Only</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-investigation">
+                                        <i class="fas fa-download"></i> Ingest Article
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Website Crawling</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="websiteIngestionForm">
+                                    <div class="mb-3">
+                                        <label class="form-label">Base URL</label>
+                                        <input type="url" class="form-control" id="websiteUrl" required>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Max Pages</label>
+                                                <input type="number" class="form-control" id="maxPages" value="50" min="1" max="500">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Max Depth</label>
+                                                <input type="number" class="form-control" id="maxDepth" value="3" min="1" max="10">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-investigation">
+                                        <i class="fas fa-globe"></i> Crawl Website
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Ingestion Results</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="ingestionResults" class="results-container">
+                                    <p class="text-muted">Ingestion results will appear here...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Entity Analysis Tab -->
+            <div class="tab-pane fade" id="entities" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Entity Analysis Settings</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Entity Types</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input entity-type" type="checkbox" value="PERSON" checked>
+                                        <label class="form-check-label">Persons</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input entity-type" type="checkbox" value="ORG" checked>
+                                        <label class="form-check-label">Organizations</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input entity-type" type="checkbox" value="GPE" checked>
+                                        <label class="form-check-label">Locations</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input entity-type" type="checkbox" value="EVENT" checked>
+                                        <label class="form-check-label">Events</label>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Confidence Threshold</label>
+                                    <input type="range" class="form-range" id="confidenceThreshold" min="0" max="1" step="0.05" value="0.85">
+                                    <div class="d-flex justify-content-between">
+                                        <small>0.0</small>
+                                        <small id="confidenceValue">0.85</small>
+                                        <small>1.0</small>
+                                    </div>
+                                </div>
+                                
+                                <button id="analyzeEntitiesBtn" class="btn btn-investigation">
+                                    <i class="fas fa-search"></i> Analyze Entities
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Discovered Entities</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="entityResults" class="results-container">
+                                    <p class="text-muted">Entity analysis results will appear here...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Relationships Tab -->
+            <div class="tab-pane fade" id="relationships" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Relationship Mapping</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Focus Entity (Optional)</label>
+                                    <input type="text" class="form-control" id="focusEntity" placeholder="Enter entity name">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Minimum Strength</label>
+                                    <input type="range" class="form-range" id="minStrength" min="0" max="1" step="0.1" value="0.5">
+                                    <div class="d-flex justify-content-between">
+                                        <small>0.0</small>
+                                        <small id="strengthValue">0.5</small>
+                                        <small>1.0</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Max Depth</label>
+                                    <input type="number" class="form-control" id="relationshipDepth" value="3" min="1" max="10">
+                                </div>
+                                
+                                <button id="mapRelationshipsBtn" class="btn btn-investigation">
+                                    <i class="fas fa-project-diagram"></i> Map Relationships
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Relationship Network</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="relationshipGraph" class="relationship-graph">
+                                    <p class="text-muted text-center pt-5">Relationship graph will appear here...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timeline Tab -->
+            <div class="tab-pane fade" id="timeline" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Timeline Analysis</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Entity ID</label>
+                                    <input type="text" class="form-control" id="timelineEntity" placeholder="Enter entity ID" required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Time Granularity</label>
+                                    <select class="form-select" id="timeGranularity">
+                                        <option value="hour">Hour</option>
+                                        <option value="day" selected>Day</option>
+                                        <option value="week">Week</option>
+                                        <option value="month">Month</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="includeRelated" checked>
+                                    <label class="form-check-label">Include Related Entities</label>
+                                </div>
+                                
+                                <button id="analyzeTimelineBtn" class="btn btn-investigation">
+                                    <i class="fas fa-clock"></i> Analyze Timeline
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Entity Timeline</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="timelineContainer" class="timeline-container">
+                                    <p class="text-muted text-center pt-5">Timeline visualization will appear here...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Patterns Tab -->
+            <div class="tab-pane fade" id="patterns" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Pattern Detection</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Pattern Types</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input pattern-type" type="checkbox" value="behavioral" checked>
+                                        <label class="form-check-label">Behavioral</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input pattern-type" type="checkbox" value="relational" checked>
+                                        <label class="form-check-label">Relational</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input pattern-type" type="checkbox" value="temporal" checked>
+                                        <label class="form-check-label">Temporal</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input pattern-type" type="checkbox" value="anomaly" checked>
+                                        <label class="form-check-label">Anomaly</label>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Time Window</label>
+                                    <select class="form-select" id="timeWindow">
+                                        <option value="7d">7 days</option>
+                                        <option value="30d" selected>30 days</option>
+                                        <option value="90d">90 days</option>
+                                        <option value="1y">1 year</option>
+                                    </select>
+                                </div>
+                                
+                                <button id="detectPatternsBtn" class="btn btn-investigation">
+                                    <i class="fas fa-chart-line"></i> Detect Patterns
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Detected Patterns</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="patternResults" class="results-container">
+                                    <p class="text-muted">Pattern detection results will appear here...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Legal Analysis Tab -->
+            <div class="tab-pane fade" id="legal" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Deontological Analysis</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Conflict Types</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input conflict-type" type="checkbox" value="direct" checked>
+                                        <label class="form-check-label">Direct Conflicts</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input conflict-type" type="checkbox" value="conditional" checked>
+                                        <label class="form-check-label">Conditional</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input conflict-type" type="checkbox" value="jurisdictional" checked>
+                                        <label class="form-check-label">Jurisdictional</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input conflict-type" type="checkbox" value="temporal" checked>
+                                        <label class="form-check-label">Temporal</label>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Severity Threshold</label>
+                                    <select class="form-select" id="severityThreshold">
+                                        <option value="low">Low</option>
+                                        <option value="medium" selected>Medium</option>
+                                        <option value="high">High</option>
+                                    </select>
+                                </div>
+                                
+                                <button id="analyzeLegalBtn" class="btn btn-investigation">
+                                    <i class="fas fa-balance-scale"></i> Analyze Legal Conflicts
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Legal Analysis Results</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="legalResults" class="results-container">
+                                    <p class="text-muted">Legal analysis results will appear here...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workflows Tab -->
+            <div class="tab-pane fade" id="workflows" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Pre-configured Workflows</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-outline-primary workflow-btn" data-workflow="comprehensive_entity_analysis">
+                                        <i class="fas fa-users"></i> Comprehensive Entity Analysis
+                                    </button>
+                                    <button class="btn btn-outline-success workflow-btn" data-workflow="relationship_investigation">
+                                        <i class="fas fa-project-diagram"></i> Relationship Investigation
+                                    </button>
+                                    <button class="btn btn-outline-warning workflow-btn" data-workflow="deontological_analysis">
+                                        <i class="fas fa-balance-scale"></i> Deontological Analysis
+                                    </button>
+                                    <button class="btn btn-outline-info workflow-btn" data-workflow="data_ingestion_pipeline">
+                                        <i class="fas fa-download"></i> Data Ingestion Pipeline
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Workflow Progress</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="workflowProgress" class="workflow-progress">
+                                    <div class="text-center mb-3">
+                                        <div class="spinner-border" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </div>
+                                    <div id="workflowSteps"></div>
+                                </div>
+                                <div id="workflowIdle" class="text-muted text-center">
+                                    <p>Select a workflow to begin analysis...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Maps Tab -->
+            <div class="tab-pane fade" id="maps" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Map Controls</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- Query Input -->
+                                <div class="mb-3">
+                                    <label class="form-label">Query Location/Events</label>
+                                    <input type="text" class="form-control" id="mapQuery" placeholder="Enter location, entity, or event...">
+                                </div>
+                                
+                                <!-- Geographic Filters -->
+                                <div class="mb-3">
+                                    <label class="form-label">Center Location</label>
+                                    <input type="text" class="form-control" id="centerLocation" placeholder="e.g., New York, Washington DC">
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Radius (km)</label>
+                                            <input type="number" class="form-control" id="searchRadius" value="100" min="1" max="5000">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Cluster Distance</label>
+                                            <input type="number" class="form-control" id="clusterDistance" value="50" min="1" max="500">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Temporal Filters -->
+                                <div class="mb-3">
+                                    <label class="form-label">Time Range</label>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <input type="date" class="form-control" id="startDate">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <input type="date" class="form-control" id="endDate">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Entity Type Filters -->
+                                <div class="mb-3">
+                                    <label class="form-label">Entity Types</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="filterPersons" checked>
+                                        <label class="form-check-label" for="filterPersons">Persons</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="filterOrganizations" checked>
+                                        <label class="form-check-label" for="filterOrganizations">Organizations</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="filterEvents" checked>
+                                        <label class="form-check-label" for="filterEvents">Events</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="filterLocations" checked>
+                                        <label class="form-check-label" for="filterLocations">Locations</label>
+                                    </div>
+                                </div>
+                                
+                                <!-- Map View Options -->
+                                <div class="mb-3">
+                                    <label class="form-label">Map View</label>
+                                    <select class="form-select" id="mapViewType">
+                                        <option value="street">Street View</option>
+                                        <option value="satellite">Satellite</option>
+                                        <option value="terrain">Terrain</option>
+                                        <option value="hybrid">Hybrid</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Action Buttons -->
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-investigation" onclick="searchGeospatialData()">
+                                        <i class="fas fa-search"></i> Search Map
+                                    </button>
+                                    <button class="btn btn-outline-secondary" onclick="extractGeographicEntities()">
+                                        <i class="fas fa-map-marker"></i> Extract Locations
+                                    </button>
+                                    <button class="btn btn-outline-info" onclick="analyzeSpationTemporal()">
+                                        <i class="fas fa-clock"></i> Temporal Analysis
+                                    </button>
+                                    <button class="btn btn-outline-success" onclick="exportMapData()">
+                                        <i class="fas fa-download"></i> Export Data
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Map Statistics -->
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h6>Map Statistics</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row text-center">
+                                    <div class="col-md-6">
+                                        <h5 id="mapEntityCount" class="text-primary">0</h5>
+                                        <small class="text-muted">Entities</small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h5 id="mapEventCount" class="text-success">0</h5>
+                                        <small class="text-muted">Events</small>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="row text-center">
+                                    <div class="col-md-6">
+                                        <h6 id="mapClusterCount" class="text-info">0</h6>
+                                        <small class="text-muted">Clusters</small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6 id="mapTimeSpan" class="text-warning">0d</h6>
+                                        <small class="text-muted">Time Span</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-9">
+                        <!-- Map Container -->
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5>Geospatial Investigation Map</h5>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="toggleTimeline()">
+                                        <i class="fas fa-play"></i> Timeline
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="toggleClustering()">
+                                        <i class="fas fa-layer-group"></i> Clusters
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="resetMapView()">
+                                        <i class="fas fa-home"></i> Reset
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <!-- Map will be rendered here -->
+                                <div id="investigationMap" style="height: 600px; width: 100%;"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Timeline Slider (initially hidden) -->
+                        <div class="card mt-3" id="timelineCard" style="display: none;">
+                            <div class="card-header">
+                                <h6>Temporal Filter</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-2">
+                                        <small id="timelineStart" class="text-muted">Start</small>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <input type="range" class="form-range" id="timelineSlider" min="0" max="100" value="100">
+                                    </div>
+                                    <div class="col-md-2 text-end">
+                                        <small id="timelineEnd" class="text-muted">End</small>
+                                    </div>
+                                </div>
+                                <div class="text-center mt-2">
+                                    <small id="currentTimelineValue" class="text-primary">Current: All Time</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Map Results -->
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Map Analysis Results</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="mapResults" class="results-container">
+                                    <div class="text-muted text-center">
+                                        <i class="fas fa-map-marker-alt fa-3x mb-3"></i>
+                                        <p>Use the map controls to search for geographic entities and events.</p>
+                                        <p>Click "Search Map" to begin geospatial analysis.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner Modal -->
+    <div class="modal" id="loadingModal" tabindex="-1">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 mb-0">Processing...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/leaflet.js') }}"></script>
+    <script>if (!window.L) { var lf=document.createElement('script'); lf.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'; document.head.appendChild(lf);} </script>
+    <script src="{{ url_for('static', filename='admin/js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='admin/js/unified-investigation-mcp-sdk.js') }}"></script>
+    
+    <script>
+        // Initialize the MCP Client
+        let mcpClient = null;
+        let currentCorpus = { documents: [] };
+        let loadingModal = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Bootstrap modal
+            loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+            
+            // Initialize MCP client
+            mcpClient = new UnifiedInvestigationMCPClient({
+                baseUrl: window.location.origin,
+                options: {
+                    timeout: 60000,
+                    retries: 3
+                }
+            });
+
+            // Set up connection status monitoring
+            mcpClient.onConnectionStatusChange(updateConnectionStatus);
+            
+            // Set up event listeners
+            setupEventListeners();
+            
+            // Initialize UI
+            updateUI();
+        });
+
+        function setupEventListeners() {
+            // Connection button
+            document.getElementById('connectBtn').addEventListener('click', toggleConnection);
+            
+            // Form submissions
+            document.getElementById('articleIngestionForm').addEventListener('submit', handleArticleIngestion);
+            document.getElementById('websiteIngestionForm').addEventListener('submit', handleWebsiteIngestion);
+            
+            // Analysis buttons
+            document.getElementById('analyzeEntitiesBtn').addEventListener('click', handleEntityAnalysis);
+            document.getElementById('mapRelationshipsBtn').addEventListener('click', handleRelationshipMapping);
+            document.getElementById('analyzeTimelineBtn').addEventListener('click', handleTimelineAnalysis);
+            document.getElementById('detectPatternsBtn').addEventListener('click', handlePatternDetection);
+            document.getElementById('analyzeLegalBtn').addEventListener('click', handleLegalAnalysis);
+            
+            // Workflow buttons
+            document.querySelectorAll('.workflow-btn').forEach(btn => {
+                btn.addEventListener('click', handleWorkflow);
+            });
+            
+            // Range sliders
+            document.getElementById('confidenceThreshold').addEventListener('input', function() {
+                document.getElementById('confidenceValue').textContent = this.value;
+            });
+            
+            document.getElementById('minStrength').addEventListener('input', function() {
+                document.getElementById('strengthValue').textContent = this.value;
+            });
+        }
+
+        async function toggleConnection() {
+            const btn = document.getElementById('connectBtn');
+            
+            if (mcpClient.connected) {
+                await mcpClient.disconnect();
+                btn.innerHTML = '<i class="fas fa-plug"></i> Connect to MCP Server';
+            } else {
+                try {
+                    showLoading();
+                    await mcpClient.connect();
+                    btn.innerHTML = '<i class="fas fa-unlink"></i> Disconnect';
+                    addActivity('Connected to MCP Server');
+                } catch (error) {
+                    console.error('Connection failed:', error);
+                    alert('Failed to connect to MCP Server: ' + error.message);
+                } finally {
+                    hideLoading();
+                }
+            }
+        }
+
+        function updateConnectionStatus(status) {
+            const indicator = document.getElementById('connectionStatus');
+            indicator.className = `connection-status ${status.status}`;
+            
+            const icons = {
+                connected: 'fa-check-circle',
+                disconnected: 'fa-times-circle',
+                error: 'fa-exclamation-triangle'
+            };
+            
+            const labels = {
+                connected: 'Connected',
+                disconnected: 'Disconnected',
+                error: 'Connection Error'
+            };
+            
+            indicator.innerHTML = `<i class="fas ${icons[status.status]}"></i> ${labels[status.status]}`;
+        }
+
+        async function handleArticleIngestion(event) {
+            event.preventDefault();
+            
+            if (!mcpClient.connected) {
+                alert('Please connect to MCP Server first');
+                return;
+            }
+
+            const formData = new FormData(event.target);
+            const url = document.getElementById('articleUrl').value;
+            const sourceType = document.getElementById('sourceType').value;
+            const analysisType = document.getElementById('analysisType').value;
+
+            try {
+                showLoading();
+                const result = await mcpClient.ingestNewsArticle(url, {
+                    sourceType: sourceType,
+                    analysisType: analysisType
+                });
+                
+                displayIngestionResult(result);
+                addActivity(`Ingested article: ${url}`);
+                updateCorpusStats(result);
+                
+            } catch (error) {
+                console.error('Article ingestion failed:', error);
+                alert('Ingestion failed: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function handleWebsiteIngestion(event) {
+            event.preventDefault();
+            
+            if (!mcpClient.connected) {
+                alert('Please connect to MCP Server first');
+                return;
+            }
+
+            const baseUrl = document.getElementById('websiteUrl').value;
+            const maxPages = parseInt(document.getElementById('maxPages').value);
+            const maxDepth = parseInt(document.getElementById('maxDepth').value);
+
+            try {
+                showLoading();
+                const result = await mcpClient.ingestWebsite(baseUrl, {
+                    maxPages: maxPages,
+                    maxDepth: maxDepth
+                });
+                
+                displayIngestionResult(result);
+                addActivity(`Crawled website: ${baseUrl} (${result.crawl_statistics?.successful_pages || 0} pages)`);
+                
+            } catch (error) {
+                console.error('Website ingestion failed:', error);
+                alert('Website crawling failed: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function handleEntityAnalysis() {
+            if (!mcpClient.connected) {
+                alert('Please connect to MCP Server first');
+                return;
+            }
+
+            const entityTypes = Array.from(document.querySelectorAll('.entity-type:checked')).map(cb => cb.value);
+            const confidenceThreshold = parseFloat(document.getElementById('confidenceThreshold').value);
+
+            try {
+                showLoading();
+                const result = await mcpClient.analyzeEntities(currentCorpus, {
+                    entityTypes: entityTypes,
+                    confidenceThreshold: confidenceThreshold
+                });
+                
+                displayEntityResults(result);
+                addActivity(`Analyzed entities: ${result.statistics?.total_entities || 0} found`);
+                
+            } catch (error) {
+                console.error('Entity analysis failed:', error);
+                alert('Entity analysis failed: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function handleRelationshipMapping() {
+            if (!mcpClient.connected) {
+                alert('Please connect to MCP Server first');
+                return;
+            }
+
+            const focusEntity = document.getElementById('focusEntity').value || null;
+            const minStrength = parseFloat(document.getElementById('minStrength').value);
+            const maxDepth = parseInt(document.getElementById('relationshipDepth').value);
+
+            try {
+                showLoading();
+                const result = await mcpClient.mapRelationships(currentCorpus, {
+                    focusEntity: focusEntity,
+                    minStrength: minStrength,
+                    maxDepth: maxDepth
+                });
+                
+                displayRelationshipResults(result);
+                addActivity(`Mapped relationships: ${result.graph_metrics?.edge_count || 0} relationships found`);
+                
+            } catch (error) {
+                console.error('Relationship mapping failed:', error);
+                alert('Relationship mapping failed: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function handleTimelineAnalysis() {
+            if (!mcpClient.connected) {
+                alert('Please connect to MCP Server first');
+                return;
+            }
+
+            const entityId = document.getElementById('timelineEntity').value;
+            if (!entityId) {
+                alert('Please enter an entity ID');
+                return;
+            }
+
+            const timeGranularity = document.getElementById('timeGranularity').value;
+            const includeRelated = document.getElementById('includeRelated').checked;
+
+            try {
+                showLoading();
+                const result = await mcpClient.analyzeEntityTimeline(entityId, currentCorpus, {
+                    timeGranularity: timeGranularity,
+                    includeRelated: includeRelated
+                });
+                
+                displayTimelineResults(result);
+                addActivity(`Analyzed timeline for ${entityId}: ${result.timeline_events?.length || 0} events`);
+                
+            } catch (error) {
+                console.error('Timeline analysis failed:', error);
+                alert('Timeline analysis failed: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function handlePatternDetection() {
+            if (!mcpClient.connected) {
+                alert('Please connect to MCP Server first');
+                return;
+            }
+
+            const patternTypes = Array.from(document.querySelectorAll('.pattern-type:checked')).map(cb => cb.value);
+            const timeWindow = document.getElementById('timeWindow').value;
+
+            try {
+                showLoading();
+                const result = await mcpClient.detectPatterns(currentCorpus, {
+                    patternTypes: patternTypes,
+                    timeWindow: timeWindow
+                });
+                
+                displayPatternResults(result);
+                addActivity(`Detected patterns: ${result.pattern_statistics?.total_patterns || 0} patterns found`);
+                
+            } catch (error) {
+                console.error('Pattern detection failed:', error);
+                alert('Pattern detection failed: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function handleLegalAnalysis() {
+            if (!mcpClient.connected) {
+                alert('Please connect to MCP Server first');
+                return;
+            }
+
+            const conflictTypes = Array.from(document.querySelectorAll('.conflict-type:checked')).map(cb => cb.value);
+            const severityThreshold = document.getElementById('severityThreshold').value;
+
+            try {
+                showLoading();
+                const result = await mcpClient.analyzeDeontologicalConflicts(currentCorpus, {
+                    conflictTypes: conflictTypes,
+                    severityThreshold: severityThreshold
+                });
+                
+                displayLegalResults(result);
+                addActivity(`Legal analysis completed: ${result.statistics?.total_conflicts || 0} conflicts found`);
+                
+            } catch (error) {
+                console.error('Legal analysis failed:', error);
+                alert('Legal analysis failed: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function handleWorkflow(event) {
+            if (!mcpClient.connected) {
+                alert('Please connect to MCP Server first');
+                return;
+            }
+
+            const workflowType = event.target.dataset.workflow;
+            
+            try {
+                showLoading();
+                showWorkflowProgress();
+                
+                const result = await mcpClient.startInvestigationWorkflow(workflowType, {
+                    corpusData: currentCorpus
+                });
+                
+                displayWorkflowResults(result);
+                addActivity(`Completed workflow: ${workflowType}`);
+                
+            } catch (error) {
+                console.error('Workflow failed:', error);
+                alert('Workflow failed: ' + error.message);
+            } finally {
+                hideLoading();
+                hideWorkflowProgress();
+            }
+        }
+
+        // Display functions
+        function displayIngestionResult(result) {
+            const container = document.getElementById('ingestionResults');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'border rounded p-3 mb-2';
+            resultDiv.innerHTML = `
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h6>${result.url || result.base_url || 'Ingestion Result'}</h6>
+                    <span class="badge bg-${result.status === 'completed' ? 'success' : 'danger'}">${result.status}</span>
+                </div>
+                <p class="text-muted mb-1">${JSON.stringify(result.statistics || {}, null, 2)}</p>
+            `;
+            container.appendChild(resultDiv);
+        }
+
+        function displayEntityResults(result) {
+            const container = document.getElementById('entityResults');
+            container.innerHTML = '';
+            
+            if (result.entities && result.entities.length > 0) {
+                result.entities.forEach(entity => {
+                    const entityDiv = document.createElement('div');
+                    entityDiv.className = 'entity-card';
+                    entityDiv.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6>${entity.canonical_name || entity.name}</h6>
+                                <p class="text-muted mb-1">Type: ${entity.type}</p>
+                                <small>Mentions: ${entity.mention_count || 0} | Documents: ${entity.document_count || 0}</small>
+                            </div>
+                            <span class="badge bg-primary">${(entity.confidence_avg || 0).toFixed(2)}</span>
+                        </div>
+                    `;
+                    container.appendChild(entityDiv);
+                });
+                
+                updateEntityCount(result.entities.length);
+            } else {
+                container.innerHTML = '<p class="text-muted">No entities found</p>';
+            }
+        }
+
+        function displayRelationshipResults(result) {
+            const container = document.getElementById('relationshipGraph');
+            container.innerHTML = `
+                <div class="p-4">
+                    <h6>Network Statistics</h6>
+                    <ul class="list-unstyled">
+                        <li>Nodes: ${result.graph_metrics?.node_count || 0}</li>
+                        <li>Edges: ${result.graph_metrics?.edge_count || 0}</li>
+                        <li>Density: ${(result.graph_metrics?.density || 0).toFixed(3)}</li>
+                        <li>Average Degree: ${(result.graph_metrics?.average_degree || 0).toFixed(2)}</li>
+                    </ul>
+                    
+                    <h6 class="mt-4">Relationships</h6>
+                    <div class="relationship-list">
+                        ${result.relationships ? result.relationships.map(rel => `
+                            <div class="border-bottom py-2">
+                                <strong>${rel.entity1}</strong> ↔ <strong>${rel.entity2}</strong>
+                                <br><small class="text-muted">${rel.type} (strength: ${rel.strength.toFixed(2)})</small>
+                            </div>
+                        `).join('') : '<p class="text-muted">No relationships found</p>'}
+                    </div>
+                </div>
+            `;
+            
+            updateRelationshipCount(result.relationships?.length || 0);
+        }
+
+        function displayTimelineResults(result) {
+            const container = document.getElementById('timelineContainer');
+            container.innerHTML = `
+                <div class="p-4">
+                    <h6>Timeline for ${result.entity_id}</h6>
+                    <div class="timeline-events">
+                        ${result.timeline_events ? result.timeline_events.map(event => `
+                            <div class="border-bottom py-2">
+                                <div class="d-flex justify-content-between">
+                                    <strong>${event.description}</strong>
+                                    <small class="text-muted">${event.timestamp}</small>
+                                </div>
+                                <small class="text-muted">Source: ${event.document_source}</small>
+                            </div>
+                        `).join('') : '<p class="text-muted">No timeline events found</p>'}
+                    </div>
+                </div>
+            `;
+        }
+
+        function displayPatternResults(result) {
+            const container = document.getElementById('patternResults');
+            container.innerHTML = '';
+            
+            if (result.patterns && result.patterns.length > 0) {
+                result.patterns.forEach(pattern => {
+                    const patternDiv = document.createElement('div');
+                    patternDiv.className = 'border rounded p-3 mb-2';
+                    patternDiv.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6>${pattern.pattern_name}</h6>
+                                <p class="mb-1">${pattern.description}</p>
+                                <small class="text-muted">Entities: ${pattern.entities?.join(', ') || 'N/A'}</small>
+                            </div>
+                            <span class="badge bg-info">${(pattern.confidence || 0).toFixed(2)}</span>
+                        </div>
+                    `;
+                    container.appendChild(patternDiv);
+                });
+            } else {
+                container.innerHTML = '<p class="text-muted">No patterns detected</p>';
+            }
+        }
+
+        function displayLegalResults(result) {
+            const container = document.getElementById('legalResults');
+            container.innerHTML = '';
+            
+            // Display conflicts
+            if (result.conflicts && result.conflicts.length > 0) {
+                const conflictsDiv = document.createElement('div');
+                conflictsDiv.innerHTML = '<h6>Detected Conflicts</h6>';
+                
+                result.conflicts.forEach(conflict => {
+                    const conflictDiv = document.createElement('div');
+                    conflictDiv.className = 'conflict-alert';
+                    conflictDiv.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <strong>${conflict.description}</strong>
+                                <br><small>Type: ${conflict.type} | Severity: ${conflict.severity}</small>
+                                <br><small>Entities: ${conflict.entities?.join(', ') || 'N/A'}</small>
+                            </div>
+                        </div>
+                    `;
+                    conflictsDiv.appendChild(conflictDiv);
+                });
+                
+                container.appendChild(conflictsDiv);
+            }
+            
+            // Display deontic statements
+            if (result.deontic_statements && result.deontic_statements.length > 0) {
+                const statementsDiv = document.createElement('div');
+                statementsDiv.innerHTML = '<h6 class="mt-4">Deontic Statements</h6>';
+                
+                result.deontic_statements.slice(0, 10).forEach(statement => {
+                    const statementDiv = document.createElement('div');
+                    statementDiv.className = 'deontic-statement';
+                    statementDiv.innerHTML = `
+                        <strong>${statement.entity}</strong> ${statement.modality} ${statement.action}
+                        <br><small class="text-muted">Confidence: ${(statement.confidence || 0).toFixed(2)}</small>
+                    `;
+                    statementsDiv.appendChild(statementDiv);
+                });
+                
+                container.appendChild(statementsDiv);
+            }
+            
+            if (container.children.length === 0) {
+                container.innerHTML = '<p class="text-muted">No legal conflicts detected</p>';
+            }
+        }
+
+        function displayWorkflowResults(result) {
+            console.log('Workflow completed:', result);
+            // Add workflow-specific result display logic here
+        }
+
+        function showWorkflowProgress() {
+            document.getElementById('workflowIdle').style.display = 'none';
+            document.getElementById('workflowProgress').style.display = 'block';
+        }
+
+        function hideWorkflowProgress() {
+            document.getElementById('workflowIdle').style.display = 'block';
+            document.getElementById('workflowProgress').style.display = 'none';
+        }
+
+        function showLoading() {
+            loadingModal.show();
+        }
+
+        function hideLoading() {
+            loadingModal.hide();
+        }
+
+        function addActivity(message) {
+            const activityList = document.getElementById('recentActivity');
+            const listItem = document.createElement('li');
+            listItem.innerHTML = `
+                <div class="d-flex justify-content-between">
+                    <span>${message}</span>
+                    <small class="text-muted">${new Date().toLocaleTimeString()}</small>
+                </div>
+            `;
+            
+            // Keep only the latest 10 activities
+            if (activityList.children.length >= 10) {
+                activityList.removeChild(activityList.lastChild);
+            }
+            
+            activityList.insertBefore(listItem, activityList.firstChild);
+        }
+
+        function updateCorpusStats(result) {
+            // Mock update - in real implementation would track actual corpus
+            const currentSize = parseInt(document.getElementById('corpusSize').textContent) || 0;
+            document.getElementById('corpusSize').textContent = currentSize + 1;
+        }
+
+        function updateEntityCount(count) {
+            document.getElementById('entityCount').textContent = count;
+        }
+
+        function updateRelationshipCount(count) {
+            document.getElementById('relationshipCount').textContent = count;
+        }
+
+        // Map functionality
+        let investigationMap = null;
+        let mapMarkers = [];
+        let mapClusters = [];
+        let currentMapData = null;
+        let timelineData = null;
+        let isTimelineVisible = false;
+
+        // Initialize map when Maps tab is shown
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add event listener for Maps tab
+            const mapsTab = document.getElementById('maps-tab');
+            if (mapsTab) {
+                mapsTab.addEventListener('shown.bs.tab', function () {
+                    initializeMap();
+                });
+            }
+        });
+
+        function initializeMap() {
+            if (investigationMap) return; // Already initialized
+
+            // Initialize Leaflet map
+            investigationMap = L.map('investigationMap').setView([40.7128, -74.0060], 4); // Default to New York
+
+            // Add OpenStreetMap tiles (no API key required)
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 18
+            }).addTo(investigationMap);
+
+            // Add click handler for map
+            investigationMap.on('click', function(e) {
+                const lat = e.latlng.lat.toFixed(6);
+                const lng = e.latlng.lng.toFixed(6);
+                console.log('Map clicked at:', lat, lng);
+            });
+
+            addActivity('Map initialized successfully');
+        }
+
+        function changeMapView() {
+            if (!investigationMap) return;
+
+            const viewType = document.getElementById('mapViewType').value;
+            
+            // Clear existing tile layers
+            investigationMap.eachLayer(function(layer) {
+                if (layer instanceof L.TileLayer) {
+                    investigationMap.removeLayer(layer);
+                }
+            });
+
+            let tileLayer;
+            switch(viewType) {
+                case 'satellite':
+                    tileLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                        attribution: 'Tiles © Esri'
+                    });
+                    break;
+                case 'terrain':
+                    tileLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenTopoMap contributors'
+                    });
+                    break;
+                case 'hybrid':
+                    tileLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                        attribution: 'Tiles © Esri'
+                    });
+                    break;
+                default: // street
+                    tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap contributors'
+                    });
+            }
+            
+            tileLayer.addTo(investigationMap);
+        }
+
+        async function searchGeospatialData() {
+            if (!mcpClient) {
+                alert('Please connect to MCP server first');
+                return;
+            }
+
+            showLoading();
+            
+            try {
+                const query = document.getElementById('mapQuery').value;
+                const centerLocation = document.getElementById('centerLocation').value;
+                const radius = parseFloat(document.getElementById('searchRadius').value);
+                
+                const result = await mcpClient.call_tool('query_geographic_context', {
+                    query: query || 'map all entities',
+                    corpus_data: JSON.stringify(currentCorpus),
+                    radius_km: radius,
+                    center_location: centerLocation,
+                    include_related_entities: true,
+                    temporal_context: true
+                });
+
+                if (result.isError) {
+                    throw new Error(result.content[0]?.text || 'Geographic query failed');
+                }
+
+                displayMapResults(result.content[0]?.text ? JSON.parse(result.content[0].text) : result);
+                addActivity(`Geographic search completed: ${result.total_results || 0} results`);
+
+            } catch (error) {
+                console.error('Error searching geospatial data:', error);
+                alert('Error searching geospatial data: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function extractGeographicEntities() {
+            if (!mcpClient) {
+                alert('Please connect to MCP server first');
+                return;
+            }
+
+            showLoading();
+            
+            try {
+                const result = await mcpClient.call_tool('extract_geographic_entities', {
+                    corpus_data: JSON.stringify(currentCorpus),
+                    confidence_threshold: 0.7,
+                    include_coordinates: true
+                });
+
+                if (result.isError) {
+                    throw new Error(result.content[0]?.text || 'Entity extraction failed');
+                }
+
+                const entities = result.content[0]?.text ? JSON.parse(result.content[0].text) : result;
+                displayExtractedEntities(entities);
+                addActivity(`Extracted ${entities.total_entities || 0} geographic entities`);
+
+            } catch (error) {
+                console.error('Error extracting geographic entities:', error);
+                alert('Error extracting geographic entities: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function analyzeSpationTemporal() {
+            if (!mcpClient) {
+                alert('Please connect to MCP server first');
+                return;
+            }
+
+            showLoading();
+            
+            try {
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+                const clusterDistance = parseFloat(document.getElementById('clusterDistance').value);
+
+                const timeRange = startDate && endDate ? {
+                    start: startDate + 'T00:00:00Z',
+                    end: endDate + 'T23:59:59Z'
+                } : null;
+
+                const result = await mcpClient.call_tool('map_spatiotemporal_events', {
+                    corpus_data: JSON.stringify(currentCorpus),
+                    time_range: timeRange,
+                    clustering_distance: clusterDistance,
+                    temporal_resolution: 'day'
+                });
+
+                if (result.isError) {
+                    throw new Error(result.content[0]?.text || 'Spatiotemporal analysis failed');
+                }
+
+                const events = result.content[0]?.text ? JSON.parse(result.content[0].text) : result;
+                displaySpatiotemporalEvents(events);
+                addActivity(`Analyzed ${events.total_events || 0} spatiotemporal events`);
+
+            } catch (error) {
+                console.error('Error analyzing spatiotemporal events:', error);
+                alert('Error analyzing spatiotemporal events: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function displayMapResults(result) {
+            currentMapData = result;
+            
+            // Update statistics
+            document.getElementById('mapEntityCount').textContent = result.total_results || 0;
+            document.getElementById('mapEventCount').textContent = result.results?.length || 0;
+
+            // Clear existing markers
+            clearMapMarkers();
+
+            // Add markers to map
+            if (result.results && investigationMap) {
+                result.results.forEach((entity, index) => {
+                    if (entity.coordinates) {
+                        const [lat, lng] = entity.coordinates;
+                        
+                        const marker = L.marker([lat, lng])
+                            .bindPopup(`
+                                <div>
+                                    <h6>${entity.entity}</h6>
+                                    <p><strong>Type:</strong> ${entity.entity_type}</p>
+                                    <p><strong>Confidence:</strong> ${(entity.confidence * 100).toFixed(1)}%</p>
+                                    <p><strong>Context:</strong> ${entity.context_snippet || 'N/A'}</p>
+                                    ${entity.related_entities ? `<p><strong>Related:</strong> ${entity.related_entities.map(r => r.entity).join(', ')}</p>` : ''}
+                                </div>
+                            `)
+                            .addTo(investigationMap);
+                            
+                        mapMarkers.push(marker);
+                    }
+                });
+
+                // Fit map to markers if any exist
+                if (mapMarkers.length > 0) {
+                    const group = new L.featureGroup(mapMarkers);
+                    investigationMap.fitBounds(group.getBounds().pad(0.1));
+                }
+            }
+
+            // Display results in table
+            const container = document.getElementById('mapResults');
+            container.innerHTML = '';
+            
+            if (result.results && result.results.length > 0) {
+                const table = document.createElement('table');
+                table.className = 'table table-striped';
+                table.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th>Entity</th>
+                            <th>Location</th>
+                            <th>Confidence</th>
+                            <th>Context</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${result.results.map(entity => `
+                            <tr>
+                                <td>${entity.entity}</td>
+                                <td>${entity.coordinates ? `${entity.coordinates[0].toFixed(4)}, ${entity.coordinates[1].toFixed(4)}` : 'N/A'}</td>
+                                <td><span class="badge bg-primary">${(entity.confidence * 100).toFixed(1)}%</span></td>
+                                <td>${entity.context_snippet ? entity.context_snippet.substring(0, 100) + '...' : 'N/A'}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="focusMapOnEntity('${entity.entity}')">
+                                        <i class="fas fa-crosshairs"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                `;
+                container.appendChild(table);
+            } else {
+                container.innerHTML = '<p class="text-muted">No geographic entities found</p>';
+            }
+        }
+
+        function displayExtractedEntities(entities) {
+            // Update statistics
+            document.getElementById('mapEntityCount').textContent = entities.total_entities || 0;
+            document.getElementById('mapClusterCount').textContent = entities.mappable_entities || 0;
+
+            // Clear existing markers
+            clearMapMarkers();
+
+            // Add markers to map
+            if (entities.entities && investigationMap) {
+                entities.entities.forEach(entity => {
+                    if (entity.coordinates) {
+                        const [lat, lng] = entity.coordinates;
+                        
+                        const marker = L.marker([lat, lng])
+                            .bindPopup(`
+                                <div>
+                                    <h6>${entity.entity}</h6>
+                                    <p><strong>Frequency:</strong> ${entity.frequency}</p>
+                                    <p><strong>Confidence:</strong> ${(entity.confidence * 100).toFixed(1)}%</p>
+                                    <p><strong>Documents:</strong> ${entity.documents?.length || 0}</p>
+                                    <p><strong>Context:</strong> ${entity.context_snippet || 'N/A'}</p>
+                                </div>
+                            `)
+                            .addTo(investigationMap);
+                            
+                        mapMarkers.push(marker);
+                    }
+                });
+
+                // Fit map to markers if any exist
+                if (mapMarkers.length > 0) {
+                    const group = new L.featureGroup(mapMarkers);
+                    investigationMap.fitBounds(group.getBounds().pad(0.1));
+                }
+            }
+
+            // Display results
+            const container = document.getElementById('mapResults');
+            container.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Extraction Summary</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Total Entities:</strong> ${entities.total_entities}</li>
+                            <li><strong>Mappable Entities:</strong> ${entities.mappable_entities}</li>
+                            <li><strong>Geographic Coverage:</strong> ${entities.geographic_coverage?.regions?.length || 0} regions</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Top Locations</h6>
+                        <div class="list-group list-group-flush">
+                            ${entities.entities?.slice(0, 5).map(entity => `
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>${entity.entity}</span>
+                                    <span class="badge bg-primary rounded-pill">${entity.frequency}</span>
+                                </div>
+                            `).join('') || '<p class="text-muted">No entities found</p>'}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function displaySpatiotemporalEvents(events) {
+            timelineData = events;
+            
+            // Update statistics
+            document.getElementById('mapEventCount').textContent = events.total_events || 0;
+            document.getElementById('mapClusterCount').textContent = Object.keys(events.spatial_clusters || {}).length;
+            
+            if (events.events && events.events.length > 0) {
+                const timeSpan = calculateTimeSpan(events.events);
+                document.getElementById('mapTimeSpan').textContent = timeSpan;
+            }
+
+            // Clear existing markers
+            clearMapMarkers();
+
+            // Add event markers to map
+            if (events.events && investigationMap) {
+                events.events.forEach(event => {
+                    if (event.latitude && event.longitude) {
+                        const eventIcon = L.divIcon({
+                            className: 'event-marker',
+                            html: `<div style="background-color: #ff6b6b; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px;"><i class="fas fa-calendar"></i></div>`,
+                            iconSize: [20, 20]
+                        });
+                        
+                        const marker = L.marker([event.latitude, event.longitude], {icon: eventIcon})
+                            .bindPopup(`
+                                <div>
+                                    <h6>${event.entity} - ${event.event_type}</h6>
+                                    <p><strong>Time:</strong> ${new Date(event.timestamp).toLocaleDateString()}</p>
+                                    <p><strong>Confidence:</strong> ${(event.confidence * 100).toFixed(1)}%</p>
+                                    <p><strong>Context:</strong> ${event.context ? event.context.substring(0, 150) + '...' : 'N/A'}</p>
+                                    <p><strong>Clusters:</strong> ${event.temporal_cluster}, ${event.spatial_cluster}</p>
+                                </div>
+                            `)
+                            .addTo(investigationMap);
+                            
+                        mapMarkers.push(marker);
+                    }
+                });
+
+                // Fit map to markers if any exist
+                if (mapMarkers.length > 0) {
+                    const group = new L.featureGroup(mapMarkers);
+                    investigationMap.fitBounds(group.getBounds().pad(0.1));
+                }
+            }
+
+            // Display analysis results
+            const container = document.getElementById('mapResults');
+            container.innerHTML = `
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6>Event Statistics</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Total Events:</strong> ${events.total_events}</li>
+                            <li><strong>Temporal Clusters:</strong> ${Object.keys(events.temporal_clusters || {}).length}</li>
+                            <li><strong>Spatial Clusters:</strong> ${Object.keys(events.spatial_clusters || {}).length}</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Event Types</h6>
+                        <div class="list-group list-group-flush">
+                            ${Object.entries(events.statistics?.event_types || {}).slice(0, 5).map(([type, count]) => `
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>${type}</span>
+                                    <span class="badge bg-secondary rounded-pill">${count}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Top Locations</h6>
+                        <div class="list-group list-group-flush">
+                            ${Object.entries(events.statistics?.top_locations || {}).slice(0, 5).map(([location, count]) => `
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>${location}</span>
+                                    <span class="badge bg-info rounded-pill">${count}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function focusMapOnEntity(entityName) {
+            if (!currentMapData || !investigationMap) return;
+
+            const entity = currentMapData.results?.find(e => e.entity === entityName);
+            if (entity && entity.coordinates) {
+                investigationMap.setView(entity.coordinates, 10);
+                
+                // Find and open the marker popup
+                mapMarkers.forEach(marker => {
+                    const popup = marker.getPopup();
+                    if (popup && popup.getContent().includes(entityName)) {
+                        marker.openPopup();
+                    }
+                });
+            }
+        }
+
+        function toggleTimeline() {
+            const timelineCard = document.getElementById('timelineCard');
+            isTimelineVisible = !isTimelineVisible;
+            
+            if (isTimelineVisible) {
+                timelineCard.style.display = 'block';
+                setupTimelineSlider();
+            } else {
+                timelineCard.style.display = 'none';
+            }
+        }
+
+        function toggleClustering() {
+            // Toggle marker clustering (simplified implementation)
+            if (mapMarkers.length > 0) {
+                const cluster = document.getElementById('clusterDistance').value;
+                addActivity(`Clustering toggled with ${cluster}km distance`);
+            }
+        }
+
+        function resetMapView() {
+            if (investigationMap) {
+                investigationMap.setView([40.7128, -74.0060], 4);
+                clearMapMarkers();
+                document.getElementById('mapResults').innerHTML = `
+                    <div class="text-muted text-center">
+                        <i class="fas fa-map-marker-alt fa-3x mb-3"></i>
+                        <p>Map reset. Use the map controls to search for geographic entities and events.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function clearMapMarkers() {
+            mapMarkers.forEach(marker => {
+                if (investigationMap) {
+                    investigationMap.removeLayer(marker);
+                }
+            });
+            mapMarkers = [];
+        }
+
+        function setupTimelineSlider() {
+            if (!timelineData || !timelineData.events) return;
+
+            const events = timelineData.events;
+            const timestamps = events.map(e => new Date(e.timestamp)).sort((a, b) => a - b);
+            
+            if (timestamps.length === 0) return;
+
+            const startTime = timestamps[0];
+            const endTime = timestamps[timestamps.length - 1];
+            
+            document.getElementById('timelineStart').textContent = startTime.toLocaleDateString();
+            document.getElementById('timelineEnd').textContent = endTime.toLocaleDateString();
+            
+            const slider = document.getElementById('timelineSlider');
+            slider.oninput = function() {
+                const percentage = this.value / 100;
+                const currentTime = new Date(startTime.getTime() + (endTime.getTime() - startTime.getTime()) * percentage);
+                
+                document.getElementById('currentTimelineValue').textContent = `Current: ${currentTime.toLocaleDateString()}`;
+                
+                // Filter markers based on timeline
+                filterMarkersByTime(currentTime);
+            };
+        }
+
+        function filterMarkersByTime(currentTime) {
+            if (!timelineData || !timelineData.events) return;
+
+            clearMapMarkers();
+            
+            timelineData.events.forEach(event => {
+                const eventTime = new Date(event.timestamp);
+                if (eventTime <= currentTime && event.latitude && event.longitude) {
+                    const eventIcon = L.divIcon({
+                        className: 'event-marker',
+                        html: `<div style="background-color: #28a745; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px;"><i class="fas fa-calendar"></i></div>`,
+                        iconSize: [20, 20]
+                    });
+                    
+                    const marker = L.marker([event.latitude, event.longitude], {icon: eventIcon})
+                        .bindPopup(`
+                            <div>
+                                <h6>${event.entity} - ${event.event_type}</h6>
+                                <p><strong>Time:</strong> ${eventTime.toLocaleDateString()}</p>
+                                <p><strong>Context:</strong> ${event.context ? event.context.substring(0, 150) + '...' : 'N/A'}</p>
+                            </div>
+                        `)
+                        .addTo(investigationMap);
+                        
+                    mapMarkers.push(marker);
+                }
+            });
+        }
+
+        function calculateTimeSpan(events) {
+            if (!events || events.length === 0) return '0d';
+            
+            const timestamps = events.map(e => new Date(e.timestamp));
+            const earliest = Math.min(...timestamps);
+            const latest = Math.max(...timestamps);
+            const diffDays = Math.ceil((latest - earliest) / (1000 * 60 * 60 * 24));
+            
+            return `${diffDays}d`;
+        }
+
+        function exportMapData() {
+            if (!currentMapData) {
+                alert('No map data to export');
+                return;
+            }
+
+            const exportData = {
+                query_results: currentMapData,
+                timeline_data: timelineData,
+                export_timestamp: new Date().toISOString(),
+                map_view: investigationMap ? {
+                    center: investigationMap.getCenter(),
+                    zoom: investigationMap.getZoom()
+                } : null
+            };
+
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `map_analysis_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            
+            URL.revokeObjectURL(url);
+            addActivity('Map data exported successfully');
+        }
+
+        // Add map view change listener
+        document.addEventListener('DOMContentLoaded', function() {
+            const mapViewSelect = document.getElementById('mapViewType');
+            if (mapViewSelect) {
+                mapViewSelect.addEventListener('change', changeMapView);
+            }
+        });
+
+        function updateUI() {
+            // Initialize any UI state
+            document.getElementById('confidenceValue').textContent = '0.85';
+            document.getElementById('strengthValue').textContent = '0.5';
+        }
+    </script>
+</body>
+</html>

@@ -35,7 +35,9 @@ import unicodedata
 
 DEFAULT_REPO_ID = "Publicus/cvefixes-security-ir-graphrag"
 DEFAULT_MANIFEST = "manifest.json"
-DEFAULT_CACHE_DIR = Path("~/.cache/ipfs_datasets_py/cvefixes-security-ir-query").expanduser()
+DEFAULT_CACHE_DIR = Path(
+    "~/.cache/ipfs_datasets_py/cvefixes-security-ir-query"
+).expanduser()
 
 SUPPORTED_RELEASE_SCHEMAS = {
     "cvefixes-huggingface-release/v1",
@@ -65,9 +67,13 @@ _PART_RE = re.compile(r"part-\d{6}\.parquet")
 _INDEX_PATHS = {
     "bm25_keyword_shards": "indexes/bm25_keyword_shards.parquet",
     "corpus_chunks": "indexes/corpus_chunks.parquet",
-    "graph_incoming_adjacency": ("indexes/graph_incoming_adjacency.parquet"),
+    "graph_incoming_adjacency": (
+        "indexes/graph_incoming_adjacency.parquet"
+    ),
     "graph_node_chunks": "indexes/graph_node_chunks.parquet",
-    "graph_outgoing_adjacency": ("indexes/graph_outgoing_adjacency.parquet"),
+    "graph_outgoing_adjacency": (
+        "indexes/graph_outgoing_adjacency.parquet"
+    ),
     "vector_chunks": "indexes/vector_chunks.parquet",
 }
 _DATA_PREFIXES = {
@@ -114,7 +120,9 @@ class _GraphShardBudgetReached(RuntimeError):
 def _validate_revision(value: str) -> str:
     revision = str(value or "")
     if _REVISION_RE.fullmatch(revision) is None:
-        raise RemoteQueryError("revision must be an immutable 40-character Hub commit SHA")
+        raise RemoteQueryError(
+            "revision must be an immutable 40-character Hub commit SHA"
+        )
     return revision.lower()
 
 
@@ -174,7 +182,9 @@ def _verify_descriptor(path: Path, value: Mapping[str, Any]) -> None:
             while chunk := handle.read(8 * 1024 * 1024):
                 digest.update(chunk)
     except OSError as exc:
-        raise RemoteQueryError(f"cannot read fetched artifact: {path.name}") from exc
+        raise RemoteQueryError(
+            f"cannot read fetched artifact: {path.name}"
+        ) from exc
     raw_digest = digest.digest()
     if raw_digest.hex() != value["sha256"]:
         raise RemoteQueryError(f"artifact digest differs: {path.name}")
@@ -196,7 +206,9 @@ class ArtifactResolver:
         local_root: Path | None = None,
     ) -> None:
         self.repo_id = str(repo_id)
-        if "/" not in self.repo_id or any(character.isspace() for character in self.repo_id):
+        if "/" not in self.repo_id or any(
+            character.isspace() for character in self.repo_id
+        ):
             raise RemoteQueryError("dataset repo_id is malformed")
         self.revision = _validate_revision(revision)
         self.path_prefix = path_prefix.strip("/")
@@ -204,9 +216,15 @@ class ArtifactResolver:
             _safe_relative_path(self.path_prefix)
         self._token = token
         self.cache_dir = cache_dir.expanduser().resolve()
-        self.local_root = local_root.expanduser().resolve() if local_root is not None else None
+        self.local_root = (
+            local_root.expanduser().resolve()
+            if local_root is not None
+            else None
+        )
         self.fetched: dict[str, int] = {}
-        self._parquet_cache: dict[tuple[str, tuple[str, ...] | None], Any] = {}
+        self._parquet_cache: dict[
+            tuple[str, tuple[str, ...] | None], Any
+        ] = {}
 
     def path(
         self,
@@ -222,14 +240,20 @@ class ArtifactResolver:
             except ValueError as exc:
                 raise RemoteQueryError("local path escapes release root") from exc
             if path.is_symlink() or not path.is_file():
-                raise RemoteQueryError(f"release file is missing: {safe.as_posix()}")
+                raise RemoteQueryError(
+                    f"release file is missing: {safe.as_posix()}"
+                )
         else:
             try:
                 from huggingface_hub import hf_hub_download
             except ImportError as exc:
-                raise RemoteQueryError("huggingface_hub is required for remote queries") from exc
+                raise RemoteQueryError(
+                    "huggingface_hub is required for remote queries"
+                ) from exc
             filename = (
-                f"{self.path_prefix}/{safe.as_posix()}" if self.path_prefix else safe.as_posix()
+                f"{self.path_prefix}/{safe.as_posix()}"
+                if self.path_prefix
+                else safe.as_posix()
             )
             try:
                 path = Path(
@@ -257,11 +281,17 @@ class ArtifactResolver:
 
     def json(self, relative_path: str) -> dict[str, Any]:
         try:
-            value = json.loads(self.path(relative_path).read_text(encoding="utf-8"))
+            value = json.loads(
+                self.path(relative_path).read_text(encoding="utf-8")
+            )
         except (OSError, UnicodeError, json.JSONDecodeError) as exc:
-            raise RemoteQueryError(f"JSON artifact is malformed: {relative_path}") from exc
+            raise RemoteQueryError(
+                f"JSON artifact is malformed: {relative_path}"
+            ) from exc
         if not isinstance(value, dict):
-            raise RemoteQueryError(f"JSON artifact must be an object: {relative_path}")
+            raise RemoteQueryError(
+                f"JSON artifact must be an object: {relative_path}"
+            )
         return value
 
     def parquet(
@@ -273,7 +303,9 @@ class ArtifactResolver:
         try:
             import pyarrow.parquet as pq
         except ImportError as exc:
-            raise RemoteQueryError("pyarrow is required for remote Parquet queries") from exc
+            raise RemoteQueryError(
+                "pyarrow is required for remote Parquet queries"
+            ) from exc
         relative_path = _descriptor_path(descriptor)
         key = (
             relative_path,
@@ -290,12 +322,18 @@ class ArtifactResolver:
         except RemoteQueryError:
             raise
         except Exception:
-            raise RemoteQueryError(f"cannot decode Parquet artifact: {relative_path}") from None
+            raise RemoteQueryError(
+                f"cannot decode Parquet artifact: {relative_path}"
+            ) from None
         expected_rows = descriptor.get("row_count")
         if expected_rows is not None and (
-            type(expected_rows) is not int or expected_rows <= 0 or table.num_rows != expected_rows
+            type(expected_rows) is not int
+            or expected_rows <= 0
+            or table.num_rows != expected_rows
         ):
-            raise RemoteQueryError(f"Parquet row count differs: {relative_path}")
+            raise RemoteQueryError(
+                f"Parquet row count differs: {relative_path}"
+            )
         self._parquet_cache[key] = table
         return table
 
@@ -326,7 +364,9 @@ def _validate_meta_rows(
         path = _descriptor_path(row)
         suffix = path[len(prefix) :] if path.startswith(prefix) else ""
         if not suffix or _PART_RE.fullmatch(suffix) is None:
-            raise RemoteQueryError(f"{name} contains an unexpected data path")
+            raise RemoteQueryError(
+                f"{name} contains an unexpected data path"
+            )
         if path in paths:
             raise RemoteQueryError(f"{name} contains a duplicate shard path")
         paths.add(path)
@@ -352,27 +392,46 @@ def _validate_meta_rows(
         start = row.get("start_document_index")
         end = row.get("end_document_index")
         if name in _DOCUMENT_RANGE_INDEXES:
-            if type(start) is not int or type(end) is not int or start < 0 or end < start:
-                raise RemoteQueryError(f"{name} has an invalid document range")
+            if (
+                type(start) is not int
+                or type(end) is not int
+                or start < 0
+                or end < start
+            ):
+                raise RemoteQueryError(
+                    f"{name} has an invalid document range"
+                )
         elif start != -1 or end != -1:
-            raise RemoteQueryError(f"{name} must not declare document ranges")
+            raise RemoteQueryError(
+                f"{name} must not declare document ranges"
+            )
         if "adjacency" in name:
-            expected_direction = "incoming" if "incoming" in name else "outgoing"
+            expected_direction = (
+                "incoming" if "incoming" in name else "outgoing"
+            )
             if row.get("direction") != expected_direction:
-                raise RemoteQueryError(f"{name} has an invalid adjacency direction")
+                raise RemoteQueryError(
+                    f"{name} has an invalid adjacency direction"
+                )
     if shard_ids != set(range(len(rows))):
         raise RemoteQueryError(f"{name} shard IDs are not contiguous")
     if name in _NON_OVERLAPPING_KEY_INDEXES:
-        by_range = sorted(rows, key=lambda item: (str(item["first_key"]), int(item["shard_id"])))
+        by_range = sorted(
+            rows, key=lambda item: (str(item["first_key"]), int(item["shard_id"]))
+        )
         for left, right in zip(by_range, by_range[1:]):
             if str(left["last_key"]) >= str(right["first_key"]):
-                raise RemoteQueryError(f"{name} contains overlapping key ranges")
+                raise RemoteQueryError(
+                    f"{name} contains overlapping key ranges"
+                )
 
 
 def _require_columns(table: Any, columns: Sequence[str], *, label: str) -> None:
     missing = [column for column in columns if column not in table.column_names]
     if missing:
-        raise RemoteQueryError(f"{label} is missing required columns: {', '.join(missing)}")
+        raise RemoteQueryError(
+            f"{label} is missing required columns: {', '.join(missing)}"
+        )
 
 
 def _validate_loaded_shard(
@@ -394,7 +453,11 @@ def _validate_loaded_shard(
     elif name == "vector_chunks":
         key_column = "entry_cid"
     else:
-        key_column = "entry_cid" if "entry_cid" in table.column_names else "record_id"
+        key_column = (
+            "entry_cid"
+            if "entry_cid" in table.column_names
+            else "record_id"
+        )
     _require_columns(table, [key_column], label=path)
     keys = [str(value) for value in table[key_column].to_pylist()]
     if (
@@ -414,19 +477,27 @@ def _validate_loaded_shard(
             if end - start + 1 != table.num_rows:
                 raise RemoteQueryError(f"document range differs: {path}")
         else:
-            document_ids = [int(value) for value in table["document_index"].to_pylist()]
+            document_ids = [
+                int(value) for value in table["document_index"].to_pylist()
+            ]
             if (
                 len(document_ids) != len(set(document_ids))
                 or min(document_ids) != start
                 or max(document_ids) != end
             ):
                 raise RemoteQueryError(f"document range differs: {path}")
-            if name == "corpus_chunks" and document_ids != list(range(start, end + 1)):
-                raise RemoteQueryError(f"corpus document range is not contiguous: {path}")
+            if name == "corpus_chunks" and document_ids != list(
+                range(start, end + 1)
+            ):
+                raise RemoteQueryError(
+                    f"corpus document range is not contiguous: {path}"
+                )
 
     if "adjacency" in name:
         _require_columns(table, ["direction"], label=path)
-        expected_direction = "incoming" if "incoming" in name else "outgoing"
+        expected_direction = (
+            "incoming" if "incoming" in name else "outgoing"
+        )
         if set(table["direction"].to_pylist()) != {expected_direction}:
             raise RemoteQueryError(f"adjacency direction differs: {path}")
 
@@ -448,7 +519,9 @@ def _tokenize(text: str) -> list[str]:
     for match in _TOKEN_RE.findall(normalized):
         tokens = [match]
         if _TOKEN_SPLIT_RE.search(match):
-            tokens.extend(part for part in _TOKEN_SPLIT_RE.split(match) if part)
+            tokens.extend(
+                part for part in _TOKEN_SPLIT_RE.split(match) if part
+            )
         for token in tokens:
             if token not in seen:
                 seen.add(token)
@@ -473,7 +546,9 @@ def _bm25_term_score(
     b: float,
 ) -> float:
     denominator = term_frequency + k1 * (
-        1.0 - b + b * float(document_length) / max(average_document_length, 1.0)
+        1.0
+        - b
+        + b * float(document_length) / max(average_document_length, 1.0)
     )
     if denominator <= 0:
         raise RemoteQueryError("BM25 posting has an invalid denominator")
@@ -487,10 +562,14 @@ def _select_keyword_shards(
     selected: dict[str, Mapping[str, Any]] = {}
     for term in terms:
         matches = [
-            row for row in meta_rows if str(row["first_key"]) <= term <= str(row["last_key"])
+            row
+            for row in meta_rows
+            if str(row["first_key"]) <= term <= str(row["last_key"])
         ]
         if len(matches) > 1:
-            raise RemoteQueryError(f"overlapping BM25 keyword shard ranges for {term!r}")
+            raise RemoteQueryError(
+                f"overlapping BM25 keyword shard ranges for {term!r}"
+            )
         if matches:
             selected[term] = matches[0]
     return selected
@@ -523,21 +602,32 @@ def _vector_routing_groups(
         grouped[cluster_id].append(row)
     result = []
     for cluster_id in sorted(grouped):
-        shards = sorted(grouped[cluster_id], key=lambda row: int(row["chunk_in_cluster"]))
+        shards = sorted(
+            grouped[cluster_id], key=lambda row: int(row["chunk_in_cluster"])
+        )
         try:
             centroid = [float(value) for value in shards[0]["centroid"]]
             remaining_centroids = [
-                [float(value) for value in row["centroid"]] for row in shards[1:]
+                [float(value) for value in row["centroid"]]
+                for row in shards[1:]
             ]
         except (TypeError, ValueError, OverflowError):
-            raise RemoteQueryError("vector centroid meta-index is malformed") from None
+            raise RemoteQueryError(
+                "vector centroid meta-index is malformed"
+            ) from None
         if (
-            [int(row["chunk_in_cluster"]) for row in shards] != list(range(len(shards)))
-            or any(int(row["centroid_shard_count"]) != len(shards) for row in shards)
+            [int(row["chunk_in_cluster"]) for row in shards]
+            != list(range(len(shards)))
+            or any(
+                int(row["centroid_shard_count"]) != len(shards)
+                for row in shards
+            )
             or any(value != centroid for value in remaining_centroids)
             or any(not math.isfinite(value) for value in centroid)
         ):
-            raise RemoteQueryError(f"vector centroid {cluster_id} has malformed shard pointers")
+            raise RemoteQueryError(
+                f"vector centroid {cluster_id} has malformed shard pointers"
+            )
         norm = math.sqrt(sum(value * value for value in centroid))
         if not math.isfinite(norm) or norm == 0:
             raise RemoteQueryError("vector routing centroid is zero or non-finite")
@@ -568,7 +658,9 @@ class CVEfixesRemoteIndex:
             raise RemoteQueryError("unsupported CVEfixes release manifest")
         primary_key = self.manifest.get("primary_key")
         if primary_key not in {None, "entry_cid"}:
-            raise RemoteQueryError("CVEfixes release primary key must be entry_cid")
+            raise RemoteQueryError(
+                "CVEfixes release primary key must be entry_cid"
+            )
         indexes = self.manifest.get("indexes")
         if not isinstance(indexes, Mapping):
             raise RemoteQueryError("release index descriptors are missing")
@@ -614,10 +706,14 @@ class CVEfixesRemoteIndex:
             matches = [
                 row
                 for row in meta
-                if int(row["start_document_index"]) <= document_id <= int(row["end_document_index"])
+                if int(row["start_document_index"])
+                <= document_id
+                <= int(row["end_document_index"])
             ]
             if len(matches) != 1:
-                raise RemoteQueryError(f"corpus pointer is not unique for document {document_id}")
+                raise RemoteQueryError(
+                    f"corpus pointer is not unique for document {document_id}"
+                )
             path = str(matches[0]["relative_path"])
             by_path[path].add(document_id)
             descriptors[path] = matches[0]
@@ -680,7 +776,9 @@ class CVEfixesRemoteIndex:
             b = float(config["b"])
             title_weight = float(config["title_weight"])
             body_weight = float(config["body_weight"])
-            max_query_terms = int(config.get("max_query_terms", MAX_QUERY_TERMS))
+            max_query_terms = int(
+                config.get("max_query_terms", MAX_QUERY_TERMS)
+            )
         except (KeyError, TypeError, ValueError, OverflowError):
             raise RemoteQueryError("release BM25 configuration is malformed") from None
         if (
@@ -705,7 +803,9 @@ class CVEfixesRemoteIndex:
         terms = _tokenize(query)[:max_query_terms]
         if not terms:
             return self._result("bm25", query, [], {"query_terms": []})
-        selected = _select_keyword_shards(self._meta_rows("bm25_keyword_shards"), terms)
+        selected = _select_keyword_shards(
+            self._meta_rows("bm25_keyword_shards"), terms
+        )
         rows_by_path: dict[str, set[str]] = defaultdict(set)
         descriptors: dict[str, Mapping[str, Any]] = {}
         for term, row in selected.items():
@@ -717,7 +817,9 @@ class CVEfixesRemoteIndex:
         matched: dict[int, set[str]] = defaultdict(set)
         posting_candidates: set[int] = set()
         for path, wanted_terms in sorted(rows_by_path.items()):
-            table = self._read_shard("bm25_keyword_shards", descriptors[path])
+            table = self._read_shard(
+                "bm25_keyword_shards", descriptors[path]
+            )
             _require_columns(
                 table,
                 [
@@ -740,22 +842,32 @@ class CVEfixesRemoteIndex:
                     row["body_frequencies"],
                     row["document_lengths"],
                 ]
-                if not arrays[0] or any(len(values) != len(arrays[0]) for values in arrays[1:]):
-                    raise RemoteQueryError(f"unaligned BM25 posting arrays for {term!r}")
+                if not arrays[0] or any(
+                    len(values) != len(arrays[0]) for values in arrays[1:]
+                ):
+                    raise RemoteQueryError(
+                        f"unaligned BM25 posting arrays for {term!r}"
+                    )
                 try:
                     idf = float(row["idf"])
                 except (TypeError, ValueError, OverflowError):
-                    raise RemoteQueryError("BM25 posting has an invalid IDF") from None
+                    raise RemoteQueryError(
+                        "BM25 posting has an invalid IDF"
+                    ) from None
                 if not math.isfinite(idf) or idf < 0:
                     raise RemoteQueryError("BM25 posting has an invalid IDF")
-                for document_id, title_tf, body_tf, document_length in zip(*arrays):
+                for document_id, title_tf, body_tf, document_length in zip(
+                    *arrays
+                ):
                     try:
                         document_id = int(document_id)
                         title_tf = int(title_tf)
                         body_tf = int(body_tf)
                         document_length = int(document_length)
                     except (TypeError, ValueError, OverflowError):
-                        raise RemoteQueryError("BM25 posting values are malformed") from None
+                        raise RemoteQueryError(
+                            "BM25 posting values are malformed"
+                        ) from None
                     if (
                         document_id < 0
                         or title_tf < 0
@@ -764,7 +876,9 @@ class CVEfixesRemoteIndex:
                         or document_length <= 0
                     ):
                         raise RemoteQueryError("BM25 posting values are malformed")
-                    weighted_tf = title_weight * title_tf + body_weight * body_tf
+                    weighted_tf = (
+                        title_weight * title_tf + body_weight * body_tf
+                    )
                     scores[document_id] += _bm25_term_score(
                         weighted_tf,
                         document_length,
@@ -775,7 +889,9 @@ class CVEfixesRemoteIndex:
                     )
                     matched[document_id].add(term)
                     posting_candidates.add(document_id)
-        ranked = heapq.nlargest(top_k, scores.items(), key=lambda item: (item[1], -item[0]))
+        ranked = heapq.nlargest(
+            top_k, scores.items(), key=lambda item: (item[1], -item[0])
+        )
         hydrated = self._hydrate(
             [document_id for document_id, _ in ranked],
             include_content=include_content,
@@ -784,7 +900,9 @@ class CVEfixesRemoteIndex:
         for document_id, score in ranked:
             row = hydrated.get(document_id)
             if row is None:
-                raise RemoteQueryError(f"corpus pointer is missing for document {document_id}")
+                raise RemoteQueryError(
+                    f"corpus pointer is missing for document {document_id}"
+                )
             results.append(
                 {
                     **row,
@@ -827,21 +945,31 @@ class CVEfixesRemoteIndex:
         config = dict(config_value)
         try:
             dimension = int(config["dimension"])
-            max_shards_per_centroid = int(config.get("max_shards_per_centroid", 2))
+            max_shards_per_centroid = int(
+                config.get("max_shards_per_centroid", 2)
+            )
         except (KeyError, TypeError, ValueError, OverflowError):
             raise RemoteQueryError("release vector configuration is malformed") from None
         if not 1 <= dimension <= MAX_QUERY_VECTOR_DIMENSION:
             raise RemoteQueryError("release vector dimension is out of bounds")
         if not 1 <= max_shards_per_centroid <= 2:
-            raise RemoteQueryError("release vector centroid fan-out exceeds the client bound")
+            raise RemoteQueryError(
+                "release vector centroid fan-out exceeds the client bound"
+            )
         if not 1 <= max_vector_shards <= MAX_VECTOR_SHARDS:
-            raise RemoteQueryError(f"max_vector_shards must be between 1 and {MAX_VECTOR_SHARDS}")
+            raise RemoteQueryError(
+                f"max_vector_shards must be between 1 and {MAX_VECTOR_SHARDS}"
+            )
         try:
             query_array = np.asarray(query_vector, dtype=np.float32)
         except (TypeError, ValueError, OverflowError):
-            raise RemoteQueryError("query vector contains invalid values") from None
+            raise RemoteQueryError(
+                "query vector contains invalid values"
+            ) from None
         if query_array.shape != (dimension,) or not np.isfinite(query_array).all():
-            raise RemoteQueryError(f"query vector must contain {dimension} finite values")
+            raise RemoteQueryError(
+                f"query vector must contain {dimension} finite values"
+            )
         query_norm = float(np.linalg.norm(query_array))
         if not math.isfinite(query_norm) or query_norm == 0:
             raise RemoteQueryError("query vector must be non-zero")
@@ -855,7 +983,9 @@ class CVEfixesRemoteIndex:
         try:
             neutral_rows = int(config.get("neutral_rows", 0))
         except (TypeError, ValueError, OverflowError):
-            raise RemoteQueryError("release vector model binding is malformed") from None
+            raise RemoteQueryError(
+                "release vector model binding is malformed"
+            ) from None
         if (
             not model_name
             or not model_id
@@ -865,7 +995,9 @@ class CVEfixesRemoteIndex:
             or config.get("searchable") is not True
             or neutral_rows != 0
         ):
-            raise RemoteQueryError("release vector model binding is incomplete or non-searchable")
+            raise RemoteQueryError(
+                "release vector model binding is incomplete or non-searchable"
+            )
         groups = _vector_routing_groups(
             meta,
             dimension=dimension,
@@ -878,22 +1010,34 @@ class CVEfixesRemoteIndex:
                 else int(config.get("default_probe_centroids", 4))
             )
         except (TypeError, ValueError, OverflowError):
-            raise RemoteQueryError("candidate_centroids is malformed") from None
+            raise RemoteQueryError(
+                "candidate_centroids is malformed"
+            ) from None
         if not 1 <= probes <= MAX_CANDIDATE_CENTROIDS:
-            raise RemoteQueryError("candidate_centroids exceeds the client bound")
+            raise RemoteQueryError(
+                "candidate_centroids exceeds the client bound"
+            )
         probes = min(probes, len(groups))
         if probes == len(groups) and len(groups) > 1 and not allow_exhaustive:
             raise RemoteQueryError(
                 "centroid selection would fetch the full vector index; "
                 "pass --allow-exhaustive explicitly"
             )
-        centroid_matrix = np.asarray([group["centroid"] for group in groups], dtype=np.float32)
+        centroid_matrix = np.asarray(
+            [group["centroid"] for group in groups], dtype=np.float32
+        )
         centroid_scores = centroid_matrix @ query_array
-        selected_group_indices = np.argsort(-centroid_scores, kind="stable")[:probes]
+        selected_group_indices = np.argsort(
+            -centroid_scores, kind="stable"
+        )[:probes]
         selected_groups = [groups[int(index)] for index in selected_group_indices]
-        selected_shards = [row for group in selected_groups for row in group["shards"]]
+        selected_shards = [
+            row for group in selected_groups for row in group["shards"]
+        ]
         if len(selected_shards) > max_vector_shards:
-            raise RemoteQueryError("selected centroids exceed max_vector_shards")
+            raise RemoteQueryError(
+                "selected centroids exceed max_vector_shards"
+            )
 
         heap: list[tuple[float, int, dict[str, Any]]] = []
         candidate_rows = 0
@@ -919,22 +1063,31 @@ class CVEfixesRemoteIndex:
             if (
                 set(table["has_embedding"].to_pylist()) != {True}
                 or set(table["model_id"].to_pylist()) != {model_id}
-                or set(table["model_revision"].to_pylist()) != {model_revision}
-                or set(table["model_config_cid"].to_pylist()) != {model_config_cid}
+                or set(table["model_revision"].to_pylist())
+                != {model_revision}
+                or set(table["model_config_cid"].to_pylist())
+                != {model_config_cid}
             ):
                 raise RemoteQueryError("vector data model binding differs")
             try:
-                matrix = np.asarray(table["embedding"].to_pylist(), dtype=np.float32)
+                matrix = np.asarray(
+                    table["embedding"].to_pylist(), dtype=np.float32
+                )
             except (TypeError, ValueError, OverflowError):
                 raise RemoteQueryError("vector shard embeddings are malformed") from None
-            if matrix.shape != (table.num_rows, dimension) or not np.isfinite(matrix).all():
+            if (
+                matrix.shape != (table.num_rows, dimension)
+                or not np.isfinite(matrix).all()
+            ):
                 raise RemoteQueryError("vector shard embeddings are malformed")
             norms = np.linalg.norm(matrix, axis=1)
             if not np.isfinite(norms).all() or np.any(norms == 0):
                 raise RemoteQueryError("vector shard contains zero embeddings")
             shard_scores = (matrix / norms[:, None]) @ query_array
             candidate_rows += table.num_rows
-            for row, score in zip(table.drop(["embedding"]).to_pylist(), shard_scores):
+            for row, score in zip(
+                table.drop(["embedding"]).to_pylist(), shard_scores
+            ):
                 document_id = int(row["document_index"])
                 item = (float(score), -document_id, dict(row))
                 if len(heap) < top_k:
@@ -951,7 +1104,9 @@ class CVEfixesRemoteIndex:
             document_id = int(pointer["document_index"])
             row = hydrated.get(document_id)
             if row is None:
-                raise RemoteQueryError(f"corpus pointer is missing for document {document_id}")
+                raise RemoteQueryError(
+                    f"corpus pointer is missing for document {document_id}"
+                )
             results.append(
                 {
                     **row,
@@ -966,9 +1121,13 @@ class CVEfixesRemoteIndex:
             query,
             results,
             {
-                "candidate_centroid_ids": [int(group["cluster_id"]) for group in selected_groups],
+                "candidate_centroid_ids": [
+                    int(group["cluster_id"]) for group in selected_groups
+                ],
                 "candidate_centroids": len(selected_groups),
-                "candidate_shard_ids": [int(row["shard_id"]) for row in selected_shards],
+                "candidate_shard_ids": [
+                    int(row["shard_id"]) for row in selected_shards
+                ],
                 "candidate_rows": candidate_rows,
                 "dimension": dimension,
                 "model_name": model_name,
@@ -976,7 +1135,9 @@ class CVEfixesRemoteIndex:
             },
         )
 
-    def _graph_nodes(self, node_cids: Sequence[str]) -> dict[str, dict[str, Any]]:
+    def _graph_nodes(
+        self, node_cids: Sequence[str]
+    ) -> dict[str, dict[str, Any]]:
         wanted = sorted(set(str(value) for value in node_cids))
         if not wanted:
             return {}
@@ -985,10 +1146,14 @@ class CVEfixesRemoteIndex:
         descriptors: dict[str, Mapping[str, Any]] = {}
         for node_cid in wanted:
             matches = [
-                row for row in meta if str(row["first_key"]) <= node_cid <= str(row["last_key"])
+                row
+                for row in meta
+                if str(row["first_key"]) <= node_cid <= str(row["last_key"])
             ]
             if len(matches) > 1:
-                raise RemoteQueryError(f"overlapping graph node ranges for {node_cid!r}")
+                raise RemoteQueryError(
+                    f"overlapping graph node ranges for {node_cid!r}"
+                )
             if matches:
                 path = str(matches[0]["relative_path"])
                 rows_by_path[path].add(node_cid)
@@ -999,7 +1164,10 @@ class CVEfixesRemoteIndex:
             for row in table.to_pylist():
                 node_cid = str(row["node_cid"])
                 if node_cid in selected:
-                    result[node_cid] = {str(key): _json_value(value) for key, value in row.items()}
+                    result[node_cid] = {
+                        str(key): _json_value(value)
+                        for key, value in row.items()
+                    }
         return result
 
     def graph_node(self, node_cid: str) -> dict[str, Any]:
@@ -1025,7 +1193,11 @@ class CVEfixesRemoteIndex:
         index_name = f"graph_{direction}_adjacency"
         meta = self._meta_rows(index_name)
         descriptors = sorted(
-            (row for row in meta if str(row["first_key"]) <= node_cid <= str(row["last_key"])),
+            (
+                row
+                for row in meta
+                if str(row["first_key"]) <= node_cid <= str(row["last_key"])
+            ),
             key=lambda row: int(row["shard_id"]),
         )
         edges: list[dict[str, Any]] = []
@@ -1054,11 +1226,17 @@ class CVEfixesRemoteIndex:
                 label=path,
             )
             rows = sorted(
-                (row for row in table.to_pylist() if str(row["node_cid"]) == node_cid),
+                (
+                    row
+                    for row in table.to_pylist()
+                    if str(row["node_cid"]) == node_cid
+                ),
                 key=lambda row: int(row["page_index"]),
             )
             for row in rows:
-                total_neighbors = max(total_neighbors, int(row["total_neighbor_count"]))
+                total_neighbors = max(
+                    total_neighbors, int(row["total_neighbor_count"])
+                )
                 arrays = [
                     row["edge_cids"],
                     row["edge_types"],
@@ -1073,7 +1251,9 @@ class CVEfixesRemoteIndex:
                     or any(len(values) != count for values in arrays)
                     or row["direction"] != direction
                 ):
-                    raise RemoteQueryError(f"{direction} adjacency row is malformed")
+                    raise RemoteQueryError(
+                        f"{direction} adjacency row is malformed"
+                    )
                 for (
                     edge_cid,
                     edge_type,
@@ -1086,13 +1266,19 @@ class CVEfixesRemoteIndex:
                     if edge_types and edge_type not in edge_types:
                         continue
                     try:
-                        numeric_score = None if score is None else float(score)
+                        numeric_score = (
+                            None if score is None else float(score)
+                        )
                     except (TypeError, ValueError, OverflowError):
                         raise RemoteQueryError(
                             f"{direction} adjacency score is malformed"
                         ) from None
-                    if numeric_score is not None and not math.isfinite(numeric_score):
-                        raise RemoteQueryError(f"{direction} adjacency score is non-finite")
+                    if numeric_score is not None and not math.isfinite(
+                        numeric_score
+                    ):
+                        raise RemoteQueryError(
+                            f"{direction} adjacency score is non-finite"
+                        )
                     neighbor_cid = str(neighbor_cid)
                     edges.append(
                         {
@@ -1103,8 +1289,16 @@ class CVEfixesRemoteIndex:
                             "neighbor_node_type": str(neighbor_node_type),
                             "retrieval_method": str(retrieval_method),
                             "score": numeric_score,
-                            "source_cid": (node_cid if direction == "outgoing" else neighbor_cid),
-                            "target_cid": (neighbor_cid if direction == "outgoing" else node_cid),
+                            "source_cid": (
+                                node_cid
+                                if direction == "outgoing"
+                                else neighbor_cid
+                            ),
+                            "target_cid": (
+                                neighbor_cid
+                                if direction == "outgoing"
+                                else node_cid
+                            ),
                         }
                     )
                     if len(edges) >= limit:
@@ -1142,7 +1336,9 @@ class CVEfixesRemoteIndex:
                 candidates.extend(edges)
                 totals[resolved_direction] = total
         except _GraphShardBudgetReached as exc:
-            raise RemoteQueryError("graph neighbor query exceeded max_shards") from exc
+            raise RemoteQueryError(
+                "graph neighbor query exceeded max_shards"
+            ) from exc
         candidates.sort(key=_graph_edge_order_key)
         selected = candidates[offset : offset + limit]
         result = self._result(
@@ -1180,12 +1376,20 @@ class CVEfixesRemoteIndex:
     ) -> dict[str, Any]:
         _validate_graph_key(start_node_cid, name="start_node_cid")
         if not 0 <= max_depth <= MAX_GRAPH_DEPTH:
-            raise RemoteQueryError(f"max_depth must be between 0 and {MAX_GRAPH_DEPTH}")
+            raise RemoteQueryError(
+                f"max_depth must be between 0 and {MAX_GRAPH_DEPTH}"
+            )
         if not 1 <= max_nodes <= MAX_GRAPH_NODES:
-            raise RemoteQueryError(f"max_nodes must be between 1 and {MAX_GRAPH_NODES}")
+            raise RemoteQueryError(
+                f"max_nodes must be between 1 and {MAX_GRAPH_NODES}"
+            )
         if not 1 <= max_edges <= MAX_GRAPH_EDGES:
-            raise RemoteQueryError(f"max_edges must be between 1 and {MAX_GRAPH_EDGES}")
-        _validate_graph_bounds(limit=per_node_limit, offset=0, max_shards=max_shards)
+            raise RemoteQueryError(
+                f"max_edges must be between 1 and {MAX_GRAPH_EDGES}"
+            )
+        _validate_graph_bounds(
+            limit=per_node_limit, offset=0, max_shards=max_shards
+        )
         directions = _graph_directions(direction)
         wanted = {str(value).strip() for value in edge_types if str(value).strip()}
         start = self._graph_nodes([start_node_cid])
@@ -1201,7 +1405,9 @@ class CVEfixesRemoteIndex:
                 "start_node_cid": start_node_cid,
             }
         visited = {start_node_cid: 0}
-        node_types = {start_node_cid: str(start[start_node_cid].get("node_type") or "")}
+        node_types = {
+            start_node_cid: str(start[start_node_cid].get("node_type") or "")
+        }
         frontier = [start_node_cid]
         traversed_edges: list[dict[str, Any]] = []
         seen_edges: set[tuple[str, str]] = set()
@@ -1239,8 +1445,12 @@ class CVEfixesRemoteIndex:
                         visited[neighbor] = depth + 1
                         next_frontier.append(neighbor)
                     seen_edges.add(identity)
-                    traversed_edges.append({**edge, "depth": depth + 1, "from_node_cid": node_cid})
-                    node_types.setdefault(neighbor, str(edge.get("neighbor_node_type") or ""))
+                    traversed_edges.append(
+                        {**edge, "depth": depth + 1, "from_node_cid": node_cid}
+                    )
+                    node_types.setdefault(
+                        neighbor, str(edge.get("neighbor_node_type") or "")
+                    )
                     if len(traversed_edges) >= max_edges:
                         stop_reason = "max_edges"
                         break
@@ -1256,7 +1466,9 @@ class CVEfixesRemoteIndex:
                 stop_reason = "max_depth"
         hydrated = self._graph_nodes(list(visited)) if hydrate else {}
         nodes = []
-        for node_cid, depth in sorted(visited.items(), key=lambda item: (item[1], item[0])):
+        for node_cid, depth in sorted(
+            visited.items(), key=lambda item: (item[1], item[0])
+        ):
             node = {
                 "depth": depth,
                 "node_cid": node_cid,
@@ -1295,7 +1507,9 @@ def _graph_directions(value: str) -> tuple[str, ...]:
         return ("outgoing", "incoming")
     if direction in {"incoming", "outgoing"}:
         return (direction,)
-    raise RemoteQueryError("graph direction must be incoming, outgoing, or both")
+    raise RemoteQueryError(
+        "graph direction must be incoming, outgoing, or both"
+    )
 
 
 def _graph_edge_order_key(edge: Mapping[str, Any]) -> tuple[Any, ...]:
@@ -1312,11 +1526,17 @@ def _graph_edge_order_key(edge: Mapping[str, Any]) -> tuple[Any, ...]:
 
 def _validate_graph_bounds(*, limit: int, offset: int, max_shards: int) -> None:
     if not 1 <= int(limit) <= MAX_GRAPH_EDGES:
-        raise RemoteQueryError(f"graph limit must be between 1 and {MAX_GRAPH_EDGES}")
+        raise RemoteQueryError(
+            f"graph limit must be between 1 and {MAX_GRAPH_EDGES}"
+        )
     if not 0 <= int(offset) <= MAX_GRAPH_EDGES:
-        raise RemoteQueryError(f"graph offset must be between 0 and {MAX_GRAPH_EDGES}")
+        raise RemoteQueryError(
+            f"graph offset must be between 0 and {MAX_GRAPH_EDGES}"
+        )
     if not 1 <= int(max_shards) <= MAX_GRAPH_SHARDS:
-        raise RemoteQueryError(f"max_shards must be between 1 and {MAX_GRAPH_SHARDS}")
+        raise RemoteQueryError(
+            f"max_shards must be between 1 and {MAX_GRAPH_SHARDS}"
+        )
 
 
 def _validate_graph_key(value: str, *, name: str) -> None:
@@ -1344,7 +1564,11 @@ def _read_query_vector(value: str) -> list[float]:
         parsed = json.loads(raw)
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise RemoteQueryError("query vector JSON is malformed") from exc
-    if not isinstance(parsed, list) or not parsed or len(parsed) > MAX_QUERY_VECTOR_DIMENSION:
+    if (
+        not isinstance(parsed, list)
+        or not parsed
+        or len(parsed) > MAX_QUERY_VECTOR_DIMENSION
+    ):
         raise RemoteQueryError("query vector JSON must be a bounded array")
     try:
         result = [float(item) for item in parsed]
@@ -1367,7 +1591,9 @@ def _bound_model_name(manifest: Mapping[str, Any], asserted: str | None) -> str:
     ):
         raise RemoteQueryError("release embedding model binding is malformed")
     if asserted is not None and asserted != model_name:
-        raise RemoteQueryError("--model must exactly match the release embedding model binding")
+        raise RemoteQueryError(
+            "--model must exactly match the release embedding model binding"
+        )
     return model_name
 
 
@@ -1395,7 +1621,8 @@ def _embedding_model_binding(
         or model_name != f"{model_id}@{model_revision}"
     ):
         raise RemoteQueryError(
-            "release embedding model must bind a Hub model ID to a 40-character immutable revision"
+            "release embedding model must bind a Hub model ID to a "
+            "40-character immutable revision"
         )
     return model_name, model_id, model_revision
 
@@ -1439,7 +1666,9 @@ def _embed_query(
     except Exception as exc:
         # Do not echo model-library exception text: it can contain paths,
         # request URLs, or authentication context.
-        raise RemoteQueryError(f"query embedding failed ({type(exc).__name__})") from None
+        raise RemoteQueryError(
+            f"query embedding failed ({type(exc).__name__})"
+        ) from None
     finally:
         del model
         gc.collect()
@@ -1483,7 +1712,9 @@ def _parser() -> argparse.ArgumentParser:
     bm25.add_argument("query")
     bm25.add_argument("--top-k", type=int, default=10)
 
-    vector = modes.add_parser("vector", help="Centroid-routed vector retrieval")
+    vector = modes.add_parser(
+        "vector", help="Centroid-routed vector retrieval"
+    )
     vector.add_argument("query")
     vector.add_argument("--top-k", type=int, default=10)
     vector.add_argument("--candidate-centroids", type=int, default=None)
@@ -1506,11 +1737,15 @@ def _parser() -> argparse.ArgumentParser:
     )
     vector.add_argument("--allow-exhaustive", action="store_true")
 
-    graph = modes.add_parser("graph", help="Bounded CID-based graph queries")
+    graph = modes.add_parser(
+        "graph", help="Bounded CID-based graph queries"
+    )
     graph_modes = graph.add_subparsers(dest="graph_mode", required=True)
     graph_node = graph_modes.add_parser("node", help="Resolve one graph node")
     graph_node.add_argument("node_cid")
-    neighbors = graph_modes.add_parser("neighbors", help="Fetch a bounded adjacency page")
+    neighbors = graph_modes.add_parser(
+        "neighbors", help="Fetch a bounded adjacency page"
+    )
     neighbors.add_argument("node_cid")
     neighbors.add_argument(
         "--direction",
@@ -1519,10 +1754,14 @@ def _parser() -> argparse.ArgumentParser:
     )
     neighbors.add_argument("--limit", type=int, default=50)
     neighbors.add_argument("--offset", type=int, default=0)
-    neighbors.add_argument("--edge-type", action="append", default=[], dest="edge_types")
+    neighbors.add_argument(
+        "--edge-type", action="append", default=[], dest="edge_types"
+    )
     neighbors.add_argument("--hydrate", action="store_true")
     neighbors.add_argument("--max-shards", type=int, default=64)
-    walk = graph_modes.add_parser("walk", help="Breadth-first graph walk with hard budgets")
+    walk = graph_modes.add_parser(
+        "walk", help="Breadth-first graph walk with hard budgets"
+    )
     walk.add_argument("start_node_cid")
     walk.add_argument(
         "--direction",
@@ -1534,7 +1773,9 @@ def _parser() -> argparse.ArgumentParser:
     walk.add_argument("--max-edges", type=int, default=500)
     walk.add_argument("--per-node-limit", type=int, default=16)
     walk.add_argument("--max-shards", type=int, default=64)
-    walk.add_argument("--edge-type", action="append", default=[], dest="edge_types")
+    walk.add_argument(
+        "--edge-type", action="append", default=[], dest="edge_types"
+    )
     walk.add_argument("--hydrate", action="store_true")
     return parser
 

@@ -65,13 +65,17 @@ class SolanaFinalityPolicy:
             commitment = getattr(record, "commitment", Commitment.PROCESSED)
             if not isinstance(commitment, Commitment):
                 commitment = Commitment.PROCESSED
-            return SolanaFinalityAssessment(prior, commitment, source="record_correction")
+            return SolanaFinalityAssessment(
+                prior, commitment, source="record_correction"
+            )
         commitment = getattr(record, "commitment", None)
         if commitment is None and isinstance(record, dict):
             commitment = record.get("commitment")
         try:
             normalized = (
-                commitment if isinstance(commitment, Commitment) else Commitment(commitment)
+                commitment
+                if isinstance(commitment, Commitment)
+                else Commitment(commitment)
             )
         except (TypeError, ValueError):
             raise InvalidRequestError(

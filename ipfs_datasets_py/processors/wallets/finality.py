@@ -170,11 +170,9 @@ class FinalityClassification:
     def __post_init__(self) -> None:
         if not isinstance(self.state, Finality):
             raise InvalidRequestError("state must be a Finality value")
-        if (
-            isinstance(self.confirmations, bool)
-            or not isinstance(self.confirmations, int)
-            or self.confirmations < 0
-        ):
+        if isinstance(self.confirmations, bool) or not isinstance(
+            self.confirmations, int
+        ) or self.confirmations < 0:
             raise InvalidRequestError("confirmations must be a non-negative integer")
 
     def to_dict(self) -> dict[str, Any]:
@@ -206,7 +204,9 @@ class OrphanCorrection:
         if not isinstance(self.new_finality, Finality):
             raise InvalidRequestError("new_finality must be a Finality value")
         if self.new_finality not in {Finality.ORPHANED, Finality.REVERTED}:
-            raise InvalidRequestError("orphan corrections must target ORPHANED or REVERTED")
+            raise InvalidRequestError(
+                "orphan corrections must target ORPHANED or REVERTED"
+            )
         transition(self.prior_finality, self.new_finality)
 
     def to_dict(self) -> dict[str, Any]:
@@ -242,7 +242,9 @@ class ReorgDecision:
             "checkpoint_anchor": self.checkpoint_anchor.to_dict(),
             "observed_anchor": self.observed_anchor.to_dict(),
             "common_ancestor": (
-                None if self.common_ancestor is None else self.common_ancestor.to_dict()
+                None
+                if self.common_ancestor is None
+                else self.common_ancestor.to_dict()
             ),
             "orphaned_anchors": [a.to_dict() for a in self.orphaned_anchors],
             "corrections": [c.to_dict() for c in self.corrections],
@@ -289,7 +291,9 @@ class CanonicalHistory:
         return cls(anchors=checkpoint.history)
 
     @classmethod
-    def from_pairs(cls, pairs: Sequence[tuple[int, str]]) -> "CanonicalHistory":
+    def from_pairs(
+        cls, pairs: Sequence[tuple[int, str]]
+    ) -> "CanonicalHistory":
         return cls(anchors=tuple(HashAnchor(seq, h) for seq, h in pairs))
 
 
@@ -299,8 +303,12 @@ def common_ancestor(
 ) -> HashAnchor | None:
     """Return the highest-sequence shared hash anchor, or ``None``."""
 
-    local_anchors = local.anchors if isinstance(local, CanonicalHistory) else tuple(local)
-    remote_anchors = remote.anchors if isinstance(remote, CanonicalHistory) else tuple(remote)
+    local_anchors = (
+        local.anchors if isinstance(local, CanonicalHistory) else tuple(local)
+    )
+    remote_anchors = (
+        remote.anchors if isinstance(remote, CanonicalHistory) else tuple(remote)
+    )
     remote_by_hash = {a.block_hash: a for a in remote_anchors}
     best: HashAnchor | None = None
     for anchor in local_anchors:
@@ -521,7 +529,8 @@ class DepthFinalityPolicy:
             return None
         if decision.review_required:
             raise ReorgReviewRequired(
-                decision.reason or "deep reorganization requires operator review"
+                decision.reason
+                or "deep reorganization requires operator review"
             )
         return decision.rewind_sequence
 
@@ -578,7 +587,8 @@ class DepthFinalityPolicy:
                 rewind_sequence=None,
                 review_required=True,
                 reason=(
-                    "no common ancestor within bounded history; deep reorg requires operator review"
+                    "no common ancestor within bounded history; "
+                    "deep reorg requires operator review"
                 ),
             )
 
@@ -640,17 +650,22 @@ class DepthFinalityPolicy:
 
         if decision.review_required or decision.kind is ReorgKind.DEEP:
             raise ReorgReviewRequired(
-                decision.reason or "deep reorganization requires operator review"
+                decision.reason
+                or "deep reorganization requires operator review"
             )
         if decision.kind is not ReorgKind.SHALLOW:
-            raise CheckpointError("apply_shallow_rewind requires a shallow reorg decision")
+            raise CheckpointError(
+                "apply_shallow_rewind requires a shallow reorg decision"
+            )
         if decision.common_ancestor is None or decision.rewind_sequence is None:
             raise CheckpointError("shallow reorg decision lacks a common ancestor")
         target_identity = identity or checkpoint.identity
         if not checkpoint.identity.compatible_with(target_identity):
             raise CheckpointError("identity mismatch during rewind")
         retained = tuple(
-            a for a in checkpoint.history if a.sequence <= decision.common_ancestor.sequence
+            a
+            for a in checkpoint.history
+            if a.sequence <= decision.common_ancestor.sequence
         )
         if not retained or not retained[-1].matches(decision.common_ancestor):
             retained = retained + (decision.common_ancestor,)
@@ -789,7 +804,9 @@ def _as_hash_anchor(value: object) -> HashAnchor:
         seq = value.get("sequence", value.get("height", value.get("slot")))
         h = value.get("block_hash", value.get("hash"))
         if seq is None or h is None or not str(h).strip():
-            raise CheckpointError("observed anchor requires sequence and canonical hash")
+            raise CheckpointError(
+                "observed anchor requires sequence and canonical hash"
+            )
         return HashAnchor(sequence=int(seq), block_hash=str(h))
     raise InvalidRequestError("observed_anchor must provide sequence and hash")
 

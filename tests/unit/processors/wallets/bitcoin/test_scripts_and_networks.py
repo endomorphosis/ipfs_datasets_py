@@ -53,7 +53,9 @@ def test_script_vectors_from_fixture(load_fixture) -> None:
     data = load_fixture("scripts_legacy_segwit_taproot.json")
     for vector in data["vectors"]:
         if "address" in vector:
-            descriptor = describe_address(vector["address"], network=BitcoinNetwork.MAINNET)
+            descriptor = describe_address(
+                vector["address"], network=BitcoinNetwork.MAINNET
+            )
             assert descriptor.script_type.value == vector["expect_script_type"]
             assert descriptor.encoding.value == vector["expect_encoding"]
             assert descriptor.is_legacy is vector["expect_legacy"]
@@ -62,7 +64,10 @@ def test_script_vectors_from_fixture(load_fixture) -> None:
             if "expect_witness_version" in vector:
                 assert descriptor.witness_version == vector["expect_witness_version"]
         if "script_hex" in vector and "address" not in vector:
-            assert classify_script_hex(vector["script_hex"]).value == vector["expect_script_type"]
+            assert (
+                classify_script_hex(vector["script_hex"]).value
+                == vector["expect_script_type"]
+            )
 
 
 def test_network_mismatch_vectors(load_fixture) -> None:

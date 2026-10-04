@@ -1,0 +1,2996 @@
+# IPFS Datasets Python - Development Guide
+
+## Project Overview
+This repository serves as a facade to multiple data processing and storage libraries:
+- DuckDB, Arrow, and HuggingFace Datasets for data manipulation
+- IPLD for data structuring
+- IPFS (via ipfs_datasets_py.ipfs_kit) for decentralized storage
+- libp2p (via ipfs_datasets_py.libp2p_kit) for peer-to-peer data transfer
+- InterPlanetary Wayback (IPWB) for web archive integration
+
+The primary goal is to provide a unified interface for data processing and distribution across decentralized networks, with seamless conversion between formats and storage systems.
+
+## Build & Installation
+```bash
+pip install -e .                # Install in development mode
+pip install -r requirements.txt  # Install dependencies
+```
+
+## Testing
+```bash
+python3 test/test.py            # Run all tests
+python3 -c "from test.test import test; test()"  # Run single test function
+python3 -c "from test.test import ws_test; ws_test()"  # Test OrbitDB integration
+python3 -c "from test.test import download_test; download_test()"  # Test downloads
+```
+
+## Usage Example
+```python
+import numpy as np
+from typing import List
+from ipfs_datasets_py import ipfs_datasets
+from ipfs_datasets_py.ipfs_knn_index import IPFSKnnIndex
+
+# Load a dataset (supports local and remote datasets)
+dataset = ipfs_datasets.load_dataset("wikipedia", subset="20220301.en")
+print(f"Loaded dataset with {len(dataset)} records")
+
+# Create sample vectors for demonstration
+vectors: List[np.ndarray] = [np.random.rand(768) for _ in range(100)]
+metadata = [{"id": i, "source": "wikipedia", "title": f"Article {i}"} for i in range(100)]
+
+# Create vector index
+index = IPFSKnnIndex(dimension=768, metric="cosine")
+vector_ids = index.add_vectors(vectors, metadata=metadata)
+print(f"Added {len(vector_ids)} vectors to index")
+
+# Create a query vector
+query_vector = np.random.rand(768)
+
+# Search for similar vectors
+results = index.search(query_vector, top_k=5)
+for i, result in enumerate(results):
+    print(f"Result {i+1}: ID={result.id}, Score={result.score:.4f}, Title={result.metadata['title']}")
+```
+
+## Code Style Guidelines
+- **Imports**: Standard library first, then third-party, then local
+- **Formatting**: 4-space indentation, 88-char line limit
+- **Typing**: Use type hints for function parameters and return values
+- **Naming**: snake_case for variables/functions, PascalCase for classes
+- **Error Handling**: Use try/except blocks, log errors appropriately
+- **Documentation**: Docstrings for all public functions and classes
+- **Dependencies**: All dependencies must be in setup.py/pyproject.toml
+
+## Project Organization
+- Main package: `ipfs_datasets_py`
+- Tests in: `test/` directory
+- Configuration in: `config/` directory
+
+## Architecture & Integration Patterns
+
+### Core Components
+- **Dataset Loaders**: Adapters for various dataset formats (HuggingFace, Arrow, DuckDB)
+- **IPFS Storage Backend**: Persistent storage of datasets on IPFS network
+- **Format Converters**: Bidirectional conversion between Parquet, Arrow, and CAR files
+- **Vector Indexing**: Fast similarity search for embeddings
+- **Knowledge Graph**: Entity and relationship modeling using IPLD
+- **P2P Transport**: libp2p-based dataset sharing and distribution
+- **Web Archive Integration**: WARC file indexing and replay via IPWB
+
+### Integration Patterns
+- Use the `ipfs_datasets_py` module to load and process data from various sources
+- Data can be seamlessly transferred to IPFS storage using the integrated `ipfs_datasets_py.ipfs_kit`
+- Peer-to-peer sharing is enabled through `ipfs_datasets_py.libp2p_kit` integration
+- Data structures are preserved using IPLD formatting
+- DuckDB queries can read/write directly from/to Parquet files or convert to/from CAR files
+- HuggingFace Datasets can be converted to Arrow Tables, Parquet files, or CAR files
+- Vector indexes support both local memory-mapped storage and IPFS-backed persistent storage
+- Knowledge graphs can be queried using both semantic similarity and relationship traversal
+- All formats (DuckDB, HuggingFace, Arrow, Parquet, CAR) can be converted to each other
+
+## IPLD-Based Knowledge Graph and Vector Storage
+- Store embedding vectors in IPLD structures
+- Implement knowledge graph components:
+  - Entities as IPLD nodes with CIDs as identifiers
+  - Relationships as IPLD links between nodes
+  - Attributes as node properties
+- GraphRAG search capabilities:
+  - Hybrid vector + graph traversal retrieval
+  - Semantic similarity via embedding vectors
+  - Graph relationship traversal
+  - Weighted path scoring
+- Specialized IPLD schemas for vector data types
+- Efficient nearest-neighbor search over IPLD-stored vectors
+- Memory-mapped vector indexes for fast similarity search
+
+### Key Classes
+
+#### IPLDVectorStore
+```python
+class IPLDVectorStore:
+    """IPLD-based vector storage for embeddings."""
+    
+    def __init__(self, dimension=768, metric="cosine"):
+        """
+        Initialize vector store with dimension and similarity metric.
+        
+        Args:
+            dimension: int - Dimensionality of vectors
+            metric: str - Distance metric ('cosine', 'l2', 'ip')
+        """
+        self.dimension = dimension
+        self.metric = metric
+        self.vectors = []
+        self.metadata = []
+        self.root_cid = None
+        
+    def add_vectors(self, vectors: List[np.ndarray], metadata: List[dict] = None) -> List[str]:
+        """
+        Store vectors in IPLD format.
+        
+        Args:
+            vectors: List[np.ndarray] - List of vectors to store
+            metadata: List[dict] - Optional metadata for each vector
+            
+        Returns:
+            List[str] - List of vector IDs (CIDs)
+        """
+        # Implementation details
+        return [f"bafy...{i}" for i in range(len(vectors))]  # Example CIDs
+        
+    def search(self, query_vector: np.ndarray, top_k: int = 10) -> List[SearchResult]:
+        """
+        Perform vector similarity search.
+        
+        Args:
+            query_vector: np.ndarray - Query vector
+            top_k: int - Number of results to return
+            
+        Returns:
+            List[SearchResult] - Ranked search results
+        """
+        # Implementation details
+        return [SearchResult(id=f"bafy...{i}", 
+                           score=0.9-i*0.1, 
+                           metadata_index=i,
+                           metadata=self.metadata[i]) for i in range(min(top_k, len(self.vectors)))]
+        
+    def export_to_ipld(self) -> tuple:
+        """
+        Export vector index as IPLD structure.
+        
+        Returns:
+            tuple: (root_cid, {cid: block_data}) - Root CID and blocks
+        """
+        # Implementation details
+        return "bafy...root", {"bafy...root": b"root_data", "bafy...meta": b"meta_data"}
+        
+    def export_to_car(self, output_path: str) -> str:
+        """
+        Export vector index to CAR file.
+        
+        Args:
+            output_path: str - Path to output CAR file
+            
+        Returns:
+            str - Root CID of the exported index
+        """
+        # Implementation details
+        return "bafy...root"
+```
+
+#### IPLDKnowledgeGraph
+```python
+import uuid
+from typing import Dict, List, Optional, Tuple, Union
+from slugify import slugify
+
+class IPLDKnowledgeGraph:
+    """Knowledge graph using IPLD for storage."""
+    
+    def __init__(self):
+        """Initialize graph store."""
+        self.entities = {}  # Map of entity_id to entity data
+        self.relationships = {}  # Map of relationship_id to relationship data
+        self.root_cid = None
+        self.entity_count = 0
+        self.relationship_count = 0
+        
+    def add_entity(self, entity_data: Dict) -> str:
+        """
+        Add entity node to graph.
+        
+        Args:
+            entity_data: Dict - Entity data including name, type, properties
+            
+        Returns:
+            str - CID of the new entity
+        """
+        entity_id = str(uuid.uuid4())
+        slug = slugify(entity_data.get("name", f"entity-{entity_id}"))
+        entity_cid = f"bafy...{slug}"
+        self.entities[entity_id] = {
+            "cid": entity_cid,
+            "data": entity_data
+        }
+        self.entity_count += 1
+        return entity_cid
+        
+    def add_relationship(self, source_cid: str, target_cid: str, 
+                         relationship_type: str, properties: Optional[Dict] = None) -> str:
+        """
+        Add relationship between entities.
+        
+        Args:
+            source_cid: str - CID of source entity
+            target_cid: str - CID of target entity
+            relationship_type: str - Type of relationship
+            properties: Optional[Dict] - Additional relationship properties
+            
+        Returns:
+            str - CID of the new relationship
+        """
+        rel_id = str(uuid.uuid4())
+        rel_cid = f"bafy...rel-{rel_id[:8]}"
+        self.relationships[rel_id] = {
+            "cid": rel_cid,
+            "source": source_cid,
+            "target": target_cid,
+            "type": relationship_type,
+            "properties": properties or {}
+        }
+        self.relationship_count += 1
+        return rel_cid
+        
+    def query(self, start_entity: str, relationship_path: List[str]) -> List[Dict]:
+        """
+        Query graph following relationship paths.
+        
+        Args:
+            start_entity: str - Starting entity CID
+            relationship_path: List[str] - Path of relationship types to follow
+            
+        Returns:
+            List[Dict] - Matching entities and relationships
+        """
+        # Implementation details
+        return [{"entity": f"Entity {i}", "path": relationship_path} for i in range(3)]
+        
+    def vector_augmented_query(self, query_vector: np.ndarray, 
+                              relationship_constraints: List[Dict]) -> List[Dict]:
+        """
+        GraphRAG query combining vector similarity and graph traversal.
+        
+        Args:
+            query_vector: np.ndarray - Query vector for similarity search
+            relationship_constraints: List[Dict] - Constraints on traversal
+            
+        Returns:
+            List[Dict] - Ranked results with entity and relationship data
+        """
+        # Implementation details
+        return [{"score": 0.9-i*0.1, "entity": f"Entity {i}"} for i in range(5)]
+        
+    def get_entities_by_vector_ids(self, vector_ids: List[str]) -> List[Dict]:
+        """
+        Get entities that reference the given vector IDs.
+        
+        Args:
+            vector_ids: List[str] - List of vector IDs (CIDs)
+            
+        Returns:
+            List[Dict] - Entities referencing these vectors
+        """
+        # Implementation details
+        return [{"id": f"entity-{i}", "name": f"Entity {i}"} for i in range(len(vector_ids))]
+        
+    def traverse_from_entities(self, entities: List[Dict], 
+                              relationship_types: Optional[List[str]] = None,
+                              max_depth: int = 2) -> List[Dict]:
+        """
+        Traverse graph from seed entities.
+        
+        Args:
+            entities: List[Dict] - Starting entities
+            relationship_types: Optional[List[str]] - Types to traverse
+            max_depth: int - Maximum traversal depth
+            
+        Returns:
+            List[Dict] - Resulting entities from traversal
+        """
+        # Implementation details
+        return [{"id": f"related-{i}", 
+                "type": "concept", 
+                "properties": {"name": f"Related Concept {i}"}} 
+                for i in range(10)]
+                
+    def export_to_car(self, output_path: str) -> str:
+        """
+        Export knowledge graph to CAR file.
+        
+        Args:
+            output_path: str - Path to output CAR file
+            
+        Returns:
+            str - Root CID of the exported graph
+        """
+        # Implementation details
+        return "bafy...graph-root"
+        
+    @classmethod
+    def from_cid(cls, cid: str) -> 'IPLDKnowledgeGraph':
+        """
+        Load knowledge graph from IPFS by CID.
+        
+        Args:
+            cid: str - Root CID of the knowledge graph
+            
+        Returns:
+            IPLDKnowledgeGraph - Loaded knowledge graph
+        """
+        graph = cls()
+        graph.root_cid = cid
+        # Implementation details for loading
+        return graph
+```
+
+### Implementation Phases
+1. Core IPLD vector storage implementation
+2. Basic knowledge graph entity and relationship modeling
+3. Integration with existing vector similarity search libraries
+4. GraphRAG query capabilities development
+5. Performance optimization and scaling enhancements
+
+### IPLD Schemas
+
+#### IPLD Schema for Vectors:
+```json
+{
+  "type": "struct",
+  "fields": {
+    "dimension": {"type": "int"},
+    "metric": {"type": "string"},
+    "vectors": {
+      "type": "list",
+      "valueType": {
+        "type": "struct",
+        "fields": {
+          "id": {"type": "string"},
+          "values": {"type": "list", "valueType": "float"},
+          "metadata": {"type": "map", "keyType": "string", "valueType": "any"}
+        }
+      }
+    }
+  }
+}
+```
+
+#### IPLD Schema for Knowledge Graph Nodes:
+```json
+{
+  "type": "struct",
+  "fields": {
+    "id": {"type": "string"},
+    "type": {"type": "string"},
+    "properties": {"type": "map", "keyType": "string", "valueType": "any"},
+    "relationships": {
+      "type": "list",
+      "valueType": {
+        "type": "struct",
+        "fields": {
+          "type": {"type": "string"},
+          "target": {"type": "link"},
+          "properties": {"type": "map", "keyType": "string", "valueType": "any"}
+        }
+      }
+    }
+  }
+}
+```
+
+
+## Advanced Features
+
+### GraphRAG Search with IPLD
+
+The IPLD-based GraphRAG system combines vector similarity search with knowledge graph traversal:
+
+1. **Vector Component**:
+   - Store document/chunk embeddings in IPLD structures
+   - Implement approximate nearest neighbor search
+   - Use FAISS or similar libraries with IPLD persistence
+
+2. **Knowledge Graph Component**:
+   - Entities represented as IPLD nodes with CIDs
+   - Relationships as typed links between nodes
+   - Properties stored as node attributes
+   - Graph schema defined via IPLD schemas
+
+3. **Hybrid Search Process**:
+   - Convert query to embedding vector
+   - Find similar vectors via ANN search
+   - Expand results through graph relationships
+   - Apply path-based relevance scoring
+   - Rank by combined vector similarity and graph relevance
+
+4. **IPLD Schema for Vectors**:
+```json
+{
+  "type": "struct",
+  "fields": {
+    "dimension": {"type": "int"},
+    "metric": {"type": "string"},
+    "vectors": {
+      "type": "list",
+      "valueType": {
+        "type": "struct",
+        "fields": {
+          "id": {"type": "string"},
+          "values": {"type": "list", "valueType": "float"},
+          "metadata": {"type": "map", "keyType": "string", "valueType": "any"}
+        }
+      }
+    }
+  }
+}
+```
+
+5. **IPLD Schema for Knowledge Graph Nodes**:
+```json
+{
+  "type": "struct",
+  "fields": {
+    "id": {"type": "string"},
+    "type": {"type": "string"},
+    "properties": {"type": "map", "keyType": "string", "valueType": "any"},
+    "relationships": {
+      "type": "list",
+      "valueType": {
+        "type": "struct",
+        "fields": {
+          "type": {"type": "string"},
+          "target": {"type": "link"},
+          "properties": {"type": "map", "keyType": "string", "valueType": "any"}
+        }
+      }
+    }
+  }
+}
+```
+
+### Practical GraphRAG Example with LLM Integration
+
+Here's a practical example of using the GraphRAG system with a large language model:
+
+```python
+import torch
+from transformers import AutoTokenizer, AutoModel
+from ipfs_kit_py.ipfs_kit import IPFSKit
+from ipfs_kit_py.graph_rag import IPLDGraphRAG
+
+# Initialize components
+ipfs = IPFSKit(role="worker")  # Use worker role for processing capabilities
+tokenizer = AutoTokenizer.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
+embedding_model = AutoModel.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
+graph_rag = IPLDGraphRAG(ipfs_client=ipfs)
+
+# 1. Create a knowledge graph with vector-enabled nodes
+def add_document_to_graph(doc_text, doc_metadata):
+    """Process a document and add it to the knowledge graph with vector embeddings."""
+    # Generate embedding for the document
+    inputs = tokenizer(doc_text, padding=True, truncation=True, return_tensors="pt")
+    with torch.no_grad():
+        outputs = embedding_model(**inputs)
+    embeddings = mean_pooling(outputs, inputs['attention_mask'])
+    embedding_vector = embeddings[0].numpy()  # Get the vector
+    
+    # Create document entity in graph with vector
+    doc_id = f"doc_{uuid.uuid4()}"
+    graph_rag.add_entity(
+        entity_id=doc_id,
+        properties={
+            "type": "document",
+            "text": doc_text,
+            "title": doc_metadata.get("title", ""),
+            "source": doc_metadata.get("source", ""),
+            "created_at": doc_metadata.get("created_at", time.time())
+        },
+        vector=embedding_vector
+    )
+    
+    # Extract concepts and create relationships
+    concepts = extract_key_concepts(doc_text)  # Custom extraction function
+    for concept in concepts:
+        # Create or get concept entity
+        concept_id = f"concept_{slugify(concept)}"
+        if not graph_rag.get_entity(concept_id):
+            graph_rag.add_entity(
+                entity_id=concept_id,
+                properties={"type": "concept", "name": concept}
+            )
+        
+        # Link document to concept
+        graph_rag.add_relationship(
+            from_entity=doc_id,
+            to_entity=concept_id,
+            relationship_type="mentions",
+            properties={"confidence": 0.85}
+        )
+    
+    return doc_id
+
+# 2. Perform hybrid search combining vector similarity and graph traversal
+def query_knowledge_graph(query_text, top_k=5):
+    """Retrieve relevant information using hybrid vector+graph search."""
+    # Generate embedding for the query
+    inputs = tokenizer(query_text, padding=True, truncation=True, return_tensors="pt")
+    with torch.no_grad():
+        outputs = embedding_model(**inputs)
+    query_embedding = mean_pooling(outputs, inputs['attention_mask'])
+    query_vector = query_embedding[0].numpy()
+    
+    # Perform hybrid search with 2-hop graph exploration
+    results = graph_rag.graph_vector_search(
+        query_vector=query_vector,
+        hop_count=2,
+        top_k=top_k
+    )
+    
+    # Extract and format the results
+    formatted_results = []
+    for result in results:
+        entity = graph_rag.get_entity(result["entity_id"])
+        formatted_results.append({
+            "id": result["entity_id"],
+            "score": result["score"],
+            "properties": entity["properties"],
+            "path": result["path"],  # The graph traversal path
+            "distance": result["distance"]  # Graph distance (hops)
+        })
+    
+    return formatted_results
+
+# Helper function for embedding generation
+def mean_pooling(model_output, attention_mask):
+    token_embeddings = model_output[0]
+    input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
+    return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
+
+# 3. Use the retrieved context with an LLM
+def answer_with_rag(query, llm_client):
+    """Generate an answer using retrieved context from the knowledge graph."""
+    # Retrieve relevant context
+    context_items = query_knowledge_graph(query)
+    
+    # Format context for the LLM
+    context_text = "\n\n".join([
+        f"Document: {item['properties'].get('title', 'Untitled')}\n"
+        f"Content: {item['properties'].get('text', '')[:500]}...\n"
+        f"Relevance: {item['score']:.2f}"
+        for item in context_items
+    ])
+    
+    # Build prompt with context
+    prompt = f"""Answer the following question based on the provided context:
+
+Context:
+{context_text}
+
+Question: {query}
+
+Answer:"""
+    
+    # Get response from LLM
+    response = llm_client.generate_text(prompt)
+    
+    return {
+        "answer": response,
+        "sources": [item["id"] for item in context_items],
+        "context_used": context_text
+    }
+```
+
+This example demonstrates how to:
+1. Add documents to a knowledge graph with vector embeddings
+2. Create relationships between entities based on content analysis
+3. Perform hybrid retrieval combining vector similarity and graph traversal
+4. Use the retrieved context with an LLM to answer queries
+
+The GraphRAG approach provides more context-aware and relationship-informed retrieval compared to traditional vector-only approaches, enabling more accurate and explanatory responses from language models.
+
+## Configuration
+- Main configuration file: `config/config.toml`
+- Key configuration options:
+  - IPFS node connection parameters
+  - Vector index dimensions and metrics
+  - Dataset cache locations
+  - Peer discovery settings for P2P sharing
+  - DuckDB connection settings
+  - Default export formats
+  - Embedding model configurations
+
+### Example Configuration
+```toml
+[ipfs]
+api_endpoint = "/ip4/127.0.0.1/tcp/5001"
+gateway_url = "http://localhost:8080/ipfs/"
+pin = true
+
+[storage]
+cache_dir = "~/.ipfs_datasets/cache"
+temp_dir = "/tmp/ipfs_datasets"
+max_cache_size_gb = 10
+
+[duckdb]
+default_db_path = "~/.ipfs_datasets/analytics.duckdb"
+memory_limit = "4GB"
+threads = 4
+
+[vector_index]
+default_dimension = 768
+default_metric = "cosine"
+index_location = "~/.ipfs_datasets/indexes"
+use_memory_mapping = true
+
+[embedding_models]
+default = "sentence-transformers/all-MiniLM-L6-v2"
+models = [
+    { name = "sentence-transformers/all-MiniLM-L6-v2", dimension = 384, type = "sentence" },
+    { name = "sentence-transformers/multi-qa-mpnet-base-dot-v1", dimension = 768, type = "qa" }
+]
+
+[export]
+default_format = "parquet"
+compress_car_files = true
+
+[web_archive]
+warc_dir = "~/.ipfs_datasets/warcs"
+cdxj_dir = "~/.ipfs_datasets/cdxj"
+use_squidwarc = false
+```
+
+## Performance Considerations
+- For large datasets, use streaming data loading to minimize memory usage
+- Vector indexes can be memory-mapped for datasets larger than RAM
+- Use batch processing when adding vectors to the index
+- Consider data sharding for distributed vector search across peers
+- Use DuckDB's vectorized processing for efficient data transformations
+- Leverage DuckDB's ability to directly query Parquet files without loading into memory
+- For extremely large datasets, use incremental processing with checkpointing
+- Use appropriate chunking strategies when converting between formats:
+  ```python
+  # Example of efficient chunking with DuckDB and Parquet
+  from ipfs_datasets_py.duckdb_connector import DuckDBConnector
+  
+  # Initialize connector
+  duckdb = DuckDBConnector()
+  
+  # Process a large Parquet file in chunks with minimal memory usage
+  duckdb.execute("""
+      COPY (
+          SELECT *
+          FROM read_parquet('large_dataset.parquet')
+          WHERE value > 100
+      )
+      TO 'filtered_results.parquet'
+      (FORMAT PARQUET, ROW_GROUP_SIZE 100000)
+  """)
+  ```
+- When processing large web archives, use selective extraction of only needed content
+- Optimize IPLD structures by choosing appropriate hash column strategies
+- For CAR file exports, tune block size based on data access patterns
+
+## Version Control
+- Commit messages should be clear and descriptive
+- Reference issues/PRs in commit messages when applicable
+- Follow semantic versioning for releases
+- Branch naming convention: feature/[feature-name], bugfix/[bug-name]
+
+## Integrated System Architecture
+
+The following diagram illustrates how all components interact in the complete system architecture:
+
+```
+                                  ┌─────────────────┐
+                                  │ Data Sources    │
+                                  │ (HF, DuckDB,    │
+                                  │  Web Archives)  │
+                                  └────────┬────────┘
+                                           │
+                                           ▼
+┌──────────────────┐           ┌────────────────────┐           ┌──────────────────┐
+│                  │           │                    │           │                  │
+│   Processing     │◀─────────▶│     UnifiedData    │◀─────────▶│  Storage Layer   │
+│    Pipeline      │           │      Layer         │           │    (IPFS/IPLD)   │
+│                  │           │                    │           │                  │
+└─────────┬────────┘           └─────────┬──────────┘           └────────┬─────────┘
+          │                              │                               │
+          ▼                              ▼                               ▼
+┌──────────────────┐           ┌────────────────────┐           ┌──────────────────┐
+│  Transformations │           │     Conversion     │           │  IPLD Components │
+│ - Vector Encoding │           │     Components     │           │ - CAR            │
+│ - KG Extraction   │           │ - Parquet ↔ CAR    │           │ - DAG-PB         │
+│ - Entity Linking  │           │ - Arrow ↔ IPLD     │           │ - UnixFS         │
+└─────────┬────────┘           └─────────┬──────────┘           └────────┬─────────┘
+          │                              │                               │
+          └──────────────────────────────┼───────────────────────────────┘
+                                         │
+                                         ▼
+                               ┌────────────────────┐
+                               │   Query Systems    │
+                               │ - Vector Search    │
+                               │ - Knowledge Graph  │
+                               │ - GraphRAG         │
+                               └────────────────────┘
+```
+
+## Implementation Plan
+
+### Phase 0: Foundation (Months 1-2)
+1. **Core Modules Setup**
+   - Set up project structure and package organization
+   - Implement basic configuration management
+   - Create initial test framework and CI/CD pipeline
+   - Set up documentation structure
+
+2. **IPFS Integration**
+   - Implement IPFS client integration
+   - Create utilities for basic IPFS operations (add, get, pin)
+   - Configure IPFS node management
+
+3. **Basic Data Handling**
+   - Implement simple dataset loading functions 
+   - Create basic converters between formats
+   - Build fundamental data structures
+
+### Phase 1: Core Infrastructure Integration (Months 2-4)
+1. **IPLD Storage Layer**
+   - Implement IPLD-based dataset storage using DAG-PB
+   - Create serialization/deserialization helpers for common dataset formats
+   - Develop CAR file import/export for efficient dataset exchange
+   - Integrate UnixFS for file and directory representation
+
+2. **Web Archive Integration**
+   - Integrate ArchiveNow for website archiving and WARC generation
+   - Implement IPWB for storing web archives on IPFS
+   - Create dataset extraction utilities for web archive content
+
+3. **File Handling**
+   - Implement chunking strategies for large dataset files
+   - Create efficient memory-mapping mechanisms
+   - Develop utilities for incremental data processing
+
+4. **Conversion Layer**
+   - Implement Parquet ↔ CAR bidirectional conversion
+   - Build Arrow ↔ IPLD conversion utilities
+   - Create DuckDB integration for SQL operations on data
+
+### Phase 2: Processing & Analysis (Months 4-6)
+1. **Dataset Processing Pipeline**
+   - Implement transformation pipeline for web archive processing
+   - Create extractors for different content types (text, structured data, etc.)
+   - Develop parallel processing capabilities for large archives
+   - Implement schema mapping and validation
+
+2. **Vector Processing**
+   - Implement multiple embedding model support
+   - Create IPLD serialization for vector data
+   - Develop efficient nearest-neighbor search
+   - Build vector index structures
+
+3. **Basic Query Capabilities**
+   - Implement simple query capabilities for datasets
+   - Create basic filtering and aggregation operations
+   - Develop range queries and sorting functionality
+
+### Phase 3: Advanced Features (Months 6-9)
+1. **Knowledge Graph Layer**
+   - Implement entity extraction from web archive content
+   - Build relationship detection between entities
+   - Create IPLD-based knowledge graph with linking between entities
+   - Develop graph traversal algorithms
+
+2. **Vector Search Integration**
+   - Store embedding vectors in IPLD structures
+   - Implement efficient nearest-neighbor search over IPLD-stored vectors
+   - Create hybrid search combining vector similarity and IPLD graph traversal
+   - Build query processing for vector similarity
+
+3. **Multi-format Query Engine**
+   - Implement unified query interface across storage formats
+   - Create query planning and optimization
+   - Build distributed query execution
+   - Implement query results caching
+
+### Phase 4: Optimization and Scaling (Months 9-12)
+1. **Performance Optimizations**
+   - Implement streaming data loading for large datasets
+   - Create memory-mapped vector indexes for datasets larger than RAM
+   - Optimize IPLD encoding/decoding for high-throughput processing
+   - Improve query performance with statistics and indexes
+
+2. **Distributed Features**
+   - Support sharded datasets across multiple IPFS nodes
+   - Implement collaborative dataset building with P2P synchronization
+   - Create federated search across distributed dataset fragments
+   - Build resilient operations with node failures
+
+3. **GraphRAG Implementation**
+   - Integrate knowledge graph and vector search for hybrid queries
+   - Implement context-aware ranking algorithms
+   - Create entity-centric query expansion
+   - Develop graph-based relevance scoring
+
+### Phase 5: Production Readiness (Months 12-15)
+1. **Monitoring and Management**
+   - Implement comprehensive logging
+   - Create performance metrics collection
+   - Build administration dashboards
+   - Develop operational tooling
+
+2. **Security & Governance**
+   - Implement encryption for sensitive data
+   - Create access control mechanisms
+   - Build data provenance tracking
+   - Develop audit logging capabilities
+
+3. **Documentation and Packaging**
+   - Complete comprehensive documentation
+   - Create examples and tutorials
+   - Build containerized deployment options
+   - Prepare release packaging and distribution
+
+### Integration Architecture
+
+The following diagram illustrates how the components integrate:
+
+```
+┌─────────────────┐     ┌───────────────┐     ┌───────────────────┐
+│  Data Sources   │────▶│ Data Loaders  │────▶│ Processing Pipeline│
+└─────────────────┘     └───────────────┘     └───────────────────┘
+  - Web Archives          - WARC Loaders        - Extractors
+  - Parquet Files         - Parquet Loaders     - Transformers
+  - HF Datasets           - HF Dataset Adapters  - Normalizers
+                                │
+                                ▼
+┌─────────────────┐     ┌───────────────┐     ┌───────────────────┐
+│  IPLD Storage   │◀───▶│ Dataset API   │────▶│   Query Engine    │
+└─────────────────┘     └───────────────┘     └───────────────────┘
+  - DAG-PB Nodes          - Dataset Operations   - Vector Search
+  - CAR Files             - Metadata Management  - Graph Traversal
+  - UnixFS Chunking       - Version Control      - Hybrid RAG Queries
+```
+
+### Implementation Approach
+- Use modular design with clear interfaces between components
+- Implement progressive enhancement with basic functionality first
+- Focus on memory efficiency for large dataset handling
+- Ensure robust error handling and recovery mechanisms
+- Provide comprehensive testing for each component
+
+## IPLD Components for Dataset Representation
+
+### IPLD-CAR (Content Addressable aRchives)
+
+#### Overview
+IPLD-CAR is a library for working with Content Addressable aRchives (CAR), a critical format for IPFS data transfer:
+- Provides transport format for datasets to/from IPFS
+- Enables packaging multiple related blocks as a single unit
+- Facilitates offline data exchange between IPFS nodes
+- Supports content-addressed data storage and transfer
+
+#### CAR File Format
+The CAR format consists of:
+- A header with the root CIDs
+- A sequence of content-addressed blocks
+- Each block contains its CID and the raw block data
+
+This format allows for efficient transport of IPLD data structures with their complete dependency graphs.
+
+#### Components
+- **CAR Encoder/Decoder**: Convert between IPLD blocks and CAR files
+- **CID Handling**: Work with Content Identifiers for addressing data
+- **Block Management**: Organize data blocks within the CAR container
+- **Selective Reading**: Ability to extract specific blocks by CID
+
+#### Core API
+The library provides two primary functions:
+```python
+def encode(roots: List[CID], blocks: List[Tuple[CID, bytes]]) -> bytes:
+    """
+    Encode roots and blocks into a CAR file.
+    
+    Args:
+        roots: List of root CIDs
+        blocks: List of (CID, data) tuples
+        
+    Returns:
+        bytes: The CAR file as bytes
+    """
+
+def decode(car_data: bytes) -> Tuple[List[CID], Dict[CID, bytes]]:
+    """
+    Decode a CAR file into roots and blocks.
+    
+    Args:
+        car_data: The CAR file as bytes
+        
+    Returns:
+        Tuple[List[CID], Dict[CID, bytes]]: (roots, blocks)
+    """
+```
+
+#### Integration
+```python
+import ipld_car
+from multiformats import multihash, CID
+
+# Encode dataset blocks to CAR format
+dataset_car = ipld_car.encode([root_cid], [(cid1, data1), (cid2, data2)])
+
+# Write CAR file to disk
+with open("my_dataset.car", "wb") as f:
+    f.write(dataset_car)
+
+# Read and decode CAR file
+with open("my_dataset.car", "rb") as f:
+    car_data = f.read()
+roots, blocks = ipld_car.decode(car_data)
+
+# Access dataset blocks by their CIDs
+for cid, block_data in blocks.items():
+    process_block(cid, block_data)
+```
+
+### IPLD-DAG-PB (Directed Acyclic Graph - ProtoBuf)
+
+#### Overview
+IPLD-DAG-PB is an implementation of the DAG-PB specification, the primary data structure used in IPFS:
+- Provides foundation for structured data representation
+- Enables linking between different dataset components
+- Supports content-addressed data models
+- Can represent relationships between data points
+
+#### DAG-PB Format
+The DAG-PB format is a strict schema that defines:
+- **PBNode**: A node containing data and links
+- **PBLink**: A link to another node with a name, hash (CID), and size (Tsize)
+
+The schema is based on Protocol Buffers and follows this structure:
+```protobuf
+message PBLink {
+  optional string Name = 1;    // UTF-8 string name
+  optional bytes Hash = 2;     // CID of the linked node
+  optional uint64 Tsize = 3;   // Size of the linked node
+}
+
+message PBNode {
+  repeated PBLink Links = 1;   // List of links to other nodes
+  optional bytes Data = 2;     // Arbitrary data payload
+}
+```
+
+#### Components
+- **PBNode**: Core data structure for representing nodes in the graph
+- **PBLink**: Mechanism for creating links between nodes
+- **Encoding/Decoding**: Convert between DAG-PB structures and binary format
+- **Schema Validation**: Ensure adherence to the strict DAG-PB schema
+
+#### Core API
+```python
+# Low-level API (raw structures)
+def encode_raw(raw_node: Dict) -> bytes:
+    """Encode a raw PBNode dictionary to bytes."""
+    
+def decode_raw(raw_data: bytes) -> Dict:
+    """Decode bytes to a raw PBNode dictionary."""
+
+# High-level API (object-oriented)
+class PBNode:
+    """A node in a DAG-PB graph."""
+    
+    def __init__(self, data=None, links=None):
+        """Initialize a PBNode with optional data and links."""
+        
+    def add_link(self, name, cid, tsize=None):
+        """Add a link to another node."""
+
+def encode(node: PBNode) -> bytes:
+    """Encode a PBNode object to bytes."""
+    
+def decode(data: bytes) -> PBNode:
+    """Decode bytes to a PBNode object."""
+    
+def prepare(obj: Dict) -> PBNode:
+    """Prepare a dictionary as a valid PBNode."""
+```
+
+#### Integration
+```python
+from ipld_dag_pb import PBNode, encode, decode, prepare
+from multiformats import CID
+
+# Create a node with dataset metadata
+metadata_node = PBNode(json.dumps({
+    "name": "climate_dataset",
+    "dimensions": 3,
+    "count": 10000
+}).encode("utf-8"))
+
+# Encode to bytes for storage
+encoded_metadata = encode(metadata_node)
+
+# Create linked structure for dataset components
+root_node = prepare({
+    "data": {"Data": json.dumps({"type": "dataset_root"}).encode()},
+    "links": [
+        {"Name": "metadata", "Hash": metadata_cid, "Tsize": len(encoded_metadata)},
+        {"Name": "vectors", "Hash": vectors_cid, "Tsize": vectors_size},
+        {"Name": "index", "Hash": index_cid, "Tsize": index_size}
+    ]
+})
+
+# Decode a node from storage
+retrieved_node = decode(stored_bytes)
+```
+
+### IPLD-UnixFS
+
+#### Overview
+IPLD-UnixFS is an implementation of the UnixFS specification for IPFS:
+- Enables file and directory representation in IPFS
+- Provides efficient chunking strategies for large datasets
+- Supports incremental processing of large files
+- Allows fine-grained control over memory usage
+
+#### UnixFS Format
+UnixFS is a data format that represents files and directories in a POSIX-like file system structure:
+- Files are represented as chunked data with metadata
+- Directories contain entries mapping names to CIDs
+- Symlinks, raw files, and other special types are supported
+- Data is structured as dag-pb nodes with UnixFS-specific data payload
+
+#### Components
+- **Chunkers**: Strategies for splitting large files into manageable pieces
+  - Fixed-size chunker: Splits data into fixed-size chunks
+  - Rabin chunker: Uses content-defined chunking for better deduplication
+  - Size-bounded chunker: Ensures chunks stay within size bounds
+- **File Builder**: Tools for constructing UnixFS file representations
+- **Directory Builder**: Mechanisms for organizing files in directories
+- **CAR Writer**: Tools for writing UnixFS structures directly to CAR files
+
+#### Core API
+
+##### Chunker API
+```python
+class ChunkerBase:
+    """Base class for chunking strategies."""
+    
+    def cut(self, context, buffer, end=False) -> list[int]:
+        """
+        Cut buffer into chunks, returning a list of chunk byte lengths.
+        
+        Args:
+            context: Opaque context maintained between calls
+            buffer: Bytes buffer to chunk
+            end: True if this is the last buffer
+            
+        Returns:
+            list[int]: List of chunk lengths
+        """
+
+class FixedSizeChunker(ChunkerBase):
+    """Chunks data into fixed-size pieces."""
+    
+    def __init__(self, chunk_size=262144):  # Default 256KB
+        """Initialize with chunk size."""
+        
+class RabinChunker(ChunkerBase):
+    """Content-defined chunking using Rabin fingerprinting."""
+    
+    def __init__(self, min_size=256*1024, avg_size=1024*1024, max_size=4*1024*1024):
+        """Initialize with size parameters."""
+```
+
+##### Writer API
+```python
+class UnixFSWriter:
+    """Writes UnixFS files to IPFS."""
+    
+    def write_file(self, file_path, chunker=None):
+        """
+        Write a file to IPFS using UnixFS format.
+        
+        Args:
+            file_path: Path to file to write
+            chunker: Chunking strategy to use
+            
+        Returns:
+            CID: Content ID of the root node
+        """
+    
+    def write_directory(self, dir_path, recursive=True):
+        """
+        Write a directory to IPFS using UnixFS format.
+        
+        Args:
+            dir_path: Path to directory to write
+            recursive: Whether to include subdirectories
+            
+        Returns:
+            CID: Content ID of the directory node
+        """
+        
+    def write_to_car(self, path, car_path, chunker=None):
+        """
+        Write a file or directory to a CAR file.
+        
+        Args:
+            path: Path to file or directory
+            car_path: Output CAR file path
+            chunker: Chunking strategy to use
+            
+        Returns:
+            CID: Content ID of the root node
+        """
+```
+
+#### Integration
+```python
+from ipld_unixfs.file.chunker import fixed
+
+# Create a fixed-size chunker for large dataset files
+chunker = fixed.FixedSizeChunker(chunk_size=1024*1024)  # 1MB chunks
+
+# Process a large dataset file incrementally
+with open("large_dataset.parquet", "rb") as f:
+    buffer = f.read(8192)
+    while buffer:
+        chunks = chunker.cut(None, buffer)
+        for chunk in chunks:
+            process_chunk(chunk)
+        buffer = f.read(8192)
+```
+
+## Web Archive Integration
+
+### InterPlanetary Wayback (IPWB) Integration
+
+#### Overview
+InterPlanetary Wayback (IPWB) is a web archive integration tool that facilitates:
+- Storage of web archive (WARC) files on the IPFS network
+- Content-addressable deduplication of web resources
+- Distributed replay of archived web content
+- Memento Protocol support for time-based content negotiation
+- End-to-end encrypted web archives for private archiving
+
+#### Components
+- **WARC Indexer**: Extracts HTTP headers and content from WARC files, pushes them to IPFS separately, and creates CDXJ indexes
+- **CDXJ Files**: Contains URI-Rs (original URLs), timestamps, and IPFS hashes for archived content with Memento compatibility
+- **Replay System**: Serves archived content from IPFS using the CDXJ index for lookup
+- **Reconstructive**: Client-side JavaScript library that uses Service Workers to rewrite URLs and handle replay
+- **Custom HTML Elements**: Components like `<reconstructive-banner>` for enhancing web archive replay
+
+#### CDXJ Format
+CDXJ is a sorted text file format that extends CDX with JSON-formatted metadata:
+
+```
+URI-R timestamp [JSON metadata]
+```
+
+Example CDXJ entry:
+```
+com,example)/ 20200101120000 {"uri":"https://example.com/","mime":"text/html","status":"200","digest":"SHA256=abc123...","length":"4526","offset":"0","filename":"example.warc.gz","headers":{"WARC-Type":"response","WARC-Date":"2020-01-01T12:00:00Z"},"ipfs":"QmZ8jJ5kqjfgP9yAJk7NQGcr4Gzdz5..."}
+```
+
+The `ipfs` field contains the IPFS hash for the archived content, enabling direct retrieval through the IPFS network.
+
+#### Integration Steps
+1. **Installation**:
+   ```bash
+   pip install ipwb
+   
+   # Or using Docker
+   docker pull oduwsdl/ipwb
+   docker run -p 5000:5000 -p 8080:8080 -v /path/to/data:/data oduwsdl/ipwb
+   ```
+
+2. **IPFS Setup**:
+   - Ensure IPFS daemon is running: `ipfs daemon`
+   - Configure with: `ipfs config Addresses.API /ip4/127.0.0.1/tcp/5001`
+
+3. **Indexing Web Archives**:
+   ```python
+   from ipwb import indexer
+   
+   # Basic indexing
+   cdxj_lines = indexer.index_file_at('path/to/archive.warc', 
+                                       outfile='index.cdxj',
+                                       quiet=True)
+   
+   # Encrypted indexing for private archives
+   encryption_key = 'mySecretKey'
+   cdxj_lines = indexer.index_file_at('path/to/archive.warc',
+                                       outfile='encrypted_index.cdxj',
+                                       encryption_key=encryption_key)
+   
+   # Selective indexing (only include specific MIME types)
+   cdxj_lines = indexer.index_file_at('path/to/archive.warc',
+                                       outfile='filtered_index.cdxj',
+                                       include_mimes=['text/html', 'text/css', 'application/javascript'])
+   ```
+
+4. **Replaying Web Archives**:
+   ```python
+   from ipwb import replay
+   
+   # Start the replay system with your CDXJ index
+   replay.start('path/to/index.cdxj')
+   
+   # Start with encrypted index
+   replay.start('path/to/encrypted_index.cdxj', encryption_key='mySecretKey')
+   
+   # Start with proxy support for HTTPS content
+   replay.start('path/to/index.cdxj', proxy=True)
+   ```
+
+5. **Advanced API Usage**:
+   ```python
+   from ipwb import util, indexer, replay
+   
+   # Direct IPFS interactions
+   content_hash = util.push_to_ipfs(content_bytes, headers_dict=None)
+   retrieved_content = util.pull_from_ipfs(content_hash)
+   
+   # Access through Memento TimeMap
+   # This provides a list of all captures for a specific URL
+   timemap_url = f"http://localhost:5000/timemap/link/http://example.com/"
+   
+   # Access specific Memento by timestamp
+   memento_url = f"http://localhost:5000/memento/20200101120000/http://example.com/"
+   ```
+
+### ArchiveNow for Website Archiving
+
+#### Overview
+ArchiveNow is a tool for pushing web resources into web archives, including generating local WARC files of entire websites. It provides a unified interface to multiple archive services and local archiving capabilities.
+
+#### Key Features
+- Push to multiple web archives simultaneously (Internet Archive, Archive.today, Perma.cc, etc.)
+- Generate local WARC files using different agents (wget or squidwarc)
+- Extensible architecture with pluggable archive handlers
+- CLI, Python API, and web service interfaces
+- Docker support for containerized deployment
+
+#### Installation
+```bash
+pip install archivenow
+
+# Or using Docker
+docker pull oduwsdl/archivenow
+docker run -p 12345:12345 oduwsdl/archivenow --server --host 0.0.0.0
+```
+
+#### Creating WARC Archives of Websites
+
+1. **Command Line Usage**:
+   ```bash
+   # Create a WARC with default filename (derived from URL)
+   archivenow --warc https://example.com/
+   
+   # Create a WARC with custom filename
+   archivenow --warc=myarchive https://example.com/
+   
+   # Create WARC using a specific agent (wget or squidwarc)
+   archivenow --warc --agent=squidwarc https://example.com/
+   
+   # Push to all supported archives simultaneously
+   archivenow --all https://example.com/
+   
+   # Push to specific archives (ia=Internet Archive, is=Archive.today, cc=Perma.cc)
+   archivenow --ia --is https://example.com/
+   ```
+
+2. **Python API Usage**:
+   ```python
+   from archivenow import archivenow
+   
+   # Create a WARC archive of a website
+   result = archivenow.push("https://example.com/", "warc", 
+                            {"warc": "myarchive", "agent": "wget"})
+   
+   # Push to Internet Archive
+   result_ia = archivenow.push("https://example.com/", "ia")
+   print(f"Internet Archive URL: {result_ia}")
+   
+   # Push to multiple archives
+   results = archivenow.push("https://example.com/", ["ia", "is", "cc"])
+   for archive, url in results.items():
+       print(f"{archive}: {url}")
+       
+   # Custom implementation with handlers
+   from archivenow.handlers import warc_handler
+   
+   custom_handler = warc_handler.WARCHandler()
+   archive_url = custom_handler.push("https://example.com/", 
+                                    {"warc": "custom_archive", 
+                                     "agent": "squidwarc", 
+                                     "depth": 1})
+   ```
+
+3. **Web Service Usage**:
+   ```bash
+   # Start ArchiveNow server
+   archivenow --server --host 0.0.0.0 --port 12345
+   
+   # Create WARC via HTTP request
+   curl http://localhost:12345/warc/https://example.com/
+   
+   # Push to Internet Archive
+   curl http://localhost:12345/ia/https://example.com/
+   
+   # Push to all archives 
+   curl http://localhost:12345/all/https://example.com/
+   
+   # Custom options via POST request
+   curl -X POST -d '{"agent":"squidwarc","depth":2}' \
+        http://localhost:12345/warc/https://example.com/
+   ```
+
+4. **Extending ArchiveNow**:
+   ```python
+   # Creating a custom archive handler
+   from archivenow.handlers.archive_handler import ArchiveHandler
+   
+   class MyCustomArchiveHandler(ArchiveHandler):
+       def __init__(self):
+           ArchiveHandler.__init__(self)
+           self.enabled = True
+           self.name = 'my_archive'
+           self.service_api = 'https://myarchive.example.org/api/save'
+       
+       def push(self, uri, params=None):
+           # Custom implementation to push to your archive service
+           # Returns the URL of the archived version
+           return f"https://myarchive.example.org/archived/{uri}"
+   
+   # Register the handler
+   from archivenow import archivenow
+   archivenow.handler_api.register_handler(MyCustomArchiveHandler())
+   ```
+
+#### Advanced Options
+
+- **Archive Agents**: ArchiveNow supports two WARC generation agents:
+  ```bash
+  # Using wget (default) - better for static sites
+  archivenow --warc --agent=wget https://example.com/
+  
+  # Using squidwarc - better for dynamic sites with JavaScript
+  archivenow --warc --agent=squidwarc https://example.com/
+  ```
+
+- **Multiple Archive Formats Simultaneously**:
+  ```bash
+  # Archive to WARC file and Internet Archive at the same time
+  archivenow --ia --warc https://example.com/
+  ```
+
+#### Best Practices for Complete Website Archiving
+
+1. **For Static Websites**:
+   - Use the default wget agent which captures all necessary resources
+   
+2. **For Dynamic Websites**:
+   - Use the squidwarc agent which uses a headless browser to better capture JavaScript content
+   
+3. **For Large Websites**:
+   - For more comprehensive crawling of large sites, consider using wget directly with recursive options
+   - For websites with complex JavaScript, use the squidwarc agent
+
+### Acquiring Web Archives
+To obtain WARC or CDXJ files from the Internet Archive:
+
+1. **Internet Archive API**:
+   ```python
+   import requests
+   
+   def get_warc_from_ia(identifier, filename):
+       """Download a WARC file from Internet Archive."""
+       url = f"https://archive.org/download/{identifier}/{filename}"
+       response = requests.get(url, stream=True)
+       with open(filename, 'wb') as f:
+           for chunk in response.iter_content(chunk_size=8192):
+               f.write(chunk)
+       return filename
+   ```
+
+2. **Internet Archive Collection API**:
+   ```python
+   def get_collection_warcs(collection_id):
+       """Get list of WARCs in an IA collection."""
+       url = f"https://archive.org/advancedsearch.php?q=collection:{collection_id}+AND+format:WARC&fl[]=identifier&fl[]=filename&output=json"
+       response = requests.get(url)
+       return response.json()['response']['docs']
+   ```
+
+3. **Web Archive Discovery Tools**:
+   - CDX API: Use Archive.org's CDX server API to find captures
+   - WayBack Machine API: Query archived URLs by timestamp
+   - ARCH Framework: Python library for archive discovery
+
+### Usage Examples
+```python
+# Complete workflow: create, index, and process a web archive
+from archivenow import archivenow
+from ipfs_datasets_py import web_archive_utils
+
+# Create a WARC archive of a website
+warc_file = archivenow.push("https://example.com/", "warc", {"warc": "example_archive"})
+
+# Index the WARC to IPFS using IPWB
+cdxj_path = web_archive_utils.index_warc(warc_file)
+
+# Extract structured data from the archive
+dataset = web_archive_utils.extract_dataset_from_cdxj(cdxj_path)
+
+# Create vector embeddings from extracted text
+embeddings = web_archive_utils.embed_archive_text(dataset)
+
+# Store archive as queryable knowledge graph
+kg = web_archive_utils.archive_to_knowledge_graph(dataset)
+```
+
+### Considerations
+- WARC files can be very large (GBs to TBs), so use streaming processing
+- IPFS provides automatic deduplication of web resources across archives
+- Implement selective indexing to focus on specific content types or domains
+- Use IPFS pinning services to ensure long-term availability of archived content
+- For complete website archiving, consider scope limitations (depth of crawl, external links)
+
+### Web Archive to Structured Datasets
+
+#### Querying Common Crawl and Internet Archive
+
+This module aims to provide functionality for querying Common Crawl and Internet Archive to obtain web content that can be processed into structured datasets (Hugging Face Datasets / Parquet files).
+
+1. **Common Crawl Integration**:
+   ```python
+   from ipfs_datasets_py import web_archive_utils
+   
+   # Query Common Crawl for specific domain/URL pattern
+   results = web_archive_utils.query_common_crawl(
+       domain="example.com",
+       url_pattern="*/blog/*",
+       crawl_id="CC-MAIN-2023-06",  # Optional specific crawl
+       limit=1000
+   )
+   
+   # Download matching WARC records
+   warc_data = web_archive_utils.download_cc_warcs(results)
+   
+   # Convert to structured dataset
+   dataset = web_archive_utils.warc_to_dataset(warc_data, extract_text=True, extract_metadata=True)
+   
+   # Save as Parquet
+   dataset.save_to_parquet("example_blog_content.parquet")
+   
+   # Or push to Hugging Face Datasets
+   dataset.push_to_hub("username/example-web-content")
+   ```
+
+2. **Internet Archive Wayback Machine Integration**:
+   ```python
+   # Query Internet Archive for historical captures of a domain
+   captures = web_archive_utils.query_wayback_machine(
+       url="example.com",
+       from_date="20150101",
+       to_date="20220101",
+       match_type="domain",
+       limit=500
+   )
+   
+   # Download captures as WARC
+   warc_data = web_archive_utils.download_wayback_captures(captures)
+   
+   # Process into dataset with time series information
+   timeseries_dataset = web_archive_utils.wayback_to_timeseries_dataset(
+       warc_data,
+       temporal_field="capture_date",
+       content_fields=["html_content", "text_content", "links"]
+   )
+   ```
+
+3. **Bulk Archive Processing Pipeline**:
+   ```python
+   # Define processing pipeline for web archives
+   pipeline = web_archive_utils.WARCProcessingPipeline(
+       extraction_steps=[
+           web_archive_utils.extractors.HTMLExtractor(),
+           web_archive_utils.extractors.TextExtractor(),
+           web_archive_utils.extractors.LinkExtractor(),
+           web_archive_utils.extractors.MetadataExtractor()
+       ],
+       transformation_steps=[
+           web_archive_utils.transformers.DedupContent(),
+           web_archive_utils.transformers.LanguageDetection(),
+           web_archive_utils.transformers.HTMLCleaner(),
+           web_archive_utils.transformers.TextNormalizer()
+       ],
+       output_format="parquet"
+   )
+   
+   # Process multiple archives in parallel
+   processed_datasets = pipeline.process_bulk(
+       warc_files=["archive1.warc.gz", "archive2.warc.gz"],
+       output_dir="processed_datasets/",
+       partitions=["domain", "language"],
+       parallel_workers=4
+   )
+   ```
+
+#### Data Extraction and Transformation
+
+The module provides tools for extracting and transforming web content from WARC files into structured datasets:
+
+1. **Content Extraction**:
+   - HTML content extraction
+   - Plain text extraction with various cleaning options
+   - Metadata extraction (headers, timestamps, MIME types)
+   - Link extraction and analysis
+   - Image and media extraction
+   - Structured data extraction (JSON-LD, microdata, etc.)
+
+2. **Transformations**:
+   - Content deduplication
+   - Language detection and filtering
+   - Content classification
+   - Named entity recognition
+   - Text normalization
+   - HTML cleaning and boilerplate removal
+
+3. **Output Formats**:
+   - Hugging Face Datasets
+   - Apache Parquet files
+   - Arrow Tables
+   - DuckDB databases
+   - IPFS-compatible CAR files
+
+#### Integration with Machine Learning Pipelines
+
+The extracted web content can be directly piped into machine learning pipelines:
+
+```python
+# Create a dataset from Common Crawl and fine-tune a model
+cc_dataset = web_archive_utils.query_and_process_common_crawl(
+    domain="stackoverflow.com",
+    url_pattern="*/questions/*",
+    extract_qa_pairs=True
+)
+
+# Convert to format suitable for model training
+training_dataset = cc_dataset.prepare_for_training(
+    text_field="answer_text",
+    metadata_fields=["tags", "upvotes"]
+)
+
+# Use with Hugging Face Transformers
+from transformers import Trainer, TrainingArguments
+trainer = Trainer(
+    model=model,
+    args=TrainingArguments(...),
+    train_dataset=training_dataset
+)
+trainer.train()
+```
+
+## Complete Integration Examples
+
+### Example 1: Complete Data Processing and Storage Workflow
+
+The following example demonstrates how DuckDB, HuggingFace, and Arrow components can be integrated to process and store datasets in multiple formats:
+
+```python
+from ipfs_datasets_py.data_integration import UnifiedDataLayer
+from ipfs_datasets_py.duckdb_connector import DuckDBConnector
+import pandas as pd
+
+# Initialize components
+data_layer = UnifiedDataLayer()
+duckdb = DuckDBConnector("analytics.duckdb")
+
+# 1. Load dataset from Huggingface
+print("Loading dataset from Huggingface...")
+dataset = data_layer.load_hf_dataset("wikipedia", "20220301.en", split="train")
+
+# 2. Process using DuckDB for analytics
+print("Processing with DuckDB...")
+# First convert to Arrow
+arrow_table = data_layer.hf_dataset_to_arrow(dataset)
+
+# Create DuckDB table from Arrow
+duckdb.create_table_from_arrow("wikipedia_raw", arrow_table)
+
+# Run analytics query
+processed_data = duckdb.query_to_arrow("""
+    SELECT 
+        id,
+        title,
+        url,
+        text,
+        LENGTH(text) as text_length,
+        REGEXP_COUNT(LOWER(text), 'python') as python_mentions
+    FROM wikipedia_raw
+    WHERE text_length > 1000
+    AND python_mentions > 0
+    ORDER BY python_mentions DESC
+    LIMIT 10000
+""")
+
+# 3. Export in multiple formats
+print("Exporting data...")
+# Export to Parquet
+data_layer.arrow_to_parquet(processed_data, "wikipedia_python.parquet")
+
+# Export to CAR file with content-addressing
+data_layer.arrow_to_car(processed_data, "wikipedia_python.car", hash_columns=["id"])
+
+# Export back to Huggingface Dataset
+hf_processed = data_layer.arrow_to_hf_dataset(processed_data)
+hf_processed.push_to_hub("myusername/wikipedia-python-articles")
+
+print("Data processing and export complete!")
+print(f"Processed {len(processed_data)} records")
+print(f"Outputs: wikipedia_python.parquet, wikipedia_python.car, and dataset on HF Hub")
+```
+
+### Example 2: Knowledge Dataset from Web Archives
+
+The following example demonstrates how all the components can be integrated into a complete workflow for building, storing, and querying a knowledge dataset from web archives:
+
+```python
+from ipfs_datasets_py import ipfs_datasets, web_archive_utils
+from ipfs_datasets_py.ipld_storage import IPLDStorage
+from ipfs_datasets_py.ipfs_knn_index import IPFSKnnIndex
+from ipfs_datasets_py.knowledge_graph import IPLDKnowledgeGraph
+from archivenow import archivenow
+import json
+
+# Step 1: Archive a website using ArchiveNow
+print("Creating web archive...")
+warc_file = archivenow.push("https://en.wikipedia.org/wiki/IPFS", "warc", 
+                           {"warc": "ipfs_wiki", "agent": "wget"})
+
+# Step 2: Index the WARC file to IPFS using IPWB
+print("Indexing to IPFS...")
+from ipwb import indexer
+cdxj_path = indexer.index_file_at(warc_file, outfile="ipfs_wiki.cdxj")
+
+# Step 3: Extract structured data from the archive
+print("Extracting structured data...")
+# Create a processing pipeline for the web archive
+pipeline = web_archive_utils.WARCProcessingPipeline(
+    extraction_steps=[
+        web_archive_utils.extractors.HTMLExtractor(),
+        web_archive_utils.extractors.TextExtractor(),
+        web_archive_utils.extractors.EntityExtractor(),
+        web_archive_utils.extractors.LinkExtractor()
+    ],
+    transformation_steps=[
+        web_archive_utils.transformers.HTMLCleaner(),
+        web_archive_utils.transformers.TextNormalizer(),
+        web_archive_utils.transformers.EntityLinker()
+    ],
+    output_format="dataset"
+)
+
+# Process the archive into a dataset
+dataset = pipeline.process(cdxj_path)
+
+# Step 4: Create vector embeddings and store in IPLD
+print("Creating embeddings...")
+# Initialize IPLD storage
+ipld_storage = IPLDStorage()
+
+# Create vector embeddings for the text content
+embedding_model = ipfs_datasets.load_embedding_model("sentence-transformers/all-MiniLM-L6-v2")
+text_chunks = dataset.get_chunked_texts(chunk_size=512, overlap=50)
+embeddings = [embedding_model.encode(chunk) for chunk in text_chunks]
+
+# Create vector index
+vector_index = IPFSKnnIndex(dimension=embedding_model.dimension)
+vector_ids = vector_index.add_vectors(embeddings, metadata={
+    "source": "wikipedia",
+    "topic": "ipfs",
+    "chunks": text_chunks
+})
+
+# Step 5: Build knowledge graph from extracted entities
+print("Building knowledge graph...")
+kg = IPLDKnowledgeGraph()
+
+# Add entities from the dataset
+for entity in dataset.get_entities():
+    entity_cid = kg.add_entity({
+        "name": entity.name,
+        "type": entity.type,
+        "mentions": entity.mentions,
+        "vector_ids": [vector_ids[i] for i in entity.chunk_indices]
+    })
+
+# Add relationships between entities
+for relation in dataset.get_relations():
+    kg.add_relationship(
+        source_cid=relation.source_entity_cid,
+        target_cid=relation.target_entity_cid,
+        relationship_type=relation.type,
+        properties=relation.properties
+    )
+
+# Step 6: Export everything to CAR files for distribution
+print("Exporting to CAR files...")
+# Export vector index to CAR
+index_car = vector_index.export_to_car("ipfs_wiki_vectors.car")
+
+# Export knowledge graph to CAR
+kg_car = kg.export_to_car("ipfs_wiki_knowledge_graph.car")
+
+# Create a root object linking everything together
+dataset_root = {
+    "name": "IPFS Wikipedia Dataset",
+    "description": "Knowledge dataset created from Wikipedia IPFS article",
+    "source_warc": warc_file,
+    "cdxj_index": cdxj_path,
+    "vector_index_cid": vector_index.root_cid,
+    "knowledge_graph_cid": kg.root_cid,
+    "created_at": datetime.datetime.now().isoformat()
+}
+
+# Store the root object
+root_cid = ipld_storage.store(json.dumps(dataset_root).encode())
+ipld_storage.export_to_car([root_cid], "ipfs_wiki_dataset_root.car")
+
+print(f"Dataset creation complete. Root CID: {root_cid}")
+
+# Step 7: Query the dataset
+print("Performing hybrid vector + graph query...")
+query = "How does IPFS handle content addressing?"
+query_embedding = embedding_model.encode(query)
+
+# Vector search to find relevant chunks
+vector_results = vector_index.search(query_embedding, top_k=5)
+
+# Get entities mentioned in the most relevant chunks
+mentioned_entities = kg.get_entities_by_vector_ids(
+    [result.id for result in vector_results]
+)
+
+# Perform graph traversal to find related concepts
+related_concepts = kg.traverse_from_entities(
+    mentioned_entities,
+    relationship_types=["RELATED_TO", "IS_PART_OF"],
+    max_depth=2
+)
+
+# Combine results for a comprehensive answer
+print("Results:")
+for result in vector_results:
+    print(f"- {result.metadata['chunks'][result.metadata_index][:100]}...")
+
+print("\nRelated concepts:")
+for concept in related_concepts:
+    print(f"- {concept.properties['name']} ({concept.properties['type']})")
+```
+
+This integrated example demonstrates:
+1. Creating a web archive with ArchiveNow
+2. Indexing it to IPFS with IPWB
+3. Processing the archive into structured data
+4. Creating and storing vector embeddings using IPLD
+5. Building a knowledge graph with entity relationships
+6. Exporting everything to CAR files for distribution
+7. Performing hybrid vector and graph-based queries
+
+The implementation provides a complete end-to-end workflow for building decentralized, content-addressed datasets with rich semantic knowledge and efficient retrieval capabilities.
+
+## Data Processing and Storage Integration
+
+### DuckDB, Arrow, and Huggingface Datasets Integration
+
+#### Overview
+This module provides a unified interface for working with multiple data processing libraries (DuckDB, Arrow, Huggingface Datasets) and enables seamless conversion between these formats and IPLD/IPFS storage formats.
+
+#### Key Features
+- Support for multiple data sources and formats (DuckDB, Arrow, Huggingface Datasets)
+- Direct query execution on data with DuckDB without format conversion
+- Bidirectional conversion between all formats and IPLD
+- Export capabilities to both Parquet and CAR files from any source
+- Streaming processing for large datasets
+- Memory-efficient operations with zero-copy when possible
+
+#### Architecture
+
+```
+┌───────────────────┐  ┌───────────────────┐  ┌───────────────────┐
+│  Huggingface      │  │     DuckDB        │  │  Apache Arrow     │
+│    Datasets       │  │    Database       │  │     Tables        │
+└─────────┬─────────┘  └──────┬────────────┘  └─────────┬─────────┘
+          │                   │                         │
+          └───────────────────┼─────────────────────────┘
+                              │
+                              ▼
+                 ┌───────────────────────────────┐
+                 │      Unified Data Layer       │
+                 └─────────────────┬─────────────┘
+                                   │
+                                   ▼
+┌───────────────────┐  ┌───────────────────┐  ┌───────────────────┐
+│   Parquet Files   │  │    IPLD Blocks    │  │    CAR Files      │
+└───────────────────┘  └───────────────────┘  └───────────────────┘
+```
+
+#### DuckDB Integration Components
+
+```python
+class DuckDBConnector:
+    """Interface for working with DuckDB databases and exporting to IPFS."""
+    
+    def __init__(self, database_path=":memory:"):
+        """
+        Initialize DuckDB connector.
+        
+        Args:
+            database_path: str - Path to DuckDB database file or ":memory:"
+        """
+        
+    def query_to_arrow(self, query):
+        """
+        Execute SQL query and return results as Arrow table.
+        
+        Args:
+            query: str - SQL query to execute
+            
+        Returns:
+            pyarrow.Table - Query results as Arrow table
+        """
+        
+    def query_to_ipld(self, query, hash_columns=None):
+        """
+        Execute SQL query and convert results to IPLD.
+        
+        Args:
+            query: str - SQL query to execute
+            hash_columns: list - Column names to use for content-addressing
+            
+        Returns:
+            tuple: (root_cid, {cid: block_data}) - Root CID and blocks
+        """
+        
+    def export_to_car(self, query, output_path, hash_columns=None):
+        """
+        Execute SQL query and export results directly to CAR file.
+        
+        Args:
+            query: str - SQL query to execute
+            output_path: str - Path to output CAR file
+            hash_columns: list - Column names to use for content-addressing
+        """
+        
+    def export_to_parquet(self, query, output_path):
+        """
+        Execute SQL query and export results to Parquet file.
+        
+        Args:
+            query: str - SQL query to execute
+            output_path: str - Path to output Parquet file
+        """
+        
+    def import_from_car(self, car_path, table_name):
+        """
+        Import data from CAR file into DuckDB table.
+        
+        Args:
+            car_path: str - Path to input CAR file
+            table_name: str - Name of table to create
+            
+        Returns:
+            int - Number of rows imported
+        """
+        
+    def import_from_parquet(self, parquet_path, table_name):
+        """
+        Import data from Parquet file into DuckDB table.
+        
+        Args:
+            parquet_path: str - Path to input Parquet file
+            table_name: str - Name of table to create
+            
+        Returns:
+            int - Number of rows imported
+        """
+```
+
+#### HuggingFace Datasets Integration
+
+```python
+class HFDatasetsConnector:
+    """Interface for working with Huggingface Datasets and exporting to IPFS."""
+    
+    def __init__(self):
+        """Initialize HuggingFace Datasets connector."""
+        
+    def load_dataset(self, dataset_name, **kwargs):
+        """
+        Load a dataset from Huggingface Datasets.
+        
+        Args:
+            dataset_name: str - Name of dataset to load
+            **kwargs - Additional arguments for datasets.load_dataset
+            
+        Returns:
+            Dataset - Loaded dataset
+        """
+        
+    def dataset_to_arrow(self, dataset, split="train"):
+        """
+        Convert dataset to Arrow table.
+        
+        Args:
+            dataset: Dataset - Huggingface dataset
+            split: str - Dataset split to convert
+            
+        Returns:
+            pyarrow.Table - Dataset as Arrow table
+        """
+        
+    def dataset_to_ipld(self, dataset, split="train", hash_columns=None):
+        """
+        Convert dataset to IPLD.
+        
+        Args:
+            dataset: Dataset - Huggingface dataset
+            split: str - Dataset split to convert
+            hash_columns: list - Column names to use for content-addressing
+            
+        Returns:
+            tuple: (root_cid, {cid: block_data}) - Root CID and blocks
+        """
+        
+    def export_to_car(self, dataset, output_path, split="train", hash_columns=None):
+        """
+        Export dataset directly to CAR file.
+        
+        Args:
+            dataset: Dataset - Huggingface dataset
+            output_path: str - Path to output CAR file
+            split: str - Dataset split to export
+            hash_columns: list - Column names to use for content-addressing
+        """
+        
+    def import_from_car(self, car_path):
+        """
+        Import dataset from CAR file.
+        
+        Args:
+            car_path: str - Path to input CAR file
+            
+        Returns:
+            Dataset - Imported dataset
+        """
+```
+
+### Apache Arrow Integration with IPLD and IPFS
+
+#### Overview
+This module provides utilities for seamless conversion between Apache Arrow columnar data and IPLD, with support for IPFS CAR export/import and interprocess communication using the C Dataset Interchange Format.
+
+#### Key Features
+- Bidirectional conversion between Arrow tables and IPLD
+- Content-addressed data using hashed indexes
+- Efficient interprocess communication with Arrow C Data Interface
+- Import/export between Parquet files and IPFS CAR archives
+- Streaming processing for large datasets
+- Memory-efficient operations with zero-copy when possible
+
+### Architecture
+
+```
+┌───────────────────┐  ┌───────────────────┐  ┌───────────────────┐
+│   Arrow Tables    │◀─┤  IPLD Converter   │─▶│    IPLD Blocks    │
+└───────────────────┘  └───────────────────┘  └───────────────────┘
+         ▲                      │                     │
+         │                      │                     ▼
+┌───────────────────┐          │             ┌───────────────────┐
+│   Parquet Files   │◀─────────┼──────┬─────▶│     CAR Files     │
+└───────────────────┘          │      │      └───────────────────┘
+         ▲                     ▼      ▼              │
+         │            ┌───────────────────┐          │
+         └────────────┤ Dataset Utilities │◀─────────┘
+                      └───────────────────┘
+                              │
+                              ▼
+                     ┌───────────────────┐
+                     │    IPC Channel    │
+                     └───────────────────┘
+```
+
+### Components
+
+#### 1. Arrow-IPLD Converter
+
+```python
+class ArrowIPLDConverter:
+    """Convert between Apache Arrow tables and IPLD structures."""
+    
+    def table_to_ipld(self, table, hash_columns=None):
+        """
+        Convert Arrow table to IPLD blocks with optional content-addressing.
+        
+        Args:
+            table: pyarrow.Table - The Arrow table to convert
+            hash_columns: list - Column names to use for content-addressing
+            
+        Returns:
+            tuple: (root_cid, {cid: block_data}) - Root CID and blocks
+        """
+        
+    def ipld_to_table(self, root_cid, blocks):
+        """
+        Convert IPLD blocks back to Arrow table.
+        
+        Args:
+            root_cid: CID - The root CID of the table structure
+            blocks: dict - Dictionary of {cid: block_data}
+            
+        Returns:
+            pyarrow.Table - The reconstructed Arrow table
+        """
+        
+    def schema_to_ipld(self, schema):
+        """
+        Convert Arrow schema to IPLD representation.
+        
+        Args:
+            schema: pyarrow.Schema - The Arrow schema
+            
+        Returns:
+            tuple: (schema_cid, schema_block) - CID and serialized schema
+        """
+```
+
+#### 2. Data Interchange Utilities
+
+```python
+class DataInterchangeUtils:
+    """Utilities for data interchange between processes and formats."""
+    
+    def export_table_to_car(self, table, output_path, hash_columns=None):
+        """
+        Export Arrow table to CAR file with content-addressing.
+        
+        Args:
+            table: pyarrow.Table - The Arrow table to export
+            output_path: str - Path to output CAR file
+            hash_columns: list - Column names to use for content-addressing
+        """
+        
+    def import_table_from_car(self, car_path):
+        """
+        Import Arrow table from CAR file.
+        
+        Args:
+            car_path: str - Path to input CAR file
+            
+        Returns:
+            pyarrow.Table - The imported Arrow table
+        """
+        
+    def parquet_to_car(self, parquet_path, car_path, hash_columns=None):
+        """
+        Convert Parquet file to CAR file with content-addressing.
+        
+        Args:
+            parquet_path: str - Path to input Parquet file
+            car_path: str - Path to output CAR file
+            hash_columns: list - Column names to use for content-addressing
+        """
+        
+    def car_to_parquet(self, car_path, parquet_path):
+        """
+        Convert CAR file to Parquet file.
+        
+        Args:
+            car_path: str - Path to input CAR file
+            parquet_path: str - Path to output Parquet file
+        """
+        
+    def get_c_data_interface(self, table):
+        """
+        Get C Data Interface representation for interprocess communication.
+        
+        Args:
+            table: pyarrow.Table - The Arrow table to share
+            
+        Returns:
+            dict - C Data Interface representation
+        """
+        
+    def table_from_c_data_interface(self, c_data):
+        """
+        Reconstruct Arrow table from C Data Interface representation.
+        
+        Args:
+            c_data: dict - C Data Interface representation
+            
+        Returns:
+            pyarrow.Table - The reconstructed Arrow table
+        """
+```
+
+#### 3. Streaming Processing for Large Datasets
+
+```python
+class StreamingProcessor:
+    """Process large datasets with streaming to minimize memory usage."""
+    
+    def stream_parquet_to_car(self, parquet_path, car_path, batch_size=10000):
+        """
+        Stream Parquet file to CAR file in batches.
+        
+        Args:
+            parquet_path: str - Path to input Parquet file
+            car_path: str - Path to output CAR file
+            batch_size: int - Number of rows per batch
+        """
+        
+    def stream_car_to_parquet(self, car_path, parquet_path, batch_size=10000):
+        """
+        Stream CAR file to Parquet file in batches.
+        
+        Args:
+            car_path: str - Path to input CAR file
+            parquet_path: str - Path to output Parquet file
+            batch_size: int - Number of rows per batch
+        """
+```
+
+### Usage Examples
+
+#### 1. Converting Between Formats with Unified Data Layer
+
+```python
+from ipfs_datasets_py.data_integration import UnifiedDataLayer
+
+# Initialize the unified data layer
+data_layer = UnifiedDataLayer()
+
+# Example 1: DuckDB to CAR file
+data_layer.duckdb_to_car(
+    query="SELECT * FROM my_table WHERE category = 'science'",
+    car_path="science_data.car",
+    db_path="my_database.duckdb",
+    hash_columns=["id", "timestamp"]
+)
+
+# Example 2: DuckDB to Parquet file
+data_layer.duckdb_to_parquet(
+    query="SELECT * FROM my_table WHERE category = 'science'",
+    parquet_path="science_data.parquet",
+    db_path="my_database.duckdb"
+)
+
+# Example 3: Huggingface Dataset to CAR file
+data_layer.hf_dataset_to_car(
+    dataset_name="wikipedia",
+    split="train",
+    car_path="wikipedia_train.car",
+    hash_columns=["id"]
+)
+
+# Example 4: Huggingface Dataset to Parquet file
+data_layer.hf_dataset_to_parquet(
+    dataset_name="wikipedia",
+    split="train",
+    parquet_path="wikipedia_train.parquet"
+)
+
+# Example 5: Converting between formats
+data_layer.parquet_to_car(
+    parquet_path="my_dataset.parquet",
+    car_path="my_dataset.car",
+    hash_columns=["id", "timestamp"]  # Use these columns for content-addressing
+)
+
+# Example 6: Converting CAR to Parquet
+data_layer.car_to_parquet(
+    car_path="my_dataset.car",
+    parquet_path="reconstructed_dataset.parquet"
+)
+```
+
+#### 2. DuckDB Direct Export Examples
+
+```python
+from ipfs_datasets_py.duckdb_connector import DuckDBConnector
+
+# Initialize DuckDB connector
+duckdb = DuckDBConnector(database_path="my_analytics.duckdb")
+
+# Execute query and export directly to CAR file
+duckdb.export_to_car(
+    query="""
+    SELECT 
+        date, 
+        category, 
+        SUM(revenue) as total_revenue, 
+        COUNT(DISTINCT user_id) as unique_users
+    FROM sales
+    WHERE date BETWEEN '2023-01-01' AND '2023-12-31'
+    GROUP BY date, category
+    ORDER BY date, total_revenue DESC
+    """,
+    output_path="sales_summary_2023.car",
+    hash_columns=["date", "category"]
+)
+
+# Execute query and export directly to Parquet file
+duckdb.export_to_parquet(
+    query="""
+    SELECT * FROM web_events
+    WHERE event_type = 'purchase'
+    AND timestamp >= CURRENT_DATE - INTERVAL 30 DAY
+    """,
+    output_path="recent_purchases.parquet"
+)
+
+# Convert data from CAR file and load into DuckDB table
+rows_imported = duckdb.import_from_car(
+    car_path="external_dataset.car",
+    table_name="external_data"
+)
+print(f"Imported {rows_imported} rows from CAR file")
+
+# Query combining data from different sources
+result = duckdb.query_to_arrow("""
+    SELECT 
+        e.user_id,
+        e.event_type,
+        u.signup_date,
+        u.country
+    FROM web_events e
+    JOIN external_data.users u ON e.user_id = u.id
+    WHERE e.timestamp >= '2023-01-01'
+""")
+```
+
+#### 3. Working with Arrow Tables and IPLD
+
+```python
+import pyarrow as pa
+from ipfs_datasets_py.arrow_ipld import ArrowIPLDConverter
+
+# Create an Arrow table
+data = {
+    "id": pa.array([1, 2, 3, 4]),
+    "name": pa.array(["Alice", "Bob", "Charlie", "Dave"]),
+    "value": pa.array([10.1, 12.3, 15.7, 9.8])
+}
+table = pa.Table.from_pydict(data)
+
+# Convert to IPLD
+converter = ArrowIPLDConverter()
+root_cid, blocks = converter.table_to_ipld(table, hash_columns=["id"])
+
+# Export blocks to CAR file
+with open("table_blocks.car", "wb") as f:
+    car_data = ipld_car.encode([root_cid], [(cid, block) for cid, block in blocks.items()])
+    f.write(car_data)
+
+# Reconstruct table from IPLD
+reconstructed_table = converter.ipld_to_table(root_cid, blocks)
+```
+
+#### 4. Interprocess Communication with C Data Interface
+
+```python
+import pyarrow as pa
+from ipfs_datasets_py.arrow_ipld import DataInterchangeUtils
+import json
+import os
+
+# Process 1: Prepare and share data
+data = pa.table({
+    "id": range(1000),
+    "values": [float(i * 2) for i in range(1000)]
+})
+
+interchange = DataInterchangeUtils()
+c_data = interchange.get_c_data_interface(data)
+
+# Serialize the interface data (except for the actual memory buffers)
+interface_json = json.dumps({
+    "schema": c_data["schema"],
+    "buffer_addresses": [int(addr) for addr in c_data["buffers"]]
+})
+
+# Write to shared location
+with open("/tmp/shared_arrow_metadata.json", "w") as f:
+    f.write(interface_json)
+
+# Use shared memory for actual data buffers
+# (In a real scenario this would use shared memory segments)
+
+# Process 2: Receive and use the data
+with open("/tmp/shared_arrow_metadata.json", "r") as f:
+    interface_data = json.loads(f.read())
+
+# Reconstruct the interface data with actual memory references
+# (In a real scenario this would attach to shared memory segments)
+
+# Reconstruct table
+received_table = interchange.table_from_c_data_interface(interface_data)
+```
+
+#### 5. Streaming Large Datasets
+
+```python
+from ipfs_datasets_py.arrow_ipld import StreamingProcessor
+
+processor = StreamingProcessor()
+
+# Process a large Parquet file in batches, converting to CAR
+processor.stream_parquet_to_car(
+    parquet_path="large_dataset.parquet",
+    car_path="large_dataset.car",
+    batch_size=50000  # Process 50k rows at a time
+)
+```
+
+### IPLD Schema for Arrow Data
+
+The following IPLD schema represents the structure used for storing Arrow tables:
+
+```json
+{
+  "types": {
+    "ArrowTable": {
+      "type": "struct",
+      "fields": {
+        "schema": {"type": "link", "linkedType": "ArrowSchema"},
+        "batches": {"type": "list", "valueType": {"type": "link", "linkedType": "RecordBatch"}}
+      }
+    },
+    "ArrowSchema": {
+      "type": "struct",
+      "fields": {
+        "fields": {"type": "list", "valueType": {"type": "link", "linkedType": "Field"}},
+        "metadata": {"type": "map", "keyType": "string", "valueType": "string"}
+      }
+    },
+    "Field": {
+      "type": "struct",
+      "fields": {
+        "name": {"type": "string"},
+        "type": {"type": "link", "linkedType": "DataType"},
+        "nullable": {"type": "bool"},
+        "metadata": {"type": "map", "keyType": "string", "valueType": "string"}
+      }
+    },
+    "DataType": {
+      "type": "union", 
+      "variants": {
+        "int": "Int",
+        "float": "Float",
+        "string": "String",
+        "bool": "Bool",
+        "list": "List",
+        "struct": "Struct",
+        "binary": "Binary",
+        "date": "Date",
+        "time": "Time",
+        "timestamp": "Timestamp"
+      }
+    },
+    "RecordBatch": {
+      "type": "struct",
+      "fields": {
+        "rowCount": {"type": "int"},
+        "columns": {"type": "list", "valueType": {"type": "link", "linkedType": "Column"}}
+      }
+    },
+    "Column": {
+      "type": "struct",
+      "fields": {
+        "name": {"type": "string"},
+        "data": {"type": "link", "linkedType": "ColumnData"}
+      }
+    },
+    "ColumnData": {
+      "type": "bytes"
+    }
+  }
+}
+```
+
+### Performance Considerations
+
+1. **Memory Efficiency**
+   - Use zero-copy approaches when possible
+   - Stream large datasets in manageable batches
+   - Employ memory mapping for large files
+
+2. **Content Addressing**
+   - Choose hash columns strategically based on natural keys
+   - Consider partial addressing of only key columns
+   - Use hierarchical chunking for large columns
+
+3. **Interprocess Communication**
+   - Prefer shared memory over serialization/deserialization
+   - Use Arrow's built-in IPC mechanisms for local processes
+   - Consider RDMA for high-performance computing contexts
+
+4. **Parallel Processing**
+   - Leverage Arrow's support for parallel computation
+   - Use worker pools for batch processing
+   - Implement partition-aware data handling
+
+## GraphRAG Implementation with IPFS/IPLD
+
+### Overview
+This module implements a GraphRAG (Graph Retrieval Augmented Generation) system using IPFS/IPLD as the storage layer. The system processes files stored on IPFS by generating multiple embedding vectors using different models and extracting knowledge graphs for enhanced retrieval capabilities.
+
+#### Key Features
+- Multi-model vector embedding generation for each document
+- Automated knowledge graph extraction from stored content
+- Hybrid search combining graph traversal and vector similarity
+- Content-addressed storage of all components using IPFS/IPLD
+- Incremental indexing of new content with relationship detection
+- Query processing with both semantic and structural awareness
+
+### Architecture
+
+```
+                        ┌───────────────────┐
+                        │    Input Files    │
+                        └────────┬──────────┘
+                                 │
+                                 ▼
+┌──────────────────────────────────────────────────────┐
+│                 Processing Pipeline                  │
+├──────────────┬──────────────────────┬───────────────┤
+│ Text         │ Multi-model          │ Knowledge     │
+│ Extraction   │ Embedding Generation │ Graph         │
+│              │                      │ Extraction    │
+└──────┬───────┴──────────┬───────────┴───────┬───────┘
+       │                  │                   │
+       ▼                  ▼                   ▼
+┌────────────┐   ┌────────────────┐   ┌─────────────────┐
+│   IPLD     │   │  IPLD Vector   │   │  IPLD Graph     │
+│ Document   │   │    Store       │   │    Store        │
+│   Store    │   │ (Multi-model)  │   │                 │
+└─────┬──────┘   └────────┬───────┘   └────────┬────────┘
+      │                   │                    │
+      └───────────────────┼────────────────────┘
+                          │
+                          ▼
+              ┌─────────────────────────┐
+              │    GraphRAG Query       │
+              │       Engine            │
+              └─────────────────────────┘
+                          │
+                          ▼
+              ┌─────────────────────────┐
+              │    Search Results       │
+              │  (Combined Ranking)     │
+              └─────────────────────────┘
+```
+
+### Components
+
+#### 1. Multi-model Embedding Generator
+
+```python
+class MultiModelEmbeddingGenerator:
+    """Generate embeddings using multiple models for comprehensive representation."""
+    
+    def __init__(self, model_configs=None):
+        """
+        Initialize with multiple embedding models.
+        
+        Args:
+            model_configs: list - List of model configurations
+                Example: [
+                    {"name": "all-MiniLM-L6-v2", "dimension": 384, "type": "sentence"},
+                    {"name": "e5-large", "dimension": 1024, "type": "passage"},
+                    {"name": "instructor-xl", "dimension": 768, "type": "instruction"}
+                ]
+        """
+        
+    def generate_embeddings(self, text, chunk_size=512, overlap=50):
+        """
+        Generate embeddings using all configured models.
+        
+        Args:
+            text: str - Text to embed
+            chunk_size: int - Size of text chunks
+            overlap: int - Overlap between chunks
+            
+        Returns:
+            dict - Map of model name to list of embeddings
+        """
+        
+    def store_on_ipfs(self, embeddings, metadata=None):
+        """
+        Store embeddings on IPFS using IPLD.
+        
+        Args:
+            embeddings: dict - Map of model name to embeddings
+            metadata: dict - Additional metadata
+            
+        Returns:
+            dict - Map of model name to CIDs
+        """
+        
+    @classmethod
+    def from_config(cls, config_path):
+        """
+        Create generator from configuration file.
+        
+        Args:
+            config_path: str - Path to configuration file
+            
+        Returns:
+            MultiModelEmbeddingGenerator
+        """
+```
+
+#### 2. Knowledge Graph Extractor
+
+```python
+class KnowledgeGraphExtractor:
+    """Extract knowledge graph from text documents."""
+    
+    def __init__(self, extraction_models=None):
+        """
+        Initialize with extraction models.
+        
+        Args:
+            extraction_models: dict - Map of extraction model types to model names
+                Example: {
+                    "entity": "spacy_large",
+                    "relation": "rebel-large",
+                    "coreference": "neuralcoref",
+                    "concept": "dbpedia-spotlight"
+                }
+        """
+        
+    def extract_graph(self, text, document_cid=None):
+        """
+        Extract knowledge graph from text.
+        
+        Args:
+            text: str - Text to extract from
+            document_cid: str - CID of source document
+            
+        Returns:
+            tuple - (entities, relationships)
+        """
+        
+    def merge_with_existing(self, new_graph, existing_graph_cid):
+        """
+        Merge new graph with existing graph.
+        
+        Args:
+            new_graph: tuple - (entities, relationships)
+            existing_graph_cid: str - CID of existing graph
+            
+        Returns:
+            tuple - (merged_entities, merged_relationships, updated_cid)
+        """
+        
+    def store_on_ipfs(self, entities, relationships, metadata=None):
+        """
+        Store knowledge graph on IPFS using IPLD.
+        
+        Args:
+            entities: list - List of entity objects
+            relationships: list - List of relationship objects
+            metadata: dict - Additional metadata
+            
+        Returns:
+            str - Root CID of knowledge graph
+        """
+```
+
+#### 3. GraphRAG Query Engine
+
+```python
+class GraphRAGQueryEngine:
+    """Query engine combining vector search and graph traversal."""
+    
+    def __init__(self, vector_stores, graph_store, model_weights=None):
+        """
+        Initialize with vector stores and graph store.
+        
+        Args:
+            vector_stores: dict - Map of model name to vector store
+            graph_store: GraphStore - Knowledge graph store
+            model_weights: dict - Weights for each model's results
+        """
+        
+    def query(self, query_text, top_k=10, max_graph_hops=2, 
+              min_relevance=0.7, combine_method="weighted"):
+        """
+        Perform GraphRAG query.
+        
+        Args:
+            query_text: str - Query text
+            top_k: int - Number of results to return
+            max_graph_hops: int - Maximum graph traversal hops
+            min_relevance: float - Minimum relevance score
+            combine_method: str - Method to combine results
+            
+        Returns:
+            list - Ranked results with metadata
+        """
+        
+    def vector_search(self, query_embedding, models=None):
+        """
+        Perform vector search across specified models.
+        
+        Args:
+            query_embedding: dict - Map of model name to query embedding
+            models: list - Models to search, None for all
+            
+        Returns:
+            dict - Map of model name to search results
+        """
+        
+    def graph_search(self, seed_entities, max_hops=2, relation_types=None):
+        """
+        Perform graph search from seed entities.
+        
+        Args:
+            seed_entities: list - List of seed entity CIDs
+            max_hops: int - Maximum traversal hops
+            relation_types: list - Types of relations to traverse
+            
+        Returns:
+            list - Graph search results
+        """
+        
+    def combine_results(self, vector_results, graph_results, method="weighted"):
+        """
+        Combine vector and graph search results.
+        
+        Args:
+            vector_results: dict - Vector search results by model
+            graph_results: list - Graph search results
+            method: str - Combination method
+            
+        Returns:
+            list - Combined and ranked results
+        """
+```
+
+#### 4. IPFS File Processor
+
+```python
+class IPFSFileProcessor:
+    """Process files stored on IPFS for GraphRAG indexing."""
+    
+    def __init__(self, embedding_generator, graph_extractor):
+        """
+        Initialize with embedding generator and graph extractor.
+        
+        Args:
+            embedding_generator: MultiModelEmbeddingGenerator
+            graph_extractor: KnowledgeGraphExtractor
+        """
+        
+    def process_file(self, file_path=None, ipfs_cid=None, file_type=None):
+        """
+        Process a file for GraphRAG indexing.
+        
+        Args:
+            file_path: str - Path to local file
+            ipfs_cid: str - CID of file already on IPFS
+            file_type: str - Type of file
+            
+        Returns:
+            dict - Processing results with CIDs
+        """
+        
+    def process_directory(self, dir_path, recursive=True, file_types=None):
+        """
+        Process a directory of files.
+        
+        Args:
+            dir_path: str - Path to directory
+            recursive: bool - Process subdirectories
+            file_types: list - File types to process
+            
+        Returns:
+            dict - Processing results by file
+        """
+        
+    def update_index(self, new_cids, graph_cid=None):
+        """
+        Update GraphRAG index with new content.
+        
+        Args:
+            new_cids: list - New content CIDs
+            graph_cid: str - Existing graph CID
+            
+        Returns:
+            dict - Updated index CIDs
+        """
+```
+
+### Integration with IPLD/IPFS Storage
+
+The GraphRAG system uses IPLD structures to store all components with content-addressing:
+
+1. **Document Storage**:
+   - Raw content stored as IPLD blocks
+   - Metadata linked to content via CIDs
+   - Version history maintained through linked IPLD structures
+
+2. **Multi-model Vector Storage**:
+   - Each embedding model has its own vector space
+   - Vectors linked to source document CIDs
+   - Efficient nearest-neighbor search via IPLD structures
+
+3. **Knowledge Graph Storage**:
+   - Entities and relationships stored as IPLD nodes and links
+   - Entity nodes contain properties and link to document CIDs
+   - Relationship links connect entity nodes with typed edges
+
+4. **Index Structure**:
+   - Root index links to all vector stores and the knowledge graph
+   - Updates are made by creating new IPLD nodes and updating links
+   - Historical versions preserved through immutable IPLD structures
+
+### Usage Examples
+
+#### 1. Processing Files for GraphRAG
+
+```python
+import datetime
+from ipfs_datasets_py.graphrag import IPFSFileProcessor, MultiModelEmbeddingGenerator, KnowledgeGraphExtractor
+
+# Initialize components
+embedding_generator = MultiModelEmbeddingGenerator([
+    {"name": "sentence-transformers/all-MiniLM-L6-v2", "dimension": 384, "type": "sentence"},
+    {"name": "sentence-transformers/multi-qa-mpnet-base-dot-v1", "dimension": 768, "type": "qa"}
+])
+
+graph_extractor = KnowledgeGraphExtractor({
+    "entity": "spacy_large",
+    "relation": "rebel-large"
+})
+
+processor = IPFSFileProcessor(embedding_generator, graph_extractor)
+
+# Process a single PDF file
+result = processor.process_file(
+    file_path="/path/to/research_paper.pdf",
+    file_type="pdf"
+)
+
+print(f"Document CID: {result['document_cid']}")
+print(f"Embedding CIDs: {result['embedding_cids']}")
+print(f"Graph CID: {result['graph_cid']}")
+
+# Process a directory of files
+directory_results = processor.process_directory(
+    dir_path="/path/to/documents",
+    recursive=True,
+    file_types=["pdf", "docx", "txt"]
+)
+
+# Export index structure to CAR file
+processor.export_index_to_car("graphrag_index.car")
+```
+
+#### 2. Querying with GraphRAG
+
+```python
+from ipfs_datasets_py.graphrag import GraphRAGQueryEngine
+from ipfs_datasets_py.vector_store import IPLDVectorStore
+from ipfs_datasets_py.knowledge_graph import IPLDKnowledgeGraph
+
+# Initialize stores from CIDs
+vector_stores = {
+    "all-MiniLM-L6-v2": IPLDVectorStore.from_cid("bafybeihsl7tqdebswdmafvytgkofgxnpq5rwzzqpsbd7gtaiujwsn4qeyy"),
+    "multi-qa-mpnet": IPLDVectorStore.from_cid("bafybeibtj5t2vxiiipnsbfji5qvlhv5zqbyblxcy7smtho2dup7g4zsqa")
+}
+
+graph_store = IPLDKnowledgeGraph.from_cid("bafybeicezu4acwofwzihqnqlipwytxnl5n5j7wr7rgxfjddj3m5jk4ux4q")
+
+# Initialize query engine with store references
+query_engine = GraphRAGQueryEngine(
+    vector_stores=vector_stores,
+    graph_store=graph_store,
+    model_weights={
+        "all-MiniLM-L6-v2": 0.3,
+        "multi-qa-mpnet": 0.7
+    }
+)
+
+# Perform a query
+results = query_engine.query(
+    query_text="How does IPFS handle content addressing?",
+    top_k=5,
+    max_graph_hops=2,
+    combine_method="weighted"
+)
+
+# Display results
+for i, result in enumerate(results):
+    print(f"Result {i+1}: {result['text'][:100]}...")
+    print(f"  Source: {result['source']}")
+    print(f"  Relevance: {result['relevance']:.2f}")
+    print(f"  Supporting Entities: {[e['name'] for e in result['entities']]}")
+    print()
+```
+
+#### 3. Incremental Graph Building
+
+```python
+from ipfs_datasets_py.graphrag import KnowledgeGraphExtractor
+from ipfs_datasets_py.knowledge_graph import IPLDKnowledgeGraph
+
+# Initialize extractor
+extractor = KnowledgeGraphExtractor()
+
+# Get existing graph from IPFS
+existing_graph_cid = "bafybeicezu4acwofwzihqnqlipwytxnl5n5j7wr7rgxfjddj3m5jk4ux4q"
+existing_graph = IPLDKnowledgeGraph.from_cid(existing_graph_cid)
+
+# Process new document
+with open("/path/to/new_document.txt", "r") as f:
+    text = f.read()
+
+# Extract entities and relationships
+new_entities, new_relationships = extractor.extract_graph(text)
+
+# Merge with existing graph
+merged_entities, merged_relationships, updated_cid = extractor.merge_with_existing(
+    (new_entities, new_relationships),
+    existing_graph_cid
+)
+
+print(f"New entities added: {len(merged_entities) - existing_graph.entity_count}")
+print(f"New relationships added: {len(merged_relationships) - existing_graph.relationship_count}")
+print(f"Updated graph CID: {updated_cid}")
+```
+
+### IPLD Schema for GraphRAG Components
+
+#### Document Schema
+```json
+{
+  "type": "struct",
+  "fields": {
+    "content": {"type": "bytes"},
+    "metadata": {
+      "type": "struct",
+      "fields": {
+        "title": {"type": "string"},
+        "mimetype": {"type": "string"},
+        "source": {"type": "string"},
+        "created": {"type": "string"},
+        "processed": {"type": "string"}
+      }
+    },
+    "embeddings": {
+      "type": "map",
+      "keyType": "string",
+      "valueType": {"type": "link"}
+    },
+    "graph": {"type": "link"},
+    "chunks": {
+      "type": "list",
+      "valueType": {
+        "type": "struct",
+        "fields": {
+          "text": {"type": "string"},
+          "start": {"type": "int"},
+          "end": {"type": "int"},
+          "embeddings": {
+            "type": "map",
+            "keyType": "string",
+            "valueType": {"type": "link"}
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+#### Entity Schema
+```json
+{
+  "type": "struct",
+  "fields": {
+    "id": {"type": "string"},
+    "name": {"type": "string"},
+    "type": {"type": "string"},
+    "properties": {"type": "map", "keyType": "string", "valueType": "any"},
+    "mentions": {
+      "type": "list",
+      "valueType": {
+        "type": "struct",
+        "fields": {
+          "document_cid": {"type": "link"},
+          "chunk_index": {"type": "int"},
+          "start": {"type": "int"},
+          "end": {"type": "int"},
+          "text": {"type": "string"}
+        }
+      }
+    },
+    "vector_ids": {
+      "type": "map",
+      "keyType": "string",
+      "valueType": {"type": "list", "valueType": "string"}
+    }
+  }
+}
+```
+
+#### Relationship Schema
+```json
+{
+  "type": "struct",
+  "fields": {
+    "id": {"type": "string"},
+    "type": {"type": "string"},
+    "source": {"type": "link"},
+    "target": {"type": "link"},
+    "properties": {"type": "map", "keyType": "string", "valueType": "any"},
+    "provenance": {
+      "type": "list",
+      "valueType": {
+        "type": "struct",
+        "fields": {
+          "document_cid": {"type": "link"},
+          "chunk_index": {"type": "int"},
+          "text": {"type": "string"},
+          "confidence": {"type": "float"}
+        }
+      }
+    }
+  }
+}
+```
+
+### Design Considerations
+
+1. **Multiple Embedding Models**
+   - Different models capture different semantic aspects
+   - Specialized models for different query types (passage, QA, etc.)
+   - Model fusion improves retrieval robustness
+
+2. **Knowledge Graph Quality**
+   - Entity disambiguation and coreference resolution
+   - Relationship confidence scoring
+   - Source attribution for provenance
+
+3. **Scalability**
+   - Chunked processing for large documents
+   - Incremental graph updates
+   - Distributed vector search across IPFS nodes
+
+4. **Query Processing**
+   - Dynamic weighting of vector vs. graph results
+   - Query type detection for model selection
+   - User feedback incorporation for result refinement
+
+5. **Storage Efficiency**
+   - Shared embedding storage for similar chunks
+   - Incremental updates with minimal duplication
+   - IPLD-based deduplicated storage

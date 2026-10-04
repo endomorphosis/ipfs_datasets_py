@@ -1,0 +1,74 @@
+[
+    {
+        "name": "_create_elasticsearch_index",
+        "signature": "(index_name: str, documents: List[Dict[str, Any]], vector_dim: int, distance_metric: str, config: Optional[Dict[str, Any]]) -> Dict[str, Any]",
+        "docstring": "Create Elasticsearch vector index",
+        "is_async": true,
+        "is_method": false,
+        "decorators": [],
+        "class_name": null
+    },
+    {
+        "name": "_create_faiss_index",
+        "signature": "(index_name: str, documents: List[Dict[str, Any]], vector_dim: int, distance_metric: str, config: Optional[Dict[str, Any]]) -> Dict[str, Any]",
+        "docstring": "Create FAISS vector index",
+        "is_async": true,
+        "is_method": false,
+        "decorators": [],
+        "class_name": null
+    },
+    {
+        "name": "_create_qdrant_index",
+        "signature": "(index_name: str, documents: List[Dict[str, Any]], vector_dim: int, distance_metric: str, config: Optional[Dict[str, Any]]) -> Dict[str, Any]",
+        "docstring": "Create Qdrant vector index",
+        "is_async": true,
+        "is_method": false,
+        "decorators": [],
+        "class_name": null
+    },
+    {
+        "name": "_search_faiss_index",
+        "signature": "(index_name: str, query: str, top_k: int, config: Optional[Dict[str, Any]]) -> Dict[str, Any]",
+        "docstring": "Search FAISS vector index",
+        "is_async": true,
+        "is_method": false,
+        "decorators": [],
+        "class_name": null
+    },
+    {
+        "name": "create_vector_index",
+        "signature": "(index_name: str, documents: List[Dict[str, Any]], backend: str = \"faiss\", vector_dim: int = 384, distance_metric: str = \"cosine\", index_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]",
+        "docstring": "Create a vector index for similarity search.\n\nArgs:\n    index_name: Name of the index to create\n    documents: List of documents with 'text' and optional 'metadata'\n    backend: Vector store backend (faiss, qdrant, elasticsearch)\n    vector_dim: Dimension of the vectors\n    distance_metric: Distance metric (cosine, euclidean, dot_product)\n    index_config: Backend-specific configuration\n    \nReturns:\n    Dictionary with index creation results",
+        "is_async": true,
+        "is_method": false,
+        "decorators": [],
+        "class_name": null
+    },
+    {
+        "name": "delete_vector_index",
+        "signature": "(index_name: str, backend: str = \"faiss\", config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]",
+        "docstring": "Delete a vector index.\n\nArgs:\n    index_name: Name of the index to delete\n    backend: Vector store backend\n    config: Backend-specific configuration\n    \nReturns:\n    Dictionary with deletion results",
+        "is_async": true,
+        "is_method": false,
+        "decorators": [],
+        "class_name": null
+    },
+    {
+        "name": "list_vector_indexes",
+        "signature": "(backend: str = \"all\") -> Dict[str, Any]",
+        "docstring": "List available vector indexes.\n\nArgs:\n    backend: Backend to list indexes for (all, faiss, qdrant, elasticsearch)\n    \nReturns:\n    Dictionary with list of available indexes",
+        "is_async": true,
+        "is_method": false,
+        "decorators": [],
+        "class_name": null
+    },
+    {
+        "name": "search_vector_index",
+        "signature": "(index_name: str, query: str, backend: str = \"faiss\", top_k: int = 10, filters: Optional[Dict[str, Any]] = None, config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]",
+        "docstring": "Search a vector index for similar documents.\n\nArgs:\n    index_name: Name of the index to search\n    query: Query text to search for\n    backend: Vector store backend\n    top_k: Number of top results to return\n    filters: Optional filters for search\n    config: Backend-specific configuration\n    \nReturns:\n    Dictionary with search results",
+        "is_async": true,
+        "is_method": false,
+        "decorators": [],
+        "class_name": null
+    }
+]

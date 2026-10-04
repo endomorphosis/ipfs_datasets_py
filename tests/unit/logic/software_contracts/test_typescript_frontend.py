@@ -261,15 +261,21 @@ def test_real_worker_is_valid_jsonl_and_missing_compiler_is_explicit() -> None:
             "export const value = 1;",
             path="src/value.ts",
         )
-        assert {item.code for item in record.unsupported} == {"typescript.compiler_unavailable"}
-        assert {item.code for item in record.diagnostics} == {"typescript.compiler_unavailable"}
+        assert {item.code for item in record.unsupported} == {
+            "typescript.compiler_unavailable"
+        }
+        assert {item.code for item in record.diagnostics} == {
+            "typescript.compiler_unavailable"
+        }
 
 
 def test_wrong_version_is_rejected_without_using_facts(tmp_path: Path) -> None:
     frontend = _frontend(tmp_path, mode="wrong-version")
     assert not frontend.probe().supported
     record = frontend.extract("export const x = 1;", path="src/x.ts")
-    assert [item.code for item in record.unsupported] == ["typescript.compiler_version_mismatch"]
+    assert [item.code for item in record.unsupported] == [
+        "typescript.compiler_version_mismatch"
+    ]
     assert not record.symbols
 
 
@@ -277,7 +283,9 @@ def test_wrong_node_version_is_rejected_without_using_facts(tmp_path: Path) -> N
     frontend = _frontend(tmp_path, mode="wrong-node")
     assert not frontend.probe().supported
     record = frontend.extract("export const x = 1;", path="src/x.ts")
-    assert [item.code for item in record.unsupported] == ["typescript.node_version_mismatch"]
+    assert [item.code for item in record.unsupported] == [
+        "typescript.node_version_mismatch"
+    ]
     assert not record.symbols
 
 
@@ -290,7 +298,9 @@ def test_malformed_worker_protocol_fails_closed(
         "export const x = 1;",
         path="src/x.ts",
     )
-    assert [item.code for item in record.unsupported] == ["typescript.compiler_unavailable"]
+    assert [item.code for item in record.unsupported] == [
+        "typescript.compiler_unavailable"
+    ]
     assert not record.symbols
 
 
@@ -299,7 +309,9 @@ def test_worker_timeout_is_bounded_and_explicit(tmp_path: Path) -> None:
         "export const x = 1;",
         path="src/x.ts",
     )
-    assert [item.code for item in record.unsupported] == ["typescript.compiler_unavailable"]
+    assert [item.code for item in record.unsupported] == [
+        "typescript.compiler_unavailable"
+    ]
     assert "exceeded" in record.unsupported[0].reason
 
 
@@ -313,11 +325,17 @@ def test_source_limits_encoding_and_extension_fail_before_worker(
         max_source_bytes=4,
     )
     oversized = frontend.extract("12345", path="value.ts")
-    assert [item.code for item in oversized.unsupported] == ["typescript.resource_limit"]
+    assert [item.code for item in oversized.unsupported] == [
+        "typescript.resource_limit"
+    ]
     extension = frontend.extract("", path="value.cts")
-    assert [item.code for item in extension.unsupported] == ["typescript.unsupported_extension"]
+    assert [item.code for item in extension.unsupported] == [
+        "typescript.unsupported_extension"
+    ]
     invalid = frontend.extract(b"\xff", path="value.ts")
-    assert [item.code for item in invalid.unsupported] == ["typescript.invalid_encoding"]
+    assert [item.code for item in invalid.unsupported] == [
+        "typescript.invalid_encoding"
+    ]
 
 
 def test_adapter_round_trip_and_golden_root(tmp_path: Path) -> None:
@@ -329,7 +347,10 @@ def test_adapter_round_trip_and_golden_root(tmp_path: Path) -> None:
     )
     assert ASTRecord.from_json(record.to_json()) == record
     assert record.verify_cid(record.cid) == record.cid
-    assert record.cid == "baguqeeramrqecwub6elecohidj37shzsc3gqe3jq57pcagnlqds7vwjsgmxa"
+    assert (
+        record.cid
+        == "baguqeeramrqecwub6elecohidj37shzsc3gqe3jq57pcagnlqds7vwjsgmxa"
+    )
 
 
 def test_capability_records_pinned_compiler_api_without_regex_fallback(

@@ -34,7 +34,9 @@ from ipfs_datasets_py.logic.security_ir.cvefixes.schemas import GraphEdge, Graph
 
 
 def _cid(label: str) -> str:
-    return canonical_identity({"label": label}, domain="test", schema_version="test/v1").cid
+    return canonical_identity(
+        {"label": label}, domain="test", schema_version="test/v1"
+    ).cid
 
 
 def _graph(label: str = "fixture") -> CVEfixesGraph:
@@ -104,7 +106,9 @@ def _graph(label: str = "fixture") -> CVEfixesGraph:
     )
 
 
-def _partitions(graph: CVEfixesGraph, default: str = "train") -> dict[str, str]:
+def _partitions(
+    graph: CVEfixesGraph, default: str = "train"
+) -> dict[str, str]:
     return {node.cid: default for node in graph.nodes}
 
 
@@ -161,7 +165,9 @@ def test_graph_entries_compact_aggregate_provenance_and_long_filters() -> None:
     assert "aggregate_provenance_via_graph_root" in entry.policies
     assert len(entry.code_facts) == 1
     assert len(entry.code_facts[0]) == 512
-    assert hashlib.sha256(predicate.encode("utf-8")).hexdigest() in (entry.code_facts[0])
+    assert hashlib.sha256(predicate.encode("utf-8")).hexdigest() in (
+        entry.code_facts[0]
+    )
 
 
 class _EmbeddingPort:
@@ -171,7 +177,10 @@ class _EmbeddingPort:
 
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
         self.document_calls += 1
-        return [[1.0, 0.0] if "path traversal" in text else [0.0, 1.0] for text in texts]
+        return [
+            [1.0, 0.0] if "path traversal" in text else [0.0, 1.0]
+            for text in texts
+        ]
 
     def embed_query(self, text: str) -> list[float]:
         self.query_calls += 1
@@ -328,7 +337,10 @@ def test_partition_crossing_and_authority_broadening_fail_closed() -> None:
     )
     assert response.partition == "train"
     assert all(item.partition == "train" for item in response.results)
-    assert all(item.authority is RetrievalAuthority.NON_AUTHORITATIVE for item in response.results)
+    assert all(
+        item.authority is RetrievalAuthority.NON_AUTHORITATIVE
+        for item in response.results
+    )
 
 
 def test_shards_are_single_partition_and_partition_map_must_be_total() -> None:
@@ -338,15 +350,20 @@ def test_shards_are_single_partition_and_partition_map_must_be_total() -> None:
     with pytest.raises(RetrievalScopeError, match="every and only"):
         build_retrieval_index(graph, partition_by_node=incomplete)
 
-    index = build_retrieval_index(graph, partition_by_node=_partitions(graph))
+    index = build_retrieval_index(
+        graph, partition_by_node=_partitions(graph)
+    )
     assert all(
-        {entry.partition for entry in shard.entries} == {shard.partition} for shard in index.shards
+        {entry.partition for entry in shard.entries} == {shard.partition}
+        for shard in index.shards
     )
 
 
 def test_index_binds_graph_config_model_config_and_detects_tampering() -> None:
     graph = _graph()
-    index = build_retrieval_index(graph, partition_by_node=_partitions(graph))
+    index = build_retrieval_index(
+        graph, partition_by_node=_partitions(graph)
+    )
     assert index.graph_root == graph.graph_root
     assert index.graph_config_cid == graph.config_cid
     assert index.retrieval_config_cid == RetrievalConfig().cid
@@ -459,7 +476,9 @@ def test_embedding_accelerator_errors_and_dimension_mismatch_fail_closed() -> No
 
 def test_serialization_rejects_duplicate_fields_and_non_finite_vectors() -> None:
     graph = _graph()
-    index = build_retrieval_index(graph, partition_by_node=_partitions(graph))
+    index = build_retrieval_index(
+        graph, partition_by_node=_partitions(graph)
+    )
     duplicate = index.to_json().replace(
         '"schema_version":',
         '"schema_version":"duplicate","schema_version":',

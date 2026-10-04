@@ -49,10 +49,16 @@ from .models import TransactionCandidate, TransactionIntent
 CONTRACT_SAFETY_GATE_INTERFACE: Final = "ContractSafetyGate@1"
 CONTRACT_SAFETY_GATE_SCHEMA_VERSION: Final = "wallet-guard.contract-safety-gate/v1"
 CODE_EPOCH_SCHEMA_VERSION: Final = "wallet-guard.code-epoch/v1"
-REQUIRED_OBLIGATION_SET_SCHEMA_VERSION: Final = "wallet-guard.required-obligation-set/v1"
-CONTRACT_SAFETY_DECISION_SCHEMA_VERSION: Final = "wallet-guard.contract-safety-decision/v1"
+REQUIRED_OBLIGATION_SET_SCHEMA_VERSION: Final = (
+    "wallet-guard.required-obligation-set/v1"
+)
+CONTRACT_SAFETY_DECISION_SCHEMA_VERSION: Final = (
+    "wallet-guard.contract-safety-decision/v1"
+)
 OBLIGATION_EVIDENCE_SCHEMA_VERSION: Final = "wallet-guard.obligation-evidence/v1"
-CONTRACT_SAFETY_REQUEST_SCHEMA_VERSION: Final = "wallet-guard.contract-safety-request/v1"
+CONTRACT_SAFETY_REQUEST_SCHEMA_VERSION: Final = (
+    "wallet-guard.contract-safety-request/v1"
+)
 
 DEFAULT_PRODUCER_ID: Final = "producer:wallet-guard-contract-safety-v1"
 
@@ -131,15 +137,17 @@ _AUTHORITY_RANK: Final[Mapping[AnalysisAuthority, int]] = {
 }
 
 # Explicit non-elevation edges used by tests and composition diagnostics.
-_NON_ELEVATING_PAIRS: Final[frozenset[tuple[AnalysisAuthority, AnalysisAuthority]]] = frozenset(
-    {
-        (AnalysisAuthority.SAT, AnalysisAuthority.PROOF),
-        (AnalysisAuthority.SAT, AnalysisAuthority.STATIC),
-        (AnalysisAuthority.MONITOR, AnalysisAuthority.PROOF),
-        (AnalysisAuthority.MONITOR, AnalysisAuthority.STATIC),
-        (AnalysisAuthority.SIMULATION, AnalysisAuthority.PROOF),
-        (AnalysisAuthority.STATIC, AnalysisAuthority.PROOF),
-    }
+_NON_ELEVATING_PAIRS: Final[frozenset[tuple[AnalysisAuthority, AnalysisAuthority]]] = (
+    frozenset(
+        {
+            (AnalysisAuthority.SAT, AnalysisAuthority.PROOF),
+            (AnalysisAuthority.SAT, AnalysisAuthority.STATIC),
+            (AnalysisAuthority.MONITOR, AnalysisAuthority.PROOF),
+            (AnalysisAuthority.MONITOR, AnalysisAuthority.STATIC),
+            (AnalysisAuthority.SIMULATION, AnalysisAuthority.PROOF),
+            (AnalysisAuthority.STATIC, AnalysisAuthority.PROOF),
+        }
+    )
 )
 
 
@@ -155,10 +163,18 @@ class EpochKind(str, Enum):
 
 
 # Outcomes that map to terminal transaction blocks when required.
-_DENY_OUTCOMES: Final[frozenset[AnalysisOutcome]] = frozenset({AnalysisOutcome.DISPROVED})
-_ERROR_OUTCOMES: Final[frozenset[AnalysisOutcome]] = frozenset({AnalysisOutcome.ERROR})
-_STALE_OUTCOMES: Final[frozenset[AnalysisOutcome]] = frozenset({AnalysisOutcome.STALE})
-_UNSUPPORTED_OUTCOMES: Final[frozenset[AnalysisOutcome]] = frozenset({AnalysisOutcome.UNSUPPORTED})
+_DENY_OUTCOMES: Final[frozenset[AnalysisOutcome]] = frozenset(
+    {AnalysisOutcome.DISPROVED}
+)
+_ERROR_OUTCOMES: Final[frozenset[AnalysisOutcome]] = frozenset(
+    {AnalysisOutcome.ERROR}
+)
+_STALE_OUTCOMES: Final[frozenset[AnalysisOutcome]] = frozenset(
+    {AnalysisOutcome.STALE}
+)
+_UNSUPPORTED_OUTCOMES: Final[frozenset[AnalysisOutcome]] = frozenset(
+    {AnalysisOutcome.UNSUPPORTED}
+)
 _UNKNOWN_OUTCOMES: Final[frozenset[AnalysisOutcome]] = frozenset(
     {
         AnalysisOutcome.UNKNOWN,
@@ -211,7 +227,9 @@ def _digest(value: Any, name: str, *, allow_empty: bool = False) -> str:
 def _timestamp(value: Any, name: str) -> str:
     text = _text(value, name, max_chars=64)
     if not _ISO8601_RE.fullmatch(text):
-        raise GuardValidationError(f"{name} must be an ISO-8601 UTC/offset timestamp")
+        raise GuardValidationError(
+            f"{name} must be an ISO-8601 UTC/offset timestamp"
+        )
     return text
 
 
@@ -221,17 +239,22 @@ def _mapping(value: Any, name: str) -> Mapping[str, Any]:
     return value
 
 
-def _reject_unknown(value: Mapping[str, Any], allowed: frozenset[str], record_name: str) -> None:
+def _reject_unknown(
+    value: Mapping[str, Any], allowed: frozenset[str], record_name: str
+) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise GuardValidationError(f"unknown {record_name} field(s): {', '.join(unknown)}")
+        raise GuardValidationError(
+            f"unknown {record_name} field(s): {', '.join(unknown)}"
+        )
 
 
 def _reject_forbidden(value: Mapping[str, Any], record_name: str) -> None:
     hit = sorted(set(value) & _FORBIDDEN_FIELDS)
     if hit:
         raise GuardForbiddenSurfaceError(
-            f"{record_name} contains forbidden custody/approval field(s): {', '.join(hit)}",
+            f"{record_name} contains forbidden custody/approval field(s): "
+            f"{', '.join(hit)}",
             details={"fields": hit},
         )
 
@@ -244,7 +267,9 @@ def _unique_ids(
 ) -> tuple[str, ...]:
     if values is None:
         items: tuple[str, ...] = ()
-    elif isinstance(values, (str, bytes, bytearray)) or not isinstance(values, Sequence):
+    elif isinstance(values, (str, bytes, bytearray)) or not isinstance(
+        values, Sequence
+    ):
         raise GuardValidationError(f"{name} must be a sequence of strings")
     else:
         if len(values) > MAX_COLLECTION_ITEMS:
@@ -267,7 +292,12 @@ def _enum(enum_type: type[Enum], value: Any, name: str) -> Enum:
 
 
 def _iso_now() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return (
+        datetime.now(timezone.utc)
+        .replace(microsecond=0)
+        .isoformat()
+        .replace("+00:00", "Z")
+    )
 
 
 def _is_expired(expiry: str, now: str) -> bool:
@@ -332,9 +362,13 @@ class CodeEpoch:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "epoch_id", _identifier(self.epoch_id, "epoch_id"))
-        object.__setattr__(self, "subject_id", _identifier(self.subject_id, "subject_id"))
+        object.__setattr__(
+            self, "subject_id", _identifier(self.subject_id, "subject_id")
+        )
         object.__setattr__(self, "kind", _enum(EpochKind, self.kind, "kind"))
-        object.__setattr__(self, "value_digest", _digest(self.value_digest, "value_digest"))
+        object.__setattr__(
+            self, "value_digest", _digest(self.value_digest, "value_digest")
+        )
         object.__setattr__(
             self,
             "network",
@@ -343,7 +377,9 @@ class CodeEpoch:
         object.__setattr__(
             self,
             "chain_namespace",
-            _text(self.chain_namespace, "chain_namespace", allow_empty=True, max_chars=128),
+            _text(
+                self.chain_namespace, "chain_namespace", allow_empty=True, max_chars=128
+            ),
         )
         for name in (
             "code_digest",
@@ -351,27 +387,37 @@ class CodeEpoch:
             "upgrade_authority_digest",
             "state_digest",
         ):
-            object.__setattr__(self, name, _digest(getattr(self, name), name, allow_empty=True))
+            object.__setattr__(
+                self, name, _digest(getattr(self, name), name, allow_empty=True)
+            )
         object.__setattr__(
             self,
             "block_or_slot",
             _text(self.block_or_slot, "block_or_slot", allow_empty=True, max_chars=128),
         )
         if self.observed_at:
-            object.__setattr__(self, "observed_at", _timestamp(self.observed_at, "observed_at"))
+            object.__setattr__(
+                self, "observed_at", _timestamp(self.observed_at, "observed_at")
+            )
         else:
             object.__setattr__(self, "observed_at", "")
         if self.expires_at:
-            object.__setattr__(self, "expires_at", _timestamp(self.expires_at, "expires_at"))
+            object.__setattr__(
+                self, "expires_at", _timestamp(self.expires_at, "expires_at")
+            )
         else:
             object.__setattr__(self, "expires_at", "")
         if not isinstance(self.attributes, Mapping):
             raise GuardValidationError("attributes must be a mapping")
         _reject_forbidden(self.attributes, "CodeEpoch.attributes")
         object.__setattr__(self, "attributes", dict(self.attributes))
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
         if self.schema_version != CODE_EPOCH_SCHEMA_VERSION:
-            raise GuardValidationError(f"unsupported CodeEpoch schema: {self.schema_version!r}")
+            raise GuardValidationError(
+                f"unsupported CodeEpoch schema: {self.schema_version!r}"
+            )
 
     @property
     def digest(self) -> str:
@@ -436,7 +482,9 @@ class CodeEpoch:
             network=value.get("network", ""),
             chain_namespace=value.get("chain_namespace", ""),
             code_digest=value.get("code_digest", ""),
-            proxy_implementation_digest=value.get("proxy_implementation_digest", ""),
+            proxy_implementation_digest=value.get(
+                "proxy_implementation_digest", ""
+            ),
             upgrade_authority_digest=value.get("upgrade_authority_digest", ""),
             state_digest=value.get("state_digest", ""),
             block_or_slot=value.get("block_or_slot", ""),
@@ -476,7 +524,9 @@ class RequiredObligationSet:
         object.__setattr__(
             self,
             "obligation_ids",
-            _unique_ids(self.obligation_ids, "obligation_ids", require_non_empty=True),
+            _unique_ids(
+                self.obligation_ids, "obligation_ids", require_non_empty=True
+            ),
         )
         object.__setattr__(
             self,
@@ -520,7 +570,9 @@ class RequiredObligationSet:
             raise GuardValidationError("attributes must be a mapping")
         _reject_forbidden(self.attributes, "RequiredObligationSet.attributes")
         object.__setattr__(self, "attributes", dict(self.attributes))
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
         if self.schema_version != REQUIRED_OBLIGATION_SET_SCHEMA_VERSION:
             raise GuardValidationError(
                 f"unsupported RequiredObligationSet schema: {self.schema_version!r}"
@@ -540,7 +592,9 @@ class RequiredObligationSet:
 
     def to_dict(self) -> dict[str, Any]:
         auth = {
-            key: (value.value if isinstance(value, AnalysisAuthority) else value)
+            key: (
+                value.value if isinstance(value, AnalysisAuthority) else value
+            )
             for key, value in self.required_authority.items()
         }
         return {
@@ -589,7 +643,9 @@ class RequiredObligationSet:
             policy_revision=value.get("policy_revision", ""),
             assumption_ids=tuple(value.get("assumption_ids", ())),
             attributes=value.get("attributes", {}),
-            schema_version=value.get("schema_version", REQUIRED_OBLIGATION_SET_SCHEMA_VERSION),
+            schema_version=value.get(
+                "schema_version", REQUIRED_OBLIGATION_SET_SCHEMA_VERSION
+            ),
         )
 
 
@@ -626,11 +682,21 @@ class ObligationAnalysisEvidence:
     schema_version: str = OBLIGATION_EVIDENCE_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "evidence_id", _identifier(self.evidence_id, "evidence_id"))
-        object.__setattr__(self, "obligation_id", _identifier(self.obligation_id, "obligation_id"))
-        object.__setattr__(self, "outcome", _enum(AnalysisOutcome, self.outcome, "outcome"))
-        object.__setattr__(self, "authority", _enum(AnalysisAuthority, self.authority, "authority"))
-        object.__setattr__(self, "code_epoch_id", _identifier(self.code_epoch_id, "code_epoch_id"))
+        object.__setattr__(
+            self, "evidence_id", _identifier(self.evidence_id, "evidence_id")
+        )
+        object.__setattr__(
+            self, "obligation_id", _identifier(self.obligation_id, "obligation_id")
+        )
+        object.__setattr__(
+            self, "outcome", _enum(AnalysisOutcome, self.outcome, "outcome")
+        )
+        object.__setattr__(
+            self, "authority", _enum(AnalysisAuthority, self.authority, "authority")
+        )
+        object.__setattr__(
+            self, "code_epoch_id", _identifier(self.code_epoch_id, "code_epoch_id")
+        )
         object.__setattr__(
             self,
             "code_epoch_digest",
@@ -655,7 +721,9 @@ class ObligationAnalysisEvidence:
             "assumption_ids",
             _unique_ids(self.assumption_ids, "assumption_ids"),
         )
-        object.__setattr__(self, "effect_ids", _unique_ids(self.effect_ids, "effect_ids"))
+        object.__setattr__(
+            self, "effect_ids", _unique_ids(self.effect_ids, "effect_ids")
+        )
         object.__setattr__(
             self,
             "candidate_digest",
@@ -674,12 +742,16 @@ class ObligationAnalysisEvidence:
             )
         else:
             object.__setattr__(self, "freshness_expires_at", "")
-        object.__setattr__(self, "summary", _text(self.summary, "summary", allow_empty=True))
+        object.__setattr__(
+            self, "summary", _text(self.summary, "summary", allow_empty=True)
+        )
         if not isinstance(self.attributes, Mapping):
             raise GuardValidationError("attributes must be a mapping")
         _reject_forbidden(self.attributes, "ObligationAnalysisEvidence.attributes")
         object.__setattr__(self, "attributes", dict(self.attributes))
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
 
     def is_stale(self, now: str) -> bool:
         if not self.freshness_expires_at:
@@ -706,7 +778,9 @@ class ObligationAnalysisEvidence:
             "model_digest": self.model_digest,
             "obligation_id": self.obligation_id,
             "outcome": (
-                self.outcome.value if isinstance(self.outcome, AnalysisOutcome) else self.outcome
+                self.outcome.value
+                if isinstance(self.outcome, AnalysisOutcome)
+                else self.outcome
             ),
             "receipt_id": self.receipt_id,
             "schema_version": self.schema_version,
@@ -762,7 +836,9 @@ class ObligationAnalysisEvidence:
             unavailable=value.get("unavailable", False),
             summary=value.get("summary", ""),
             attributes=value.get("attributes", {}),
-            schema_version=value.get("schema_version", OBLIGATION_EVIDENCE_SCHEMA_VERSION),
+            schema_version=value.get(
+                "schema_version", OBLIGATION_EVIDENCE_SCHEMA_VERSION
+            ),
         )
 
 
@@ -801,10 +877,14 @@ class ContractSafetyRequest:
     schema_version: str = CONTRACT_SAFETY_REQUEST_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "request_id", _identifier(self.request_id, "request_id"))
+        object.__setattr__(
+            self, "request_id", _identifier(self.request_id, "request_id")
+        )
         if not isinstance(self.intent, TransactionIntent):
             if isinstance(self.intent, Mapping):
-                object.__setattr__(self, "intent", TransactionIntent.from_dict(self.intent))
+                object.__setattr__(
+                    self, "intent", TransactionIntent.from_dict(self.intent)
+                )
             else:
                 raise GuardValidationError("intent must be a TransactionIntent")
         if not isinstance(self.candidate, TransactionCandidate):
@@ -815,11 +895,17 @@ class ContractSafetyRequest:
                     TransactionCandidate.from_dict(self.candidate),
                 )
             else:
-                raise GuardValidationError("candidate must be a TransactionCandidate")
+                raise GuardValidationError(
+                    "candidate must be a TransactionCandidate"
+                )
         if self.candidate.intent_id != self.intent.intent_id:
-            raise GuardValidationError("candidate.intent_id must match intent.intent_id")
+            raise GuardValidationError(
+                "candidate.intent_id must match intent.intent_id"
+            )
         if self.candidate.network and self.candidate.network != self.intent.network:
-            raise GuardValidationError("candidate.network must match intent.network when provided")
+            raise GuardValidationError(
+                "candidate.network must match intent.network when provided"
+            )
         if not isinstance(self.required_obligations, RequiredObligationSet):
             if isinstance(self.required_obligations, Mapping):
                 object.__setattr__(
@@ -828,7 +914,9 @@ class ContractSafetyRequest:
                     RequiredObligationSet.from_dict(self.required_obligations),
                 )
             else:
-                raise GuardValidationError("required_obligations must be a RequiredObligationSet")
+                raise GuardValidationError(
+                    "required_obligations must be a RequiredObligationSet"
+                )
         epochs = _sequence_of_epochs(self.code_epochs)
         if not epochs:
             raise GuardValidationError("at least one CodeEpoch is required")
@@ -838,10 +926,16 @@ class ContractSafetyRequest:
             raise GuardValidationError("code_epochs epoch_id values must be unique")
         evidence_items = _sequence_of_evidence(self.evidence)
         object.__setattr__(self, "evidence", evidence_items)
-        object.__setattr__(self, "tenant_id", _identifier(self.tenant_id, "tenant_id"))
+        object.__setattr__(
+            self, "tenant_id", _identifier(self.tenant_id, "tenant_id")
+        )
         object.__setattr__(self, "actor_id", _identifier(self.actor_id, "actor_id"))
-        object.__setattr__(self, "policy_id", _identifier(self.policy_id, "policy_id"))
-        object.__setattr__(self, "issued_at", _timestamp(self.issued_at, "issued_at"))
+        object.__setattr__(
+            self, "policy_id", _identifier(self.policy_id, "policy_id")
+        )
+        object.__setattr__(
+            self, "issued_at", _timestamp(self.issued_at, "issued_at")
+        )
         object.__setattr__(self, "expiry", _timestamp(self.expiry, "expiry"))
         if self.expiry < self.issued_at:
             raise GuardValidationError("expiry must not precede issued_at")
@@ -873,26 +967,34 @@ class ContractSafetyRequest:
             self, "primary_code_epoch_id", _identifier(primary, "primary_code_epoch_id")
         )
         if self.primary_code_epoch_id not in epoch_ids:
-            raise GuardValidationError("primary_code_epoch_id must reference a bound CodeEpoch")
+            raise GuardValidationError(
+                "primary_code_epoch_id must reference a bound CodeEpoch"
+            )
         for name in ("proxy_epoch_id", "upgrade_epoch_id", "state_epoch_id"):
             raw = getattr(self, name)
             if raw:
                 oid = _identifier(raw, name)
                 if oid not in epoch_ids:
-                    raise GuardValidationError(f"{name} must reference a bound CodeEpoch")
+                    raise GuardValidationError(
+                        f"{name} must reference a bound CodeEpoch"
+                    )
                 object.__setattr__(self, name, oid)
             else:
                 object.__setattr__(self, name, "")
         object.__setattr__(
             self,
             "prior_decision_digest",
-            _digest(self.prior_decision_digest, "prior_decision_digest", allow_empty=True),
+            _digest(
+                self.prior_decision_digest, "prior_decision_digest", allow_empty=True
+            ),
         )
         if not isinstance(self.attributes, Mapping):
             raise GuardValidationError("attributes must be a mapping")
         _reject_forbidden(self.attributes, "ContractSafetyRequest.attributes")
         object.__setattr__(self, "attributes", dict(self.attributes))
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
 
     def epoch_by_id(self, epoch_id: str) -> CodeEpoch:
         for epoch in self.code_epochs:
@@ -985,7 +1087,9 @@ class ContractSafetyRequest:
             state_epoch_id=value.get("state_epoch_id", ""),
             prior_decision_digest=value.get("prior_decision_digest", ""),
             attributes=value.get("attributes", {}),
-            schema_version=value.get("schema_version", CONTRACT_SAFETY_REQUEST_SCHEMA_VERSION),
+            schema_version=value.get(
+                "schema_version", CONTRACT_SAFETY_REQUEST_SCHEMA_VERSION
+            ),
         )
 
 
@@ -1001,7 +1105,9 @@ def _sequence_of_epochs(values: Any) -> tuple[CodeEpoch, ...]:
         elif isinstance(item, Mapping):
             out.append(CodeEpoch.from_dict(item))
         else:
-            raise GuardValidationError("code_epochs items must be CodeEpoch or mappings")
+            raise GuardValidationError(
+                "code_epochs items must be CodeEpoch or mappings"
+            )
     return tuple(out)
 
 
@@ -1064,8 +1170,12 @@ class ContractSafetyDecision:
     schema_version: str = CONTRACT_SAFETY_DECISION_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "decision_id", _identifier(self.decision_id, "decision_id"))
-        object.__setattr__(self, "request_digest", _digest(self.request_digest, "request_digest"))
+        object.__setattr__(
+            self, "decision_id", _identifier(self.decision_id, "decision_id")
+        )
+        object.__setattr__(
+            self, "request_digest", _digest(self.request_digest, "request_digest")
+        )
         object.__setattr__(
             self,
             "outcome",
@@ -1077,11 +1187,17 @@ class ContractSafetyDecision:
         expected_block = transaction_blocks_automation(self.outcome)  # type: ignore[arg-type]
         if self.outcome is TransactionVerdictOutcome.ALLOW:
             if self.blocks_automation:
-                raise GuardValidationError("ALLOW decisions must set blocks_automation=False")
+                raise GuardValidationError(
+                    "ALLOW decisions must set blocks_automation=False"
+                )
         elif not self.blocks_automation:
-            raise GuardValidationError(f"non-ALLOW outcome {self.outcome} must block automation")
+            raise GuardValidationError(
+                f"non-ALLOW outcome {self.outcome} must block automation"
+            )
         if expected_block and not self.blocks_automation:
-            raise GuardValidationError("blocks_automation inconsistent with outcome")
+            raise GuardValidationError(
+                "blocks_automation inconsistent with outcome"
+            )
         object.__setattr__(
             self,
             "reason_codes",
@@ -1100,7 +1216,9 @@ class ContractSafetyDecision:
             if self.reasons
             else ("contract safety decision",),
         )
-        object.__setattr__(self, "intent_digest", _digest(self.intent_digest, "intent_digest"))
+        object.__setattr__(
+            self, "intent_digest", _digest(self.intent_digest, "intent_digest")
+        )
         object.__setattr__(
             self,
             "candidate_digest",
@@ -1120,7 +1238,9 @@ class ContractSafetyDecision:
         if not isinstance(self.code_epoch_digests, Mapping):
             raise GuardValidationError("code_epoch_digests must be a mapping")
         digests = {
-            _identifier(k, "code_epoch_digests key"): _digest(v, f"code_epoch_digests[{k}]")
+            _identifier(k, "code_epoch_digests key"): _digest(
+                v, f"code_epoch_digests[{k}]"
+            )
             for k, v in self.code_epoch_digests.items()
         }
         object.__setattr__(self, "code_epoch_digests", digests)
@@ -1145,7 +1265,9 @@ class ContractSafetyDecision:
             self,
             "obligation_results",
             {
-                _identifier(k, "obligation_results key"): _text(v, f"obligation_results[{k}]")
+                _identifier(k, "obligation_results key"): _text(
+                    v, f"obligation_results[{k}]"
+                )
                 for k, v in self.obligation_results.items()
             },
         )
@@ -1155,17 +1277,25 @@ class ContractSafetyDecision:
             self,
             "authority_results",
             {
-                _identifier(k, "authority_results key"): _text(v, f"authority_results[{k}]")
+                _identifier(k, "authority_results key"): _text(
+                    v, f"authority_results[{k}]"
+                )
                 for k, v in self.authority_results.items()
             },
         )
-        object.__setattr__(self, "evidence_ids", _unique_ids(self.evidence_ids, "evidence_ids"))
+        object.__setattr__(
+            self, "evidence_ids", _unique_ids(self.evidence_ids, "evidence_ids")
+        )
         object.__setattr__(
             self, "assumption_ids", _unique_ids(self.assumption_ids, "assumption_ids")
         )
-        object.__setattr__(self, "issued_at", _timestamp(self.issued_at, "issued_at"))
+        object.__setattr__(
+            self, "issued_at", _timestamp(self.issued_at, "issued_at")
+        )
         object.__setattr__(self, "expiry", _timestamp(self.expiry, "expiry"))
-        object.__setattr__(self, "producer_id", _identifier(self.producer_id, "producer_id"))
+        object.__setattr__(
+            self, "producer_id", _identifier(self.producer_id, "producer_id")
+        )
         for name in ("proxy_epoch_id", "upgrade_epoch_id", "state_epoch_id"):
             raw = getattr(self, name)
             if raw:
@@ -1176,7 +1306,9 @@ class ContractSafetyDecision:
             raise GuardValidationError("attributes must be a mapping")
         _reject_forbidden(self.attributes, "ContractSafetyDecision.attributes")
         object.__setattr__(self, "attributes", dict(self.attributes))
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
 
     @property
     def digest(self) -> str:
@@ -1185,7 +1317,10 @@ class ContractSafetyDecision:
     def permits_automation(self) -> bool:
         """True only for a current non-blocking ALLOW."""
 
-        return self.outcome is TransactionVerdictOutcome.ALLOW and not self.blocks_automation
+        return (
+            self.outcome is TransactionVerdictOutcome.ALLOW
+            and not self.blocks_automation
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -1288,7 +1423,9 @@ class ContractSafetyDecision:
             upgrade_epoch_id=value.get("upgrade_epoch_id", ""),
             state_epoch_id=value.get("state_epoch_id", ""),
             attributes=value.get("attributes", {}),
-            schema_version=value.get("schema_version", CONTRACT_SAFETY_DECISION_SCHEMA_VERSION),
+            schema_version=value.get(
+                "schema_version", CONTRACT_SAFETY_DECISION_SCHEMA_VERSION
+            ),
         )
 
 
@@ -1320,7 +1457,9 @@ class ContractSafetyGate:
             raise GuardValidationError(
                 f"unsupported contract safety gate schema: {self.schema_version!r}"
             )
-        object.__setattr__(self, "producer_id", _identifier(self.producer_id, "producer_id"))
+        object.__setattr__(
+            self, "producer_id", _identifier(self.producer_id, "producer_id")
+        )
 
     def evaluate(
         self,
@@ -1347,7 +1486,9 @@ class ContractSafetyGate:
             if isinstance(request, Mapping):
                 request = ContractSafetyRequest.from_dict(request)
             else:
-                raise GuardValidationError("request must be a ContractSafetyRequest")
+                raise GuardValidationError(
+                    "request must be a ContractSafetyRequest"
+                )
 
         clock = now or _iso_now()
         reason_codes: list[str] = []
@@ -1356,7 +1497,9 @@ class ContractSafetyGate:
         authority_results: dict[str, str] = {}
         blocking: TransactionVerdictOutcome | None = None
 
-        def _block(outcome: TransactionVerdictOutcome, code: str, reason: str) -> None:
+        def _block(
+            outcome: TransactionVerdictOutcome, code: str, reason: str
+        ) -> None:
             nonlocal blocking
             reason_codes.append(code)
             reasons.append(reason)
@@ -1513,25 +1656,40 @@ class ContractSafetyGate:
                     _block(
                         TransactionVerdictOutcome.DENY,
                         f"contract.epoch_not_in_scope:{obligation_id}",
-                        (f"evidence for {obligation_id} binds an epoch outside the request scope"),
+                        (
+                            f"evidence for {obligation_id} binds an epoch "
+                            "outside the request scope"
+                        ),
                     )
                     continue
 
             # Candidate / intent binding (permit only evaluated transaction)
-            if evidence.candidate_digest and evidence.candidate_digest != request.candidate_digest:
+            if (
+                evidence.candidate_digest
+                and evidence.candidate_digest != request.candidate_digest
+            ):
                 obligation_results[obligation_id] = "mismatched"
                 _block(
                     TransactionVerdictOutcome.DENY,
                     f"contract.candidate_mismatch:{obligation_id}",
-                    (f"evidence for {obligation_id} was not evaluated on this exact candidate"),
+                    (
+                        f"evidence for {obligation_id} was not evaluated on "
+                        "this exact candidate"
+                    ),
                 )
                 continue
-            if evidence.intent_digest and evidence.intent_digest != request.intent_digest:
+            if (
+                evidence.intent_digest
+                and evidence.intent_digest != request.intent_digest
+            ):
                 obligation_results[obligation_id] = "mismatched"
                 _block(
                     TransactionVerdictOutcome.DENY,
                     f"contract.intent_mismatch:{obligation_id}",
-                    (f"evidence for {obligation_id} was not evaluated on this exact intent"),
+                    (
+                        f"evidence for {obligation_id} was not evaluated on "
+                        "this exact intent"
+                    ),
                 )
                 continue
 
@@ -1591,7 +1749,10 @@ class ContractSafetyGate:
                 _block(
                     TransactionVerdictOutcome.INCONCLUSIVE,
                     f"contract.unsupported_required:{obligation_id}",
-                    (f"required obligation {obligation_id} is unsupported by the analysis backend"),
+                    (
+                        f"required obligation {obligation_id} is unsupported "
+                        "by the analysis backend"
+                    ),
                 )
                 continue
             if outcome in _UNKNOWN_OUTCOMES:
@@ -1623,23 +1784,22 @@ class ContractSafetyGate:
             outcome = TransactionVerdictOutcome.ALLOW
             if not reason_codes:
                 reason_codes.append("contract.allow")
-                reasons.append("all required obligations proved under bound code epochs")
+                reasons.append(
+                    "all required obligations proved under bound code epochs"
+                )
             blocks = False
         else:
             outcome = blocking
             blocks = True
 
         epoch_digests = {e.epoch_id: e.digest for e in request.code_epochs}
-        decision_id = (
-            "decision:"
-            + stable_digest(
-                {
-                    "request": request.request_digest,
-                    "producer": self.producer_id,
-                    "outcome": outcome.value,
-                }
-            )[:32]
-        )
+        decision_id = "decision:" + stable_digest(
+            {
+                "request": request.request_digest,
+                "producer": self.producer_id,
+                "outcome": outcome.value,
+            }
+        )[:32]
 
         return ContractSafetyDecision(
             decision_id=decision_id,
@@ -1688,12 +1848,16 @@ class ContractSafetyGate:
             if isinstance(decision, Mapping):
                 decision = ContractSafetyDecision.from_dict(decision)
             else:
-                raise GuardValidationError("decision must be a ContractSafetyDecision")
+                raise GuardValidationError(
+                    "decision must be a ContractSafetyDecision"
+                )
         if not isinstance(request, ContractSafetyRequest):
             if isinstance(request, Mapping):
                 request = ContractSafetyRequest.from_dict(request)
             else:
-                raise GuardValidationError("request must be a ContractSafetyRequest")
+                raise GuardValidationError(
+                    "request must be a ContractSafetyRequest"
+                )
 
         clock = now or _iso_now()
         mismatches: list[str] = []
@@ -1716,8 +1880,7 @@ class ContractSafetyGate:
 
         if mismatches:
             return ContractSafetyDecision(
-                decision_id="decision:"
-                + stable_digest(
+                decision_id="decision:" + stable_digest(
                     {
                         "prior": decision.digest,
                         "mismatches": mismatches,
@@ -1728,7 +1891,10 @@ class ContractSafetyGate:
                 outcome=TransactionVerdictOutcome.STALE,
                 blocks_automation=True,
                 reason_codes=("contract.revalidation_mismatch",),
-                reasons=("prior contract safety permission invalidated: " + ", ".join(mismatches),),
+                reasons=(
+                    "prior contract safety permission invalidated: "
+                    + ", ".join(mismatches),
+                ),
                 intent_digest=request.intent_digest,
                 candidate_digest=request.candidate_digest,
                 network=request.intent.network,
@@ -1736,7 +1902,9 @@ class ContractSafetyGate:
                 obligation_set_id=request.required_obligations.set_id,
                 code_epoch_digests={e.epoch_id: e.digest for e in request.code_epochs},
                 primary_code_epoch_id=request.primary_code_epoch_id,
-                primary_code_epoch_digest=request.epoch_by_id(request.primary_code_epoch_id).digest,
+                primary_code_epoch_digest=request.epoch_by_id(
+                    request.primary_code_epoch_id
+                ).digest,
                 evaluated_effect_ids=request.evaluated_effect_ids,
                 obligation_results={
                     oid: "invalidated" for oid in request.required_obligations.obligation_ids
@@ -1754,10 +1922,14 @@ class ContractSafetyGate:
             )
 
         if _is_expired(decision.expiry, clock):
-            return self.evaluate(request, now=clock, live_code_epochs=live_code_epochs)
+            return self.evaluate(
+                request, now=clock, live_code_epochs=live_code_epochs
+            )
 
         # Re-run full evaluation with live epochs so upgrades fail closed.
-        return self.evaluate(request, now=clock, live_code_epochs=live_code_epochs)
+        return self.evaluate(
+            request, now=clock, live_code_epochs=live_code_epochs
+        )
 
 
 def _prefer_blocking(
@@ -1789,7 +1961,9 @@ def _live_epoch_map(
         elif isinstance(item, Mapping):
             epoch = CodeEpoch.from_dict(item)
         else:
-            raise GuardValidationError("live_code_epochs items must be CodeEpoch or mappings")
+            raise GuardValidationError(
+                "live_code_epochs items must be CodeEpoch or mappings"
+            )
         result[epoch.epoch_id] = epoch
     return result
 
@@ -1801,11 +1975,9 @@ def _find_live_by_subject(
 ) -> CodeEpoch | None:
     kind_value = kind.value if isinstance(kind, EpochKind) else str(kind)
     for epoch in live_map.values():
-        if (
-            epoch.subject_id == subject_id
-            and (epoch.kind.value if isinstance(epoch.kind, EpochKind) else epoch.kind)
-            == kind_value
-        ):
+        if epoch.subject_id == subject_id and (
+            epoch.kind.value if isinstance(epoch.kind, EpochKind) else epoch.kind
+        ) == kind_value:
             return epoch
     return None
 
@@ -1820,7 +1992,9 @@ def evaluate_contract_safety(
     """Module-level helper matching the plan surface for contract safety."""
 
     engine = gate or ContractSafetyGate()
-    return engine.evaluate(request, now=now, live_code_epochs=live_code_epochs)
+    return engine.evaluate(
+        request, now=now, live_code_epochs=live_code_epochs
+    )
 
 
 __all__ = [

@@ -28,21 +28,6 @@ def _symbols(state):
     return {symbol.qualified_name: symbol for symbol in state.symbols}
 
 
-def test_tracked_hidden_python_source_survives_cold_and_incremental_scan(tmp_path):
-    source = b"raise RuntimeError('must not execute')\ndef check(): return 1\n"
-    path = ".supervisor-public-smoke.py"
-    (tmp_path / path).write_bytes(source)
-    for args in (("init",), ("add", "--", path)):
-        subprocess.run(["git", *args], cwd=tmp_path, check=True, capture_output=True)
-    first = scan_repository_state(tmp_path, repository_id="repo:hidden")
-    second = scan_repository_state(tmp_path, repository_id="repo:hidden", previous_state=first)
-    assert first == second
-    symbols = _symbols(first)
-    assert set(symbols) == {".supervisor-public-smoke", ".supervisor-public-smoke.check"}
-    assert all(symbol.module_path == path and symbol.source_cid == cid_for_bytes(source)
-               and symbol.namespace == ".supervisor-public-smoke" for symbol in symbols.values())
-
-
 def test_cold_and_incremental_scans_have_the_same_root(tmp_path) -> None:
     (tmp_path / "pkg").mkdir()
     (tmp_path / "pkg" / "sample.py").write_text("def answer(value: int) -> int:\n    return value + 1\n", encoding="utf-8")

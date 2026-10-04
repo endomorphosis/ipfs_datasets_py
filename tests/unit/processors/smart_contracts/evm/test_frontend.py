@@ -95,7 +95,6 @@ SELFDESTRUCT_BYTECODE = bytes.fromhex("6000ff")
 # PUSH1 0x00 PUSH1 0x00 DELEGATECALL STOP
 DELEGATECALL_BYTECODE = bytes.fromhex("600060006000600060006000f400")
 
-
 # EIP-1167 minimal proxy pointing at IMPL.
 def _minimal_proxy(impl: str) -> bytes:
     addr = bytes.fromhex(impl[2:] if impl.startswith("0x") else impl)
@@ -176,9 +175,7 @@ def test_code_epoch_binds_required_fields(frontend: EVMContractFrontend) -> None
         compiler_version="0.8.20",
         compiler_flags={"optimizer": True, "runs": 200},
         libraries={"Lib": IMPL},
-        constructor_args=bytes.fromhex(
-            "0000000000000000000000000000000000000000000000000000000000000001"
-        ),
+        constructor_args=bytes.fromhex("0000000000000000000000000000000000000000000000000000000000000001"),
         metadata_policy="embedded-cbor-ipfs-none",
         abi=b'[{"type":"function","name":"x"}]',
         network="ethereum-mainnet",
@@ -261,14 +258,18 @@ def test_unsupported_opcodes_never_pass() -> None:
     assert cfg.pass_status is SemanticPassStatus.UNSUPPORTED
     assert cfg.unsupported_opcodes
     assert cfg.is_pass is False
-    status = incomplete_trace_never_passes(cfg=cfg, trace_complete=True, claim_pass=True)
+    status = incomplete_trace_never_passes(
+        cfg=cfg, trace_complete=True, claim_pass=True
+    )
     assert status is SemanticPassStatus.UNSUPPORTED
 
 
 def test_incomplete_traces_never_pass() -> None:
     _disasm, cfg, _effects = analyze_bytecode(ADD_BYTECODE, trace_complete=False)
     # CFG itself may be PASS statically, but incomplete traces never pass claims.
-    status = incomplete_trace_never_passes(cfg=cfg, trace_complete=False, claim_pass=True)
+    status = incomplete_trace_never_passes(
+        cfg=cfg, trace_complete=False, claim_pass=True
+    )
     assert status is SemanticPassStatus.INCOMPLETE
     assert status is not SemanticPassStatus.PASS
 

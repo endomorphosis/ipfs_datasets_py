@@ -13,7 +13,9 @@ from ipfs_datasets_py.processors.wallets.protocols import (
 )
 from ipfs_datasets_py.processors.wallets.xrpl.networks import XRPLNetwork
 
-_FIXTURE_DIR = Path(__file__).resolve().parents[4] / "fixtures" / "wallets" / "xaman"
+_FIXTURE_DIR = (
+    Path(__file__).resolve().parents[4] / "fixtures" / "wallets" / "xaman"
+)
 
 
 @pytest.fixture

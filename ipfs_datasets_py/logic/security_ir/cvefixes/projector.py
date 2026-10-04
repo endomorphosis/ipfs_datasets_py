@@ -51,7 +51,9 @@ def _validate_cid(value: str, label: str) -> str:
         encoded = value[1:].upper()
         raw = base64.b32decode(encoded + ("=" * ((-len(encoded)) % 8)))
     except (ValueError, base64.binascii.Error) as exc:
-        raise ProjectionError(f"{label} must be an ir_core raw/sha2-256 CIDv1") from exc
+        raise ProjectionError(
+            f"{label} must be an ir_core raw/sha2-256 CIDv1"
+        ) from exc
     if len(raw) != 36 or not raw.startswith(_IR_CORE_CID_HEADER):
         raise ProjectionError(f"{label} must be an ir_core raw/sha2-256 CIDv1")
     return value
@@ -118,7 +120,9 @@ class ProjectorConfig:
             if type(getattr(self, name)) is not int or getattr(self, name) <= 0:
                 raise ProjectionError(f"{name} must be a positive integer")
         if self.schema_version != PROJECTOR_CONFIG_SCHEMA_VERSION:
-            raise ProjectionError(f"unsupported projector config schema {self.schema_version!r}")
+            raise ProjectionError(
+                f"unsupported projector config schema {self.schema_version!r}"
+            )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -132,7 +136,9 @@ class ProjectorConfig:
 
     @property
     def cid(self) -> str:
-        return canonical_config_cid(self.to_dict(), schema_version=self.schema_version)
+        return canonical_config_cid(
+            self.to_dict(), schema_version=self.schema_version
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -186,10 +192,17 @@ class ModelSemanticCandidate:
         if not isinstance(self.kind, SemanticKind):
             raise ProjectionError("model candidate kind must be SemanticKind")
         if not isinstance(self.evidence_polarity, EvidencePolarity):
-            raise ProjectionError("model candidate evidence_polarity must be EvidencePolarity")
+            raise ProjectionError(
+                "model candidate evidence_polarity must be EvidencePolarity"
+            )
         for name in ("predicate", "code_unit_cid", "model_id", "model_revision"):
             value = getattr(self, name)
-            if not isinstance(value, str) or not value or value != value.strip() or "\x00" in value:
+            if (
+                not isinstance(value, str)
+                or not value
+                or value != value.strip()
+                or "\x00" in value
+            ):
                 raise ProjectionError(f"model candidate {name} is invalid")
         _validate_cid(self.code_unit_cid, "model candidate code_unit_cid")
         if (
@@ -197,7 +210,9 @@ class ModelSemanticCandidate:
             or not isinstance(self.confidence, (int, float))
             or not 0.0 <= float(self.confidence) <= 1.0
         ):
-            raise ProjectionError("model candidate confidence must be between zero and one")
+            raise ProjectionError(
+                "model candidate confidence must be between zero and one"
+            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -226,7 +241,12 @@ class SemanticFact:
             raise ProjectionError("semantic extraction method is invalid")
         for name in ("predicate", "code_unit_cid", "source_cid", "config_cid"):
             value = getattr(self, name)
-            if not isinstance(value, str) or not value or value != value.strip() or "\x00" in value:
+            if (
+                not isinstance(value, str)
+                or not value
+                or value != value.strip()
+                or "\x00" in value
+            ):
                 raise ProjectionError(f"semantic {name} is invalid")
         for name in ("code_unit_cid", "source_cid", "config_cid"):
             _validate_cid(getattr(self, name), f"semantic {name}")
@@ -238,14 +258,18 @@ class SemanticFact:
             raise ProjectionError("semantic confidence must be between zero and one")
         object.__setattr__(self, "confidence", float(self.confidence))
         if self.schema_version != PROJECTOR_SCHEMA_VERSION:
-            raise ProjectionError(f"unsupported semantic fact schema {self.schema_version!r}")
+            raise ProjectionError(
+                f"unsupported semantic fact schema {self.schema_version!r}"
+            )
         if self.extraction_method is ExtractionMethod.DETERMINISTIC_SYNTAX:
             if self.confidence != 1.0 or self.model_id or self.model_revision:
                 raise ProjectionError(
                     "deterministic facts cannot carry model identity or confidence"
                 )
         elif not self.model_id or not self.model_revision:
-            raise ProjectionError("model-assisted facts require model_id and model_revision")
+            raise ProjectionError(
+                "model-assisted facts require model_id and model_revision"
+            )
         computed = self.identity.cid
         if self.fact_id and self.fact_id != computed:
             raise ProjectionError("semantic fact_id does not match content")
@@ -313,7 +337,9 @@ class VulnerableFixedPair:
             if value:
                 _validate_cid(value, f"pair {name}")
         if self.schema_version != PROJECTOR_SCHEMA_VERSION:
-            raise ProjectionError(f"unsupported pair schema {self.schema_version!r}")
+            raise ProjectionError(
+                f"unsupported pair schema {self.schema_version!r}"
+            )
         computed = self.identity.cid
         if self.pair_id and self.pair_id != computed:
             raise ProjectionError("pair_id does not match content")
@@ -375,7 +401,9 @@ class ProjectionResult:
         _validate_cid(self.source_cid, "projection source_cid")
         _validate_cid(self.config_cid, "projection config_cid")
         if self.schema_version != PROJECTOR_SCHEMA_VERSION:
-            raise ProjectionError(f"unsupported projection schema {self.schema_version!r}")
+            raise ProjectionError(
+                f"unsupported projection schema {self.schema_version!r}"
+            )
         units = tuple(sorted(self.code_units, key=lambda item: item.cid))
         pairs = tuple(sorted(self.pairs, key=lambda item: item.cid))
         facts = tuple(sorted(self.semantic_facts, key=lambda item: item.cid))
@@ -405,7 +433,9 @@ class ProjectionResult:
         ):
             raise ProjectionError("pair references a code unit outside the result")
         if any(item.code_unit_cid not in unit_ids for item in facts):
-            raise ProjectionError("semantic fact references a code unit outside the result")
+            raise ProjectionError(
+                "semantic fact references a code unit outside the result"
+            )
         object.__setattr__(self, "code_units", units)
         object.__setattr__(self, "pairs", pairs)
         object.__setattr__(self, "semantic_facts", facts)
@@ -422,7 +452,8 @@ class ProjectionResult:
     @property
     def supported(self) -> bool:
         return not any(
-            item.code is DiagnosticCode.UNSUPPORTED_LANGUAGE for item in self.diagnostics
+            item.code is DiagnosticCode.UNSUPPORTED_LANGUAGE
+            for item in self.diagnostics
         )
 
     def deterministic_dict(self) -> dict[str, Any]:
@@ -581,11 +612,11 @@ class PythonLanguageAdapter:
                 name = (
                     _qualified_call_name(node.exc.func)
                     if isinstance(node.exc, ast.Call)
-                    else type(node.exc).__name__
-                    if node.exc is not None
-                    else "reraised"
+                    else type(node.exc).__name__ if node.exc is not None else "reraised"
                 )
-                observations.add(SyntaxObservation(SemanticKind.EFFECT, f"raise:{name}"))
+                observations.add(
+                    SyntaxObservation(SemanticKind.EFFECT, f"raise:{name}")
+                )
                 self.generic_visit(node)
 
         Visitor().visit(tree)
@@ -667,7 +698,10 @@ class LanguageAdapterRegistry:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "adapters": {name: adapter.version for name, adapter in sorted(self._adapters.items())},
+            "adapters": {
+                name: adapter.version
+                for name, adapter in sorted(self._adapters.items())
+            },
             "aliases": dict(sorted(self._aliases.items())),
         }
 
@@ -879,10 +913,13 @@ class _ProjectionBuilder:
             "bounded prefix and full-content digest"
         )
         if not any(
-            item.code is DiagnosticCode.LIMIT_EXCEEDED and item.message == message
+            item.code is DiagnosticCode.LIMIT_EXCEEDED
+            and item.message == message
             for item in self.diagnostics
         ):
-            self.diagnostics.append(ProjectionDiagnostic(DiagnosticCode.LIMIT_EXCEEDED, message))
+            self.diagnostics.append(
+                ProjectionDiagnostic(DiagnosticCode.LIMIT_EXCEEDED, message)
+            )
         digest = hashlib.sha256(value.encode("utf-8")).hexdigest()
         suffix = f":sha256:{digest}"
         if self.config.max_predicate_chars <= len(suffix):
@@ -903,7 +940,10 @@ class _ProjectionBuilder:
         extra_payload: Mapping[str, Any] | None = None,
         derive_syntax: bool = True,
     ) -> VulnerableFixedPair:
-        pair_key = f"{unit_kind.value}:{path}:{unit_index}:{symbol or '<anonymous>'}"
+        pair_key = (
+            f"{unit_kind.value}:{path}:{unit_index}:"
+            f"{symbol or '<anonymous>'}"
+        )
         side_units: dict[str, CodeUnit] = {}
         for polarity, body, start_line in (
             ("vulnerable", vulnerable_body, start_lines[0]),
@@ -921,16 +961,23 @@ class _ProjectionBuilder:
                 "body_sha256": hashlib.sha256(body.encode("utf-8")).hexdigest(),
                 "commit_hash": self.row.hash,
                 "cve_id": self.row.cve_id,
-                "end_line": (start_line + max(0, len(body.splitlines()) - 1) if start_line else 0),
+                "end_line": (
+                    start_line + max(0, len(body.splitlines()) - 1)
+                    if start_line
+                    else 0
+                ),
                 "evidence_polarity": (
                     EvidencePolarity.VULNERABLE_POSITIVE.value
                     if polarity == "vulnerable"
                     else EvidencePolarity.FIXED_NEGATIVE.value
                 ),
-                "excerpt": body.replace("\x00", "\\x00")[: self.config.max_excerpt_chars],
+                "excerpt": body.replace("\x00", "\\x00")[
+                    : self.config.max_excerpt_chars
+                ],
                 "excerpt_sanitized_nul": "\x00" in body,
                 "excerpt_truncated": (
-                    len(body.replace("\x00", "\\x00")) > self.config.max_excerpt_chars
+                    len(body.replace("\x00", "\\x00"))
+                    > self.config.max_excerpt_chars
                 ),
                 "extraction_method": ExtractionMethod.DETERMINISTIC_SYNTAX.value,
                 "grants_execution_authority": False,
@@ -960,7 +1007,9 @@ class _ProjectionBuilder:
             path=path,
             unit_index=unit_index,
             symbol=symbol,
-            vulnerable_cid=(side_units["vulnerable"].cid if "vulnerable" in side_units else ""),
+            vulnerable_cid=(
+                side_units["vulnerable"].cid if "vulnerable" in side_units else ""
+            ),
             fixed_cid=side_units["fixed"].cid if "fixed" in side_units else "",
             source_cid=self.source_cid,
         )
@@ -1052,7 +1101,9 @@ class _ProjectionBuilder:
         vulnerable_observations = set(
             projections.get("vulnerable", LanguageProjection()).observations
         )
-        fixed_observations = set(projections.get("fixed", LanguageProjection()).observations)
+        fixed_observations = set(
+            projections.get("fixed", LanguageProjection()).observations
+        )
         fixed_unit = side_units.get("fixed")
         if fixed_unit is not None:
             for observation in sorted(
@@ -1069,7 +1120,8 @@ class _ProjectionBuilder:
                             predicate=self.bounded_predicate(
                                 (
                                     "added_guard:"
-                                    if observation.kind is SemanticKind.PRECONDITION
+                                    if observation.kind
+                                    is SemanticKind.PRECONDITION
                                     else "added_action:"
                                 )
                                 + observation.predicate
@@ -1114,13 +1166,19 @@ class _ProjectionBuilder:
                 path=path,
                 unit_index=symbol_index,
                 symbol=key[0],
-                vulnerable_body=(vulnerable_symbol.body if vulnerable_symbol is not None else ""),
+                vulnerable_body=(
+                    vulnerable_symbol.body if vulnerable_symbol is not None else ""
+                ),
                 fixed_body=fixed_symbol.body if fixed_symbol is not None else "",
                 start_lines=(
                     vulnerable_symbol.start_line if vulnerable_symbol else 0,
                     fixed_symbol.start_line if fixed_symbol else 0,
                 ),
-                parent_cids=tuple(cid for cid in (pair.vulnerable_cid, pair.fixed_cid) if cid),
+                parent_cids=tuple(
+                    cid
+                    for cid in (pair.vulnerable_cid, pair.fixed_cid)
+                    if cid
+                ),
                 extra_payload={"symbol_kind": key[1]},
                 derive_syntax=False,
             )
@@ -1161,8 +1219,12 @@ class VulnerableFixedProjector:
             model_candidates, Sequence
         ):
             raise TypeError("model_candidates must be a sequence")
-        if not all(isinstance(item, ModelSemanticCandidate) for item in model_candidates):
-            raise TypeError("every model_candidates item must be ModelSemanticCandidate")
+        if not all(
+            isinstance(item, ModelSemanticCandidate) for item in model_candidates
+        ):
+            raise TypeError(
+                "every model_candidates item must be ModelSemanticCandidate"
+            )
         source_cid = source_cid or canonical_source_row_cid(row)
         _validate_cid(source_cid, "source_cid")
         language = self.registry.normalize(row.language)
@@ -1268,7 +1330,9 @@ class VulnerableFixedProjector:
                 else EvidencePolarity.FIXED_NEGATIVE
             )
             if candidate.evidence_polarity is not expected_polarity:
-                raise ProjectionError("model candidate polarity conflicts with its code unit")
+                raise ProjectionError(
+                    "model candidate polarity conflicts with its code unit"
+                )
             builder.facts.append(
                 SemanticFact(
                     kind=candidate.kind,

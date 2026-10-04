@@ -99,7 +99,8 @@ _CONTROLLED_ENGLISH: Final[Mapping[PropertyClass, str]] = {
         "Some execution path can reach the target state (existential reachability)."
     ),
     PropertyClass.UNIVERSAL_REACHABILITY: (
-        "Every execution path eventually reaches the target state (universal reachability)."
+        "Every execution path eventually reaches the target state "
+        "(universal reachability)."
     ),
     PropertyClass.INEVITABILITY: (
         "The target state is eventually inevitable under the modeled environment."
@@ -107,12 +108,18 @@ _CONTROLLED_ENGLISH: Final[Mapping[PropertyClass, str]] = {
     PropertyClass.INVARIANCE: (
         "The target property holds as an invariant on every reachable state."
     ),
-    PropertyClass.TERMINATION: ("Every execution eventually terminates (termination)."),
+    PropertyClass.TERMINATION: (
+        "Every execution eventually terminates (termination)."
+    ),
     PropertyClass.REFINEMENT: (
         "The implementation refines the abstract specification (refinement)."
     ),
-    PropertyClass.LIVENESS: ("Some progress property eventually holds (liveness)."),
-    PropertyClass.SAFETY: ("Bad states are never reached (safety)."),
+    PropertyClass.LIVENESS: (
+        "Some progress property eventually holds (liveness)."
+    ),
+    PropertyClass.SAFETY: (
+        "Bad states are never reached (safety)."
+    ),
 }
 
 # Fields that, when they differ, count as *material* semantic divergence.
@@ -271,7 +278,9 @@ def _string_tuple(
         items: Iterable[Any] = ()
     elif isinstance(value, str):
         items = (value,)
-    elif isinstance(value, Sequence) and not isinstance(value, (bytes, bytearray, memoryview)):
+    elif isinstance(value, Sequence) and not isinstance(
+        value, (bytes, bytearray, memoryview)
+    ):
         items = value
     else:
         raise GoalAmbiguityError(f"{label} must be a sequence of strings")
@@ -328,7 +337,9 @@ def _digest(value: Any) -> str:
 def _reject_forbidden_meta(meta: Mapping[str, Any], label: str) -> None:
     for key in _FORBIDDEN_ADMISSION_KEYS:
         if key in meta and meta[key] is True:
-            raise GoalAmbiguityError(f"{label} cannot claim forbidden admission key {key!r}")
+            raise GoalAmbiguityError(
+                f"{label} cannot claim forbidden admission key {key!r}"
+            )
 
 
 def _property_class(value: object) -> PropertyClass:
@@ -342,7 +353,9 @@ def _quantifiers(value: object) -> tuple[QuantifierKind, ...]:
         return (value,)
     if isinstance(value, str):
         return (_enum(value, QuantifierKind, "quantifiers"),)
-    if not isinstance(value, Sequence) or isinstance(value, (bytes, bytearray, memoryview)):
+    if not isinstance(value, Sequence) or isinstance(
+        value, (bytes, bytearray, memoryview)
+    ):
         raise GoalAmbiguityError("quantifiers must be a sequence")
     return tuple(_enum(item, QuantifierKind, "quantifiers") for item in value)
 
@@ -429,10 +442,14 @@ def material_identity(interpretation: EndGoalInterpretation | Mapping[str, Any])
             "current_state": dict(interpretation.get("current_state") or {}),
             "target_state": dict(interpretation.get("target_state") or {}),
             "environment": dict(interpretation.get("environment") or {}),
-            "controlled_english": str(interpretation.get("controlled_english") or ""),
+            "controlled_english": str(
+                interpretation.get("controlled_english") or ""
+            ),
         }
     else:
-        raise GoalAmbiguityError("interpretation must be an EndGoalInterpretation or mapping")
+        raise GoalAmbiguityError(
+            "interpretation must be an EndGoalInterpretation or mapping"
+        )
     return content_identity(payload)
 
 
@@ -461,14 +478,20 @@ class SemanticDiff:
     fingerprint: str = ""
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "left_id", _text(self.left_id, "left_id", maximum=256))
-        object.__setattr__(self, "right_id", _text(self.right_id, "right_id", maximum=256))
+        object.__setattr__(
+            self, "left_id", _text(self.left_id, "left_id", maximum=256)
+        )
+        object.__setattr__(
+            self, "right_id", _text(self.right_id, "right_id", maximum=256)
+        )
         object.__setattr__(
             self,
             "changed_fields",
             _string_tuple(self.changed_fields, "changed_fields", preserve_order=True),
         )
-        object.__setattr__(self, "field_deltas", _mapping(self.field_deltas, "field_deltas"))
+        object.__setattr__(
+            self, "field_deltas", _mapping(self.field_deltas, "field_deltas")
+        )
         object.__setattr__(self, "material", _bool(self.material, "material"))
         object.__setattr__(
             self,
@@ -655,8 +678,12 @@ class ConfirmationRequirement:
     required: bool = True
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "kind", _enum(self.kind, ConfirmationKind, "kind"))
-        object.__setattr__(self, "message", _text(self.message, "message", maximum=4096))
+        object.__setattr__(
+            self, "kind", _enum(self.kind, ConfirmationKind, "kind")
+        )
+        object.__setattr__(
+            self, "message", _text(self.message, "message", maximum=4096)
+        )
         object.__setattr__(
             self,
             "candidate_ids",
@@ -724,8 +751,12 @@ class GoalInterpretationSet:
     meta: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "set_id", _text(self.set_id, "set_id", maximum=256))
-        object.__setattr__(self, "goal_id", _text(self.goal_id, "goal_id", maximum=256))
+        object.__setattr__(
+            self, "set_id", _text(self.set_id, "set_id", maximum=256)
+        )
+        object.__setattr__(
+            self, "goal_id", _text(self.goal_id, "goal_id", maximum=256)
+        )
         object.__setattr__(
             self,
             "caller_text",
@@ -742,7 +773,9 @@ class GoalInterpretationSet:
                     "interpretations must contain EndGoalInterpretation values"
                 )
         if not interpretations:
-            raise GoalAmbiguityError("GoalInterpretationSet requires at least one interpretation")
+            raise GoalAmbiguityError(
+                "GoalInterpretationSet requires at least one interpretation"
+            )
         ids = [item.interpretation_id for item in interpretations]
         if len(ids) != len(set(ids)):
             raise GoalAmbiguityError("interpretation ids must be unique")
@@ -755,7 +788,9 @@ class GoalInterpretationSet:
             elif isinstance(item, Mapping):
                 diffs.append(SemanticDiff.from_dict(item))
             else:
-                raise GoalAmbiguityError("pairwise_diffs must contain SemanticDiff values")
+                raise GoalAmbiguityError(
+                    "pairwise_diffs must contain SemanticDiff values"
+                )
         object.__setattr__(self, "pairwise_diffs", tuple(diffs))
 
         requirements: list[ConfirmationRequirement] = []
@@ -766,9 +801,12 @@ class GoalInterpretationSet:
                 requirements.append(ConfirmationRequirement.from_dict(item))
             else:
                 raise GoalAmbiguityError(
-                    "confirmation_requirements must contain ConfirmationRequirement values"
+                    "confirmation_requirements must contain "
+                    "ConfirmationRequirement values"
                 )
-        object.__setattr__(self, "confirmation_requirements", tuple(requirements))
+        object.__setattr__(
+            self, "confirmation_requirements", tuple(requirements)
+        )
 
         status = _enum(self.ambiguity_status, AmbiguityStatus, "ambiguity_status")
         object.__setattr__(self, "ambiguity_status", status)
@@ -809,24 +847,33 @@ class GoalInterpretationSet:
                 )
             if selected_flags:
                 raise GoalAmbiguityError(
-                    "no interpretation may be selected while material ambiguity requires selection"
+                    "no interpretation may be selected while material ambiguity "
+                    "requires selection"
                 )
         if status is AmbiguityStatus.RESOLVED:
             if not self.selected_id:
-                raise GoalAmbiguityError("resolved interpretation sets require selected_id")
+                raise GoalAmbiguityError(
+                    "resolved interpretation sets require selected_id"
+                )
             known = {item.interpretation_id for item in interpretations}
             if self.selected_id not in known:
-                raise GoalAmbiguityError("selected_id must reference an interpretation in the set")
+                raise GoalAmbiguityError(
+                    "selected_id must reference an interpretation in the set"
+                )
             if len(selected_flags) != 1:
                 raise GoalAmbiguityError(
                     "resolved set must mark exactly one interpretation selected"
                 )
             if selected_flags[0].interpretation_id != self.selected_id:
-                raise GoalAmbiguityError("selected flag must match selected_id")
+                raise GoalAmbiguityError(
+                    "selected flag must match selected_id"
+                )
 
         # Reject silent multi-select.
         if len(selected_flags) > 1:
-            raise GoalAmbiguityError("at most one interpretation may be selected")
+            raise GoalAmbiguityError(
+                "at most one interpretation may be selected"
+            )
 
     @property
     def material_count(self) -> int:
@@ -845,7 +892,9 @@ class GoalInterpretationSet:
         for item in self.interpretations:
             if item.interpretation_id == interpretation_id:
                 return item
-        raise GoalAmbiguityError(f"unknown interpretation_id: {interpretation_id!r}")
+        raise GoalAmbiguityError(
+            f"unknown interpretation_id: {interpretation_id!r}"
+        )
 
     def visible_differences(self) -> tuple[str, ...]:
         """Controlled-English strings that differ across candidates."""
@@ -886,12 +935,20 @@ class GoalInterpretationSet:
             caller_text=payload.get("caller_text", ""),
             interpretations=tuple(payload.get("interpretations") or ()),
             pairwise_diffs=tuple(payload.get("pairwise_diffs") or ()),
-            confirmation_requirements=tuple(payload.get("confirmation_requirements") or ()),
-            ambiguity_status=payload.get("ambiguity_status", AmbiguityStatus.NONE),
+            confirmation_requirements=tuple(
+                payload.get("confirmation_requirements") or ()
+            ),
+            ambiguity_status=payload.get(
+                "ambiguity_status", AmbiguityStatus.NONE
+            ),
             selected_id=str(payload.get("selected_id") or ""),
             unresolved_fields=tuple(payload.get("unresolved_fields") or ()),
-            material_candidate_ids=tuple(payload.get("material_candidate_ids") or ()),
-            algorithm_version=str(payload.get("algorithm_version") or AMBIGUITY_ALGORITHM_VERSION),
+            material_candidate_ids=tuple(
+                payload.get("material_candidate_ids") or ()
+            ),
+            algorithm_version=str(
+                payload.get("algorithm_version") or AMBIGUITY_ALGORITHM_VERSION
+            ),
             meta=payload.get("meta") or {},
         )
 
@@ -916,7 +973,9 @@ class GoalAmbiguityReport:
     algorithm_version: str = AMBIGUITY_ALGORITHM_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "status", _enum(self.status, GateStatus, "status"))
+        object.__setattr__(
+            self, "status", _enum(self.status, GateStatus, "status")
+        )
         if not isinstance(self.interpretation_set, GoalInterpretationSet):
             if isinstance(self.interpretation_set, Mapping):
                 object.__setattr__(
@@ -925,16 +984,21 @@ class GoalAmbiguityReport:
                     GoalInterpretationSet.from_dict(self.interpretation_set),
                 )
             else:
-                raise GoalAmbiguityError("interpretation_set must be a GoalInterpretationSet")
+                raise GoalAmbiguityError(
+                    "interpretation_set must be a GoalInterpretationSet"
+                )
         object.__setattr__(
             self,
             "request_digest",
-            _text(self.request_digest, "request_digest", optional=True, maximum=128),
+            _text(
+                self.request_digest, "request_digest", optional=True, maximum=128
+            ),
         )
         object.__setattr__(self, "admitted", _bool(self.admitted, "admitted"))
         if self.admitted:
             raise GoalAmbiguityError(
-                "GoalAmbiguityReport cannot admit interpretations (selection is not admission)"
+                "GoalAmbiguityReport cannot admit interpretations "
+                "(selection is not admission)"
             )
         object.__setattr__(
             self,
@@ -957,15 +1021,26 @@ class GoalAmbiguityReport:
             _text(self.algorithm_version, "algorithm_version", maximum=128),
         )
         # Gate status must agree with set status for the selection path.
-        if self.status is GateStatus.REQUIRES_SELECTION and self.selected_interpretation_id:
+        if (
+            self.status is GateStatus.REQUIRES_SELECTION
+            and self.selected_interpretation_id
+        ):
             raise GoalAmbiguityError(
-                "cannot report a selected interpretation while selection is still required"
+                "cannot report a selected interpretation while selection "
+                "is still required"
             )
         if self.status is GateStatus.RESOLVED:
             if not self.selected_interpretation_id:
-                raise GoalAmbiguityError("resolved reports require selected_interpretation_id")
-            if self.interpretation_set.ambiguity_status is not AmbiguityStatus.RESOLVED:
-                raise GoalAmbiguityError("resolved report requires a resolved interpretation set")
+                raise GoalAmbiguityError(
+                    "resolved reports require selected_interpretation_id"
+                )
+            if (
+                self.interpretation_set.ambiguity_status
+                is not AmbiguityStatus.RESOLVED
+            ):
+                raise GoalAmbiguityError(
+                    "resolved report requires a resolved interpretation set"
+                )
 
     @property
     def requires_selection(self) -> bool:
@@ -996,9 +1071,13 @@ class GoalAmbiguityReport:
             interpretation_set=payload.get("interpretation_set") or {},
             request_digest=str(payload.get("request_digest") or ""),
             admitted=False,
-            selected_interpretation_id=str(payload.get("selected_interpretation_id") or ""),
+            selected_interpretation_id=str(
+                payload.get("selected_interpretation_id") or ""
+            ),
             rejection_reasons=tuple(payload.get("rejection_reasons") or ()),
-            algorithm_version=str(payload.get("algorithm_version") or AMBIGUITY_ALGORITHM_VERSION),
+            algorithm_version=str(
+                payload.get("algorithm_version") or AMBIGUITY_ALGORITHM_VERSION
+            ),
         )
 
 
@@ -1057,7 +1136,9 @@ def _extract_current_hints(text: str) -> dict[str, str]:
     return {"phase": "init"}
 
 
-def _stable_interp_id(goal_id: str, property_class: PropertyClass, ordinal: int) -> str:
+def _stable_interp_id(
+    goal_id: str, property_class: PropertyClass, ordinal: int
+) -> str:
     digest = hashlib.sha256(
         f"{goal_id}|{property_class.value}|{ordinal}".encode("utf-8")
     ).hexdigest()[:12]
@@ -1076,7 +1157,9 @@ def _build_interpretation(
     peer_summary: str = "",
 ) -> EndGoalInterpretation:
     if selected:
-        raise GoalAmbiguityError("interpretations cannot be pre-selected during expansion")
+        raise GoalAmbiguityError(
+            "interpretations cannot be pre-selected during expansion"
+        )
     english = controlled_english_for(
         property_class,
         target_state=target_state,
@@ -1085,7 +1168,9 @@ def _build_interpretation(
     )
     semantic_diff: dict[str, Any] = {
         "property_class": property_class.value,
-        "quantifiers": [q.value for q in quantifiers_for_property_class(property_class)],
+        "quantifiers": [
+            q.value for q in quantifiers_for_property_class(property_class)
+        ],
     }
     if peer_summary:
         semantic_diff["vs_peers"] = peer_summary
@@ -1186,7 +1271,8 @@ def _confirmation_for(
                 kind=ConfirmationKind.CLARIFY_UNRESOLVED,
                 message=(
                     "Unresolved fields remain and must be clarified or "
-                    "explicitly accepted as open: " + ", ".join(sorted(set(unresolved)))
+                    "explicitly accepted as open: "
+                    + ", ".join(sorted(set(unresolved)))
                 ),
                 candidate_ids=tuple(material_ids),
                 unresolved_fields=tuple(sorted(set(unresolved))),
@@ -1296,7 +1382,9 @@ def expand_ambiguous_prompt(
         if not target:
             unresolved.append("target_state")
         single = _build_interpretation(
-            interpretation_id=_stable_interp_id(goal_id, PropertyClass.UNSPECIFIED, 0),
+            interpretation_id=_stable_interp_id(
+                goal_id, PropertyClass.UNSPECIFIED, 0
+            ),
             property_class=PropertyClass.UNSPECIFIED,
             current_state=current,
             target_state=target,
@@ -1313,7 +1401,10 @@ def expand_ambiguous_prompt(
         )
 
     classes = expansions[:max_candidates]
-    peer_summary = "material alternatives: " + ", ".join(item.value for item in classes)
+    peer_summary = (
+        "material alternatives: "
+        + ", ".join(item.value for item in classes)
+    )
     built: list[EndGoalInterpretation] = []
     for ordinal, prop in enumerate(classes):
         built.append(
@@ -1343,7 +1434,9 @@ def expand_ambiguous_prompt(
             "ambiguous corpus prompt produced fewer than two material candidates"
         )
     if is_ambiguous_prompt(text) and len(interpretation_set.visible_differences()) < 2:
-        raise GoalAmbiguityError("ambiguous corpus prompt candidates are not visibly different")
+        raise GoalAmbiguityError(
+            "ambiguous corpus prompt candidates are not visibly different"
+        )
     return interpretation_set
 
 
@@ -1522,7 +1615,8 @@ class GoalAmbiguityGate:
         if isinstance(source, str):
             return self.analyze_prompt(source, goal_id=goal_id)
         raise GoalAmbiguityError(
-            "source must be an EndGoalSpec, caller text string, or GoalInterpretationSet"
+            "source must be an EndGoalSpec, caller text string, "
+            "or GoalInterpretationSet"
         )
 
     def compare_goal_interpretations(
@@ -1551,12 +1645,15 @@ class GoalAmbiguityGate:
         """
 
         if not isinstance(interpretation_set, GoalInterpretationSet):
-            raise GoalAmbiguityError("interpretation_set must be a GoalInterpretationSet")
+            raise GoalAmbiguityError(
+                "interpretation_set must be a GoalInterpretationSet"
+            )
         selected_id = _text(interpretation_id, "interpretation_id", maximum=256)
         chosen = interpretation_set.get(selected_id)
 
         if (
-            interpretation_set.ambiguity_status is AmbiguityStatus.REQUIRES_SELECTION
+            interpretation_set.ambiguity_status
+            is AmbiguityStatus.REQUIRES_SELECTION
             and not selected_id
         ):
             raise GoalAmbiguityError(
@@ -1566,11 +1663,14 @@ class GoalAmbiguityGate:
 
         if (
             interpretation_set.material_count > 1
-            and selected_id not in interpretation_set.material_candidate_ids
+            and selected_id
+            not in interpretation_set.material_candidate_ids
             and selected_id
             not in {item.interpretation_id for item in interpretation_set.interpretations}
         ):
-            raise GoalAmbiguityError("selected interpretation_id is not a material candidate")
+            raise GoalAmbiguityError(
+                "selected interpretation_id is not a material candidate"
+            )
 
         if (
             not allow_when_unambiguous
@@ -1606,7 +1706,8 @@ class GoalAmbiguityGate:
                 ConfirmationRequirement(
                     kind=ConfirmationKind.NONE,
                     message=(
-                        f"Interpretation {selected_id!r} explicitly selected; ambiguity resolved."
+                        f"Interpretation {selected_id!r} explicitly selected; "
+                        f"ambiguity resolved."
                     ),
                     candidate_ids=(selected_id,),
                     unresolved_fields=(),
@@ -1616,7 +1717,8 @@ class GoalAmbiguityGate:
             ambiguity_status=AmbiguityStatus.RESOLVED,
             selected_id=selected_id,
             unresolved_fields=(),
-            material_candidate_ids=interpretation_set.material_candidate_ids or (selected_id,),
+            material_candidate_ids=interpretation_set.material_candidate_ids
+            or (selected_id,),
             algorithm_version=interpretation_set.algorithm_version,
             meta={
                 **dict(interpretation_set.meta),
@@ -1634,15 +1736,20 @@ class GoalAmbiguityGate:
             algorithm_version=AMBIGUITY_ALGORITHM_VERSION,
         )
 
-    def require_selection_or_raise(self, report: GoalAmbiguityReport) -> None:
+    def require_selection_or_raise(
+        self, report: GoalAmbiguityReport
+    ) -> None:
         """Raise if material ambiguity remains unresolved (fail closed)."""
 
         if report.requires_selection:
             raise GoalAmbiguityError(
-                "material ambiguity requires interpretation selection; cannot proceed silently"
+                "material ambiguity requires interpretation selection; "
+                "cannot proceed silently"
             )
         if report.interpretation_set.ambiguity_status is AmbiguityStatus.REQUIRES_SELECTION:
-            raise GoalAmbiguityError("interpretation set still requires selection")
+            raise GoalAmbiguityError(
+                "interpretation set still requires selection"
+            )
 
     def apply_to_end_goal(
         self,
@@ -1662,15 +1769,22 @@ class GoalAmbiguityGate:
 
         interpretation_set = report.interpretation_set
         status = interpretation_set.ambiguity_status
-        if status is AmbiguityStatus.REQUIRES_SELECTION and report.selected_interpretation_id:
+        if (
+            status is AmbiguityStatus.REQUIRES_SELECTION
+            and report.selected_interpretation_id
+        ):
             raise GoalAmbiguityError(
-                "inconsistent report: selection present while status requires selection"
+                "inconsistent report: selection present while status requires "
+                "selection"
             )
 
         # If resolved, pin property_class / quantifiers to the selected interp.
         property_class = end_goal.property_class
         quantifiers = end_goal.quantifiers
-        if status is AmbiguityStatus.RESOLVED and report.selected_interpretation_id:
+        if (
+            status is AmbiguityStatus.RESOLVED
+            and report.selected_interpretation_id
+        ):
             chosen = interpretation_set.get(report.selected_interpretation_id)
             property_class = chosen.property_class
             quantifiers = chosen.quantifiers
@@ -1722,13 +1836,16 @@ class GoalAmbiguityGate:
             AmbiguityStatus.RESOLVED: GateStatus.RESOLVED,
             AmbiguityStatus.UNSUPPORTED: GateStatus.UNSUPPORTED,
         }
-        gate_status = status_map.get(interpretation_set.ambiguity_status, GateStatus.REJECTED)
+        gate_status = status_map.get(
+            interpretation_set.ambiguity_status, GateStatus.REJECTED
+        )
         # Hard invariant: multi material → requires selection, never auto resolve.
         if interpretation_set.material_count > 1:
             if interpretation_set.ambiguity_status is AmbiguityStatus.RESOLVED:
                 if not interpretation_set.selected_id:
                     raise GoalAmbiguityError(
-                        "multi-candidate set cannot be resolved without selected_id"
+                        "multi-candidate set cannot be resolved without "
+                        "selected_id"
                     )
             elif interpretation_set.selected_id:
                 raise GoalAmbiguityError(
@@ -1737,7 +1854,11 @@ class GoalAmbiguityGate:
             else:
                 gate_status = GateStatus.REQUIRES_SELECTION
 
-        selected = interpretation_set.selected_id if gate_status is GateStatus.RESOLVED else ""
+        selected = (
+            interpretation_set.selected_id
+            if gate_status is GateStatus.RESOLVED
+            else ""
+        )
         return GoalAmbiguityReport(
             status=gate_status,
             interpretation_set=interpretation_set,

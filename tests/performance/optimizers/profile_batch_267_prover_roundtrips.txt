@@ -1,0 +1,36 @@
+========================================================================
+BATCH 267: Prover Round-Trip Profile
+========================================================================
+
+Statements: 60
+Elapsed ms: 0.93
+Avg ms/statement: 0.02
+Valid count: 60
+
+         5405 function calls in 0.001 seconds
+
+   Ordered by: cumulative time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+       60    0.000    0.000    0.001    0.000 /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/optimizers/logic_theorem_optimizer/prover_integration.py:168(verify_statement)
+       60    0.000    0.000    0.001    0.000 /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/optimizers/logic_theorem_optimizer/prover_integration.py:210(_verify_with_prover)
+      180    0.000    0.000    0.000    0.000 {built-in method builtins.sum}
+       60    0.000    0.000    0.000    0.000 /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/optimizers/tests/performance/profile_batch_267_prover_roundtrips.py:35(prove)
+     1862    0.000    0.000    0.000    0.000 /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/optimizers/tests/performance/profile_batch_267_prover_roundtrips.py:39(<genexpr>)
+       60    0.000    0.000    0.000    0.000 /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/optimizers/logic_theorem_optimizer/prover_integration.py:347(_aggregate_results)
+     1802    0.000    0.000    0.000    0.000 {built-in method builtins.ord}
+       60    0.000    0.000    0.000    0.000 /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/optimizers/logic_theorem_optimizer/prover_integration.py:304(_extract_validity)
+      420    0.000    0.000    0.000    0.000 {built-in method builtins.hasattr}
+       60    0.000    0.000    0.000    0.000 /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/optimizers/logic_theorem_optimizer/prover_integration.py:280(_translate_to_prover_format)
+       60    0.000    0.000    0.000    0.000 /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/optimizers/logic_theorem_optimizer/prover_integration.py:327(_extract_confidence)
+      120    0.000    0.000    0.000    0.000 {built-in method time.time}
+      120    0.000    0.000    0.000    0.000 {built-in method builtins.len}
+      120    0.000    0.000    0.000    0.000 /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/optimizers/logic_theorem_optimizer/prover_integration.py:382(<genexpr>)
+      120    0.000    0.000    0.000    0.000 /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/optimizers/logic_theorem_optimizer/prover_integration.py:391(<genexpr>)
+       60    0.000    0.000    0.000    0.000 {method 'append' of 'list' objects}
+        1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}
+       60    0.000    0.000    0.000    0.000 {method 'items' of 'dict' objects}
+       60    0.000    0.000    0.000    0.000 <string>:2(__init__)
+       60    0.000    0.000    0.000    0.000 {built-in method builtins.isinstance}
+
+

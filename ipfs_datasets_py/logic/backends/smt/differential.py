@@ -50,8 +50,12 @@ from ipfs_datasets_py.logic.software_verification.receipts import (
 
 SMT_DIFFERENTIAL_INTERFACE: Final = "SmtDifferentialVerification@1"
 SMT_DIFFERENTIAL_SCHEMA_VERSION: Final = "smt-differential-verification/v1"
-SMT_SOFTWARE_VERIFICATION_OUTCOME_VERSION: Final = "smt-software-verification-outcome/v1"
-SOFTWARE_VERIFICATION_SMT_BACKEND_VERSION: Final = "software-verification-smt-backend/v1"
+SMT_SOFTWARE_VERIFICATION_OUTCOME_VERSION: Final = (
+    "smt-software-verification-outcome/v1"
+)
+SOFTWARE_VERIFICATION_SMT_BACKEND_VERSION: Final = (
+    "software-verification-smt-backend/v1"
+)
 
 Z3_SV_BACKEND_ID: Final = "z3"
 Z3_SV_BACKEND_INTERFACE: Final = "Z3SoftwareVerificationBackend@1"
@@ -105,7 +109,12 @@ class DifferentialClassification(StrEnum):
 def _text(value: object, field_name: str, *, optional: bool = False) -> str:
     if optional and value == "":
         return ""
-    if not isinstance(value, str) or not value or value != value.strip() or "\x00" in value:
+    if (
+        not isinstance(value, str)
+        or not value
+        or value != value.strip()
+        or "\x00" in value
+    ):
         qualifier = "an empty or " if optional else "a "
         raise SmtDifferentialError(
             f"{field_name} must be {qualifier}non-empty trimmed string without NUL bytes"
@@ -140,14 +149,23 @@ class SmtRawSolverOutput:
         if not isinstance(self.stdout, str) or not isinstance(self.stderr, str):
             raise MalformedSmtSolverOutput("stdout and stderr must be strings")
         if self.returncode is not None and (
-            isinstance(self.returncode, bool) or not isinstance(self.returncode, int)
+            isinstance(self.returncode, bool)
+            or not isinstance(self.returncode, int)
         ):
-            raise MalformedSmtSolverOutput("returncode must be an integer or None")
-        object.__setattr__(self, "elapsed_ms", _non_negative_int(self.elapsed_ms, "elapsed_ms"))
+            raise MalformedSmtSolverOutput(
+                "returncode must be an integer or None"
+            )
+        object.__setattr__(
+            self, "elapsed_ms", _non_negative_int(self.elapsed_ms, "elapsed_ms")
+        )
         if not isinstance(self.solver_version, str):
             raise MalformedSmtSolverOutput("solver_version must be a string")
-        if not isinstance(self.timed_out, bool) or not isinstance(self.unavailable, bool):
-            raise MalformedSmtSolverOutput("timed_out and unavailable must be booleans")
+        if not isinstance(self.timed_out, bool) or not isinstance(
+            self.unavailable, bool
+        ):
+            raise MalformedSmtSolverOutput(
+                "timed_out and unavailable must be booleans"
+            )
 
 
 SmtSolverRunner = Callable[
@@ -193,7 +211,11 @@ def normalize_smtlib_for_solver(source: str) -> str:
             continue
         # Quote only values that would otherwise parse as multi-token / keywords
         # (notably identifiers containing ':'). Leave simple tokens like 2.6 alone.
-        needs_quote = ":" in value or " " in value or any(ch in value for ch in "()[]{}")
+        needs_quote = (
+            ":" in value
+            or " " in value
+            or any(ch in value for ch in "()[]{}")
+        )
         if not needs_quote:
             lines.append(line)
             continue
@@ -295,7 +317,9 @@ def parse_smt_solver_stdout(
         # Extra trailing content without a requested artifact is tolerated only
         # when it is blank or pure comments (already stripped).
         non_comment = [
-            line for line in tail.splitlines() if line.strip() and not line.lstrip().startswith(";")
+            line
+            for line in tail.splitlines()
+            if line.strip() and not line.lstrip().startswith(";")
         ]
         if non_comment and verdict == "unknown":
             # Some solvers print reason-unknown after the verdict.
@@ -374,18 +398,28 @@ class SoftwareVerificationSmtOutcome:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "backend_id", _text(self.backend_id, "backend_id"))
-        object.__setattr__(self, "backend_version", _text(self.backend_version, "backend_version"))
+        object.__setattr__(
+            self, "backend_version", _text(self.backend_version, "backend_version")
+        )
         object.__setattr__(
             self,
             "backend_interface",
             _text(self.backend_interface, "backend_interface"),
         )
-        object.__setattr__(self, "obligation_id", _text(self.obligation_id, "obligation_id"))
-        object.__setattr__(self, "query_mode", _enum_query_mode(self.query_mode))
-        object.__setattr__(self, "verdict", _enum_verdict(self.verdict))
+        object.__setattr__(
+            self, "obligation_id", _text(self.obligation_id, "obligation_id")
+        )
+        object.__setattr__(
+            self, "query_mode", _enum_query_mode(self.query_mode)
+        )
+        object.__setattr__(
+            self, "verdict", _enum_verdict(self.verdict)
+        )
         if not isinstance(self.result, TypedBackendResult):
             raise SmtDifferentialError("result must be a TypedBackendResult")
-        if self.compilation is not None and not isinstance(self.compilation, SmtCompilation):
+        if self.compilation is not None and not isinstance(
+            self.compilation, SmtCompilation
+        ):
             raise SmtDifferentialError("compilation must be SmtCompilation or None")
         if not isinstance(self.solver_version, str):
             raise SmtDifferentialError("solver_version must be a string")
@@ -395,8 +429,12 @@ class SoftwareVerificationSmtOutcome:
             tuple(_text(item, "unsat_core item") for item in self.unsat_core),
         )
         if not isinstance(self.model_text, str) or "\x00" in self.model_text:
-            raise SmtDifferentialError("model_text must be a string without NUL bytes")
-        if not isinstance(self.raw_stdout, str) or not isinstance(self.raw_stderr, str):
+            raise SmtDifferentialError(
+                "model_text must be a string without NUL bytes"
+            )
+        if not isinstance(self.raw_stdout, str) or not isinstance(
+            self.raw_stderr, str
+        ):
             raise SmtDifferentialError("raw_stdout/raw_stderr must be strings")
         if self.schema_version != SMT_SOFTWARE_VERIFICATION_OUTCOME_VERSION:
             raise SmtDifferentialError(
@@ -445,14 +483,20 @@ def _enum_query_mode(value: object) -> SmtQueryMode:
     try:
         return value if isinstance(value, SmtQueryMode) else SmtQueryMode(value)
     except (TypeError, ValueError) as error:
-        raise SmtDifferentialError(f"query_mode must be a SmtQueryMode, got {value!r}") from error
+        raise SmtDifferentialError(
+            f"query_mode must be a SmtQueryMode, got {value!r}"
+        ) from error
 
 
 def _enum_verdict(value: object) -> SmtSolverVerdict:
     try:
-        return value if isinstance(value, SmtSolverVerdict) else SmtSolverVerdict(value)
+        return (
+            value if isinstance(value, SmtSolverVerdict) else SmtSolverVerdict(value)
+        )
     except (TypeError, ValueError) as error:
-        raise SmtDifferentialError(f"verdict must be a SmtSolverVerdict, got {value!r}") from error
+        raise SmtDifferentialError(
+            f"verdict must be a SmtSolverVerdict, got {value!r}"
+        ) from error
 
 
 def _build_typed_result(
@@ -524,7 +568,9 @@ def _build_typed_result(
             "compilers": [item.to_dict() for item in receipt.compilers],
         }
 
-    result_id = f"result:{backend_id}:{stable_digest({'obligation': obligation_id, 'verdict': verdict.value})[:24]}"
+    result_id = (
+        f"result:{backend_id}:{stable_digest({'obligation': obligation_id, 'verdict': verdict.value})[:24]}"
+    )
     return result_cls(
         result_id=result_id,
         backend_id=backend_id,
@@ -536,7 +582,9 @@ def _build_typed_result(
         translation_ceiling=translation_ceiling,
         usage=usage,
         witness=FrozenMap(witness),
-        diagnostics=tuple(dict.fromkeys(_bounded_diagnostic(item) for item in diagnostics if item)),
+        diagnostics=tuple(
+            dict.fromkeys(_bounded_diagnostic(item) for item in diagnostics if item)
+        ),
         reason=reason,
         metadata=FrozenMap(metadata),
     )
@@ -703,12 +751,16 @@ class SoftwareVerificationSmtBackend:
             raw=raw,
         )
 
-    def _default_runner(self, smtlib: str, bounds: ExecutionBounds) -> SmtRawSolverOutput:
+    def _default_runner(
+        self, smtlib: str, bounds: ExecutionBounds
+    ) -> SmtRawSolverOutput:
         raise SmtDifferentialError(
             f"{self.backend_id} has no default runner; inject a runner or subclass"
         )
 
-    def _invoke(self, smtlib: str, bounds: ExecutionBounds) -> SmtRawSolverOutput:
+    def _invoke(
+        self, smtlib: str, bounds: ExecutionBounds
+    ) -> SmtRawSolverOutput:
         runner = self._runner or self._default_runner
         try:
             raw = runner(smtlib, bounds)
@@ -735,7 +787,9 @@ class SoftwareVerificationSmtBackend:
                 unavailable=True,
             )
         if not isinstance(raw, SmtRawSolverOutput):
-            raise MalformedSmtSolverOutput("runner must return SmtRawSolverOutput")
+            raise MalformedSmtSolverOutput(
+                "runner must return SmtRawSolverOutput"
+            )
         return raw
 
     def _outcome_from_raw(
@@ -747,7 +801,9 @@ class SoftwareVerificationSmtBackend:
     ) -> SoftwareVerificationSmtOutcome:
         obligation_id = compilation.obligation_id
         query_mode = compilation.query_mode
-        output_bytes = len(raw.stdout.encode("utf-8")) + len(raw.stderr.encode("utf-8"))
+        output_bytes = len(raw.stdout.encode("utf-8")) + len(
+            raw.stderr.encode("utf-8")
+        )
         usage = ResourceUsage(
             elapsed_ms=min(raw.elapsed_ms, bounds.timeout_ms),
             steps=0,
@@ -790,7 +846,10 @@ class SoftwareVerificationSmtBackend:
 
         if raw.timed_out:
             verdict = SmtSolverVerdict.TIMEOUT
-            reason = raw.stderr or f"{self.backend_id} exceeded {bounds.timeout_ms} ms"
+            reason = (
+                raw.stderr
+                or f"{self.backend_id} exceeded {bounds.timeout_ms} ms"
+            )
             result = _build_typed_result(
                 backend_id=self.backend_id,
                 backend_version=self.backend_version,
@@ -826,7 +885,9 @@ class SoftwareVerificationSmtBackend:
         if raw.returncode not in (0, None) and not raw.stdout.strip():
             # Non-zero with empty stdout is a hard solver error.
             verdict = SmtSolverVerdict.ERROR
-            reason = raw.stderr or (f"{self.backend_id} exited with return code {raw.returncode}")
+            reason = raw.stderr or (
+                f"{self.backend_id} exited with return code {raw.returncode}"
+            )
             result = _build_typed_result(
                 backend_id=self.backend_id,
                 backend_version=self.backend_version,
@@ -935,9 +996,13 @@ def classify_differential(
     """Classify a Z3/CVC5 pair fail-closed."""
 
     if left.obligation_id != right.obligation_id:
-        raise SmtDifferentialError("differential outcomes must share the same obligation_id")
+        raise SmtDifferentialError(
+            "differential outcomes must share the same obligation_id"
+        )
     if left.query_mode is not right.query_mode:
-        raise SmtDifferentialError("differential outcomes must share the same query_mode")
+        raise SmtDifferentialError(
+            "differential outcomes must share the same query_mode"
+        )
 
     left_v = left.verdict
     right_v = right.verdict
@@ -1004,7 +1069,8 @@ def classify_differential(
     # One conclusive, one unknown/timeout — treat as non-agreement unknown.
     return (
         DifferentialClassification.AGREE_UNKNOWN,
-        f"inconclusive pair: {left.backend_id}={left_v.value}, {right.backend_id}={right_v.value}",
+        f"inconclusive pair: {left.backend_id}={left_v.value}, "
+        f"{right.backend_id}={right_v.value}",
     )
 
 
@@ -1026,7 +1092,9 @@ class SmtDifferentialReport:
     interface: str = SMT_DIFFERENTIAL_INTERFACE
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "obligation_id", _text(self.obligation_id, "obligation_id"))
+        object.__setattr__(
+            self, "obligation_id", _text(self.obligation_id, "obligation_id")
+        )
         object.__setattr__(self, "query_mode", _enum_query_mode(self.query_mode))
         try:
             classification = (
@@ -1050,7 +1118,9 @@ class SmtDifferentialReport:
             raise SmtDifferentialError("right must be SoftwareVerificationSmtOutcome")
         if not isinstance(self.compilation, SmtCompilation):
             raise SmtDifferentialError("compilation must be SmtCompilation")
-        object.__setattr__(self, "script_digest", _text(self.script_digest, "script_digest"))
+        object.__setattr__(
+            self, "script_digest", _text(self.script_digest, "script_digest")
+        )
         if not isinstance(self.agreement, bool):
             raise SmtDifferentialError("agreement must be a boolean")
         object.__setattr__(
@@ -1120,7 +1190,9 @@ class SmtDifferentialVerifier:
         if not isinstance(right, SoftwareVerificationSmtBackend):
             raise TypeError("right must be a SoftwareVerificationSmtBackend")
         if left.backend_id == right.backend_id:
-            raise SmtDifferentialError("differential backends must have distinct backend_id values")
+            raise SmtDifferentialError(
+                "differential backends must have distinct backend_id values"
+            )
         self._left = left
         self._right = right
         self._compiler = compiler or SoftwareVerificationSMTCompiler()
@@ -1139,14 +1211,20 @@ class SmtDifferentialVerifier:
         *,
         bounds: ExecutionBounds | None = None,
     ) -> SmtDifferentialReport:
-        effective_bounds = bounds or ExecutionBounds(timeout_ms=5_000, max_steps=100_000)
+        effective_bounds = bounds or ExecutionBounds(
+            timeout_ms=5_000, max_steps=100_000
+        )
         if isinstance(obligation, SmtCompilation):
             compilation = obligation
         else:
             compilation = self._compiler.compile(obligation)
 
-        left_outcome = self._left.run_compilation(compilation, bounds=effective_bounds)
-        right_outcome = self._right.run_compilation(compilation, bounds=effective_bounds)
+        left_outcome = self._left.run_compilation(
+            compilation, bounds=effective_bounds
+        )
+        right_outcome = self._right.run_compilation(
+            compilation, bounds=effective_bounds
+        )
         return self._report(compilation, left_outcome, right_outcome)
 
     def _report(
@@ -1296,7 +1374,9 @@ def subprocess_smt_runner(
                     text=True,
                     timeout=2,
                 )
-                lines = (version_run.stdout or version_run.stderr or "").strip().splitlines()
+                lines = (
+                    version_run.stdout or version_run.stderr or ""
+                ).strip().splitlines()
                 version = lines[0] if lines else ""
             except (OSError, subprocess.TimeoutExpired):
                 version = ""

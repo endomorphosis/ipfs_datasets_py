@@ -28,12 +28,20 @@ from .semantics import (
 PROXY_SCHEMA_VERSION = "smart-contract-evm-proxy-v1"
 
 # EIP-1967 slots (bytes32(uint256(keccak256("eip1967.proxy.*")) - 1)).
-EIP1967_IMPLEMENTATION_SLOT = "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc"
-EIP1967_ADMIN_SLOT = "0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103"
-EIP1967_BEACON_SLOT = "0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50"
+EIP1967_IMPLEMENTATION_SLOT = (
+    "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc"
+)
+EIP1967_ADMIN_SLOT = (
+    "0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103"
+)
+EIP1967_BEACON_SLOT = (
+    "0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50"
+)
 
 # EIP-1822 UUPS proxiable UUID slot: keccak256("PROXIABLE")
-EIP1822_PROXIABLE_SLOT = "0xc5f16f0fcc639fa48a6947836d9850f504798523bf8c9a3a87d5876cf622bcf7"
+EIP1822_PROXIABLE_SLOT = (
+    "0xc5f16f0fcc639fa48a6947836d9850f504798523bf8c9a3a87d5876cf622bcf7"
+)
 
 # EIP-1167 minimal proxy prefix/suffix around the 20-byte implementation.
 # 363d3d373d3d3d363d73 <20 bytes> 5af43d82803e903d91602b57fd5bf3
@@ -158,7 +166,9 @@ class ProxyBinding:
     schema_version: str = PROXY_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "proxy_address", normalize_address(self.proxy_address))
+        object.__setattr__(
+            self, "proxy_address", normalize_address(self.proxy_address)
+        )
         kind = self.kind if isinstance(self.kind, ProxyKind) else ProxyKind(str(self.kind))
         object.__setattr__(self, "kind", kind)
         if self.implementation_address:
@@ -170,24 +180,34 @@ class ProxyBinding:
         else:
             object.__setattr__(self, "implementation_address", "")
         if self.admin_address:
-            object.__setattr__(self, "admin_address", normalize_address(self.admin_address))
+            object.__setattr__(
+                self, "admin_address", normalize_address(self.admin_address)
+            )
         else:
             object.__setattr__(self, "admin_address", "")
         if self.beacon_address:
-            object.__setattr__(self, "beacon_address", normalize_address(self.beacon_address))
+            object.__setattr__(
+                self, "beacon_address", normalize_address(self.beacon_address)
+            )
         else:
             object.__setattr__(self, "beacon_address", "")
-        facets = tuple(normalize_address(item) for item in self.facet_addresses if item)
+        facets = tuple(
+            normalize_address(item) for item in self.facet_addresses if item
+        )
         object.__setattr__(self, "facet_addresses", facets)
         slots = {
-            _required_text(key, "storage slot key"): _required_text(val, "storage slot value")
+            _required_text(key, "storage slot key"): _required_text(
+                val, "storage slot value"
+            )
             for key, val in dict(self.storage_slots).items()
         }
         object.__setattr__(self, "storage_slots", MappingProxyType(slots))
         if self.bytecode_digest:
             digest = _required_text(self.bytecode_digest, "bytecode_digest")
             if not digest.startswith("sha256:"):
-                raise InvalidRequestError("bytecode_digest must be a tagged sha256 digest")
+                raise InvalidRequestError(
+                    "bytecode_digest must be a tagged sha256 digest"
+                )
             object.__setattr__(self, "bytecode_digest", digest)
         else:
             object.__setattr__(self, "bytecode_digest", "")
@@ -317,10 +337,14 @@ def detect_proxy_pattern(
         diagnostics.append("SELFDESTRUCT present; redeployment risk is explicit")
     if previous_code_digest:
         if not previous_code_digest.startswith("sha256:"):
-            raise InvalidRequestError("previous_code_digest must be a tagged sha256 digest")
+            raise InvalidRequestError(
+                "previous_code_digest must be a tagged sha256 digest"
+            )
         if previous_code_digest != digest:
             redeployment = RedeploymentRisk.CODE_EPOCH_CHANGED
-            diagnostics.append("runtime bytecode digest differs from previous code epoch")
+            diagnostics.append(
+                "runtime bytecode digest differs from previous code epoch"
+            )
 
     # 1. EIP-1167 minimal proxy (exact layout).
     minimal_impl = detect_minimal_proxy(data)
@@ -333,7 +357,8 @@ def detect_proxy_pattern(
             has_delegatecall=True,
             redeployment_risk=redeployment,
             confidence="bytecode_pattern",
-            diagnostics=tuple(diagnostics) + ("EIP-1167 minimal proxy pattern matched",),
+            diagnostics=tuple(diagnostics)
+            + ("EIP-1167 minimal proxy pattern matched",),
             storage_slots=slots,
         )
 
@@ -370,7 +395,9 @@ def detect_proxy_pattern(
             uups_from_slot = _slot_value_to_address(value) or uups_from_slot
 
     # 2. Beacon (EIP-1967 beacon slot present).
-    beacon_hint = _contains_bytes(data, _EIP1967_BEACON_SLOT_BYTES) or bool(beacon_from_slot)
+    beacon_hint = _contains_bytes(data, _EIP1967_BEACON_SLOT_BYTES) or bool(
+        beacon_from_slot
+    )
     if beacon_hint:
         if not beacon_from_slot:
             diagnostics.append(

@@ -257,9 +257,7 @@ class WorldIdProcessor:
         if verification.action and verification.action != action:
             raise WorldIdVerificationError("verification action does not match IDKit evidence")
         if normalized.environment != self.config.environment:
-            raise WorldIdVerificationError(
-                "IDKit environment does not match configured environment"
-            )
+            raise WorldIdVerificationError("IDKit environment does not match configured environment")
         if verification.environment and verification.environment != normalized.environment:
             raise WorldIdVerificationError("verification environment does not match IDKit evidence")
 

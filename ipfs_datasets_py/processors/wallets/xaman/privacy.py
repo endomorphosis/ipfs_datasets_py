@@ -88,13 +88,17 @@ class PayloadPrivacyPolicy:
             or not isinstance(self.max_request_summary_keys, int)
             or self.max_request_summary_keys <= 0
         ):
-            raise InvalidRequestError("max_request_summary_keys must be a positive integer")
+            raise InvalidRequestError(
+                "max_request_summary_keys must be a positive integer"
+            )
         if (
             isinstance(self.max_string_field_bytes, bool)
             or not isinstance(self.max_string_field_bytes, int)
             or self.max_string_field_bytes <= 0
         ):
-            raise InvalidRequestError("max_string_field_bytes must be a positive integer")
+            raise InvalidRequestError(
+                "max_string_field_bytes must be a positive integer"
+            )
 
     def apply_instruction(self, text: str | None) -> dict[str, Any]:
         """Return bounded/redacted instruction fields."""

@@ -31,19 +31,21 @@ ABBY_VOICE_REGENERATION_PLAN_SCHEMA_VERSION = "abby_voice_regeneration_plan_v1"
 ABBY_VOICE_REGENERATION_POLICY_ID = "abby-voice-tts-repair-v1"
 
 _SPACE_RE = re.compile(r"\s+")
-_DASH_RE = re.compile(
-    r"[-\u058a\u05be\u1400\u1806\u2010-\u2015\u2e17\u2e1a\u2e3a-\u2e3b\u2e40\u301c\u3030\u30a0\ufe31-\ufe32\ufe58\ufe63\uff0d]"
-)
+_DASH_RE = re.compile(r"[-\u058a\u05be\u1400\u1806\u2010-\u2015\u2e17\u2e1a\u2e3a-\u2e3b\u2e40\u301c\u3030\u30a0\ufe31-\ufe32\ufe58\ufe63\uff0d]")
 _PAREN_RE = re.compile(r"[()]")
 _RAW_DIGIT_RE = re.compile(r"\d")
 _NEGATIVE_RE = re.compile(r"(?i)\bnegative\b")
-_DIGIT_WORD_PATTERN = r"(?:zero|one|two|three|four|five|six|seven|eight|nine)"
+_DIGIT_WORD_PATTERN = (
+    r"(?:zero|one|two|three|four|five|six|seven|eight|nine)"
+)
 _UNSAFE_JOINED_DASH_PATTERN = r"[-‐‑‒–—−]"
 _NUMBER_WORD_DASH_RE = re.compile(
     rf"(?i)(?<!\w){_DIGIT_WORD_PATTERN}{_UNSAFE_JOINED_DASH_PATTERN}"
     rf"{_DIGIT_WORD_PATTERN}(?!\w)"
 )
-_DIGIT_DASH_RE = re.compile(rf"\d\s*{_UNSAFE_JOINED_DASH_PATTERN}\s*\d")
+_DIGIT_DASH_RE = re.compile(
+    rf"\d\s*{_UNSAFE_JOINED_DASH_PATTERN}\s*\d"
+)
 _DIRECTIONAL_ADDRESS_DASH_RE = re.compile(
     rf"(?i)\b(?:n|s|e|w|north|south|east|west)"
     rf"{_UNSAFE_JOINED_DASH_PATTERN}(?:e|w|east|west)\b"
@@ -261,12 +263,21 @@ class AbbyVoiceRegenerationItem:
         response_id = _required_id(self.response_id, field_name="response_id")
         selected_path = _relative_audio_path(self.selected_dataset_audio_path)
         selected_text = _required_text(self.selected_text, field_name="selected_text")
-        queue_text = _required_text(self.queue_repair_text, field_name="queue_repair_text")
+        queue_text = _required_text(
+            self.queue_repair_text, field_name="queue_repair_text"
+        )
         spoken_text = normalize_regeneration_spoken_text(self.spoken_text)
         reasons = tuple(
-            sorted({_required_id(reason, field_name="risk_reason") for reason in self.risk_reasons})
+            sorted(
+                {
+                    _required_id(reason, field_name="risk_reason")
+                    for reason in self.risk_reasons
+                }
+            )
         )
-        recommendation = _required_id(self.recommendation, field_name="recommendation")
+        recommendation = _required_id(
+            self.recommendation, field_name="recommendation"
+        )
         source_digest = str(self.source_record_sha256 or "")
         if not re.fullmatch(r"[0-9a-f]{64}", source_digest):
             raise AbbyVoiceRegenerationError(
@@ -274,7 +285,9 @@ class AbbyVoiceRegenerationItem:
             )
         text_digest = sha256_text(spoken_text)
         if self.text_sha256 and self.text_sha256 != text_digest:
-            raise AbbyVoiceRegenerationError("text_sha256 does not match normalized spoken_text")
+            raise AbbyVoiceRegenerationError(
+                "text_sha256 does not match normalized spoken_text"
+            )
 
         object.__setattr__(self, "superseded_audio_id", superseded_audio_id)
         object.__setattr__(self, "response_id", response_id)
@@ -288,13 +301,19 @@ class AbbyVoiceRegenerationItem:
 
         computed = _stable_id("abby-voice-regeneration", self.identity_dict())
         if self.regeneration_id and self.regeneration_id != computed:
-            raise AbbyVoiceRegenerationError("regeneration_id does not match deterministic content")
+            raise AbbyVoiceRegenerationError(
+                "regeneration_id does not match deterministic content"
+            )
         object.__setattr__(self, "regeneration_id", computed)
 
     @classmethod
-    def from_mapping(cls, record: Mapping[str, Any]) -> "AbbyVoiceRegenerationItem":
+    def from_mapping(
+        cls, record: Mapping[str, Any]
+    ) -> "AbbyVoiceRegenerationItem":
         if not isinstance(record, Mapping):
-            raise AbbyVoiceRegenerationError("regeneration queue row must be a mapping")
+            raise AbbyVoiceRegenerationError(
+                "regeneration queue row must be a mapping"
+            )
         queue_text = _required_text(
             record.get("normalizedRepairText"),
             field_name="normalizedRepairText",
@@ -307,12 +326,17 @@ class AbbyVoiceRegenerationItem:
         return cls(
             superseded_audio_id=str(record.get("audioId") or ""),
             response_id=str(record.get("responseId") or ""),
-            selected_dataset_audio_path=str(record.get("selectedDatasetAudioPath") or ""),
+            selected_dataset_audio_path=str(
+                record.get("selectedDatasetAudioPath") or ""
+            ),
             selected_text=str(record.get("selectedText") or queue_text),
             queue_repair_text=queue_text,
             spoken_text=queue_text,
             risk_reasons=tuple(str(reason) for reason in raw_reasons),
-            recommendation=str(record.get("recommendation") or "regenerate_from_normalized_text"),
+            recommendation=str(
+                record.get("recommendation")
+                or "regenerate_from_normalized_text"
+            ),
             source_record_sha256=record_sha256(record),
         )
 
@@ -330,7 +354,9 @@ class AbbyVoiceRegenerationItem:
         parsed = cls(
             superseded_audio_id=str(payload.get("superseded_audio_id") or ""),
             response_id=str(payload.get("response_id") or ""),
-            selected_dataset_audio_path=str(payload.get("selected_dataset_audio_path") or ""),
+            selected_dataset_audio_path=str(
+                payload.get("selected_dataset_audio_path") or ""
+            ),
             selected_text=str(payload.get("selected_text") or ""),
             queue_repair_text=str(payload.get("queue_repair_text") or ""),
             spoken_text=str(payload.get("spoken_text") or ""),
@@ -382,7 +408,9 @@ class AbbyVoiceRegenerationPlan:
             sorted(self.items, key=lambda item: (item.response_id, item.superseded_audio_id))
         )
         if not items:
-            raise AbbyVoiceRegenerationError("regeneration plan requires at least one item")
+            raise AbbyVoiceRegenerationError(
+                "regeneration plan requires at least one item"
+            )
         if any(not isinstance(item, AbbyVoiceRegenerationItem) for item in items):
             raise AbbyVoiceRegenerationError(
                 "regeneration plan items must be AbbyVoiceRegenerationItem"
@@ -396,7 +424,9 @@ class AbbyVoiceRegenerationPlan:
             ("regeneration_id", [item.regeneration_id for item in items]),
         ):
             if len(values) != len(set(values)):
-                raise AbbyVoiceRegenerationError(f"regeneration plan has duplicate {field_name}")
+                raise AbbyVoiceRegenerationError(
+                    f"regeneration plan has duplicate {field_name}"
+                )
         policy_id = _required_id(self.policy_id, field_name="policy_id")
         if self.schema_version != ABBY_VOICE_REGENERATION_PLAN_SCHEMA_VERSION:
             raise AbbyVoiceRegenerationError(
@@ -407,7 +437,9 @@ class AbbyVoiceRegenerationPlan:
             [item.source_record_sha256 for item in items],
         )
         if self.source_manifest_id and self.source_manifest_id != computed_source:
-            raise AbbyVoiceRegenerationError("source_manifest_id does not match queue content")
+            raise AbbyVoiceRegenerationError(
+                "source_manifest_id does not match queue content"
+            )
         metadata = dict(self.metadata)
 
         object.__setattr__(self, "items", items)
@@ -417,7 +449,9 @@ class AbbyVoiceRegenerationPlan:
 
         computed_plan = _stable_id("abby-voice-regeneration-plan", self.identity_dict())
         if self.plan_id and self.plan_id != computed_plan:
-            raise AbbyVoiceRegenerationError("plan_id does not match deterministic content")
+            raise AbbyVoiceRegenerationError(
+                "plan_id does not match deterministic content"
+            )
         object.__setattr__(self, "plan_id", computed_plan)
 
     @classmethod
@@ -458,9 +492,14 @@ class AbbyVoiceRegenerationPlan:
         if not isinstance(metadata, Mapping):
             raise AbbyVoiceRegenerationError("regeneration plan metadata must be a mapping")
         if any(not isinstance(item, Mapping) for item in raw_items):
-            raise AbbyVoiceRegenerationError("regeneration plan item must be a mapping")
+            raise AbbyVoiceRegenerationError(
+                "regeneration plan item must be a mapping"
+            )
         parsed = cls(
-            items=tuple(AbbyVoiceRegenerationItem.from_dict(item) for item in raw_items),
+            items=tuple(
+                AbbyVoiceRegenerationItem.from_dict(item)
+                for item in raw_items
+            ),
             policy_id=str(payload.get("policy_id") or ""),
             schema_version=str(payload.get("schema_version") or ""),
             source_manifest_id=str(payload.get("source_manifest_id") or ""),
@@ -616,7 +655,9 @@ def read_regeneration_queue(
                     )
                 records.append(record)
     except OSError as exc:
-        raise AbbyVoiceRegenerationError(f"cannot read regeneration queue: {queue_path}") from exc
+        raise AbbyVoiceRegenerationError(
+            f"cannot read regeneration queue: {queue_path}"
+        ) from exc
     return AbbyVoiceRegenerationPlan.from_records(
         records,
         limit=limit,
@@ -634,7 +675,9 @@ def read_regeneration_plan(path: str | Path) -> AbbyVoiceRegenerationPlan:
     try:
         payload = json.loads(plan_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        raise AbbyVoiceRegenerationError(f"cannot read regeneration plan: {plan_path}") from exc
+        raise AbbyVoiceRegenerationError(
+            f"cannot read regeneration plan: {plan_path}"
+        ) from exc
     if not isinstance(payload, Mapping):
         raise AbbyVoiceRegenerationError("regeneration plan must be a JSON object")
     return AbbyVoiceRegenerationPlan.from_dict(payload)

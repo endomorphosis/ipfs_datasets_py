@@ -180,7 +180,9 @@ def _end_goal(**overrides: Any) -> EndGoalSpec:
 def _formal_goal(end_goal: EndGoalSpec | None = None) -> FormalGoal:
     goal = end_goal or _end_goal(
         ambiguity_status=AmbiguityStatus.RESOLVED,
-        interpretations=(_interpretation("interp:exists-ready", selected=True),),
+        interpretations=(
+            _interpretation("interp:exists-ready", selected=True),
+        ),
     )
     return FormalGoal(
         formal_goal_id="formal:lease-ready",
@@ -371,7 +373,9 @@ def test_end_goal_spec_binds_required_semantic_fields() -> None:
     assert record["property_class"] == PropertyClass.EXISTENTIAL_REACHABILITY.value
     assert QuantifierKind.EXISTS.value in record["quantifiers"]
     assert record["environment"]["network"] == "async"
-    assert record["assumptions"][0]["assumption_class"] == (AssumptionClass.MUST_PROVE.value)
+    assert record["assumptions"][0]["assumption_class"] == (
+        AssumptionClass.MUST_PROVE.value
+    )
     assert record["logic_family"] == "temporal.ltl"
     assert "provider:z3" in record["provider_ids"]
     assert record["bounds"]["max_steps"] == 32
@@ -493,7 +497,9 @@ def test_formal_goal_blocks_unresolved_ambiguity() -> None:
     with pytest.raises(TacticianContractError, match="ambiguity"):
         FormalGoal(
             formal_goal_id="formal:x",
-            end_goal=_end_goal(ambiguity_status=AmbiguityStatus.REQUIRES_SELECTION),
+            end_goal=_end_goal(
+                ambiguity_status=AmbiguityStatus.REQUIRES_SELECTION
+            ),
             selected_interpretation_id="interp:exists-ready",
         )
 
@@ -665,12 +671,16 @@ def test_plan_rejects_proof_completion_and_smuggled_metadata() -> None:
 def test_plan_identity_changes_with_candidates_and_bindings() -> None:
     base = _plan()
     changed = _plan(
-        candidates=(_candidate(candidate_id="cand:inv-a", statement="other"),),
+        candidates=(
+            _candidate(candidate_id="cand:inv-a", statement="other"),
+        ),
         step_order=("cand:inv-a",),
     )
     assert changed.content_id != base.content_id
     assert _plan(tree_id="tree:other").content_id != base.content_id
-    assert _plan(status=PlanStatus.SELECTED).content_id != base.content_id
+    assert (
+        _plan(status=PlanStatus.SELECTED).content_id != base.content_id
+    )
 
 
 def test_plan_rejects_unknown_step_order() -> None:
@@ -867,6 +877,12 @@ def test_deep_copy_dict_round_trip_for_nested_graph_and_plan() -> None:
     }
     restored = copy.deepcopy(blob)
     assert FormalGoal.from_dict(restored["formal_goal"]).content_id == formal.content_id
-    assert ProofObligationGraph.from_dict(restored["graph"]).content_id == graph.content_id
-    assert GoalDirectedProofPlan.from_dict(restored["plan"]).content_id == plan.content_id
+    assert (
+        ProofObligationGraph.from_dict(restored["graph"]).content_id
+        == graph.content_id
+    )
+    assert (
+        GoalDirectedProofPlan.from_dict(restored["plan"]).content_id
+        == plan.content_id
+    )
     assert ProofHole.from_dict(restored["hole"]).content_id == _hole().content_id

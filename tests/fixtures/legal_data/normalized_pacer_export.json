@@ -1,0 +1,25 @@
+{
+  "docket_id": "1:24-cv-1001",
+  "case_name": "Doe v. Example",
+  "court": "D. Example",
+  "case_number": "1:24-cv-1001",
+  "documents": [
+    {
+      "id": "doc_1",
+      "title": "Complaint",
+      "text": "Complaint text from a normalized PACER export.",
+      "date_filed": "2024-01-10",
+      "document_number": "1",
+      "source_url": "file:///exports/pacer/complaint.pdf",
+      "metadata": {
+        "source_path": "/exports/pacer/complaint.pdf",
+        "text_extraction": {
+          "source": "directory_pdf"
+        }
+      }
+    }
+  ],
+  "plaintiff_docket": [],
+  "defendant_docket": [],
+  "authorities": []
+}

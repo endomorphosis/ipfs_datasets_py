@@ -183,7 +183,11 @@ def _write_normalized_build(root: Path) -> str:
                 "byte_length": len(content),
                 "path": name,
                 "sha256": sha256(content).hexdigest(),
-                **({"row_count": row_counts[name]} if name in row_counts else {}),
+                **(
+                    {"row_count": row_counts[name]}
+                    if name in row_counts
+                    else {}
+                ),
             }
             for name, content in sorted(artifacts.items())
         ],
@@ -210,7 +214,9 @@ def _reseal_normalized_artifact(
     (root / name).write_bytes(content)
     manifest_path = root / "manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    descriptor = next(item for item in manifest["files"] if item["path"] == name)
+    descriptor = next(
+        item for item in manifest["files"] if item["path"] == name
+    )
     descriptor["byte_length"] = len(content)
     descriptor["sha256"] = sha256(content).hexdigest()
     if row_count is not None:
@@ -238,8 +244,12 @@ def test_load_normalized_dataset_bundle_verifies_manifest_and_rows(
     assert loaded.bundle.provenance == ()
     assert loaded.normalized_dir == str(normalized_dir.resolve())
     assert loaded.manifest_sha256 == manifest_sha256
-    assert loaded.manifest_id == (f"abby-voice-normalized-build:sha256:{manifest_sha256}")
-    assert loaded.manifest["schema_version"] == (ABBY_VOICE_NORMALIZED_BUILD_SCHEMA_VERSION)
+    assert loaded.manifest_id == (
+        f"abby-voice-normalized-build:sha256:{manifest_sha256}"
+    )
+    assert loaded.manifest["schema_version"] == (
+        ABBY_VOICE_NORMALIZED_BUILD_SCHEMA_VERSION
+    )
     assert loaded.source_manifest_count == 1
     assert loaded.input_record_count == 1
 
@@ -374,15 +384,12 @@ def test_merge_links_audio_reciprocally_and_rebuilds_graphrag() -> None:
     assert merged.admitted_audio_ids == (audio.audio_id,)
     assert merged.response_audio_links == ((response.response_id, audio.audio_id),)
     assert merged.merge_id.startswith("abby-voice-dataset-merge:sha256:")
-    assert (
-        validate_bundle(
-            responses=merged.bundle.responses,
-            templates=merged.bundle.templates,
-            audio=merged.bundle.audio,
-            provenance=merged.bundle.provenance,
-        )
-        == merged.bundle
-    )
+    assert validate_bundle(
+        responses=merged.bundle.responses,
+        templates=merged.bundle.templates,
+        audio=merged.bundle.audio,
+        provenance=merged.bundle.provenance,
+    ) == merged.bundle
     validate_publishable(merged.bundle)
 
 
@@ -507,7 +514,9 @@ def test_merge_rejects_conflicting_existing_audio_identity() -> None:
     admitted_audio = admission.linked_audio[0]
     conflicting = replace(admitted_audio, uri="ipfs://bafy-conflicting-location")
     base = AbbyVoiceDatasetBundle(
-        responses=(replace(response, audio_ids=(conflicting.audio_id,)),),
+        responses=(
+            replace(response, audio_ids=(conflicting.audio_id,)),
+        ),
         audio=(conflicting,),
         provenance=admission.provenance,
     )

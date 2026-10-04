@@ -165,7 +165,9 @@ def test_identifiers_are_chain_qualified_and_never_cross_network_coerced():
     validation = SanctionsSnapshotValidator().validate(invalid, now=NOW)
     assert validation.status is SnapshotEvidenceStatus.UNKNOWN
     assert not validation.permits_allow
-    assert "ofac.digital_identifier_invalid" in {finding.code for finding in validation.diagnostics}
+    assert "ofac.digital_identifier_invalid" in {
+        finding.code for finding in validation.diagnostics
+    }
 
     # Asset names that do not establish an unambiguous network also fail closed.
     ambiguous = _parse(_xml(_entry(1, identifiers=(("USDT", ETH_ADDRESS),))))
@@ -210,7 +212,9 @@ def test_truncation_suspicious_drop_rollback_and_delisting_time_fail_closed():
         effective_at=PUBLISHED,
         previous=previous,
     )
-    result = SanctionsSnapshotValidator().validate(truncated, previous=previous, now=NOW)
+    result = SanctionsSnapshotValidator().validate(
+        truncated, previous=previous, now=NOW
+    )
     assert result.status is SnapshotEvidenceStatus.UNKNOWN
     assert not result.permits_allow
     assert {"ofac.record_count_mismatch", "snapshot.suspicious_count_drop"} <= {
@@ -245,7 +249,9 @@ def test_delta_and_valid_delisting_bind_a_later_effective_epoch():
         _xml(_entry(2, name="Changed"), _entry(3)),
         previous=previous,
     )
-    result = SanctionsSnapshotValidator().validate(current, previous=previous, now=NOW)
+    result = SanctionsSnapshotValidator().validate(
+        current, previous=previous, now=NOW
+    )
     assert result.status is SnapshotEvidenceStatus.CURRENT
     assert result.permits_allow
     assert result.delta is not None
@@ -260,7 +266,9 @@ def test_expired_snapshot_is_stale_and_never_allow():
         published_at="2026-07-01T00:00:00Z",
         effective_at="2026-07-01T00:00:00Z",
     )
-    result = SanctionsSnapshotValidator(maximum_age=timedelta(days=1)).validate(record, now=NOW)
+    result = SanctionsSnapshotValidator(maximum_age=timedelta(days=1)).validate(
+        record, now=NOW
+    )
     assert result.status is SnapshotEvidenceStatus.STALE
     assert not result.permits_allow
     assert "snapshot.expired" in {finding.code for finding in result.diagnostics}
@@ -276,7 +284,9 @@ def test_publication_after_retrieval_is_unknown_instead_of_escaping_model_error(
     result = SanctionsSnapshotValidator().validate(record, now=NOW)
     assert result.status is SnapshotEvidenceStatus.UNKNOWN
     assert not result.permits_allow
-    assert "ofac.snapshot_model_invalid" in {finding.code for finding in result.diagnostics}
+    assert "ofac.snapshot_model_invalid" in {
+        finding.code for finding in result.diagnostics
+    }
 
 
 def test_injected_acquisition_rejects_unofficial_origin_and_enforces_bound():

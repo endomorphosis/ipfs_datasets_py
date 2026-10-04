@@ -104,9 +104,7 @@ def eth_asset() -> AssetIdentity:
     )
 
 
-def addr_node(
-    node_id: str, address: str, *, providers: tuple[str, ...] = ("provider-a",)
-) -> FlowNode:
+def addr_node(node_id: str, address: str, *, providers: tuple[str, ...] = ("provider-a",)) -> FlowNode:
     return FlowNode(
         node_id=node_id,
         kind=NodeKind.ADDRESS,
@@ -179,7 +177,9 @@ def linear_graph(
 ) -> tuple[CryptoFlowGraph, GraphSnapshot]:
     """Build origin -> ... -> listed linear transfer chain."""
 
-    nodes = [addr_node(node_id, address) for node_id, address in node_address_pairs]
+    nodes = [
+        addr_node(node_id, address) for node_id, address in node_address_pairs
+    ]
     edges = []
     for index in range(len(nodes) - 1):
         edges.append(
@@ -190,7 +190,9 @@ def linear_graph(
             )
         )
     receipt = completeness(
-        status=CompletenessStatus.COMPLETE if complete else CompletenessStatus.PARTIAL
+        status=CompletenessStatus.COMPLETE
+        if complete
+        else CompletenessStatus.PARTIAL
     )
     graph = CryptoFlowGraph(
         graph_id="graph:fixture",
@@ -313,7 +315,9 @@ def test_origin_self_listed_is_direct_hit() -> None:
     graph, snapshot = linear_graph(("node:listed", "0xlisted"))
     result = compute_bounded_exposure(
         origin_node_id="node:listed",
-        listed_targets=(ListedTarget(node_id="node:listed", listed_identifier="id:self"),),
+        listed_targets=(
+            ListedTarget(node_id="node:listed", listed_identifier="id:self"),
+        ),
         policy=exposure_policy(),
         snapshot=snapshot,
     )
@@ -363,7 +367,9 @@ def test_indirect_exposure_configured_deny_still_not_designation() -> None:
     )
     result = compute_bounded_exposure(
         origin_node_id="node:origin",
-        listed_targets=(ListedTarget(node_id="node:listed", listed_identifier="id:x"),),
+        listed_targets=(
+            ListedTarget(node_id="node:listed", listed_identifier="id:x"),
+        ),
         policy=exposure_policy(indirect_outcome=SanctionsPolicyOutcome.DENY),
         snapshot=snapshot,
     )
@@ -411,7 +417,9 @@ def test_max_paths_truncation_fail_closed() -> None:
     # Star: origin connected to many listed targets.
     origin = addr_node("node:origin", "0xorigin")
     listed_nodes = [addr_node(f"node:l{i}", f"0xl{i}") for i in range(5)]
-    edges = [transfer(f"edge:{i}", "node:origin", f"node:l{i}") for i in range(5)]
+    edges = [
+        transfer(f"edge:{i}", "node:origin", f"node:l{i}") for i in range(5)
+    ]
     receipt = completeness()
     graph = CryptoFlowGraph(
         graph_id="graph:star",
@@ -667,7 +675,9 @@ def test_path_replay_fails_on_digest_mismatch() -> None:
         snapshot=snapshot,
     )
     path = result.paths[0]
-    assert not replay_exposure_path(path, graph, graph_digest="sha256:" + ("ff" * 32))
+    assert not replay_exposure_path(
+        path, graph, graph_digest="sha256:" + ("ff" * 32)
+    )
 
 
 def test_bounded_exposure_round_trip() -> None:
@@ -740,7 +750,8 @@ def test_indirect_rule_evaluation_review_not_designation() -> None:
     assert evaluation.outcome is SanctionsPolicyOutcome.REVIEW
     assert evaluation.declares_designation is False
     assert any(
-        h.match_level is SanctionsMatchLevel.BOUNDED_INDIRECT_EXPOSURE for h in evaluation.hits
+        h.match_level is SanctionsMatchLevel.BOUNDED_INDIRECT_EXPOSURE
+        for h in evaluation.hits
     )
     assert any("does_not_declare_designation" in h.notes for h in evaluation.hits)
 
@@ -768,7 +779,9 @@ def test_ownership_rule_fires_on_threshold() -> None:
         at_time=AT_TIME,
     )
     assert evaluation.outcome is SanctionsPolicyOutcome.DENY
-    assert any(h.match_level is SanctionsMatchLevel.OWNED_ENTITY for h in evaluation.hits)
+    assert any(
+        h.match_level is SanctionsMatchLevel.OWNED_ENTITY for h in evaluation.hits
+    )
 
 
 def test_freshness_rule_stale() -> None:
@@ -894,7 +907,9 @@ def test_formalize_bounded_absence_is_completeness_qualified() -> None:
     assert formal.negative_conclusion is NegativeConclusionKind.BOUNDED_ABSENCE
     assert formal.claims_global_absence is False
     assert "not_global_absence" in formal.datalog_fragment or any(
-        "not_global_absence" in body for c in formal.clauses for body in c.body
+        "not_global_absence" in body
+        for c in formal.clauses
+        for body in c.body
     )
 
 
@@ -1005,7 +1020,9 @@ def test_rule_set_digest_changes_with_rules() -> None:
     b = ComplianceRuleSet(
         rule_set_id="ruleset:fixture",
         revision="rev:1",
-        rules=default_compliance_rules(indirect_outcome=SanctionsPolicyOutcome.DENY),
+        rules=default_compliance_rules(
+            indirect_outcome=SanctionsPolicyOutcome.DENY
+        ),
     )
     assert a.rules_digest != b.rules_digest
 

@@ -354,9 +354,7 @@ def _bounded_world_id_request_json(
     try:
         request_body = json.dumps(payload, allow_nan=False, separators=(",", ":")).encode("utf-8")
     except (TypeError, ValueError):
-        raise WorldIdVerificationError(
-            "World ID verification payload is not JSON serializable"
-        ) from None
+        raise WorldIdVerificationError("World ID verification payload is not JSON serializable") from None
     if len(request_body) > limits.max_request_bytes:
         raise WorldIdVerificationError(
             safe_exception_text(
@@ -551,13 +549,9 @@ def _maybe_decompress_body(
             )
         return body
     if encoding in {"gzip", "x-gzip"}:
-        return _decompress_gzip(
-            body, max_decompressed_bytes=max_decompressed_bytes, endpoint=endpoint
-        )
+        return _decompress_gzip(body, max_decompressed_bytes=max_decompressed_bytes, endpoint=endpoint)
     if encoding == "deflate":
-        return _decompress_deflate(
-            body, max_decompressed_bytes=max_decompressed_bytes, endpoint=endpoint
-        )
+        return _decompress_deflate(body, max_decompressed_bytes=max_decompressed_bytes, endpoint=endpoint)
     raise WorldIdVerificationError(
         safe_exception_text(
             "World ID verification response content-encoding is not allowed",

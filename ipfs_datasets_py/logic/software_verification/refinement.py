@@ -170,7 +170,8 @@ def _coerce_records(
     id_field: str,
 ) -> tuple[Any, ...]:
     records = tuple(
-        item if isinstance(item, cls) else cls.from_dict(_mapping(item, label)) for item in values
+        item if isinstance(item, cls) else cls.from_dict(_mapping(item, label))
+        for item in values
     )
     return tuple(sorted(records, key=lambda item: getattr(item, id_field)))
 
@@ -238,7 +239,9 @@ class RefinementState:
             is_initial=value.get("is_initial", False),
             is_terminal=value.get("is_terminal", False),
             predicate_statement=value.get("predicate_statement", "true"),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
             schema_version=value.get("schema_version", STATE_SCHEMA_VERSION),
         )
 
@@ -256,19 +259,24 @@ class RefinementTransition:
     schema_version: str = TRANSITION_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "transition_id", _identifier(self.transition_id, "transition_id"))
+        object.__setattr__(
+            self, "transition_id", _identifier(self.transition_id, "transition_id")
+        )
         object.__setattr__(
             self, "source_state_id", _identifier(self.source_state_id, "source_state_id")
         )
         object.__setattr__(
             self, "target_state_id", _identifier(self.target_state_id, "target_state_id")
         )
-        object.__setattr__(self, "action_label", _text(self.action_label, "action_label"))
+        object.__setattr__(
+            self, "action_label", _text(self.action_label, "action_label")
+        )
         object.__setattr__(self, "is_stutter", _bool(self.is_stutter, "is_stutter"))
         object.__setattr__(self, "attributes", _frozen(self.attributes, "attributes"))
         if self.schema_version != TRANSITION_SCHEMA_VERSION:
             raise RefinementValidationError(
-                f"unsupported refinement-transition schema_version {self.schema_version!r}"
+                f"unsupported refinement-transition schema_version "
+                f"{self.schema_version!r}"
             )
 
     def to_dict(self) -> dict[str, Any]:
@@ -306,7 +314,9 @@ class RefinementTransition:
             target_state_id=value.get("target_state_id", ""),
             action_label=value.get("action_label", ""),
             is_stutter=value.get("is_stutter", False),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
             schema_version=value.get("schema_version", TRANSITION_SCHEMA_VERSION),
         )
 
@@ -340,7 +350,9 @@ class RefinementSystem:
         if len(state_ids) != len(set(state_ids)):
             raise RefinementValidationError("refinement state identifiers must be unique")
         if not any(item.is_initial for item in states):
-            raise RefinementValidationError("refinement system requires at least one initial state")
+            raise RefinementValidationError(
+                "refinement system requires at least one initial state"
+            )
         known_states = set(state_ids)
         transitions = tuple(
             item
@@ -350,7 +362,9 @@ class RefinementSystem:
         )
         transition_ids = [item.transition_id for item in transitions]
         if len(transition_ids) != len(set(transition_ids)):
-            raise RefinementValidationError("refinement transition identifiers must be unique")
+            raise RefinementValidationError(
+                "refinement transition identifiers must be unique"
+            )
         for transition in transitions:
             _known(
                 (transition.source_state_id, transition.target_state_id),
@@ -364,7 +378,9 @@ class RefinementSystem:
             concurrency_document_id = _identifier(
                 concurrency_document_id, "concurrency_document_id"
             )
-        object.__setattr__(self, "states", tuple(sorted(states, key=lambda item: item.state_id)))
+        object.__setattr__(
+            self, "states", tuple(sorted(states, key=lambda item: item.state_id))
+        )
         object.__setattr__(
             self,
             "transitions",
@@ -390,7 +406,9 @@ class RefinementSystem:
         if state_id not in set(self.state_ids):
             raise RefinementValidationError(f"unknown state {state_id}")
         return tuple(
-            transition for transition in self.transitions if transition.source_state_id == state_id
+            transition
+            for transition in self.transitions
+            if transition.source_state_id == state_id
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -437,7 +455,9 @@ class RefinementSystem:
                 for item in value.get("transitions", ())
             ),
             concurrency_document_id=value.get("concurrency_document_id", ""),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
             schema_version=value.get("schema_version", SYSTEM_SCHEMA_VERSION),
         )
 
@@ -504,7 +524,9 @@ class SimulationCouple:
             abstract_state_id=value.get("abstract_state_id", ""),
             concrete_state_id=value.get("concrete_state_id", ""),
             statement=value.get("statement", "related"),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
             schema_version=value.get("schema_version", COUPLE_SCHEMA_VERSION),
         )
 
@@ -531,7 +553,9 @@ class SimulationRelation:
     schema_version: str = SIMULATION_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "relation_id", _identifier(self.relation_id, "relation_id"))
+        object.__setattr__(
+            self, "relation_id", _identifier(self.relation_id, "relation_id")
+        )
         object.__setattr__(
             self, "direction", _enum(self.direction, SimulationDirection, "direction")
         )
@@ -546,7 +570,9 @@ class SimulationRelation:
             _identifier(self.concrete_system_id, "concrete_system_id"),
         )
         if self.abstract_system_id == self.concrete_system_id:
-            raise RefinementValidationError("simulation abstract and concrete systems must differ")
+            raise RefinementValidationError(
+                "simulation abstract and concrete systems must differ"
+            )
         couples = tuple(
             item
             if isinstance(item, SimulationCouple)
@@ -560,9 +586,13 @@ class SimulationRelation:
         couple_ids = [item.couple_id for item in couples]
         if len(couple_ids) != len(set(couple_ids)):
             raise RefinementValidationError("simulation couple identifiers must be unique")
-        object.__setattr__(self, "couples", tuple(sorted(couples, key=lambda item: item.couple_id)))
+        object.__setattr__(
+            self, "couples", tuple(sorted(couples, key=lambda item: item.couple_id))
+        )
         object.__setattr__(self, "statement", _text(self.statement, "statement"))
-        claims = _bool(self.claims_unbounded_refinement, "claims_unbounded_refinement")
+        claims = _bool(
+            self.claims_unbounded_refinement, "claims_unbounded_refinement"
+        )
         max_matching_steps = self.max_matching_steps
         if max_matching_steps is not None:
             max_matching_steps = _non_bool_int(max_matching_steps, "max_matching_steps")
@@ -583,7 +613,9 @@ class SimulationRelation:
             )
 
     def related_pairs(self) -> frozenset[tuple[str, str]]:
-        return frozenset((item.abstract_state_id, item.concrete_state_id) for item in self.couples)
+        return frozenset(
+            (item.abstract_state_id, item.concrete_state_id) for item in self.couples
+        )
 
     def validate_against(
         self,
@@ -742,20 +774,18 @@ class SimulationRelation:
             ):
                 if transition.action_label != action_label:
                     continue
-            if transition.action_label == action_label or (allow_stutter and transition.is_stutter):
+            if transition.action_label == action_label or (
+                allow_stutter and transition.is_stutter
+            ):
                 if (abstract_target, transition.target_state_id) in related:
                     if transition.action_label == action_label or transition.is_stutter:
                         if transition.action_label == action_label:
                             return True
         for transition in concrete.successors(concrete_state):
-            if (
-                transition.action_label == action_label
-                and (
-                    abstract_target,
-                    transition.target_state_id,
-                )
-                in related
-            ):
+            if transition.action_label == action_label and (
+                abstract_target,
+                transition.target_state_id,
+            ) in related:
                 return True
         if allow_stutter:
             # Finite concrete stutter chain then matching action.
@@ -771,14 +801,10 @@ class SimulationRelation:
                 for transition in concrete.successors(current):
                     if transition.is_stutter and transition.target_state_id not in visited:
                         frontier.append(transition.target_state_id)
-                    if (
-                        transition.action_label == action_label
-                        and (
-                            abstract_target,
-                            transition.target_state_id,
-                        )
-                        in related
-                    ):
+                    if transition.action_label == action_label and (
+                        abstract_target,
+                        transition.target_state_id,
+                    ) in related:
                         return True
                 depth += 1
         return False
@@ -794,14 +820,10 @@ class SimulationRelation:
         allow_stutter: bool,
     ) -> bool:
         for transition in abstract.successors(abstract_state):
-            if (
-                transition.action_label == action_label
-                and (
-                    transition.target_state_id,
-                    concrete_target,
-                )
-                in related
-            ):
+            if transition.action_label == action_label and (
+                transition.target_state_id,
+                concrete_target,
+            ) in related:
                 return True
         if allow_stutter:
             visited: set[str] = set()
@@ -816,14 +838,10 @@ class SimulationRelation:
                 for transition in abstract.successors(current):
                     if transition.is_stutter and transition.target_state_id not in visited:
                         frontier.append(transition.target_state_id)
-                    if (
-                        transition.action_label == action_label
-                        and (
-                            transition.target_state_id,
-                            concrete_target,
-                        )
-                        in related
-                    ):
+                    if transition.action_label == action_label and (
+                        transition.target_state_id,
+                        concrete_target,
+                    ) in related:
                         return True
                 depth += 1
         return False
@@ -873,9 +891,13 @@ class SimulationRelation:
                 for item in value.get("couples", ())
             ),
             statement=value.get("statement", "simulation"),
-            claims_unbounded_refinement=value.get("claims_unbounded_refinement", False),
+            claims_unbounded_refinement=value.get(
+                "claims_unbounded_refinement", False
+            ),
             max_matching_steps=value.get("max_matching_steps"),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
             schema_version=value.get("schema_version", SIMULATION_SCHEMA_VERSION),
         )
 
@@ -917,7 +939,9 @@ class RefinementBoundedness:
             max_states = _non_bool_int(max_states, "max_states")
             if max_states < 1:
                 raise RefinementValidationError("max_states must be positive when set")
-        claims = _bool(self.claims_unbounded_refinement, "claims_unbounded_refinement")
+        claims = _bool(
+            self.claims_unbounded_refinement, "claims_unbounded_refinement"
+        )
         if kind is BoundednessKind.BOUNDED:
             if max_steps is None and max_states is None:
                 raise RefinementValidationError(
@@ -983,8 +1007,12 @@ class RefinementBoundedness:
             statement=value.get("statement", ""),
             max_steps=value.get("max_steps"),
             max_states=value.get("max_states"),
-            claims_unbounded_refinement=value.get("claims_unbounded_refinement", False),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
+            claims_unbounded_refinement=value.get(
+                "claims_unbounded_refinement", False
+            ),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
             schema_version=value.get("schema_version", BOUNDEDNESS_SCHEMA_VERSION),
         )
 
@@ -1005,7 +1033,9 @@ class RefinementObligation:
     schema_version: str = OBLIGATION_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "obligation_id", _identifier(self.obligation_id, "obligation_id"))
+        object.__setattr__(
+            self, "obligation_id", _identifier(self.obligation_id, "obligation_id")
+        )
         object.__setattr__(self, "kind", _enum(self.kind, RefinementKind, "kind"))
         object.__setattr__(self, "statement", _text(self.statement, "statement"))
         object.__setattr__(
@@ -1022,9 +1052,13 @@ class RefinementObligation:
             self.simulation_relation_id, "simulation_relation_id"
         )
         if simulation_relation_id:
-            simulation_relation_id = _identifier(simulation_relation_id, "simulation_relation_id")
+            simulation_relation_id = _identifier(
+                simulation_relation_id, "simulation_relation_id"
+            )
         if self.kind is RefinementKind.SIMULATION and not simulation_relation_id:
-            raise RefinementValidationError("simulation obligations require simulation_relation_id")
+            raise RefinementValidationError(
+                "simulation obligations require simulation_relation_id"
+            )
         if self.kind is RefinementKind.BISEIMULATION and not simulation_relation_id:
             raise RefinementValidationError(
                 "bisimulation obligations require simulation_relation_id"
@@ -1032,7 +1066,9 @@ class RefinementObligation:
         boundedness_id = _optional_text(self.boundedness_id, "boundedness_id")
         if boundedness_id:
             boundedness_id = _identifier(boundedness_id, "boundedness_id")
-        claims = _bool(self.claims_unbounded_refinement, "claims_unbounded_refinement")
+        claims = _bool(
+            self.claims_unbounded_refinement, "claims_unbounded_refinement"
+        )
         object.__setattr__(self, "simulation_relation_id", simulation_relation_id)
         object.__setattr__(self, "boundedness_id", boundedness_id)
         object.__setattr__(self, "claims_unbounded_refinement", claims)
@@ -1085,8 +1121,12 @@ class RefinementObligation:
             concrete_system_id=value.get("concrete_system_id", ""),
             simulation_relation_id=value.get("simulation_relation_id", ""),
             boundedness_id=value.get("boundedness_id", ""),
-            claims_unbounded_refinement=value.get("claims_unbounded_refinement", False),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
+            claims_unbounded_refinement=value.get(
+                "claims_unbounded_refinement", False
+            ),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
             schema_version=value.get("schema_version", OBLIGATION_SCHEMA_VERSION),
         )
 
@@ -1139,7 +1179,9 @@ class RefinementIR:
         object.__setattr__(
             self,
             "obligations",
-            _coerce_records(self.obligations, RefinementObligation, "obligation", "obligation_id"),
+            _coerce_records(
+                self.obligations, RefinementObligation, "obligation", "obligation_id"
+            ),
         )
         object.__setattr__(
             self,
@@ -1153,7 +1195,9 @@ class RefinementIR:
         )
         object.__setattr__(self, "metadata", _frozen(self.metadata, "metadata"))
         if self.schema_version != REFINEMENT_IR_SCHEMA_VERSION:
-            raise RefinementValidationError(f"unsupported schema_version {self.schema_version!r}")
+            raise RefinementValidationError(
+                f"unsupported schema_version {self.schema_version!r}"
+            )
         self.validate()
         identity = self._compute_identity()
         if self.document_id and self.document_id != identity.cid:
@@ -1195,7 +1239,9 @@ class RefinementIR:
             return set(ids)
 
         if not self.systems:
-            raise RefinementValidationError("RefinementIR requires at least one refinement system")
+            raise RefinementValidationError(
+                "RefinementIR requires at least one refinement system"
+            )
 
         system_ids = unique(self.systems, "system_id", "system")
         simulation_ids = unique(self.simulations, "relation_id", "simulation")
@@ -1205,23 +1251,32 @@ class RefinementIR:
 
         systems_by_id = {item.system_id: item for item in self.systems}
         if not self.abstract_systems():
-            raise RefinementValidationError("RefinementIR requires at least one abstract system")
+            raise RefinementValidationError(
+                "RefinementIR requires at least one abstract system"
+            )
         if not self.concrete_systems():
-            raise RefinementValidationError("RefinementIR requires at least one concrete system")
+            raise RefinementValidationError(
+                "RefinementIR requires at least one concrete system"
+            )
 
         for simulation in self.simulations:
             if simulation.abstract_system_id not in system_ids:
                 raise RefinementValidationError(
-                    f"simulation {simulation.relation_id} references unknown abstract system"
+                    f"simulation {simulation.relation_id} references unknown abstract "
+                    f"system"
                 )
             if simulation.concrete_system_id not in system_ids:
                 raise RefinementValidationError(
-                    f"simulation {simulation.relation_id} references unknown concrete system"
+                    f"simulation {simulation.relation_id} references unknown concrete "
+                    f"system"
                 )
             abstract = systems_by_id[simulation.abstract_system_id]
             concrete = systems_by_id[simulation.concrete_system_id]
             simulation.validate_against(abstract, concrete)
-            if simulation.max_matching_steps is not None and simulation.claims_unbounded_refinement:
+            if (
+                simulation.max_matching_steps is not None
+                and simulation.claims_unbounded_refinement
+            ):
                 raise RefinementValidationError(
                     "bounded schedules never claim unbounded refinement"
                 )
@@ -1259,11 +1314,17 @@ class RefinementIR:
                     for item in self.boundedness
                     if item.boundedness_id == obligation.boundedness_id
                 )
-                if bound.kind is BoundednessKind.BOUNDED and obligation.claims_unbounded_refinement:
+                if (
+                    bound.kind is BoundednessKind.BOUNDED
+                    and obligation.claims_unbounded_refinement
+                ):
                     raise RefinementValidationError(
                         "bounded schedules never claim unbounded refinement"
                     )
-                if bound.kind is BoundednessKind.BOUNDED and bound.claims_unbounded_refinement:
+                if (
+                    bound.kind is BoundednessKind.BOUNDED
+                    and bound.claims_unbounded_refinement
+                ):
                     raise RefinementValidationError(
                         "bounded schedules never claim unbounded refinement"
                     )
@@ -1341,7 +1402,9 @@ class RefinementIR:
                 RefinementBoundedness.from_dict(_mapping(item, "boundedness"))
                 for item in value.get("boundedness", ())
             ),
-            metadata=_frozen(_mapping(value.get("metadata", {}), "metadata"), "metadata"),
+            metadata=_frozen(
+                _mapping(value.get("metadata", {}), "metadata"), "metadata"
+            ),
             document_id=value.get("document_id", ""),
             schema_version=value.get("schema_version", REFINEMENT_IR_SCHEMA_VERSION),
         )

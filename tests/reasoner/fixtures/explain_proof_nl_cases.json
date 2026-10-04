@@ -1,0 +1,25 @@
+[
+  {
+    "id": "non_compliance_nl_renderer",
+    "sentence": "Company A shall file report within 30 days.",
+    "jurisdiction": "us/federal",
+    "query": {
+      "events": [],
+      "facts": {
+        "true": true
+      }
+    },
+    "time_context": {
+      "at_time": "2026-03-20T10:00:00Z",
+      "start": "2026-03-01T00:00:00Z",
+      "end": "2026-03-20T10:00:00Z"
+    },
+    "expected_contains": [
+      "concludes compliance=non_compliant (proved).",
+      "Step 1: DCEC_ACTIVATION infers",
+      "Norm context: Under us/federal, Company A shall file report",
+      "IR refs: norm:",
+      "Evidence from data/federal_laws/us_constitution.jsonld:proof_renderer_fixture#1 [chars:200-230] supports"
+    ]
+  }
+]

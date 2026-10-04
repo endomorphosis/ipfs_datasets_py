@@ -1,0 +1,108 @@
+{
+  "timestamp": "2026-02-24T22:23:32.139929",
+  "total_benchmarks": 11,
+  "passed": 5,
+  "failed": 6,
+  "skipped": 0,
+  "total_time_s": 24.419559001922607,
+  "benchmarks": [
+    {
+      "name": "bench_ontology_extraction_baseline.py",
+      "category": "extraction",
+      "status": "passed",
+      "execution_time_s": 4.024763584136963,
+      "metrics": {},
+      "error": null
+    },
+    {
+      "name": "bench_ontology_generator_extract_entities_10k.py",
+      "category": "extraction",
+      "status": "passed",
+      "execution_time_s": 9.64722490310669,
+      "metrics": {
+        "\"avg_relationships\"": 58.0
+      },
+      "error": null
+    },
+    {
+      "name": "bench_extraction_strategy_performance.py",
+      "category": "extraction",
+      "status": "failed",
+      "execution_time_s": 0.09727716445922852,
+      "metrics": {},
+      "error": "Traceback (most recent call last):\n  File \"/home/barberb/complaint-generator/ipfs_datasets_py/benchmarks/bench_extraction_strategy_performance.py\", line 9, in <module>\n    from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (\nModuleNotFoundError: No module named 'ipfs_datasets_py.optimizers'\n"
+    },
+    {
+      "name": "bench_infer_relationships_scaling.py",
+      "category": "relationships",
+      "status": "failed",
+      "execution_time_s": 0.13666677474975586,
+      "metrics": {},
+      "error": "Traceback (most recent call last):\n  File \"/home/barberb/complaint-generator/ipfs_datasets_py/benchmarks/bench_infer_relationships_scaling.py\", line 9, in <module>\n    from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (\nModuleNotFoundError: No module named 'ipfs_datasets_py.optimizers'\n"
+    },
+    {
+      "name": "bench_relationship_type_confidence_scoring.py",
+      "category": "relationships",
+      "status": "failed",
+      "execution_time_s": 0.09528827667236328,
+      "metrics": {},
+      "error": "Traceback (most recent call last):\n  File \"/home/barberb/complaint-generator/ipfs_datasets_py/benchmarks/bench_relationship_type_confidence_scoring.py\", line 9, in <module>\n    from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (\nModuleNotFoundError: No module named 'ipfs_datasets_py.optimizers'\n"
+    },
+    {
+      "name": "bench_logic_validator_validate_ontology.py",
+      "category": "validation",
+      "status": "passed",
+      "execution_time_s": 5.324413776397705,
+      "metrics": {
+        "\"max_ms\"": 1.115
+      },
+      "error": null
+    },
+    {
+      "name": "bench_ontology_generator_generate.py",
+      "category": "generator",
+      "status": "failed",
+      "execution_time_s": 0.08118343353271484,
+      "metrics": {},
+      "error": "Traceback (most recent call last):\n  File \"/home/barberb/complaint-generator/ipfs_datasets_py/benchmarks/bench_ontology_generator_generate.py\", line 14, in <module>\n    from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (\nModuleNotFoundError: No module named 'ipfs_datasets_py.optimizers'\n"
+    },
+    {
+      "name": "bench_ontology_generator_rule_based.py",
+      "category": "generator",
+      "status": "failed",
+      "execution_time_s": 0.08515262603759766,
+      "metrics": {},
+      "error": "Traceback (most recent call last):\n  File \"/home/barberb/complaint-generator/ipfs_datasets_py/benchmarks/bench_ontology_generator_rule_based.py\", line 14, in <module>\n    from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (\nModuleNotFoundError: No module named 'ipfs_datasets_py.optimizers'\n"
+    },
+    {
+      "name": "bench_query_validation_cache_key.py",
+      "category": "query",
+      "status": "passed",
+      "execution_time_s": 0.5210258960723877,
+      "metrics": {
+        "\"max_ms\"": 0.5323
+      },
+      "error": null
+    },
+    {
+      "name": "bench_query_optimizer_under_load.py",
+      "category": "query",
+      "status": "passed",
+      "execution_time_s": 4.307178258895874,
+      "metrics": {
+        "\"throughput_qps\"": 384539.76
+      },
+      "error": null
+    },
+    {
+      "name": "bench_end_to_end_pipeline_performance.py",
+      "category": "end_to_end",
+      "status": "failed",
+      "execution_time_s": 0.09851193428039551,
+      "metrics": {},
+      "error": "Traceback (most recent call last):\n  File \"/home/barberb/complaint-generator/ipfs_datasets_py/benchmarks/bench_end_to_end_pipeline_performance.py\", line 9, in <module>\n    from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline\nModuleNotFoundError: No module named 'ipfs_datasets_py.optimizers'\n"
+    }
+  ],
+  "regressions": [],
+  "improvements": []
+}

@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .dashboard {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #333;
+        }
+
+        .metric-card {
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .key-metric {
+            background-color: #e9f5ff;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .key-metric h3 {
+            margin-top: 0;
+            font-size: 16px;
+        }
+
+        .key-metric p {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+
+        .chart-container {
+            margin-bottom: 20px;
+        }
+
+        .chart-container img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .chart-description {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        table th,
+        table td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        table th {
+            background-color: #f2f2f2;
+        }
+
+        .footer {
+            text-align: center;
+            color: #777;
+            margin-top: 20px;
+            font-size: 12px;
+        }
+
+        .alert-section {
+            margin-top: 30px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .alert-card {
+            border-left: 5px solid #ff9800;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #fff8e1;
+            border-radius: 3px;
+        }
+
+        .alert-card.critical {
+            border-left-color: #f44336;
+            background-color: #ffebee;
+        }
+
+        .alert-card.high {
+            border-left-color: #ff5722;
+            background-color: #fbe9e7;
+        }
+
+        .alert-card.medium {
+            border-left-color: #ff9800;
+            background-color: #fff8e1;
+        }
+
+        .alert-card.low {
+            border-left-color: #4caf50;
+            background-color: #e8f5e9;
+        }
+
+        .alert-header {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .alert-body {
+            margin-bottom: 5px;
+        }
+
+        .alert-timestamp {
+            color: #777;
+            font-size: 12px;
+        }
+
+        .optimization-card {
+            border-left: 5px solid #2196f3;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #e3f2fd;
+            border-radius: 3px;
+        }
+
+        .optimization-header {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .optimization-details {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        .optimization-examples {
+            font-family: monospace;
+            background-color: #f5f5f5;
+            padding: 8px;
+            border-radius: 3px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard">
+        <h1>{{ title }}</h1>
+        <p>Generated at {{ current_time }}</p>
+
+        {% if anomalies %}
+        <div class="alert-section">
+            <h2>Query Anomalies</h2>
+            {% for anomaly in anomalies %}
+            <div class="alert-card {{ anomaly.severity }}">
+                <div class="alert-header">{{ anomaly.type }}</div>
+                <div class="alert-body">
+                    {% if anomaly.type == 'performance_anomaly' %}
+                    <p>Query took {{ anomaly.value|round(2) }}s, which is {{ anomaly.ratio|round(1) }}x the average time
+                    </p>
+                    {% elif anomaly.type == 'empty_results_anomaly' %}
+                    <p>Query returned zero results: "{{ anomaly.query_text }}"</p>
+                    {% elif anomaly.type == 'relevance_anomaly' %}
+                    <p>Average result score was {{ anomaly.value|round(2) }}, which is below threshold</p>
+                    {% else %}
+                    <p>{{ anomaly.type }}</p>
+                    {% endif %}
+                </div>
+                <div class="alert-timestamp">{{ anomaly.timestamp }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <h2>Performance Summary</h2>
+        <div class="metric-grid">
+            <div class="key-metric">
+                <h3>Total Queries</h3>
+                <p>{{ performance.total_queries }}</p>
+            </div>
+            <div class="key-metric">
+                <h3>Avg. Duration</h3>
+                <p>{{ performance.avg_duration|round(2) }}s</p>
+            </div>
+            <div class="key-metric">
+                <h3>Success Rate</h3>
+                <p>{{ (performance.success_rate * 100)|round(1) }}%</p>
+            </div>
+            <div class="key-metric">
+                <h3>Error Rate</h3>
+                <p>{{ (performance.error_rate * 100)|round(1) }}%</p>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <h3>Query Performance Over Time</h3>
+            {% if chart_data.performance %}
+            <img src="data:image/png;base64,{{ chart_data.performance }}" alt="Query Performance">
+            {% else %}
+            <p>No performance data available</p>
+            {% endif %}
+        </div>
+
+        <div class="chart-container">
+            <h3>Query Duration Distribution</h3>
+            {% if chart_data.durations %}
+            <img src="data:image/png;base64,{{ chart_data.durations }}" alt="Query Durations">
+            {% else %}
+            <p>No duration data available</p>
+            {% endif %}
+        </div>
+
+        {% if chart_data.timeline %}
+        <div class="chart-container">
+            <h3>Query and Audit Event Timeline</h3>
+            <img src="data:image/png;base64,{{ chart_data.timeline }}" alt="Query and Audit Timeline">
+        </div>
+        {% endif %}
+
+        {% if chart_data.security_correlation %}
+        <div class="chart-container">
+            <h3>Query Performance & Security Event Correlation</h3>
+            <img src="data:image/png;base64,{{ chart_data.security_correlation }}" alt="Security Correlation">
+            <p class="chart-description">This visualization shows the correlation between query performance and security
+                events, helping identify if security incidents impact query performance or if performance anomalies
+                correlate with security events.</p>
+        </div>
+        {% endif %}
+
+        {% if include_patterns and patterns %}
+        <h2>Query Patterns</h2>
+
+        {% if chart_data.terms %}
+        <div class="chart-container">
+            <h3>Most Common Query Terms</h3>
+            <img src="data:image/png;base64,{{ chart_data.terms }}" alt="Term Frequency">
+        </div>
+        {% endif %}
+
+        <div class="metric-card">
+            <h3>Top Query Terms</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Term</th>
+                        <th>Frequency</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for term, count in patterns.common_terms.items() %}
+                    <tr>
+                        <td>{{ term }}</td>
+                        <td>{{ count }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        {% if include_optimization and optimization and optimization.opportunities %}
+        <h2>Optimization Opportunities</h2>
+
+        {% for opportunity in optimization.opportunities %}
+        <div class="optimization-card">
+            <div class="optimization-header">{{ opportunity.type }}</div>
+            <div class="optimization-details">{{ opportunity.description }}</div>
+
+            {% if opportunity.queries %}
+            <h4>Example Queries:</h4>
+            {% for query in opportunity.queries %}
+            <div class="optimization-examples">
+                <div>{{ query.query_text }}</div>
+                <small>{{ query.timestamp }} - Duration: {{ query.duration|round(2) if query.duration else 'N/A'
+                    }}s</small>
+            </div>
+            {% endfor %}
+            {% endif %}
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <div class="footer">
+            <p>Generated by RAGQueryVisualizer</p>
+        </div>
+    </div>
+</body>
+
+</html>

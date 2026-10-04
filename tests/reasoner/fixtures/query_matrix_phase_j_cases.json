@@ -1,0 +1,112 @@
+[
+  {
+    "id": "q1_compliant_wages_within_window",
+    "api": "check_compliance",
+    "query": {
+      "frame_key": "pay_wages",
+      "events_case": "wages_paid_on_time",
+      "facts_case": "default"
+    },
+    "time_context": {
+      "start": "2026-05-01T00:00:00Z",
+      "end": "2026-05-15T00:00:00Z",
+      "at_time": "2026-05-15T00:00:00Z"
+    },
+    "expected_status": "compliant"
+  },
+  {
+    "id": "q2_wages_deadline_violation",
+    "api": "check_compliance",
+    "query": {
+      "frame_key": "pay_wages",
+      "events_case": "none",
+      "facts_case": "default"
+    },
+    "time_context": {
+      "start": "2026-05-01T00:00:00Z",
+      "end": "2026-05-15T00:00:00Z",
+      "at_time": "2026-05-15T00:00:00Z"
+    },
+    "expected_status": "non_compliant"
+  },
+  {
+    "id": "q3_prohibited_disclosure_violation",
+    "api": "check_compliance",
+    "query": {
+      "frame_key": "disclose_record",
+      "events_case": "record_disclosed",
+      "facts_case": "default"
+    },
+    "time_context": {
+      "start": "2026-06-01T00:00:00Z",
+      "end": "2026-06-01T23:59:59Z",
+      "at_time": "2026-06-01T23:59:59Z"
+    },
+    "expected_status": "non_compliant"
+  },
+  {
+    "id": "q4_exception_applied_disclosure",
+    "api": "check_compliance",
+    "query": {
+      "frame_key": "disclose_record",
+      "events_case": "record_disclosed",
+      "facts_case": "court_order"
+    },
+    "time_context": {
+      "start": "2026-06-01T00:00:00Z",
+      "end": "2026-06-01T23:59:59Z",
+      "at_time": "2026-06-01T23:59:59Z"
+    },
+    "expected_status": "compliant"
+  },
+  {
+    "id": "q5_late_breach_notification_violation",
+    "api": "find_violations",
+    "state": {
+      "events_case": "none",
+      "facts_case": "default"
+    },
+    "time_range": [
+      "2026-07-01T00:00:00Z",
+      "2026-07-04T00:00:00Z"
+    ],
+    "expected_violation_type": "deadline_missed"
+  },
+  {
+    "id": "q6_no_violation_when_filed_before_deadline",
+    "api": "find_violations",
+    "state": {
+      "events_case": "all_required_on_time",
+      "facts_case": "default"
+    },
+    "time_range": [
+      "2026-07-01T00:00:00Z",
+      "2026-07-04T00:00:00Z"
+    ],
+    "expected_absent_violation_type": "deadline_missed"
+  },
+  {
+    "id": "q7_modal_conflict_detection",
+    "api": "check_compliance",
+    "query": {
+      "frame_key": "pay_wages",
+      "events_case": "wages_paid_on_time",
+      "facts_case": "conflict_mode"
+    },
+    "time_context": {
+      "start": "2026-05-01T00:00:00Z",
+      "end": "2026-05-15T00:00:00Z",
+      "at_time": "2026-05-15T00:00:00Z"
+    },
+    "expected_conflict": true
+  },
+  {
+    "id": "q8_proof_explanation_reconstruction",
+    "api": "explain_proof",
+    "from_query_id": "q2_wages_deadline_violation",
+    "format": "nl",
+    "expect_reconstructed_nl": true,
+    "expect_ir_refs": true,
+    "expect_provenance": true
+  }
+]

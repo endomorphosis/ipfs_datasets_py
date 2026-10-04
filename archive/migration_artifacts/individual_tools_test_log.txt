@@ -1,0 +1,72 @@
+2025-05-27 01:59:58,904 - ipfs_datasets - INFO - Monitoring system initialized
+Traceback (most recent call last):
+  File "/home/barberb/ipfs_datasets_py/test_individual_tools.py", line 48, in test_codebase_search
+    regex_result = codebase_search(
+                   ^^^^^^^^^^^^^^^^
+TypeError: codebase_search() got an unexpected keyword argument 'use_regex'
+Traceback (most recent call last):
+  File "/home/barberb/ipfs_datasets_py/test_individual_tools.py", line 83, in test_documentation_generator
+    result = documentation_generator(
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/development_tools/base_tool.py", line 249, in mcp_function
+    tool = tool_class()
+           ^^^^^^^^^^^^
+TypeError: documentation_generator() missing 1 required positional argument: 'input_path'
+Traceback (most recent call last):
+  File "/home/barberb/ipfs_datasets_py/test_individual_tools.py", line 122, in test_lint_python_codebase
+    result = lint_python_codebase(
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/development_tools/base_tool.py", line 249, in mcp_function
+    tool = tool_class()
+           ^^^^^^^^^^^^
+  File "/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/development_tools/linting_tools.py", line 541, in lint_python_codebase
+    tool = LintingTools()
+           ^^^^^^^^^^^^^^
+TypeError: Can't instantiate abstract class LintingTools without an implementation for abstract method '_execute_core'
+Traceback (most recent call last):
+  File "/home/barberb/ipfs_datasets_py/test_individual_tools.py", line 169, in test_test_generator
+    result = test_generator(
+             ^^^^^^^^^^^^^^^
+TypeError: test_generator() got an unexpected keyword argument 'file_path'
+Traceback (most recent call last):
+  File "/home/barberb/ipfs_datasets_py/test_individual_tools.py", line 212, in test_run_comprehensive_tests
+    result = run_comprehensive_tests(
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/development_tools/base_tool.py", line 249, in mcp_function
+    tool = tool_class()
+           ^^^^^^^^^^^^
+  File "/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/development_tools/test_runner.py", line 821, in run_comprehensive_tests
+    tool = TestRunner()
+           ^^^^^^^^^^^^
+TypeError: Can't instantiate abstract class TestRunner without an implementation for abstract method '_execute_core'
+==================================================
+Running Individual Development Tools Tests
+==================================================
+
+🔍 Testing codebase_search...
+❌ codebase_search error: codebase_search() got an unexpected keyword argument 'use_regex'
+
+📄 Testing documentation_generator...
+❌ documentation_generator error: documentation_generator() missing 1 required positional argument: 'input_path'
+
+🔬 Testing lint_python_codebase...
+❌ lint_python_codebase error: Can't instantiate abstract class LintingTools without an implementation for abstract method '_execute_core'
+
+🧪 Testing test_generator...
+❌ test_generator error: test_generator() got an unexpected keyword argument 'file_path'
+
+🔄 Testing run_comprehensive_tests...
+❌ run_comprehensive_tests error: Can't instantiate abstract class TestRunner without an implementation for abstract method '_execute_core'
+
+==================================================
+Development Tools Test Summary
+==================================================
+codebase_search: ❌ FAIL
+documentation_generator: ❌ FAIL
+lint_python_codebase: ❌ FAIL
+test_generator: ❌ FAIL
+run_comprehensive_tests: ❌ FAIL
+
+Overall Status: ❌ Some tests FAILED
+Test outputs saved to: /home/barberb/ipfs_datasets_py/tool_test_results
+2025-05-27 02:00:06,009 - ipfs_datasets - INFO - Monitoring system shutdown

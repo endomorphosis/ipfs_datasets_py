@@ -54,7 +54,9 @@ from .preflight import (
 GUARD_SERVICE_INTERFACE: Final = "GuardService@1"
 GUARD_SERVICE_SCHEMA_VERSION: Final = "wallet-guard.guard-service/v1"
 SIGN_AUTHORIZATION_SCHEMA_VERSION: Final = "wallet-guard.sign-authorization/v1"
-BROADCAST_AUTHORIZATION_SCHEMA_VERSION: Final = "wallet-guard.broadcast-authorization/v1"
+BROADCAST_AUTHORIZATION_SCHEMA_VERSION: Final = (
+    "wallet-guard.broadcast-authorization/v1"
+)
 SIGNING_INVENTORY_SCHEMA_VERSION: Final = "wallet-guard.signing-inventory/v1"
 
 DEFAULT_GUARD_SERVICE_PRODUCER_ID: Final = "producer:wallet-guard-service-v1"
@@ -178,7 +180,12 @@ KNOWN_SIGNING_PATHS: Final[tuple[dict[str, str], ...]] = (
 
 
 def _iso_now() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return (
+        datetime.now(timezone.utc)
+        .replace(microsecond=0)
+        .isoformat()
+        .replace("+00:00", "Z")
+    )
 
 
 def _reject_forbidden_kwargs(options: Mapping[str, Any] | None, *, surface: str) -> None:
@@ -210,7 +217,9 @@ def _reject_forbidden_kwargs(options: Mapping[str, Any] | None, *, surface: str)
             )
         # Boolean True under any approval-like key is also rejected above;
         # additionally reject bare approved-style values nested under "flags".
-        if lowered in {"flags", "options", "meta", "metadata"} and isinstance(value, Mapping):
+        if lowered in {"flags", "options", "meta", "metadata"} and isinstance(
+            value, Mapping
+        ):
             _reject_forbidden_kwargs(value, surface=f"{surface}.{key_text}")
 
 
@@ -222,7 +231,9 @@ def _coerce_request(
     if isinstance(request, Mapping):
         _reject_forbidden_kwargs(request, surface="TransactionPreflightRequest")
         return TransactionPreflightRequest.from_dict(request)
-    raise GuardValidationError("request must be a TransactionPreflightRequest or mapping")
+    raise GuardValidationError(
+        "request must be a TransactionPreflightRequest or mapping"
+    )
 
 
 def _coerce_capability(
@@ -233,7 +244,9 @@ def _coerce_capability(
     if isinstance(capability, Mapping):
         _reject_forbidden_kwargs(capability, surface="AdmissibilityCapability")
         return AdmissibilityCapability.from_dict(capability)
-    raise GuardValidationError("capability must be an AdmissibilityCapability or mapping")
+    raise GuardValidationError(
+        "capability must be an AdmissibilityCapability or mapping"
+    )
 
 
 def _normalize_phase(phase: PreflightPhase | str) -> PreflightPhase:
@@ -357,9 +370,13 @@ class GuardService:
         if self.preflight is None:
             self.preflight = TransactionPreflight(producer_id=self.producer_id)
         if self.interface != GUARD_SERVICE_INTERFACE:
-            raise GuardValidationError(f"unsupported guard service interface: {self.interface!r}")
+            raise GuardValidationError(
+                f"unsupported guard service interface: {self.interface!r}"
+            )
         if self.schema_version != GUARD_SERVICE_SCHEMA_VERSION:
-            raise GuardValidationError(f"unsupported guard service schema: {self.schema_version!r}")
+            raise GuardValidationError(
+                f"unsupported guard service schema: {self.schema_version!r}"
+            )
 
     # -- discovery / inventory ----------------------------------------------
 
@@ -378,7 +395,9 @@ class GuardService:
                 "producer_id": self.producer_id,
                 "supports_preflight": True,
                 "supports_capability_consumption": True,
-                "supports_sign": bool(self.signing_enabled and self.enable_signing_with_capability),
+                "supports_sign": bool(
+                    self.signing_enabled and self.enable_signing_with_capability
+                ),
                 "supports_broadcast": bool(
                     self.signing_enabled and self.enable_signing_with_capability
                 ),
@@ -450,7 +469,9 @@ class GuardService:
         tenant_id: str | None = None,
     ) -> bool:
         assert self.preflight is not None
-        return self.preflight.is_consumed(_coerce_capability(capability), tenant_id=tenant_id)
+        return self.preflight.is_consumed(
+            _coerce_capability(capability), tenant_id=tenant_id
+        )
 
     # -- signing boundary ---------------------------------------------------
 
@@ -554,7 +575,8 @@ class GuardService:
         capability: AdmissibilityCapability | Mapping[str, Any] | None = None,
         live_request: TransactionPreflightRequest | Mapping[str, Any] | None = None,
         raw_transaction: Any = None,
-        external_broadcaster: Callable[[Any, BroadcastAuthorization], Any] | None = None,
+        external_broadcaster: Callable[[Any, BroadcastAuthorization], Any]
+        | None = None,
         now: str | None = None,
         options: Mapping[str, Any] | None = None,
         approved: Any = None,
@@ -641,7 +663,8 @@ class GuardService:
         capability: AdmissibilityCapability | Mapping[str, Any] | None = None,
         live_request: TransactionPreflightRequest | Mapping[str, Any] | None = None,
         raw_transaction: Any = None,
-        external_broadcaster: Callable[[Any, BroadcastAuthorization], Any] | None = None,
+        external_broadcaster: Callable[[Any, BroadcastAuthorization], Any]
+        | None = None,
         now: str | None = None,
         options: Mapping[str, Any] | None = None,
         approved: Any = None,

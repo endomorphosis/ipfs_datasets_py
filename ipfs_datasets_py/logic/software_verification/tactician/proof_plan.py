@@ -62,12 +62,15 @@ PROOF_PLAN_STEP_SPEC_SCHEMA: Final = (
     "ipfs_datasets_py/logic/software_verification/proof-plan-step-spec@1"
 )
 MISSING_PROOF_PLAN_ALTERNATIVE_SCHEMA: Final = (
-    "ipfs_datasets_py/logic/software_verification/missing-proof-plan-alternative@1"
+    "ipfs_datasets_py/logic/software_verification/"
+    "missing-proof-plan-alternative@1"
 )
 PLAN_RANKING_POLICY_SCHEMA: Final = (
     "ipfs_datasets_py/logic/software_verification/plan-ranking-policy@1"
 )
-RANKED_PROOF_PLAN_SCHEMA: Final = "ipfs_datasets_py/logic/software_verification/ranked-proof-plan@1"
+RANKED_PROOF_PLAN_SCHEMA: Final = (
+    "ipfs_datasets_py/logic/software_verification/ranked-proof-plan@1"
+)
 PROOF_PLAN_RANKING_RESULT_SCHEMA: Final = (
     "ipfs_datasets_py/logic/software_verification/proof-plan-ranking-result@1"
 )
@@ -275,7 +278,8 @@ def _enum(value: object, enum_cls: type[StrEnum], label: str) -> StrEnum:
         return enum_cls(str(value).strip())
     except ValueError as error:
         raise ProofPlanError(
-            f"{label} must be one of {', '.join(item.value for item in enum_cls)}"
+            f"{label} must be one of "
+            f"{', '.join(item.value for item in enum_cls)}"
         ) from error
 
 
@@ -288,7 +292,9 @@ def _mapping(value: object, label: str) -> Mapping[str, Any]:
 
 
 def _to_millionths(value: float | Decimal | int) -> int:
-    quant = (Decimal(str(value)) * Decimal(1_000_000)).quantize(Decimal(1), rounding=ROUND_HALF_UP)
+    quant = (Decimal(str(value)) * Decimal(1_000_000)).quantize(
+        Decimal(1), rounding=ROUND_HALF_UP
+    )
     return int(quant)
 
 
@@ -310,7 +316,9 @@ def authority_rank(authority: AuthorityCeiling | str) -> int:
     """Return total-order rank for an authority ceiling."""
 
     resolved = (
-        authority if isinstance(authority, AuthorityCeiling) else _authority(authority, "authority")
+        authority
+        if isinstance(authority, AuthorityCeiling)
+        else _authority(authority, "authority")
     )
     return _AUTHORITY_RANK.get(resolved, 0)
 
@@ -403,7 +411,11 @@ class ProofPlanRankingWeights:
         )
 
     def to_dict(self) -> dict[str, Any]:
-        return {name: getattr(self, name) for name in self.__dataclass_fields__ if name != "SCHEMA"}
+        return {
+            name: getattr(self, name)
+            for name in self.__dataclass_fields__
+            if name != "SCHEMA"
+        }
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "ProofPlanRankingWeights":
@@ -412,7 +424,9 @@ class ProofPlanRankingWeights:
         allowed = set(cls.__dataclass_fields__) - {"SCHEMA"}
         unknown = sorted(str(key) for key in payload if key not in allowed)
         if unknown:
-            raise ProofPlanError("unknown ranking weight fields: " + ", ".join(unknown))
+            raise ProofPlanError(
+                "unknown ranking weight fields: " + ", ".join(unknown)
+            )
         return cls(**{key: payload[key] for key in payload if key in allowed})
 
 
@@ -426,7 +440,9 @@ class ProofPlanRankingPolicy:
     available_resource_classes: tuple[str, ...] = ()
     satisfied_dependencies: tuple[str, ...] = ()
     required_obligation_ids: tuple[str, ...] = ()
-    weights: ProofPlanRankingWeights = field(default_factory=ProofPlanRankingWeights)
+    weights: ProofPlanRankingWeights = field(
+        default_factory=ProofPlanRankingWeights
+    )
     # Per-new-assumption soft cost in [0, 1] before weighting.
     assumption_unit_cost: float = 0.25
     max_new_assumptions: int = 16
@@ -502,10 +518,18 @@ class ProofPlanRankingPolicy:
         if not isinstance(payload, Mapping):
             raise ProofPlanError("ranking policy must be an object")
         return cls(
-            minimum_authority=payload.get("minimum_authority", AuthorityCeiling.BOUNDED),
-            available_resource_classes=tuple(payload.get("available_resource_classes") or ()),
-            satisfied_dependencies=tuple(payload.get("satisfied_dependencies") or ()),
-            required_obligation_ids=tuple(payload.get("required_obligation_ids") or ()),
+            minimum_authority=payload.get(
+                "minimum_authority", AuthorityCeiling.BOUNDED
+            ),
+            available_resource_classes=tuple(
+                payload.get("available_resource_classes") or ()
+            ),
+            satisfied_dependencies=tuple(
+                payload.get("satisfied_dependencies") or ()
+            ),
+            required_obligation_ids=tuple(
+                payload.get("required_obligation_ids") or ()
+            ),
             weights=payload.get("weights") or ProofPlanRankingWeights(),
             assumption_unit_cost=payload.get("assumption_unit_cost", 0.25),
             max_new_assumptions=int(payload.get("max_new_assumptions", 16)),
@@ -551,7 +575,9 @@ class ProofPlanStepSpec:
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "step_id", _text(self.step_id, "step_id", maximum=256))
+        object.__setattr__(
+            self, "step_id", _text(self.step_id, "step_id", maximum=256)
+        )
         object.__setattr__(
             self,
             "obligation_id",
@@ -572,12 +598,16 @@ class ProofPlanStepSpec:
         object.__setattr__(
             self,
             "dependencies",
-            _string_tuple(self.dependencies, "dependencies", allow_empty=True),
+            _string_tuple(
+                self.dependencies, "dependencies", allow_empty=True
+            ),
         )
         object.__setattr__(
             self,
             "expected_receipts",
-            _string_tuple(self.expected_receipts, "expected_receipts", allow_empty=True),
+            _string_tuple(
+                self.expected_receipts, "expected_receipts", allow_empty=True
+            ),
         )
         object.__setattr__(
             self,
@@ -603,11 +633,15 @@ class ProofPlanStepSpec:
                 allow_empty=True,
             ),
         )
-        object.__setattr__(self, "authority", _authority(self.authority, "authority"))
+        object.__setattr__(
+            self, "authority", _authority(self.authority, "authority")
+        )
         object.__setattr__(
             self,
             "new_assumption_ids",
-            _string_tuple(self.new_assumption_ids, "new_assumption_ids", allow_empty=True),
+            _string_tuple(
+                self.new_assumption_ids, "new_assumption_ids", allow_empty=True
+            ),
         )
         object.__setattr__(
             self,
@@ -624,7 +658,9 @@ class ProofPlanStepSpec:
             "cache_value",
             _number(self.cache_value, "cache_value", minimum=0.0, maximum=1.0),
         )
-        object.__setattr__(self, "risk", _number(self.risk, "risk", minimum=0.0, maximum=1.0))
+        object.__setattr__(
+            self, "risk", _number(self.risk, "risk", minimum=0.0, maximum=1.0)
+        )
         object.__setattr__(
             self,
             "downstream_unlock",
@@ -639,7 +675,9 @@ class ProofPlanStepSpec:
                 minimum=0.0,
             ),
         )
-        object.__setattr__(self, "proof_claimed", _bool(self.proof_claimed, "proof_claimed"))
+        object.__setattr__(
+            self, "proof_claimed", _bool(self.proof_claimed, "proof_claimed")
+        )
         object.__setattr__(
             self,
             "completion_claimed",
@@ -712,7 +750,9 @@ class ProofPlanStepSpec:
             validation=tuple(payload.get("validation") or ()),
             fallback=tuple(payload.get("fallback") or ()),
             resources=tuple(payload.get("resources") or ()),
-            completion_conditions=tuple(payload.get("completion_conditions") or ()),
+            completion_conditions=tuple(
+                payload.get("completion_conditions") or ()
+            ),
             authority=payload.get("authority", AuthorityCeiling.BOUNDED),
             new_assumption_ids=tuple(payload.get("new_assumption_ids") or ()),
             provider_ids=tuple(payload.get("provider_ids") or ()),
@@ -720,7 +760,9 @@ class ProofPlanStepSpec:
             cache_value=payload.get("cache_value", 0.0),
             risk=payload.get("risk", 0.2),
             downstream_unlock=payload.get("downstream_unlock", 0.0),
-            critical_path_contribution=payload.get("critical_path_contribution", 1.0),
+            critical_path_contribution=payload.get(
+                "critical_path_contribution", 1.0
+            ),
             proof_claimed=bool(payload.get("proof_claimed", False)),
             completion_claimed=bool(payload.get("completion_claimed", False)),
             metadata=payload.get("metadata") or {},
@@ -771,11 +813,15 @@ class ProofPlanHardFailure:
     detail: str = ""
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "reason", _enum(self.reason, HardPruneReason, "reason"))
+        object.__setattr__(
+            self, "reason", _enum(self.reason, HardPruneReason, "reason")
+        )
         object.__setattr__(
             self,
             "reason_codes",
-            _string_tuple(self.reason_codes, "reason_codes", allow_empty=True),
+            _string_tuple(
+                self.reason_codes, "reason_codes", allow_empty=True
+            ),
         )
         object.__setattr__(
             self,
@@ -836,14 +882,20 @@ class MissingProofPlanAlternative:
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "plan_id", _text(self.plan_id, "plan_id", maximum=256))
+        object.__setattr__(
+            self, "plan_id", _text(self.plan_id, "plan_id", maximum=256)
+        )
         object.__setattr__(
             self,
             "formal_goal_id",
             _text(self.formal_goal_id, "formal_goal_id", maximum=256),
         )
-        object.__setattr__(self, "graph_id", _text(self.graph_id, "graph_id", maximum=256))
-        object.__setattr__(self, "tree_id", _text(self.tree_id, "tree_id", maximum=256))
+        object.__setattr__(
+            self, "graph_id", _text(self.graph_id, "graph_id", maximum=256)
+        )
+        object.__setattr__(
+            self, "tree_id", _text(self.tree_id, "tree_id", maximum=256)
+        )
         steps: list[ProofPlanStepSpec] = []
         for item in self.steps or ():
             if isinstance(item, ProofPlanStepSpec):
@@ -864,7 +916,9 @@ class MissingProofPlanAlternative:
             self,
             "covered_obligation_ids",
             _string_tuple(
-                self.covered_obligation_ids or tuple(step.obligation_id for step in steps),
+                self.covered_obligation_ids or tuple(
+                    step.obligation_id for step in steps
+                ),
                 "covered_obligation_ids",
                 allow_empty=True,
             ),
@@ -883,15 +937,20 @@ class MissingProofPlanAlternative:
             "alternative_ids",
         )
         producer_kinds = _string_tuple(
-            self.producer_kinds or tuple("proof_plan_step" for _ in alternative_ids),
+            self.producer_kinds
+            or tuple("proof_plan_step" for _ in alternative_ids),
             "producer_kinds",
         )
         if len(alternative_ids) != len(producer_kinds):
-            raise ProofPlanError("alternative_ids and producer_kinds must have equal length")
+            raise ProofPlanError(
+                "alternative_ids and producer_kinds must have equal length"
+            )
         object.__setattr__(self, "alternative_ids", alternative_ids)
         object.__setattr__(self, "producer_kinds", producer_kinds)
         failures = tuple(
-            item if isinstance(item, ProofPlanHardFailure) else ProofPlanHardFailure.from_dict(item)
+            item
+            if isinstance(item, ProofPlanHardFailure)
+            else ProofPlanHardFailure.from_dict(item)
             for item in (self.hard_failures or ())
         )
         object.__setattr__(
@@ -914,7 +973,9 @@ class MissingProofPlanAlternative:
                 maximum=256,
             ),
         )
-        object.__setattr__(self, "proof_claimed", _bool(self.proof_claimed, "proof_claimed"))
+        object.__setattr__(
+            self, "proof_claimed", _bool(self.proof_claimed, "proof_claimed")
+        )
         object.__setattr__(
             self,
             "completion_claimed",
@@ -934,7 +995,11 @@ class MissingProofPlanAlternative:
         }
         ordered: list[str] = []
         while remaining:
-            ready = sorted(step_id for step_id, deps in remaining.items() if not deps)
+            ready = sorted(
+                step_id
+                for step_id, deps in remaining.items()
+                if not deps
+            )
             if not ready:
                 # Cycle or external-only deps — fall back to lexical order.
                 return tuple(step.step_id for step in self.steps)
@@ -989,7 +1054,9 @@ class MissingProofPlanAlternative:
 
     @property
     def critical_path_length(self) -> float:
-        return float(sum(step.critical_path_contribution for step in self.steps))
+        return float(
+            sum(step.critical_path_contribution for step in self.steps)
+        )
 
     @property
     def fallback_quality(self) -> float:
@@ -1034,7 +1101,9 @@ class MissingProofPlanAlternative:
         }
 
     @classmethod
-    def from_dict(cls, payload: Mapping[str, Any]) -> "MissingProofPlanAlternative":
+    def from_dict(
+        cls, payload: Mapping[str, Any]
+    ) -> "MissingProofPlanAlternative":
         if not isinstance(payload, Mapping):
             raise ProofPlanError("plan alternative payload must be an object")
         bounds_raw = payload.get("bounds") or {}
@@ -1044,8 +1113,12 @@ class MissingProofPlanAlternative:
             graph_id=payload.get("graph_id", ""),
             tree_id=payload.get("tree_id", ""),
             steps=tuple(payload.get("steps") or ()),
-            covered_obligation_ids=tuple(payload.get("covered_obligation_ids") or ()),
-            required_obligation_ids=tuple(payload.get("required_obligation_ids") or ()),
+            covered_obligation_ids=tuple(
+                payload.get("covered_obligation_ids") or ()
+            ),
+            required_obligation_ids=tuple(
+                payload.get("required_obligation_ids") or ()
+            ),
             alternative_ids=tuple(payload.get("alternative_ids") or ()),
             producer_kinds=tuple(payload.get("producer_kinds") or ()),
             hard_failures=tuple(payload.get("hard_failures") or ()),
@@ -1053,24 +1126,22 @@ class MissingProofPlanAlternative:
                 ResourceBounds.from_dict(bounds_raw)
                 if isinstance(bounds_raw, Mapping) and bounds_raw.get("schema")
                 else (
-                    ResourceBounds(
-                        **{
-                            k: v
-                            for k, v in bounds_raw.items()
-                            if k
-                            in {
-                                "wall_time_ms",
-                                "memory_bytes",
-                                "max_steps",
-                                "max_depth",
-                                "max_nodes",
-                                "max_candidates",
-                                "model_token_limit",
-                                "network_allowed",
-                                "extra",
-                            }
+                    ResourceBounds(**{
+                        k: v
+                        for k, v in bounds_raw.items()
+                        if k
+                        in {
+                            "wall_time_ms",
+                            "memory_bytes",
+                            "max_steps",
+                            "max_depth",
+                            "max_nodes",
+                            "max_candidates",
+                            "model_token_limit",
+                            "network_allowed",
+                            "extra",
                         }
-                    )
+                    })
                     if isinstance(bounds_raw, Mapping)
                     else DEFAULT_BOUNDS
                 )
@@ -1124,7 +1195,10 @@ def collect_hard_failures(
     step_ids = {step.step_id for step in plan.steps}
     depends = {step.step_id: step.dependencies for step in plan.steps}
     if _detect_cycle(
-        {sid: tuple(dep for dep in deps if dep in step_ids) for sid, deps in depends.items()}
+        {
+            sid: tuple(dep for dep in deps if dep in step_ids)
+            for sid, deps in depends.items()
+        }
     ):
         failures.append(
             ProofPlanHardFailure(
@@ -1160,10 +1234,15 @@ def collect_hard_failures(
                     reason=HardPruneReason.INCOMPLETE_STEP,
                     reason_codes=tuple(f"missing_{name}" for name in missing),
                     step_id=step.step_id,
-                    detail=(f"step {step.step_id} incomplete: " + ", ".join(missing)),
+                    detail=(
+                        f"step {step.step_id} incomplete: "
+                        + ", ".join(missing)
+                    ),
                 )
             )
-        unknown = [dep for dep in step.dependencies if dep not in step_ids]
+        unknown = [
+            dep for dep in step.dependencies if dep not in step_ids
+        ]
         # External deps are allowed only when marked satisfied by policy or
         # declared as root-external via the "external:" prefix.
         unresolved = [
@@ -1177,12 +1256,18 @@ def collect_hard_failures(
             failures.append(
                 ProofPlanHardFailure(
                     reason=HardPruneReason.UNKNOWN_DEPENDENCY,
-                    reason_codes=tuple(f"unknown_dep:{dep}" for dep in sorted(unresolved)),
+                    reason_codes=tuple(
+                        f"unknown_dep:{dep}" for dep in sorted(unresolved)
+                    ),
                     step_id=step.step_id,
-                    detail=(f"step {step.step_id} references unknown dependencies"),
+                    detail=(
+                        f"step {step.step_id} references unknown dependencies"
+                    ),
                 )
             )
-        if not authority_meets_minimum(step.authority, policy.minimum_authority):
+        if not authority_meets_minimum(
+            step.authority, policy.minimum_authority
+        ):
             failures.append(
                 ProofPlanHardFailure(
                     reason=HardPruneReason.INSUFFICIENT_AUTHORITY,
@@ -1207,12 +1292,20 @@ def collect_hard_failures(
             failures.append(
                 ProofPlanHardFailure(
                     reason=HardPruneReason.MISSING_COVERAGE,
-                    reason_codes=tuple(f"uncovered:{oid}" for oid in missing_cov),
-                    detail=("plan fails to cover required obligations: " + ", ".join(missing_cov)),
+                    reason_codes=tuple(
+                        f"uncovered:{oid}" for oid in missing_cov
+                    ),
+                    detail=(
+                        "plan fails to cover required obligations: "
+                        + ", ".join(missing_cov)
+                    ),
                 )
             )
 
-    if plan.bounds.max_candidates and len(plan.steps) > plan.bounds.max_candidates:
+    if (
+        plan.bounds.max_candidates
+        and len(plan.steps) > plan.bounds.max_candidates
+    ):
         failures.append(
             ProofPlanHardFailure(
                 reason=HardPruneReason.RESOURCE_BOUND,
@@ -1221,7 +1314,10 @@ def collect_hard_failures(
             )
         )
 
-    if policy.max_new_assumptions and len(plan.new_assumption_ids) > policy.max_new_assumptions:
+    if (
+        policy.max_new_assumptions
+        and len(plan.new_assumption_ids) > policy.max_new_assumptions
+    ):
         failures.append(
             ProofPlanHardFailure(
                 reason=HardPruneReason.RESOURCE_BOUND,
@@ -1337,7 +1433,9 @@ def score_missing_proof_plan(
             authority_factor = Decimal(1)
 
     # Critical path: shorter is better (bounded inverse).
-    critical_factor = Decimal(1) / (Decimal(1) + Decimal(str(plan.critical_path_length)))
+    critical_factor = Decimal(1) / (
+        Decimal(1) + Decimal(str(plan.critical_path_length))
+    )
 
     factors: dict[str, Decimal] = {
         "discharged_coverage": coverage_ratio,
@@ -1346,7 +1444,8 @@ def score_missing_proof_plan(
         "authority": authority_factor,
         "assumption_cost": assumption_factor,
         "risk": Decimal(1) - Decimal(str(plan.mean_risk)),
-        "proof_cost": Decimal(1) / (Decimal(1) + Decimal(str(plan.total_proof_cost))),
+        "proof_cost": Decimal(1)
+        / (Decimal(1) + Decimal(str(plan.total_proof_cost))),
         "cache_value": Decimal(str(plan.mean_cache_value)),
         "fallback_quality": Decimal(str(plan.fallback_quality))
         * resource_hit,  # fallbacks that need unavailable resources degrade
@@ -1361,12 +1460,16 @@ def score_missing_proof_plan(
 
     score = sum((contribution for _, contribution in weighted), Decimal(0))
     score_millionths = _to_millionths(score)
-    soft_scores = {name: _to_millionths(factor) for name, factor in factors.items()}
+    soft_scores = {
+        name: _to_millionths(factor) for name, factor in factors.items()
+    }
     rationale = tuple(
-        f"{name} contributes {_to_millionths(contribution)} millionths (factor={soft_scores[name]})"
+        f"{name} contributes {_to_millionths(contribution)} millionths "
+        f"(factor={soft_scores[name]})"
         for name, contribution in weighted
     ) + (
-        f"assumption count is {assumption_count} (unit_cost={policy.assumption_unit_cost})",
+        f"assumption count is {assumption_count} "
+        f"(unit_cost={policy.assumption_unit_cost})",
         f"min step authority is {min_auth.value}",
         f"covers {len(covered)} obligation(s)",
         f"total deterministic proof-plan priority is {score_millionths} millionths",
@@ -1394,7 +1497,9 @@ class RankedProofPlan:
         if not isinstance(self.plan, MissingProofPlanAlternative):
             raise ProofPlanError("plan must be a MissingProofPlanAlternative")
         if self.plan.admissible != (self.score_millionths is not None):
-            raise ProofPlanError("hard-pruned plans must not receive a soft score")
+            raise ProofPlanError(
+                "hard-pruned plans must not receive a soft score"
+            )
         if self.score_millionths is not None:
             object.__setattr__(
                 self,
@@ -1403,18 +1508,26 @@ class RankedProofPlan:
             )
             scores = dict(self.soft_scores)
             if set(scores) != set(RANKING_SCORE_DIMENSIONS):
-                raise ProofPlanError("admissible plan is missing a ranking soft-score dimension")
+                raise ProofPlanError(
+                    "admissible plan is missing a ranking soft-score dimension"
+                )
             object.__setattr__(self, "soft_scores", MappingProxyType(scores))
-            rationale = tuple(str(item).strip() for item in self.rationale if str(item).strip())
+            rationale = tuple(
+                str(item).strip() for item in self.rationale if str(item).strip()
+            )
             if not rationale:
                 raise ProofPlanError("ranked plans require a rationale")
             object.__setattr__(self, "rationale", rationale)
         else:
             if self.soft_scores:
-                raise ProofPlanError("hard-pruned plan cannot contain soft scores")
+                raise ProofPlanError(
+                    "hard-pruned plan cannot contain soft scores"
+                )
             object.__setattr__(self, "soft_scores", MappingProxyType({}))
             # Hard-pruned plans still carry an explainable prune rationale.
-            rationale = tuple(str(item).strip() for item in self.rationale if str(item).strip())
+            rationale = tuple(
+                str(item).strip() for item in self.rationale if str(item).strip()
+            )
             if not rationale:
                 rationale = tuple(
                     f"hard-pruned: {failure.reason.value}"
@@ -1445,7 +1558,9 @@ class RankedProofPlan:
         if not isinstance(payload, Mapping):
             raise ProofPlanError("ranked plan payload must be an object")
         return cls(
-            plan=MissingProofPlanAlternative.from_dict(payload.get("plan") or {}),
+            plan=MissingProofPlanAlternative.from_dict(
+                payload.get("plan") or {}
+            ),
             score_millionths=payload.get("score_millionths"),
             soft_scores=payload.get("soft_scores") or {},
             rationale=tuple(payload.get("rationale") or ()),
@@ -1471,7 +1586,9 @@ class ProofPlanRankingResult:
         if any(item.score_millionths is not None for item in self.pruned):
             raise ProofPlanError("pruned plans must be unscored")
         if self.selected != (self.ranked[0] if self.ranked else None):
-            raise ProofPlanError("selected plan must be the first deterministic rank")
+            raise ProofPlanError(
+                "selected plan must be the first deterministic rank"
+            )
         ids = [item.plan_id for item in (*self.ranked, *self.pruned)]
         if len(ids) != len(set(ids)):
             raise ProofPlanError("ranking result contains duplicate plan ids")
@@ -1521,7 +1638,13 @@ class ProofPlanRankingResult:
                 status=PlanStatus.RANKED,
                 bounds=plan.bounds,
                 provider_ids=tuple(
-                    sorted({provider for step in plan.steps for provider in step.provider_ids})
+                    sorted(
+                        {
+                            provider
+                            for step in plan.steps
+                            for provider in step.provider_ids
+                        }
+                    )
                 ),
                 rank_score_millionths=int(self.selected.score_millionths or 0),
                 root_goal_id=plan.root_goal_id,
@@ -1536,7 +1659,9 @@ class ProofPlanRankingResult:
                 },
             )
         except TacticianContractError as error:
-            raise ProofPlanError(f"failed to build GoalDirectedProofPlan: {error}") from error
+            raise ProofPlanError(
+                f"failed to build GoalDirectedProofPlan: {error}"
+            ) from error
 
 
 # ---------------------------------------------------------------------------
@@ -1581,7 +1706,9 @@ class GoalDirectedProofPlanRanker:
 
     def rank(
         self,
-        alternatives: Iterable[MissingProofPlanAlternative | Mapping[str, Any]],
+        alternatives: Iterable[
+            MissingProofPlanAlternative | Mapping[str, Any]
+        ],
         *,
         policy: ProofPlanRankingPolicy | Mapping[str, Any] | None = None,
     ) -> ProofPlanRankingResult:
@@ -1595,15 +1722,21 @@ class GoalDirectedProofPlanRanker:
             elif isinstance(item, Mapping):
                 plan = MissingProofPlanAlternative.from_dict(item)
             else:
-                raise ProofPlanError("alternatives must be MissingProofPlanAlternative values")
+                raise ProofPlanError(
+                    "alternatives must be MissingProofPlanAlternative values"
+                )
             normalized.append(with_hard_failures(plan, resolved_policy))
 
         if not normalized:
-            raise ProofPlanError("at least one missing-proof plan alternative is required")
+            raise ProofPlanError(
+                "at least one missing-proof plan alternative is required"
+            )
         ids = [item.plan_id for item in normalized]
         duplicates = sorted({pid for pid in ids if ids.count(pid) > 1})
         if duplicates:
-            raise ProofPlanError("plan ids must be unique: " + ", ".join(duplicates))
+            raise ProofPlanError(
+                "plan ids must be unique: " + ", ".join(duplicates)
+            )
 
         evaluated: list[RankedProofPlan] = []
         for plan in normalized:
@@ -1615,14 +1748,20 @@ class GoalDirectedProofPlanRanker:
                         soft_scores={},
                         rationale=tuple(
                             f"hard-pruned: {failure.reason.value}"
-                            + (f" step={failure.step_id}" if failure.step_id else "")
+                            + (
+                                f" step={failure.step_id}"
+                                if failure.step_id
+                                else ""
+                            )
                             + (f" — {failure.detail}" if failure.detail else "")
                             for failure in plan.hard_failures
                         ),
                     )
                 )
             else:
-                score, soft, rationale = score_missing_proof_plan(plan, resolved_policy)
+                score, soft, rationale = score_missing_proof_plan(
+                    plan, resolved_policy
+                )
                 evaluated.append(
                     RankedProofPlan(
                         plan=plan,
@@ -1672,7 +1811,8 @@ class GoalDirectedProofPlanRanker:
                 (item for item in evaluated if item.score_millionths is None),
                 key=lambda item: (
                     tuple(
-                        (f.reason.value, f.step_id, f.reason_codes) for f in item.plan.hard_failures
+                        (f.reason.value, f.step_id, f.reason_codes)
+                        for f in item.plan.hard_failures
                     ),
                     item.plan_id,
                 ),
@@ -1748,12 +1888,20 @@ def complete_step(
         meta["root"] = True
         dependencies = ()
     receipts = (
-        tuple(expected_receipts) if expected_receipts is not None else (f"receipt:{obligation_id}",)
+        tuple(expected_receipts)
+        if expected_receipts is not None
+        else (f"receipt:{obligation_id}",)
     )
     validation_cmds = (
-        tuple(validation) if validation is not None else (f"validate:{obligation_id}",)
+        tuple(validation)
+        if validation is not None
+        else (f"validate:{obligation_id}",)
     )
-    fallbacks = tuple(fallback) if fallback is not None else (f"fallback:replay:{obligation_id}",)
+    fallbacks = (
+        tuple(fallback)
+        if fallback is not None
+        else (f"fallback:replay:{obligation_id}",)
+    )
     conditions = (
         tuple(completion_conditions)
         if completion_conditions is not None
@@ -1802,7 +1950,9 @@ def build_missing_proof_plan(
     """Construct one complete missing-proof plan alternative."""
 
     normalized_steps = tuple(
-        item if isinstance(item, ProofPlanStepSpec) else ProofPlanStepSpec.from_dict(item)
+        item
+        if isinstance(item, ProofPlanStepSpec)
+        else ProofPlanStepSpec.from_dict(item)
         for item in steps
     )
     covered = (
@@ -1821,7 +1971,8 @@ def build_missing_proof_plan(
         required_obligation_ids=required,
         alternative_ids=tuple(alternative_ids or (plan_id,)),
         producer_kinds=tuple(
-            producer_kinds or tuple("proof_plan_step" for _ in (alternative_ids or (plan_id,)))
+            producer_kinds
+            or tuple("proof_plan_step" for _ in (alternative_ids or (plan_id,)))
         ),
         hard_failures=(),
         bounds=bounds or DEFAULT_BOUNDS,
@@ -1871,9 +2022,13 @@ def to_and_or_plan_branch(plan: MissingProofPlanAlternative) -> dict[str, Any]:
         for constraint, codes in sorted(by_constraint.items())
     ]
     cost_micro = max(0, int(round(plan.total_proof_cost * 1_000_000)))
-    risk_millionths = max(0, min(1_000_000, int(round(plan.mean_risk * 1_000_000))))
+    risk_millionths = max(
+        0, min(1_000_000, int(round(plan.mean_risk * 1_000_000)))
+    )
     # Assumption cost surfaces as historical_failure-like soft penalty input.
-    assumption_penalty = min(1_000_000, len(plan.new_assumption_ids) * 100_000)
+    assumption_penalty = min(
+        1_000_000, len(plan.new_assumption_ids) * 100_000
+    )
     return {
         "branch_id": plan.plan_id,
         "goal_content_id": plan.formal_goal_id,
@@ -1910,19 +2065,23 @@ def to_proof_aware_plan_candidate(
     """
 
     if plan.hard_failures:
-        raise ProofPlanError("cannot project a hard-pruned plan to a proof-aware candidate")
+        raise ProofPlanError(
+            "cannot project a hard-pruned plan to a proof-aware candidate"
+        )
     branch_id = plan.plan_id
     predicted_files = [
-        f"proof/{plan.formal_goal_id}/{step.step_id}.lean" for step in plan.steps
+        f"proof/{plan.formal_goal_id}/{step.step_id}.lean"
+        for step in plan.steps
     ] or [f"proof/{plan.formal_goal_id}/plan.lean"]
-    predicted_symbols = [f"{plan.formal_goal_id}.{step.step_id}" for step in plan.steps] or [
-        plan.formal_goal_id
-    ]
-    validation_commands = [cmd for step in plan.steps for cmd in step.validation] or [
-        "validate:proof-plan"
-    ]
+    predicted_symbols = [
+        f"{plan.formal_goal_id}.{step.step_id}" for step in plan.steps
+    ] or [plan.formal_goal_id]
+    validation_commands = [
+        cmd for step in plan.steps for cmd in step.validation
+    ] or ["validate:proof-plan"]
     validation_proof = [
-        f"step {step.step_id} expects {', '.join(step.expected_receipts)}" for step in plan.steps
+        f"step {step.step_id} expects {', '.join(step.expected_receipts)}"
+        for step in plan.steps
     ] or ["plan declares expected receipts"]
     dependencies = sorted(
         {
@@ -1936,7 +2095,8 @@ def to_proof_aware_plan_candidate(
         "candidate_id": branch_id,
         "branch": {
             "branch_id": branch_id,
-            "summary": summary or f"Missing-proof plan {plan.plan_id} for {plan.formal_goal_id}",
+            "summary": summary
+            or f"Missing-proof plan {plan.plan_id} for {plan.formal_goal_id}",
             "predicted_files": predicted_files,
             "predicted_symbols": predicted_symbols,
             "dependencies": dependencies,
@@ -1944,18 +2104,23 @@ def to_proof_aware_plan_candidate(
             "validation_proof": validation_proof,
             "estimated_cost": max(0.01, plan.total_proof_cost),
             "risk": plan.mean_risk,
-            "expected_objective_delta": min(1.0, max(0.0, plan.fallback_quality)),
+            "expected_objective_delta": min(
+                1.0, max(0.0, plan.fallback_quality)
+            ),
             "source": "goal_directed_proof_plan_ranker",
         },
         "obligation_impact": list(
-            plan.covered_obligation_ids or tuple(step.obligation_id for step in plan.steps)
+            plan.covered_obligation_ids
+            or tuple(step.obligation_id for step in plan.steps)
         ),
         "required_assurance": plan.min_step_authority.value,
         "proof_cost": plan.total_proof_cost,
         "cache_likelihood": plan.mean_cache_value,
         "dependencies": dependencies,
         "expected_evidence_delta": [
-            receipt for step in plan.steps for receipt in step.expected_receipts
+            receipt
+            for step in plan.steps
+            for receipt in step.expected_receipts
         ]
         or [f"receipt:{plan.plan_id}"],
         "resource_classes": list(plan.resource_classes) or ["solver"],
@@ -1983,7 +2148,9 @@ def rank_via_and_or_evaluator(
             evaluate_and_or_plan_branches,
         )
     except ImportError as error:  # pragma: no cover - environment specific
-        raise ProofPlanError("plan-evaluator AND/OR adapter requires ipfs_accelerate_py") from error
+        raise ProofPlanError(
+            "plan-evaluator AND/OR adapter requires ipfs_accelerate_py"
+        ) from error
 
     resolved_policy = (
         policy
@@ -2052,7 +2219,8 @@ def rank_via_proof_aware_evaluator(
     admitted = [plan for plan in plans if plan.admissible]
     if not admitted:
         raise ProofPlanError(
-            "no admissible plan remains after hard pruning; cannot invoke proof-aware evaluator"
+            "no admissible plan remains after hard pruning; "
+            "cannot invoke proof-aware evaluator"
         )
     candidates = [to_proof_aware_plan_candidate(plan) for plan in admitted]
     return evaluate_proof_aware_plans(

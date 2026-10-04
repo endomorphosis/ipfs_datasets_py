@@ -1,0 +1,4 @@
+interface:
+  display_name: "Query SkillCenter HF"
+  short_description: "Search skills and walk the remote graph"
+  default_prompt: "Use $query-skillcenter-hf to find relevant skills or traverse their remote knowledge-graph relationships."

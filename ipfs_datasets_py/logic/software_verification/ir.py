@@ -113,7 +113,9 @@ def _identifier(value: object, label: str) -> str:
 
 
 def _identifiers(values: Sequence[str], label: str) -> tuple[str, ...]:
-    if isinstance(values, (str, bytes, bytearray)) or not isinstance(values, Sequence):
+    if isinstance(values, (str, bytes, bytearray)) or not isinstance(
+        values, Sequence
+    ):
         raise IRValidationError(f"{label} must be a sequence of identifiers")
     result = tuple(_identifier(item, f"{label} item") for item in values)
     if len(result) != len(set(result)):
@@ -131,7 +133,9 @@ def _freeze_mapping(value: Mapping[str, Any] | FrozenMap, label: str) -> FrozenM
     try:
         return value if isinstance(value, FrozenMap) else FrozenMap(value)
     except (TypeError, ValueError) as error:
-        raise IRValidationError(f"{label} must contain JSON-compatible data: {error}") from error
+        raise IRValidationError(
+            f"{label} must contain JSON-compatible data: {error}"
+        ) from error
 
 
 def _kind_value(value: Enum | str) -> str:
@@ -169,7 +173,9 @@ def _source_mapping(
     sources = _identifiers(source_ref_ids, f"{owner}.source_ref_ids")
     spans = _identifiers(span_ids, f"{owner}.span_ids")
     if not sources and not spans:
-        raise IRValidationError(f"{owner} must be source mapped with source_ref_ids or span_ids")
+        raise IRValidationError(
+            f"{owner} must be source mapped with source_ref_ids or span_ids"
+        )
     return sources, spans
 
 
@@ -195,7 +201,9 @@ def _reject_observations(value: Mapping[str, Any], *, label: str) -> None:
         )
 
 
-def _reject_unknown(value: Mapping[str, Any], allowed: frozenset[str], label: str) -> None:
+def _reject_unknown(
+    value: Mapping[str, Any], allowed: frozenset[str], label: str
+) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
         raise IRValidationError(f"unknown {label} field(s): {', '.join(unknown)}")
@@ -227,10 +235,14 @@ class VerificationDeclaration:
         )
         object.__setattr__(self, "kind", _declaration_kind(self.kind))
         object.__setattr__(self, "name", _text(self.name, "name"))
-        object.__setattr__(self, "payload", _freeze_mapping(self.payload, "payload"))
+        object.__setattr__(
+            self, "payload", _freeze_mapping(self.payload, "payload")
+        )
         object.__setattr__(self, "source_ref_ids", sources)
         object.__setattr__(self, "span_ids", spans)
-        object.__setattr__(self, "depends_on", _identifiers(self.depends_on, "depends_on"))
+        object.__setattr__(
+            self, "depends_on", _identifiers(self.depends_on, "depends_on")
+        )
         try:
             extensions = validate_extensions(self.extensions)
         except PropertyValidationError as error:
@@ -282,8 +294,12 @@ class VerificationDeclaration:
             declaration_id=value.get("declaration_id", ""),
             kind=value.get("kind", ""),
             name=value.get("name", ""),
-            payload=FrozenMap(_mapping(value.get("payload", value.get("body", {})), "payload")),
-            source_ref_ids=tuple(value.get("source_ref_ids", value.get("source_refs", ()))),
+            payload=FrozenMap(
+                _mapping(value.get("payload", value.get("body", {})), "payload")
+            ),
+            source_ref_ids=tuple(
+                value.get("source_ref_ids", value.get("source_refs", ()))
+            ),
             span_ids=tuple(value.get("span_ids", ())),
             depends_on=tuple(value.get("depends_on", ())),
             extensions=FrozenMap(_mapping(value.get("extensions", {}), "extensions")),
@@ -310,9 +326,16 @@ class VerificationBound:
         )
         kind = _boundedness_kind(self.kind)
         limits = _freeze_mapping(self.limits, "limits")
-        if kind not in {BoundednessKind.UNBOUNDED, BoundednessKind.NOT_APPLICABLE} and not limits:
+        if (
+            kind
+            not in {BoundednessKind.UNBOUNDED, BoundednessKind.NOT_APPLICABLE}
+            and not limits
+        ):
             raise IRValidationError("bounded VerificationBound.limits must not be empty")
-        if kind in {BoundednessKind.UNBOUNDED, BoundednessKind.NOT_APPLICABLE} and limits:
+        if (
+            kind in {BoundednessKind.UNBOUNDED, BoundednessKind.NOT_APPLICABLE}
+            and limits
+        ):
             raise IRValidationError(
                 "unbounded and not-applicable VerificationBound.limits must be empty"
             )
@@ -332,7 +355,9 @@ class VerificationBound:
         object.__setattr__(self, "kind", kind)
         object.__setattr__(self, "limits", limits)
         if self.description:
-            object.__setattr__(self, "description", _text(self.description, "description"))
+            object.__setattr__(
+                self, "description", _text(self.description, "description")
+            )
         object.__setattr__(self, "source_ref_ids", sources)
         object.__setattr__(self, "span_ids", spans)
         try:
@@ -380,7 +405,9 @@ class VerificationBound:
             kind=value.get("kind", ""),
             limits=FrozenMap(_mapping(value.get("limits", {}), "limits")),
             description=value.get("description", ""),
-            source_ref_ids=tuple(value.get("source_ref_ids", value.get("source_refs", ()))),
+            source_ref_ids=tuple(
+                value.get("source_ref_ids", value.get("source_refs", ()))
+            ),
             span_ids=tuple(value.get("span_ids", ())),
             extensions=FrozenMap(_mapping(value.get("extensions", {}), "extensions")),
         )
@@ -527,7 +554,9 @@ class SoftwareVerificationIR:
         self.validate()
         computed = self._compute_identity()
         if self.document_id and self.document_id != computed.cid:
-            raise IRValidationError("document_id does not match canonical semantic content")
+            raise IRValidationError(
+                "document_id does not match canonical semantic content"
+            )
         object.__setattr__(self, "document_id", computed.cid)
 
     @property
@@ -558,34 +587,48 @@ class SoftwareVerificationIR:
 
         return {
             "artifacts": [
-                item.to_dict() for item in sorted(self.artifacts, key=lambda item: item.artifact_id)
+                item.to_dict()
+                for item in sorted(self.artifacts, key=lambda item: item.artifact_id)
             ],
             "assumptions": [
                 item.to_dict()
-                for item in sorted(self.assumptions, key=lambda item: item.assumption_id)
+                for item in sorted(
+                    self.assumptions, key=lambda item: item.assumption_id
+                )
             ],
             "bounds": [
-                item.to_dict() for item in sorted(self.bounds, key=lambda item: item.bound_id)
+                item.to_dict()
+                for item in sorted(self.bounds, key=lambda item: item.bound_id)
             ],
             "declarations": [
                 item.to_dict()
-                for item in sorted(self.declarations, key=lambda item: item.declaration_id)
+                for item in sorted(
+                    self.declarations, key=lambda item: item.declaration_id
+                )
             ],
             "diagnostics": [
                 item.to_dict()
-                for item in sorted(self.diagnostics, key=lambda item: item.diagnostic_id)
+                for item in sorted(
+                    self.diagnostics, key=lambda item: item.diagnostic_id
+                )
             ],
             "extensions": self.extensions.to_dict(),
             "metadata": self.metadata.to_dict(),
             "properties": [
                 item.to_dict()
-                for item in sorted(self.properties, key=lambda item: item.property_id)
+                for item in sorted(
+                    self.properties, key=lambda item: item.property_id
+                )
             ],
             "schema_version": self.schema_version,
             "sources": [
-                item.to_dict() for item in sorted(self.sources, key=lambda item: item.ref_id)
+                item.to_dict()
+                for item in sorted(self.sources, key=lambda item: item.ref_id)
             ],
-            "spans": [item.to_dict() for item in sorted(self.spans, key=lambda item: item.span_id)],
+            "spans": [
+                item.to_dict()
+                for item in sorted(self.spans, key=lambda item: item.span_id)
+            ],
         }
 
     deterministic_dict = semantic_dict
@@ -611,7 +654,9 @@ class SoftwareVerificationIR:
         """Validate source maps and every cross-reference in the document."""
 
         if self.schema_version != SOFTWARE_VERIFICATION_IR_SCHEMA_VERSION:
-            raise IRValidationError(f"unsupported schema_version {self.schema_version!r}")
+            raise IRValidationError(
+                f"unsupported schema_version {self.schema_version!r}"
+            )
         if not self.sources:
             raise IRValidationError("a source-grounded document requires sources")
 
@@ -695,11 +740,9 @@ class SoftwareVerificationIR:
             )
 
         diagnostic_ids = {item.diagnostic_id for item in self.diagnostics}
-        valid_diagnostic_subjects = (
-            valid_subjects
-            | {item.property_id for item in self.properties}
-            | {item.artifact_id for item in self.artifacts}
-        )
+        valid_diagnostic_subjects = valid_subjects | {
+            item.property_id for item in self.properties
+        } | {item.artifact_id for item in self.artifacts}
         for diagnostic in self.diagnostics:
             diagnostic.validate()
             self._known(
@@ -772,7 +815,9 @@ class SoftwareVerificationIR:
         span_ids = getattr(item, "span_ids")
         cls._known(source_ref_ids, source_ids, f"{item_id}.source_ref_ids")
         cls._known(span_ids, set(spans), f"{item_id}.span_ids")
-        cls._validate_span_sources(source_ref_ids, span_ids, spans, str(item_id))
+        cls._validate_span_sources(
+            source_ref_ids, span_ids, spans, str(item_id)
+        )
 
     @staticmethod
     def _validate_span_sources(
@@ -790,7 +835,9 @@ class SoftwareVerificationIR:
                 }
             )
             if unlisted:
-                raise IRValidationError(f"{label} spans belong to unlisted sources {unlisted}")
+                raise IRValidationError(
+                    f"{label} spans belong to unlisted sources {unlisted}"
+                )
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> "SoftwareVerificationIR":
@@ -818,10 +865,12 @@ class SoftwareVerificationIR:
         )
         return cls(
             sources=tuple(
-                SourceRef.from_dict(_mapping(item, "source")) for item in value.get("sources", ())
+                SourceRef.from_dict(_mapping(item, "source"))
+                for item in value.get("sources", ())
             ),
             spans=tuple(
-                SourceSpan.from_dict(_mapping(item, "span")) for item in value.get("spans", ())
+                SourceSpan.from_dict(_mapping(item, "span"))
+                for item in value.get("spans", ())
             ),
             declarations=tuple(
                 VerificationDeclaration.from_dict(_mapping(item, "declaration"))
@@ -849,19 +898,29 @@ class SoftwareVerificationIR:
             ),
             metadata=FrozenMap(_mapping(value.get("metadata", {}), "metadata")),
             extensions=FrozenMap(_mapping(value.get("extensions", {}), "extensions")),
-            observations=FrozenMap(_mapping(value.get("observations", {}), "observations")),
+            observations=FrozenMap(
+                _mapping(value.get("observations", {}), "observations")
+            ),
             document_id=value.get("document_id", ""),
-            schema_version=value.get("schema_version", SOFTWARE_VERIFICATION_IR_SCHEMA_VERSION),
+            schema_version=value.get(
+                "schema_version", SOFTWARE_VERIFICATION_IR_SCHEMA_VERSION
+            ),
         )
 
     @classmethod
-    def from_json(cls, value: str | bytes | bytearray) -> "SoftwareVerificationIR":
+    def from_json(
+        cls, value: str | bytes | bytearray
+    ) -> "SoftwareVerificationIR":
         try:
             decoded = json.loads(value)
         except (TypeError, UnicodeDecodeError, json.JSONDecodeError) as error:
-            raise IRValidationError("software-verification document JSON is malformed") from error
+            raise IRValidationError(
+                "software-verification document JSON is malformed"
+            ) from error
         if not isinstance(decoded, Mapping):
-            raise IRValidationError("software-verification document JSON must contain an object")
+            raise IRValidationError(
+                "software-verification document JSON must contain an object"
+            )
         return cls.from_dict(decoded)
 
 

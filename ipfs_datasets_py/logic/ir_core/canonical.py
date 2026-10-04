@@ -25,7 +25,6 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from decimal import Decimal
 from enum import Enum
-from functools import lru_cache
 import json
 import math
 import unicodedata
@@ -69,7 +68,7 @@ def _decode_pointer_segment(segment: str) -> str:
     return "".join(result)
 
 
-def _parse_pointer_uncached(pointer: str) -> tuple[str, ...]:
+def _parse_pointer(pointer: str) -> tuple[str, ...]:
     if not isinstance(pointer, str):
         raise TypeError("collection paths must be strings")
     if pointer == "":
@@ -77,22 +76,6 @@ def _parse_pointer_uncached(pointer: str) -> tuple[str, ...]:
     if not pointer.startswith("/"):
         raise CanonicalizationError(f"collection path {pointer!r} must be an RFC 6901 JSON Pointer")
     return tuple(_decode_pointer_segment(part) for part in pointer[1:].split("/"))
-
-
-@lru_cache(maxsize=512)
-def _cached_pointer_parts(pointer: str) -> tuple[str, ...]:
-    """Reuse only immutable syntax, never canonical payloads or proof verdicts."""
-    return _parse_pointer_uncached(pointer)
-
-
-def _parse_pointer(pointer: str) -> tuple[str, ...]:
-    # Bound retained key length as well as entry count. Exact built-in strings
-    # have stable equality/hash behavior; subclasses keep the original parser
-    # path so their validation hooks and hashability remain unchanged. Parsing
-    # errors are never cached, and callers only receive immutable tuples.
-    if type(pointer) is str and len(pointer) <= 2048:
-        return _cached_pointer_parts(pointer)
-    return _parse_pointer_uncached(pointer)
 
 
 def _encode_pointer_segment(segment: str) -> str:

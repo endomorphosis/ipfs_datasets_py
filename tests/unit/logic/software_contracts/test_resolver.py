@@ -79,7 +79,9 @@ def composition(*, aliases=(), optional_modules=()) -> RepositoryComposition:
 
 
 def edge_by_local(resolver: SymbolResolver, local_name: str):
-    return next(edge for edge in resolver.resolve_imports() if edge.local_name == local_name)
+    return next(
+        edge for edge in resolver.resolve_imports() if edge.local_name == local_name
+    )
 
 
 def test_cross_repository_imports_aliases_and_reexports_bind_pinned_revisions() -> None:
@@ -142,7 +144,8 @@ from hallucinate_app.runtime import load as hallucinate_load
     package_export = next(
         edge
         for edge in resolver.resolve_exports()
-        if edge.source_module == "ipfs_datasets_py" and edge.exported_name == "load_dataset"
+        if edge.source_module == "ipfs_datasets_py"
+        and edge.exported_name == "load_dataset"
     )
     assert package_export.via_import_id is not None
     assert package_export.resolution.status == STATUS_DEFINITE
@@ -204,13 +207,10 @@ dynamic = __import__(name)
     assert optional.status == STATUS_OPTIONAL
     assert optional.is_optional
 
-    assert (
-        resolver.resolve_module(
-            "....outside",
-            source=consumer,
-        ).status
-        == STATUS_UNRESOLVED
-    )
+    assert resolver.resolve_module(
+        "....outside",
+        source=consumer,
+    ).status == STATUS_UNRESOLVED
 
 
 def test_incomplete_alias_may_set_is_unknown_not_guessed() -> None:
@@ -235,7 +235,9 @@ def test_incomplete_alias_may_set_is_unknown_not_guessed() -> None:
     )
     result = resolver.resolve_module("selected_backend")
     assert result.status == STATUS_UNRESOLVED
-    assert [item.module for item in result.candidates] == ["ipfs_datasets_py.backend_a"]
+    assert [item.module for item in result.candidates] == [
+        "ipfs_datasets_py.backend_a"
+    ]
 
 
 def test_package_mirror_is_ignored_and_stale_authority_is_revision_mismatch() -> None:
@@ -263,7 +265,9 @@ def test_package_mirror_is_ignored_and_stale_authority_is_revision_mismatch() ->
 
     result = edge_by_local(resolver, "load").resolution
     assert result.status == STATUS_REVISION_MISMATCH
-    assert {item.repository_id for item in result.candidates} == {"repository:datasets"}
+    assert {item.repository_id for item in result.candidates} == {
+        "repository:datasets"
+    }
     graph = resolver.resolve()
     assert mirror.cid in graph.ignored_mirror_record_cids
     assert authoritative.cid in graph.stale_record_cids
@@ -294,7 +298,9 @@ value = api.fetch()
     assert imported.resolution.status == STATUS_DEFINITE
 
     api_fetch = next(
-        item for item in consumer.references if item.name == "api.fetch" and item.context == "call"
+        item
+        for item in consumer.references
+        if item.name == "api.fetch" and item.context == "call"
     )
     # The imported object is a variable and its runtime class is not encoded in
     # lexical AST facts, so the method target remains explicitly missing.
@@ -333,7 +339,9 @@ def test_js_family_relative_specifier_resolves_without_a_module_loader() -> None
             source_extensions=(".ts",),
         ),
         module=replace(source_base.module, name="swissknife.src.app"),
-        imports=tuple(replace(item, module="./client.js") for item in source_base.imports),
+        imports=tuple(
+            replace(item, module="./client.js") for item in source_base.imports
+        ),
     )
     resolver = SymbolResolver(composition(), (source, target))
     edge = edge_by_local(resolver, "client")
@@ -392,7 +400,8 @@ class NotRunner:
     structural = next(
         item
         for item in relations
-        if item.implementation.qualified_name == "ipfs_kit_py.runners.StructuralRunner"
+        if item.implementation.qualified_name
+        == "ipfs_kit_py.runners.StructuralRunner"
         and item.protocol.qualified_name == "ipfs_datasets_py.protocols.Runner"
     )
     assert structural.kind == "structural"

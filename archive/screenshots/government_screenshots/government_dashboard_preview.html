@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Government Sources Analysis Dashboard</title>
+    <style>
+        :root {
+            --government-primary: #002868;
+            --government-secondary: #bf0a30; 
+            --government-accent: #c5b358;
+            --government-light: #f8f9fa;
+            --government-dark: #1a1a1a;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--government-light) 0%, #e8eaf0 100%);
+            color: var(--government-dark);
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--government-primary) 0%, #003d7a 100%);
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--government-accent);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: var(--government-primary);
+        }
+        
+        .logo h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255,255,255,0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4CAF50;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid var(--government-primary);
+            transition: transform 0.2s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--government-primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .main-panel {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .panel-header {
+            background: var(--government-primary);
+            color: white;
+            padding: 1rem 1.5rem;
+            font-weight: 600;
+        }
+        
+        .panel-content {
+            padding: 1.5rem;
+        }
+        
+        .source-list {
+            list-style: none;
+        }
+        
+        .source-item {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            background: var(--government-light);
+            border-radius: 8px;
+            border-left: 4px solid var(--government-accent);
+        }
+        
+        .source-name {
+            font-weight: 600;
+            color: var(--government-primary);
+        }
+        
+        .source-docs {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .analysis-tabs {
+            display: flex;
+            background: #f0f2f5;
+            border-radius: 8px;
+            padding: 0.25rem;
+            margin-bottom: 1rem;
+        }
+        
+        .tab-button {
+            flex: 1;
+            padding: 0.75rem;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+        
+        .tab-button.active {
+            background: var(--government-primary);
+            color: white;
+        }
+        
+        .query-results {
+            margin-top: 1rem;
+        }
+        
+        .query-item {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            border-left: 3px solid var(--government-secondary);
+        }
+        
+        .query-type {
+            font-weight: 600;
+            color: var(--government-primary);
+            margin-bottom: 0.25rem;
+        }
+        
+        .query-text {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .footer {
+            background: var(--government-primary);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+        
+        .test-results {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .result-item {
+            text-align: center;
+            padding: 1rem;
+            background: var(--government-light);
+            border-radius: 8px;
+        }
+        
+        .result-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--government-primary);
+        }
+        
+        .result-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 0.25rem;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">🏛️</div>
+                <div>
+                    <h1>Government Sources Analysis Dashboard</h1>
+                    <p style="font-size: 0.9rem; opacity: 0.9;">White House • Congress • Federal Register</p>
+                </div>
+            </div>
+            <div class="connection-status">
+                <div class="status-dot"></div>
+                <span>Connected</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">75</div>
+                <div class="stat-label">Government Documents Processed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">20</div>
+                <div class="stat-label">Government Entities Extracted</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">5</div>
+                <div class="stat-label">GraphRAG Queries Executed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">96%</div>
+                <div class="stat-label">Document Admissibility Rate</div>
+            </div>
+        </div>
+
+        <div class="content-grid">
+            <div class="main-panel">
+                <div class="panel-header">
+                    🔍 GraphRAG Query Results
+                </div>
+                <div class="panel-content">
+                    <div class="analysis-tabs">
+                        <button class="tab-button active">Recent Queries</button>
+                        <button class="tab-button">Entity Analysis</button>
+                        <button class="tab-button">Timeline View</button>
+                    </div>
+                    
+                    <div class="query-results">
+                        <div class="query-item">
+                            <div class="query-type">Semantic Query - Data Scientist</div>
+                            <div class="query-text">"government policy decisions" → 15 results in 1.02s</div>
+                        </div>
+                        <div class="query-item">
+                            <div class="query-type">Entity Query - Historian</div>
+                            <div class="query-text">"White House" → 8 results in 1.03s</div>
+                        </div>
+                        <div class="query-item">
+                            <div class="query-type">Relationship Query - Lawyer</div>
+                            <div class="query-text">"President Biden AND Congress" → 15 results in 0.72s</div>
+                        </div>
+                        <div class="query-item">
+                            <div class="query-type">Cross-Document Query - Historian</div>
+                            <div class="query-text">"regulatory changes" → 13 results in 0.84s</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="main-panel">
+                <div class="panel-header">
+                    📊 Government Sources
+                </div>
+                <div class="panel-content">
+                    <ul class="source-list">
+                        <li class="source-item">
+                            <div>
+                                <div class="source-name">🏛️ White House</div>
+                                <div class="source-docs">25 executive documents</div>
+                            </div>
+                        </li>
+                        <li class="source-item">
+                            <div>
+                                <div class="source-name">🏛️ Congress</div>
+                                <div class="source-docs">25 legislative documents</div>
+                            </div>
+                        </li>
+                        <li class="source-item">
+                            <div>
+                                <div class="source-name">📋 Federal Register</div>
+                                <div class="source-docs">25 regulatory notices</div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-results">
+            <h2 style="color: var(--government-primary); margin-bottom: 1rem;">🎯 Professional Analysis Results</h2>
+            
+            <div class="result-grid">
+                <div class="result-item">
+                    <div class="result-value">82%</div>
+                    <div class="result-label">ML Model Accuracy</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-value">12</div>
+                    <div class="result-label">Topic Clusters</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-value">53</div>
+                    <div class="result-label">Cross-References</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-value">7 days</div>
+                    <div class="result-label">Temporal Coverage</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-value">72/75</div>
+                    <div class="result-label">Admissible Evidence</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-value">20 nodes</div>
+                    <div class="result-label">Knowledge Graph</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2025 Government Sources Analysis Dashboard - Secure • Compliant • Professional</p>
+    </footer>
+</body>
+</html>

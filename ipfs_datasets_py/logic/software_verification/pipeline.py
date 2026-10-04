@@ -126,7 +126,8 @@ _UNARY_OP_TO_SMT: Final[dict[str, SmtTermKind]] = {
 }
 
 
-from .codebase_pipeline import PipelineError
+class PipelineError(ValueError):
+    """Fail-closed pipeline error."""
 
 
 class UnsupportedConstructError(PipelineError):
@@ -178,7 +179,45 @@ def _symbol_smt_name(symbol: ProgramSymbol) -> str:
     return f"{smt_sanitize(symbol.name or 'symbol', prefix='v')[:64]}_{digest}"
 
 
-from .codebase_pipeline import ContractSpec
+@dataclass(frozen=True, slots=True)
+class ContractSpec:
+    """Declarative pre/post conditions for a named source function.
+
+    Expression strings are Python expression source (``ast.parse(..., mode="eval")``)
+    over function parameter names and the reserved name ``result``.
+    """
+
+    function_name: str
+    preconditions: tuple[str, ...] = ()
+    postconditions: tuple[str, ...] = ()
+    contract_id: str = ""
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self, "function_name", _text(self.function_name, "function_name")
+        )
+        object.__setattr__(
+            self,
+            "preconditions",
+            tuple(_text(item, "precondition") for item in self.preconditions),
+        )
+        object.__setattr__(
+            self,
+            "postconditions",
+            tuple(_text(item, "postcondition") for item in self.postconditions),
+        )
+        contract_id = self.contract_id.strip() if isinstance(self.contract_id, str) else ""
+        if not contract_id:
+            contract_id = _safe_id("contract", self.function_name)
+        object.__setattr__(self, "contract_id", contract_id)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "contract_id": self.contract_id,
+            "function_name": self.function_name,
+            "postconditions": list(self.postconditions),
+            "preconditions": list(self.preconditions),
+        }
 
 
 @dataclass(frozen=True, slots=True)

@@ -65,7 +65,9 @@ class ScriptDescriptor:
         if not isinstance(self.encoding, AddressEncoding):
             raise InvalidRequestError("encoding must be an AddressEncoding")
         if self.script_hex is not None:
-            if not isinstance(self.script_hex, str) or not _HEX_RE.fullmatch(self.script_hex):
+            if not isinstance(self.script_hex, str) or not _HEX_RE.fullmatch(
+                self.script_hex
+            ):
                 raise InvalidRequestError("script_hex must be even-length hex")
             object.__setattr__(self, "script_hex", self.script_hex.lower())
         if self.address is not None and not str(self.address).strip():
@@ -248,7 +250,12 @@ def classify_script_hex(script_hex: str | None) -> ScriptType:
     ):
         return ScriptType.P2PKH
     # P2SH: OP_HASH160 <20> OP_EQUAL
-    if len(script) == 23 and script[0] == 0xA9 and script[1] == 0x14 and script[22] == 0x87:
+    if (
+        len(script) == 23
+        and script[0] == 0xA9
+        and script[1] == 0x14
+        and script[22] == 0x87
+    ):
         return ScriptType.P2SH
     # P2WPKH: 0 <20>
     if len(script) == 22 and script[0] == 0x00 and script[1] == 0x14:
@@ -266,7 +273,11 @@ def classify_script_hex(script_hex: str | None) -> ScriptType:
     if script and script[-1] == 0xAE:
         return ScriptType.MULTISIG
     # compressed/uncompressed P2PK
-    if len(script) in (35, 67) and script[-1] == 0xAC and script[0] in (33, 65):
+    if (
+        len(script) in (35, 67)
+        and script[-1] == 0xAC
+        and script[0] in (33, 65)
+    ):
         return ScriptType.P2PK
     return ScriptType.UNKNOWN
 
@@ -374,7 +385,8 @@ def describe_address(
             expected.legacy_p2sh_versions
         ):
             raise NormalizationError(
-                f"address network mismatch for configured network {expected.network.value}"
+                f"address network mismatch for configured network "
+                f"{expected.network.value}"
             )
         matched = expected
         if version in expected.legacy_p2pkh_versions:
@@ -412,7 +424,10 @@ def describe_script(
         descriptor = describe_address(address, network=network)
         if script_hex is not None:
             classified = classify_script_hex(script_hex)
-            if classified is not ScriptType.UNKNOWN and classified is not descriptor.script_type:
+            if (
+                classified is not ScriptType.UNKNOWN
+                and classified is not descriptor.script_type
+            ):
                 raise NormalizationError(
                     "script_hex classification disagrees with address type "
                     f"({classified.value} vs {descriptor.script_type.value})"

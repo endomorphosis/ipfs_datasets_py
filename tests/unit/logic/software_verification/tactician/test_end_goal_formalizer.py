@@ -264,10 +264,18 @@ def test_controlled_language_round_trip_semantic_identity(
     assert original.bounds.max_steps == replayed.bounds.max_steps
     assert original.assurance_target == replayed.assurance_target
     assert original.logic_family == replayed.logic_family
-    assert set(original.acceptance_evidence) == set(replayed.acceptance_evidence)
+    assert set(original.acceptance_evidence) == set(
+        replayed.acceptance_evidence
+    )
     assert len(original.assumptions) == len(replayed.assumptions)
-    assert original.assumptions[0].assumption_class == replayed.assumptions[0].assumption_class
-    assert original.assumptions[0].statement == replayed.assumptions[0].statement
+    assert (
+        original.assumptions[0].assumption_class
+        == replayed.assumptions[0].assumption_class
+    )
+    assert (
+        original.assumptions[0].statement
+        == replayed.assumptions[0].statement
+    )
 
 
 def test_render_controlled_language_is_deterministic(
@@ -299,7 +307,9 @@ def test_round_trip_twice_is_stable(formalizer: EndGoalFormalizer) -> None:
     _, mid, d1, d2 = formalizer.round_trip(request)
     assert d1 == d2
     rendered = render_controlled_language(mid)
-    again = formalizer.formalize(_request(text=rendered, prefer_controlled_language=True))
+    again = formalizer.formalize(
+        _request(text=rendered, prefer_controlled_language=True)
+    )
     assert again.candidates
     third = again.candidates[0].end_goal
     # Re-render and compare semantic digests via another round trip.
@@ -370,7 +380,9 @@ def test_prose_universal_reachability(formalizer: EndGoalFormalizer) -> None:
 
 def test_prose_invariance(formalizer: EndGoalFormalizer) -> None:
     text = "The ready flag remains an invariant after initialization."
-    result = formalizer.formalize(_request(text=text, prefer_controlled_language=False))
+    result = formalizer.formalize(
+        _request(text=text, prefer_controlled_language=False)
+    )
     goal = result.candidates[0].end_goal
     assert goal.property_class is PropertyClass.INVARIANCE
     assert QuantifierKind.ALWAYS in goal.quantifiers
@@ -378,7 +390,9 @@ def test_prose_invariance(formalizer: EndGoalFormalizer) -> None:
 
 def test_prose_termination(formalizer: EndGoalFormalizer) -> None:
     text = "The program terminates within 1000 ms."
-    result = formalizer.formalize(_request(text=text, prefer_controlled_language=False))
+    result = formalizer.formalize(
+        _request(text=text, prefer_controlled_language=False)
+    )
     goal = result.candidates[0].end_goal
     assert goal.property_class is PropertyClass.TERMINATION
     assert goal.bounds.wall_time_ms == 1000
@@ -397,7 +411,9 @@ def test_every_clause_maps_to_prompt_or_repository_spans(
     assert goal.provenance, "expected non-empty phrase provenance"
 
     prompt_refs = set(goal.source.source_ref_ids)
-    assert "source:prompt" in prompt_refs or any("prompt" in ref for ref in prompt_refs)
+    assert "source:prompt" in prompt_refs or any(
+        "prompt" in ref for ref in prompt_refs
+    )
     assert "source:lease.py" in prompt_refs
 
     # Every provenance row binds source refs and span ids with ordered offsets.
@@ -463,8 +479,12 @@ def test_prose_provenance_offsets_lie_within_prompt(
         "W.l.o.g. the graph is connected.",
     ],
 )
-def test_hidden_assumptions_are_rejected(formalizer: EndGoalFormalizer, phrase: str) -> None:
-    result = formalizer.formalize(_request(text=phrase, prefer_controlled_language=False))
+def test_hidden_assumptions_are_rejected(
+    formalizer: EndGoalFormalizer, phrase: str
+) -> None:
+    result = formalizer.formalize(
+        _request(text=phrase, prefer_controlled_language=False)
+    )
     assert result.status is FormalizationStatus.REJECTED
     assert result.candidates == ()
     assert any(r.code == "hidden_assumption" for r in result.rejections)
@@ -472,7 +492,11 @@ def test_hidden_assumptions_are_rejected(formalizer: EndGoalFormalizer, phrase: 
 
 
 def test_declared_assume_is_accepted(formalizer: EndGoalFormalizer) -> None:
-    text = "PROPERTY safety\nASSUME hypothetical: tokens are totally ordered\nTARGET phase=ready\n"
+    text = (
+        "PROPERTY safety\n"
+        "ASSUME hypothetical: tokens are totally ordered\n"
+        "TARGET phase=ready\n"
+    )
     result = formalizer.formalize(
         _request(
             text=text,
@@ -522,7 +546,11 @@ def test_hidden_overlay_assumption_rejected(
 
 
 def test_denied_identifier_rejected(formalizer: EndGoalFormalizer) -> None:
-    text = "PROPERTY safety\nACTOR evil\nTARGET phase=ready\n"
+    text = (
+        "PROPERTY safety\n"
+        "ACTOR evil\n"
+        "TARGET phase=ready\n"
+    )
     result = formalizer.formalize(
         _request(
             text=text,
@@ -543,7 +571,10 @@ def test_learned_proposal_is_candidate_only(
     formalizer: EndGoalFormalizer,
 ) -> None:
     text = (
-        "PROPERTY existential_reachability\nACTOR scheduler\nTARGET phase=ready\nTRANSITION claim\n"
+        "PROPERTY existential_reachability\n"
+        "ACTOR scheduler\n"
+        "TARGET phase=ready\n"
+        "TRANSITION claim\n"
     )
     learned = {
         "property_class": "universal_reachability",
@@ -564,7 +595,9 @@ def test_learned_proposal_is_candidate_only(
     assert result.status is FormalizationStatus.CANDIDATE
     assert len(result.candidates) >= 2
     learned_candidates = [
-        c for c in result.candidates if c.mode is FormalizationMode.LEARNED_CANDIDATE
+        c
+        for c in result.candidates
+        if c.mode is FormalizationMode.LEARNED_CANDIDATE
     ]
     assert learned_candidates, "expected a learned candidate"
     learned_c = learned_candidates[0]
@@ -605,8 +638,13 @@ def test_learned_proposal_ungrounded_identifier_rejected(
         )
     )
     # Deterministic candidate may still succeed; learned path is rejected.
-    assert any(r.code == "learned_ungrounded_identifier" for r in result.rejections)
-    assert all(c.mode is not FormalizationMode.LEARNED_CANDIDATE for c in result.candidates)
+    assert any(
+        r.code == "learned_ungrounded_identifier" for r in result.rejections
+    )
+    assert all(
+        c.mode is not FormalizationMode.LEARNED_CANDIDATE
+        for c in result.candidates
+    )
 
 
 def test_learned_hidden_assumption_rejected(
@@ -625,7 +663,9 @@ def test_learned_hidden_assumption_rejected(
             },
         )
     )
-    assert any(r.code == "learned_hidden_assumption" for r in result.rejections)
+    assert any(
+        r.code == "learned_hidden_assumption" for r in result.rejections
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -637,7 +677,9 @@ def test_underspecified_prose_is_explicit(
     formalizer: EndGoalFormalizer,
 ) -> None:
     text = "Please make it correct somehow."
-    result = formalizer.formalize(_request(text=text, prefer_controlled_language=False))
+    result = formalizer.formalize(
+        _request(text=text, prefer_controlled_language=False)
+    )
     assert result.status in {
         FormalizationStatus.UNDERSPECIFIED,
         FormalizationStatus.UNSUPPORTED,
@@ -656,7 +698,8 @@ def test_underspecified_prose_is_explicit(
         or "property_class" in result.underspecified_fields
         or (
             result.candidates
-            and result.candidates[0].end_goal.property_class is PropertyClass.UNSPECIFIED
+            and result.candidates[0].end_goal.property_class
+            is PropertyClass.UNSPECIFIED
         )
     )
 
@@ -664,7 +707,11 @@ def test_underspecified_prose_is_explicit(
 def test_explicit_unsupported_directive(
     formalizer: EndGoalFormalizer,
 ) -> None:
-    text = "PROPERTY safety\nUNSUPPORTED continuous_time_dynamics\nTARGET phase=ready\n"
+    text = (
+        "PROPERTY safety\n"
+        "UNSUPPORTED continuous_time_dynamics\n"
+        "TARGET phase=ready\n"
+    )
     result = formalizer.formalize(
         _request(
             text=text,
@@ -678,7 +725,9 @@ def test_explicit_unsupported_directive(
 
 
 def test_prose_unsupported_marker(formalizer: EndGoalFormalizer) -> None:
-    text = "The system reaches ready. Unsupported continuous_time_dynamics."
+    text = (
+        "The system reaches ready. Unsupported continuous_time_dynamics."
+    )
     result = formalizer.formalize(
         _request(
             text=text,
@@ -687,7 +736,10 @@ def test_prose_unsupported_marker(formalizer: EndGoalFormalizer) -> None:
         )
     )
     assert result.candidates
-    assert "continuous_time_dynamics" in result.candidates[0].end_goal.unsupported_semantics
+    assert (
+        "continuous_time_dynamics"
+        in result.candidates[0].end_goal.unsupported_semantics
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -709,12 +761,14 @@ def test_content_ids_change_when_semantics_change(
     formalizer: EndGoalFormalizer,
 ) -> None:
     a = formalizer.formalize(_request()).candidates[0].end_goal.content_id
-    alt = (
-        _controlled_language_doc()
-        .replace("existential_reachability", "universal_reachability")
-        .replace("QUANTIFIER exists", "QUANTIFIER forall")
+    alt = _controlled_language_doc().replace(
+        "existential_reachability", "universal_reachability"
+    ).replace("QUANTIFIER exists", "QUANTIFIER forall")
+    b = (
+        formalizer.formalize(_request(text=alt))
+        .candidates[0]
+        .end_goal.content_id
     )
-    b = formalizer.formalize(_request(text=alt)).candidates[0].end_goal.content_id
     assert a != b
 
 

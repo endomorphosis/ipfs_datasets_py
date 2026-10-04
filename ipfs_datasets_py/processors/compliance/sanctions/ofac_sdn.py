@@ -35,7 +35,9 @@ from .snapshot import (
     SnapshotSource,
 )
 
-OFAC_SANCTIONS_LIST_SERVICE_URL: Final[str] = "https://ofac.treasury.gov/sanctions-list-service"
+OFAC_SANCTIONS_LIST_SERVICE_URL: Final[str] = (
+    "https://ofac.treasury.gov/sanctions-list-service"
+)
 OFAC_SLS_HOST_URL: Final[str] = "https://sanctionslist.ofac.treas.gov/"
 OFAC_SDN_XML_URL: Final[str] = (
     "https://sanctionslistservice.ofac.treas.gov/api/PublicationPreview/exports/SDN.XML"
@@ -205,7 +207,9 @@ class OFACSDNParser:
         try:
             root = ET.fromstring(raw_bytes)
         except ET.ParseError as exc:
-            diagnostics.append(SnapshotDiagnostic("ofac.malformed_xml", f"Malformed XML: {exc}"))
+            diagnostics.append(
+                SnapshotDiagnostic("ofac.malformed_xml", f"Malformed XML: {exc}")
+            )
             return self._failed(source, diagnostics)
 
         schema_identity = _schema_identity(root)
@@ -413,7 +417,9 @@ class OFACSDNParser:
             return None
         return count
 
-    def _published_at(self, root: ET.Element, diagnostics: list[SnapshotDiagnostic]) -> str:
+    def _published_at(
+        self, root: ET.Element, diagnostics: list[SnapshotDiagnostic]
+    ) -> str:
         value = _first_text(root, "Publish_Date", "publishDate", "DateOfIssue")
         if not value:
             return ""
@@ -428,7 +434,11 @@ class OFACSDNParser:
             parsed = datetime.fromisoformat(candidate)
             if parsed.tzinfo is None:
                 parsed = parsed.replace(tzinfo=UTC)
-            return parsed.astimezone(UTC).isoformat(timespec="seconds").replace("+00:00", "Z")
+            return (
+                parsed.astimezone(UTC)
+                .isoformat(timespec="seconds")
+                .replace("+00:00", "Z")
+            )
         except ValueError:
             diagnostics.append(
                 SnapshotDiagnostic(
@@ -612,7 +622,8 @@ def _parse_digital_identifier(
         return None
 
     stable_id = _stable_component(
-        identifier_uid or hashlib.sha256(f"{symbol}\0{canonical}".encode()).hexdigest()[:24]
+        identifier_uid
+        or hashlib.sha256(f"{symbol}\0{canonical}".encode()).hexdigest()[:24]
     )
     return DigitalCurrencyIdentifier(
         identifier_id=f"identifier:ofac-sdn:{_stable_component(entry_uid)}:{stable_id}",
@@ -652,7 +663,9 @@ def _decode_base58(value: str, alphabet: str) -> bytes | None:
     return b"\x00" * zeros + encoded
 
 
-def _valid_base58check(value: str, alphabet: str, *, versions: set[bytes]) -> bool:
+def _valid_base58check(
+    value: str, alphabet: str, *, versions: set[bytes]
+) -> bool:
     decoded = _decode_base58(value, alphabet)
     if decoded is None or len(decoded) < 5:
         return False
@@ -759,7 +772,9 @@ def _descendants(element: ET.Element, local_name: str) -> list[ET.Element]:
     return [item for item in element.iter() if _local(item.tag) == local_name]
 
 
-def _children_or_descendants(element: ET.Element, local_name: str) -> list[ET.Element]:
+def _children_or_descendants(
+    element: ET.Element, local_name: str
+) -> list[ET.Element]:
     direct = [item for item in element if _local(item.tag) == local_name]
     return direct or _descendants(element, local_name)
 

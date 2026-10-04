@@ -38,7 +38,9 @@ from ipfs_datasets_py.logic.security_ir.cvefixes.schemas import (
 
 
 def _cid(label: str) -> str:
-    return canonical_identity({"label": label}, domain="test", schema_version="test/v1").cid
+    return canonical_identity(
+        {"label": label}, domain="test", schema_version="test/v1"
+    ).cid
 
 
 def _projection(label: str = "a") -> ProjectionResult:
@@ -122,7 +124,9 @@ def _node_by_subject(graph: CVEfixesGraph, subject_cid: str):
 
 def test_builder_materializes_reviewed_ontology_and_adjacency() -> None:
     projection = _projection()
-    graph = build_cvefixes_graph((projection,), cwe_by_cve={"CVE-2024-12345": "CWE-22"})
+    graph = build_cvefixes_graph(
+        (projection,), cwe_by_cve={"CVE-2024-12345": "CWE-22"}
+    )
 
     assert {item.node_type for item in graph.nodes} == {
         item.value
@@ -138,7 +142,9 @@ def test_builder_materializes_reviewed_ontology_and_adjacency() -> None:
             GraphNodeType.MITIGATION,
         }
     }
-    assert {item.edge_type for item in graph.edges} >= {
+    assert {
+        item.edge_type for item in graph.edges
+    } >= {
         GraphEdgeType.DESCRIBES.value,
         GraphEdgeType.AFFECTS.value,
         GraphEdgeType.FIXED_BY.value,
@@ -153,8 +159,16 @@ def test_builder_materializes_reviewed_ontology_and_adjacency() -> None:
     edge_ids = {item.cid for item in graph.edges}
     assert set(graph.outgoing) == node_ids
     assert set(graph.incoming) == node_ids
-    assert {edge_id for values in graph.outgoing.values() for edge_id in values} == edge_ids
-    assert {edge_id for values in graph.incoming.values() for edge_id in values} == edge_ids
+    assert {
+        edge_id
+        for values in graph.outgoing.values()
+        for edge_id in values
+    } == edge_ids
+    assert {
+        edge_id
+        for values in graph.incoming.values()
+        for edge_id in values
+    } == edge_ids
 
 
 def test_ontology_rejects_wrong_directions_and_edge_classes() -> None:
@@ -193,18 +207,25 @@ def test_all_edges_bind_sources_existing_endpoints_and_non_authority() -> None:
         and item.payload["authoritative"] is False
         for item in graph.edges
     )
-    assert all(item.payload["grants_execution_authority"] is False for item in graph.nodes)
+    assert all(
+        item.payload["grants_execution_authority"] is False
+        for item in graph.nodes
+    )
 
 
 def test_edges_bind_shared_evidence_instead_of_endpoint_union() -> None:
-    graph = CVEfixesGraphBuilder().build((_projection("a"), _projection("b")))
+    graph = CVEfixesGraphBuilder().build(
+        (_projection("a"), _projection("b"))
+    )
     nodes = {item.cid: item for item in graph.nodes}
 
     assert any(len(item.source_cids) > 1 for item in graph.nodes)
     for edge in graph.edges:
         source = nodes[edge.source_node_cid]
         target = nodes[edge.target_node_cid]
-        assert set(edge.source_cids) == (set(source.source_cids) & set(target.source_cids))
+        assert set(edge.source_cids) == (
+            set(source.source_cids) & set(target.source_cids)
+        )
 
 
 def test_similarity_is_separate_explicitly_non_authoritative_evidence() -> None:
@@ -220,7 +241,9 @@ def test_similarity_is_separate_explicitly_non_authoritative_evidence() -> None:
         model_config_cid=_cid("embedding-config"),
         score=0.875,
     )
-    graph = CVEfixesGraphBuilder().build((projection,), similarity_observations=(observation,))
+    graph = CVEfixesGraphBuilder().build(
+        (projection,), similarity_observations=(observation,)
+    )
 
     assert len(graph.similarity_edges) == 1
     edge = graph.similarity_edges[0]
@@ -243,7 +266,9 @@ def test_rebuild_is_deterministic_for_input_and_mapping_order() -> None:
     )
     second = CVEfixesGraphBuilder().build(
         (second_projection, first_projection),
-        cwe_by_cve=dict(reversed([("CVE-2024-12345", "CWE-22")])),
+        cwe_by_cve=dict(
+            reversed([("CVE-2024-12345", "CWE-22")])
+        ),
     )
 
     assert first == second
@@ -273,7 +298,11 @@ def test_round_trip_verifies_every_integrity_layer_and_detects_tampering() -> No
         CVEfixesGraph.from_dict(tampered_node)
 
     tampered_adjacency = deepcopy(encoded)
-    node_cid = next(key for key, edge_ids in tampered_adjacency["outgoing"].items() if edge_ids)
+    node_cid = next(
+        key
+        for key, edge_ids in tampered_adjacency["outgoing"].items()
+        if edge_ids
+    )
     tampered_adjacency["outgoing"][node_cid] = []
     with pytest.raises(GraphValidationError, match="adjacency"):
         CVEfixesGraph.from_dict(tampered_adjacency)

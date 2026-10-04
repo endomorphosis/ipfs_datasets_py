@@ -1,0 +1,199 @@
+{
+  "claim_id": "no_deposit_before_finality",
+  "counterexample": {
+    "account_ids": [],
+    "asset_ids": [],
+    "capability_ids": [
+      "{'event_id': 'event:deposit_credited:1', 'deposit_id': 'deposit:stale-rpc', 'txid': 'tx:stale-rpc', 'conditions': {'observed_ok': True, 'finalized_ok': True, 'confirmation_ok': False, 'finalized_before_credit': True, 'domain_fields_ok': True, 'reorg_ok': True}}"
+    ],
+    "claim_id": "no_deposit_before_finality",
+    "compiler_artifact": {
+      "deposit_ids": [
+        "deposit:stale-rpc"
+      ],
+      "kind": "deposit_policy",
+      "offending_ids": [
+        "deposit:stale-rpc"
+      ],
+      "txids": [
+        "tx:stale-rpc"
+      ],
+      "violating_event_ids": [
+        "event:deposit_credited:1"
+      ],
+      "violations": [
+        {
+          "conditions": {
+            "confirmation_ok": false,
+            "domain_fields_ok": true,
+            "finalized_before_credit": true,
+            "finalized_ok": true,
+            "observed_ok": true,
+            "reorg_ok": true
+          },
+          "deposit_id": "deposit:stale-rpc",
+          "event_id": "event:deposit_credited:1",
+          "txid": "tx:stale-rpc"
+        }
+      ]
+    },
+    "deposit_ids": [
+      "deposit:stale-rpc"
+    ],
+    "evidence_refs": [
+      {
+        "kind": "test_fixture",
+        "line_end": 65,
+        "line_start": 55,
+        "notes": "Fixture deposit finality policy.",
+        "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+        "review_status": "trusted_fixture"
+      },
+      {
+        "kind": "test_fixture",
+        "line_end": 77,
+        "line_start": 66,
+        "notes": "Fixture deposit credited trace.",
+        "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+        "review_status": "trusted_fixture"
+      },
+      {
+        "kind": "test_fixture",
+        "line_end": 77,
+        "line_start": 66,
+        "notes": "Fixture deposit observed trace.",
+        "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+        "review_status": "trusted_fixture"
+      },
+      {
+        "kind": "test_fixture",
+        "line_end": 77,
+        "line_start": 66,
+        "notes": "Fixture deposit finalized trace.",
+        "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+        "review_status": "trusted_fixture"
+      }
+    ],
+    "message": "Z3 found a satisfying violation trace.",
+    "soundness_notes": [],
+    "source_facts": [
+      {
+        "account_id": "account:alice_btc",
+        "asset_id": "asset:btc",
+        "block_height": 100,
+        "chain_id": "chain:btc",
+        "confirmations": 1,
+        "deposit_id": "deposit:stale-rpc",
+        "event": "deposit_observed",
+        "evidence_refs": [
+          {
+            "kind": "test_fixture",
+            "line_end": 77,
+            "line_start": 66,
+            "notes": "Fixture deposit observed trace.",
+            "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+            "review_status": "trusted_fixture"
+          }
+        ],
+        "id": "event:deposit_observed:1",
+        "timestamp": 40,
+        "txid": "tx:stale-rpc"
+      },
+      {
+        "account_id": "account:alice_btc",
+        "asset_id": "asset:btc",
+        "block_height": 106,
+        "chain_id": "chain:btc",
+        "confirmations": 1,
+        "deposit_id": "deposit:stale-rpc",
+        "event": "deposit_finalized",
+        "evidence_refs": [
+          {
+            "kind": "test_fixture",
+            "line_end": 77,
+            "line_start": 66,
+            "notes": "Fixture deposit finalized trace.",
+            "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+            "review_status": "trusted_fixture"
+          }
+        ],
+        "finality_threshold": 6,
+        "id": "event:deposit_finalized:1",
+        "timestamp": 41,
+        "txid": "tx:stale-rpc"
+      },
+      {
+        "account_id": "account:alice_btc",
+        "after_finality": true,
+        "asset_id": "asset:btc",
+        "block_height": 106,
+        "chain_id": "chain:btc",
+        "confirmations": 1,
+        "deposit_id": "deposit:stale-rpc",
+        "event": "deposit_credited",
+        "evidence_refs": [
+          {
+            "kind": "test_fixture",
+            "line_end": 77,
+            "line_start": 66,
+            "notes": "Fixture deposit credited trace.",
+            "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+            "review_status": "trusted_fixture"
+          }
+        ],
+        "finality_threshold": 6,
+        "id": "event:deposit_credited:1",
+        "rpc_observation": "stale",
+        "timestamp": 42,
+        "txid": "tx:stale-rpc"
+      },
+      {
+        "conditions": {
+          "confirmation_ok": false,
+          "domain_fields_ok": true,
+          "finalized_before_credit": true,
+          "finalized_ok": true,
+          "observed_ok": true,
+          "reorg_ok": true
+        },
+        "deposit_id": "deposit:stale-rpc",
+        "event_id": "event:deposit_credited:1",
+        "txid": "tx:stale-rpc"
+      }
+    ],
+    "trace": [],
+    "txids": [
+      "tx:stale-rpc"
+    ],
+    "violating_event_ids": [
+      "event:deposit_credited:1"
+    ],
+    "wallet_ids": [],
+    "withdrawal_ids": [],
+    "witness": {
+      "deposit_0_confirmation_ok": "False",
+      "deposit_0_domain_fields_ok": "True",
+      "deposit_0_finalized_before_credit": "True",
+      "deposit_0_finalized_ok": "True",
+      "deposit_0_observed_ok": "True",
+      "deposit_0_reorg_ok": "True"
+    }
+  },
+  "expected_claims": [
+    "no_deposit_before_finality"
+  ],
+  "matched_claims": [
+    "no_deposit_before_finality"
+  ],
+  "model_id": "minimal-btc-exchange::stale_rpc_finality_gap",
+  "mutators": [
+    "stale_rpc_finality_gap"
+  ],
+  "proof_or_trace_cid": "bafkreiasu5ptxtskqorqyuj4y6kkw5qn4dxthsigyplnxmjvhfez463e4e",
+  "risk": "high",
+  "scenario": "stale_rpc_finality_gap",
+  "schema_version": "crypto-exchange-counterexample-vector/v1",
+  "solver_name": "z3",
+  "solver_result": "sat",
+  "status": "DISPROVED"
+}

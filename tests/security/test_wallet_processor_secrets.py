@@ -478,8 +478,12 @@ def test_processor_tree_has_no_public_identity_clustering_or_custody_verbs() -> 
 
 
 def test_exception_formatting_never_embeds_canary_or_endpoint() -> None:
-    wrapped = InvalidRequestError(safe_exception_text("delegate failed", endpoint=ENDPOINT))
-    rendered = "".join(traceback.format_exception(type(wrapped), wrapped, wrapped.__traceback__))
+    wrapped = InvalidRequestError(
+        safe_exception_text("delegate failed", endpoint=ENDPOINT)
+    )
+    rendered = "".join(
+        traceback.format_exception(type(wrapped), wrapped, wrapped.__traceback__)
+    )
     assert CANARY not in str(wrapped)
     assert ENDPOINT not in str(wrapped)
     assert ENDPOINT not in rendered

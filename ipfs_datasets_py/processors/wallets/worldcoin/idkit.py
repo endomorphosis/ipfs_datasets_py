@@ -78,22 +78,16 @@ class WorldIdIdkitResult:
 
     @property
     def nullifiers(self) -> tuple[str, ...]:
-        return tuple(
-            response.nullifier_value for response in self.responses if response.nullifier_value
-        )
+        return tuple(response.nullifier_value for response in self.responses if response.nullifier_value)
 
     @property
     def session_actions(self) -> tuple[str, ...]:
-        return tuple(
-            response.session_action for response in self.responses if response.session_action
-        )
+        return tuple(response.session_action for response in self.responses if response.session_action)
 
     @property
     def verification_timestamps(self) -> tuple[int, ...]:
         return tuple(
-            response.expires_at_min
-            for response in self.responses
-            if response.expires_at_min is not None
+            response.expires_at_min for response in self.responses if response.expires_at_min is not None
         )
 
     @property
@@ -135,9 +129,7 @@ def normalize_idkit_response(payload: Mapping[str, Any]) -> WorldIdIdkitResult:
         raise WorldIdPayloadError("IDKit response environment must be staging or production")
     raw_responses = _response_items(payload)
     action_description = _optional_string_field(payload, "action_description", "IDKit response")
-    user_presence_completed = _optional_bool_field(
-        payload, "user_presence_completed", "IDKit response"
-    )
+    user_presence_completed = _optional_bool_field(payload, "user_presence_completed", "IDKit response")
     identity_attested = _optional_bool_field(payload, "identity_attested", "IDKit response")
     integrity_bundle_present = _integrity_bundle_present(payload)
 
@@ -145,9 +137,7 @@ def normalize_idkit_response(payload: Mapping[str, Any]) -> WorldIdIdkitResult:
         action = _required_string_field(payload, "action", "IDKit response")
         if _optional_string_field(payload, "session_id", "IDKit response"):
             raise WorldIdPayloadError("IDKit 3.0 responses must not include session_id")
-        responses = tuple(
-            _normalize_v3_response(response, index) for index, response in enumerate(raw_responses)
-        )
+        responses = tuple(_normalize_v3_response(response, index) for index, response in enumerate(raw_responses))
         return WorldIdIdkitResult(
             protocol_version=protocol_version,
             nonce=nonce,
@@ -168,8 +158,7 @@ def normalize_idkit_response(payload: Mapping[str, Any]) -> WorldIdIdkitResult:
         if not session_id:
             raise WorldIdPayloadError("IDKit 4.0 session responses require session_id")
         responses = tuple(
-            _normalize_v4_session_response(response, index)
-            for index, response in enumerate(raw_responses)
+            _normalize_v4_session_response(response, index) for index, response in enumerate(raw_responses)
         )
         return WorldIdIdkitResult(
             protocol_version=protocol_version,
@@ -187,9 +176,7 @@ def normalize_idkit_response(payload: Mapping[str, Any]) -> WorldIdIdkitResult:
         )
 
     action = _required_string_field(payload, "action", "IDKit response")
-    responses = tuple(
-        _normalize_v4_response(response, index) for index, response in enumerate(raw_responses)
-    )
+    responses = tuple(_normalize_v4_response(response, index) for index, response in enumerate(raw_responses))
     return WorldIdIdkitResult(
         protocol_version=protocol_version,
         nonce=nonce,
@@ -225,9 +212,7 @@ def assert_idkit_allowed_by_config(result: WorldIdIdkitResult, config: WorldIdCo
     if config.require_user_presence and result.user_presence_completed is not True:
         raise WorldIdPayloadError("IDKit response user_presence_completed is required")
     if config.enabled and result.environment and result.environment != config.environment:
-        raise WorldIdPayloadError(
-            "IDKit response environment does not match configured environment"
-        )
+        raise WorldIdPayloadError("IDKit response environment does not match configured environment")
     if result.action and result.action not in config.allowed_actions:
         raise WorldIdPayloadError("IDKit response action is not allowed")
 
@@ -280,9 +265,7 @@ def _normalize_v3_response(response: Mapping[str, Any], index: int) -> WorldIdCr
 def _normalize_v4_response(response: Mapping[str, Any], index: int) -> WorldIdCredentialResponse:
     context = f"IDKit response responses[{index}]"
     if "session_nullifier" in response:
-        raise WorldIdPayloadError(
-            f"{context} must not include session_nullifier for uniqueness proofs"
-        )
+        raise WorldIdPayloadError(f"{context} must not include session_nullifier for uniqueness proofs")
     _proof_list(response, context)
     return WorldIdCredentialResponse(
         identifier=_required_string_field(response, "identifier", context),
@@ -294,9 +277,7 @@ def _normalize_v4_response(response: Mapping[str, Any], index: int) -> WorldIdCr
     )
 
 
-def _normalize_v4_session_response(
-    response: Mapping[str, Any], index: int
-) -> WorldIdCredentialResponse:
+def _normalize_v4_session_response(response: Mapping[str, Any], index: int) -> WorldIdCredentialResponse:
     context = f"IDKit response responses[{index}]"
     if "nullifier" in response:
         raise WorldIdPayloadError(f"{context} must not include nullifier for session proofs")
@@ -334,12 +315,8 @@ def _response_items(payload: Mapping[str, Any]) -> list[Mapping[str, Any]]:
 def _proof_list(response: Mapping[str, Any], context: str) -> list[str]:
     proof = response.get("proof")
     if not isinstance(proof, list) or len(proof) < 5:
-        raise WorldIdPayloadError(
-            f"{context}.proof must be a list with at least five proof elements"
-        )
-    return [
-        _non_empty_string(value, f"{context}.proof[{index}]") for index, value in enumerate(proof)
-    ]
+        raise WorldIdPayloadError(f"{context}.proof must be a list with at least five proof elements")
+    return [_non_empty_string(value, f"{context}.proof[{index}]") for index, value in enumerate(proof)]
 
 
 def _required_string_field(source: Mapping[str, Any], name: str, context: str) -> str:

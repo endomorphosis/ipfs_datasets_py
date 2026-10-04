@@ -27,7 +27,7 @@ python -m ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon 
 
 ## HAMMER-001 Define the hammer trust contract and result schema
 
-- Status: todo
+- Status: completed
 - Priority: P0
 - Track: architecture
 - Depends on:
@@ -37,7 +37,7 @@ python -m ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon 
 
 ## HAMMER-002 Inventory existing logic, ITP, ATP, and SMT capabilities
 
-- Status: todo
+- Status: completed
 - Priority: P0
 - Track: discovery
 - Depends on:
@@ -47,7 +47,7 @@ python -m ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon 
 
 ## HAMMER-003 Build a content-addressed premise corpus and theorem manifest
 
-- Status: todo
+- Status: completed
 - Priority: P0
 - Track: data
 - Depends on: HAMMER-001, HAMMER-002
@@ -57,7 +57,7 @@ python -m ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon 
 
 ## HAMMER-004 Implement deterministic premise selection baselines
 
-- Status: todo
+- Status: completed
 - Priority: P0
 - Track: retrieval
 - Depends on: HAMMER-003
@@ -67,7 +67,7 @@ python -m ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon 
 
 ## HAMMER-005 Add an optional learned premise selector behind evaluation gates
 
-- Status: todo
+- Status: completed
 - Priority: P1
 - Track: retrieval
 - Depends on: HAMMER-004
@@ -77,7 +77,7 @@ python -m ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon 
 
 ## HAMMER-006 Create native ITP frontend adapters and goal snapshots
 
-- Status: todo
+- Status: completed
 - Priority: P0
 - Track: integration
 - Depends on: HAMMER-001, HAMMER-002
@@ -87,7 +87,7 @@ python -m ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon 
 
 ## HAMMER-007 Implement typed translation to TPTP and SMT-LIB
 
-- Status: todo
+- Status: completed
 - Priority: P0
 - Track: translation
 - Depends on: HAMMER-001, HAMMER-004, HAMMER-006
@@ -97,7 +97,7 @@ python -m ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon 
 
 ## HAMMER-008 Add policy-controlled parallel ATP and SMT portfolio execution
 
-- Status: todo
+- Status: completed
 - Priority: P0
 - Track: execution
 - Depends on: HAMMER-002, HAMMER-007
@@ -107,7 +107,7 @@ python -m ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon 
 
 ## HAMMER-009 Normalize proof traces and counterexample evidence
 
-- Status: todo
+- Status: completed
 - Priority: P0
 - Track: provenance
 - Depends on: HAMMER-008
@@ -117,7 +117,7 @@ python -m ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon 
 
 ## HAMMER-010 Implement native proof reconstruction and kernel verification
 
-- Status: todo
+- Status: completed
 - Priority: P0
 - Track: trust
 - Depends on: HAMMER-006, HAMMER-009
@@ -127,7 +127,7 @@ python -m ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon 
 
 ## HAMMER-011 Add native-automation and decomposition fallbacks
 
-- Status: todo
+- Status: completed
 - Priority: P1
 - Track: recovery
 - Depends on: HAMMER-010
@@ -137,7 +137,7 @@ python -m ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon 
 
 ## HAMMER-012 Persist replayable hammer receipts through IPFS-aware storage
 
-- Status: todo
+- Status: completed
 - Priority: P1
 - Track: storage
 - Depends on: HAMMER-003, HAMMER-009, HAMMER-010
@@ -147,7 +147,7 @@ python -m ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon 
 
 ## HAMMER-013 Expose governed MCP and CLI hammer operations
 
-- Status: todo
+- Status: completed
 - Priority: P1
 - Track: interfaces
 - Depends on: HAMMER-008, HAMMER-010, HAMMER-012
@@ -157,7 +157,7 @@ python -m ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon 
 
 ## HAMMER-014 Build end-to-end golden corpus and adversarial test suites
 
-- Status: todo
+- Status: completed
 - Priority: P0
 - Track: quality
 - Depends on: HAMMER-004, HAMMER-007, HAMMER-008, HAMMER-010, HAMMER-011, HAMMER-012
@@ -167,7 +167,7 @@ python -m ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon 
 
 ## HAMMER-015 Publish benchmarks, documentation, and release gate
 
-- Status: todo
+- Status: completed
 - Priority: P1
 - Track: release
 - Depends on: HAMMER-005, HAMMER-013, HAMMER-014

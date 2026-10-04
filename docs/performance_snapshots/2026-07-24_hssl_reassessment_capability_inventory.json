@@ -1,0 +1,59 @@
+{
+  "benchmark_script": "python -m benchmarks.logic_pipeline.runtime probe --require spacy_pipeline,symai,llm_router,hammer,leanstral_service,lean_toolchain",
+  "captured_on": "2026-07-24",
+  "notes": [
+    "This snapshot authorizes only the unchanged pilot/development reassessment matrix.",
+    "Every capability and the independent native kernel passed a bounded non-corpus live smoke.",
+    "No corpus or holdout content was opened and no production route was changed."
+  ],
+  "results": {
+    "capability_statuses": {
+      "cache_backend": "available",
+      "hammer": "available",
+      "lean_toolchain": "available",
+      "leanstral_service": "available",
+      "llm_router": "available",
+      "resource_scheduler": "available",
+      "spacy_pipeline": "available",
+      "symai": "available"
+    },
+    "evidence": "HSSLEV1207F16",
+    "freeze": {
+      "bytes_sha256": "a094342cee7bbe47607f987471192318c551edfe748d70ef85ce06f2aeaaf7e3",
+      "path": "workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/receipts/capability-freeze.json",
+      "semantic_sha256": "2446b48d1550fd5792ac9b126dd9fa2785d251f01c1ddc7afcae019889336252"
+    },
+    "frozen": true,
+    "inventory": {
+      "bytes_sha256": "91861d2fa659dddcf0fe56b7365f6b0fffa0be812846b857b539282be505d68b",
+      "path": "workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/receipts/capability-inventory.json",
+      "semantic_sha256": "9a3d1c61f9d09ebedee0ff446fb9aa72808a467ff1ea41feb8ca204eacb9948b"
+    },
+    "native_kernel": {
+      "receipt_sha256": "9c341ffbf7eefb6c517b43a028f5a5183813867ce471576b1f134527665ff92d",
+      "status": "pass"
+    },
+    "run_id": "reassessment-v2",
+    "safety": {
+      "corpus_accessed": false,
+      "fallback_used": false,
+      "holdout_accessed": false,
+      "matrix_execution_authorized": true,
+      "production_routing_changed": false,
+      "secrets_serialized": false
+    },
+    "schema": "ipfs-datasets.logic-pipeline-benchmark.capability-reassessment-snapshot.v1",
+    "source_binding": {
+      "active_checkout_unchanged": true,
+      "baseline_manifest_path": "workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/state/baseline-manifest.json",
+      "baseline_manifest_sha256": "efff421a0c0e23f9b8a53e427e86bcb4781e9a583e0a2aa94624b80e29bfb9d0",
+      "baseline_semantic_sha256": "6c7084db784022d81abc65148fb0d72a8046da881c4d4b448434b9b13af7e469",
+      "detached": true,
+      "recursive_gitlink_count": 20,
+      "recursive_gitlinks_sha256": "72f2e124dcd3c03f671cfd8641881b73272800ae0587472b6bbf6192696e4531",
+      "source_commit": "3e053f6edece026fef48c153aa5c4d62a50da3d2",
+      "worktree_receipt_sha256": "800cae053102c79c27ed530cd1cb8dd516a3627166e59aba13beb495c65bd974"
+    },
+    "status": "eligible"
+  }
+}

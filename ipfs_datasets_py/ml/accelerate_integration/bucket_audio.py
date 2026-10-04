@@ -49,8 +49,12 @@ from ...voice.workset import (
     VoiceAudioWorkset,
 )
 
-BUCKET_AUDIO_REVALIDATION_PLAN_SCHEMA_VERSION = "abby_voice_bucket_audio_revalidation_plan_v1"
-BUCKET_AUDIO_REVALIDATION_BINDING_SCHEMA_VERSION = "abby_voice_bucket_audio_revalidation_binding_v1"
+BUCKET_AUDIO_REVALIDATION_PLAN_SCHEMA_VERSION = (
+    "abby_voice_bucket_audio_revalidation_plan_v1"
+)
+BUCKET_AUDIO_REVALIDATION_BINDING_SCHEMA_VERSION = (
+    "abby_voice_bucket_audio_revalidation_binding_v1"
+)
 
 
 def _canonical_bytes(value: Any) -> bytes:
@@ -139,13 +143,18 @@ class BucketAudioRevalidationBinding:
             raise ValueError("raw_sha256 must be a full lowercase SHA-256")
         if len(self.slot_names) != len(self.slot_values):
             raise ValueError("slot names and values must have equal lengths")
-        classification = CriticalFactClassification(self.critical_fact_classification)
+        classification = CriticalFactClassification(
+            self.critical_fact_classification
+        )
         if classification is CriticalFactClassification.BOUND and not self.slot_names:
             raise ValueError("bound critical facts require at least one slot")
         if classification is CriticalFactClassification.UNCLASSIFIED:
-            raise ValueError("likely-but-unclassified critical facts cannot enter scheduled work")
-        if classification is CriticalFactClassification.NONE_DETECTED and (
-            self.slot_names or self.slot_values
+            raise ValueError(
+                "likely-but-unclassified critical facts cannot enter scheduled work"
+            )
+        if (
+            classification is CriticalFactClassification.NONE_DETECTED
+            and (self.slot_names or self.slot_values)
         ):
             raise ValueError("no-critical-facts classification must have no slots")
         if self.schema_version != BUCKET_AUDIO_REVALIDATION_BINDING_SCHEMA_VERSION:
@@ -193,7 +202,8 @@ class BucketAudioRevalidationBinding:
                 value.get("extractor_version") or LEGACY_CRITICAL_SLOT_EXTRACTOR_VERSION
             ),
             schema_version=str(
-                value.get("schema_version") or BUCKET_AUDIO_REVALIDATION_BINDING_SCHEMA_VERSION
+                value.get("schema_version")
+                or BUCKET_AUDIO_REVALIDATION_BINDING_SCHEMA_VERSION
             ),
         )
 
@@ -286,7 +296,8 @@ class BucketAudioRevalidationPlan:
             workset=workset,
             policy=policy,
             bindings=tuple(
-                BucketAudioRevalidationBinding.from_dict(item) for item in bindings_payload
+                BucketAudioRevalidationBinding.from_dict(item)
+                for item in bindings_payload
             ),
             schema_version=str(value["schema_version"]),
             revalidation_plan_id=str(value.get("revalidation_plan_id") or ""),
@@ -294,7 +305,9 @@ class BucketAudioRevalidationPlan:
         return plan
 
     @classmethod
-    def from_json(cls, value: str | bytes | bytearray) -> BucketAudioRevalidationPlan:
+    def from_json(
+        cls, value: str | bytes | bytearray
+    ) -> BucketAudioRevalidationPlan:
         if isinstance(value, bytes | bytearray):
             try:
                 value = bytes(value).decode("utf-8")
@@ -420,13 +433,17 @@ def build_bucket_audio_revalidation_plan(
                 f"verified cache SHA-256 changed for {record.response_id!r}"
             )
         detected_media = detect_media_type(payload)
-        if detected_media is None or not media_types_compatible(record.media_type, detected_media):
+        if detected_media is None or not media_types_compatible(
+            record.media_type, detected_media
+        ):
             raise BucketAudioRecoveryError(
                 f"verified cache media changed for {record.response_id!r}"
             )
         suffix = _MEDIA_SUFFIX.get(detected_media)
         if suffix is None:
-            raise BucketAudioRecoveryError(f"unsupported recovery media type {detected_media!r}")
+            raise BucketAudioRecoveryError(
+                f"unsupported recovery media type {detected_media!r}"
+            )
         persisted = resolver.persist(
             payload,
             suffix=suffix,
@@ -488,8 +505,12 @@ def build_bucket_audio_revalidation_plan(
 
     workset = VoiceAudioWorkset(
         tts_manifest=AudioWorkManifest(AudioWorkOperation.TTS),
-        asr_manifest=AudioWorkManifest(AudioWorkOperation.ASR, tuple(asr_items)),
-        validation_manifest=AudioWorkManifest(AudioWorkOperation.VALIDATE, tuple(validation_items)),
+        asr_manifest=AudioWorkManifest(
+            AudioWorkOperation.ASR, tuple(asr_items)
+        ),
+        validation_manifest=AudioWorkManifest(
+            AudioWorkOperation.VALIDATE, tuple(validation_items)
+        ),
         source_manifest_id=recovery.recovery_id,
         policy_id=selected_policy.identity,
     )

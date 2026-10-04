@@ -28,7 +28,9 @@ from typing import Any, Final
 CVEFIXES_VOCABULARY: Final = "security.cvefixes"
 CVEFIXES_VOCABULARY_NAMESPACE: Final = CVEFIXES_VOCABULARY
 CVEFIXES_VOCABULARY_VERSION: Final = "v1"
-CVEFIXES_VOCABULARY_SCHEMA_VERSION: Final = f"{CVEFIXES_VOCABULARY}/{CVEFIXES_VOCABULARY_VERSION}"
+CVEFIXES_VOCABULARY_SCHEMA_VERSION: Final = (
+    f"{CVEFIXES_VOCABULARY}/{CVEFIXES_VOCABULARY_VERSION}"
+)
 CVEFIXES_SCHEMA_VERSION: Final = CVEFIXES_VOCABULARY_SCHEMA_VERSION
 CVEFIXES_POLICY_ATTRIBUTES_KEY: Final = CVEFIXES_VOCABULARY
 
@@ -207,7 +209,9 @@ def _coerce_kind(value: CVEfixesTermKind | str) -> CVEfixesTermKind:
     try:
         return CVEfixesTermKind(value)
     except (TypeError, ValueError) as exc:
-        raise CVEfixesVocabularyError(f"unknown CVEfixes term kind: {value!r}") from exc
+        raise CVEfixesVocabularyError(
+            f"unknown CVEfixes term kind: {value!r}"
+        ) from exc
 
 
 def _reject_broadening(value: Any, field_name: str) -> str:
@@ -216,9 +220,13 @@ def _reject_broadening(value: Any, field_name: str) -> str:
     if value != value.strip():
         raise CVEfixesVocabularyError(f"{field_name} must be canonical")
     if any(character in value for character in _WILDCARD_CHARS):
-        raise CVEfixesVocabularyError(f"{field_name} must not contain wildcard syntax")
+        raise CVEfixesVocabularyError(
+            f"{field_name} must not contain wildcard syntax"
+        )
     if value.casefold() in _BROADENING_NAMES:
-        raise CVEfixesVocabularyError(f"{field_name} must not use a catch-all value")
+        raise CVEfixesVocabularyError(
+            f"{field_name} must not use a catch-all value"
+        )
     return value
 
 
@@ -226,16 +234,24 @@ def _validate_local_name(kind: CVEfixesTermKind, name: Any) -> str:
     name = _reject_broadening(name, f"{kind.value} term")
     if kind is CVEfixesTermKind.CVE:
         if _CVE_RE.fullmatch(name) is None:
-            raise CVEfixesVocabularyError(f"invalid canonical CVE classification: {name!r}")
+            raise CVEfixesVocabularyError(
+                f"invalid canonical CVE classification: {name!r}"
+            )
         return name
     if kind is CVEfixesTermKind.CWE:
         if _CWE_RE.fullmatch(name) is None:
-            raise CVEfixesVocabularyError(f"invalid canonical CWE classification: {name!r}")
+            raise CVEfixesVocabularyError(
+                f"invalid canonical CWE classification: {name!r}"
+            )
         return name
     if _LOCAL_NAME_RE.fullmatch(name) is None:
-        raise CVEfixesVocabularyError(f"{kind.value} term must be canonical lower_snake_case")
+        raise CVEfixesVocabularyError(
+            f"{kind.value} term must be canonical lower_snake_case"
+        )
     if name not in _FIXED_TERMS[kind]:
-        raise CVEfixesVocabularyError(f"unknown CVEfixes {kind.value} term: {name!r}")
+        raise CVEfixesVocabularyError(
+            f"unknown CVEfixes {kind.value} term: {name!r}"
+        )
     return name
 
 
@@ -252,7 +268,8 @@ class CVEfixesTerm:
         object.__setattr__(self, "kind", kind)
         if self.schema_version != CVEFIXES_VOCABULARY_SCHEMA_VERSION:
             raise CVEfixesVocabularyError(
-                f"unsupported CVEfixes vocabulary schema version: {self.schema_version!r}"
+                "unsupported CVEfixes vocabulary schema version: "
+                f"{self.schema_version!r}"
             )
         object.__setattr__(self, "name", _validate_local_name(kind, self.name))
 
@@ -260,7 +277,9 @@ class CVEfixesTerm:
     def canonical(self) -> str:
         """Return the stable namespaced spelling used in Security IR."""
 
-        return f"{self.schema_version}/{self.kind.value}/{self.name}"
+        return (
+            f"{self.schema_version}/{self.kind.value}/{self.name}"
+        )
 
     @property
     def policy_role(self) -> CVEfixesPolicyRole:
@@ -304,7 +323,9 @@ class CVEfixesTerm:
             schema_version=value["schema_version"],
         )
         if value["term"] != term.canonical:
-            raise CVEfixesVocabularyError("CVEfixes term does not match its typed components")
+            raise CVEfixesVocabularyError(
+                "CVEfixes term does not match its typed components"
+            )
         return term
 
 
@@ -328,15 +349,20 @@ def parse_cvefixes_term(
     prefix = f"{CVEFIXES_VOCABULARY_SCHEMA_VERSION}/"
     if not value.startswith(prefix):
         if value.startswith(f"{CVEFIXES_VOCABULARY}/"):
-            raise CVEfixesVocabularyError("unsupported CVEfixes vocabulary version")
-        raise CVEfixesVocabularyError(f"term is outside {CVEFIXES_VOCABULARY_SCHEMA_VERSION!r}")
+            raise CVEfixesVocabularyError(
+                "unsupported CVEfixes vocabulary version"
+            )
+        raise CVEfixesVocabularyError(
+            f"term is outside {CVEFIXES_VOCABULARY_SCHEMA_VERSION!r}"
+        )
     components = value[len(prefix) :].split("/")
     if len(components) != 2 or not all(components):
         raise CVEfixesVocabularyError("malformed canonical CVEfixes term")
     kind = _coerce_kind(components[0])
     if expected_kind is not None and kind is not _coerce_kind(expected_kind):
         raise CVEfixesVocabularyError(
-            f"expected a {_coerce_kind(expected_kind).value} term, received {kind.value}"
+            f"expected a {_coerce_kind(expected_kind).value} term, "
+            f"received {kind.value}"
         )
     term = CVEfixesTerm(kind, components[1])
     if term.canonical != value:
@@ -357,12 +383,16 @@ class ScopedCVEfixesTerm:
 
     def __post_init__(self) -> None:
         if not isinstance(self.term, CVEfixesTerm):
-            raise CVEfixesVocabularyError("scoped term must contain a CVEfixesTerm")
+            raise CVEfixesVocabularyError(
+                "scoped term must contain a CVEfixesTerm"
+            )
         if self.scope is not None and (
             not isinstance(self.scope, CVEfixesTerm)
             or self.scope.kind is not CVEfixesTermKind.SCOPE
         ):
-            raise CVEfixesVocabularyError("scoped term scope must be a CVEfixes scope term")
+            raise CVEfixesVocabularyError(
+                "scoped term scope must be a CVEfixes scope term"
+            )
 
     def to_dict(self) -> dict[str, str | None]:
         return {
@@ -385,19 +415,29 @@ class CVEfixesAlias:
         object.__setattr__(self, "kind", kind)
         alias = _reject_broadening(self.alias, "CVEfixes alias")
         if "/" in alias:
-            raise CVEfixesVocabularyError("CVEfixes aliases must be local names")
+            raise CVEfixesVocabularyError(
+                "CVEfixes aliases must be local names"
+            )
         object.__setattr__(self, "alias", alias)
         _validate_local_name(kind, self.canonical_name)
         if kind in _SCOPED_ALIAS_KINDS:
             if self.scope is None:
-                raise CVEfixesVocabularyError(f"{kind.value} aliases require an exact scope")
+                raise CVEfixesVocabularyError(
+                    f"{kind.value} aliases require an exact scope"
+                )
             _validate_local_name(CVEfixesTermKind.SCOPE, self.scope)
         elif self.scope is not None:
-            raise CVEfixesVocabularyError(f"{kind.value} aliases must not declare a security scope")
+            raise CVEfixesVocabularyError(
+                f"{kind.value} aliases must not declare a security scope"
+            )
 
     @property
     def target(self) -> ScopedCVEfixesTerm:
-        scope = CVEfixesTerm(CVEfixesTermKind.SCOPE, self.scope) if self.scope is not None else None
+        scope = (
+            CVEfixesTerm(CVEfixesTermKind.SCOPE, self.scope)
+            if self.scope is not None
+            else None
+        )
         return ScopedCVEfixesTerm(
             CVEfixesTerm(self.kind, self.canonical_name),
             scope,
@@ -414,15 +454,22 @@ def validate_cvefixes_aliases(
     scopedness: dict[tuple[CVEfixesTermKind, str], bool] = {}
     for value in aliases:
         if not isinstance(value, CVEfixesAlias):
-            raise CVEfixesVocabularyError("CVEfixes aliases must be CVEfixesAlias instances")
+            raise CVEfixesVocabularyError(
+                "CVEfixes aliases must be CVEfixesAlias instances"
+            )
         key = (value.kind, value.alias, value.scope)
         previous = targets.get(key)
         if previous is not None:
-            raise CVEfixesVocabularyError(f"duplicate CVEfixes alias target for {value.alias!r}")
+            raise CVEfixesVocabularyError(
+                f"duplicate CVEfixes alias target for {value.alias!r}"
+            )
         targets[key] = value.canonical_name
         alias_key = (value.kind, value.alias)
         is_scoped = value.scope is not None
-        if alias_key in scopedness and scopedness[alias_key] is not is_scoped:
+        if (
+            alias_key in scopedness
+            and scopedness[alias_key] is not is_scoped
+        ):
             raise CVEfixesVocabularyError(
                 f"alias {value.alias!r} cannot mix scoped and unscoped targets"
             )
@@ -469,7 +516,10 @@ CVEFIXES_ALIASES: Final = validate_cvefixes_aliases(
 )
 
 _ALIASES_BY_NAME: Final = MappingProxyType(
-    {(item.kind, item.alias, item.scope): item for item in CVEFIXES_ALIASES}
+    {
+        (item.kind, item.alias, item.scope): item
+        for item in CVEFIXES_ALIASES
+    }
 )
 
 
@@ -481,9 +531,13 @@ def _coerce_scope_name(value: str | CVEfixesTerm | None) -> str | None:
             raise CVEfixesVocabularyError("alias scope must be a scope term")
         return value.name
     if not isinstance(value, str):
-        raise CVEfixesVocabularyError("alias scope must be a scope term or canonical string")
+        raise CVEfixesVocabularyError(
+            "alias scope must be a scope term or canonical string"
+        )
     if value.startswith(f"{CVEFIXES_VOCABULARY_SCHEMA_VERSION}/"):
-        return parse_cvefixes_term(value, expected_kind=CVEfixesTermKind.SCOPE).name
+        return parse_cvefixes_term(
+            value, expected_kind=CVEfixesTermKind.SCOPE
+        ).name
     return _validate_local_name(CVEfixesTermKind.SCOPE, value)
 
 
@@ -507,7 +561,9 @@ def resolve_cvefixes_term(
             alias = _ALIASES_BY_NAME.get((kind, value, scope_name))
             if alias is None:
                 candidates = [
-                    item for item in CVEFIXES_ALIASES if item.kind is kind and item.alias == value
+                    item
+                    for item in CVEFIXES_ALIASES
+                    if item.kind is kind and item.alias == value
                 ]
                 if candidates and scope_name is None:
                     raise CVEfixesVocabularyError(
@@ -520,7 +576,9 @@ def resolve_cvefixes_term(
                 raise
             term = alias.target.term
     scope_term = (
-        CVEfixesTerm(CVEfixesTermKind.SCOPE, scope_name) if scope_name is not None else None
+        CVEfixesTerm(CVEfixesTermKind.SCOPE, scope_name)
+        if scope_name is not None
+        else None
     )
     return ScopedCVEfixesTerm(term, scope_term)
 
@@ -551,10 +609,14 @@ def _coerce_exact_term(
             return None
         raise CVEfixesVocabularyError(f"{kind.value} term is required")
     term = (
-        value if isinstance(value, CVEfixesTerm) else parse_cvefixes_term(value, expected_kind=kind)
+        value
+        if isinstance(value, CVEfixesTerm)
+        else parse_cvefixes_term(value, expected_kind=kind)
     )
     if term.kind is not kind:
-        raise CVEfixesVocabularyError(f"expected a {kind.value} term, received {term.kind.value}")
+        raise CVEfixesVocabularyError(
+            f"expected a {kind.value} term, received {term.kind.value}"
+        )
     return term
 
 
@@ -562,12 +624,18 @@ def _coerce_term_set(
     values: Sequence[CVEfixesTerm | str],
     kind: CVEfixesTermKind,
 ) -> tuple[CVEfixesTerm, ...]:
-    if isinstance(values, (str, bytes, bytearray)) or not isinstance(values, Sequence):
-        raise CVEfixesVocabularyError(f"{kind.value} terms must be a sequence")
+    if isinstance(values, (str, bytes, bytearray)) or not isinstance(
+        values, Sequence
+    ):
+        raise CVEfixesVocabularyError(
+            f"{kind.value} terms must be a sequence"
+        )
     terms = tuple(_coerce_exact_term(value, kind) for value in values)
     canonical = [term.canonical for term in terms if term is not None]
     if len(canonical) != len(set(canonical)):
-        raise CVEfixesVocabularyError(f"{kind.value} terms must be unique")
+        raise CVEfixesVocabularyError(
+            f"{kind.value} terms must be unique"
+        )
     return tuple(
         sorted(
             (term for term in terms if term is not None),
@@ -580,13 +648,19 @@ def _coerce_classifications(
     values: Sequence[CVEfixesTerm | str],
     kind: CVEfixesTermKind,
 ) -> tuple[CVEfixesTerm, ...]:
-    if isinstance(values, (str, bytes, bytearray)) or not isinstance(values, Sequence):
-        raise CVEfixesVocabularyError(f"{kind.value} classifications must be a sequence")
+    if isinstance(values, (str, bytes, bytearray)) or not isinstance(
+        values, Sequence
+    ):
+        raise CVEfixesVocabularyError(
+            f"{kind.value} classifications must be a sequence"
+        )
     terms: list[CVEfixesTerm] = []
     for value in values:
         if isinstance(value, CVEfixesTerm):
             term = _coerce_exact_term(value, kind)
-        elif isinstance(value, str) and value.startswith(f"{CVEFIXES_VOCABULARY_SCHEMA_VERSION}/"):
+        elif isinstance(value, str) and value.startswith(
+            f"{CVEFIXES_VOCABULARY_SCHEMA_VERSION}/"
+        ):
             term = parse_cvefixes_term(value, expected_kind=kind)
         else:
             term = CVEfixesTerm(kind, value)
@@ -594,7 +668,9 @@ def _coerce_classifications(
         terms.append(term)
     canonical = [term.canonical for term in terms]
     if len(canonical) != len(set(canonical)):
-        raise CVEfixesVocabularyError(f"{kind.value} classifications must be unique")
+        raise CVEfixesVocabularyError(
+            f"{kind.value} classifications must be unique"
+        )
     return tuple(sorted(terms, key=lambda item: item.canonical))
 
 
@@ -621,12 +697,15 @@ class CVEfixesPolicyAttributes:
     def __post_init__(self) -> None:
         if self.schema_version != CVEFIXES_VOCABULARY_SCHEMA_VERSION:
             raise CVEfixesVocabularyError(
-                f"unsupported CVEfixes policy attribute schema version: {self.schema_version!r}"
+                "unsupported CVEfixes policy attribute schema version: "
+                f"{self.schema_version!r}"
             )
         object.__setattr__(
             self,
             "action",
-            _coerce_exact_term(self.action, CVEfixesTermKind.ACTION, allow_none=True),
+            _coerce_exact_term(
+                self.action, CVEfixesTermKind.ACTION, allow_none=True
+            ),
         )
         for field_name, kind in (
             ("preconditions", CVEfixesTermKind.PRECONDITION),
@@ -641,12 +720,16 @@ class CVEfixesPolicyAttributes:
         object.__setattr__(
             self,
             "language",
-            _coerce_exact_term(self.language, CVEfixesTermKind.LANGUAGE, allow_none=True),
+            _coerce_exact_term(
+                self.language, CVEfixesTermKind.LANGUAGE, allow_none=True
+            ),
         )
         object.__setattr__(
             self,
             "scope",
-            _coerce_exact_term(self.scope, CVEfixesTermKind.SCOPE, allow_none=True),
+            _coerce_exact_term(
+                self.scope, CVEfixesTermKind.SCOPE, allow_none=True
+            ),
         )
         object.__setattr__(
             self,
@@ -719,9 +802,13 @@ class CVEfixesPolicyAttributes:
             "cve_ids": [term.canonical for term in self.cve_ids],
             "cwe_ids": [term.canonical for term in self.cwe_ids],
             "effects": [term.canonical for term in self.effects],
-            "language": (self.language.canonical if self.language is not None else None),
+            "language": (
+                self.language.canonical if self.language is not None else None
+            ),
             "mitigations": [term.canonical for term in self.mitigations],
-            "preconditions": [term.canonical for term in self.preconditions],
+            "preconditions": [
+                term.canonical for term in self.preconditions
+            ],
             "schema_version": self.schema_version,
             "scope": self.scope.canonical if self.scope is not None else None,
         }
@@ -734,7 +821,9 @@ class CVEfixesPolicyAttributes:
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> "CVEfixesPolicyAttributes":
         if not isinstance(value, Mapping):
-            raise CVEfixesVocabularyError("CVEfixes policy attributes must be a mapping")
+            raise CVEfixesVocabularyError(
+                "CVEfixes policy attributes must be a mapping"
+            )
         expected = {
             "action",
             "cve_ids",
@@ -755,7 +844,9 @@ class CVEfixesPolicyAttributes:
             if missing:
                 details.append("missing: " + ", ".join(missing))
             raise CVEfixesVocabularyError(
-                "CVEfixes policy attribute fields are not canonical (" + "; ".join(details) + ")"
+                "CVEfixes policy attribute fields are not canonical ("
+                + "; ".join(details)
+                + ")"
             )
         return cls(
             action=value["action"],
@@ -774,7 +865,9 @@ class CVEfixesPolicyAttributes:
         cls, attributes: Mapping[str, Any]
     ) -> "CVEfixesPolicyAttributes":
         if not isinstance(attributes, Mapping):
-            raise CVEfixesVocabularyError("Security IR policy attributes must be a mapping")
+            raise CVEfixesVocabularyError(
+                "Security IR policy attributes must be a mapping"
+            )
         if CVEFIXES_POLICY_ATTRIBUTES_KEY not in attributes:
             raise CVEfixesVocabularyError(
                 f"missing {CVEFIXES_POLICY_ATTRIBUTES_KEY!r} policy attributes"

@@ -25,7 +25,9 @@ async def wallet_processor_capabilities(
     """Return declared capabilities for families or a selected family/network."""
     try:
         api = mcp_api()
-        result = api.capabilities(CapabilitiesRequest(family=family, network=network))
+        result = api.capabilities(
+            CapabilitiesRequest(family=family, network=network)
+        )
         return success_response(result.to_dict())
     except Exception as exc:
         return error_response(exc)

@@ -1,0 +1,122 @@
+name: MCP Server Benchmarks
+
+on:
+  push:
+    branches: [ main, develop, copilot/** ]
+    paths:
+      - 'ipfs_datasets_py/mcp_server/**'
+      - 'benchmarks/**'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'ipfs_datasets_py/mcp_server/**'
+      - 'benchmarks/**'
+  schedule:
+    # Run benchmarks nightly at 3 AM UTC to catch regressions early.
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  benchmarks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-3.12-${{ hashFiles('requirements.txt', 'setup.py') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-3.12-
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[test]"
+          pip install pytest-benchmark anyio
+
+      - name: Validate benchmark tests are importable and runnable
+        run: |
+          pytest benchmarks/ \
+            -v --tb=short \
+            --no-header \
+            -q
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+
+      - name: Run MCP benchmark suite with timing
+        run: |
+          pytest benchmarks/ \
+            --benchmark-only \
+            --benchmark-sort=mean \
+            --benchmark-columns=min,mean,max,stddev,rounds \
+            --benchmark-json=benchmark-results.json \
+            -q --no-header
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mcp-benchmark-results-${{ github.run_id }}
+          path: benchmark-results.json
+          retention-days: 30
+
+      - name: Check benchmark regression (warn only, not fail)
+        if: github.event_name == 'pull_request'
+        run: |
+          python - <<'EOF'
+          import json, sys
+
+          try:
+              with open("benchmark-results.json") as f:
+                  data = json.load(f)
+          except FileNotFoundError:
+              print("No benchmark results found — skipping regression check.")
+              sys.exit(0)
+
+          benchmarks = data.get("benchmarks", [])
+          SLOW_THRESHOLD_MS = {
+              "test_dispatch_warm_cache": 50.0,
+              "test_schema_cache_hit": 1.0,
+              "test_pool_hit_acquire_release": 5.0,
+              "test_discover_categories": 500.0,
+          }
+
+          warnings = []
+          for bm in benchmarks:
+              name = bm["name"].split("::")[-1]
+              mean_ms = bm["stats"]["mean"] * 1000  # seconds → ms
+              threshold = SLOW_THRESHOLD_MS.get(name)
+              if threshold and mean_ms > threshold:
+                  warnings.append(
+                      f"  SLOW: {name}  mean={mean_ms:.2f}ms  threshold={threshold}ms"
+                  )
+
+          if warnings:
+              print("⚠️  Benchmark warnings (informational — not blocking):")
+              for w in warnings:
+                  print(w)
+          else:
+              print("✅ All benchmarks within expected ranges.")
+          EOF

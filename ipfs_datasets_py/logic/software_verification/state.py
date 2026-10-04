@@ -86,7 +86,9 @@ class LabelKind(StrEnum):
 
 def _text(value: object, label: str) -> str:
     if not isinstance(value, str) or not value or value.strip() != value or "\x00" in value:
-        raise StateValidationError(f"{label} must be a non-empty trimmed string without NUL bytes")
+        raise StateValidationError(
+            f"{label} must be a non-empty trimmed string without NUL bytes"
+        )
     return value
 
 
@@ -278,9 +280,13 @@ class StateVariable:
         boundedness = _enum(self.boundedness, Boundedness, "boundedness")
         object.__setattr__(self, "type_kind", type_kind)
         object.__setattr__(self, "boundedness", boundedness)
-        object.__setattr__(self, "description", _optional_text(self.description, "description"))
+        object.__setattr__(
+            self, "description", _optional_text(self.description, "description")
+        )
         object.__setattr__(self, "attributes", _frozen(self.attributes, "attributes"))
-        object.__setattr__(self, "source_ref_ids", _ids(self.source_ref_ids, "source_ref_ids"))
+        object.__setattr__(
+            self, "source_ref_ids", _ids(self.source_ref_ids, "source_ref_ids")
+        )
 
         domain_bound = self.domain_bound
         if isinstance(domain_bound, Mapping):
@@ -323,8 +329,13 @@ class StateVariable:
             raise StateValidationError(
                 f"{type_kind.value} variable {self.variable_id} requires element_type_kind"
             )
-        if type_kind not in {StateTypeKind.SET, StateTypeKind.MAP} and element_type is not None:
-            raise StateValidationError("element_type_kind is only valid for set or map variables")
+        if (
+            type_kind not in {StateTypeKind.SET, StateTypeKind.MAP}
+            and element_type is not None
+        ):
+            raise StateValidationError(
+                "element_type_kind is only valid for set or map variables"
+            )
         if self.schema_version != STATE_VARIABLE_SCHEMA_VERSION:
             raise StateValidationError(
                 f"unsupported state-variable schema_version {self.schema_version!r}"
@@ -349,7 +360,9 @@ class StateVariable:
         if kind is StateTypeKind.OPAQUE:
             return isinstance(value, str) and bool(value)
         if kind is StateTypeKind.SET:
-            if isinstance(value, (str, bytes, bytearray)) or not isinstance(value, Sequence):
+            if isinstance(value, (str, bytes, bytearray)) or not isinstance(
+                value, Sequence
+            ):
                 return False
             if len(value) != len(set(value)):
                 return False
@@ -426,7 +439,9 @@ class StateVariable:
             else FiniteDomainBound.from_dict(_mapping(domain, "domain_bound")),
             element_type_kind=value.get("element_type_kind"),
             description=value.get("description", ""),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
             source_ref_ids=tuple(value.get("source_ref_ids", ())),
             schema_version=value.get("schema_version", STATE_VARIABLE_SCHEMA_VERSION),
         )
@@ -484,7 +499,9 @@ class StateSchema:
         self.validate()
         identity = self._compute_identity()
         if self.schema_id and self.schema_id != identity.cid:
-            raise StateValidationError("schema_id does not match canonical state-schema content")
+            raise StateValidationError(
+                "schema_id does not match canonical state-schema content"
+            )
         object.__setattr__(self, "schema_id", identity.cid)
 
     @property
@@ -577,8 +594,12 @@ class StateValuation:
     schema_version: str = STATE_VALUATION_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "valuation_id", _identifier(self.valuation_id, "valuation_id"))
-        object.__setattr__(self, "assignments", _frozen(self.assignments, "assignments"))
+        object.__setattr__(
+            self, "valuation_id", _identifier(self.valuation_id, "valuation_id")
+        )
+        object.__setattr__(
+            self, "assignments", _frozen(self.assignments, "assignments")
+        )
         if not self.assignments:
             raise StateValidationError("a state valuation requires assignments")
         for key in self.assignments:
@@ -661,7 +682,9 @@ class StatePredicate:
     schema_version: str = STATE_PREDICATE_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "predicate_id", _identifier(self.predicate_id, "predicate_id"))
+        object.__setattr__(
+            self, "predicate_id", _identifier(self.predicate_id, "predicate_id")
+        )
         object.__setattr__(self, "role", _enum(self.role, PredicateRole, "role"))
         object.__setattr__(self, "statement", _text(self.statement, "statement"))
         object.__setattr__(self, "expression", _frozen(self.expression, "expression"))
@@ -671,7 +694,9 @@ class StatePredicate:
             _ids(self.subject_variable_ids, "subject_variable_ids"),
         )
         object.__setattr__(self, "attributes", _frozen(self.attributes, "attributes"))
-        object.__setattr__(self, "source_ref_ids", _ids(self.source_ref_ids, "source_ref_ids"))
+        object.__setattr__(
+            self, "source_ref_ids", _ids(self.source_ref_ids, "source_ref_ids")
+        )
         if self.schema_version != STATE_PREDICATE_SCHEMA_VERSION:
             raise StateValidationError(
                 f"unsupported state-predicate schema_version {self.schema_version!r}"
@@ -712,9 +737,13 @@ class StatePredicate:
             predicate_id=value.get("predicate_id", ""),
             role=value.get("role", ""),
             statement=value.get("statement", ""),
-            expression=_frozen(_mapping(value.get("expression", {}), "expression"), "expression"),
+            expression=_frozen(
+                _mapping(value.get("expression", {}), "expression"), "expression"
+            ),
             subject_variable_ids=tuple(value.get("subject_variable_ids", ())),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
             source_ref_ids=tuple(value.get("source_ref_ids", ())),
             schema_version=value.get("schema_version", STATE_PREDICATE_SCHEMA_VERSION),
         )
@@ -744,7 +773,9 @@ class StateLabel:
             _ids(self.subject_variable_ids, "subject_variable_ids"),
         )
         object.__setattr__(self, "attributes", _frozen(self.attributes, "attributes"))
-        object.__setattr__(self, "source_ref_ids", _ids(self.source_ref_ids, "source_ref_ids"))
+        object.__setattr__(
+            self, "source_ref_ids", _ids(self.source_ref_ids, "source_ref_ids")
+        )
         if self.schema_version != STATE_LABEL_SCHEMA_VERSION:
             raise StateValidationError(
                 f"unsupported state-label schema_version {self.schema_version!r}"
@@ -785,9 +816,13 @@ class StateLabel:
             label_id=value.get("label_id", ""),
             name=value.get("name", ""),
             kind=value.get("kind", LabelKind.ATOMIC_PROPOSITION.value),
-            expression=_frozen(_mapping(value.get("expression", {}), "expression"), "expression"),
+            expression=_frozen(
+                _mapping(value.get("expression", {}), "expression"), "expression"
+            ),
             subject_variable_ids=tuple(value.get("subject_variable_ids", ())),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
             source_ref_ids=tuple(value.get("source_ref_ids", ())),
             schema_version=value.get("schema_version", STATE_LABEL_SCHEMA_VERSION),
         )
@@ -807,7 +842,9 @@ class VariantMeasure:
     schema_version: str = VARIANT_MEASURE_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "variant_id", _identifier(self.variant_id, "variant_id"))
+        object.__setattr__(
+            self, "variant_id", _identifier(self.variant_id, "variant_id")
+        )
         object.__setattr__(self, "statement", _text(self.statement, "statement"))
         object.__setattr__(self, "expression", _frozen(self.expression, "expression"))
         object.__setattr__(
@@ -821,7 +858,9 @@ class VariantMeasure:
             _text(self.well_founded_order, "well_founded_order"),
         )
         object.__setattr__(self, "attributes", _frozen(self.attributes, "attributes"))
-        object.__setattr__(self, "source_ref_ids", _ids(self.source_ref_ids, "source_ref_ids"))
+        object.__setattr__(
+            self, "source_ref_ids", _ids(self.source_ref_ids, "source_ref_ids")
+        )
         if self.schema_version != VARIANT_MEASURE_SCHEMA_VERSION:
             raise StateValidationError(
                 f"unsupported variant schema_version {self.schema_version!r}"
@@ -861,10 +900,14 @@ class VariantMeasure:
         return cls(
             variant_id=value.get("variant_id", ""),
             statement=value.get("statement", ""),
-            expression=_frozen(_mapping(value.get("expression", {}), "expression"), "expression"),
+            expression=_frozen(
+                _mapping(value.get("expression", {}), "expression"), "expression"
+            ),
             subject_variable_ids=tuple(value.get("subject_variable_ids", ())),
             well_founded_order=value.get("well_founded_order", "natural_numbers"),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
             source_ref_ids=tuple(value.get("source_ref_ids", ())),
             schema_version=value.get("schema_version", VARIANT_MEASURE_SCHEMA_VERSION),
         )

@@ -32,9 +32,13 @@ from typing import Any, Final
 from ...ir_core.identity import cid_v1_from_digest
 
 
-CVEFIXES_HF_CORPUS_LAYOUT_SCHEMA_VERSION: Final = "cvefixes-hf-corpus-layout/v1"
+CVEFIXES_HF_CORPUS_LAYOUT_SCHEMA_VERSION: Final = (
+    "cvefixes-hf-corpus-layout/v1"
+)
 CVEFIXES_HF_CORPUS_SCHEMA_VERSION: Final = "cvefixes-hf-corpus/v1"
-CVEFIXES_HF_CORPUS_META_SCHEMA_VERSION: Final = "cvefixes-hf-shard-meta/v1"
+CVEFIXES_HF_CORPUS_META_SCHEMA_VERSION: Final = (
+    "cvefixes-hf-shard-meta/v1"
+)
 
 CORPUS_COLUMNS: Final[tuple[str, ...]] = (
     "document_index",
@@ -121,7 +125,9 @@ class CVEfixesHFCorpusLimitError(CVEfixesHFCorpusLayoutError):
 
 def _positive_int(value: Any, label: str) -> int:
     if type(value) is not int or value <= 0:
-        raise CVEfixesHFCorpusLayoutError(f"{label} must be a positive integer")
+        raise CVEfixesHFCorpusLayoutError(
+            f"{label} must be a positive integer"
+        )
     return value
 
 
@@ -155,15 +161,25 @@ class CVEfixesHFCorpusLayoutConfig:
         ):
             _positive_int(getattr(self, name), name)
         if self.max_documents > _INT32_MAX:
-            raise CVEfixesHFCorpusLimitError("max_documents exceeds the int32 document-index limit")
+            raise CVEfixesHFCorpusLimitError(
+                "max_documents exceeds the int32 document-index limit"
+            )
         if self.max_rows_per_shard > _INT32_MAX:
-            raise CVEfixesHFCorpusLimitError("max_rows_per_shard exceeds the int32 limit")
+            raise CVEfixesHFCorpusLimitError(
+                "max_rows_per_shard exceeds the int32 limit"
+            )
         if self.max_shard_bytes > DEFAULT_MAX_SHARD_BYTES:
-            raise CVEfixesHFCorpusLimitError("max_shard_bytes exceeds the publisher artifact limit")
+            raise CVEfixesHFCorpusLimitError(
+                "max_shard_bytes exceeds the publisher artifact limit"
+            )
         if self.compression != PARQUET_COMPRESSION:
-            raise CVEfixesHFCorpusLayoutError("CVEfixes Hugging Face corpus shards require zstd")
+            raise CVEfixesHFCorpusLayoutError(
+                "CVEfixes Hugging Face corpus shards require zstd"
+            )
         if self.schema_version != CVEFIXES_HF_CORPUS_LAYOUT_SCHEMA_VERSION:
-            raise CVEfixesHFCorpusLayoutError("unsupported corpus layout schema version")
+            raise CVEfixesHFCorpusLayoutError(
+                "unsupported corpus layout schema version"
+            )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -200,21 +216,31 @@ class CorpusArtifactDescriptor:
             or path.as_posix() != self.relative_path
             or any(part in {"", ".", ".."} for part in path.parts)
         ):
-            raise CVEfixesHFCorpusLayoutError("corpus descriptor has an unsafe path")
+            raise CVEfixesHFCorpusLayoutError(
+                "corpus descriptor has an unsafe path"
+            )
         if not _SHA256_RE.fullmatch(self.sha256):
-            raise CVEfixesHFCorpusLayoutError("corpus descriptor has an invalid SHA-256")
+            raise CVEfixesHFCorpusLayoutError(
+                "corpus descriptor has an invalid SHA-256"
+            )
         _validate_cid(self.cid, "corpus descriptor CID")
         if type(self.size_bytes) is not int or self.size_bytes <= 0:
-            raise CVEfixesHFCorpusLayoutError("corpus descriptor size must be positive")
+            raise CVEfixesHFCorpusLayoutError(
+                "corpus descriptor size must be positive"
+            )
         if type(self.row_count) is not int or self.row_count <= 0:
-            raise CVEfixesHFCorpusLayoutError("corpus descriptor row_count must be positive")
+            raise CVEfixesHFCorpusLayoutError(
+                "corpus descriptor row_count must be positive"
+            )
         expected_config = (
             CORPUS_INDEX_CONFIG_NAME
             if self.relative_path == CORPUS_INDEX_PATH
             else CORPUS_CONFIG_NAME
         )
         if self.config_name != expected_config:
-            raise CVEfixesHFCorpusLayoutError("corpus descriptor config does not match its path")
+            raise CVEfixesHFCorpusLayoutError(
+                "corpus descriptor config does not match its path"
+            )
 
     def to_dict(self) -> dict[str, Any]:
         """Return the compact descriptor used in ``manifest.indexes``."""
@@ -292,8 +318,12 @@ class CVEfixesHFCorpusLayoutSummary:
             "parquet": {
                 "compression": self.config.compression,
                 "compression_level": self.config.compression_level,
-                "corpus_max_rows_per_chunk": (self.config.max_rows_per_shard),
-                "corpus_schema_version": (CVEFIXES_HF_CORPUS_SCHEMA_VERSION),
+                "corpus_max_rows_per_chunk": (
+                    self.config.max_rows_per_shard
+                ),
+                "corpus_schema_version": (
+                    CVEFIXES_HF_CORPUS_SCHEMA_VERSION
+                ),
             },
         }
 
@@ -336,7 +366,9 @@ def _corpus_schema(pa: Any) -> Any:
         ],
         metadata={
             b"primary_key": b"entry_cid",
-            b"schema_version": (CVEFIXES_HF_CORPUS_SCHEMA_VERSION.encode("ascii")),
+            b"schema_version": (
+                CVEFIXES_HF_CORPUS_SCHEMA_VERSION.encode("ascii")
+            ),
         },
     )
 
@@ -357,25 +389,35 @@ def _meta_schema(pa: Any) -> Any:
             ("size_bytes", pa.int64(), False),
             ("start_document_index", pa.int64(), False),
         ],
-        metadata={b"schema_version": (CVEFIXES_HF_CORPUS_META_SCHEMA_VERSION.encode("ascii"))},
+        metadata={
+            b"schema_version": (
+                CVEFIXES_HF_CORPUS_META_SCHEMA_VERSION.encode("ascii")
+            )
+        },
     )
 
 
 def _validate_cid(value: Any, label: str) -> str:
     if not isinstance(value, str) or _CID_RE.fullmatch(value) is None:
-        raise CVEfixesHFCorpusLayoutError(f"{label} must be a CIDv1(raw, sha2-256) string")
+        raise CVEfixesHFCorpusLayoutError(
+            f"{label} must be a CIDv1(raw, sha2-256) string"
+        )
     encoded = value[1:]
     padded = encoded.upper() + "=" * ((8 - len(encoded) % 8) % 8)
     try:
         payload = base64.b32decode(padded, casefold=False)
     except (ValueError, base64.binascii.Error) as exc:
-        raise CVEfixesHFCorpusLayoutError(f"{label} is not valid base32 CID text") from exc
+        raise CVEfixesHFCorpusLayoutError(
+            f"{label} is not valid base32 CID text"
+        ) from exc
     if (
         len(payload) != len(_CID_PREFIX) + 32
         or payload[: len(_CID_PREFIX)] != _CID_PREFIX
         or cid_v1_from_digest(payload[len(_CID_PREFIX) :]) != value
     ):
-        raise CVEfixesHFCorpusLayoutError(f"{label} must use the release CID profile")
+        raise CVEfixesHFCorpusLayoutError(
+            f"{label} must use the release CID profile"
+        )
     return value
 
 
@@ -395,13 +437,19 @@ def _clean_text(
         or (not allow_empty and not value)
         or (value and value != value.strip())
     ):
-        raise CVEfixesHFCorpusLayoutError(f"{label} must be bounded clean text")
+        raise CVEfixesHFCorpusLayoutError(
+            f"{label} must be bounded clean text"
+        )
     try:
         encoded = value.encode("utf-8")
     except UnicodeEncodeError as exc:
-        raise CVEfixesHFCorpusLayoutError(f"{label} is not valid UTF-8 text") from exc
+        raise CVEfixesHFCorpusLayoutError(
+            f"{label} is not valid UTF-8 text"
+        ) from exc
     if maximum_utf8_bytes is not None and len(encoded) > maximum_utf8_bytes:
-        raise CVEfixesHFCorpusLimitError(f"{label} exceeds its UTF-8 byte limit")
+        raise CVEfixesHFCorpusLimitError(
+            f"{label} exceeds its UTF-8 byte limit"
+        )
     return value
 
 
@@ -413,10 +461,16 @@ def _string_list(
     cids: bool = False,
     require_nonempty: bool = False,
 ) -> list[str]:
-    if isinstance(value, (str, bytes, bytearray)) or not isinstance(value, Sequence):
-        raise CVEfixesHFCorpusLayoutError(f"{label} must be a sequence of strings")
+    if isinstance(value, (str, bytes, bytearray)) or not isinstance(
+        value, Sequence
+    ):
+        raise CVEfixesHFCorpusLayoutError(
+            f"{label} must be a sequence of strings"
+        )
     if len(value) > config.max_list_items:
-        raise CVEfixesHFCorpusLimitError(f"{label} exceeds {config.max_list_items} items")
+        raise CVEfixesHFCorpusLimitError(
+            f"{label} exceeds {config.max_list_items} items"
+        )
     result = [
         (
             _validate_cid(item, f"{label} item")
@@ -430,12 +484,18 @@ def _string_list(
         for item in value
     ]
     if require_nonempty and not result:
-        raise CVEfixesHFCorpusLayoutError(f"{label} must not be empty")
+        raise CVEfixesHFCorpusLayoutError(
+            f"{label} must not be empty"
+        )
     if len(result) != len(set(result)):
-        raise CVEfixesHFCorpusLayoutError(f"{label} must not contain duplicate values")
+        raise CVEfixesHFCorpusLayoutError(
+            f"{label} must not contain duplicate values"
+        )
     expected = sorted(result, key=lambda item: (item.casefold(), item))
     if result != expected:
-        raise CVEfixesHFCorpusLayoutError(f"{label} must be in canonical sorted order")
+        raise CVEfixesHFCorpusLayoutError(
+            f"{label} must be in canonical sorted order"
+        )
     return result
 
 
@@ -452,9 +512,12 @@ def _strict_row_fields(row: Mapping[str, Any], position: int) -> None:
         if missing:
             detail.append(f"missing: {', '.join(missing)}")
         if extra:
-            detail.append("unexpected: " + ", ".join(repr(item) for item in extra))
+            detail.append(
+                "unexpected: " + ", ".join(repr(item) for item in extra)
+            )
         raise CVEfixesHFCorpusLayoutError(
-            f"corpus row {position} fields differ" + (f" ({'; '.join(detail)})" if detail else "")
+            f"corpus row {position} fields differ"
+            + (f" ({'; '.join(detail)})" if detail else "")
         )
 
 
@@ -465,10 +528,20 @@ def _normalize_row(
 ) -> dict[str, Any]:
     _strict_row_fields(raw, position)
     document_index = raw["document_index"]
-    if type(document_index) is not int or document_index < 0 or document_index > _INT32_MAX:
-        raise CVEfixesHFCorpusLayoutError("document_index must be a non-negative int32")
-    entry_cid = _validate_cid(raw["entry_cid"], f"corpus row {position} entry_cid")
-    node_cid = _validate_cid(raw["node_cid"], f"corpus row {position} node_cid")
+    if (
+        type(document_index) is not int
+        or document_index < 0
+        or document_index > _INT32_MAX
+    ):
+        raise CVEfixesHFCorpusLayoutError(
+            "document_index must be a non-negative int32"
+        )
+    entry_cid = _validate_cid(
+        raw["entry_cid"], f"corpus row {position} entry_cid"
+    )
+    node_cid = _validate_cid(
+        raw["node_cid"], f"corpus row {position} node_cid"
+    )
     title = _clean_text(
         raw["title"],
         f"corpus row {position} title",
@@ -489,7 +562,9 @@ def _normalize_row(
         or _SHA256_RE.fullmatch(text_sha256) is None
         or text_sha256 != expected_text_sha256
     ):
-        raise CVEfixesHFCorpusIntegrityError(f"corpus row {position} text_sha256 differs from text")
+        raise CVEfixesHFCorpusIntegrityError(
+            f"corpus row {position} text_sha256 differs from text"
+        )
     values = {
         name: _clean_text(
             raw[name],
@@ -500,14 +575,22 @@ def _normalize_row(
         for name in ("partition", "shard_key", "kind", "authority")
     }
     if values["authority"] not in _AUTHORITIES:
-        raise CVEfixesHFCorpusLayoutError("corpus authority must be candidate or non_authoritative")
+        raise CVEfixesHFCorpusLayoutError(
+            "corpus authority must be candidate or non_authoritative"
+        )
     graph_node = raw["graph_node"]
     if type(graph_node) is not bool:
-        raise CVEfixesHFCorpusLayoutError("graph_node must be a boolean")
+        raise CVEfixesHFCorpusLayoutError(
+            "graph_node must be a boolean"
+        )
     if raw["grants_execution_authority"] is not False:
-        raise CVEfixesHFCorpusLayoutError("corpus rows can never grant execution authority")
+        raise CVEfixesHFCorpusLayoutError(
+            "corpus rows can never grant execution authority"
+        )
     if raw["schema_version"] != CVEFIXES_HF_CORPUS_SCHEMA_VERSION:
-        raise CVEfixesHFCorpusLayoutError("unsupported corpus row schema version")
+        raise CVEfixesHFCorpusLayoutError(
+            "unsupported corpus row schema version"
+        )
     lists = {
         name: _string_list(
             raw[name],
@@ -546,23 +629,39 @@ def _normalize_rows(
     rows: Sequence[Mapping[str, Any]],
     config: CVEfixesHFCorpusLayoutConfig,
 ) -> tuple[dict[str, Any], ...]:
-    if isinstance(rows, (str, bytes, bytearray)) or not isinstance(rows, Sequence):
-        raise CVEfixesHFCorpusLayoutError("corpus rows must be a sequence of mappings")
+    if isinstance(rows, (str, bytes, bytearray)) or not isinstance(
+        rows, Sequence
+    ):
+        raise CVEfixesHFCorpusLayoutError(
+            "corpus rows must be a sequence of mappings"
+        )
     if not rows:
-        raise CVEfixesHFCorpusLayoutError("corpus rows must not be empty")
+        raise CVEfixesHFCorpusLayoutError(
+            "corpus rows must not be empty"
+        )
     if len(rows) > config.max_documents:
-        raise CVEfixesHFCorpusLimitError("corpus rows exceed max_documents")
+        raise CVEfixesHFCorpusLimitError(
+            "corpus rows exceed max_documents"
+        )
     normalized: list[dict[str, Any]] = []
     for position, row in enumerate(rows):
         if not isinstance(row, Mapping):
-            raise CVEfixesHFCorpusLayoutError(f"corpus row {position} must be a mapping")
+            raise CVEfixesHFCorpusLayoutError(
+                f"corpus row {position} must be a mapping"
+            )
         normalized.append(_normalize_row(row, position, config))
     normalized.sort(key=lambda row: int(row["document_index"]))
-    if [row["document_index"] for row in normalized] != list(range(len(normalized))):
-        raise CVEfixesHFCorpusLayoutError("document_index values must be dense from zero")
+    if [row["document_index"] for row in normalized] != list(
+        range(len(normalized))
+    ):
+        raise CVEfixesHFCorpusLayoutError(
+            "document_index values must be dense from zero"
+        )
     entry_cids = [str(row["entry_cid"]) for row in normalized]
     if len(entry_cids) != len(set(entry_cids)):
-        raise CVEfixesHFCorpusLayoutError("corpus rows contain duplicate entry CIDs")
+        raise CVEfixesHFCorpusLayoutError(
+            "corpus rows contain duplicate entry CIDs"
+        )
     return tuple(normalized)
 
 
@@ -575,9 +674,13 @@ def _write_parquet(
 ) -> None:
     _, pq = _pyarrow()
     if table.num_rows <= 0:
-        raise CVEfixesHFCorpusLayoutError(f"cannot write an empty Parquet file: {path.name}")
+        raise CVEfixesHFCorpusLayoutError(
+            f"cannot write an empty Parquet file: {path.name}"
+        )
     if enforce_row_limit and table.num_rows > config.max_rows_per_shard:
-        raise CVEfixesHFCorpusLimitError(f"corpus shard exceeds its row limit: {path.name}")
+        raise CVEfixesHFCorpusLimitError(
+            f"corpus shard exceeds its row limit: {path.name}"
+        )
     path.parent.mkdir(parents=True, exist_ok=True)
     partial = path.with_name(f".{path.name}.partial")
     try:
@@ -587,14 +690,20 @@ def _write_parquet(
             compression=config.compression,
             compression_level=config.compression_level,
             data_page_version="1.0",
-            row_group_size=min(config.max_rows_per_shard, max(1, table.num_rows)),
+            row_group_size=min(
+                config.max_rows_per_shard, max(1, table.num_rows)
+            ),
             use_dictionary=False,
             version="2.6",
             write_statistics=True,
         )
         _validate_parquet_encoding(
             partial,
-            max_rows=(config.max_rows_per_shard if enforce_row_limit else None),
+            max_rows=(
+                config.max_rows_per_shard
+                if enforce_row_limit
+                else None
+            ),
         )
         os.replace(partial, path)
     finally:
@@ -610,13 +719,22 @@ def _validate_parquet_encoding(
     try:
         parquet = pq.ParquetFile(path)
     except Exception as exc:
-        raise CVEfixesHFCorpusIntegrityError(f"corpus Parquet is unreadable: {path.name}") from exc
-    if max_rows is not None and parquet.metadata.num_rows > max_rows:
-        raise CVEfixesHFCorpusLimitError(f"corpus Parquet exceeds its row limit: {path.name}")
+        raise CVEfixesHFCorpusIntegrityError(
+            f"corpus Parquet is unreadable: {path.name}"
+        ) from exc
+    if (
+        max_rows is not None
+        and parquet.metadata.num_rows > max_rows
+    ):
+        raise CVEfixesHFCorpusLimitError(
+            f"corpus Parquet exceeds its row limit: {path.name}"
+        )
     compressions = {
         parquet.metadata.row_group(group).column(column).compression
         for group in range(parquet.num_row_groups)
-        for column in range(parquet.metadata.row_group(group).num_columns)
+        for column in range(
+            parquet.metadata.row_group(group).num_columns
+        )
     }
     if compressions and compressions != {"ZSTD"}:
         raise CVEfixesHFCorpusIntegrityError(
@@ -634,7 +752,9 @@ def _descriptor(
     try:
         content = path.read_bytes()
     except OSError as exc:
-        raise CVEfixesHFCorpusIntegrityError(f"cannot read corpus artifact: {path.name}") from exc
+        raise CVEfixesHFCorpusIntegrityError(
+            f"cannot read corpus artifact: {path.name}"
+        ) from exc
     digest = hashlib.sha256(content).digest()
     return CorpusArtifactDescriptor(
         relative_path=path.relative_to(root).as_posix(),
@@ -681,7 +801,9 @@ def _write_data_shards(
 
     def write_group(group: Sequence[Mapping[str, Any]]) -> None:
         if len(descriptors) >= config.max_shards:
-            raise CVEfixesHFCorpusLimitError("corpus requires more than max_shards")
+            raise CVEfixesHFCorpusLimitError(
+                "corpus requires more than max_shards"
+            )
         shard_id = len(descriptors)
         path = destination / f"part-{shard_id:06d}.parquet"
         table = pa.Table.from_pylist(
@@ -697,7 +819,9 @@ def _write_data_shards(
         if path.stat().st_size > config.max_shard_bytes:
             path.unlink()
             if len(group) == 1:
-                raise CVEfixesHFCorpusLimitError("one corpus row exceeds max_shard_bytes")
+                raise CVEfixesHFCorpusLimitError(
+                    "one corpus row exceeds max_shard_bytes"
+                )
             midpoint = len(group) // 2
             write_group(group[:midpoint])
             write_group(group[midpoint:])
@@ -738,7 +862,9 @@ def _write_meta_index(
     )
     if path.stat().st_size > config.max_shard_bytes:
         path.unlink()
-        raise CVEfixesHFCorpusLimitError("corpus meta-index exceeds max_shard_bytes")
+        raise CVEfixesHFCorpusLimitError(
+            "corpus meta-index exceeds max_shard_bytes"
+        )
     return _descriptor(
         path,
         root=root,
@@ -754,15 +880,23 @@ def _root_path(
 ) -> Path:
     candidate = Path(value).expanduser()
     if candidate.is_symlink():
-        raise CVEfixesHFCorpusLayoutError("corpus output directory must not be a symlink")
+        raise CVEfixesHFCorpusLayoutError(
+            "corpus output directory must not be a symlink"
+        )
     try:
         root = candidate.resolve(strict=require_existing)
     except OSError as exc:
-        raise CVEfixesHFCorpusLayoutError("corpus output directory does not exist") from exc
+        raise CVEfixesHFCorpusLayoutError(
+            "corpus output directory does not exist"
+        ) from exc
     if require_existing and not root.is_dir():
-        raise CVEfixesHFCorpusLayoutError("corpus output directory does not exist")
+        raise CVEfixesHFCorpusLayoutError(
+            "corpus output directory does not exist"
+        )
     if not require_existing and root.exists() and not root.is_dir():
-        raise CVEfixesHFCorpusLayoutError("corpus output must be a directory")
+        raise CVEfixesHFCorpusLayoutError(
+            "corpus output must be a directory"
+        )
     return root
 
 
@@ -772,18 +906,30 @@ def _assert_safe_owned_targets(output: Path) -> None:
     target = data_parent / "corpus"
     index = output / CORPUS_INDEX_PATH
     for parent in (data_parent, index_parent):
-        if parent.is_symlink() or (parent.exists() and not parent.is_dir()):
-            raise CVEfixesHFCorpusLayoutError(f"corpus parent path is unsafe: {parent}")
+        if parent.is_symlink() or (
+            parent.exists() and not parent.is_dir()
+        ):
+            raise CVEfixesHFCorpusLayoutError(
+                f"corpus parent path is unsafe: {parent}"
+            )
     if target.is_symlink() or (target.exists() and not target.is_dir()):
-        raise CVEfixesHFCorpusLayoutError("owned corpus data path is unsafe")
+        raise CVEfixesHFCorpusLayoutError(
+            "owned corpus data path is unsafe"
+        )
     if target.exists():
         for item in target.iterdir():
-            if item.is_symlink() or not item.is_file() or _PART_RE.fullmatch(item.name) is None:
+            if (
+                item.is_symlink()
+                or not item.is_file()
+                or _PART_RE.fullmatch(item.name) is None
+            ):
                 raise CVEfixesHFCorpusLayoutError(
                     f"unexpected file in owned corpus directory: {item}"
                 )
     if index.is_symlink() or (index.exists() and not index.is_file()):
-        raise CVEfixesHFCorpusLayoutError("owned corpus meta-index path is unsafe")
+        raise CVEfixesHFCorpusLayoutError(
+            "owned corpus meta-index path is unsafe"
+        )
 
 
 def _install_staged_files(temporary: Path, output: Path) -> None:
@@ -840,23 +986,33 @@ def build_cvefixes_hf_corpus_layout(
 
     selected = config or CVEfixesHFCorpusLayoutConfig()
     if not isinstance(selected, CVEfixesHFCorpusLayoutConfig):
-        raise CVEfixesHFCorpusLayoutError("config must be CVEfixesHFCorpusLayoutConfig")
+        raise CVEfixesHFCorpusLayoutError(
+            "config must be CVEfixesHFCorpusLayoutConfig"
+        )
     rows = _normalize_rows(corpus_rows, selected)
     output = _root_path(output_dir, require_existing=False)
     output.mkdir(parents=True, exist_ok=True)
-    temporary = Path(tempfile.mkdtemp(prefix=".cvefixes-corpus-", dir=output))
+    temporary = Path(
+        tempfile.mkdtemp(prefix=".cvefixes-corpus-", dir=output)
+    )
     try:
         metadata, _ = _write_data_shards(rows, temporary, selected)
         _write_meta_index(metadata, temporary, selected)
-        staged = validate_cvefixes_hf_corpus_layout(temporary, config=selected)
+        staged = validate_cvefixes_hf_corpus_layout(
+            temporary, config=selected
+        )
         _install_staged_files(temporary, output)
     finally:
         shutil.rmtree(temporary, ignore_errors=True)
 
-    installed = validate_cvefixes_hf_corpus_layout(output, config=selected)
-    if installed.counts != staged.counts or [item.sha256 for item in installed.artifacts] != [
-        item.sha256 for item in staged.artifacts
-    ]:
+    installed = validate_cvefixes_hf_corpus_layout(
+        output, config=selected
+    )
+    if (
+        installed.counts != staged.counts
+        or [item.sha256 for item in installed.artifacts]
+        != [item.sha256 for item in staged.artifacts]
+    ):
         raise CVEfixesHFCorpusIntegrityError(
             "installed corpus layout differs from completed staging"
         )
@@ -870,23 +1026,32 @@ def _read_meta_index(
     _, pq = _pyarrow()
     path = root / CORPUS_INDEX_PATH
     if path.is_symlink() or not path.is_file():
-        raise CVEfixesHFCorpusIntegrityError("corpus_chunks meta-index is missing")
+        raise CVEfixesHFCorpusIntegrityError(
+            "corpus_chunks meta-index is missing"
+        )
     if path.stat().st_size > config.max_shard_bytes:
-        raise CVEfixesHFCorpusLimitError("corpus meta-index exceeds max_shard_bytes")
+        raise CVEfixesHFCorpusLimitError(
+            "corpus meta-index exceeds max_shard_bytes"
+        )
     _validate_parquet_encoding(path, max_rows=None)
     try:
         table = pq.read_table(path)
     except Exception as exc:
-        raise CVEfixesHFCorpusIntegrityError("cannot read corpus_chunks meta-index") from exc
+        raise CVEfixesHFCorpusIntegrityError(
+            "cannot read corpus_chunks meta-index"
+        ) from exc
     expected = _meta_schema(_pyarrow()[0])
     if (
         tuple(table.column_names) != CORPUS_META_COLUMNS
         or table.schema.remove_metadata() != expected.remove_metadata()
-        or dict(table.schema.metadata or {}) != dict(expected.metadata or {})
+        or dict(table.schema.metadata or {})
+        != dict(expected.metadata or {})
         or table.num_rows <= 0
         or table.num_rows > config.max_shards
     ):
-        raise CVEfixesHFCorpusIntegrityError("corpus_chunks meta-index schema is malformed")
+        raise CVEfixesHFCorpusIntegrityError(
+            "corpus_chunks meta-index schema is malformed"
+        )
     return path, [dict(row) for row in table.to_pylist()]
 
 
@@ -897,13 +1062,16 @@ def _verify_meta_row(
     config: CVEfixesHFCorpusLayoutConfig,
 ) -> tuple[Path, CorpusArtifactDescriptor]:
     if set(row) != set(CORPUS_META_COLUMNS):
-        raise CVEfixesHFCorpusIntegrityError("corpus meta-index row fields differ")
+        raise CVEfixesHFCorpusIntegrityError(
+            "corpus meta-index row fields differ"
+        )
     expected_relative = f"data/corpus/part-{shard_id:06d}.parquet"
     if (
         row.get("relative_path") != expected_relative
         or row.get("shard_id") != shard_id
         or row.get("kind") != CORPUS_CONFIG_NAME
-        or row.get("schema_version") != CVEFIXES_HF_CORPUS_META_SCHEMA_VERSION
+        or row.get("schema_version")
+        != CVEFIXES_HF_CORPUS_META_SCHEMA_VERSION
         or type(row.get("row_count")) is not int
         or not 1 <= row["row_count"] <= config.max_rows_per_shard
         or type(row.get("start_document_index")) is not int
@@ -913,7 +1081,9 @@ def _verify_meta_row(
         or not isinstance(row.get("sha256"), str)
         or _SHA256_RE.fullmatch(row["sha256"]) is None
     ):
-        raise CVEfixesHFCorpusIntegrityError(f"corpus meta-index row {shard_id} is malformed")
+        raise CVEfixesHFCorpusIntegrityError(
+            f"corpus meta-index row {shard_id} is malformed"
+        )
     _validate_cid(row.get("cid"), f"corpus meta row {shard_id} CID")
     _validate_cid(
         row.get("first_key"),
@@ -925,7 +1095,9 @@ def _verify_meta_row(
     )
     path = root.joinpath(*PurePosixPath(expected_relative).parts)
     if path.is_symlink() or not path.is_file():
-        raise CVEfixesHFCorpusIntegrityError(f"corpus shard is missing: {expected_relative}")
+        raise CVEfixesHFCorpusIntegrityError(
+            f"corpus shard is missing: {expected_relative}"
+        )
     descriptor = _descriptor(
         path,
         root=root,
@@ -954,8 +1126,12 @@ def _read_verified_rows(
     descriptors: list[CorpusArtifactDescriptor] = []
     expected_document_index = 0
     for shard_id, meta in enumerate(metadata):
-        path, descriptor = _verify_meta_row(root, meta, shard_id, config)
-        _validate_parquet_encoding(path, max_rows=config.max_rows_per_shard)
+        path, descriptor = _verify_meta_row(
+            root, meta, shard_id, config
+        )
+        _validate_parquet_encoding(
+            path, max_rows=config.max_rows_per_shard
+        )
         try:
             table = pq.read_table(path)
         except Exception as exc:
@@ -964,8 +1140,10 @@ def _read_verified_rows(
             ) from exc
         if (
             tuple(table.column_names) != CORPUS_COLUMNS
-            or table.schema.remove_metadata() != expected_schema.remove_metadata()
-            or dict(table.schema.metadata or {}) != dict(expected_schema.metadata or {})
+            or table.schema.remove_metadata()
+            != expected_schema.remove_metadata()
+            or dict(table.schema.metadata or {})
+            != dict(expected_schema.metadata or {})
             or table.num_rows != descriptor.row_count
         ):
             raise CVEfixesHFCorpusIntegrityError(
@@ -973,11 +1151,13 @@ def _read_verified_rows(
             )
         shard_rows = [dict(row) for row in table.to_pylist()]
         normalized = tuple(
-            _normalize_row(row, position, config) for position, row in enumerate(shard_rows)
+            _normalize_row(row, position, config)
+            for position, row in enumerate(shard_rows)
         )
         if tuple(shard_rows) != normalized:
             raise CVEfixesHFCorpusIntegrityError(
-                f"corpus shard rows are not normalized: {descriptor.relative_path}"
+                f"corpus shard rows are not normalized: "
+                f"{descriptor.relative_path}"
             )
         documents = [int(row["document_index"]) for row in shard_rows]
         expected_documents = list(
@@ -1000,20 +1180,32 @@ def _read_verified_rows(
         rows.extend(shard_rows)
         descriptors.append(descriptor)
     if len(rows) > config.max_documents:
-        raise CVEfixesHFCorpusLimitError("installed corpus exceeds max_documents")
+        raise CVEfixesHFCorpusLimitError(
+            "installed corpus exceeds max_documents"
+        )
     if len({str(row["entry_cid"]) for row in rows}) != len(rows):
-        raise CVEfixesHFCorpusIntegrityError("installed corpus repeats an entry CID")
+        raise CVEfixesHFCorpusIntegrityError(
+            "installed corpus repeats an entry CID"
+        )
     return tuple(rows), tuple(descriptors)
 
 
 def _actual_data_paths(root: Path) -> set[str]:
     directory = root / "data" / "corpus"
     if directory.is_symlink() or not directory.is_dir():
-        raise CVEfixesHFCorpusIntegrityError("corpus data directory is missing")
+        raise CVEfixesHFCorpusIntegrityError(
+            "corpus data directory is missing"
+        )
     result: set[str] = set()
     for path in directory.iterdir():
-        if path.is_symlink() or not path.is_file() or _PART_RE.fullmatch(path.name) is None:
-            raise CVEfixesHFCorpusIntegrityError(f"unexpected corpus data artifact: {path.name}")
+        if (
+            path.is_symlink()
+            or not path.is_file()
+            or _PART_RE.fullmatch(path.name) is None
+        ):
+            raise CVEfixesHFCorpusIntegrityError(
+                f"unexpected corpus data artifact: {path.name}"
+            )
         result.add(path.relative_to(root).as_posix())
     return result
 
@@ -1027,13 +1219,19 @@ def validate_cvefixes_hf_corpus_layout(
 
     selected = config or CVEfixesHFCorpusLayoutConfig()
     if not isinstance(selected, CVEfixesHFCorpusLayoutConfig):
-        raise CVEfixesHFCorpusLayoutError("config must be CVEfixesHFCorpusLayoutConfig")
+        raise CVEfixesHFCorpusLayoutError(
+            "config must be CVEfixesHFCorpusLayoutConfig"
+        )
     root = _root_path(output_dir, require_existing=True)
     index_path, metadata = _read_meta_index(root, selected)
-    rows, descriptors = _read_verified_rows(root, metadata, selected)
+    rows, descriptors = _read_verified_rows(
+        root, metadata, selected
+    )
     pointed = {item.relative_path for item in descriptors}
     if pointed != _actual_data_paths(root):
-        raise CVEfixesHFCorpusIntegrityError("corpus meta-index does not cover data shards exactly")
+        raise CVEfixesHFCorpusIntegrityError(
+            "corpus meta-index does not cover data shards exactly"
+        )
     index_descriptor = _descriptor(
         index_path,
         root=root,

@@ -99,12 +99,18 @@ NATIVE_SYMBOL: Final[str] = "SOL"
 SYSTEM_PROGRAM_ID: Final[str] = "11111111111111111111111111111111"
 TOKEN_PROGRAM_ID: Final[str] = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
 TOKEN_2022_PROGRAM_ID: Final[str] = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
-TOKEN_PROGRAM_IDS: Final[frozenset[str]] = frozenset({TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID})
+TOKEN_PROGRAM_IDS: Final[frozenset[str]] = frozenset(
+    {TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID}
+)
 
 SUPPORTED_MESSAGE_VERSIONS: Final[frozenset[str]] = frozenset({"legacy", "0"})
 
-_BASE58_ALPHABET: Final[str] = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
-_BASE58_INDEX: Final[dict[str, int]] = {ch: i for i, ch in enumerate(_BASE58_ALPHABET)}
+_BASE58_ALPHABET: Final[str] = (
+    "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+)
+_BASE58_INDEX: Final[dict[str, int]] = {
+    ch: i for i, ch in enumerate(_BASE58_ALPHABET)
+}
 _ID_RE: Final[re.Pattern[str]] = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$")
 _DECIMAL_INTEGER: Final[re.Pattern[str]] = re.compile(r"^-?(0|[1-9][0-9]*)$")
 _HEX_RE: Final[re.Pattern[str]] = re.compile(r"^(?:0x)?[0-9A-Fa-f]+$")
@@ -242,8 +248,12 @@ def decode_base58(value: object, *, field: str = "value") -> bytes:
         for character in value:
             number = number * 58 + _BASE58_INDEX[character]
     except KeyError as exc:
-        raise SolanaAdapterError(f"{field} contains non-base58 characters") from exc
-    payload = b"" if number == 0 else number.to_bytes((number.bit_length() + 7) // 8, "big")
+        raise SolanaAdapterError(
+            f"{field} contains non-base58 characters"
+        ) from exc
+    payload = (
+        b"" if number == 0 else number.to_bytes((number.bit_length() + 7) // 8, "big")
+    )
     leading_zeroes = len(value) - len(value.lstrip("1"))
     return b"\x00" * leading_zeroes + payload
 
@@ -308,7 +318,9 @@ def parse_exact_base_units(value: object, *, field: str = "amount") -> str:
         return str(value)
     text = _text(value, field)
     if not _DECIMAL_INTEGER.fullmatch(text) or text.startswith("-"):
-        raise SolanaAdapterError(f"{field} must be a non-negative decimal integer string")
+        raise SolanaAdapterError(
+            f"{field} must be a non-negative decimal integer string"
+        )
     return text
 
 
@@ -333,13 +345,17 @@ class SolanaNetworkAnchor:
         object.__setattr__(self, "network", _text(self.network, "network"))
         # Genesis may be short base58 (mainnet) or 32-byte base58; store as-is
         # after non-empty validation.  Identity digests bind the literal.
-        object.__setattr__(self, "genesis_hash", _text(self.genesis_hash, "genesis_hash"))
+        object.__setattr__(
+            self, "genesis_hash", _text(self.genesis_hash, "genesis_hash")
+        )
         object.__setattr__(
             self,
             "display_name",
             _text(self.display_name, "display_name", allow_empty=True),
         )
-        object.__setattr__(self, "native_symbol", _text(self.native_symbol, "native_symbol"))
+        object.__setattr__(
+            self, "native_symbol", _text(self.native_symbol, "native_symbol")
+        )
         if (
             isinstance(self.native_decimals, bool)
             or not isinstance(self.native_decimals, int)
@@ -443,7 +459,8 @@ def resolve_network(
             provided = _text(genesis_hash, "genesis_hash")
             if provided != known.genesis_hash:
                 raise SolanaAdapterError(
-                    f"genesis_hash does not match known network for chain_id={known.chain_id}"
+                    f"genesis_hash does not match known network for "
+                    f"chain_id={known.chain_id}"
                 )
         if network is not None and network not in {
             known.network,
@@ -465,9 +482,13 @@ def resolve_network(
         return known
 
     if not chain_id and not network:
-        raise SolanaAdapterError("chain_id or network is required for Solana conversion")
+        raise SolanaAdapterError(
+            "chain_id or network is required for Solana conversion"
+        )
     if not genesis_hash:
-        raise SolanaAdapterError("unknown Solana cluster requires an explicit genesis_hash")
+        raise SolanaAdapterError(
+            "unknown Solana cluster requires an explicit genesis_hash"
+        )
     net_name = network or f"solana-{chain_id}"
     return SolanaNetworkAnchor(
         chain_id=chain_id or net_name,
@@ -607,7 +628,9 @@ def normalize_message_version(value: Any) -> str:
     if type(value) is int and not isinstance(value, bool):
         if value == 0:
             return "0"
-        raise SolanaAdapterError(f"unsupported versioned message version: {value!r}")
+        raise SolanaAdapterError(
+            f"unsupported versioned message version: {value!r}"
+        )
     text = str(value).strip().lower()
     if text in {"legacy", "legacy_v0"}:
         return "legacy"
@@ -642,9 +665,13 @@ class AccountPrivilege:
             "account_index",
             _non_negative_int(self.account_index, "account_index"),
         )
-        object.__setattr__(self, "pubkey", normalize_pubkey(self.pubkey, field="pubkey"))
+        object.__setattr__(
+            self, "pubkey", normalize_pubkey(self.pubkey, field="pubkey")
+        )
         object.__setattr__(self, "is_signer", _bool(self.is_signer, "is_signer"))
-        object.__setattr__(self, "is_writable", _bool(self.is_writable, "is_writable"))
+        object.__setattr__(
+            self, "is_writable", _bool(self.is_writable, "is_writable")
+        )
         source = _text(self.source, "source")
         try:
             AccountKeySource(source)
@@ -701,19 +728,28 @@ class SolanaInstruction:
             self.account_indexes, Sequence
         ):
             raise SolanaAdapterError("account_indexes must be a sequence of integers")
-        indexes = tuple(_non_negative_int(item, "account_index") for item in self.account_indexes)
+        indexes = tuple(
+            _non_negative_int(item, "account_index") for item in self.account_indexes
+        )
         object.__setattr__(self, "account_indexes", indexes)
         if isinstance(self.accounts, (str, bytes, bytearray)) or not isinstance(
             self.accounts, Sequence
         ):
             raise SolanaAdapterError("accounts must be a sequence of pubkeys")
         accounts = tuple(
-            normalize_pubkey(item, field="instruction.account") for item in self.accounts
+            normalize_pubkey(item, field="instruction.account")
+            for item in self.accounts
         )
         object.__setattr__(self, "accounts", accounts)
-        object.__setattr__(self, "data", _text(self.data, "data", allow_empty=True))
-        object.__setattr__(self, "data_encoding", _text(self.data_encoding, "data_encoding"))
-        object.__setattr__(self, "outer_index", _non_negative_int(self.outer_index, "outer_index"))
+        object.__setattr__(
+            self, "data", _text(self.data, "data", allow_empty=True)
+        )
+        object.__setattr__(
+            self, "data_encoding", _text(self.data_encoding, "data_encoding")
+        )
+        object.__setattr__(
+            self, "outer_index", _non_negative_int(self.outer_index, "outer_index")
+        )
         object.__setattr__(
             self,
             "inner_index",
@@ -754,7 +790,9 @@ class SolanaInstruction:
         value = _as_mapping(value, "SolanaInstruction")
         return cls(
             program_id=value.get("program_id", value.get("programId", "")),
-            account_indexes=tuple(value.get("account_indexes", value.get("accountIndexes", ()))),
+            account_indexes=tuple(
+                value.get("account_indexes", value.get("accountIndexes", ()))
+            ),
             accounts=tuple(value.get("accounts", ())),
             data=value.get("data", ""),
             data_encoding=value.get("data_encoding", value.get("dataEncoding", "base58")),
@@ -786,12 +824,18 @@ class AddressLookupTableRef:
         object.__setattr__(
             self,
             "writable_indexes",
-            tuple(_non_negative_int(i, "lookup.writable_index") for i in self.writable_indexes),
+            tuple(
+                _non_negative_int(i, "lookup.writable_index")
+                for i in self.writable_indexes
+            ),
         )
         object.__setattr__(
             self,
             "readonly_indexes",
-            tuple(_non_negative_int(i, "lookup.readonly_index") for i in self.readonly_indexes),
+            tuple(
+                _non_negative_int(i, "lookup.readonly_index")
+                for i in self.readonly_indexes
+            ),
         )
         object.__setattr__(
             self,
@@ -810,9 +854,13 @@ class AddressLookupTableRef:
             ),
         )
         if len(self.writable_indexes) != len(self.writable_addresses):
-            raise SolanaAdapterError("lookup writable index/address count mismatch")
+            raise SolanaAdapterError(
+                "lookup writable index/address count mismatch"
+            )
         if len(self.readonly_indexes) != len(self.readonly_addresses):
-            raise SolanaAdapterError("lookup readonly index/address count mismatch")
+            raise SolanaAdapterError(
+                "lookup readonly index/address count mismatch"
+            )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -874,9 +922,13 @@ def privileges_from_header(
     if num_required > n:
         raise SolanaAdapterError("numRequiredSignatures exceeds static account keys")
     if num_ro_signed > num_required:
-        raise SolanaAdapterError("numReadonlySignedAccounts exceeds numRequiredSignatures")
+        raise SolanaAdapterError(
+            "numReadonlySignedAccounts exceeds numRequiredSignatures"
+        )
     if num_ro_unsigned > (n - num_required):
-        raise SolanaAdapterError("numReadonlyUnsignedAccounts exceeds non-signer static keys")
+        raise SolanaAdapterError(
+            "numReadonlyUnsignedAccounts exceeds non-signer static keys"
+        )
 
     privileges: list[AccountPrivilege] = []
     for index, pubkey in enumerate(static_keys):
@@ -940,7 +992,9 @@ def privileges_from_json_parsed(
                 field=f"accountKeys[{index}]",
             )
             is_signer = _bool(item.get("signer", item.get("is_signer", False)), "signer")
-            is_writable = _bool(item.get("writable", item.get("is_writable", False)), "writable")
+            is_writable = _bool(
+                item.get("writable", item.get("is_writable", False)), "writable"
+            )
         else:
             raise SolanaAdapterError(
                 "jsonParsed accountKeys entries must be mappings with privilege bits"
@@ -1030,22 +1084,34 @@ def resolve_account_privileges(
         w_indexes = tuple(
             _non_negative_int(v, "lookup writable index")
             for v in (
-                declaration.get("writableIndexes") or declaration.get("writable_indexes") or ()
+                declaration.get("writableIndexes")
+                or declaration.get("writable_indexes")
+                or ()
             )
         )
         r_indexes = tuple(
             _non_negative_int(v, "lookup readonly index")
             for v in (
-                declaration.get("readonlyIndexes") or declaration.get("readonly_indexes") or ()
+                declaration.get("readonlyIndexes")
+                or declaration.get("readonly_indexes")
+                or ()
             )
         )
-        table_writable = loaded_writable[writable_offset : writable_offset + len(w_indexes)]
-        table_readonly = loaded_readonly[readonly_offset : readonly_offset + len(r_indexes)]
+        table_writable = loaded_writable[
+            writable_offset : writable_offset + len(w_indexes)
+        ]
+        table_readonly = loaded_readonly[
+            readonly_offset : readonly_offset + len(r_indexes)
+        ]
         if len(table_writable) != len(w_indexes) or len(table_readonly) != len(r_indexes):
-            raise SolanaAdapterError(f"lookup table {table_index} has unresolved address indexes")
+            raise SolanaAdapterError(
+                f"lookup table {table_index} has unresolved address indexes"
+            )
         tables.append(
             AddressLookupTableRef(
-                account_key=declaration.get("accountKey", declaration.get("account_key", "")),
+                account_key=declaration.get(
+                    "accountKey", declaration.get("account_key", "")
+                ),
                 writable_indexes=w_indexes,
                 readonly_indexes=r_indexes,
                 writable_addresses=table_writable,
@@ -1056,19 +1122,19 @@ def resolve_account_privileges(
         readonly_offset += len(r_indexes)
 
     if declarations:
-        if writable_offset != len(loaded_writable) or readonly_offset != len(loaded_readonly):
-            raise SolanaAdapterError("loaded addresses are not fully described by lookup tables")
+        if writable_offset != len(loaded_writable) or readonly_offset != len(
+            loaded_readonly
+        ):
+            raise SolanaAdapterError(
+                "loaded addresses are not fully described by lookup tables"
+            )
 
     # Prefer explicit privilege bits when present on accountKeys.
-    if (
-        raw_static
-        and isinstance(raw_static[0], Mapping)
-        and (
-            "signer" in raw_static[0]
-            or "is_signer" in raw_static[0]
-            or "writable" in raw_static[0]
-            or "is_writable" in raw_static[0]
-        )
+    if raw_static and isinstance(raw_static[0], Mapping) and (
+        "signer" in raw_static[0]
+        or "is_signer" in raw_static[0]
+        or "writable" in raw_static[0]
+        or "is_writable" in raw_static[0]
     ):
         privileges = privileges_from_json_parsed(
             raw_static,
@@ -1086,7 +1152,9 @@ def resolve_account_privileges(
         # Without header or privilege bits, only fail if we need them.
         # Treat all static as non-signer read-only unless counts are given —
         # but that would invent facts.  Fail closed.
-        raise SolanaAdapterError("message.header or explicit account privilege bits are required")
+        raise SolanaAdapterError(
+            "message.header or explicit account privilege bits are required"
+        )
     header_map = _as_mapping(header, "message.header")
     privileges = privileges_from_header(
         static,
@@ -1128,7 +1196,9 @@ def parse_instructions(
         try:
             return account_keys[program_index]
         except IndexError as exc:
-            raise SolanaAdapterError("programIdIndex is outside resolved account keys") from exc
+            raise SolanaAdapterError(
+                "programIdIndex is outside resolved account keys"
+            ) from exc
 
     def accounts_of(instruction: Mapping[str, Any]) -> tuple[tuple[int, ...], tuple[str, ...]]:
         values = instruction.get("accounts") or ()
@@ -1216,18 +1286,24 @@ def parse_instructions(
             unsupported.append(
                 UnsupportedField(
                     path="meta.innerInstructions",
-                    reason=("inner instruction coverage absent; CPI tree not invented"),
+                    reason=(
+                        "inner instruction coverage absent; CPI tree not invented"
+                    ),
                 )
             )
 
     inner_by_outer: dict[int, Sequence[object]] = {}
     if inner_groups_raw is not None:
-        if not isinstance(inner_groups_raw, Sequence) or isinstance(inner_groups_raw, (str, bytes)):
+        if not isinstance(inner_groups_raw, Sequence) or isinstance(
+            inner_groups_raw, (str, bytes)
+        ):
             raise SolanaAdapterError("meta.innerInstructions must be a sequence")
         for group in inner_groups_raw:
             if not isinstance(group, Mapping):
                 raise SolanaAdapterError("inner instruction group must be a mapping")
-            index = _non_negative_int(group.get("index"), "inner instruction outer index")
+            index = _non_negative_int(
+                group.get("index"), "inner instruction outer index"
+            )
             values = group.get("instructions")
             if not isinstance(values, Sequence) or isinstance(values, (str, bytes)):
                 raise SolanaAdapterError("inner instructions must be a sequence")
@@ -1242,11 +1318,15 @@ def parse_instructions(
         for inner_index, inner in enumerate(inner_by_outer.get(outer_index, ())):
             if not isinstance(inner, Mapping):
                 raise SolanaAdapterError("inner instruction must be a mapping")
-            result.append(one(inner, outer_index=outer_index, inner_index=inner_index))
+            result.append(
+                one(inner, outer_index=outer_index, inner_index=inner_index)
+            )
 
     unknown_groups = set(inner_by_outer) - set(range(len(outer)))
     if unknown_groups:
-        raise SolanaAdapterError("inner instructions reference a missing outer index")
+        raise SolanaAdapterError(
+            "inner instructions reference a missing outer index"
+        )
 
     return tuple(result), missing, unsupported
 
@@ -1294,7 +1374,9 @@ class SolanaTransactionObservation:
         object.__setattr__(
             self, "signature", normalize_signature(self.signature, field="signature")
         )
-        object.__setattr__(self, "chain_id", _text(self.chain_id, "chain_id", allow_empty=True))
+        object.__setattr__(
+            self, "chain_id", _text(self.chain_id, "chain_id", allow_empty=True)
+        )
         for name in (
             "network",
             "genesis_hash",
@@ -1308,9 +1390,13 @@ class SolanaTransactionObservation:
         ):
             raw = getattr(self, name)
             if name == "blockhash" and raw:
-                object.__setattr__(self, name, normalize_blockhash(raw, field="blockhash"))
+                object.__setattr__(
+                    self, name, normalize_blockhash(raw, field="blockhash")
+                )
             else:
-                object.__setattr__(self, name, _text(raw, name, allow_empty=True))
+                object.__setattr__(
+                    self, name, _text(raw, name, allow_empty=True)
+                )
         object.__setattr__(self, "slot", _optional_non_negative_int(self.slot, "slot"))
         object.__setattr__(
             self, "block_time", _optional_non_negative_int(self.block_time, "block_time")
@@ -1321,9 +1407,13 @@ class SolanaTransactionObservation:
             _optional_non_negative_int(self.transaction_index, "transaction_index"),
         )
         if self.message is not None:
-            object.__setattr__(self, "message", _attributes(_as_mapping(self.message, "message")))
+            object.__setattr__(
+                self, "message", _attributes(_as_mapping(self.message, "message"))
+            )
         if self.meta is not None:
-            object.__setattr__(self, "meta", _attributes(_as_mapping(self.meta, "meta")))
+            object.__setattr__(
+                self, "meta", _attributes(_as_mapping(self.meta, "meta"))
+            )
         if self.signatures is not None:
             if isinstance(self.signatures, (str, bytes, bytearray)) or not isinstance(
                 self.signatures, Sequence
@@ -1359,7 +1449,9 @@ class SolanaTransactionObservation:
             "commitment": self.commitment,
             "genesis_hash": self.genesis_hash,
             "kind": SolanaPayloadKind.TRANSACTION_OBSERVATION.value,
-            "log_messages": None if self.log_messages is None else list(self.log_messages),
+            "log_messages": None
+            if self.log_messages is None
+            else list(self.log_messages),
             "message": None if self.message is None else thaw_json(self.message),
             "meta": None if self.meta is None else thaw_json(self.meta),
             "network": self.network,
@@ -1368,7 +1460,9 @@ class SolanaTransactionObservation:
             "raw": thaw_json(self.raw),
             "retraction": self.retraction,
             "signature": self.signature,
-            "signatures": None if self.signatures is None else list(self.signatures),
+            "signatures": None
+            if self.signatures is None
+            else list(self.signatures),
             "slot": self.slot,
             "transaction_index": self.transaction_index,
             "validity_end": self.validity_end,
@@ -1424,7 +1518,9 @@ class SolanaTransactionObservation:
             slot=value.get("slot"),
             blockhash=value.get("blockhash", value.get("block_hash", "")),
             block_time=value.get("block_time", value.get("blockTime")),
-            transaction_index=value.get("transaction_index", value.get("transactionIndex")),
+            transaction_index=value.get(
+                "transaction_index", value.get("transactionIndex")
+            ),
             commitment=value.get(
                 "commitment", value.get("confirmation_status", value.get("confirmationStatus", ""))
             ),
@@ -1463,14 +1559,20 @@ class SolanaMessageCandidate:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "intent_id", _identifier(self.intent_id, "intent_id"))
-        object.__setattr__(self, "chain_id", _text(self.chain_id, "chain_id", allow_empty=True))
-        object.__setattr__(self, "network", _text(self.network, "network", allow_empty=True))
+        object.__setattr__(
+            self, "chain_id", _text(self.chain_id, "chain_id", allow_empty=True)
+        )
+        object.__setattr__(
+            self, "network", _text(self.network, "network", allow_empty=True)
+        )
         object.__setattr__(
             self,
             "genesis_hash",
             _text(self.genesis_hash, "genesis_hash", allow_empty=True),
         )
-        object.__setattr__(self, "version", normalize_message_version(self.version or "legacy"))
+        object.__setattr__(
+            self, "version", normalize_message_version(self.version or "legacy")
+        )
         if self.recent_blockhash:
             object.__setattr__(
                 self,
@@ -1479,7 +1581,9 @@ class SolanaMessageCandidate:
             )
         else:
             object.__setattr__(self, "recent_blockhash", "")
-        object.__setattr__(self, "message", _attributes(_as_mapping(self.message, "message")))
+        object.__setattr__(
+            self, "message", _attributes(_as_mapping(self.message, "message"))
+        )
         if self.fee_payer:
             object.__setattr__(
                 self, "fee_payer", normalize_pubkey(self.fee_payer, field="fee_payer")
@@ -1560,7 +1664,12 @@ def default_solana_capability() -> CapabilityDescriptor:
             "with exact account-order and privilege semantics"
         ),
         attributes={
-            "known_clusters": sorted({a.chain_id for a in KNOWN_NETWORKS.values()}),
+            "known_clusters": sorted(
+                {
+                    a.chain_id
+                    for a in KNOWN_NETWORKS.values()
+                }
+            ),
             "preserves_raw_evidence": True,
             "invents_missing_facts": False,
             "account_order_semantic": True,
@@ -1587,7 +1696,9 @@ class SolanaWalletAdapter:
         if not isinstance(capability, CapabilityDescriptor):
             raise SolanaAdapterError("capability must be a CapabilityDescriptor")
         if not capability.side_effect_free:
-            raise SolanaAdapterError("Solana adapter capability must be side-effect-free")
+            raise SolanaAdapterError(
+                "Solana adapter capability must be side-effect-free"
+            )
         self._capability = capability
 
     @property
@@ -1603,7 +1714,9 @@ class SolanaWalletAdapter:
 
     def convert(
         self,
-        payload: Mapping[str, Any] | SolanaTransactionObservation | SolanaMessageCandidate,
+        payload: Mapping[str, Any]
+        | SolanaTransactionObservation
+        | SolanaMessageCandidate,
         *,
         source_provenance: CryptoIRProvenance | Mapping[str, Any] | None = None,
     ) -> AdapterConversionResult:
@@ -1616,7 +1729,9 @@ class SolanaWalletAdapter:
         elif isinstance(payload, Mapping):
             payload_map = payload
         else:
-            raise SolanaAdapterError("payload must be a mapping or Solana structured record")
+            raise SolanaAdapterError(
+                "payload must be a mapping or Solana structured record"
+            )
 
         source_digest = f"sha256:{content_sha256_hex(dict(payload_map))}"
         provenance_dict: dict[str, Any] = {}
@@ -1634,17 +1749,18 @@ class SolanaWalletAdapter:
             )
             if source_authority is AuthorityKind.AUTHORIZATION:
                 raise SolanaAdapterError(
-                    "cannot convert authorization-authority payload through Solana adapter"
+                    "cannot convert authorization-authority payload through "
+                    "Solana adapter"
                 )
             result_authority = source_authority
 
             if kind is SolanaPayloadKind.TRANSACTION_OBSERVATION:
-                result_payload, unsupported, diagnostics, status = self._convert_observation(
-                    payload_map
+                result_payload, unsupported, diagnostics, status = (
+                    self._convert_observation(payload_map)
                 )
             elif kind is SolanaPayloadKind.MESSAGE_CANDIDATE:
-                result_payload, unsupported, diagnostics, status = self._convert_message_candidate(
-                    payload_map
+                result_payload, unsupported, diagnostics, status = (
+                    self._convert_message_candidate(payload_map)
                 )
             elif kind is SolanaPayloadKind.SERIALIZED_CANDIDATE:
                 result_payload, unsupported, diagnostics, status = (
@@ -1715,7 +1831,9 @@ class SolanaWalletAdapter:
             else:
                 kind = default
             return data, kind
-        raise SolanaAdapterError("source_provenance must be CryptoIRProvenance or mapping")
+        raise SolanaAdapterError(
+            "source_provenance must be CryptoIRProvenance or mapping"
+        )
 
     def _detect_kind(self, payload: Mapping[str, Any]) -> SolanaPayloadKind:
         kind_raw = payload.get("kind", payload.get("payload_kind", ""))
@@ -1768,7 +1886,9 @@ class SolanaWalletAdapter:
             if instr.program_id == SYSTEM_PROGRAM_ID and "lamports" in info:
                 amount = parse_exact_base_units(info.get("lamports"), field="lamports")
                 source = normalize_pubkey(info.get("source"), field="transfer.source")
-                dest = normalize_pubkey(info.get("destination"), field="transfer.destination")
+                dest = normalize_pubkey(
+                    info.get("destination"), field="transfer.destination"
+                )
                 transfers.append(
                     {
                         "kind": "native",
@@ -1784,8 +1904,12 @@ class SolanaWalletAdapter:
                     }
                 )
             elif instr.program_id in TOKEN_PROGRAM_IDS:
-                source = normalize_pubkey(info.get("source"), field="token transfer source")
-                dest = normalize_pubkey(info.get("destination"), field="token transfer destination")
+                source = normalize_pubkey(
+                    info.get("source"), field="token transfer source"
+                )
+                dest = normalize_pubkey(
+                    info.get("destination"), field="token transfer destination"
+                )
                 token_amount = info.get("tokenAmount", info.get("token_amount"))
                 if token_amount is not None:
                     if not isinstance(token_amount, Mapping):
@@ -1793,10 +1917,14 @@ class SolanaWalletAdapter:
                     amount = parse_exact_base_units(
                         token_amount.get("amount"), field="SPL token amount"
                     )
-                    decimals = _non_negative_int(token_amount.get("decimals"), "SPL token decimals")
+                    decimals = _non_negative_int(
+                        token_amount.get("decimals"), "SPL token decimals"
+                    )
                     mint = normalize_pubkey(info.get("mint"), field="SPL token mint")
                 else:
-                    amount = parse_exact_base_units(info.get("amount"), field="SPL token amount")
+                    amount = parse_exact_base_units(
+                        info.get("amount"), field="SPL token amount"
+                    )
                     mint_raw = info.get("mint")
                     if mint_raw is None:
                         # Cannot invent mint/decimals for unchecked transfer.
@@ -1860,7 +1988,9 @@ class SolanaWalletAdapter:
         except SolanaAdapterError:
             raise
 
-        commitment = map_commitment(obs.commitment) if obs.commitment else FinalityStatus.UNKNOWN
+        commitment = (
+            map_commitment(obs.commitment) if obs.commitment else FinalityStatus.UNKNOWN
+        )
         if not obs.commitment:
             missing_coverage.append("commitment")
             unsupported.append(
@@ -1869,7 +1999,11 @@ class SolanaWalletAdapter:
                     reason="commitment absent; left as unknown (not invented)",
                 )
             )
-        retraction = map_retraction(obs.retraction) if obs.retraction else RetractionStatus.UNKNOWN
+        retraction = (
+            map_retraction(obs.retraction)
+            if obs.retraction
+            else RetractionStatus.UNKNOWN
+        )
         if not obs.retraction:
             missing_coverage.append("retraction")
 
@@ -1879,7 +2013,9 @@ class SolanaWalletAdapter:
         message_dict: dict[str, Any] | None = (
             thaw_json(obs.message) if obs.message is not None else None
         )
-        meta_dict: dict[str, Any] | None = thaw_json(obs.meta) if obs.meta is not None else None
+        meta_dict: dict[str, Any] | None = (
+            thaw_json(obs.meta) if obs.meta is not None else None
+        )
 
         if message_dict is None:
             missing_coverage.append("message")
@@ -1890,7 +2026,9 @@ class SolanaWalletAdapter:
                 )
             )
         else:
-            privileges, lookup_tables = resolve_account_privileges(message_dict, meta_dict)
+            privileges, lookup_tables = resolve_account_privileges(
+                message_dict, meta_dict
+            )
             instrs, instr_missing, instr_unsup = parse_instructions(
                 message_dict, meta_dict, privileges
             )
@@ -2016,7 +2154,9 @@ class SolanaWalletAdapter:
             coordinate=coordinate,
             finality=commitment,
             retraction=retraction,
-            validity=ValidityWindow(start=obs.validity_start, end=obs.validity_end),
+            validity=ValidityWindow(
+                start=obs.validity_start, end=obs.validity_end
+            ),
             from_account=fee_payer_account,
             to_account=None,
             provenance=provenance,
@@ -2034,10 +2174,15 @@ class SolanaWalletAdapter:
                 "logs_present": logs_list is not None,
                 "inner_instructions_present": (
                     meta_dict is not None
-                    and ("innerInstructions" in meta_dict or "inner_instructions" in meta_dict)
+                    and (
+                        "innerInstructions" in meta_dict
+                        or "inner_instructions" in meta_dict
+                    )
                 ),
                 "instruction_count": len(instructions),
-                "outer_instruction_count": sum(1 for i in instructions if i.inner_index is None),
+                "outer_instruction_count": sum(
+                    1 for i in instructions if i.inner_index is None
+                ),
                 "inner_instruction_count": sum(
                     1 for i in instructions if i.inner_index is not None
                 ),
@@ -2168,7 +2313,9 @@ class SolanaWalletAdapter:
                 )
             meta_for_resolve = {"loadedAddresses": loaded}
 
-        privileges, lookup_tables = resolve_account_privileges(message_dict, meta_for_resolve)
+        privileges, lookup_tables = resolve_account_privileges(
+            message_dict, meta_for_resolve
+        )
         instructions, instr_missing, instr_unsup = parse_instructions(
             message_dict, None, privileges
         )
@@ -2215,7 +2362,9 @@ class SolanaWalletAdapter:
 
         calls = tuple(
             CallIntent(
-                target=account_identity(instr.program_id, chain, account_kind="program"),
+                target=account_identity(
+                    instr.program_id, chain, account_kind="program"
+                ),
                 method=instr.parsed_type or "program_instruction",
                 attributes={
                     "program_id": instr.program_id,
@@ -2253,10 +2402,14 @@ class SolanaWalletAdapter:
 
         if not fee_payer:
             # UnsignedTransactionIntent requires a concrete origin account.
-            raise SolanaAdapterError("message_candidate requires fee_payer or at least one signer")
+            raise SolanaAdapterError(
+                "message_candidate requires fee_payer or at least one signer"
+            )
         origin = account_identity(fee_payer, chain, account_kind="signer")
         if not signer_requirements:
-            signer_requirements = (SignerRequirement(account=origin, role="fee_payer"),)
+            signer_requirements = (
+                SignerRequirement(account=origin, role="fee_payer"),
+            )
 
         unsigned = UnsignedTransactionIntent(
             intent_id=candidate.intent_id,
@@ -2318,7 +2471,9 @@ class SolanaWalletAdapter:
         candidate_id = _identifier(
             payload.get("candidate_id", payload.get("id", "")), "candidate_id"
         )
-        intent_id = _identifier(payload.get("intent_id", candidate_id), "intent_id")
+        intent_id = _identifier(
+            payload.get("intent_id", candidate_id), "intent_id"
+        )
         network = resolve_network(
             chain_id=payload.get("chain_id") or payload.get("cluster") or None,
             network=payload.get("network") or None,
@@ -2328,7 +2483,9 @@ class SolanaWalletAdapter:
         unsupported: list[UnsupportedField] = []
         diagnostics: list[str] = []
 
-        raw_bytes = payload.get("raw_tx", payload.get("serialized", payload.get("wire")))
+        raw_bytes = payload.get(
+            "raw_tx", payload.get("serialized", payload.get("wire"))
+        )
         payload_digest = payload.get("payload_digest", "")
         encoding = _text(payload.get("encoding", "base64"), "encoding")
         byte_length = payload.get("byte_length")
@@ -2360,7 +2517,9 @@ class SolanaWalletAdapter:
                 payload_digest = f"sha256:{hashlib.sha256(body).hexdigest()}"
         else:
             if not payload_digest:
-                raise SolanaAdapterError("serialized candidate requires raw_tx or payload_digest")
+                raise SolanaAdapterError(
+                    "serialized candidate requires raw_tx or payload_digest"
+                )
             if byte_length is None:
                 unsupported.append(
                     UnsupportedField(
@@ -2414,20 +2573,25 @@ class SolanaWalletAdapter:
             else AdapterConversionStatus.PARTIAL
         )
         diagnostics.append(
-            f"cluster={network.chain_id};network={network.network};genesis={network.genesis_hash}"
+            f"cluster={network.chain_id};network={network.network};"
+            f"genesis={network.genesis_hash}"
         )
         return result_payload, tuple(unsupported), tuple(diagnostics), status
 
 
 def convert_solana_payload(
-    payload: Mapping[str, Any] | SolanaTransactionObservation | SolanaMessageCandidate,
+    payload: Mapping[str, Any]
+    | SolanaTransactionObservation
+    | SolanaMessageCandidate,
     *,
     source_provenance: CryptoIRProvenance | Mapping[str, Any] | None = None,
     adapter: SolanaWalletAdapter | None = None,
 ) -> AdapterConversionResult:
     """Module-level helper around :class:`SolanaWalletAdapter.convert`."""
 
-    return (adapter or SolanaWalletAdapter()).convert(payload, source_provenance=source_provenance)
+    return (adapter or SolanaWalletAdapter()).convert(
+        payload, source_provenance=source_provenance
+    )
 
 
 __all__ = [

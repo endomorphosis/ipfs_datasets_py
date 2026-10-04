@@ -89,7 +89,9 @@ def test_hash_join_rescues_bm25_vocabulary_terms(tmp_path: Path):
         bucket_id="Publicus/abby-voice",
         listing_sha256="c" * 64,
     )
-    bundle = normalize_bucket_audio_entries(inventory=inventory, plan=plan, plan_id=plan.plan_id)
+    bundle = normalize_bucket_audio_entries(
+        inventory=inventory, plan=plan, plan_id=plan.plan_id
+    )
     assert bundle.summary()["unmapped_linkable_count"] == 1
 
     catalog = load_text_hash_catalog(
@@ -109,7 +111,11 @@ def test_hash_join_rescues_bm25_vocabulary_terms(tmp_path: Path):
     )
     assert stats["rescued"] == 1
     assert rescued.summary()["unmapped_linkable_count"] == 0
-    vocab_entry = next(item for item in rescued.entries if item.legacy_text_hash == vocab_hash)
+    vocab_entry = next(
+        item
+        for item in rescued.entries
+        if item.legacy_text_hash == vocab_hash
+    )
     assert vocab_entry.mapping_status is BucketAudioMappingStatus.MAPPED_TO_VOCABULARY
     assert vocab_entry.source_text == "Portland"
     assert vocab_entry.subject_kind is BucketAudioSubjectKind.BM25_TERM
@@ -147,10 +153,13 @@ def test_asr_rescue_matches_response_by_normalized_identity():
         accepted_responses=(response,),
         discovered_objects=objects,
     )
-    bundle = normalize_bucket_audio_entries(inventory=inventory, plan=plan, plan_id=plan.plan_id)
+    bundle = normalize_bucket_audio_entries(
+        inventory=inventory, plan=plan, plan_id=plan.plan_id
+    )
     orphan_path = f"runs/orphan/audio/abby-tts-{orphan_hash}.mp3"
     assert any(
-        item.mapping_status is BucketAudioMappingStatus.UNMAPPED_LINKABLE for item in bundle.entries
+        item.mapping_status is BucketAudioMappingStatus.UNMAPPED_LINKABLE
+        for item in bundle.entries
     )
     rescued, stats = rescue_unmapped_by_asr(
         bundle,

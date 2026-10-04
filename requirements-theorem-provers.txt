@@ -1,7 +1,4 @@
 # Python binding profile for theorem-prover integrations.
-# FormalVerificationDistributionContract@1 (FVT-G215 / FVT-084) requires this
-# profile to stay aligned with setup.py extras, pyproject optional-dependencies,
-# requirements.txt, and requirements-lazy.txt for deterministic Python bindings.
 #
 # Z3, CVC5, pySMT, beartype, and jsonschema are mirrored deterministic base
 # bindings.  SymbolicAI is the optional advisor binding in this profile.

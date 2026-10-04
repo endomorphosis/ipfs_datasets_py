@@ -52,9 +52,15 @@ BACKWARD_PROOF_OBLIGATION_GRAPH_INTERFACE: Final = "BackwardProofObligationGraph
 BACKWARD_GRAPH_BUILD_SCHEMA: Final = (
     "ipfs_datasets_py/logic/software_verification/backward-graph-build@1"
 )
-REGRESSION_STEP_SCHEMA: Final = "ipfs_datasets_py/logic/software_verification/regression-step@1"
-OBLIGATION_SEED_SCHEMA: Final = "ipfs_datasets_py/logic/software_verification/obligation-seed@1"
-EVIDENCE_CITATION_SCHEMA: Final = "ipfs_datasets_py/logic/software_verification/evidence-citation@1"
+REGRESSION_STEP_SCHEMA: Final = (
+    "ipfs_datasets_py/logic/software_verification/regression-step@1"
+)
+OBLIGATION_SEED_SCHEMA: Final = (
+    "ipfs_datasets_py/logic/software_verification/obligation-seed@1"
+)
+EVIDENCE_CITATION_SCHEMA: Final = (
+    "ipfs_datasets_py/logic/software_verification/evidence-citation@1"
+)
 GRAPH_BUILD_RESULT_SCHEMA: Final = (
     "ipfs_datasets_py/logic/software_verification/backward-graph-result@1"
 )
@@ -252,7 +258,9 @@ def _enum(value: object, enum_type: type[StrEnum], label: str) -> Any:
             return enum_type(value.strip())
         except ValueError as error:
             allowed = ", ".join(item.value for item in enum_type)
-            raise ProofGraphError(f"{label} must be one of: {allowed}") from error
+            raise ProofGraphError(
+                f"{label} must be one of: {allowed}"
+            ) from error
     raise ProofGraphError(f"{label} must be a {enum_type.__name__}")
 
 
@@ -267,9 +275,12 @@ def _string_tuple(
         items: tuple[str, ...] = ()
     elif isinstance(values, str):
         items = (_text(values, label, maximum=512),)
-    elif isinstance(values, Sequence) and not isinstance(values, (bytes, bytearray, memoryview)):
+    elif isinstance(values, Sequence) and not isinstance(
+        values, (bytes, bytearray, memoryview)
+    ):
         items = tuple(
-            _text(item, f"{label}[{index}]", maximum=512) for index, item in enumerate(values)
+            _text(item, f"{label}[{index}]", maximum=512)
+            for index, item in enumerate(values)
         )
     else:
         raise ProofGraphError(f"{label} must be a sequence of strings")
@@ -345,7 +356,9 @@ def _source_binding(value: object, label: str = "source") -> SourceSpanBinding:
 
 
 def _stable_id(prefix: str, *parts: str) -> str:
-    digest = hashlib.sha256("|".join(parts).encode("utf-8", errors="replace")).hexdigest()[:16]
+    digest = hashlib.sha256(
+        "|".join(parts).encode("utf-8", errors="replace")
+    ).hexdigest()[:16]
     return f"{prefix}:{digest}"
 
 
@@ -440,7 +453,9 @@ class EvidenceCitation:
             "statement",
             _text(self.statement, "statement", optional=True, maximum=4096),
         )
-        object.__setattr__(self, "metadata", _mapping(self.metadata, "metadata"))
+        object.__setattr__(
+            self, "metadata", _mapping(self.metadata, "metadata")
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -489,14 +504,20 @@ class ObligationSeed:
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "seed_id", _text(self.seed_id, "seed_id", maximum=256))
-        object.__setattr__(self, "kind", _enum(self.kind, ObligationSeedKind, "kind"))
+        object.__setattr__(
+            self, "seed_id", _text(self.seed_id, "seed_id", maximum=256)
+        )
+        object.__setattr__(
+            self, "kind", _enum(self.kind, ObligationSeedKind, "kind")
+        )
         object.__setattr__(
             self,
             "statement",
             _text(self.statement, "statement", maximum=8192),
         )
-        object.__setattr__(self, "label", _text(self.label, "label", optional=True, maximum=512))
+        object.__setattr__(
+            self, "label", _text(self.label, "label", optional=True, maximum=512)
+        )
         object.__setattr__(
             self,
             "hole_id",
@@ -505,7 +526,9 @@ class ObligationSeed:
         object.__setattr__(
             self,
             "parent_seed_id",
-            _text(self.parent_seed_id, "parent_seed_id", optional=True, maximum=256),
+            _text(
+                self.parent_seed_id, "parent_seed_id", optional=True, maximum=256
+            ),
         )
         combo = _text(self.combination, "combination", maximum=16).lower()
         if combo not in {"and", "or"}:
@@ -530,7 +553,9 @@ class ObligationSeed:
             "authority",
             _enum(self.authority, AuthorityCeiling, "authority"),
         )
-        object.__setattr__(self, "status", _enum(self.status, HoleStatus, "status"))
+        object.__setattr__(
+            self, "status", _enum(self.status, HoleStatus, "status")
+        )
         evidence = self.evidence
         if evidence is None:
             pass
@@ -544,7 +569,9 @@ class ObligationSeed:
             "subsumed_by",
             _text(self.subsumed_by, "subsumed_by", optional=True, maximum=256),
         )
-        object.__setattr__(self, "depth_hint", _nonnegative_int(self.depth_hint, "depth_hint"))
+        object.__setattr__(
+            self, "depth_hint", _nonnegative_int(self.depth_hint, "depth_hint")
+        )
         experimental = _bool(self.experimental, "experimental")
         if (
             self.inference_rule in _EXPERIMENTAL_RULES
@@ -554,8 +581,12 @@ class ObligationSeed:
             experimental = True
         object.__setattr__(self, "experimental", experimental)
         if experimental:
-            object.__setattr__(self, "authority", cap_experimental_authority(self.authority))
-        object.__setattr__(self, "metadata", _mapping(self.metadata, "metadata"))
+            object.__setattr__(
+                self, "authority", cap_experimental_authority(self.authority)
+            )
+        object.__setattr__(
+            self, "metadata", _mapping(self.metadata, "metadata")
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -589,7 +620,9 @@ class ObligationSeed:
             hole_id=payload.get("hole_id", ""),
             parent_seed_id=payload.get("parent_seed_id", ""),
             combination=payload.get("combination", "and"),
-            inference_rule=payload.get("inference_rule", InferenceRule.DEPENDS_ON),
+            inference_rule=payload.get(
+                "inference_rule", InferenceRule.DEPENDS_ON
+            ),
             reconstruction_method=payload.get(
                 "reconstruction_method", ReconstructionMethod.SOURCE_VC
             ),
@@ -626,7 +659,9 @@ class RegressionStep:
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "step_id", _text(self.step_id, "step_id", maximum=256))
+        object.__setattr__(
+            self, "step_id", _text(self.step_id, "step_id", maximum=256)
+        )
         object.__setattr__(
             self,
             "parent_obligation_id",
@@ -639,11 +674,14 @@ class RegressionStep:
         object.__setattr__(
             self,
             "child_obligation_id",
-            _text(self.child_obligation_id, "child_obligation_id", maximum=256),
+            _text(
+                self.child_obligation_id, "child_obligation_id", maximum=256
+            ),
         )
         if self.parent_obligation_id == self.child_obligation_id:
             raise ProofGraphError(
-                f"regression steps cannot be self-loops ({self.parent_obligation_id})"
+                "regression steps cannot be self-loops "
+                f"({self.parent_obligation_id})"
             )
         object.__setattr__(
             self,
@@ -663,7 +701,8 @@ class RegressionStep:
         # that are non-empty (enforced by enums) and consistent.
         if not self.inference_rule.value or not self.reconstruction_method.value:
             raise ProofGraphError(
-                "regression steps must name inference_rule and reconstruction_method"
+                "regression steps must name inference_rule and "
+                "reconstruction_method"
             )
         object.__setattr__(
             self,
@@ -683,7 +722,9 @@ class RegressionStep:
         object.__setattr__(
             self,
             "transition_id",
-            _text(self.transition_id, "transition_id", optional=True, maximum=256),
+            _text(
+                self.transition_id, "transition_id", optional=True, maximum=256
+            ),
         )
         combo = _text(self.combination, "combination", maximum=16).lower()
         if combo not in {"and", "or"}:
@@ -696,7 +737,9 @@ class RegressionStep:
         ):
             experimental = True
         object.__setattr__(self, "experimental", experimental)
-        object.__setattr__(self, "metadata", _mapping(self.metadata, "metadata"))
+        object.__setattr__(
+            self, "metadata", _mapping(self.metadata, "metadata")
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -720,7 +763,9 @@ class RegressionStep:
             step_id=payload.get("step_id", ""),
             parent_obligation_id=payload.get("parent_obligation_id", ""),
             child_obligation_id=payload.get("child_obligation_id", ""),
-            inference_rule=payload.get("inference_rule", InferenceRule.WEAKEST_PRECONDITION),
+            inference_rule=payload.get(
+                "inference_rule", InferenceRule.WEAKEST_PRECONDITION
+            ),
             reconstruction_method=payload.get(
                 "reconstruction_method", ReconstructionMethod.SOURCE_VC
             ),
@@ -756,7 +801,9 @@ class BackwardGraphRequest:
             "formal_goal_id",
             _text(self.formal_goal_id, "formal_goal_id", maximum=256),
         )
-        object.__setattr__(self, "tree_id", _text(self.tree_id, "tree_id", maximum=256))
+        object.__setattr__(
+            self, "tree_id", _text(self.tree_id, "tree_id", maximum=256)
+        )
         seeds: list[ObligationSeed] = []
         for index, item in enumerate(self.seeds or ()):
             if isinstance(item, ObligationSeed):
@@ -764,7 +811,9 @@ class BackwardGraphRequest:
             elif isinstance(item, Mapping):
                 seeds.append(ObligationSeed.from_dict(item))
             else:
-                raise ProofGraphError(f"seeds[{index}] must be an ObligationSeed")
+                raise ProofGraphError(
+                    f"seeds[{index}] must be an ObligationSeed"
+                )
         object.__setattr__(self, "seeds", tuple(seeds))
         steps: list[RegressionStep] = []
         for index, item in enumerate(self.steps or ()):
@@ -773,7 +822,9 @@ class BackwardGraphRequest:
             elif isinstance(item, Mapping):
                 steps.append(RegressionStep.from_dict(item))
             else:
-                raise ProofGraphError(f"steps[{index}] must be a RegressionStep")
+                raise ProofGraphError(
+                    f"steps[{index}] must be a RegressionStep"
+                )
         object.__setattr__(self, "steps", tuple(steps))
         holes: list[ProofHole] = []
         for index, item in enumerate(self.holes or ()):
@@ -788,7 +839,10 @@ class BackwardGraphRequest:
         object.__setattr__(
             self,
             "root_label",
-            _text(self.root_label, "root_label", optional=True, maximum=512) or "formal goal",
+            _text(
+                self.root_label, "root_label", optional=True, maximum=512
+            )
+            or "formal goal",
         )
         object.__setattr__(
             self,
@@ -799,7 +853,9 @@ class BackwardGraphRequest:
                 "discharge_authority",
             ),
         )
-        object.__setattr__(self, "metadata", _mapping(self.metadata, "metadata"))
+        object.__setattr__(
+            self, "metadata", _mapping(self.metadata, "metadata")
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -843,7 +899,9 @@ class BackwardGraphResult:
     def __post_init__(self) -> None:
         if not isinstance(self.graph, ProofObligationGraph):
             raise ProofGraphError("graph must be a ProofObligationGraph")
-        object.__setattr__(self, "status", _enum(self.status, GraphBuildStatus, "status"))
+        object.__setattr__(
+            self, "status", _enum(self.status, GraphBuildStatus, "status")
+        )
         object.__setattr__(
             self,
             "open_node_ids",
@@ -866,7 +924,11 @@ class BackwardGraphResult:
         )
         pairs: list[tuple[str, str]] = []
         for item in self.subsumed_pairs or ():
-            if isinstance(item, Sequence) and not isinstance(item, (str, bytes)) and len(item) == 2:
+            if (
+                isinstance(item, Sequence)
+                and not isinstance(item, (str, bytes))
+                and len(item) == 2
+            ):
                 pairs.append(
                     (
                         _text(item[0], "subsumed_pairs[0]", maximum=256),
@@ -874,9 +936,13 @@ class BackwardGraphResult:
                     )
                 )
             else:
-                raise ProofGraphError("subsumed_pairs must be (subsumed, by) id pairs")
+                raise ProofGraphError(
+                    "subsumed_pairs must be (subsumed, by) id pairs"
+                )
         object.__setattr__(self, "subsumed_pairs", tuple(pairs))
-        object.__setattr__(self, "cycle_detected", _bool(self.cycle_detected, "cycle_detected"))
+        object.__setattr__(
+            self, "cycle_detected", _bool(self.cycle_detected, "cycle_detected")
+        )
         object.__setattr__(
             self,
             "scc_blocked_ids",
@@ -887,7 +953,9 @@ class BackwardGraphResult:
             "budget_exhausted",
             _bool(self.budget_exhausted, "budget_exhausted"),
         )
-        object.__setattr__(self, "steps_used", _nonnegative_int(self.steps_used, "steps_used"))
+        object.__setattr__(
+            self, "steps_used", _nonnegative_int(self.steps_used, "steps_used")
+        )
         object.__setattr__(
             self,
             "algorithm_version",
@@ -899,7 +967,9 @@ class BackwardGraphResult:
             _string_tuple(self.diagnostics, "diagnostics", preserve_order=True),
         )
         if self.proof_claimed or self.completion_claimed:
-            raise ProofGraphError("BackwardGraphResult cannot claim proof or completion")
+            raise ProofGraphError(
+                "BackwardGraphResult cannot claim proof or completion"
+            )
         object.__setattr__(self, "proof_claimed", False)
         object.__setattr__(self, "completion_claimed", False)
 
@@ -1171,7 +1241,9 @@ def _require_named_rule_and_method(
     if not method.value:
         raise ProofGraphError(f"{context}: reconstruction_method is required")
     if not rule_is_checked(rule):
-        raise ProofGraphError(f"{context}: inference_rule {rule!r} is not a checked rule")
+        raise ProofGraphError(
+            f"{context}: inference_rule {rule!r} is not a checked rule"
+        )
 
 
 def _detect_cycles(
@@ -1238,7 +1310,9 @@ class BackwardProofObligationGraph:
         default_bounds: ResourceBounds | None = None,
         allow_experimental: bool = True,
     ) -> None:
-        self.default_bounds = default_bounds if default_bounds is not None else DEFAULT_BOUNDS
+        self.default_bounds = (
+            default_bounds if default_bounds is not None else DEFAULT_BOUNDS
+        )
         self.allow_experimental = bool(allow_experimental)
 
     def build(
@@ -1279,7 +1353,9 @@ class BackwardProofObligationGraph:
         budget_exhausted = False
 
         root_node_id = "node:root"
-        graph_id = request.graph_id or _stable_id("graph", request.formal_goal_id, request.tree_id)
+        graph_id = request.graph_id or _stable_id(
+            "graph", request.formal_goal_id, request.tree_id
+        )
         root = ProofGraphNode(
             node_id=root_node_id,
             kind=GraphNodeKind.ROOT,
@@ -1313,7 +1389,9 @@ class BackwardProofObligationGraph:
             if node.node_id in nodes_by_id:
                 return node.node_id
             if not _budget_ok():
-                diagnostics.append(f"budget exhausted before adding node {node.node_id}")
+                diagnostics.append(
+                    f"budget exhausted before adding node {node.node_id}"
+                )
                 return ""
             nodes_by_id[node.node_id] = node
             return node.node_id
@@ -1335,14 +1413,15 @@ class BackwardProofObligationGraph:
             if source == target:
                 diagnostics.append(f"skipped self-loop edge {edge_id}")
                 return
-            _require_named_rule_and_method(rule, method, context=f"edge {edge_id}")
-            if (
-                experimental
-                or rule in _EXPERIMENTAL_RULES
-                or method in _EXPERIMENTAL_RECONSTRUCTION
-            ):
+            _require_named_rule_and_method(
+                rule, method, context=f"edge {edge_id}"
+            )
+            if experimental or rule in _EXPERIMENTAL_RULES or method in _EXPERIMENTAL_RECONSTRUCTION:
                 if not self.allow_experimental:
-                    diagnostics.append(f"rejected experimental edge {edge_id} (rule={rule.value})")
+                    diagnostics.append(
+                        f"rejected experimental edge {edge_id} "
+                        f"(rule={rule.value})"
+                    )
                     return
                 experimental = True
             meta = dict(metadata or {})
@@ -1389,7 +1468,11 @@ class BackwardProofObligationGraph:
                 return parent_node_id
             combo_id = f"node:{combo}:{tag}"
             kind = GraphNodeKind.AND if combo == "and" else GraphNodeKind.OR
-            rule = InferenceRule.AND_INTRO if combo == "and" else InferenceRule.OR_INTRO
+            rule = (
+                InferenceRule.AND_INTRO
+                if combo == "and"
+                else InferenceRule.OR_INTRO
+            )
             method = ReconstructionMethod.KERNEL
             if not _budget_ok():
                 return parent_node_id
@@ -1410,7 +1493,9 @@ class BackwardProofObligationGraph:
                 target=combo_id,
                 rule=rule,
                 method=method,
-                kind=GraphEdgeKind.DEPENDS_ON if combo == "and" else GraphEdgeKind.ALTERNATIVE,
+                kind=GraphEdgeKind.DEPENDS_ON
+                if combo == "and"
+                else GraphEdgeKind.ALTERNATIVE,
             )
             return combo_id
 
@@ -1428,7 +1513,9 @@ class BackwardProofObligationGraph:
             tag="root-or",
         )
 
-        def _materialize_seed(seed: ObligationSeed, default_parent: str) -> str:
+        def _materialize_seed(
+            seed: ObligationSeed, default_parent: str
+        ) -> str:
             nonlocal budget_exhausted
             if not _budget_ok():
                 return ""
@@ -1437,12 +1524,16 @@ class BackwardProofObligationGraph:
 
             # Depth budget
             if bounds.max_depth and seed.depth_hint > bounds.max_depth:
-                diagnostics.append(f"seed {seed.seed_id} exceeds max_depth={bounds.max_depth}")
+                diagnostics.append(
+                    f"seed {seed.seed_id} exceeds max_depth={bounds.max_depth}"
+                )
                 budget_exhausted = True
                 return ""
 
             if seed.experimental and not self.allow_experimental:
-                diagnostics.append(f"skipped experimental seed {seed.seed_id}")
+                diagnostics.append(
+                    f"skipped experimental seed {seed.seed_id}"
+                )
                 return ""
 
             # Subsumption control: identical statement already present.
@@ -1484,7 +1575,9 @@ class BackwardProofObligationGraph:
             # candidates for leaf discharge; experimental never discharges.
             if seed.experimental and status is HoleStatus.DISCHARGED:
                 status = HoleStatus.CANDIDATE
-                diagnostics.append(f"experimental seed {seed.seed_id} cannot be discharged")
+                diagnostics.append(
+                    f"experimental seed {seed.seed_id} cannot be discharged"
+                )
 
             kind = _node_kind_for_seed(seed)
             meta: dict[str, Any] = dict(seed.metadata)
@@ -1567,14 +1660,18 @@ class BackwardProofObligationGraph:
                     _materialize_seed(seed, root_node_id)
                 remaining = []
             else:
-                remaining = [s for s in next_remaining if s.seed_id not in seed_to_node]
+                remaining = [
+                    s for s in next_remaining if s.seed_id not in seed_to_node
+                ]
 
         # --- Apply explicit regression steps ---
         for step in request.steps:
             if not _budget_ok():
                 break
             if step.experimental and not self.allow_experimental:
-                diagnostics.append(f"skipped experimental step {step.step_id}")
+                diagnostics.append(
+                    f"skipped experimental step {step.step_id}"
+                )
                 continue
 
             parent_node = obligation_to_node.get(step.parent_obligation_id)
@@ -1582,7 +1679,9 @@ class BackwardProofObligationGraph:
                 # Create parent leaf if missing.
                 parent_node_id = f"node:obl:{step.parent_obligation_id}"
                 if len(parent_node_id) > 256:
-                    parent_node_id = _stable_id("node", step.parent_obligation_id)
+                    parent_node_id = _stable_id(
+                        "node", step.parent_obligation_id
+                    )
                 if parent_node_id not in nodes_by_id:
                     if not _budget_ok():
                         break
@@ -1611,13 +1710,17 @@ class BackwardProofObligationGraph:
             if child_node is None:
                 child_node_id = f"node:obl:{step.child_obligation_id}"
                 if len(child_node_id) > 256:
-                    child_node_id = _stable_id("node", step.child_obligation_id)
+                    child_node_id = _stable_id(
+                        "node", step.child_obligation_id
+                    )
                 # Subsumption against existing statements.
                 norm = " ".join(step.statement.strip().lower().split())
                 if norm and norm in statement_index:
                     child_node = statement_index[norm]
                     obligation_to_node[step.child_obligation_id] = child_node
-                    subsumed_pairs.append((step.child_obligation_id, child_node))
+                    subsumed_pairs.append(
+                        (step.child_obligation_id, child_node)
+                    )
                     _add_edge(
                         edge_id=f"edge:subsume:{step.step_id}",
                         source=parent_node,
@@ -1677,7 +1780,9 @@ class BackwardProofObligationGraph:
         # Build adjacency for evidence lookup.
         children: dict[str, list[str]] = {nid: [] for nid in nodes_by_id}
         for edge in edges:
-            children.setdefault(edge.source_node_id, []).append(edge.target_node_id)
+            children.setdefault(edge.source_node_id, []).append(
+                edge.target_node_id
+            )
 
         # Authority enum is not ordered numerically; compare membership + ceiling.
         def _meets_discharge(authority: AuthorityCeiling) -> bool:
@@ -1715,8 +1820,12 @@ class BackwardProofObligationGraph:
             if node.metadata.get("experimental"):
                 # Experimental leaves never receive trusted discharge.
                 if node.status is HoleStatus.DISCHARGED:
-                    nodes_by_id[nid] = replace(node, status=HoleStatus.CANDIDATE)
-                    diagnostics.append(f"refused trusted discharge for experimental node {nid}")
+                    nodes_by_id[nid] = replace(
+                        node, status=HoleStatus.CANDIDATE
+                    )
+                    diagnostics.append(
+                        f"refused trusted discharge for experimental node {nid}"
+                    )
                 continue
             # Look for evidence children linked by evidence_ref edges.
             adequate = False
@@ -1730,7 +1839,9 @@ class BackwardProofObligationGraph:
                 target = nodes_by_id.get(edge.target_node_id)
                 if target is None:
                     continue
-                if target.kind is GraphNodeKind.EVIDENCE and _meets_discharge(target.authority):
+                if target.kind is GraphNodeKind.EVIDENCE and _meets_discharge(
+                    target.authority
+                ):
                     if target.metadata.get("experimental"):
                         continue
                     adequate = True
@@ -1742,7 +1853,9 @@ class BackwardProofObligationGraph:
                     child = nodes_by_id.get(child_id)
                     if child is None:
                         continue
-                    if child.kind is GraphNodeKind.EVIDENCE and _meets_discharge(child.authority):
+                    if child.kind is GraphNodeKind.EVIDENCE and _meets_discharge(
+                        child.authority
+                    ):
                         if child.metadata.get("experimental"):
                             continue
                         adequate = True
@@ -1775,18 +1888,25 @@ class BackwardProofObligationGraph:
             elif node.status is HoleStatus.DISCHARGED:
                 # Fail closed: claimed discharge without adequate evidence.
                 nodes_by_id[nid] = replace(node, status=HoleStatus.OPEN)
-                diagnostics.append(f"stripped discharge from {nid}: inadequate evidence")
+                diagnostics.append(
+                    f"stripped discharge from {nid}: inadequate evidence"
+                )
 
         # --- Cycle / SCC control: strip cycle-forming edges to terminate ---
         adjacency: dict[str, list[str]] = {nid: [] for nid in nodes_by_id}
         for edge in edges:
-            if edge.source_node_id in adjacency and edge.target_node_id in nodes_by_id:
+            if (
+                edge.source_node_id in adjacency
+                and edge.target_node_id in nodes_by_id
+            ):
                 adjacency[edge.source_node_id].append(edge.target_node_id)
 
         has_cycle, cycle_nodes = _detect_cycles(adjacency)
         scc_blocked: list[str] = []
         if has_cycle:
-            diagnostics.append("cycle detected during expansion; blocking cyclic nodes")
+            diagnostics.append(
+                "cycle detected during expansion; blocking cyclic nodes"
+            )
             # Remove edges that close cycles (keep a DAG for the contract).
             safe_edges: list[ProofGraphEdge] = []
             # Rebuild greedily: add edges that do not create a cycle.
@@ -1808,7 +1928,9 @@ class BackwardProofObligationGraph:
 
             for edge in sorted(edges, key=lambda e: e.edge_id):
                 if _would_cycle(edge.source_node_id, edge.target_node_id):
-                    diagnostics.append(f"dropped cycle-forming edge {edge.edge_id}")
+                    diagnostics.append(
+                        f"dropped cycle-forming edge {edge.edge_id}"
+                    )
                     continue
                 dag_adj[edge.source_node_id].append(edge.target_node_id)
                 safe_edges.append(edge)
@@ -1820,7 +1942,9 @@ class BackwardProofObligationGraph:
                         HoleStatus.DISCHARGED,
                         HoleStatus.FALSE,
                     }:
-                        nodes_by_id[nid] = replace(node, status=HoleStatus.BLOCKED)
+                        nodes_by_id[nid] = replace(
+                            node, status=HoleStatus.BLOCKED
+                        )
                         scc_blocked.append(nid)
 
         # Final acyclicity check (contract requires DAG).
@@ -1833,11 +1957,14 @@ class BackwardProofObligationGraph:
             edges = [
                 e
                 for e in edges
-                if e.target_node_id not in still_nodes or e.source_node_id not in still_nodes
+                if e.target_node_id not in still_nodes
+                or e.source_node_id not in still_nodes
             ]
             for nid in still_nodes:
                 if nid in nodes_by_id:
-                    nodes_by_id[nid] = replace(nodes_by_id[nid], status=HoleStatus.BLOCKED)
+                    nodes_by_id[nid] = replace(
+                        nodes_by_id[nid], status=HoleStatus.BLOCKED
+                    )
                     if nid not in scc_blocked:
                         scc_blocked.append(nid)
             diagnostics.append("residual cycles collapsed via edge drop")
@@ -1870,7 +1997,11 @@ class BackwardProofObligationGraph:
         elif scc_blocked:
             status = GraphBuildStatus.BLOCKED
         elif open_ids:
-            status = GraphBuildStatus.PARTIAL if discharged_ids else GraphBuildStatus.OPEN
+            status = (
+                GraphBuildStatus.PARTIAL
+                if discharged_ids
+                else GraphBuildStatus.OPEN
+            )
         elif discharged_ids and not open_ids:
             status = GraphBuildStatus.DISCHARGED
         else:
@@ -1880,11 +2011,14 @@ class BackwardProofObligationGraph:
         for edge in edges:
             if not edge.inference_rule or not edge.reconstruction_method:
                 raise ProofGraphError(
-                    f"edge {edge.edge_id} missing inference_rule or reconstruction_method"
+                    f"edge {edge.edge_id} missing inference_rule or "
+                    "reconstruction_method"
                 )
             if edge.inference_rule in {
                 r.value for r in _EXPERIMENTAL_RULES
-            } or edge.reconstruction_method in {m.value for m in _EXPERIMENTAL_RECONSTRUCTION}:
+            } or edge.reconstruction_method in {
+                m.value for m in _EXPERIMENTAL_RECONSTRUCTION
+            }:
                 if edge.edge_id not in experimental_edge_ids:
                     experimental_edge_ids.append(edge.edge_id)
                 # Ensure metadata marks untrusted.
@@ -1919,7 +2053,9 @@ class BackwardProofObligationGraph:
                 completion_claimed=False,
             )
         except TacticianContractError as error:
-            raise ProofGraphError(f"failed to construct ProofObligationGraph: {error}") from error
+            raise ProofGraphError(
+                f"failed to construct ProofObligationGraph: {error}"
+            ) from error
 
         return BackwardGraphResult(
             graph=graph,
@@ -1947,7 +2083,9 @@ def build_backward_proof_graph(
 ) -> BackwardGraphResult:
     """Convenience entry point for ``BackwardProofObligationGraph@1``."""
 
-    return BackwardProofObligationGraph(allow_experimental=allow_experimental).build(request)
+    return BackwardProofObligationGraph(
+        allow_experimental=allow_experimental
+    ).build(request)
 
 
 def and_or_meanings_distinct(graph: ProofObligationGraph) -> bool:
@@ -1958,7 +2096,9 @@ def and_or_meanings_distinct(graph: ProofObligationGraph) -> bool:
     """
 
     nodes = {n.node_id: n for n in graph.nodes}
-    children_edges: dict[str, list[ProofGraphEdge]] = {n.node_id: [] for n in graph.nodes}
+    children_edges: dict[str, list[ProofGraphEdge]] = {
+        n.node_id: [] for n in graph.nodes
+    }
     for edge in graph.edges:
         children_edges.setdefault(edge.source_node_id, []).append(edge)
 
@@ -1987,7 +2127,10 @@ def every_edge_names_checked_rule(graph: ProofObligationGraph) -> bool:
     for edge in graph.edges:
         if not edge.inference_rule or edge.inference_rule not in checked_rules:
             return False
-        if not edge.reconstruction_method or edge.reconstruction_method not in checked_methods:
+        if (
+            not edge.reconstruction_method
+            or edge.reconstruction_method not in checked_methods
+        ):
             return False
     return True
 
@@ -2000,8 +2143,10 @@ def experimental_paths_untrusted(result: BackwardGraphResult) -> bool:
         experimental = (
             edge.edge_id in result.experimental_edge_ids
             or edge.metadata.get("experimental") is True
-            or edge.inference_rule in {r.value for r in _EXPERIMENTAL_RULES}
-            or edge.reconstruction_method in {m.value for m in _EXPERIMENTAL_RECONSTRUCTION}
+            or edge.inference_rule
+            in {r.value for r in _EXPERIMENTAL_RULES}
+            or edge.reconstruction_method
+            in {m.value for m in _EXPERIMENTAL_RECONSTRUCTION}
         )
         if not experimental:
             continue
@@ -2039,7 +2184,9 @@ def solved_leaves_cite_evidence(result: BackwardGraphResult) -> bool:
             target = nodes.get(edge.target_node_id)
             if target is None:
                 continue
-            if target.kind is GraphNodeKind.EVIDENCE and is_trusted_authority(target.authority):
+            if target.kind is GraphNodeKind.EVIDENCE and is_trusted_authority(
+                target.authority
+            ):
                 found = True
                 break
             if (

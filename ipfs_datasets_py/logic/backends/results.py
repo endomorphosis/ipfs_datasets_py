@@ -129,15 +129,27 @@ _NON_CONCLUSIVE_STATUSES: Final = frozenset(
 )
 
 _AUTHORITY_CONCLUSIONS: Final[dict[ResultAuthority, frozenset[ResultStatus]]] = {
-    ResultAuthority.THEOREM: frozenset({ResultStatus.PROVED, ResultStatus.DISPROVED}),
+    ResultAuthority.THEOREM: frozenset(
+        {ResultStatus.PROVED, ResultStatus.DISPROVED}
+    ),
     ResultAuthority.SATISFIABILITY: frozenset(
         {ResultStatus.SATISFIABLE, ResultStatus.UNSATISFIABLE}
     ),
-    ResultAuthority.MODEL_CHECK: frozenset({ResultStatus.SATISFIED, ResultStatus.VIOLATED}),
-    ResultAuthority.MONITOR: frozenset({ResultStatus.SATISFIED, ResultStatus.VIOLATED}),
-    ResultAuthority.AUTHORIZATION: frozenset({ResultStatus.AUTHORIZED, ResultStatus.DENIED}),
-    ResultAuthority.PROTOCOL: frozenset({ResultStatus.SECURE, ResultStatus.ATTACK_FOUND}),
-    ResultAuthority.HYPERPROPERTY: frozenset({ResultStatus.SATISFIED, ResultStatus.VIOLATED}),
+    ResultAuthority.MODEL_CHECK: frozenset(
+        {ResultStatus.SATISFIED, ResultStatus.VIOLATED}
+    ),
+    ResultAuthority.MONITOR: frozenset(
+        {ResultStatus.SATISFIED, ResultStatus.VIOLATED}
+    ),
+    ResultAuthority.AUTHORIZATION: frozenset(
+        {ResultStatus.AUTHORIZED, ResultStatus.DENIED}
+    ),
+    ResultAuthority.PROTOCOL: frozenset(
+        {ResultStatus.SECURE, ResultStatus.ATTACK_FOUND}
+    ),
+    ResultAuthority.HYPERPROPERTY: frozenset(
+        {ResultStatus.SATISFIED, ResultStatus.VIOLATED}
+    ),
     ResultAuthority.CANDIDATE: frozenset({ResultStatus.CANDIDATE}),
     ResultAuthority.RECONSTRUCTION: frozenset(
         {ResultStatus.RECONSTRUCTED, ResultStatus.RECONSTRUCTION_FAILED}
@@ -153,13 +165,20 @@ def _enum(value: object, enum_type: type[Enum], field_name: str) -> Any:
         return value if isinstance(value, enum_type) else enum_type(value)
     except (TypeError, ValueError) as error:
         choices = ", ".join(repr(item.value) for item in enum_type)
-        raise ResultNormalizationError(f"{field_name} must be one of {choices}") from error
+        raise ResultNormalizationError(
+            f"{field_name} must be one of {choices}"
+        ) from error
 
 
 def _text(value: object, field_name: str, *, optional: bool = False) -> str:
     if optional and value == "":
         return ""
-    if not isinstance(value, str) or not value or value != value.strip() or "\x00" in value:
+    if (
+        not isinstance(value, str)
+        or not value
+        or value != value.strip()
+        or "\x00" in value
+    ):
         qualifier = "an empty or " if optional else "a "
         raise ResultNormalizationError(
             f"{field_name} must be {qualifier}non-empty trimmed string without NUL bytes"
@@ -167,9 +186,15 @@ def _text(value: object, field_name: str, *, optional: bool = False) -> str:
     return value
 
 
-def _unique_text(values: Sequence[str] | object, field_name: str) -> tuple[str, ...]:
-    if isinstance(values, (str, bytes, bytearray)) or not isinstance(values, Sequence):
-        raise ResultNormalizationError(f"{field_name} must be a sequence of strings")
+def _unique_text(
+    values: Sequence[str] | object, field_name: str
+) -> tuple[str, ...]:
+    if isinstance(values, (str, bytes, bytearray)) or not isinstance(
+        values, Sequence
+    ):
+        raise ResultNormalizationError(
+            f"{field_name} must be a sequence of strings"
+        )
     result = tuple(_text(item, f"{field_name} item") for item in values)
     if len(result) != len(set(result)):
         raise ResultNormalizationError(f"{field_name} must not contain duplicates")
@@ -182,10 +207,14 @@ def _mapping(value: object, field_name: str) -> dict[str, Any]:
     return dict(value)
 
 
-def _reject_unknown(value: Mapping[str, Any], allowed: frozenset[str], record_name: str) -> None:
+def _reject_unknown(
+    value: Mapping[str, Any], allowed: frozenset[str], record_name: str
+) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise ResultNormalizationError(f"unknown {record_name} field(s): {', '.join(unknown)}")
+        raise ResultNormalizationError(
+            f"unknown {record_name} field(s): {', '.join(unknown)}"
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -240,7 +269,9 @@ class TypedBackendResult:
                 f"{type(self).__name__} requires {expected_text} authority, "
                 f"not {self.authority.value}"
             )
-        object.__setattr__(self, "status", _enum(self.status, ResultStatus, "status"))
+        object.__setattr__(
+            self, "status", _enum(self.status, ResultStatus, "status")
+        )
         allowed = _AUTHORITY_CONCLUSIONS[self.authority] | _NON_CONCLUSIVE_STATUSES
         if self.status not in allowed:
             raise AuthoritySubstitutionError(
@@ -265,12 +296,18 @@ class TypedBackendResult:
             ),
         )
         if not isinstance(self.usage, ResourceUsage):
-            raise ResultNormalizationError("usage must be an ir_core.protocols.ResourceUsage value")
+            raise ResultNormalizationError(
+                "usage must be an ir_core.protocols.ResourceUsage value"
+            )
         try:
             object.__setattr__(
                 self,
                 "witness",
-                (self.witness if isinstance(self.witness, FrozenMap) else FrozenMap(self.witness)),
+                (
+                    self.witness
+                    if isinstance(self.witness, FrozenMap)
+                    else FrozenMap(self.witness)
+                ),
             )
             object.__setattr__(
                 self,
@@ -290,7 +327,9 @@ class TypedBackendResult:
             "diagnostics",
             _unique_text(self.diagnostics, "diagnostics"),
         )
-        object.__setattr__(self, "reason", _text(self.reason, "reason", optional=True))
+        object.__setattr__(
+            self, "reason", _text(self.reason, "reason", optional=True)
+        )
         object.__setattr__(
             self,
             "schema_version",
@@ -317,11 +356,14 @@ class TypedBackendResult:
 
         return self.usage.exceeds(self.bounds)
 
-    def require_authority(self, required: ResultAuthority | str) -> TypedBackendResult:
+    def require_authority(
+        self, required: ResultAuthority | str
+    ) -> TypedBackendResult:
         required_authority = _enum(required, ResultAuthority, "required authority")
         if self.authority is not required_authority:
             raise AuthoritySubstitutionError(
-                f"{self.authority.value} result cannot be used as {required_authority.value}"
+                f"{self.authority.value} result cannot be used as "
+                f"{required_authority.value}"
             )
         return self
 
@@ -355,7 +397,9 @@ class TypedBackendResult:
         if cls is TypedBackendResult:
             result_class = _RESULT_CLASSES_BY_TYPE.get(result_type)
             if result_class is None:
-                raise ResultNormalizationError(f"unsupported result_type: {result_type!r}")
+                raise ResultNormalizationError(
+                    f"unsupported result_type: {result_type!r}"
+                )
         else:
             result_class = cls
             if result_type and result_type != cls.result_type:
@@ -378,13 +422,17 @@ class TypedBackendResult:
             status=payload.get("status", ""),
             assumptions=tuple(payload.get("assumptions", ())),
             bounds=ExecutionBounds.from_dict(payload.get("bounds", {})),
-            translation_ceiling=payload.get("translation_ceiling", EvidenceAuthority.NONE.value),
+            translation_ceiling=payload.get(
+                "translation_ceiling", EvidenceAuthority.NONE.value
+            ),
             usage=ResourceUsage.from_dict(payload.get("usage", {})),
             witness=FrozenMap(payload.get("witness", {})),
             diagnostics=tuple(payload.get("diagnostics", ())),
             reason=payload.get("reason", ""),
             metadata=FrozenMap(payload.get("metadata", {})),
-            schema_version=payload.get("schema_version", TYPED_BACKEND_RESULT_SCHEMA_VERSION),
+            schema_version=payload.get(
+                "schema_version", TYPED_BACKEND_RESULT_SCHEMA_VERSION
+            ),
         )
 
 
@@ -448,7 +496,9 @@ class AttestationResult(TypedBackendResult):
     expected_authority: ClassVar[ResultAuthority] = ResultAuthority.ATTESTATION
 
 
-_RESULT_CLASSES_BY_AUTHORITY: Final[dict[ResultAuthority, type[TypedBackendResult]]] = {
+_RESULT_CLASSES_BY_AUTHORITY: Final[
+    dict[ResultAuthority, type[TypedBackendResult]]
+] = {
     ResultAuthority.THEOREM: TheoremResult,
     ResultAuthority.SATISFIABILITY: SatisfiabilityResult,
     ResultAuthority.MODEL_CHECK: ModelCheckResult,
@@ -461,7 +511,8 @@ _RESULT_CLASSES_BY_AUTHORITY: Final[dict[ResultAuthority, type[TypedBackendResul
     ResultAuthority.ATTESTATION: AttestationResult,
 }
 _RESULT_CLASSES_BY_TYPE: Final = {
-    result_class.result_type: result_class for result_class in _RESULT_CLASSES_BY_AUTHORITY.values()
+    result_class.result_type: result_class
+    for result_class in _RESULT_CLASSES_BY_AUTHORITY.values()
 }
 _RESULT_FIELDS: Final = frozenset(
     {
@@ -651,7 +702,9 @@ def normalize_result(
 ) -> TypedBackendResult:
     """Convenience facade for :meth:`ResultAuthorityNormalization.normalize`."""
 
-    return ResultAuthorityNormalization.normalize(value, expected_authority=expected_authority)
+    return ResultAuthorityNormalization.normalize(
+        value, expected_authority=expected_authority
+    )
 
 
 # Readability aliases; aliases share the same exact class and wire authority.

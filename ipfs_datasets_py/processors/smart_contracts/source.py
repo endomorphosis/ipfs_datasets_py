@@ -83,8 +83,12 @@ class SourceFileRecord:
         if not digest.startswith("sha256:"):
             raise InvalidRequestError("content_digest must be a tagged sha256 digest")
         object.__setattr__(self, "content_digest", digest)
-        object.__setattr__(self, "byte_length", _non_negative(self.byte_length, "byte_length"))
-        object.__setattr__(self, "language", self.language.strip() if self.language else "")
+        object.__setattr__(
+            self, "byte_length", _non_negative(self.byte_length, "byte_length")
+        )
+        object.__setattr__(
+            self, "language", self.language.strip() if self.language else ""
+        )
         object.__setattr__(self, "attributes", _freeze_mapping(self.attributes))
 
     def to_dict(self) -> dict[str, Any]:
@@ -172,7 +176,9 @@ class ToolchainPin:
             _required_text(self.schema_version, "schema_version"),
         )
         if self.schema_version != TOOLCHAIN_PIN_SCHEMA_VERSION:
-            raise InvalidRequestError(f"unsupported toolchain pin schema: {self.schema_version}")
+            raise InvalidRequestError(
+                f"unsupported toolchain pin schema: {self.schema_version}"
+            )
         digest = bind_toolchain(
             compiler=self.compiler,
             compiler_version=self.compiler_version,
@@ -214,11 +220,15 @@ class ToolchainPin:
             linker_version=str(value.get("linker_version", "")),
             target=str(value.get("target", "")),
             optimization=str(value.get("optimization", "")),
-            schema_version=str(value.get("schema_version", TOOLCHAIN_PIN_SCHEMA_VERSION)),
+            schema_version=str(
+                value.get("schema_version", TOOLCHAIN_PIN_SCHEMA_VERSION)
+            ),
         )
         claimed = value.get("toolchain_digest")
         if claimed and claimed != pin.toolchain_digest:
-            raise ArtifactPoisonedError("toolchain digest does not match deterministic pin content")
+            raise ArtifactPoisonedError(
+                "toolchain digest does not match deterministic pin content"
+            )
         return pin
 
     def assert_matches(self, other: "ToolchainPin") -> None:
@@ -255,7 +265,9 @@ class SourceManifest:
     MAX_FILES: ClassVar[int] = 4096
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "request_id", _required_text(self.request_id, "request_id"))
+        object.__setattr__(
+            self, "request_id", _required_text(self.request_id, "request_id")
+        )
         if (
             not isinstance(self.observed_at, datetime)
             or self.observed_at.tzinfo is None
@@ -272,7 +284,9 @@ class SourceManifest:
         paths: set[str] = set()
         for index, record in enumerate(files):
             if not isinstance(record, SourceFileRecord):
-                raise InvalidRequestError(f"files[{index}] must be a SourceFileRecord")
+                raise InvalidRequestError(
+                    f"files[{index}] must be a SourceFileRecord"
+                )
             if record.path in paths:
                 raise InvalidRequestError(f"duplicate source path: {record.path}")
             paths.add(record.path)
@@ -298,7 +312,9 @@ class SourceManifest:
             "metadata_policy",
             _required_text(self.metadata_policy, "metadata_policy"),
         )
-        object.__setattr__(self, "code_epoch", self.code_epoch.strip() if self.code_epoch else "")
+        object.__setattr__(
+            self, "code_epoch", self.code_epoch.strip() if self.code_epoch else ""
+        )
         object.__setattr__(self, "attributes", _freeze_mapping(self.attributes))
         object.__setattr__(
             self,
@@ -306,7 +322,9 @@ class SourceManifest:
             _required_text(self.schema_version, "schema_version"),
         )
         if self.schema_version != SOURCE_MANIFEST_SCHEMA_VERSION:
-            raise InvalidRequestError(f"unsupported source manifest schema: {self.schema_version}")
+            raise InvalidRequestError(
+                f"unsupported source manifest schema: {self.schema_version}"
+            )
         object.__setattr__(self, "manifest_digest", content_digest(self._identity()))
         ensure_secret_safe(self.to_dict())
 
@@ -368,7 +386,9 @@ class SourceManifest:
             observed_at = observed
         else:
             raise InvalidRequestError("observed_at is required")
-        files = tuple(SourceFileRecord.from_dict(item) for item in value.get("files", ()))
+        files = tuple(
+            SourceFileRecord.from_dict(item) for item in value.get("files", ())
+        )
         toolchain = ToolchainPin.from_dict(value.get("toolchain", {}))
         manifest = cls(
             files=files,
@@ -378,11 +398,15 @@ class SourceManifest:
             creation_bytecode_digest=str(value.get("creation_bytecode_digest", "")),
             runtime_bytecode_digest=str(value.get("runtime_bytecode_digest", "")),
             interface_digest=str(value.get("interface_digest", "")),
-            metadata_policy=str(value.get("metadata_policy", "embedded-cbor-ipfs-none")),
+            metadata_policy=str(
+                value.get("metadata_policy", "embedded-cbor-ipfs-none")
+            ),
             constructor_args_digest=str(value.get("constructor_args_digest", "")),
             code_epoch=str(value.get("code_epoch", "")),
             attributes=value.get("attributes", {}),
-            schema_version=str(value.get("schema_version", SOURCE_MANIFEST_SCHEMA_VERSION)),
+            schema_version=str(
+                value.get("schema_version", SOURCE_MANIFEST_SCHEMA_VERSION)
+            ),
         )
         claimed = value.get("manifest_digest")
         if claimed and claimed != manifest.manifest_digest:
@@ -398,15 +422,23 @@ class SourceManifest:
         """Fail closed when supplied source bytes disagree with the manifest."""
 
         if set(sources_by_path) != {record.path for record in self.files}:
-            raise ArtifactInconsistentError("source path set does not match source manifest")
+            raise ArtifactInconsistentError(
+                "source path set does not match source manifest"
+            )
         for record in self.files:
             payload = sources_by_path[record.path]
             if type(payload) is not bytes:
-                raise InvalidRequestError(f"source bytes for {record.path} must be exact bytes")
+                raise InvalidRequestError(
+                    f"source bytes for {record.path} must be exact bytes"
+                )
             if len(payload) != record.byte_length:
-                raise ArtifactPoisonedError(f"source length mismatch for {record.path}")
+                raise ArtifactPoisonedError(
+                    f"source length mismatch for {record.path}"
+                )
             if bytes_digest(payload) != record.content_digest:
-                raise ArtifactPoisonedError(f"source digest mismatch for {record.path}")
+                raise ArtifactPoisonedError(
+                    f"source digest mismatch for {record.path}"
+                )
 
     def assert_deployed_equivalence(
         self,

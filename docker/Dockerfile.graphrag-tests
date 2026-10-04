@@ -1,0 +1,35 @@
+# Dockerfile for GraphRAG tests
+ARG PYTHON_VERSION=3.10
+FROM python:${PYTHON_VERSION}-slim
+
+# Install system dependencies including ffmpeg for multimedia processing
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    ffmpeg \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy application files
+COPY setup.py README.md ./
+COPY ipfs_datasets_py/ ./ipfs_datasets_py/
+COPY tests/ ./tests/
+
+# Install package with all dependencies
+RUN pip install --no-cache-dir -e .[all,test] && \
+    pip install --no-cache-dir pytest pytest-cov pytest-asyncio flake8 mypy
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV POSTGRES_HOST=postgres
+ENV POSTGRES_PORT=5432
+ENV POSTGRES_DB=test_db
+ENV POSTGRES_USER=postgres
+ENV POSTGRES_PASSWORD=test_password
+ENV REDIS_HOST=redis
+ENV REDIS_PORT=6379
+
+# Run tests by default
+CMD ["sh", "-c", "pytest tests/ -v --cov=ipfs_datasets_py --cov-report=xml:/app/test-results/coverage.xml --cov-report=term-missing --junit-xml=/app/test-results/test-results.xml"]

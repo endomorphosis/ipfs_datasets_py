@@ -1,0 +1,17 @@
+{
+  "target": "coq",
+  "translated_formula": "Forbidden use_substandard_materials",
+  "success": true,
+  "confidence": 0.85,
+  "errors": [],
+  "warnings": [],
+  "metadata": {
+    "syntax_version": "coq8.15",
+    "deontic_operator": "F"
+  },
+  "dependencies": [
+    "Coq.Logic.Classical",
+    "Coq.Sets.Ensembles",
+    "Coq.Logic.Classical_Pred_Type"
+  ]
+}

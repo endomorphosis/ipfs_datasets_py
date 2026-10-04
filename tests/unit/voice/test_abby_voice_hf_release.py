@@ -196,7 +196,9 @@ def _build(tmp_path: Path, *, shard_rows: int = 2, release_id: str = "release-te
 def _reseal_release_manifest(path: Path, manifest: dict) -> None:
     body = dict(manifest)
     body.pop("release_cid", None)
-    manifest["release_cid"] = cid_v1_from_digest(sha256(canonical_json_bytes(body)).digest())
+    manifest["release_cid"] = cid_v1_from_digest(
+        sha256(canonical_json_bytes(body)).digest()
+    )
     path.write_bytes(canonical_json_bytes(manifest) + b"\n")
 
 
@@ -393,7 +395,9 @@ def test_release_license_and_pre_artifact_identity_are_consistent(tmp_path: Path
     fixture = _fixture_bundle()
     mit_fixture = {
         name: (
-            rows if name == "evaluations" else tuple(replace(row, license_id="MIT") for row in rows)
+            rows
+            if name == "evaluations"
+            else tuple(replace(row, license_id="MIT") for row in rows)
         )
         for name, rows in fixture.items()
     }
@@ -409,11 +413,19 @@ def test_release_license_and_pre_artifact_identity_are_consistent(tmp_path: Path
 
     manifest = json.loads(Path(result.manifest_path).read_text(encoding="utf-8"))
     assert manifest["license_id"] == "MIT"
-    assert (tmp_path / "README.md").read_text(encoding="utf-8").startswith("---\nlicense: mit\n")
-    assert {item["license_id"] for item in manifest["descriptors"] if item["license_id"]} == {"MIT"}
+    assert (tmp_path / "README.md").read_text(encoding="utf-8").startswith(
+        "---\nlicense: mit\n"
+    )
+    assert {
+        item["license_id"]
+        for item in manifest["descriptors"]
+        if item["license_id"]
+    } == {"MIT"}
 
     artifact_payload = json.loads(
-        (tmp_path / "manifests" / "artifact-manifest.json").read_text(encoding="utf-8")
+        (tmp_path / "manifests" / "artifact-manifest.json").read_text(
+            encoding="utf-8"
+        )
     )
     metadata = artifact_payload["deterministic_metadata"]
     assert "release_cid" not in metadata
@@ -449,10 +461,14 @@ def test_validate_rejects_legacy_cyclic_artifact_release_cid(tmp_path: Path):
     for descriptor in manifest["descriptors"]:
         if descriptor["relative_path"] == "manifests/artifact-manifest.json":
             descriptor["sha256"] = artifact_sha256
-            descriptor["content_cid"] = cid_v1_from_digest(bytes.fromhex(artifact_sha256))
+            descriptor["content_cid"] = cid_v1_from_digest(
+                bytes.fromhex(artifact_sha256)
+            )
             descriptor["size_bytes"] = artifact_path.stat().st_size
             break
-    manifest["artifact_manifest_id"] = ArtifactManifest.from_dict(artifact_payload).manifest_id
+    manifest["artifact_manifest_id"] = ArtifactManifest.from_dict(
+        artifact_payload
+    ).manifest_id
     _reseal_release_manifest(manifest_path, manifest)
 
     with pytest.raises(
@@ -515,7 +531,8 @@ def test_release_embeds_exact_audio_and_retained_support_without_mutable_refs(
     audio_source.write_bytes(b"RIFF....WAVE")
     support_source = source_root / "vocabulary.jsonl"
     support_source.write_text(
-        '{"id":"vocabulary-one","text":"shelter"}\n{"id":"vocabulary-two","text":"food"}\n',
+        '{"id":"vocabulary-one","text":"shelter"}\n'
+        '{"id":"vocabulary-two","text":"food"}\n',
         encoding="utf-8",
     )
     support_sha256 = sha256(support_source.read_bytes()).hexdigest()
@@ -551,18 +568,24 @@ def test_release_embeds_exact_audio_and_retained_support_without_mutable_refs(
         "retained_support_paths": ["metadata/vocabulary.jsonl"],
     }
     audio_descriptor = next(
-        item for item in result.descriptors if item.metadata.get("role") == "audio_asset"
+        item
+        for item in result.descriptors
+        if item.metadata.get("role") == "audio_asset"
     )
     assert audio_descriptor.relative_path == "assets/audio/audio-food.mp3"
     assert (release_root / audio_descriptor.relative_path).read_bytes() == b"RIFF....WAVE"
     support_descriptor = next(
-        item for item in result.descriptors if item.metadata.get("role") == "retained_support"
+        item
+        for item in result.descriptors
+        if item.metadata.get("role") == "retained_support"
     )
     assert support_descriptor.row_count == 2
     audio_rows = []
     for descriptor in result.descriptors:
         if descriptor.config_name == ABBY_VOICE_AUDIO_V2:
-            audio_rows.extend(pq.read_table(release_root / descriptor.relative_path).to_pylist())
+            audio_rows.extend(
+                pq.read_table(release_root / descriptor.relative_path).to_pylist()
+            )
     assert audio_rows[0]["uri"] == "assets/audio/audio-food.mp3"
     receipt = validate_abby_voice_hf_release(release_root)
     assert receipt["embedded_audio_asset_count"] == 1
@@ -632,7 +655,9 @@ def test_embedded_release_rejects_unpinned_or_mutable_support(tmp_path: Path):
                 AbbyVoiceReleaseSupportSource(
                     relative_path="metadata/bad.jsonl",
                     source_path=support_source,
-                    expected_sha256=sha256(support_source.read_bytes()).hexdigest(),
+                    expected_sha256=sha256(
+                        support_source.read_bytes()
+                    ).hexdigest(),
                     row_count=1,
                 ),
             ),

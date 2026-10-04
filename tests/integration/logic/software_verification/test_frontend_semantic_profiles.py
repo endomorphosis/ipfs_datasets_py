@@ -360,7 +360,9 @@ def test_source_mapping_survives_vc_pipeline() -> None:
     """Source refs/spans remain bound after contract attachment and VC generation."""
 
     profile = get_frontend_profile("python")
-    adapted = adapt_source_to_software_verification(PYTHON_INCR, path="incr.py", language="python")
+    adapted = adapt_source_to_software_verification(
+        PYTHON_INCR, path="incr.py", language="python"
+    )
     assert adapted.program is not None
     pre = extract_source_mapping(adapted, profile=profile)
     assert pre.intact is True
@@ -413,14 +415,14 @@ def test_source_mapping_survives_vc_pipeline() -> None:
     if payload:
         # Source identity must remain discoverable on the pipeline result.
         serialized = str(payload)
-        assert (
-            "source:" in serialized or "span:" in serialized or pre.source_ref_ids[0] in serialized
-        )
+        assert "source:" in serialized or "span:" in serialized or pre.source_ref_ids[0] in serialized
 
 
 def test_extract_source_mapping_requires_spans_when_profile_demands() -> None:
     profile = get_frontend_profile("python")
-    adapted = adapt_source_to_software_verification(PYTHON_INCR, path="incr.py", language="python")
+    adapted = adapt_source_to_software_verification(
+        PYTHON_INCR, path="incr.py", language="python"
+    )
     snapshot = extract_source_mapping(adapted, profile=profile)
     assert snapshot.intact is True
     assert len(snapshot.span_ids) >= 1

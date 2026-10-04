@@ -1,0 +1,338 @@
+name: Error Monitoring Template
+
+on:
+  workflow_call:
+    inputs:
+      service_name:
+        description: 'Service name (e.g., JavaScript SDK, CLI Tools, MCP Tools)'
+        required: true
+        type: string
+      service_type:
+        description: 'Service type (javascript|cli|mcp-tools)'
+        required: true
+        type: string
+      watch_paths:
+        description: 'Paths to watch for changes (comma-separated)'
+        required: false
+        type: string
+        default: ''
+      test_mode:
+        description: 'Test mode for workflow_dispatch'
+        required: false
+        type: string
+        default: 'comprehensive'
+      cron_schedule:
+        description: 'Cron schedule for automated runs'
+        required: false
+        type: string
+        default: '0 4 * * *'
+    secrets:
+      GITHUB_TOKEN:
+        required: true
+
+permissions:
+  contents: read
+  issues: write
+  actions: read
+
+env:
+  PYTHON_VERSION: '3.12'
+  NODE_VERSION: '20'
+  ERROR_REPORTING_ENABLED: 'true'
+
+jobs:
+  # Check runner availability
+  check-runner:
+    uses: ./.github/workflows/templates/check-runner-availability.yml
+    with:
+      runner_labels: "self-hosted,linux,x64"
+      skip_if_unavailable: true
+  
+  # Discover service components
+  discover-components:
+    needs: [check-runner]
+    if: ${{ needs.check-runner.outputs.should_run == 'true' }}
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
+    outputs:
+      component_count: ${{ steps.discover.outputs.component_count }}
+      components: ${{ steps.discover.outputs.components }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          submodules: false
+      
+      - name: Discover Service Components
+        id: discover
+        run: |
+          echo "🔍 Discovering ${{ inputs.service_name }} components..."
+          
+          case "${{ inputs.service_type }}" in
+            javascript)
+              components=$(find ipfs_datasets_py/static/js -name "*.js" -not -path "*/node_modules/*" | wc -l)
+              echo "Found $components JavaScript files"
+              ;;
+            cli)
+              components=$(find scripts/cli -name "*.py" | wc -l)
+              echo "Found $components CLI scripts"
+              ;;
+            mcp-tools)
+              components=$(find ipfs_datasets_py/mcp_server/tools -maxdepth 1 -type d -not -name __pycache__ -not -name tools | wc -l)
+              echo "Found $components tool categories"
+              ;;
+          esac
+          
+          echo "component_count=$components" >> $GITHUB_OUTPUT
+          echo "## 📊 ${{ inputs.service_name }} Components" >> $GITHUB_STEP_SUMMARY
+          echo "Discovered **$components** components" >> $GITHUB_STEP_SUMMARY
+  
+  # Run static analysis
+  static-analysis:
+    needs: [check-runner, discover-components]
+    if: ${{ needs.check-runner.outputs.should_run == 'true' }}
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: ${{ inputs.service_type == 'javascript' && 'node:20-slim' || 'python:3.12-slim' }}
+      options: --user root
+    outputs:
+      analysis_passed: ${{ steps.analyze.outputs.passed }}
+      issues_found: ${{ steps.analyze.outputs.issues_found }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          submodules: false
+      
+      - name: Install Analysis Tools
+        run: |
+          if [ "${{ inputs.service_type }}" = "javascript" ]; then
+            npm install -g eslint jshint
+          else
+            apt-get update && apt-get install -y git
+            pip install --upgrade pip
+            pip install -e .[test]
+            pip install flake8 pylint mypy
+          fi
+      
+      - name: Run Static Analysis
+        id: analyze
+        continue-on-error: true
+        run: |
+          echo "🔍 Running static analysis for ${{ inputs.service_name }}..."
+          
+          issues=0
+          
+          case "${{ inputs.service_type }}" in
+            javascript)
+              # Lint JavaScript files
+              find ipfs_datasets_py/static/js -name "*.js" -not -path "*/node_modules/*" -exec eslint {} \; || issues=$((issues + 1))
+              ;;
+            cli)
+              # Lint Python CLI scripts
+              python -m flake8 scripts/cli/ --count --select=E9,F63,F7,F82 --show-source --statistics || issues=$((issues + 1))
+              ;;
+            mcp-tools)
+              # Lint MCP tool files
+              python -m flake8 ipfs_datasets_py/mcp_server/tools/ --count --select=E9,F63,F7,F82 --show-source --statistics || issues=$((issues + 1))
+              ;;
+          esac
+          
+          echo "issues_found=$issues" >> $GITHUB_OUTPUT
+          
+          if [ $issues -eq 0 ]; then
+            echo "passed=true" >> $GITHUB_OUTPUT
+            echo "✅ No critical issues found"
+          else
+            echo "passed=false" >> $GITHUB_OUTPUT
+            echo "❌ Found $issues critical issues"
+          fi
+  
+  # Run functionality tests
+  functionality-tests:
+    needs: [check-runner, static-analysis]
+    if: ${{ needs.check-runner.outputs.should_run == 'true' }}
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
+    outputs:
+      tests_passed: ${{ steps.test.outputs.passed }}
+      failures: ${{ steps.test.outputs.failures }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          submodules: false
+      
+      - name: Install Dependencies
+        run: |
+          apt-get update
+          apt-get install -y git curl nodejs npm
+          pip install --upgrade pip
+          pip install -e .[test,all]
+      
+      - name: Run Functionality Tests
+        id: test
+        continue-on-error: true
+        run: |
+          echo "🧪 Testing ${{ inputs.service_name }} functionality..."
+          
+          failures=0
+          
+          case "${{ inputs.service_type }}" in
+            javascript)
+              # Test JavaScript SDK
+              node --check ipfs_datasets_py/static/js/mcp-sdk.js || failures=$((failures + 1))
+              node --check ipfs_datasets_py/static/js/mcp-api-client.js || failures=$((failures + 1))
+              ;;
+            cli)
+              # Test CLI commands
+              ./ipfs-datasets --help > /dev/null 2>&1 || failures=$((failures + 1))
+              python ipfs_datasets_cli.py --list-categories > /dev/null 2>&1 || failures=$((failures + 1))
+              ;;
+            mcp-tools)
+              # Test MCP tools loading
+              python -c "
+              from pathlib import Path
+              import importlib.util
+              import sys
+              
+              tools_dir = Path('ipfs_datasets_py/mcp_server/tools')
+              failed = 0
+              
+              for category_dir in tools_dir.iterdir():
+                  if not category_dir.is_dir() or category_dir.name.startswith('_'):
+                      continue
+                  
+                  for tool_file in category_dir.glob('*.py'):
+                      if tool_file.name.startswith('_'):
+                          continue
+                      
+                      try:
+                          module_name = f'ipfs_datasets_py.mcp_server.tools.{category_dir.name}.{tool_file.stem}'
+                          spec = importlib.util.spec_from_file_location(module_name, tool_file)
+                          if spec and spec.loader:
+                              module = importlib.util.module_from_spec(spec)
+                              sys.modules[module_name] = module
+                              spec.loader.exec_module(module)
+                      except Exception as e:
+                          print(f'Failed to load {tool_file.name}: {e}')
+                          failed += 1
+              
+              sys.exit(failed)
+              " || failures=$((failures + 1))
+              ;;
+          esac
+          
+          echo "failures=$failures" >> $GITHUB_OUTPUT
+          
+          if [ $failures -eq 0 ]; then
+            echo "passed=true" >> $GITHUB_OUTPUT
+            echo "✅ All functionality tests passed"
+          else
+            echo "passed=false" >> $GITHUB_OUTPUT
+            echo "❌ $failures functionality tests failed"
+          fi
+  
+  # Test error reporting integration
+  error-reporting-test:
+    needs: [check-runner, static-analysis]
+    if: ${{ needs.check-runner.outputs.should_run == 'true' }}
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
+    outputs:
+      reporting_works: ${{ steps.test.outputs.works }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          submodules: false
+      
+      - name: Install Dependencies
+        run: |
+          apt-get update && apt-get install -y git
+          pip install --upgrade pip
+          pip install -e .[test]
+      
+      - name: Test Error Reporter
+        id: test
+        continue-on-error: true
+        run: |
+          echo "📊 Testing error reporter for ${{ inputs.service_name }}..."
+          
+          python -c "
+          from ipfs_datasets_py.error_reporting.error_reporter import ErrorReporter
+          
+          reporter = ErrorReporter(enabled=False)
+          print('✅ Error reporter initialized')
+          
+          # Test error hash computation
+          try:
+              raise RuntimeError('Test error')
+          except Exception as e:
+              error_hash = reporter._compute_error_hash(
+                  error_type=type(e).__name__,
+                  error_message=str(e),
+                  error_location='test_location'
+              )
+              print(f'✅ Error hash computed: {error_hash}')
+          
+          print('✅ Error reporting test passed')
+          " && echo "works=true" >> $GITHUB_OUTPUT || echo "works=false" >> $GITHUB_OUTPUT
+  
+  # Generate monitoring summary
+  monitoring-summary:
+    needs: [check-runner, discover-components, static-analysis, functionality-tests, error-reporting-test]
+    if: always()
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "## 📊 ${{ inputs.service_name }} Error Monitoring Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Runner status
+          if [ "${{ needs.check-runner.outputs.should_run }}" = "true" ]; then
+            echo "✅ **Runner Status**: Available" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ **Runner Status**: Unavailable - monitoring skipped" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Workflows will be retried when runners are available." >> $GITHUB_STEP_SUMMARY
+            exit 0
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Test Suite | Status | Details |" >> $GITHUB_STEP_SUMMARY
+          echo "|------------|--------|---------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Component Discovery | ${{ needs.discover-components.result }} | ${{ needs.discover-components.outputs.component_count }} components |" >> $GITHUB_STEP_SUMMARY
+          echo "| Static Analysis | ${{ needs.static-analysis.result }} | ${{ needs.static-analysis.outputs.issues_found }} issues found |" >> $GITHUB_STEP_SUMMARY
+          echo "| Functionality Tests | ${{ needs.functionality-tests.result }} | ${{ needs.functionality-tests.outputs.failures }} failures |" >> $GITHUB_STEP_SUMMARY
+          echo "| Error Reporting | ${{ needs.error-reporting-test.result }} | ${{ needs.error-reporting-test.outputs.reporting_works == 'true' && 'Working' || 'Issues detected' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Overall status
+          echo "### Overall Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.static-analysis.outputs.analysis_passed }}" = "true" ] && [ "${{ needs.functionality-tests.outputs.tests_passed }}" = "true" ]; then
+            echo "✅ **All checks passed** - ${{ inputs.service_name }} is healthy" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Issues detected** - Auto-healing will be triggered" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Next Steps:**" >> $GITHUB_STEP_SUMMARY
+            echo "- GitHub issues will be created for failures" >> $GITHUB_STEP_SUMMARY
+            echo "- Draft PRs will be generated via copilot-agent-autofix" >> $GITHUB_STEP_SUMMARY
+            echo "- Copilot will attempt automatic fixes" >> $GITHUB_STEP_SUMMARY
+          fi

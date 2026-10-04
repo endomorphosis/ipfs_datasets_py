@@ -103,13 +103,19 @@ class RecordingExecutor:
         self.stdout = stdout
         self.returncode = returncode
 
-    def execute(self, invocation: ProcessInvocation, cancellation=None) -> RawProcessResult:
+    def execute(
+        self, invocation: ProcessInvocation, cancellation=None
+    ) -> RawProcessResult:
         self.calls.append(invocation)
         # Echo workspace markers when present for path assertions.
         marker = invocation.cwd / "input" / "payload.txt"
         if marker.exists():
-            (invocation.cwd / "out" / "result.txt").parent.mkdir(parents=True, exist_ok=True)
-            (invocation.cwd / "out" / "result.txt").write_bytes(marker.read_bytes().upper())
+            (invocation.cwd / "out" / "result.txt").parent.mkdir(
+                parents=True, exist_ok=True
+            )
+            (invocation.cwd / "out" / "result.txt").write_bytes(
+                marker.read_bytes().upper()
+            )
         return RawProcessResult(
             returncode=self.returncode,
             stdout=self.stdout,
@@ -125,7 +131,10 @@ class RecordingExecutor:
 
 def test_universal_lifecycle_versions_and_runtime_catalog() -> None:
     assert BOUNDED_TOOL_RUNNER_VERSION == "bounded-tool-runner/v1"
-    assert UNIVERSAL_BOUNDED_TOOL_LIFECYCLE_VERSION == "universal-bounded-tool-lifecycle/v1"
+    assert (
+        UNIVERSAL_BOUNDED_TOOL_LIFECYCLE_VERSION
+        == "universal-bounded-tool-lifecycle/v1"
+    )
     assert UNIVERSAL_TOOL_RUNTIMES == frozenset(
         {"native", "jvm", "ocaml", "opam", "wasm", "kernel"}
     )
@@ -155,11 +164,7 @@ def test_all_runtime_families_share_private_workspace_and_argv_contract(
     fake = RecordingExecutor(stdout=b"verified\n")
     runner = _runner(tmp_path, fake)
     request = ToolRunRequest(
-        argv=(
-            "fake-host",
-            "-jar" if runtime is ToolRuntime.JVM else "--check",
-            "{workspace}/input/payload.txt",
-        ),
+        argv=("fake-host", "-jar" if runtime is ToolRuntime.JVM else "--check", "{workspace}/input/payload.txt"),
         runtime=runtime,
         input_files={"input/payload.txt": "claim"},
         output_paths=("out/result.txt",),
@@ -273,7 +278,9 @@ def test_concrete_adapters_accept_and_retain_injected_lifecycle(
 def test_lifecycle_owned_adapter_modules_do_not_call_subprocess_directly() -> None:
     """Adapters that own BoundedToolRunner must not bypass it with subprocess.*."""
 
-    forbidden = re.compile(r"\bsubprocess\.(?:run|Popen|call|check_output|check_call)\s*\(")
+    forbidden = re.compile(
+        r"\bsubprocess\.(?:run|Popen|call|check_output|check_call)\s*\("
+    )
     offenders: list[str] = []
     for relative in _LIFECYCLE_OWNED_MODULES:
         path = BACKENDS_ROOT / relative
@@ -400,7 +407,9 @@ def test_tool_limits_from_milliseconds_maps_execution_bounds() -> None:
     "escape_path",
     ["../escape", "/etc/passwd", "nested/../../secret", r"windows\\escape"],
 )
-def test_adversarial_path_escape_is_rejected(tmp_path: Path, escape_path: str) -> None:
+def test_adversarial_path_escape_is_rejected(
+    tmp_path: Path, escape_path: str
+) -> None:
     with pytest.raises(ToolProcessError):
         _runner(tmp_path, RecordingExecutor()).run(
             ToolRunRequest(
@@ -514,7 +523,9 @@ def test_adversarial_symlink_output_is_not_followed(tmp_path: Path) -> None:
             pytest.skip("symlinks unavailable")
         return RawProcessResult(returncode=0)
 
-    result = _runner(tmp_path, fake).run(ToolRunRequest(argv=("fake",), output_paths=("leaked",)))
+    result = _runner(tmp_path, fake).run(
+        ToolRunRequest(argv=("fake",), output_paths=("leaked",))
+    )
     assert result.output_files == {}
     assert b"top-secret" not in repr(result.to_dict()).encode()
 
@@ -525,7 +536,9 @@ def test_secrets_are_redacted_across_command_streams_and_files(
     secret = "adversary-api-key-9f3a"
 
     def fake(invocation: ProcessInvocation, cancellation=None) -> RawProcessResult:
-        (invocation.cwd / "receipt.txt").write_text(f"token={secret}", encoding="utf-8")
+        (invocation.cwd / "receipt.txt").write_text(
+            f"token={secret}", encoding="utf-8"
+        )
         return RawProcessResult(
             returncode=1,
             stdout=f"saw {secret}",

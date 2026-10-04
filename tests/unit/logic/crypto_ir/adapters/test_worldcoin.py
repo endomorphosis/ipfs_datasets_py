@@ -209,7 +209,9 @@ def test_import_worldcoin_adapter_has_no_network_side_effects(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     def _blocked(*_args: Any, **_kwargs: Any) -> None:
-        raise AssertionError("network socket use forbidden during Worldcoin adapter import")
+        raise AssertionError(
+            "network socket use forbidden during Worldcoin adapter import"
+        )
 
     monkeypatch.setattr(socket, "socket", _blocked)
     monkeypatch.setattr(socket, "create_connection", _blocked)
@@ -264,7 +266,10 @@ def test_world_chain_identity_distinct_from_ethereum() -> None:
     assert chain["chain_id"] == "480"
     assert chain["network"] == "world-chain-mainnet"
     assert chain["genesis_digest"].startswith("keccak256:")
-    assert chain["attributes"]["genesis_hash"] == WORLD_CHAIN_MAINNET_GENESIS_HASH.lower()
+    assert (
+        chain["attributes"]["genesis_hash"]
+        == WORLD_CHAIN_MAINNET_GENESIS_HASH.lower()
+    )
     assert chain["attributes"]["settlement_layer"] == "ethereum-mainnet"
     assert "ethereum-mainnet" in result.result_payload["distinct_from"]
     assert "world_id_observation" in result.result_payload["distinct_from"]
@@ -287,7 +292,10 @@ def test_is_world_chain_and_settlement_helpers() -> None:
     assert is_world_chain_id(WORLD_CHAIN_MAINNET_CHAIN_ID)
     assert is_world_chain_id(WORLD_CHAIN_SEPOLIA_CHAIN_ID)
     assert not is_world_chain_id(ETHEREUM_MAINNET_CHAIN_ID)
-    assert world_chain_settlement_layer(WORLD_CHAIN_MAINNET_CHAIN_ID) == "ethereum-mainnet"
+    assert (
+        world_chain_settlement_layer(WORLD_CHAIN_MAINNET_CHAIN_ID)
+        == "ethereum-mainnet"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -369,7 +377,9 @@ def test_nullifier_binding_conversion() -> None:
 
 
 def test_rejects_raw_nullifier_material() -> None:
-    result = convert_worldcoin_payload(_world_id_observation(raw={"nullifier": "0xdeadbeef" * 4}))
+    result = convert_worldcoin_payload(
+        _world_id_observation(raw={"nullifier": "0xdeadbeef" * 4})
+    )
     assert result.status is AdapterConversionStatus.ERROR
     assert any("private field" in d for d in result.diagnostics)
 
@@ -495,7 +505,9 @@ def test_verifier_instance_domain_bound() -> None:
 
 
 def test_verifier_requires_domain() -> None:
-    result = convert_worldcoin_payload(_verifier(external_nullifier_domain={"rp_id": "rp-only"}))
+    result = convert_worldcoin_payload(
+        _verifier(external_nullifier_domain={"rp_id": "rp-only"})
+    )
     assert result.status is AdapterConversionStatus.ERROR
 
 
@@ -574,7 +586,9 @@ def test_composition_preserves_distinct_domains() -> None:
     assert "action_domain" in types
 
     # Each component retains its own record_type (no collapse into one blob).
-    child_types = {c["record_type"] for c in payload["components"] if c["record_type"]}
+    child_types = {
+        c["record_type"] for c in payload["components"] if c["record_type"]
+    }
     assert child_types == types
 
 
@@ -611,7 +625,9 @@ def test_cross_domain_confusion_wld_is_not_world_id() -> None:
     assert wld.result_authority is AuthorityKind.DECLARATION
     assert proof.result_authority is AuthorityKind.OBSERVATION
     # Shared chain id must not merge asset and proof authorities.
-    assert wld.result_payload["chain"]["chain_id"] == proof.result_payload["chain"]["chain_id"]
+    assert wld.result_payload["chain"]["chain_id"] == proof.result_payload["chain"][
+        "chain_id"
+    ]
     assert "world_id_observation" in wld.result_payload["distinct_from"]
     assert "wld_asset" in proof.result_payload["distinct_from"]
 

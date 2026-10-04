@@ -1,0 +1,72 @@
+{
+  "complaint_type": "free_speech",
+  "category": "civil_rights",
+  "description": "Decision tree for free speech complaints",
+  "root_questions": [
+    "q1",
+    "q3"
+  ],
+  "questions": {
+    "q1": {
+      "id": "q1",
+      "question": "Who censored or suppressed your speech?",
+      "field_name": "censoring_party",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": [
+        "platform",
+        "government",
+        "school",
+        "employer"
+      ]
+    },
+    "q2": {
+      "id": "q2",
+      "question": "What platform or venue was involved?",
+      "field_name": "platform_or_venue",
+      "required": false,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q3": {
+      "id": "q3",
+      "question": "What content was censored?",
+      "field_name": "content_censored",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q4": {
+      "id": "q4",
+      "question": "When did the censorship occur?",
+      "field_name": "date_of_censorship",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q5": {
+      "id": "q5",
+      "question": "What reason was given for the censorship, if any?",
+      "field_name": "reason_given",
+      "required": false,
+      "depends_on": [
+        "date_of_censorship"
+      ],
+      "follow_ups": [],
+      "keywords": []
+    }
+  },
+  "required_fields": [
+    "censoring_party",
+    "content_censored",
+    "date_of_censorship"
+  ],
+  "optional_fields": [
+    "platform_or_venue",
+    "reason_given"
+  ]
+}

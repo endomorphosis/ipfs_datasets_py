@@ -86,16 +86,9 @@ def test_world_id_verify_from_config_uses_rp_and_timeout() -> None:
 
     def fake_request_json(method, url, request_payload, headers, timeout_seconds):
         seen.update(url=url, timeout=timeout_seconds)
-        return {
-            "success": True,
-            "results": [],
-            "action": DEFAULT_WORLD_ID_ACTION,
-            "nullifier": "0xabc",
-        }
+        return {"success": True, "results": [], "action": DEFAULT_WORLD_ID_ACTION, "nullifier": "0xabc"}
 
-    result = verify_world_id_proof_from_config(
-        config, sample_idkit_payload(), request_json=fake_request_json
-    )
+    result = verify_world_id_proof_from_config(config, sample_idkit_payload(), request_json=fake_request_json)
 
     assert result.success is True
     assert seen == {"url": "https://developer.world.org/api/v4/verify/rp_test_123", "timeout": 4.25}
@@ -109,9 +102,7 @@ def test_world_id_verify_rejects_disabled_config_and_bad_inputs() -> None:
         verify_world_id_proof("", sample_idkit_payload(), request_json=lambda *_: {})
 
     with pytest.raises(WorldIdVerificationError, match="base URL"):
-        verify_world_id_proof(
-            "rp_test_123", sample_idkit_payload(), verify_base_url="developer.world.org"
-        )
+        verify_world_id_proof("rp_test_123", sample_idkit_payload(), verify_base_url="developer.world.org")
 
     with pytest.raises(WorldIdVerificationError, match="timeout_seconds"):
         verify_world_id_proof("rp_test_123", sample_idkit_payload(), timeout_seconds=0)
@@ -387,12 +378,7 @@ def test_default_transport_rejects_oversized_request_body() -> None:
 
 
 def test_default_transport_success_path_parses_json_under_bounds() -> None:
-    payload = {
-        "success": True,
-        "results": [],
-        "action": DEFAULT_WORLD_ID_ACTION,
-        "nullifier": "0xabc",
-    }
+    payload = {"success": True, "results": [], "action": DEFAULT_WORLD_ID_ACTION, "nullifier": "0xabc"}
 
     def fake_open(request: urllib_request.Request, *, timeout: float) -> _FakeResponse:
         assert request.get_method() == "POST"
@@ -475,12 +461,7 @@ def test_world_id_verification_result_nullifier_not_in_repr_or_serialization() -
     assert result.nullifier == nullifier
     assert result.has_nullifier is True
 
-    for surface in (
-        repr(result),
-        str(result),
-        json.dumps(result.public_dict()),
-        json.dumps(result.to_dict()),
-    ):
+    for surface in (repr(result), str(result), json.dumps(result.public_dict()), json.dumps(result.to_dict())):
         assert nullifier not in surface
         assert "session-secret-123" not in surface
         assert "0xverified" not in surface

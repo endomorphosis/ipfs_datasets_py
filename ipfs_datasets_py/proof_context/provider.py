@@ -17,9 +17,6 @@ from ipfs_datasets_py.proof_context.contracts import (
     UnavailableContextError,
 )
 
-_CONTEXT_PACK_MODULE = "ipfs_datasets_py.proof_context.context_pack"
-_CONTEXT_PACK_OWNER = "ipfs_datasets_py.proof_context.context_pack"
-
 _RESOLVED: dict[str, Any] = {}
 
 
@@ -42,8 +39,7 @@ class DatasetsProofContextProvider:
     schema = PORT_SCHEMA
     interface = PORT_INTERFACE
     producer = PRODUCER_REPOSITORY
-    context_pack_construction_owner = _CONTEXT_PACK_OWNER
-    semantic_pack_builder = f"{_CONTEXT_PACK_MODULE}.build_minimal_semantic_pack"
+    context_pack_construction_owner = "pending:PCCE-012"
 
     def capabilities(self) -> tuple[dict[str, str], ...]:
         rows: list[dict[str, str]] = []
@@ -111,17 +107,6 @@ class DatasetsProofContextProvider:
             raise OpaqueSourceRequiredError(
                 "opaque or insufficient content requires the exact scanned-tree source"
             )
-
-    def context_pack_authority(self) -> Any:
-        return _load(_CONTEXT_PACK_MODULE, "get_authority")()
-
-    def build_minimal_semantic_pack(self, *args: Any, **kwargs: Any) -> Any:
-        return _load(_CONTEXT_PACK_MODULE, "build_minimal_semantic_pack")(
-            *args, **kwargs
-        )
-
-    def build_context_pack(self, *args: Any, **kwargs: Any) -> Any:
-        return self.build_minimal_semantic_pack(*args, **kwargs)
 
 
 def get_provider() -> DatasetsProofContextProvider:

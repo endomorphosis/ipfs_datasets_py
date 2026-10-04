@@ -1,0 +1,52 @@
+name: Crypto Exchange Security Verification
+
+on:
+  push:
+    branches: [main, develop, copilot/**]
+    paths:
+      - 'docs/security_verification/**'
+      - 'scripts/ops/security_verification/**'
+      - 'security_ir_artifacts/**'
+      - 'tests/logic/security_models/crypto_exchange/**'
+      - 'ipfs_datasets_py/logic/security_models/crypto_exchange/**'
+      - '.github/workflows/crypto-exchange-security-verification.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'docs/security_verification/**'
+      - 'scripts/ops/security_verification/**'
+      - 'security_ir_artifacts/**'
+      - 'tests/logic/security_models/crypto_exchange/**'
+      - 'ipfs_datasets_py/logic/security_models/crypto_exchange/**'
+      - '.github/workflows/crypto-exchange-security-verification.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  taskboard-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run crypto-exchange taskboard preflight
+        run: |
+          PYTHONPATH=. python scripts/ops/security_verification/preflight_crypto_exchange_taskboard.py \
+            --taskboard docs/security_verification/crypto_exchange_theorem_prover_taskboard.todo.md \
+            --state data/crypto_exchange_theorem_prover/state/cxtp_task_state.json \
+            --out security_ir_artifacts/recovery/taskboard-preflight-report.json
+
+      - name: Validate preflight tests
+        run: |
+          PYTHONPATH=. python -m pytest tests/logic/security_models/crypto_exchange/test_taskboard_preflight.py -q

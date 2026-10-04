@@ -185,7 +185,9 @@ def test_capability_gaps_are_explicit_and_sorted() -> None:
     portfolio = VerificationPortfolio()
     capabilities = (
         _capability("z3", AttemptFamily.SOLVER, status=CapabilityStatus.UNAVAILABLE),
-        _capability("cvc5", AttemptFamily.SOLVER, status=CapabilityStatus.QUARANTINED),
+        _capability(
+            "cvc5", AttemptFamily.SOLVER, status=CapabilityStatus.QUARANTINED
+        ),
     )
     plan = portfolio.plan(
         _obligation(
@@ -223,7 +225,9 @@ def test_theorem_candidates_route_to_reconstruction() -> None:
         item.requires_candidate and item.family is AttemptFamily.KERNEL
         for item in plan.reconstruction_attempts
     )
-    assert all(item.role is PortfolioRole.CANDIDATE for item in plan.candidate_attempts)
+    assert all(
+        item.role is PortfolioRole.CANDIDATE for item in plan.candidate_attempts
+    )
 
     # Positive candidates alone never prove.
     candidate = plan.candidate_attempts[0]
@@ -299,7 +303,9 @@ def test_order_cannot_change_final_authority() -> None:
 
     assert first == second == third
     assert first.digest == second.digest == third.digest
-    assert first.authority_attempt_ids == tuple(sorted(first.authority_attempt_ids))
+    assert first.authority_attempt_ids == tuple(
+        sorted(first.authority_attempt_ids)
+    )
     assert first.verdict is PortfolioVerdict.PROVED
 
 
@@ -354,7 +360,9 @@ def test_disagreement_quarantine_is_order_independent() -> None:
     apalache = next(item for item in plan.attempts if item.backend_id == "apalache")
     a = [
         _outcome_from_spec(tlc, ResultStatus.SATISFIED),
-        _outcome_from_spec(apalache, ResultStatus.VIOLATED, conclusive_counterexample=True),
+        _outcome_from_spec(
+            apalache, ResultStatus.VIOLATED, conclusive_counterexample=True
+        ),
     ]
     b = list(reversed(a))
     assert portfolio.select(plan, a) == portfolio.select(plan, b)
@@ -498,8 +506,12 @@ def test_default_required_authority_and_family_mapping() -> None:
     assert default_required_authority(PropertyKind.TRACE_CONFORMANCE) is ResultAuthority.MONITOR
     assert family_default_authority(AttemptFamily.KERNEL) is ResultAuthority.RECONSTRUCTION
     assert family_default_authority("solver") is ResultAuthority.SATISFIABILITY
-    assert assurance_satisfies(EvidenceAuthority.AUTHORITATIVE, EvidenceAuthority.BOUNDED)
-    assert not assurance_satisfies(EvidenceAuthority.ADVISORY, EvidenceAuthority.BOUNDED)
+    assert assurance_satisfies(
+        EvidenceAuthority.AUTHORITATIVE, EvidenceAuthority.BOUNDED
+    )
+    assert not assurance_satisfies(
+        EvidenceAuthority.ADVISORY, EvidenceAuthority.BOUNDED
+    )
 
 
 def test_invalid_policy_and_outcome_fail_closed() -> None:

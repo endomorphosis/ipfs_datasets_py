@@ -1,0 +1,15 @@
+{
+  "entity_count": 1,
+  "relationship_count": 0,
+  "metadata_sections": [
+    "extraction_method",
+    "extraction_stats",
+    "language",
+    "model_version",
+    "processing_time_ms",
+    "source_file",
+    "warnings"
+  ],
+  "has_warnings": true,
+  "tokens_processed": 1500
+}

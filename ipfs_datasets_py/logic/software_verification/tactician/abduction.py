@@ -50,13 +50,21 @@ from ipfs_datasets_py.logic.software_verification.tactician.contracts import (
 # ---------------------------------------------------------------------------
 
 MISSING_PROOF_ABDUCTION_INTERFACE: Final = "MissingProofAbduction@1"
-ABDUCTION_REQUEST_SCHEMA: Final = "ipfs_datasets_py/logic/software_verification/abduction-request@1"
-FINITE_THEORY_SCHEMA: Final = "ipfs_datasets_py/logic/software_verification/finite-theory@1"
+ABDUCTION_REQUEST_SCHEMA: Final = (
+    "ipfs_datasets_py/logic/software_verification/abduction-request@1"
+)
+FINITE_THEORY_SCHEMA: Final = (
+    "ipfs_datasets_py/logic/software_verification/finite-theory@1"
+)
 ABDUCTION_CANDIDATE_SCHEMA: Final = (
     "ipfs_datasets_py/logic/software_verification/abduction-candidate@1"
 )
-ABDUCTION_RESULT_SCHEMA: Final = "ipfs_datasets_py/logic/software_verification/abduction-result@1"
-UNSAT_CORE_SCHEMA: Final = "ipfs_datasets_py/logic/software_verification/abduction-unsat-core@1"
+ABDUCTION_RESULT_SCHEMA: Final = (
+    "ipfs_datasets_py/logic/software_verification/abduction-result@1"
+)
+UNSAT_CORE_SCHEMA: Final = (
+    "ipfs_datasets_py/logic/software_verification/abduction-unsat-core@1"
+)
 ABDUCTION_ALGORITHM_VERSION: Final = "missing-proof-abduction/1.0.0"
 
 DEFAULT_BOUNDS: Final = ResourceBounds(
@@ -258,7 +266,9 @@ def _enum(value: object, enum_type: type[StrEnum], label: str) -> Any:
             return enum_type(value.strip())
         except ValueError as error:
             allowed = ", ".join(item.value for item in enum_type)
-            raise AbductionError(f"{label} must be one of: {allowed}") from error
+            raise AbductionError(
+                f"{label} must be one of: {allowed}"
+            ) from error
     raise AbductionError(f"{label} must be a {enum_type.__name__}")
 
 
@@ -273,9 +283,12 @@ def _string_tuple(
         items: tuple[str, ...] = ()
     elif isinstance(values, str):
         items = (_text(values, label, maximum=512),)
-    elif isinstance(values, Sequence) and not isinstance(values, (bytes, bytearray, memoryview)):
+    elif isinstance(values, Sequence) and not isinstance(
+        values, (bytes, bytearray, memoryview)
+    ):
         items = tuple(
-            _text(item, f"{label}[{index}]", maximum=512) for index, item in enumerate(values)
+            _text(item, f"{label}[{index}]", maximum=512)
+            for index, item in enumerate(values)
         )
     else:
         raise AbductionError(f"{label} must be a sequence of strings")
@@ -362,7 +375,9 @@ def _assumption(value: object, label: str = "assumption") -> AssumptionBinding:
 
 
 def _stable_id(prefix: str, *parts: str) -> str:
-    digest = hashlib.sha256("|".join(parts).encode("utf-8", errors="replace")).hexdigest()[:16]
+    digest = hashlib.sha256(
+        "|".join(parts).encode("utf-8", errors="replace")
+    ).hexdigest()[:16]
     return f"{prefix}:{digest}"
 
 
@@ -376,7 +391,11 @@ def _normalize_statement(statement: str) -> str:
 def _statement_tokens(statement: str) -> frozenset[str]:
     """Extract identifier-like tokens from a statement for relevance."""
 
-    return frozenset(token.lower() for token in _TOKEN_RE.findall(statement) if len(token) > 1)
+    return frozenset(
+        token.lower()
+        for token in _TOKEN_RE.findall(statement)
+        if len(token) > 1
+    )
 
 
 def _is_negation_of(a: str, b: str) -> bool:
@@ -516,7 +535,9 @@ class FiniteTheory:
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "theory_id", _text(self.theory_id, "theory_id", maximum=256))
+        object.__setattr__(
+            self, "theory_id", _text(self.theory_id, "theory_id", maximum=256)
+        )
         object.__setattr__(
             self,
             "goal_statement",
@@ -593,7 +614,9 @@ class FiniteTheory:
             "goal_statement": self.goal_statement,
             "known_facts": list(self.known_facts),
             "axioms": list(self.axioms),
-            "trusted_assumptions": [a.to_dict() for a in self.trusted_assumptions],
+            "trusted_assumptions": [
+                a.to_dict() for a in self.trusted_assumptions
+            ],
             "symbols": list(self.symbols),
             "goal_id": self.goal_id,
             "logic_family": self.logic_family,
@@ -609,7 +632,9 @@ class FiniteTheory:
             goal_statement=payload.get("goal_statement", ""),
             known_facts=tuple(payload.get("known_facts") or ()),
             axioms=tuple(payload.get("axioms") or ()),
-            trusted_assumptions=tuple(payload.get("trusted_assumptions") or ()),
+            trusted_assumptions=tuple(
+                payload.get("trusted_assumptions") or ()
+            ),
             symbols=tuple(payload.get("symbols") or ()),
             goal_id=payload.get("goal_id", ""),
             logic_family=payload.get("logic_family", "finite_fragment"),
@@ -635,7 +660,9 @@ class UnsatCoreWitness:
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "core_id", _text(self.core_id, "core_id", maximum=256))
+        object.__setattr__(
+            self, "core_id", _text(self.core_id, "core_id", maximum=256)
+        )
         object.__setattr__(
             self,
             "conflicting_statements",
@@ -648,7 +675,9 @@ class UnsatCoreWitness:
         object.__setattr__(
             self,
             "explanation",
-            _text(self.explanation, "explanation", optional=True, maximum=4096),
+            _text(
+                self.explanation, "explanation", optional=True, maximum=4096
+            ),
         )
         object.__setattr__(
             self,
@@ -688,7 +717,9 @@ class UnsatCoreWitness:
             raise AbductionError("unsat core payload must be an object")
         return cls(
             core_id=payload.get("core_id", ""),
-            conflicting_statements=tuple(payload.get("conflicting_statements") or ()),
+            conflicting_statements=tuple(
+                payload.get("conflicting_statements") or ()
+            ),
             explanation=payload.get("explanation", ""),
             goal_statement=payload.get("goal_statement", ""),
             witness_kind=payload.get("witness_kind", "unsat_core"),
@@ -717,7 +748,9 @@ class RejectedPremise:
             "statement",
             _text(self.statement, "statement", optional=True, maximum=8192),
         )
-        object.__setattr__(self, "reason", _enum(self.reason, RejectionReason, "reason"))
+        object.__setattr__(
+            self, "reason", _enum(self.reason, RejectionReason, "reason")
+        )
         object.__setattr__(
             self,
             "hole_id",
@@ -740,7 +773,9 @@ class RejectedPremise:
             "statement": self.statement,
             "reason": self.reason.value,
             "hole_id": self.hole_id,
-            "premise_class": (self.premise_class.value if self.premise_class else None),
+            "premise_class": (
+                self.premise_class.value if self.premise_class else None
+            ),
             "detail": self.detail,
         }
 
@@ -801,8 +836,12 @@ class AbductionCandidate:
             "premise_class",
             _enum(self.premise_class, PremiseClass, "premise_class"),
         )
-        object.__setattr__(self, "statement", _text(self.statement, "statement", maximum=8192))
-        object.__setattr__(self, "hole_id", _text(self.hole_id, "hole_id", maximum=256))
+        object.__setattr__(
+            self, "statement", _text(self.statement, "statement", maximum=8192)
+        )
+        object.__setattr__(
+            self, "hole_id", _text(self.hole_id, "hole_id", maximum=256)
+        )
         object.__setattr__(self, "source", _source_binding(self.source, "source"))
         object.__setattr__(
             self,
@@ -822,7 +861,9 @@ class AbductionCandidate:
         object.__setattr__(
             self,
             "authority",
-            cap_candidate_authority(_enum(self.authority, AuthorityCeiling, "authority")),
+            cap_candidate_authority(
+                _enum(self.authority, AuthorityCeiling, "authority")
+            ),
         )
         object.__setattr__(
             self,
@@ -836,7 +877,9 @@ class AbductionCandidate:
                 "generated premises require separate validation and policy "
                 "admission before trusted insertion"
             )
-        object.__setattr__(self, "reviewable", _bool(self.reviewable, "reviewable"))
+        object.__setattr__(
+            self, "reviewable", _bool(self.reviewable, "reviewable")
+        )
         admitted = _bool(self.admitted_to_trusted, "admitted_to_trusted")
         if admitted:
             raise AbductionError(
@@ -848,7 +891,9 @@ class AbductionCandidate:
         object.__setattr__(
             self,
             "weakness_score_millionths",
-            _nonnegative_int(self.weakness_score_millionths, "weakness_score_millionths"),
+            _nonnegative_int(
+                self.weakness_score_millionths, "weakness_score_millionths"
+            ),
         )
         for flag_name in (
             "relevant",
@@ -862,7 +907,9 @@ class AbductionCandidate:
             # already handled reviewable above for reviewable
             if flag_name == "reviewable":
                 continue
-            object.__setattr__(self, flag_name, _bool(getattr(self, flag_name), flag_name))
+            object.__setattr__(
+                self, flag_name, _bool(getattr(self, flag_name), flag_name)
+            )
         object.__setattr__(
             self,
             "dependency_ids",
@@ -882,12 +929,19 @@ class AbductionCandidate:
         proof = _bool(self.proof_claimed, "proof_claimed")
         completion = _bool(self.completion_claimed, "completion_claimed")
         if proof or completion:
-            raise AbductionError("AbductionCandidate cannot claim proof or completion")
+            raise AbductionError(
+                "AbductionCandidate cannot claim proof or completion"
+            )
         object.__setattr__(self, "proof_claimed", False)
         object.__setattr__(self, "completion_claimed", False)
         # Environment assumptions must remain reviewable.
-        if self.premise_class is PremiseClass.ENVIRONMENT_ASSUMPTION and not self.reviewable:
-            raise AbductionError("environment_assumption candidates must remain reviewable")
+        if (
+            self.premise_class is PremiseClass.ENVIRONMENT_ASSUMPTION
+            and not self.reviewable
+        ):
+            raise AbductionError(
+                "environment_assumption candidates must remain reviewable"
+            )
 
     @property
     def content_id(self) -> str:
@@ -971,23 +1025,35 @@ class AbductionCandidate:
     def from_dict(cls, payload: Mapping[str, Any]) -> "AbductionCandidate":
         if not isinstance(payload, Mapping):
             raise AbductionError("candidate payload must be an object")
-        if payload.get("proof_claimed") is True or payload.get("completion_claimed") is True:
-            raise AbductionError("AbductionCandidate cannot claim proof or completion")
+        if payload.get("proof_claimed") is True or payload.get(
+            "completion_claimed"
+        ) is True:
+            raise AbductionError(
+                "AbductionCandidate cannot claim proof or completion"
+            )
         if payload.get("admitted_to_trusted") is True:
-            raise AbductionError("AbductionCandidate cannot set admitted_to_trusted=True")
+            raise AbductionError(
+                "AbductionCandidate cannot set admitted_to_trusted=True"
+            )
         return cls(
             candidate_id=payload.get("candidate_id", ""),
-            premise_class=payload.get("premise_class", PremiseClass.FACT_TO_PROVE),
+            premise_class=payload.get(
+                "premise_class", PremiseClass.FACT_TO_PROVE
+            ),
             statement=payload.get("statement", ""),
             hole_id=payload.get("hole_id", ""),
             source=payload.get("source") or {},
             formal_goal_id=payload.get("formal_goal_id", ""),
             theory_id=payload.get("theory_id", ""),
             authority=payload.get("authority", AuthorityCeiling.CANDIDATE),
-            assumption_class=payload.get("assumption_class", AssumptionClass.HYPOTHETICAL),
+            assumption_class=payload.get(
+                "assumption_class", AssumptionClass.HYPOTHETICAL
+            ),
             reviewable=bool(payload.get("reviewable", True)),
             admitted_to_trusted=bool(payload.get("admitted_to_trusted", False)),
-            weakness_score_millionths=int(payload.get("weakness_score_millionths") or 0),
+            weakness_score_millionths=int(
+                payload.get("weakness_score_millionths") or 0
+            ),
             relevant=bool(payload.get("relevant", True)),
             consistent=bool(payload.get("consistent", True)),
             source_scoped=bool(payload.get("source_scoped", True)),
@@ -1053,7 +1119,9 @@ class AbductionRequest:
         object.__setattr__(
             self,
             "proposed_premises",
-            _string_tuple(self.proposed_premises, "proposed_premises", preserve_order=True),
+            _string_tuple(
+                self.proposed_premises, "proposed_premises", preserve_order=True
+            ),
         )
         object.__setattr__(
             self,
@@ -1096,7 +1164,9 @@ class AbductionRequest:
             ),
             tree_id=payload.get("tree_id", ""),
             proposed_premises=tuple(payload.get("proposed_premises") or ()),
-            open_obligation_ids=tuple(payload.get("open_obligation_ids") or ()),
+            open_obligation_ids=tuple(
+                payload.get("open_obligation_ids") or ()
+            ),
             metadata=payload.get("metadata") or {},
         )
 
@@ -1122,20 +1192,26 @@ class AbductionResult:
     steps_used: int = 0
     budget_exhausted: bool = False
     diagnostics: tuple[str, ...] = ()
-    classified_by_class: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
+    classified_by_class: Mapping[str, tuple[str, ...]] = field(
+        default_factory=dict
+    )
     algorithm_version: str = ABDUCTION_ALGORITHM_VERSION
     metadata: Mapping[str, Any] = field(default_factory=dict)
     proof_claimed: bool = False
     completion_claimed: bool = False
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "result_id", _text(self.result_id, "result_id", maximum=256))
+        object.__setattr__(
+            self, "result_id", _text(self.result_id, "result_id", maximum=256)
+        )
         object.__setattr__(
             self,
             "formal_goal_id",
             _text(self.formal_goal_id, "formal_goal_id", maximum=256),
         )
-        object.__setattr__(self, "status", _enum(self.status, AbductionStatus, "status"))
+        object.__setattr__(
+            self, "status", _enum(self.status, AbductionStatus, "status")
+        )
         candidates: list[AbductionCandidate] = []
         for index, raw in enumerate(self.candidates or ()):
             if isinstance(raw, AbductionCandidate):
@@ -1143,7 +1219,9 @@ class AbductionResult:
             elif isinstance(raw, Mapping):
                 candidates.append(AbductionCandidate.from_dict(raw))
             else:
-                raise AbductionError(f"candidates[{index}] must be an AbductionCandidate")
+                raise AbductionError(
+                    f"candidates[{index}] must be an AbductionCandidate"
+                )
         object.__setattr__(self, "candidates", tuple(candidates))
         rejected: list[RejectedPremise] = []
         for index, raw in enumerate(self.rejected or ()):
@@ -1152,7 +1230,9 @@ class AbductionResult:
             elif isinstance(raw, Mapping):
                 rejected.append(RejectedPremise.from_dict(raw))
             else:
-                raise AbductionError(f"rejected[{index}] must be a RejectedPremise")
+                raise AbductionError(
+                    f"rejected[{index}] must be a RejectedPremise"
+                )
         object.__setattr__(self, "rejected", tuple(rejected))
         core = self.unsat_core
         if core is None:
@@ -1167,7 +1247,9 @@ class AbductionResult:
             "theory_id",
             _text(self.theory_id, "theory_id", optional=True, maximum=256),
         )
-        object.__setattr__(self, "steps_used", _nonnegative_int(self.steps_used, "steps_used"))
+        object.__setattr__(
+            self, "steps_used", _nonnegative_int(self.steps_used, "steps_used")
+        )
         object.__setattr__(
             self,
             "budget_exhausted",
@@ -1187,9 +1269,14 @@ class AbductionResult:
             if isinstance(values, str):
                 vals = (values,)
             elif isinstance(values, Sequence):
-                vals = tuple(_text(v, f"classified_by_class[{k}]", maximum=256) for v in values)
+                vals = tuple(
+                    _text(v, f"classified_by_class[{k}]", maximum=256)
+                    for v in values
+                )
             else:
-                raise AbductionError(f"classified_by_class[{k}] must be a sequence of ids")
+                raise AbductionError(
+                    f"classified_by_class[{k}] must be a sequence of ids"
+                )
             normalized_class[k] = vals
         object.__setattr__(self, "classified_by_class", normalized_class)
         object.__setattr__(
@@ -1205,7 +1292,9 @@ class AbductionResult:
         proof = _bool(self.proof_claimed, "proof_claimed")
         completion = _bool(self.completion_claimed, "completion_claimed")
         if proof or completion:
-            raise AbductionError("AbductionResult cannot claim proof or completion")
+            raise AbductionError(
+                "AbductionResult cannot claim proof or completion"
+            )
         object.__setattr__(self, "proof_claimed", False)
         object.__setattr__(self, "completion_claimed", False)
 
@@ -1232,7 +1321,9 @@ class AbductionResult:
             "status": self.status.value,
             "candidates": [c.to_dict() for c in self.candidates],
             "rejected": [r.to_dict() for r in self.rejected],
-            "unsat_core": (None if self.unsat_core is None else self.unsat_core.to_dict()),
+            "unsat_core": (
+                None if self.unsat_core is None else self.unsat_core.to_dict()
+            ),
             "theory_id": self.theory_id,
             "steps_used": self.steps_used,
             "budget_exhausted": self.budget_exhausted,
@@ -1253,8 +1344,12 @@ class AbductionResult:
     def from_dict(cls, payload: Mapping[str, Any]) -> "AbductionResult":
         if not isinstance(payload, Mapping):
             raise AbductionError("result payload must be an object")
-        if payload.get("proof_claimed") is True or payload.get("completion_claimed") is True:
-            raise AbductionError("AbductionResult cannot claim proof or completion")
+        if payload.get("proof_claimed") is True or payload.get(
+            "completion_claimed"
+        ) is True:
+            raise AbductionError(
+                "AbductionResult cannot claim proof or completion"
+            )
         return cls(
             result_id=payload.get("result_id", ""),
             formal_goal_id=payload.get("formal_goal_id", ""),
@@ -1267,7 +1362,9 @@ class AbductionResult:
             budget_exhausted=bool(payload.get("budget_exhausted", False)),
             diagnostics=tuple(payload.get("diagnostics") or ()),
             classified_by_class=payload.get("classified_by_class") or {},
-            algorithm_version=payload.get("algorithm_version", ABDUCTION_ALGORITHM_VERSION),
+            algorithm_version=payload.get(
+                "algorithm_version", ABDUCTION_ALGORITHM_VERSION
+            ),
             metadata=payload.get("metadata") or {},
             proof_claimed=bool(payload.get("proof_claimed", False)),
             completion_claimed=bool(payload.get("completion_claimed", False)),
@@ -1362,7 +1459,9 @@ def check_admissibility(
     goal_ids = [theory.goal_id] if theory.goal_id else []
     if hole and hole.formal_goal_id:
         goal_ids.append(hole.formal_goal_id)
-    if is_goal_entailing_assumption(normalized, theory.goal_statement, goal_ids=goal_ids):
+    if is_goal_entailing_assumption(
+        normalized, theory.goal_statement, goal_ids=goal_ids
+    ):
         return _AdmissibilityReport(
             relevant=False,
             consistent=True,
@@ -1428,8 +1527,12 @@ def check_admissibility(
     theory_symbols = theory.symbol_set()
     hole_tokens: frozenset[str] = frozenset()
     if hole:
-        hole_tokens = _statement_tokens(hole.statement) | _statement_tokens(hole.reason)
-        hole_tokens |= frozenset(s.lower() for s in hole.source.ast_scope_ids if s)
+        hole_tokens = _statement_tokens(hole.statement) | _statement_tokens(
+            hole.reason
+        )
+        hole_tokens |= frozenset(
+            s.lower() for s in hole.source.ast_scope_ids if s
+        )
     goal_tokens = _statement_tokens(theory.goal_statement)
     overlap = stmt_tokens & (theory_symbols | hole_tokens | goal_tokens)
     # Non-proof diagnostics are "relevant" by classification even without tokens.
@@ -1482,7 +1585,11 @@ def check_admissibility(
         w_tokens = _statement_tokens(w_norm)
         # If weaker tokens are a proper subset and statement contains weaker
         # as a conjunctive superstring, mark too strong.
-        if w_tokens and w_tokens < stmt_tokens and w_norm.lower() in normalized.lower():
+        if (
+            w_tokens
+            and w_tokens < stmt_tokens
+            and w_norm.lower() in normalized.lower()
+        ):
             weak = False
             return _AdmissibilityReport(
                 relevant=True,
@@ -1534,7 +1641,9 @@ def detect_impossible_goal(
         # handled above
     if conflicts:
         return UnsatCoreWitness(
-            core_id=_stable_id("core", theory.theory_id, *sorted(conflicts)[:4]),
+            core_id=_stable_id(
+                "core", theory.theory_id, *sorted(conflicts)[:4]
+            ),
             conflicting_statements=tuple(conflicts),
             explanation=(
                 "goal is inconsistent with known facts/axioms/assumptions "
@@ -1579,7 +1688,9 @@ def _default_statements_for_hole(hole: ProofHole) -> tuple[str, ...]:
                 f"invariant({hole.source.ast_scope_ids[0] if hole.source.ast_scope_ids else hole.hole_id})"
             )
         # Weaker template: local bound preservation
-        proposals.append(f"preserves_local_bound({hole.hole_id})")
+        proposals.append(
+            f"preserves_local_bound({hole.hole_id})"
+        )
     elif premise_class is PremiseClass.SYNTHESIZE_CONTRACT:
         if base and not base.lower().startswith("missing"):
             proposals.append(base)
@@ -1601,11 +1712,17 @@ def _default_statements_for_hole(hole: ProofHole) -> tuple[str, ...]:
             label = reason if reason else hole.hole_id
             proposals.append(f"prove_fact({label})")
     elif premise_class is PremiseClass.UNSUPPORTED_SEMANTICS:
-        proposals.append(base or f"unsupported_semantics({hole.hole_id})")
+        proposals.append(
+            base or f"unsupported_semantics({hole.hole_id})"
+        )
     elif premise_class is PremiseClass.UNAVAILABLE_AUTHORITY:
-        proposals.append(base or f"unavailable_authority({hole.hole_id})")
+        proposals.append(
+            base or f"unavailable_authority({hole.hole_id})"
+        )
     elif premise_class is PremiseClass.IMPLEMENTATION_CHANGE:
-        proposals.append(base or f"implementation_change({hole.hole_id})")
+        proposals.append(
+            base or f"implementation_change({hole.hole_id})"
+        )
     else:
         if base:
             proposals.append(base)
@@ -1676,7 +1793,9 @@ class MissingProofAbduction:
         object.__setattr__(
             self,
             "max_candidates_per_hole",
-            _nonnegative_int(self.max_candidates_per_hole, "max_candidates_per_hole"),
+            _nonnegative_int(
+                self.max_candidates_per_hole, "max_candidates_per_hole"
+            ),
         )
         if self.max_candidates_per_hole == 0:
             limit = self.bounds.max_candidates or 8
@@ -1694,7 +1813,9 @@ class MissingProofAbduction:
         bounds = _bounds(request.bounds, "bounds")
         max_steps = bounds.max_steps or self.bounds.max_steps or 64
         max_candidates = (
-            bounds.max_candidates or self.bounds.max_candidates or self.max_candidates_per_hole
+            bounds.max_candidates
+            or self.bounds.max_candidates
+            or self.max_candidates_per_hole
         )
         steps_used = 0
         budget_exhausted = False
@@ -1720,7 +1841,8 @@ class MissingProofAbduction:
                 steps_used=1,
                 budget_exhausted=False,
                 diagnostics=(
-                    "impossible target under declared finite theory; returning unsat core/witness",
+                    "impossible target under declared finite theory; "
+                    "returning unsat core/witness",
                 ),
                 classified_by_class={},
             )
@@ -1741,9 +1863,15 @@ class MissingProofAbduction:
                 HoleStatus.FALSE,
             } or is_non_proof_premise_class(premise_class):
                 # Record diagnostic classification without admitting as premise
-                stmt = hole.statement or hole.reason or f"{premise_class.value}({hole.hole_id})"
+                stmt = (
+                    hole.statement
+                    or hole.reason
+                    or f"{premise_class.value}({hole.hole_id})"
+                )
                 cand = AbductionCandidate(
-                    candidate_id=_stable_id("abd", hole.hole_id, premise_class.value, stmt),
+                    candidate_id=_stable_id(
+                        "abd", hole.hole_id, premise_class.value, stmt
+                    ),
                     premise_class=premise_class,
                     statement=stmt,
                     hole_id=hole.hole_id,
@@ -1753,16 +1881,21 @@ class MissingProofAbduction:
                     authority=AuthorityCeiling.NONE,
                     assumption_class=AssumptionClass.HYPOTHETICAL,
                     reviewable=True,
-                    weakness_score_millionths=_weakness_score(premise_class, stmt, ()),
+                    weakness_score_millionths=_weakness_score(
+                        premise_class, stmt, ()
+                    ),
                     relevant=True,
                     consistent=True,
-                    source_scoped=bool(hole.source.tree_id or hole.source.source_ref_ids),
+                    source_scoped=bool(
+                        hole.source.tree_id or hole.source.source_ref_ids
+                    ),
                     non_circular=True,
                     non_vacuous=True,
                     weak=True,
                     dependency_ids=hole.dependency_ids,
                     rationale=(
-                        f"classified {premise_class.value} diagnostic from hole {hole.hole_id}"
+                        f"classified {premise_class.value} diagnostic from hole "
+                        f"{hole.hole_id}"
                     ),
                     metadata={"diagnostic": True, "hole_kind": hole.kind.value},
                 )
@@ -1788,7 +1921,9 @@ class MissingProofAbduction:
                     diagnostics.append("step budget exhausted during abduction")
                     break
                 if hole_candidate_count >= self.max_candidates_per_hole:
-                    diagnostics.append(f"per-hole candidate cap reached for {hole.hole_id}")
+                    diagnostics.append(
+                        f"per-hole candidate cap reached for {hole.hole_id}"
+                    )
                     break
                 if len(candidates) + len(non_proof_candidates) >= max_candidates:
                     budget_exhausted = True
@@ -1818,7 +1953,8 @@ class MissingProofAbduction:
                     rejected.append(
                         RejectedPremise(
                             statement=statement,
-                            reason=report.rejection or RejectionReason.MALFORMED,
+                            reason=report.rejection
+                            or RejectionReason.MALFORMED,
                             hole_id=hole.hole_id,
                             premise_class=premise_class,
                             detail=report.detail,
@@ -1828,9 +1964,13 @@ class MissingProofAbduction:
 
                 seen_statements.add(key)
                 weaker_catalogue.append(statement)
-                score = _weakness_score(premise_class, statement, report.symbol_overlap)
+                score = _weakness_score(
+                    premise_class, statement, report.symbol_overlap
+                )
                 cand = AbductionCandidate(
-                    candidate_id=_stable_id("abd", hole.hole_id, premise_class.value, statement),
+                    candidate_id=_stable_id(
+                        "abd", hole.hole_id, premise_class.value, statement
+                    ),
                     premise_class=premise_class,
                     statement=statement,
                     hole_id=hole.hole_id,
@@ -1849,7 +1989,10 @@ class MissingProofAbduction:
                     weak=report.weak,
                     dependency_ids=hole.dependency_ids,
                     symbol_overlap=report.symbol_overlap,
-                    rationale=(f"weak admissible {premise_class.value} for hole {hole.hole_id}"),
+                    rationale=(
+                        f"weak admissible {premise_class.value} for hole "
+                        f"{hole.hole_id}"
+                    ),
                     metadata={
                         "hole_kind": hole.kind.value,
                         "admissibility": report.detail or "passed",
@@ -1898,7 +2041,8 @@ class MissingProofAbduction:
                     rejected.append(
                         RejectedPremise(
                             statement=statement,
-                            reason=report.rejection or RejectionReason.MALFORMED,
+                            reason=report.rejection
+                            or RejectionReason.MALFORMED,
                             hole_id=synthetic_hole.hole_id,
                             premise_class=PremiseClass.FACT_TO_PROVE,
                             detail=report.detail,
@@ -1908,7 +2052,9 @@ class MissingProofAbduction:
                 seen_statements.add(key)
                 candidates.append(
                     AbductionCandidate(
-                        candidate_id=_stable_id("abd", "proposed", statement),
+                        candidate_id=_stable_id(
+                            "abd", "proposed", statement
+                        ),
                         premise_class=PremiseClass.FACT_TO_PROVE,
                         statement=statement,
                         hole_id=synthetic_hole.hole_id,
@@ -1947,7 +2093,9 @@ class MissingProofAbduction:
         # Classify index
         classified: dict[str, list[str]] = {}
         for cand in all_candidates:
-            classified.setdefault(cand.premise_class.value, []).append(cand.candidate_id)
+            classified.setdefault(cand.premise_class.value, []).append(
+                cand.candidate_id
+            )
         classified_frozen = {k: tuple(v) for k, v in classified.items()}
 
         # Status selection
@@ -1970,12 +2118,12 @@ class MissingProofAbduction:
                 status = AbductionStatus.UNSUPPORTED
             else:
                 status = AbductionStatus.PARTIAL
-        elif has_admissible and (rejected or non_proof_candidates or budget_exhausted):
-            status = (
-                AbductionStatus.PARTIAL
-                if (rejected or non_proof_candidates)
-                else AbductionStatus.CANDIDATES
-            )
+        elif has_admissible and (
+            rejected or non_proof_candidates or budget_exhausted
+        ):
+            status = AbductionStatus.PARTIAL if (
+                rejected or non_proof_candidates
+            ) else AbductionStatus.CANDIDATES
         elif has_admissible:
             status = AbductionStatus.CANDIDATES
         elif not request.holes and not request.proposed_premises:
@@ -1984,7 +2132,9 @@ class MissingProofAbduction:
         elif rejected and not candidates:
             # All proposals rejected — honest unknown (not silent failure)
             status = AbductionStatus.UNKNOWN
-            diagnostics.append("all proposed premises rejected; returning honest unknown")
+            diagnostics.append(
+                "all proposed premises rejected; returning honest unknown"
+            )
         else:
             status = AbductionStatus.EMPTY
 

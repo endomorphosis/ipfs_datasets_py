@@ -132,8 +132,14 @@ def _bounds(**overrides: Any) -> ResourceBounds:
 
 
 def test_interface_constant() -> None:
-    assert BACKWARD_PROOF_OBLIGATION_GRAPH_INTERFACE == "BackwardProofObligationGraph@1"
-    assert BackwardProofObligationGraph.INTERFACE == BACKWARD_PROOF_OBLIGATION_GRAPH_INTERFACE
+    assert (
+        BACKWARD_PROOF_OBLIGATION_GRAPH_INTERFACE
+        == "BackwardProofObligationGraph@1"
+    )
+    assert (
+        BackwardProofObligationGraph.INTERFACE
+        == BACKWARD_PROOF_OBLIGATION_GRAPH_INTERFACE
+    )
 
 
 def test_build_from_holes_produces_dag_with_named_edges() -> None:
@@ -331,13 +337,17 @@ def test_and_or_meanings_are_distinct() -> None:
 
     # AND children use joint depends_on; OR uses alternative/or_intro.
     for node in and_nodes:
-        outs = [e for e in result.graph.edges if e.source_node_id == node.node_id]
+        outs = [
+            e for e in result.graph.edges if e.source_node_id == node.node_id
+        ]
         for edge in outs:
             assert edge.kind is not GraphEdgeKind.ALTERNATIVE
             assert edge.inference_rule != InferenceRule.OR_INTRO.value
 
     for node in or_nodes:
-        outs = [e for e in result.graph.edges if e.source_node_id == node.node_id]
+        outs = [
+            e for e in result.graph.edges if e.source_node_id == node.node_id
+        ]
         for edge in outs:
             assert edge.inference_rule != InferenceRule.AND_INTRO.value
 
@@ -374,7 +384,7 @@ def test_max_steps_budget_terminates() -> None:
         wp_step(
             step_id=f"step:{i}",
             parent_obligation_id=f"obl:{i}",
-            child_obligation_id=f"obl:{i + 1}",
+            child_obligation_id=f"obl:{i+1}",
             statement=f"wp step {i}",
         )
         for i in range(10)
@@ -449,7 +459,9 @@ def test_subsumption_collapses_duplicate_statements() -> None:
         for n in result.graph.nodes
         if n.kind is GraphNodeKind.LEAF and n.metadata.get("statement")
     ]
-    normalized = {" ".join(str(s).strip().lower().split()) for s in leaf_statements if s}
+    normalized = {
+        " ".join(str(s).strip().lower().split()) for s in leaf_statements if s
+    }
     assert "invariant(owner_holds_token)" in normalized
     # Subsumption edges use the checked rule.
     sub_edges = [
@@ -460,7 +472,9 @@ def test_subsumption_collapses_duplicate_statements() -> None:
     ]
     assert sub_edges
     for edge in sub_edges:
-        assert edge.reconstruction_method == (ReconstructionMethod.SUBSUMPTION_CHECK.value)
+        assert edge.reconstruction_method == (
+            ReconstructionMethod.SUBSUMPTION_CHECK.value
+        )
 
 
 def test_cycle_control_produces_acyclic_graph() -> None:
@@ -550,11 +564,15 @@ def test_solved_leaf_requires_adequate_evidence() -> None:
     assert solved_leaves_cite_evidence(result)
     # Evidence edges name the citation rule.
     ev_edges = [
-        e for e in result.graph.edges if e.inference_rule == InferenceRule.EVIDENCE_CITATION.value
+        e
+        for e in result.graph.edges
+        if e.inference_rule == InferenceRule.EVIDENCE_CITATION.value
     ]
     assert ev_edges
     assert all(
-        e.reconstruction_method == ReconstructionMethod.EVIDENCE_RECEIPT.value for e in ev_edges
+        e.reconstruction_method
+        == ReconstructionMethod.EVIDENCE_RECEIPT.value
+        for e in ev_edges
     )
 
 
@@ -579,7 +597,9 @@ def test_leaf_without_evidence_not_discharged() -> None:
         not solved_leaves_cite_evidence(result) is False
     )
     # The open claim is stripped.
-    node = next(n for n in result.graph.nodes if n.node_id == "node:seed:open")
+    node = next(
+        n for n in result.graph.nodes if n.node_id == "node:seed:open"
+    )
     assert node.status is not HoleStatus.DISCHARGED or result.discharged_node_ids
     # If somehow discharged, evidence must be present; otherwise open.
     if node.status is HoleStatus.DISCHARGED:
@@ -616,7 +636,9 @@ def test_candidate_authority_evidence_does_not_discharge() -> None:
             discharge_authority=AuthorityCeiling.BOUNDED,
         )
     )
-    leaf_node = next(n for n in result.graph.nodes if n.node_id == "node:seed:leaf2")
+    leaf_node = next(
+        n for n in result.graph.nodes if n.node_id == "node:seed:leaf2"
+    )
     assert leaf_node.status is not HoleStatus.DISCHARGED
     assert "node:seed:leaf2" not in result.discharged_node_ids
 
@@ -689,7 +711,11 @@ def test_cec_forward_as_backward_and_tdfol_are_experimental() -> None:
         InferenceRule.CEC_FORWARD_AS_BACKWARD.value,
         InferenceRule.TDFOL_FORWARD_ONLY.value,
     }
-    found = {e.inference_rule for e in result.graph.edges if e.inference_rule in experimental_rules}
+    found = {
+        e.inference_rule
+        for e in result.graph.edges
+        if e.inference_rule in experimental_rules
+    }
     assert experimental_rules == found or found  # at least one path materialised
     for edge in result.graph.edges:
         if edge.inference_rule in experimental_rules:
@@ -698,9 +724,18 @@ def test_cec_forward_as_backward_and_tdfol_are_experimental() -> None:
 
 
 def test_cap_experimental_authority_demotes_theorem() -> None:
-    assert cap_experimental_authority(AuthorityCeiling.THEOREM) is AuthorityCeiling.CANDIDATE
-    assert cap_experimental_authority(AuthorityCeiling.ADVISORY) is AuthorityCeiling.ADVISORY
-    assert cap_experimental_authority(AuthorityCeiling.NONE) is AuthorityCeiling.NONE
+    assert (
+        cap_experimental_authority(AuthorityCeiling.THEOREM)
+        is AuthorityCeiling.CANDIDATE
+    )
+    assert (
+        cap_experimental_authority(AuthorityCeiling.ADVISORY)
+        is AuthorityCeiling.ADVISORY
+    )
+    assert (
+        cap_experimental_authority(AuthorityCeiling.NONE)
+        is AuthorityCeiling.NONE
+    )
 
 
 def test_experimental_disallowed_when_flag_false() -> None:
@@ -716,7 +751,9 @@ def test_experimental_disallowed_when_flag_false() -> None:
             bounds=_bounds(),
         )
     )
-    assert not any(n.metadata.get("experimental") for n in result.graph.nodes)
+    assert not any(
+        n.metadata.get("experimental") for n in result.graph.nodes
+    )
     assert any("experimental" in d for d in result.diagnostics)
 
 
@@ -811,7 +848,11 @@ def test_mixed_trusted_and_experimental_or_branch() -> None:
     assert and_or_meanings_distinct(result.graph)
     assert experimental_paths_untrusted(result)
     # Trusted seed may keep satisfiability; legacy is capped.
-    legacy_nodes = [n for n in result.graph.nodes if n.metadata.get("experimental") is True]
+    legacy_nodes = [
+        n
+        for n in result.graph.nodes
+        if n.metadata.get("experimental") is True
+    ]
     assert legacy_nodes
     for n in legacy_nodes:
         assert not is_trusted_authority(n.authority)

@@ -1,0 +1,20 @@
+site_name: IPFS Datasets Python
+site_description: Documentation for IPFS Datasets Python
+docs_dir: docs
+site_dir: site
+
+theme:
+  name: mkdocs
+
+plugins:
+  - search
+
+nav:
+  - Home: index.md
+  - Getting Started: getting_started.md
+  - Installation: installation.md
+  - User Guide: user_guide.md
+  - Developer Guide: developer_guide.md
+  - API Reference:
+      - Optimizers API: api/OPTIMIZERS_API_REFERENCE.md
+      - Core Operations API: api/CORE_OPERATIONS_API.md

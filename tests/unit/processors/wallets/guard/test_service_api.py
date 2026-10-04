@@ -99,7 +99,9 @@ def _intent(**overrides: Any) -> TransactionIntent:
     return TransactionIntent(**base)
 
 
-def _candidate(intent: TransactionIntent | None = None, **overrides: Any) -> TransactionCandidate:
+def _candidate(
+    intent: TransactionIntent | None = None, **overrides: Any
+) -> TransactionCandidate:
     intent = intent or _intent()
     base: dict[str, Any] = {
         "candidate_id": "candidate:tx-001",

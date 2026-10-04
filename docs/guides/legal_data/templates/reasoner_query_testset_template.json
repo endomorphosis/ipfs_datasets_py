@@ -1,0 +1,219 @@
+{
+  "schema_version": "1.0",
+  "description": "Template query set for hybrid legal reasoner API contract and proof validation",
+  "queries": [
+    {
+      "id": "Q1",
+      "api": "check_compliance",
+      "title": "Wages paid within 30-day window",
+      "query": {
+        "actor_ref": "ent:employer",
+        "frame_ref": "frm:pay_wages",
+        "facts": {
+          "contract_active": true
+        },
+        "events": [
+          {
+            "frame_ref": "frm:pay_wages",
+            "time": "2026-03-20T10:00:00Z"
+          }
+        ]
+      },
+      "time_context": "2026-03-31T00:00:00Z",
+      "expected": {
+        "status": "compliant",
+        "required_proof_steps": [
+          "activation_true",
+          "temporal_guard_pass",
+          "event_observed"
+        ]
+      }
+    },
+    {
+      "id": "Q2",
+      "api": "check_compliance",
+      "title": "Wages unpaid after deadline",
+      "query": {
+        "actor_ref": "ent:employer",
+        "frame_ref": "frm:pay_wages",
+        "facts": {
+          "contract_active": true
+        },
+        "events": []
+      },
+      "time_context": "2026-04-15T00:00:00Z",
+      "expected": {
+        "status": "violation",
+        "required_proof_steps": [
+          "activation_true",
+          "deadline_passed",
+          "required_event_missing"
+        ]
+      }
+    },
+    {
+      "id": "Q3",
+      "api": "check_compliance",
+      "title": "Prohibited disclosure without exception",
+      "query": {
+        "actor_ref": "ent:employer",
+        "frame_ref": "frm:disclose_medical_data",
+        "facts": {
+          "court_order_exists": false
+        },
+        "events": [
+          {
+            "frame_ref": "frm:disclose_medical_data",
+            "time": "2026-04-10T12:00:00Z"
+          }
+        ]
+      },
+      "time_context": "2026-04-10T12:00:00Z",
+      "expected": {
+        "status": "violation",
+        "required_proof_steps": [
+          "activation_true",
+          "exception_not_satisfied",
+          "forbidden_event_observed"
+        ]
+      }
+    },
+    {
+      "id": "Q4",
+      "api": "check_compliance",
+      "title": "Exception-applied disclosure",
+      "query": {
+        "actor_ref": "ent:employer",
+        "frame_ref": "frm:disclose_medical_data",
+        "facts": {
+          "court_order_exists": true
+        },
+        "events": [
+          {
+            "frame_ref": "frm:disclose_medical_data",
+            "time": "2026-04-10T12:00:00Z"
+          }
+        ]
+      },
+      "time_context": "2026-04-10T12:00:00Z",
+      "expected": {
+        "status": "exception_applied",
+        "required_proof_steps": [
+          "activation_true",
+          "exception_satisfied",
+          "prohibition_discharged"
+        ]
+      }
+    },
+    {
+      "id": "Q5",
+      "api": "find_violations",
+      "title": "Late breach notification",
+      "state": {
+        "facts": {
+          "breach_detected": true
+        },
+        "events": [
+          {
+            "frame_ref": "frm:notify_customer",
+            "time": "2026-06-05T12:00:00Z"
+          }
+        ]
+      },
+      "time_range": [
+        "2026-06-01T00:00:00Z",
+        "2026-06-07T00:00:00Z"
+      ],
+      "expected": {
+        "status": "violation_found",
+        "required_proof_steps": [
+          "activation_true",
+          "within_window_failed",
+          "event_late"
+        ]
+      }
+    },
+    {
+      "id": "Q6",
+      "api": "find_violations",
+      "title": "No violation before report deadline",
+      "state": {
+        "facts": {
+          "contract_active": true
+        },
+        "events": [
+          {
+            "frame_ref": "frm:file_report",
+            "time": "2026-05-20T09:00:00Z"
+          }
+        ]
+      },
+      "time_range": [
+        "2026-05-01T00:00:00Z",
+        "2026-05-31T23:59:59Z"
+      ],
+      "expected": {
+        "status": "no_violation",
+        "required_proof_steps": [
+          "activation_true",
+          "deadline_guard_pass",
+          "event_observed"
+        ]
+      }
+    },
+    {
+      "id": "Q7",
+      "api": "check_compliance",
+      "title": "Modal conflict detection on same frame",
+      "query": {
+        "actor_ref": "ent:company_a",
+        "frame_ref": "frm:file_report",
+        "facts": {
+          "conflict_mode": true
+        },
+        "events": []
+      },
+      "time_context": "2026-05-25T00:00:00Z",
+      "expected": {
+        "status": "conflict_detected",
+        "required_proof_steps": [
+          "obligation_active",
+          "prohibition_active",
+          "scope_overlap"
+        ]
+      }
+    },
+    {
+      "id": "Q8",
+      "api": "explain_proof",
+      "title": "Explain proof for prior violation",
+      "from_query_id": "Q2",
+      "format": "nl",
+      "expected": {
+        "status": "explanation_ready",
+        "required_fields": [
+          "proof_id",
+          "steps",
+          "ir_refs",
+          "provenance",
+          "reconstructed_nl"
+        ],
+        "required_proof_steps": [
+          "proof_load",
+          "provenance_expand",
+          "nl_regeneration"
+        ]
+      }
+    }
+  ],
+  "response_contract": {
+    "required_fields": [
+      "status",
+      "proof_id",
+      "ir_refs",
+      "source_refs",
+      "time_context",
+      "conflicts"
+    ]
+  }
+}

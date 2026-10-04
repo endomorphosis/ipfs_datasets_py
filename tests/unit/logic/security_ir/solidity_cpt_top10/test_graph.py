@@ -71,7 +71,9 @@ contract Token {
 
 
 def _cid(label: str) -> str:
-    return canonical_identity({"label": label}, domain="test", schema_version="test/v1").cid
+    return canonical_identity(
+        {"label": label}, domain="test", schema_version="test/v1"
+    ).cid
 
 
 def _raw(text: str, *, name: str = "Vault", path: str = "contracts/Vault.sol") -> dict:
@@ -89,7 +91,9 @@ def _raw(text: str, *, name: str = "Vault", path: str = "contracts/Vault.sol") -
 
 def _projection(text: str = SOURCE_A, *, row_index: int = 3, quality: float | None = None):
     adapted = adapt_solidity_cpt_row(_raw(text), row_index=row_index)
-    return SolidityGraphProjector().project_adapted(adapted, quality_score=quality)
+    return SolidityGraphProjector().project_adapted(
+        adapted, quality_score=quality
+    )
 
 
 def test_builder_materializes_reviewed_ontology_and_adjacency() -> None:
@@ -121,8 +125,12 @@ def test_builder_materializes_reviewed_ontology_and_adjacency() -> None:
     edge_ids = {item.cid for item in graph.edges}
     assert set(graph.outgoing) == node_ids
     assert set(graph.incoming) == node_ids
-    assert {edge_id for values in graph.outgoing.values() for edge_id in values} == edge_ids
-    assert {edge_id for values in graph.incoming.values() for edge_id in values} == edge_ids
+    assert {
+        edge_id for values in graph.outgoing.values() for edge_id in values
+    } == edge_ids
+    assert {
+        edge_id for values in graph.incoming.values() for edge_id in values
+    } == edge_ids
     assert graph.graph_root
     assert graph.node_table_root
     assert graph.edge_table_root
@@ -138,7 +146,9 @@ def test_authority_types_remain_separate_node_types() -> None:
     adapted = adapt_solidity_cpt_row(_raw(SOURCE_A), row_index=3)
     base = SolidityGraphProjector().project_adapted(adapted)
     unit_cid = next(
-        item.cid for item in base.code_units if item.unit_kind == UnitKind.FUNCTION.value
+        item.cid
+        for item in base.code_units
+        if item.unit_kind == UnitKind.FUNCTION.value
     )
     projection = SolidityGraphProjector().project_adapted(
         adapted,
@@ -168,17 +178,24 @@ def test_authority_types_remain_separate_node_types() -> None:
     assert reviewed
     assert verified
     assert all(
-        item.payload["authority_type"] == GraphNodeType.OBSERVED_SYNTAX.value for item in observed
+        item.payload["authority_type"] == GraphNodeType.OBSERVED_SYNTAX.value
+        for item in observed
     )
     assert all(
-        item.payload["authority_type"] == GraphNodeType.REVIEWED_CLAIM.value for item in reviewed
+        item.payload["authority_type"] == GraphNodeType.REVIEWED_CLAIM.value
+        for item in reviewed
     )
     assert all(
-        item.payload["authority_type"] == GraphNodeType.VERIFIED_RESULT.value for item in verified
+        item.payload["authority_type"] == GraphNodeType.VERIFIED_RESULT.value
+        for item in verified
     )
     # Node types are disjoint partitions.
-    assert {item.cid for item in observed}.isdisjoint({item.cid for item in reviewed})
-    assert {item.cid for item in reviewed}.isdisjoint({item.cid for item in verified})
+    assert {item.cid for item in observed}.isdisjoint(
+        {item.cid for item in reviewed}
+    )
+    assert {item.cid for item in reviewed}.isdisjoint(
+        {item.cid for item in verified}
+    )
 
 
 def test_ontology_rejects_wrong_directions_and_edge_classes() -> None:
@@ -217,7 +234,10 @@ def test_all_edges_bind_sources_existing_endpoints_and_non_authority() -> None:
         and item.payload["authoritative"] is False
         for item in graph.edges
     )
-    assert all(item.payload["grants_execution_authority"] is False for item in graph.nodes)
+    assert all(
+        item.payload["grants_execution_authority"] is False
+        for item in graph.nodes
+    )
     assert all(item.config_cid == graph.config_cid for item in graph.nodes)
     assert all(item.config_cid == graph.config_cid for item in graph.edges)
     # Source bodies never appear in graph payloads.
@@ -230,7 +250,9 @@ def test_all_edges_bind_sources_existing_endpoints_and_non_authority() -> None:
 def test_similarity_is_separate_explicitly_non_authoritative_evidence() -> None:
     projection = _projection()
     functions = [
-        item for item in projection.code_units if item.unit_kind == UnitKind.FUNCTION.value
+        item
+        for item in projection.code_units
+        if item.unit_kind == UnitKind.FUNCTION.value
     ]
     assert len(functions) >= 2
     evidence_cid = _cid("embedding-receipt")
@@ -243,7 +265,9 @@ def test_similarity_is_separate_explicitly_non_authoritative_evidence() -> None:
         model_config_cid=_cid("embedding-config"),
         score=0.875,
     )
-    graph = SolidityGraphBuilder().build((projection,), similarity_observations=(observation,))
+    graph = SolidityGraphBuilder().build(
+        (projection,), similarity_observations=(observation,)
+    )
 
     assert len(graph.similarity_edges) == 1
     edge = graph.similarity_edges[0]
@@ -269,8 +293,12 @@ def test_quality_score_node_is_not_a_security_label() -> None:
 def test_rebuild_is_deterministic_for_input_order() -> None:
     first_projection = _projection(SOURCE_A, row_index=1)
     second_projection = _projection(SOURCE_B, row_index=2)
-    first = SolidityGraphBuilder().build((first_projection, second_projection))
-    second = SolidityGraphBuilder().build((second_projection, first_projection))
+    first = SolidityGraphBuilder().build(
+        (first_projection, second_projection)
+    )
+    second = SolidityGraphBuilder().build(
+        (second_projection, first_projection)
+    )
     assert first.graph_root == second.graph_root
     assert first.to_dict() == second.to_dict()
     assert first.to_json() == second.to_json()
@@ -310,10 +338,14 @@ def test_empty_projections_and_conflicting_similarity_fail_closed() -> None:
 
     projection = _projection()
     functions = [
-        item for item in projection.code_units if item.unit_kind == UnitKind.FUNCTION.value
+        item
+        for item in projection.code_units
+        if item.unit_kind == UnitKind.FUNCTION.value
     ]
     contracts = [
-        item for item in projection.code_units if item.unit_kind == UnitKind.CONTRACT.value
+        item
+        for item in projection.code_units
+        if item.unit_kind == UnitKind.CONTRACT.value
     ]
     with pytest.raises(GraphBuildError, match="same node type"):
         SolidityGraphBuilder().build(

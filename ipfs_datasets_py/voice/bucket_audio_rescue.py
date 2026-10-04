@@ -48,9 +48,7 @@ def _legacy_text_hash(text: str) -> str:
     return sha256(collapsed.encode("utf-8")).hexdigest()[:20]
 
 
-def _rows_from_manifest(
-    payload: Mapping[str, Any] | Sequence[Any],
-) -> tuple[Mapping[str, Any], ...]:
+def _rows_from_manifest(payload: Mapping[str, Any] | Sequence[Any]) -> tuple[Mapping[str, Any], ...]:
     if isinstance(payload, Mapping):
         for key in ("responses", "items", "entries", "records", "vocabulary"):
             value = payload.get(key)
@@ -134,9 +132,7 @@ def load_text_hash_catalog(
 
 def rescue_unmapped_by_text_hash(
     bundle: AbbyVoiceBucketAudioNormalizedBundle,
-    catalogs: Sequence[
-        tuple[dict[str, TextHashCatalogEntry], BucketAudioMappingStatus, BucketAudioMappingMethod]
-    ],
+    catalogs: Sequence[tuple[dict[str, TextHashCatalogEntry], BucketAudioMappingStatus, BucketAudioMappingMethod]],
 ) -> tuple[AbbyVoiceBucketAudioNormalizedBundle, dict[str, int]]:
     """Remap ``unmapped_linkable`` entries using ordered textHash catalogs.
 
@@ -220,18 +216,15 @@ def _best_asr_match(
     response_texts: Mapping[str, tuple[str, str]],
     vocabulary_texts: Mapping[str, tuple[str, str]],
     max_wer_bp: int,
-) -> (
-    tuple[
-        BucketAudioMappingStatus,
-        BucketAudioMappingMethod,
-        BucketAudioSubjectKind,
-        str,
-        str,
-        str,
-        int | None,
-    ]
-    | None
-):
+) -> tuple[
+    BucketAudioMappingStatus,
+    BucketAudioMappingMethod,
+    BucketAudioSubjectKind,
+    str,
+    str,
+    str,
+    int | None,
+] | None:
     """Return mapping fields for the best ASR match, if any.
 
     ``response_texts`` / ``vocabulary_texts`` map subject_id -> (display_text, spoken_or_normalized).

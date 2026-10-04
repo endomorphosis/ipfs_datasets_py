@@ -1,0 +1,1205 @@
+{
+  "accounts": [
+    {
+      "asset_id": "asset:btc",
+      "balance": 5,
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 129,
+          "line_start": 8,
+          "notes": "Fixture account balance and reservations.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "account:alice_btc",
+      "owner": "principal:alice",
+      "reservation_requests": [
+        2,
+        2
+      ],
+      "wallet_id": "wallet:user_alice"
+    }
+  ],
+  "assets": [
+    {
+      "decimals": 8,
+      "id": "asset:btc",
+      "symbol": "BTC"
+    }
+  ],
+  "assumptions": [
+    {
+      "description": "cryptographic primitives are unbroken",
+      "evidence_expires_at": "2027-01-01T00:00:00Z",
+      "evidence_refs": [
+        {
+          "kind": "manual_review",
+          "notes": "Built-in fixture evidence for bounded assumption A1.",
+          "path": "docs/security_verification/threat_model.md",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "A1",
+      "last_reviewed_at": "2026-07-07T00:00:00Z",
+      "owner": "security-architecture"
+    },
+    {
+      "description": "private keys are generated with sufficient entropy",
+      "evidence_expires_at": "2027-01-01T00:00:00Z",
+      "evidence_refs": [
+        {
+          "kind": "manual_review",
+          "notes": "Built-in fixture evidence for bounded assumption A2.",
+          "path": "docs/security_verification/threat_model.md",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "A2",
+      "last_reviewed_at": "2026-07-07T00:00:00Z",
+      "owner": "wallet-key-management"
+    },
+    {
+      "description": "signing code signs only approved canonical transaction bytes",
+      "evidence_expires_at": "2027-01-01T00:00:00Z",
+      "evidence_refs": [
+        {
+          "kind": "manual_review",
+          "notes": "Built-in fixture evidence for bounded assumption A3.",
+          "path": "docs/security_verification/threat_model.md",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "A3",
+      "last_reviewed_at": "2026-07-07T00:00:00Z",
+      "owner": "wallet-transaction-signing"
+    },
+    {
+      "description": "database commits are serializable",
+      "evidence_expires_at": "2027-01-01T00:00:00Z",
+      "evidence_refs": [
+        {
+          "kind": "manual_review",
+          "notes": "Built-in fixture evidence for bounded assumption A4.",
+          "path": "docs/security_verification/threat_model.md",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "A4",
+      "last_reviewed_at": "2026-07-07T00:00:00Z",
+      "owner": "exchange-ledger-database"
+    },
+    {
+      "description": "nonce reservation is atomic",
+      "evidence_expires_at": "2027-01-01T00:00:00Z",
+      "evidence_refs": [
+        {
+          "kind": "manual_review",
+          "notes": "Built-in fixture evidence for bounded assumption A5.",
+          "path": "docs/security_verification/threat_model.md",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "A5",
+      "last_reviewed_at": "2026-07-07T00:00:00Z",
+      "owner": "withdrawal-nonce-service"
+    },
+    {
+      "description": "blockchain finality threshold k is sufficient",
+      "evidence_expires_at": "2027-01-01T00:00:00Z",
+      "evidence_refs": [
+        {
+          "kind": "manual_review",
+          "notes": "Built-in fixture evidence for bounded assumption A6.",
+          "path": "docs/security_verification/threat_model.md",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "A6",
+      "last_reviewed_at": "2026-07-07T00:00:00Z",
+      "owner": "chain-risk-management"
+    },
+    {
+      "description": "admin identities are not all compromised",
+      "evidence_expires_at": "2027-01-01T00:00:00Z",
+      "evidence_refs": [
+        {
+          "kind": "manual_review",
+          "notes": "Built-in fixture evidence for bounded assumption A7.",
+          "path": "docs/security_verification/threat_model.md",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "A7",
+      "last_reviewed_at": "2026-07-07T00:00:00Z",
+      "owner": "security-governance"
+    },
+    {
+      "description": "HSM/key manager obeys its interface contract",
+      "evidence_expires_at": "2027-01-01T00:00:00Z",
+      "evidence_refs": [
+        {
+          "kind": "manual_review",
+          "notes": "Built-in fixture evidence for bounded assumption A8.",
+          "path": "docs/security_verification/threat_model.md",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "A8",
+      "last_reviewed_at": "2026-07-07T00:00:00Z",
+      "owner": "custody-platform"
+    },
+    {
+      "description": "external RPC providers may lie/delay/censor within modeled bounds",
+      "evidence_expires_at": "2027-01-01T00:00:00Z",
+      "evidence_refs": [
+        {
+          "kind": "manual_review",
+          "notes": "Built-in fixture evidence for bounded assumption A9.",
+          "path": "docs/security_verification/threat_model.md",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "A9",
+      "last_reviewed_at": "2026-07-07T00:00:00Z",
+      "owner": "blockchain-infrastructure"
+    },
+    {
+      "description": "audit logs are append-only or tamper-evident",
+      "evidence_expires_at": "2027-01-01T00:00:00Z",
+      "evidence_refs": [
+        {
+          "kind": "manual_review",
+          "notes": "Built-in fixture evidence for bounded assumption A10.",
+          "path": "docs/security_verification/threat_model.md",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "A10",
+      "last_reviewed_at": "2026-07-07T00:00:00Z",
+      "owner": "audit-compliance"
+    }
+  ],
+  "capabilities": [
+    {
+      "allow_expiry_extension": false,
+      "caveats_relax_authority": false,
+      "delegated_actions": [
+        "withdraw"
+      ],
+      "delegated_authority": 2,
+      "delegated_resources": [
+        "wallet:user_alice"
+      ],
+      "delegator_authority": 3,
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 54,
+          "line_start": 45,
+          "notes": "Fixture capability chain.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "expired": false,
+      "expiry": 90,
+      "id": "cap:withdraw:user_alice",
+      "parent_actions": [
+        "withdraw",
+        "cancel"
+      ],
+      "parent_expiry": 100,
+      "parent_resources": [
+        "wallet:user_alice"
+      ],
+      "principal": "principal:alice",
+      "privileged_action_attempted": false,
+      "resource_id": "wallet:user_alice",
+      "revoked_before_action": false
+    }
+  ],
+  "claims": [
+    {
+      "description": "No withdrawal broadcast occurs without authorization.",
+      "domain": "withdrawals",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 60,
+          "line_start": 21,
+          "notes": "Fixture withdrawal claim binding.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "claim:no_unauthorized_withdrawal",
+      "required_assumptions": [
+        "A3",
+        "A4",
+        "A5",
+        "A8"
+      ],
+      "severity": "blocking"
+    },
+    {
+      "description": "Reservations never exceed available internal account balance.",
+      "domain": "ledger",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 47,
+          "line_start": 38,
+          "notes": "Fixture ledger reservation claim binding.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "claim:no_over_reserved_internal_account",
+      "required_assumptions": [
+        "A4",
+        "A5"
+      ],
+      "severity": "blocking"
+    },
+    {
+      "description": "Custody assets always cover recorded customer liabilities and pending settlements.",
+      "domain": "ledger",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 346,
+          "line_start": 338,
+          "notes": "Fixture ledger totals claim binding.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "claim:global_asset_conservation",
+      "required_assumptions": [
+        "A4"
+      ],
+      "severity": "blocking"
+    },
+    {
+      "description": "Deposits are only credited after the chain finality threshold is reached.",
+      "domain": "deposits",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 242,
+          "line_start": 201,
+          "notes": "Fixture deposit finality claim binding.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "claim:no_deposit_before_finality",
+      "required_assumptions": [
+        "A6",
+        "A9"
+      ],
+      "severity": "blocking"
+    },
+    {
+      "description": "No signing request is honored for a wallet after it has been frozen.",
+      "domain": "hsm",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 258,
+          "line_start": 244,
+          "notes": "Fixture HSM freeze claim binding.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "claim:no_signing_request_after_wallet_freeze",
+      "required_assumptions": [
+        "A3",
+        "A8"
+      ],
+      "severity": "blocking"
+    },
+    {
+      "description": "Delegated capabilities never exceed the delegating principal authority.",
+      "domain": "capabilities",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 78,
+          "line_start": 59,
+          "notes": "Fixture capability delegation claim binding.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "claim:capability_delegation_no_authority_increase",
+      "required_assumptions": [
+        "A7"
+      ],
+      "severity": "high"
+    },
+    {
+      "description": "A revoked capability cannot authorize future privileged actions.",
+      "domain": "capabilities",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 272,
+          "line_start": 260,
+          "notes": "Fixture capability revocation claim binding.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "claim:revoked_capability_no_future_authorization",
+      "required_assumptions": [
+        "A7"
+      ],
+      "severity": "high"
+    },
+    {
+      "description": "Every critical transition has a corresponding append-only audit log entry.",
+      "domain": "audit",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 281,
+          "line_start": 274,
+          "notes": "Fixture audit linkage claim binding.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "claim:audit_event_exists_for_critical_transition",
+      "required_assumptions": [
+        "A10"
+      ],
+      "severity": "medium"
+    }
+  ],
+  "disproof_vectors": [
+    {
+      "claim_id": "claim:no_unauthorized_withdrawal",
+      "counterexample": null,
+      "id": "disproof:no_unauthorized_withdrawal:remove_approval",
+      "status": "SURVIVED",
+      "tactic": "remove_precondition:withdrawal_approved"
+    },
+    {
+      "claim_id": "claim:no_signing_request_after_wallet_freeze",
+      "counterexample": null,
+      "id": "disproof:no_signing_request_after_wallet_freeze:replay_stale_signing",
+      "status": "SURVIVED",
+      "tactic": "replay:signing_request_after_freeze"
+    },
+    {
+      "claim_id": "claim:revoked_capability_no_future_authorization",
+      "counterexample": null,
+      "id": "disproof:revoked_capability_no_future_authorization:reinstate_race",
+      "status": "SURVIVED",
+      "tactic": "race_condition:capability_revocation_vs_privileged_action"
+    }
+  ],
+  "entities": [
+    {
+      "id": "entity:user_alice",
+      "kind": "user",
+      "name": "Alice"
+    },
+    {
+      "id": "entity:exchange",
+      "kind": "exchange",
+      "name": "Example Exchange"
+    }
+  ],
+  "events": [
+    {
+      "amount": 2,
+      "asset_id": "asset:btc",
+      "authorized": true,
+      "event": "withdrawal_requested",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture withdrawal request trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "event:withdrawal_requested:1",
+      "nonce": "nonce:1",
+      "nonce_fresh": true,
+      "principal": "principal:alice",
+      "sufficient_balance": true,
+      "timestamp": 1,
+      "wallet_id": "wallet:user_alice",
+      "wallet_not_frozen": true,
+      "withdrawal_id": "withdrawal:1"
+    },
+    {
+      "amount": 2,
+      "asset_id": "asset:btc",
+      "event": "withdrawal_approved",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture withdrawal approval trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "event:withdrawal_approved:1",
+      "max_seconds": 30,
+      "nonce": "nonce:1",
+      "principal": "principal:exchange_signer",
+      "timestamp": 2,
+      "wallet_id": "wallet:user_alice",
+      "withdrawal_id": "withdrawal:1"
+    },
+    {
+      "event": "nonce_reserved",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture nonce reservation trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "event:nonce_reserved:1",
+      "nonce": "nonce:1",
+      "timestamp": 2.5,
+      "withdrawal_id": "withdrawal:1"
+    },
+    {
+      "amount": 2,
+      "asset_id": "asset:btc",
+      "event": "balance_reserved",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture balance reservation trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "event:balance_reserved:1",
+      "timestamp": 2.6,
+      "wallet_id": "wallet:user_alice",
+      "withdrawal_id": "withdrawal:1"
+    },
+    {
+      "amount": 2,
+      "asset_id": "asset:btc",
+      "authorized": true,
+      "critical": true,
+      "event": "withdrawal_broadcast",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture withdrawal broadcast trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "event:withdrawal_broadcast:1",
+      "nonce": "nonce:1",
+      "nonce_fresh": true,
+      "principal": "principal:exchange_signer",
+      "sufficient_balance": true,
+      "timestamp": 3,
+      "wallet_id": "wallet:user_alice",
+      "wallet_not_frozen": true,
+      "withdrawal_id": "withdrawal:1"
+    },
+    {
+      "account_id": "account:alice_btc",
+      "asset_id": "asset:btc",
+      "block_height": 100,
+      "chain_id": "chain:btc",
+      "confirmations": 0,
+      "deposit_id": "deposit:1",
+      "event": "deposit_observed",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture deposit observed trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "event:deposit_observed:1",
+      "timestamp": 4,
+      "txid": "tx:1"
+    },
+    {
+      "account_id": "account:alice_btc",
+      "asset_id": "asset:btc",
+      "block_height": 106,
+      "chain_id": "chain:btc",
+      "confirmations": 6,
+      "deposit_id": "deposit:1",
+      "event": "deposit_finalized",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture deposit finalized trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "finality_threshold": 6,
+      "id": "event:deposit_finalized:1",
+      "timestamp": 5,
+      "txid": "tx:1"
+    },
+    {
+      "account_id": "account:alice_btc",
+      "after_finality": true,
+      "asset_id": "asset:btc",
+      "block_height": 106,
+      "chain_id": "chain:btc",
+      "confirmations": 6,
+      "deposit_id": "deposit:1",
+      "event": "deposit_credited",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture deposit credited trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "finality_threshold": 6,
+      "id": "event:deposit_credited:1",
+      "timestamp": 6,
+      "txid": "tx:1"
+    },
+    {
+      "approved_tx_bytes": "0xdeadbeef",
+      "event": "signing_request",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture signing request trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "event:signing_request:pre_freeze",
+      "timestamp": 6.5,
+      "txid": "tx:withdrawal:1",
+      "wallet_id": "wallet:user_alice"
+    },
+    {
+      "event": "wallet_frozen",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture wallet freeze trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "event:wallet_frozen:1",
+      "timestamp": 7,
+      "wallet_id": "wallet:user_alice"
+    },
+    {
+      "capability_id": "cap:withdraw:user_alice",
+      "event": "privileged_action",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture privileged action trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "event:privileged_action:pre_revoke",
+      "timestamp": 8
+    },
+    {
+      "capability_id": "cap:withdraw:user_alice",
+      "event": "capability_revoked",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture capability revocation trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "event:capability_revoked:1",
+      "timestamp": 9
+    },
+    {
+      "event": "audit_logged",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture audit trail trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "event:audit_logged:1",
+      "target_event_id": "event:withdrawal_broadcast:1",
+      "target_txid": "tx:withdrawal:1",
+      "target_withdrawal_id": "withdrawal:1",
+      "timestamp": 10
+    }
+  ],
+  "invariants": [
+    {
+      "description": "Every broadcast withdrawal is authorized.",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 96,
+          "line_start": 92,
+          "notes": "Fixture withdrawal invariant.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "inv:no_unauthorized_withdrawal"
+    },
+    {
+      "description": "Reservations never exceed available internal balance.",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 96,
+          "line_start": 92,
+          "notes": "Fixture reservation invariant.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "inv:no_double_spend"
+    },
+    {
+      "description": "Frozen wallets cannot sign future requests.",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 96,
+          "line_start": 92,
+          "notes": "Fixture freeze invariant.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "inv:no_post_freeze_signing"
+    }
+  ],
+  "metadata": {
+    "ledger_totals": {
+      "custody_assets": {
+        "asset:btc": 5
+      },
+      "customer_liabilities": {
+        "asset:btc": 5
+      },
+      "known_losses": {
+        "asset:btc": 0
+      },
+      "pending_settlements": {
+        "asset:btc": 0
+      }
+    },
+    "ledger_totals_evidence_refs": [
+      {
+        "kind": "test_fixture",
+        "line_end": 150,
+        "line_start": 132,
+        "notes": "Fixture ledger totals for global conservation.",
+        "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+        "review_status": "trusted_fixture"
+      }
+    ],
+    "proof_dependency_modes": {
+      "flogic": "not-used",
+      "zkp": "not-used"
+    },
+    "runtime_trace": [
+      {
+        "event": "withdrawal_requested",
+        "wallet_id": "wallet:user_alice",
+        "withdrawal_id": "withdrawal:1"
+      },
+      {
+        "event": "wallet_frozen",
+        "wallet_id": "wallet:user_alice"
+      },
+      {
+        "event": "wallet_unfrozen",
+        "wallet_id": "wallet:user_alice"
+      }
+    ],
+    "threat_model": [
+      {
+        "id": "T1",
+        "name": "stolen_api_token"
+      },
+      {
+        "id": "T2",
+        "name": "compromised_exchange_employee"
+      },
+      {
+        "id": "T3",
+        "name": "replayed_withdrawal_request"
+      },
+      {
+        "id": "T4",
+        "name": "stale_blockchain_rpc_data"
+      },
+      {
+        "id": "T5",
+        "name": "chain_reorg_after_deposit_credit"
+      },
+      {
+        "id": "T6",
+        "name": "race_condition_between_withdrawals"
+      },
+      {
+        "id": "T7",
+        "name": "hot_wallet_key_compromise"
+      },
+      {
+        "id": "T8",
+        "name": "malicious_dependency_or_build_artifact"
+      },
+      {
+        "id": "T9",
+        "name": "prompt_injection_against_policy_compiler"
+      },
+      {
+        "id": "T10",
+        "name": "simulated_proof_mode_used_in_production"
+      }
+    ]
+  },
+  "model_id": "minimal-btc-exchange",
+  "policies": [
+    {
+      "enabled": true,
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 65,
+          "line_start": 55,
+          "notes": "Fixture authorization policy.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "policy:authorization_required",
+      "name": "authorization_required"
+    },
+    {
+      "enabled": true,
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 65,
+          "line_start": 55,
+          "notes": "Fixture nonce freshness policy.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "policy:fresh_nonce_required",
+      "name": "fresh_nonce_required"
+    },
+    {
+      "enabled": true,
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 65,
+          "line_start": 55,
+          "notes": "Fixture balance policy.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "policy:sufficient_balance_required",
+      "name": "sufficient_balance_required"
+    },
+    {
+      "enabled": true,
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 65,
+          "line_start": 55,
+          "notes": "Fixture wallet freeze policy.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "policy:wallet_not_frozen_required",
+      "name": "wallet_not_frozen_required"
+    },
+    {
+      "enabled": true,
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 65,
+          "line_start": 55,
+          "notes": "Fixture atomic reservation policy.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "policy:atomic_reservation",
+      "name": "atomic_reservation"
+    },
+    {
+      "enabled": true,
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 65,
+          "line_start": 55,
+          "notes": "Fixture delegation monotonicity policy.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "policy:delegation_monotonicity",
+      "name": "delegation_monotonicity"
+    },
+    {
+      "enabled": true,
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 65,
+          "line_start": 55,
+          "notes": "Fixture capability revocation policy.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "policy:revocation_enforced",
+      "name": "revocation_enforced"
+    },
+    {
+      "enabled": true,
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 65,
+          "line_start": 55,
+          "notes": "Fixture deposit finality policy.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "policy:credit_after_finality_required",
+      "name": "credit_after_finality_required"
+    },
+    {
+      "enabled": true,
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 65,
+          "line_start": 55,
+          "notes": "Fixture audit policy.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "policy:audit_required",
+      "name": "audit_required"
+    }
+  ],
+  "principals": [
+    {
+      "id": "principal:alice",
+      "role": "role:user"
+    },
+    {
+      "id": "principal:exchange_signer",
+      "role": "role:signer"
+    },
+    {
+      "id": "principal:auditor",
+      "role": "role:auditor"
+    }
+  ],
+  "proof_obligations": [
+    {
+      "claim_id": "claim:no_unauthorized_withdrawal",
+      "id": "obligation:no_unauthorized_withdrawal:z3",
+      "prover": "z3",
+      "status": "PROVED"
+    },
+    {
+      "claim_id": "claim:no_over_reserved_internal_account",
+      "id": "obligation:no_over_reserved_internal_account:z3",
+      "prover": "z3",
+      "status": "PROVED"
+    },
+    {
+      "claim_id": "claim:global_asset_conservation",
+      "id": "obligation:global_asset_conservation:z3",
+      "prover": "z3",
+      "status": "PROVED"
+    },
+    {
+      "claim_id": "claim:no_deposit_before_finality",
+      "id": "obligation:no_deposit_before_finality:z3",
+      "prover": "z3",
+      "status": "PROVED"
+    },
+    {
+      "claim_id": "claim:no_signing_request_after_wallet_freeze",
+      "id": "obligation:no_signing_request_after_wallet_freeze:z3",
+      "prover": "z3",
+      "status": "PROVED"
+    },
+    {
+      "claim_id": "claim:capability_delegation_no_authority_increase",
+      "id": "obligation:capability_delegation_no_authority_increase:z3",
+      "prover": "z3",
+      "status": "PROVED"
+    },
+    {
+      "claim_id": "claim:revoked_capability_no_future_authorization",
+      "id": "obligation:revoked_capability_no_future_authorization:z3",
+      "prover": "z3",
+      "status": "PROVED"
+    },
+    {
+      "claim_id": "claim:audit_event_exists_for_critical_transition",
+      "id": "obligation:audit_event_exists_for_critical_transition:z3",
+      "prover": "z3",
+      "status": "PROVED"
+    }
+  ],
+  "prover_targets": [
+    "z3"
+  ],
+  "roles": [
+    {
+      "id": "role:user",
+      "name": "user"
+    },
+    {
+      "id": "role:signer",
+      "name": "exchange_signer"
+    },
+    {
+      "id": "role:auditor",
+      "name": "auditor"
+    }
+  ],
+  "runtime_traces": [
+    {
+      "conformance_status": "conforming",
+      "description": "Requested, approved, and broadcast withdrawal trace checked for conformance.",
+      "domain": "withdrawals",
+      "events": [
+        "event:withdrawal_requested:1",
+        "event:withdrawal_approved:1",
+        "event:nonce_reserved:1",
+        "event:balance_reserved:1",
+        "event:withdrawal_broadcast:1"
+      ],
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 200,
+          "line_start": 136,
+          "notes": "Fixture withdrawal runtime trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "trace:withdrawal_lifecycle"
+    },
+    {
+      "conformance_status": "conforming",
+      "description": "Deposit observed through credited-after-finality runtime trace.",
+      "domain": "deposits",
+      "events": [
+        "event:deposit_observed:1",
+        "event:deposit_finalized:1",
+        "event:deposit_credited:1"
+      ],
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 242,
+          "line_start": 201,
+          "notes": "Fixture deposit runtime trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "trace:deposit_finality"
+    },
+    {
+      "conformance_status": "conforming",
+      "description": "Privileged action followed by capability revocation runtime trace.",
+      "domain": "capabilities",
+      "events": [
+        "event:privileged_action:pre_revoke",
+        "event:capability_revoked:1"
+      ],
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 272,
+          "line_start": 259,
+          "notes": "Fixture capability runtime trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "trace:capability_revocation"
+    },
+    {
+      "conformance_status": "conforming",
+      "description": "Audit log entry emitted for the withdrawal broadcast critical transition.",
+      "domain": "audit",
+      "events": [
+        "event:audit_logged:1"
+      ],
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 281,
+          "line_start": 273,
+          "notes": "Fixture audit runtime trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "trace:audit_linkage"
+    }
+  ],
+  "schema_version": "security-model-ir/v1",
+  "solver_results": [
+    {
+      "claim_id": "claim:no_unauthorized_withdrawal",
+      "id": "solver:no_unauthorized_withdrawal:z3",
+      "result": "unsat",
+      "solver_name": "z3"
+    },
+    {
+      "claim_id": "claim:no_over_reserved_internal_account",
+      "id": "solver:no_over_reserved_internal_account:z3",
+      "result": "unsat",
+      "solver_name": "z3"
+    },
+    {
+      "claim_id": "claim:global_asset_conservation",
+      "id": "solver:global_asset_conservation:z3",
+      "result": "unsat",
+      "solver_name": "z3"
+    },
+    {
+      "claim_id": "claim:no_deposit_before_finality",
+      "id": "solver:no_deposit_before_finality:z3",
+      "result": "unsat",
+      "solver_name": "z3"
+    },
+    {
+      "claim_id": "claim:no_signing_request_after_wallet_freeze",
+      "id": "solver:no_signing_request_after_wallet_freeze:z3",
+      "result": "unsat",
+      "solver_name": "z3"
+    },
+    {
+      "claim_id": "claim:capability_delegation_no_authority_increase",
+      "id": "solver:capability_delegation_no_authority_increase:z3",
+      "result": "unsat",
+      "solver_name": "z3"
+    },
+    {
+      "claim_id": "claim:revoked_capability_no_future_authorization",
+      "id": "solver:revoked_capability_no_future_authorization:z3",
+      "result": "unsat",
+      "solver_name": "z3"
+    },
+    {
+      "claim_id": "claim:audit_event_exists_for_critical_transition",
+      "id": "solver:audit_event_exists_for_critical_transition:z3",
+      "result": "unsat",
+      "solver_name": "z3"
+    }
+  ],
+  "state_machines": [
+    {
+      "current": "broadcast",
+      "id": "sm:withdrawal",
+      "nonce": "nonce:1",
+      "states": [
+        "requested",
+        "approved",
+        "broadcast",
+        "cancelled"
+      ]
+    },
+    {
+      "current": "credited",
+      "finality_threshold": 6,
+      "id": "sm:deposit",
+      "states": [
+        "observed",
+        "finalized",
+        "credited"
+      ]
+    }
+  ],
+  "wallets": [
+    {
+      "asset": "asset:btc",
+      "id": "wallet:user_alice",
+      "owner": "principal:alice",
+      "status": "active"
+    },
+    {
+      "asset": "asset:btc",
+      "id": "wallet:exchange_hot",
+      "owner": "principal:exchange_signer",
+      "status": "active"
+    }
+  ]
+}

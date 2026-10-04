@@ -21,38 +21,6 @@ from typing import Any, Final
 
 MIGRATION_RECEIPT_SCHEMA_ID: Final = "ir-core-migration-receipt/v1"
 
-# This is the datasets-owned semantic envelope for supervisor events.  It is
-# intentionally not an event log, queue, outbox, or state-transition engine:
-# Kit owns durable bytes and Accelerate owns publication, ordering, delivery,
-# and operational admission.  Keeping the definition in the existing schema
-# registry makes cross-version negotiation use the one canonical mechanism.
-CANONICAL_EVENT_SCHEMA_ID: Final = (
-    "ipfs_datasets_py/logic/ir-core/canonical-event@1"
-)
-CANONICAL_EVENT_SCHEMA_VERSION: Final = "canonical-event/v1"
-CANONICAL_EVENT_REQUIRED_FIELDS: Final[frozenset[str]] = frozenset(
-    {
-        "schema",
-        "event_id",
-        "event_type",
-        "stream_id",
-        "causal_parent_ids",
-        "correlation_id",
-        "causation_id",
-        "payload",
-    }
-)
-CANONICAL_EVENT_FORBIDDEN_FIELDS: Final[frozenset[str]] = frozenset(
-    {
-        "authorization_decision",
-        "completion_decision",
-        "lease_id",
-        "fencing_epoch",
-        "policy_id",
-        "policy_revision",
-    }
-)
-
 JSONScalar = None | bool | int | float | str
 JSONValue = JSONScalar | list["JSONValue"] | dict[str, "JSONValue"]
 
@@ -87,10 +55,6 @@ class MigrationExecutionError(SchemaRegistryError):
 
 class NondeterministicMigrationError(MigrationExecutionError):
     """Raised when identical input produces different migration output."""
-
-
-class CanonicalEventValidationError(SchemaRegistryError):
-    """Raised when a canonical event envelope is incomplete or unsafe."""
 
 
 def _validate_exact_id(value: str, *, field_name: str) -> str:
@@ -172,121 +136,6 @@ def _freeze_json(value: JSONValue) -> Any:
     if isinstance(value, list):
         return tuple(_freeze_json(item) for item in value)
     return value
-
-
-def _canonical_event_identifier(value: str, *, field_name: str) -> str:
-    """Validate a semantic event identifier without assigning runtime meaning."""
-
-    try:
-        return _validate_exact_id(value, field_name=field_name)
-    except InvalidSchemaIDError as error:
-        raise CanonicalEventValidationError(str(error)) from error
-
-
-@dataclass(frozen=True)
-class CanonicalEvent:
-    """Versioned, immutable semantic envelope for one supervisor event.
-
-    The envelope is deliberately transport-neutral.  In particular, it does
-    not contain a delivery cursor, global sequence, lease, fence, policy, or
-    terminal decision.  Those values are operational facts owned by the
-    existing Accelerate event path, not semantic identity owned by Datasets.
-    """
-
-    event_id: str
-    event_type: str
-    stream_id: str
-    causal_parent_ids: tuple[str, ...]
-    correlation_id: str
-    causation_id: str
-    payload: Mapping[str, JSONValue]
-    schema: str = CANONICAL_EVENT_SCHEMA_ID
-
-    def __post_init__(self) -> None:
-        if self.schema != CANONICAL_EVENT_SCHEMA_ID:
-            raise CanonicalEventValidationError(
-                f"unsupported canonical event schema {self.schema!r}"
-            )
-        for field_name in (
-            "event_id",
-            "event_type",
-            "stream_id",
-            "correlation_id",
-            "causation_id",
-        ):
-            _canonical_event_identifier(getattr(self, field_name), field_name=field_name)
-        parents = tuple(self.causal_parent_ids)
-        if len(parents) != len(set(parents)):
-            raise CanonicalEventValidationError("causal_parent_ids must be unique")
-        if self.event_id in parents:
-            raise CanonicalEventValidationError("an event cannot be its own causal parent")
-        for parent_id in parents:
-            _canonical_event_identifier(parent_id, field_name="causal_parent_id")
-        object.__setattr__(self, "causal_parent_ids", parents)
-        try:
-            normalized_payload = _detached_payload(self.payload)
-        except MigrationExecutionError as error:
-            raise CanonicalEventValidationError(f"invalid event payload: {error}") from error
-        object.__setattr__(self, "payload", _freeze_json(normalized_payload))
-
-    def to_dict(self) -> dict[str, JSONValue]:
-        """Return the fixed wire representation used for identity and migration."""
-
-        return {
-            "causal_parent_ids": list(self.causal_parent_ids),
-            "causation_id": self.causation_id,
-            "correlation_id": self.correlation_id,
-            "event_id": self.event_id,
-            "event_type": self.event_type,
-            "payload": _detached_payload(self.payload),
-            "schema": self.schema,
-            "stream_id": self.stream_id,
-        }
-
-    @classmethod
-    def from_dict(cls, payload: Mapping[str, Any]) -> "CanonicalEvent":
-        """Parse the closed canonical wire schema and reject authority fields."""
-
-        if not isinstance(payload, Mapping):
-            raise CanonicalEventValidationError("canonical event must be an object")
-        fields = set(payload)
-        forbidden = fields & CANONICAL_EVENT_FORBIDDEN_FIELDS
-        if forbidden:
-            raise CanonicalEventValidationError(
-                "canonical event contains operational authority field(s): "
-                + ", ".join(sorted(forbidden))
-            )
-        missing = CANONICAL_EVENT_REQUIRED_FIELDS - fields
-        extra = fields - CANONICAL_EVENT_REQUIRED_FIELDS
-        if missing or extra:
-            details = []
-            if missing:
-                details.append("missing " + ", ".join(sorted(missing)))
-            if extra:
-                details.append("unknown " + ", ".join(sorted(extra)))
-            raise CanonicalEventValidationError("canonical event fields: " + "; ".join(details))
-        parents = payload["causal_parent_ids"]
-        if not isinstance(parents, (list, tuple)):
-            raise CanonicalEventValidationError("causal_parent_ids must be an array")
-        event_payload = payload["payload"]
-        if not isinstance(event_payload, Mapping):
-            raise CanonicalEventValidationError("payload must be an object")
-        return cls(
-            schema=payload["schema"],
-            event_id=payload["event_id"],
-            event_type=payload["event_type"],
-            stream_id=payload["stream_id"],
-            causal_parent_ids=tuple(parents),
-            correlation_id=payload["correlation_id"],
-            causation_id=payload["causation_id"],
-            payload=event_payload,
-        )
-
-    @property
-    def payload_digest(self) -> str:
-        """Return the canonical digest of this semantic event envelope."""
-
-        return payload_digest(self.to_dict())
 
 
 class CompatibilityStatus(str, Enum):
@@ -950,31 +799,6 @@ class IRSchemaRegistry(Mapping[str, SchemaSpec]):
         return {**body, "registry_digest": payload_digest(body)}
 
 
-def canonical_event_schema() -> SchemaSpec:
-    """Return the one registered semantic schema for canonical event envelopes."""
-
-    return SchemaSpec(
-        schema_id=CANONICAL_EVENT_SCHEMA_ID,
-        description=(
-            "Transport-neutral supervisor event envelope; durable publication, "
-            "ordering, delivery, and admission remain external authorities."
-        ),
-    )
-
-
-def register_canonical_event_schema(registry: IRSchemaRegistry) -> None:
-    """Register the event schema once in an existing registry.
-
-    Registration is intentionally strict: a same-name schema with different
-    semantics is a conflict, and duplicate registration is surfaced through
-    the registry's established failure mode.
-    """
-
-    if not isinstance(registry, IRSchemaRegistry):
-        raise TypeError("registry must be an IRSchemaRegistry")
-    registry.register_schema(canonical_event_schema())
-
-
 # Terminology aliases make the protocol natural for both schema-version and
 # migration-step callers without creating parallel implementations.
 SchemaVersion = SchemaSpec
@@ -983,12 +807,6 @@ MigrationLossReport = LossReport
 
 
 __all__ = [
-    "CANONICAL_EVENT_FORBIDDEN_FIELDS",
-    "CANONICAL_EVENT_REQUIRED_FIELDS",
-    "CANONICAL_EVENT_SCHEMA_ID",
-    "CANONICAL_EVENT_SCHEMA_VERSION",
-    "CanonicalEvent",
-    "CanonicalEventValidationError",
     "MIGRATION_RECEIPT_SCHEMA_ID",
     "CompatibilityDeclaration",
     "CompatibilityResult",
@@ -1014,7 +832,5 @@ __all__ = [
     "SchemaVersion",
     "UnknownSchemaError",
     "canonical_payload_bytes",
-    "canonical_event_schema",
     "payload_digest",
-    "register_canonical_event_schema",
 ]

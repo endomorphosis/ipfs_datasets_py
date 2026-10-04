@@ -1,0 +1,72 @@
+{
+  "check_compliance": {
+    "api": "str",
+    "checked_norms": {
+      "__type__": "list",
+      "items": "str"
+    },
+    "proof_id": "str",
+    "schema_version": "str",
+    "status": "str",
+    "time_context": {
+      "at": "str"
+    },
+    "violation_count": "int",
+    "violations": {
+      "__type__": "list",
+      "items": {
+        "frame_id": "str",
+        "norm_id": "str",
+        "type": "str"
+      }
+    }
+  },
+  "explain_proof": {
+    "api": "str",
+    "format": "str",
+    "proof_id": "str",
+    "root_conclusion": "str",
+    "schema_version": "str",
+    "steps": {
+      "__type__": "list",
+      "items": {
+        "conclusion": "str",
+        "ir_refs": {
+          "__type__": "list",
+          "items": "str"
+        },
+        "premises": {
+          "__type__": "list",
+          "items": "empty"
+        },
+        "rule_id": "str",
+        "source_refs": {
+          "__type__": "list",
+          "items": "str"
+        },
+        "step_id": "str"
+      }
+    }
+  },
+  "find_violations": {
+    "api": "str",
+    "proof_id": "str",
+    "schema_version": "str",
+    "time_range": {
+      "__type__": "tuple",
+      "items": [
+        "str",
+        "str"
+      ]
+    },
+    "violation_count": "int",
+    "violations": {
+      "__type__": "list",
+      "items": {
+        "frame_id": "str",
+        "norm_id": "str",
+        "type": "str"
+      }
+    }
+  }
+}

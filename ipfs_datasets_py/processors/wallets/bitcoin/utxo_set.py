@@ -133,7 +133,8 @@ class UtxoSet:
 
         if missing and not allow_missing_inputs:
             raise NormalizationError(
-                f"missing inputs for {tx.txid}: " + ", ".join(item.key for item in missing)
+                f"missing inputs for {tx.txid}: "
+                + ", ".join(item.key for item in missing)
             )
 
         created: list[OutPoint] = []
@@ -179,7 +180,8 @@ class UtxoSet:
                 continue
             if entry.is_spent:
                 raise NormalizationError(
-                    f"cannot reverse {txid}: output {outpoint.key} still spent by {entry.spent_by}"
+                    f"cannot reverse {txid}: output {outpoint.key} still spent by "
+                    f"{entry.spent_by}"
                 )
             del self._entries[outpoint.key]
             removed.append(outpoint)

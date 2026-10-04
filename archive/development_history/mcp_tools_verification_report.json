@@ -1,0 +1,568 @@
+{
+  "total_tools": 34,
+  "tools_tested": 34,
+  "tools_passed": 33,
+  "tools_failed": 1,
+  "tool_categories": {
+    "cli": {
+      "tools": [
+        "execute_command"
+      ],
+      "count": 1,
+      "path": "/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/cli"
+    },
+    "security_tools": {
+      "tools": [
+        "check_access_permission"
+      ],
+      "count": 1,
+      "path": "/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/security_tools"
+    },
+    "functions": {
+      "tools": [
+        "execute_python_snippet"
+      ],
+      "count": 1,
+      "path": "/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/functions"
+    },
+    "ipfs_tools": {
+      "tools": [
+        "get_from_ipfs",
+        "pin_to_ipfs",
+        "ipfs_tools_claudes"
+      ],
+      "count": 3,
+      "path": "/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/ipfs_tools"
+    },
+    "development_tools": {
+      "tools": [
+        "test_runner",
+        "base_tool",
+        "documentation_generator_simple",
+        "codebase_search",
+        "documentation_generator",
+        "config",
+        "test_generator",
+        "linting_tools"
+      ],
+      "count": 8,
+      "path": "/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/development_tools"
+    },
+    "graph_tools": {
+      "tools": [
+        "query_knowledge_graph"
+      ],
+      "count": 1,
+      "path": "/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/graph_tools"
+    },
+    "audit_tools": {
+      "tools": [
+        "audit_tools",
+        "record_audit_event",
+        "generate_audit_report"
+      ],
+      "count": 3,
+      "path": "/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/audit_tools"
+    },
+    "vector_tools": {
+      "tools": [
+        "shared_state",
+        "search_vector_index",
+        "create_vector_index"
+      ],
+      "count": 3,
+      "path": "/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/vector_tools"
+    },
+    "provenance_tools": {
+      "tools": [
+        "record_provenance",
+        "provenance_tools_claudes"
+      ],
+      "count": 2,
+      "path": "/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/provenance_tools"
+    },
+    "web_archive_tools": {
+      "tools": [
+        "extract_dataset_from_cdxj",
+        "create_warc",
+        "extract_links_from_warc",
+        "index_warc",
+        "extract_metadata_from_warc",
+        "extract_text_from_warc"
+      ],
+      "count": 6,
+      "path": "/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/web_archive_tools"
+    },
+    "dataset_tools": {
+      "tools": [
+        "save_dataset",
+        "convert_dataset_format",
+        "load_dataset",
+        "dataset_tools_claudes",
+        "process_dataset"
+      ],
+      "count": 5,
+      "path": "/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/dataset_tools"
+    }
+  },
+  "detailed_results": {
+    "imports": {
+      "cli": [
+        {
+          "status": "success",
+          "has_function": true,
+          "module": "ipfs_datasets_py.mcp_server.tools.cli.execute_command"
+        }
+      ],
+      "security_tools": [
+        {
+          "status": "success",
+          "has_function": true,
+          "module": "ipfs_datasets_py.mcp_server.tools.security_tools.check_access_permission"
+        }
+      ],
+      "functions": [
+        {
+          "status": "success",
+          "has_function": true,
+          "module": "ipfs_datasets_py.mcp_server.tools.functions.execute_python_snippet"
+        }
+      ],
+      "ipfs_tools": [
+        {
+          "status": "success",
+          "has_function": true,
+          "module": "ipfs_datasets_py.mcp_server.tools.ipfs_tools.get_from_ipfs"
+        },
+        {
+          "status": "success",
+          "has_function": true,
+          "module": "ipfs_datasets_py.mcp_server.tools.ipfs_tools.pin_to_ipfs"
+        },
+        {
+          "status": "success",
+          "has_function": true,
+          "module": "ipfs_datasets_py.mcp_server.tools.ipfs_tools.ipfs_tools_claudes"
+        }
+      ],
+      "development_tools": [
+        {
+          "status": "success",
+          "has_function": true,
+          "module": "ipfs_datasets_py.mcp_server.tools.development_tools.test_runner"
+        },
+        {
+          "status": "success",
+          "has_function": true,
+          "module": "ipfs_datasets_py.mcp_server.tools.development_tools.base_tool"
+        },
+        {
+          "status": "success",
+          "has_function": true,
+          "module": "ipfs_datasets_py.mcp_server.tools.development_tools.documentation_generator_simple"
+        },
+        {
+          "status": "success",
+          "has_function": true,
+          "module": "ipfs_datasets_py.mcp_server.tools.development_tools.codebase_search"
+        },
+        {
+          "status": "success",
+          "has_function": true,
+          "module": "ipfs_datasets_py.mcp_server.tools.development_tools.documentation_generator"
+        },
+        {
+          "status": "success",
+          "has_function": true,
+          "module": "ipfs_datasets_py.mcp_server.tools.development_tools.config"
+        },
+        {
+          "status": "success",
+          "has_function": true,
+          "module": "ipfs_datasets_py.mcp_server.tools.development_tools.test_generator"
+        },
+        {
+          "status": "success",
+          "has_function": true,
+          "module": "ipfs_datasets_py.mcp_server.tools.development_tools.linting_tools"
+        }
+      ],
+      "graph_tools": [
+        {
+          "status": "success",
+          "has_function": true,
+          "module": "ipfs_datasets_py.mcp_server.tools.graph_tools.query_knowledge_graph"
+        }
+      ],
+      "audit_tools": [
+        {
+          "status": "success",
+          "has_function": true,
+          "module": "ipfs_datasets_py.mcp_server.tools.audit_tools.audit_tools"
+        },
+        {
+          "status": "success",
+          "has_function": true,
+          "module": "ipfs_datasets_py.mcp_server.tools.audit_tools.record_audit_event"
+        },
+        {
+          "status": "success",
+          "has_function": true,
+          "module": "ipfs_datasets_py.mcp_server.tools.audit_tools.generate_audit_report"
+        }
+      ],
+      "vector_tools": [
+        {
+          "status": "warning",
+          "has_function": false,
+          "error": "No main function 'shared_state' found",
+          "module": "ipfs_datasets_py.mcp_server.tools.vector_tools.shared_state"
+        },
+        {
+          "status": "success",
+          "has_function": true,
+          "module": "ipfs_datasets_py.mcp_server.tools.vector_tools.search_vector_index"
+        },
+        {
+          "status": "success",
+          "has_function": true,
+          "module": "ipfs_datasets_py.mcp_server.tools.vector_tools.create_vector_index"
+        }
+      ],
+      "provenance_tools": [
+        {
+          "status": "success",
+          "has_function": true,
+          "module": "ipfs_datasets_py.mcp_server.tools.provenance_tools.record_provenance"
+        },
+        {
+          "status": "success",
+          "has_function": true,
+          "module": "ipfs_datasets_py.mcp_server.tools.provenance_tools.provenance_tools_claudes"
+        }
+      ],
+      "web_archive_tools": [
+        {
+          "status": "success",
+          "has_function": true,
+          "module": "ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_dataset_from_cdxj"
+        },
+        {
+          "status": "success",
+          "has_function": true,
+          "module": "ipfs_datasets_py.mcp_server.tools.web_archive_tools.create_warc"
+        },
+        {
+          "status": "success",
+          "has_function": true,
+          "module": "ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_links_from_warc"
+        },
+        {
+          "status": "success",
+          "has_function": true,
+          "module": "ipfs_datasets_py.mcp_server.tools.web_archive_tools.index_warc"
+        },
+        {
+          "status": "success",
+          "has_function": true,
+          "module": "ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_metadata_from_warc"
+        },
+        {
+          "status": "success",
+          "has_function": true,
+          "module": "ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_text_from_warc"
+        }
+      ],
+      "dataset_tools": [
+        {
+          "status": "success",
+          "has_function": true,
+          "module": "ipfs_datasets_py.mcp_server.tools.dataset_tools.save_dataset"
+        },
+        {
+          "status": "success",
+          "has_function": true,
+          "module": "ipfs_datasets_py.mcp_server.tools.dataset_tools.convert_dataset_format"
+        },
+        {
+          "status": "success",
+          "has_function": true,
+          "module": "ipfs_datasets_py.mcp_server.tools.dataset_tools.load_dataset"
+        },
+        {
+          "status": "success",
+          "has_function": true,
+          "module": "ipfs_datasets_py.mcp_server.tools.dataset_tools.dataset_tools_claudes"
+        },
+        {
+          "status": "success",
+          "has_function": true,
+          "module": "ipfs_datasets_py.mcp_server.tools.dataset_tools.process_dataset"
+        }
+      ]
+    },
+    "functionality": {
+      "cli": [
+        {
+          "tool": "execute_command",
+          "status": "success"
+        }
+      ],
+      "security_tools": [
+        {
+          "tool": "check_access_permission",
+          "status": "success"
+        }
+      ],
+      "functions": [
+        {
+          "tool": "execute_python_snippet",
+          "status": "success"
+        }
+      ],
+      "ipfs_tools": [
+        {
+          "tool": "get_from_ipfs",
+          "status": "success"
+        },
+        {
+          "tool": "pin_to_ipfs",
+          "status": "success"
+        }
+      ],
+      "development_tools": [
+        {
+          "tool": "test_generator",
+          "status": "success"
+        },
+        {
+          "tool": "documentation_generator",
+          "status": "success"
+        },
+        {
+          "tool": "codebase_search",
+          "status": "success"
+        },
+        {
+          "tool": "linting_tools",
+          "status": "success"
+        },
+        {
+          "tool": "test_runner",
+          "status": "success"
+        }
+      ],
+      "graph_tools": [
+        {
+          "tool": "query_knowledge_graph",
+          "status": "success"
+        }
+      ],
+      "audit_tools": [
+        {
+          "tool": "record_audit_event",
+          "status": "success"
+        },
+        {
+          "tool": "generate_audit_report",
+          "status": "success"
+        }
+      ],
+      "vector_tools": [
+        {
+          "tool": "create_vector_index",
+          "status": "success"
+        },
+        {
+          "tool": "search_vector_index",
+          "status": "success"
+        }
+      ],
+      "provenance_tools": [
+        {
+          "tool": "record_provenance",
+          "status": "success"
+        }
+      ],
+      "web_archive_tools": [
+        {
+          "tool": "create_warc",
+          "status": "success"
+        },
+        {
+          "tool": "extract_dataset_from_cdxj",
+          "status": "success"
+        },
+        {
+          "tool": "extract_links_from_warc",
+          "status": "success"
+        },
+        {
+          "tool": "extract_metadata_from_warc",
+          "status": "success"
+        },
+        {
+          "tool": "extract_text_from_warc",
+          "status": "success"
+        },
+        {
+          "tool": "index_warc",
+          "status": "success"
+        }
+      ],
+      "dataset_tools": [
+        {
+          "tool": "load_dataset",
+          "status": "success"
+        },
+        {
+          "tool": "save_dataset",
+          "status": "success"
+        },
+        {
+          "tool": "process_dataset",
+          "status": "success"
+        },
+        {
+          "tool": "convert_dataset_format",
+          "status": "success"
+        }
+      ]
+    },
+    "server_startup": {
+      "status": "success",
+      "tools_registered": 33,
+      "missing_tools": [],
+      "tool_names": [
+        "save_dataset",
+        "convert_dataset_format",
+        "load_dataset",
+        "ClaudesDatasetTool",
+        "dataset_tools_claudes",
+        "process_dataset",
+        "get_from_ipfs",
+        "pin_to_ipfs",
+        "ClaudesIPFSTool",
+        "ipfs_tools_claudes",
+        "get_global_manager",
+        "reset_global_manager",
+        "search_vector_index",
+        "create_vector_index",
+        "query_knowledge_graph",
+        "AuditTool",
+        "audit_tools",
+        "record_audit_event",
+        "generate_audit_report",
+        "BaseDevelopmentTool",
+        "DatasetTestRunner",
+        "TestExecutor",
+        "TestResult",
+        "TestRunSummary",
+        "TestRunner",
+        "TestSuiteResult",
+        "create_test_runner",
+        "development_tool_mcp_wrapper",
+        "test_runner",
+        "check_access_permission",
+        "record_provenance",
+        "ClaudesProvenanceTool",
+        "provenance_tools_claudes"
+      ]
+    }
+  },
+  "coverage_analysis": {
+    "dataset_operations": {
+      "expected": 4,
+      "covered": 4,
+      "coverage_percentage": 100.0,
+      "covered_tools": [
+        "load_dataset",
+        "save_dataset",
+        "process_dataset",
+        "convert_dataset_format"
+      ],
+      "missing_tools": []
+    },
+    "ipfs_operations": {
+      "expected": 2,
+      "covered": 2,
+      "coverage_percentage": 100.0,
+      "covered_tools": [
+        "pin_to_ipfs",
+        "get_from_ipfs"
+      ],
+      "missing_tools": []
+    },
+    "vector_search": {
+      "expected": 2,
+      "covered": 2,
+      "coverage_percentage": 100.0,
+      "covered_tools": [
+        "create_vector_index",
+        "search_vector_index"
+      ],
+      "missing_tools": []
+    },
+    "knowledge_graphs": {
+      "expected": 1,
+      "covered": 1,
+      "coverage_percentage": 100.0,
+      "covered_tools": [
+        "query_knowledge_graph"
+      ],
+      "missing_tools": []
+    },
+    "audit_logging": {
+      "expected": 2,
+      "covered": 2,
+      "coverage_percentage": 100.0,
+      "covered_tools": [
+        "record_audit_event",
+        "generate_audit_report"
+      ],
+      "missing_tools": []
+    },
+    "data_provenance": {
+      "expected": 1,
+      "covered": 1,
+      "coverage_percentage": 100.0,
+      "covered_tools": [
+        "record_provenance"
+      ],
+      "missing_tools": []
+    },
+    "security": {
+      "expected": 1,
+      "covered": 1,
+      "coverage_percentage": 100.0,
+      "covered_tools": [
+        "check_access_permission"
+      ],
+      "missing_tools": []
+    },
+    "web_archiving": {
+      "expected": 3,
+      "covered": 3,
+      "coverage_percentage": 100.0,
+      "covered_tools": [
+        "create_warc",
+        "extract_text_from_warc",
+        "index_warc"
+      ],
+      "missing_tools": []
+    },
+    "development_tools": {
+      "expected": 3,
+      "covered": 3,
+      "coverage_percentage": 100.0,
+      "covered_tools": [
+        "test_generator",
+        "documentation_generator",
+        "codebase_search"
+      ],
+      "missing_tools": []
+    }
+  },
+  "functionality_tested": 26,
+  "functionality_passed": 26
+}

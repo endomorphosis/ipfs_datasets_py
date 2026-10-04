@@ -104,7 +104,9 @@ class TransportLimits:
             or not isinstance(self.request_timeout_seconds, (int, float))
             or self.request_timeout_seconds <= 0
         ):
-            raise InvalidRequestError("request_timeout_seconds must be a positive number")
+            raise InvalidRequestError(
+                "request_timeout_seconds must be a positive number"
+            )
 
     @classmethod
     def from_bounds(
@@ -147,7 +149,9 @@ class TransportRequest:
         }
         lowered = {key.casefold() for key in headers}
         if lowered & {"authorization", "proxy-authorization", "cookie", "set-cookie"}:
-            raise InvalidRequestError("credentials must not appear in transport headers")
+            raise InvalidRequestError(
+                "credentials must not appear in transport headers"
+            )
         object.__setattr__(self, "headers", MappingProxyType(headers))
         if type(self.body) is not bytes:
             raise InvalidRequestError("request body must be exact bytes")
@@ -178,7 +182,9 @@ class TransportResponse:
     def __post_init__(self) -> None:
         if not isinstance(self.url, str) or not self.url.strip():
             raise InvalidRequestError("response url must not be empty")
-        if isinstance(self.status_code, bool) or not isinstance(self.status_code, int):
+        if isinstance(self.status_code, bool) or not isinstance(
+            self.status_code, int
+        ):
             raise InvalidRequestError("status_code must be an integer")
         if type(self.body) is not bytes:
             raise InvalidRequestError("response body must be exact bytes")
@@ -270,7 +276,9 @@ class FixtureResponseSource:
         context.check_active()
         entry = self._fixtures.get(request.url)
         if entry is None:
-            raise ProviderError(_safe_error("fixture not registered for URL", endpoint=request.url))
+            raise ProviderError(
+                _safe_error("fixture not registered for URL", endpoint=request.url)
+            )
         headers = dict(entry.headers)
         if entry.redirect_to:
             headers.setdefault("location", entry.redirect_to)
@@ -370,19 +378,25 @@ class AcquisitionTransport:
 
         scheme = (parsed.scheme or "").casefold()
         if scheme not in self._policy.allowed_schemes:
-            raise InvalidRequestError(_safe_error("URL scheme is not allowlisted", endpoint=url))
+            raise InvalidRequestError(
+                _safe_error("URL scheme is not allowlisted", endpoint=url)
+            )
         if parsed.username is not None or parsed.password is not None:
             raise InvalidRequestError(
                 _safe_error("URL userinfo/credentials are forbidden", endpoint=url)
             )
         if parsed.fragment:
-            raise InvalidRequestError(_safe_error("URL fragments are forbidden", endpoint=url))
+            raise InvalidRequestError(
+                _safe_error("URL fragments are forbidden", endpoint=url)
+            )
         if any(
             key.strip().casefold() in _SECRET_QUERY_KEYS
             for key, _value in parse_qsl(parsed.query, keep_blank_values=True)
         ):
             raise InvalidRequestError(
-                _safe_error("credentials are forbidden in query parameters", endpoint=url)
+                _safe_error(
+                    "credentials are forbidden in query parameters", endpoint=url
+                )
             )
 
         hostname = (parsed.hostname or "").rstrip(".").casefold()
@@ -402,7 +416,9 @@ class AcquisitionTransport:
                         _safe_error("loopback URL is not permitted", endpoint=url)
                     )
             elif not literal.is_global:
-                raise InvalidRequestError(_safe_error("URL address is unsafe", endpoint=url))
+                raise InvalidRequestError(
+                    _safe_error("URL address is unsafe", endpoint=url)
+                )
         else:
             if is_loopback_name:
                 if not self._policy.allow_http_loopback or scheme != "http":
@@ -411,18 +427,25 @@ class AcquisitionTransport:
                     )
             else:
                 if hostname.endswith(_BLOCKED_HOST_SUFFIXES):
-                    raise InvalidRequestError(_safe_error("URL hostname is unsafe", endpoint=url))
+                    raise InvalidRequestError(
+                        _safe_error("URL hostname is unsafe", endpoint=url)
+                    )
                 if not _HOSTNAME_RE.fullmatch(hostname):
-                    raise InvalidRequestError(_safe_error("URL hostname is invalid", endpoint=url))
+                    raise InvalidRequestError(
+                        _safe_error("URL hostname is invalid", endpoint=url)
+                    )
             if not self._policy.permits_host(hostname):
-                raise InvalidRequestError(_safe_error("URL host is not allowlisted", endpoint=url))
+                raise InvalidRequestError(
+                    _safe_error("URL host is not allowlisted", endpoint=url)
+                )
 
         if scheme == "http" and not self._policy.allow_http_loopback:
             raise InvalidRequestError(
                 _safe_error("http scheme requires allow_http_loopback", endpoint=url)
             )
         if scheme == "http" and not (
-            is_loopback_name or (literal is not None and literal.is_loopback)
+            is_loopback_name
+            or (literal is not None and literal.is_loopback)
         ):
             raise InvalidRequestError(
                 _safe_error("http is only allowed for loopback", endpoint=url)
@@ -435,7 +458,9 @@ class AcquisitionTransport:
             # present and host is allowlisted; still reject privileged
             # internal conventions below 1024 except 443.
             if effective_port < 1024 and effective_port != 443:
-                raise InvalidRequestError(_safe_error("URL port is not allowed", endpoint=url))
+                raise InvalidRequestError(
+                    _safe_error("URL port is not allowed", endpoint=url)
+                )
         return parsed
 
     def validate_resolved_addresses(
@@ -451,7 +476,9 @@ class AcquisitionTransport:
         allow_loopback = self._policy.allow_http_loopback and scheme == "http"
 
         if not addresses:
-            raise InvalidRequestError(_safe_error("DNS answer is empty", endpoint=url))
+            raise InvalidRequestError(
+                _safe_error("DNS answer is empty", endpoint=url)
+            )
         checked: list[str] = []
         for address in addresses:
             try:
@@ -462,18 +489,25 @@ class AcquisitionTransport:
                 ) from exc
             if parsed_ip.is_loopback:
                 if not allow_loopback:
-                    raise InvalidRequestError(_safe_error("DNS answer is unsafe", endpoint=url))
+                    raise InvalidRequestError(
+                        _safe_error("DNS answer is unsafe", endpoint=url)
+                    )
             elif not parsed_ip.is_global:
-                raise InvalidRequestError(_safe_error("DNS answer is unsafe", endpoint=url))
+                raise InvalidRequestError(
+                    _safe_error("DNS answer is unsafe", endpoint=url)
+                )
             checked.append(parsed_ip.compressed)
 
         # Hostname literals already validated; for names, ensure answers
         # do not silently mix loopback and global.
         kinds = {
-            "loopback" if ipaddress.ip_address(item).is_loopback else "global" for item in checked
+            "loopback" if ipaddress.ip_address(item).is_loopback else "global"
+            for item in checked
         }
         if len(kinds) > 1:
-            raise InvalidRequestError(_safe_error("DNS answer mixes address scopes", endpoint=url))
+            raise InvalidRequestError(
+                _safe_error("DNS answer mixes address scopes", endpoint=url)
+            )
         # Touch hostname for offline resolvers that key on it.
         _ = hostname
         return tuple(checked)
@@ -489,7 +523,9 @@ class AcquisitionTransport:
             raise ResourceLimitError(
                 _safe_error("response exceeds max_response_bytes", endpoint=url)
             )
-        header_bytes = sum(len(key) + len(value) for key, value in response.headers.items())
+        header_bytes = sum(
+            len(key) + len(value) for key, value in response.headers.items()
+        )
         if header_bytes > self._limits.max_header_bytes:
             raise ResourceLimitError(
                 _safe_error("response headers exceed max_header_bytes", endpoint=url)

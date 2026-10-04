@@ -16,11 +16,11 @@ from ipfs_datasets_py.processors.wallets import (
 )
 
 reg = default_registry()
-reg.list_families()  # tuple[str, ...]
-reg.list_specs()  # ProcessorFamilySpec rows
-reg.get_spec("ethereum")  # static spec (no chain import)
-reg.capabilities_for("bitcoin")  # Capabilities without loading package
-reg.required_extra("xaman")  # "wallets-xaman"
+reg.list_families()                 # tuple[str, ...]
+reg.list_specs()                    # ProcessorFamilySpec rows
+reg.get_spec("ethereum")            # static spec (no chain import)
+reg.capabilities_for("bitcoin")     # Capabilities without loading package
+reg.required_extra("xaman")         # "wallets-xaman"
 # get_wallet_processor("xrpl", network="xrpl-mainnet")  # loads extra
 ```
 
@@ -29,19 +29,9 @@ reg.required_extra("xaman")  # "wallets-xaman"
 ```python
 from datetime import datetime, timezone
 from ipfs_datasets_py.processors.wallets.models import (
-    ChainRef,
-    AccountRef,
-    AccountKind,
-    AssetRef,
-    AssetKind,
-    ExactAmount,
-    LedgerPosition,
-    Provenance,
-    Finality,
-    TransactionRecord,
-    TransferRecord,
-    TransferKind,
-    TransactionStatus,
+    ChainRef, AccountRef, AccountKind, AssetRef, AssetKind,
+    ExactAmount, LedgerPosition, Provenance, Finality,
+    TransactionRecord, TransferRecord, TransferKind, TransactionStatus,
 )
 
 chain = ChainRef(
@@ -61,10 +51,7 @@ keys, seed phrases, or live mainnet addresses into examples.
 ```python
 from pathlib import Path
 from ipfs_datasets_py.processors.wallets.export import (
-    write_jsonl,
-    read_jsonl,
-    build_export_manifest,
-    verify_manifest,
+    write_jsonl, read_jsonl, build_export_manifest, verify_manifest,
 )
 
 partition = write_jsonl(records, Path("part-000.jsonl"))

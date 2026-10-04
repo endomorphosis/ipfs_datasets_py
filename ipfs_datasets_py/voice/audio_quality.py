@@ -119,8 +119,12 @@ _DIGIT_TO_ORDINAL = {
     "9": "ninth",
 }
 _LEGACY_DIGIT_WORD_TO_DIGIT = {**_WORD_TO_DIGIT, "oh": "0"}
-_LEGACY_DIGIT_TOKEN = r"(?:zero|oh|one|two|three|four|five|six|seven|eight|nine|\d)"
-_LEGACY_DIGIT_SEPARATOR = r"(?:[\s,()/:;`'\"“”‘’\-–—…]*|\.{2,})"
+_LEGACY_DIGIT_TOKEN = (
+    r"(?:zero|oh|one|two|three|four|five|six|seven|eight|nine|\d)"
+)
+_LEGACY_DIGIT_SEPARATOR = (
+    r"(?:[\s,()/:;`'\"“”‘’\-–—…]*|\.{2,})"
+)
 _LEGACY_DIGIT_RUN_RE = re.compile(
     rf"(?<![A-Za-z0-9])(?:{_LEGACY_DIGIT_TOKEN})(?:"
     rf"{_LEGACY_DIGIT_SEPARATOR}(?:{_LEGACY_DIGIT_TOKEN})){{2,}}"
@@ -276,15 +280,8 @@ class AudioQualityPolicy:
             "clipping_peak_threshold_bp",
         ):
             value = getattr(self, name)
-            if (
-                isinstance(value, bool)
-                or not isinstance(value, int)
-                or value < 0
-                or value > _BASIS_POINT_SCALE
-            ):
-                raise ValueError(
-                    f"{name} must be an integer basis-point value in 0..{_BASIS_POINT_SCALE}"
-                )
+            if isinstance(value, bool) or not isinstance(value, int) or value < 0 or value > _BASIS_POINT_SCALE:
+                raise ValueError(f"{name} must be an integer basis-point value in 0..{_BASIS_POINT_SCALE}")
         if (
             isinstance(self.min_duration_ms, bool)
             or not isinstance(self.min_duration_ms, int)
@@ -309,31 +306,13 @@ class AudioQualityPolicy:
             or self.required_channels <= 0
         ):
             raise ValueError("required_channels must be a positive integer or None")
-        media = tuple(
-            sorted({str(item).casefold() for item in self.allowed_media_types if str(item).strip()})
-        )
+        media = tuple(sorted({str(item).casefold() for item in self.allowed_media_types if str(item).strip()}))
         if not media or any(not item.startswith("audio/") for item in media):
             raise ValueError("allowed_media_types must contain audio/* MIME types")
-        slots = tuple(
-            sorted(
-                {
-                    str(item).strip().casefold()
-                    for item in self.critical_slot_names
-                    if str(item).strip()
-                }
-            )
-        )
+        slots = tuple(sorted({str(item).strip().casefold() for item in self.critical_slot_names if str(item).strip()}))
         if not slots:
             raise ValueError("critical_slot_names must not be empty")
-        consent = tuple(
-            sorted(
-                {
-                    str(item).strip().casefold()
-                    for item in self.publishable_consent
-                    if str(item).strip()
-                }
-            )
-        )
+        consent = tuple(sorted({str(item).strip().casefold() for item in self.publishable_consent if str(item).strip()}))
         if not consent:
             raise ValueError("publishable_consent must not be empty")
         object.__setattr__(self, "allowed_media_types", media)
@@ -383,9 +362,7 @@ class AudioQualityPolicy:
         return cls(
             policy_id=str(payload.get("policy_id") or AUDIO_QUALITY_POLICY_ID),
             policy_version=str(payload.get("policy_version") or AUDIO_QUALITY_POLICY_VERSION),
-            schema_version=str(
-                payload.get("schema_version") or AUDIO_QUALITY_POLICY_SCHEMA_VERSION
-            ),
+            schema_version=str(payload.get("schema_version") or AUDIO_QUALITY_POLICY_SCHEMA_VERSION),
             max_wer_bp=int(payload.get("max_wer_bp", 1_500)),
             max_cer_bp=int(payload.get("max_cer_bp", 1_000)),
             max_silence_ratio_bp=int(payload.get("max_silence_ratio_bp", 6_000)),
@@ -398,15 +375,11 @@ class AudioQualityPolicy:
                 else int(payload["required_sample_rate_hz"])
             ),
             required_channels=(
-                None
-                if payload.get("required_channels") is None
-                else int(payload["required_channels"])
+                None if payload.get("required_channels") is None else int(payload["required_channels"])
             ),
             allowed_media_types=tuple(payload.get("allowed_media_types") or ()),
             critical_slot_names=tuple(payload.get("critical_slot_names") or CRITICAL_SLOT_NAMES),
-            publishable_consent=tuple(
-                payload.get("publishable_consent") or ("granted", "not_required")
-            ),
+            publishable_consent=tuple(payload.get("publishable_consent") or ("granted", "not_required")),
             silence_peak_threshold_bp=int(payload.get("silence_peak_threshold_bp", 100)),
             clipping_peak_threshold_bp=int(payload.get("clipping_peak_threshold_bp", 9_900)),
         )
@@ -546,7 +519,9 @@ class QualityGateResult:
 
         if not isinstance(payload, Mapping):
             raise TypeError("quality gate result must be a mapping")
-        expected = frozenset({"detail", "gate", "metrics", "passed", "reason", "retryable"})
+        expected = frozenset(
+            {"detail", "gate", "metrics", "passed", "reason", "retryable"}
+        )
         actual = frozenset(payload)
         if actual != expected:
             raise ValueError(
@@ -655,7 +630,9 @@ def _normalize_roundtrip_text(text: str) -> str:
             and index + 1 < len(raw_tokens)
             and raw_tokens[index + 1] in _WORD_TO_DIGIT
         ):
-            output.append(str(_TENS_TO_VALUE[token] + int(_WORD_TO_DIGIT[raw_tokens[index + 1]])))
+            output.append(
+                str(_TENS_TO_VALUE[token] + int(_WORD_TO_DIGIT[raw_tokens[index + 1]]))
+            )
             index += 2
             continue
         run: list[str] = []
@@ -937,7 +914,9 @@ def derive_legacy_critical_slots(text: str) -> tuple[tuple[str, str], ...]:
         for amount in _LEGACY_AMOUNT_RE.finditer(sentence):
             bindings.append(("amount", " ".join(amount.group(0).split())))
 
-        lowered = normalized_text_identity(normalize_indextts_spoken_text(sentence))
+        lowered = normalized_text_identity(
+            normalize_indextts_spoken_text(sentence)
+        )
         if "911" in sentence or "nine one one" in lowered:
             bindings.append(("emergency", "911"))
 
@@ -947,7 +926,9 @@ def derive_legacy_critical_slots(text: str) -> tuple[tuple[str, str], ...]:
                 bindings.append(binding)
 
     unique = {
-        (str(name).casefold(), str(value).strip()) for name, value in bindings if str(value).strip()
+        (str(name).casefold(), str(value).strip())
+        for name, value in bindings
+        if str(value).strip()
     }
     return tuple(sorted(unique, key=lambda item: (item[0], item[1])))
 
@@ -968,23 +949,24 @@ def find_unclassified_legacy_critical_facts(
 
     if not isinstance(text, str) or not text.strip():
         raise ValueError("legacy critical-fact classification requires non-empty text")
-    selected = derive_legacy_critical_slots(text) if bindings is None else tuple(bindings)
+    selected = (
+        derive_legacy_critical_slots(text)
+        if bindings is None
+        else tuple(bindings)
+    )
     normalized_bindings = {
-        (str(name).casefold(), normalize_slot_value(name, value)) for name, value in selected
+        (str(name).casefold(), normalize_slot_value(name, value))
+        for name, value in selected
     }
     markers: set[str] = set()
     unknown_amount = _LEGACY_UNKNOWN_AMOUNT_RE.search(text) is not None
 
     for extension_match in _LEGACY_PHONE_EXTENSION_RE.finditer(text):
         digits = _legacy_digit_run(extension_match.group("value"))
-        if (
-            digits
-            and (
-                "phone_extension",
-                normalize_slot_value("phone_extension", digits),
-            )
-            not in normalized_bindings
-        ):
+        if digits and (
+            "phone_extension",
+            normalize_slot_value("phone_extension", digits),
+        ) not in normalized_bindings:
             markers.add("phone_extension_unbound")
 
     for match in _LEGACY_SENTENCE_RE.finditer(text):
@@ -1006,7 +988,11 @@ def find_unclassified_legacy_critical_facts(
                 normalize_slot_value("amount", value),
             ) not in normalized_bindings:
                 markers.add("amount_pattern_unbound")
-        if _LEGACY_AMOUNT_CONTEXT_RE.search(sentence) and not amount_matches and not unknown_amount:
+        if (
+            _LEGACY_AMOUNT_CONTEXT_RE.search(sentence)
+            and not amount_matches
+            and not unknown_amount
+        ):
             markers.add("amount_context_unclassified")
 
         street = _LEGACY_STREET_RE.search(sentence)
@@ -1021,7 +1007,10 @@ def find_unclassified_legacy_critical_facts(
                     markers.add(f"{name}_digit_run_unbound")
                 continue
             digits = _legacy_digit_run(digit_match.group(0))
-            if 3 <= len(digits) <= 6 and _LEGACY_UNCLASSIFIED_DIGIT_CONTEXT_RE.search(sentence):
+            if (
+                3 <= len(digits) <= 6
+                and _LEGACY_UNCLASSIFIED_DIGIT_CONTEXT_RE.search(sentence)
+            ):
                 markers.add("contextual_identifier_unclassified")
 
     return tuple(sorted(markers))
@@ -1271,11 +1260,7 @@ def validate_decode_and_acoustic(
         else:
             detected_media = media
 
-    if (
-        declared_sample_rate_hz is not None
-        and sample_rate
-        and declared_sample_rate_hz != sample_rate
-    ):
+    if declared_sample_rate_hz is not None and sample_rate and declared_sample_rate_hz != sample_rate:
         return QualityGateResult(
             gate=AudioQualityGate.DECODE,
             passed=False,
@@ -1291,11 +1276,7 @@ def validate_decode_and_acoustic(
             detail="declared channels do not match decoded audio",
             metrics=metrics,
         )
-    if (
-        declared_duration_ms is not None
-        and duration_ms
-        and abs(declared_duration_ms - duration_ms) > 50
-    ):
+    if declared_duration_ms is not None and duration_ms and abs(declared_duration_ms - duration_ms) > 50:
         return QualityGateResult(
             gate=AudioQualityGate.DECODE,
             passed=False,
@@ -1303,11 +1284,7 @@ def validate_decode_and_acoustic(
             detail="declared duration_ms does not match decoded audio",
             metrics=metrics,
         )
-    if (
-        selected.required_sample_rate_hz is not None
-        and sample_rate
-        and sample_rate != selected.required_sample_rate_hz
-    ):
+    if selected.required_sample_rate_hz is not None and sample_rate and sample_rate != selected.required_sample_rate_hz:
         return QualityGateResult(
             gate=AudioQualityGate.DECODE,
             passed=False,
@@ -1315,11 +1292,7 @@ def validate_decode_and_acoustic(
             detail="sample_rate_hz is outside the policy requirement",
             metrics=metrics,
         )
-    if (
-        selected.required_channels is not None
-        and channels
-        and channels != selected.required_channels
-    ):
+    if selected.required_channels is not None and channels and channels != selected.required_channels:
         return QualityGateResult(
             gate=AudioQualityGate.DECODE,
             passed=False,
@@ -1546,10 +1519,7 @@ def validate_integrity(
             passed=False,
             reason=AudioQualityReason.SIZE_MISMATCH,
             detail="artifact byte length does not match the stored descriptor size",
-            metrics={
-                "actual_byte_length": len(payload),
-                "expected_byte_length": expected_byte_length,
-            },
+            metrics={"actual_byte_length": len(payload), "expected_byte_length": expected_byte_length},
         )
     detected = detect_media_type(payload)
     if detected is None:

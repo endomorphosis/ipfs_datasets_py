@@ -51,7 +51,9 @@ from .rules import (
 )
 
 
-FORMALIZE_SCHEMA_VERSION: Final[str] = "ipfs-datasets.crypto-ir.compliance-formalize@1.0.0"
+FORMALIZE_SCHEMA_VERSION: Final[str] = (
+    "ipfs-datasets.crypto-ir.compliance-formalize@1.0.0"
+)
 FORMALIZER_VERSION: Final[str] = "1.0.0"
 
 # Rule kinds this formalizer knows how to lower.
@@ -133,7 +135,9 @@ class FormalClause:
         )
         if type(self.executable) is not bool:
             raise FormalizeError("executable must be a boolean")
-        object.__setattr__(self, "notes", tuple(_text(n, "notes") for n in self.notes))
+        object.__setattr__(
+            self, "notes", tuple(_text(n, "notes") for n in self.notes)
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -206,7 +210,9 @@ class FormalizedCompliance:
             "formalization_id",
             _identifier(self.formalization_id, "formalization_id"),
         )
-        object.__setattr__(self, "status", _enum(FormalizationStatus, self.status, "status"))
+        object.__setattr__(
+            self, "status", _enum(FormalizationStatus, self.status, "status")
+        )
         object.__setattr__(
             self, "logic_family", _enum(LogicFamily, self.logic_family, "logic_family")
         )
@@ -227,7 +233,9 @@ class FormalizedCompliance:
             raise FormalizeError("executable must be a boolean")
         # Fail closed: non-compiled statuses are never executable.
         if self.status is not FormalizationStatus.COMPILED and self.executable:
-            raise FormalizeError("non-compiled formalization must not be marked executable")
+            raise FormalizeError(
+                "non-compiled formalization must not be marked executable"
+            )
         if self.status is FormalizationStatus.COMPILED and not self.executable:
             raise FormalizeError("compiled formalization must be executable")
         if self.theory not in _SUPPORTED_THEORIES and self.executable:
@@ -249,9 +257,13 @@ class FormalizedCompliance:
             "datalog_fragment",
             "propositional_fragment",
         ):
-            object.__setattr__(self, name, _text(getattr(self, name), name, allow_empty=True))
+            object.__setattr__(
+                self, name, _text(getattr(self, name), name, allow_empty=True)
+            )
         if self.rules_digest:
-            object.__setattr__(self, "rules_digest", _digest(self.rules_digest, "rules_digest"))
+            object.__setattr__(
+                self, "rules_digest", _digest(self.rules_digest, "rules_digest")
+            )
         if self.policy_outcome is not None:
             object.__setattr__(
                 self,
@@ -280,7 +292,9 @@ class FormalizedCompliance:
             raise FormalizeError("attributes must be a mapping")
         object.__setattr__(self, "attributes", dict(self.attributes))
         if self.schema_version != FORMALIZE_SCHEMA_VERSION:
-            raise FormalizeError(f"unsupported formalize schema: {self.schema_version}")
+            raise FormalizeError(
+                f"unsupported formalize schema: {self.schema_version}"
+            )
         object.__setattr__(
             self, "formalizer_version", _text(self.formalizer_version, "formalizer_version")
         )
@@ -324,7 +338,9 @@ class FormalizedCompliance:
             "logic_family": self.logic_family.value,
             "negative_conclusion": self.negative_conclusion.value,
             "payload_kind": self.payload_kind.value,
-            "policy_outcome": None if self.policy_outcome is None else self.policy_outcome.value,
+            "policy_outcome": None
+            if self.policy_outcome is None
+            else self.policy_outcome.value,
             "propositional_fragment": self.propositional_fragment,
             "reason_codes": list(self.reason_codes),
             "rule_set_id": self.rule_set_id,
@@ -380,7 +396,9 @@ class FormalizedCompliance:
             logic_family=value.get("logic_family", ""),
             payload_kind=value.get("payload_kind", ""),
             theory=value.get("theory", ""),
-            clauses=tuple(FormalClause.from_dict(item) for item in value.get("clauses", ())),
+            clauses=tuple(
+                FormalClause.from_dict(item) for item in value.get("clauses", ())
+            ),
             executable=bool(value.get("executable", False)),
             rule_set_id=value.get("rule_set_id", ""),
             rule_set_revision=value.get("rule_set_revision", ""),
@@ -424,7 +442,9 @@ class ComplianceFormalizer:
     ) -> None:
         preferred_theory = _enum(TheoryFragment, preferred_theory, "preferred_theory")
         if preferred_theory not in _SUPPORTED_THEORIES:
-            raise FormalizeError(f"preferred_theory {preferred_theory.value} is not supported")
+            raise FormalizeError(
+                f"preferred_theory {preferred_theory.value} is not supported"
+            )
         if type(fail_closed_on_truncation) is not bool:
             raise FormalizeError("fail_closed_on_truncation must be a boolean")
         if type(fail_closed_on_incomplete) is not bool:
@@ -451,7 +471,11 @@ class ComplianceFormalizer:
         clauses: list[FormalClause] = []
 
         # Fail closed on truncation before producing a positive absence claim.
-        if exposure is not None and exposure.truncated and self.fail_closed_on_truncation:
+        if (
+            exposure is not None
+            and exposure.truncated
+            and self.fail_closed_on_truncation
+        ):
             return self._refuse(
                 rule_set=rule_set,
                 exposure=exposure,
@@ -483,7 +507,9 @@ class ComplianceFormalizer:
             )
 
         unsupported = [
-            r for r in rule_set.rules if r.kind not in _SUPPORTED_KINDS or r.elevates_to_designation
+            r
+            for r in rule_set.rules
+            if r.kind not in _SUPPORTED_KINDS or r.elevates_to_designation
         ]
         if unsupported:
             return self._refuse(
@@ -584,7 +610,9 @@ class ComplianceFormalizer:
                 FORMALIZER_VERSION,
             )
         ).encode("utf-8")
-        formalization_id = f"formalize:{hashlib.sha256(material).hexdigest()[:40]}"
+        formalization_id = (
+            f"formalize:{hashlib.sha256(material).hexdigest()[:40]}"
+        )
 
         return FormalizedCompliance(
             formalization_id=formalization_id,
@@ -602,7 +630,9 @@ class ComplianceFormalizer:
             policy_outcome=policy_outcome,
             negative_conclusion=negative,
             completeness_status=(
-                exposure.frontier.status.value if exposure and exposure.frontier else ""
+                exposure.frontier.status.value
+                if exposure and exposure.frontier
+                else ""
             ),
             graph_snapshot_id=exposure.graph_snapshot_id if exposure else "",
             graph_digest=exposure.graph_digest if exposure else "",
@@ -642,7 +672,9 @@ class ComplianceFormalizer:
                 *reason_codes,
             )
         ).encode("utf-8")
-        formalization_id = f"formalize:{hashlib.sha256(material).hexdigest()[:40]}"
+        formalization_id = (
+            f"formalize:{hashlib.sha256(material).hexdigest()[:40]}"
+        )
         return FormalizedCompliance(
             formalization_id=formalization_id,
             status=status,
@@ -659,7 +691,9 @@ class ComplianceFormalizer:
             policy_outcome=SanctionsPolicyOutcome.INCONCLUSIVE,
             negative_conclusion=negative,
             completeness_status=(
-                exposure.frontier.status.value if exposure and exposure.frontier else ""
+                exposure.frontier.status.value
+                if exposure and exposure.frontier
+                else ""
             ),
             graph_snapshot_id=exposure.graph_snapshot_id if exposure else "",
             graph_digest=exposure.graph_digest if exposure else "",
@@ -677,8 +711,12 @@ class ComplianceFormalizer:
             },
         )
 
-    def _lower_rule(self, rule: ComplianceRule, theory: TheoryFragment) -> list[FormalClause]:
-        head = f"{rule.predicate.value}(subject) => Outcome({rule.outcome.value})"
+    def _lower_rule(
+        self, rule: ComplianceRule, theory: TheoryFragment
+    ) -> list[FormalClause]:
+        head = (
+            f"{rule.predicate.value}(subject) => Outcome({rule.outcome.value})"
+        )
         body = [
             f"kind={rule.kind.value}",
             f"reason={rule.reason_code}",
@@ -687,7 +725,9 @@ class ComplianceFormalizer:
         if rule.match_level is not None:
             body.append(f"match_level={rule.match_level.value}")
         if rule.ownership_threshold_basis_points is not None:
-            body.append(f"threshold_bps={rule.ownership_threshold_basis_points}")
+            body.append(
+                f"threshold_bps={rule.ownership_threshold_basis_points}"
+            )
         if rule.max_snapshot_age_seconds is not None:
             body.append(f"max_age_s={rule.max_snapshot_age_seconds}")
         return [
@@ -709,7 +749,10 @@ class ComplianceFormalizer:
             FormalClause(
                 clause_id="clause:exposure-binding",
                 predicate=CompliancePredicate.BOUNDED_EXPOSURE.value,
-                head=(f"BoundedExposure({exposure.origin_node_id},{exposure.verdict.value})"),
+                head=(
+                    f"BoundedExposure({exposure.origin_node_id},"
+                    f"{exposure.verdict.value})"
+                ),
                 body=(
                     f"exposure_id={exposure.exposure_id}",
                     f"graph={exposure.graph_snapshot_id}",
@@ -757,7 +800,8 @@ class ComplianceFormalizer:
                         clause_id=f"clause:indirect:{path.path_id}",
                         predicate=CompliancePredicate.BOUNDED_EXPOSURE.value,
                         head=(
-                            f"BoundedIndirectExposure({path.origin_node_id},{path.target_node_id})"
+                            f"BoundedIndirectExposure({path.origin_node_id},"
+                            f"{path.target_node_id})"
                         ),
                         body=(
                             f"depth={path.depth}",

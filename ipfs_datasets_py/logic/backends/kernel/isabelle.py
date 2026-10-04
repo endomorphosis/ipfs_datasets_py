@@ -85,7 +85,9 @@ ISABELLE_AXIOM_REPORT_VERSION: Final = "isabelle-axiom-report/v1"
 
 _DIGEST = re.compile(r"^[0-9a-f]{64}$")
 _SORRY = re.compile(r"(?<![A-Za-z0-9_'])(?:sorry|oops)(?![A-Za-z0-9_'])")
-_AXIOMATIZATION = re.compile(r"(?im)^\s*(?:axiomatization\b|axioms?\s+|consts?\s+[^\n]*where\b)")
+_AXIOMATIZATION = re.compile(
+    r"(?im)^\s*(?:axiomatization\b|axioms?\s+|consts?\s+[^\n]*where\b)"
+)
 _THEORY = re.compile(r"^\s*theory\s+([A-Za-z_][A-Za-z0-9_'.]*)", re.MULTILINE)
 _IMPORTS = re.compile(r"^\s*imports\s+(.+)$", re.MULTILINE)
 _DECL = re.compile(
@@ -127,15 +129,20 @@ class IsabellePathMetadata:
     schema_version: str = ISABELLE_PATH_METADATA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "theory_name", _text(self.theory_name, "theory_name"))
+        object.__setattr__(
+            self, "theory_name", _text(self.theory_name, "theory_name")
+        )
         theory_path = _text(self.theory_path, "theory_path")
         expected = f"{self.theory_name}.thy"
         if theory_path != expected and not theory_path.endswith(f"/{expected}"):
             raise IsabelleKernelError(
-                f"theory_path must be {expected!r} (or a path ending with it); got {theory_path!r}"
+                f"theory_path must be {expected!r} (or a path ending with it); "
+                f"got {theory_path!r}"
             )
         object.__setattr__(self, "theory_path", theory_path)
-        object.__setattr__(self, "session_dir", _text(self.session_dir, "session_dir"))
+        object.__setattr__(
+            self, "session_dir", _text(self.session_dir, "session_dir")
+        )
         object.__setattr__(
             self,
             "command_template",
@@ -174,13 +181,21 @@ class IsabelleSourceBinding:
     schema_version: str = ISABELLE_SOURCE_BINDING_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "request_digest", _digest(self.request_digest, "request_digest"))
-        object.__setattr__(self, "source_digest", _digest(self.source_digest, "source_digest"))
-        object.__setattr__(self, "source_format", _text(self.source_format, "source_format"))
+        object.__setattr__(
+            self, "request_digest", _digest(self.request_digest, "request_digest")
+        )
+        object.__setattr__(
+            self, "source_digest", _digest(self.source_digest, "source_digest")
+        )
+        object.__setattr__(
+            self, "source_format", _text(self.source_format, "source_format")
+        )
         if self.path_metadata is not None and not isinstance(
             self.path_metadata, IsabellePathMetadata
         ):
-            raise IsabelleKernelError("path_metadata must be an IsabellePathMetadata when provided")
+            raise IsabelleKernelError(
+                "path_metadata must be an IsabellePathMetadata when provided"
+            )
         if self.schema_version != ISABELLE_SOURCE_BINDING_VERSION:
             raise IsabelleKernelError(
                 f"unsupported Isabelle source binding schema: {self.schema_version!r}"
@@ -227,7 +242,9 @@ class IsabelleAxiomReport:
     schema_version: str = ISABELLE_AXIOM_REPORT_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "declaration", _text(self.declaration, "declaration"))
+        object.__setattr__(
+            self, "declaration", _text(self.declaration, "declaration")
+        )
         object.__setattr__(
             self, "report_text", _text(self.report_text, "report_text", optional=True)
         )
@@ -238,9 +255,13 @@ class IsabelleAxiomReport:
         if not isinstance(self.contains_sorry, bool):
             raise IsabelleKernelError("contains_sorry must be a boolean")
         if not isinstance(self.contains_unreviewed_axiomatization, bool):
-            raise IsabelleKernelError("contains_unreviewed_axiomatization must be a boolean")
+            raise IsabelleKernelError(
+                "contains_unreviewed_axiomatization must be a boolean"
+            )
         if self.schema_version != ISABELLE_AXIOM_REPORT_VERSION:
-            raise IsabelleKernelError(f"unsupported axiom report schema: {self.schema_version!r}")
+            raise IsabelleKernelError(
+                f"unsupported axiom report schema: {self.schema_version!r}"
+            )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -276,13 +297,19 @@ class IsabelleKernelReceipt:
     schema_version: str = ISABELLE_KERNEL_RECEIPT_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "request_digest", _digest(self.request_digest, "request_digest"))
+        object.__setattr__(
+            self, "request_digest", _digest(self.request_digest, "request_digest")
+        )
         if not isinstance(self.source_binding, IsabelleSourceBinding):
             raise IsabelleKernelError("source_binding must be an IsabelleSourceBinding")
         if self.request_digest != self.source_binding.request_digest:
             raise IsabelleKernelError("receipt request does not match source binding")
-        object.__setattr__(self, "theorem_name", _text(self.theorem_name, "theorem_name"))
-        object.__setattr__(self, "theorem_digest", _digest(self.theorem_digest, "theorem_digest"))
+        object.__setattr__(
+            self, "theorem_name", _text(self.theorem_name, "theorem_name")
+        )
+        object.__setattr__(
+            self, "theorem_digest", _digest(self.theorem_digest, "theorem_digest")
+        )
         imports = tuple(_text(item, "imports item") for item in self.imports)
         if len(imports) != len(set(imports)):
             raise IsabelleKernelError("imports must not contain duplicates")
@@ -311,7 +338,9 @@ class IsabelleKernelReceipt:
             self.translation, KernelTranslationBinding
         ):
             raise IsabelleKernelError("translation must be a KernelTranslationBinding")
-        if self.axiom_report is not None and not isinstance(self.axiom_report, IsabelleAxiomReport):
+        if self.axiom_report is not None and not isinstance(
+            self.axiom_report, IsabelleAxiomReport
+        ):
             raise IsabelleKernelError("axiom_report must be an IsabelleAxiomReport")
         object.__setattr__(self, "plane", _enum(self.plane, CapabilityPlane, "plane"))
         if not isinstance(self.accepted, bool):
@@ -361,7 +390,9 @@ class IsabelleKernelReceipt:
             "theorem_digest": self.theorem_digest,
             "theorem_name": self.theorem_name,
             "toolchain": self.toolchain.to_dict(),
-            "translation": (self.translation.to_dict() if self.translation is not None else None),
+            "translation": (
+                self.translation.to_dict() if self.translation is not None else None
+            ),
         }
 
     @property
@@ -386,7 +417,9 @@ class IsabelleKernelOutcome:
     interface_version: str = ISABELLE_KERNEL_BACKEND_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "request_digest", _digest(self.request_digest, "request_digest"))
+        object.__setattr__(
+            self, "request_digest", _digest(self.request_digest, "request_digest")
+        )
         if not isinstance(self.source_binding, IsabelleSourceBinding):
             raise IsabelleKernelError("source_binding must be an IsabelleSourceBinding")
         if not isinstance(self.result, TypedBackendResult):
@@ -420,7 +453,12 @@ class IsabelleKernelOutcome:
 def _text(value: object, field_name: str, *, optional: bool = False) -> str:
     if optional and value == "":
         return ""
-    if not isinstance(value, str) or not value or value != value.strip() or "\x00" in value:
+    if (
+        not isinstance(value, str)
+        or not value
+        or value != value.strip()
+        or "\x00" in value
+    ):
         qualifier = "an empty or " if optional else "a "
         raise IsabelleKernelError(
             f"{field_name} must be {qualifier}non-empty trimmed string without NUL bytes"
@@ -445,7 +483,9 @@ def _enum(value: object, enum_type: type[StrEnum], field_name: str) -> Any:
 
 def _source_text(value: object) -> str:
     if not isinstance(value, str) or not value.strip() or "\x00" in value:
-        raise IsabelleKernelError("Isabelle source must be non-empty text without NUL bytes")
+        raise IsabelleKernelError(
+            "Isabelle source must be non-empty text without NUL bytes"
+        )
     if len(value.encode("utf-8")) > DEFAULT_MAX_SOURCE_BYTES:
         raise IsabelleKernelError("Isabelle source exceeds the canonical byte bound")
     return value
@@ -539,7 +579,9 @@ def evaluate_isabelle_kernel_output(
     if process.error:
         diagnostics.append(sanitize_diagnostic(process.error))
     if process.timed_out:
-        diagnostics.append("isabelle invocation timed out under its bounded wall-clock budget")
+        diagnostics.append(
+            "isabelle invocation timed out under its bounded wall-clock budget"
+        )
         return False, None, bound_diagnostics(diagnostics)
     if process.unavailable:
         diagnostics.append("isabelle kernel is unavailable")
@@ -599,7 +641,8 @@ def evaluate_isabelle_kernel_output(
 
     if contains_unreviewed:
         diagnostics.append(
-            "isabelle source contains unreviewed axiomatization; cannot grant theorem authority"
+            "isabelle source contains unreviewed axiomatization; "
+            "cannot grant theorem authority"
         )
         return False, report, bound_diagnostics(diagnostics)
 
@@ -619,7 +662,9 @@ def evaluate_isabelle_kernel_output(
 
 
 def _usage_from_process(process: ToolRunResult) -> ResourceUsage:
-    output_bytes = len(process.stdout.encode("utf-8")) + len(process.stderr.encode("utf-8"))
+    output_bytes = len(process.stdout.encode("utf-8")) + len(
+        process.stderr.encode("utf-8")
+    )
     return ResourceUsage(
         elapsed_ms=max(0, round(process.elapsed_seconds * 1000)),
         output_bytes=output_bytes,
@@ -665,7 +710,9 @@ def _payload_source(
         translation = KernelTranslationBinding(
             translation_id=str(raw_translation.get("translation_id", "")),
             translation_digest=str(raw_translation.get("translation_digest", "")),
-            source_family=str(raw_translation.get("source_family", "software_verification")),
+            source_family=str(
+                raw_translation.get("source_family", "software_verification")
+            ),
             target_family=str(raw_translation.get("target_family", "isabelle")),
             fidelity=str(raw_translation.get("fidelity", "exact")),
             metadata=FrozenMap(
@@ -760,7 +807,9 @@ class IsabelleKernelBackend:
         if self._native_probe is not None:
             state = self._native_probe()
             if not isinstance(state, KernelCapabilityState):
-                raise IsabelleKernelError("native_probe must return KernelCapabilityState")
+                raise IsabelleKernelError(
+                    "native_probe must return KernelCapabilityState"
+                )
             if state.plane is not CapabilityPlane.NATIVE:
                 raise IsabelleKernelError("native_probe must report the native plane")
             return state
@@ -821,7 +870,9 @@ class IsabelleKernelBackend:
                 f"{request.query_kind.value}"
             )
         if request.query_kind is not QueryKind.THEOREM_PROOF:
-            raise IsabelleKernelError("Isabelle kernel backend only answers theorem_proof queries")
+            raise IsabelleKernelError(
+                "Isabelle kernel backend only answers theorem_proof queries"
+            )
 
     def _tool_request(
         self, source: str, bounds: ExecutionBounds, path_metadata: IsabellePathMetadata
@@ -931,10 +982,14 @@ class IsabelleKernelBackend:
                 "toolchain": receipt.toolchain.to_dict(),
                 "path_metadata": receipt.path_metadata.to_dict(),
                 "translation": (
-                    receipt.translation.to_dict() if receipt.translation is not None else None
+                    receipt.translation.to_dict()
+                    if receipt.translation is not None
+                    else None
                 ),
                 "axiom_report": (
-                    receipt.axiom_report.to_dict() if receipt.axiom_report is not None else None
+                    receipt.axiom_report.to_dict()
+                    if receipt.axiom_report is not None
+                    else None
                 ),
             },
             **common,
@@ -954,7 +1009,9 @@ class IsabelleKernelBackend:
             caller_path=caller_path,
             session_dir=self.session_dir,
         )
-        binding = IsabelleSourceBinding.bind(request, source, path_metadata=path_metadata)
+        binding = IsabelleSourceBinding.bind(
+            request, source, path_metadata=path_metadata
+        )
         capability = self.probe_capabilities()
         resolved_plane = _enum(plane, CapabilityPlane, "plane")
 
@@ -992,7 +1049,9 @@ class IsabelleKernelBackend:
                 else capability.browser or capability.wasm
             )
             toolchain = KernelToolchainBinding(
-                toolchain_id=(f"toolchain:isabelle:{resolved_plane.value}:{self.backend_version}"),
+                toolchain_id=(
+                    f"toolchain:isabelle:{resolved_plane.value}:{self.backend_version}"
+                ),
                 kernel_id=self.backend_id,
                 plane=resolved_plane,
                 executable=plane_state.executable,
@@ -1015,7 +1074,8 @@ class IsabelleKernelBackend:
 
         if not plane_state.available:
             reason = (
-                plane_state.reason or f"Isabelle kernel plane {resolved_plane.value} is unavailable"
+                plane_state.reason
+                or f"Isabelle kernel plane {resolved_plane.value} is unavailable"
             )
             receipt = IsabelleKernelReceipt(
                 request_digest=request.digest,
@@ -1172,17 +1232,26 @@ class IsabelleKernelBackend:
             accepted = False
         elif not accepted:
             if axiom_report is not None and (
-                axiom_report.contains_sorry or axiom_report.contains_unreviewed_axiomatization
+                axiom_report.contains_sorry
+                or axiom_report.contains_unreviewed_axiomatization
             ):
                 if self.incomplete_disposition is IsabelleAuthorityDisposition.DOWNGRADE:
                     status = ResultStatus.CANDIDATE
-                    reason = "isabelle proof still contains sorry/oops or unreviewed axiomatization"
+                    reason = (
+                        "isabelle proof still contains sorry/oops or unreviewed "
+                        "axiomatization"
+                    )
                 else:
                     status = ResultStatus.MALFORMED
-                    reason = "isabelle proof still contains sorry/oops or unreviewed axiomatization"
+                    reason = (
+                        "isabelle proof still contains sorry/oops or unreviewed "
+                        "axiomatization"
+                    )
             else:
                 status = ResultStatus.ERROR
-                reason = next(iter(eval_diagnostics), "isabelle kernel rejected the proof")
+                reason = next(
+                    iter(eval_diagnostics), "isabelle kernel rejected the proof"
+                )
         else:
             status = ResultStatus.PROVED
             reason = ""

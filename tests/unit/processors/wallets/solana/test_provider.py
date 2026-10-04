@@ -90,7 +90,9 @@ def test_signature_pagination_has_no_duplicates_and_keeps_failed_tx(
     batches = asyncio.run(collect())
     assert len(batches) == 1
     bundles = batches[0].records
-    signatures = [bundle.transaction["transaction"]["signatures"][0] for bundle in bundles]
+    signatures = [
+        bundle.transaction["transaction"]["signatures"][0] for bundle in bundles
+    ]
     assert signatures == [
         rpc_session["signatures"]["versioned"],
         rpc_session["signatures"]["failed_legacy"],

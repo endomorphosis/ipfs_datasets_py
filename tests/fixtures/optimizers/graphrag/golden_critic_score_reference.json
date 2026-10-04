@@ -1,0 +1,9 @@
+{
+  "overall": 0.736802,
+  "completeness": 0.79,
+  "consistency": 1.0,
+  "clarity": 0.86,
+  "granularity": 0.3633,
+  "relationship_coherence": 0.68,
+  "domain_alignment": 0.5556
+}

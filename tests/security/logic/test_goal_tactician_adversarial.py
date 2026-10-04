@@ -319,7 +319,10 @@ def test_goal_tactician_adversarial_interfaces() -> None:
         == "FormalVerificationTacticianAdversarialGate@1"
     )
     assert PROOF_CANDIDATE_VALIDATOR_INTERFACE == "ProofCandidateValidator@1"
-    assert COUNTEREXAMPLE_SEMANTIC_EQUIVALENCE_INTERFACE == "CounterexampleSemanticEquivalence@1"
+    assert (
+        COUNTEREXAMPLE_SEMANTIC_EQUIVALENCE_INTERFACE
+        == "CounterexampleSemanticEquivalence@1"
+    )
     assert ProofCandidateValidator.INTERFACE == PROOF_CANDIDATE_VALIDATOR_INTERFACE
 
 
@@ -626,7 +629,9 @@ def _theorem(**changes: Any) -> TheoremResult:
         "assumptions": ASSUMPTIONS,
         "bounds": ExecutionBounds(timeout_ms=1000, max_steps=100),
         "translation_ceiling": EvidenceAuthority.INDEPENDENTLY_CHECKABLE,
-        "metadata": FrozenMap({"bounds": dict(BOUNDS), "expires_at": EXPIRES, "issued_at": NOW}),
+        "metadata": FrozenMap(
+            {"bounds": dict(BOUNDS), "expires_at": EXPIRES, "issued_at": NOW}
+        ),
     }
     fields.update(changes)
     return TheoremResult(**fields)
@@ -652,7 +657,9 @@ def _trusted(**changes: Any) -> Any:
         source,
         theorem_id=changes.pop("theorem_id", "theorem:sort-correct"),
         property_id=changes.pop("property_id", PROPERTY),
-        translation_receipt_id=changes.pop("translation_receipt_id", "translation:fol-to-lean:v1"),
+        translation_receipt_id=changes.pop(
+            "translation_receipt_id", "translation:fol-to-lean:v1"
+        ),
         tree_id=changes.pop("tree_id", TREE),
         policy_id=changes.pop("policy_id", "policy:formal@1"),
         receipt_id=changes.pop("receipt_id", ""),
@@ -703,7 +710,9 @@ def test_stale_receipt_window_and_wrong_tree_fail_closed() -> None:
     assert stale_window.status is VerificationStatus.INVALID
     assert stale_window.result["valid"] is False
 
-    wrong_tree = api.verify_receipt(receipt, _binding_expectation(tree_id="tree:other@zzz"))
+    wrong_tree = api.verify_receipt(
+        receipt, _binding_expectation(tree_id="tree:other@zzz")
+    )
     assert wrong_tree.status is VerificationStatus.INVALID
     assert wrong_tree.authority is VerificationAuthority.NONE
 
@@ -766,7 +775,9 @@ def test_shell_string_argv_injection_rejected(tmp_path: Path) -> None:
 
 def test_secrets_redacted_from_tool_outputs(tmp_path: Path) -> None:
     def fake(invocation: ProcessInvocation, cancellation=None) -> RawProcessResult:
-        (invocation.cwd / "receipt.txt").write_text(f"token={SECRET}", encoding="utf-8")
+        (invocation.cwd / "receipt.txt").write_text(
+            f"token={SECRET}", encoding="utf-8"
+        )
         return RawProcessResult(
             returncode=1,
             stdout=f"saw {SECRET}",
@@ -802,12 +813,9 @@ def test_pre_cancelled_tool_run_never_reports_proof_success(tmp_path: Path) -> N
         cancellation=token,
     )
     # Either never started or reported cancelled — never success-as-proof.
-    assert (
-        started["value"] is False
-        or result.returncode != 0
-        or (
-            getattr(result, "cancelled", False) is True or "cancel" in str(result.to_dict()).lower()
-        )
+    assert started["value"] is False or result.returncode != 0 or (
+        getattr(result, "cancelled", False) is True
+        or "cancel" in str(result.to_dict()).lower()
     )
     assert "proof_success" not in str(result.to_dict()).lower() or not started["value"]
 

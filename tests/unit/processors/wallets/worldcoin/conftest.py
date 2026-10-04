@@ -14,7 +14,9 @@ _WORLDCOIN_TEST_DIR = Path(__file__).resolve().parent
 if str(_WORLDCOIN_TEST_DIR) not in sys.path:
     sys.path.insert(0, str(_WORLDCOIN_TEST_DIR))
 
-FIXTURES_DIR = Path(__file__).resolve().parents[4] / "fixtures" / "wallets" / "worldcoin"
+FIXTURES_DIR = (
+    Path(__file__).resolve().parents[4] / "fixtures" / "wallets" / "worldcoin"
+)
 
 
 @pytest.fixture

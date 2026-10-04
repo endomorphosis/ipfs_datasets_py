@@ -206,7 +206,9 @@ def _build_release(root: Path) -> None:
     ]
     _write_parquet(node_path, node_rows)
 
-    adjacency_path = root / "data/graph/adjacency/outgoing/part-000000.parquet"
+    adjacency_path = (
+        root / "data/graph/adjacency/outgoing/part-000000.parquet"
+    )
     adjacency_rows = [
         {
             "direction": "outgoing",
@@ -303,13 +305,17 @@ def _build_release(root: Path) -> None:
                     kind="vectors",
                     start_document_index=index,
                     end_document_index=index,
-                    centroid=([1.0, 0.0] if index == 0 else [0.0, 1.0]),
+                    centroid=(
+                        [1.0, 0.0] if index == 0 else [0.0, 1.0]
+                    ),
                     centroid_shard_count=1,
                     chunk_in_cluster=0,
                     cluster_id=index,
                     dimension=2,
                     model_name=f"test/model@{MODEL_REVISION}",
-                    shard_centroid=([1.0, 0.0] if index == 0 else [0.0, 1.0]),
+                    shard_centroid=(
+                        [1.0, 0.0] if index == 0 else [0.0, 1.0]
+                    ),
                 )
                 for index, (path, _) in enumerate(vector_rows)
             ],
@@ -377,7 +383,9 @@ def _build_release(root: Path) -> None:
             "searchable": True,
         },
     }
-    (root / "manifest.json").write_text(json.dumps(manifest, sort_keys=True), encoding="utf-8")
+    (root / "manifest.json").write_text(
+        json.dumps(manifest, sort_keys=True), encoding="utf-8"
+    )
 
 
 def _index(root: Path) -> CVEfixesRemoteIndex:
@@ -426,7 +434,9 @@ def test_bm25_and_vector_use_integrity_checked_bounded_shards(
     assert bm25["results"][0]["entry_cid"] == "entry-a"
     assert bm25["results"][0]["matched_terms"] == ["overflow"]
     assert bm25["diagnostics"]["keyword_shards_fetched"] == 1
-    assert {item["relative_path"] for item in bm25["fetch_trace"]["files"]} == {
+    assert {
+        item["relative_path"] for item in bm25["fetch_trace"]["files"]
+    } == {
         "data/bm25/postings/part-000000.parquet",
         "data/corpus/part-000000.parquet",
         "indexes/bm25_keyword_shards.parquet",
@@ -451,7 +461,9 @@ def test_bm25_and_vector_use_integrity_checked_bounded_shards(
 
 def test_no_content_removes_corpus_text(tmp_path: Path) -> None:
     _build_release(tmp_path)
-    result = _index(tmp_path).bm25("overflow", top_k=1, include_content=False)
+    result = _index(tmp_path).bm25(
+        "overflow", top_k=1, include_content=False
+    )
     assert "text" not in result["results"][0]
     assert result["results"][0]["title"] == "CVE overflow repair"
 
@@ -492,7 +504,9 @@ def test_raw_file_cid_is_checked_before_meta_index_use(tmp_path: Path) -> None:
     manifest_path = tmp_path / "manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     wrong_digest = hashlib.sha256(b"wrong artifact").digest()
-    manifest["indexes"]["bm25_keyword_shards"]["cid"] = _raw_sha256_cid(wrong_digest)
+    manifest["indexes"]["bm25_keyword_shards"]["cid"] = _raw_sha256_cid(
+        wrong_digest
+    )
     manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
 
     with pytest.raises(RemoteQueryError, match="CID differs"):
@@ -509,7 +523,9 @@ def test_declared_shard_key_range_is_checked_against_parquet(
     _write_parquet(index_path, rows)
     manifest_path = tmp_path / "manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    manifest["indexes"]["bm25_keyword_shards"] = _descriptor(index_path, tmp_path, row_count=1)
+    manifest["indexes"]["bm25_keyword_shards"] = _descriptor(
+        index_path, tmp_path, row_count=1
+    )
     manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
 
     with pytest.raises(RemoteQueryError, match="key range differs"):

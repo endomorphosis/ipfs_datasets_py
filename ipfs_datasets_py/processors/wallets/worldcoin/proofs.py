@@ -30,9 +30,7 @@ def verifier_id_for_protocol(protocol_version: str) -> str:
 
 
 def _canonical_bytes(value: Mapping[str, Any]) -> bytes:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode(
-        "utf-8"
-    )
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
 
 
 def _sha256(value: bytes) -> str:
@@ -100,9 +98,7 @@ def create_world_id_proof_receipt(
     """Create a receipt only for a currently active verified binding."""
 
     if not binding_is_active(binding, now_min=now_min):
-        raise WorldIdBindingError(
-            "revoked, expired, or unverified binding cannot yield a verified receipt"
-        )
+        raise WorldIdBindingError("revoked, expired, or unverified binding cannot yield a verified receipt")
     proof_system = proof_system_for_protocol(binding.protocol_version)
     verifier_id = verifier_id_for_protocol(binding.protocol_version)
     digest = _sha256(_canonical_bytes({"verifier_id": verifier_id, "proof_system": proof_system}))
@@ -135,11 +131,9 @@ def create_world_id_proof_receipt(
     )
     expires_at = None
     if binding.expires_at_min is not None:
-        expires_at = (
-            datetime.fromtimestamp(int(binding.expires_at_min) * 60, tz=timezone.utc)
-            .isoformat()
-            .replace("+00:00", "Z")
-        )
+        expires_at = datetime.fromtimestamp(
+            int(binding.expires_at_min) * 60, tz=timezone.utc
+        ).isoformat().replace("+00:00", "Z")
     major = binding.protocol_version.split(".", 1)[0]
     return ProofReceipt(
         proof_id=f"proof-{uuid.uuid4().hex}",

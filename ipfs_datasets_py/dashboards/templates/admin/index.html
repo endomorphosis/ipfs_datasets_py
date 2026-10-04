@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPFS Datasets Admin Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <meta http-equiv="refresh" content="{{ refresh_interval }}">
+</head>
+<body>
+    <nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
+        <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">IPFS Datasets Admin</a>
+        <ul class="navbar-nav px-3">
+            <li class="nav-item text-nowrap">
+                <span class="nav-link">{{ node_info.hostname }}</span>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <nav class="col-md-2 d-none d-md-block bg-light sidebar">
+                <div class="sidebar-sticky">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#overview">
+                                Overview
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#metrics">
+                                Metrics
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#logs">
+                                Logs
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#nodes">
+                                Nodes
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#operations">
+                                Operations
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#config">
+                                Configuration
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Dashboard Overview</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group mr-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.location.reload()">Refresh</button>
+                        </div>
+                        <div class="btn-group mr-2">
+                            <span class="text-muted">Last updated: {{ last_updated }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <section id="overview">
+                    <h2>System Status</h2>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">System</h5>
+                                    <p class="card-text">
+                                        <strong>Hostname:</strong> {{ node_info.hostname }}<br>
+                                        <strong>Platform:</strong> {{ node_info.platform }}<br>
+                                        <strong>Python:</strong> {{ node_info.python_version }}<br>
+                                        <strong>Uptime:</strong> {{ uptime }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Resource Usage</h5>
+                                    <p class="card-text">
+                                        <strong>CPU:</strong> {{ system_stats.cpu_percent }}%<br>
+                                        <strong>Memory:</strong> {{ system_stats.memory_used }} / {{ system_stats.memory_total }} ({{ system_stats.memory_percent }}%)<br>
+                                        <strong>Disk:</strong> {{ system_stats.disk_used }} / {{ system_stats.disk_total }} ({{ system_stats.disk_percent }}%)
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Application</h5>
+                                    <p class="card-text">
+                                        <strong>Version:</strong> {{ node_info.ipfs_datasets_version }}<br>
+                                        <strong>Started:</strong> {{ node_info.start_time }}<br>
+                                        <strong>Status:</strong> <span class="badge badge-success">Running</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="metrics" class="mt-4">
+                    <h2>Metrics</h2>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">CPU Usage</h5>
+                                    <canvas id="cpuChart" width="400" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Memory Usage</h5>
+                                    <canvas id="memoryChart" width="400" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Custom Metrics</h5>
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Metric</th>
+                                                <th>Type</th>
+                                                <th>Value</th>
+                                                <th>Labels</th>
+                                                <th>Last Updated</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for metric_name, metric_instances in metrics.items() %}
+                                                {% for metric in metric_instances %}
+                                                <tr>
+                                                    <td>{{ metric_name }}</td>
+                                                    <td>{{ metric.type }}</td>
+                                                    <td>{{ metric.value }}</td>
+                                                    <td>{{ metric.labels }}</td>
+                                                    <td>{{ metric.timestamp }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="logs" class="mt-4">
+                    <h2>Logs</h2>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label for="logFilter">Filter logs:</label>
+                                <input type="text" class="form-control" id="logFilter" placeholder="Type to filter logs">
+                            </div>
+                            <div class="log-container">
+                                {% for log in logs %}
+                                <div class="log-entry log-{{ log.level|lower }}">
+                                    <span class="log-timestamp">{{ log.timestamp }}</span>
+                                    <span class="log-level log-level-{{ log.level|lower }}">{{ log.level }}</span>
+                                    <span class="log-name">{{ log.name }}</span>
+                                    <span class="log-message">{{ log.message }}</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="nodes" class="mt-4">
+                    <h2>Connected Nodes</h2>
+                    <div class="card">
+                        <div class="card-body">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Node ID</th>
+                                        <th>Status</th>
+                                        <th>Address</th>
+                                        <th>Last Seen</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for node in nodes %}
+                                    <tr>
+                                        <td>{{ node.id }}</td>
+                                        <td>
+                                            {% if node.status == 'online' %}
+                                            <span class="badge badge-success">Online</span>
+                                            {% else %}
+                                            <span class="badge badge-danger">Offline</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ node.address }}</td>
+                                        <td>{{ node.last_seen }}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary">Details</button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="operations" class="mt-4">
+                    <h2>Active Operations</h2>
+                    <div class="card">
+                        <div class="card-body">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Operation ID</th>
+                                        <th>Type</th>
+                                        <th>Status</th>
+                                        <th>Start Time</th>
+                                        <th>Duration</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for op in operations %}
+                                    <tr>
+                                        <td>{{ op.operation_id }}</td>
+                                        <td>{{ op.operation_type }}</td>
+                                        <td>
+                                            {% if op.status == 'success' %}
+                                            <span class="badge badge-success">Success</span>
+                                            {% elif op.status == 'error' %}
+                                            <span class="badge badge-danger">Error</span>
+                                            {% else %}
+                                            <span class="badge badge-warning">{{ op.status }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ op.start_time }}</td>
+                                        <td>{{ op.duration_ms|round(2) if op.duration_ms else 'N/A' }} ms</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary">Details</button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="config" class="mt-4">
+                    <h2>Configuration</h2>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="accordion" id="configAccordion">
+                                <div class="card">
+                                    <div class="card-header" id="headingDashboard">
+                                        <h2 class="mb-0">
+                                            <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseDashboard">
+                                                Dashboard Configuration
+                                            </button>
+                                        </h2>
+                                    </div>
+                                    <div id="collapseDashboard" class="collapse show" aria-labelledby="headingDashboard" data-parent="#configAccordion">
+                                        <div class="card-body">
+                                            <pre>{{ dashboard_config|tojson(indent=4) }}</pre>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card">
+                                    <div class="card-header" id="headingMonitoring">
+                                        <h2 class="mb-0">
+                                            <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapseMonitoring">
+                                                Monitoring Configuration
+                                            </button>
+                                        </h2>
+                                    </div>
+                                    <div id="collapseMonitoring" class="collapse" aria-labelledby="headingMonitoring" data-parent="#configAccordion">
+                                        <div class="card-body">
+                                            <pre>{{ monitoring_config|tojson(indent=4) }}</pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/chart.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>

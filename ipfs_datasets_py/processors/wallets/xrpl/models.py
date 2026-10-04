@@ -53,7 +53,9 @@ class XRPLAmount:
                 raise InvalidRequestError("XRP amount must not carry currency/issuer")
         else:
             if not self.currency or not self.issuer:
-                raise InvalidRequestError("issued amount requires currency and issuer identity")
+                raise InvalidRequestError(
+                    "issued amount requires currency and issuer identity"
+                )
             object.__setattr__(self, "currency", self.currency.strip())
             object.__setattr__(self, "issuer", self.issuer.strip())
 

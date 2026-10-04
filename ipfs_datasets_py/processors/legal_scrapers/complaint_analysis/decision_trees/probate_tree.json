@@ -1,0 +1,116 @@
+{
+  "complaint_type": "probate",
+  "category": "probate",
+  "description": "Decision tree for probate and estate law complaints",
+  "root_questions": [
+    "q1",
+    "q2",
+    "q3"
+  ],
+  "questions": {
+    "q1": {
+      "id": "q1",
+      "question": "What is the name of the decedent (deceased person)?",
+      "field_name": "decedent_name",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": ["q4"],
+      "keywords": ["decedent", "deceased", "testator"]
+    },
+    "q2": {
+      "id": "q2",
+      "question": "What is the date of death?",
+      "field_name": "date_of_death",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": ["death", "died", "deceased"]
+    },
+    "q3": {
+      "id": "q3",
+      "question": "What type of probate issue are you experiencing? (e.g., will contest, executor dispute, trust dispute, guardianship, estate administration)",
+      "field_name": "probate_issue_type",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": ["q5", "q6"],
+      "keywords": ["will contest", "executor", "trustee", "guardianship", "conservatorship", "estate administration"]
+    },
+    "q4": {
+      "id": "q4",
+      "question": "In which county and state did the decedent reside at the time of death?",
+      "field_name": "decedent_residence",
+      "required": true,
+      "depends_on": ["q1"],
+      "follow_ups": [],
+      "keywords": ["residence", "domicile", "county", "state"]
+    },
+    "q5": {
+      "id": "q5",
+      "question": "Did the decedent leave a will or trust?",
+      "field_name": "will_or_trust_exists",
+      "required": true,
+      "depends_on": ["q3"],
+      "follow_ups": ["q7"],
+      "keywords": ["will", "testament", "trust", "testate", "intestate"]
+    },
+    "q6": {
+      "id": "q6",
+      "question": "Who is the executor, administrator, or trustee involved?",
+      "field_name": "fiduciary_name",
+      "required": false,
+      "depends_on": ["q3"],
+      "follow_ups": [],
+      "keywords": ["executor", "administrator", "trustee", "personal representative"]
+    },
+    "q7": {
+      "id": "q7",
+      "question": "What are the specific issues or disputes? (e.g., undue influence, lack of capacity, breach of fiduciary duty, improper distribution)",
+      "field_name": "specific_issues",
+      "required": true,
+      "depends_on": ["q5"],
+      "follow_ups": ["q8"],
+      "keywords": ["undue influence", "capacity", "fraud", "breach", "fiduciary duty", "distribution"]
+    },
+    "q8": {
+      "id": "q8",
+      "question": "What are the estate assets involved? (e.g., real property, bank accounts, investments, personal property)",
+      "field_name": "estate_assets",
+      "required": false,
+      "depends_on": ["q7"],
+      "follow_ups": [],
+      "keywords": ["assets", "property", "real estate", "bank account", "investment"]
+    },
+    "q9": {
+      "id": "q9",
+      "question": "What is your relationship to the decedent? (e.g., spouse, child, heir, beneficiary, creditor)",
+      "field_name": "relationship_to_decedent",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": ["spouse", "heir", "beneficiary", "child", "family", "creditor"]
+    },
+    "q10": {
+      "id": "q10",
+      "question": "Has probate been opened, and if so, in which court?",
+      "field_name": "probate_court_info",
+      "required": false,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": ["probate court", "case number", "proceeding", "filed"]
+    }
+  },
+  "required_fields": [
+    "decedent_name",
+    "date_of_death",
+    "probate_issue_type",
+    "decedent_residence",
+    "will_or_trust_exists",
+    "specific_issues",
+    "relationship_to_decedent"
+  ],
+  "optional_fields": [
+    "fiduciary_name",
+    "estate_assets",
+    "probate_court_info"
+  ]
+}

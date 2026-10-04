@@ -81,13 +81,23 @@ from ..guard.preflight import TransactionPreflight
 # ---------------------------------------------------------------------------
 
 WORLDCOIN_TRANSACTION_GUARD_INTERFACE: Final = "WorldcoinTransactionGuard@1"
-WORLDCOIN_TRANSACTION_GUARD_SCHEMA_VERSION: Final = "wallet-guard.worldcoin-transaction-guard/v1"
-WORLD_CHAIN_CANDIDATE_SCHEMA_VERSION: Final = "wallet-guard.world-chain-transaction-candidate/v1"
+WORLDCOIN_TRANSACTION_GUARD_SCHEMA_VERSION: Final = (
+    "wallet-guard.worldcoin-transaction-guard/v1"
+)
+WORLD_CHAIN_CANDIDATE_SCHEMA_VERSION: Final = (
+    "wallet-guard.world-chain-transaction-candidate/v1"
+)
 WORLD_ID_BINDING_SCHEMA_VERSION: Final = "wallet-guard.world-id-binding/v1"
-VERIFIER_PROXY_EPOCH_SCHEMA_VERSION: Final = "wallet-guard.worldcoin-verifier-proxy-epoch/v1"
+VERIFIER_PROXY_EPOCH_SCHEMA_VERSION: Final = (
+    "wallet-guard.worldcoin-verifier-proxy-epoch/v1"
+)
 BRIDGE_LEG_SCHEMA_VERSION: Final = "wallet-guard.worldcoin-bridge-leg/v1"
-WORLDCOIN_TX_BINDING_SCHEMA_VERSION: Final = "wallet-guard.worldcoin-transaction-binding/v1"
-WORLDCOIN_GUARD_DECISION_SCHEMA_VERSION: Final = "wallet-guard.worldcoin-guard-decision/v1"
+WORLDCOIN_TX_BINDING_SCHEMA_VERSION: Final = (
+    "wallet-guard.worldcoin-transaction-binding/v1"
+)
+WORLDCOIN_GUARD_DECISION_SCHEMA_VERSION: Final = (
+    "wallet-guard.worldcoin-guard-decision/v1"
+)
 
 DEFAULT_PRODUCER_ID: Final = "producer:wallet-guard-worldcoin-v1"
 DEFAULT_POLICY_ID: Final = "policy:worldcoin-wallet-guard-v1"
@@ -226,7 +236,9 @@ def _digest(value: Any, name: str) -> str:
 def _timestamp(value: Any, name: str) -> str:
     text = _text(value, name, max_chars=64)
     if not _ISO8601_RE.fullmatch(text):
-        raise GuardValidationError(f"{name} must be an ISO-8601 UTC/offset timestamp")
+        raise GuardValidationError(
+            f"{name} must be an ISO-8601 UTC/offset timestamp"
+        )
     return text
 
 
@@ -264,7 +276,9 @@ def _amount(value: Any, name: str) -> str:
         return str(value)
     text = _text(value, name, max_chars=128)
     if not _DECIMAL_RE.fullmatch(text):
-        raise GuardValidationError(f"{name} must be a non-negative decimal integer string")
+        raise GuardValidationError(
+            f"{name} must be a non-negative decimal integer string"
+        )
     return text
 
 
@@ -297,7 +311,12 @@ def _attributes(value: Mapping[str, Any] | None) -> FrozenMap:
 
 
 def _iso_now() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return (
+        datetime.now(timezone.utc)
+        .replace(microsecond=0)
+        .isoformat()
+        .replace("+00:00", "Z")
+    )
 
 
 def _parse_iso(ts: str) -> datetime:
@@ -358,7 +377,9 @@ def _hex_data(value: Any, name: str) -> str:
 def _environment(value: Any) -> str:
     text = _text(value, "environment").lower()
     if text not in _ALLOWED_ENVIRONMENTS:
-        raise GuardValidationError("environment must be production, staging, development, or test")
+        raise GuardValidationError(
+            "environment must be production, staging, development, or test"
+        )
     return text
 
 
@@ -376,7 +397,9 @@ def _commitment(value: Any, name: str) -> str:
     lowered = text.lower()
     if lowered in {"null", "none", "undefined"}:
         raise GuardValidationError(f"{name} is not a valid commitment")
-    if text.startswith(WORLD_ID_NULLIFIER_REF_PREFIX) or text.startswith("worldid-nullifier-ref:"):
+    if text.startswith(WORLD_ID_NULLIFIER_REF_PREFIX) or text.startswith(
+        "worldid-nullifier-ref:"
+    ):
         return text
     if _HEX_COMMITMENT_RE.fullmatch(text):
         if text.startswith("0x") or text.startswith("0X"):
@@ -393,7 +416,9 @@ def _commitment(value: Any, name: str) -> str:
 def _require_world_chain_id(chain_id: Any) -> int:
     cid = _positive_int(chain_id, "chain_id")
     if not is_world_chain_id(cid):
-        raise GuardValidationError(f"chain_id must be World Chain 480 or 4801 (got {cid})")
+        raise GuardValidationError(
+            f"chain_id must be World Chain 480 or 4801 (got {cid})"
+        )
     return cid
 
 
@@ -423,11 +448,15 @@ class VerifierProxyEpoch:
     schema_version: str = VERIFIER_PROXY_EPOCH_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "verifier_id", _identifier(self.verifier_id, "verifier_id"))
+        object.__setattr__(
+            self, "verifier_id", _identifier(self.verifier_id, "verifier_id")
+        )
         object.__setattr__(
             self, "verifier_address", _address(self.verifier_address, "verifier_address")
         )
-        object.__setattr__(self, "code_epoch", _text(self.code_epoch, "code_epoch", max_chars=256))
+        object.__setattr__(
+            self, "code_epoch", _text(self.code_epoch, "code_epoch", max_chars=256)
+        )
         object.__setattr__(self, "chain_id", _require_world_chain_id(self.chain_id))
         object.__setattr__(
             self,
@@ -452,12 +481,16 @@ class VerifierProxyEpoch:
         object.__setattr__(
             self, "proxy_kind", _optional_text(self.proxy_kind, "proxy_kind", max_chars=64)
         )
-        object.__setattr__(self, "proxy_admin", _optional_address(self.proxy_admin, "proxy_admin"))
+        object.__setattr__(
+            self, "proxy_admin", _optional_address(self.proxy_admin, "proxy_admin")
+        )
         anchor = resolve_network(chain_id=self.chain_id, network=self.network or None)
         object.__setattr__(self, "network", anchor.network)
         if not isinstance(self.attributes, FrozenMap):
             object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
         if self.schema_version != VERIFIER_PROXY_EPOCH_SCHEMA_VERSION:
             raise GuardValidationError(
                 f"unsupported verifier proxy epoch schema: {self.schema_version!r}"
@@ -500,7 +533,9 @@ class VerifierProxyEpoch:
         _reject_forbidden(value, "VerifierProxyEpoch")
         return cls(
             verifier_id=value.get("verifier_id", value.get("verifierId", "")),
-            verifier_address=value.get("verifier_address", value.get("verifierAddress", "")),
+            verifier_address=value.get(
+                "verifier_address", value.get("verifierAddress", "")
+            ),
             code_epoch=value.get("code_epoch", value.get("codeEpoch", "")),
             chain_id=value.get("chain_id", value.get("chainId", 0)),
             implementation_address=value.get(
@@ -514,7 +549,9 @@ class VerifierProxyEpoch:
             proxy_admin=value.get("proxy_admin", value.get("proxyAdmin", "")),
             network=value.get("network", ""),
             attributes=value.get("attributes", {}),
-            schema_version=value.get("schema_version", VERIFIER_PROXY_EPOCH_SCHEMA_VERSION),
+            schema_version=value.get(
+                "schema_version", VERIFIER_PROXY_EPOCH_SCHEMA_VERSION
+            ),
         )
 
 
@@ -537,7 +574,9 @@ class BridgeLegBinding:
         object.__setattr__(self, "leg_id", _identifier(self.leg_id, "leg_id"))
         direction = _text(self.direction, "direction", max_chars=32).lower()
         if direction not in {"deposit", "withdraw", "message"}:
-            raise GuardValidationError("bridge direction must be deposit, withdraw, or message")
+            raise GuardValidationError(
+                "bridge direction must be deposit, withdraw, or message"
+            )
         object.__setattr__(self, "direction", direction)
         object.__setattr__(
             self,
@@ -547,7 +586,9 @@ class BridgeLegBinding:
         object.__setattr__(
             self,
             "destination_chain_id",
-            _text(str(self.destination_chain_id), "destination_chain_id", max_chars=64),
+            _text(
+                str(self.destination_chain_id), "destination_chain_id", max_chars=64
+            ),
         )
         object.__setattr__(
             self,
@@ -566,9 +607,13 @@ class BridgeLegBinding:
         object.__setattr__(self, "amount", _amount(self.amount, "amount"))
         if not isinstance(self.attributes, FrozenMap):
             object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
         if self.schema_version != BRIDGE_LEG_SCHEMA_VERSION:
-            raise GuardValidationError(f"unsupported bridge leg schema: {self.schema_version!r}")
+            raise GuardValidationError(
+                f"unsupported bridge leg schema: {self.schema_version!r}"
+            )
 
     @property
     def leg_digest(self) -> str:
@@ -607,12 +652,18 @@ class BridgeLegBinding:
         return cls(
             leg_id=value.get("leg_id", value.get("legId", "")),
             direction=value.get("direction", ""),
-            source_chain_id=value.get("source_chain_id", value.get("sourceChainId", "")),
+            source_chain_id=value.get(
+                "source_chain_id", value.get("sourceChainId", "")
+            ),
             destination_chain_id=value.get(
                 "destination_chain_id", value.get("destinationChainId", "")
             ),
-            bridge_contract=value.get("bridge_contract", value.get("bridgeContract", "")),
-            message_digest=value.get("message_digest", value.get("messageDigest", "")),
+            bridge_contract=value.get(
+                "bridge_contract", value.get("bridgeContract", "")
+            ),
+            message_digest=value.get(
+                "message_digest", value.get("messageDigest", "")
+            ),
             asset_id=value.get("asset_id", value.get("assetId", "")),
             amount=value.get("amount", "0"),
             attributes=value.get("attributes", {}),
@@ -657,7 +708,9 @@ class WorldChainTransactionCandidate:
     schema_version: str = WORLD_CHAIN_CANDIDATE_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "intent_id", _identifier(self.intent_id, "intent_id"))
+        object.__setattr__(
+            self, "intent_id", _identifier(self.intent_id, "intent_id")
+        )
         chain_id = _require_world_chain_id(self.chain_id)
         object.__setattr__(self, "chain_id", chain_id)
         try:
@@ -671,16 +724,26 @@ class WorldChainTransactionCandidate:
         object.__setattr__(self, "network", anchor.network)
         object.__setattr__(self, "genesis_hash", anchor.genesis_hash)
         settlement = self.settlement_layer or world_chain_settlement_layer(chain_id)
-        object.__setattr__(self, "settlement_layer", _text(settlement, "settlement_layer"))
-        object.__setattr__(self, "from_address", _address(self.from_address, "from_address"))
-        object.__setattr__(self, "to_address", _address(self.to_address, "to_address"))
+        object.__setattr__(
+            self, "settlement_layer", _text(settlement, "settlement_layer")
+        )
+        object.__setattr__(
+            self, "from_address", _address(self.from_address, "from_address")
+        )
+        object.__setattr__(
+            self, "to_address", _address(self.to_address, "to_address")
+        )
         object.__setattr__(self, "value_wei", _amount(self.value_wei, "value_wei"))
         object.__setattr__(self, "data", _hex_data(self.data, "data"))
-        object.__setattr__(self, "method", _optional_text(self.method, "method", max_chars=128))
+        object.__setattr__(
+            self, "method", _optional_text(self.method, "method", max_chars=128)
+        )
         if self.nonce is not None:
             object.__setattr__(self, "nonce", _non_negative_int(self.nonce, "nonce"))
         if self.gas_limit is not None:
-            object.__setattr__(self, "gas_limit", _non_negative_int(self.gas_limit, "gas_limit"))
+            object.__setattr__(
+                self, "gas_limit", _non_negative_int(self.gas_limit, "gas_limit")
+            )
         if self.max_fee_per_gas is not None:
             object.__setattr__(
                 self,
@@ -691,15 +754,21 @@ class WorldChainTransactionCandidate:
             object.__setattr__(
                 self,
                 "max_priority_fee_per_gas",
-                _non_negative_int(self.max_priority_fee_per_gas, "max_priority_fee_per_gas"),
+                _non_negative_int(
+                    self.max_priority_fee_per_gas, "max_priority_fee_per_gas"
+                ),
             )
         object.__setattr__(
             self,
             "native_effects",
             tuple(dict(item) for item in self.native_effects),
         )
-        object.__setattr__(self, "wld_effects", tuple(dict(item) for item in self.wld_effects))
-        object.__setattr__(self, "token_effects", tuple(dict(item) for item in self.token_effects))
+        object.__setattr__(
+            self, "wld_effects", tuple(dict(item) for item in self.wld_effects)
+        )
+        object.__setattr__(
+            self, "token_effects", tuple(dict(item) for item in self.token_effects)
+        )
         if self.serialized_hex:
             ser = _text(self.serialized_hex, "serialized_hex", max_chars=MAX_HEX_PAYLOAD_CHARS)
             if not ser.startswith("0x"):
@@ -711,7 +780,9 @@ class WorldChainTransactionCandidate:
             object.__setattr__(self, "serialized_hex", "")
         if not isinstance(self.attributes, FrozenMap):
             object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
         if self.schema_version != WORLD_CHAIN_CANDIDATE_SCHEMA_VERSION:
             raise GuardValidationError(
                 f"unsupported World Chain candidate schema: {self.schema_version!r}"
@@ -762,26 +833,38 @@ class WorldChainTransactionCandidate:
         return cls(
             intent_id=value.get("intent_id", value.get("intentId", "")),
             chain_id=value.get("chain_id", value.get("chainId", 0)),
-            from_address=value.get("from_address", value.get("fromAddress", value.get("from", ""))),
-            to_address=value.get("to_address", value.get("toAddress", value.get("to", ""))),
+            from_address=value.get(
+                "from_address", value.get("fromAddress", value.get("from", ""))
+            ),
+            to_address=value.get(
+                "to_address", value.get("toAddress", value.get("to", ""))
+            ),
             value_wei=value.get("value_wei", value.get("valueWei", value.get("value", "0"))),
             data=value.get("data", value.get("input", value.get("calldata", "0x"))),
             method=value.get("method", ""),
             nonce=value.get("nonce"),
             gas_limit=value.get("gas_limit", value.get("gasLimit", value.get("gas"))),
-            max_fee_per_gas=value.get("max_fee_per_gas", value.get("maxFeePerGas")),
+            max_fee_per_gas=value.get(
+                "max_fee_per_gas", value.get("maxFeePerGas")
+            ),
             max_priority_fee_per_gas=value.get(
                 "max_priority_fee_per_gas", value.get("maxPriorityFeePerGas")
             ),
             network=value.get("network", ""),
             genesis_hash=value.get("genesis_hash", value.get("genesisHash", "")),
-            settlement_layer=value.get("settlement_layer", value.get("settlementLayer", "")),
+            settlement_layer=value.get(
+                "settlement_layer", value.get("settlementLayer", "")
+            ),
             native_effects=tuple(value.get("native_effects", value.get("nativeEffects", ()))),
             wld_effects=tuple(value.get("wld_effects", value.get("wldEffects", ()))),
             token_effects=tuple(value.get("token_effects", value.get("tokenEffects", ()))),
-            serialized_hex=value.get("serialized_hex", value.get("serializedHex", "")),
+            serialized_hex=value.get(
+                "serialized_hex", value.get("serializedHex", "")
+            ),
             attributes=value.get("attributes", {}),
-            schema_version=value.get("schema_version", WORLD_CHAIN_CANDIDATE_SCHEMA_VERSION),
+            schema_version=value.get(
+                "schema_version", WORLD_CHAIN_CANDIDATE_SCHEMA_VERSION
+            ),
         )
 
 
@@ -823,7 +906,9 @@ class WorldIDBinding:
     schema_version: str = WORLD_ID_BINDING_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "binding_id", _identifier(self.binding_id, "binding_id"))
+        object.__setattr__(
+            self, "binding_id", _identifier(self.binding_id, "binding_id")
+        )
         object.__setattr__(self, "rp_id", _text(self.rp_id, "rp_id", max_chars=256))
         object.__setattr__(self, "action", _text(self.action, "action", max_chars=256))
         object.__setattr__(self, "environment", _environment(self.environment))
@@ -832,8 +917,12 @@ class WorldIDBinding:
             "nullifier_commitment",
             _commitment(self.nullifier_commitment, "nullifier_commitment"),
         )
-        object.__setattr__(self, "app_id", _optional_text(self.app_id, "app_id", max_chars=256))
-        object.__setattr__(self, "protocol_version", _protocol_version(self.protocol_version))
+        object.__setattr__(
+            self, "app_id", _optional_text(self.app_id, "app_id", max_chars=256)
+        )
+        object.__setattr__(
+            self, "protocol_version", _protocol_version(self.protocol_version)
+        )
         domain = self.external_nullifier_domain
         if not domain:
             domain = "|".join(
@@ -886,15 +975,21 @@ class WorldIDBinding:
                     VerifierProxyEpoch.from_dict(self.verifier_epoch),
                 )
             else:
-                raise GuardValidationError("verifier_epoch must be VerifierProxyEpoch or mapping")
+                raise GuardValidationError(
+                    "verifier_epoch must be VerifierProxyEpoch or mapping"
+                )
         object.__setattr__(
             self,
             "mini_app_id",
             _optional_text(self.mini_app_id, "mini_app_id", max_chars=256),
         )
         if self.chain_id is not None:
-            object.__setattr__(self, "chain_id", _require_world_chain_id(self.chain_id))
-            anchor = resolve_network(chain_id=self.chain_id, network=self.network or None)
+            object.__setattr__(
+                self, "chain_id", _require_world_chain_id(self.chain_id)
+            )
+            anchor = resolve_network(
+                chain_id=self.chain_id, network=self.network or None
+            )
             object.__setattr__(self, "network", anchor.network)
         else:
             object.__setattr__(
@@ -909,13 +1004,17 @@ class WorldIDBinding:
         object.__setattr__(self, "proof_implies_authorization", False)
         if not isinstance(self.attributes, FrozenMap):
             object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
         if self.schema_version != WORLD_ID_BINDING_SCHEMA_VERSION:
             raise GuardValidationError(
                 f"unsupported World ID binding schema: {self.schema_version!r}"
             )
         if not self.rp_id or not self.action:
-            raise GuardValidationError("WorldIDBinding requires rp_id and action domain binding")
+            raise GuardValidationError(
+                "WorldIDBinding requires rp_id and action domain binding"
+            )
 
     @property
     def replay_domain(self) -> dict[str, Any]:
@@ -951,7 +1050,9 @@ class WorldIDBinding:
             "rp_id": self.rp_id,
             "signal_hash_ref": self.signal_hash_ref,
             "verification_status": self.verification_status,
-            "verifier_epoch": (self.verifier_epoch.to_dict() if self.verifier_epoch else None),
+            "verifier_epoch": (
+                self.verifier_epoch.to_dict() if self.verifier_epoch else None
+            ),
         }
 
     def to_dict(self) -> dict[str, Any]:
@@ -983,28 +1084,40 @@ class WorldIDBinding:
                 value.get("nullifierCommitment", value.get("nullifier_ref", "")),
             ),
             app_id=value.get("app_id", value.get("appId", "")),
-            protocol_version=value.get("protocol_version", value.get("protocolVersion", "4.0")),
+            protocol_version=value.get(
+                "protocol_version", value.get("protocolVersion", "4.0")
+            ),
             external_nullifier_domain=value.get(
                 "external_nullifier_domain",
                 value.get("externalNullifierDomain", ""),
             ),
-            signal_hash_ref=value.get("signal_hash_ref", value.get("signalHashRef", "")),
+            signal_hash_ref=value.get(
+                "signal_hash_ref", value.get("signalHashRef", "")
+            ),
             challenge_id=value.get("challenge_id", value.get("challengeId", "")),
             verification_status=value.get(
                 "verification_status", value.get("verificationStatus", "verified")
             ),
-            proof_observed_at=value.get("proof_observed_at", value.get("proofObservedAt", "")),
+            proof_observed_at=value.get(
+                "proof_observed_at", value.get("proofObservedAt", "")
+            ),
             proof_max_age_seconds=value.get(
                 "proof_max_age_seconds",
                 value.get("proofMaxAgeSeconds", DEFAULT_PROOF_MAX_AGE_SECONDS),
             ),
-            verifier_epoch=value.get("verifier_epoch", value.get("verifierEpoch")),
+            verifier_epoch=value.get(
+                "verifier_epoch", value.get("verifierEpoch")
+            ),
             mini_app_id=value.get("mini_app_id", value.get("miniAppId", "")),
             chain_id=value.get("chain_id", value.get("chainId")),
             network=value.get("network", ""),
-            proof_implies_authorization=value.get("proof_implies_authorization", False),
+            proof_implies_authorization=value.get(
+                "proof_implies_authorization", False
+            ),
             attributes=value.get("attributes", {}),
-            schema_version=value.get("schema_version", WORLD_ID_BINDING_SCHEMA_VERSION),
+            schema_version=value.get(
+                "schema_version", WORLD_ID_BINDING_SCHEMA_VERSION
+            ),
         )
 
 
@@ -1049,11 +1162,19 @@ class WorldcoinTransactionBinding:
     schema_version: str = WORLDCOIN_TX_BINDING_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "binding_id", _identifier(self.binding_id, "binding_id"))
-        object.__setattr__(self, "intent_id", _identifier(self.intent_id, "intent_id"))
-        object.__setattr__(self, "candidate_id", _identifier(self.candidate_id, "candidate_id"))
+        object.__setattr__(
+            self, "binding_id", _identifier(self.binding_id, "binding_id")
+        )
+        object.__setattr__(
+            self, "intent_id", _identifier(self.intent_id, "intent_id")
+        )
+        object.__setattr__(
+            self, "candidate_id", _identifier(self.candidate_id, "candidate_id")
+        )
         object.__setattr__(self, "chain_id", _require_world_chain_id(self.chain_id))
-        object.__setattr__(self, "network", _text(self.network, "network", max_chars=128))
+        object.__setattr__(
+            self, "network", _text(self.network, "network", max_chars=128)
+        )
         object.__setattr__(
             self, "genesis_hash", _text(self.genesis_hash, "genesis_hash", max_chars=128)
         )
@@ -1062,11 +1183,17 @@ class WorldcoinTransactionBinding:
             "settlement_layer",
             _text(self.settlement_layer, "settlement_layer", max_chars=128),
         )
-        object.__setattr__(self, "from_address", _address(self.from_address, "from_address"))
-        object.__setattr__(self, "to_address", _address(self.to_address, "to_address"))
+        object.__setattr__(
+            self, "from_address", _address(self.from_address, "from_address")
+        )
+        object.__setattr__(
+            self, "to_address", _address(self.to_address, "to_address")
+        )
         object.__setattr__(self, "value_wei", _amount(self.value_wei, "value_wei"))
         object.__setattr__(self, "data", _hex_data(self.data, "data"))
-        object.__setattr__(self, "method", _optional_text(self.method, "method", max_chars=128))
+        object.__setattr__(
+            self, "method", _optional_text(self.method, "method", max_chars=128)
+        )
         if self.nonce is not None:
             object.__setattr__(self, "nonce", _non_negative_int(self.nonce, "nonce"))
         object.__setattr__(self, "fee_wei", _amount(self.fee_wei, "fee_wei"))
@@ -1075,8 +1202,12 @@ class WorldcoinTransactionBinding:
             "native_effects",
             tuple(dict(item) for item in self.native_effects),
         )
-        object.__setattr__(self, "wld_effects", tuple(dict(item) for item in self.wld_effects))
-        object.__setattr__(self, "token_effects", tuple(dict(item) for item in self.token_effects))
+        object.__setattr__(
+            self, "wld_effects", tuple(dict(item) for item in self.wld_effects)
+        )
+        object.__setattr__(
+            self, "token_effects", tuple(dict(item) for item in self.token_effects)
+        )
         object.__setattr__(
             self, "candidate_digest", _digest(self.candidate_digest, "candidate_digest")
         )
@@ -1085,15 +1216,23 @@ class WorldcoinTransactionBinding:
             "serialized_digest",
             _digest(self.serialized_digest, "serialized_digest"),
         )
-        object.__setattr__(self, "encoding", _identifier(self.encoding, "encoding"))
-        object.__setattr__(self, "byte_length", _non_negative_int(self.byte_length, "byte_length"))
+        object.__setattr__(
+            self, "encoding", _identifier(self.encoding, "encoding")
+        )
+        object.__setattr__(
+            self, "byte_length", _non_negative_int(self.byte_length, "byte_length")
+        )
         if self.byte_length == 0:
             raise GuardValidationError("byte_length must be positive")
         if self.world_id is not None and not isinstance(self.world_id, WorldIDBinding):
             if isinstance(self.world_id, Mapping):
-                object.__setattr__(self, "world_id", WorldIDBinding.from_dict(self.world_id))
+                object.__setattr__(
+                    self, "world_id", WorldIDBinding.from_dict(self.world_id)
+                )
             else:
-                raise GuardValidationError("world_id must be WorldIDBinding, mapping, or None")
+                raise GuardValidationError(
+                    "world_id must be WorldIDBinding, mapping, or None"
+                )
         legs: list[BridgeLegBinding] = []
         for item in self.bridge_legs:
             if isinstance(item, BridgeLegBinding):
@@ -1101,7 +1240,9 @@ class WorldcoinTransactionBinding:
             elif isinstance(item, Mapping):
                 legs.append(BridgeLegBinding.from_dict(item))
             else:
-                raise GuardValidationError("bridge_legs items must be BridgeLegBinding")
+                raise GuardValidationError(
+                    "bridge_legs items must be BridgeLegBinding"
+                )
         object.__setattr__(self, "bridge_legs", tuple(legs))
         object.__setattr__(
             self,
@@ -1125,11 +1266,15 @@ class WorldcoinTransactionBinding:
             elif isinstance(item, Mapping):
                 effects.append(ExpectedEffect.from_dict(item))
             else:
-                raise GuardValidationError("expected_effects items must be ExpectedEffect")
+                raise GuardValidationError(
+                    "expected_effects items must be ExpectedEffect"
+                )
         object.__setattr__(self, "expected_effects", tuple(effects))
         if not isinstance(self.attributes, FrozenMap):
             object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
         if self.schema_version != WORLDCOIN_TX_BINDING_SCHEMA_VERSION:
             raise GuardValidationError(
                 f"unsupported worldcoin binding schema: {self.schema_version!r}"
@@ -1220,7 +1365,9 @@ class WorldcoinTransactionBinding:
             expected_effects=tuple(value.get("expected_effects", ())),
             binding_digest=value.get("binding_digest", ""),
             attributes=value.get("attributes", {}),
-            schema_version=value.get("schema_version", WORLDCOIN_TX_BINDING_SCHEMA_VERSION),
+            schema_version=value.get(
+                "schema_version", WORLDCOIN_TX_BINDING_SCHEMA_VERSION
+            ),
         )
 
 
@@ -1255,26 +1402,41 @@ class WorldcoinGuardDecision:
 
     def __post_init__(self) -> None:
         if not isinstance(self.outcome, TransactionVerdictOutcome):
-            object.__setattr__(self, "outcome", TransactionVerdictOutcome(str(self.outcome)))
+            object.__setattr__(
+                self, "outcome", TransactionVerdictOutcome(str(self.outcome))
+            )
         object.__setattr__(self, "blocks_automation", bool(self.blocks_automation))
-        object.__setattr__(self, "reason_codes", tuple(str(c) for c in self.reason_codes))
+        object.__setattr__(
+            self, "reason_codes", tuple(str(c) for c in self.reason_codes)
+        )
         object.__setattr__(self, "reasons", tuple(str(r) for r in self.reasons))
-        object.__setattr__(self, "binding_digest", _digest(self.binding_digest, "binding_digest"))
+        object.__setattr__(
+            self, "binding_digest", _digest(self.binding_digest, "binding_digest")
+        )
         if self.request_digest:
             object.__setattr__(
                 self, "request_digest", _digest(self.request_digest, "request_digest")
             )
         else:
             object.__setattr__(self, "request_digest", "")
-        object.__setattr__(self, "security_results", dict(self.security_results or {}))
-        object.__setattr__(self, "compliance_results", dict(self.compliance_results or {}))
+        object.__setattr__(
+            self, "security_results", dict(self.security_results or {})
+        )
+        object.__setattr__(
+            self, "compliance_results", dict(self.compliance_results or {})
+        )
         if not isinstance(self.attributes, FrozenMap):
             object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
 
     @property
     def allowed(self) -> bool:
-        return self.outcome is TransactionVerdictOutcome.ALLOW and not self.blocks_automation
+        return (
+            self.outcome is TransactionVerdictOutcome.ALLOW
+            and not self.blocks_automation
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -1296,7 +1458,9 @@ class WorldcoinGuardDecision:
 # Live resolvers
 # ---------------------------------------------------------------------------
 
-VerifierEpochResolver = Callable[[str], VerifierProxyEpoch | Mapping[str, Any] | None]
+VerifierEpochResolver = Callable[
+    [str], VerifierProxyEpoch | Mapping[str, Any] | None
+]
 NullifierReplayChecker = Callable[[str, str], bool]
 # (nullifier_commitment, external_nullifier_domain) -> already_used
 
@@ -1356,7 +1520,9 @@ class WorldcoinTransactionGuard:
         if self.preflight is None:
             self.preflight = TransactionPreflight(producer_id=self.producer_id)
         if self.interface != WORLDCOIN_TRANSACTION_GUARD_INTERFACE:
-            raise GuardValidationError(f"unsupported worldcoin guard interface: {self.interface!r}")
+            raise GuardValidationError(
+                f"unsupported worldcoin guard interface: {self.interface!r}"
+            )
         if self.schema_version != WORLDCOIN_TRANSACTION_GUARD_SCHEMA_VERSION:
             raise GuardValidationError(
                 f"unsupported worldcoin guard schema: {self.schema_version!r}"
@@ -1395,7 +1561,9 @@ class WorldcoinTransactionGuard:
                 _reject_forbidden(world_id, "WorldIDBinding")
                 wid = WorldIDBinding.from_dict(world_id)
             else:
-                raise GuardValidationError("world_id must be WorldIDBinding or mapping")
+                raise GuardValidationError(
+                    "world_id must be WorldIDBinding or mapping"
+                )
             # Domain must bind to the same World Chain when chain_id present.
             if wid.chain_id is not None and wid.chain_id != cand.chain_id:
                 raise GuardValidationError(
@@ -1410,7 +1578,9 @@ class WorldcoinTransactionGuard:
                 elif isinstance(item, Mapping):
                     legs.append(BridgeLegBinding.from_dict(item))
                 else:
-                    raise GuardValidationError("bridge_legs items must be BridgeLegBinding")
+                    raise GuardValidationError(
+                        "bridge_legs items must be BridgeLegBinding"
+                    )
 
         if serialized_bytes is None:
             if cand.serialized_hex:
@@ -1443,7 +1613,9 @@ class WorldcoinTransactionGuard:
                 elif isinstance(item, Mapping):
                     effects.append(ExpectedEffect.from_dict(item))
                 else:
-                    raise GuardValidationError("expected_effects items must be ExpectedEffect")
+                    raise GuardValidationError(
+                        "expected_effects items must be ExpectedEffect"
+                    )
         else:
             effects = self._derive_expected_effects(cand, world_id=wid, bridge_legs=legs)
 
@@ -1512,7 +1684,9 @@ class WorldcoinTransactionGuard:
     ) -> TransactionPreflightRequest:
         """Project a Worldcoin binding into the common preflight request surface."""
 
-        intent = self._intent_from_binding(binding, expires_at=intent_expires_at or expiry)
+        intent = self._intent_from_binding(
+            binding, expires_at=intent_expires_at or expiry
+        )
         candidate = TransactionCandidate(
             candidate_id=binding.candidate_id,
             intent_id=binding.intent_id,
@@ -1573,7 +1747,8 @@ class WorldcoinTransactionGuard:
         security_results: Mapping[str, Any] | None = None,
         compliance_results: Mapping[str, Any] | None = None,
         now: str | None = None,
-        live_verifier_epochs: Mapping[str, VerifierProxyEpoch | Mapping[str, Any]] | None = None,
+        live_verifier_epochs: Mapping[str, VerifierProxyEpoch | Mapping[str, Any]]
+        | None = None,
         request_id: str = "req:worldcoin-guard",
         tenant_id: str = "tenant:default",
         actor_id: str = "actor:policy-engine",
@@ -1726,7 +1901,8 @@ class WorldcoinTransactionGuard:
         *,
         phase: PreflightPhase | WorldcoinGuardPhase | str = PreflightPhase.PRE_SIGN,
         now: str | None = None,
-        live_verifier_epochs: Mapping[str, VerifierProxyEpoch | Mapping[str, Any]] | None = None,
+        live_verifier_epochs: Mapping[str, VerifierProxyEpoch | Mapping[str, Any]]
+        | None = None,
         live_candidate: WorldChainTransactionCandidate | Mapping[str, Any] | None = None,
         live_world_id: WorldIDBinding | Mapping[str, Any] | None = None,
         live_bridge_legs: Sequence[BridgeLegBinding | Mapping[str, Any]] | None = None,
@@ -1744,12 +1920,16 @@ class WorldcoinTransactionGuard:
             if isinstance(capability, Mapping):
                 capability = AdmissibilityCapability.from_dict(capability)
             else:
-                raise GuardValidationError("capability must be an AdmissibilityCapability")
+                raise GuardValidationError(
+                    "capability must be an AdmissibilityCapability"
+                )
         if not isinstance(live_request, TransactionPreflightRequest):
             if isinstance(live_request, Mapping):
                 live_request = TransactionPreflightRequest.from_dict(live_request)
             else:
-                raise GuardValidationError("live_request must be a TransactionPreflightRequest")
+                raise GuardValidationError(
+                    "live_request must be a TransactionPreflightRequest"
+                )
 
         if isinstance(phase, PreflightPhase):
             phase_value = phase.value
@@ -1825,12 +2005,18 @@ class WorldcoinTransactionGuard:
                         "observed": live_wid.binding_digest,
                     },
                 )
-            if live_wid.nullifier_commitment != binding.world_id.nullifier_commitment:
+            if (
+                live_wid.nullifier_commitment
+                != binding.world_id.nullifier_commitment
+            ):
                 raise GuardCapabilityError(
                     "nullifier commitment substituted",
                     reason_code="worldcoin.nullifier_substituted",
                 )
-            if live_wid.external_nullifier_domain != binding.world_id.external_nullifier_domain:
+            if (
+                live_wid.external_nullifier_domain
+                != binding.world_id.external_nullifier_domain
+            ):
                 raise GuardCapabilityError(
                     "external-nullifier domain substituted",
                     reason_code="worldcoin.domain_substituted",
@@ -1867,7 +2053,8 @@ class WorldcoinTransactionGuard:
         )
         if structural["blocking"] is not None:
             raise GuardCapabilityError(
-                "; ".join(structural["reasons"]) or "worldcoin live revalidation failed",
+                "; ".join(structural["reasons"])
+                or "worldcoin live revalidation failed",
                 reason_code=structural["reason_codes"][0]
                 if structural["reason_codes"]
                 else "worldcoin.consumption_blocked",
@@ -1908,7 +2095,9 @@ class WorldcoinTransactionGuard:
         if isinstance(candidate, Mapping):
             _reject_forbidden(candidate, "WorldChainTransactionCandidate")
             return WorldChainTransactionCandidate.from_dict(candidate)
-        raise GuardValidationError("candidate must be a WorldChainTransactionCandidate or mapping")
+        raise GuardValidationError(
+            "candidate must be a WorldChainTransactionCandidate or mapping"
+        )
 
     def _derive_expected_effects(
         self,
@@ -1955,7 +2144,10 @@ class WorldcoinTransactionGuard:
                 ExpectedEffect(
                     effect_id="effect:world-id-evidence",
                     kind="world_id_proof_evidence",
-                    summary=(f"World ID evidence action={world_id.action} (not authorization)"),
+                    summary=(
+                        f"World ID evidence action={world_id.action} "
+                        f"(not authorization)"
+                    ),
                 )
             )
         if not effects:
@@ -1973,7 +2165,8 @@ class WorldcoinTransactionGuard:
         binding: WorldcoinTransactionBinding,
         *,
         now: str,
-        live_verifier_epochs: Mapping[str, VerifierProxyEpoch | Mapping[str, Any]] | None,
+        live_verifier_epochs: Mapping[str, VerifierProxyEpoch | Mapping[str, Any]]
+        | None,
         phase: WorldcoinGuardPhase,
         re_resolve: bool = False,
     ) -> dict[str, Any]:
@@ -2006,9 +2199,13 @@ class WorldcoinTransactionGuard:
                 and blocking is not TransactionVerdictOutcome.DENY
             ):
                 blocking = outcome
-            elif outcome is TransactionVerdictOutcome.STALE and blocking not in (
-                TransactionVerdictOutcome.DENY,
-                TransactionVerdictOutcome.STALE,
+            elif (
+                outcome is TransactionVerdictOutcome.STALE
+                and blocking
+                not in (
+                    TransactionVerdictOutcome.DENY,
+                    TransactionVerdictOutcome.STALE,
+                )
             ):
                 blocking = outcome
 
@@ -2080,7 +2277,9 @@ class WorldcoinTransactionGuard:
                 )
             # Replay check.
             assert self.nullifier_already_used is not None
-            if self.nullifier_already_used(wid.nullifier_commitment, wid.external_nullifier_domain):
+            if self.nullifier_already_used(
+                wid.nullifier_commitment, wid.external_nullifier_domain
+            ):
                 _block(
                     TransactionVerdictOutcome.DENY,
                     "worldcoin.nullifier_replay",
@@ -2101,12 +2300,9 @@ class WorldcoinTransactionGuard:
                         self.verifier_epoch_resolver(bound_epoch.verifier_id),
                         field_name="verifier_epoch_resolver result",
                     )
-                if (
-                    re_resolve
-                    and live is None
-                    and (
-                        live_verifier_epochs is not None or self.verifier_epoch_resolver is not None
-                    )
+                if re_resolve and live is None and (
+                    live_verifier_epochs is not None
+                    or self.verifier_epoch_resolver is not None
                 ):
                     _block(
                         TransactionVerdictOutcome.STALE,

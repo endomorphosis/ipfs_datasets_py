@@ -419,12 +419,16 @@ class EvidenceDescriptor:
     schema_version: ClassVar[str] = TAXONOMY_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "evidence_id", _identifier(self.evidence_id, "evidence_id"))
+        object.__setattr__(
+            self, "evidence_id", _identifier(self.evidence_id, "evidence_id")
+        )
         object.__setattr__(self, "name", _text(self.name, "name"))
         object.__setattr__(
             self, "evidence_kind", _enum(self.evidence_kind, EvidenceKind, "evidence_kind")
         )
-        object.__setattr__(self, "authority", _enum(self.authority, EvidenceAuthority, "authority"))
+        object.__setattr__(
+            self, "authority", _enum(self.authority, EvidenceAuthority, "authority")
+        )
         object.__setattr__(
             self,
             "description",
@@ -437,7 +441,9 @@ class EvidenceDescriptor:
             self.authority is EvidenceAuthority.INDEPENDENTLY_CHECKABLE
             and not self.machine_checkable
         ):
-            raise TaxonomyError("independently_checkable evidence must be machine_checkable")
+            raise TaxonomyError(
+                "independently_checkable evidence must be machine_checkable"
+            )
 
     @property
     def id(self) -> str:
@@ -513,10 +519,13 @@ class BoundednessDescriptor:
         )
         object.__setattr__(self, "version", _version(self.version))
         if (
-            self.boundedness_kind not in {BoundednessKind.UNBOUNDED, BoundednessKind.NOT_APPLICABLE}
+            self.boundedness_kind
+            not in {BoundednessKind.UNBOUNDED, BoundednessKind.NOT_APPLICABLE}
             and not self.limit_names
         ):
-            raise TaxonomyError("bounded descriptors must declare at least one limit name")
+            raise TaxonomyError(
+                "bounded descriptors must declare at least one limit name"
+            )
 
     @property
     def id(self) -> str:
@@ -596,7 +605,9 @@ class TranslationDescriptor:
         object.__setattr__(
             self,
             "loses_property_ids",
-            _strings(self.loses_property_ids, "loses_property_ids", identifiers=True),
+            _strings(
+                self.loses_property_ids, "loses_property_ids", identifiers=True
+            ),
         )
         object.__setattr__(
             self,
@@ -693,7 +704,9 @@ class LogicFamilyDescriptor:
         if not isinstance(self.declaration_only, bool):
             raise TaxonomyError("declaration_only must be a boolean")
         if self.declaration_only and self.operation_ids:
-            raise TaxonomyError("declaration-only families cannot claim executable operations")
+            raise TaxonomyError(
+                "declaration-only families cannot claim executable operations"
+            )
         if self.equivalent_to is not None:
             object.__setattr__(
                 self, "equivalent_to", _identifier(self.equivalent_to, "equivalent_to")
@@ -751,7 +764,9 @@ class FamilySupportDescriptor:
     notes: str = ""
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "family_id", _identifier(self.family_id, "family_id"))
+        object.__setattr__(
+            self, "family_id", _identifier(self.family_id, "family_id")
+        )
         object.__setattr__(
             self,
             "support_level",
@@ -768,7 +783,9 @@ class FamilySupportDescriptor:
                 field_name,
                 _strings(getattr(self, field_name), field_name, identifiers=True),
             )
-        object.__setattr__(self, "notes", _text(self.notes, "notes") if self.notes else "")
+        object.__setattr__(
+            self, "notes", _text(self.notes, "notes") if self.notes else ""
+        )
         if self.support_level is SupportLevel.UNSUPPORTED and any(
             (
                 self.fragment_ids,
@@ -777,13 +794,30 @@ class FamilySupportDescriptor:
                 self.translation_ids,
             )
         ):
-            raise TaxonomyError("unsupported family declarations cannot claim capabilities")
-        if self.support_level is SupportLevel.DECLARATION_ONLY and self.operation_ids:
-            raise TaxonomyError("declaration-only support cannot claim executable operations")
-        if self.support_level is SupportLevel.TRANSLATED and not self.translation_ids:
-            raise TaxonomyError("translated support must identify at least one translation")
-        if self.support_level is not SupportLevel.TRANSLATED and self.translation_ids:
-            raise TaxonomyError("translation_ids are valid only for translated support")
+            raise TaxonomyError(
+                "unsupported family declarations cannot claim capabilities"
+            )
+        if (
+            self.support_level is SupportLevel.DECLARATION_ONLY
+            and self.operation_ids
+        ):
+            raise TaxonomyError(
+                "declaration-only support cannot claim executable operations"
+            )
+        if (
+            self.support_level is SupportLevel.TRANSLATED
+            and not self.translation_ids
+        ):
+            raise TaxonomyError(
+                "translated support must identify at least one translation"
+            )
+        if (
+            self.support_level is not SupportLevel.TRANSLATED
+            and self.translation_ids
+        ):
+            raise TaxonomyError(
+                "translation_ids are valid only for translated support"
+            )
 
     @property
     def level(self) -> SupportLevel:
@@ -831,7 +865,9 @@ class ProviderCapabilityDescriptor:
     schema_version: ClassVar[str] = "provider-capability/v1"
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "provider_id", _identifier(self.provider_id, "provider_id"))
+        object.__setattr__(
+            self, "provider_id", _identifier(self.provider_id, "provider_id")
+        )
         object.__setattr__(
             self, "provider_version", _version(self.provider_version, "provider_version")
         )
@@ -869,8 +905,9 @@ class ProviderCapabilityDescriptor:
         raw_metadata: object = self.metadata
         if isinstance(raw_metadata, Mapping):
             raw_metadata = tuple(raw_metadata.items())
-        if isinstance(raw_metadata, (str, bytes, bytearray)) or not isinstance(
-            raw_metadata, Sequence
+        if (
+            isinstance(raw_metadata, (str, bytes, bytearray))
+            or not isinstance(raw_metadata, Sequence)
         ):
             raise TaxonomyError("metadata must be a mapping or key/value sequence")
         metadata: list[tuple[str, str]] = []
@@ -937,7 +974,8 @@ class ProviderCapabilityDescriptor:
             provider_id=value["provider_id"],
             provider_version=value["provider_version"],
             family_support=tuple(
-                FamilySupportDescriptor.from_dict(item) for item in value.get("family_support", ())
+                FamilySupportDescriptor.from_dict(item)
+                for item in value.get("family_support", ())
             ),
             runtime_ids=tuple(value.get("runtime_ids", ())),
             evidence_ids=tuple(value.get("evidence_ids", ())),

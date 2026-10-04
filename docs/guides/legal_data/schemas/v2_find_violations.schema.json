@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "v2_find_violations.schema.json",
+  "title": "Hybrid Legal V2 find_violations response",
+  "type": "object",
+  "required": [
+    "api",
+    "schema_version",
+    "time_range",
+    "violation_count",
+    "violations",
+    "proof_id"
+  ],
+  "properties": {
+    "api": { "type": "string" },
+    "schema_version": { "type": "string" },
+    "time_range": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "violation_count": { "type": "integer" },
+    "violations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["norm_id", "frame_id", "type"],
+        "properties": {
+          "norm_id": { "type": "string" },
+          "frame_id": { "type": "string" },
+          "type": { "type": "string" }
+        }
+      }
+    },
+    "proof_id": { "type": "string" }
+  },
+  "additionalProperties": true
+}

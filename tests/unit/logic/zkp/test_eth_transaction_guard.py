@@ -79,7 +79,9 @@ def _intent(**overrides: Any) -> TransactionIntent:
     return TransactionIntent(**base)
 
 
-def _candidate(intent: TransactionIntent | None = None, **overrides: Any) -> TransactionCandidate:
+def _candidate(
+    intent: TransactionIntent | None = None, **overrides: Any
+) -> TransactionCandidate:
     intent = intent or _intent()
     base: dict[str, Any] = {
         "candidate_id": "candidate:zkp-001",
@@ -189,7 +191,9 @@ def test_require_consumed_guard_succeeds_once() -> None:
 def test_submit_proof_transaction_disabled_by_default(
     ethereum_config: EthereumConfig,
 ) -> None:
-    with patch("ipfs_datasets_py.logic.zkp.eth_integration.Web3") as mock_web3:
+    with patch(
+        "ipfs_datasets_py.logic.zkp.eth_integration.Web3"
+    ) as mock_web3:
         mock_instance = MagicMock()
         mock_instance.is_connected.return_value = True
         mock_instance.eth.chain_id = 1337
@@ -212,7 +216,9 @@ def test_submit_proof_transaction_rejects_approved_true(
     ethereum_config: EthereumConfig,
 ) -> None:
     service, request, capability = _allow_capability()
-    with patch("ipfs_datasets_py.logic.zkp.eth_integration.Web3") as mock_web3:
+    with patch(
+        "ipfs_datasets_py.logic.zkp.eth_integration.Web3"
+    ) as mock_web3:
         mock_instance = MagicMock()
         mock_instance.is_connected.return_value = True
         mock_instance.eth.chain_id = 1337
@@ -240,7 +246,9 @@ def test_submit_proof_transaction_with_consumed_capability(
 ) -> None:
     service, request, capability = _allow_capability()
 
-    with patch("ipfs_datasets_py.logic.zkp.eth_integration.Web3") as mock_web3:
+    with patch(
+        "ipfs_datasets_py.logic.zkp.eth_integration.Web3"
+    ) as mock_web3:
         mock_instance = MagicMock()
         mock_instance.is_connected.return_value = True
         mock_instance.eth.chain_id = 1337
@@ -249,7 +257,9 @@ def test_submit_proof_transaction_with_consumed_capability(
 
         mock_contract = MagicMock()
         mock_tx = {"to": "0x" + "1" * 40, "data": "0x"}
-        mock_contract.functions.verifyProof.return_value.build_transaction.return_value = mock_tx
+        mock_contract.functions.verifyProof.return_value.build_transaction.return_value = (
+            mock_tx
+        )
 
         mock_account = MagicMock()
         mock_signed = MagicMock()
@@ -299,7 +309,9 @@ def test_register_vk_hash_disabled_without_capability(
     ethereum_config: EthereumConfig,
 ) -> None:
     ethereum_config.vk_hash_registry_contract_address = "0x" + "3" * 40
-    with patch("ipfs_datasets_py.logic.zkp.eth_integration.Web3") as mock_web3:
+    with patch(
+        "ipfs_datasets_py.logic.zkp.eth_integration.Web3"
+    ) as mock_web3:
         mock_instance = MagicMock()
         mock_instance.is_connected.return_value = True
         mock_instance.eth.chain_id = 1337
@@ -323,7 +335,9 @@ def test_register_vk_hash_disabled_without_capability(
 def test_pipeline_dry_run_skips_guard(ethereum_config: EthereumConfig) -> None:
     """Dry-run / RPC-only paths remain available without a capability."""
 
-    with patch("ipfs_datasets_py.logic.zkp.eth_integration.Web3") as mock_web3:
+    with patch(
+        "ipfs_datasets_py.logic.zkp.eth_integration.Web3"
+    ) as mock_web3:
         mock_instance = MagicMock()
         mock_instance.is_connected.return_value = True
         mock_instance.eth.chain_id = 1337
@@ -366,7 +380,9 @@ def test_pipeline_dry_run_skips_guard(ethereum_config: EthereumConfig) -> None:
 def test_pipeline_live_submission_requires_capability(
     ethereum_config: EthereumConfig,
 ) -> None:
-    with patch("ipfs_datasets_py.logic.zkp.eth_integration.Web3") as mock_web3:
+    with patch(
+        "ipfs_datasets_py.logic.zkp.eth_integration.Web3"
+    ) as mock_web3:
         mock_instance = MagicMock()
         mock_instance.is_connected.return_value = True
         mock_instance.eth.chain_id = 1337
@@ -417,7 +433,9 @@ def test_substitution_fails_before_signing(ethereum_config: EthereumConfig) -> N
         nonce=request.nonce,
     )
 
-    with patch("ipfs_datasets_py.logic.zkp.eth_integration.Web3") as mock_web3:
+    with patch(
+        "ipfs_datasets_py.logic.zkp.eth_integration.Web3"
+    ) as mock_web3:
         mock_instance = MagicMock()
         mock_instance.is_connected.return_value = True
         mock_instance.eth.chain_id = 1337

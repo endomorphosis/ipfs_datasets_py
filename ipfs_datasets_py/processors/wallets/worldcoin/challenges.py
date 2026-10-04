@@ -26,9 +26,7 @@ class WorldIdReplayError(WorldIdChallengeError):
 
 
 def _canonical_bytes(value: Mapping[str, Any]) -> bytes:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode(
-        "utf-8"
-    )
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
 
 
 def _required(value: object, name: str) -> str:
@@ -112,9 +110,7 @@ class WorldIdChallengeStore:
             raise WorldIdChallengeError("ttl_seconds must be a positive integer")
         issued_at = int(self._now() if now is None else now)
         challenge = WorldIdChallenge(
-            challenge_id=_required(
-                challenge_id or f"world-id-challenge-{secrets.token_hex(16)}", "challenge_id"
-            ),
+            challenge_id=_required(challenge_id or f"world-id-challenge-{secrets.token_hex(16)}", "challenge_id"),
             nonce_commitment=self._challenge_commitment(
                 nonce=nonce,
                 signal=signal,
@@ -215,10 +211,7 @@ class WorldIdChallengeStore:
             return {
                 "version": self.SNAPSHOT_VERSION,
                 "challenges": [
-                    item.to_dict()
-                    for item in sorted(
-                        self.challenges.values(), key=lambda value: value.challenge_id
-                    )
+                    item.to_dict() for item in sorted(self.challenges.values(), key=lambda value: value.challenge_id)
                 ],
                 "replay_commitments": dict(sorted(self.replay_commitments.items())),
             }

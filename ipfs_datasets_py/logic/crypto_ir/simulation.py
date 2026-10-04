@@ -124,7 +124,9 @@ def _as_mapping(value: Any, name: str) -> Mapping[str, Any]:
     return value
 
 
-def _known_fields(value: Mapping[str, Any], allowed: frozenset[str], name: str) -> None:
+def _known_fields(
+    value: Mapping[str, Any], allowed: frozenset[str], name: str
+) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
         raise SimulationError(f"unknown {name} field(s): {', '.join(unknown)}")
@@ -275,7 +277,9 @@ def assert_not_promoted_to_proof(
             f"(simulation_outcome={sim.value})"
         )
     if sim is not SimulationOutcome.VIOLATION and claimed is AnalysisOutcome.DISPROVED:
-        raise SimulationError("only a violating simulation trace may claim analysis DISPROVED")
+        raise SimulationError(
+            "only a violating simulation trace may claim analysis DISPROVED"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -309,10 +313,14 @@ class SimulationBounds:
             "max_network_calls",
             "max_input_bytes",
         ):
-            object.__setattr__(self, name, _non_negative_int(getattr(self, name), name))
+            object.__setattr__(
+                self, name, _non_negative_int(getattr(self, name), name)
+            )
         if not isinstance(self.allow_network, bool):
             raise SimulationError("allow_network must be a bool")
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -353,7 +361,9 @@ class SimulationBounds:
             max_network_calls=value.get("max_network_calls", 0),
             allow_network=value.get("allow_network", False),
             max_input_bytes=value.get("max_input_bytes", 64 * 1024),
-            schema_version=value.get("schema_version", SIMULATION_BOUNDS_SCHEMA_VERSION),
+            schema_version=value.get(
+                "schema_version", SIMULATION_BOUNDS_SCHEMA_VERSION
+            ),
         )
 
     @property
@@ -388,13 +398,17 @@ class StateSnapshot:
     LAYER: ClassVar[AuthorityKind] = AuthorityKind.OBSERVATION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "snapshot_id", _identifier(self.snapshot_id, "snapshot_id"))
+        object.__setattr__(
+            self, "snapshot_id", _identifier(self.snapshot_id, "snapshot_id")
+        )
         object.__setattr__(
             self,
             "chain_namespace",
             _identifier(self.chain_namespace, "chain_namespace"),
         )
-        object.__setattr__(self, "block_or_slot", _text(self.block_or_slot, "block_or_slot"))
+        object.__setattr__(
+            self, "block_or_slot", _text(self.block_or_slot, "block_or_slot")
+        )
         object.__setattr__(self, "state_digest", _text(self.state_digest, "state_digest"))
         object.__setattr__(self, "storage", _attributes(self.storage))
         object.__setattr__(
@@ -405,7 +419,9 @@ class StateSnapshot:
             self, "subject_id", _text(self.subject_id, "subject_id", allow_empty=True)
         )
         object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
 
     def storage_digest(self) -> str:
         return _digest_of(dict(self.storage))
@@ -460,7 +476,9 @@ class StateSnapshot:
             vm_id=value.get("vm_id", "offline.v1"),
             subject_id=value.get("subject_id", ""),
             attributes=value.get("attributes", {}),
-            schema_version=value.get("schema_version", STATE_SNAPSHOT_SCHEMA_VERSION),
+            schema_version=value.get(
+                "schema_version", STATE_SNAPSHOT_SCHEMA_VERSION
+            ),
         )
 
     @property
@@ -485,9 +503,13 @@ class SimulationStep:
     attributes: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "step_index", _non_negative_int(self.step_index, "step_index"))
+        object.__setattr__(
+            self, "step_index", _non_negative_int(self.step_index, "step_index")
+        )
         object.__setattr__(self, "op", _identifier(self.op, "op"))
-        object.__setattr__(self, "target", _text(self.target, "target", allow_empty=True))
+        object.__setattr__(
+            self, "target", _text(self.target, "target", allow_empty=True)
+        )
         object.__setattr__(self, "value", _text(self.value, "value", allow_empty=True))
         object.__setattr__(self, "storage_writes", _attributes(self.storage_writes))
         object.__setattr__(
@@ -545,7 +567,9 @@ class SimulationRequest:
     LAYER: ClassVar[AuthorityKind] = AuthorityKind.DECLARATION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "request_id", _identifier(self.request_id, "request_id"))
+        object.__setattr__(
+            self, "request_id", _identifier(self.request_id, "request_id")
+        )
         if not isinstance(self.snapshot, StateSnapshot):
             object.__setattr__(
                 self,
@@ -560,9 +584,13 @@ class SimulationRequest:
                 SimulationBounds.from_dict(_as_mapping(self.bounds, "bounds")),
             )
         chain = self.chain_namespace or self.snapshot.chain_namespace
-        object.__setattr__(self, "chain_namespace", _identifier(chain, "chain_namespace"))
+        object.__setattr__(
+            self, "chain_namespace", _identifier(chain, "chain_namespace")
+        )
         object.__setattr__(self, "tool_name", _identifier(self.tool_name, "tool_name"))
-        object.__setattr__(self, "tool_version", _text(self.tool_version, "tool_version"))
+        object.__setattr__(
+            self, "tool_version", _text(self.tool_version, "tool_version")
+        )
         vm = self.vm_id or self.snapshot.vm_id
         object.__setattr__(self, "vm_id", _identifier(vm, "vm_id"))
         object.__setattr__(
@@ -580,9 +608,13 @@ class SimulationRequest:
         object.__setattr__(
             self, "sandbox_mode", _enum(SandboxMode, self.sandbox_mode, "sandbox_mode")
         )
-        object.__setattr__(self, "provider_id", _identifier(self.provider_id, "provider_id"))
+        object.__setattr__(
+            self, "provider_id", _identifier(self.provider_id, "provider_id")
+        )
         object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
         # Input size bound.
         input_bytes = len(canonical_json_bytes(dict(self.call_input)))
         if input_bytes > self.bounds.max_input_bytes:
@@ -590,8 +622,13 @@ class SimulationRequest:
                 f"call_input exceeds max_input_bytes "
                 f"({input_bytes} > {self.bounds.max_input_bytes})"
             )
-        if self.sandbox_mode is SandboxMode.PRODUCTION_FORK and not self.allow_production_fork:
-            raise SimulationError("production fork sandboxes require allow_production_fork=True")
+        if (
+            self.sandbox_mode is SandboxMode.PRODUCTION_FORK
+            and not self.allow_production_fork
+        ):
+            raise SimulationError(
+                "production fork sandboxes require allow_production_fork=True"
+            )
 
     def input_digest(self) -> str:
         return _digest_of(dict(self.call_input))
@@ -647,9 +684,13 @@ class SimulationRequest:
         )
         return cls(
             request_id=value.get("request_id", ""),
-            snapshot=StateSnapshot.from_dict(_as_mapping(value.get("snapshot", {}), "snapshot")),
+            snapshot=StateSnapshot.from_dict(
+                _as_mapping(value.get("snapshot", {}), "snapshot")
+            ),
             call_input=value.get("call_input", {}),
-            bounds=SimulationBounds.from_dict(_as_mapping(value.get("bounds", {}), "bounds")),
+            bounds=SimulationBounds.from_dict(
+                _as_mapping(value.get("bounds", {}), "bounds")
+            ),
             chain_namespace=value.get("chain_namespace", ""),
             tool_name=value.get("tool_name", "crypto-ir-offline-sandbox"),
             tool_version=value.get("tool_version", "1.0.0"),
@@ -657,10 +698,14 @@ class SimulationRequest:
             obligation_id=value.get("obligation_id", ""),
             monitor_predicate_ids=tuple(value.get("monitor_predicate_ids", ())),
             allow_production_fork=value.get("allow_production_fork", False),
-            sandbox_mode=value.get("sandbox_mode", SandboxMode.OFFLINE_DETERMINISTIC),
+            sandbox_mode=value.get(
+                "sandbox_mode", SandboxMode.OFFLINE_DETERMINISTIC
+            ),
             provider_id=value.get("provider_id", "offline"),
             attributes=value.get("attributes", {}),
-            schema_version=value.get("schema_version", SIMULATION_REQUEST_SCHEMA_VERSION),
+            schema_version=value.get(
+                "schema_version", SIMULATION_REQUEST_SCHEMA_VERSION
+            ),
         )
 
     @property
@@ -715,9 +760,15 @@ class SimulationReceipt:
     LAYER: ClassVar[AuthorityKind] = AuthorityKind.EVIDENCE
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "receipt_id", _identifier(self.receipt_id, "receipt_id"))
-        object.__setattr__(self, "request_id", _identifier(self.request_id, "request_id"))
-        object.__setattr__(self, "outcome", _enum(SimulationOutcome, self.outcome, "outcome"))
+        object.__setattr__(
+            self, "receipt_id", _identifier(self.receipt_id, "receipt_id")
+        )
+        object.__setattr__(
+            self, "request_id", _identifier(self.request_id, "request_id")
+        )
+        object.__setattr__(
+            self, "outcome", _enum(SimulationOutcome, self.outcome, "outcome")
+        )
         object.__setattr__(
             self, "authority", _enum(SimulationAuthority, self.authority, "authority")
         )
@@ -734,8 +785,12 @@ class SimulationReceipt:
             SimulationOutcome.VIOLATION,
             SimulationOutcome.REVERT,
         }:
-            raise SimulationError("non-executed receipt cannot claim success/violation/revert")
-        object.__setattr__(self, "snapshot_id", _identifier(self.snapshot_id, "snapshot_id"))
+            raise SimulationError(
+                "non-executed receipt cannot claim success/violation/revert"
+            )
+        object.__setattr__(
+            self, "snapshot_id", _identifier(self.snapshot_id, "snapshot_id")
+        )
         object.__setattr__(
             self,
             "snapshot_state_digest",
@@ -785,7 +840,9 @@ class SimulationReceipt:
             "obligation_id",
             "reason",
         ):
-            object.__setattr__(self, name, _text(getattr(self, name), name, allow_empty=True))
+            object.__setattr__(
+                self, name, _text(getattr(self, name), name, allow_empty=True)
+            )
         object.__setattr__(
             self,
             "monitor_predicate_ids",
@@ -795,7 +852,9 @@ class SimulationReceipt:
             self, "sandbox_mode", _enum(SandboxMode, self.sandbox_mode, "sandbox_mode")
         )
         for name in ("elapsed_ms", "memory_bytes_used", "network_calls"):
-            object.__setattr__(self, name, _non_negative_int(getattr(self, name), name))
+            object.__setattr__(
+                self, name, _non_negative_int(getattr(self, name), name)
+            )
         if self.elapsed_ms > self.bounds.max_time_ms and self.outcome not in {
             SimulationOutcome.TIMEOUT,
             SimulationOutcome.BOUND_EXCEEDED,
@@ -804,15 +863,21 @@ class SimulationReceipt:
             raise SimulationError(
                 "elapsed_ms exceeds max_time_ms without timeout/bound_exceeded outcome"
             )
-        if self.memory_bytes_used > self.bounds.max_memory_bytes and self.outcome not in {
-            SimulationOutcome.BOUND_EXCEEDED,
-            SimulationOutcome.ERROR,
-        }:
+        if (
+            self.memory_bytes_used > self.bounds.max_memory_bytes
+            and self.outcome
+            not in {
+                SimulationOutcome.BOUND_EXCEEDED,
+                SimulationOutcome.ERROR,
+            }
+        ):
             raise SimulationError(
                 "memory_bytes_used exceeds max_memory_bytes without bound_exceeded"
             )
         if self.network_calls > 0 and not self.bounds.allow_network:
-            raise SimulationError("network_calls recorded while bounds.allow_network is false")
+            raise SimulationError(
+                "network_calls recorded while bounds.allow_network is false"
+            )
         if self.network_calls > self.bounds.max_network_calls:
             raise SimulationError("network_calls exceed max_network_calls bound")
         object.__setattr__(
@@ -827,7 +892,9 @@ class SimulationReceipt:
         )
         # Authority lattice: never allow analysis PROVED from simulation.
         if self.analysis_outcome is AnalysisOutcome.PROVED:
-            raise SimulationError("simulation receipt cannot claim analysis PROVED")
+            raise SimulationError(
+                "simulation receipt cannot claim analysis PROVED"
+            )
         expected_monitor = monitor_outcome_for_simulation(self.outcome)
         if self.monitor_outcome is not expected_monitor:
             raise SimulationError(
@@ -842,7 +909,9 @@ class SimulationReceipt:
             )
         object.__setattr__(self, "final_storage", _attributes(self.final_storage))
         object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
         # Isolation: source digest on the receipt must match the snapshot digest
         # that was provided at request time (caller re-binds it).
         if self.isolation_source_digest != self.snapshot_state_digest:
@@ -896,7 +965,9 @@ class SimulationReceipt:
             "network_calls": self.network_calls,
             "obligation_id": self.obligation_id,
             "outcome": (
-                self.outcome.value if isinstance(self.outcome, SimulationOutcome) else self.outcome
+                self.outcome.value
+                if isinstance(self.outcome, SimulationOutcome)
+                else self.outcome
             ),
             "post_state_digest": self.post_state_digest,
             "provider_id": self.provider_id,
@@ -921,7 +992,9 @@ class SimulationReceipt:
     def from_dict(cls, value: Mapping[str, Any]) -> "SimulationReceipt":
         value = _as_mapping(value, "SimulationReceipt")
         steps_raw = value.get("steps", ())
-        steps = tuple(SimulationStep.from_dict(_as_mapping(item, "steps")) for item in steps_raw)
+        steps = tuple(
+            SimulationStep.from_dict(_as_mapping(item, "steps")) for item in steps_raw
+        )
         return cls(
             receipt_id=value.get("receipt_id", ""),
             request_id=value.get("request_id", ""),
@@ -932,7 +1005,9 @@ class SimulationReceipt:
             snapshot_state_digest=value.get("snapshot_state_digest", ""),
             post_state_digest=value.get("post_state_digest", ""),
             isolation_source_digest=value.get("isolation_source_digest", ""),
-            bounds=SimulationBounds.from_dict(_as_mapping(value.get("bounds", {}), "bounds")),
+            bounds=SimulationBounds.from_dict(
+                _as_mapping(value.get("bounds", {}), "bounds")
+            ),
             steps=steps,
             block_or_slot=value.get("block_or_slot", ""),
             chain_namespace=value.get("chain_namespace", ""),
@@ -943,16 +1018,22 @@ class SimulationReceipt:
             input_digest=value.get("input_digest", ""),
             obligation_id=value.get("obligation_id", ""),
             monitor_predicate_ids=tuple(value.get("monitor_predicate_ids", ())),
-            sandbox_mode=value.get("sandbox_mode", SandboxMode.OFFLINE_DETERMINISTIC),
+            sandbox_mode=value.get(
+                "sandbox_mode", SandboxMode.OFFLINE_DETERMINISTIC
+            ),
             elapsed_ms=value.get("elapsed_ms", 0),
             memory_bytes_used=value.get("memory_bytes_used", 0),
             network_calls=value.get("network_calls", 0),
             reason=value.get("reason", ""),
             monitor_outcome=value.get("monitor_outcome", MonitorOutcome.UNKNOWN),
-            analysis_outcome=value.get("analysis_outcome", AnalysisOutcome.UNKNOWN),
+            analysis_outcome=value.get(
+                "analysis_outcome", AnalysisOutcome.UNKNOWN
+            ),
             final_storage=value.get("final_storage", {}),
             attributes=value.get("attributes", {}),
-            schema_version=value.get("schema_version", SIMULATION_RECEIPT_SCHEMA_VERSION),
+            schema_version=value.get(
+                "schema_version", SIMULATION_RECEIPT_SCHEMA_VERSION
+            ),
         )
 
     @property
@@ -1430,7 +1511,10 @@ def run_simulation(
     source_storage_mapping = dict(thaw_json(request.snapshot.storage))
 
     # Production fork mode requires opt-in on the request before availability.
-    if sandbox.mode is SandboxMode.PRODUCTION_FORK and not request.allow_production_fork:
+    if (
+        sandbox.mode is SandboxMode.PRODUCTION_FORK
+        and not request.allow_production_fork
+    ):
         run = SandboxRunResult(
             outcome=SimulationOutcome.REFUSED,
             steps=(),
@@ -1457,7 +1541,9 @@ def run_simulation(
 
     # Isolation check: original snapshot must be byte-stable.
     if request.snapshot.storage_digest() != source_storage_before:
-        raise SimulationError("sandbox mutated source StateSnapshot.storage (isolation violated)")
+        raise SimulationError(
+            "sandbox mutated source StateSnapshot.storage (isolation violated)"
+        )
     if request.snapshot.state_digest != source_state_digest:
         raise SimulationError(
             "sandbox mutated source StateSnapshot.state_digest (isolation violated)"

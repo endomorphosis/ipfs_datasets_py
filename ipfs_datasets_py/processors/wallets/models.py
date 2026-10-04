@@ -103,7 +103,9 @@ _SECRET_VALUE_PATTERNS = (
     re.compile(r"(?i)^[a-z][a-z0-9+.-]*://[^/\s:@]+:[^/\s@]+@"),
     # Catches long sentinel-style tokens without treating paths or prose that
     # merely mention a security test as concrete credentials.
-    re.compile(r"(?i)^[a-z0-9][a-z0-9_-]{15,}-(?:secret|password|passwd|passphrase)$"),
+    re.compile(
+        r"(?i)^[a-z0-9][a-z0-9_-]{15,}-(?:secret|password|passwd|passphrase)$"
+    ),
 )
 
 
@@ -145,7 +147,9 @@ def ensure_secret_safe(value: Any) -> None:
             if len(item) > SECRET_SAFE_MAX_STRING_CHARS:
                 raise ValueError("wallet serialization security policy limit exceeded")
             if _is_concrete_secret(item):
-                raise ValueError("wallet serialization rejects concrete secret values")
+                raise ValueError(
+                    "wallet serialization rejects concrete secret values"
+                )
             return
 
         if isinstance(item, Mapping):
@@ -154,13 +158,19 @@ def ensure_secret_safe(value: Any) -> None:
             for key, child in item.items():
                 if isinstance(key, str):
                     if len(key) > SECRET_SAFE_MAX_STRING_CHARS:
-                        raise ValueError("wallet serialization security policy limit exceeded")
+                        raise ValueError(
+                            "wallet serialization security policy limit exceeded"
+                        )
                     if _is_secret_field(key) or _is_concrete_secret(key):
-                        raise ValueError("wallet serialization rejects secret-shaped fields")
+                        raise ValueError(
+                            "wallet serialization rejects secret-shaped fields"
+                        )
                 visit(child, depth + 1)
             return
 
-        if isinstance(item, Sequence) and not isinstance(item, (str, bytes, bytearray, memoryview)):
+        if isinstance(item, Sequence) and not isinstance(
+            item, (str, bytes, bytearray, memoryview)
+        ):
             if len(item) > SECRET_SAFE_MAX_COLLECTION_ITEMS:
                 raise ValueError("wallet serialization security policy limit exceeded")
             for child in item:
@@ -263,7 +273,9 @@ class VersionedExtension:
         _required(self.schema_version, "extension schema_version")
         if not isinstance(self.data, Mapping):
             raise ValueError("extension data must be a mapping")
-        ensure_secret_safe({"schema_version": self.schema_version, "data": self.data})
+        ensure_secret_safe(
+            {"schema_version": self.schema_version, "data": self.data}
+        )
         frozen = freeze_json(self.data)
         ensure_secret_safe(frozen)
         object.__setattr__(self, "data", frozen)
@@ -452,7 +464,9 @@ class ExactAmount:
     decimals: int
 
     def __post_init__(self) -> None:
-        if not isinstance(self.base_units, str) or not _DECIMAL_INTEGER.fullmatch(self.base_units):
+        if not isinstance(self.base_units, str) or not _DECIMAL_INTEGER.fullmatch(
+            self.base_units
+        ):
             raise ValueError("base_units must be a canonical decimal integer string")
         _non_negative(self.decimals, "decimals")
         if self.decimals > 255:
@@ -630,7 +644,9 @@ def _same_chain(record: LedgerRecord, *refs: AccountRef | AssetRef | None) -> No
             if not isinstance(ref, (AccountRef, AssetRef)):
                 raise ValueError("record references must be AccountRef or AssetRef values")
             if ref.chain != record.chain:
-                raise ValueError("account and asset references must match the record chain")
+                raise ValueError(
+                    "account and asset references must match the record chain"
+                )
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -646,7 +662,10 @@ class BlockRecord(LedgerRecord):
         _required(self.block_hash, "block_hash")
         if self.ledger_position.sequence is None:
             raise ValueError("block ledger position must have a sequence")
-        if self.ledger_position.hash is not None and self.ledger_position.hash != self.block_hash:
+        if (
+            self.ledger_position.hash is not None
+            and self.ledger_position.hash != self.block_hash
+        ):
             raise ValueError("block_hash must match the ledger position hash")
         if self.parent_hash is not None:
             _required(self.parent_hash, "parent_hash")

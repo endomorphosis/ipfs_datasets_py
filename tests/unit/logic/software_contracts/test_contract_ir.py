@@ -317,7 +317,9 @@ def test_schema_descriptor_guarantees_and_ast_symbols() -> None:
     assert descriptor["fact_kinds"] == sorted(FACT_KINDS)
     assert descriptor["authority_ranks_high_to_low"] == list(AUTHORITY_RANKS)
     assert set(descriptor["predicate_operators"]) == PREDICATE_OPERATORS
-    assert set(descriptor["rejected_predicate_operators"]) == (REJECTED_PREDICATE_OPERATORS)
+    assert set(descriptor["rejected_predicate_operators"]) == (
+        REJECTED_PREDICATE_OPERATORS
+    )
     guarantees = descriptor["guarantees"]
     assert guarantees["explicit_assumptions_and_authority"] is True
     assert guarantees["rejects_unbounded_executable_predicates"] is True
@@ -356,7 +358,9 @@ def test_json_schema_file_exists_and_names_closed_vocabularies() -> None:
     assert schema_path.is_file(), f"missing schema at {schema_path}"
     payload = json.loads(schema_path.read_text(encoding="utf-8"))
     assert payload["$id"].endswith("software-contract-v1.schema.json")
-    assert payload["properties"]["schema"]["const"] == SOFTWARE_CONTRACT_SCHEMA
+    assert (
+        payload["properties"]["schema"]["const"] == SOFTWARE_CONTRACT_SCHEMA
+    )
     assert payload["properties"]["owner_goal"]["const"] == GOAL_ID
     operators = set(payload["$defs"]["predicateOperator"]["enum"])
     assert operators == PREDICATE_OPERATORS
@@ -379,7 +383,11 @@ def test_fact_kinds_are_distinguished() -> None:
             inference_authority()
             if kind == "inferred"
             else reviewed_authority(
-                rank=("type_declaration" if kind == "extracted" else "reviewed_registry")
+                rank=(
+                    "type_declaration"
+                    if kind == "extracted"
+                    else "reviewed_registry"
+                )
             )
         )
         if kind == "witnessed":
@@ -474,7 +482,10 @@ def test_callable_contract_round_trips_with_stable_cid() -> None:
     assert restored == contract
     assert restored.cid == contract.cid
     assert contract.verify_cid(contract.cid) == contract.cid
-    assert contract.cid == "baguqeeraellbrbjfomy7wivl5aqti4r2x27542o3mcd6h5gsi647h6b6cf4a"
+    assert (
+        contract.cid
+        == "baguqeeraellbrbjfomy7wivl5aqti4r2x27542o3mcd6h5gsi647h6b6cf4a"
+    )
     # Nested records are frozen.
     with pytest.raises(dataclasses.FrozenInstanceError):
         contract.qualified_name = "changed"  # type: ignore[misc]
@@ -494,7 +505,10 @@ def test_contract_document_json_round_trip_and_golden_cid() -> None:
     assert cid_for_structured(document.to_dict()) == document.cid
     assert document.verify_cid(document.cid) == document.cid
     # Golden root — schema/fields cannot drift without review.
-    assert document.cid == "baguqeerayqx6iygly4t3xswej7zcu4mnmbe2tcubsoubscarucxqvff43lwa"
+    assert (
+        document.cid
+        == "baguqeerayqx6iygly4t3xswej7zcu4mnmbe2tcubsoubscarucxqvff43lwa"
+    )
     again = ContractDocument.from_dict(document.to_dict())
     assert again.cid == document.cid
 
@@ -526,7 +540,9 @@ def test_record_order_is_canonicalized() -> None:
         symbol_id=first.symbol_id,
     )
     assert second.cid == first.cid
-    assert [item.effect_id for item in second.effects] == [item.effect_id for item in first.effects]
+    assert [item.effect_id for item in second.effects] == [
+        item.effect_id for item in first.effects
+    ]
 
 
 def test_closed_fields_reject_unknown_keys() -> None:
@@ -566,9 +582,14 @@ def test_registry_admits_reviewed_contract_and_round_trips() -> None:
     assert len(registry) == 1
     assert contract.contract_id in registry
     assert registry.get(contract.contract_id) == contract
-    assert registry.get_by_qualified_name(contract.qualified_name) == contract
+    assert (
+        registry.get_by_qualified_name(contract.qualified_name) == contract
+    )
     assert not registry.has_findings
-    assert registry.cid == "baguqeerag6pg4suv2xf4r5h3uo2nh7ksis53woxvja4m6te7l2klckoxkyga"
+    assert (
+        registry.cid
+        == "baguqeerag6pg4suv2xf4r5h3uo2nh7ksis53woxvja4m6te7l2klckoxkyga"
+    )
 
     restored = ContractRegistry.from_dict(registry.to_dict())
     assert restored.cid == registry.cid
@@ -629,7 +650,9 @@ def test_lower_authority_cannot_override_higher() -> None:
     )
     assert high.contract_id in registry
     # Low-authority contract should not replace the high-authority one.
-    assert registry.get_by_qualified_name(high.qualified_name).contract_id == (high.contract_id)
+    assert registry.get_by_qualified_name(high.qualified_name).contract_id == (
+        high.contract_id
+    )
 
 
 def test_reject_on_findings_raises() -> None:
@@ -697,7 +720,9 @@ def test_assumption_is_explicit_on_callable() -> None:
     assert len(contract.assumptions) == 1
     assert contract.assumptions[0].required is True
     assert "Network I/O" in contract.assumptions[0].statement
-    assert contract.assumptions[0].provenance.authority.rank == ("reviewed_registry")
+    assert contract.assumptions[0].provenance.authority.rank == (
+        "reviewed_registry"
+    )
 
 
 def test_all_record_types_have_content_identity() -> None:

@@ -138,7 +138,9 @@ def test_ledger_ingestion_fetches_blocks_receipts_and_optional_traces(
     assert len(batches) == 1
     bundle = batches[0].records[0]
     assert len(bundle.receipts) == 3
-    first_hash = rpc_session_hash = "0x" + "01" * 32
+    first_hash = rpc_session_hash = (
+        "0x" + "01" * 32
+    )
     assert bundle.traces[first_hash][0]["action"]["value"] == "0x2a"
     assert Capability.INTERNAL_TRANSFERS in provider.capabilities.features
     assert provider.capabilities.metadata["read_only"] is True
@@ -230,7 +232,9 @@ def test_wallet_history_scan_is_finite_and_filtered(
     assert len(asyncio.run(collect("0x" + "11" * 20))) == 1
     assert asyncio.run(collect("0x" + "99" * 20)) == []
     with pytest.raises(UnsupportedCapabilityError):
-        asyncio.run(provider.trace_transaction("0x" + "01" * 32, context=_context()))
+        asyncio.run(
+            provider.trace_transaction("0x" + "01" * 32, context=_context())
+        )
 
 
 def test_public_surface_is_read_only_and_endpoint_repr_is_redacted(

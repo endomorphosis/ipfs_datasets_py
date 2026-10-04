@@ -8,13 +8,12 @@ actual model inputs, separately from any source-text normalization hash.
 """
 from __future__ import annotations
 
-from contextlib import contextmanager, ExitStack
+from contextlib import contextmanager
 import hashlib
 import os
 from pathlib import Path
 import platform
 import socket
-import stat
 import sys
 import threading
 from typing import Any, Sequence
@@ -86,23 +85,7 @@ def _offline_guard():
                     os.environ[name] = old
 
 
-def _asset_file_identity(info):
-    if not stat.S_ISREG(info.st_mode):
-        raise EmbeddingRuntimeError("model asset descriptor must be a regular file")
-    # Reading may update atime; it cannot legitimately change these fields.
-    return (info.st_dev, info.st_ino, info.st_mode, info.st_size,
-            info.st_mtime_ns, info.st_ctime_ns)
-
-
-def _snapshot_assets(snapshot_path: str | Path, *, release_verified_pages: bool = False) -> tuple[Path, list[dict[str, Any]]]:
-    """Verify the complete pinned snapshot; optionally advise verified file pages.
-
-    Advice is best effort and reports no freed-memory guarantee. The opt-in holds
-    all nine descriptors until every asset passes, then advises those descriptors
-    without rereading bodies. Default callers retain the existing read behavior.
-    """
-    if type(release_verified_pages) is not bool:
-        raise EmbeddingRuntimeError("release_verified_pages must be a boolean")
+def _snapshot_assets(snapshot_path: str | Path) -> tuple[Path, list[dict[str, Any]]]:
     snapshot = Path(snapshot_path).expanduser()
     if not snapshot.is_absolute():
         raise EmbeddingRuntimeError("snapshot must be an absolute local path")
@@ -129,55 +112,26 @@ def _snapshot_assets(snapshot_path: str | Path, *, release_verified_pages: bool 
     repository = snapshot.parent.parent.resolve()
     manifest = []
     total = 0
-    held = []
-    with ExitStack() as opened:
-        for name, (expected_size, expected_hash) in sorted(_PINNED_ASSETS.items()):
-            path = snapshot / name
-            resolved = path.resolve(strict=True)
-            if not resolved.is_relative_to(repository) or not resolved.is_file():
-                raise EmbeddingRuntimeError("asset must resolve inside the pinned model cache")
-            initial = resolved.stat()
-            size = initial.st_size
-            total += size
-            if size != expected_size or total > MAX_ASSET_BYTES:
-                raise EmbeddingRuntimeError("model assets exceed pinned size or byte limit")
-            digest = hashlib.sha256()
-            read = 0
-            # Retain verified descriptors only for the explicitly selected policy.
-            with ExitStack() as current:
-                handle = (opened if release_verified_pages else current).enter_context(path.open("rb"))
-                if release_verified_pages:
-                    before = _asset_file_identity(os.fstat(handle.fileno()))
-                    if before != _asset_file_identity(initial):
-                        raise EmbeddingRuntimeError("model asset changed before verification")
-                for block in iter(lambda: handle.read(1024 * 1024), b""):
-                    read += len(block)
-                    if read > expected_size:
-                        raise EmbeddingRuntimeError("model asset grew during verification")
-                    digest.update(block)
-                if read != size or digest.hexdigest() != expected_hash:
-                    raise EmbeddingRuntimeError("model asset SHA-256 does not match pinned bytes")
-                if release_verified_pages:
-                    if _asset_file_identity(os.fstat(handle.fileno())) != before:
-                        raise EmbeddingRuntimeError("model asset changed during verification")
-                    held.append((handle, before))
-            manifest.append({"name": name, "sha256": digest.hexdigest(), "bytes": read})
-        if release_verified_pages:
-            # Refuse a changed earlier asset before the first advice call.
-            for handle, before in held:
-                if _asset_file_identity(os.fstat(handle.fileno())) != before:
-                    raise EmbeddingRuntimeError("model asset changed after verification")
-            advise = getattr(os, "posix_fadvise", None)
-            policy = getattr(os, "POSIX_FADV_DONTNEED", None)
-            if advise is not None and policy is not None:
-                for handle, _ in held:
-                    try:
-                        advise(handle.fileno(), 0, 0, policy)
-                    except TimeoutError:
-                        raise
-                    except (OSError, NotImplementedError):
-                        # Unsupported hints must not change verified asset validity.
-                        pass
+    for name, (expected_size, expected_hash) in sorted(_PINNED_ASSETS.items()):
+        path = snapshot / name
+        resolved = path.resolve(strict=True)
+        if not resolved.is_relative_to(repository) or not resolved.is_file():
+            raise EmbeddingRuntimeError("asset must resolve inside the pinned model cache")
+        size = resolved.stat().st_size
+        total += size
+        if size != expected_size or total > MAX_ASSET_BYTES:
+            raise EmbeddingRuntimeError("model assets exceed pinned size or byte limit")
+        digest = hashlib.sha256()
+        read = 0
+        with path.open("rb") as handle:
+            for block in iter(lambda: handle.read(1024 * 1024), b""):
+                read += len(block)
+                if read > expected_size:
+                    raise EmbeddingRuntimeError("model asset grew during verification")
+                digest.update(block)
+        if read != size or digest.hexdigest() != expected_hash:
+            raise EmbeddingRuntimeError("model asset SHA-256 does not match pinned bytes")
+        manifest.append({"name": name, "sha256": digest.hexdigest(), "bytes": read})
     return snapshot, manifest
 
 

@@ -338,7 +338,9 @@ def _generate(
     loops: tuple[LoopContract, ...] = (),
     loop_variant_policy: LoopVariantPolicy = LoopVariantPolicy.OPTIONAL,
 ) -> VerificationConditionSet:
-    return VerificationConditionGenerator(loop_variant_policy=loop_variant_policy).generate(
+    return VerificationConditionGenerator(
+        loop_variant_policy=loop_variant_policy
+    ).generate(
         program or _program(),
         contract or _contract(),
         loops,
@@ -371,12 +373,15 @@ def test_generate_binds_source_construct_assumptions_symbols_rule_and_parent() -
         assert obligation.source_ref_ids or obligation.span_ids
         assert obligation.obligation_id.startswith("vc:")
 
-    assign = next(item for item in result.obligations if item.rule is VCRuleKind.ASSIGN)
+    assign = next(
+        item for item in result.obligations if item.rule is VCRuleKind.ASSIGN
+    )
     assert assign.source_construct_id == "command:increment"
     assert assign.generated_symbol_ids == ("gen:command:increment:symbol:result",)
     assert assign.assumption_expression_ids == ("expr:positive",)
     assert any(
-        item.symbol_id == "gen:command:increment:symbol:result" for item in result.generated_symbols
+        item.symbol_id == "gen:command:increment:symbol:result"
+        for item in result.generated_symbols
     )
 
     payload = result.to_dict()
@@ -416,7 +421,9 @@ def test_exceptional_and_normal_postconditions_are_distinct() -> None:
     assert normal
     assert all(item.goal_expression_ids == ("expr:result",) for item in normal)
     assert exceptional
-    assert any(item.attributes.get("exception_type") == "ValueError" for item in exceptional)
+    assert any(
+        item.attributes.get("exception_type") == "ValueError" for item in exceptional
+    )
     assert result.obligations_by_rule(VCRuleKind.THROW)
     assert result.obligations_by_rule(VCRuleKind.RETURN)
     assert result.obligations_by_rule(VCRuleKind.ASSERT)
@@ -491,7 +498,8 @@ def test_unsupported_effects_remain_explicit() -> None:
     assert UnsupportedEffectKind.UNDEFINED_BEHAVIOR in kinds
     assert result.obligations_by_rule(VCRuleKind.UNDEFINED)
     assert result.obligations_by_rule(VCRuleKind.UNSUPPORTED_EFFECT) or any(
-        item.kind is UnsupportedEffectKind.PERFORMS_IO for item in result.unsupported_effects
+        item.kind is UnsupportedEffectKind.PERFORMS_IO
+        for item in result.unsupported_effects
     )
 
 
@@ -579,8 +587,12 @@ def test_resource_commands_emit_resource_obligations() -> None:
     contract = ProgramContract(
         contract_id="contract:resource",
         function_id="function:resource",
-        preconditions=(_clause("clause:pre", ContractClauseKind.PRECONDITION, "expr:true"),),
-        postconditions=(_clause("clause:post", ContractClauseKind.POSTCONDITION, "expr:ok"),),
+        preconditions=(
+            _clause("clause:pre", ContractClauseKind.PRECONDITION, "expr:true"),
+        ),
+        postconditions=(
+            _clause("clause:post", ContractClauseKind.POSTCONDITION, "expr:ok"),
+        ),
         frame=FrameCondition(
             readable_symbol_ids=("symbol:buf", "symbol:ok"),
             writable_symbol_ids=("symbol:buf", "symbol:ok"),
@@ -609,7 +621,9 @@ def test_mutation_detects_dropped_branch_obligations() -> None:
     assert complete.branch_edge_ids()
     assert not mutated.branch_edge_ids()
     with pytest.raises(VCValidationError, match="missing branch obligations"):
-        VerificationConditionGenerator().validate_coverage(_program(), _contract(), mutated)
+        VerificationConditionGenerator().validate_coverage(
+            _program(), _contract(), mutated
+        )
 
 
 def test_mutation_detects_dropped_frame_obligations() -> None:
@@ -619,7 +633,9 @@ def test_mutation_detects_dropped_frame_obligations() -> None:
     assert complete.frame_construct_ids() == frozenset({"symbol:result"})
     assert not mutated.frame_construct_ids()
     with pytest.raises(VCValidationError, match="missing frame obligations"):
-        VerificationConditionGenerator().validate_coverage(_program(), _contract(), mutated)
+        VerificationConditionGenerator().validate_coverage(
+            _program(), _contract(), mutated
+        )
 
 
 def test_vc_set_is_immutable_and_content_addressed() -> None:

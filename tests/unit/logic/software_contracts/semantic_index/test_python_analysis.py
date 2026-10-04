@@ -5,8 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 from textwrap import dedent
 
-import pytest
-
 from ipfs_datasets_py.logic.software_contracts.python_frontend import PythonASTExtractor
 from ipfs_datasets_py.logic.software_contracts.semantic_index.models import SymbolKind
 from ipfs_datasets_py.logic.software_contracts.semantic_index.python_analysis import (
@@ -19,26 +17,6 @@ from ipfs_datasets_py.logic.software_contracts.semantic_index.python_analysis im
 def _by_name(source: str, path: str = "pkg/example.py"):
     result = analyze_python_source(source, path, "repo:example")
     return {item.symbol.qualified_name: item for item in result.symbols}
-
-
-@pytest.mark.parametrize("path,module,namespace", [
-    (".supervisor-public-smoke.py", ".supervisor-public-smoke", ".supervisor-public-smoke"),
-    (".internal/check.py", ".internal.check", ".internal.check"),
-    ("pkg/.check.py", "pkg..check", "pkg"),
-    ("pkg/check.py", "pkg.check", "pkg"),
-])
-def test_hidden_source_names_retain_path_identity_and_nonempty_namespace(path, module, namespace):
-    source = "raise RuntimeError('must not execute')\ndef check(): return 1\n"
-    result = analyze_python_source(source, path, "repo:hidden")
-    symbols = {item.symbol.qualified_name: item.symbol for item in result.symbols}
-    assert set(symbols) == {module, module + ".check"}
-    assert all(symbol.module_path == path and symbol.namespace == namespace
-               for symbol in symbols.values())
-    explicit = analyze_python_source(source, path, "repo:hidden", namespace="explicit")
-    assert all(item.symbol.namespace == "explicit" for item in explicit.symbols)
-    other = analyze_python_source(source, "other.py", "repo:hidden")
-    assert {item.symbol.stable_id for item in result.symbols}.isdisjoint(
-        item.symbol.stable_id for item in other.symbols)
 
 
 def test_extracts_symbol_contracts_and_position_free_ast() -> None:

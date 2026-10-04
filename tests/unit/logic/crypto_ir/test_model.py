@@ -160,10 +160,9 @@ def test_schema_registry_is_closed_and_deterministic() -> None:
     identifiers = [item["identifier"] for item in descriptor["schemas"]]
     assert identifiers == sorted(identifiers)
     assert CRYPTO_IR_MODEL_SCHEMA.identifier in SCHEMA_VERSIONS
-    assert (
-        get_schema_version(CRYPTO_IR_MODEL_SCHEMA.identifier)
-        is SCHEMA_VERSIONS[CRYPTO_IR_MODEL_SCHEMA.identifier]
-    )
+    assert get_schema_version(CRYPTO_IR_MODEL_SCHEMA.identifier) is SCHEMA_VERSIONS[
+        CRYPTO_IR_MODEL_SCHEMA.identifier
+    ]
     with pytest.raises(Exception):
         get_schema_version("ipfs-datasets.crypto-ir.unknown@9.9.9")
 
@@ -350,7 +349,9 @@ def test_observed_transaction_carries_finality_validity_retraction() -> None:
         coordinate=LedgerCoordinate(sequence=12_000_000, hash="0xblock"),
         finality=FinalityStatus.FINALIZED,
         retraction=RetractionStatus.NOT_RETRACTED,
-        validity=ValidityWindow(start="2026-07-29T00:00:00Z", end="2026-07-30T00:00:00Z"),
+        validity=ValidityWindow(
+            start="2026-07-29T00:00:00Z", end="2026-07-30T00:00:00Z"
+        ),
         from_account=_account("0xfrom"),
         to_account=_account("0xto"),
         provenance=prov,
@@ -446,7 +447,9 @@ def test_authority_layers_are_distinct() -> None:
     assert record_layer(_chain()) is AuthorityKind.DECLARATION
     assert record_layer(_intent()) is AuthorityKind.DECLARATION
     assert (
-        record_layer(CryptoAssumption(assumption_id="a1", statement="provider is honest"))
+        record_layer(
+            CryptoAssumption(assumption_id="a1", statement="provider is honest")
+        )
         is AuthorityKind.ASSUMPTION
     )
     assert (
@@ -486,7 +489,9 @@ def test_conversion_cannot_elevate_observation_to_authorization() -> None:
     with pytest.raises(CryptoIRValidationError, match="authorization"):
         refuse_authority_elevation(obs, AuthorityKind.AUTHORIZATION)
     with pytest.raises(Exception, match="authorization|elevate"):
-        assert_authority_not_elevated(AuthorityKind.OBSERVATION, AuthorityKind.AUTHORIZATION)
+        assert_authority_not_elevated(
+            AuthorityKind.OBSERVATION, AuthorityKind.AUTHORIZATION
+        )
 
 
 def test_conversion_cannot_rewrite_result_as_authorization() -> None:
@@ -502,7 +507,9 @@ def test_conversion_cannot_rewrite_result_as_authorization() -> None:
 
 def test_declaration_cannot_become_observation_by_conversion() -> None:
     with pytest.raises(Exception):
-        assert_authority_not_elevated(AuthorityKind.DECLARATION, AuthorityKind.OBSERVATION)
+        assert_authority_not_elevated(
+            AuthorityKind.DECLARATION, AuthorityKind.OBSERVATION
+        )
 
 
 # ---------------------------------------------------------------------------

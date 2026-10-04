@@ -1,0 +1,57 @@
+{
+  "platform": {
+    "system": "Windows",
+    "release": "11",
+    "version": "10.0.22000",
+    "machine": "AMD64",
+    "processor": "Intel64 Family 6 Model 158 Stepping 9, GenuineIntel",
+    "python_version": "3.14.2",
+    "python_implementation": "CPython",
+    "is_windows": true,
+    "is_64bit": true
+  },
+  "venv": {
+    "exists": true,
+    "path": ".venv\\Scripts\\python.exe"
+  },
+  "pip_upgrade": true,
+  "core_deps": [
+    {
+      "name": "numpy",
+      "success": true,
+      "output": "Requirement already satisfied: numpy in c:\\users\\admin\\ipfs_datasets_py\\.venv\\lib\\site-packages (2.4"
+    },
+    {
+      "name": "requests",
+      "success": true,
+      "output": "Collecting requests\n  Downloading requests-2.32.5-py3-none-any.whl.metadata (4.9 kB)\nWould install r"
+    },
+    {
+      "name": "pyyaml",
+      "success": true,
+      "output": "Collecting pyyaml\n  Downloading pyyaml-6.0.3-cp314-cp314-win_amd64.whl.metadata (2.4 kB)\nWould insta"
+    },
+    {
+      "name": "cachetools",
+      "success": true,
+      "output": "Collecting cachetools\n  Downloading cachetools-6.2.4-py3-none-any.whl.metadata (5.6 kB)\nWould instal"
+    }
+  ],
+  "optional_deps": [
+    {
+      "name": "python-magic-bin",
+      "success": true,
+      "available": true
+    },
+    {
+      "name": "pywin32",
+      "success": true,
+      "available": true
+    }
+  ],
+  "issues": [
+    "Some imports failed",
+    "setup.py validation failed"
+  ],
+  "success": true
+}

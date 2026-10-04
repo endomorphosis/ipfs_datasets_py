@@ -145,7 +145,9 @@ def compose_requirement_outcomes(
             continue
         # unknown / unsupported / inconclusive / not_ready / missing / other
         reason_codes.append(f"{family}.inconclusive:{req_id}")
-        reasons.append(f"{family} requirement {req_id} is inconclusive ({outcome})")
+        reasons.append(
+            f"{family} requirement {req_id} is inconclusive ({outcome})"
+        )
         if blocking is None or blocking is TransactionVerdictOutcome.ALLOW:
             blocking = TransactionVerdictOutcome.INCONCLUSIVE
 
@@ -205,7 +207,12 @@ def _build_bound_context(request: TransactionPreflightRequest) -> BoundContext:
 
 
 def _iso_now() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return (
+        datetime.now(timezone.utc)
+        .replace(microsecond=0)
+        .isoformat()
+        .replace("+00:00", "Z")
+    )
 
 
 def _is_expired(expiry: str, now: str) -> bool:
@@ -234,9 +241,13 @@ class TransactionPreflight:
         if self.consumption_store is None:
             self.consumption_store = InMemoryCapabilityConsumptionStore()
         if self.interface != TRANSACTION_PREFLIGHT_INTERFACE:
-            raise GuardValidationError(f"unsupported preflight interface: {self.interface!r}")
+            raise GuardValidationError(
+                f"unsupported preflight interface: {self.interface!r}"
+            )
         if self.schema_version != TRANSACTION_PREFLIGHT_SCHEMA_VERSION:
-            raise GuardValidationError(f"unsupported preflight schema: {self.schema_version!r}")
+            raise GuardValidationError(
+                f"unsupported preflight schema: {self.schema_version!r}"
+            )
 
     # -- evaluation ---------------------------------------------------------
 
@@ -272,7 +283,9 @@ class TransactionPreflight:
             if isinstance(request, Mapping):
                 request = TransactionPreflightRequest.from_dict(request)
             else:
-                raise GuardValidationError("request must be a TransactionPreflightRequest")
+                raise GuardValidationError(
+                    "request must be a TransactionPreflightRequest"
+                )
 
         clock = now or _iso_now()
         reasons: list[str] = []
@@ -329,7 +342,9 @@ class TransactionPreflight:
 
         # ALLOW path: mint receipt + one-use capability.
         try:
-            receipt = self._build_allow_receipt(request, reason_codes=reason_codes, reasons=reasons)
+            receipt = self._build_allow_receipt(
+                request, reason_codes=reason_codes, reasons=reasons
+            )
         except (ReceiptError, GuardError) as exc:
             return self._blocked(
                 request,
@@ -405,12 +420,16 @@ class TransactionPreflight:
             if isinstance(capability, Mapping):
                 capability = AdmissibilityCapability.from_dict(capability)
             else:
-                raise GuardValidationError("capability must be an AdmissibilityCapability")
+                raise GuardValidationError(
+                    "capability must be an AdmissibilityCapability"
+                )
         if not isinstance(live_request, TransactionPreflightRequest):
             if isinstance(live_request, Mapping):
                 live_request = TransactionPreflightRequest.from_dict(live_request)
             else:
-                raise GuardValidationError("live_request must be a TransactionPreflightRequest")
+                raise GuardValidationError(
+                    "live_request must be a TransactionPreflightRequest"
+                )
 
         if isinstance(phase, PreflightPhase):
             phase_value = phase.value
@@ -420,7 +439,9 @@ class TransactionPreflight:
             PreflightPhase.PRE_SIGN.value,
             PreflightPhase.PRE_BROADCAST.value,
         }:
-            raise GuardValidationError("phase must be pre_sign or pre_broadcast")
+            raise GuardValidationError(
+                "phase must be pre_sign or pre_broadcast"
+            )
 
         clock = now or _iso_now()
 
@@ -469,11 +490,15 @@ class TransactionPreflight:
             mismatches.append("tenant_id")
         if capability.audience_id != live_request.audience_id:
             mismatches.append("audience_id")
-        if capability.authorization.request_digest != live_request.request_digest:
+        if (
+            capability.authorization.request_digest
+            != live_request.request_digest
+        ):
             mismatches.append("authorization.request_digest")
         if mismatches:
             raise GuardCapabilityError(
-                "live request does not match capability binding: " + ", ".join(mismatches),
+                "live request does not match capability binding: "
+                + ", ".join(mismatches),
                 reason_code="guard.context_mismatch",
                 details={"mismatches": mismatches},
             )
@@ -577,14 +602,18 @@ class TransactionPreflight:
                         f"unsupported outcome_override: {outcome_override!r}"
                     ) from exc
             if not isinstance(outcome_override, TransactionVerdictOutcome):
-                raise GuardPolicyError("outcome_override must be a TransactionVerdictOutcome")
+                raise GuardPolicyError(
+                    "outcome_override must be a TransactionVerdictOutcome"
+                )
             # Override still cannot ignore hard denies from composition when
             # it claims ALLOW; fail closed.
             if outcome_override is TransactionVerdictOutcome.ALLOW:
                 for block in (security_block, compliance_block):
                     if block is not None:
                         reason_codes.append("preflight.override_blocked")
-                        reasons.append("ALLOW override rejected because a requirement blocked")
+                        reasons.append(
+                            "ALLOW override rejected because a requirement blocked"
+                        )
                         return block
             return outcome_override
 
@@ -627,15 +656,12 @@ class TransactionPreflight:
     ) -> DecisionReceipt:
         roots = request.roots or _default_roots(request.policy_id)
         context = _build_bound_context(request)
-        receipt_id = (
-            "receipt:"
-            + stable_digest(
-                {
-                    "request": request.request_digest,
-                    "producer": self.producer_id,
-                }
-            )[:32]
-        )
+        receipt_id = "receipt:" + stable_digest(
+            {
+                "request": request.request_digest,
+                "producer": self.producer_id,
+            }
+        )[:32]
         return build_decision_receipt(
             receipt_id=receipt_id,
             context=context,
@@ -645,7 +671,8 @@ class TransactionPreflight:
             reason_codes=tuple(reason_codes) or ("preflight.allow",),
             obligation_ids=tuple(
                 sorted(
-                    set(request.security_requirement_ids) | set(request.compliance_requirement_ids)
+                    set(request.security_requirement_ids)
+                    | set(request.compliance_requirement_ids)
                 )
             ),
             profile_id=request.profile_id,
@@ -677,16 +704,13 @@ class TransactionPreflight:
             else:
                 allowed = receipt.effect_ids
 
-        capability_id = (
-            "cap:"
-            + stable_digest(
-                {
-                    "receipt": receipt.content_digest,
-                    "request": request.request_digest,
-                    "audience": request.audience_id,
-                }
-            )[:32]
-        )
+        capability_id = "cap:" + stable_digest(
+            {
+                "receipt": receipt.content_digest,
+                "request": request.request_digest,
+                "audience": request.audience_id,
+            }
+        )[:32]
         try:
             auth = derive_capability(
                 receipt,

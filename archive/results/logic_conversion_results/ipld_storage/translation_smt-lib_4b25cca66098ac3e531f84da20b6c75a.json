@@ -1,0 +1,17 @@
+{
+  "target": "smt-lib",
+  "translated_formula": "(obligatory agent_2969 maintain_insurance_coverage)",
+  "success": true,
+  "confidence": 0.9,
+  "errors": [],
+  "warnings": [],
+  "metadata": {
+    "logic": "QF_UF",
+    "deontic_operator": "O"
+  },
+  "dependencies": [
+    "z3",
+    "cvc4",
+    "smt-lib2"
+  ]
+}

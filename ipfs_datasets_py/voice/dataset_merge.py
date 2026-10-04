@@ -63,7 +63,9 @@ _NORMALIZED_BUILD_FILES = frozenset(
         *_NORMALIZED_JSON_FILES,
     }
 )
-_NORMALIZED_JSONL_FILES = frozenset({*_NORMALIZED_ROW_FILES, *_NORMALIZED_SUPPORT_JSONL_FILES})
+_NORMALIZED_JSONL_FILES = frozenset(
+    {*_NORMALIZED_ROW_FILES, *_NORMALIZED_SUPPORT_JSONL_FILES}
+)
 
 
 class AbbyVoiceDatasetMergeError(ValueError):
@@ -99,7 +101,9 @@ def _require_sha256(value: Any, *, label: str) -> str:
         or len(value) != 64
         or any(character not in "0123456789abcdef" for character in value)
     ):
-        raise AbbyVoiceDatasetMergeError(f"{label} must be a full lowercase SHA-256")
+        raise AbbyVoiceDatasetMergeError(
+            f"{label} must be a full lowercase SHA-256"
+        )
     return value
 
 
@@ -115,7 +119,9 @@ def _parse_strict_json(payload: bytes, *, label: str) -> Any:
         result: dict[str, Any] = {}
         for key, value in pairs:
             if key in result:
-                raise AbbyVoiceDatasetMergeError(f"{label} contains duplicate key {key!r}")
+                raise AbbyVoiceDatasetMergeError(
+                    f"{label} contains duplicate key {key!r}"
+                )
             result[key] = value
         return result
 
@@ -139,10 +145,14 @@ def _parse_canonical_jsonl(
     except UnicodeDecodeError as exc:
         raise AbbyVoiceDatasetMergeError(f"{label} must be UTF-8 JSONL") from exc
     if not text.endswith("\n"):
-        raise AbbyVoiceDatasetMergeError(f"{label} must end with a newline")
+        raise AbbyVoiceDatasetMergeError(
+            f"{label} must end with a newline"
+        )
     raw_lines = text.splitlines()
     if not raw_lines or any(not line for line in raw_lines):
-        raise AbbyVoiceDatasetMergeError(f"{label} must not contain blank JSONL rows")
+        raise AbbyVoiceDatasetMergeError(
+            f"{label} must not contain blank JSONL rows"
+        )
     rows: list[Mapping[str, Any]] = []
     rendered: list[bytes] = []
     for line_number, line in enumerate(raw_lines, start=1):
@@ -151,7 +161,9 @@ def _parse_canonical_jsonl(
             label=f"{label} row {line_number}",
         )
         if not isinstance(value, Mapping):
-            raise AbbyVoiceDatasetMergeError(f"{label} row {line_number} must be a JSON object")
+            raise AbbyVoiceDatasetMergeError(
+                f"{label} row {line_number} must be a JSON object"
+            )
         rows.append(value)
         try:
             rendered.append(_canonical_bytes(value) + b"\n")
@@ -160,7 +172,9 @@ def _parse_canonical_jsonl(
                 f"{label} row {line_number} is not canonical JSON"
             ) from exc
     if b"".join(rendered) != payload:
-        raise AbbyVoiceDatasetMergeError(f"{label} does not use canonical JSONL serialization")
+        raise AbbyVoiceDatasetMergeError(
+            f"{label} does not use canonical JSONL serialization"
+        )
     return tuple(rows)
 
 
@@ -183,16 +197,27 @@ class AbbyVoiceNormalizedDatasetLoadResult:
         )
         if not isinstance(self.bundle, AbbyVoiceDatasetBundle):
             raise TypeError("bundle must be an AbbyVoiceDatasetBundle")
-        if not isinstance(self.normalized_dir, str) or not self.normalized_dir:
-            raise AbbyVoiceDatasetMergeError("normalized_dir must be a non-empty path")
+        if (
+            not isinstance(self.normalized_dir, str)
+            or not self.normalized_dir
+        ):
+            raise AbbyVoiceDatasetMergeError(
+                "normalized_dir must be a non-empty path"
+            )
         if self.normalization_version != NORMALIZATION_VERSION:
             raise AbbyVoiceDatasetMergeError(
                 "normalization_version does not match the supported build"
             )
         for name in ("source_manifest_count", "input_record_count"):
             value = getattr(self, name)
-            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
-                raise AbbyVoiceDatasetMergeError(f"{name} must be a non-negative integer")
+            if (
+                isinstance(value, bool)
+                or not isinstance(value, int)
+                or value < 0
+            ):
+                raise AbbyVoiceDatasetMergeError(
+                    f"{name} must be a non-negative integer"
+                )
         if not isinstance(self.manifest, Mapping):
             raise TypeError("manifest must be a mapping")
         # Retain an independent JSON-safe snapshot. The manifest digest remains
@@ -210,7 +235,10 @@ class AbbyVoiceNormalizedDatasetLoadResult:
 
     @property
     def manifest_id(self) -> str:
-        return f"abby-voice-normalized-build:sha256:{self.manifest_sha256}"
+        return (
+            "abby-voice-normalized-build:sha256:"
+            f"{self.manifest_sha256}"
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -245,10 +273,14 @@ def load_normalized_dataset_bundle(
     )
     raw_root = Path(normalized_dir).expanduser()
     if raw_root.is_symlink():
-        raise AbbyVoiceDatasetMergeError("normalized dataset directory must not be a symlink")
+        raise AbbyVoiceDatasetMergeError(
+            "normalized dataset directory must not be a symlink"
+        )
     root = raw_root.resolve()
     if not root.is_dir():
-        raise AbbyVoiceDatasetMergeError(f"normalized dataset directory does not exist: {root}")
+        raise AbbyVoiceDatasetMergeError(
+            f"normalized dataset directory does not exist: {root}"
+        )
 
     expected_directory_names = {
         *_NORMALIZED_BUILD_FILES,
@@ -292,7 +324,8 @@ def load_normalized_dataset_bundle(
     if (
         not isinstance(manifest, Mapping)
         or set(manifest) != expected_manifest_keys
-        or manifest.get("schema_version") != ABBY_VOICE_NORMALIZED_BUILD_SCHEMA_VERSION
+        or manifest.get("schema_version")
+        != ABBY_VOICE_NORMALIZED_BUILD_SCHEMA_VERSION
         or manifest.get("normalization_version") != NORMALIZATION_VERSION
         or manifest.get("deterministic") is not True
     ):
@@ -306,15 +339,25 @@ def load_normalized_dataset_bundle(
             "normalized dataset manifest is not canonical JSON"
         ) from exc
     if canonical_manifest != manifest_bytes:
-        raise AbbyVoiceDatasetMergeError("normalized dataset manifest is not canonical")
+        raise AbbyVoiceDatasetMergeError(
+            "normalized dataset manifest is not canonical"
+        )
     for count_name in ("source_manifest_count", "input_record_count"):
         count = manifest[count_name]
-        if isinstance(count, bool) or not isinstance(count, int) or count < 0:
-            raise AbbyVoiceDatasetMergeError(f"normalized dataset manifest {count_name} is invalid")
+        if (
+            isinstance(count, bool)
+            or not isinstance(count, int)
+            or count < 0
+        ):
+            raise AbbyVoiceDatasetMergeError(
+                f"normalized dataset manifest {count_name} is invalid"
+            )
 
     raw_descriptors = manifest["files"]
     if not isinstance(raw_descriptors, list):
-        raise AbbyVoiceDatasetMergeError("normalized dataset manifest files must be a list")
+        raise AbbyVoiceDatasetMergeError(
+            "normalized dataset manifest files must be a list"
+        )
     descriptors: dict[str, Mapping[str, Any]] = {}
     descriptor_paths: list[str] = []
     for index, descriptor in enumerate(raw_descriptors):
@@ -331,7 +374,11 @@ def load_normalized_dataset_bundle(
             "byte_length",
             "path",
             "sha256",
-            *(("row_count",) if path_value in _NORMALIZED_JSONL_FILES else ()),
+            *(
+                ("row_count",)
+                if path_value in _NORMALIZED_JSONL_FILES
+                else ()
+            ),
         }
         if set(descriptor) != expected_descriptor_keys:
             raise AbbyVoiceDatasetMergeError(
@@ -342,7 +389,11 @@ def load_normalized_dataset_bundle(
                 f"normalized dataset descriptor path is duplicated: {path_value}"
             )
         byte_length = descriptor["byte_length"]
-        if isinstance(byte_length, bool) or not isinstance(byte_length, int) or byte_length < 0:
+        if (
+            isinstance(byte_length, bool)
+            or not isinstance(byte_length, int)
+            or byte_length < 0
+        ):
             raise AbbyVoiceDatasetMergeError(
                 f"normalized dataset byte_length is invalid: {path_value}"
             )
@@ -352,14 +403,19 @@ def load_normalized_dataset_bundle(
         )
         if path_value in _NORMALIZED_JSONL_FILES:
             row_count = descriptor["row_count"]
-            if isinstance(row_count, bool) or not isinstance(row_count, int) or row_count < 0:
+            if (
+                isinstance(row_count, bool)
+                or not isinstance(row_count, int)
+                or row_count < 0
+            ):
                 raise AbbyVoiceDatasetMergeError(
                     f"normalized dataset row_count is invalid: {path_value}"
                 )
         descriptors[path_value] = descriptor
         descriptor_paths.append(path_value)
-    if set(descriptors) != _NORMALIZED_BUILD_FILES or descriptor_paths != sorted(
-        _NORMALIZED_BUILD_FILES
+    if (
+        set(descriptors) != _NORMALIZED_BUILD_FILES
+        or descriptor_paths != sorted(_NORMALIZED_BUILD_FILES)
     ):
         raise AbbyVoiceDatasetMergeError(
             "normalized dataset manifest has an unexpected file descriptor set"
@@ -381,20 +437,28 @@ def load_normalized_dataset_bundle(
         if name in _NORMALIZED_JSONL_FILES:
             rows = _parse_canonical_jsonl(content, label=name)
             if len(rows) != descriptor["row_count"]:
-                raise AbbyVoiceDatasetMergeError(f"normalized dataset row_count mismatch: {name}")
+                raise AbbyVoiceDatasetMergeError(
+                    f"normalized dataset row_count mismatch: {name}"
+                )
             jsonl_rows[name] = rows
 
     json_documents: dict[str, Mapping[str, Any]] = {}
     for name in sorted(_NORMALIZED_JSON_FILES):
         value = _parse_strict_json(payloads[name], label=name)
         if not isinstance(value, Mapping):
-            raise AbbyVoiceDatasetMergeError(f"{name} must contain a JSON object")
+            raise AbbyVoiceDatasetMergeError(
+                f"{name} must contain a JSON object"
+            )
         try:
             canonical_value = _pretty_json_bytes(value)
         except (TypeError, ValueError) as exc:
-            raise AbbyVoiceDatasetMergeError(f"{name} is not canonical JSON") from exc
+            raise AbbyVoiceDatasetMergeError(
+                f"{name} is not canonical JSON"
+            ) from exc
         if canonical_value != payloads[name]:
-            raise AbbyVoiceDatasetMergeError(f"{name} does not use canonical JSON serialization")
+            raise AbbyVoiceDatasetMergeError(
+                f"{name} does not use canonical JSON serialization"
+            )
         json_documents[name] = value
 
     quality = json_documents["quality-report.json"]
@@ -402,7 +466,8 @@ def load_normalized_dataset_bundle(
     if (
         quality.get("schema_version") != QUALITY_REPORT_VERSION
         or quality.get("normalization_version") != NORMALIZATION_VERSION
-        or quality.get("source_manifest_count") != manifest["source_manifest_count"]
+        or quality.get("source_manifest_count")
+        != manifest["source_manifest_count"]
         or quality.get("input_record_count") != manifest["input_record_count"]
         or not isinstance(accepted, Mapping)
     ):
@@ -440,7 +505,10 @@ def load_normalized_dataset_bundle(
     }
     for name, rows in row_groups.items():
         identity_field = _NORMALIZED_ROW_FILES[name]
-        identities = [str(getattr(row, identity_field)) for row in rows]
+        identities = [
+            str(getattr(row, identity_field))
+            for row in rows
+        ]
         if identities != sorted(identities):
             raise AbbyVoiceDatasetMergeError(
                 f"normalized dataset rows are not canonically ordered: {name}"
@@ -498,7 +566,10 @@ class AbbyVoiceDatasetMergeResult:
             raise AbbyVoiceDatasetMergeError("admitted audio IDs must be unique")
         if len(links) != len(set(links)):
             raise AbbyVoiceDatasetMergeError("response/audio links must be unique")
-        if len(links) != len(audio_ids) or {audio_id for _, audio_id in links} != set(audio_ids):
+        if (
+            len(links) != len(audio_ids)
+            or {audio_id for _, audio_id in links} != set(audio_ids)
+        ):
             raise AbbyVoiceDatasetMergeError(
                 "every admitted audio ID must have exactly one response link"
             )
@@ -513,7 +584,9 @@ class AbbyVoiceDatasetMergeResult:
             + sha256(_canonical_bytes(self._identity_document())).hexdigest()
         )
         if self.merge_id and self.merge_id != computed:
-            raise AbbyVoiceDatasetMergeError("merge_id does not match deterministic merge content")
+            raise AbbyVoiceDatasetMergeError(
+                "merge_id does not match deterministic merge content"
+            )
         object.__setattr__(self, "merge_id", computed)
 
     def _identity_document(self) -> dict[str, Any]:
@@ -565,33 +638,47 @@ def _validate_admission_bindings(
     linked = tuple(admission.linked_audio)
     linked_by_id = {row.audio_id: row for row in linked}
     linked_dispositions = tuple(
-        item for item in admission.dispositions if item.status is AudioDispositionStatus.LINKED
+        item
+        for item in admission.dispositions
+        if item.status is AudioDispositionStatus.LINKED
     )
     if linked and (
         not admission.policy_identity
         or admission.policy_identity.strip() != admission.policy_identity
     ):
-        raise AbbyVoiceDatasetMergeError("linked admission must have a canonical policy identity")
+        raise AbbyVoiceDatasetMergeError(
+            "linked admission must have a canonical policy identity"
+        )
     dispositions_by_audio_id = {
         item.audio_id: item for item in linked_dispositions if item.audio_id
     }
-    if len(dispositions_by_audio_id) != len(linked_dispositions) or set(
-        dispositions_by_audio_id
-    ) != set(linked_by_id):
+    if (
+        len(dispositions_by_audio_id) != len(linked_dispositions)
+        or set(dispositions_by_audio_id) != set(linked_by_id)
+    ):
         raise AbbyVoiceDatasetMergeError(
             "linked dispositions must correspond one-to-one with admitted audio"
         )
 
     referenced_provenance: set[str] = set()
     for audio_id, row in linked_by_id.items():
-        if not row.response_id or row.template_id is not None or row.segment_kind != "response":
-            raise AbbyVoiceDatasetMergeError(f"admitted audio {audio_id!r} is not response audio")
+        if (
+            not row.response_id
+            or row.template_id is not None
+            or row.segment_kind != "response"
+        ):
+            raise AbbyVoiceDatasetMergeError(
+                f"admitted audio {audio_id!r} is not response audio"
+            )
         response = responses_by_id.get(row.response_id)
         if response is None:
             raise AbbyVoiceDatasetMergeError(
-                f"admitted audio {audio_id!r} names unknown response {row.response_id!r}"
+                f"admitted audio {audio_id!r} names unknown response "
+                f"{row.response_id!r}"
             )
-        if row.audio_id != stable_audio_id(row.content_sha256, segment_kind=row.segment_kind):
+        if row.audio_id != stable_audio_id(
+            row.content_sha256, segment_kind=row.segment_kind
+        ):
             raise AbbyVoiceDatasetMergeError(
                 f"admitted audio {audio_id!r} does not have its stable content ID"
             )
@@ -603,12 +690,17 @@ def _validate_admission_bindings(
             raise AbbyVoiceDatasetMergeError(
                 f"admitted audio {audio_id!r} does not match response text and locale"
             )
-        if row.license_id != response.license_id or row.consent_status != response.consent_status:
+        if (
+            row.license_id != response.license_id
+            or row.consent_status != response.consent_status
+        ):
             raise AbbyVoiceDatasetMergeError(
                 f"admitted audio {audio_id!r} does not match response rights"
             )
         if not row.provenance_ids:
-            raise AbbyVoiceDatasetMergeError(f"admitted audio {audio_id!r} has no provenance")
+            raise AbbyVoiceDatasetMergeError(
+                f"admitted audio {audio_id!r} has no provenance"
+            )
         disposition = dispositions_by_audio_id[audio_id]
         if (
             disposition.reason is not AudioDispositionReason.PROMOTED
@@ -623,10 +715,18 @@ def _validate_admission_bindings(
 
     provenance = tuple(admission.provenance)
     provenance_by_id = {row.provenance_id: row for row in provenance}
-    if len(provenance_by_id) != len(provenance) or set(provenance_by_id) != referenced_provenance:
-        raise AbbyVoiceDatasetMergeError("admission provenance must exactly cover admitted audio")
+    if (
+        len(provenance_by_id) != len(provenance)
+        or set(provenance_by_id) != referenced_provenance
+    ):
+        raise AbbyVoiceDatasetMergeError(
+            "admission provenance must exactly cover admitted audio"
+        )
     for provenance_id, row in provenance_by_id.items():
-        if row.subject_schema_version != ABBY_VOICE_AUDIO_V2 or row.subject_id not in linked_by_id:
+        if (
+            row.subject_schema_version != ABBY_VOICE_AUDIO_V2
+            or row.subject_id not in linked_by_id
+        ):
             raise AbbyVoiceDatasetMergeError(
                 f"admission provenance {provenance_id!r} is not bound to admitted audio"
             )
@@ -698,7 +798,10 @@ def merge_admitted_audio(
                 replace(
                     row,
                     audio_ids=tuple(
-                        sorted(set(row.audio_ids) | links_by_response.get(row.response_id, set()))
+                        sorted(
+                            set(row.audio_ids)
+                            | links_by_response.get(row.response_id, set())
+                        )
                     ),
                 )
                 for row in base.responses
@@ -722,7 +825,9 @@ def merge_admitted_audio(
         provenance=merged.provenance,
     )
     admitted_ids = tuple(row.audio_id for row in admitted_audio)
-    links = tuple((str(row.response_id), row.audio_id) for row in admitted_audio)
+    links = tuple(
+        (str(row.response_id), row.audio_id) for row in admitted_audio
+    )
     return AbbyVoiceDatasetMergeResult(
         bundle=merged,
         graphrag_index=graphrag_index,

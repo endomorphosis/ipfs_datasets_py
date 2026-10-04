@@ -1,0 +1,246 @@
+{
+  "claim_id": "global_asset_conservation",
+  "counterexample": {
+    "account_ids": [],
+    "asset_ids": [
+      "asset:btc",
+      "asset:eth"
+    ],
+    "capability_ids": [
+      "asset:eth"
+    ],
+    "claim_id": "global_asset_conservation",
+    "compiler_artifact": {
+      "asset_ids": [
+        "asset:btc",
+        "asset:eth"
+      ],
+      "kind": "global_asset_conservation",
+      "violations": [
+        "asset:eth"
+      ]
+    },
+    "deposit_ids": [],
+    "evidence_refs": [
+      {
+        "kind": "test_fixture",
+        "line_end": 129,
+        "line_start": 8,
+        "notes": "Fixture account balance and reservations.",
+        "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+        "review_status": "trusted_fixture"
+      },
+      {
+        "kind": "test_fixture",
+        "line_end": 150,
+        "line_start": 132,
+        "notes": "Fixture ledger totals for global conservation.",
+        "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+        "review_status": "trusted_fixture"
+      }
+    ],
+    "message": "Z3 found a satisfying violation trace.",
+    "soundness_notes": [],
+    "source_facts": [
+      {
+        "amount": 2,
+        "asset_id": "asset:btc",
+        "authorized": true,
+        "event": "withdrawal_requested",
+        "evidence_refs": [
+          {
+            "kind": "test_fixture",
+            "line_end": 77,
+            "line_start": 66,
+            "notes": "Fixture withdrawal request trace.",
+            "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+            "review_status": "trusted_fixture"
+          }
+        ],
+        "id": "event:withdrawal_requested:1",
+        "nonce": "nonce:1",
+        "nonce_fresh": true,
+        "principal": "principal:alice",
+        "sufficient_balance": true,
+        "timestamp": 1,
+        "wallet_id": "wallet:user_alice",
+        "wallet_not_frozen": true,
+        "withdrawal_id": "withdrawal:1"
+      },
+      {
+        "amount": 2,
+        "asset_id": "asset:btc",
+        "event": "withdrawal_approved",
+        "evidence_refs": [
+          {
+            "kind": "test_fixture",
+            "line_end": 77,
+            "line_start": 66,
+            "notes": "Fixture withdrawal approval trace.",
+            "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+            "review_status": "trusted_fixture"
+          }
+        ],
+        "id": "event:withdrawal_approved:1",
+        "max_seconds": 30,
+        "nonce": "nonce:1",
+        "principal": "principal:exchange_signer",
+        "timestamp": 2,
+        "wallet_id": "wallet:user_alice",
+        "withdrawal_id": "withdrawal:1"
+      },
+      {
+        "amount": 2,
+        "asset_id": "asset:btc",
+        "event": "balance_reserved",
+        "evidence_refs": [
+          {
+            "kind": "test_fixture",
+            "line_end": 77,
+            "line_start": 66,
+            "notes": "Fixture balance reservation trace.",
+            "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+            "review_status": "trusted_fixture"
+          }
+        ],
+        "id": "event:balance_reserved:1",
+        "timestamp": 2.6,
+        "wallet_id": "wallet:user_alice",
+        "withdrawal_id": "withdrawal:1"
+      },
+      {
+        "amount": 2,
+        "asset_id": "asset:btc",
+        "authorized": true,
+        "critical": true,
+        "event": "withdrawal_broadcast",
+        "evidence_refs": [
+          {
+            "kind": "test_fixture",
+            "line_end": 77,
+            "line_start": 66,
+            "notes": "Fixture withdrawal broadcast trace.",
+            "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+            "review_status": "trusted_fixture"
+          }
+        ],
+        "id": "event:withdrawal_broadcast:1",
+        "nonce": "nonce:1",
+        "nonce_fresh": true,
+        "principal": "principal:exchange_signer",
+        "sufficient_balance": true,
+        "timestamp": 3,
+        "wallet_id": "wallet:user_alice",
+        "wallet_not_frozen": true,
+        "withdrawal_id": "withdrawal:1"
+      },
+      {
+        "account_id": "account:alice_btc",
+        "asset_id": "asset:btc",
+        "block_height": 100,
+        "chain_id": "chain:btc",
+        "confirmations": 0,
+        "deposit_id": "deposit:1",
+        "event": "deposit_observed",
+        "evidence_refs": [
+          {
+            "kind": "test_fixture",
+            "line_end": 77,
+            "line_start": 66,
+            "notes": "Fixture deposit observed trace.",
+            "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+            "review_status": "trusted_fixture"
+          }
+        ],
+        "id": "event:deposit_observed:1",
+        "timestamp": 4,
+        "txid": "tx:1"
+      },
+      {
+        "account_id": "account:alice_btc",
+        "asset_id": "asset:btc",
+        "block_height": 106,
+        "chain_id": "chain:btc",
+        "confirmations": 6,
+        "deposit_id": "deposit:1",
+        "event": "deposit_finalized",
+        "evidence_refs": [
+          {
+            "kind": "test_fixture",
+            "line_end": 77,
+            "line_start": 66,
+            "notes": "Fixture deposit finalized trace.",
+            "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+            "review_status": "trusted_fixture"
+          }
+        ],
+        "finality_threshold": 6,
+        "id": "event:deposit_finalized:1",
+        "timestamp": 5,
+        "txid": "tx:1"
+      },
+      {
+        "account_id": "account:alice_btc",
+        "after_finality": true,
+        "asset_id": "asset:btc",
+        "block_height": 106,
+        "chain_id": "chain:btc",
+        "confirmations": 6,
+        "deposit_id": "deposit:1",
+        "event": "deposit_credited",
+        "evidence_refs": [
+          {
+            "kind": "test_fixture",
+            "line_end": 77,
+            "line_start": 66,
+            "notes": "Fixture deposit credited trace.",
+            "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+            "review_status": "trusted_fixture"
+          }
+        ],
+        "finality_threshold": 6,
+        "id": "event:deposit_credited:1",
+        "timestamp": 6,
+        "txid": "tx:1"
+      },
+      {
+        "decimals": 8,
+        "id": "asset:btc",
+        "symbol": "BTC"
+      },
+      {
+        "decimals": 18,
+        "id": "asset:eth",
+        "symbol": "ETH"
+      }
+    ],
+    "trace": [],
+    "txids": [],
+    "violating_event_ids": [],
+    "wallet_ids": [],
+    "withdrawal_ids": [],
+    "witness": {
+      "available_0": "5",
+      "available_1": "3",
+      "liability_0": "5",
+      "liability_1": "10"
+    }
+  },
+  "expected_claims": [
+    "global_asset_conservation"
+  ],
+  "matched_claims": [
+    "global_asset_conservation"
+  ],
+  "model_id": "minimal-btc-exchange::multi_asset_conservation_gap",
+  "mutators": [
+    "multi_asset_conservation_gap"
+  ],
+  "proof_or_trace_cid": "bafkreigiz4s7t7jbwv3mrijo3kffkescarcphphrueqxekjk4hghddduj4",
+  "risk": "blocking",
+  "scenario": "multi_asset_conservation_gap",
+  "schema_version": "crypto-exchange-counterexample-vector/v1",
+  "solver_name": "z3",
+  "solver_result": "sat",
+  "status": "DISPROVED"
+}

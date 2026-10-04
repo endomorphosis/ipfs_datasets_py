@@ -221,7 +221,9 @@ class UtxoEntry:
     def __post_init__(self) -> None:
         if not isinstance(self.outpoint, OutPoint):
             raise InvalidRequestError("outpoint must be an OutPoint")
-        object.__setattr__(self, "value_sats", parse_sats(self.value_sats, field="value_sats"))
+        object.__setattr__(
+            self, "value_sats", parse_sats(self.value_sats, field="value_sats")
+        )
         if not isinstance(self.descriptor, ScriptDescriptor):
             raise InvalidRequestError("descriptor must be a ScriptDescriptor")
         if not self.created_by.strip():

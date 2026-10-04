@@ -74,7 +74,9 @@ class RegistryEntry:
                 f"({self.adapter_id!r} != {self.adapter.adapter_id!r})"
             )
         if self.adapter.capability.capability_id != self.capability.capability_id:
-            raise CryptoIRRegistryError("capability_id does not match adapter.capability")
+            raise CryptoIRRegistryError(
+                "capability_id does not match adapter.capability"
+            )
         # Capability identity must bind both version axes.
         adapter_cap = self.adapter.capability
         if (
@@ -144,13 +146,17 @@ class AdapterRegistry:
         adapter_id = _text(adapter.adapter_id, "adapter_id")
         capability = adapter.capability
         if not isinstance(capability, CapabilityDescriptor):
-            raise CryptoIRRegistryError("adapter.capability must be a CapabilityDescriptor")
+            raise CryptoIRRegistryError(
+                "adapter.capability must be a CapabilityDescriptor"
+            )
         if not capability.side_effect_free:
             raise CryptoIRRegistryError(
                 "registered adapters must declare side_effect_free capabilities"
             )
         if adapter_id in self._entries:
-            raise CryptoIRRegistryError(f"duplicate adapter registration: {adapter_id}")
+            raise CryptoIRRegistryError(
+                f"duplicate adapter registration: {adapter_id}"
+            )
         if capability.capability_id in self._by_capability:
             raise CryptoIRRegistryError(
                 f"duplicate capability registration: {capability.capability_id}"
@@ -205,7 +211,9 @@ class AdapterRegistry:
             required_features=required_features,
         )
         if not probe.available:
-            raise CryptoIRRegistryError(f"adapter {adapter_id!r} unavailable: {probe.reason}")
+            raise CryptoIRRegistryError(
+                f"adapter {adapter_id!r} unavailable: {probe.reason}"
+            )
         return entry
 
     def probe(
@@ -258,13 +266,21 @@ class AdapterRegistry:
                 target = CapabilityKind(kind)
             except (TypeError, ValueError) as exc:
                 raise CryptoIRRegistryError(f"unsupported capability kind: {kind!r}") from exc
-        return tuple(entry for entry in self if entry.capability.kind is target)
+        return tuple(
+            entry
+            for entry in self
+            if entry.capability.kind is target
+        )
 
     def list_for_chain_namespace(self, namespace: str) -> tuple[RegistryEntry, ...]:
         """Return adapters that support *namespace* (empty list is not an error)."""
 
         text = _text(namespace, "namespace")
-        return tuple(entry for entry in self if entry.capability.supports_chain_namespace(text))
+        return tuple(
+            entry
+            for entry in self
+            if entry.capability.supports_chain_namespace(text)
+        )
 
     def list_available(
         self,
@@ -324,7 +340,9 @@ class AdapterRegistry:
             )
         entry = self.get(adapter_id)
         try:
-            result = entry.adapter.convert(payload, source_provenance=source_provenance)
+            result = entry.adapter.convert(
+                payload, source_provenance=source_provenance
+            )
         except CryptoIRAdapterError as exc:
             return AdapterConversionResult(
                 conversion_id=f"registry-error:{adapter_id}",
@@ -336,7 +354,9 @@ class AdapterRegistry:
                 diagnostics=(str(exc),),
             )
         if not isinstance(result, AdapterConversionResult):
-            raise CryptoIRRegistryError("adapter.convert must return AdapterConversionResult")
+            raise CryptoIRRegistryError(
+                "adapter.convert must return AdapterConversionResult"
+            )
         return result
 
     def unavailable_result(

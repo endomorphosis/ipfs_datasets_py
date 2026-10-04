@@ -1,0 +1,223 @@
+# DCEC English Grammar Rules
+# Version: 1.0
+# This file externalizes grammar rules for better maintainability and multi-language support
+
+# Logical Connectives
+connectives:
+  and:
+    category: CONJUNCTION
+    semantics:
+      type: and
+      connective: AND
+    examples:
+      - "Alice loves Bob and Carol"
+      - "It is raining and cold"
+  
+  or:
+    category: CONJUNCTION
+    semantics:
+      type: or
+      connective: OR
+    examples:
+      - "Alice or Bob will go"
+      - "It is raining or snowing"
+  
+  not:
+    category: ADVERB
+    semantics:
+      type: not
+      connective: NOT
+    examples:
+      - "Alice does not love Bob"
+      - "It is not raining"
+  
+  if_then:
+    category: CONJUNCTION
+    patterns:
+      - "if {P} then {Q}"
+      - "{P} implies {Q}"
+    semantics:
+      type: implies
+      connective: IMPLIES
+    examples:
+      - "if it rains then the ground is wet"
+
+# Deontic Modals (obligation, permission, prohibition)
+deontic:
+  obligation:
+    words: ["must", "obligated", "should", "required"]
+    category: VERB
+    semantics:
+      type: deontic
+      operator: obligated
+    examples:
+      - "Alice must go to the store"
+      - "Bob is obligated to pay taxes"
+  
+  permission:
+    words: ["may", "permitted", "allowed", "can"]
+    category: VERB
+    semantics:
+      type: deontic
+      operator: permitted
+    examples:
+      - "Alice may enter the building"
+      - "Bob is permitted to speak"
+  
+  prohibition:
+    words: ["forbidden", "prohibited", "must not"]
+    category: VERB
+    semantics:
+      type: deontic
+      operator: forbidden
+    examples:
+      - "Alice is forbidden from smoking"
+      - "Bob must not enter"
+
+# Cognitive Operators (belief, knowledge, intention)
+cognitive:
+  belief:
+    words: ["believes", "think", "assume"]
+    category: VERB
+    semantics:
+      type: cognitive
+      operator: belief
+    pattern: "{agent} believes {proposition}"
+    examples:
+      - "Alice believes it is raining"
+      - "Bob thinks the door is locked"
+  
+  knowledge:
+    words: ["knows", "aware"]
+    category: VERB
+    semantics:
+      type: cognitive
+      operator: knowledge
+    pattern: "{agent} knows {proposition}"
+    examples:
+      - "Alice knows that 2+2=4"
+      - "Bob is aware that the meeting is at 3pm"
+  
+  intention:
+    words: ["intends", "plans", "wants"]
+    category: VERB
+    semantics:
+      type: cognitive
+      operator: intention
+    pattern: "{agent} intends {action}"
+    examples:
+      - "Alice intends to go shopping"
+      - "Bob plans to finish the report"
+  
+  desire:
+    words: ["desires", "wishes", "hopes"]
+    category: VERB
+    semantics:
+      type: cognitive
+      operator: desire
+    pattern: "{agent} desires {state}"
+    examples:
+      - "Alice desires peace"
+      - "Bob wishes for good weather"
+
+# Temporal Operators
+temporal:
+  always:
+    words: ["always", "necessarily", "invariably"]
+    category: ADVERB
+    semantics:
+      type: temporal
+      operator: always
+    examples:
+      - "It is always sunny in California"
+      - "The sun necessarily rises in the east"
+  
+  eventually:
+    words: ["eventually", "sometime", "ultimately"]
+    category: ADVERB
+    semantics:
+      type: temporal
+      operator: eventually
+    examples:
+      - "It will eventually rain"
+      - "Alice will sometime arrive"
+  
+  next:
+    words: ["next", "immediately"]
+    category: ADVERB
+    semantics:
+      type: temporal
+      operator: next
+    examples:
+      - "Next the door will open"
+      - "Immediately after, Bob will speak"
+  
+  until:
+    words: ["until"]
+    category: PREPOSITION
+    semantics:
+      type: temporal
+      operator: until
+    pattern: "{P} until {Q}"
+    examples:
+      - "It rains until the sun comes out"
+      - "Alice waits until Bob arrives"
+
+# Quantifiers
+quantifiers:
+  universal:
+    words: ["all", "every", "each"]
+    category: DETERMINER
+    semantics:
+      type: quantifier
+      operator: forall
+    examples:
+      - "All humans are mortal"
+      - "Every student passed the exam"
+  
+  existential:
+    words: ["some", "a", "an", "exists"]
+    category: DETERMINER
+    semantics:
+      type: quantifier
+      operator: exists
+    examples:
+      - "Some cats are black"
+      - "There exists a solution"
+
+# Production Rules
+production_rules:
+  # Sentence structures
+  sentence:
+    - pattern: "{subject} {verb} {object}"
+      example: "Alice loves Bob"
+    
+    - pattern: "{agent} {modal} {verb} {object}"
+      example: "Alice must go home"
+    
+    - pattern: "{agent} {cognitive_verb} that {proposition}"
+      example: "Alice believes that it is raining"
+  
+  # Compound sentences
+  compound:
+    - pattern: "{sentence} {connective} {sentence}"
+      example: "Alice goes and Bob stays"
+    
+    - pattern: "if {condition} then {consequence}"
+      example: "if it rains then the ground is wet"
+  
+  # Modal constructions
+  modal_sentence:
+    - pattern: "It is {deontic_modal} that {proposition}"
+      example: "It is obligatory that Alice pays"
+    
+    - pattern: "{agent} {deontic_modal} {action}"
+      example: "Alice must leave"
+
+# Grammar Configuration
+config:
+  version: "1.0"
+  language: "en"
+  case_sensitive: false
+  allow_contractions: true
+  default_tense: "present"

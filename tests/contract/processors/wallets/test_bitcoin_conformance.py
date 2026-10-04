@@ -37,7 +37,9 @@ from ipfs_datasets_py.tests.contract.processors.wallets.conformance import (
     WalletProcessorConformance,
 )
 
-_FIXTURE_DIR = Path(__file__).resolve().parents[3] / "fixtures" / "wallets" / "bitcoin"
+_FIXTURE_DIR = (
+    Path(__file__).resolve().parents[3] / "fixtures" / "wallets" / "bitcoin"
+)
 
 
 def _load(name: str) -> dict:
@@ -57,7 +59,9 @@ def _extra_legacy_segwit_taproot(suite: WalletProcessorConformance) -> None:
     for vector in data["vectors"]:
         if "address" not in vector:
             continue
-        descriptor = describe_address(vector["address"], network=BitcoinNetwork.MAINNET)
+        descriptor = describe_address(
+            vector["address"], network=BitcoinNetwork.MAINNET
+        )
         assert isinstance(descriptor, ScriptDescriptor)
         assert descriptor.script_type.value == vector["expect_script_type"]
 
@@ -92,7 +96,9 @@ def _extra_multi_io(suite: WalletProcessorConformance) -> None:
                 network=BitcoinNetwork.MAINNET,
             ),
         )
-    processor.normalize_transactions([data["transaction"]], context=_context(), apply_utxos=True)
+    processor.normalize_transactions(
+        [data["transaction"]], context=_context(), apply_utxos=True
+    )
     assert data["expect"]["total_out_sats"] == 145000
 
 
@@ -166,7 +172,9 @@ def _extra_reorg_utxo(suite: WalletProcessorConformance) -> None:
         ),
         height=seed.get("height"),
     )
-    processor.normalize_transactions([data["orphaned_tx"]], context=_context(), apply_utxos=True)
+    processor.normalize_transactions(
+        [data["orphaned_tx"]], context=_context(), apply_utxos=True
+    )
     processor.reverse_from_height(201)
     assert (
         processor.balance_sats("bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4")

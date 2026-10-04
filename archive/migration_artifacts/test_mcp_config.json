@@ -1,0 +1,26 @@
+{
+  "mcp": {
+    "servers": {
+      "ipfs-datasets": {
+        "command": "python",
+        "args": ["-m", "ipfs_datasets_py.mcp_server", "--host", "127.0.0.1", "--port", "8000"],
+        "cwd": "/home/barberb/ipfs_datasets_py",
+        "env": {
+          "PYTHONPATH": "/home/barberb/ipfs_datasets_py",
+          "IPFS_DATASETS_CONFIG": "/home/barberb/ipfs_datasets_py/config/mcp_config.yaml"
+        }
+      }
+    }
+  },
+  "copilot-mcp.servers": {
+    "ipfs-datasets": {
+      "command": "python",
+      "args": ["-m", "ipfs_datasets_py.mcp_server", "--host", "127.0.0.1", "--port", "8000"],
+      "cwd": "/home/barberb/ipfs_datasets_py",
+      "env": {
+        "PYTHONPATH": "/home/barberb/ipfs_datasets_py",
+        "IPFS_DATASETS_CONFIG": "/home/barberb/ipfs_datasets_py/config/mcp_config.yaml"
+      }
+    }
+  }
+}

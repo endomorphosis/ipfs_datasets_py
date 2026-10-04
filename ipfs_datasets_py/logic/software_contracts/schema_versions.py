@@ -15,7 +15,9 @@ from types import MappingProxyType
 from typing import Any, Final, Mapping
 
 
-SCHEMA_REGISTRY_SCHEMA: Final[str] = "ipfs-datasets.software-contracts.schema-registry@1"
+SCHEMA_REGISTRY_SCHEMA: Final[str] = (
+    "ipfs-datasets.software-contracts.schema-registry@1"
+)
 AST_IR_OBJECTIVE_VALIDATION_SCHEMA: Final[str] = (
     "ipfs-datasets.software-contracts.ast-ir-objective-validation@1"
 )
@@ -28,7 +30,8 @@ AST_IR_PACKET_GOAL_IDS: Final[tuple[str, ...]] = (
 AST_IR_REPAIR_TASK_ID: Final[str] = "DSCON-074"
 OBJECTIVE_VALIDATION_EVIDENCE: Final[str] = "objective validation repair"
 AST_IR_VALIDATION_COMMAND: Final[str] = (
-    "python -m pytest -q ipfs_datasets_py/tests/unit/logic/software_contracts/test_ast_ir.py"
+    "python -m pytest -q "
+    "ipfs_datasets_py/tests/unit/logic/software_contracts/test_ast_ir.py"
 )
 AST_IR_VALIDATED_ARTIFACTS: Final[tuple[str, ...]] = (
     "ipfs_datasets_py/ipfs_datasets_py/logic/software_contracts/__init__.py",
@@ -36,7 +39,9 @@ AST_IR_VALIDATED_ARTIFACTS: Final[tuple[str, ...]] = (
     "ipfs_datasets_py/ipfs_datasets_py/logic/software_contracts/schema_versions.py",
     "ipfs_datasets_py/tests/unit/logic/software_contracts/test_ast_ir.py",
 )
-_SCHEMA_NAME_RE: Final[re.Pattern[str]] = re.compile(r"^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$")
+_SCHEMA_NAME_RE: Final[re.Pattern[str]] = re.compile(
+    r"^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$"
+)
 _MAX_SAFE_INTEGER: Final[int] = (1 << 53) - 1
 
 
@@ -52,13 +57,17 @@ def _exact_text(value: Any, field: str) -> str:
     if unicodedata.normalize("NFC", value) != value:
         raise SchemaVersionError(f"{field} must be NFC-normalized")
     if any(not character.isprintable() or character.isspace() for character in value):
-        raise SchemaVersionError(f"{field} must contain only printable non-whitespace characters")
+        raise SchemaVersionError(
+            f"{field} must contain only printable non-whitespace characters"
+        )
     return value
 
 
 def _component(value: Any, field: str) -> int:
     if type(value) is not int or not 0 <= value <= _MAX_SAFE_INTEGER:
-        raise SchemaVersionError(f"{field} must be an integer in 0..{_MAX_SAFE_INTEGER}")
+        raise SchemaVersionError(
+            f"{field} must be an integer in 0..{_MAX_SAFE_INTEGER}"
+        )
     return value
 
 
@@ -74,7 +83,9 @@ class SchemaVersion:
     def __post_init__(self) -> None:
         name = _exact_text(self.name, "name")
         if not _SCHEMA_NAME_RE.fullmatch(name):
-            raise SchemaVersionError("name must be a lowercase dot/dash-separated schema name")
+            raise SchemaVersionError(
+                "name must be a lowercase dot/dash-separated schema name"
+            )
         object.__setattr__(self, "name", name)
         object.__setattr__(self, "major", _component(self.major, "major"))
         object.__setattr__(self, "minor", _component(self.minor, "minor"))
@@ -130,7 +141,9 @@ FRONTEND_CAPABILITY_SCHEMA_VERSION: Final[SchemaVersion] = SchemaVersion(
 
 # Friendly aliases for callers that prefer schema nouns over version nouns.
 AST_IR_SCHEMA: Final[SchemaVersion] = AST_IR_SCHEMA_VERSION
-FRONTEND_CAPABILITY_SCHEMA: Final[SchemaVersion] = FRONTEND_CAPABILITY_SCHEMA_VERSION
+FRONTEND_CAPABILITY_SCHEMA: Final[SchemaVersion] = (
+    FRONTEND_CAPABILITY_SCHEMA_VERSION
+)
 
 _REGISTERED: Final[tuple[SchemaVersion, ...]] = (
     AST_IR_SCHEMA_VERSION,
@@ -161,7 +174,9 @@ def schema_registry_descriptor() -> dict[str, Any]:
         "schema": SCHEMA_REGISTRY_SCHEMA,
         "owner_goal": AST_IR_OWNER_GOAL_ID,
         "compatibility": "exact-version-only",
-        "schemas": [SCHEMA_VERSIONS[key].to_dict() for key in sorted(SCHEMA_VERSIONS)],
+        "schemas": [
+            SCHEMA_VERSIONS[key].to_dict() for key in sorted(SCHEMA_VERSIONS)
+        ],
     }
 
 

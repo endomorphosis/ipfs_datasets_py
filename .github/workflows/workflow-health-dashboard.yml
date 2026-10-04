@@ -1,0 +1,407 @@
+# Workflow Health Dashboard
+#
+# Purpose: Generate and maintain a real-time health dashboard for all workflows
+# Schedule: Every 4 hours
+# Duration: ~10 minutes
+# Maintainer: DevOps Team
+#
+# This workflow collects metrics from all workflows and generates a comprehensive
+# health dashboard showing success rates, failure patterns, execution times, and trends.
+
+name: Workflow Health Dashboard
+
+on:
+  schedule:
+    # Run every 4 hours
+    - cron: '0 */4 * * *'
+  workflow_dispatch:
+    inputs:
+      days_back:
+        description: 'Number of days to analyze'
+        required: false
+        default: '7'
+        type: choice
+        options:
+          - '1'
+          - '7'
+          - '14'
+          - '30'
+  push:
+    branches: [main, master]
+    paths:
+      - '.github/workflows/workflow-health-dashboard.yml'
+      - '.github/scripts/generate_health_dashboard.py'
+
+permissions:
+  contents: write
+  actions: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: health-dashboard-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  collect-metrics:
+    name: Collect Workflow Metrics
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      metrics_file: ${{ steps.collect.outputs.metrics_file }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install PyYAML requests python-dateutil
+      
+      - name: Collect Workflow Metrics
+        id: collect
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DAYS_BACK: ${{ inputs.days_back || '7' }}
+        run: |
+          cat > collect_metrics.py << 'EOF'
+          import os
+          import json
+          import requests
+          from datetime import datetime, timedelta
+          from collections import defaultdict
+          
+          def collect_workflow_metrics(days_back=7):
+              token = os.environ['GITHUB_TOKEN']
+              repo = os.environ['GITHUB_REPOSITORY']
+              headers = {'Authorization': f'token {token}'}
+              
+              # Get workflow runs from the last N days
+              since = (datetime.utcnow() - timedelta(days=days_back)).isoformat() + 'Z'
+              url = f'https://api.github.com/repos/{repo}/actions/runs'
+              
+              all_runs = []
+              page = 1
+              while page <= 10:  # Limit to 10 pages
+                  params = {
+                      'created': f'>={since}',
+                      'per_page': 100,
+                      'page': page
+                  }
+                  response = requests.get(url, headers=headers, params=params)
+                  data = response.json()
+                  
+                  if 'workflow_runs' not in data or not data['workflow_runs']:
+                      break
+                  
+                  all_runs.extend(data['workflow_runs'])
+                  page += 1
+              
+              # Aggregate metrics by workflow
+              metrics = defaultdict(lambda: {
+                  'total_runs': 0,
+                  'successful_runs': 0,
+                  'failed_runs': 0,
+                  'cancelled_runs': 0,
+                  'total_duration_seconds': 0,
+                  'run_times': []
+              })
+              
+              for run in all_runs:
+                  workflow_name = run['name']
+                  status = run['status']
+                  conclusion = run['conclusion']
+                  
+                  metrics[workflow_name]['total_runs'] += 1
+                  
+                  if conclusion == 'success':
+                      metrics[workflow_name]['successful_runs'] += 1
+                  elif conclusion == 'failure':
+                      metrics[workflow_name]['failed_runs'] += 1
+                  elif conclusion == 'cancelled':
+                      metrics[workflow_name]['cancelled_runs'] += 1
+                  
+                  # Calculate duration
+                  if run.get('created_at') and run.get('updated_at'):
+                      created = datetime.strptime(run['created_at'], '%Y-%m-%dT%H:%M:%SZ')
+                      updated = datetime.strptime(run['updated_at'], '%Y-%m-%dT%H:%M:%SZ')
+                      duration = (updated - created).total_seconds()
+                      metrics[workflow_name]['total_duration_seconds'] += duration
+                      metrics[workflow_name]['run_times'].append(duration)
+              
+              # Calculate statistics
+              results = []
+              for workflow_name, data in metrics.items():
+                  if data['total_runs'] > 0:
+                      success_rate = (data['successful_runs'] / data['total_runs']) * 100
+                      avg_duration = data['total_duration_seconds'] / data['total_runs']
+                      
+                      # Calculate median duration
+                      run_times = sorted(data['run_times'])
+                      median_duration = run_times[len(run_times)//2] if run_times else 0
+                      
+                      results.append({
+                          'workflow': workflow_name,
+                          'total_runs': data['total_runs'],
+                          'successful_runs': data['successful_runs'],
+                          'failed_runs': data['failed_runs'],
+                          'cancelled_runs': data['cancelled_runs'],
+                          'success_rate': round(success_rate, 1),
+                          'avg_duration_seconds': round(avg_duration, 1),
+                          'median_duration_seconds': round(median_duration, 1),
+                          'avg_duration_minutes': round(avg_duration / 60, 1),
+                          'median_duration_minutes': round(median_duration / 60, 1)
+                      })
+              
+              # Sort by total runs (most active first)
+              results.sort(key=lambda x: x['total_runs'], reverse=True)
+              
+              return {
+                  'generated_at': datetime.utcnow().isoformat() + 'Z',
+                  'days_analyzed': days_back,
+                  'total_workflows': len(results),
+                  'total_runs': sum(r['total_runs'] for r in results),
+                  'workflows': results
+              }
+          
+          # Collect metrics
+          days = int(os.environ.get('DAYS_BACK', '7'))
+          metrics = collect_workflow_metrics(days)
+          
+          # Save to file
+          with open('workflow_metrics.json', 'w') as f:
+              json.dump(metrics, f, indent=2)
+          
+          print(f"Collected metrics for {metrics['total_workflows']} workflows")
+          print(f"Total runs analyzed: {metrics['total_runs']}")
+          EOF
+          
+          python collect_metrics.py
+          echo "metrics_file=workflow_metrics.json" >> $GITHUB_OUTPUT
+      
+      - name: Upload Metrics
+        uses: actions/upload-artifact@v4
+        with:
+          name: workflow-metrics
+          path: workflow_metrics.json
+          retention-days: 90
+
+  generate-dashboard:
+    name: Generate Health Dashboard
+    runs-on: ubuntu-latest
+    needs: collect-metrics
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+      
+      - name: Download Metrics
+        uses: actions/download-artifact@v4
+        with:
+          name: workflow-metrics
+      
+      - name: Generate HTML Dashboard
+        run: |
+          cat > generate_dashboard.py << 'EOF'
+          import json
+          from datetime import datetime
+          
+          # Load metrics
+          with open('workflow_metrics.json', 'r') as f:
+              metrics = json.load(f)
+          
+          # Generate HTML
+          html = f'''
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Workflow Health Dashboard</title>
+              <style>
+                  * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+                  body {{ 
+                      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                      background: #f5f5f5;
+                      padding: 20px;
+                  }}
+                  .container {{ max-width: 1400px; margin: 0 auto; }}
+                  .header {{
+                      background: white;
+                      padding: 30px;
+                      border-radius: 10px;
+                      margin-bottom: 20px;
+                      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                  }}
+                  .header h1 {{ color: #333; margin-bottom: 10px; }}
+                  .header .meta {{ color: #666; font-size: 14px; }}
+                  .stats-grid {{
+                      display: grid;
+                      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                      gap: 20px;
+                      margin-bottom: 20px;
+                  }}
+                  .stat-card {{
+                      background: white;
+                      padding: 20px;
+                      border-radius: 10px;
+                      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                  }}
+                  .stat-card .label {{ color: #666; font-size: 14px; margin-bottom: 10px; }}
+                  .stat-card .value {{ color: #333; font-size: 32px; font-weight: bold; }}
+                  .workflow-table {{
+                      background: white;
+                      border-radius: 10px;
+                      padding: 20px;
+                      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                      overflow-x: auto;
+                  }}
+                  table {{ width: 100%; border-collapse: collapse; }}
+                  th, td {{ padding: 12px; text-align: left; }}
+                  th {{ background: #f8f9fa; font-weight: 600; color: #333; }}
+                  tr:hover {{ background: #f8f9fa; }}
+                  .success-rate {{ 
+                      display: inline-block;
+                      padding: 4px 8px;
+                      border-radius: 4px;
+                      font-weight: 600;
+                  }}
+                  .rate-excellent {{ background: #d4edda; color: #155724; }}
+                  .rate-good {{ background: #fff3cd; color: #856404; }}
+                  .rate-poor {{ background: #f8d7da; color: #721c24; }}
+                  .duration {{ color: #666; }}
+              </style>
+          </head>
+          <body>
+              <div class="container">
+                  <div class="header">
+                      <h1>🎯 Workflow Health Dashboard</h1>
+                      <div class="meta">
+                          Generated: {metrics['generated_at']}<br>
+                          Analysis Period: Last {metrics['days_analyzed']} days
+                      </div>
+                  </div>
+                  
+                  <div class="stats-grid">
+                      <div class="stat-card">
+                          <div class="label">Total Workflows</div>
+                          <div class="value">{metrics['total_workflows']}</div>
+                      </div>
+                      <div class="stat-card">
+                          <div class="label">Total Runs</div>
+                          <div class="value">{metrics['total_runs']:,}</div>
+                      </div>
+                      <div class="stat-card">
+                          <div class="label">Successful Runs</div>
+                          <div class="value">{sum(w['successful_runs'] for w in metrics['workflows']):,}</div>
+                      </div>
+                      <div class="stat-card">
+                          <div class="label">Failed Runs</div>
+                          <div class="value">{sum(w['failed_runs'] for w in metrics['workflows']):,}</div>
+                      </div>
+                  </div>
+                  
+                  <div class="workflow-table">
+                      <h2 style="margin-bottom: 20px;">Workflow Statistics</h2>
+                      <table>
+                          <thead>
+                              <tr>
+                                  <th>Workflow</th>
+                                  <th>Total Runs</th>
+                                  <th>Success Rate</th>
+                                  <th>Failed</th>
+                                  <th>Avg Duration</th>
+                              </tr>
+                          </thead>
+                          <tbody>
+          '''
+          
+          for workflow in metrics['workflows']:
+              # Determine success rate class
+              rate = workflow['success_rate']
+              if rate >= 95:
+                  rate_class = 'rate-excellent'
+              elif rate >= 80:
+                  rate_class = 'rate-good'
+              else:
+                  rate_class = 'rate-poor'
+              
+              html += f'''
+                              <tr>
+                                  <td><strong>{workflow['workflow']}</strong></td>
+                                  <td>{workflow['total_runs']}</td>
+                                  <td><span class="success-rate {rate_class}">{workflow['success_rate']}%</span></td>
+                                  <td>{workflow['failed_runs']}</td>
+                                  <td class="duration">{workflow['avg_duration_minutes']} min</td>
+                              </tr>
+              '''
+          
+          html += '''
+                          </tbody>
+                      </table>
+                  </div>
+              </div>
+          </body>
+          </html>
+          '''
+          
+          with open('dashboard.html', 'w') as f:
+              f.write(html)
+          
+          print("Dashboard generated successfully")
+          EOF
+          
+          python generate_dashboard.py
+      
+      - name: Upload Dashboard
+        uses: actions/upload-artifact@v4
+        with:
+          name: health-dashboard
+          path: dashboard.html
+          retention-days: 90
+      
+      - name: Deploy to GitHub Pages (if enabled)
+        if: false  # Enable this when GitHub Pages is configured
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .
+          publish_branch: gh-pages
+          destination_dir: health-dashboard
+      
+      - name: Summary
+        run: |
+          echo "## Workflow Health Dashboard Generated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📊 Dashboard has been generated and uploaded as an artifact." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Quick Stats" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Parse and display summary stats
+          python -c "
+          import json
+          with open('workflow_metrics.json') as f:
+              m = json.load(f)
+          
+          total_success = sum(w['successful_runs'] for w in m['workflows'])
+          total_failed = sum(w['failed_runs'] for w in m['workflows'])
+          overall_rate = (total_success / m['total_runs'] * 100) if m['total_runs'] > 0 else 0
+          
+          print(f\"- **Total Workflows:** {m['total_workflows']}\")
+          print(f\"- **Total Runs:** {m['total_runs']:,}\")
+          print(f\"- **Overall Success Rate:** {overall_rate:.1f}%\")
+          print(f\"- **Failed Runs:** {total_failed}\")
+          " >> $GITHUB_STEP_SUMMARY
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📥 Download the dashboard HTML from artifacts to view detailed metrics." >> $GITHUB_STEP_SUMMARY

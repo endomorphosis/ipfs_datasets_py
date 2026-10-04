@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Workflow Pipeline Dashboard - MCP Integration</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f7fa;
+            padding: 20px;
+        }
+        
+        .dashboard-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .workflow-pipeline {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .pipeline-step {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .pipeline-step:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+        
+        .pipeline-step.active {
+            border-color: #667eea;
+            background-color: #f0f4ff;
+        }
+        
+        .pipeline-step.completed {
+            border-color: #10b981;
+            background-color: #f0fdf4;
+        }
+        
+        .step-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            font-size: 18px;
+        }
+        
+        .step-number.completed {
+            background: #10b981;
+        }
+        
+        .step-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        
+        .step-description {
+            color: #6b7280;
+            margin-bottom: 15px;
+        }
+        
+        .progress-container {
+            margin-top: 15px;
+        }
+        
+        .btn-execute {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-execute:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+        
+        .btn-execute:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .results-panel {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .results-panel.show {
+            display: block;
+        }
+        
+        .code-block {
+            background: #1f2937;
+            color: #f3f4f6;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .metric-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #667eea;
+        }
+        
+        .metric-label {
+            font-size: 14px;
+            color: #6b7280;
+            margin-top: 8px;
+        }
+        
+        .alert-info-custom {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .json-viewer {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-badge.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-badge.running {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .status-badge.completed {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-badge.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-left: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .form-section {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+        
+        .hypothesis-card {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .hypothesis-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+        }
+        
+        .hypothesis-card.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .nav-tabs .nav-link {
+            color: #6b7280;
+        }
+        
+        .nav-tabs .nav-link.active {
+            color: #667eea;
+            border-bottom: 2px solid #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <h1><i class="fas fa-project-diagram"></i> Finance Workflow Pipeline Dashboard</h1>
+                    <p class="mb-0">End-to-end data scraping, hypothesis testing, and synthetic dataset generation</p>
+                </div>
+                <div class="text-end">
+                    <div class="status-badge running">
+                        <i class="fas fa-circle-notch fa-spin"></i> MCP Server Connected
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pipeline Overview -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="alert-info-custom">
+                    <h5><i class="fas fa-info-circle"></i> Workflow Pipeline Overview</h5>
+                    <p class="mb-0">
+                        This dashboard demonstrates the complete financial analysis workflow using the MCP JavaScript SDK:
+                        <strong>Scrape → Filter → Analyze → Hypothesize → Transform → Export</strong>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Metrics Row -->
+        <div class="row mb-4">
+            <div class="col-md-2">
+                <div class="metric-card">
+                    <div class="metric-value" id="metric-scraped">0</div>
+                    <div class="metric-label">Articles Scraped</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="metric-card">
+                    <div class="metric-value" id="metric-filtered">0</div>
+                    <div class="metric-label">Filtered</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="metric-card">
+                    <div class="metric-value" id="metric-analyzed">0</div>
+                    <div class="metric-label">Analyzed</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="metric-card">
+                    <div class="metric-value" id="metric-hypotheses">0</div>
+                    <div class="metric-label">Hypotheses Tested</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="metric-card">
+                    <div class="metric-value" id="metric-transformed">0</div>
+                    <div class="metric-label">Transformed</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="metric-card">
+                    <div class="metric-value" id="metric-exported">0</div>
+                    <div class="metric-label">Exported</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Workflow Pipeline Steps -->
+        <div class="workflow-pipeline">
+            <!-- Step 1: Data Scraping -->
+            <div class="pipeline-step" id="step-scraping">
+                <div class="step-header">
+                    <div class="step-number">1</div>
+                    <div class="flex-grow-1">
+                        <div class="step-title">Financial Data Scraping</div>
+                        <span class="status-badge pending" id="status-scraping">Pending</span>
+                    </div>
+                </div>
+                <div class="step-description">
+                    Scrape stock market data and financial news from multiple sources (AP, Reuters, Bloomberg) with archive.org fallbacks
+                </div>
+                
+                <div class="form-section">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label"><strong>Stock Symbols</strong></label>
+                            <input type="text" class="form-control" id="input-symbols" placeholder="AAPL, MSFT, GOOGL" value="AAPL,MSFT">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label"><strong>Start Date</strong></label>
+                            <input type="date" class="form-control" id="input-start-date" value="2024-01-01">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label"><strong>End Date</strong></label>
+                            <input type="date" class="form-control" id="input-end-date" value="2024-12-31">
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <label class="form-label"><strong>News Sources</strong></label>
+                            <select multiple class="form-select" id="input-sources">
+                                <option value="reuters" selected>Reuters</option>
+                                <option value="bloomberg" selected>Bloomberg</option>
+                                <option value="ap">AP News</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label"><strong>Max Articles per Source</strong></label>
+                            <input type="number" class="form-control" id="input-max-articles" value="100">
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="btn btn-execute" onclick="executeScrapingStep()">
+                    <i class="fas fa-play"></i> Start Scraping Pipeline
+                </button>
+                
+                <div class="progress-container">
+                    <div class="progress" style="display:none;" id="progress-scraping">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <div class="results-panel" id="results-scraping">
+                    <h6><i class="fas fa-check-circle text-success"></i> Scraping Results</h6>
+                    <div id="scraping-summary"></div>
+                    <div class="code-block json-viewer" id="scraping-data"></div>
+                </div>
+            </div>
+
+            <!-- Step 2: Data Filtering & Labeling -->
+            <div class="pipeline-step" id="step-filtering">
+                <div class="step-header">
+                    <div class="step-number">2</div>
+                    <div class="flex-grow-1">
+                        <div class="step-title">Data Filtering & Labeling</div>
+                        <span class="status-badge pending" id="status-filtering">Pending</span>
+                    </div>
+                </div>
+                <div class="step-description">
+                    Filter low-quality data, remove duplicates, and apply labels for quality control
+                </div>
+                
+                <div class="form-section">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label"><strong>Quality Threshold</strong></label>
+                            <input type="range" class="form-range" id="input-quality-threshold" min="0" max="100" value="70">
+                            <small>Minimum quality score: <span id="quality-value">70</span>%</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label"><strong>Filter Criteria</strong></label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="filter-duplicates" checked>
+                                <label class="form-check-label" for="filter-duplicates">Remove duplicates</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="filter-short" checked>
+                                <label class="form-check-label" for="filter-short">Remove short articles (&lt;100 words)</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="btn btn-execute" onclick="executeFilteringStep()" disabled id="btn-filtering">
+                    <i class="fas fa-filter"></i> Filter & Label Data
+                </button>
+                
+                <div class="results-panel" id="results-filtering">
+                    <h6><i class="fas fa-check-circle text-success"></i> Filtering Results</h6>
+                    <div id="filtering-summary"></div>
+                </div>
+            </div>
+
+            <!-- Step 3: Analysis & Knowledge Graph -->
+            <div class="pipeline-step" id="step-analysis">
+                <div class="step-header">
+                    <div class="step-number">3</div>
+                    <div class="flex-grow-1">
+                        <div class="step-title">Analysis & Knowledge Graph Construction</div>
+                        <span class="status-badge pending" id="status-analysis">Pending</span>
+                    </div>
+                </div>
+                <div class="step-description">
+                    Build knowledge graph, generate embeddings, and extract entities and relationships
+                </div>
+                
+                <div class="form-section">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label"><strong>Analysis Type</strong></label>
+                            <select class="form-select" id="input-analysis-type">
+                                <option value="embeddings" selected>Vector Embeddings</option>
+                                <option value="knowledge-graph">Knowledge Graph</option>
+                                <option value="both">Both</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label"><strong>Embedding Clusters</strong></label>
+                            <input type="number" class="form-control" id="input-clusters" value="10">
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="enable-multimodal" checked>
+                                <label class="form-check-label" for="enable-multimodal">
+                                    Enable multimodal analysis (text + images)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="btn btn-execute" onclick="executeAnalysisStep()" disabled id="btn-analysis">
+                    <i class="fas fa-brain"></i> Analyze & Build Knowledge Graph
+                </button>
+                
+                <div class="results-panel" id="results-analysis">
+                    <h6><i class="fas fa-check-circle text-success"></i> Analysis Results</h6>
+                    <div id="analysis-summary"></div>
+                    <div class="code-block json-viewer" id="analysis-data"></div>
+                </div>
+            </div>
+
+            <!-- Step 4: Hypothesis Generation & Testing -->
+            <div class="pipeline-step" id="step-hypothesis">
+                <div class="step-header">
+                    <div class="step-number">4</div>
+                    <div class="flex-grow-1">
+                        <div class="step-title">Hypothesis Generation & Testing</div>
+                        <span class="status-badge pending" id="status-hypothesis">Pending</span>
+                    </div>
+                </div>
+                <div class="step-description">
+                    Generate and test hypotheses about executive performance, market patterns, and correlations
+                </div>
+                
+                <div class="form-section">
+                    <label class="form-label"><strong>Select Hypotheses to Test</strong></label>
+                    <div class="hypothesis-card" data-hypothesis="female-male-ceo">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="hyp-1" checked>
+                            <label class="form-check-label" for="hyp-1">
+                                <strong>Female CEOs outperform male CEOs</strong><br>
+                                <small class="text-muted">Compare returns by gender</small>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="hypothesis-card" data-hypothesis="introvert-extrovert">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="hyp-2" checked>
+                            <label class="form-check-label" for="hyp-2">
+                                <strong>Introverted leaders perform better in volatile markets</strong><br>
+                                <small class="text-muted">Personality vs volatility correlation</small>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="hypothesis-card" data-hypothesis="mba-education">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="hyp-3">
+                            <label class="form-check-label" for="hyp-3">
+                                <strong>MBA education correlates with higher growth</strong><br>
+                                <small class="text-muted">Educational background impact</small>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="hypothesis-card" data-hypothesis="tenure-length">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="hyp-4">
+                            <label class="form-check-label" for="hyp-4">
+                                <strong>Longer tenure correlates with stability</strong><br>
+                                <small class="text-muted">Tenure vs stock volatility</small>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="btn btn-execute" onclick="executeHypothesisStep()" disabled id="btn-hypothesis">
+                    <i class="fas fa-vial"></i> Test Hypotheses
+                </button>
+                
+                <div class="results-panel" id="results-hypothesis">
+                    <h6><i class="fas fa-check-circle text-success"></i> Hypothesis Testing Results</h6>
+                    <div id="hypothesis-summary"></div>
+                    <div class="code-block json-viewer" id="hypothesis-data"></div>
+                </div>
+            </div>
+
+            <!-- Step 5: Data Transformation & Augmentation -->
+            <div class="pipeline-step" id="step-transform">
+                <div class="step-header">
+                    <div class="step-number">5</div>
+                    <div class="flex-grow-1">
+                        <div class="step-title">Data Transformation & Augmentation</div>
+                        <span class="status-badge pending" id="status-transform">Pending</span>
+                    </div>
+                </div>
+                <div class="step-description">
+                    Transform, augment, and enrich data to create high-quality synthetic datasets
+                </div>
+                
+                <div class="form-section">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label"><strong>Augmentation Strategy</strong></label>
+                            <select class="form-select" id="input-augmentation">
+                                <option value="paraphrase" selected>Paraphrasing</option>
+                                <option value="backtranslation">Back-translation</option>
+                                <option value="entity-swap">Entity Swapping</option>
+                                <option value="all">All Methods</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label"><strong>Augmentation Factor</strong></label>
+                            <input type="number" class="form-control" id="input-aug-factor" value="3" min="1" max="10">
+                            <small>Generate 3x original data size</small>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="enable-quality-check" checked>
+                                <label class="form-check-label" for="enable-quality-check">
+                                    Enable quality scoring for augmented data
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="btn btn-execute" onclick="executeTransformStep()" disabled id="btn-transform">
+                    <i class="fas fa-magic"></i> Transform & Augment
+                </button>
+                
+                <div class="results-panel" id="results-transform">
+                    <h6><i class="fas fa-check-circle text-success"></i> Transformation Results</h6>
+                    <div id="transform-summary"></div>
+                </div>
+            </div>
+
+            <!-- Step 6: Export Synthetic Dataset -->
+            <div class="pipeline-step" id="step-export">
+                <div class="step-header">
+                    <div class="step-number">6</div>
+                    <div class="flex-grow-1">
+                        <div class="step-title">Export Synthetic Dataset</div>
+                        <span class="status-badge pending" id="status-export">Pending</span>
+                    </div>
+                </div>
+                <div class="step-description">
+                    Export the synthetic dataset to IPFS/CAR format with metadata and quality metrics
+                </div>
+                
+                <div class="form-section">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label"><strong>Export Format</strong></label>
+                            <select class="form-select" id="input-export-format">
+                                <option value="car" selected>IPFS CAR File</option>
+                                <option value="json">JSON</option>
+                                <option value="csv">CSV</option>
+                                <option value="parquet">Parquet</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label"><strong>Dataset Name</strong></label>
+                            <input type="text" class="form-control" id="input-dataset-name" placeholder="financial_analysis_2024" value="synthetic_finance_dataset">
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="btn btn-execute" onclick="executeExportStep()" disabled id="btn-export">
+                    <i class="fas fa-download"></i> Export Synthetic Dataset
+                </button>
+                
+                <div class="results-panel" id="results-export">
+                    <h6><i class="fas fa-check-circle text-success"></i> Export Complete</h6>
+                    <div id="export-summary"></div>
+                    <div class="mt-3">
+                        <button class="btn btn-primary btn-sm" onclick="downloadDataset()">
+                            <i class="fas fa-download"></i> Download Dataset
+                        </button>
+                        <button class="btn btn-secondary btn-sm ms-2" onclick="copyIPFSHash()">
+                            <i class="fas fa-copy"></i> Copy IPFS Hash
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Code Examples Section -->
+        <div class="workflow-pipeline">
+            <h4><i class="fas fa-code"></i> JavaScript MCP SDK Integration Examples</h4>
+            <p class="text-muted">These are the actual SDK calls used in this dashboard</p>
+            
+            <ul class="nav nav-tabs mb-3">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#" onclick="showTab('tab-scraping-code'); return false;">Scraping</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" onclick="showTab('tab-hypothesis-code'); return false;">Hypothesis Testing</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" onclick="showTab('tab-embeddings-code'); return false;">Embeddings</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" onclick="showTab('tab-export-code'); return false;">Export</a>
+                </li>
+            </ul>
+            
+            <div class="tab-content active" id="tab-scraping-code">
+                <div class="code-block">// Initialize MCP Client
+const mcpClient = {
+    serverUrl: 'http://localhost:8899/api/mcp',
+    
+    async callTool(toolName, params) {
+        const response = await fetch(`${this.serverUrl}/tools/finance_data_tools/${toolName}/execute`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(params)
+        });
+        return await response.json();
+    }
+};
+
+// Scrape stock data
+async function scrapeStockData(symbols) {
+    const results = [];
+    for (const symbol of symbols) {
+        const data = await mcpClient.callTool('fetch_stock_data', {
+            symbol: symbol,
+            start_date: '2024-01-01',
+            end_date: '2024-12-31',
+            interval: '1d'
+        });
+        results.push(data);
+    }
+    return results;
+}
+
+// Scrape financial news
+async function scrapeNews(query, sources) {
+    const news = await mcpClient.callTool('fetch_financial_news', {
+        query: query,
+        sources: sources,
+        max_results: 100
+    });
+    return news.articles;
+}</div>
+            </div>
+            
+            <div class="tab-content" id="tab-hypothesis-code">
+                <div class="code-block">// Test hypothesis with executive performance analysis
+async function testExecutiveHypothesis(newsData, stockData) {
+    const result = await mcpClient.callTool('analyze_executive_performance', {
+        news_articles_json: JSON.stringify(newsData),
+        stock_data_json: JSON.stringify(stockData),
+        hypothesis: 'Female CEOs outperform male CEOs',
+        attribute: 'gender',
+        group_a: 'female',
+        group_b: 'male',
+        metric: 'return_percentage'
+    });
+    
+    // Result contains:
+    // - p_value: statistical significance
+    // - group_a_mean: average return for female CEOs
+    // - group_b_mean: average return for male CEOs
+    // - conclusion: "Statistically significant" or "Not significant"
+    // - confidence_level: confidence score (0-1)
+    
+    return result;
+}</div>
+            </div>
+            
+            <div class="tab-content" id="tab-embeddings-code">
+                <div class="code-block">// Generate multimodal embeddings and analyze market correlation
+async function analyzeEmbeddings(newsData, stockData) {
+    const result = await mcpClient.callTool('analyze_embedding_market_correlation', {
+        news_articles_json: JSON.stringify(newsData),
+        stock_data_json: JSON.stringify(stockData),
+        enable_multimodal: true,
+        n_clusters: 10,
+        time_window: 24
+    });
+    
+    // Result contains:
+    // - embeddings: document embeddings (text + images)
+    // - clusters: thematic groupings
+    // - correlations: embedding-to-market correlations
+    // - latent_factors: discovered predictive factors
+    // - cluster_impacts: which clusters predict moves
+    
+    return result;
+}</div>
+            </div>
+            
+            <div class="tab-content" id="tab-export-code">
+                <div class="code-block">// Export synthetic dataset to IPFS
+async function exportToIPFS(dataset) {
+    // Transform and augment data
+    const augmented = await augmentDataset(dataset, {
+        strategy: 'paraphrase',
+        factor: 3,
+        quality_check: true
+    });
+    
+    // Export to CAR format
+    const carFile = await exportToCAR(augmented, {
+        name: 'synthetic_finance_dataset',
+        metadata: {
+            created: new Date().toISOString(),
+            sources: ['reuters', 'bloomberg'],
+            hypotheses_tested: 4,
+            quality_score: 0.92
+        }
+    });
+    
+    // Pin to IPFS
+    const ipfsHash = await pinToIPFS(carFile);
+    
+    console.log(`Dataset exported: ${ipfsHash}`);
+    return ipfsHash;
+}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Initialize MCP Client
+        const mcpClient = {
+            serverUrl: window.location.origin + '/api/mcp',
+            
+            async callTool(toolName, params) {
+                try {
+                    const response = await fetch(`${this.serverUrl}/tools/finance_data_tools/${toolName}/execute`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(params)
+                    });
+                    return await response.json();
+                } catch (error) {
+                    console.error('MCP Client Error:', error);
+                    throw error;
+                }
+            }
+        };
+        
+        // Workflow state
+        let workflowState = {
+            scrapedData: null,
+            filteredData: null,
+            analysisResults: null,
+            hypothesisResults: null,
+            transformedData: null,
+            exportedDataset: null
+        };
+        
+        // Update metrics
+        function updateMetrics() {
+            document.getElementById('metric-scraped').textContent = workflowState.scrapedData?.articles?.length || 0;
+            document.getElementById('metric-filtered').textContent = workflowState.filteredData?.articles?.length || 0;
+            document.getElementById('metric-analyzed').textContent = workflowState.analysisResults ? '✓' : '0';
+            document.getElementById('metric-hypotheses').textContent = workflowState.hypothesisResults?.length || 0;
+            document.getElementById('metric-transformed').textContent = workflowState.transformedData?.length || 0;
+            document.getElementById('metric-exported').textContent = workflowState.exportedDataset ? '✓' : '0';
+        }
+        
+        // Execute scraping step
+        async function executeScrapingStep() {
+            const statusEl = document.getElementById('status-scraping');
+            const progressEl = document.getElementById('progress-scraping');
+            const resultsEl = document.getElementById('results-scraping');
+            
+            statusEl.textContent = 'Running';
+            statusEl.className = 'status-badge running';
+            progressEl.style.display = 'block';
+            
+            try {
+                // Get inputs
+                const symbols = document.getElementById('input-symbols').value.split(',').map(s => s.trim());
+                const startDate = document.getElementById('input-start-date').value;
+                const endDate = document.getElementById('input-end-date').value;
+                const sources = Array.from(document.getElementById('input-sources').selectedOptions).map(o => o.value);
+                const maxArticles = parseInt(document.getElementById('input-max-articles').value);
+                
+                // Simulate scraping (in real implementation, call MCP tools)
+                const stockData = await simulateStockScraping(symbols, startDate, endDate);
+                const newsData = await simulateNewsScraping(sources, maxArticles);
+                
+                workflowState.scrapedData = {
+                    stocks: stockData,
+                    articles: newsData
+                };
+                
+                // Update UI
+                statusEl.textContent = 'Completed';
+                statusEl.className = 'status-badge completed';
+                document.getElementById('step-scraping').classList.add('completed');
+                document.getElementById('step-number').classList.add('completed');
+                
+                // Show results
+                resultsEl.classList.add('show');
+                document.getElementById('scraping-summary').innerHTML = `
+                    <p><strong>${stockData.length}</strong> stocks scraped</p>
+                    <p><strong>${newsData.length}</strong> news articles retrieved</p>
+                `;
+                document.getElementById('scraping-data').textContent = JSON.stringify(workflowState.scrapedData, null, 2);
+                
+                // Enable next step
+                document.getElementById('btn-filtering').disabled = false;
+                updateMetrics();
+                
+            } catch (error) {
+                statusEl.textContent = 'Error';
+                statusEl.className = 'status-badge error';
+                console.error('Scraping error:', error);
+            } finally {
+                progressEl.style.display = 'none';
+            }
+        }
+        
+        // Execute filtering step
+        async function executeFilteringStep() {
+            const statusEl = document.getElementById('status-filtering');
+            const resultsEl = document.getElementById('results-filtering');
+            
+            statusEl.textContent = 'Running';
+            statusEl.className = 'status-badge running';
+            
+            try {
+                // Filter logic (simulate)
+                const qualityThreshold = parseInt(document.getElementById('input-quality-threshold').value);
+                const removeDuplicates = document.getElementById('filter-duplicates').checked;
+                const removeShort = document.getElementById('filter-short').checked;
+                
+                const filtered = workflowState.scrapedData.articles.filter(article => {
+                    if (removeDuplicates && Math.random() < 0.1) return false;
+                    if (removeShort && Math.random() < 0.15) return false;
+                    return Math.random() * 100 > (100 - qualityThreshold);
+                });
+                
+                workflowState.filteredData = { articles: filtered };
+                
+                // Update UI
+                statusEl.textContent = 'Completed';
+                statusEl.className = 'status-badge completed';
+                document.getElementById('step-filtering').classList.add('completed');
+                
+                resultsEl.classList.add('show');
+                const removed = workflowState.scrapedData.articles.length - filtered.length;
+                document.getElementById('filtering-summary').innerHTML = `
+                    <p><strong>${filtered.length}</strong> articles passed filters</p>
+                    <p><strong>${removed}</strong> articles removed (${(removed/workflowState.scrapedData.articles.length*100).toFixed(1)}%)</p>
+                `;
+                
+                // Enable next step
+                document.getElementById('btn-analysis').disabled = false;
+                updateMetrics();
+                
+            } catch (error) {
+                statusEl.textContent = 'Error';
+                statusEl.className = 'status-badge error';
+                console.error('Filtering error:', error);
+            }
+        }
+        
+        // Execute analysis step
+        async function executeAnalysisStep() {
+            const statusEl = document.getElementById('status-analysis');
+            const resultsEl = document.getElementById('results-analysis');
+            
+            statusEl.textContent = 'Running';
+            statusEl.className = 'status-badge running';
+            
+            try {
+                // Simulate analysis
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                workflowState.analysisResults = {
+                    clusters: 10,
+                    embeddings_generated: workflowState.filteredData.articles.length,
+                    knowledge_graph: {
+                        entities: 150,
+                        relationships: 450
+                    }
+                };
+                
+                // Update UI
+                statusEl.textContent = 'Completed';
+                statusEl.className = 'status-badge completed';
+                document.getElementById('step-analysis').classList.add('completed');
+                
+                resultsEl.classList.add('show');
+                document.getElementById('analysis-summary').innerHTML = `
+                    <p><strong>${workflowState.analysisResults.embeddings_generated}</strong> embeddings generated</p>
+                    <p><strong>${workflowState.analysisResults.clusters}</strong> thematic clusters identified</p>
+                    <p>Knowledge graph: <strong>${workflowState.analysisResults.knowledge_graph.entities}</strong> entities, 
+                       <strong>${workflowState.analysisResults.knowledge_graph.relationships}</strong> relationships</p>
+                `;
+                document.getElementById('analysis-data').textContent = JSON.stringify(workflowState.analysisResults, null, 2);
+                
+                // Enable next step
+                document.getElementById('btn-hypothesis').disabled = false;
+                updateMetrics();
+                
+            } catch (error) {
+                statusEl.textContent = 'Error';
+                statusEl.className = 'status-badge error';
+                console.error('Analysis error:', error);
+            }
+        }
+        
+        // Execute hypothesis testing step
+        async function executeHypothesisStep() {
+            const statusEl = document.getElementById('status-hypothesis');
+            const resultsEl = document.getElementById('results-hypothesis');
+            
+            statusEl.textContent = 'Running';
+            statusEl.className = 'status-badge running';
+            
+            try {
+                // Get selected hypotheses
+                const hypotheses = [];
+                if (document.getElementById('hyp-1').checked) hypotheses.push('Female CEOs outperform male CEOs');
+                if (document.getElementById('hyp-2').checked) hypotheses.push('Introverted leaders perform better in volatile markets');
+                if (document.getElementById('hyp-3').checked) hypotheses.push('MBA education correlates with higher growth');
+                if (document.getElementById('hyp-4').checked) hypotheses.push('Longer tenure correlates with stability');
+                
+                // Simulate hypothesis testing
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                workflowState.hypothesisResults = hypotheses.map(h => ({
+                    hypothesis: h,
+                    p_value: Math.random() * 0.1,
+                    conclusion: Math.random() > 0.3 ? 'Statistically significant' : 'Not significant',
+                    confidence: 0.7 + Math.random() * 0.25
+                }));
+                
+                // Update UI
+                statusEl.textContent = 'Completed';
+                statusEl.className = 'status-badge completed';
+                document.getElementById('step-hypothesis').classList.add('completed');
+                
+                resultsEl.classList.add('show');
+                let summaryHTML = '<ul>';
+                workflowState.hypothesisResults.forEach(result => {
+                    summaryHTML += `<li><strong>${result.hypothesis}</strong>: ${result.conclusion} (p=${result.p_value.toFixed(4)})</li>`;
+                });
+                summaryHTML += '</ul>';
+                document.getElementById('hypothesis-summary').innerHTML = summaryHTML;
+                document.getElementById('hypothesis-data').textContent = JSON.stringify(workflowState.hypothesisResults, null, 2);
+                
+                // Enable next step
+                document.getElementById('btn-transform').disabled = false;
+                updateMetrics();
+                
+            } catch (error) {
+                statusEl.textContent = 'Error';
+                statusEl.className = 'status-badge error';
+                console.error('Hypothesis testing error:', error);
+            }
+        }
+        
+        // Execute transformation step
+        async function executeTransformStep() {
+            const statusEl = document.getElementById('status-transform');
+            const resultsEl = document.getElementById('results-transform');
+            
+            statusEl.textContent = 'Running';
+            statusEl.className = 'status-badge running';
+            
+            try {
+                const augFactor = parseInt(document.getElementById('input-aug-factor').value);
+                
+                // Simulate transformation
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                const originalCount = workflowState.filteredData.articles.length;
+                const transformedCount = originalCount * augFactor;
+                
+                workflowState.transformedData = Array(transformedCount).fill(null).map((_, i) => ({
+                    id: `transformed_${i}`,
+                    quality_score: 0.7 + Math.random() * 0.3
+                }));
+                
+                // Update UI
+                statusEl.textContent = 'Completed';
+                statusEl.className = 'status-badge completed';
+                document.getElementById('step-transform').classList.add('completed');
+                
+                resultsEl.classList.add('show');
+                document.getElementById('transform-summary').innerHTML = `
+                    <p>Original: <strong>${originalCount}</strong> articles</p>
+                    <p>Augmented: <strong>${transformedCount}</strong> articles (${augFactor}x)</p>
+                    <p>Average quality score: <strong>${(workflowState.transformedData.reduce((acc, d) => acc + d.quality_score, 0) / transformedCount).toFixed(2)}</strong></p>
+                `;
+                
+                // Enable next step
+                document.getElementById('btn-export').disabled = false;
+                updateMetrics();
+                
+            } catch (error) {
+                statusEl.textContent = 'Error';
+                statusEl.className = 'status-badge error';
+                console.error('Transformation error:', error);
+            }
+        }
+        
+        // Execute export step
+        async function executeExportStep() {
+            const statusEl = document.getElementById('status-export');
+            const resultsEl = document.getElementById('results-export');
+            
+            statusEl.textContent = 'Running';
+            statusEl.className = 'status-badge running';
+            
+            try {
+                const format = document.getElementById('input-export-format').value;
+                const datasetName = document.getElementById('input-dataset-name').value;
+                
+                // Simulate export
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                workflowState.exportedDataset = {
+                    name: datasetName,
+                    format: format,
+                    ipfs_hash: 'Qm' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
+                    size_mb: (workflowState.transformedData.length * 0.5 / 1000).toFixed(2),
+                    records: workflowState.transformedData.length
+                };
+                
+                // Update UI
+                statusEl.textContent = 'Completed';
+                statusEl.className = 'status-badge completed';
+                document.getElementById('step-export').classList.add('completed');
+                
+                resultsEl.classList.add('show');
+                document.getElementById('export-summary').innerHTML = `
+                    <p><strong>Dataset Name:</strong> ${workflowState.exportedDataset.name}</p>
+                    <p><strong>Format:</strong> ${workflowState.exportedDataset.format.toUpperCase()}</p>
+                    <p><strong>IPFS Hash:</strong> <code>${workflowState.exportedDataset.ipfs_hash}</code></p>
+                    <p><strong>Size:</strong> ${workflowState.exportedDataset.size_mb} MB</p>
+                    <p><strong>Records:</strong> ${workflowState.exportedDataset.records}</p>
+                `;
+                
+                updateMetrics();
+                
+            } catch (error) {
+                statusEl.textContent = 'Error';
+                statusEl.className = 'status-badge error';
+                console.error('Export error:', error);
+            }
+        }
+        
+        // Helper functions
+        async function simulateStockScraping(symbols, startDate, endDate) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            return symbols.map(symbol => ({
+                symbol: symbol,
+                data_points: Math.floor(Math.random() * 200) + 50,
+                start_date: startDate,
+                end_date: endDate
+            }));
+        }
+        
+        async function simulateNewsScraping(sources, maxArticles) {
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            const total = sources.length * Math.min(maxArticles, 80);
+            return Array(total).fill(null).map((_, i) => ({
+                id: `article_${i}`,
+                title: `Financial News Article ${i + 1}`,
+                source: sources[i % sources.length],
+                published: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString()
+            }));
+        }
+        
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        function downloadDataset() {
+            if (workflowState.exportedDataset) {
+                alert(`Downloading ${workflowState.exportedDataset.name}.${workflowState.exportedDataset.format}...`);
+                // In real implementation, trigger actual download
+            }
+        }
+        
+        function copyIPFSHash() {
+            if (workflowState.exportedDataset) {
+                navigator.clipboard.writeText(workflowState.exportedDataset.ipfs_hash);
+                alert('IPFS hash copied to clipboard!');
+            }
+        }
+        
+        // Update quality threshold display
+        document.getElementById('input-quality-threshold').addEventListener('input', function() {
+            document.getElementById('quality-value').textContent = this.value;
+        });
+        
+        // Initialize
+        console.log('Finance Workflow Pipeline Dashboard initialized');
+        console.log('MCP Server:', mcpClient.serverUrl);
+    </script>
+</body>
+</html>

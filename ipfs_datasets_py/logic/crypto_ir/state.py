@@ -121,10 +121,14 @@ def _as_mapping(value: Any, name: str) -> Mapping[str, Any]:
     return value
 
 
-def _known_fields(value: Mapping[str, Any], allowed: frozenset[str], name: str) -> None:
+def _known_fields(
+    value: Mapping[str, Any], allowed: frozenset[str], name: str
+) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise CryptoIRValidationError(f"unknown {name} field(s): {', '.join(unknown)}")
+        raise CryptoIRValidationError(
+            f"unknown {name} field(s): {', '.join(unknown)}"
+        )
 
 
 def _attributes(value: Mapping[str, Any] | None) -> Mapping[str, Any]:
@@ -183,7 +187,9 @@ def _sequence_of(
         elif from_dict is not None and isinstance(item, Mapping):
             converted.append(from_dict(item))
         else:
-            raise CryptoIRValidationError(f"{name} items must be {item_type.__name__} or mappings")
+            raise CryptoIRValidationError(
+                f"{name} items must be {item_type.__name__} or mappings"
+            )
     return tuple(converted)
 
 
@@ -214,7 +220,9 @@ class PrivilegeSet:
             object.__setattr__(self, "flags", _privilege_flags(self.flags))
         else:
             # Ensure members are PrivilegeFlag even when caller passed frozenset[str].
-            normalized = frozenset(_enum(PrivilegeFlag, item, "privilege") for item in self.flags)
+            normalized = frozenset(
+                _enum(PrivilegeFlag, item, "privilege") for item in self.flags
+            )
             object.__setattr__(self, "flags", normalized)
 
     def has(self, flag: PrivilegeFlag | str) -> bool:
@@ -258,7 +266,9 @@ class PrincipalRef:
     attributes: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "principal_id", _identifier(self.principal_id, "principal_id"))
+        object.__setattr__(
+            self, "principal_id", _identifier(self.principal_id, "principal_id")
+        )
         object.__setattr__(self, "kind", _text(self.kind, "kind"))
         object.__setattr__(
             self, "account_id", _text(self.account_id, "account_id", allow_empty=True)
@@ -267,9 +277,13 @@ class PrincipalRef:
             raise CryptoIRValidationError("account_id is not a stable identifier")
         if not isinstance(self.privileges, PrivilegeSet):
             if isinstance(self.privileges, Mapping):
-                object.__setattr__(self, "privileges", PrivilegeSet.from_dict(self.privileges))
+                object.__setattr__(
+                    self, "privileges", PrivilegeSet.from_dict(self.privileges)
+                )
             else:
-                object.__setattr__(self, "privileges", PrivilegeSet(flags=self.privileges))
+                object.__setattr__(
+                    self, "privileges", PrivilegeSet(flags=self.privileges)
+                )
         object.__setattr__(self, "label", _text(self.label, "label", allow_empty=True))
         object.__setattr__(self, "attributes", _attributes(self.attributes))
 
@@ -359,7 +373,9 @@ class ContractStateEpoch:
             )
         object.__setattr__(self, "subject_id", _identifier(self.subject_id, "subject_id"))
         object.__setattr__(self, "kind", _enum(StateEpochKind, self.kind, "kind"))
-        object.__setattr__(self, "value_digest", _digest(self.value_digest, "value_digest"))
+        object.__setattr__(
+            self, "value_digest", _digest(self.value_digest, "value_digest")
+        )
         fact = self.fact_id or f"epoch:{self.epoch_id}"
         object.__setattr__(self, "fact_id", _identifier(fact, "fact_id"))
         object.__setattr__(
@@ -380,7 +396,9 @@ class ContractStateEpoch:
             object.__setattr__(
                 self,
                 "observed_at",
-                LedgerCoordinate.from_dict(_as_mapping(self.observed_at, "observed_at")),
+                LedgerCoordinate.from_dict(
+                    _as_mapping(self.observed_at, "observed_at")
+                ),
             )
         object.__setattr__(
             self,
@@ -391,7 +409,9 @@ class ContractStateEpoch:
             self, "assumption_ids", _unique_ids(self.assumption_ids, "assumption_ids")
         )
         object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
 
     def to_time_bounded_epoch(self) -> TimeBoundedEpoch:
         """Project to the kernel :class:`TimeBoundedEpoch` record."""
@@ -461,14 +481,18 @@ class ContractStateEpoch:
             fact_id=value.get("fact_id", ""),
             code_digest=value.get("code_digest", ""),
             storage_digest=value.get("storage_digest", ""),
-            validity=ValidityWindow.from_dict(_as_mapping(value.get("validity", {}), "validity")),
+            validity=ValidityWindow.from_dict(
+                _as_mapping(value.get("validity", {}), "validity")
+            ),
             observed_at=LedgerCoordinate.from_dict(
                 _as_mapping(value.get("observed_at", {}), "observed_at")
             ),
             source_provenance_ids=tuple(value.get("source_provenance_ids", ())),
             assumption_ids=tuple(value.get("assumption_ids", ())),
             attributes=value.get("attributes", {}),
-            schema_version=value.get("schema_version", CRYPTO_IR_STATE_SCHEMA_VERSION),
+            schema_version=value.get(
+                "schema_version", CRYPTO_IR_STATE_SCHEMA_VERSION
+            ),
         )
 
     def canonical_bytes(self) -> bytes:
@@ -498,11 +522,15 @@ class StateInvariant:
     LAYER: ClassVar[AuthorityKind] = AuthorityKind.ASSUMPTION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "invariant_id", _identifier(self.invariant_id, "invariant_id"))
+        object.__setattr__(
+            self, "invariant_id", _identifier(self.invariant_id, "invariant_id")
+        )
         object.__setattr__(self, "statement", _text(self.statement, "statement"))
         fact = self.fact_id or f"invariant:{self.invariant_id}"
         object.__setattr__(self, "fact_id", _identifier(fact, "fact_id"))
-        object.__setattr__(self, "subject_ids", _unique_ids(self.subject_ids, "subject_ids"))
+        object.__setattr__(
+            self, "subject_ids", _unique_ids(self.subject_ids, "subject_ids")
+        )
         object.__setattr__(
             self, "assumption_ids", _unique_ids(self.assumption_ids, "assumption_ids")
         )

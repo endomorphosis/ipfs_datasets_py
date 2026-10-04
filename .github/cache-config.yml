@@ -1,0 +1,116 @@
+# GitHub API Cache Configuration
+# This file configures the GitHub API caching and P2P sharing infrastructure
+
+# Cache Settings
+cache:
+  # Enable GitHub API response caching
+  enabled: true
+  
+  # Maximum number of cache entries
+  max_size: 5000
+  
+  # Default cache TTL (time-to-live) in seconds
+  # 300 = 5 minutes, 600 = 10 minutes, 3600 = 1 hour
+  default_ttl: 300
+  
+  # Cache directory (default: ~/.cache/github-api-p2p)
+  directory: "~/.cache/github-api-p2p"
+  
+  # Enable persistent cache (saves to disk)
+  persistence: true
+
+# P2P Cache Sharing
+p2p:
+  # Enable P2P cache sharing between runners
+  enabled: true
+  
+  # Port for P2P listening
+  listen_port: 9000
+  
+  # Enable automatic peer discovery via GitHub Cache API
+  peer_discovery: true
+  
+  # Bootstrap peers (multiaddrs)
+  # Example: /ip4/192.168.1.100/tcp/9000/p2p/QmPeerID...
+  bootstrap_peers: []
+  
+  # Encryption settings
+  encryption:
+    # Enable message encryption (uses GitHub token as shared secret)
+    enabled: true
+    
+    # Only runners with same GitHub access can decrypt messages
+    token_based: true
+
+# Content-Addressed Caching
+content_addressing:
+  # Use IPFS multiformats for content hashing
+  enabled: true
+  
+  # Validation fields for staleness detection
+  validation:
+    # Check repository updated_at/pushed_at fields
+    repos: true
+    
+    # Check workflow status/conclusion/updated_at
+    workflows: true
+    
+    # Check runner status/busy fields
+    runners: true
+
+# Rate Limiting Protection
+rate_limiting:
+  # Minimum API calls remaining before warning
+  warning_threshold: 100
+  
+  # Minimum API calls remaining before aggressive caching
+  aggressive_threshold: 50
+  
+  # Use cache-first strategy when below aggressive threshold
+  cache_first_mode: true
+
+# Statistics and Monitoring
+monitoring:
+  # Enable cache statistics collection
+  enabled: true
+  
+  # Log cache hits/misses
+  log_stats: true
+  
+  # Export metrics for monitoring systems
+  export_metrics: false
+  
+  # Metrics export format (prometheus, json)
+  metrics_format: "json"
+
+# TTL Configuration for Different Operations
+operation_ttls:
+  # Repository operations
+  list_repos: 600          # 10 minutes
+  get_repo_info: 300       # 5 minutes
+  
+  # Workflow operations
+  list_workflows: 300      # 5 minutes
+  get_workflow_runs: 120   # 2 minutes (frequently changing)
+  get_workflow_run: 60     # 1 minute (frequently changing)
+  
+  # Runner operations
+  list_runners: 300        # 5 minutes
+  get_runner_status: 60    # 1 minute
+  
+  # GitHub Copilot operations
+  copilot_completion: 3600 # 1 hour (stable for same prompts)
+
+# Integration with ipfs_accelerate_py
+ipfs_accelerate_integration:
+  # Enable cross-repository cache sharing
+  enabled: true
+  
+  # Compatible cache formats
+  use_compatible_formats: true
+  
+  # Share cache with ipfs_accelerate_py runners
+  share_with_accelerate: true
+  
+  # Accept cache from ipfs_accelerate_py runners
+  accept_from_accelerate: true

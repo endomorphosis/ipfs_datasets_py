@@ -73,7 +73,9 @@ def _normalizer(**kwargs: object) -> SolanaNormalizer:
 def test_versioned_tx_inner_outer_lamport_spl_and_token_balances(
     rpc_session: dict,
 ) -> None:
-    records = _normalizer().normalize((_bundle(rpc_session, "versioned"),), context=_context())
+    records = _normalizer().normalize(
+        (_bundle(rpc_session, "versioned"),), context=_context()
+    )
     transaction = next(item for item in records if isinstance(item, TransactionRecord))
     assert transaction.status is TransactionStatus.SUCCEEDED
     assert transaction.finality is Finality.FINALIZED
@@ -96,25 +98,32 @@ def test_versioned_tx_inner_outer_lamport_spl_and_token_balances(
 
     transfers = [item for item in records if isinstance(item, TransferRecord)]
     assert [
-        (item.transfer_kind, item.amount.base_units, item.amount.decimals) for item in transfers
+        (item.transfer_kind, item.amount.base_units, item.amount.decimals)
+        for item in transfers
     ] == [
         (TransferKind.NATIVE, "18446744073709551615", 9),
         (TransferKind.NATIVE, "42", 9),
         (TransferKind.TOKEN, "900719925474099312345", 6),
     ]
-    token_accounts = [item for item in records if isinstance(item, TokenAccountRecord)]
+    token_accounts = [
+        item for item in records if isinstance(item, TokenAccountRecord)
+    ]
     assert [item.amount.base_units for item in token_accounts] == [
         "0",
         "900719925474099312345",
     ]
-    assert all(item.asset.kind is AssetKind.FUNGIBLE_TOKEN for item in token_accounts)
+    assert all(
+        item.asset.kind is AssetKind.FUNGIBLE_TOKEN for item in token_accounts
+    )
     assert all(record.to_dict()["record_id"] == record.record_id for record in records)
 
 
 def test_failed_transaction_is_visible_but_rolled_back_transfer_is_not_emitted(
     rpc_session: dict,
 ) -> None:
-    records = _normalizer().normalize((_bundle(rpc_session, "failed_legacy"),), context=_context())
+    records = _normalizer().normalize(
+        (_bundle(rpc_session, "failed_legacy"),), context=_context()
+    )
     transaction = next(item for item in records if isinstance(item, TransactionRecord))
     assert transaction.status is TransactionStatus.FAILED
     assert transaction.finality is Finality.FINALIZED
@@ -162,7 +171,9 @@ def test_nft_enrichment_is_optional_projection_over_token_records(
     rpc_session: dict,
 ) -> None:
     mint = rpc_session["addresses"]["mint"]
-    core = _normalizer().normalize((_bundle(rpc_session, "versioned"),), context=_context())
+    core = _normalizer().normalize(
+        (_bundle(rpc_session, "versioned"),), context=_context()
+    )
     assert all(
         item.asset.kind is AssetKind.FUNGIBLE_TOKEN
         for item in core
@@ -191,4 +202,6 @@ def test_nft_enrichment_is_optional_projection_over_token_records(
 
 def test_normalized_output_obeys_item_budget(rpc_session: dict) -> None:
     with pytest.raises(ResourceLimitError, match="max_items"):
-        _normalizer().normalize((_bundle(rpc_session, "versioned"),), context=_context(max_items=5))
+        _normalizer().normalize(
+            (_bundle(rpc_session, "versioned"),), context=_context(max_items=5)
+        )

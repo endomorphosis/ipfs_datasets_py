@@ -134,10 +134,14 @@ class OperationContext:
         """Fail before I/O if cancellation or the deadline forbids more work."""
 
         if self.cancellation is not None and self.cancellation.cancelled:
-            raise OperationCancelledError(f"operation {self.request_id!r} was cancelled")
+            raise OperationCancelledError(
+                f"operation {self.request_id!r} was cancelled"
+            )
         remaining = self.remaining_seconds(now=now)
         if remaining is not None and remaining <= 0:
-            raise DeadlineExceededError(f"operation {self.request_id!r} exceeded its deadline")
+            raise DeadlineExceededError(
+                f"operation {self.request_id!r} exceeded its deadline"
+            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -169,7 +173,9 @@ class BoundedRequest:
             and self.end_position is not None
             and self.start_position > self.end_position
         ):
-            raise InvalidRequestError("start_position must not be greater than end_position")
+            raise InvalidRequestError(
+                "start_position must not be greater than end_position"
+            )
         object.__setattr__(self, "options", MappingProxyType(dict(self.options)))
 
 
@@ -199,7 +205,9 @@ class RecordBatch:
                 f"batch contains {len(self.records)} items; limit is {limits.max_items}"
             )
         if self.response_bytes > limits.max_response_bytes:
-            raise ResourceLimitError("batch response bytes exceed max_response_bytes")
+            raise ResourceLimitError(
+                "batch response bytes exceed max_response_bytes"
+            )
 
 
 @dataclass(frozen=True, slots=True)

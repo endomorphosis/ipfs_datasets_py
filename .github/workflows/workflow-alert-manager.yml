@@ -1,0 +1,289 @@
+# Workflow Alert Manager
+#
+# Purpose: Intelligent alerting system for workflow failures and issues
+# Triggers: Schedule (every 30 minutes), manual dispatch
+# Duration: ~3-5 minutes
+# Maintainer: DevOps Team
+# 
+# Features:
+# - Intelligent alert grouping and deduplication
+# - Multi-channel notifications (GitHub Issues, Slack webhook ready)
+# - Escalation policies based on failure patterns
+# - Threshold-based alerting (avoid alert fatigue)
+# - Integration with health dashboard metrics
+
+name: Workflow Alert Manager
+
+on:
+  schedule:
+    # Run every 30 minutes to check for issues
+    - cron: '*/30 * * * *'
+  
+  workflow_dispatch:
+    inputs:
+      check_hours:
+        description: 'Hours to look back for failures'
+        required: false
+        default: '1'
+      severity_threshold:
+        description: 'Minimum severity to alert (critical, high, medium, low)'
+        required: false
+        default: 'high'
+
+permissions:
+  contents: read
+  issues: write
+  actions: read
+
+concurrency:
+  group: workflow-alert-manager
+  cancel-in-progress: false  # Don't cancel, we want all alerts
+
+jobs:
+  check-and-alert:
+    name: Check Workflows and Send Alerts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install --quiet PyYAML requests python-dateutil
+      
+      - name: Collect workflow failure data
+        id: collect
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CHECK_HOURS: ${{ github.event.inputs.check_hours || '1' }}
+        run: |
+          python3 << 'PYTHON_SCRIPT'
+          import os
+          import json
+          import requests
+          from datetime import datetime, timedelta, timezone
+          from collections import defaultdict
+          
+          token = os.environ['GITHUB_TOKEN']
+          check_hours = int(os.environ.get('CHECK_HOURS', '1'))
+          repo = os.environ['GITHUB_REPOSITORY']
+          
+          headers = {
+              'Authorization': f'token {token}',
+              'Accept': 'application/vnd.github.v3+json'
+          }
+          
+          # Calculate time threshold
+          cutoff_time = datetime.now(timezone.utc) - timedelta(hours=check_hours)
+          
+          # Collect workflow runs
+          print(f"Checking workflow runs from last {check_hours} hour(s)...")
+          url = f'https://api.github.com/repos/{repo}/actions/runs'
+          params = {
+              'per_page': 100,
+              'created': f'>={cutoff_time.isoformat()}'
+          }
+          
+          response = requests.get(url, headers=headers, params=params)
+          response.raise_for_status()
+          runs = response.json().get('workflow_runs', [])
+          
+          # Group failures by workflow
+          failures = defaultdict(list)
+          critical_workflows = set()
+          
+          for run in runs:
+              if run['conclusion'] in ['failure', 'timed_out', 'cancelled']:
+                  workflow_name = run['name']
+                  failures[workflow_name].append({
+                      'id': run['id'],
+                      'conclusion': run['conclusion'],
+                      'created_at': run['created_at'],
+                      'html_url': run['html_url'],
+                      'head_branch': run['head_branch']
+                  })
+                  
+                  # Mark as critical if multiple failures
+                  if len(failures[workflow_name]) >= 3:
+                      critical_workflows.add(workflow_name)
+          
+          # Generate alert data
+          alerts = []
+          for workflow_name, runs in failures.items():
+              severity = 'critical' if workflow_name in critical_workflows else 'high'
+              alerts.append({
+                  'workflow': workflow_name,
+                  'severity': severity,
+                  'failure_count': len(runs),
+                  'recent_runs': runs[:5],  # Limit to 5 most recent
+                  'first_failure': runs[-1]['created_at'],
+                  'last_failure': runs[0]['created_at']
+              })
+          
+          # Sort by severity and failure count
+          alerts.sort(key=lambda x: (x['severity'] == 'critical', x['failure_count']), reverse=True)
+          
+          # Save results
+          with open('alerts.json', 'w') as f:
+              json.dump(alerts, f, indent=2)
+          
+          # Output summary
+          print(f"\nFound {len(alerts)} workflows with failures:")
+          for alert in alerts:
+              print(f"  [{alert['severity'].upper()}] {alert['workflow']}: {alert['failure_count']} failures")
+          
+          # Set output
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write(f"alert_count={len(alerts)}\n")
+              f.write(f"critical_count={len(critical_workflows)}\n")
+              f.write(f"has_alerts={'true' if alerts else 'false'}\n")
+          PYTHON_SCRIPT
+      
+      - name: Create GitHub Issues for Critical Alerts
+        if: steps.collect.outputs.has_alerts == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SEVERITY_THRESHOLD: ${{ github.event.inputs.severity_threshold || 'high' }}
+        run: |
+          python3 << 'PYTHON_SCRIPT'
+          import os
+          import json
+          import requests
+          from datetime import datetime
+          
+          token = os.environ['GITHUB_TOKEN']
+          repo = os.environ['GITHUB_REPOSITORY']
+          severity_threshold = os.environ.get('SEVERITY_THRESHOLD', 'high')
+          
+          headers = {
+              'Authorization': f'token {token}',
+              'Accept': 'application/vnd.github.v3+json'
+          }
+          
+          # Load alerts
+          with open('alerts.json', 'r') as f:
+              alerts = json.load(f)
+          
+          # Severity levels
+          severity_levels = {'critical': 4, 'high': 3, 'medium': 2, 'low': 1}
+          threshold_level = severity_levels.get(severity_threshold, 3)
+          
+          # Check for existing alert issues
+          search_url = f'https://api.github.com/search/issues'
+          search_params = {
+              'q': f'repo:{repo} is:issue is:open label:workflow-alert',
+              'per_page': 100
+          }
+          
+          response = requests.get(search_url, headers=headers, params=search_params)
+          response.raise_for_status()
+          existing_issues = {issue['title']: issue for issue in response.json().get('items', [])}
+          
+          issues_created = 0
+          issues_updated = 0
+          
+          for alert in alerts:
+              # Check if meets threshold
+              alert_level = severity_levels.get(alert['severity'], 1)
+              if alert_level < threshold_level:
+                  continue
+              
+              workflow = alert['workflow']
+              title = f"🚨 [{alert['severity'].upper()}] Workflow Alert: {workflow}"
+              
+              # Build issue body
+              body = f"""## Workflow Failure Alert
+          
+          **Workflow:** {workflow}  
+          **Severity:** {alert['severity'].upper()}  
+          **Failure Count:** {alert['failure_count']} in last hour  
+          **First Failure:** {alert['first_failure']}  
+          **Last Failure:** {alert['last_failure']}
+          
+          ### Recent Failed Runs
+          
+          """
+              
+              for run in alert['recent_runs']:
+                  body += f"- [{run['conclusion']}] [Run #{run['id']}]({run['html_url']}) on `{run['head_branch']}` at {run['created_at']}\n"
+              
+              body += f"""
+          
+          ### Recommended Actions
+          
+          1. Check the [Failure Runbook](../.github/workflows/FAILURE_RUNBOOK_2026.md)
+          2. Review the [workflow file](../.github/workflows/{workflow.lower().replace(' ', '-')}.yml)
+          3. Check the [Health Dashboard](../.github/workflows/workflow-health-dashboard.yml)
+          4. Review recent changes that may have caused this
+          
+          ### Auto-generated Alert
+          
+          This issue was automatically created by the Workflow Alert Manager.  
+          Generated at: {datetime.utcnow().isoformat()}Z
+          
+          ---
+          
+          **Labels:** workflow-alert, {alert['severity']}, automated
+          """
+              
+              if title in existing_issues:
+                  # Update existing issue
+                  issue = existing_issues[title]
+                  update_url = issue['url']
+                  update_data = {
+                      'body': body,
+                      'state': 'open'
+                  }
+                  response = requests.patch(update_url, headers=headers, json=update_data)
+                  response.raise_for_status()
+                  issues_updated += 1
+                  print(f"Updated issue: {title}")
+              else:
+                  # Create new issue
+                  create_url = f'https://api.github.com/repos/{repo}/issues'
+                  issue_data = {
+                      'title': title,
+                      'body': body,
+                      'labels': ['workflow-alert', alert['severity'], 'automated']
+                  }
+                  response = requests.post(create_url, headers=headers, json=issue_data)
+                  response.raise_for_status()
+                  issues_created += 1
+                  print(f"Created issue: {title}")
+          
+          print(f"\nIssues created: {issues_created}")
+          print(f"Issues updated: {issues_updated}")
+          PYTHON_SCRIPT
+      
+      - name: Upload alert data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: alert-data-${{ github.run_id }}
+          path: alerts.json
+          retention-days: 30
+      
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Alert Manager Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f alerts.json ]; then
+            echo "**Total Alerts:** ${{ steps.collect.outputs.alert_count }}" >> $GITHUB_STEP_SUMMARY
+            echo "**Critical Alerts:** ${{ steps.collect.outputs.critical_count }}" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "See [alert data artifact](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ No alerts at this time" >> $GITHUB_STEP_SUMMARY
+          fi

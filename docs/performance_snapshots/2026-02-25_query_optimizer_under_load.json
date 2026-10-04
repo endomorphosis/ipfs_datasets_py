@@ -1,0 +1,37 @@
+{
+  "benchmark_script": "benchmarks/bench_query_optimizer_under_load.py",
+  "captured_on": "2026-02-25",
+  "notes": [
+    "Local development environment benchmark",
+    "Matplotlib/Plotly and joblib warnings were emitted by optional dependencies and did not affect benchmark execution"
+  ],
+  "results": {
+    "small_payload": {
+      "iterations": 3000,
+      "warmups": 100,
+      "avg_ms": 0.0024,
+      "median_ms": 0.0023,
+      "p95_ms": 0.0025,
+      "max_ms": 0.0078,
+      "throughput_qps": 414810.39
+    },
+    "medium_payload": {
+      "iterations": 3000,
+      "warmups": 100,
+      "avg_ms": 0.0022,
+      "median_ms": 0.0022,
+      "p95_ms": 0.0023,
+      "max_ms": 0.0054,
+      "throughput_qps": 440415.33
+    },
+    "large_payload": {
+      "iterations": 3000,
+      "warmups": 100,
+      "avg_ms": 0.0022,
+      "median_ms": 0.0022,
+      "p95_ms": 0.0023,
+      "max_ms": 0.0054,
+      "throughput_qps": 444035.93
+    }
+  }
+}

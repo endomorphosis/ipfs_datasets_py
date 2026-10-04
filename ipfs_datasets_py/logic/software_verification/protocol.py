@@ -180,7 +180,12 @@ class CorrespondenceKind(StrEnum):
 def _text(value: object, label: str, *, optional: bool = False) -> str:
     if optional and value == "":
         return ""
-    if not isinstance(value, str) or not value or value.strip() != value or "\x00" in value:
+    if (
+        not isinstance(value, str)
+        or not value
+        or value.strip() != value
+        or "\x00" in value
+    ):
         qualifier = "an empty or " if optional else "a "
         raise ProtocolValidationError(
             f"{label} must be {qualifier}non-empty trimmed string without NUL bytes"
@@ -210,7 +215,9 @@ def _sequence(value: object, label: str) -> Sequence[Any]:
 
 
 def _identifiers(values: object, label: str, *, sort: bool = True) -> tuple[str, ...]:
-    result = tuple(_identifier(item, f"{label} item") for item in _sequence(values, label))
+    result = tuple(
+        _identifier(item, f"{label} item") for item in _sequence(values, label)
+    )
     if len(result) != len(set(result)):
         raise ProtocolValidationError(f"{label} must not contain duplicates")
     return tuple(sorted(result)) if sort else result
@@ -221,7 +228,9 @@ def _enums(
     enum_type: type[StrEnum],
     label: str,
 ) -> tuple[Any, ...]:
-    result = tuple(_enum(item, enum_type, f"{label} item") for item in _sequence(values, label))
+    result = tuple(
+        _enum(item, enum_type, f"{label} item") for item in _sequence(values, label)
+    )
     if len(result) != len(set(result)):
         raise ProtocolValidationError(f"{label} must not contain duplicates")
     return tuple(sorted(result, key=lambda item: item.value))
@@ -242,10 +251,14 @@ def _frozen(value: Mapping[str, Any] | FrozenMap, label: str) -> FrozenMap:
         ) from error
 
 
-def _reject_unknown(value: Mapping[str, Any], allowed: frozenset[str], label: str) -> None:
+def _reject_unknown(
+    value: Mapping[str, Any], allowed: frozenset[str], label: str
+) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise ProtocolValidationError(f"unknown {label} field(s): {', '.join(unknown)}")
+        raise ProtocolValidationError(
+            f"unknown {label} field(s): {', '.join(unknown)}"
+        )
 
 
 def _source_map(
@@ -329,7 +342,9 @@ class ProtocolTerm:
                 "a term must contain exactly one of symbol_id, function_id, or literal"
             )
         if self.symbol_id:
-            object.__setattr__(self, "symbol_id", _identifier(self.symbol_id, "term.symbol_id"))
+            object.__setattr__(
+                self, "symbol_id", _identifier(self.symbol_id, "term.symbol_id")
+            )
             if self.arguments:
                 raise ProtocolValidationError("an atomic symbol term cannot have arguments")
         elif self.function_id:
@@ -391,7 +406,9 @@ class ProtocolSort:
     span_ids: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        sources, spans = _source_map(self.source_ref_ids, self.span_ids, owner="ProtocolSort")
+        sources, spans = _source_map(
+            self.source_ref_ids, self.span_ids, owner="ProtocolSort"
+        )
         object.__setattr__(self, "sort_id", _identifier(self.sort_id, "sort_id"))
         object.__setattr__(self, "name", _text(self.name, "sort.name"))
         object.__setattr__(self, "kind", _enum(self.kind, SortKind, "sort.kind"))
@@ -411,7 +428,9 @@ class ProtocolSort:
         value = _mapping(value, "sort")
         _reject_unknown(
             value,
-            frozenset({"sort_id", "name", "kind", "source_ref_ids", "source_refs", "span_ids"}),
+            frozenset(
+                {"sort_id", "name", "kind", "source_ref_ids", "source_refs", "span_ids"}
+            ),
             "sort",
         )
         sources, spans = _source_values(value)
@@ -436,12 +455,18 @@ class ProtocolVariable:
     span_ids: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        sources, spans = _source_map(self.source_ref_ids, self.span_ids, owner="ProtocolVariable")
-        object.__setattr__(self, "variable_id", _identifier(self.variable_id, "variable_id"))
+        sources, spans = _source_map(
+            self.source_ref_ids, self.span_ids, owner="ProtocolVariable"
+        )
+        object.__setattr__(
+            self, "variable_id", _identifier(self.variable_id, "variable_id")
+        )
         object.__setattr__(self, "name", _text(self.name, "variable.name"))
         object.__setattr__(self, "sort", _identifier(self.sort, "variable.sort"))
         if self.role_id:
-            object.__setattr__(self, "role_id", _identifier(self.role_id, "variable.role_id"))
+            object.__setattr__(
+                self, "role_id", _identifier(self.role_id, "variable.role_id")
+            )
         object.__setattr__(self, "source_ref_ids", sources)
         object.__setattr__(self, "span_ids", spans)
 
@@ -494,7 +519,9 @@ class ProtocolRole:
     span_ids: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        sources, spans = _source_map(self.source_ref_ids, self.span_ids, owner="ProtocolRole")
+        sources, spans = _source_map(
+            self.source_ref_ids, self.span_ids, owner="ProtocolRole"
+        )
         object.__setattr__(self, "role_id", _identifier(self.role_id, "role_id"))
         object.__setattr__(self, "name", _text(self.name, "role.name"))
         object.__setattr__(
@@ -553,7 +580,9 @@ class FreshName:
     span_ids: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        sources, spans = _source_map(self.source_ref_ids, self.span_ids, owner="FreshName")
+        sources, spans = _source_map(
+            self.source_ref_ids, self.span_ids, owner="FreshName"
+        )
         object.__setattr__(self, "name_id", _identifier(self.name_id, "name_id"))
         object.__setattr__(self, "name", _text(self.name, "fresh_name.name"))
         object.__setattr__(self, "sort", _identifier(self.sort, "fresh_name.sort"))
@@ -562,7 +591,9 @@ class FreshName:
             "generated_by_role_id",
             _identifier(self.generated_by_role_id, "generated_by_role_id"),
         )
-        object.__setattr__(self, "kind", _enum(self.kind, FreshNameKind, "fresh_name.kind"))
+        object.__setattr__(
+            self, "kind", _enum(self.kind, FreshNameKind, "fresh_name.kind")
+        )
         object.__setattr__(self, "source_ref_ids", sources)
         object.__setattr__(self, "span_ids", spans)
 
@@ -621,7 +652,9 @@ class ProtocolKey:
     span_ids: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        sources, spans = _source_map(self.source_ref_ids, self.span_ids, owner="ProtocolKey")
+        sources, spans = _source_map(
+            self.source_ref_ids, self.span_ids, owner="ProtocolKey"
+        )
         object.__setattr__(self, "key_id", _identifier(self.key_id, "key_id"))
         object.__setattr__(self, "name", _text(self.name, "key.name"))
         object.__setattr__(self, "sort", _identifier(self.sort, "key.sort"))
@@ -631,7 +664,9 @@ class ProtocolKey:
             raise ProtocolValidationError("key.owner_role_ids must not be empty")
         object.__setattr__(self, "owner_role_ids", owners)
         if self.peer_key_id:
-            object.__setattr__(self, "peer_key_id", _identifier(self.peer_key_id, "peer_key_id"))
+            object.__setattr__(
+                self, "peer_key_id", _identifier(self.peer_key_id, "peer_key_id")
+            )
         object.__setattr__(self, "source_ref_ids", sources)
         object.__setattr__(self, "span_ids", spans)
 
@@ -693,22 +728,32 @@ class ProtocolFunction:
     span_ids: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        sources, spans = _source_map(self.source_ref_ids, self.span_ids, owner="ProtocolFunction")
-        object.__setattr__(self, "function_id", _identifier(self.function_id, "function_id"))
+        sources, spans = _source_map(
+            self.source_ref_ids, self.span_ids, owner="ProtocolFunction"
+        )
+        object.__setattr__(
+            self, "function_id", _identifier(self.function_id, "function_id")
+        )
         object.__setattr__(self, "name", _text(self.name, "function.name"))
         object.__setattr__(
             self,
             "parameter_sorts",
             tuple(
                 _identifier(item, "function parameter sort")
-                for item in _sequence(self.parameter_sorts, "function.parameter_sorts")
+                for item in _sequence(
+                    self.parameter_sorts, "function.parameter_sorts"
+                )
             ),
         )
         object.__setattr__(
             self, "result_sort", _identifier(self.result_sort, "function.result_sort")
         )
-        object.__setattr__(self, "kind", _enum(self.kind, FunctionKind, "function.kind"))
-        object.__setattr__(self, "theory", _enum(self.theory, EquationalTheory, "function.theory"))
+        object.__setattr__(
+            self, "kind", _enum(self.kind, FunctionKind, "function.kind")
+        )
+        object.__setattr__(
+            self, "theory", _enum(self.theory, EquationalTheory, "function.theory")
+        )
         object.__setattr__(self, "source_ref_ids", sources)
         object.__setattr__(self, "span_ids", spans)
 
@@ -768,13 +813,17 @@ class TrustAssumption:
     span_ids: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        sources, spans = _source_map(self.source_ref_ids, self.span_ids, owner="TrustAssumption")
+        sources, spans = _source_map(
+            self.source_ref_ids, self.span_ids, owner="TrustAssumption"
+        )
         object.__setattr__(
             self,
             "assumption_id",
             _identifier(self.assumption_id, "assumption_id"),
         )
-        object.__setattr__(self, "statement", _text(self.statement, "trust_assumption.statement"))
+        object.__setattr__(
+            self, "statement", _text(self.statement, "trust_assumption.statement")
+        )
         object.__setattr__(
             self,
             "trusted_role_ids",
@@ -786,7 +835,9 @@ class TrustAssumption:
             _identifiers(self.trusted_key_ids, "trusted_key_ids"),
         )
         if not self.trusted_role_ids and not self.trusted_key_ids:
-            raise ProtocolValidationError("a trust assumption must identify a trusted role or key")
+            raise ProtocolValidationError(
+                "a trust assumption must identify a trusted role or key"
+            )
         object.__setattr__(self, "source_ref_ids", sources)
         object.__setattr__(self, "span_ids", spans)
 
@@ -841,8 +892,12 @@ class ProtocolChannel:
     span_ids: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        sources, spans = _source_map(self.source_ref_ids, self.span_ids, owner="ProtocolChannel")
-        object.__setattr__(self, "channel_id", _identifier(self.channel_id, "channel_id"))
+        sources, spans = _source_map(
+            self.source_ref_ids, self.span_ids, owner="ProtocolChannel"
+        )
+        object.__setattr__(
+            self, "channel_id", _identifier(self.channel_id, "channel_id")
+        )
         object.__setattr__(self, "name", _text(self.name, "channel.name"))
         object.__setattr__(
             self,
@@ -867,7 +922,9 @@ class ProtocolChannel:
             self.security is ChannelSecurity.SECURE
             and self.adversary_access is not AdversaryAccess.NONE
         ):
-            raise ProtocolValidationError("a secure channel must deny adversary access")
+            raise ProtocolValidationError(
+                "a secure channel must deny adversary access"
+            )
         object.__setattr__(self, "source_ref_ids", sources)
         object.__setattr__(self, "span_ids", spans)
 
@@ -926,8 +983,12 @@ class ProtocolMessage:
     span_ids: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        sources, spans = _source_map(self.source_ref_ids, self.span_ids, owner="ProtocolMessage")
-        object.__setattr__(self, "message_id", _identifier(self.message_id, "message_id"))
+        sources, spans = _source_map(
+            self.source_ref_ids, self.span_ids, owner="ProtocolMessage"
+        )
+        object.__setattr__(
+            self, "message_id", _identifier(self.message_id, "message_id")
+        )
         object.__setattr__(self, "name", _text(self.name, "message.name"))
         object.__setattr__(
             self,
@@ -941,11 +1002,17 @@ class ProtocolMessage:
             "sender_role_id",
             _identifier(self.sender_role_id, "sender_role_id"),
         )
-        receivers = _identifiers(self.receiver_role_ids, "message.receiver_role_ids")
+        receivers = _identifiers(
+            self.receiver_role_ids, "message.receiver_role_ids"
+        )
         if not receivers:
-            raise ProtocolValidationError("message.receiver_role_ids must not be empty")
+            raise ProtocolValidationError(
+                "message.receiver_role_ids must not be empty"
+            )
         object.__setattr__(self, "receiver_role_ids", receivers)
-        object.__setattr__(self, "channel_id", _identifier(self.channel_id, "message.channel_id"))
+        object.__setattr__(
+            self, "channel_id", _identifier(self.channel_id, "message.channel_id")
+        )
         object.__setattr__(self, "source_ref_ids", sources)
         object.__setattr__(self, "span_ids", spans)
 
@@ -984,7 +1051,9 @@ class ProtocolMessage:
         return cls(
             message_id=value.get("message_id", ""),
             name=value.get("name", ""),
-            payload=ProtocolTerm.from_dict(_mapping(value.get("payload", {}), "message.payload")),
+            payload=ProtocolTerm.from_dict(
+                _mapping(value.get("payload", {}), "message.payload")
+            ),
             sender_role_id=value.get("sender_role_id", ""),
             receiver_role_ids=tuple(value.get("receiver_role_ids", ())),
             channel_id=value.get("channel_id", ""),
@@ -1004,7 +1073,9 @@ class AdversaryKnowledge:
     span_ids: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        sources, spans = _source_map(self.source_ref_ids, self.span_ids, owner="AdversaryKnowledge")
+        sources, spans = _source_map(
+            self.source_ref_ids, self.span_ids, owner="AdversaryKnowledge"
+        )
         object.__setattr__(
             self,
             "knowledge_id",
@@ -1056,8 +1127,12 @@ class AdversaryKnowledge:
         sources, spans = _source_values(value)
         return cls(
             knowledge_id=value.get("knowledge_id", ""),
-            term=ProtocolTerm.from_dict(_mapping(value.get("term", {}), "knowledge.term")),
-            available_after_event_ids=tuple(value.get("available_after_event_ids", ())),
+            term=ProtocolTerm.from_dict(
+                _mapping(value.get("term", {}), "knowledge.term")
+            ),
+            available_after_event_ids=tuple(
+                value.get("available_after_event_ids", ())
+            ),
             source_ref_ids=sources,
             span_ids=spans,
         )
@@ -1077,12 +1152,22 @@ class ProtocolAdversary:
     span_ids: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        sources, spans = _source_map(self.source_ref_ids, self.span_ids, owner="ProtocolAdversary")
-        object.__setattr__(self, "adversary_id", _identifier(self.adversary_id, "adversary_id"))
-        object.__setattr__(self, "kind", _enum(self.kind, AdversaryKind, "adversary.kind"))
-        capabilities = _enums(self.capabilities, AdversaryCapability, "adversary.capabilities")
+        sources, spans = _source_map(
+            self.source_ref_ids, self.span_ids, owner="ProtocolAdversary"
+        )
+        object.__setattr__(
+            self, "adversary_id", _identifier(self.adversary_id, "adversary_id")
+        )
+        object.__setattr__(
+            self, "kind", _enum(self.kind, AdversaryKind, "adversary.kind")
+        )
+        capabilities = _enums(
+            self.capabilities, AdversaryCapability, "adversary.capabilities"
+        )
         if self.kind is AdversaryKind.NONE and capabilities:
-            raise ProtocolValidationError("an absent adversary cannot have capabilities")
+            raise ProtocolValidationError(
+                "an absent adversary cannot have capabilities"
+            )
         if self.kind is AdversaryKind.PASSIVE and any(
             item
             in {
@@ -1104,8 +1189,12 @@ class ProtocolAdversary:
                     (
                         item
                         if isinstance(item, AdversaryKnowledge)
-                        else AdversaryKnowledge.from_dict(_mapping(item, "adversary knowledge"))
-                        for item in _sequence(self.knowledge, "adversary.knowledge")
+                        else AdversaryKnowledge.from_dict(
+                            _mapping(item, "adversary knowledge")
+                        )
+                        for item in _sequence(
+                            self.knowledge, "adversary.knowledge"
+                        )
                     ),
                     key=lambda item: item.knowledge_id,
                 )
@@ -1114,15 +1203,21 @@ class ProtocolAdversary:
         object.__setattr__(
             self,
             "compromised_role_ids",
-            _identifiers(self.compromised_role_ids, "adversary.compromised_role_ids"),
+            _identifiers(
+                self.compromised_role_ids, "adversary.compromised_role_ids"
+            ),
         )
         object.__setattr__(
             self,
             "compromised_key_ids",
-            _identifiers(self.compromised_key_ids, "adversary.compromised_key_ids"),
+            _identifiers(
+                self.compromised_key_ids, "adversary.compromised_key_ids"
+            ),
         )
         if self.kind is AdversaryKind.NONE and (
-            self.knowledge or self.compromised_role_ids or self.compromised_key_ids
+            self.knowledge
+            or self.compromised_role_ids
+            or self.compromised_key_ids
         ):
             raise ProtocolValidationError(
                 "an absent adversary cannot have knowledge or compromises"
@@ -1189,7 +1284,9 @@ class RewriteFact:
     span_ids: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        sources, spans = _source_map(self.source_ref_ids, self.span_ids, owner="RewriteFact")
+        sources, spans = _source_map(
+            self.source_ref_ids, self.span_ids, owner="RewriteFact"
+        )
         object.__setattr__(self, "fact_id", _identifier(self.fact_id, "fact_id"))
         object.__setattr__(
             self,
@@ -1205,9 +1302,13 @@ class RewriteFact:
             if isinstance(self.right, ProtocolTerm)
             else ProtocolTerm.from_dict(_mapping(self.right, "rewrite.right")),
         )
-        object.__setattr__(self, "theory", _enum(self.theory, EquationalTheory, "rewrite.theory"))
+        object.__setattr__(
+            self, "theory", _enum(self.theory, EquationalTheory, "rewrite.theory")
+        )
         if self.left.sort != self.right.sort:
-            raise ProtocolValidationError("rewrite facts must preserve the term sort")
+            raise ProtocolValidationError(
+                "rewrite facts must preserve the term sort"
+            )
         object.__setattr__(self, "source_ref_ids", sources)
         object.__setattr__(self, "span_ids", spans)
 
@@ -1241,8 +1342,12 @@ class RewriteFact:
         sources, spans = _source_values(value)
         return cls(
             fact_id=value.get("fact_id", ""),
-            left=ProtocolTerm.from_dict(_mapping(value.get("left", {}), "rewrite.left")),
-            right=ProtocolTerm.from_dict(_mapping(value.get("right", {}), "rewrite.right")),
+            left=ProtocolTerm.from_dict(
+                _mapping(value.get("left", {}), "rewrite.left")
+            ),
+            right=ProtocolTerm.from_dict(
+                _mapping(value.get("right", {}), "rewrite.right")
+            ),
             theory=value.get("theory", ""),
             source_ref_ids=sources,
             span_ids=spans,
@@ -1262,7 +1367,9 @@ class ProtocolEvent:
     span_ids: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        sources, spans = _source_map(self.source_ref_ids, self.span_ids, owner="ProtocolEvent")
+        sources, spans = _source_map(
+            self.source_ref_ids, self.span_ids, owner="ProtocolEvent"
+        )
         object.__setattr__(self, "event_id", _identifier(self.event_id, "event_id"))
         object.__setattr__(self, "name", _text(self.name, "event.name"))
         object.__setattr__(self, "role_id", _identifier(self.role_id, "event.role_id"))
@@ -1276,7 +1383,9 @@ class ProtocolEvent:
                 for item in _sequence(self.parameters, "event.parameters")
             ),
         )
-        object.__setattr__(self, "phase", _enum(self.phase, EventPhase, "event.phase"))
+        object.__setattr__(
+            self, "phase", _enum(self.phase, EventPhase, "event.phase")
+        )
         object.__setattr__(self, "source_ref_ids", sources)
         object.__setattr__(self, "span_ids", spans)
 
@@ -1345,9 +1454,13 @@ class ProtocolClaim:
     span_ids: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        sources, spans = _source_map(self.source_ref_ids, self.span_ids, owner="ProtocolClaim")
+        sources, spans = _source_map(
+            self.source_ref_ids, self.span_ids, owner="ProtocolClaim"
+        )
         object.__setattr__(self, "claim_id", _identifier(self.claim_id, "claim_id"))
-        object.__setattr__(self, "kind", _enum(self.kind, ProtocolClaimKind, "claim.kind"))
+        object.__setattr__(
+            self, "kind", _enum(self.kind, ProtocolClaimKind, "claim.kind")
+        )
         object.__setattr__(self, "statement", _text(self.statement, "claim.statement"))
         for name in ("secret_terms", "left_terms", "right_terms"):
             object.__setattr__(
@@ -1399,7 +1512,9 @@ class ProtocolClaim:
             )
         elif self.kind is ProtocolClaimKind.REACHABILITY:
             valid = populated["reachable_event_ids"] and not any(
-                populated[name] for name in populated if name != "reachable_event_ids"
+                populated[name]
+                for name in populated
+                if name != "reachable_event_ids"
             )
         elif self.kind in {
             ProtocolClaimKind.AUTHENTICATION,
@@ -1425,7 +1540,9 @@ class ProtocolClaim:
                 and len(self.left_terms) == len(self.right_terms)
                 and all(
                     left.sort == right.sort
-                    for left, right in zip(self.left_terms, self.right_terms, strict=True)
+                    for left, right in zip(
+                        self.left_terms, self.right_terms, strict=True
+                    )
                 )
                 and not any(
                     populated[name]
@@ -1450,7 +1567,8 @@ class ProtocolClaim:
             and self.correspondence is not CorrespondenceKind.NON_INJECTIVE
         ):
             raise ProtocolValidationError(
-                "injective correspondence applies only to authentication or correspondence claims"
+                "injective correspondence applies only to authentication or "
+                "correspondence claims"
             )
 
     def to_dict(self) -> dict[str, Any]:
@@ -1505,7 +1623,9 @@ class ProtocolClaim:
             consequent_event_ids=tuple(value.get("consequent_event_ids", ())),
             left_terms=tuple(value.get("left_terms", ())),
             right_terms=tuple(value.get("right_terms", ())),
-            correspondence=value.get("correspondence", CorrespondenceKind.NON_INJECTIVE.value),
+            correspondence=value.get(
+                "correspondence", CorrespondenceKind.NON_INJECTIVE.value
+            ),
             assumption_ids=tuple(value.get("assumption_ids", ())),
             source_ref_ids=sources,
             span_ids=spans,
@@ -1531,7 +1651,9 @@ class ProtocolIR:
     rewrite_facts: tuple[RewriteFact, ...] = ()
     events: tuple[ProtocolEvent, ...] = ()
     claims: tuple[ProtocolClaim, ...] = ()
-    equational_theories: tuple[EquationalTheory | str, ...] = (EquationalTheory.FREE,)
+    equational_theories: tuple[EquationalTheory | str, ...] = (
+        EquationalTheory.FREE,
+    )
     metadata: FrozenMap = field(default_factory=FrozenMap)
     observations: FrozenMap = field(default_factory=FrozenMap)
     document_id: str = ""
@@ -1624,7 +1746,9 @@ class ProtocolIR:
         self.validate()
         computed = self._compute_identity()
         if self.document_id and self.document_id != computed.cid:
-            raise ProtocolValidationError("document_id does not match canonical protocol semantics")
+            raise ProtocolValidationError(
+                "document_id does not match canonical protocol semantics"
+            )
         object.__setattr__(self, "document_id", computed.cid)
 
     @property
@@ -1673,18 +1797,25 @@ class ProtocolIR:
         )
         result: dict[str, Any] = {
             "adversary": self.adversary.to_dict(),
-            "equational_theories": [item.value for item in self.equational_theories],
+            "equational_theories": [
+                item.value for item in self.equational_theories
+            ],
             "interface": PROTOCOL_IR_INTERFACE,
             "metadata": self.metadata.to_dict(),
             "schema_version": self.schema_version,
             "sources": [
-                item.to_dict() for item in sorted(self.sources, key=lambda item: item.ref_id)
+                item.to_dict()
+                for item in sorted(self.sources, key=lambda item: item.ref_id)
             ],
-            "spans": [item.to_dict() for item in sorted(self.spans, key=lambda item: item.span_id)],
+            "spans": [
+                item.to_dict()
+                for item in sorted(self.spans, key=lambda item: item.span_id)
+            ],
         }
         for name, values, id_field in groups:
             result[name] = [
-                item.to_dict() for item in sorted(values, key=lambda item: getattr(item, id_field))
+                item.to_dict()
+                for item in sorted(values, key=lambda item: getattr(item, id_field))
             ]
         return result
 
@@ -1711,9 +1842,13 @@ class ProtocolIR:
         """Validate all source maps, types, theories, and cross-references."""
 
         if self.schema_version != PROTOCOL_IR_SCHEMA_VERSION:
-            raise ProtocolValidationError(f"unsupported schema_version {self.schema_version!r}")
+            raise ProtocolValidationError(
+                f"unsupported schema_version {self.schema_version!r}"
+            )
         if not self.sources:
-            raise ProtocolValidationError("a source-grounded protocol requires sources")
+            raise ProtocolValidationError(
+                "a source-grounded protocol requires sources"
+            )
         if not self.sorts:
             raise ProtocolValidationError("a typed protocol requires sorts")
         if not self.roles:
@@ -1741,7 +1876,8 @@ class ProtocolIR:
             self._unique(values, id_field, label)
 
         semantic_id_groups = [
-            {getattr(item, id_field) for item in values} for values, id_field, _ in groups[2:]
+            {getattr(item, id_field) for item in values}
+            for values, id_field, _ in groups[2:]
         ]
         semantic_ids: set[str] = set()
         for identifiers in semantic_id_groups:
@@ -1783,7 +1919,9 @@ class ProtocolIR:
         role_ids = {item.role_id for item in self.roles}
         variable_ids = {item.variable_id for item in self.variables}
         key_ids = {item.key_id for item in self.keys}
-        assumption_ids = {item.assumption_id for item in self.trust_assumptions}
+        assumption_ids = {
+            item.assumption_id for item in self.trust_assumptions
+        }
         channel_ids = {item.channel_id for item in self.channels}
         event_ids = {item.event_id for item in self.events}
 
@@ -1791,7 +1929,9 @@ class ProtocolIR:
         for item in self.variables:
             self._known((item.sort,), sort_ids, f"variable {item.variable_id}.sort")
             if item.role_id:
-                self._known((item.role_id,), role_ids, f"variable {item.variable_id}.role_id")
+                self._known(
+                    (item.role_id,), role_ids, f"variable {item.variable_id}.role_id"
+                )
             symbol_sorts[item.variable_id] = item.sort
         for role in self.roles:
             self._known(
@@ -1802,7 +1942,9 @@ class ProtocolIR:
             wrong_scope = sorted(
                 variable_id
                 for variable_id in role.parameter_ids
-                if next(item for item in self.variables if item.variable_id == variable_id).role_id
+                if next(
+                    item for item in self.variables if item.variable_id == variable_id
+                ).role_id
                 != role.role_id
             )
             if wrong_scope:
@@ -1821,13 +1963,18 @@ class ProtocolIR:
         keys_by_id = {item.key_id: item for item in self.keys}
         for item in self.keys:
             self._known((item.sort,), sort_ids, f"key {item.key_id}.sort")
-            self._known(item.owner_role_ids, role_ids, f"key {item.key_id}.owner_role_ids")
+            self._known(
+                item.owner_role_ids, role_ids, f"key {item.key_id}.owner_role_ids"
+            )
             if item.peer_key_id:
-                self._known((item.peer_key_id,), key_ids, f"key {item.key_id}.peer_key_id")
+                self._known(
+                    (item.peer_key_id,), key_ids, f"key {item.key_id}.peer_key_id"
+                )
                 peer = keys_by_id[item.peer_key_id]
                 if peer.peer_key_id != item.key_id:
                     raise ProtocolValidationError(
-                        f"key pair {item.key_id!r}/{item.peer_key_id!r} must be reciprocal"
+                        f"key pair {item.key_id!r}/{item.peer_key_id!r} "
+                        "must be reciprocal"
                     )
                 if {item.kind, peer.kind} != {KeyKind.PRIVATE, KeyKind.PUBLIC}:
                     raise ProtocolValidationError(
@@ -1876,19 +2023,26 @@ class ProtocolIR:
                 and item.adversary_access is not AdversaryAccess.NONE
             ):
                 raise ProtocolValidationError(
-                    f"channel {item.channel_id!r} grants access to an absent adversary"
+                    f"channel {item.channel_id!r} grants access to an absent "
+                    "adversary"
                 )
-            if self.adversary.kind is AdversaryKind.PASSIVE and item.adversary_access in {
-                AdversaryAccess.INJECT,
-                AdversaryAccess.CONTROL,
-            }:
+            if (
+                self.adversary.kind is AdversaryKind.PASSIVE
+                and item.adversary_access
+                in {AdversaryAccess.INJECT, AdversaryAccess.CONTROL}
+            ):
                 raise ProtocolValidationError(
-                    f"channel {item.channel_id!r} grants active access to a passive adversary"
+                    f"channel {item.channel_id!r} grants active access to a "
+                    "passive adversary"
                 )
             required_capabilities = {
                 AdversaryAccess.NONE: frozenset(),
-                AdversaryAccess.OBSERVE: frozenset({AdversaryCapability.INTERCEPT}),
-                AdversaryAccess.INJECT: frozenset({AdversaryCapability.INJECT}),
+                AdversaryAccess.OBSERVE: frozenset(
+                    {AdversaryCapability.INTERCEPT}
+                ),
+                AdversaryAccess.INJECT: frozenset(
+                    {AdversaryCapability.INJECT}
+                ),
                 AdversaryAccess.CONTROL: frozenset(
                     {
                         AdversaryCapability.INTERCEPT,
@@ -1896,7 +2050,9 @@ class ProtocolIR:
                     }
                 ),
             }[item.adversary_access]
-            missing_capabilities = required_capabilities - set(self.adversary.capabilities)
+            missing_capabilities = required_capabilities - set(
+                self.adversary.capabilities
+            )
             if missing_capabilities:
                 raise ProtocolValidationError(
                     f"channel {item.channel_id!r} adversary_access requires "
@@ -1919,7 +2075,9 @@ class ProtocolIR:
                 channel_ids,
                 f"message {item.message_id}.channel_id",
             )
-            self._validate_term(item.payload, sort_ids, symbol_sorts, functions_by_id)
+            self._validate_term(
+                item.payload, sort_ids, symbol_sorts, functions_by_id
+            )
 
         self._known(
             self.adversary.compromised_role_ids,
@@ -1937,19 +2095,29 @@ class ProtocolIR:
                 event_ids,
                 f"knowledge {item.knowledge_id}.available_after_event_ids",
             )
-            self._validate_term(item.term, sort_ids, symbol_sorts, functions_by_id)
+            self._validate_term(
+                item.term, sort_ids, symbol_sorts, functions_by_id
+            )
         for item in self.rewrite_facts:
             if item.theory not in enabled_theories:
                 raise ProtocolValidationError(
                     f"rewrite fact {item.fact_id!r} uses disabled equational "
                     f"theory {item.theory.value!r}"
                 )
-            self._validate_term(item.left, sort_ids, symbol_sorts, functions_by_id)
-            self._validate_term(item.right, sort_ids, symbol_sorts, functions_by_id)
+            self._validate_term(
+                item.left, sort_ids, symbol_sorts, functions_by_id
+            )
+            self._validate_term(
+                item.right, sort_ids, symbol_sorts, functions_by_id
+            )
         for item in self.events:
-            self._known((item.role_id,), role_ids, f"event {item.event_id}.role_id")
+            self._known(
+                (item.role_id,), role_ids, f"event {item.event_id}.role_id"
+            )
             for term in item.parameters:
-                self._validate_term(term, sort_ids, symbol_sorts, functions_by_id)
+                self._validate_term(
+                    term, sort_ids, symbol_sorts, functions_by_id
+                )
         for item in self.claims:
             self._known(
                 item.assumption_ids,
@@ -1970,7 +2138,9 @@ class ProtocolIR:
                 *item.left_terms,
                 *item.right_terms,
             ):
-                self._validate_term(term, sort_ids, symbol_sorts, functions_by_id)
+                self._validate_term(
+                    term, sort_ids, symbol_sorts, functions_by_id
+                )
 
     @staticmethod
     def _validate_term(
@@ -1980,24 +2150,32 @@ class ProtocolIR:
         functions: Mapping[str, ProtocolFunction],
     ) -> None:
         if term.sort not in sort_ids:
-            raise ProtocolValidationError(f"term references unknown sort {term.sort!r}")
+            raise ProtocolValidationError(
+                f"term references unknown sort {term.sort!r}"
+            )
         if term.symbol_id:
             if term.symbol_id not in symbol_sorts:
-                raise ProtocolValidationError(f"term references unknown symbol {term.symbol_id!r}")
+                raise ProtocolValidationError(
+                    f"term references unknown symbol {term.symbol_id!r}"
+                )
             expected = symbol_sorts[term.symbol_id]
             if term.sort != expected:
                 raise ProtocolValidationError(
-                    f"symbol {term.symbol_id!r} has sort {expected!r}, not {term.sort!r}"
+                    f"symbol {term.symbol_id!r} has sort {expected!r}, "
+                    f"not {term.sort!r}"
                 )
             return
         if term.literal:
             return
         function = functions.get(term.function_id)
         if function is None:
-            raise ProtocolValidationError(f"term references unknown function {term.function_id!r}")
+            raise ProtocolValidationError(
+                f"term references unknown function {term.function_id!r}"
+            )
         if term.sort != function.result_sort:
             raise ProtocolValidationError(
-                f"function {term.function_id!r} returns {function.result_sort!r}, not {term.sort!r}"
+                f"function {term.function_id!r} returns {function.result_sort!r}, "
+                f"not {term.sort!r}"
             )
         if len(term.arguments) != len(function.parameter_sorts):
             raise ProtocolValidationError(
@@ -2008,7 +2186,9 @@ class ProtocolIR:
         for index, (argument, expected) in enumerate(
             zip(term.arguments, function.parameter_sorts, strict=True)
         ):
-            ProtocolIR._validate_term(argument, sort_ids, symbol_sorts, functions)
+            ProtocolIR._validate_term(
+                argument, sort_ids, symbol_sorts, functions
+            )
             if argument.sort != expected:
                 raise ProtocolValidationError(
                     f"function {term.function_id!r} argument {index} expects "
@@ -2112,7 +2292,9 @@ class ProtocolIR:
                 "observations",
             ),
             document_id=value.get("document_id", ""),
-            schema_version=value.get("schema_version", PROTOCOL_IR_SCHEMA_VERSION),
+            schema_version=value.get(
+                "schema_version", PROTOCOL_IR_SCHEMA_VERSION
+            ),
         )
 
     @classmethod

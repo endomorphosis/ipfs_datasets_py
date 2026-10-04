@@ -94,7 +94,9 @@ def frontend(
         language_version="3.12",
         capabilities=capabilities,
         source_extensions=(".pyi", ".py"),
-        toolchain_cid=cid_for_structured({"frontend": "cpython-ast", "version": "3.12.4"}),
+        toolchain_cid=cid_for_structured(
+            {"frontend": "cpython-ast", "version": "3.12.4"}
+        ),
     )
 
 
@@ -244,7 +246,9 @@ def test_schema_registry_is_exact_immutable_and_deterministic() -> None:
     descriptor = schema_registry_descriptor()
     assert descriptor["owner_goal"] == "DSCON-G105"
     assert descriptor["compatibility"] == "exact-version-only"
-    assert [item["identifier"] for item in descriptor["schemas"]] == sorted(SCHEMA_VERSIONS)
+    assert [item["identifier"] for item in descriptor["schemas"]] == sorted(
+        SCHEMA_VERSIONS
+    )
     assert (
         cid_for_structured(descriptor)
         == "baguqeeraanunv3jqvjqsj757l6sxfmvyngl7bi4hr5fjpyrg432l7jdzek2q"
@@ -266,7 +270,9 @@ def test_schema_version_rejects_ambiguous_components_and_closed_read_shape() -> 
             }
         )
     with pytest.raises(SchemaVersionError):
-        SchemaVersion.from_dict({**AST_IR_SCHEMA_VERSION.to_dict(), "future": "field"})
+        SchemaVersion.from_dict(
+            {**AST_IR_SCHEMA_VERSION.to_dict(), "future": "field"}
+        )
 
 
 def test_full_ast_round_trips_through_canonical_cid_profile_with_golden_root() -> None:
@@ -280,7 +286,10 @@ def test_full_ast_round_trips_through_canonical_cid_profile_with_golden_root() -
     assert cid_for_structured(record.to_dict()) == record.cid
     assert record.verify_cid(record.cid) == record.cid
     # Golden root: schema/frontends cannot drift without an explicit review.
-    assert record.cid == "baguqeeraw7urbhc7vpj4us2wqekdisc6g4na2hjjvwq2quirp52p7hjtb4rq"
+    assert (
+        record.cid
+        == "baguqeeraw7urbhc7vpj4us2wqekdisc6g4na2hjjvwq2quirp52p7hjtb4rq"
+    )
 
 
 def test_record_order_and_set_like_fields_are_canonicalized() -> None:
@@ -386,7 +395,10 @@ def test_shared_schema_rejects_subclass_serialization_escape_hatches() -> None:
     record = complete_record()
     with pytest.raises(ASTIRValidationError, match="exact ASTRecord"):
         PythonSpecificASTRecord(
-            **{field.name: getattr(record, field.name) for field in dataclasses.fields(ASTRecord)}
+            **{
+                field.name: getattr(record, field.name)
+                for field in dataclasses.fields(ASTRecord)
+            }
         )
 
     class PythonSpecificSpan(SourceSpan):
@@ -450,7 +462,9 @@ def test_python_and_typescript_frontends_share_the_same_ast_contract(
         language_version=language_version,
         capabilities=("calls", "modules", "references", "symbols"),
         source_extensions=tuple(reversed(extensions)),
-        toolchain_cid=cid_for_structured({"language": language, "version": language_version}),
+        toolchain_cid=cid_for_structured(
+            {"language": language, "version": language_version}
+        ),
     )
     base = complete_record()
     record = dataclasses.replace(base, frontend=capability)
@@ -485,11 +499,15 @@ def test_source_provenance_accepts_git_paths_with_internal_spaces() -> None:
         (lambda: SourceSpan(2, 1, 1, 0, 1, 1), "precedes"),
         (lambda: SourceSpan(0, 1, 2, 0, 1, 1), "precedes"),
         (
-            lambda: SourceProvenance(cid_for_bytes(b"x"), "/absolute.py", "repository:x", "rev"),
+            lambda: SourceProvenance(
+                cid_for_bytes(b"x"), "/absolute.py", "repository:x", "rev"
+            ),
             "relative POSIX",
         ),
         (
-            lambda: SourceProvenance(cid_for_bytes(b"x"), "../escape.py", "repository:x", "rev"),
+            lambda: SourceProvenance(
+                cid_for_bytes(b"x"), "../escape.py", "repository:x", "rev"
+            ),
             "relative POSIX",
         ),
         (
@@ -506,7 +524,9 @@ def test_source_provenance_accepts_git_paths_with_internal_spaces() -> None:
         ),
     ],
 )
-def test_ambiguous_constructor_values_fail_closed(factory: Any, match: str) -> None:
+def test_ambiguous_constructor_values_fail_closed(
+    factory: Any, match: str
+) -> None:
     with pytest.raises(ASTIRValidationError, match=match):
         factory()
 
@@ -563,15 +583,21 @@ def test_graph_rejects_dangling_duplicate_and_cyclic_records() -> None:
     with pytest.raises(ASTIRValidationError, match="duplicate scope_id"):
         dataclasses.replace(record, scopes=record.scopes + (record.scopes[0],))
 
-    dangling_call = dataclasses.replace(record.calls[0], callee_reference_id="reference:missing")
+    dangling_call = dataclasses.replace(
+        record.calls[0], callee_reference_id="reference:missing"
+    )
     with pytest.raises(ASTIRValidationError, match="unknown callee_reference_id"):
         dataclasses.replace(record, calls=(dangling_call,))
 
-    dangling_symbol = dataclasses.replace(record.symbols[0], scope_id="scope:missing")
+    dangling_symbol = dataclasses.replace(
+        record.symbols[0], scope_id="scope:missing"
+    )
     with pytest.raises(ASTIRValidationError, match="unknown scope_id"):
         dataclasses.replace(record, symbols=(dangling_symbol,))
 
-    cyclic_root = dataclasses.replace(record.scopes[0], parent_scope_id=record.scopes[1].scope_id)
+    cyclic_root = dataclasses.replace(
+        record.scopes[0], parent_scope_id=record.scopes[1].scope_id
+    )
     with pytest.raises(ASTIRValidationError):
         dataclasses.replace(record, scopes=(cyclic_root, record.scopes[1]))
 
@@ -617,7 +643,11 @@ def test_signature_preserves_semantic_shape_without_default_expressions() -> Non
     assert not signature.is_generator
 
     with pytest.raises(ASTIRValidationError, match="contiguous"):
-        SignatureDefinition(parameters=(ParameterDefinition("x", "positional_or_named", 1),))
+        SignatureDefinition(
+            parameters=(
+                ParameterDefinition("x", "positional_or_named", 1),
+            )
+        )
 
 
 def test_unsupported_constructs_and_diagnostics_are_durable_facts() -> None:
@@ -663,7 +693,10 @@ def test_package_exports_are_the_serialized_shared_surface() -> None:
     assert package.CallSite is CallRecord
     assert package.Effect is EffectRecord
     assert package.Diagnostic is DiagnosticRecord
-    assert package.ast_ir_objective_validation_contract is ast_ir_objective_validation_contract
+    assert (
+        package.ast_ir_objective_validation_contract
+        is ast_ir_objective_validation_contract
+    )
 
 
 def test_objective_validation_repair_contract_covers_the_goal_packet() -> None:
@@ -678,7 +711,8 @@ def test_objective_validation_repair_contract_covers_the_goal_packet() -> None:
         "DSCON-G120",
     )
     assert AST_IR_VALIDATION_COMMAND == (
-        "python -m pytest -q ipfs_datasets_py/tests/unit/logic/software_contracts/test_ast_ir.py"
+        "python -m pytest -q "
+        "ipfs_datasets_py/tests/unit/logic/software_contracts/test_ast_ir.py"
     )
     assert AST_IR_VALIDATED_ARTIFACTS == (
         "ipfs_datasets_py/ipfs_datasets_py/logic/software_contracts/__init__.py",

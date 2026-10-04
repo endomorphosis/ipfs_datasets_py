@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unified Investigation Dashboard - Screenshot Demo</title>
+    <style>
+        :root {
+            /* Unified Color Scheme - Investigation Theme */
+            --primary: #1e40af;
+            --primary-dark: #1e3a8a;
+            --secondary: #6366f1;
+            --accent: #06b6d4;
+            --success: #059669;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --info: #0891b2;
+            
+            /* Investigation-specific colors */
+            --entity-person: #8b5cf6;
+            --entity-org: #06b6d4;
+            --entity-location: #10b981;
+            --entity-event: #f59e0b;
+            --entity-concept: #ef4444;
+            --relationship-strong: #059669;
+            --relationship-medium: #f59e0b;
+            --relationship-weak: #6b7280;
+            
+            /* Surface colors */
+            --surface: #ffffff;
+            --surface-secondary: #f8fafc;
+            --surface-tertiary: #e2e8f0;
+            --surface-hover: #f1f5f9;
+            --border: #e2e8f0;
+            --border-hover: #cbd5e1;
+            
+            /* Text colors */
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #64748b;
+            --text-inverse: #ffffff;
+            
+            /* Spacing */
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--surface-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .dashboard-container {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 280px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        
+        .sidebar-header {
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .sidebar-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .sidebar-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+        
+        .navigation {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--spacing-md);
+        }
+        
+        .nav-section {
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .nav-section-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: var(--spacing-sm);
+            padding: 0 var(--spacing-sm);
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: 0.5rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-size: 0.875rem;
+        }
+        
+        .nav-item:hover {
+            background: var(--surface-hover);
+            color: var(--text-primary);
+        }
+        
+        .nav-item.active {
+            background: var(--primary);
+            color: var(--text-inverse);
+        }
+        
+        .nav-icon {
+            font-size: 1.25rem;
+            width: 24px;
+            text-align: center;
+        }
+        
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .status-bar {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: var(--spacing-sm) var(--spacing-xl);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.875rem;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        
+        .status-connected { background: var(--success); }
+        .status-processing { background: var(--warning); }
+        .status-error { background: var(--danger); }
+        
+        .main-header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: var(--spacing-md) var(--spacing-xl);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        }
+        
+        .page-title {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .page-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: var(--spacing-xs);
+        }
+        
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: 0.5rem;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+            font-size: 0.875rem;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: var(--text-inverse);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+        
+        .content-area {
+            flex: 1;
+            overflow: auto;
+            padding: var(--spacing-xl);
+        }
+        
+        .grid {
+            display: grid;
+            gap: var(--spacing-lg);
+        }
+        
+        .grid-4 { grid-template-columns: repeat(4, 1fr); }
+        .grid-2 { grid-template-columns: repeat(2, 1fr); }
+        
+        .card {
+            background: var(--surface);
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+        
+        .card-header {
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .card-content {
+            padding: var(--spacing-lg);
+        }
+        
+        .stat-card {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        
+        .stat-change {
+            font-size: 0.75rem;
+            margin-top: var(--spacing-xs);
+            color: var(--text-muted);
+        }
+        
+        .discovery-item, .investigation-item {
+            padding: var(--spacing-md);
+            border-radius: 0.5rem;
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .discovery-item {
+            border-left: 3px solid var(--entity-person);
+            background: var(--surface-secondary);
+        }
+        
+        .investigation-item {
+            background: var(--surface-secondary);
+        }
+        
+        .entity-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: var(--spacing-xs);
+        }
+        
+        .entity-person { background: var(--entity-person); color: white; }
+        .entity-organization { background: var(--entity-org); color: white; }
+        .entity-location { background: var(--entity-location); color: white; }
+        .entity-event { background: var(--entity-event); color: white; }
+        .entity-concept { background: var(--entity-concept); color: white; }
+        
+        .progress-bar {
+            width: 100%;
+            background: var(--surface-tertiary);
+            border-radius: 0.25rem;
+            height: 4px;
+            margin-top: var(--spacing-xs);
+        }
+        
+        .progress-fill {
+            background: var(--warning);
+            height: 100%;
+            border-radius: 0.25rem;
+            width: 65%;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1 class="sidebar-title">🔍 Investigation Hub</h1>
+                <p class="sidebar-subtitle">Entity Analysis & Research Platform</p>
+            </div>
+            
+            <nav class="navigation">
+                <!-- Core Investigation Tools -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Investigation</div>
+                    <button class="nav-item active">
+                        <span class="nav-icon">📊</span>
+                        Overview & Stats
+                    </button>
+                    <button class="nav-item">
+                        <span class="nav-icon">🎯</span>
+                        Entity Explorer
+                    </button>
+                    <button class="nav-item">
+                        <span class="nav-icon">🕸️</span>
+                        Relationship Map
+                    </button>
+                    <button class="nav-item">
+                        <span class="nav-icon">📈</span>
+                        Timeline Analysis
+                    </button>
+                </div>
+                
+                <!-- Data Management -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Data Management</div>
+                    <button class="nav-item">
+                        <span class="nav-icon">📥</span>
+                        Data Ingestion
+                    </button>
+                    <button class="nav-item">
+                        <span class="nav-icon">📚</span>
+                        Corpus Browser
+                    </button>
+                    <button class="nav-item">
+                        <span class="nav-icon">🌐</span>
+                        Source Management
+                    </button>
+                </div>
+                
+                <!-- Analysis Tools -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Analysis Tools</div>
+                    <button class="nav-item">
+                        <span class="nav-icon">🔍</span>
+                        Advanced Search
+                    </button>
+                    <button class="nav-item">
+                        <span class="nav-icon">📋</span>
+                        Pattern Detection
+                    </button>
+                    <button class="nav-item">
+                        <span class="nav-icon">⚖️</span>
+                        Conflict Analysis
+                    </button>
+                    <button class="nav-item">
+                        <span class="nav-icon">🔗</span>
+                        Data Provenance
+                    </button>
+                </div>
+            </nav>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <div style="display: flex; gap: 1rem;">
+                    <div class="status-item">
+                        <div class="status-dot status-connected"></div>
+                        <span>Connected</span>
+                    </div>
+                    <div class="status-item">
+                        <span>Last Update: 14:32:15</span>
+                    </div>
+                </div>
+                <div class="status-item">
+                    <span>Processing: 3 tasks</span>
+                </div>
+            </div>
+            
+            <!-- Main Header -->
+            <header class="main-header">
+                <div>
+                    <h1 class="page-title">Investigation Overview</h1>
+                    <p class="page-subtitle">Analyze entities, relationships, and patterns across your corpus</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-outline">
+                        <span>🔍</span>
+                        Quick Search
+                    </button>
+                    <button class="btn btn-primary">
+                        <span>📥</span>
+                        Add Data
+                    </button>
+                </div>
+            </header>
+            
+            <!-- Content Area -->
+            <div class="content-area">
+                <!-- Key Statistics -->
+                <div class="grid grid-4" style="margin-bottom: 2rem;">
+                    <div class="card stat-card">
+                        <div class="card-content">
+                            <div class="stat-value">1,247</div>
+                            <div class="stat-label">Documents Analyzed</div>
+                            <div class="stat-change">+127 today</div>
+                        </div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="card-content">
+                            <div class="stat-value">3,891</div>
+                            <div class="stat-label">Entities Discovered</div>
+                            <div class="stat-change">15 types</div>
+                        </div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="card-content">
+                            <div class="stat-value">1,523</div>
+                            <div class="stat-label">Relationships Mapped</div>
+                            <div class="stat-change">452 strong</div>
+                        </div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="card-content">
+                            <div class="stat-value">45</div>
+                            <div class="stat-label">Sources Analyzed</div>
+                            <div class="stat-change">87% reliable</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Investigation Dashboard Grid -->
+                <div class="grid grid-2">
+                    <!-- Recent Discoveries -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">🔍 Recent Discoveries</h2>
+                            <button class="btn btn-outline">View All</button>
+                        </div>
+                        <div class="card-content">
+                            <div class="discovery-item">
+                                <div style="font-weight: 600; margin-bottom: 0.5rem;">New Entity Cluster</div>
+                                <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                                    Identified 12 connected entities in financial documents
+                                </div>
+                                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                    <span class="entity-badge entity-organization">Corp A</span>
+                                    <span class="entity-badge entity-person">John Smith</span>
+                                    <span class="entity-badge entity-location">New York</span>
+                                </div>
+                            </div>
+                            <div class="discovery-item" style="border-left-color: var(--entity-event);">
+                                <div style="font-weight: 600; margin-bottom: 0.5rem;">Temporal Pattern</div>
+                                <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                                    Detected significant activity spike in March 2024
+                                </div>
+                                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                    <span class="entity-badge entity-event">Market Event</span>
+                                    <span class="entity-badge entity-concept">Volatility</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Active Investigations -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">⚡ Active Investigations</h2>
+                            <button class="btn btn-primary">New Investigation</button>
+                        </div>
+                        <div class="card-content">
+                            <div class="investigation-item">
+                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+                                    <div style="font-weight: 600;">Financial Network Analysis</div>
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <div class="status-dot status-processing"></div>
+                                        <span style="font-size: 0.75rem;">Processing</span>
+                                    </div>
+                                </div>
+                                <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                                    Analyzing relationships between 247 financial entities
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill"></div>
+                                </div>
+                            </div>
+                            <div class="investigation-item">
+                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+                                    <div style="font-weight: 600;">Government Document Review</div>
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <div class="status-dot status-connected"></div>
+                                        <span style="font-size: 0.75rem;">Complete</span>
+                                    </div>
+                                </div>
+                                <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                                    Successfully processed 89 government documents
+                                </div>
+                                <button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Results</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

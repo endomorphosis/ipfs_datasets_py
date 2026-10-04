@@ -26,7 +26,9 @@ from ipfs_datasets_py.logic.security_ir.cvefixes.schemas import (
 
 
 def _cid(label: str) -> str:
-    return canonical_identity({"label": label}, domain="test", schema_version="test/v1").cid
+    return canonical_identity(
+        {"label": label}, domain="test", schema_version="test/v1"
+    ).cid
 
 
 SOURCE_CID = _cid("pinned-source")
@@ -193,7 +195,9 @@ def test_source_parent_and_config_identities_are_mandatory(missing: str) -> None
         ("config_cid", "sha256:" + "0" * 64),
     ],
 )
-def test_identity_bindings_must_use_shared_ir_core_cids(field: str, value: object) -> None:
+def test_identity_bindings_must_use_shared_ir_core_cids(
+    field: str, value: object
+) -> None:
     values = {**_bindings(), "node_type": "cve"}
     values[field] = value
 
@@ -230,12 +234,16 @@ def test_unknown_fields_and_unknown_record_types_fail_closed() -> None:
 
 def test_json_decoder_rejects_duplicate_keys_and_non_finite_numbers() -> None:
     with pytest.raises(CVEfixesSchemaError, match="duplicate field"):
-        SourceRecord.from_json('{"record_type":"source_record","record_type":"source_record"}')
+        SourceRecord.from_json(
+            '{"record_type":"source_record","record_type":"source_record"}'
+        )
     with pytest.raises(CVEfixesSchemaError, match="non-finite"):
         SourceRecord.from_json('{"payload":{"score":NaN}}')
 
 
-@pytest.mark.parametrize("authority", ["authoritative", "reviewed", "execution_authority", True])
+@pytest.mark.parametrize(
+    "authority", ["authoritative", "reviewed", "execution_authority", True]
+)
 def test_derived_records_cannot_broaden_authority(authority: object) -> None:
     source = _records()[0].to_dict()
     candidate = _records()[5].to_dict()
@@ -299,11 +307,15 @@ def test_dataset_round_trip_is_order_independent_and_tamper_evident() -> None:
     assert first.canonical_bytes() == second.canonical_bytes()
 
     with pytest.raises(CVEfixesSchemaError, match="dataset_id does not match"):
-        DerivedDataset.from_dict({**first.to_dict(), "dataset_id": _cid("forged-dataset")})
+        DerivedDataset.from_dict(
+            {**first.to_dict(), "dataset_id": _cid("forged-dataset")}
+        )
 
 
 def test_policy_scope_and_metrics_are_required_and_finite() -> None:
     with pytest.raises(CVEfixesSchemaError, match="scope must not be empty"):
         PolicyCandidate(**_bindings(), effect="deny", scope={})
     with pytest.raises(CVEfixesSchemaError, match="metrics must not be empty"):
-        EvaluationRecord(**_bindings(), subject_cids=(_cid("subject"),), metrics={})
+        EvaluationRecord(
+            **_bindings(), subject_cids=(_cid("subject"),), metrics={}
+        )

@@ -188,7 +188,9 @@ def test_bind_rejects_approval_authority_fields_on_candidate() -> None:
     cand["user_approved"] = True
     with pytest.raises(GuardForbiddenSurfaceError) as excinfo:
         guard.bind_payload(cand, _payload(), ledger_epoch=_ledger_epoch())
-    assert "approval" in str(excinfo.value).lower() or "user_approved" in str(excinfo.value)
+    assert "approval" in str(excinfo.value).lower() or "user_approved" in str(
+        excinfo.value
+    )
 
 
 def test_bind_rejects_approval_fields_on_payload() -> None:
@@ -266,16 +268,18 @@ def test_evaluate_rejects_approval_kwargs_as_authority() -> None:
             xaman_user_approved=True,
             xaman_workflow_resolved=True,
         )
-    assert (
-        "does not replace" in str(excinfo.value).lower() or "approval" in str(excinfo.value).lower()
-    )
+    assert "does not replace" in str(excinfo.value).lower() or "approval" in str(
+        excinfo.value
+    ).lower()
 
 
 def test_evaluate_stale_compliance_blocks_even_if_payload_opened() -> None:
     guard = _guard()
     binding = guard.bind_payload(
         _xrp_payment(),
-        _payload(workflow_observation={"payload_status": "opened", "obs:note": "user-seen"}),
+        _payload(
+            workflow_observation={"payload_status": "opened", "obs:note": "user-seen"}
+        ),
         ledger_epoch=_ledger_epoch(),
     )
     request = _request_for(guard, binding, "req:xaman-stale")
@@ -283,7 +287,9 @@ def test_evaluate_stale_compliance_blocks_even_if_payload_opened() -> None:
         binding,
         request=request,
         security_results={req: "pass" for req in request.security_requirement_ids},
-        compliance_results={req: "stale" for req in request.compliance_requirement_ids},
+        compliance_results={
+            req: "stale" for req in request.compliance_requirement_ids
+        },
         now=_NOW_OK,
     )
     assert decision.outcome is TransactionVerdictOutcome.STALE

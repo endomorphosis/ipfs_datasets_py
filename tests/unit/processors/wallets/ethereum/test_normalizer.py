@@ -68,7 +68,9 @@ def test_legacy_eip1559_receipts_reverts_and_contract_creation_are_preserved(
     rpc_session: Mapping[str, object],
 ) -> None:
     records = _normalizer().normalize((_bundle(rpc_session),), context=_context())
-    transactions = [record for record in records if isinstance(record, TransactionRecord)]
+    transactions = [
+        record for record in records if isinstance(record, TransactionRecord)
+    ]
     assert len(transactions) == 3
     legacy, reverted, creation = transactions
     assert legacy.status is TransactionStatus.SUCCEEDED
@@ -79,7 +81,10 @@ def test_legacy_eip1559_receipts_reverts_and_contract_creation_are_preserved(
     assert reverted.fee.base_units == str(25_000 * 1_500_000_000)
     assert reverted.extensions["ethereum"].data["max_fee_per_gas"] == "2000000000"
     assert creation.participants[-1].kind is AccountKind.CONTRACT
-    assert creation.extensions["ethereum"].data["contract_address"] == "0x" + "dd" * 20
+    assert (
+        creation.extensions["ethereum"].data["contract_address"]
+        == "0x" + "dd" * 20
+    )
 
 
 def test_native_values_are_exact_and_failed_value_is_not_hidden(
@@ -128,7 +133,9 @@ def test_erc20_erc721_and_erc1155_logs_decode_without_metadata(
     ]
     erc20 = tokens[0]
     assert erc20.asset.decimals == 0
-    assert erc20.extensions["ethereum"].data["token_metadata_complete"] is False
+    assert (
+        erc20.extensions["ethereum"].data["token_metadata_complete"] is False
+    )
     assert erc20.extensions["ethereum"].data["base_units_exact"] is True
     erc721 = tokens[1]
     assert erc721.transfer_kind is TransferKind.MINT
@@ -141,11 +148,14 @@ def test_optional_token_metadata_changes_display_precision_not_ingestion(
 ) -> None:
     erc20_address = "0x" + "aa" * 20
     metadata = {erc20_address: TokenMetadata(decimals=6, symbol="SYN")}
-    records = _normalizer(metadata).normalize((_bundle(rpc_session),), context=_context())
+    records = _normalizer(metadata).normalize(
+        (_bundle(rpc_session),), context=_context()
+    )
     erc20 = next(
         record
         for record in records
-        if isinstance(record, TransferRecord) and record.asset.asset_namespace == "erc20"
+        if isinstance(record, TransferRecord)
+        and record.asset.asset_namespace == "erc20"
     )
     assert erc20.amount.base_units == "1000"
     assert erc20.amount.decimals == 6
@@ -159,8 +169,12 @@ def test_removed_logs_and_event_ids_are_preserved_and_stable(
     normalizer = _normalizer()
     first = normalizer.normalize((_bundle(rpc_session),), context=_context())
     second = normalizer.normalize((_bundle(rpc_session),), context=_context())
-    first_events = [record for record in first if isinstance(record, ContractEventRecord)]
-    second_events = [record for record in second if isinstance(record, ContractEventRecord)]
+    first_events = [
+        record for record in first if isinstance(record, ContractEventRecord)
+    ]
+    second_events = [
+        record for record in second if isinstance(record, ContractEventRecord)
+    ]
     assert [record.record_id for record in first_events] == [
         record.record_id for record in second_events
     ]
@@ -182,11 +196,15 @@ def test_trace_capability_emits_internal_value_or_labels_incomplete(
     rpc_session: Mapping[str, object],
 ) -> None:
     absent = _normalizer().normalize((_bundle(rpc_session),), context=_context())
-    absent_tx = next(record for record in absent if isinstance(record, TransactionRecord))
+    absent_tx = next(
+        record for record in absent if isinstance(record, TransactionRecord)
+    )
     assert absent_tx.extensions["ethereum"].data["trace_capability"] is False
     assert absent_tx.extensions["ethereum"].data["internal_value_complete"] is False
 
-    traced = _normalizer().normalize((_bundle(rpc_session, traces=True),), context=_context())
+    traced = _normalizer().normalize(
+        (_bundle(rpc_session, traces=True),), context=_context()
+    )
     internal = [
         record
         for record in traced

@@ -58,12 +58,22 @@ from ipfs_datasets_py.processors.wallets.worldcoin.snapshots import (
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[5]
-WORLDCOIN_FIXTURES = REPO_ROOT / "ipfs_datasets_py" / "tests" / "fixtures" / "wallets" / "worldcoin"
+WORLDCOIN_FIXTURES = (
+    REPO_ROOT / "ipfs_datasets_py" / "tests" / "fixtures" / "wallets" / "worldcoin"
+)
 SECURITY_BASELINE = (
-    REPO_ROOT / "data" / "wallet_processor_migration" / "audit" / "security-baseline.json"
+    REPO_ROOT
+    / "data"
+    / "wallet_processor_migration"
+    / "audit"
+    / "security-baseline.json"
 )
 REPORT_PATH = (
-    REPO_ROOT / "data" / "wallet_processor_migration" / "validation" / "conformance-report.json"
+    REPO_ROOT
+    / "data"
+    / "wallet_processor_migration"
+    / "validation"
+    / "conformance-report.json"
 )
 
 HMAC_KEY = b"test-only-world-id-state-hmac-key"
@@ -156,7 +166,9 @@ def test_safe_hash_and_signing_vectors_match_old_and_new() -> None:
     # Old package must match byte-for-byte on safe vectors.
     old = _import_old_world_id()
     assert old.hash_to_field_hex(b"") == hash_to_field_hex(b"")
-    assert old.hash_to_field_hex(action["input_utf8"]) == hash_to_field_hex(action["input_utf8"])
+    assert old.hash_to_field_hex(action["input_utf8"]) == hash_to_field_hex(
+        action["input_utf8"]
+    )
     old_sig = old.sign_world_id_request(
         signing["signing_key_hex"],
         ttl_seconds=signing["ttl_seconds"],
@@ -194,7 +206,9 @@ def test_idkit_normalization_matches_old_and_new(fixture_name: str) -> None:
     new_norm = normalize_world_id_idkit_response(payload)
     assert new_norm.protocol_version == expected["protocol_version"]
     assert new_norm.proof_type == expected["proof_type"]
-    assert list(new_norm.credential_identifiers) == list(expected["credential_identifiers"])
+    assert list(new_norm.credential_identifiers) == list(
+        expected["credential_identifiers"]
+    )
     if "nullifiers" in expected:
         assert list(new_norm.nullifiers) == list(expected["nullifiers"])
     if "session_id" in expected:
@@ -203,7 +217,9 @@ def test_idkit_normalization_matches_old_and_new(fixture_name: str) -> None:
     public_json = json.dumps(new_norm.public_dict(), sort_keys=True)
     for token in fixture.get("sensitive_tokens_must_not_appear_in_public_dict", []):
         assert token not in public_json
-    for token in fixture.get("sensitive_tokens_must_not_appear_in_repr_or_public_dict", []):
+    for token in fixture.get(
+        "sensitive_tokens_must_not_appear_in_repr_or_public_dict", []
+    ):
         assert token not in public_json
         assert token not in repr(new_norm)
 
@@ -342,7 +358,9 @@ def test_legacy_proofs_fail_closed_by_default() -> None:
         assert_idkit_allowed_by_config(normalized, safe_config)
 
     # Explicit opt-in still works for migration windows.
-    permissive = load_world_id_config(env=_enabled_env(WORLD_ID_ALLOW_LEGACY_PROOFS="true"))
+    permissive = load_world_id_config(
+        env=_enabled_env(WORLD_ID_ALLOW_LEGACY_PROOFS="true")
+    )
     assert permissive.allow_legacy_proofs is True
     assert_idkit_allowed_by_config(normalized, permissive)
 

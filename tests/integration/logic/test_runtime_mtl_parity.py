@@ -42,7 +42,8 @@ def _ensure_typescript_built() -> Path:
         )
         if install.returncode != 0:
             pytest.fail(
-                f"npm install failed for logic-runtime-mtl:\n{install.stdout}\n{install.stderr}"
+                "npm install failed for logic-runtime-mtl:\n"
+                f"{install.stdout}\n{install.stderr}"
             )
     build = subprocess.run(
         [npm, "run", "build"],
@@ -53,7 +54,8 @@ def _ensure_typescript_built() -> Path:
     )
     if build.returncode != 0 or not TS_INDEX.is_file():
         pytest.fail(
-            f"TypeScript build failed for logic-runtime-mtl:\n{build.stdout}\n{build.stderr}"
+            "TypeScript build failed for logic-runtime-mtl:\n"
+            f"{build.stdout}\n{build.stderr}"
         )
     return TS_INDEX
 
@@ -95,9 +97,7 @@ process.stdout.write(JSON.stringify(evaluateCase(payload)));
 
 def _assert_expected(result: dict, expected: dict, case_id: str) -> None:
     for key, value in expected.items():
-        assert result[key] == value, (
-            f"{case_id}: field {key} expected {value!r} got {result.get(key)!r}"
-        )
+        assert result[key] == value, f"{case_id}: field {key} expected {value!r} got {result.get(key)!r}"
     assert result["authority"] == MonitorAuthority.MONITOR.value
     assert result["authorizes_global_proof"] is False
     assert result["interface"] == RUNTIME_MTL_INTERFACE

@@ -33,9 +33,15 @@ from types import MappingProxyType
 from typing import Any, Final, Protocol, runtime_checkable
 
 COUNTEREXAMPLE_REPLAY_INTERFACE: Final = "CounterexampleReplay@1"
-REPLAY_RECIPE_SCHEMA: Final = "ipfs_datasets_py/logic/counterexample-replay-recipe@1"
-REPLAY_RECEIPT_SCHEMA: Final = "ipfs_datasets_py/logic/counterexample-replay-receipt@1"
-REPLAY_RESULT_SCHEMA: Final = "ipfs_datasets_py/logic/counterexample-replay-result@1"
+REPLAY_RECIPE_SCHEMA: Final = (
+    "ipfs_datasets_py/logic/counterexample-replay-recipe@1"
+)
+REPLAY_RECEIPT_SCHEMA: Final = (
+    "ipfs_datasets_py/logic/counterexample-replay-receipt@1"
+)
+REPLAY_RESULT_SCHEMA: Final = (
+    "ipfs_datasets_py/logic/counterexample-replay-result@1"
+)
 ALGORITHM_VERSION: Final = "counterexample-replay/1.0.0"
 ALGORITHM_NAME: Final = "exact_binding_counterexample_replay"
 
@@ -201,7 +207,8 @@ class CounterexampleReplayProtocol(Protocol):
         tool_version: str = "",
         policy_id: str = "",
         bounds: Mapping[str, Any] | None = None,
-    ) -> "ReplayRecipe": ...
+    ) -> "ReplayRecipe":
+        ...
 
     def replay(
         self,
@@ -210,7 +217,8 @@ class CounterexampleReplayProtocol(Protocol):
         oracle: ViolationOracle | None = None,
         observed_bindings: Mapping[str, Any] | None = None,
         tool_available: bool | ToolAvailabilityProbe | None = None,
-    ) -> "ReplayResult": ...
+    ) -> "ReplayResult":
+        ...
 
 
 def _text(value: object, label: str, *, optional: bool = False, maximum: int = 512) -> str:
@@ -405,7 +413,8 @@ def _is_private_or_forbidden_key(key: str) -> bool:
     if normalized in _SAFE_PUBLIC_KEYS:
         return False
     return bool(
-        _PRIVATE_CHANNEL_KEY_RE.search(normalized) or _FORBIDDEN_CHANNEL_KEY_RE.match(normalized)
+        _PRIVATE_CHANNEL_KEY_RE.search(normalized)
+        or _FORBIDDEN_CHANNEL_KEY_RE.match(normalized)
     )
 
 
@@ -430,12 +439,17 @@ def _assert_public_safe(value: Any, *, label: str = "replay recipe") -> None:
                     )
                     continue
                 if _is_private_or_forbidden_key(key) or any(
-                    marker == key_l or marker in key_l for marker in _FORBIDDEN_PUBLIC_MARKERS
+                    marker == key_l or marker in key_l
+                    for marker in _FORBIDDEN_PUBLIC_MARKERS
                 ):
-                    raise ReplayError(f"{label} contains forbidden public channel key {key!r}")
+                    raise ReplayError(
+                        f"{label} contains forbidden public channel key {key!r}"
+                    )
                 walk(child, path=child_path, allow_channel_class=allow_channel_class)
             return
-        if isinstance(node, Sequence) and not isinstance(node, (str, bytes, bytearray, memoryview)):
+        if isinstance(node, Sequence) and not isinstance(
+            node, (str, bytes, bytearray, memoryview)
+        ):
             for index, child in enumerate(node):
                 walk(
                     child,
@@ -472,7 +486,9 @@ def _strip_private(value: Any) -> Any:
                 continue
             cleaned[key] = _strip_private(child)
         return cleaned
-    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray, memoryview)):
+    if isinstance(value, Sequence) and not isinstance(
+        value, (str, bytes, bytearray, memoryview)
+    ):
         return [_strip_private(item) for item in value]
     if isinstance(value, str):
         # Redact inline secret-shaped substrings rather than embedding them.
@@ -802,7 +818,9 @@ class ReplayBindings:
             assumption_ids=tuple(value.get("assumption_ids") or value.get("assumptions") or ()),
             tool_id=str(value.get("tool_id") or ""),
             tool_version=str(value.get("tool_version") or ""),
-            policy_id=str(value.get("policy_id") or value.get("observation_policy_id") or ""),
+            policy_id=str(
+                value.get("policy_id") or value.get("observation_policy_id") or ""
+            ),
             bounds=value.get("bounds") or value.get("finite_bounds") or {},
             witness_content_id=str(
                 value.get("witness_content_id") or value.get("content_id") or ""
@@ -865,12 +883,12 @@ class ReplayRecipe:
     contains_source: bool = False
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "kind", _text(self.kind, "kind", maximum=128) or "generic_failure")
+        object.__setattr__(
+            self, "kind", _text(self.kind, "kind", maximum=128) or "generic_failure"
+        )
         if not isinstance(self.bindings, ReplayBindings):
             object.__setattr__(
-                self,
-                "bindings",
-                ReplayBindings.from_mapping(self.bindings),  # type: ignore[arg-type]
+                self, "bindings", ReplayBindings.from_mapping(self.bindings)  # type: ignore[arg-type]
             )
         object.__setattr__(
             self,
@@ -908,7 +926,8 @@ class ReplayRecipe:
         object.__setattr__(
             self,
             "interface",
-            _text(self.interface, "interface", maximum=128) or COUNTEREXAMPLE_REPLAY_INTERFACE,
+            _text(self.interface, "interface", maximum=128)
+            or COUNTEREXAMPLE_REPLAY_INTERFACE,
         )
         for flag_name in (
             "contains_private_material",
@@ -1027,7 +1046,9 @@ class ReplayReceipt:
 
     def __post_init__(self) -> None:
         status = (
-            self.status if isinstance(self.status, ReplayStatus) else ReplayStatus(str(self.status))
+            self.status
+            if isinstance(self.status, ReplayStatus)
+            else ReplayStatus(str(self.status))
         )
         object.__setattr__(self, "status", status)
         object.__setattr__(
@@ -1048,7 +1069,9 @@ class ReplayReceipt:
         object.__setattr__(
             self, "oracle_id", _text(self.oracle_id, "oracle_id", optional=True, maximum=256)
         )
-        object.__setattr__(self, "detail", _text(self.detail, "detail", optional=True, maximum=512))
+        object.__setattr__(
+            self, "detail", _text(self.detail, "detail", optional=True, maximum=512)
+        )
         object.__setattr__(
             self,
             "schema",
@@ -1057,7 +1080,8 @@ class ReplayReceipt:
         object.__setattr__(
             self,
             "interface",
-            _text(self.interface, "interface", maximum=128) or COUNTEREXAMPLE_REPLAY_INTERFACE,
+            _text(self.interface, "interface", maximum=128)
+            or COUNTEREXAMPLE_REPLAY_INTERFACE,
         )
         if not self.receipt_id:
             object.__setattr__(
@@ -1067,11 +1091,15 @@ class ReplayReceipt:
             object.__setattr__(
                 self,
                 "content_id",
-                _sha256_hex(_canonical(self.to_dict(identity=False)).encode("utf-8")),
+                _sha256_hex(
+                    _canonical(self.to_dict(identity=False)).encode("utf-8")
+                ),
             )
 
     def to_dict(self, *, identity: bool = True) -> dict[str, Any]:
-        status = self.status.value if isinstance(self.status, ReplayStatus) else str(self.status)
+        status = (
+            self.status.value if isinstance(self.status, ReplayStatus) else str(self.status)
+        )
         payload: dict[str, Any] = {
             "algorithm": self.algorithm,
             "algorithm_version": self.algorithm_version,
@@ -1108,7 +1136,9 @@ class ReplayResult:
 
     def __post_init__(self) -> None:
         status = (
-            self.status if isinstance(self.status, ReplayStatus) else ReplayStatus(str(self.status))
+            self.status
+            if isinstance(self.status, ReplayStatus)
+            else ReplayStatus(str(self.status))
         )
         object.__setattr__(self, "status", status)
         if not self.content_id:
@@ -1141,7 +1171,9 @@ class ReplayResult:
         return self.status is ReplayStatus.UNAVAILABLE or self.status == ReplayStatus.UNAVAILABLE
 
     def to_dict(self) -> dict[str, Any]:
-        status = self.status.value if isinstance(self.status, ReplayStatus) else str(self.status)
+        status = (
+            self.status.value if isinstance(self.status, ReplayStatus) else str(self.status)
+        )
         payload = {
             "content_id": self.content_id,
             "interface": self.interface,
@@ -1232,7 +1264,9 @@ class CounterexampleReplayer:
                         for item in value
                         if isinstance(item, str) and item.strip()
                     ]
-        counterexample_id = str(raw.get("counterexample_id") or raw.get("semantic_id") or "")
+        counterexample_id = str(
+            raw.get("counterexample_id") or raw.get("semantic_id") or ""
+        )
         summary = str(raw.get("summary") or "")
         private_refs = _extract_private_artifact_refs(raw)
         recipe = ReplayRecipe(
@@ -1314,7 +1348,8 @@ class CounterexampleReplayer:
                 oracle_id=recipe.oracle_id,
                 oracle_calls=0,
                 detail=(
-                    "exact binding mismatch: " + ", ".join(field.value for field in mismatches)
+                    "exact binding mismatch: "
+                    + ", ".join(field.value for field in mismatches)
                 ),
                 wall_ms=wall_ms,
             )
@@ -1407,7 +1442,9 @@ class CounterexampleReplayer:
                 receipt=receipt,
             )
 
-        status = ReplayStatus.REPRODUCED if violated else ReplayStatus.NOT_REPRODUCED
+        status = (
+            ReplayStatus.REPRODUCED if violated else ReplayStatus.NOT_REPRODUCED
+        )
         wall_ms = int((time.monotonic() - started) * 1000)
         receipt = ReplayReceipt(
             receipt_id="",

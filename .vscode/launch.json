@@ -1,0 +1,41 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug MCP Tools Test",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/comprehensive_mcp_test.py",
+            "console": "integratedTerminal",
+            "python": "${workspaceFolder}/.venv/bin/python",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Debug MCP Server",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "ipfs_datasets_py.mcp_server",
+            "console": "integratedTerminal",
+            "python": "${workspaceFolder}/.venv/bin/python",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Debug Individual MCP Tool",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/debug_tool.py",
+            "console": "integratedTerminal",
+            "python": "${workspaceFolder}/.venv/bin/python",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        }
+    ]
+}

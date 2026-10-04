@@ -30,7 +30,9 @@ from typing import Any, Final
 SOLIDITY_VOCABULARY: Final = "security.solidity-cpt"
 SOLIDITY_VOCABULARY_NAMESPACE: Final = SOLIDITY_VOCABULARY
 SOLIDITY_VOCABULARY_VERSION: Final = "v1"
-SOLIDITY_VOCABULARY_SCHEMA_VERSION: Final = f"{SOLIDITY_VOCABULARY}/{SOLIDITY_VOCABULARY_VERSION}"
+SOLIDITY_VOCABULARY_SCHEMA_VERSION: Final = (
+    f"{SOLIDITY_VOCABULARY}/{SOLIDITY_VOCABULARY_VERSION}"
+)
 SOLIDITY_SCHEMA_VERSION: Final = SOLIDITY_VOCABULARY_SCHEMA_VERSION
 SOLIDITY_POLICY_ATTRIBUTES_KEY: Final = SOLIDITY_VOCABULARY
 
@@ -185,7 +187,9 @@ SOLIDITY_SCOPES: Final = frozenset(
         "provenance",
     }
 )
-SOLIDITY_AUTHORITY_TYPES: Final = frozenset(item.value for item in SolidityAuthorityType)
+SOLIDITY_AUTHORITY_TYPES: Final = frozenset(
+    item.value for item in SolidityAuthorityType
+)
 SOLIDITY_NODE_TYPES: Final = frozenset(
     {
         "source",
@@ -286,7 +290,9 @@ def _coerce_kind(value: SolidityTermKind | str) -> SolidityTermKind:
     try:
         return SolidityTermKind(value)
     except (TypeError, ValueError) as exc:
-        raise SolidityVocabularyError(f"unknown Solidity CPT term kind: {value!r}") from exc
+        raise SolidityVocabularyError(
+            f"unknown Solidity CPT term kind: {value!r}"
+        ) from exc
 
 
 def _reject_broadening(value: Any, field_name: str) -> str:
@@ -295,22 +301,33 @@ def _reject_broadening(value: Any, field_name: str) -> str:
     if value != value.strip():
         raise SolidityVocabularyError(f"{field_name} must be canonical")
     if any(character in value for character in _WILDCARD_CHARS):
-        raise SolidityVocabularyError(f"{field_name} must not contain wildcard syntax")
+        raise SolidityVocabularyError(
+            f"{field_name} must not contain wildcard syntax"
+        )
     if value.casefold() in _BROADENING_NAMES:
-        raise SolidityVocabularyError(f"{field_name} must not use a catch-all value")
+        raise SolidityVocabularyError(
+            f"{field_name} must not use a catch-all value"
+        )
     return value
 
 
 def _validate_local_name(kind: SolidityTermKind, name: Any) -> str:
     name = _reject_broadening(name, f"{kind.value} term")
     if _LOCAL_NAME_RE.fullmatch(name) is None:
-        raise SolidityVocabularyError(f"{kind.value} term must be canonical lower_snake_case")
-    if kind is SolidityTermKind.SECURITY_CONCEPT and name in _QUALITY_AS_SECURITY_FORBIDDEN:
+        raise SolidityVocabularyError(
+            f"{kind.value} term must be canonical lower_snake_case"
+        )
+    if (
+        kind is SolidityTermKind.SECURITY_CONCEPT
+        and name in _QUALITY_AS_SECURITY_FORBIDDEN
+    ):
         raise SolidityVocabularyError(
             "corpus quality ranking is not a security concept or safety label"
         )
     if name not in _FIXED_TERMS[kind]:
-        raise SolidityVocabularyError(f"unknown Solidity CPT {kind.value} term: {name!r}")
+        raise SolidityVocabularyError(
+            f"unknown Solidity CPT {kind.value} term: {name!r}"
+        )
     return name
 
 
@@ -327,7 +344,8 @@ class SolidityTerm:
         object.__setattr__(self, "kind", kind)
         if self.schema_version != SOLIDITY_VOCABULARY_SCHEMA_VERSION:
             raise SolidityVocabularyError(
-                f"unsupported Solidity CPT vocabulary schema version: {self.schema_version!r}"
+                "unsupported Solidity CPT vocabulary schema version: "
+                f"{self.schema_version!r}"
             )
         object.__setattr__(self, "name", _validate_local_name(kind, self.name))
 
@@ -376,7 +394,9 @@ class SolidityTerm:
             if missing:
                 details.append("missing: " + ", ".join(missing))
             raise SolidityVocabularyError(
-                "Solidity CPT term fields are not canonical (" + "; ".join(details) + ")"
+                "Solidity CPT term fields are not canonical ("
+                + "; ".join(details)
+                + ")"
             )
         term = cls(
             kind=value["kind"],
@@ -384,7 +404,9 @@ class SolidityTerm:
             schema_version=value["schema_version"],
         )
         if value["term"] != term.canonical:
-            raise SolidityVocabularyError("Solidity CPT term does not match its typed components")
+            raise SolidityVocabularyError(
+                "Solidity CPT term does not match its typed components"
+            )
         return term
 
 
@@ -408,15 +430,20 @@ def parse_solidity_term(
     prefix = f"{SOLIDITY_VOCABULARY_SCHEMA_VERSION}/"
     if not value.startswith(prefix):
         if value.startswith(f"{SOLIDITY_VOCABULARY}/"):
-            raise SolidityVocabularyError("unsupported Solidity CPT vocabulary version")
-        raise SolidityVocabularyError(f"term is outside {SOLIDITY_VOCABULARY_SCHEMA_VERSION!r}")
+            raise SolidityVocabularyError(
+                "unsupported Solidity CPT vocabulary version"
+            )
+        raise SolidityVocabularyError(
+            f"term is outside {SOLIDITY_VOCABULARY_SCHEMA_VERSION!r}"
+        )
     components = value[len(prefix) :].split("/")
     if len(components) != 2 or not all(components):
         raise SolidityVocabularyError("malformed canonical Solidity CPT term")
     kind = _coerce_kind(components[0])
     if expected_kind is not None and kind is not _coerce_kind(expected_kind):
         raise SolidityVocabularyError(
-            f"expected a {_coerce_kind(expected_kind).value} term, received {kind.value}"
+            f"expected a {_coerce_kind(expected_kind).value} term, "
+            f"received {kind.value}"
         )
     term = SolidityTerm(kind, components[1])
     if term.canonical != value:
@@ -450,16 +477,23 @@ def require_authority_type(
     if isinstance(value, SolidityTerm):
         if value.kind is not SolidityTermKind.AUTHORITY_TYPE:
             raise SolidityVocabularyError(
-                f"expected an authority_type term, received {value.kind.value}"
+                "expected an authority_type term, "
+                f"received {value.kind.value}"
             )
         return SolidityAuthorityType(value.name)
-    if isinstance(value, str) and value.startswith(f"{SOLIDITY_VOCABULARY_SCHEMA_VERSION}/"):
-        term = parse_solidity_term(value, expected_kind=SolidityTermKind.AUTHORITY_TYPE)
+    if isinstance(value, str) and value.startswith(
+        f"{SOLIDITY_VOCABULARY_SCHEMA_VERSION}/"
+    ):
+        term = parse_solidity_term(
+            value, expected_kind=SolidityTermKind.AUTHORITY_TYPE
+        )
         return SolidityAuthorityType(term.name)
     try:
         return SolidityAuthorityType(value)
     except (TypeError, ValueError) as exc:
-        raise SolidityVocabularyError(f"unknown authority type: {value!r}") from exc
+        raise SolidityVocabularyError(
+            f"unknown authority type: {value!r}"
+        ) from exc
 
 
 @dataclass(frozen=True, slots=True)
@@ -475,7 +509,9 @@ class SolidityAlias:
         object.__setattr__(self, "kind", kind)
         alias = _reject_broadening(self.alias, "Solidity CPT alias")
         if "/" in alias:
-            raise SolidityVocabularyError("Solidity CPT aliases must be local names")
+            raise SolidityVocabularyError(
+                "Solidity CPT aliases must be local names"
+            )
         object.__setattr__(self, "alias", alias)
         _validate_local_name(kind, self.canonical_name)
 
@@ -493,11 +529,15 @@ def validate_solidity_aliases(
     targets: dict[tuple[SolidityTermKind, str], str] = {}
     for value in aliases:
         if not isinstance(value, SolidityAlias):
-            raise SolidityVocabularyError("aliases must be SolidityAlias instances")
+            raise SolidityVocabularyError(
+                "aliases must be SolidityAlias instances"
+            )
         key = (value.kind, value.alias)
         previous = targets.get(key)
         if previous is not None and previous != value.canonical_name:
-            raise SolidityVocabularyError(f"duplicate Solidity CPT alias for {value.alias!r}")
+            raise SolidityVocabularyError(
+                f"duplicate Solidity CPT alias for {value.alias!r}"
+            )
         targets[key] = value.canonical_name
         prepared.append(value)
     return tuple(
@@ -515,8 +555,12 @@ def validate_solidity_aliases(
 SOLIDITY_ALIASES: Final = validate_solidity_aliases(
     (
         SolidityAlias(SolidityTermKind.LANGUAGE, "sol", "solidity"),
-        SolidityAlias(SolidityTermKind.SECURITY_CONCEPT, "reentry", "reentrancy"),
-        SolidityAlias(SolidityTermKind.ACTION, "call_untrusted", "call_external_untrusted"),
+        SolidityAlias(
+            SolidityTermKind.SECURITY_CONCEPT, "reentry", "reentrancy"
+        ),
+        SolidityAlias(
+            SolidityTermKind.ACTION, "call_untrusted", "call_external_untrusted"
+        ),
         SolidityAlias(
             SolidityTermKind.MITIGATION,
             "cei",
@@ -566,11 +610,14 @@ def _coerce_exact_term(
         value
         if isinstance(value, SolidityTerm)
         else parse_solidity_term(value, expected_kind=kind)
-        if isinstance(value, str) and value.startswith(f"{SOLIDITY_VOCABULARY_SCHEMA_VERSION}/")
+        if isinstance(value, str)
+        and value.startswith(f"{SOLIDITY_VOCABULARY_SCHEMA_VERSION}/")
         else SolidityTerm(kind, value)  # type: ignore[arg-type]
     )
     if term.kind is not kind:
-        raise SolidityVocabularyError(f"expected a {kind.value} term, received {term.kind.value}")
+        raise SolidityVocabularyError(
+            f"expected a {kind.value} term, received {term.kind.value}"
+        )
     return term
 
 
@@ -578,7 +625,9 @@ def _coerce_term_set(
     values: Sequence[SolidityTerm | str],
     kind: SolidityTermKind,
 ) -> tuple[SolidityTerm, ...]:
-    if isinstance(values, (str, bytes, bytearray)) or not isinstance(values, Sequence):
+    if isinstance(values, (str, bytes, bytearray)) or not isinstance(
+        values, Sequence
+    ):
         raise SolidityVocabularyError(f"{kind.value} terms must be a sequence")
     terms = tuple(_coerce_exact_term(value, kind) for value in values)
     canonical = [term.canonical for term in terms if term is not None]
@@ -615,12 +664,15 @@ class SolidityPolicyAttributes:
     def __post_init__(self) -> None:
         if self.schema_version != SOLIDITY_VOCABULARY_SCHEMA_VERSION:
             raise SolidityVocabularyError(
-                f"unsupported Solidity CPT policy attribute schema version: {self.schema_version!r}"
+                "unsupported Solidity CPT policy attribute schema version: "
+                f"{self.schema_version!r}"
             )
         object.__setattr__(
             self,
             "action",
-            _coerce_exact_term(self.action, SolidityTermKind.ACTION, allow_none=True),
+            _coerce_exact_term(
+                self.action, SolidityTermKind.ACTION, allow_none=True
+            ),
         )
         for field_name, kind in (
             ("preconditions", SolidityTermKind.PRECONDITION),
@@ -637,12 +689,16 @@ class SolidityPolicyAttributes:
         object.__setattr__(
             self,
             "language",
-            _coerce_exact_term(self.language, SolidityTermKind.LANGUAGE, allow_none=True),
+            _coerce_exact_term(
+                self.language, SolidityTermKind.LANGUAGE, allow_none=True
+            ),
         )
         object.__setattr__(
             self,
             "scope",
-            _coerce_exact_term(self.scope, SolidityTermKind.SCOPE, allow_none=True),
+            _coerce_exact_term(
+                self.scope, SolidityTermKind.SCOPE, allow_none=True
+            ),
         )
         object.__setattr__(
             self,
@@ -712,15 +768,21 @@ class SolidityPolicyAttributes:
             "action": self.action.canonical if self.action is not None else None,
             "assumptions": [term.canonical for term in self.assumptions],
             "authority_type": (
-                self.authority_type.canonical if self.authority_type is not None else None
+                self.authority_type.canonical
+                if self.authority_type is not None
+                else None
             ),
             "effects": [term.canonical for term in self.effects],
-            "language": (self.language.canonical if self.language is not None else None),
+            "language": (
+                self.language.canonical if self.language is not None else None
+            ),
             "mitigations": [term.canonical for term in self.mitigations],
             "preconditions": [term.canonical for term in self.preconditions],
             "schema_version": self.schema_version,
             "scope": self.scope.canonical if self.scope is not None else None,
-            "security_concepts": [term.canonical for term in self.security_concepts],
+            "security_concepts": [
+                term.canonical for term in self.security_concepts
+            ],
         }
 
     def to_security_ir_attributes(self) -> dict[str, Any]:
@@ -729,7 +791,9 @@ class SolidityPolicyAttributes:
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> "SolidityPolicyAttributes":
         if not isinstance(value, Mapping):
-            raise SolidityVocabularyError("Solidity CPT policy attributes must be a mapping")
+            raise SolidityVocabularyError(
+                "Solidity CPT policy attributes must be a mapping"
+            )
         expected = {
             "action",
             "assumptions",
@@ -773,7 +837,9 @@ class SolidityPolicyAttributes:
         cls, attributes: Mapping[str, Any]
     ) -> "SolidityPolicyAttributes":
         if not isinstance(attributes, Mapping):
-            raise SolidityVocabularyError("Security IR policy attributes must be a mapping")
+            raise SolidityVocabularyError(
+                "Security IR policy attributes must be a mapping"
+            )
         if SOLIDITY_POLICY_ATTRIBUTES_KEY not in attributes:
             raise SolidityVocabularyError(
                 f"missing {SOLIDITY_POLICY_ATTRIBUTES_KEY!r} policy attributes"
@@ -798,7 +864,9 @@ validate_policy_attributes = validate_solidity_policy_attributes
 
 
 def _vocab_terms_default() -> Mapping[str, frozenset[str]]:
-    return MappingProxyType({kind.value: frozenset(names) for kind, names in _FIXED_TERMS.items()})
+    return MappingProxyType(
+        {kind.value: frozenset(names) for kind, names in _FIXED_TERMS.items()}
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -806,18 +874,30 @@ class SolidityVocabulary:
     """Immutable registry view of the reviewed Solidity CPT vocabulary."""
 
     schema_version: str = SOLIDITY_VOCABULARY_SCHEMA_VERSION
-    terms: Mapping[str, frozenset[str]] = field(default_factory=_vocab_terms_default)
+    terms: Mapping[str, frozenset[str]] = field(
+        default_factory=_vocab_terms_default
+    )
 
     def __post_init__(self) -> None:
         if self.schema_version != SOLIDITY_VOCABULARY_SCHEMA_VERSION:
-            raise SolidityVocabularyError("unsupported Solidity vocabulary schema version")
-        expected = {kind.value: frozenset(names) for kind, names in _FIXED_TERMS.items()}
+            raise SolidityVocabularyError(
+                "unsupported Solidity vocabulary schema version"
+            )
+        expected = {
+            kind.value: frozenset(names) for kind, names in _FIXED_TERMS.items()
+        }
         if not isinstance(self.terms, Mapping):
             raise SolidityVocabularyError("terms must be a mapping")
-        actual = {str(key): frozenset(value) for key, value in self.terms.items()}
+        actual = {
+            str(key): frozenset(value) for key, value in self.terms.items()
+        }
         if actual != expected:
-            raise SolidityVocabularyError("terms must exactly match the reviewed vocabulary")
-        object.__setattr__(self, "terms", MappingProxyType(dict(sorted(actual.items()))))
+            raise SolidityVocabularyError(
+                "terms must exactly match the reviewed vocabulary"
+            )
+        object.__setattr__(
+            self, "terms", MappingProxyType(dict(sorted(actual.items())))
+        )
 
     def contains(self, kind: SolidityTermKind | str, name: str) -> bool:
         kind = _coerce_kind(kind)
@@ -833,7 +913,9 @@ class SolidityVocabulary:
         return {
             "authority_types": [item.value for item in SolidityAuthorityType],
             "schema_version": self.schema_version,
-            "terms": {key: sorted(value) for key, value in sorted(self.terms.items())},
+            "terms": {
+                key: sorted(value) for key, value in sorted(self.terms.items())
+            },
         }
 
 

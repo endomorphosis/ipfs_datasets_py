@@ -453,7 +453,9 @@ def test_atomic_regions_channels_rely_guarantee_and_linearizability() -> None:
     assert document.channels[0].mode is ChannelMode.BUFFERED
     assert document.channels[0].capacity == 4
     assert document.rely_guarantee[0].rely_statement
-    operations = {item.abstract_operation for item in document.linearizability_points}
+    operations = {
+        item.abstract_operation for item in document.linearizability_points
+    }
     assert operations == {"AbstractEnqueue", "AbstractDequeue"}
 
     with pytest.raises(ConcurrencyValidationError, match="capacity"):
@@ -494,7 +496,9 @@ def test_session_duality_validates_and_is_involutive() -> None:
     twice = client.dual().dual(protocol_id=client.protocol_id, name=client.name)
     # Dual of dual restores polarities and role.
     assert twice.role is client.role
-    assert [item.polarity for item in twice.actions] == [item.polarity for item in client.actions]
+    assert [item.polarity for item in twice.actions] == [
+        item.polarity for item in client.actions
+    ]
 
     broken_server = SessionProtocol(
         "sess:broken",
@@ -591,7 +595,9 @@ def test_forward_and_backward_simulation_relations_validate() -> None:
             RefinementState("a0", "a0", is_initial=True),
             RefinementState("a1", "a1"),
         ),
-        transitions=(RefinementTransition("at", "a0", "a1", "go"),),
+        transitions=(
+            RefinementTransition("at", "a0", "a1", "go"),
+        ),
     )
     concrete = RefinementSystem(
         "sys:con-b",
@@ -601,7 +607,9 @@ def test_forward_and_backward_simulation_relations_validate() -> None:
             RefinementState("c0", "c0", is_initial=True),
             RefinementState("c1", "c1"),
         ),
-        transitions=(RefinementTransition("ct", "c0", "c1", "go"),),
+        transitions=(
+            RefinementTransition("ct", "c0", "c1", "go"),
+        ),
     )
     backward = SimulationRelation(
         "sim:back",

@@ -31,30 +31,52 @@ from .graph import CVEfixesGraph
 from .schemas import GraphEdge, GraphNode
 
 
-CVEFIXES_HF_GRAPH_LAYOUT_SCHEMA_VERSION: Final = "cvefixes-hf-graph-layout/v1"
-CVEFIXES_HF_GRAPH_NODE_SCHEMA_VERSION: Final = "cvefixes-hf-graph-node/v1"
-CVEFIXES_HF_GRAPH_EDGE_SCHEMA_VERSION: Final = "cvefixes-hf-graph-edge/v1"
-CVEFIXES_HF_GRAPH_ADJACENCY_SCHEMA_VERSION: Final = "cvefixes-hf-graph-adjacency/v1"
-CVEFIXES_HF_SHARD_META_SCHEMA_VERSION: Final = "cvefixes-hf-shard-meta/v1"
+CVEFIXES_HF_GRAPH_LAYOUT_SCHEMA_VERSION: Final = (
+    "cvefixes-hf-graph-layout/v1"
+)
+CVEFIXES_HF_GRAPH_NODE_SCHEMA_VERSION: Final = (
+    "cvefixes-hf-graph-node/v1"
+)
+CVEFIXES_HF_GRAPH_EDGE_SCHEMA_VERSION: Final = (
+    "cvefixes-hf-graph-edge/v1"
+)
+CVEFIXES_HF_GRAPH_ADJACENCY_SCHEMA_VERSION: Final = (
+    "cvefixes-hf-graph-adjacency/v1"
+)
+CVEFIXES_HF_SHARD_META_SCHEMA_VERSION: Final = (
+    "cvefixes-hf-shard-meta/v1"
+)
 
 GRAPH_HF_CONFIG_PATHS: Final[Mapping[str, str]] = MappingProxyType(
     {
         "graph_edges": "data/graph/edges/*.parquet",
-        "graph_incoming_adjacency": ("data/graph/adjacency/incoming/*.parquet"),
+        "graph_incoming_adjacency": (
+            "data/graph/adjacency/incoming/*.parquet"
+        ),
         "graph_nodes": "data/graph/nodes/*.parquet",
-        "graph_outgoing_adjacency": ("data/graph/adjacency/outgoing/*.parquet"),
+        "graph_outgoing_adjacency": (
+            "data/graph/adjacency/outgoing/*.parquet"
+        ),
         "graph_edge_chunk_index": "indexes/graph_edge_chunks.parquet",
-        "graph_incoming_adjacency_index": ("indexes/graph_incoming_adjacency.parquet"),
+        "graph_incoming_adjacency_index": (
+            "indexes/graph_incoming_adjacency.parquet"
+        ),
         "graph_node_chunk_index": "indexes/graph_node_chunks.parquet",
-        "graph_outgoing_adjacency_index": ("indexes/graph_outgoing_adjacency.parquet"),
+        "graph_outgoing_adjacency_index": (
+            "indexes/graph_outgoing_adjacency.parquet"
+        ),
     }
 )
 GRAPH_HF_MANIFEST_INDEX_PATHS: Final[Mapping[str, str]] = MappingProxyType(
     {
         "graph_edge_chunks": "indexes/graph_edge_chunks.parquet",
-        "graph_incoming_adjacency": ("indexes/graph_incoming_adjacency.parquet"),
+        "graph_incoming_adjacency": (
+            "indexes/graph_incoming_adjacency.parquet"
+        ),
         "graph_node_chunks": "indexes/graph_node_chunks.parquet",
-        "graph_outgoing_adjacency": ("indexes/graph_outgoing_adjacency.parquet"),
+        "graph_outgoing_adjacency": (
+            "indexes/graph_outgoing_adjacency.parquet"
+        ),
     }
 )
 
@@ -69,17 +91,25 @@ _DATA_CONFIG_BY_PREFIX: Final[Mapping[str, str]] = MappingProxyType(
 _INDEX_CONFIG_BY_PATH: Final[Mapping[str, str]] = MappingProxyType(
     {
         "indexes/graph_edge_chunks.parquet": "graph_edge_chunk_index",
-        "indexes/graph_incoming_adjacency.parquet": ("graph_incoming_adjacency_index"),
+        "indexes/graph_incoming_adjacency.parquet": (
+            "graph_incoming_adjacency_index"
+        ),
         "indexes/graph_node_chunks.parquet": "graph_node_chunk_index",
-        "indexes/graph_outgoing_adjacency.parquet": ("graph_outgoing_adjacency_index"),
+        "indexes/graph_outgoing_adjacency.parquet": (
+            "graph_outgoing_adjacency_index"
+        ),
     }
 )
 _DATA_CONFIG_TO_INDEX: Final[Mapping[str, str]] = MappingProxyType(
     {
         "graph_edges": "indexes/graph_edge_chunks.parquet",
-        "graph_incoming_adjacency": ("indexes/graph_incoming_adjacency.parquet"),
+        "graph_incoming_adjacency": (
+            "indexes/graph_incoming_adjacency.parquet"
+        ),
         "graph_nodes": "indexes/graph_node_chunks.parquet",
-        "graph_outgoing_adjacency": ("indexes/graph_outgoing_adjacency.parquet"),
+        "graph_outgoing_adjacency": (
+            "indexes/graph_outgoing_adjacency.parquet"
+        ),
     }
 )
 _DATA_CONFIG_TO_KIND: Final[Mapping[str, str]] = MappingProxyType(
@@ -149,7 +179,9 @@ class HuggingFaceGraphLayoutLimitError(HuggingFaceGraphLayoutError):
 
 def _positive_int(value: Any, label: str) -> int:
     if type(value) is not int or value <= 0:
-        raise HuggingFaceGraphLayoutError(f"{label} must be a positive integer")
+        raise HuggingFaceGraphLayoutError(
+            f"{label} must be a positive integer"
+        )
     return value
 
 
@@ -179,15 +211,25 @@ class HuggingFaceGraphLayoutConfig:
         ):
             _positive_int(getattr(self, name), name)
         if self.row_group_size > self.max_rows_per_shard:
-            raise HuggingFaceGraphLayoutError("row_group_size cannot exceed max_rows_per_shard")
-        if self.adjacency_pointers_per_row > self.adjacency_pointers_per_shard:
             raise HuggingFaceGraphLayoutError(
-                "adjacency_pointers_per_row cannot exceed adjacency_pointers_per_shard"
+                "row_group_size cannot exceed max_rows_per_shard"
+            )
+        if (
+            self.adjacency_pointers_per_row
+            > self.adjacency_pointers_per_shard
+        ):
+            raise HuggingFaceGraphLayoutError(
+                "adjacency_pointers_per_row cannot exceed "
+                "adjacency_pointers_per_shard"
             )
         if self.compression != "zstd":
-            raise HuggingFaceGraphLayoutError("SkillCenter-compatible graph shards require zstd")
+            raise HuggingFaceGraphLayoutError(
+                "SkillCenter-compatible graph shards require zstd"
+            )
         if self.schema_version != CVEFIXES_HF_GRAPH_LAYOUT_SCHEMA_VERSION:
-            raise HuggingFaceGraphLayoutError("unsupported graph layout schema version")
+            raise HuggingFaceGraphLayoutError(
+                "unsupported graph layout schema version"
+            )
 
 
 def _expected_config(path: str) -> str:
@@ -198,7 +240,9 @@ def _expected_config(path: str) -> str:
             suffix = path[len(prefix) :]
             if _PART_RE.fullmatch(suffix):
                 return config_name
-    raise HuggingFaceGraphLayoutError(f"unsupported graph artifact path: {path!r}")
+    raise HuggingFaceGraphLayoutError(
+        f"unsupported graph artifact path: {path!r}"
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -218,16 +262,25 @@ class HuggingFaceGraphArtifact:
             or not self.path
             or self.path != PurePosixPath(self.path).as_posix()
             or PurePosixPath(self.path).is_absolute()
-            or any(part in {"", ".", ".."} for part in PurePosixPath(self.path).parts)
+            or any(
+                part in {"", ".", ".."}
+                for part in PurePosixPath(self.path).parts
+            )
         ):
             raise HuggingFaceGraphLayoutError("unsafe graph artifact path")
         expected_config = _expected_config(self.path)
         if self.config_name != expected_config:
-            raise HuggingFaceGraphLayoutError("graph artifact config does not match its path")
+            raise HuggingFaceGraphLayoutError(
+                "graph artifact config does not match its path"
+            )
         if not isinstance(self.content, bytes):
-            raise HuggingFaceGraphLayoutError("graph artifact content must be bytes")
+            raise HuggingFaceGraphLayoutError(
+                "graph artifact content must be bytes"
+            )
         if type(self.row_count) is not int or self.row_count < 0:
-            raise HuggingFaceGraphLayoutError("graph artifact row_count must be non-negative")
+            raise HuggingFaceGraphLayoutError(
+                "graph artifact row_count must be non-negative"
+            )
         digest = hashlib.sha256(self.content).digest()
         digest_hex = digest.hex()
         content_cid = cid_v1_from_digest(digest)
@@ -272,14 +325,24 @@ class CVEfixesHuggingFaceGraphLayout:
     schema_version: str = CVEFIXES_HF_GRAPH_LAYOUT_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        if not isinstance(self.graph_root, str) or not _CID_RE.fullmatch(self.graph_root):
-            raise HuggingFaceGraphLayoutIntegrityError("graph_root must be a CIDv1")
+        if not isinstance(self.graph_root, str) or not _CID_RE.fullmatch(
+            self.graph_root
+        ):
+            raise HuggingFaceGraphLayoutIntegrityError(
+                "graph_root must be a CIDv1"
+            )
         if not isinstance(self.config, HuggingFaceGraphLayoutConfig):
-            raise HuggingFaceGraphLayoutError("config must be HuggingFaceGraphLayoutConfig")
+            raise HuggingFaceGraphLayoutError(
+                "config must be HuggingFaceGraphLayoutConfig"
+            )
         if self.schema_version != CVEFIXES_HF_GRAPH_LAYOUT_SCHEMA_VERSION:
-            raise HuggingFaceGraphLayoutIntegrityError("unsupported graph layout schema version")
+            raise HuggingFaceGraphLayoutIntegrityError(
+                "unsupported graph layout schema version"
+            )
         if not isinstance(self.entry_cid_by_node, Mapping):
-            raise HuggingFaceGraphLayoutError("entry_cid_by_node must be a mapping")
+            raise HuggingFaceGraphLayoutError(
+                "entry_cid_by_node must be a mapping"
+            )
         entry_cid_by_node = dict(sorted(self.entry_cid_by_node.items()))
         if any(
             not isinstance(node_cid, str)
@@ -288,20 +351,29 @@ class CVEfixesHuggingFaceGraphLayout:
             or _CID_RE.fullmatch(entry_cid) is None
             for node_cid, entry_cid in entry_cid_by_node.items()
         ):
-            raise HuggingFaceGraphLayoutIntegrityError("entry_cid_by_node must bind CIDv1 strings")
+            raise HuggingFaceGraphLayoutIntegrityError(
+                "entry_cid_by_node must bind CIDv1 strings"
+            )
         if len(set(entry_cid_by_node.values())) != len(entry_cid_by_node):
-            raise HuggingFaceGraphLayoutIntegrityError("entry_cid_by_node values must be unique")
+            raise HuggingFaceGraphLayoutIntegrityError(
+                "entry_cid_by_node values must be unique"
+            )
         object.__setattr__(
             self,
             "entry_cid_by_node",
             MappingProxyType(entry_cid_by_node),
         )
         artifacts = tuple(sorted(self.artifacts, key=lambda item: item.path))
-        if not artifacts or len({item.path for item in artifacts}) != len(artifacts):
+        if not artifacts or len({item.path for item in artifacts}) != len(
+            artifacts
+        ):
             raise HuggingFaceGraphLayoutIntegrityError(
                 "graph artifacts must be non-empty with unique paths"
             )
-        if not all(isinstance(item, HuggingFaceGraphArtifact) for item in artifacts):
+        if not all(
+            isinstance(item, HuggingFaceGraphArtifact)
+            for item in artifacts
+        ):
             raise HuggingFaceGraphLayoutError(
                 "artifacts must contain HuggingFaceGraphArtifact values"
             )
@@ -316,7 +388,9 @@ class CVEfixesHuggingFaceGraphLayout:
                     f"graph layout requires exactly one {index_path}"
                 )
         for config_name in _DATA_CONFIG_TO_INDEX:
-            if not any(item.config_name == config_name for item in artifacts):
+            if not any(
+                item.config_name == config_name for item in artifacts
+            ):
                 raise HuggingFaceGraphLayoutIntegrityError(
                     f"graph layout has no {config_name} shard"
                 )
@@ -375,7 +449,11 @@ def _node_schema() -> Any:
             ("properties_json", pa.large_string(), False),
             ("schema_version", pa.string(), False),
         ],
-        metadata={b"schema_version": (CVEFIXES_HF_GRAPH_NODE_SCHEMA_VERSION.encode("ascii"))},
+        metadata={
+            b"schema_version": (
+                CVEFIXES_HF_GRAPH_NODE_SCHEMA_VERSION.encode("ascii")
+            )
+        },
     )
 
 
@@ -393,7 +471,11 @@ def _edge_schema() -> Any:
             ("properties_json", pa.large_string(), False),
             ("schema_version", pa.string(), False),
         ],
-        metadata={b"schema_version": (CVEFIXES_HF_GRAPH_EDGE_SCHEMA_VERSION.encode("ascii"))},
+        metadata={
+            b"schema_version": (
+                CVEFIXES_HF_GRAPH_EDGE_SCHEMA_VERSION.encode("ascii")
+            )
+        },
     )
 
 
@@ -415,7 +497,11 @@ def _adjacency_schema() -> Any:
             ("scores", pa.list_(pa.float64()), False),
             ("total_neighbor_count", pa.int64(), False),
         ],
-        metadata={b"schema_version": (CVEFIXES_HF_GRAPH_ADJACENCY_SCHEMA_VERSION.encode("ascii"))},
+        metadata={
+            b"schema_version": (
+                CVEFIXES_HF_GRAPH_ADJACENCY_SCHEMA_VERSION.encode("ascii")
+            )
+        },
     )
 
 
@@ -447,7 +533,11 @@ def _meta_schema(*, adjacency: bool) -> Any:
         )
     return pa.schema(
         fields,
-        metadata={b"schema_version": (CVEFIXES_HF_SHARD_META_SCHEMA_VERSION.encode("ascii"))},
+        metadata={
+            b"schema_version": (
+                CVEFIXES_HF_SHARD_META_SCHEMA_VERSION.encode("ascii")
+            )
+        },
     )
 
 
@@ -477,7 +567,9 @@ def _canonical_json(value: Any) -> str:
     try:
         return canonical_json_bytes(value).decode("utf-8")
     except (TypeError, ValueError) as exc:
-        raise HuggingFaceGraphLayoutError("graph properties must be finite canonical JSON") from exc
+        raise HuggingFaceGraphLayoutError(
+            "graph properties must be finite canonical JSON"
+        ) from exc
 
 
 def _node_label(node: GraphNode) -> str:
@@ -496,7 +588,9 @@ def _node_rows(
     entry_cid_by_node = entry_cid_by_node or {}
     return tuple(
         {
-            "entry_cid": entry_cid_by_node.get(node.cid, node.source_cids[0]),
+            "entry_cid": entry_cid_by_node.get(
+                node.cid, node.source_cids[0]
+            ),
             "label": _node_label(node),
             "node_cid": node.cid,
             "node_type": node.node_type,
@@ -528,8 +622,12 @@ def _retrieval_method(edge: GraphEdge) -> str:
 
 def _query_terms(edge: GraphEdge) -> list[str]:
     raw = edge.payload.get("query_terms", ())
-    if isinstance(raw, Sequence) and not isinstance(raw, (str, bytes, bytearray)):
-        values = [item for item in raw if isinstance(item, str) and item]
+    if isinstance(raw, Sequence) and not isinstance(
+        raw, (str, bytes, bytearray)
+    ):
+        values = [
+            item for item in raw if isinstance(item, str) and item
+        ]
         return sorted(set(values))
     return []
 
@@ -573,7 +671,9 @@ def _adjacency_rows(
     config: HuggingFaceGraphLayoutConfig,
 ) -> tuple[dict[str, Any], ...]:
     if direction not in {"incoming", "outgoing"}:
-        raise HuggingFaceGraphLayoutError(f"unsupported graph adjacency direction: {direction}")
+        raise HuggingFaceGraphLayoutError(
+            f"unsupported graph adjacency direction: {direction}"
+        )
     node_by_cid = {node.cid: node for node in graph.nodes}
     edge_by_cid = {edge.cid: edge for edge in graph.edges}
     adjacency = graph.outgoing if direction == "outgoing" else graph.incoming
@@ -582,12 +682,22 @@ def _adjacency_rows(
         selected: list[tuple[GraphEdge, str]] = []
         for edge_cid in adjacency[node_cid]:
             edge = edge_by_cid[edge_cid]
-            neighbor_cid = edge.target_node_cid if direction == "outgoing" else edge.source_node_cid
+            neighbor_cid = (
+                edge.target_node_cid
+                if direction == "outgoing"
+                else edge.source_node_cid
+            )
             selected.append((edge, neighbor_cid))
-        selected.sort(key=lambda item: _adjacency_sort_key(item[0], neighbor_cid=item[1]))
+        selected.sort(
+            key=lambda item: _adjacency_sort_key(
+                item[0], neighbor_cid=item[1]
+            )
+        )
         page_count = max(
             1,
-            math.ceil(len(selected) / config.adjacency_pointers_per_row),
+            math.ceil(
+                len(selected) / config.adjacency_pointers_per_row
+            ),
         )
         starts: Sequence[int] = (
             range(
@@ -599,23 +709,34 @@ def _adjacency_rows(
             else (0,)
         )
         for page_index, start in enumerate(starts):
-            page = selected[start : start + config.adjacency_pointers_per_row]
+            page = selected[
+                start : start + config.adjacency_pointers_per_row
+            ]
             result.append(
                 {
                     "direction": direction,
                     "edge_cids": [edge.cid for edge, _ in page],
                     "edge_types": [edge.edge_type for edge, _ in page],
-                    "neighbor_cids": [neighbor_cid for _, neighbor_cid in page],
+                    "neighbor_cids": [
+                        neighbor_cid for _, neighbor_cid in page
+                    ],
                     "neighbor_count": len(page),
                     "neighbor_node_types": [
-                        node_by_cid[neighbor_cid].node_type for _, neighbor_cid in page
+                        node_by_cid[neighbor_cid].node_type
+                        for _, neighbor_cid in page
                     ],
                     "node_cid": node_cid,
                     "page_count": page_count,
                     "page_index": page_index,
-                    "retrieval_methods": [_retrieval_method(edge) for edge, _ in page],
-                    "schema_version": (CVEFIXES_HF_GRAPH_ADJACENCY_SCHEMA_VERSION),
-                    "scores": [_edge_score(edge) for edge, _ in page],
+                    "retrieval_methods": [
+                        _retrieval_method(edge) for edge, _ in page
+                    ],
+                    "schema_version": (
+                        CVEFIXES_HF_GRAPH_ADJACENCY_SCHEMA_VERSION
+                    ),
+                    "scores": [
+                        _edge_score(edge) for edge, _ in page
+                    ],
                     "total_neighbor_count": len(selected),
                 }
             )
@@ -646,10 +767,13 @@ def _adjacency_chunks(
     for row in rows:
         row_pointers = int(row["neighbor_count"])
         if row_pointers > config.adjacency_pointers_per_row:
-            raise HuggingFaceGraphLayoutLimitError("adjacency row exceeds pointer bound")
+            raise HuggingFaceGraphLayoutLimitError(
+                "adjacency row exceeds pointer bound"
+            )
         if pending and (
             len(pending) >= config.max_rows_per_shard
-            or pointer_count + row_pointers > config.adjacency_pointers_per_shard
+            or pointer_count + row_pointers
+            > config.adjacency_pointers_per_shard
         ):
             yield tuple(pending)
             pending = []
@@ -678,7 +802,9 @@ def _make_data_artifacts(
     for shard_id, chunk in enumerate(row_chunks):
         content = _parquet_bytes(chunk, schema, config)
         if len(content) > config.max_shard_bytes:
-            raise HuggingFaceGraphLayoutLimitError(f"{config_name} shard exceeds max_shard_bytes")
+            raise HuggingFaceGraphLayoutLimitError(
+                f"{config_name} shard exceeds max_shard_bytes"
+            )
         artifacts.append(
             HuggingFaceGraphArtifact(
                 path=f"{directory}/part-{shard_id:06d}.parquet",
@@ -688,7 +814,9 @@ def _make_data_artifacts(
             )
         )
     if len(artifacts) > config.max_shards_per_config:
-        raise HuggingFaceGraphLayoutLimitError(f"{config_name} exceeds max_shards_per_config")
+        raise HuggingFaceGraphLayoutLimitError(
+            f"{config_name} exceeds max_shards_per_config"
+        )
     return tuple(artifacts)
 
 
@@ -705,7 +833,9 @@ def _read_table(artifact: HuggingFaceGraphArtifact) -> Any:
 def _shard_id(artifact: HuggingFaceGraphArtifact) -> int:
     match = _PART_RE.fullmatch(PurePosixPath(artifact.path).name)
     if match is None:
-        raise HuggingFaceGraphLayoutIntegrityError("data shard name is malformed")
+        raise HuggingFaceGraphLayoutIntegrityError(
+            "data shard name is malformed"
+        )
     return int(match.group(1))
 
 
@@ -731,14 +861,26 @@ def _meta_row(
         "start_document_index": -1,
     }
     if "adjacency" in artifact.config_name:
-        direction = "incoming" if artifact.config_name == "graph_incoming_adjacency" else "outgoing"
+        direction = (
+            "incoming"
+            if artifact.config_name == "graph_incoming_adjacency"
+            else "outgoing"
+        )
         result.update(
             {
-                "adjacency_count": sum(int(row["neighbor_count"]) for row in rows),
+                "adjacency_count": sum(
+                    int(row["neighbor_count"]) for row in rows
+                ),
                 "direction": direction,
-                "first_page_index": (int(rows[0]["page_index"]) if rows else -1),
-                "last_page_index": (int(rows[-1]["page_index"]) if rows else -1),
-                "node_count": len({str(row["node_cid"]) for row in rows}),
+                "first_page_index": (
+                    int(rows[0]["page_index"]) if rows else -1
+                ),
+                "last_page_index": (
+                    int(rows[-1]["page_index"]) if rows else -1
+                ),
+                "node_count": len(
+                    {str(row["node_cid"]) for row in rows}
+                ),
             }
         )
     return result
@@ -764,7 +906,9 @@ def _make_index_artifact(
         config,
     )
     if len(content) > config.max_shard_bytes:
-        raise HuggingFaceGraphLayoutLimitError(f"meta index exceeds max_shard_bytes: {index_path}")
+        raise HuggingFaceGraphLayoutLimitError(
+            f"meta index exceeds max_shard_bytes: {index_path}"
+        )
     return HuggingFaceGraphArtifact(
         path=index_path,
         config_name=_INDEX_CONFIG_BY_PATH[index_path],
@@ -784,14 +928,22 @@ def build_cvefixes_hf_graph_layout(
     if not isinstance(graph, CVEfixesGraph):
         raise HuggingFaceGraphLayoutError("graph must be CVEfixesGraph")
     if not graph.nodes:
-        raise HuggingFaceGraphLayoutError("graph must contain at least one node")
+        raise HuggingFaceGraphLayoutError(
+            "graph must contain at least one node"
+        )
     resolved_config = config or HuggingFaceGraphLayoutConfig()
     if not isinstance(resolved_config, HuggingFaceGraphLayoutConfig):
-        raise HuggingFaceGraphLayoutError("config must be HuggingFaceGraphLayoutConfig")
+        raise HuggingFaceGraphLayoutError(
+            "config must be HuggingFaceGraphLayoutConfig"
+        )
     entry_cid_by_node = entry_cid_by_node or {}
     if not isinstance(entry_cid_by_node, Mapping):
-        raise HuggingFaceGraphLayoutError("entry_cid_by_node must be a mapping")
-    if entry_cid_by_node and set(entry_cid_by_node) != {node.cid for node in graph.nodes}:
+        raise HuggingFaceGraphLayoutError(
+            "entry_cid_by_node must be a mapping"
+        )
+    if entry_cid_by_node and set(entry_cid_by_node) != {
+        node.cid for node in graph.nodes
+    }:
         raise HuggingFaceGraphLayoutIntegrityError(
             "entry_cid_by_node must bind every and only graph node"
         )
@@ -811,7 +963,9 @@ def build_cvefixes_hf_graph_layout(
         config=resolved_config,
     )
     outgoing = _make_data_artifacts(
-        _adjacency_rows(graph, direction="outgoing", config=resolved_config),
+        _adjacency_rows(
+            graph, direction="outgoing", config=resolved_config
+        ),
         config_name="graph_outgoing_adjacency",
         directory="data/graph/adjacency/outgoing",
         schema=_adjacency_schema(),
@@ -819,7 +973,9 @@ def build_cvefixes_hf_graph_layout(
         adjacency=True,
     )
     incoming = _make_data_artifacts(
-        _adjacency_rows(graph, direction="incoming", config=resolved_config),
+        _adjacency_rows(
+            graph, direction="incoming", config=resolved_config
+        ),
         config_name="graph_incoming_adjacency",
         directory="data/graph/adjacency/incoming",
         schema=_adjacency_schema(),
@@ -842,7 +998,11 @@ def build_cvefixes_hf_graph_layout(
     )
     layout = CVEfixesHuggingFaceGraphLayout(
         graph_root=graph.graph_root,
-        artifacts=tuple(item for config_name in sorted(grouped) for item in grouped[config_name])
+        artifacts=tuple(
+            item
+            for config_name in sorted(grouped)
+            for item in grouped[config_name]
+        )
         + indexes,
         config=resolved_config,
         entry_cid_by_node=entry_cid_by_node,
@@ -871,7 +1031,9 @@ def _expected_schema(config_name: str) -> Any:
         "graph_outgoing_adjacency_index",
     }:
         return _meta_schema(adjacency=True)
-    raise HuggingFaceGraphLayoutIntegrityError(f"unsupported graph config: {config_name}")
+    raise HuggingFaceGraphLayoutIntegrityError(
+        f"unsupported graph config: {config_name}"
+    )
 
 
 def _validate_artifact_table(
@@ -879,7 +1041,9 @@ def _validate_artifact_table(
     config: HuggingFaceGraphLayoutConfig,
 ) -> list[dict[str, Any]]:
     if len(artifact.content) > config.max_shard_bytes:
-        raise HuggingFaceGraphLayoutLimitError(f"artifact exceeds max_shard_bytes: {artifact.path}")
+        raise HuggingFaceGraphLayoutLimitError(
+            f"artifact exceeds max_shard_bytes: {artifact.path}"
+        )
     table = _read_table(artifact)
     expected_schema = _expected_schema(artifact.config_name)
     # Parquet normalizes nested-list child names from ``item`` to ``element``.
@@ -889,16 +1053,26 @@ def _validate_artifact_table(
         not table.schema.equals(expected_schema, check_metadata=False)
         or table.schema.metadata != expected_schema.metadata
     ):
-        raise HuggingFaceGraphLayoutIntegrityError(f"unexpected Parquet schema: {artifact.path}")
+        raise HuggingFaceGraphLayoutIntegrityError(
+            f"unexpected Parquet schema: {artifact.path}"
+        )
     if table.num_rows != artifact.row_count:
-        raise HuggingFaceGraphLayoutIntegrityError(f"Parquet row count differs: {artifact.path}")
-    if artifact.is_data and table.num_rows > config.max_rows_per_shard:
-        raise HuggingFaceGraphLayoutLimitError(f"data shard exceeds row bound: {artifact.path}")
+        raise HuggingFaceGraphLayoutIntegrityError(
+            f"Parquet row count differs: {artifact.path}"
+        )
+    if (
+        artifact.is_data
+        and table.num_rows > config.max_rows_per_shard
+    ):
+        raise HuggingFaceGraphLayoutLimitError(
+            f"data shard exceeds row bound: {artifact.path}"
+        )
     rows = table.to_pylist()
     if (
         artifact.is_data
         and "adjacency" in artifact.config_name
-        and sum(int(row["neighbor_count"]) for row in rows) > config.adjacency_pointers_per_shard
+        and sum(int(row["neighbor_count"]) for row in rows)
+        > config.adjacency_pointers_per_shard
     ):
         raise HuggingFaceGraphLayoutLimitError(
             f"adjacency shard exceeds pointer bound: {artifact.path}"
@@ -923,13 +1097,17 @@ def _validate_canonical_graph_rows(
         if (
             row["node_cid"] != node.cid
             or row["node_type"] != node.node_type
-            or row["entry_cid"] != entry_cid_by_node.get(node.cid, node.source_cids[0])
+            or row["entry_cid"]
+            != entry_cid_by_node.get(node.cid, node.source_cids[0])
             or row["label"] != _node_label(node)
-            or row["schema_version"] != CVEFIXES_HF_GRAPH_NODE_SCHEMA_VERSION
+            or row["schema_version"]
+            != CVEFIXES_HF_GRAPH_NODE_SCHEMA_VERSION
             or row["properties_json"] != _canonical_json(node.to_dict())
             or node.cid in node_types
         ):
-            raise HuggingFaceGraphLayoutIntegrityError("graph node identity columns differ")
+            raise HuggingFaceGraphLayoutIntegrityError(
+                "graph node identity columns differ"
+            )
         node_types[node.cid] = node.node_type
     edge_ids: set[str] = set()
     for row in edges:
@@ -947,13 +1125,16 @@ def _validate_canonical_graph_rows(
             or row["retrieval_method"] != _retrieval_method(edge)
             or row["score"] != _edge_score(edge)
             or row["query_terms_json"] != _canonical_json(_query_terms(edge))
-            or row["schema_version"] != CVEFIXES_HF_GRAPH_EDGE_SCHEMA_VERSION
+            or row["schema_version"]
+            != CVEFIXES_HF_GRAPH_EDGE_SCHEMA_VERSION
             or row["properties_json"] != _canonical_json(edge.to_dict())
             or edge.cid in edge_ids
             or edge.source_node_cid not in node_types
             or edge.target_node_cid not in node_types
         ):
-            raise HuggingFaceGraphLayoutIntegrityError("graph edge identity columns differ")
+            raise HuggingFaceGraphLayoutIntegrityError(
+                "graph edge identity columns differ"
+            )
         edge_ids.add(edge.cid)
     return node_types, edge_ids
 
@@ -983,7 +1164,8 @@ def _validate_adjacency_rows(
         neighbor_count = int(row["neighbor_count"])
         if (
             row["direction"] != direction
-            or row["schema_version"] != CVEFIXES_HF_GRAPH_ADJACENCY_SCHEMA_VERSION
+            or row["schema_version"]
+            != CVEFIXES_HF_GRAPH_ADJACENCY_SCHEMA_VERSION
             or node_cid not in node_ids
             or any(len(value) != neighbor_count for value in aligned)
             or neighbor_count > config.adjacency_pointers_per_row
@@ -992,7 +1174,9 @@ def _validate_adjacency_rows(
             or int(row["page_index"]) >= int(row["page_count"])
             or int(row["total_neighbor_count"]) < neighbor_count
         ):
-            raise HuggingFaceGraphLayoutIntegrityError(f"{direction} adjacency row is malformed")
+            raise HuggingFaceGraphLayoutIntegrityError(
+                f"{direction} adjacency row is malformed"
+            )
         pages_by_node.setdefault(node_cid, []).append(row)
         for offset, edge_cid in enumerate(row["edge_cids"]):
             edge = edge_rows.get(str(edge_cid))
@@ -1000,16 +1184,24 @@ def _validate_adjacency_rows(
                 raise HuggingFaceGraphLayoutIntegrityError(
                     f"{direction} adjacency edge coverage differs"
                 )
-            expected_node = edge["source_cid"] if direction == "outgoing" else edge["target_cid"]
+            expected_node = (
+                edge["source_cid"]
+                if direction == "outgoing"
+                else edge["target_cid"]
+            )
             expected_neighbor = (
-                edge["target_cid"] if direction == "outgoing" else edge["source_cid"]
+                edge["target_cid"]
+                if direction == "outgoing"
+                else edge["source_cid"]
             )
             if (
                 node_cid != expected_node
                 or row["neighbor_cids"][offset] != expected_neighbor
-                or row["neighbor_node_types"][offset] != node_types[expected_neighbor]
+                or row["neighbor_node_types"][offset]
+                != node_types[expected_neighbor]
                 or row["edge_types"][offset] != edge["edge_type"]
-                or row["retrieval_methods"][offset] != edge["retrieval_method"]
+                or row["retrieval_methods"][offset]
+                != edge["retrieval_method"]
                 or row["scores"][offset] != edge["score"]
             ):
                 raise HuggingFaceGraphLayoutIntegrityError(
@@ -1024,11 +1216,15 @@ def _validate_adjacency_rows(
         raise HuggingFaceGraphLayoutIntegrityError(
             f"{direction} adjacency does not cover every graph edge"
         )
-    endpoint_field = "source_cid" if direction == "outgoing" else "target_cid"
-    neighbor_field = "target_cid" if direction == "outgoing" else "source_cid"
-    expected_edges_by_node: dict[str, list[Mapping[str, Any]]] = {
-        node_cid: [] for node_cid in node_ids
-    }
+    endpoint_field = (
+        "source_cid" if direction == "outgoing" else "target_cid"
+    )
+    neighbor_field = (
+        "target_cid" if direction == "outgoing" else "source_cid"
+    )
+    expected_edges_by_node: dict[
+        str, list[Mapping[str, Any]]
+    ] = {node_cid: [] for node_cid in node_ids}
     try:
         for edge in edge_rows.values():
             expected_edges_by_node[str(edge[endpoint_field])].append(edge)
@@ -1040,7 +1236,11 @@ def _validate_adjacency_rows(
         expected_edges.sort(
             key=lambda edge: (
                 edge["score"] is None,
-                -(float(edge["score"]) if edge["score"] is not None else 0.0),
+                -(
+                    float(edge["score"])
+                    if edge["score"] is not None
+                    else 0.0
+                ),
                 edge["edge_type"],
                 edge[neighbor_field],
                 edge["edge_cid"],
@@ -1048,23 +1248,34 @@ def _validate_adjacency_rows(
         )
     for node_cid, pages in pages_by_node.items():
         page_count = int(pages[0]["page_count"])
-        flattened_edge_ids = [str(edge_cid) for row in pages for edge_cid in row["edge_cids"]]
+        flattened_edge_ids = [
+            str(edge_cid)
+            for row in pages
+            for edge_cid in row["edge_cids"]
+        ]
         expected_edges = expected_edges_by_node[node_cid]
         expected_page_count = max(
             1,
-            math.ceil(len(expected_edges) / config.adjacency_pointers_per_row),
+            math.ceil(
+                len(expected_edges) / config.adjacency_pointers_per_row
+            ),
         )
         if (
-            [int(row["page_index"]) for row in pages] != list(range(page_count))
+            [int(row["page_index"]) for row in pages]
+            != list(range(page_count))
             or any(int(row["page_count"]) != page_count for row in pages)
             or page_count != expected_page_count
-            or flattened_edge_ids != [str(edge["edge_cid"]) for edge in expected_edges]
+            or flattened_edge_ids
+            != [str(edge["edge_cid"]) for edge in expected_edges]
         ):
             raise HuggingFaceGraphLayoutIntegrityError(
                 f"{direction} adjacency page sequence differs"
             )
         pointer_count = sum(int(row["neighbor_count"]) for row in pages)
-        if any(int(row["total_neighbor_count"]) != pointer_count for row in pages):
+        if any(
+            int(row["total_neighbor_count"]) != pointer_count
+            for row in pages
+        ):
             raise HuggingFaceGraphLayoutIntegrityError(
                 f"{direction} adjacency total differs for {node_cid}"
             )
@@ -1078,35 +1289,55 @@ def validate_cvefixes_hf_graph_layout(
     """Validate schemas, identities, adjacency, and exact meta coverage."""
 
     if not isinstance(layout, CVEfixesHuggingFaceGraphLayout):
-        raise HuggingFaceGraphLayoutError("layout must be CVEfixesHuggingFaceGraphLayout")
+        raise HuggingFaceGraphLayoutError(
+            "layout must be CVEfixesHuggingFaceGraphLayout"
+        )
     if graph is not None and not isinstance(graph, CVEfixesGraph):
         raise HuggingFaceGraphLayoutError("graph must be CVEfixesGraph")
     if graph is not None and graph.graph_root != layout.graph_root:
-        raise HuggingFaceGraphLayoutIntegrityError("layout graph_root differs from its graph")
+        raise HuggingFaceGraphLayoutIntegrityError(
+            "layout graph_root differs from its graph"
+        )
 
     rows_by_config: dict[str, list[dict[str, Any]]] = {}
-    data_by_config: dict[str, list[tuple[HuggingFaceGraphArtifact, list[dict[str, Any]]]]] = {}
+    data_by_config: dict[
+        str, list[tuple[HuggingFaceGraphArtifact, list[dict[str, Any]]]]
+    ] = {}
     for artifact in layout.artifacts:
         rows = _validate_artifact_table(artifact, layout.config)
         rows_by_config.setdefault(artifact.config_name, []).extend(rows)
         if artifact.is_data:
-            data_by_config.setdefault(artifact.config_name, []).append((artifact, rows))
+            data_by_config.setdefault(artifact.config_name, []).append(
+                (artifact, rows)
+            )
 
     for config_name, values in data_by_config.items():
         values.sort(key=lambda item: item[0].path)
-        if [_shard_id(item[0]) for item in values] != list(range(len(values))):
+        if [_shard_id(item[0]) for item in values] != list(
+            range(len(values))
+        ):
             raise HuggingFaceGraphLayoutIntegrityError(
                 f"{config_name} shard IDs are not contiguous"
             )
         if len(values) > layout.config.max_shards_per_config:
-            raise HuggingFaceGraphLayoutLimitError(f"{config_name} exceeds max_shards_per_config")
+            raise HuggingFaceGraphLayoutLimitError(
+                f"{config_name} exceeds max_shards_per_config"
+            )
 
     node_rows = rows_by_config["graph_nodes"]
     edge_rows = rows_by_config["graph_edges"]
-    if [row["node_cid"] for row in node_rows] != sorted(row["node_cid"] for row in node_rows):
-        raise HuggingFaceGraphLayoutIntegrityError("graph node shards are not globally CID ordered")
-    if [row["edge_cid"] for row in edge_rows] != sorted(row["edge_cid"] for row in edge_rows):
-        raise HuggingFaceGraphLayoutIntegrityError("graph edge shards are not globally CID ordered")
+    if [row["node_cid"] for row in node_rows] != sorted(
+        row["node_cid"] for row in node_rows
+    ):
+        raise HuggingFaceGraphLayoutIntegrityError(
+            "graph node shards are not globally CID ordered"
+        )
+    if [row["edge_cid"] for row in edge_rows] != sorted(
+        row["edge_cid"] for row in edge_rows
+    ):
+        raise HuggingFaceGraphLayoutIntegrityError(
+            "graph edge shards are not globally CID ordered"
+        )
     node_types, edge_ids = _validate_canonical_graph_rows(
         node_rows,
         edge_rows,
@@ -1135,17 +1366,26 @@ def validate_cvefixes_hf_graph_layout(
         index_artifact = layout.artifact(index_path)
         actual_meta = rows_by_config[index_artifact.config_name]
         expected_meta = [
-            _meta_row(artifact, rows) for artifact, rows in data_by_config[data_config]
+            _meta_row(artifact, rows)
+            for artifact, rows in data_by_config[data_config]
         ]
         if actual_meta != expected_meta:
-            raise HuggingFaceGraphLayoutIntegrityError(f"meta-index pointer mismatch: {index_path}")
+            raise HuggingFaceGraphLayoutIntegrityError(
+                f"meta-index pointer mismatch: {index_path}"
+            )
         for row in actual_meta:
             relative_path = str(row["relative_path"])
             if relative_path in covered_paths:
-                raise HuggingFaceGraphLayoutIntegrityError("data shard is indexed more than once")
+                raise HuggingFaceGraphLayoutIntegrityError(
+                    "data shard is indexed more than once"
+                )
             covered_paths.add(relative_path)
-    if covered_paths != {artifact.path for artifact in layout.data_artifacts}:
-        raise HuggingFaceGraphLayoutIntegrityError("meta indexes do not cover data shards exactly")
+    if covered_paths != {
+        artifact.path for artifact in layout.data_artifacts
+    }:
+        raise HuggingFaceGraphLayoutIntegrityError(
+            "meta indexes do not cover data shards exactly"
+        )
 
     if graph is not None:
         if node_rows != list(
@@ -1154,13 +1394,19 @@ def validate_cvefixes_hf_graph_layout(
                 entry_cid_by_node=layout.entry_cid_by_node,
             )
         ):
-            raise HuggingFaceGraphLayoutIntegrityError("node shards differ from the supplied graph")
+            raise HuggingFaceGraphLayoutIntegrityError(
+                "node shards differ from the supplied graph"
+            )
         if edge_rows != list(_edge_rows(graph)):
-            raise HuggingFaceGraphLayoutIntegrityError("edge shards differ from the supplied graph")
+            raise HuggingFaceGraphLayoutIntegrityError(
+                "edge shards differ from the supplied graph"
+            )
         for direction in ("outgoing", "incoming"):
             config_name = f"graph_{direction}_adjacency"
             if rows_by_config[config_name] != list(
-                _adjacency_rows(graph, direction=direction, config=layout.config)
+                _adjacency_rows(
+                    graph, direction=direction, config=layout.config
+                )
             ):
                 raise HuggingFaceGraphLayoutIntegrityError(
                     f"{direction} adjacency differs from the supplied graph"
@@ -1172,8 +1418,12 @@ def validate_cvefixes_hf_graph_layout(
         data_shard_count=len(layout.data_artifacts),
         node_count=len(node_rows),
         edge_count=len(edge_rows),
-        outgoing_adjacency_rows=len(rows_by_config["graph_outgoing_adjacency"]),
-        incoming_adjacency_rows=len(rows_by_config["graph_incoming_adjacency"]),
+        outgoing_adjacency_rows=len(
+            rows_by_config["graph_outgoing_adjacency"]
+        ),
+        incoming_adjacency_rows=len(
+            rows_by_config["graph_incoming_adjacency"]
+        ),
     )
 
 

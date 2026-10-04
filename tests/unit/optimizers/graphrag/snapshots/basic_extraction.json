@@ -1,0 +1,15 @@
+{
+  "entity_count": 3,
+  "relationship_count": 3,
+  "overall_confidence": 0.91,
+  "entity_types": [
+    "Organization",
+    "Person"
+  ],
+  "relationship_types": [
+    "knows",
+    "works_for"
+  ],
+  "avg_entity_confidence": 0.9066666666666666,
+  "avg_relationship_confidence": 0.85
+}

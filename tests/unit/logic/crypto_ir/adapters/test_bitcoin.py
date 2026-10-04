@@ -285,7 +285,9 @@ def test_import_bitcoin_adapter_has_no_network_side_effects(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     def _blocked(*_args: Any, **_kwargs: Any) -> None:
-        raise AssertionError("network socket use forbidden during Bitcoin adapter import")
+        raise AssertionError(
+            "network socket use forbidden during Bitcoin adapter import"
+        )
 
     monkeypatch.setattr(socket, "socket", _blocked)
     monkeypatch.setattr(socket, "create_connection", _blocked)
@@ -495,16 +497,16 @@ def test_full_observation_preserves_network_outpoints_sats_witness() -> None:
     assert inputs[0]["outpoint"]["txid"] == TXID_B
     assert inputs[0]["outpoint"]["vout"] == 1
     assert inputs[0]["outpoint"]["txid_internal"] == reverse_hex_bytes(TXID_B)
-    assert inputs[0]["witness"] == [WITNESS_SIG, WITNESS_PUB] or list(inputs[0]["witness"]) == [
-        WITNESS_SIG,
-        WITNESS_PUB,
-    ]
+    assert inputs[0]["witness"] == [WITNESS_SIG, WITNESS_PUB] or list(
+        inputs[0]["witness"]
+    ) == [WITNESS_SIG, WITNESS_PUB]
     assert inputs[0]["sequence"] == 0xFFFFFFFD
     assert inputs[0]["prevout_value_sats"] == "100000"
     assert inputs[0]["previous_output_known"] is True
     assert inputs[0]["prevout_spending_condition"]["script_hex"] == P2WPKH_SCRIPT
-    assert inputs[0]["prevout_spending_condition"]["script_commitment"] == script_commitment(
-        P2WPKH_SCRIPT
+    assert (
+        inputs[0]["prevout_spending_condition"]["script_commitment"]
+        == script_commitment(P2WPKH_SCRIPT)
     )
     assert inputs[0].get("display_address_not_spend_authority") is True
 
@@ -640,13 +642,16 @@ def test_confirmations_map_to_finality() -> None:
     from ipfs_datasets_py.logic.crypto_ir.adapters.bitcoin import TxStatus
 
     assert (
-        map_finality(None, confirmations=1, status=TxStatus.CONFIRMED) is FinalityStatus.CONFIRMED
+        map_finality(None, confirmations=1, status=TxStatus.CONFIRMED)
+        is FinalityStatus.CONFIRMED
     )
     assert (
-        map_finality(None, confirmations=100, status=TxStatus.CONFIRMED) is FinalityStatus.FINALIZED
+        map_finality(None, confirmations=100, status=TxStatus.CONFIRMED)
+        is FinalityStatus.FINALIZED
     )
     assert (
-        map_finality(None, confirmations=None, status=TxStatus.MEMPOOL) is FinalityStatus.PROPOSED
+        map_finality(None, confirmations=None, status=TxStatus.MEMPOOL)
+        is FinalityStatus.PROPOSED
     )
 
 
@@ -659,7 +664,9 @@ def test_rejects_float_sats_on_observation() -> None:
 
 def test_rejects_malformed_txid() -> None:
     with pytest.raises(BitcoinAdapterError):
-        BitcoinTransactionObservation.from_dict(_full_observation(txid="not-hex"))
+        BitcoinTransactionObservation.from_dict(
+            _full_observation(txid="not-hex")
+        )
 
 
 def test_authority_not_elevated_on_round_trip() -> None:

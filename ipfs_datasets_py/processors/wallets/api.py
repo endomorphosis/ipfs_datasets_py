@@ -255,7 +255,8 @@ class TrustPolicy:
         scheme = (parsed.scheme or "").lower()
         if scheme not in ({"https", "http"} if self.allow_http else {"https"}):
             raise InvalidRequestError(
-                f"untrusted callers may not supply provider_url ({endpoint_fingerprint(url)})"
+                f"untrusted callers may not supply provider_url "
+                f"({endpoint_fingerprint(url)})"
             )
         host = (parsed.hostname or "").rstrip(".").lower()
         if not host or host not in self.allowed_provider_hosts:
@@ -264,7 +265,9 @@ class TrustPolicy:
                 f"({endpoint_fingerprint(url)})"
             )
 
-    def assert_secret_reference(self, reference: str | None, *, trust: TrustLevel) -> None:
+    def assert_secret_reference(
+        self, reference: str | None, *, trust: TrustLevel
+    ) -> None:
         if reference is None:
             return
         reference = _required_str(reference, "secret_reference")
@@ -278,7 +281,9 @@ class TrustPolicy:
         if trust is TrustLevel.TRUSTED:
             return
         if not any(reference.startswith(prefix) for prefix in self.allowed_secret_prefixes):
-            raise InvalidRequestError("secret_reference is not on the untrusted MCP allowlist")
+            raise InvalidRequestError(
+                "secret_reference is not on the untrusted MCP allowlist"
+            )
 
     def assert_no_inline_secrets(self, payload: Mapping[str, Any]) -> None:
         """Reject request fields that look like inline secret material."""
@@ -290,7 +295,8 @@ class TrustPolicy:
             }:
                 if isinstance(value, str) and value.strip():
                     raise InvalidRequestError(
-                        f"inline secret field {key!r} is forbidden; use an opaque secret_reference"
+                        f"inline secret field {key!r} is forbidden; "
+                        "use an opaque secret_reference"
                     )
             if isinstance(value, Mapping):
                 self.assert_no_inline_secrets(value)
@@ -418,7 +424,9 @@ class LedgerRangeIngestRequest:
         _non_negative_int(self.start_position, "start_position")
         _non_negative_int(self.end_position, "end_position")
         if self.start_position > self.end_position:
-            raise InvalidRequestError("start_position must not be greater than end_position")
+            raise InvalidRequestError(
+                "start_position must not be greater than end_position"
+            )
         if self.family is not None:
             object.__setattr__(self, "family", _required_str(self.family, "family"))
         if self.cursor == "":
@@ -448,7 +456,9 @@ class WalletExportRequest:
         object.__setattr__(self, "scope", _required_str(self.scope, "scope"))
         if not isinstance(self.chain, ChainRef):
             object.__setattr__(self, "chain", _parse_chain(self.chain))
-        object.__setattr__(self, "output_dir", _required_str(self.output_dir, "output_dir"))
+        object.__setattr__(
+            self, "output_dir", _required_str(self.output_dir, "output_dir")
+        )
         if not isinstance(self.bounds, ScanBounds):
             object.__setattr__(self, "bounds", _parse_bounds(self.bounds))
         object.__setattr__(self, "records", tuple(self.records))
@@ -462,7 +472,8 @@ class WalletExportRequest:
             )
         if self.mode is ExportMode.RAW and self.raw_payload_policy is RawPayloadPolicy.OMITTED:
             raise InvalidRequestError(
-                "raw export mode requires an explicit raw_payload_policy other than 'omitted'"
+                "raw export mode requires an explicit raw_payload_policy "
+                "other than 'omitted'"
             )
         if self.mode is not ExportMode.RAW and self.raw_payload_policy is not (
             RawPayloadPolicy.OMITTED
@@ -471,7 +482,8 @@ class WalletExportRequest:
             # set explicitly when raw policy is non-omitted.
             if self.mode is ExportMode.FINALIZED:
                 raise InvalidRequestError(
-                    "non-omitted raw_payload_policy requires export_mode 'provisional' or 'raw'"
+                    "non-omitted raw_payload_policy requires export_mode "
+                    "'provisional' or 'raw'"
                 )
         _positive_int(self.normalized_schema_major, "normalized_schema_major")
         if len(self.records) > self.bounds.max_items:
@@ -512,7 +524,9 @@ class CapabilitiesRequest:
         if self.family is not None:
             object.__setattr__(self, "family", _required_str(self.family, "family"))
         if self.network is not None:
-            object.__setattr__(self, "network", _required_str(self.network, "network"))
+            object.__setattr__(
+                self, "network", _required_str(self.network, "network")
+            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -930,7 +944,9 @@ class WalletProcessorAPI:
             families.append(entry)
         return CapabilitiesResult(families=tuple(families))
 
-    def capabilities(self, request: CapabilitiesRequest | None = None) -> CapabilitiesResult:
+    def capabilities(
+        self, request: CapabilitiesRequest | None = None
+    ) -> CapabilitiesResult:
         """Return declared capabilities; never loads optional chain SDKs."""
 
         request = request or CapabilitiesRequest()
@@ -960,11 +976,15 @@ class WalletProcessorAPI:
             for fam in listing.families:
                 meta = fam.get("metadata") or {}
                 networks = meta.get("networks") or []
-                if request.network in networks or request.network == meta.get("default_network"):
+                if request.network in networks or request.network == meta.get(
+                    "default_network"
+                ):
                     selected = dict(fam)
                     break
             if selected is None:
-                raise InvalidRequestError(f"no family declared for network {request.network!r}")
+                raise InvalidRequestError(
+                    f"no family declared for network {request.network!r}"
+                )
         return CapabilitiesResult(families=listing.families, selected=selected)
 
     # -- ingest ---------------------------------------------------------------
@@ -1130,12 +1150,16 @@ class WalletProcessorAPI:
         mode = request.mode
         context = self._build_context(request.request_id, request.bounds)
         export_status = (
-            ExportStatus.COMPLETE if mode is ExportMode.FINALIZED else ExportStatus.PARTIAL
+            ExportStatus.COMPLETE
+            if mode is ExportMode.FINALIZED
+            else ExportStatus.PARTIAL
         )
         # RAW mode remains partial until an operator explicitly finalizes.
         raw_policy = request.raw_payload_policy
         if mode is ExportMode.RAW and raw_policy is RawPayloadPolicy.OMITTED:
-            raise InvalidRequestError("raw export mode requires explicit raw_payload_policy")
+            raise InvalidRequestError(
+                "raw export mode requires explicit raw_payload_policy"
+            )
         exporter = WalletDatasetExporter(
             chain=request.chain,
             output_dir=request.output_dir,
@@ -1211,14 +1235,18 @@ class WalletProcessorAPI:
                 # Lightweight accounting checks on dict payloads.
                 payload = dict(request.manifest)
                 manifest_id = (
-                    str(payload["manifest_id"]) if payload.get("manifest_id") is not None else None
+                    str(payload["manifest_id"])
+                    if payload.get("manifest_id") is not None
+                    else None
                 )
                 record_count = (
                     int(payload["record_count"])
                     if payload.get("record_count") is not None
                     else None
                 )
-                status = str(payload["status"]) if payload.get("status") is not None else None
+                status = (
+                    str(payload["status"]) if payload.get("status") is not None else None
+                )
                 partitions = payload.get("partitions") or []
                 if record_count is not None and isinstance(partitions, list):
                     part_sum = sum(int(p.get("record_count", 0)) for p in partitions)
@@ -1236,7 +1264,9 @@ class WalletProcessorAPI:
                 loaded = load_export_manifest(path)
                 if request.manifest is None:
                     # Recursive check on loaded mapping.
-                    nested = self.verify_manifest(VerifyManifestRequest(manifest=loaded))
+                    nested = self.verify_manifest(
+                        VerifyManifestRequest(manifest=loaded)
+                    )
                     return VerifyManifestResult(
                         ok=nested.ok,
                         path=path,
@@ -1266,10 +1296,14 @@ class WalletProcessorAPI:
                 "chain processors outside this facade"
             )
         if self._processor.chain.identity_dict() != chain.identity_dict():
-            raise InvalidRequestError("injected processor chain does not match request chain")
+            raise InvalidRequestError(
+                "injected processor chain does not match request chain"
+            )
         return self._processor
 
-    def _build_context(self, request_id: str | None, bounds: ScanBounds) -> OperationContext:
+    def _build_context(
+        self, request_id: str | None, bounds: ScanBounds
+    ) -> OperationContext:
         rid = request_id or f"wallet-api-{uuid.uuid4().hex[:12]}"
         # OperationContext.check_active uses wall-clock time unless a custom
         # ``now`` is threaded through every call site.  Deadlines must therefore
@@ -1361,7 +1395,9 @@ class WalletProcessorAPI:
         options: Mapping[str, object],
     ) -> None:
         self._trust_policy.assert_provider_url(provider_url, trust=self._trust)
-        self._trust_policy.assert_secret_reference(secret_reference, trust=self._trust)
+        self._trust_policy.assert_secret_reference(
+            secret_reference, trust=self._trust
+        )
         # Also scan options for untrusted provider_url / secrets.
         if isinstance(options, Mapping):
             opt_url = options.get("provider_url")
@@ -1369,10 +1405,13 @@ class WalletProcessorAPI:
                 self._trust_policy.assert_provider_url(opt_url, trust=self._trust)
             opt_secret = options.get("secret_reference") or options.get("api_key")
             if isinstance(opt_secret, str) and options.get("secret_reference"):
-                self._trust_policy.assert_secret_reference(opt_secret, trust=self._trust)
+                self._trust_policy.assert_secret_reference(
+                    opt_secret, trust=self._trust
+                )
             elif isinstance(opt_secret, str) and self._trust is TrustLevel.UNTRUSTED:
                 raise InvalidRequestError(
-                    "inline secret field 'api_key' is forbidden; use an opaque secret_reference"
+                    "inline secret field 'api_key' is forbidden; "
+                    "use an opaque secret_reference"
                 )
             self._trust_policy.assert_no_inline_secrets(
                 {k: v for k, v in options.items() if not isinstance(v, (bytes, bytearray))}
@@ -1415,7 +1454,9 @@ class WalletProcessorAPI:
                 "broadcast; use GuardService with a consumed "
                 "AdmissibilityCapability (no approved=true escape hatch)"
             )
-        raise AttributeError(f"{type(self).__name__!r} object has no attribute {name!r}")
+        raise AttributeError(
+            f"{type(self).__name__!r} object has no attribute {name!r}"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -1490,8 +1531,12 @@ async def wallet_export(
             formats=_parse_formats(request.get("formats")),
             mode=mode,
             raw_payload_policy=raw_policy,
-            processor_version=str(request.get("processor_version") or "wallet-api@1.0.0"),
-            normalized_schema_major=int(request.get("normalized_schema_major") or 1),
+            processor_version=str(
+                request.get("processor_version") or "wallet-api@1.0.0"
+            ),
+            normalized_schema_major=int(
+                request.get("normalized_schema_major") or 1
+            ),
         )
     return await facade.wallet_export(request)
 

@@ -200,7 +200,9 @@ def _model(**overrides: object) -> ContractSemanticModel:
         "principals": (
             PrincipalRef(
                 principal_id="principal:caller",
-                privileges=PrivilegeSet(flags=(PrivilegeFlag.CALLER, PrivilegeFlag.SIGNER)),
+                privileges=PrivilegeSet(
+                    flags=(PrivilegeFlag.CALLER, PrivilegeFlag.SIGNER)
+                ),
             ),
         ),
         "control_edges": (reentrant, cpi, spend),
@@ -550,10 +552,13 @@ class TestProjectionAndObligations:
         # Full model is fine.
         assert_obligation_admissible(model, obligation)
 
-        projected = project_semantic_model(model, drop_fact_ids=(reentrant_fact,))
+        projected = project_semantic_model(
+            model, drop_fact_ids=(reentrant_fact,)
+        )
         assert reentrant_fact in projected.discarded_fact_ids()
         assert all(
-            edge.kind is not ControlEdgeKind.REENTRANT_CALL for edge in projected.control_edges
+            edge.kind is not ControlEdgeKind.REENTRANT_CALL
+            for edge in projected.control_edges
         )
         with pytest.raises(CryptoIRValidationError, match="lossy projection"):
             assert_obligation_admissible(projected, obligation)
@@ -591,7 +596,9 @@ class TestProjectionAndObligations:
     def test_projection_with_explicit_unsupported_record(self) -> None:
         model = _model()
         cpi_fact = next(
-            edge.fact_id for edge in model.control_edges if edge.kind is ControlEdgeKind.CPI
+            edge.fact_id
+            for edge in model.control_edges
+            if edge.kind is ControlEdgeKind.CPI
         )
         mark = UnsupportedSemantic(
             unsupported_id="adapter-drop-cpi",

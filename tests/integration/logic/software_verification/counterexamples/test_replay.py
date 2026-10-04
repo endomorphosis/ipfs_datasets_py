@@ -173,7 +173,9 @@ def smt_model_oracle(candidate: Mapping[str, Any]) -> bool:
 
 def trace_oracle(candidate: Mapping[str, Any]) -> bool:
     steps = list(candidate.get("steps") or candidate.get("trace") or [])
-    labels = [(step.get("label") if isinstance(step, Mapping) else step) for step in steps]
+    labels = [
+        (step.get("label") if isinstance(step, Mapping) else step) for step in steps
+    ]
     return "bad" in labels
 
 
@@ -181,7 +183,8 @@ def hypertrace_oracle(candidate: Mapping[str, Any]) -> bool:
     differences = list(candidate.get("differences") or [])
     observed = set(candidate.get("observed_fields") or [])
     has_secret_div = any(
-        (d.get("field") if isinstance(d, Mapping) else d) == "secret_bit" for d in differences
+        (d.get("field") if isinstance(d, Mapping) else d) == "secret_bit"
+        for d in differences
     )
     return has_secret_div and "public_out" in observed
 
@@ -194,7 +197,9 @@ def protocol_oracle(candidate: Mapping[str, Any]) -> bool:
         (m.get("type") if isinstance(m, Mapping) else m) == "forge" for m in messages
     )
     has_init = "initiator" in roles
-    has_step = any((s.get("action") if isinstance(s, Mapping) else s) == "inject" for s in steps)
+    has_step = any(
+        (s.get("action") if isinstance(s, Mapping) else s) == "inject" for s in steps
+    )
     return has_forge and has_init and has_step
 
 
@@ -244,7 +249,9 @@ def test_recipe_is_content_addressed_and_stable() -> None:
         (protocol_witness, protocol_oracle),
     ],
 )
-def test_corpus_witnesses_replay_under_exact_identities(witness_factory, oracle) -> None:
+def test_corpus_witnesses_replay_under_exact_identities(
+    witness_factory, oracle
+) -> None:
     witness = witness_factory()
     result = replay_counterexample(witness, oracle=oracle)
     assert result.status is ReplayStatus.REPRODUCED
@@ -290,16 +297,15 @@ def test_not_reproduced_when_oracle_rejects() -> None:
         (
             {
                 "witness_content_id": (
-                    "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+                    "sha256:ffffffffffffffffffffffffffffffff"
+                    "ffffffffffffffffffffffffffffffff"
                 )
             },
             ReplayMismatchField.WITNESS_CONTENT_ID,
         ),
     ],
 )
-def test_binding_fails_on_changed_identity(
-    override: dict[str, Any], field: ReplayMismatchField
-) -> None:
+def test_binding_fails_on_changed_identity(override: dict[str, Any], field: ReplayMismatchField) -> None:
     witness = smt_model_witness()
     recipe = build_replay_recipe(witness, oracle_id="oracle:z3-model")
     result = CounterexampleReplayer().replay(

@@ -1,0 +1,101 @@
+{
+  "broader_terms": {
+    "EPA": ["federal agency", "environmental agency", "regulatory agency"],
+    "regulations": ["legal requirements", "government standards", "administrative law"],
+    "permit": ["authorization", "legal permission", "government approval"],
+    "water_pollution": ["environmental violation", "pollution", "environmental harm"],
+    "workplace_safety": ["occupational health", "employee protection", "labor standards"],
+    "consumer_protection": ["consumer rights", "market regulation", "fair trade"],
+    "intellectual_property": ["property rights", "legal rights", "intangible assets"],
+    "criminal_law": ["law", "legal system", "justice system"],
+    "civil_rights": ["human rights", "constitutional rights", "individual freedoms"],
+    "healthcare_law": ["health regulation", "medical law", "public health policy"],
+    "tax_law": ["fiscal policy", "revenue law", "public finance"],
+    "corporate_law": ["business law", "commercial law", "economic regulation"],
+    "labor_law": ["employment law", "workplace regulation", "worker protection"],
+    "environmental_law": ["natural resources law", "conservation law", "sustainability regulation"],
+    "immigration_law": ["nationality law", "border control", "citizenship law"]
+  },
+  "narrower_terms": {
+    "regulations": ["specific rules", "technical standards", "compliance requirements", "implementation guidelines"],
+    "environmental_law": ["clean air act", "clean water act", "endangered species act", "NEPA", "CERCLA"],
+    "employment_law": ["minimum wage", "overtime", "workplace discrimination", "wrongful termination", "employee benefits"],
+    "consumer_protection": ["product liability", "false advertising", "warranty law", "consumer credit"],
+    "tax_law": ["income tax", "property tax", "sales tax", "estate tax", "corporate tax"],
+    "healthcare_law": ["HIPAA", "medicare", "medicaid", "medical malpractice", "patient rights"],
+    "intellectual_property": ["patents", "copyrights", "trademarks", "trade secrets"],
+    "criminal_law": ["felonies", "misdemeanors", "infractions", "white collar crime", "violent crime"],
+    "corporate_law": ["securities law", "merger regulations", "corporate governance", "shareholder rights"],
+    "real_estate_law": ["zoning regulations", "property rights", "landlord-tenant law", "mortgage law"]
+  },
+  "related_terms": {
+    "regulations": ["enforcement", "compliance", "penalties", "violations", "standards", "guidelines"],
+    "EPA": ["environmental protection", "pollution control", "clean air", "clean water", "hazardous waste"],
+    "OSHA": ["workplace safety", "occupational health", "worker protection", "safety standards", "injury prevention"],
+    "FDA": ["food safety", "drug approval", "medical devices", "product recalls", "consumer protection"],
+    "SEC": ["securities regulation", "stock market", "investor protection", "financial disclosure", "corporate governance"],
+    "discrimination": ["civil rights", "equal protection", "protected classes", "disparate treatment", "hostile environment"],
+    "contract": ["breach", "enforcement", "consideration", "offer", "acceptance", "damages"],
+    "negligence": ["duty of care", "breach of duty", "causation", "damages", "reasonable person standard"],
+    "intellectual_property": ["infringement", "licensing", "fair use", "trade dress", "domain names"],
+    "bankruptcy": ["Chapter 7", "Chapter 11", "Chapter 13", "debt relief", "creditor rights", "asset liquidation"],
+    "environmental_compliance": ["permits", "monitoring", "reporting", "inspections", "remediation"],
+    "workplace_safety": ["hazard assessment", "safety training", "protective equipment", "accident prevention", "OSHA standards"],
+    "consumer_rights": ["warranties", "returns", "refunds", "false advertising", "deceptive practices"],
+    "healthcare_compliance": ["patient privacy", "medical records", "informed consent", "quality standards"],
+    "taxation": ["tax returns", "deductions", "credits", "audits", "penalties", "tax planning"]
+  },
+  "legal_domains": {
+    "environmental": {
+      "key_concepts": ["pollution", "emissions", "conservation", "endangered species", "hazardous waste"],
+      "key_agencies": ["EPA", "DOI", "NOAA", "US Forest Service"],
+      "key_laws": ["Clean Air Act", "Clean Water Act", "ESA", "NEPA", "CERCLA", "RCRA"]
+    },
+    "employment": {
+      "key_concepts": ["wages", "workplace safety", "discrimination", "benefits", "collective bargaining"],
+      "key_agencies": ["DOL", "EEOC", "NLRB", "OSHA"],
+      "key_laws": ["FLSA", "Title VII", "ADA", "FMLA", "NLRA"]
+    },
+    "consumer": {
+      "key_concepts": ["product safety", "false advertising", "warranties", "credit protection"],
+      "key_agencies": ["FTC", "CFPB", "CPSC"],
+      "key_laws": ["FTC Act", "FDCPA", "TILA", "FCRA"]
+    },
+    "healthcare": {
+      "key_concepts": ["patient rights", "medical privacy", "insurance", "pharmaceuticals"],
+      "key_agencies": ["FDA", "HHS", "CMS", "CDC"],
+      "key_laws": ["HIPAA", "ACA", "Medicare Act", "Medicaid Act"]
+    },
+    "corporate": {
+      "key_concepts": ["securities", "mergers", "corporate governance", "shareholder rights"],
+      "key_agencies": ["SEC", "FTC"],
+      "key_laws": ["Securities Act", "Exchange Act", "Sarbanes-Oxley", "Dodd-Frank"]
+    }
+  },
+  "expansion_strategies": {
+    "aggressive": {
+      "description": "Maximum expansion with all synonyms and related terms",
+      "synonym_depth": 5,
+      "include_broader": true,
+      "include_narrower": true,
+      "include_related": true,
+      "max_alternatives": 10
+    },
+    "moderate": {
+      "description": "Balanced expansion with most relevant terms",
+      "synonym_depth": 3,
+      "include_broader": true,
+      "include_narrower": false,
+      "include_related": true,
+      "max_alternatives": 5
+    },
+    "conservative": {
+      "description": "Minimal expansion with only direct synonyms",
+      "synonym_depth": 2,
+      "include_broader": false,
+      "include_narrower": false,
+      "include_related": false,
+      "max_alternatives": 3
+    }
+  }
+}

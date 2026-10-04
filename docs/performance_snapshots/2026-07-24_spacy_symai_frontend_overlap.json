@@ -1,0 +1,80 @@
+{
+  "benchmark_script": "benchmarks/logic_pipeline/report.py --section frontend --validate",
+  "captured_on": "2026-07-24",
+  "notes": [
+    "This is a capability-preflight front-end ablation capture, not an efficacy claim.",
+    "The requested en_core_web_sm full spaCy pipeline was unavailable; SyMAI and llm_router provider/model identities were degraded.",
+    "All 240 required case, arm, and cache cells are retained as unavailable instead of being dropped, substituted, or scored as semantic failures.",
+    "The current codec, regex/legal parser, and forced blank-model control were available, but isolated measurements were withheld because the paired comparison matrix was capability-ineligible.",
+    "The complete reviewed pilot and development splits were frozen before outcomes; holdout cases were not accessed.",
+    "The report schema retains case-level semantic disagreements and derives component-unique wins, A0 regressions, and unnecessary SyMAI calls when a measured replay is available."
+  ],
+  "results": {
+    "schema": "ipfs-datasets.logic-pipeline-benchmark.frontend-overlap-snapshot.v1",
+    "evidence": "HSSLEV0519C80",
+    "artifact": {
+      "path": "workspace/benchmarks/hammer-symai-spacy-leanstral/results/frontend-overlap-v1.json",
+      "sha256": "86cc7263efe890a80e0ecf3518eaefaad8dfbabb4fb35d544be83905e4c32404",
+      "execution_mode": "capability_preflight"
+    },
+    "scope": {
+      "splits": [
+        "pilot",
+        "development"
+      ],
+      "pilot_case_count": 10,
+      "development_case_count": 10,
+      "development_selection": "all reviewed development cases; no outcome-derived case shortlist",
+      "stratum_count": 10,
+      "variant_ids": [
+        "A0",
+        "A1",
+        "A4",
+        "A5",
+        "A7",
+        "A8"
+      ],
+      "cache_modes": [
+        "cold",
+        "warm"
+      ],
+      "expected_observations": 240,
+      "retained_observations": 240,
+      "holdout_accessed": false
+    },
+    "capabilities": {
+      "current_modal_codec": "available",
+      "spacy_full_model": "unavailable",
+      "regex_legal_parser": "available",
+      "spacy_blank_model": "available",
+      "symai": "degraded",
+      "llm_router": "degraded"
+    },
+    "frontend_metrics": {
+      "semantic_measurement_count": 0,
+      "normalized_ir_exact_match_rate": null,
+      "deterministic_semantic_equivalence_rate": null,
+      "ambiguity_classification_accuracy": null,
+      "unsupported_fail_closed_accuracy": null,
+      "latency_ms_p50": null,
+      "latency_ms_p95": null,
+      "model_calls": null,
+      "a0_regressions": null,
+      "component_unique_wins": {
+        "full_spacy": null,
+        "regex_legal": null,
+        "blank_model": null,
+        "gated_symai": null,
+        "always_on_symai": null
+      },
+      "symai_unnecessary_call_rate": null,
+      "efficacy_conclusion": "not_estimable_due_to_capability_missingness"
+    },
+    "required_follow_up": [
+      "Install and pin the requested en_core_web_sm spaCy pipeline.",
+      "Configure pinned SyMAI and llm_router provider/model identities.",
+      "Replay the unchanged 240-cell pilot/development matrix with isolated cold and warm caches.",
+      "Use the validated case-level semantic receipts; the report rejects missing cells, arm substitution, aggregate tampering, and disagreement loss."
+    ]
+  }
+}

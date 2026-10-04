@@ -1,0 +1,78 @@
+{
+  "tool_categories": [
+    "cli",
+    "security_tools",
+    "functions",
+    "ipfs_tools",
+    "graph_tools",
+    "audit_tools",
+    "vector_tools",
+    "provenance_tools",
+    "web_archive_tools",
+    "dataset_tools"
+  ],
+  "total_tools": 21,
+  "tools_by_category": {
+    "cli": [
+      "execute_command"
+    ],
+    "security_tools": [
+      "check_access_permission"
+    ],
+    "functions": [
+      "execute_python_snippet"
+    ],
+    "ipfs_tools": [
+      "get_from_ipfs",
+      "pin_to_ipfs"
+    ],
+    "graph_tools": [
+      "query_knowledge_graph"
+    ],
+    "audit_tools": [
+      "record_audit_event",
+      "generate_audit_report"
+    ],
+    "vector_tools": [
+      "search_vector_index",
+      "create_vector_index"
+    ],
+    "provenance_tools": [
+      "record_provenance"
+    ],
+    "web_archive_tools": [
+      "extract_dataset_from_cdxj",
+      "create_warc",
+      "extract_links_from_warc",
+      "index_warc",
+      "extract_metadata_from_warc",
+      "extract_text_from_warc"
+    ],
+    "dataset_tools": [
+      "save_dataset",
+      "convert_dataset_format",
+      "load_dataset",
+      "process_dataset"
+    ]
+  },
+  "library_to_tool_mapping": {
+    "ipfs_datasets.py": [
+      "dataset_tools"
+    ],
+    "web_archive_utils.py": [
+      "web_archive_tools"
+    ],
+    "ipfs_knn_index.py": [
+      "vector_tools"
+    ],
+    "data_provenance.py": [
+      "provenance_tools"
+    ],
+    "security.py": [
+      "security_tools"
+    ],
+    "knowledge_graph_extraction.py": [
+      "graph_tools"
+    ]
+  }
+}

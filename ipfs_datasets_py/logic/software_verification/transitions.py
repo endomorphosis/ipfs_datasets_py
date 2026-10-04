@@ -43,7 +43,9 @@ from .state import (
 
 STATE_TRANSITION_IR_INTERFACE: Final = "StateTransitionIR@1"
 STATE_TRANSITION_IR_SCHEMA_VERSION: Final = "state-transition-ir/v1"
-STATE_TRANSITION_IR_IDENTITY_DOMAIN: Final = "logic.software-verification.state-transition"
+STATE_TRANSITION_IR_IDENTITY_DOMAIN: Final = (
+    "logic.software-verification.state-transition"
+)
 ACTION_FRAME_SCHEMA_VERSION: Final = "action-frame/v1"
 ACTION_SCHEMA_VERSION: Final = "action/v1"
 TRANSITION_RELATION_SCHEMA_VERSION: Final = "transition-relation/v1"
@@ -260,9 +262,13 @@ class Action:
                 f"action {self.action_id} requires a guard or next predicate"
             )
         object.__setattr__(self, "label_ids", _ids(self.label_ids, "label_ids"))
-        object.__setattr__(self, "enables_stutter", _bool(self.enables_stutter, "enables_stutter"))
+        object.__setattr__(
+            self, "enables_stutter", _bool(self.enables_stutter, "enables_stutter")
+        )
         object.__setattr__(self, "attributes", _frozen(self.attributes, "attributes"))
-        object.__setattr__(self, "source_ref_ids", _ids(self.source_ref_ids, "source_ref_ids"))
+        object.__setattr__(
+            self, "source_ref_ids", _ids(self.source_ref_ids, "source_ref_ids")
+        )
         if self.schema_version != ACTION_SCHEMA_VERSION:
             raise TransitionValidationError(
                 f"unsupported action schema_version {self.schema_version!r}"
@@ -311,7 +317,9 @@ class Action:
             next_predicate_id=value.get("next_predicate_id", ""),
             label_ids=tuple(value.get("label_ids", ())),
             enables_stutter=value.get("enables_stutter", False),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
             source_ref_ids=tuple(value.get("source_ref_ids", ())),
             schema_version=value.get("schema_version", ACTION_SCHEMA_VERSION),
         )
@@ -332,7 +340,9 @@ class TransitionRelation:
     schema_version: str = TRANSITION_RELATION_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "relation_id", _identifier(self.relation_id, "relation_id"))
+        object.__setattr__(
+            self, "relation_id", _identifier(self.relation_id, "relation_id")
+        )
         kind = _enum(self.kind, TransitionKind, "kind")
         object.__setattr__(self, "kind", kind)
         object.__setattr__(self, "statement", _text(self.statement, "statement"))
@@ -344,9 +354,13 @@ class TransitionRelation:
             "predicate_id",
             "" if not predicate_id else _identifier(predicate_id, "predicate_id"),
         )
-        object.__setattr__(self, "allows_stutter", _bool(self.allows_stutter, "allows_stutter"))
+        object.__setattr__(
+            self, "allows_stutter", _bool(self.allows_stutter, "allows_stutter")
+        )
         object.__setattr__(self, "attributes", _frozen(self.attributes, "attributes"))
-        object.__setattr__(self, "source_ref_ids", _ids(self.source_ref_ids, "source_ref_ids"))
+        object.__setattr__(
+            self, "source_ref_ids", _ids(self.source_ref_ids, "source_ref_ids")
+        )
         if kind is TransitionKind.ACTION and not action_ids:
             raise TransitionValidationError(
                 f"action transition {self.relation_id} requires action_ids"
@@ -360,9 +374,13 @@ class TransitionRelation:
                 f"stutter transition {self.relation_id} must not reference actions or predicates"
             )
         if kind is not TransitionKind.ACTION and action_ids:
-            raise TransitionValidationError("action_ids are only valid for action transitions")
+            raise TransitionValidationError(
+                "action_ids are only valid for action transitions"
+            )
         if kind is not TransitionKind.RELATION and self.predicate_id:
-            raise TransitionValidationError("predicate_id is only valid for relation transitions")
+            raise TransitionValidationError(
+                "predicate_id is only valid for relation transitions"
+            )
         if self.schema_version != TRANSITION_RELATION_SCHEMA_VERSION:
             raise TransitionValidationError(
                 f"unsupported transition-relation schema_version {self.schema_version!r}"
@@ -408,9 +426,13 @@ class TransitionRelation:
             action_ids=tuple(value.get("action_ids", ())),
             predicate_id=value.get("predicate_id", ""),
             allows_stutter=value.get("allows_stutter", False),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
             source_ref_ids=tuple(value.get("source_ref_ids", ())),
-            schema_version=value.get("schema_version", TRANSITION_RELATION_SCHEMA_VERSION),
+            schema_version=value.get(
+                "schema_version", TRANSITION_RELATION_SCHEMA_VERSION
+            ),
         )
 
 
@@ -428,7 +450,9 @@ class FairnessConstraint:
     schema_version: str = FAIRNESS_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "fairness_id", _identifier(self.fairness_id, "fairness_id"))
+        object.__setattr__(
+            self, "fairness_id", _identifier(self.fairness_id, "fairness_id")
+        )
         object.__setattr__(self, "kind", _enum(self.kind, FairnessKind, "kind"))
         object.__setattr__(self, "statement", _text(self.statement, "statement"))
         action_ids = _ids(self.action_ids, "action_ids")
@@ -448,7 +472,9 @@ class FairnessConstraint:
                 f"fairness constraint {self.fairness_id} cannot mix action_ids and predicate_id"
             )
         object.__setattr__(self, "attributes", _frozen(self.attributes, "attributes"))
-        object.__setattr__(self, "source_ref_ids", _ids(self.source_ref_ids, "source_ref_ids"))
+        object.__setattr__(
+            self, "source_ref_ids", _ids(self.source_ref_ids, "source_ref_ids")
+        )
         if self.schema_version != FAIRNESS_SCHEMA_VERSION:
             raise TransitionValidationError(
                 f"unsupported fairness schema_version {self.schema_version!r}"
@@ -491,7 +517,9 @@ class FairnessConstraint:
             statement=value.get("statement", ""),
             action_ids=tuple(value.get("action_ids", ())),
             predicate_id=value.get("predicate_id", ""),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
             source_ref_ids=tuple(value.get("source_ref_ids", ())),
             schema_version=value.get("schema_version", FAIRNESS_SCHEMA_VERSION),
         )
@@ -551,7 +579,9 @@ class KripkeWorld:
             world_id=value.get("world_id", ""),
             valuation_id=value.get("valuation_id", ""),
             label_ids=tuple(value.get("label_ids", ())),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
             schema_version=value.get("schema_version", KRIPKE_WORLD_SCHEMA_VERSION),
         )
 
@@ -628,7 +658,9 @@ class KripkeEdge:
             target_world_id=value.get("target_world_id", ""),
             action_id=value.get("action_id", ""),
             label_ids=tuple(value.get("label_ids", ())),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
             schema_version=value.get("schema_version", KRIPKE_EDGE_SCHEMA_VERSION),
         )
 
@@ -645,7 +677,9 @@ class KripkeStructure:
     schema_version: str = KRIPKE_STRUCTURE_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "structure_id", _identifier(self.structure_id, "structure_id"))
+        object.__setattr__(
+            self, "structure_id", _identifier(self.structure_id, "structure_id")
+        )
         worlds = tuple(
             item
             if isinstance(item, KripkeWorld)
@@ -699,7 +733,9 @@ class KripkeStructure:
         if world_id not in known:
             raise TransitionValidationError(f"unknown world {world_id}")
         return tuple(
-            edge.target_world_id for edge in self.edges if edge.source_world_id == world_id
+            edge.target_world_id
+            for edge in self.edges
+            if edge.source_world_id == world_id
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -740,8 +776,12 @@ class KripkeStructure:
                 for item in value.get("edges", ())
             ),
             initial_world_ids=tuple(value.get("initial_world_ids", ())),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
-            schema_version=value.get("schema_version", KRIPKE_STRUCTURE_SCHEMA_VERSION),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
+            schema_version=value.get(
+                "schema_version", KRIPKE_STRUCTURE_SCHEMA_VERSION
+            ),
         )
 
 
@@ -752,7 +792,8 @@ def _coerce_records(
     id_field: str,
 ) -> tuple[Any, ...]:
     records = tuple(
-        item if isinstance(item, cls) else cls.from_dict(_mapping(item, label)) for item in values
+        item if isinstance(item, cls) else cls.from_dict(_mapping(item, label))
+        for item in values
     )
     return tuple(sorted(records, key=lambda item: getattr(item, id_field)))
 
@@ -808,7 +849,9 @@ class StateTransitionIR:
         object.__setattr__(
             self,
             "transitions",
-            _coerce_records(self.transitions, TransitionRelation, "transition", "relation_id"),
+            _coerce_records(
+                self.transitions, TransitionRelation, "transition", "relation_id"
+            ),
         )
         object.__setattr__(
             self,
@@ -828,7 +871,9 @@ class StateTransitionIR:
         object.__setattr__(
             self,
             "valuations",
-            _coerce_records(self.valuations, StateValuation, "valuation", "valuation_id"),
+            _coerce_records(
+                self.valuations, StateValuation, "valuation", "valuation_id"
+            ),
         )
 
         kripke = self.kripke
@@ -840,7 +885,9 @@ class StateTransitionIR:
         object.__setattr__(self, "metadata", _frozen(self.metadata, "metadata"))
 
         if self.schema_version != STATE_TRANSITION_IR_SCHEMA_VERSION:
-            raise TransitionValidationError(f"unsupported schema_version {self.schema_version!r}")
+            raise TransitionValidationError(
+                f"unsupported schema_version {self.schema_version!r}"
+            )
 
         self.validate()
         identity = self._compute_identity()
@@ -928,7 +975,9 @@ class StateTransitionIR:
             if not frame.allows_all_reads:
                 _known(frame.reads, variable_ids, f"action {action.action_id}.frame.reads")
             if not frame.allows_all_writes:
-                _known(frame.writes, variable_ids, f"action {action.action_id}.frame.writes")
+                _known(
+                    frame.writes, variable_ids, f"action {action.action_id}.frame.writes"
+                )
             if action.guard_predicate_id:
                 if action.guard_predicate_id not in predicate_ids:
                     raise TransitionValidationError(
@@ -1122,7 +1171,8 @@ class StateTransitionIR:
                 for item in value.get("predicates", ())
             ),
             actions=tuple(
-                Action.from_dict(_mapping(item, "action")) for item in value.get("actions", ())
+                Action.from_dict(_mapping(item, "action"))
+                for item in value.get("actions", ())
             ),
             transitions=tuple(
                 TransitionRelation.from_dict(_mapping(item, "transition"))
@@ -1133,7 +1183,8 @@ class StateTransitionIR:
                 for item in value.get("fairness", ())
             ),
             labels=tuple(
-                StateLabel.from_dict(_mapping(item, "label")) for item in value.get("labels", ())
+                StateLabel.from_dict(_mapping(item, "label"))
+                for item in value.get("labels", ())
             ),
             variants=tuple(
                 VariantMeasure.from_dict(_mapping(item, "variant"))
@@ -1148,7 +1199,9 @@ class StateTransitionIR:
             else KripkeStructure.from_dict(_mapping(kripke_raw, "kripke")),
             metadata=_frozen(_mapping(value.get("metadata", {}), "metadata"), "metadata"),
             document_id=value.get("document_id", ""),
-            schema_version=value.get("schema_version", STATE_TRANSITION_IR_SCHEMA_VERSION),
+            schema_version=value.get(
+                "schema_version", STATE_TRANSITION_IR_SCHEMA_VERSION
+            ),
         )
 
 

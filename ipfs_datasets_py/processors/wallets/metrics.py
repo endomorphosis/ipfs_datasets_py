@@ -119,7 +119,9 @@ def _safe_label(value: str, name: str) -> str:
     lowered = cleaned.lower()
     for fragment in _FORBIDDEN_LABEL_FRAGMENTS:
         if fragment in lowered:
-            raise InvalidRequestError(f"{name} must not look like a secret or address field")
+            raise InvalidRequestError(
+                f"{name} must not look like a secret or address field"
+            )
     # Hex-looking 0x… blobs of wallet-address length are rejected explicitly.
     if cleaned.startswith("0x") and len(cleaned) >= 40:
         raise InvalidRequestError(f"{name} must not contain wallet addresses")
@@ -171,7 +173,9 @@ class ResourceBudget:
         object.__setattr__(
             self,
             "min_records_per_second",
-            _finite_nonnegative_float(self.min_records_per_second, "min_records_per_second"),
+            _finite_nonnegative_float(
+                self.min_records_per_second, "min_records_per_second"
+            ),
         )
         object.__setattr__(self, "source", _safe_label(self.source, "source"))
         if self.source in {"live-provider-latency", "live_provider_latency"}:
@@ -405,8 +409,12 @@ class WalletProcessorMetrics:
         self._reorg_rewinds = 0
         self._shallow_reorgs = 0
         self._deep_reorgs = 0
-        self._finality_counts: dict[str, int] = {state.value: 0 for state in Finality}
-        self._error_category_counts: dict[str, int] = {cat.value: 0 for cat in MetricErrorCategory}
+        self._finality_counts: dict[str, int] = {
+            state.value: 0 for state in Finality
+        }
+        self._error_category_counts: dict[str, int] = {
+            cat.value: 0 for cat in MetricErrorCategory
+        }
         self._checkpoint_age_seconds: float | None = None
         self._head_lag_units: int | None = None
         self._head_lag_unit_name: str | None = None
@@ -464,7 +472,9 @@ class WalletProcessorMetrics:
             try:
                 category = MetricErrorCategory(category)
             except ValueError as exc:
-                raise InvalidRequestError(f"unknown error category: {category!r}") from exc
+                raise InvalidRequestError(
+                    f"unknown error category: {category!r}"
+                ) from exc
         if not isinstance(category, MetricErrorCategory):
             raise InvalidRequestError("category must be a MetricErrorCategory")
         n = _non_negative_int(count, "count")
@@ -489,7 +499,9 @@ class WalletProcessorMetrics:
         state = _require_finality(finality)
         n = _non_negative_int(count, "count")
         with self._lock:
-            self._finality_counts[state.value] = self._finality_counts.get(state.value, 0) + n
+            self._finality_counts[state.value] = (
+                self._finality_counts.get(state.value, 0) + n
+            )
 
     def record_reorg_rewind(
         self,
@@ -524,8 +536,13 @@ class WalletProcessorMetrics:
 
         with self._lock:
             if age_seconds is not None:
-                self._checkpoint_age_seconds = _finite_nonnegative_float(age_seconds, "age_seconds")
-            elif observed_at is not None and checkpoint_committed_at is not None:
+                self._checkpoint_age_seconds = _finite_nonnegative_float(
+                    age_seconds, "age_seconds"
+                )
+            elif (
+                observed_at is not None
+                and checkpoint_committed_at is not None
+            ):
                 if (
                     not isinstance(observed_at, datetime)
                     or observed_at.tzinfo is None
@@ -538,7 +555,9 @@ class WalletProcessorMetrics:
                 delta = (observed_at - checkpoint_committed_at).total_seconds()
                 self._checkpoint_age_seconds = max(0.0, float(delta))
             if revision is not None:
-                self._last_checkpoint_revision = _safe_label(revision, "revision")
+                self._last_checkpoint_revision = _safe_label(
+                    revision, "revision"
+                )
 
     def observe_head_lag(
         self,
@@ -589,7 +608,9 @@ class WalletProcessorMetrics:
             self._shallow_reorgs = 0
             self._deep_reorgs = 0
             self._finality_counts = {state.value: 0 for state in Finality}
-            self._error_category_counts = {cat.value: 0 for cat in MetricErrorCategory}
+            self._error_category_counts = {
+                cat.value: 0 for cat in MetricErrorCategory
+            }
             self._checkpoint_age_seconds = None
             self._head_lag_units = None
             self._head_lag_unit_name = None
@@ -597,7 +618,11 @@ class WalletProcessorMetrics:
             self._peak_memory_bytes = None
 
     def _wall_time_unlocked(self) -> float:
-        end = self._ended_monotonic if self._ended_monotonic is not None else time.monotonic()
+        end = (
+            self._ended_monotonic
+            if self._ended_monotonic is not None
+            else time.monotonic()
+        )
         return max(0.0, end - self._started_monotonic)
 
     def _throughput_unlocked(self, numerator: int, wall: float) -> float:
@@ -630,14 +655,20 @@ class WalletProcessorMetrics:
                 shallow_reorgs=self._shallow_reorgs,
                 deep_reorgs=self._deep_reorgs,
                 finality_counts=MappingProxyType(dict(self._finality_counts)),
-                error_category_counts=MappingProxyType(dict(self._error_category_counts)),
+                error_category_counts=MappingProxyType(
+                    dict(self._error_category_counts)
+                ),
                 checkpoint_age_seconds=self._checkpoint_age_seconds,
                 head_lag_units=self._head_lag_units,
                 head_lag_unit_name=self._head_lag_unit_name,
                 last_checkpoint_revision=self._last_checkpoint_revision,
                 wall_time_seconds=wall,
-                records_per_second=self._throughput_unlocked(self._records_accepted, wall),
-                export_records_per_second=self._throughput_unlocked(self._records_exported, wall),
+                records_per_second=self._throughput_unlocked(
+                    self._records_accepted, wall
+                ),
+                export_records_per_second=self._throughput_unlocked(
+                    self._records_exported, wall
+                ),
                 peak_memory_bytes=self._peak_memory_bytes,
                 labels=MappingProxyType(dict(self._labels)),
             )
@@ -667,7 +698,9 @@ class IngestRunReceipt:
     error_category: str | None = None
     started_at: datetime | None = None
     finished_at: datetime | None = None
-    schema_version: str = field(default=INGEST_RUN_RECEIPT_SCHEMA_VERSION, init=False)
+    schema_version: str = field(
+        default=INGEST_RUN_RECEIPT_SCHEMA_VERSION, init=False
+    )
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "run_id", _safe_label(self.run_id, "run_id"))
@@ -700,8 +733,12 @@ class IngestRunReceipt:
                 ) from exc
         for ts_name in ("started_at", "finished_at"):
             value = getattr(self, ts_name)
-            if value is not None and (not isinstance(value, datetime) or value.tzinfo is None):
-                raise InvalidRequestError(f"{ts_name} must be a timezone-aware datetime or None")
+            if value is not None and (
+                not isinstance(value, datetime) or value.tzinfo is None
+            ):
+                raise InvalidRequestError(
+                    f"{ts_name} must be a timezone-aware datetime or None"
+                )
 
     @classmethod
     def from_metrics(
@@ -770,10 +807,14 @@ class IngestRunReceipt:
             elif isinstance(node, str):
                 lowered = node.lower()
                 if node.startswith("0x") and len(node) >= 40:
-                    raise InvalidRequestError(f"receipt value at {path} looks like an address")
+                    raise InvalidRequestError(
+                        f"receipt value at {path} looks like an address"
+                    )
                 for frag in ("begin private", "api_key=", "authorization: bearer"):
                     if frag in lowered:
-                        raise InvalidRequestError(f"receipt value at {path} looks like a secret")
+                        raise InvalidRequestError(
+                            f"receipt value at {path} looks like a secret"
+                        )
 
         _walk(payload)
 
@@ -791,8 +832,12 @@ class IngestRunReceipt:
             "live_smoke": self.live_smoke.to_dict(),
             "warnings": list(self.warnings),
             "error_category": self.error_category,
-            "started_at": (self.started_at.isoformat() if self.started_at is not None else None),
-            "finished_at": (self.finished_at.isoformat() if self.finished_at is not None else None),
+            "started_at": (
+                self.started_at.isoformat() if self.started_at is not None else None
+            ),
+            "finished_at": (
+                self.finished_at.isoformat() if self.finished_at is not None else None
+            ),
         }
 
 

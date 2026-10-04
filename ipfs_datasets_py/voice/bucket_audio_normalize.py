@@ -30,8 +30,12 @@ from .bucket_audio_plan import (
     SourceResponseAlias,
 )
 
-ABBY_VOICE_BUCKET_AUDIO_ENTRY_SCHEMA_VERSION = "abby_voice_bucket_audio_entry_v1"
-ABBY_VOICE_BUCKET_AUDIO_NORMALIZED_SCHEMA_VERSION = "abby_voice_bucket_audio_normalized_v1"
+ABBY_VOICE_BUCKET_AUDIO_ENTRY_SCHEMA_VERSION = (
+    "abby_voice_bucket_audio_entry_v1"
+)
+ABBY_VOICE_BUCKET_AUDIO_NORMALIZED_SCHEMA_VERSION = (
+    "abby_voice_bucket_audio_normalized_v1"
+)
 ABBY_VOICE_BUCKET_AUDIO_NORMALIZED_VERSION = "1.0.0"
 
 _HASH20_RE = __import__("re").compile(r"^[0-9a-f]{20}$")
@@ -97,7 +101,9 @@ def _required_text(value: Any, *, label: str) -> str:
 
 
 def _stable_entry_id(path: str, listing_sha256: str) -> str:
-    digest = sha256(_canonical_bytes({"listing_sha256": listing_sha256, "path": path})).hexdigest()
+    digest = sha256(
+        _canonical_bytes({"listing_sha256": listing_sha256, "path": path})
+    ).hexdigest()
     return f"bucket-audio-entry:sha256:{digest}"
 
 
@@ -162,13 +168,21 @@ class NormalizedBucketAudioEntry:
         ):
             raise ValueError("size_bytes must be a non-negative integer")
         object.__setattr__(self, "object_class", BucketAudioObjectClass(self.object_class))
-        object.__setattr__(self, "mapping_status", BucketAudioMappingStatus(self.mapping_status))
-        object.__setattr__(self, "subject_kind", BucketAudioSubjectKind(self.subject_kind))
-        object.__setattr__(self, "mapping_method", BucketAudioMappingMethod(self.mapping_method))
+        object.__setattr__(
+            self, "mapping_status", BucketAudioMappingStatus(self.mapping_status)
+        )
+        object.__setattr__(
+            self, "subject_kind", BucketAudioSubjectKind(self.subject_kind)
+        )
+        object.__setattr__(
+            self, "mapping_method", BucketAudioMappingMethod(self.mapping_method)
+        )
         if not _HASH64_RE.fullmatch(self.listing_sha256):
             raise ValueError("listing_sha256 must be a full lowercase SHA-256")
         _required_text(self.bucket_id, label="bucket_id")
-        if self.legacy_text_hash is not None and not _HASH20_RE.fullmatch(self.legacy_text_hash):
+        if self.legacy_text_hash is not None and not _HASH20_RE.fullmatch(
+            self.legacy_text_hash
+        ):
             raise ValueError("legacy_text_hash must be 20 lowercase hex characters")
         if self.canonical_text_sha256 is not None and not _HASH64_RE.fullmatch(
             self.canonical_text_sha256
@@ -257,7 +271,8 @@ class NormalizedBucketAudioEntry:
             source_text=value.get("source_text"),
             asr_wer_bp=value.get("asr_wer_bp"),
             schema_version=str(
-                value.get("schema_version") or ABBY_VOICE_BUCKET_AUDIO_ENTRY_SCHEMA_VERSION
+                value.get("schema_version")
+                or ABBY_VOICE_BUCKET_AUDIO_ENTRY_SCHEMA_VERSION
             ),
         )
 
@@ -284,7 +299,8 @@ class AbbyVoiceBucketAudioNormalizedBundle:
         if len(paths) != len(set(paths)):
             raise ValueError("normalized entry paths must be unique")
         if any(
-            item.listing_sha256 != self.listing_sha256 or item.bucket_id != self.bucket_id
+            item.listing_sha256 != self.listing_sha256
+            or item.bucket_id != self.bucket_id
             for item in entries
         ):
             raise ValueError("every entry must bind the same bucket listing")
@@ -390,16 +406,20 @@ class AbbyVoiceBucketAudioNormalizedBundle:
         # Always recompute content-addressed id so additive entry fields
         # (rescue metadata) do not fail closed on older bundle payloads.
         return cls(
-            entries=tuple(NormalizedBucketAudioEntry.from_dict(item) for item in raw_entries),
+            entries=tuple(
+                NormalizedBucketAudioEntry.from_dict(item) for item in raw_entries
+            ),
             bucket_id=str(value["bucket_id"]),
             listing_sha256=str(value["listing_sha256"]),
             plan_id=value.get("plan_id"),
             inventory_id=value.get("inventory_id"),
             schema_version=str(
-                value.get("schema_version") or ABBY_VOICE_BUCKET_AUDIO_NORMALIZED_SCHEMA_VERSION
+                value.get("schema_version")
+                or ABBY_VOICE_BUCKET_AUDIO_NORMALIZED_SCHEMA_VERSION
             ),
             normalized_version=str(
-                value.get("normalized_version") or ABBY_VOICE_BUCKET_AUDIO_NORMALIZED_VERSION
+                value.get("normalized_version")
+                or ABBY_VOICE_BUCKET_AUDIO_NORMALIZED_VERSION
             ),
             normalized_id="",
         )
@@ -437,17 +457,27 @@ def normalize_bucket_audio_entries(
         )
 
     alias_by_hash: dict[str, SourceResponseAlias] = {}
-    alias_source = tuple(plan.aliases) if plan is not None else tuple(aliases)
+    alias_source = (
+        tuple(plan.aliases)
+        if plan is not None
+        else tuple(aliases)
+    )
     for alias in alias_source:
         if not isinstance(alias, SourceResponseAlias):
             raise TypeError("aliases must contain SourceResponseAlias values")
         previous = alias_by_hash.get(alias.legacy_text_hash)
         if previous is not None and previous.response_id != alias.response_id:
-            raise ValueError(f"conflicting aliases for legacy hash {alias.legacy_text_hash!r}")
+            raise ValueError(
+                f"conflicting aliases for legacy hash {alias.legacy_text_hash!r}"
+            )
         alias_by_hash[alias.legacy_text_hash] = alias
 
     selection_by_path: dict[str, tuple[BucketAudioSelection, bool, int | None]] = {}
-    selection_source = tuple(plan.selections) if plan is not None else tuple(selections)
+    selection_source = (
+        tuple(plan.selections)
+        if plan is not None
+        else tuple(selections)
+    )
     for selection in selection_source:
         if not isinstance(selection, BucketAudioSelection):
             raise TypeError("selections must contain BucketAudioSelection values")
@@ -459,7 +489,9 @@ def normalize_bucket_audio_entries(
     for obj in inv.objects:
         selection_hit = selection_by_path.get(obj.path)
         alias = (
-            alias_by_hash.get(obj.legacy_text_hash) if obj.legacy_text_hash is not None else None
+            alias_by_hash.get(obj.legacy_text_hash)
+            if obj.legacy_text_hash is not None
+            else None
         )
         subject_kind = BucketAudioSubjectKind.NONE
         subject_id: str | None = None
@@ -480,7 +512,10 @@ def normalize_bucket_audio_entries(
                 # Selection implies an alias existed at plan time; still join if
                 # available via hash for canonical text metadata.
                 alias = alias_by_hash.get(legacy_hash)
-        elif obj.object_class is BucketAudioObjectClass.RESPONSE_LINKABLE and alias is not None:
+        elif (
+            obj.object_class is BucketAudioObjectClass.RESPONSE_LINKABLE
+            and alias is not None
+        ):
             # Linkable + aliased but not chosen (should be rare if plan complete).
             mapping_status = BucketAudioMappingStatus.ALTERNATE_FOR_RESPONSE
             response_id = alias.response_id
@@ -516,7 +551,9 @@ def normalize_bucket_audio_entries(
                 run_id=obj.run_id,
                 phase=obj.phase,
                 response_id=response_id,
-                canonical_text_sha256=(alias.canonical_text_sha256 if alias is not None else None),
+                canonical_text_sha256=(
+                    alias.canonical_text_sha256 if alias is not None else None
+                ),
                 source_id=alias.source_id if alias is not None else None,
                 source_ref=alias.source_ref if alias is not None else None,
                 is_preferred_selection=preferred,

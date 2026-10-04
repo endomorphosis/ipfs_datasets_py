@@ -1,0 +1,19 @@
+{
+  "target": "lean",
+  "translated_formula": "Obligatory maintain_insurance_coverage (agent := agent_6362)",
+  "success": true,
+  "confidence": 0.85,
+  "errors": [],
+  "warnings": [],
+  "metadata": {
+    "syntax_version": "lean4",
+    "deontic_operator": "O",
+    "has_agent": true,
+    "has_conditions": false
+  },
+  "dependencies": [
+    "Mathlib.Logic.Basic",
+    "Mathlib.Data.Set.Basic",
+    "Mathlib.Logic.Relation"
+  ]
+}

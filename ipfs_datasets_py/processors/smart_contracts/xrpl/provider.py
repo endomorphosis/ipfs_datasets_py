@@ -147,7 +147,9 @@ class XRPLLedgerFixture:
                 or not isinstance(self.ledger_index, int)
                 or self.ledger_index < 0
             ):
-                raise InvalidRequestError("ledger_index must be a non-negative integer")
+                raise InvalidRequestError(
+                    "ledger_index must be a non-negative integer"
+                )
         object.__setattr__(
             self, "ledger_hash", self.ledger_hash.strip() if self.ledger_hash else ""
         )
@@ -208,7 +210,9 @@ class XRPLLedgerFixture:
         object.__setattr__(
             self,
             "enabled_amendments",
-            tuple(_required_text(item, "amendment") for item in self.enabled_amendments),
+            tuple(
+                _required_text(item, "amendment") for item in self.enabled_amendments
+            ),
         )
         for flag_name in (
             "hooks_capability_present",
@@ -218,14 +222,20 @@ class XRPLLedgerFixture:
             "no_freeze",
             "default_ripple",
         ):
-            object.__setattr__(self, flag_name, bool(getattr(self, flag_name)))
+            object.__setattr__(
+                self, flag_name, bool(getattr(self, flag_name))
+            )
         object.__setattr__(
             self,
             "hooks_capability_evidence",
-            self.hooks_capability_evidence.strip() if self.hooks_capability_evidence else "",
+            self.hooks_capability_evidence.strip()
+            if self.hooks_capability_evidence
+            else "",
         )
         if self.hooks_capability_present and not self.hooks_capability_evidence:
-            raise InvalidRequestError("hooks_capability_present requires hooks_capability_evidence")
+            raise InvalidRequestError(
+                "hooks_capability_present requires hooks_capability_evidence"
+            )
         object.__setattr__(self, "attributes", _freeze_mapping(self.attributes))
         ensure_secret_safe(self.to_dict())
 
@@ -273,7 +283,6 @@ class XRPLLedgerFixture:
 
         if self.state_snapshot_json:
             return self.state_snapshot_json
-
         def _jsonable(value: Any) -> Any:
             if isinstance(value, Mapping):
                 return {str(k): _jsonable(v) for k, v in value.items()}
@@ -300,10 +309,14 @@ class XRPLLedgerFixture:
             "owner_reserve_drops": self.owner_reserve_drops,
             "payment_channels": _jsonable(self.payment_channels),
             "sequence": self.sequence,
-            "signer_list": _jsonable(self.signer_list) if self.signer_list is not None else None,
+            "signer_list": _jsonable(self.signer_list)
+            if self.signer_list is not None
+            else None,
             "trust_lines": _jsonable(self.trust_lines),
         }
-        return json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        return json.dumps(payload, sort_keys=True, separators=(",", ":")).encode(
+            "utf-8"
+        )
 
     def artifact_for(self, kind: ArtifactKind) -> StoredArtifact | None:
         if kind is ArtifactKind.STATE_SNAPSHOT:
@@ -325,7 +338,9 @@ class XRPLLedgerFixture:
                     "hooks_capability_present": self.hooks_capability_present,
                     "ledger_index": self.ledger_index,
                 }
-                payload = json.dumps(meta, sort_keys=True, separators=(",", ":")).encode("utf-8")
+                payload = json.dumps(
+                    meta, sort_keys=True, separators=(",", ":")
+                ).encode("utf-8")
             return StoredArtifact(
                 raw_bytes=payload,
                 kind=ArtifactKind.METADATA,
@@ -362,7 +377,9 @@ class XRPLLedgerFixture:
             "hooks_capability_present": self.hooks_capability_present,
             "ledger_hash": self.ledger_hash,
             "ledger_index": self.ledger_index,
-            "metadata_digest": bytes_digest(self.metadata_json) if self.metadata_json else "",
+            "metadata_digest": bytes_digest(self.metadata_json)
+            if self.metadata_json
+            else "",
             "nfts_count": len(self.nfts),
             "no_freeze": self.no_freeze,
             "offers_count": len(self.offers),
@@ -399,13 +416,17 @@ class OfflineXRPLProvider:
         index: dict[str, XRPLLedgerFixture] = {}
         for fixture in fixtures:
             if not isinstance(fixture, XRPLLedgerFixture):
-                raise InvalidRequestError("fixtures must be XRPLLedgerFixture instances")
+                raise InvalidRequestError(
+                    "fixtures must be XRPLLedgerFixture instances"
+                )
             keys = {
                 f"{fixture.chain_id}:{fixture.account}",
                 fixture.fixture_key,
             }
             if fixture.ledger_index is not None:
-                keys.add(f"{fixture.chain_id}:{fixture.account}@{fixture.ledger_index}")
+                keys.add(
+                    f"{fixture.chain_id}:{fixture.account}@{fixture.ledger_index}"
+                )
             for key in keys:
                 if key in index and index[key] is not fixture:
                     raise InvalidRequestError(f"duplicate XRPL fixture key: {key}")
@@ -449,7 +470,9 @@ class OfflineXRPLProvider:
             fixture.fixture_key,
         }
         if fixture.ledger_index is not None:
-            keys.add(f"{fixture.chain_id}:{fixture.account}@{fixture.ledger_index}")
+            keys.add(
+                f"{fixture.chain_id}:{fixture.account}@{fixture.ledger_index}"
+            )
         for key in keys:
             current[key] = fixture
         self._fixtures = MappingProxyType(current)
@@ -488,7 +511,9 @@ class OfflineXRPLProvider:
             rest = text[len("xrpl://") :]
             parts = rest.split("/", 1)
             if len(parts) != 2:
-                raise InvalidRequestError("xrpl locator must be xrpl://{chain_id}/{account}")
+                raise InvalidRequestError(
+                    "xrpl locator must be xrpl://{chain_id}/{account}"
+                )
             chain_part, acct_part = parts
             if is_ripple_evm_sidechain(chain_part):
                 raise InvalidRequestError(
@@ -510,7 +535,9 @@ class OfflineXRPLProvider:
         except InvalidRequestError as exc:
             raise InvalidRequestError("unsupported XRPL locator form") from exc
         if not chain_id:
-            raise InvalidRequestError("bare account locator requires request chain_id")
+            raise InvalidRequestError(
+                "bare account locator requires request chain_id"
+            )
         return resolve_xrpl_chain_id(chain_id), account, None
 
     async def acquire(
@@ -528,7 +555,9 @@ class OfflineXRPLProvider:
             return ContractAcquisitionResult(
                 request_id=request.request_id,
                 status=AcquisitionStatus.UNSUPPORTED,
-                diagnostics=(f"provider {self._provider_id!r} is not allowlisted",),
+                diagnostics=(
+                    f"provider {self._provider_id!r} is not allowlisted",
+                ),
             )
 
         try:
@@ -574,7 +603,9 @@ class OfflineXRPLProvider:
             )
 
         try:
-            parsed_chain, account, ledger = self.parse_locator(request.locator, chain_id=req_chain)
+            parsed_chain, account, ledger = self.parse_locator(
+                request.locator, chain_id=req_chain
+            )
         except InvalidRequestError as exc:
             status = (
                 AcquisitionStatus.UNSUPPORTED
@@ -587,12 +618,16 @@ class OfflineXRPLProvider:
                 diagnostics=(str(exc),),
             )
 
-        fixture = self.get_fixture(chain_id=parsed_chain, account=account, ledger_index=ledger)
+        fixture = self.get_fixture(
+            chain_id=parsed_chain, account=account, ledger_index=ledger
+        )
         if fixture is None:
             return ContractAcquisitionResult(
                 request_id=request.request_id,
                 status=AcquisitionStatus.UNAVAILABLE,
-                diagnostics=(f"no offline fixture for {parsed_chain}:{account}",),
+                diagnostics=(
+                    f"no offline fixture for {parsed_chain}:{account}",
+                ),
             )
 
         artifact = fixture.artifact_for(kind)
@@ -616,7 +651,9 @@ class OfflineXRPLProvider:
             ),
             response_digest=bytes_digest(artifact.raw_bytes),
             final_url_digest=bytes_digest(
-                f"offline://{self._provider_id}/{parsed_chain}/{account}".encode("utf-8")
+                f"offline://{self._provider_id}/{parsed_chain}/{account}".encode(
+                    "utf-8"
+                )
             ),
             status_code=200,
             byte_length=total_bytes,

@@ -7,7 +7,9 @@ from typing import Any
 import pytest
 
 
-FIXTURE_DIR = Path(__file__).resolve().parents[4] / "fixtures" / "wallets" / "solana"
+FIXTURE_DIR = (
+    Path(__file__).resolve().parents[4] / "fixtures" / "wallets" / "solana"
+)
 
 
 @pytest.fixture(scope="session")

@@ -1,0 +1,53 @@
+# IPFS Datasets MCP Server Configuration
+
+# Server settings
+server:
+  verbose: true
+  log_level: INFO
+  host: 0.0.0.0
+  port: 8000
+  reload: true
+  tool_timeout: 120
+  transport: http
+
+# Tool settings
+tools:
+  # Enable specific tool categories
+  enabled_categories:
+    - dataset
+    - ipfs
+    - vector
+    - graph
+    - audit
+    - security
+    - provenance
+  
+  # Tool-specific configurations
+  dataset:
+    default_format: ipld
+  
+  ipfs:
+    gateway_url: http://127.0.0.1:8080
+  
+  vector:
+    default_vector_dimensions: 1536
+  
+  graph:
+    default_graph_format: rdf
+  
+  audit:
+    audit_log_path: ~/.ipfs_datasets/audit.log
+  
+  security:
+    permission_level: standard
+  
+  provenance:
+    default_provenance_format: w3c
+
+# IPFS Kit integration
+ipfs_kit:
+  # Integration method: 'direct' or 'mcp'
+  integration: direct
+  
+  # URL of the IPFS Kit MCP server (used when integration is 'mcp')
+  # mcp_url: http://127.0.0.1:8001

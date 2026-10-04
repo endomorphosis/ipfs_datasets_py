@@ -1,0 +1,286 @@
+# ============================================================================
+# Workflow Validation CI Pipeline - Phase 4 Task 4.2
+# ============================================================================
+# Purpose: Validates all workflow files on PR to ensure quality and security
+# Triggers: Pull requests affecting workflow files
+# Duration: ~2-3 minutes
+# Maintainer: DevOps Team
+# Dependencies: enhanced_workflow_validator.py
+# Related Workflows: None (standalone validation)
+# ============================================================================
+
+name: Workflow Validation CI
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+      - '.github/scripts/enhanced_workflow_validator.py'
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - '.github/workflows/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  statuses: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-workflows:
+    name: Validate Workflow Files
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install pyyaml
+      
+      - name: Run enhanced workflow validator
+        id: validate
+        run: |
+          python .github/scripts/enhanced_workflow_validator.py \
+            --json validation-report.json \
+            --html validation-report.html
+        continue-on-error: true
+      
+      - name: Parse validation results
+        id: parse
+        run: |
+          # Parse JSON report for statistics
+          TOTAL=$(jq -r '.stats.total_workflows' validation-report.json)
+          ISSUES=$(jq -r '.stats.total_issues' validation-report.json)
+          CRITICAL=$(jq -r '.stats.critical_issues' validation-report.json)
+          HIGH=$(jq -r '.stats.high_issues' validation-report.json)
+          MEDIUM=$(jq -r '.stats.medium_issues' validation-report.json)
+          LOW=$(jq -r '.stats.low_issues' validation-report.json)
+          FIXABLE=$(jq -r '.stats.auto_fixable_issues' validation-report.json)
+          
+          echo "total_workflows=$TOTAL" >> $GITHUB_OUTPUT
+          echo "total_issues=$ISSUES" >> $GITHUB_OUTPUT
+          echo "critical_issues=$CRITICAL" >> $GITHUB_OUTPUT
+          echo "high_issues=$HIGH" >> $GITHUB_OUTPUT
+          echo "medium_issues=$MEDIUM" >> $GITHUB_OUTPUT
+          echo "low_issues=$LOW" >> $GITHUB_OUTPUT
+          echo "auto_fixable=$FIXABLE" >> $GITHUB_OUTPUT
+          
+          # Determine status
+          if [ "$CRITICAL" -gt 0 ]; then
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "status_message=❌ Validation failed: $CRITICAL critical issues found" >> $GITHUB_OUTPUT
+          elif [ "$HIGH" -gt 0 ]; then
+            echo "status=warning" >> $GITHUB_OUTPUT
+            echo "status_message=⚠️ Validation warning: $HIGH high-priority issues found" >> $GITHUB_OUTPUT
+          else
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "status_message=✅ All workflows validated successfully" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Upload validation reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: workflow-validation-reports
+          path: |
+            validation-report.json
+            validation-report.html
+          retention-days: 30
+      
+      - name: Comment on PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = JSON.parse(fs.readFileSync('validation-report.json', 'utf8'));
+            
+            // Build summary comment
+            let body = '## 🔍 Workflow Validation Report\n\n';
+            body += '### Summary\n\n';
+            body += `- **Total Workflows:** ${report.stats.total_workflows}\n`;
+            body += `- **Total Issues:** ${report.stats.total_issues}\n`;
+            body += `- **Auto-fixable:** ${report.stats.auto_fixable_issues}\n\n`;
+            
+            body += '### Issues by Severity\n\n';
+            body += `- 🔴 **Critical:** ${report.stats.critical_issues}\n`;
+            body += `- 🟠 **High:** ${report.stats.high_issues}\n`;
+            body += `- 🟡 **Medium:** ${report.stats.medium_issues}\n`;
+            body += `- 🔵 **Low:** ${report.stats.low_issues}\n`;
+            body += `- ⚪ **Info:** ${report.stats.info_issues}\n\n`;
+            
+            // Add critical/high issues details
+            const criticalOrHigh = report.results.filter(r => 
+              r.issues.some(i => i.severity === 'critical' || i.severity === 'high')
+            );
+            
+            if (criticalOrHigh.length > 0) {
+              body += '### Critical & High Priority Issues\n\n';
+              
+              for (const workflow of criticalOrHigh.slice(0, 5)) {
+                body += `#### 📄 ${workflow.file}\n\n`;
+                
+                const importantIssues = workflow.issues.filter(i => 
+                  i.severity === 'critical' || i.severity === 'high'
+                );
+                
+                for (const issue of importantIssues.slice(0, 3)) {
+                  const icon = issue.severity === 'critical' ? '🔴' : '🟠';
+                  body += `${icon} **[${issue.severity.toUpperCase()}]** [${issue.category}]\n`;
+                  body += `- ${issue.message}\n`;
+                  
+                  if (issue.fix_suggestion) {
+                    body += `- 💡 Fix: ${issue.fix_suggestion}\n`;
+                  }
+                  
+                  if (issue.auto_fixable) {
+                    body += `- ✨ Auto-fixable\n`;
+                  }
+                  body += '\n';
+                }
+              }
+              
+              if (criticalOrHigh.length > 5) {
+                body += `\n_... and ${criticalOrHigh.length - 5} more workflows with issues_\n\n`;
+              }
+            } else {
+              body += '### ✅ No Critical or High Priority Issues Found!\n\n';
+            }
+            
+            // Add link to full reports
+            body += '### 📊 Full Reports\n\n';
+            body += 'Download the artifacts from this workflow run to view:\n';
+            body += '- `validation-report.json` - Machine-readable report\n';
+            body += '- `validation-report.html` - Human-readable HTML report\n\n';
+            
+            // Add status
+            if (report.stats.critical_issues > 0) {
+              body += '### ❌ Status: Failed\n\n';
+              body += 'Critical issues must be resolved before merging.\n';
+            } else if (report.stats.high_issues > 0) {
+              body += '### ⚠️ Status: Warning\n\n';
+              body += 'High-priority issues should be addressed.\n';
+            } else {
+              body += '### ✅ Status: Passed\n\n';
+              body += 'All workflows validated successfully!\n';
+            }
+            
+            // Post comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });
+      
+      - name: Update commit status
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = JSON.parse(fs.readFileSync('validation-report.json', 'utf8'));
+            
+            let state = 'success';
+            let description = 'All workflows validated';
+            
+            if (report.stats.critical_issues > 0) {
+              state = 'failure';
+              description = `${report.stats.critical_issues} critical issues found`;
+            } else if (report.stats.high_issues > 0) {
+              state = 'error';
+              description = `${report.stats.high_issues} high-priority issues found`;
+            }
+            
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.sha,
+              state: state,
+              description: description,
+              context: 'Workflow Validation',
+              target_url: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
+            });
+      
+      - name: Create issue for critical problems
+        if: steps.parse.outputs.critical_issues > 0 && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = JSON.parse(fs.readFileSync('validation-report.json', 'utf8'));
+            
+            // Find workflows with critical issues
+            const criticalWorkflows = report.results.filter(r =>
+              r.issues.some(i => i.severity === 'critical')
+            );
+            
+            if (criticalWorkflows.length === 0) return;
+            
+            let body = '## 🚨 Critical Workflow Validation Issues Detected\n\n';
+            body += `Found ${report.stats.critical_issues} critical issues in ${criticalWorkflows.length} workflows.\n\n`;
+            body += '### Affected Workflows\n\n';
+            
+            for (const workflow of criticalWorkflows) {
+              body += `#### 📄 ${workflow.file}\n\n`;
+              
+              const criticalIssues = workflow.issues.filter(i => i.severity === 'critical');
+              
+              for (const issue of criticalIssues) {
+                body += `- 🔴 **${issue.message}**\n`;
+                if (issue.fix_suggestion) {
+                  body += `  - 💡 Fix: ${issue.fix_suggestion}\n`;
+                }
+              }
+              body += '\n';
+            }
+            
+            body += '### Action Required\n\n';
+            body += '1. Review the issues listed above\n';
+            body += '2. Apply suggested fixes\n';
+            body += '3. Run validation locally: `python .github/scripts/enhanced_workflow_validator.py`\n';
+            body += '4. Submit a PR to fix the issues\n\n';
+            body += `**Workflow Run:** ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n`;
+            
+            // Create issue
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 Critical Workflow Validation Issues Detected',
+              body: body,
+              labels: ['workflow-validation', 'critical', 'automated']
+            });
+      
+      - name: Fail job if critical issues found
+        if: steps.parse.outputs.critical_issues > 0
+        run: |
+          echo "❌ Validation failed: ${{ steps.parse.outputs.critical_issues }} critical issues found"
+          echo "Review the validation report for details"
+          exit 1
+      
+      - name: Success summary
+        if: steps.parse.outputs.critical_issues == 0 && steps.parse.outputs.high_issues == 0
+        run: |
+          echo "✅ All workflows validated successfully!"
+          echo "Total workflows: ${{ steps.parse.outputs.total_workflows }}"
+          echo "Total issues: ${{ steps.parse.outputs.total_issues }}"
+          echo "Auto-fixable: ${{ steps.parse.outputs.auto_fixable }}"

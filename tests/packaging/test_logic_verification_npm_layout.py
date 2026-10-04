@@ -140,13 +140,9 @@ def test_source_entrypoint_exports_runtime_mtl_interface() -> None:
         "evaluatePortable",
         "goldenFixtures",
     ):
-        assert (
-            re.search(
-                rf"export\s+(?:async\s+)?(?:function|class|const|type|interface)\s+{symbol}|export\s*\{{[^}}]*\b{symbol}\b",
-                source,
-            )
-            or symbol in source
-        ), f"source entrypoint must export {symbol}"
+        assert re.search(rf"export\s+(?:async\s+)?(?:function|class|const|type|interface)\s+{symbol}|export\s*\{{[^}}]*\b{symbol}\b", source) or symbol in source, (
+            f"source entrypoint must export {symbol}"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -162,11 +158,13 @@ def test_declared_package_entrypoints_are_internally_consistent() -> None:
     assert paths["export_import"], "package.json exports['.'].import is required"
     # main and export import must name the same JS artifact.
     assert paths["main"] == paths["export_import"], (
-        f"main {paths['main']!r} disagrees with exports.import {paths['export_import']!r}"
+        f"main {paths['main']!r} disagrees with exports.import "
+        f"{paths['export_import']!r}"
     )
     if paths["export_types"]:
         assert paths["types"] == paths["export_types"], (
-            f"types {paths['types']!r} disagrees with exports.types {paths['export_types']!r}"
+            f"types {paths['types']!r} disagrees with exports.types "
+            f"{paths['export_types']!r}"
         )
     # types should be the declaration twin of main.
     main_path = Path(paths["main"])
@@ -230,10 +228,9 @@ def test_declared_and_built_entrypoints_agree() -> None:
             # the monorepo contract by requiring the parity import path.
             parity_import = BUILT_ENTRY_JS
             assert (TS_PACKAGE / "src" / "index.ts").is_file()
-            assert (
-                expected_emit_path(SOURCE_ENTRY, out_dir=out_dir, root_dir=root_dir)
-                == parity_import
-            )
+            assert expected_emit_path(
+                SOURCE_ENTRY, out_dir=out_dir, root_dir=root_dir
+            ) == parity_import
             # Record that package.json should be aligned; fail if main points
             # at a path that can never be emitted.
             main_emit_possible = paths["main"] == built_js or paths["main"] == f"{out_dir}/index.js"
@@ -255,7 +252,9 @@ def test_declared_and_built_entrypoints_agree() -> None:
     else:
         assert entrypoints_agree(paths["main"], built_js)
         if paths["types"]:
-            assert entrypoints_agree(paths["types"], built_dts) or paths["types"].endswith(".d.ts")
+            assert entrypoints_agree(paths["types"], built_dts) or paths["types"].endswith(
+                ".d.ts"
+            )
 
 
 def test_test_script_agrees_with_tsconfig_emit_for_tests() -> None:
@@ -266,7 +265,9 @@ def test_test_script_agrees_with_tsconfig_emit_for_tests() -> None:
     root_dir = str(compiler.get("rootDir") or ".").rstrip("/") or "."
 
     test_source = "test/runtime_mtl.test.ts"
-    expected_test_js = expected_emit_path(test_source, out_dir=out_dir, root_dir=root_dir)
+    expected_test_js = expected_emit_path(
+        test_source, out_dir=out_dir, root_dir=root_dir
+    )
     scripts = package.get("scripts") or {}
     test_script = str(scripts.get("test") or "")
     assert expected_test_js in test_script or expected_test_js.replace("\\", "/") in test_script, (
@@ -311,7 +312,9 @@ def test_package_discovery_includes_runtime_mtl_module() -> None:
     assert (TS_PACKAGE / "src" / "index.ts").is_file()
     # Package is discoverable under the datasets typescript namespace path.
     assert TS_PACKAGE.is_dir()
-    assert TS_PACKAGE.relative_to(DATASETS_ROOT).as_posix() == ("typescript/logic-runtime-mtl")
+    assert TS_PACKAGE.relative_to(DATASETS_ROOT).as_posix() == (
+        "typescript/logic-runtime-mtl"
+    )
 
 
 def test_toolchain_lock_records_typescript_package_layout() -> None:
@@ -332,5 +335,11 @@ def test_entrypoints_agree_helper() -> None:
     assert entrypoints_agree("dist/src/index.js", "dist/src/index.js")
     assert entrypoints_agree("./dist/src/index.js", "dist/src/index.js")
     assert not entrypoints_agree("dist/index.js", "dist/src/index.js")
-    assert expected_emit_path("src/index.ts", out_dir="dist", root_dir=".") == "dist/src/index.js"
-    assert expected_emit_path("src/index.ts", out_dir="dist", root_dir="src") == "dist/index.js"
+    assert (
+        expected_emit_path("src/index.ts", out_dir="dist", root_dir=".")
+        == "dist/src/index.js"
+    )
+    assert (
+        expected_emit_path("src/index.ts", out_dir="dist", root_dir="src")
+        == "dist/index.js"
+    )

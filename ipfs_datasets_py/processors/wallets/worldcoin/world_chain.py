@@ -308,11 +308,7 @@ def classify_world_chain_finality(
             source_tag=tag,
         )
     if confirmations is not None:
-        if (
-            isinstance(confirmations, bool)
-            or not isinstance(confirmations, int)
-            or confirmations < 0
-        ):
+        if isinstance(confirmations, bool) or not isinstance(confirmations, int) or confirmations < 0:
             raise WorldChainConfigError("confirmations must be a non-negative integer")
         if confirmations >= min_operational_confirmations:
             return WorldChainFinalityAssessment(
@@ -389,10 +385,7 @@ class WorldChainProcessor:
             or self.min_operational_confirmations < 1
         ):
             raise WorldChainConfigError("min_operational_confirmations must be a positive integer")
-        if (
-            self.sepolia_wld_contract is not None
-            and self.network.chain_id != WORLD_CHAIN_SEPOLIA_CHAIN_ID
-        ):
+        if self.sepolia_wld_contract is not None and self.network.chain_id != WORLD_CHAIN_SEPOLIA_CHAIN_ID:
             raise WorldChainConfigError("sepolia_wld_contract is only valid for chain_id 4801")
         chain_ref = self.network.to_chain_ref()
         object.__setattr__(self, "_chain_ref", chain_ref)

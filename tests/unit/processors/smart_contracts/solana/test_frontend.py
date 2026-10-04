@@ -776,7 +776,9 @@ async def test_offline_provider_acquires_program(context: OperationContext) -> N
     provider = OfflineSolanaProvider([fixture])
     request = ContractAcquisitionRequest(
         request_id="acq-1",
-        chain=ChainRef(chain="solana", network="solana-mainnet-beta", chain_id="mainnet-beta"),
+        chain=ChainRef(
+            chain="solana", network="solana-mainnet-beta", chain_id="mainnet-beta"
+        ),
         artifact_kind=ArtifactKind.PROGRAM,
         locator=f"solana://mainnet-beta/{PROGRAM_ID}",
         provider_policy=ProviderPolicy(
@@ -799,7 +801,9 @@ async def test_offline_provider_unavailable(context: OperationContext) -> None:
     provider = OfflineSolanaProvider([])
     request = ContractAcquisitionRequest(
         request_id="acq-2",
-        chain=ChainRef(chain="solana", network="solana-mainnet-beta", chain_id="mainnet-beta"),
+        chain=ChainRef(
+            chain="solana", network="solana-mainnet-beta", chain_id="mainnet-beta"
+        ),
         artifact_kind=ArtifactKind.PROGRAM,
         locator=f"solana://mainnet-beta/{PROGRAM_ID}",
     )
@@ -824,7 +828,9 @@ async def test_offline_provider_idl_and_source(context: OperationContext) -> Non
     provider = OfflineSolanaProvider([fixture])
     idl_req = ContractAcquisitionRequest(
         request_id="acq-3",
-        chain=ChainRef(chain="solana", network="solana-mainnet-beta", chain_id="mainnet-beta"),
+        chain=ChainRef(
+            chain="solana", network="solana-mainnet-beta", chain_id="mainnet-beta"
+        ),
         artifact_kind=ArtifactKind.IDL,
         locator=f"solana://mainnet-beta/{PROGRAM_ID}@9",
     )
@@ -834,7 +840,9 @@ async def test_offline_provider_idl_and_source(context: OperationContext) -> Non
 
     source_req = ContractAcquisitionRequest(
         request_id="acq-4",
-        chain=ChainRef(chain="solana", network="solana-mainnet-beta", chain_id="mainnet-beta"),
+        chain=ChainRef(
+            chain="solana", network="solana-mainnet-beta", chain_id="mainnet-beta"
+        ),
         artifact_kind=ArtifactKind.SOURCE,
         locator=PROGRAM_ID,  # bare program id
     )

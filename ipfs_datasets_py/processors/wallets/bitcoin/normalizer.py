@@ -62,11 +62,7 @@ def _account_for_descriptor(
 ) -> AccountRef | None:
     if descriptor is None or descriptor.address is None:
         return None
-    kind = (
-        AccountKind.SCRIPT
-        if descriptor.script_type is not ScriptType.UNKNOWN
-        else AccountKind.ADDRESS
-    )
+    kind = AccountKind.SCRIPT if descriptor.script_type is not ScriptType.UNKNOWN else AccountKind.ADDRESS
     if descriptor.script_type in {
         ScriptType.P2PKH,
         ScriptType.P2WPKH,
@@ -270,7 +266,9 @@ class BitcoinNormalizer:
             return item
         if isinstance(item, Mapping):
             return parse_esplora_transaction(item, network=self.network)
-        raise NormalizationError(f"unsupported Bitcoin native record type: {type(item)!r}")
+        raise NormalizationError(
+            f"unsupported Bitcoin native record type: {type(item)!r}"
+        )
 
     def _finality_for(self, tx: BitcoinTransaction, head_height: int | None) -> Finality:
         if tx.status is TxStatus.REPLACED:
@@ -486,7 +484,9 @@ class BitcoinNormalizer:
                                 schema_version=EXTENSION_SCHEMA,
                                 data={
                                     "script": (
-                                        vin.descriptor.to_dict() if vin.descriptor else None
+                                        vin.descriptor.to_dict()
+                                        if vin.descriptor
+                                        else None
                                     ),
                                     "spent_in": tx.txid,
                                 },
