@@ -337,7 +337,7 @@ The following tasks use the `ipfs_accelerate_py` agent supervisor format: each t
 
 ## PORTAL-CXTP-006 Persist counterexamples as regression vectors
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P1
 - Track: quality
@@ -359,7 +359,7 @@ The following tasks use the `ipfs_accelerate_py` agent supervisor format: each t
 
 ## PORTAL-CXTP-008 Add CVC5 differential SMT backend
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P1
 - Track: platform
