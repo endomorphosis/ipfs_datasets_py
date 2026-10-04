@@ -296,3 +296,17 @@ def test_oversized_historical_inventory_is_not_retained(monkeypatch):
         context.seal("past")
     assert context._historical_seal is None
     assert context.counters.historical_seal_retained_bytes == 0
+
+
+def test_reviewed_8d_migration_refuses_runtime_file_drift(monkeypatch, tmp_path):
+    changed = tmp_path / "runtime.py"
+    changed.write_text("# unreviewed runtime replacement\n")
+    monkeypatch.setattr(training.runtimes, "__file__", str(changed))
+    with pytest.raises(training.CodebaseFeatureTrainingError, match="reviewed native reference runtime"):
+        lineage._reference_guard(lineage.InventoryLineageCounters())
+
+
+def test_reviewed_8d_migration_refuses_runtime_module_substitution(monkeypatch):
+    monkeypatch.setattr(training.runtimes, "__name__", "foreign.runtime")
+    with pytest.raises(training.CodebaseFeatureTrainingError, match="reviewed native reference runtime"):
+        lineage._reference_guard(lineage.InventoryLineageCounters())

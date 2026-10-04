@@ -31,6 +31,14 @@ REFERENCE_SHA256 = {
     training.__name__: "aea5fa8803ae6b6dde7c4e71b81f68a7f95257b3a5d76cea693ee13e66710aa0",
     runtimes.__name__: "ca31983a5f514c7f5cf8b1b9250ef92e1beb13c0a2305381aac575931e79b4ac",
 }
+# The reviewed frozen 8D producer keeps the inherited lineage body unchanged,
+# and adds exact numerical diagnostic replay. Its runtime is independently
+# pinned; accepting the training file alone would leave its new import unbound.
+_REVIEWED_8D_PRODUCER_MIGRATION = (
+    "aea5fa8803ae6b6dde7c4e71b81f68a7f95257b3a5d76cea693ee13e66710aa0",
+    "e459766bed0c990660334eaf264b6c46fc29e229d49ae8c416bdfc7ca142c317",
+    "32dc798bfe81a587412c3d86431c368a5a83e27660870ca6de6f107a1e855146",
+)
 _require = training._require
 _wire = training._wire
 
@@ -63,8 +71,18 @@ def _reference_guard(counters):
     for module in (training, runtimes):
         actual = hashlib.sha256(Path(module.__file__).read_bytes()).hexdigest()
         counters.reference_guard_file_hashes += 1
-        _require(actual == REFERENCE_SHA256[module.__name__],
+        expected = REFERENCE_SHA256[module.__name__]
+        migration = (module is training
+                     and expected == _REVIEWED_8D_PRODUCER_MIGRATION[0]
+                     and actual == _REVIEWED_8D_PRODUCER_MIGRATION[1])
+        _require(actual == expected or migration,
                  "inventory lineage reuse requires the reviewed native reference producer")
+        if migration:
+            runtime_sha = hashlib.sha256(Path(training.runtimes.__file__).read_bytes()).hexdigest()
+            _require(training.runtimes.__name__ ==
+                     "ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_runtime_8d"
+                     and runtime_sha == _REVIEWED_8D_PRODUCER_MIGRATION[2],
+                     "inventory lineage reuse requires the reviewed native reference runtime")
 
 
 class InventoryLineageContext:
