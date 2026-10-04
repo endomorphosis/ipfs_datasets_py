@@ -1,1 +1,0 @@
-# Tests for YtDlpWrapper.download_video method

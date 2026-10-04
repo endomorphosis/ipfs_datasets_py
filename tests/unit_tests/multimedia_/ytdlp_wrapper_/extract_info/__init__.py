@@ -1,1 +1,0 @@
-# Tests for YtDlpWrapper.extract_info method
