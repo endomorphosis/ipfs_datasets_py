@@ -571,3 +571,39 @@ def build_context_pack(
         capsule_cids=tuple(capsule_cids),
         required_source_cids=required,
     )
+
+
+def expand_context_pack_incrementally(
+    record: ContextPackRecord,
+    *,
+    extra_capsule_cids: Sequence[str],
+    scanned_tree_oid: str,
+    prior_scanned_tree_oid: str,
+    task_id: str,
+) -> ContextPackRecord:
+    """Add extra exact capsules to an existing pack without a second authority.
+
+    A changed scanned tree fails closed. This does not admit completion.
+    """
+
+    if not isinstance(record, ContextPackRecord):
+        raise ContextPackConstructionError("incremental expansion requires a ContextPackRecord")
+    if not str(scanned_tree_oid or "").strip():
+        raise StaleContextError("incremental expansion requires the current scanned tree")
+    if str(scanned_tree_oid) != str(prior_scanned_tree_oid or ""):
+        raise StaleContextError("incremental expansion rejects a changed scanned tree")
+    extras = tuple(str(cid).strip() for cid in extra_capsule_cids if str(cid).strip())
+    if not extras:
+        raise ContextPackConstructionError("incremental expansion requires extra exact capsules")
+    merged = tuple(dict.fromkeys((*record.capsule_cids, *extras)))
+    return build_context_pack(
+        repository_state_cid=record.repository_state_cid,
+        task_id=task_id,
+        target_source_cid=record.required_source_cids["target_source"],
+        surrounding_source_cid=record.required_source_cids["surrounding_source"],
+        test_source_cid=record.required_source_cids["test_source"],
+        scanned_tree_oid=scanned_tree_oid,
+        source_tree_oid=scanned_tree_oid,
+        capsule_cids=merged,
+        freshness="fresh",
+    )
