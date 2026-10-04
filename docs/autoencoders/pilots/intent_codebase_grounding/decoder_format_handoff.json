@@ -1,0 +1,196 @@
+{
+  "schema": "ir-decoder-format-handoff/v1",
+  "recorded_on_utc": "2026-10-04",
+  "base_commit": "418caeb94d071f88eaa3144e32cfa3f3133ef02c",
+  "decisions": {
+    "physical_lane_keys": [
+      "ir_family_id",
+      "dimension"
+    ],
+    "stable_physical_lanes": [
+      {
+        "ir_family_id": "codebase_ir",
+        "dimension": 8
+      },
+      {
+        "ir_family_id": "codebase_ir",
+        "dimension": 384
+      },
+      {
+        "ir_family_id": "codebase_ir",
+        "dimension": 768
+      },
+      {
+        "ir_family_id": "security_ir",
+        "dimension": 8
+      },
+      {
+        "ir_family_id": "security_ir",
+        "dimension": 384
+      },
+      {
+        "ir_family_id": "security_ir",
+        "dimension": 768
+      },
+      {
+        "ir_family_id": "legal_ir",
+        "dimension": 8
+      },
+      {
+        "ir_family_id": "legal_ir",
+        "dimension": 384
+      },
+      {
+        "ir_family_id": "legal_ir",
+        "dimension": 768
+      },
+      {
+        "ir_family_id": "intent_ir",
+        "dimension": 8
+      },
+      {
+        "ir_family_id": "intent_ir",
+        "dimension": 384
+      },
+      {
+        "ir_family_id": "intent_ir",
+        "dimension": 768
+      }
+    ],
+    "checkpoint_profile_keys": [
+      "ir_family_id",
+      "dimension",
+      "dimension_role",
+      "target_format_id",
+      "schema_version",
+      "task_id",
+      "decoder_architecture_id",
+      "ordered_codec_sha256",
+      "implementation_generation_id",
+      "source_producer_id",
+      "source_token_policy_id",
+      "target_token_policy_id"
+    ],
+    "concrete_checkpoint_binding_adds": [
+      "checkpoint_sha256",
+      "original_fitting_receipts",
+      "parent_checkpoint_receipts"
+    ],
+    "experiment_keys": [
+      "profile_id",
+      "run_id",
+      "checkpoint_sha256"
+    ],
+    "ablation_requires_own_checkpoint": true,
+    "ablation_requires_new_database_or_hf_repository": false,
+    "different_output_contract_requires_separate_head_identity": true,
+    "shared_backbone_allowed_with_independently_bound_heads": true,
+    "deterministic_logic_projections": "versioned adapters and cache identities; learned heads need own checkpoint",
+    "inventory_store_hf_migration_status": "planned; existing twelve physical lanes preserved"
+  },
+  "implemented_scope": {
+    "api": "checkpoint_hub.open_ir_decoder_format_autoencoder",
+    "legacy_request_fields_unchanged": [
+      "ir_family_id",
+      "dimension",
+      "dimension_role",
+      "task_id",
+      "checkpoint_sha256"
+    ],
+    "closed_format_request_fields": [
+      "target_format_id",
+      "schema_version",
+      "task_id"
+    ],
+    "supported_original_formats": [
+      {
+        "ir_family_id": "intent_ir",
+        "dimension": 384,
+        "dimension_role": "input_embedding",
+        "target_format_id": "intent_ir/intent_rich_ast",
+        "schema_version": "intent-rich-grammar/v1",
+        "task_id": "source_to_native_ir"
+      },
+      {
+        "ir_family_id": "security_ir",
+        "dimension": 384,
+        "dimension_role": "input_embedding",
+        "target_format_id": "security_ir/program_expression",
+        "schema_version": "program-ir/v1",
+        "task_id": "source_to_native_ir"
+      }
+    ],
+    "all_original_corpus_targets_checked_before_load": true,
+    "returned_output_checks": "family/dimension/report identity, source/ID association, status and structural fragment format",
+    "targets_passed_to_model": false,
+    "native_evidence_passed_to_model": false,
+    "invalid_output_rows_remain_in_denominator": true,
+    "unsupported_formats_fall_back": false,
+    "legacy_apis_retained": true,
+    "file_checks_are_atomic_snapshot": false
+  },
+  "remaining_work": [
+    "Namespace inventory, DuckDB/DuckLake, Hugging Face and promotion pointers by format profile and run.",
+    "Implement explicit Legal canonical-rule and Codebase structural-feature contracts in their own lineages.",
+    "Implement and train complete-document and source-text heads with their own format/checkpoint identities.",
+    "Improve target-free semantic generation using authentic parents and original embeddings before teacher qualification.",
+    "Warm-start 768D heads through explicit parameter/codec and producer mappings; retain old teacher vectors unchanged.",
+    "Admit authentic native 768D same-source vectors and separately evaluate larger source spans/decoder target budgets.",
+    "Bind proof caches and Intent planning to source revisions, profiles, checkpoint and verifier/projection identities."
+  ],
+  "ablation_plan": [
+    "authentic frozen parent replay",
+    "inherited 384D decoder with trained input connector",
+    "same inherited decoder with staged unfreezing",
+    "compatible 8D donor as separately measurable run",
+    "longer-span curriculum and schema changes in separate declared profiles"
+  ],
+  "teacher_gate": "Family/task-specific target-free semantic thresholds declared before training; loss alone insufficient.",
+  "text_reconstruction_gate": "Predict IR plus learned surface channel with raw source, gold IR and source-hash lookups withheld; exact UTF-8 separate from normalized text, IR and retained-source restoration.",
+  "target_encoder_model_card_observation": {
+    "url": "https://huggingface.co/Alibaba-NLP/gte-multilingual-base",
+    "checked_on_utc": "2026-10-04",
+    "dense_dimensions": 768,
+    "maximum_encoder_input_tokens": 8192,
+    "decoder_target_length_inferred": false,
+    "immutable_model_revision_selected": false
+  },
+  "evidence": {
+    "asset_audit": {
+      "path": "/home/barberb/lift_coding/artifacts/ir-format-checkpoint-routing-20261004/format_asset_audit.json",
+      "bytes": 116193,
+      "sha256": "049848a740e5588b361c499beb332fe8f042e20c47ce53c6bca3a323f183c9a0"
+    },
+    "prior_preservation": {
+      "path": "/home/barberb/lift_coding/artifacts/ir-format-checkpoint-routing-20261004/format_prior_preservation_review.json",
+      "bytes": 12643448,
+      "sha256": "184b33951ec23d18d3624d248fc4e617ae89c8a54c98e3fe1dbb97524c57e0db"
+    },
+    "controls_summary": {
+      "path": "/home/barberb/lift_coding/artifacts/ir-format-checkpoint-routing-20261004/format_controls_summary.json",
+      "bytes": 3843,
+      "sha256": "ce9e8e06468de161273bcbbdd7c69bb48021f17dbd77b6390620b33798554b45"
+    },
+    "source_review": {
+      "path": "/home/barberb/lift_coding/artifacts/ir-format-checkpoint-routing-20261004/format_runtime_source_review.json",
+      "bytes": 5990,
+      "sha256": "4b8bc212ec138df4d09a8940d00ccd8ae7b5e2a3206763564861ccf89a3db919"
+    }
+  },
+  "qualification": {
+    "selected_contract_controls_passed": true,
+    "authentic_asset_metadata_audited": true,
+    "new_numerical_replay_executed": false,
+    "training_executed": false,
+    "new_embeddings_generated": false,
+    "original_text_reconstruction_qualified": false,
+    "teacher_qualified": false,
+    "proof_authority": false,
+    "physical_store_migration_executed": false,
+    "huggingface_release_published": false,
+    "github_main_updated": false,
+    "runtime_release_qualified": false,
+    "full_source_dependency_closure_qualified": false,
+    "native_shared_library_closure_attested": false
+  }
+}

@@ -273,3 +273,19 @@ def open_ir_original_corpus_autoencoder(directory_plan_pin, inventory_pins, requ
     return _open_ir_original_corpus_autoencoder(directory_plan_pin, inventory_pins, request,
         package_manifest_pin=package_manifest_pin, corpus_pin=corpus_pin,
         corpus_split=corpus_split, row_ids=row_ids, max_reference_bytes=max_reference_bytes)
+
+
+def open_ir_decoder_format_autoencoder(directory_plan_pin, inventory_pins, request, *, format_request,
+        package_manifest_pin, corpus_pin, corpus_split, row_ids,
+        max_reference_bytes=512 * 1024 * 1024):
+    """Open an original Intent/Security fragment head with an explicit format.
+
+    Family, schema version, decoder task and exact codec/checkpoint bindings are
+    checked before loading. A fragment head cannot stand in for a document,
+    text-reconstruction or logic-output decoder. Model quality remains separate.
+    """
+    from .ir_decoder_format_runtime import _open_ir_decoder_format_autoencoder
+    return _open_ir_decoder_format_autoencoder(directory_plan_pin, inventory_pins, request,
+        format_request=format_request, package_manifest_pin=package_manifest_pin,
+        corpus_pin=corpus_pin, corpus_split=corpus_split, row_ids=row_ids,
+        max_reference_bytes=max_reference_bytes)
