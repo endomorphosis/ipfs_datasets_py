@@ -20,6 +20,12 @@ try:
 except Exception:  # pragma: no cover - wheel is part of build-system.requires.
     _bdist_wheel = None
 
+# FormalVerificationDistributionContract@1 (FVT-G215 / FVT-084):
+# - find_namespace_packages so logic backends / installer plugins ship in wheels
+# - package_data + _BuildPyWithFormalVerificationAssets for runtime assets
+# - theorem-provers / lazy extras stay parity-aligned with requirements-*.txt
+# - native provers remain optional via ipfs-datasets-install-provers only
+
 # Platform detection for conditional dependencies
 IS_WINDOWS = platform.system() == 'Windows'
 IS_LINUX = platform.system() == 'Linux'
