@@ -473,3 +473,153 @@ active during the migration. The original frozen resource owner remains intact;
 new guardians bind the exact new owner copy. This is disk allocation, not an
 increase to native RAM, encoder context or qualification thresholds. The migration
 receipt is `native4096-four-width-20261004/resource-cap/receipt.json`.
+
+
+## Source conditioning and field-head update rates
+
+These opt-in experiments address the remaining 8D/4096D gaps without changing
+production defaults. The 384D/768D selected checkpoints are preserved. They train
+decoder heads over frozen source representations; the historical 8D linguistic
+teacher and protected restart12 checkpoint remain unchanged. All codec, context,
+selection and admission constraints above still apply.
+
+### Native 4096D matched conditioning comparison
+
+`native4096_conditioning_experiment.py` and
+`benchmark_native4096_conditioning.py` compare three fresh heads against the same
+copied GRU/token prior. A single authenticated native operation produces the two
+original TRAIN clauses plus an A/B/A reset repeat. Each arm receives the same
+live owner capability and completes 200 updates. No serialized receipt can
+substitute for that capability. The first 20 baseline updates reproduce the previous real losses and
+predictions; a separate numerical control also verifies exact 20-update tensor
+parity. The new native vectors match the prior operation exactly.
+
+The source-scaled arm divides source-weight learning rate by the maximum L1 norm
+of the centered, radius-normalized TRAIN vectors. This input-only statistic is
+34.218689, giving a source-weight rate of approximately 0.000029224 instead of
+0.001. Source bias and copied-prior rates stay 0.001. The scaling limits the
+initial Adam activation jump; it is not a bound on all later adaptive updates.
+The third arm combines this scaling with a 40-step frozen-prior phase and a
+training-loss plateau scheduler. No plateau reduction triggers in this run.
+
+| Arm | Token CE at update 20 | Final conditioned CE | Final zero-source CE | Final swapped-source CE | Final exact / 2 | Fit seconds |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Unscaled joint fit | 1.560576 | 0.018791 | 0.032571 | 0.048023 | 2 | 1.502 |
+| Source-scaled joint fit | 0.140675 | 0.015291 | 0.025506 | 0.085754 | 2 | 1.369 |
+| Source-scaled, frozen-prior warmup and plateau | 1.919495 | 0.026482 | 0.026882 | 0.027370 | 2 | 1.349 |
+
+All three are exact on the two conditioned training clauses at the measured
+100- and 200-update panels. At update 200, every zero-source panel is exact on
+one clause and every swapped-source panel is exact on zero. Source scaling
+lowers final training CE by 18.6% relative to the matched unscaled fit; the
+staged intervention performs worse and is not adopted. This demonstrates
+source-conditioned fitting of two authored clauses differing only in object
+("archive"/"notice"). It does not demonstrate held-out fidelity, other logic
+families, encoder convergence or a global minimum. No head is promoted.
+
+For “The registrar may deliver the archive.” the source-scaled head emits:
+
+```json
+{"rules":[{"action":"deliver","actor":"registrar","conditions":[],"exceptions":[],"modality":"P","object":"archive","temporal":[]}]}
+```
+
+The second output changes only `object` to `notice`. This is the learned
+restricted rule codec's output, not validation of the full legal logic families.
+
+Each fit presents 400 decoder rows, taking approximately 0.00376, 0.00342 and
+0.00337 seconds per presentation. These timings include control generation and
+extra post-update loss measurements and are not comparable to the older
+20-update pilot's leaner fit timing. The native operation takes 121.828 seconds
+for three requested rows (40.609 seconds per row), including 88.299 seconds to
+hash the existing 67.1 GB model. Native child time is 33.527 seconds. Maximum
+sampled combined owner/native RSS is 1,082,535,936 bytes under the unchanged
+8 GiB guards. The full guarded phase takes 255.101 seconds and releases normally.
+One CPU worker, bridge names `[]`, provers off, metric disk cache off; native
+page-cache warmth is uncontrolled. No bridge-on evaluate or Lake build runs.
+
+The next 4096D validation needs source-disjoint training/development cohorts
+covering actors, modalities and actions, using the same live native-owner gate.
+The two-source result is insufficient for production or distillation promotion.
+Evidence: `workspace/test-logs/native4096-conditioning-20261004`.
+
+### 8D optimizer-rate follow-up
+
+`benchmark_eight_dimensional_head_rate.py` tests a smaller learning rate for the
+shared actor/modality/object head, without changing the historical 8D source
+features, architecture, source normalization, losses or fidelity selection. Both
+arms start from the same saved R9 final attempt and retain the same two-group
+AdamW implementation. The base learning rate stays 0.001; the head multiplier
+is ten for the baseline and two for the candidate. This also changes the
+rate-scaled decoupled weight decay, while preserving the inherited scheduler
+and proportional learning-rate floors. Each fit executes 170 updates and 1,220
+paragraph presentations. Full vocabulary size remains 32, context and output
+limits remain 512, and temperature remains zero.
+
+Saved-data diagnostics find 113 distinct training clause vectors and 54 distinct
+development vectors, with no exact collisions or cross-split literal overlap.
+The parent's source projection is not initially saturated: none of its 7,232
+training or 3,456 development activations has absolute tanh output at least
+0.99. These checks do not establish semantic sufficiency. Object substitutions
+remain weakly separated in the cached historical feature representation: 34
+training archive/notice pairs have mean raw-vector L2 distance 0.01564. The
+24 development pairs average 0.01615. This confirms the earlier source-head
+geometry concern; it does not diagnose the preserved linguistic teacher itself.
+
+| Head multiplier | Final training exact / 48 | Final development exact / 48 | Development token CE | Generated development objects / 180 | Fit seconds |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 10, baseline | 12 | 1 | 0.16349 | 97 | 28.12 |
+| 2, candidate | 17 | 1 | 0.14803 | 88 | 27.56 |
+
+The lower head rate reduces development token cross-entropy by approximately
+9.5% relative to the paired final baseline. Its improvement against the original
+parent CE of 0.14907 is approximately 0.7%. It fails to improve exact
+reconstruction and loses object fidelity.
+Both arms therefore retain their parent at selected epoch zero. The candidate
+is not adopted as a training default. Its in-sample exact count does not
+establish held-out improvement. The baseline reproduces the R11 selected and
+final tensor hashes exactly, and both arms use identical decoder/count batches.
+
+Fit throughput is 43.38 versus 44.27 paragraph presentations per second.
+These one-seed, shared-host observations are not a demonstrated speedup.
+Development numerical evaluation takes approximately 0.00675 and 0.00714
+seconds per span for the two final attempts, over 48 spans each, excluding
+source-encoder production, control-panel scoring and admission. Inputs are warm
+cached vectors, with one CPU worker, bridge names `[]`, provers off and metric
+disk cache off. No bridge-on evaluate runs, and no legal-IR throughput is claimed.
+
+All 36 selected/final control panels are retained. The guardian finishes in
+141.50 seconds and releases normally, retaining 110,690,588 bytes under the
+300 MB reservation. Maximum sampled process-group RSS is 1,075,511,296 bytes
+under a 1.5 GiB reservation; this is not a continuously measured peak. Thirty
+focused tests pass. The same-author arithmetic audit checks 83,422 conditions;
+the independent saved-data audit passes 79,901 checks, including all 36 panels,
+paired exposure, baseline replay and resource release.
+Evidence is under `workspace/test-logs/decoder-eight-head-rate-20261004`.
+No native encoder or protected teacher weights change. No new holdout, production
+promotion, general convergence claim, logic-family qualification or Lake
+admission results from this experiment.
+
+### Preserved 384D/768D checkpoints and remaining coverage
+
+No further larger-width fitting runs in this comparison. An independent audit
+of the previously exposed style outputs finds 42 modality errors for 384D:
+40 obligations become permissions and two become prohibitions. It also finds
+two action errors, while actors and objects remain correct on all 180 clauses.
+The 768D output has two permission-to-obligation errors in authorization wording.
+These are aggregate observations of an already exposed cohort, not new holdout
+results. The original development scores and selected checkpoints are preserved.
+
+The next larger-width training comparison should add balanced paraphrases built
+from original TRAIN rule tuples and reserve separate wording constructions for
+evaluation. Evaluation sources and target labels must not become training rows.
+Simply continuing the existing narrow wording distribution did not resolve this
+gap. The independent census is saved in
+`workspace/test-logs/decoder-next-source-review-20261004/exposed-style-review.json`.
+
+The implementation, raw fits, controls, source/recipe manifests, independent
+reviews and resource receipts from these follow-ups are published under
+`docs/implementation/reports/evidence/decoder-conditioning-20261004`. That
+archive references the preceding published evidence for unchanged encoders and
+frozen dependencies. It includes no pretrained model weights. Only an actual
+`lake build <Lib>` can provide Lean admission; none is claimed here, and the
+Constitution remains unformalized.
