@@ -1,0 +1,11 @@
+{
+  "filename": "releases/20261004-historical-git-assets-v1/objects/868f2d28b691f8815568146af45c224f112e8eb324ce29b4ca2c5d9ebf2d8abc.bin",
+  "original_git_blob": "ef215b8ffb1ed15505a0145a50dd080528fcdccf",
+  "original_path": "docs/implementation/reports/evidence/decoder-generated-field-training-r2-20261003/evidence.tar.xz",
+  "repo_id": "Publicus/autoencoder-decoder-checkpoints",
+  "repository": "https://github.com/endomorphosis/ipfs_datasets_py",
+  "revision": "cce278a763b5f7435a9895333a8af99b7fe8ea43",
+  "schema": "huggingface-historical-git-asset@1",
+  "sha256": "868f2d28b691f8815568146af45c224f112e8eb324ce29b4ca2c5d9ebf2d8abc",
+  "size_bytes": 203598796
+}

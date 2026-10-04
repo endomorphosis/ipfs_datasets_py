@@ -1,0 +1,4397 @@
+{
+  "admitted": false,
+  "candidate_sha256": {
+    "ipfs_datasets_py/logic/formalization/autoencoder/native_family_lake_v7.py": "ef49c69ca34d4b9d0d72a2eaac638483d2089345fbefd3a81a551d6863329fd1",
+    "ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters_v7.py": "a86ff5aa017a8f09e44492afb4aa0da06d8b24d8ed21a614bca8a9b02a3600b0",
+    "ipfs_datasets_py/logic/formalization/autoencoder/native_ui_bounded_event_calculus.py": "83e48cbafca710ec4277c14ad71043e0537a11fb66536b966c7583051beac144",
+    "ipfs_datasets_py/logic/formalization/autoencoder/parallel_projection_checks_v3.py": "aa4532f2d4275422c409f28d6eb9a6b8e2c56b815a5758e598c6e64f03471cd9",
+    "ipfs_datasets_py/logic/formalization/autoencoder/projection_validation_contract_v7.py": "bc3299b2fbe03b2bd7eb9de3a08aeb88da86c576648f4de6e5ff50cfb4580765",
+    "ipfs_datasets_py/logic/formalization/autoencoder/resumable_native_validation.py": "b30a7fc18f802633f202de7bfa7993a152dce427f94cc740d62b05f116c0e539",
+    "ipfs_datasets_py/logic/formalization/autoencoder/ui_source_contract_384_v5.py": "c29879612036ae4ec73c865b1afaab2cc404e9aa3c2722cb99474597119250fa",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_family_training_validated_v7.py": "2031b22255e27259378e2ae52eacbd94c15dd53611faf676cea5fe57c23e16f8",
+    "scripts/ops/autoencoder/check_ui_event_validation_resume.py": "984436df48c5f71f27c6236f26a5c0b561fdeea9cc0efebffbaa42bd1dcfe833",
+    "tests/fixtures/logic/ui_bounded_event_v1/cases.py": "1e050c1347179af432a55f1a5435c3de259169899fcfdc25ee403b8caec1e717",
+    "tests/unit/logic/formalization/autoencoder/test_native_family_validation_v7.py": "cc6831ebdb7e7acf46f115d12f742c9e6200cacf4cb7e4f87a1d879b9a41c219",
+    "tests/unit/logic/formalization/autoencoder/test_resumable_native_validation.py": "862cb7cdd79e8122fd5c538dd8659c2d9cf8b6857367b9dba13dfda2f9d2a766",
+    "tests/unit/logic/formalization/autoencoder/test_ui_source_contract_384_v5.py": "fdaea729210abfb95276c533eedaf389541c0c8d16a0306eca074aea8723e689"
+  },
+  "formalized": false,
+  "fresh_holdout": false,
+  "historical_attempts_retained": true,
+  "historical_findings": [
+    "one stale trace-id test setup fixed without weakening native epoch validation",
+    "driver JSON arrays versus tuples comparison fixed",
+    "returned resume manifest seal updated to match durable manifest"
+  ],
+  "model_inference_executed": false,
+  "native": {
+    "all_native_builds_remain_partial": true,
+    "bridge_names": [],
+    "bridge_on_evaluation_ran": false,
+    "cache_measurement": "no_model_or_legal_IR_metric_evaluation",
+    "cold_model_inference_ran": false,
+    "controlled_actual_lake_passes": 1,
+    "controlled_lease_wait_timeout_seconds": 0.25,
+    "controlled_recovery": {
+      "default_host_pressure_sampler_preserved": true,
+      "elapsed_seconds": 11.737772413063794,
+      "limits_relaxed": false,
+      "max_rss_kib": 775780,
+      "scope": "controlled_real_scheduler_contention_with_actual_Lake_not_natural_host_pressure"
+    },
+    "controlled_rounds": 2,
+    "controlled_timeout_count": 1,
+    "cpu_slots_per_native_job": 2,
+    "final_version_actual_lake_passes": 10,
+    "global_lease_wait_timeout_seconds": 30,
+    "global_workers": 2,
+    "initial": {
+      "admitted": false,
+      "all_inputs_unchanged": true,
+      "archived_job_count": 0,
+      "attempt_count": 15,
+      "elapsed_seconds": 65.6938133421354,
+      "event_authenticity_verified": false,
+      "formalized": false,
+      "fresh_holdout": false,
+      "live_job_count": 9,
+      "max_rss_kib": 799596,
+      "model_inference_executed": false,
+      "native_job_count": 9,
+      "native_lake_status_counts": {
+        "passed": 9
+      },
+      "preparation_blocks": 6,
+      "preparation_seconds": 5.8816757830791175,
+      "qualified": false,
+      "receipt": {
+        "admitted": false,
+        "archived_receipts_are_live_authority": false,
+        "budget_scope": "cumulative_new_admission_and_backoff_window_not_a_hard_deadline_for_admitted_native_steps",
+        "checkpoint_promoted": false,
+        "consumed_admission_seconds": 54.81228941096924,
+        "execution_authority": false,
+        "formalized": false,
+        "inflight": null,
+        "live_validation_complete": true,
+        "manifest_sha256": "0b2bced211c7d3e1b8673c7758458da6700319240907e33d7af2e6699b6cbfa1",
+        "model_inference_executed": false,
+        "plan_sha256": "c15b21586be59d8a4acdded99f9e1a643ee9053a88367f22cf66c036072188a7",
+        "proof_authority": false,
+        "qualified": false,
+        "rounds": [
+          {
+            "path": "round-0000/result.json",
+            "sha256": "85f736ed5926b6c0ffda1e14c374dcf56a27c80f1a78311e6ddc1350a6b20399"
+          }
+        ],
+        "schema": "resumable-native-validation/v1",
+        "source_semantics_verified": false,
+        "status": "completed",
+        "stopped_reason": "all_jobs_settled",
+        "training_executed": false
+      },
+      "resume": false,
+      "rss_scope": "Python_process_only_excludes_native_children",
+      "schema": "bounded-ui-event-resume-regression/v1",
+      "scope": "authored_bounded_EC_and_unchanged_prepared_native_targets",
+      "source_prediction_repaired": false,
+      "source_semantics_verified": false,
+      "training_executed": false,
+      "validation_seconds": 54.94810205604881,
+      "weights_modified": false
+    },
+    "legal_ir_target_count": null,
+    "memory_mb_per_native_job": 1024,
+    "native_step_timeout_seconds": 60,
+    "negative_EC_preparation_blocks": 6,
+    "per_job": [
+      {
+        "all_requested_projections_passed": false,
+        "job_id": "fixture-intent-recommendation",
+        "lake_status": "passed",
+        "library": "IntentIR",
+        "native_status": "partial",
+        "projections": [
+          {
+            "lake_status": "blocked",
+            "logic_family": "datalog",
+            "lowering": null,
+            "parser_status": "blocked",
+            "projection_id": "intent_ir/semantic/datalog/v1",
+            "reason": "native_projection_not_ready"
+          },
+          {
+            "lake_status": "blocked",
+            "logic_family": "deontic",
+            "lowering": null,
+            "parser_status": "blocked",
+            "projection_id": "intent-route/norms/v1",
+            "reason": "recommendation_or_assertion_has_no_reviewed_Intent_norm_operator"
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "frame_logic",
+            "lowering": {
+              "assumptions": [
+                "Frame triples are interpreted relations; declaration records do not establish the source proposition."
+              ],
+              "operators": [
+                "frame_relation"
+              ],
+              "validator": "exact_native_frame_record_source_replay"
+            },
+            "parser_status": "passed",
+            "projection_id": "intent-extended/frame_logic/default/v1",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "higher_order",
+            "lowering": {
+              "assumptions": [
+                "Native Lean emitter assumptions are retained in its original generated source and source-bound payload."
+              ],
+              "operators": [
+                "typed_predicate",
+                "parameterized_modality"
+              ],
+              "validator": "exact_native_source_replay_existing_Intent_Lean_generator"
+            },
+            "parser_status": "passed",
+            "projection_id": "intent-extended/higher_order/default/v1",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "higher_order",
+            "lowering": {
+              "assumptions": [
+                "Native Lean emitter assumptions are retained in its original generated source and source-bound payload."
+              ],
+              "operators": [
+                "typed_predicate",
+                "parameterized_modality"
+              ],
+              "validator": "exact_native_source_replay_existing_Intent_Lean_generator"
+            },
+            "parser_status": "passed",
+            "projection_id": "rich-intent/higher_order/v1",
+            "reason": null
+          },
+          {
+            "lake_status": "blocked",
+            "logic_family": "horn_chc",
+            "lowering": null,
+            "parser_status": "blocked",
+            "projection_id": "intent_ir/semantic/horn_chc/v1",
+            "reason": "native_projection_not_ready"
+          },
+          {
+            "lake_status": "blocked",
+            "logic_family": "modal",
+            "lowering": null,
+            "parser_status": "blocked",
+            "projection_id": "intent_ir/semantic/unhandled/v1",
+            "reason": "native_projection_not_ready"
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "program",
+            "lowering": {
+              "assumptions": [
+                "The supplied transition relation is a parameter, not a program inferred from the action verb.",
+                "This is a partial-correctness contract, with no termination, execution, mutation-frame, or compliance proof.",
+                "Empty postconditions are explicitly True; verification, tools and I/O semantics stay unsupported."
+              ],
+              "capability_floor_eligible": false,
+              "capability_floor_reason": "vacuous_contract_without_meaningful_postcondition",
+              "operators": [
+                "universal_partial_correctness",
+                "ordered_ground_predicates",
+                "action_relation"
+              ],
+              "retained_native_records": [
+                {
+                  "action": {
+                    "action_id": "action:0",
+                    "actor": "agent",
+                    "effect_ids": [],
+                    "grounding": "inferred",
+                    "input_refs": [],
+                    "object_refs": [
+                      "Cache.py"
+                    ],
+                    "output_refs": [],
+                    "precondition_ids": [],
+                    "source_ref_ids": [
+                      "source"
+                    ],
+                    "tool_refs": [],
+                    "verb": "inspect",
+                    "verification_ids": []
+                  },
+                  "effects": [],
+                  "kind": "hoare_action_contract",
+                  "postcondition": [],
+                  "precondition": [],
+                  "verification": []
+                }
+              ],
+              "validator": "native_Intent_action_and_complete_pre_post_reference_validation"
+            },
+            "parser_status": "passed",
+            "projection_id": "intent-route/action-hoare/v1",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "temporal",
+            "lowering": {
+              "assumptions": [
+                "Only finite typed state equality-map predicates and labelled actions are lowered.",
+                "Native declarations describe allowed transitions, not observed execution or verified source behavior.",
+                "The terminal local stutter flag is redundant with its equality-map action; a Lean example checks that fact.",
+                "The separate bounded run uses the declared step budget. No eventual completion, code execution or normative compliance is inferred.",
+                "The finite declared sequence is a specification, not an observed trace or an eventual-completion theorem."
+              ],
+              "operators": [
+                "typed_state_equality",
+                "initial",
+                "guard",
+                "next",
+                "write_frame",
+                "labelled_transition",
+                "terminal_self_loop",
+                "bounded_control_trace"
+              ],
+              "retained_native_context": {
+                "context": {
+                  "abstraction": "abstract_intent_control_flow",
+                  "max_steps": 64
+                },
+                "format": "StateTransitionIR@1",
+                "node_map": [
+                  {
+                    "from_position": "position_0",
+                    "intent_action_id": "action:0",
+                    "state_action_id": "action:abstract:0",
+                    "to_position": "done"
+                  }
+                ],
+                "payload": {
+                  "actions": [
+                    {
+                      "action_id": "action:abstract:0",
+                      "attributes": {
+                        "abstract_event_only": true,
+                        "intent_action_id": "action:0"
+                      },
+                      "enables_stutter": false,
+                      "frame": {
+                        "allows_all_reads": false,
+                        "allows_all_writes": false,
+                        "reads": [
+                          "var:pc"
+                        ],
+                        "schema_version": "action-frame/v1",
+                        "writes": [
+                          "var:pc"
+                        ]
+                      },
+                      "guard_predicate_id": "pred:guard:0",
+                      "label_ids": [],
+                      "name": "AdvanceIntent0",
+                      "next_predicate_id": "pred:next:0",
+                      "schema_version": "action/v1",
+                      "source_ref_ids": [
+                        "source"
+                      ]
+                    },
+                    {
+                      "action_id": "action:done",
+                      "attributes": {
+                        "abstract_event_only": true,
+                        "origin": "adapter_generated_terminal_self_loop"
+                      },
+                      "enables_stutter": true,
+                      "frame": {
+                        "allows_all_reads": false,
+                        "allows_all_writes": false,
+                        "reads": [
+                          "var:pc"
+                        ],
+                        "schema_version": "action-frame/v1",
+                        "writes": [
+                          "var:pc"
+                        ]
+                      },
+                      "guard_predicate_id": "pred:done-guard",
+                      "label_ids": [],
+                      "name": "Done",
+                      "next_predicate_id": "pred:done-next",
+                      "schema_version": "action/v1",
+                      "source_ref_ids": []
+                    }
+                  ],
+                  "document_id": "bafkreiflnagb3cawhkk5y6wcj56bxua3gzl2mwhrpy63naowcnlg2tr7da",
+                  "fairness": [],
+                  "interface": "StateTransitionIR@1",
+                  "kripke": null,
+                  "labels": [],
+                  "metadata": {
+                    "abstraction": "abstract_intent_control_flow",
+                    "code_effects_modeled": false,
+                    "intent_document_id": "intent-rich:35cb9df1c03ba79d86757a2c9b83ae29875d389d9bae10691f3d5e0265ebcd2d",
+                    "intent_ir_sha256": "ea7977d02171559daa3d2231ace5f4d06832449da83ef29bcf756013a0a80327",
+                    "max_steps": 64,
+                    "normative_compliance_modeled": false,
+                    "position_map": [
+                      {
+                        "from_position": "position_0",
+                        "intent_action_id": "action:0",
+                        "state_action_id": "action:abstract:0",
+                        "to_position": "done"
+                      }
+                    ]
+                  },
+                  "predicates": [
+                    {
+                      "attributes": {},
+                      "expression": {
+                        "var:pc": "done"
+                      },
+                      "predicate_id": "pred:done-guard",
+                      "role": "guard",
+                      "schema_version": "state-predicate/v1",
+                      "source_ref_ids": [],
+                      "statement": "Terminal abstract position.",
+                      "subject_variable_ids": [
+                        "var:pc"
+                      ]
+                    },
+                    {
+                      "attributes": {},
+                      "expression": {
+                        "var:pc": "done"
+                      },
+                      "predicate_id": "pred:done-next",
+                      "role": "next",
+                      "schema_version": "state-predicate/v1",
+                      "source_ref_ids": [],
+                      "statement": "Explicit terminal self-loop.",
+                      "subject_variable_ids": [
+                        "var:pc"
+                      ]
+                    },
+                    {
+                      "attributes": {},
+                      "expression": {
+                        "var:pc": "position_0"
+                      },
+                      "predicate_id": "pred:guard:0",
+                      "role": "guard",
+                      "schema_version": "state-predicate/v1",
+                      "source_ref_ids": [
+                        "source"
+                      ],
+                      "statement": "At declared abstract position.",
+                      "subject_variable_ids": [
+                        "var:pc"
+                      ]
+                    },
+                    {
+                      "attributes": {},
+                      "expression": {
+                        "var:pc": "position_0"
+                      },
+                      "predicate_id": "pred:init",
+                      "role": "initial",
+                      "schema_version": "state-predicate/v1",
+                      "source_ref_ids": [
+                        "source"
+                      ],
+                      "statement": "Initial intent graph position.",
+                      "subject_variable_ids": [
+                        "var:pc"
+                      ]
+                    },
+                    {
+                      "attributes": {},
+                      "expression": {
+                        "var:pc": "done"
+                      },
+                      "predicate_id": "pred:next:0",
+                      "role": "next",
+                      "schema_version": "state-predicate/v1",
+                      "source_ref_ids": [
+                        "source"
+                      ],
+                      "statement": "Advance the abstract control position.",
+                      "subject_variable_ids": [
+                        "var:pc"
+                      ]
+                    }
+                  ],
+                  "schema": {
+                    "interface": "StateSchema@1",
+                    "metadata": {
+                      "abstraction": "abstract_intent_control_flow"
+                    },
+                    "schema_id": "bafkreieywyzn3aejip6mpantiwoj5tg7hxnzacrwbu22hksborl4brmpli",
+                    "schema_version": "state-schema/v1",
+                    "variables": [
+                      {
+                        "attributes": {},
+                        "boundedness": "finite",
+                        "description": "Abstract intent graph position; no executable-code state semantics.",
+                        "domain_bound": {
+                          "bound_id": "bound:pc",
+                          "cardinality": null,
+                          "lower": null,
+                          "members": [
+                            "position_0",
+                            "done"
+                          ],
+                          "schema_version": "state-finite-bound/v1",
+                          "upper": null
+                        },
+                        "element_type_kind": null,
+                        "name": "pc",
+                        "schema_version": "state-variable/v1",
+                        "source_ref_ids": [
+                          "source"
+                        ],
+                        "type_kind": "enumeration",
+                        "variable_id": "var:pc"
+                      }
+                    ]
+                  },
+                  "schema_version": "state-transition-ir/v1",
+                  "transitions": [
+                    {
+                      "action_ids": [
+                        "action:abstract:0",
+                        "action:done"
+                      ],
+                      "allows_stutter": true,
+                      "attributes": {},
+                      "kind": "action",
+                      "predicate_id": "",
+                      "relation_id": "transition:next",
+                      "schema_version": "transition-relation/v1",
+                      "source_ref_ids": [],
+                      "statement": "Disjunction of abstract control advances and terminal self-loop."
+                    }
+                  ],
+                  "valuations": [],
+                  "variants": []
+                },
+                "source": "native_intent_ir"
+              },
+              "retained_workflow_records": [
+                {
+                  "entry_action_ids": [
+                    "action:0"
+                  ],
+                  "kind": "workflow_boundary",
+                  "terminal_action_ids": [
+                    "action:0"
+                  ]
+                }
+              ],
+              "validator": "native_workflow_boundary_edges_join_exact_linear_StateTransitionIR"
+            },
+            "parser_status": "passed",
+            "projection_id": "intent-route/workflow-temporal/v1",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "transition_system",
+            "lowering": {
+              "assumptions": [
+                "Only finite typed state equality-map predicates and labelled actions are lowered.",
+                "Native declarations describe allowed transitions, not observed execution or verified source behavior.",
+                "The terminal local stutter flag is redundant with its equality-map action; a Lean example checks that fact.",
+                "The separate bounded run uses the declared step budget. No eventual completion, code execution or normative compliance is inferred."
+              ],
+              "operators": [
+                "typed_state_equality",
+                "initial",
+                "guard",
+                "next",
+                "write_frame",
+                "labelled_transition",
+                "terminal_self_loop",
+                "bounded_control_trace"
+              ],
+              "retained_native_context": {
+                "context": {
+                  "abstraction": "abstract_intent_control_flow",
+                  "max_steps": 64
+                },
+                "format": "StateTransitionIR@1",
+                "node_map": [
+                  {
+                    "from_position": "position_0",
+                    "intent_action_id": "action:0",
+                    "state_action_id": "action:abstract:0",
+                    "to_position": "done"
+                  }
+                ],
+                "payload": {
+                  "actions": [
+                    {
+                      "action_id": "action:abstract:0",
+                      "attributes": {
+                        "abstract_event_only": true,
+                        "intent_action_id": "action:0"
+                      },
+                      "enables_stutter": false,
+                      "frame": {
+                        "allows_all_reads": false,
+                        "allows_all_writes": false,
+                        "reads": [
+                          "var:pc"
+                        ],
+                        "schema_version": "action-frame/v1",
+                        "writes": [
+                          "var:pc"
+                        ]
+                      },
+                      "guard_predicate_id": "pred:guard:0",
+                      "label_ids": [],
+                      "name": "AdvanceIntent0",
+                      "next_predicate_id": "pred:next:0",
+                      "schema_version": "action/v1",
+                      "source_ref_ids": [
+                        "source"
+                      ]
+                    },
+                    {
+                      "action_id": "action:done",
+                      "attributes": {
+                        "abstract_event_only": true,
+                        "origin": "adapter_generated_terminal_self_loop"
+                      },
+                      "enables_stutter": true,
+                      "frame": {
+                        "allows_all_reads": false,
+                        "allows_all_writes": false,
+                        "reads": [
+                          "var:pc"
+                        ],
+                        "schema_version": "action-frame/v1",
+                        "writes": [
+                          "var:pc"
+                        ]
+                      },
+                      "guard_predicate_id": "pred:done-guard",
+                      "label_ids": [],
+                      "name": "Done",
+                      "next_predicate_id": "pred:done-next",
+                      "schema_version": "action/v1",
+                      "source_ref_ids": []
+                    }
+                  ],
+                  "document_id": "bafkreiflnagb3cawhkk5y6wcj56bxua3gzl2mwhrpy63naowcnlg2tr7da",
+                  "fairness": [],
+                  "interface": "StateTransitionIR@1",
+                  "kripke": null,
+                  "labels": [],
+                  "metadata": {
+                    "abstraction": "abstract_intent_control_flow",
+                    "code_effects_modeled": false,
+                    "intent_document_id": "intent-rich:35cb9df1c03ba79d86757a2c9b83ae29875d389d9bae10691f3d5e0265ebcd2d",
+                    "intent_ir_sha256": "ea7977d02171559daa3d2231ace5f4d06832449da83ef29bcf756013a0a80327",
+                    "max_steps": 64,
+                    "normative_compliance_modeled": false,
+                    "position_map": [
+                      {
+                        "from_position": "position_0",
+                        "intent_action_id": "action:0",
+                        "state_action_id": "action:abstract:0",
+                        "to_position": "done"
+                      }
+                    ]
+                  },
+                  "predicates": [
+                    {
+                      "attributes": {},
+                      "expression": {
+                        "var:pc": "done"
+                      },
+                      "predicate_id": "pred:done-guard",
+                      "role": "guard",
+                      "schema_version": "state-predicate/v1",
+                      "source_ref_ids": [],
+                      "statement": "Terminal abstract position.",
+                      "subject_variable_ids": [
+                        "var:pc"
+                      ]
+                    },
+                    {
+                      "attributes": {},
+                      "expression": {
+                        "var:pc": "done"
+                      },
+                      "predicate_id": "pred:done-next",
+                      "role": "next",
+                      "schema_version": "state-predicate/v1",
+                      "source_ref_ids": [],
+                      "statement": "Explicit terminal self-loop.",
+                      "subject_variable_ids": [
+                        "var:pc"
+                      ]
+                    },
+                    {
+                      "attributes": {},
+                      "expression": {
+                        "var:pc": "position_0"
+                      },
+                      "predicate_id": "pred:guard:0",
+                      "role": "guard",
+                      "schema_version": "state-predicate/v1",
+                      "source_ref_ids": [
+                        "source"
+                      ],
+                      "statement": "At declared abstract position.",
+                      "subject_variable_ids": [
+                        "var:pc"
+                      ]
+                    },
+                    {
+                      "attributes": {},
+                      "expression": {
+                        "var:pc": "position_0"
+                      },
+                      "predicate_id": "pred:init",
+                      "role": "initial",
+                      "schema_version": "state-predicate/v1",
+                      "source_ref_ids": [
+                        "source"
+                      ],
+                      "statement": "Initial intent graph position.",
+                      "subject_variable_ids": [
+                        "var:pc"
+                      ]
+                    },
+                    {
+                      "attributes": {},
+                      "expression": {
+                        "var:pc": "done"
+                      },
+                      "predicate_id": "pred:next:0",
+                      "role": "next",
+                      "schema_version": "state-predicate/v1",
+                      "source_ref_ids": [
+                        "source"
+                      ],
+                      "statement": "Advance the abstract control position.",
+                      "subject_variable_ids": [
+                        "var:pc"
+                      ]
+                    }
+                  ],
+                  "schema": {
+                    "interface": "StateSchema@1",
+                    "metadata": {
+                      "abstraction": "abstract_intent_control_flow"
+                    },
+                    "schema_id": "bafkreieywyzn3aejip6mpantiwoj5tg7hxnzacrwbu22hksborl4brmpli",
+                    "schema_version": "state-schema/v1",
+                    "variables": [
+                      {
+                        "attributes": {},
+                        "boundedness": "finite",
+                        "description": "Abstract intent graph position; no executable-code state semantics.",
+                        "domain_bound": {
+                          "bound_id": "bound:pc",
+                          "cardinality": null,
+                          "lower": null,
+                          "members": [
+                            "position_0",
+                            "done"
+                          ],
+                          "schema_version": "state-finite-bound/v1",
+                          "upper": null
+                        },
+                        "element_type_kind": null,
+                        "name": "pc",
+                        "schema_version": "state-variable/v1",
+                        "source_ref_ids": [
+                          "source"
+                        ],
+                        "type_kind": "enumeration",
+                        "variable_id": "var:pc"
+                      }
+                    ]
+                  },
+                  "schema_version": "state-transition-ir/v1",
+                  "transitions": [
+                    {
+                      "action_ids": [
+                        "action:abstract:0",
+                        "action:done"
+                      ],
+                      "allows_stutter": true,
+                      "attributes": {},
+                      "kind": "action",
+                      "predicate_id": "",
+                      "relation_id": "transition:next",
+                      "schema_version": "transition-relation/v1",
+                      "source_ref_ids": [],
+                      "statement": "Disjunction of abstract control advances and terminal self-loop."
+                    }
+                  ],
+                  "valuations": [],
+                  "variants": []
+                },
+                "source": "native_intent_ir"
+              },
+              "validator": "native_StateTransitionIR_exact_linear_pc_and_terminal_self_loop"
+            },
+            "parser_status": "passed",
+            "projection_id": "intent-extended/transition_system/default/v1",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "transition_system",
+            "lowering": {
+              "assumptions": [
+                "finite_step_budget",
+                "TLA_specification_allows_stuttering",
+                "no_source_program_equivalence_proof"
+              ],
+              "operators": [
+                "typed_state_equality",
+                "initial",
+                "guard",
+                "next",
+                "write_frame",
+                "labelled_transition",
+                "finite_step_budget",
+                "TLA_box_stuttering"
+              ],
+              "syntax_requirements": [
+                {
+                  "kind": "SANY",
+                  "model_text": "---- MODULE BoundedNativeState ----\nEXTENDS Integers, Sequences\n\nMaxSteps == 64\nv0Domain == {\"position_0\", \"done\"}\nVARIABLES v0, step, actionLabel\nvars == <<v0, step, actionLabel>>\nSourceVariableAliases == <<<<\"var:pc\", \"v0\">>, <<\"pc\", \"v0\">>>>\nActionIntentOrigins == <<<<\"action:abstract:0\", \"action:0\">>>>\nActionEventOrigins == <<>>\nSyntheticActionOrigins == <<<<\"action:done\", \"adapter_generated_terminal_self_loop\">>>>\nStateAbstraction == \"abstract_intent_control_flow\"\nSourceIntentDocument == \"intent-rich:35cb9df1c03ba79d86757a2c9b83ae29875d389d9bae10691f3d5e0265ebcd2d\"\nSourceIntentIRSHA256 == \"ea7977d02171559daa3d2231ace5f4d06832449da83ef29bcf756013a0a80327\"\nIntentPositionMap == <<<<\"action:abstract:0\", \"action:0\", \"position_0\", \"done\">>>>\nCodeEffectsModeled == FALSE\nNormativeComplianceModeled == FALSE\nRuntimeEventOccurrencesAttested == FALSE\nTypeOK == v0 \\in v0Domain /\\ step \\in 0..MaxSteps /\\ actionLabel \\in {\"initial\", \"stutter\", \"action:abstract:0\", \"action:done\"}\nPred0 == v0 = \"done\"\nPred1 == v0' = \"done\"\nPred2 == v0 = \"position_0\"\nPred3 == v0 = \"position_0\"\nPred4 == v0' = \"done\"\nInit == TypeOK /\\ step = 0 /\\ actionLabel = \"initial\" /\\ Pred3\nAction0 == Pred2 /\\ Pred4 /\\ actionLabel' = \"action:abstract:0\"\nAction1 == Pred0 /\\ Pred1 /\\ actionLabel' = \"action:done\"\nDeclaredStutter == UNCHANGED <<v0>> /\\ actionLabel' = \"stutter\"\nNext == TypeOK /\\ TypeOK' /\\ step < MaxSteps /\\ step' = step + 1 /\\ (Action0 \\/ Action1 \\/ DeclaredStutter)\nSpec == Init /\\ [][Next]_vars\nSafety == TypeOK\n====\n",
+                  "module_name": "BoundedNativeState"
+                }
+              ],
+              "validator": "exact_bounded_native_TLA_and_Lean_regeneration"
+            },
+            "parser_status": "passed",
+            "projection_id": "intent_ir/bounded_state/tla_plus/v4",
+            "reason": null
+          }
+        ],
+        "requested_family_count": 40
+      },
+      {
+        "all_requested_projections_passed": false,
+        "job_id": "fixture-ui-ordered-graph",
+        "lake_status": "passed",
+        "library": "UIUXIR",
+        "native_status": "partial",
+        "projections": [
+          {
+            "lake_status": "passed",
+            "logic_family": "first_order",
+            "lowering": {
+              "assumptions": [
+                "Atomic predicates and distinct deontic/cognitive operators are interpretation parameters.",
+                "Native Object and agent sorts have separate arbitrary Lean carrier types.",
+                "Temporal operators use discrete unbounded Nat traces; no modal axioms or event-calculus axioms asserted."
+              ],
+              "operators": [
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate"
+              ],
+              "validator": "replayed_native_formula_evidence_and_exact_AST_reparse"
+            },
+            "parser_status": "passed",
+            "projection_id": "ui_ux_ir/native_formula/FOL/v3",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "frame_logic",
+            "lowering": {
+              "assumptions": [
+                "Frame triples are interpreted relations; declaration records do not establish the source proposition."
+              ],
+              "operators": [
+                "frame_relation"
+              ],
+              "validator": "exact_native_frame_record_source_replay"
+            },
+            "parser_status": "passed",
+            "projection_id": "ui_ux_ir:flogic",
+            "reason": null
+          }
+        ],
+        "requested_family_count": 40
+      },
+      {
+        "all_requested_projections_passed": false,
+        "job_id": "fixture-ui-state-without-interpretation",
+        "lake_status": "passed",
+        "library": "UIUXIR",
+        "native_status": "partial",
+        "projections": [
+          {
+            "lake_status": "passed",
+            "logic_family": "first_order",
+            "lowering": {
+              "assumptions": [
+                "Atomic predicates and distinct deontic/cognitive operators are interpretation parameters.",
+                "Native Object and agent sorts have separate arbitrary Lean carrier types.",
+                "Temporal operators use discrete unbounded Nat traces; no modal axioms or event-calculus axioms asserted."
+              ],
+              "operators": [
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate"
+              ],
+              "validator": "replayed_native_formula_evidence_and_exact_AST_reparse"
+            },
+            "parser_status": "passed",
+            "projection_id": "ui_ux_ir/native_formula/FOL/v3",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "frame_logic",
+            "lowering": {
+              "assumptions": [
+                "Frame triples are interpreted relations; declaration records do not establish the source proposition."
+              ],
+              "operators": [
+                "frame_relation"
+              ],
+              "validator": "exact_native_frame_record_source_replay"
+            },
+            "parser_status": "passed",
+            "projection_id": "ui_ux_ir:flogic",
+            "reason": null
+          }
+        ],
+        "requested_family_count": 40
+      },
+      {
+        "all_requested_projections_passed": false,
+        "job_id": "fixture-ui-declared-state",
+        "lake_status": "passed",
+        "library": "UIUXIR",
+        "native_status": "partial",
+        "projections": [
+          {
+            "lake_status": "passed",
+            "logic_family": "event_calculus",
+            "lowering": {
+              "assumptions": [
+                "The UI compiler's three-argument happens record denotes an untimed declared edge, never an actual timed occurrence.",
+                "Step is membership in the explicitly declared relation; no run, initial-state reachability, inertia or event-calculus axiom is asserted.",
+                "Only a single source state is supported; timeout and multi-source records remain blocked."
+              ],
+              "capability_floor_eligible": false,
+              "event_occurrences_attested": false,
+              "implementation": "native-ui-lean/v1",
+              "missing_capabilities": [
+                "timed_event_calculus"
+              ],
+              "operators": [
+                "declared_transition",
+                "initiates",
+                "terminates"
+              ],
+              "payload_sha256": "b290b117f4f8e737f122fdd00a9f04d45b17df3fa433cf0139e0b76b9558b2ba",
+              "provided_capabilities": [
+                "untimed_declared_transition_relation"
+              ],
+              "runtime_authority_granted": false,
+              "semantics_scope": "UI_declared_transition_relation_not_timed_event_occurrence",
+              "source_semantics_verified": false,
+              "validator": "closed_UI_untimed_edge_and_exact_effect_consistency"
+            },
+            "parser_status": "passed",
+            "projection_id": "ui_ux_ir:event_calculus",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "first_order",
+            "lowering": {
+              "assumptions": [
+                "Atomic predicates and distinct deontic/cognitive operators are interpretation parameters.",
+                "Native Object and agent sorts have separate arbitrary Lean carrier types.",
+                "Temporal operators use discrete unbounded Nat traces; no modal axioms or event-calculus axioms asserted."
+              ],
+              "operators": [
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate"
+              ],
+              "validator": "replayed_native_formula_evidence_and_exact_AST_reparse"
+            },
+            "parser_status": "passed",
+            "projection_id": "ui_ux_ir/native_formula/FOL/v3",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "frame_logic",
+            "lowering": {
+              "assumptions": [
+                "Frame triples are interpreted relations; declaration records do not establish the source proposition."
+              ],
+              "operators": [
+                "frame_relation"
+              ],
+              "validator": "exact_native_frame_record_source_replay"
+            },
+            "parser_status": "passed",
+            "projection_id": "ui_ux_ir:flogic",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "transition_system",
+            "lowering": {
+              "assumptions": [
+                "finite_step_budget",
+                "TLA_specification_allows_stuttering",
+                "no_source_program_equivalence_proof"
+              ],
+              "operators": [
+                "typed_state_equality",
+                "initial",
+                "guard",
+                "next",
+                "write_frame",
+                "labelled_transition",
+                "finite_step_budget",
+                "TLA_box_stuttering"
+              ],
+              "syntax_requirements": [
+                {
+                  "kind": "SANY",
+                  "model_text": "---- MODULE BoundedNativeState ----\nEXTENDS Integers, Sequences\n\nMaxSteps == 64\nv0Domain == {\"state_0\", \"state_1\"}\nVARIABLES v0, step, actionLabel\nvars == <<v0, step, actionLabel>>\nSourceVariableAliases == <<<<\"var:ui-state\", \"v0\">>, <<\"ui_state\", \"v0\">>>>\nActionIntentOrigins == <<>>\nActionEventOrigins == <<<<\"action:ui:0\", \"close\", \"close_event\">>>>\nSyntheticActionOrigins == <<>>\nSourceUIDocument == \"ui-candidate:ea5f7c5a8f7edc6b5b14fa44b009271b413476ee200c3581ac312ac82e83d831\"\nSourceUIModel == \"declared_behavior\"\nSourceUISHA256 == \"23c20f5bd84f2002662f323f57a952808cecfd29a1e9e5778f71a6ac31f4ed57\"\nUIStateMap == <<<<\"closed\", \"state_0\">>, <<\"open\", \"state_1\">>>>\nUITerminalStates == {\"state_0\"}\nUITerminal == v0 \\in UITerminalStates\nUIDeclaredCancelableActions == {\"action:ui:0\"}\nUIDeclaredCancelable(action) == action \\in UIDeclaredCancelableActions\nCancellationExecutionModeled == FALSE\nRuntimeEventOccurrencesAttested == FALSE\nTypeOK == v0 \\in v0Domain /\\ step \\in 0..MaxSteps /\\ actionLabel \\in {\"initial\", \"stutter\", \"action:ui:0\"}\nPred0 == v0 = \"state_1\"\nPred1 == v0 = \"state_1\"\nPred2 == v0' = \"state_0\"\nInit == TypeOK /\\ step = 0 /\\ actionLabel = \"initial\" /\\ Pred1\nAction0 == Pred0 /\\ Pred2 /\\ actionLabel' = \"action:ui:0\"\nNext == TypeOK /\\ TypeOK' /\\ step < MaxSteps /\\ step' = step + 1 /\\ (Action0)\nSpec == Init /\\ [][Next]_vars\nSafety == TypeOK\n====\n",
+                  "module_name": "BoundedNativeState"
+                }
+              ],
+              "validator": "exact_bounded_native_TLA_and_Lean_regeneration"
+            },
+            "parser_status": "passed",
+            "projection_id": "ui_ux_ir/bounded_state/tla_plus/v4",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "transition_system",
+            "lowering": {
+              "assumptions": [
+                "Only finite typed state equality-map predicates and labelled actions are lowered.",
+                "Native declarations describe allowed transitions, not observed execution or verified source behavior."
+              ],
+              "operators": [
+                "typed_state_equality",
+                "initial",
+                "guard",
+                "next",
+                "write_frame",
+                "labelled_transition"
+              ],
+              "validator": "StateTransitionIR.from_dict_exact_roundtrip"
+            },
+            "parser_status": "passed",
+            "projection_id": "ui_ux_ir/declared_state/native/v2",
+            "reason": null
+          }
+        ],
+        "requested_family_count": 40
+      },
+      {
+        "all_requested_projections_passed": false,
+        "job_id": "fixture-ui-timeout-frontier",
+        "lake_status": "passed",
+        "library": "UIUXIR",
+        "native_status": "partial",
+        "projections": [
+          {
+            "lake_status": "blocked",
+            "logic_family": "event_calculus",
+            "lowering": null,
+            "parser_status": "blocked",
+            "projection_id": "ui_ux_ir:event_calculus",
+            "reason": "UI_happens_is_single_source_untimed_edge_only_timeout_or_multi_source_requires_semantics"
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "first_order",
+            "lowering": {
+              "assumptions": [
+                "Atomic predicates and distinct deontic/cognitive operators are interpretation parameters.",
+                "Native Object and agent sorts have separate arbitrary Lean carrier types.",
+                "Temporal operators use discrete unbounded Nat traces; no modal axioms or event-calculus axioms asserted."
+              ],
+              "operators": [
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate"
+              ],
+              "validator": "replayed_native_formula_evidence_and_exact_AST_reparse"
+            },
+            "parser_status": "passed",
+            "projection_id": "ui_ux_ir/native_formula/FOL/v3",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "frame_logic",
+            "lowering": {
+              "assumptions": [
+                "Frame triples are interpreted relations; declaration records do not establish the source proposition."
+              ],
+              "operators": [
+                "frame_relation"
+              ],
+              "validator": "exact_native_frame_record_source_replay"
+            },
+            "parser_status": "passed",
+            "projection_id": "ui_ux_ir:flogic",
+            "reason": null
+          }
+        ],
+        "requested_family_count": 40
+      },
+      {
+        "all_requested_projections_passed": false,
+        "job_id": "fixture-intent-intended",
+        "lake_status": "passed",
+        "library": "IntentIR",
+        "native_status": "partial",
+        "projections": [
+          {
+            "lake_status": "passed",
+            "logic_family": "datalog",
+            "lowering": {
+              "assumptions": [
+                "These Lean definitions state interpretation constraints, never assert those constraints true.",
+                "An asserted goal is intention I; required/permitted/prohibited remain O/P/F, never an event fact.",
+                "Datalog/CHC ground atoms abbreviate explicit typed formulas. There is no closed-world negation, least-fixed-point execution, permission grant or modal inference calculus.",
+                "Action declarations remain in their source-bound native partial-correctness projection, not in a fact database.",
+                "Source-language meaning and execution/compliance are unverified."
+              ],
+              "capability_floor_eligible": false,
+              "capability_floor_reason": "modal_atom_abstraction_is_not_domain_rule_inference",
+              "execution_authority": false,
+              "goals_asserted_true": false,
+              "operators": [
+                "I"
+              ],
+              "retained_native_semantic_source": {
+                "family": "datalog",
+                "records": [
+                  {
+                    "actor": "agent",
+                    "body": {
+                      "arguments": [
+                        "agent",
+                        "Cache.py"
+                      ],
+                      "confidence": 0.0,
+                      "grounding": "inferred",
+                      "modality": "intended",
+                      "predicate": "inspect",
+                      "review_status": "machine_extracted",
+                      "statement_kind": "goal",
+                      "text": "agent intends to inspect Cache.py."
+                    },
+                    "logic_family": "intention_agency",
+                    "native_record": {
+                      "arguments": [
+                        "agent",
+                        "Cache.py"
+                      ],
+                      "confidence": 0.0,
+                      "grounding": "inferred",
+                      "kind": "goal",
+                      "modality": "intended",
+                      "normalized_text": "agent intends to inspect Cache.py.",
+                      "predicate": "inspect",
+                      "review_status": "machine_extracted",
+                      "source_ref_ids": [
+                        "source"
+                      ],
+                      "statement_id": "goal:0"
+                    },
+                    "operator": "I",
+                    "statement_id": "goal:0"
+                  }
+                ],
+                "rule_program": {
+                  "atom_bindings": [
+                    {
+                      "rule_arguments": [
+                        "agent",
+                        "Cache.py"
+                      ],
+                      "rule_predicate": "intent_semantic_0",
+                      "typed_formula": {
+                        "actor": "agent",
+                        "body": {
+                          "arguments": [
+                            "agent",
+                            "Cache.py"
+                          ],
+                          "confidence": 0.0,
+                          "grounding": "inferred",
+                          "modality": "intended",
+                          "predicate": "inspect",
+                          "review_status": "machine_extracted",
+                          "statement_kind": "goal",
+                          "text": "agent intends to inspect Cache.py."
+                        },
+                        "logic_family": "intention_agency",
+                        "native_record": {
+                          "arguments": [
+                            "agent",
+                            "Cache.py"
+                          ],
+                          "confidence": 0.0,
+                          "grounding": "inferred",
+                          "kind": "goal",
+                          "modality": "intended",
+                          "normalized_text": "agent intends to inspect Cache.py.",
+                          "predicate": "inspect",
+                          "review_status": "machine_extracted",
+                          "source_ref_ids": [
+                            "source"
+                          ],
+                          "statement_id": "goal:0"
+                        },
+                        "operator": "I",
+                        "statement_id": "goal:0"
+                      }
+                    }
+                  ],
+                  "capability_floor_eligible": false,
+                  "facts_asserted_true": false,
+                  "least_fixed_point_executed": false,
+                  "native_chc": {
+                    "clauses": [
+                      {
+                        "body": [],
+                        "clause_id": "chc:1",
+                        "constraints": [],
+                        "head": {
+                          "arguments": [
+                            {
+                              "kind": "string",
+                              "name": "agent",
+                              "range": {
+                                "end": 125,
+                                "schema_version": "syntax-source-range/v1",
+                                "start": 118
+                              },
+                              "sort": "atom"
+                            },
+                            {
+                              "kind": "string",
+                              "name": "Cache.py",
+                              "range": {
+                                "end": 137,
+                                "schema_version": "syntax-source-range/v1",
+                                "start": 127
+                              },
+                              "sort": "atom"
+                            }
+                          ],
+                          "issuer": "",
+                          "polarity": "positive",
+                          "predicate": "intent_semantic_0",
+                          "range": {
+                            "end": 138,
+                            "schema_version": "syntax-source-range/v1",
+                            "start": 100
+                          }
+                        },
+                        "is_query": false
+                      }
+                    ],
+                    "loss_receipts": [],
+                    "ok": true,
+                    "profile": "chc",
+                    "schema_version": "rules-chc-lowering/v1",
+                    "unsupported": []
+                  },
+                  "native_profile": "datalog",
+                  "native_rule_document": {
+                    "family_id": "datalog",
+                    "interface": "RuleFrontend@1",
+                    "metadata": {
+                      "interface": "RuleFrontend@1",
+                      "module_version": "1.0.0"
+                    },
+                    "notation_id": "datalog_rules",
+                    "notation_version": "1.0.0",
+                    "predicate_names": [
+                      "intent_semantic_0"
+                    ],
+                    "priority_policy": null,
+                    "profile": "datalog",
+                    "profile_id": "datalog",
+                    "schema_version": "rules-document/v1",
+                    "statements": [
+                      {
+                        "action": "",
+                        "body": [],
+                        "constraint_kind": "",
+                        "delegation_depth": 0,
+                        "directive_name": "profile",
+                        "directive_value": "datalog",
+                        "effect": "derive",
+                        "head": null,
+                        "kind": "directive",
+                        "principal": "",
+                        "range": {
+                          "end": 87,
+                          "schema_version": "syntax-source-range/v1",
+                          "start": 70
+                        },
+                        "raw": "",
+                        "resource": "",
+                        "role": "profile",
+                        "stratum": 0,
+                        "subject": "",
+                        "unsupported_reason": ""
+                      },
+                      {
+                        "action": "",
+                        "body": [],
+                        "constraint_kind": "",
+                        "delegation_depth": 0,
+                        "directive_name": "stratum",
+                        "directive_value": "0",
+                        "effect": "derive",
+                        "head": null,
+                        "kind": "directive",
+                        "principal": "",
+                        "range": {
+                          "end": 99,
+                          "schema_version": "syntax-source-range/v1",
+                          "start": 88
+                        },
+                        "raw": "",
+                        "resource": "",
+                        "role": "stratum",
+                        "stratum": 0,
+                        "subject": "",
+                        "unsupported_reason": ""
+                      },
+                      {
+                        "action": "",
+                        "body": [],
+                        "constraint_kind": "",
+                        "delegation_depth": 0,
+                        "directive_name": "",
+                        "directive_value": "",
+                        "effect": "derive",
+                        "head": {
+                          "arguments": [
+                            {
+                              "kind": "string",
+                              "name": "agent",
+                              "range": {
+                                "end": 125,
+                                "schema_version": "syntax-source-range/v1",
+                                "start": 118
+                              },
+                              "sort": "atom"
+                            },
+                            {
+                              "kind": "string",
+                              "name": "Cache.py",
+                              "range": {
+                                "end": 137,
+                                "schema_version": "syntax-source-range/v1",
+                                "start": 127
+                              },
+                              "sort": "atom"
+                            }
+                          ],
+                          "issuer": "",
+                          "polarity": "positive",
+                          "predicate": "intent_semantic_0",
+                          "range": {
+                            "end": 138,
+                            "schema_version": "syntax-source-range/v1",
+                            "start": 100
+                          }
+                        },
+                        "kind": "fact",
+                        "principal": "",
+                        "range": {
+                          "end": 139,
+                          "schema_version": "syntax-source-range/v1",
+                          "start": 100
+                        },
+                        "raw": "",
+                        "resource": "",
+                        "role": "fact",
+                        "stratum": 0,
+                        "subject": "",
+                        "unsupported_reason": ""
+                      }
+                    ],
+                    "trust_roots": [],
+                    "unsupported_count": 0,
+                    "world_policy": null
+                  },
+                  "program_interpretation": "ground_clause_satisfaction_under_explicit_typed_formula_bindings",
+                  "source": "intent_semantic_0(\"agent\",\"Cache.py\").\n"
+                },
+                "schema": "intent-semantic-source-views/v1",
+                "semantic_source": {
+                  "action_accounting": [
+                    {
+                      "disposition": "declared_action_contract_not_observed_event",
+                      "native_action_id": "action:0",
+                      "replacement_projection_ids": [
+                        "intent-route/action-hoare/v1"
+                      ]
+                    }
+                  ],
+                  "blocked": [],
+                  "goals_asserted_true": false,
+                  "native_document": {
+                    "actions": [
+                      {
+                        "action_id": "action:0",
+                        "actor": "agent",
+                        "effect_ids": [],
+                        "grounding": "inferred",
+                        "input_refs": [],
+                        "object_refs": [
+                          "Cache.py"
+                        ],
+                        "output_refs": [],
+                        "precondition_ids": [],
+                        "source_ref_ids": [
+                          "source"
+                        ],
+                        "tool_refs": [],
+                        "verb": "inspect",
+                        "verification_ids": []
+                      }
+                    ],
+                    "control_edges": [],
+                    "document_id": "intent-rich:7e7cd640ae54d6d06d38e2ad7b62638127be940f982f202e400a9e467b5a011c",
+                    "entry_action_ids": [
+                      "action:0"
+                    ],
+                    "intent_kind": "declarative",
+                    "schema_version": "intent-ir/v1",
+                    "sources": [
+                      {
+                        "container_sha256": "",
+                        "container_uri": "",
+                        "content_cid": "",
+                        "content_sha256": "7e7cd640ae54d6d06d38e2ad7b62638127be940f982f202e400a9e467b5a011c",
+                        "license_expression": "",
+                        "ref_id": "source",
+                        "review_status": "machine_extracted",
+                        "source_id": "7e7cd640ae54d6d06d38e2ad7b62638127be940f982f202e400a9e467b5a011c",
+                        "source_revision": "7e7cd640ae54d6d06d38e2ad7b62638127be940f982f202e400a9e467b5a011c",
+                        "source_uri": "instruction:learned-rich-intent",
+                        "span": {
+                          "end_char": 34,
+                          "start_char": 0
+                        }
+                      }
+                    ],
+                    "statements": [
+                      {
+                        "arguments": [
+                          "agent",
+                          "Cache.py"
+                        ],
+                        "confidence": 0.0,
+                        "grounding": "inferred",
+                        "kind": "goal",
+                        "modality": "intended",
+                        "normalized_text": "agent intends to inspect Cache.py.",
+                        "predicate": "inspect",
+                        "review_status": "machine_extracted",
+                        "source_ref_ids": [
+                          "source"
+                        ],
+                        "statement_id": "goal:0"
+                      }
+                    ],
+                    "tags": [
+                      "learned-candidate"
+                    ],
+                    "terminal_action_ids": [
+                      "action:0"
+                    ],
+                    "title": "Rich candidate action/workflow view"
+                  },
+                  "native_document_sha256": "sha256:b18e8447d4a883a7cf0df88a3352ffb390efbf93c11c10f1228dbffe8233c8c4",
+                  "observed_events": [],
+                  "schema": "intent-semantic-source-views/v1",
+                  "semantic_records": [
+                    {
+                      "actor": "agent",
+                      "body": {
+                        "arguments": [
+                          "agent",
+                          "Cache.py"
+                        ],
+                        "confidence": 0.0,
+                        "grounding": "inferred",
+                        "modality": "intended",
+                        "predicate": "inspect",
+                        "review_status": "machine_extracted",
+                        "statement_kind": "goal",
+                        "text": "agent intends to inspect Cache.py."
+                      },
+                      "logic_family": "intention_agency",
+                      "native_record": {
+                        "arguments": [
+                          "agent",
+                          "Cache.py"
+                        ],
+                        "confidence": 0.0,
+                        "grounding": "inferred",
+                        "kind": "goal",
+                        "modality": "intended",
+                        "normalized_text": "agent intends to inspect Cache.py.",
+                        "predicate": "inspect",
+                        "review_status": "machine_extracted",
+                        "source_ref_ids": [
+                          "source"
+                        ],
+                        "statement_id": "goal:0"
+                      },
+                      "operator": "I",
+                      "statement_id": "goal:0"
+                    }
+                  ],
+                  "source_semantics_verified": false,
+                  "statement_accounting": [
+                    {
+                      "disposition": "formula_definition_not_asserted_truth",
+                      "replacement_projection_ids": [
+                        "intent_ir/semantic/intention_agency/v1"
+                      ],
+                      "statement_id": "goal:0"
+                    }
+                  ]
+                }
+              },
+              "source_semantics_verified": false,
+              "validator": "native_Intent_exact_role_force_and_RuleFrontend_semantic_binding_replay"
+            },
+            "parser_status": "passed",
+            "projection_id": "intent_ir/semantic/datalog/v1",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "dcec",
+            "lowering": {
+              "assumptions": [
+                "Object carrier and atomic predicates are arbitrary interpretation parameters.",
+                "Deontic/cognitive operators are distinct interpretation parameters; no modal axioms or source truth are asserted.",
+                "Supported temporal operators use discrete unbounded Nat traces."
+              ],
+              "operators": [
+                "CognitiveFormula",
+                "I",
+                "AtomicFormula"
+              ],
+              "validator": "strict_native_reparse_and_exact_AST"
+            },
+            "parser_status": "passed",
+            "projection_id": "intent-extended/dcec/default/v1",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "dcec",
+            "lowering": {
+              "assumptions": [
+                "Object predicates, agent interpretation and distinct modal operators are parameters.",
+                "Boolean structure is preserved exactly; no deontic or cognitive axioms are asserted.",
+                "This ground rich fragment introduces no clock, quantifier, observed event or event-calculus axiom."
+              ],
+              "capability_scope": "ground_rich_deontic_and_intention_formulas_not_full_DCEC_or_timed_events",
+              "operators": [
+                "CognitiveFormula",
+                "I",
+                "AtomicFormula"
+              ],
+              "source_candidate_replay_required": true,
+              "strict_functional_receipt": {
+                "admitted": false,
+                "backend_executed": false,
+                "execution_authority": false,
+                "formalized": false,
+                "formula_rewritten": false,
+                "free_variables": [],
+                "full_input_consumed": true,
+                "ground_only": true,
+                "independent_ast": {
+                  "agent": {
+                    "arguments": [],
+                    "function": {
+                      "argument_sorts": [],
+                      "name": "Se03778de48f3ed6b0126f4f17546aa99fad5175acde9faefa7af57939302b478",
+                      "node_type": "Function",
+                      "return_sort": {
+                        "name": "agent",
+                        "node_type": "Sort",
+                        "parent": null
+                      }
+                    },
+                    "node_type": "FunctionTerm"
+                  },
+                  "formula": {
+                    "arguments": [
+                      {
+                        "arguments": [],
+                        "function": {
+                          "argument_sorts": [],
+                          "name": "Se03778de48f3ed6b0126f4f17546aa99fad5175acde9faefa7af57939302b478",
+                          "node_type": "Function",
+                          "return_sort": {
+                            "name": "Object",
+                            "node_type": "Sort",
+                            "parent": null
+                          }
+                        },
+                        "node_type": "FunctionTerm"
+                      },
+                      {
+                        "arguments": [],
+                        "function": {
+                          "argument_sorts": [],
+                          "name": "S8127bd5cdb73e98731c26d2ebb94bc9f89ffb1eca5669a93f692966cd1aa6b73",
+                          "node_type": "Function",
+                          "return_sort": {
+                            "name": "Object",
+                            "node_type": "Sort",
+                            "parent": null
+                          }
+                        },
+                        "node_type": "FunctionTerm"
+                      }
+                    ],
+                    "node_type": "AtomicFormula",
+                    "predicate": {
+                      "argument_sorts": [
+                        {
+                          "name": "Object",
+                          "node_type": "Sort",
+                          "parent": null
+                        },
+                        {
+                          "name": "Object",
+                          "node_type": "Sort",
+                          "parent": null
+                        }
+                      ],
+                      "name": "Se904a35838cc115556680ad432c62b3f5ac0767d70a997e85ab0b44dcb889adb",
+                      "node_type": "Predicate"
+                    }
+                  },
+                  "node_type": "CognitiveFormula",
+                  "operator": {
+                    "enum": "CognitiveOperator",
+                    "value": "I"
+                  }
+                },
+                "independent_structure_equal": true,
+                "lake_executed": false,
+                "native_ast": {
+                  "agent": {
+                    "arguments": [],
+                    "function": {
+                      "argument_sorts": [],
+                      "name": "Se03778de48f3ed6b0126f4f17546aa99fad5175acde9faefa7af57939302b478",
+                      "node_type": "Function",
+                      "return_sort": {
+                        "name": "agent",
+                        "node_type": "Sort",
+                        "parent": null
+                      }
+                    },
+                    "node_type": "FunctionTerm"
+                  },
+                  "formula": {
+                    "arguments": [
+                      {
+                        "arguments": [],
+                        "function": {
+                          "argument_sorts": [],
+                          "name": "Se03778de48f3ed6b0126f4f17546aa99fad5175acde9faefa7af57939302b478",
+                          "node_type": "Function",
+                          "return_sort": {
+                            "name": "Object",
+                            "node_type": "Sort",
+                            "parent": null
+                          }
+                        },
+                        "node_type": "FunctionTerm"
+                      },
+                      {
+                        "arguments": [],
+                        "function": {
+                          "argument_sorts": [],
+                          "name": "S8127bd5cdb73e98731c26d2ebb94bc9f89ffb1eca5669a93f692966cd1aa6b73",
+                          "node_type": "Function",
+                          "return_sort": {
+                            "name": "Object",
+                            "node_type": "Sort",
+                            "parent": null
+                          }
+                        },
+                        "node_type": "FunctionTerm"
+                      }
+                    ],
+                    "node_type": "AtomicFormula",
+                    "predicate": {
+                      "argument_sorts": [
+                        {
+                          "name": "Object",
+                          "node_type": "Sort",
+                          "parent": null
+                        },
+                        {
+                          "name": "Object",
+                          "node_type": "Sort",
+                          "parent": null
+                        }
+                      ],
+                      "name": "Se904a35838cc115556680ad432c62b3f5ac0767d70a997e85ab0b44dcb889adb",
+                      "node_type": "Predicate"
+                    }
+                  },
+                  "node_type": "CognitiveFormula",
+                  "operator": {
+                    "enum": "CognitiveOperator",
+                    "value": "I"
+                  }
+                },
+                "native_ast_sha256": "f554dc8814f0c3d06e7ecdeca1687455bec8fca14e60969a3591c659d7527765",
+                "native_parse_passed": true,
+                "native_reparse_passed": true,
+                "passed": true,
+                "payload_sha256": "993c0a3d718b18c2b366e5bd9d47c55078134f75599373e3fa291a67b03766ce",
+                "producer_pins": {
+                  "ipfs_datasets_py.logic.CEC.native.dcec_cleaning": "06517ecd30e4889d2a54db6732279e61a53945906860ef66378b5d707cca04b0",
+                  "ipfs_datasets_py.logic.CEC.native.dcec_core": "bb977f411605fc1f0715ed23c988102d55fa012029053c21c8fc5b14aea17e14",
+                  "ipfs_datasets_py.logic.CEC.native.dcec_integration": "f039af934dba224d6c4984e8840fd8a4de00fe5e69837b0678d1d670dc26ac82",
+                  "ipfs_datasets_py.logic.CEC.native.dcec_parsing": "2756e3c94acf902579bfc54d469e01ddd25b72f53d177b88921829d71df7da70",
+                  "ipfs_datasets_py.logic.CEC.native.dcec_prototypes": "0e0b231ed68c39054cfd2fd674780cb736fd258cde7570881cb3a41cb5d2680e",
+                  "ipfs_datasets_py.logic.autoformal.tree_pin": "587165942fb06ea9effc836b555e0ac0606c5876b013a374a1e76d25ee069e4d",
+                  "ipfs_datasets_py.logic.formalization.autoencoder.family_training": "e42e5314a59966ade1163e062817484357feb97e86158e21360ad39fa1558e64",
+                  "ipfs_datasets_py.logic.formalization.autoencoder.strict_dcec_functional": "ca81eaff0ed4e280a0fd20df4e7e4eb45bbfe5097e60e70c6a87131e81b17f95",
+                  "ipfs_datasets_py.logic.intent_ir.formalize.modal_projections": "7337b9266ed4f171ec7ee763828f8b637bf57930d8b89fa0d47139650996a14d"
+                },
+                "proof_authority": false,
+                "qualified": false,
+                "receipt_sha256": "384688c4d6e5e6737e2e90bdfd6efdc9f6a0c0150bb4876e98124d8b7a03c506",
+                "schema": "strict-rich-dcec-functional/v1",
+                "scope": "ground_rich_deontic_and_intention_formulas_not_full_DCEC_or_timed_events",
+                "source": "I(Se03778de48f3ed6b0126f4f17546aa99fad5175acde9faefa7af57939302b478, Se904a35838cc115556680ad432c62b3f5ac0767d70a997e85ab0b44dcb889adb(Se03778de48f3ed6b0126f4f17546aa99fad5175acde9faefa7af57939302b478, S8127bd5cdb73e98731c26d2ebb94bc9f89ffb1eca5669a93f692966cd1aa6b73))",
+                "source_candidate_replay_required": true,
+                "source_semantics_verified": false,
+                "source_sha256": "8c76981ecbaae4780173c3729e4718cd8f5fc9c158fb8689eea82f77183f07a0",
+                "symbol_table_sha256": "cd101127bb14cce97861b96af4b6ff73603f866f0b9565d06d036fb98888ed44"
+              },
+              "validator": "independent_complete_rich_functional_parse_and_native_DCEC_AST_parity"
+            },
+            "parser_status": "passed",
+            "projection_id": "rich-intent/dcec/v1",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "frame_logic",
+            "lowering": {
+              "assumptions": [
+                "Frame triples are interpreted relations; declaration records do not establish the source proposition."
+              ],
+              "operators": [
+                "frame_relation"
+              ],
+              "validator": "exact_native_frame_record_source_replay"
+            },
+            "parser_status": "passed",
+            "projection_id": "intent-extended/frame_logic/default/v1",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "higher_order",
+            "lowering": {
+              "assumptions": [
+                "Native Lean emitter assumptions are retained in its original generated source and source-bound payload."
+              ],
+              "operators": [
+                "typed_predicate",
+                "parameterized_modality"
+              ],
+              "validator": "exact_native_source_replay_existing_Intent_Lean_generator"
+            },
+            "parser_status": "passed",
+            "projection_id": "intent-extended/higher_order/default/v1",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "higher_order",
+            "lowering": {
+              "assumptions": [
+                "Native Lean emitter assumptions are retained in its original generated source and source-bound payload."
+              ],
+              "operators": [
+                "typed_predicate",
+                "parameterized_modality"
+              ],
+              "validator": "exact_native_source_replay_existing_Intent_Lean_generator"
+            },
+            "parser_status": "passed",
+            "projection_id": "rich-intent/higher_order/v1",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "horn_chc",
+            "lowering": {
+              "assumptions": [
+                "These Lean definitions state interpretation constraints, never assert those constraints true.",
+                "An asserted goal is intention I; required/permitted/prohibited remain O/P/F, never an event fact.",
+                "Datalog/CHC ground atoms abbreviate explicit typed formulas. There is no closed-world negation, least-fixed-point execution, permission grant or modal inference calculus.",
+                "Action declarations remain in their source-bound native partial-correctness projection, not in a fact database.",
+                "Source-language meaning and execution/compliance are unverified."
+              ],
+              "capability_floor_eligible": false,
+              "capability_floor_reason": "modal_atom_abstraction_is_not_domain_rule_inference",
+              "execution_authority": false,
+              "goals_asserted_true": false,
+              "operators": [
+                "I"
+              ],
+              "retained_native_semantic_source": {
+                "family": "horn_chc",
+                "records": [
+                  {
+                    "actor": "agent",
+                    "body": {
+                      "arguments": [
+                        "agent",
+                        "Cache.py"
+                      ],
+                      "confidence": 0.0,
+                      "grounding": "inferred",
+                      "modality": "intended",
+                      "predicate": "inspect",
+                      "review_status": "machine_extracted",
+                      "statement_kind": "goal",
+                      "text": "agent intends to inspect Cache.py."
+                    },
+                    "logic_family": "intention_agency",
+                    "native_record": {
+                      "arguments": [
+                        "agent",
+                        "Cache.py"
+                      ],
+                      "confidence": 0.0,
+                      "grounding": "inferred",
+                      "kind": "goal",
+                      "modality": "intended",
+                      "normalized_text": "agent intends to inspect Cache.py.",
+                      "predicate": "inspect",
+                      "review_status": "machine_extracted",
+                      "source_ref_ids": [
+                        "source"
+                      ],
+                      "statement_id": "goal:0"
+                    },
+                    "operator": "I",
+                    "statement_id": "goal:0"
+                  }
+                ],
+                "rule_program": {
+                  "atom_bindings": [
+                    {
+                      "rule_arguments": [
+                        "agent",
+                        "Cache.py"
+                      ],
+                      "rule_predicate": "intent_semantic_0",
+                      "typed_formula": {
+                        "actor": "agent",
+                        "body": {
+                          "arguments": [
+                            "agent",
+                            "Cache.py"
+                          ],
+                          "confidence": 0.0,
+                          "grounding": "inferred",
+                          "modality": "intended",
+                          "predicate": "inspect",
+                          "review_status": "machine_extracted",
+                          "statement_kind": "goal",
+                          "text": "agent intends to inspect Cache.py."
+                        },
+                        "logic_family": "intention_agency",
+                        "native_record": {
+                          "arguments": [
+                            "agent",
+                            "Cache.py"
+                          ],
+                          "confidence": 0.0,
+                          "grounding": "inferred",
+                          "kind": "goal",
+                          "modality": "intended",
+                          "normalized_text": "agent intends to inspect Cache.py.",
+                          "predicate": "inspect",
+                          "review_status": "machine_extracted",
+                          "source_ref_ids": [
+                            "source"
+                          ],
+                          "statement_id": "goal:0"
+                        },
+                        "operator": "I",
+                        "statement_id": "goal:0"
+                      }
+                    }
+                  ],
+                  "capability_floor_eligible": false,
+                  "facts_asserted_true": false,
+                  "least_fixed_point_executed": false,
+                  "native_chc": {
+                    "clauses": [
+                      {
+                        "body": [],
+                        "clause_id": "chc:1",
+                        "constraints": [],
+                        "head": {
+                          "arguments": [
+                            {
+                              "kind": "string",
+                              "name": "agent",
+                              "range": {
+                                "end": 125,
+                                "schema_version": "syntax-source-range/v1",
+                                "start": 118
+                              },
+                              "sort": "atom"
+                            },
+                            {
+                              "kind": "string",
+                              "name": "Cache.py",
+                              "range": {
+                                "end": 137,
+                                "schema_version": "syntax-source-range/v1",
+                                "start": 127
+                              },
+                              "sort": "atom"
+                            }
+                          ],
+                          "issuer": "",
+                          "polarity": "positive",
+                          "predicate": "intent_semantic_0",
+                          "range": {
+                            "end": 138,
+                            "schema_version": "syntax-source-range/v1",
+                            "start": 100
+                          }
+                        },
+                        "is_query": false
+                      }
+                    ],
+                    "loss_receipts": [],
+                    "ok": true,
+                    "profile": "chc",
+                    "schema_version": "rules-chc-lowering/v1",
+                    "unsupported": []
+                  },
+                  "native_profile": "datalog",
+                  "native_rule_document": {
+                    "family_id": "datalog",
+                    "interface": "RuleFrontend@1",
+                    "metadata": {
+                      "interface": "RuleFrontend@1",
+                      "module_version": "1.0.0"
+                    },
+                    "notation_id": "datalog_rules",
+                    "notation_version": "1.0.0",
+                    "predicate_names": [
+                      "intent_semantic_0"
+                    ],
+                    "priority_policy": null,
+                    "profile": "datalog",
+                    "profile_id": "datalog",
+                    "schema_version": "rules-document/v1",
+                    "statements": [
+                      {
+                        "action": "",
+                        "body": [],
+                        "constraint_kind": "",
+                        "delegation_depth": 0,
+                        "directive_name": "profile",
+                        "directive_value": "datalog",
+                        "effect": "derive",
+                        "head": null,
+                        "kind": "directive",
+                        "principal": "",
+                        "range": {
+                          "end": 87,
+                          "schema_version": "syntax-source-range/v1",
+                          "start": 70
+                        },
+                        "raw": "",
+                        "resource": "",
+                        "role": "profile",
+                        "stratum": 0,
+                        "subject": "",
+                        "unsupported_reason": ""
+                      },
+                      {
+                        "action": "",
+                        "body": [],
+                        "constraint_kind": "",
+                        "delegation_depth": 0,
+                        "directive_name": "stratum",
+                        "directive_value": "0",
+                        "effect": "derive",
+                        "head": null,
+                        "kind": "directive",
+                        "principal": "",
+                        "range": {
+                          "end": 99,
+                          "schema_version": "syntax-source-range/v1",
+                          "start": 88
+                        },
+                        "raw": "",
+                        "resource": "",
+                        "role": "stratum",
+                        "stratum": 0,
+                        "subject": "",
+                        "unsupported_reason": ""
+                      },
+                      {
+                        "action": "",
+                        "body": [],
+                        "constraint_kind": "",
+                        "delegation_depth": 0,
+                        "directive_name": "",
+                        "directive_value": "",
+                        "effect": "derive",
+                        "head": {
+                          "arguments": [
+                            {
+                              "kind": "string",
+                              "name": "agent",
+                              "range": {
+                                "end": 125,
+                                "schema_version": "syntax-source-range/v1",
+                                "start": 118
+                              },
+                              "sort": "atom"
+                            },
+                            {
+                              "kind": "string",
+                              "name": "Cache.py",
+                              "range": {
+                                "end": 137,
+                                "schema_version": "syntax-source-range/v1",
+                                "start": 127
+                              },
+                              "sort": "atom"
+                            }
+                          ],
+                          "issuer": "",
+                          "polarity": "positive",
+                          "predicate": "intent_semantic_0",
+                          "range": {
+                            "end": 138,
+                            "schema_version": "syntax-source-range/v1",
+                            "start": 100
+                          }
+                        },
+                        "kind": "fact",
+                        "principal": "",
+                        "range": {
+                          "end": 139,
+                          "schema_version": "syntax-source-range/v1",
+                          "start": 100
+                        },
+                        "raw": "",
+                        "resource": "",
+                        "role": "fact",
+                        "stratum": 0,
+                        "subject": "",
+                        "unsupported_reason": ""
+                      }
+                    ],
+                    "trust_roots": [],
+                    "unsupported_count": 0,
+                    "world_policy": null
+                  },
+                  "program_interpretation": "ground_clause_satisfaction_under_explicit_typed_formula_bindings",
+                  "source": "intent_semantic_0(\"agent\",\"Cache.py\").\n"
+                },
+                "schema": "intent-semantic-source-views/v1",
+                "semantic_source": {
+                  "action_accounting": [
+                    {
+                      "disposition": "declared_action_contract_not_observed_event",
+                      "native_action_id": "action:0",
+                      "replacement_projection_ids": [
+                        "intent-route/action-hoare/v1"
+                      ]
+                    }
+                  ],
+                  "blocked": [],
+                  "goals_asserted_true": false,
+                  "native_document": {
+                    "actions": [
+                      {
+                        "action_id": "action:0",
+                        "actor": "agent",
+                        "effect_ids": [],
+                        "grounding": "inferred",
+                        "input_refs": [],
+                        "object_refs": [
+                          "Cache.py"
+                        ],
+                        "output_refs": [],
+                        "precondition_ids": [],
+                        "source_ref_ids": [
+                          "source"
+                        ],
+                        "tool_refs": [],
+                        "verb": "inspect",
+                        "verification_ids": []
+                      }
+                    ],
+                    "control_edges": [],
+                    "document_id": "intent-rich:7e7cd640ae54d6d06d38e2ad7b62638127be940f982f202e400a9e467b5a011c",
+                    "entry_action_ids": [
+                      "action:0"
+                    ],
+                    "intent_kind": "declarative",
+                    "schema_version": "intent-ir/v1",
+                    "sources": [
+                      {
+                        "container_sha256": "",
+                        "container_uri": "",
+                        "content_cid": "",
+                        "content_sha256": "7e7cd640ae54d6d06d38e2ad7b62638127be940f982f202e400a9e467b5a011c",
+                        "license_expression": "",
+                        "ref_id": "source",
+                        "review_status": "machine_extracted",
+                        "source_id": "7e7cd640ae54d6d06d38e2ad7b62638127be940f982f202e400a9e467b5a011c",
+                        "source_revision": "7e7cd640ae54d6d06d38e2ad7b62638127be940f982f202e400a9e467b5a011c",
+                        "source_uri": "instruction:learned-rich-intent",
+                        "span": {
+                          "end_char": 34,
+                          "start_char": 0
+                        }
+                      }
+                    ],
+                    "statements": [
+                      {
+                        "arguments": [
+                          "agent",
+                          "Cache.py"
+                        ],
+                        "confidence": 0.0,
+                        "grounding": "inferred",
+                        "kind": "goal",
+                        "modality": "intended",
+                        "normalized_text": "agent intends to inspect Cache.py.",
+                        "predicate": "inspect",
+                        "review_status": "machine_extracted",
+                        "source_ref_ids": [
+                          "source"
+                        ],
+                        "statement_id": "goal:0"
+                      }
+                    ],
+                    "tags": [
+                      "learned-candidate"
+                    ],
+                    "terminal_action_ids": [
+                      "action:0"
+                    ],
+                    "title": "Rich candidate action/workflow view"
+                  },
+                  "native_document_sha256": "sha256:b18e8447d4a883a7cf0df88a3352ffb390efbf93c11c10f1228dbffe8233c8c4",
+                  "observed_events": [],
+                  "schema": "intent-semantic-source-views/v1",
+                  "semantic_records": [
+                    {
+                      "actor": "agent",
+                      "body": {
+                        "arguments": [
+                          "agent",
+                          "Cache.py"
+                        ],
+                        "confidence": 0.0,
+                        "grounding": "inferred",
+                        "modality": "intended",
+                        "predicate": "inspect",
+                        "review_status": "machine_extracted",
+                        "statement_kind": "goal",
+                        "text": "agent intends to inspect Cache.py."
+                      },
+                      "logic_family": "intention_agency",
+                      "native_record": {
+                        "arguments": [
+                          "agent",
+                          "Cache.py"
+                        ],
+                        "confidence": 0.0,
+                        "grounding": "inferred",
+                        "kind": "goal",
+                        "modality": "intended",
+                        "normalized_text": "agent intends to inspect Cache.py.",
+                        "predicate": "inspect",
+                        "review_status": "machine_extracted",
+                        "source_ref_ids": [
+                          "source"
+                        ],
+                        "statement_id": "goal:0"
+                      },
+                      "operator": "I",
+                      "statement_id": "goal:0"
+                    }
+                  ],
+                  "source_semantics_verified": false,
+                  "statement_accounting": [
+                    {
+                      "disposition": "formula_definition_not_asserted_truth",
+                      "replacement_projection_ids": [
+                        "intent_ir/semantic/intention_agency/v1"
+                      ],
+                      "statement_id": "goal:0"
+                    }
+                  ]
+                }
+              },
+              "source_semantics_verified": false,
+              "validator": "native_Intent_exact_role_force_and_RuleFrontend_semantic_binding_replay"
+            },
+            "parser_status": "passed",
+            "projection_id": "intent_ir/semantic/horn_chc/v1",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "intention_agency",
+            "lowering": {
+              "assumptions": [
+                "The predicate, ordered arguments and declared modal scope are interpreted exactly.",
+                "Confidence, grounding, review status and source text are provenance, not probability or truth.",
+                "No norm is asserted true, complied with, or executable; modality interpretations have no added axioms."
+              ],
+              "operators": [
+                "I"
+              ],
+              "retained_native_records": [
+                {
+                  "body": {
+                    "arguments": [
+                      "agent",
+                      "Cache.py"
+                    ],
+                    "confidence": 0.0,
+                    "grounding": "inferred",
+                    "modality": "intended",
+                    "predicate": "inspect",
+                    "review_status": "machine_extracted",
+                    "statement_kind": "goal",
+                    "text": "agent intends to inspect Cache.py."
+                  },
+                  "kind": "intention_deontic_formula",
+                  "operator": "intended"
+                }
+              ],
+              "validator": "native_Intent_advisor_closed_body_and_operator_consistency"
+            },
+            "parser_status": "passed",
+            "projection_id": "intent-route/intentions/v1",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "intention_agency",
+            "lowering": {
+              "assumptions": [
+                "These Lean definitions state interpretation constraints, never assert those constraints true.",
+                "An asserted goal is intention I; required/permitted/prohibited remain O/P/F, never an event fact.",
+                "Datalog/CHC ground atoms abbreviate explicit typed formulas. There is no closed-world negation, least-fixed-point execution, permission grant or modal inference calculus.",
+                "Action declarations remain in their source-bound native partial-correctness projection, not in a fact database.",
+                "Source-language meaning and execution/compliance are unverified."
+              ],
+              "capability_floor_eligible": true,
+              "capability_floor_reason": "typed_native_predicate_or_modal_view",
+              "execution_authority": false,
+              "goals_asserted_true": false,
+              "operators": [
+                "I"
+              ],
+              "retained_native_semantic_source": {
+                "family": "intention_agency",
+                "records": [
+                  {
+                    "actor": "agent",
+                    "body": {
+                      "arguments": [
+                        "agent",
+                        "Cache.py"
+                      ],
+                      "confidence": 0.0,
+                      "grounding": "inferred",
+                      "modality": "intended",
+                      "predicate": "inspect",
+                      "review_status": "machine_extracted",
+                      "statement_kind": "goal",
+                      "text": "agent intends to inspect Cache.py."
+                    },
+                    "logic_family": "intention_agency",
+                    "native_record": {
+                      "arguments": [
+                        "agent",
+                        "Cache.py"
+                      ],
+                      "confidence": 0.0,
+                      "grounding": "inferred",
+                      "kind": "goal",
+                      "modality": "intended",
+                      "normalized_text": "agent intends to inspect Cache.py.",
+                      "predicate": "inspect",
+                      "review_status": "machine_extracted",
+                      "source_ref_ids": [
+                        "source"
+                      ],
+                      "statement_id": "goal:0"
+                    },
+                    "operator": "I",
+                    "statement_id": "goal:0"
+                  }
+                ],
+                "rule_program": null,
+                "schema": "intent-semantic-source-views/v1",
+                "semantic_source": {
+                  "action_accounting": [
+                    {
+                      "disposition": "declared_action_contract_not_observed_event",
+                      "native_action_id": "action:0",
+                      "replacement_projection_ids": [
+                        "intent-route/action-hoare/v1"
+                      ]
+                    }
+                  ],
+                  "blocked": [],
+                  "goals_asserted_true": false,
+                  "native_document": {
+                    "actions": [
+                      {
+                        "action_id": "action:0",
+                        "actor": "agent",
+                        "effect_ids": [],
+                        "grounding": "inferred",
+                        "input_refs": [],
+                        "object_refs": [
+                          "Cache.py"
+                        ],
+                        "output_refs": [],
+                        "precondition_ids": [],
+                        "source_ref_ids": [
+                          "source"
+                        ],
+                        "tool_refs": [],
+                        "verb": "inspect",
+                        "verification_ids": []
+                      }
+                    ],
+                    "control_edges": [],
+                    "document_id": "intent-rich:7e7cd640ae54d6d06d38e2ad7b62638127be940f982f202e400a9e467b5a011c",
+                    "entry_action_ids": [
+                      "action:0"
+                    ],
+                    "intent_kind": "declarative",
+                    "schema_version": "intent-ir/v1",
+                    "sources": [
+                      {
+                        "container_sha256": "",
+                        "container_uri": "",
+                        "content_cid": "",
+                        "content_sha256": "7e7cd640ae54d6d06d38e2ad7b62638127be940f982f202e400a9e467b5a011c",
+                        "license_expression": "",
+                        "ref_id": "source",
+                        "review_status": "machine_extracted",
+                        "source_id": "7e7cd640ae54d6d06d38e2ad7b62638127be940f982f202e400a9e467b5a011c",
+                        "source_revision": "7e7cd640ae54d6d06d38e2ad7b62638127be940f982f202e400a9e467b5a011c",
+                        "source_uri": "instruction:learned-rich-intent",
+                        "span": {
+                          "end_char": 34,
+                          "start_char": 0
+                        }
+                      }
+                    ],
+                    "statements": [
+                      {
+                        "arguments": [
+                          "agent",
+                          "Cache.py"
+                        ],
+                        "confidence": 0.0,
+                        "grounding": "inferred",
+                        "kind": "goal",
+                        "modality": "intended",
+                        "normalized_text": "agent intends to inspect Cache.py.",
+                        "predicate": "inspect",
+                        "review_status": "machine_extracted",
+                        "source_ref_ids": [
+                          "source"
+                        ],
+                        "statement_id": "goal:0"
+                      }
+                    ],
+                    "tags": [
+                      "learned-candidate"
+                    ],
+                    "terminal_action_ids": [
+                      "action:0"
+                    ],
+                    "title": "Rich candidate action/workflow view"
+                  },
+                  "native_document_sha256": "sha256:b18e8447d4a883a7cf0df88a3352ffb390efbf93c11c10f1228dbffe8233c8c4",
+                  "observed_events": [],
+                  "schema": "intent-semantic-source-views/v1",
+                  "semantic_records": [
+                    {
+                      "actor": "agent",
+                      "body": {
+                        "arguments": [
+                          "agent",
+                          "Cache.py"
+                        ],
+                        "confidence": 0.0,
+                        "grounding": "inferred",
+                        "modality": "intended",
+                        "predicate": "inspect",
+                        "review_status": "machine_extracted",
+                        "statement_kind": "goal",
+                        "text": "agent intends to inspect Cache.py."
+                      },
+                      "logic_family": "intention_agency",
+                      "native_record": {
+                        "arguments": [
+                          "agent",
+                          "Cache.py"
+                        ],
+                        "confidence": 0.0,
+                        "grounding": "inferred",
+                        "kind": "goal",
+                        "modality": "intended",
+                        "normalized_text": "agent intends to inspect Cache.py.",
+                        "predicate": "inspect",
+                        "review_status": "machine_extracted",
+                        "source_ref_ids": [
+                          "source"
+                        ],
+                        "statement_id": "goal:0"
+                      },
+                      "operator": "I",
+                      "statement_id": "goal:0"
+                    }
+                  ],
+                  "source_semantics_verified": false,
+                  "statement_accounting": [
+                    {
+                      "disposition": "formula_definition_not_asserted_truth",
+                      "replacement_projection_ids": [
+                        "intent_ir/semantic/intention_agency/v1"
+                      ],
+                      "statement_id": "goal:0"
+                    }
+                  ]
+                }
+              },
+              "source_semantics_verified": false,
+              "validator": "native_Intent_exact_role_force_and_RuleFrontend_semantic_binding_replay"
+            },
+            "parser_status": "passed",
+            "projection_id": "intent_ir/semantic/intention_agency/v1",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "program",
+            "lowering": {
+              "assumptions": [
+                "The supplied transition relation is a parameter, not a program inferred from the action verb.",
+                "This is a partial-correctness contract, with no termination, execution, mutation-frame, or compliance proof.",
+                "Empty postconditions are explicitly True; verification, tools and I/O semantics stay unsupported."
+              ],
+              "capability_floor_eligible": false,
+              "capability_floor_reason": "vacuous_contract_without_meaningful_postcondition",
+              "operators": [
+                "universal_partial_correctness",
+                "ordered_ground_predicates",
+                "action_relation"
+              ],
+              "retained_native_records": [
+                {
+                  "action": {
+                    "action_id": "action:0",
+                    "actor": "agent",
+                    "effect_ids": [],
+                    "grounding": "inferred",
+                    "input_refs": [],
+                    "object_refs": [
+                      "Cache.py"
+                    ],
+                    "output_refs": [],
+                    "precondition_ids": [],
+                    "source_ref_ids": [
+                      "source"
+                    ],
+                    "tool_refs": [],
+                    "verb": "inspect",
+                    "verification_ids": []
+                  },
+                  "effects": [],
+                  "kind": "hoare_action_contract",
+                  "postcondition": [],
+                  "precondition": [],
+                  "verification": []
+                }
+              ],
+              "validator": "native_Intent_action_and_complete_pre_post_reference_validation"
+            },
+            "parser_status": "passed",
+            "projection_id": "intent-route/action-hoare/v1",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "temporal",
+            "lowering": {
+              "assumptions": [
+                "Only finite typed state equality-map predicates and labelled actions are lowered.",
+                "Native declarations describe allowed transitions, not observed execution or verified source behavior.",
+                "The terminal local stutter flag is redundant with its equality-map action; a Lean example checks that fact.",
+                "The separate bounded run uses the declared step budget. No eventual completion, code execution or normative compliance is inferred.",
+                "The finite declared sequence is a specification, not an observed trace or an eventual-completion theorem."
+              ],
+              "operators": [
+                "typed_state_equality",
+                "initial",
+                "guard",
+                "next",
+                "write_frame",
+                "labelled_transition",
+                "terminal_self_loop",
+                "bounded_control_trace"
+              ],
+              "retained_native_context": {
+                "context": {
+                  "abstraction": "abstract_intent_control_flow",
+                  "max_steps": 64
+                },
+                "format": "StateTransitionIR@1",
+                "node_map": [
+                  {
+                    "from_position": "position_0",
+                    "intent_action_id": "action:0",
+                    "state_action_id": "action:abstract:0",
+                    "to_position": "done"
+                  }
+                ],
+                "payload": {
+                  "actions": [
+                    {
+                      "action_id": "action:abstract:0",
+                      "attributes": {
+                        "abstract_event_only": true,
+                        "intent_action_id": "action:0"
+                      },
+                      "enables_stutter": false,
+                      "frame": {
+                        "allows_all_reads": false,
+                        "allows_all_writes": false,
+                        "reads": [
+                          "var:pc"
+                        ],
+                        "schema_version": "action-frame/v1",
+                        "writes": [
+                          "var:pc"
+                        ]
+                      },
+                      "guard_predicate_id": "pred:guard:0",
+                      "label_ids": [],
+                      "name": "AdvanceIntent0",
+                      "next_predicate_id": "pred:next:0",
+                      "schema_version": "action/v1",
+                      "source_ref_ids": [
+                        "source"
+                      ]
+                    },
+                    {
+                      "action_id": "action:done",
+                      "attributes": {
+                        "abstract_event_only": true,
+                        "origin": "adapter_generated_terminal_self_loop"
+                      },
+                      "enables_stutter": true,
+                      "frame": {
+                        "allows_all_reads": false,
+                        "allows_all_writes": false,
+                        "reads": [
+                          "var:pc"
+                        ],
+                        "schema_version": "action-frame/v1",
+                        "writes": [
+                          "var:pc"
+                        ]
+                      },
+                      "guard_predicate_id": "pred:done-guard",
+                      "label_ids": [],
+                      "name": "Done",
+                      "next_predicate_id": "pred:done-next",
+                      "schema_version": "action/v1",
+                      "source_ref_ids": []
+                    }
+                  ],
+                  "document_id": "bafkreigmifya6grfrlwxdlyvw377o7myn2sog32y2kke4xy6dgvxvgo6cu",
+                  "fairness": [],
+                  "interface": "StateTransitionIR@1",
+                  "kripke": null,
+                  "labels": [],
+                  "metadata": {
+                    "abstraction": "abstract_intent_control_flow",
+                    "code_effects_modeled": false,
+                    "intent_document_id": "intent-rich:7e7cd640ae54d6d06d38e2ad7b62638127be940f982f202e400a9e467b5a011c",
+                    "intent_ir_sha256": "b18e8447d4a883a7cf0df88a3352ffb390efbf93c11c10f1228dbffe8233c8c4",
+                    "max_steps": 64,
+                    "normative_compliance_modeled": false,
+                    "position_map": [
+                      {
+                        "from_position": "position_0",
+                        "intent_action_id": "action:0",
+                        "state_action_id": "action:abstract:0",
+                        "to_position": "done"
+                      }
+                    ]
+                  },
+                  "predicates": [
+                    {
+                      "attributes": {},
+                      "expression": {
+                        "var:pc": "done"
+                      },
+                      "predicate_id": "pred:done-guard",
+                      "role": "guard",
+                      "schema_version": "state-predicate/v1",
+                      "source_ref_ids": [],
+                      "statement": "Terminal abstract position.",
+                      "subject_variable_ids": [
+                        "var:pc"
+                      ]
+                    },
+                    {
+                      "attributes": {},
+                      "expression": {
+                        "var:pc": "done"
+                      },
+                      "predicate_id": "pred:done-next",
+                      "role": "next",
+                      "schema_version": "state-predicate/v1",
+                      "source_ref_ids": [],
+                      "statement": "Explicit terminal self-loop.",
+                      "subject_variable_ids": [
+                        "var:pc"
+                      ]
+                    },
+                    {
+                      "attributes": {},
+                      "expression": {
+                        "var:pc": "position_0"
+                      },
+                      "predicate_id": "pred:guard:0",
+                      "role": "guard",
+                      "schema_version": "state-predicate/v1",
+                      "source_ref_ids": [
+                        "source"
+                      ],
+                      "statement": "At declared abstract position.",
+                      "subject_variable_ids": [
+                        "var:pc"
+                      ]
+                    },
+                    {
+                      "attributes": {},
+                      "expression": {
+                        "var:pc": "position_0"
+                      },
+                      "predicate_id": "pred:init",
+                      "role": "initial",
+                      "schema_version": "state-predicate/v1",
+                      "source_ref_ids": [
+                        "source"
+                      ],
+                      "statement": "Initial intent graph position.",
+                      "subject_variable_ids": [
+                        "var:pc"
+                      ]
+                    },
+                    {
+                      "attributes": {},
+                      "expression": {
+                        "var:pc": "done"
+                      },
+                      "predicate_id": "pred:next:0",
+                      "role": "next",
+                      "schema_version": "state-predicate/v1",
+                      "source_ref_ids": [
+                        "source"
+                      ],
+                      "statement": "Advance the abstract control position.",
+                      "subject_variable_ids": [
+                        "var:pc"
+                      ]
+                    }
+                  ],
+                  "schema": {
+                    "interface": "StateSchema@1",
+                    "metadata": {
+                      "abstraction": "abstract_intent_control_flow"
+                    },
+                    "schema_id": "bafkreieywyzn3aejip6mpantiwoj5tg7hxnzacrwbu22hksborl4brmpli",
+                    "schema_version": "state-schema/v1",
+                    "variables": [
+                      {
+                        "attributes": {},
+                        "boundedness": "finite",
+                        "description": "Abstract intent graph position; no executable-code state semantics.",
+                        "domain_bound": {
+                          "bound_id": "bound:pc",
+                          "cardinality": null,
+                          "lower": null,
+                          "members": [
+                            "position_0",
+                            "done"
+                          ],
+                          "schema_version": "state-finite-bound/v1",
+                          "upper": null
+                        },
+                        "element_type_kind": null,
+                        "name": "pc",
+                        "schema_version": "state-variable/v1",
+                        "source_ref_ids": [
+                          "source"
+                        ],
+                        "type_kind": "enumeration",
+                        "variable_id": "var:pc"
+                      }
+                    ]
+                  },
+                  "schema_version": "state-transition-ir/v1",
+                  "transitions": [
+                    {
+                      "action_ids": [
+                        "action:abstract:0",
+                        "action:done"
+                      ],
+                      "allows_stutter": true,
+                      "attributes": {},
+                      "kind": "action",
+                      "predicate_id": "",
+                      "relation_id": "transition:next",
+                      "schema_version": "transition-relation/v1",
+                      "source_ref_ids": [],
+                      "statement": "Disjunction of abstract control advances and terminal self-loop."
+                    }
+                  ],
+                  "valuations": [],
+                  "variants": []
+                },
+                "source": "native_intent_ir"
+              },
+              "retained_workflow_records": [
+                {
+                  "entry_action_ids": [
+                    "action:0"
+                  ],
+                  "kind": "workflow_boundary",
+                  "terminal_action_ids": [
+                    "action:0"
+                  ]
+                }
+              ],
+              "validator": "native_workflow_boundary_edges_join_exact_linear_StateTransitionIR"
+            },
+            "parser_status": "passed",
+            "projection_id": "intent-route/workflow-temporal/v1",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "transition_system",
+            "lowering": {
+              "assumptions": [
+                "Only finite typed state equality-map predicates and labelled actions are lowered.",
+                "Native declarations describe allowed transitions, not observed execution or verified source behavior.",
+                "The terminal local stutter flag is redundant with its equality-map action; a Lean example checks that fact.",
+                "The separate bounded run uses the declared step budget. No eventual completion, code execution or normative compliance is inferred."
+              ],
+              "operators": [
+                "typed_state_equality",
+                "initial",
+                "guard",
+                "next",
+                "write_frame",
+                "labelled_transition",
+                "terminal_self_loop",
+                "bounded_control_trace"
+              ],
+              "retained_native_context": {
+                "context": {
+                  "abstraction": "abstract_intent_control_flow",
+                  "max_steps": 64
+                },
+                "format": "StateTransitionIR@1",
+                "node_map": [
+                  {
+                    "from_position": "position_0",
+                    "intent_action_id": "action:0",
+                    "state_action_id": "action:abstract:0",
+                    "to_position": "done"
+                  }
+                ],
+                "payload": {
+                  "actions": [
+                    {
+                      "action_id": "action:abstract:0",
+                      "attributes": {
+                        "abstract_event_only": true,
+                        "intent_action_id": "action:0"
+                      },
+                      "enables_stutter": false,
+                      "frame": {
+                        "allows_all_reads": false,
+                        "allows_all_writes": false,
+                        "reads": [
+                          "var:pc"
+                        ],
+                        "schema_version": "action-frame/v1",
+                        "writes": [
+                          "var:pc"
+                        ]
+                      },
+                      "guard_predicate_id": "pred:guard:0",
+                      "label_ids": [],
+                      "name": "AdvanceIntent0",
+                      "next_predicate_id": "pred:next:0",
+                      "schema_version": "action/v1",
+                      "source_ref_ids": [
+                        "source"
+                      ]
+                    },
+                    {
+                      "action_id": "action:done",
+                      "attributes": {
+                        "abstract_event_only": true,
+                        "origin": "adapter_generated_terminal_self_loop"
+                      },
+                      "enables_stutter": true,
+                      "frame": {
+                        "allows_all_reads": false,
+                        "allows_all_writes": false,
+                        "reads": [
+                          "var:pc"
+                        ],
+                        "schema_version": "action-frame/v1",
+                        "writes": [
+                          "var:pc"
+                        ]
+                      },
+                      "guard_predicate_id": "pred:done-guard",
+                      "label_ids": [],
+                      "name": "Done",
+                      "next_predicate_id": "pred:done-next",
+                      "schema_version": "action/v1",
+                      "source_ref_ids": []
+                    }
+                  ],
+                  "document_id": "bafkreigmifya6grfrlwxdlyvw377o7myn2sog32y2kke4xy6dgvxvgo6cu",
+                  "fairness": [],
+                  "interface": "StateTransitionIR@1",
+                  "kripke": null,
+                  "labels": [],
+                  "metadata": {
+                    "abstraction": "abstract_intent_control_flow",
+                    "code_effects_modeled": false,
+                    "intent_document_id": "intent-rich:7e7cd640ae54d6d06d38e2ad7b62638127be940f982f202e400a9e467b5a011c",
+                    "intent_ir_sha256": "b18e8447d4a883a7cf0df88a3352ffb390efbf93c11c10f1228dbffe8233c8c4",
+                    "max_steps": 64,
+                    "normative_compliance_modeled": false,
+                    "position_map": [
+                      {
+                        "from_position": "position_0",
+                        "intent_action_id": "action:0",
+                        "state_action_id": "action:abstract:0",
+                        "to_position": "done"
+                      }
+                    ]
+                  },
+                  "predicates": [
+                    {
+                      "attributes": {},
+                      "expression": {
+                        "var:pc": "done"
+                      },
+                      "predicate_id": "pred:done-guard",
+                      "role": "guard",
+                      "schema_version": "state-predicate/v1",
+                      "source_ref_ids": [],
+                      "statement": "Terminal abstract position.",
+                      "subject_variable_ids": [
+                        "var:pc"
+                      ]
+                    },
+                    {
+                      "attributes": {},
+                      "expression": {
+                        "var:pc": "done"
+                      },
+                      "predicate_id": "pred:done-next",
+                      "role": "next",
+                      "schema_version": "state-predicate/v1",
+                      "source_ref_ids": [],
+                      "statement": "Explicit terminal self-loop.",
+                      "subject_variable_ids": [
+                        "var:pc"
+                      ]
+                    },
+                    {
+                      "attributes": {},
+                      "expression": {
+                        "var:pc": "position_0"
+                      },
+                      "predicate_id": "pred:guard:0",
+                      "role": "guard",
+                      "schema_version": "state-predicate/v1",
+                      "source_ref_ids": [
+                        "source"
+                      ],
+                      "statement": "At declared abstract position.",
+                      "subject_variable_ids": [
+                        "var:pc"
+                      ]
+                    },
+                    {
+                      "attributes": {},
+                      "expression": {
+                        "var:pc": "position_0"
+                      },
+                      "predicate_id": "pred:init",
+                      "role": "initial",
+                      "schema_version": "state-predicate/v1",
+                      "source_ref_ids": [
+                        "source"
+                      ],
+                      "statement": "Initial intent graph position.",
+                      "subject_variable_ids": [
+                        "var:pc"
+                      ]
+                    },
+                    {
+                      "attributes": {},
+                      "expression": {
+                        "var:pc": "done"
+                      },
+                      "predicate_id": "pred:next:0",
+                      "role": "next",
+                      "schema_version": "state-predicate/v1",
+                      "source_ref_ids": [
+                        "source"
+                      ],
+                      "statement": "Advance the abstract control position.",
+                      "subject_variable_ids": [
+                        "var:pc"
+                      ]
+                    }
+                  ],
+                  "schema": {
+                    "interface": "StateSchema@1",
+                    "metadata": {
+                      "abstraction": "abstract_intent_control_flow"
+                    },
+                    "schema_id": "bafkreieywyzn3aejip6mpantiwoj5tg7hxnzacrwbu22hksborl4brmpli",
+                    "schema_version": "state-schema/v1",
+                    "variables": [
+                      {
+                        "attributes": {},
+                        "boundedness": "finite",
+                        "description": "Abstract intent graph position; no executable-code state semantics.",
+                        "domain_bound": {
+                          "bound_id": "bound:pc",
+                          "cardinality": null,
+                          "lower": null,
+                          "members": [
+                            "position_0",
+                            "done"
+                          ],
+                          "schema_version": "state-finite-bound/v1",
+                          "upper": null
+                        },
+                        "element_type_kind": null,
+                        "name": "pc",
+                        "schema_version": "state-variable/v1",
+                        "source_ref_ids": [
+                          "source"
+                        ],
+                        "type_kind": "enumeration",
+                        "variable_id": "var:pc"
+                      }
+                    ]
+                  },
+                  "schema_version": "state-transition-ir/v1",
+                  "transitions": [
+                    {
+                      "action_ids": [
+                        "action:abstract:0",
+                        "action:done"
+                      ],
+                      "allows_stutter": true,
+                      "attributes": {},
+                      "kind": "action",
+                      "predicate_id": "",
+                      "relation_id": "transition:next",
+                      "schema_version": "transition-relation/v1",
+                      "source_ref_ids": [],
+                      "statement": "Disjunction of abstract control advances and terminal self-loop."
+                    }
+                  ],
+                  "valuations": [],
+                  "variants": []
+                },
+                "source": "native_intent_ir"
+              },
+              "validator": "native_StateTransitionIR_exact_linear_pc_and_terminal_self_loop"
+            },
+            "parser_status": "passed",
+            "projection_id": "intent-extended/transition_system/default/v1",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "transition_system",
+            "lowering": {
+              "assumptions": [
+                "finite_step_budget",
+                "TLA_specification_allows_stuttering",
+                "no_source_program_equivalence_proof"
+              ],
+              "operators": [
+                "typed_state_equality",
+                "initial",
+                "guard",
+                "next",
+                "write_frame",
+                "labelled_transition",
+                "finite_step_budget",
+                "TLA_box_stuttering"
+              ],
+              "syntax_requirements": [
+                {
+                  "kind": "SANY",
+                  "model_text": "---- MODULE BoundedNativeState ----\nEXTENDS Integers, Sequences\n\nMaxSteps == 64\nv0Domain == {\"position_0\", \"done\"}\nVARIABLES v0, step, actionLabel\nvars == <<v0, step, actionLabel>>\nSourceVariableAliases == <<<<\"var:pc\", \"v0\">>, <<\"pc\", \"v0\">>>>\nActionIntentOrigins == <<<<\"action:abstract:0\", \"action:0\">>>>\nActionEventOrigins == <<>>\nSyntheticActionOrigins == <<<<\"action:done\", \"adapter_generated_terminal_self_loop\">>>>\nStateAbstraction == \"abstract_intent_control_flow\"\nSourceIntentDocument == \"intent-rich:7e7cd640ae54d6d06d38e2ad7b62638127be940f982f202e400a9e467b5a011c\"\nSourceIntentIRSHA256 == \"b18e8447d4a883a7cf0df88a3352ffb390efbf93c11c10f1228dbffe8233c8c4\"\nIntentPositionMap == <<<<\"action:abstract:0\", \"action:0\", \"position_0\", \"done\">>>>\nCodeEffectsModeled == FALSE\nNormativeComplianceModeled == FALSE\nRuntimeEventOccurrencesAttested == FALSE\nTypeOK == v0 \\in v0Domain /\\ step \\in 0..MaxSteps /\\ actionLabel \\in {\"initial\", \"stutter\", \"action:abstract:0\", \"action:done\"}\nPred0 == v0 = \"done\"\nPred1 == v0' = \"done\"\nPred2 == v0 = \"position_0\"\nPred3 == v0 = \"position_0\"\nPred4 == v0' = \"done\"\nInit == TypeOK /\\ step = 0 /\\ actionLabel = \"initial\" /\\ Pred3\nAction0 == Pred2 /\\ Pred4 /\\ actionLabel' = \"action:abstract:0\"\nAction1 == Pred0 /\\ Pred1 /\\ actionLabel' = \"action:done\"\nDeclaredStutter == UNCHANGED <<v0>> /\\ actionLabel' = \"stutter\"\nNext == TypeOK /\\ TypeOK' /\\ step < MaxSteps /\\ step' = step + 1 /\\ (Action0 \\/ Action1 \\/ DeclaredStutter)\nSpec == Init /\\ [][Next]_vars\nSafety == TypeOK\n====\n",
+                  "module_name": "BoundedNativeState"
+                }
+              ],
+              "validator": "exact_bounded_native_TLA_and_Lean_regeneration"
+            },
+            "parser_status": "passed",
+            "projection_id": "intent_ir/bounded_state/tla_plus/v4",
+            "reason": null
+          }
+        ],
+        "requested_family_count": 40
+      },
+      {
+        "all_requested_projections_passed": false,
+        "job_id": "fixture-ui-ec-idle-inertia",
+        "lake_status": "passed",
+        "library": "UIUXIR",
+        "native_status": "partial",
+        "projections": [
+          {
+            "lake_status": "passed",
+            "logic_family": "event_calculus",
+            "lowering": {
+              "assumptions": [
+                "explicit_caller_occurrence_declarations_not_authenticated_history",
+                "finite_discrete_complete_signed_prefix_only",
+                "frozen_boolean_parameters_only",
+                "no_timeout_simultaneous_event_release_or_self_loop_semantics",
+                "source_fidelity_not_proven",
+                "happenings_unknown_at_prefix_end_state_known_one_successor_then_unknown",
+                "actual_Lake_execution_required"
+              ],
+              "capability_floor_eligible": true,
+              "capability_scope": "explicit_bounded_discrete_EC_with_complete_signed_occurrences",
+              "event_authenticity_verified": false,
+              "exhaustive_effect_cell_count": 6,
+              "native_formula_count": 13,
+              "operators": [
+                "Happens",
+                "HoldsAt",
+                "Initiates",
+                "Terminates",
+                "discrete_successor_inertia",
+                "explicit_initial_fluents"
+              ],
+              "signed_occurrence_tick_count": 3,
+              "source_semantics_verified": false,
+              "syntax_requirements": [],
+              "timeout_semantics_inferred": false,
+              "validator": "native_EC_AST_and_signed_discrete_inertia_complete_source_replay"
+            },
+            "parser_status": "passed",
+            "projection_id": "ui_ux_ir/explicit_guards/bounded_event_calculus/v1",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "first_order",
+            "lowering": {
+              "assumptions": [
+                "Atomic predicates and distinct deontic/cognitive operators are interpretation parameters.",
+                "Native Object and agent sorts have separate arbitrary Lean carrier types.",
+                "Temporal operators use discrete unbounded Nat traces; no modal axioms or event-calculus axioms asserted."
+              ],
+              "operators": [
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate"
+              ],
+              "validator": "replayed_native_formula_evidence_and_exact_AST_reparse"
+            },
+            "parser_status": "passed",
+            "projection_id": "ui_ux_ir/native_formula/FOL/v3",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "frame_logic",
+            "lowering": {
+              "assumptions": [
+                "Frame triples are interpreted relations; declaration records do not establish the source proposition."
+              ],
+              "operators": [
+                "frame_relation"
+              ],
+              "validator": "exact_native_frame_record_source_replay"
+            },
+            "parser_status": "passed",
+            "projection_id": "ui_ux_ir:flogic",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "transition_system",
+            "lowering": {
+              "actual_event_occurrence_asserted": false,
+              "assumptions": [
+                "caller_supplied_frozen_boolean_parameters_not_source_translation",
+                "guard_constraint_references_not_proven",
+                "frozen_parameters_not_dynamic_UI_state",
+                "no_timing_effects_priority_parallel_or_recovery_semantics",
+                "disabled_cases_retained",
+                "reachable_deadlocks_are_diagnostics_not_a_progress_claim",
+                "bounded_TLA_allows_specification_stuttering",
+                "actual_Lake_required_no_source_truth_or_event_authenticity"
+              ],
+              "bounded_ec_report_sha256": "393e178768a6ef810eca21d3495eed76b5f5de2e18a5f6259717f4d454165947",
+              "enabled_edge_count": 1,
+              "guard_truth_table_rows": 2,
+              "operators": [
+                "finite_boolean_guard",
+                "explicit_initial_values",
+                "frozen_parameter_frame",
+                "declared_labelled_transition"
+              ],
+              "preserved_payload_sha256": "41faddeebe0356f86181a0d264d31ac18cae40940c4182aa65d61e05cf3a8c99",
+              "preserved_v4_report_sha256": "26bb07ef975f4d941c1b78b5554cea282a5839c032a6d9396ad6c71e3f49563e",
+              "reachable_nonterminal_deadlocks": [],
+              "source_semantics_verified": false,
+              "syntax_requirements": [],
+              "timing_supported": false,
+              "validator": "complete_explicit_UI_Boolean_truth_table_and_native_state_replay"
+            },
+            "parser_status": "passed",
+            "projection_id": "ui_ux_ir/explicit_guards/state/v1",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "transition_system",
+            "lowering": {
+              "actual_event_occurrence_asserted": false,
+              "assumptions": [
+                "caller_supplied_frozen_boolean_parameters_not_source_translation",
+                "guard_constraint_references_not_proven",
+                "frozen_parameters_not_dynamic_UI_state",
+                "no_timing_effects_priority_parallel_or_recovery_semantics",
+                "disabled_cases_retained",
+                "reachable_deadlocks_are_diagnostics_not_a_progress_claim",
+                "bounded_TLA_allows_specification_stuttering",
+                "actual_Lake_required_no_source_truth_or_event_authenticity"
+              ],
+              "bounded_ec_report_sha256": "393e178768a6ef810eca21d3495eed76b5f5de2e18a5f6259717f4d454165947",
+              "enabled_edge_count": 1,
+              "guard_truth_table_rows": 2,
+              "operators": [
+                "finite_boolean_guard",
+                "explicit_initial_values",
+                "frozen_parameter_frame",
+                "declared_labelled_transition"
+              ],
+              "preserved_payload_sha256": "41faddeebe0356f86181a0d264d31ac18cae40940c4182aa65d61e05cf3a8c99",
+              "preserved_v4_report_sha256": "26bb07ef975f4d941c1b78b5554cea282a5839c032a6d9396ad6c71e3f49563e",
+              "reachable_nonterminal_deadlocks": [],
+              "source_semantics_verified": false,
+              "syntax_requirements": [
+                {
+                  "kind": "SANY",
+                  "model_text": "---- MODULE BoundedNativeState ----\nEXTENDS Integers, Sequences\n\nMaxSteps == 4\nv0Domain == {\"state_0\", \"state_1\"}\nv1Domain == BOOLEAN\nVARIABLES v0, v1, step, actionLabel\nvars == <<v0, v1, step, actionLabel>>\nSourceVariableAliases == <<<<\"var:ui-control\", \"v0\">>, <<\"ui_control\", \"v0\">>, <<\"var:ui-param:0\", \"v1\">>, <<\"ui_parameter_0\", \"v1\">>>>\nActionIntentOrigins == <<>>\nActionEventOrigins == <<>>\nSyntheticActionOrigins == <<>>\nRuntimeEventOccurrencesAttested == FALSE\nTypeOK == v0 \\in v0Domain /\\ v1 \\in v1Domain /\\ step \\in 0..MaxSteps /\\ actionLabel \\in {\"initial\", \"stutter\", \"action:ui-guard:0:1\"}\nPred0 == v0 = \"state_1\" /\\ v1 = TRUE\nPred1 == v0' = \"state_0\"\nPred2 == v0 = \"state_1\" /\\ v1 = TRUE\nInit == TypeOK /\\ step = 0 /\\ actionLabel = \"initial\" /\\ Pred2\nAction0 == Pred0 /\\ Pred1 /\\ actionLabel' = \"action:ui-guard:0:1\" /\\ v1' = v1\nNext == TypeOK /\\ TypeOK' /\\ step < MaxSteps /\\ step' = step + 1 /\\ (Action0)\nSpec == Init /\\ [][Next]_vars\nSafety == TypeOK\n====\n",
+                  "module_name": "BoundedNativeState"
+                }
+              ],
+              "timing_supported": false,
+              "validator": "complete_explicit_UI_Boolean_truth_table_and_native_state_replay"
+            },
+            "parser_status": "passed",
+            "projection_id": "ui_ux_ir/explicit_guards/tla_plus/v1",
+            "reason": null
+          }
+        ],
+        "requested_family_count": 40
+      },
+      {
+        "all_requested_projections_passed": false,
+        "job_id": "fixture-ui-ec-occurrence-then-inertia",
+        "lake_status": "passed",
+        "library": "UIUXIR",
+        "native_status": "partial",
+        "projections": [
+          {
+            "lake_status": "passed",
+            "logic_family": "event_calculus",
+            "lowering": {
+              "assumptions": [
+                "explicit_caller_occurrence_declarations_not_authenticated_history",
+                "finite_discrete_complete_signed_prefix_only",
+                "frozen_boolean_parameters_only",
+                "no_timeout_simultaneous_event_release_or_self_loop_semantics",
+                "source_fidelity_not_proven",
+                "happenings_unknown_at_prefix_end_state_known_one_successor_then_unknown",
+                "actual_Lake_execution_required"
+              ],
+              "capability_floor_eligible": true,
+              "capability_scope": "explicit_bounded_discrete_EC_with_complete_signed_occurrences",
+              "event_authenticity_verified": false,
+              "exhaustive_effect_cell_count": 6,
+              "native_formula_count": 13,
+              "operators": [
+                "Happens",
+                "HoldsAt",
+                "Initiates",
+                "Terminates",
+                "discrete_successor_inertia",
+                "explicit_initial_fluents"
+              ],
+              "signed_occurrence_tick_count": 3,
+              "source_semantics_verified": false,
+              "syntax_requirements": [],
+              "timeout_semantics_inferred": false,
+              "validator": "native_EC_AST_and_signed_discrete_inertia_complete_source_replay"
+            },
+            "parser_status": "passed",
+            "projection_id": "ui_ux_ir/explicit_guards/bounded_event_calculus/v1",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "first_order",
+            "lowering": {
+              "assumptions": [
+                "Atomic predicates and distinct deontic/cognitive operators are interpretation parameters.",
+                "Native Object and agent sorts have separate arbitrary Lean carrier types.",
+                "Temporal operators use discrete unbounded Nat traces; no modal axioms or event-calculus axioms asserted."
+              ],
+              "operators": [
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate"
+              ],
+              "validator": "replayed_native_formula_evidence_and_exact_AST_reparse"
+            },
+            "parser_status": "passed",
+            "projection_id": "ui_ux_ir/native_formula/FOL/v3",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "frame_logic",
+            "lowering": {
+              "assumptions": [
+                "Frame triples are interpreted relations; declaration records do not establish the source proposition."
+              ],
+              "operators": [
+                "frame_relation"
+              ],
+              "validator": "exact_native_frame_record_source_replay"
+            },
+            "parser_status": "passed",
+            "projection_id": "ui_ux_ir:flogic",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "transition_system",
+            "lowering": {
+              "actual_event_occurrence_asserted": false,
+              "assumptions": [
+                "caller_supplied_frozen_boolean_parameters_not_source_translation",
+                "guard_constraint_references_not_proven",
+                "frozen_parameters_not_dynamic_UI_state",
+                "no_timing_effects_priority_parallel_or_recovery_semantics",
+                "disabled_cases_retained",
+                "reachable_deadlocks_are_diagnostics_not_a_progress_claim",
+                "bounded_TLA_allows_specification_stuttering",
+                "actual_Lake_required_no_source_truth_or_event_authenticity"
+              ],
+              "bounded_ec_report_sha256": "61122e363851f4de1804ce920c4736b08fb6cedb9ee953b4f8cb6e0b5bd75fb6",
+              "enabled_edge_count": 1,
+              "guard_truth_table_rows": 2,
+              "operators": [
+                "finite_boolean_guard",
+                "explicit_initial_values",
+                "frozen_parameter_frame",
+                "declared_labelled_transition"
+              ],
+              "preserved_payload_sha256": "41faddeebe0356f86181a0d264d31ac18cae40940c4182aa65d61e05cf3a8c99",
+              "preserved_v4_report_sha256": "26bb07ef975f4d941c1b78b5554cea282a5839c032a6d9396ad6c71e3f49563e",
+              "reachable_nonterminal_deadlocks": [],
+              "source_semantics_verified": false,
+              "syntax_requirements": [],
+              "timing_supported": false,
+              "validator": "complete_explicit_UI_Boolean_truth_table_and_native_state_replay"
+            },
+            "parser_status": "passed",
+            "projection_id": "ui_ux_ir/explicit_guards/state/v1",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "transition_system",
+            "lowering": {
+              "actual_event_occurrence_asserted": false,
+              "assumptions": [
+                "caller_supplied_frozen_boolean_parameters_not_source_translation",
+                "guard_constraint_references_not_proven",
+                "frozen_parameters_not_dynamic_UI_state",
+                "no_timing_effects_priority_parallel_or_recovery_semantics",
+                "disabled_cases_retained",
+                "reachable_deadlocks_are_diagnostics_not_a_progress_claim",
+                "bounded_TLA_allows_specification_stuttering",
+                "actual_Lake_required_no_source_truth_or_event_authenticity"
+              ],
+              "bounded_ec_report_sha256": "61122e363851f4de1804ce920c4736b08fb6cedb9ee953b4f8cb6e0b5bd75fb6",
+              "enabled_edge_count": 1,
+              "guard_truth_table_rows": 2,
+              "operators": [
+                "finite_boolean_guard",
+                "explicit_initial_values",
+                "frozen_parameter_frame",
+                "declared_labelled_transition"
+              ],
+              "preserved_payload_sha256": "41faddeebe0356f86181a0d264d31ac18cae40940c4182aa65d61e05cf3a8c99",
+              "preserved_v4_report_sha256": "26bb07ef975f4d941c1b78b5554cea282a5839c032a6d9396ad6c71e3f49563e",
+              "reachable_nonterminal_deadlocks": [],
+              "source_semantics_verified": false,
+              "syntax_requirements": [
+                {
+                  "kind": "SANY",
+                  "model_text": "---- MODULE BoundedNativeState ----\nEXTENDS Integers, Sequences\n\nMaxSteps == 4\nv0Domain == {\"state_0\", \"state_1\"}\nv1Domain == BOOLEAN\nVARIABLES v0, v1, step, actionLabel\nvars == <<v0, v1, step, actionLabel>>\nSourceVariableAliases == <<<<\"var:ui-control\", \"v0\">>, <<\"ui_control\", \"v0\">>, <<\"var:ui-param:0\", \"v1\">>, <<\"ui_parameter_0\", \"v1\">>>>\nActionIntentOrigins == <<>>\nActionEventOrigins == <<>>\nSyntheticActionOrigins == <<>>\nRuntimeEventOccurrencesAttested == FALSE\nTypeOK == v0 \\in v0Domain /\\ v1 \\in v1Domain /\\ step \\in 0..MaxSteps /\\ actionLabel \\in {\"initial\", \"stutter\", \"action:ui-guard:0:1\"}\nPred0 == v0 = \"state_1\" /\\ v1 = TRUE\nPred1 == v0' = \"state_0\"\nPred2 == v0 = \"state_1\" /\\ v1 = TRUE\nInit == TypeOK /\\ step = 0 /\\ actionLabel = \"initial\" /\\ Pred2\nAction0 == Pred0 /\\ Pred1 /\\ actionLabel' = \"action:ui-guard:0:1\" /\\ v1' = v1\nNext == TypeOK /\\ TypeOK' /\\ step < MaxSteps /\\ step' = step + 1 /\\ (Action0)\nSpec == Init /\\ [][Next]_vars\nSafety == TypeOK\n====\n",
+                  "module_name": "BoundedNativeState"
+                }
+              ],
+              "timing_supported": false,
+              "validator": "complete_explicit_UI_Boolean_truth_table_and_native_state_replay"
+            },
+            "parser_status": "passed",
+            "projection_id": "ui_ux_ir/explicit_guards/tla_plus/v1",
+            "reason": null
+          }
+        ],
+        "requested_family_count": 40
+      },
+      {
+        "all_requested_projections_passed": false,
+        "job_id": "fixture-ui-ec-false-guard-idle",
+        "lake_status": "passed",
+        "library": "UIUXIR",
+        "native_status": "partial",
+        "projections": [
+          {
+            "lake_status": "passed",
+            "logic_family": "event_calculus",
+            "lowering": {
+              "assumptions": [
+                "explicit_caller_occurrence_declarations_not_authenticated_history",
+                "finite_discrete_complete_signed_prefix_only",
+                "frozen_boolean_parameters_only",
+                "no_timeout_simultaneous_event_release_or_self_loop_semantics",
+                "source_fidelity_not_proven",
+                "happenings_unknown_at_prefix_end_state_known_one_successor_then_unknown",
+                "actual_Lake_execution_required"
+              ],
+              "capability_floor_eligible": true,
+              "capability_scope": "explicit_bounded_discrete_EC_with_complete_signed_occurrences",
+              "event_authenticity_verified": false,
+              "exhaustive_effect_cell_count": 4,
+              "native_formula_count": 10,
+              "operators": [
+                "Happens",
+                "HoldsAt",
+                "Initiates",
+                "Terminates",
+                "discrete_successor_inertia",
+                "explicit_initial_fluents"
+              ],
+              "signed_occurrence_tick_count": 2,
+              "source_semantics_verified": false,
+              "syntax_requirements": [],
+              "timeout_semantics_inferred": false,
+              "validator": "native_EC_AST_and_signed_discrete_inertia_complete_source_replay"
+            },
+            "parser_status": "passed",
+            "projection_id": "ui_ux_ir/explicit_guards/bounded_event_calculus/v1",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "first_order",
+            "lowering": {
+              "assumptions": [
+                "Atomic predicates and distinct deontic/cognitive operators are interpretation parameters.",
+                "Native Object and agent sorts have separate arbitrary Lean carrier types.",
+                "Temporal operators use discrete unbounded Nat traces; no modal axioms or event-calculus axioms asserted."
+              ],
+              "operators": [
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "BinaryFormula",
+                "\u2227",
+                "Predicate",
+                "Predicate"
+              ],
+              "validator": "replayed_native_formula_evidence_and_exact_AST_reparse"
+            },
+            "parser_status": "passed",
+            "projection_id": "ui_ux_ir/native_formula/FOL/v3",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "frame_logic",
+            "lowering": {
+              "assumptions": [
+                "Frame triples are interpreted relations; declaration records do not establish the source proposition."
+              ],
+              "operators": [
+                "frame_relation"
+              ],
+              "validator": "exact_native_frame_record_source_replay"
+            },
+            "parser_status": "passed",
+            "projection_id": "ui_ux_ir:flogic",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "transition_system",
+            "lowering": {
+              "actual_event_occurrence_asserted": false,
+              "assumptions": [
+                "caller_supplied_frozen_boolean_parameters_not_source_translation",
+                "guard_constraint_references_not_proven",
+                "frozen_parameters_not_dynamic_UI_state",
+                "no_timing_effects_priority_parallel_or_recovery_semantics",
+                "disabled_cases_retained",
+                "reachable_deadlocks_are_diagnostics_not_a_progress_claim",
+                "bounded_TLA_allows_specification_stuttering",
+                "actual_Lake_required_no_source_truth_or_event_authenticity"
+              ],
+              "bounded_ec_report_sha256": "725998ab311b43e3b3881c28c13935d6408d7b03fe491567a84dc8e13d5136b0",
+              "enabled_edge_count": 1,
+              "guard_truth_table_rows": 2,
+              "operators": [
+                "finite_boolean_guard",
+                "explicit_initial_values",
+                "frozen_parameter_frame",
+                "declared_labelled_transition"
+              ],
+              "preserved_payload_sha256": "ce4b16d47c92f91426a785350f25bfc42238ac58372b472c55ea0a68d93ce89e",
+              "preserved_v4_report_sha256": "0f7f550cf891c55a50e326a8805e19bd7a9f630cdd23ac028726f5ba6352a4fd",
+              "reachable_nonterminal_deadlocks": [
+                "open"
+              ],
+              "source_semantics_verified": false,
+              "syntax_requirements": [],
+              "timing_supported": false,
+              "validator": "complete_explicit_UI_Boolean_truth_table_and_native_state_replay"
+            },
+            "parser_status": "passed",
+            "projection_id": "ui_ux_ir/explicit_guards/state/v1",
+            "reason": null
+          },
+          {
+            "lake_status": "passed",
+            "logic_family": "transition_system",
+            "lowering": {
+              "actual_event_occurrence_asserted": false,
+              "assumptions": [
+                "caller_supplied_frozen_boolean_parameters_not_source_translation",
+                "guard_constraint_references_not_proven",
+                "frozen_parameters_not_dynamic_UI_state",
+                "no_timing_effects_priority_parallel_or_recovery_semantics",
+                "disabled_cases_retained",
+                "reachable_deadlocks_are_diagnostics_not_a_progress_claim",
+                "bounded_TLA_allows_specification_stuttering",
+                "actual_Lake_required_no_source_truth_or_event_authenticity"
+              ],
+              "bounded_ec_report_sha256": "725998ab311b43e3b3881c28c13935d6408d7b03fe491567a84dc8e13d5136b0",
+              "enabled_edge_count": 1,
+              "guard_truth_table_rows": 2,
+              "operators": [
+                "finite_boolean_guard",
+                "explicit_initial_values",
+                "frozen_parameter_frame",
+                "declared_labelled_transition"
+              ],
+              "preserved_payload_sha256": "ce4b16d47c92f91426a785350f25bfc42238ac58372b472c55ea0a68d93ce89e",
+              "preserved_v4_report_sha256": "0f7f550cf891c55a50e326a8805e19bd7a9f630cdd23ac028726f5ba6352a4fd",
+              "reachable_nonterminal_deadlocks": [
+                "open"
+              ],
+              "source_semantics_verified": false,
+              "syntax_requirements": [
+                {
+                  "kind": "SANY",
+                  "model_text": "---- MODULE BoundedNativeState ----\nEXTENDS Integers, Sequences\n\nMaxSteps == 4\nv0Domain == {\"state_0\", \"state_1\"}\nv1Domain == BOOLEAN\nVARIABLES v0, v1, step, actionLabel\nvars == <<v0, v1, step, actionLabel>>\nSourceVariableAliases == <<<<\"var:ui-control\", \"v0\">>, <<\"ui_control\", \"v0\">>, <<\"var:ui-param:0\", \"v1\">>, <<\"ui_parameter_0\", \"v1\">>>>\nActionIntentOrigins == <<>>\nActionEventOrigins == <<>>\nSyntheticActionOrigins == <<>>\nRuntimeEventOccurrencesAttested == FALSE\nTypeOK == v0 \\in v0Domain /\\ v1 \\in v1Domain /\\ step \\in 0..MaxSteps /\\ actionLabel \\in {\"initial\", \"stutter\", \"action:ui-guard:0:1\"}\nPred0 == v0 = \"state_1\" /\\ v1 = TRUE\nPred1 == v0' = \"state_0\"\nPred2 == v0 = \"state_1\" /\\ v1 = FALSE\nInit == TypeOK /\\ step = 0 /\\ actionLabel = \"initial\" /\\ Pred2\nAction0 == Pred0 /\\ Pred1 /\\ actionLabel' = \"action:ui-guard:0:1\" /\\ v1' = v1\nNext == TypeOK /\\ TypeOK' /\\ step < MaxSteps /\\ step' = step + 1 /\\ (Action0)\nSpec == Init /\\ [][Next]_vars\nSafety == TypeOK\n====\n",
+                  "module_name": "BoundedNativeState"
+                }
+              ],
+              "timing_supported": false,
+              "validator": "complete_explicit_UI_Boolean_truth_table_and_native_state_replay"
+            },
+            "parser_status": "passed",
+            "projection_id": "ui_ux_ir/explicit_guards/tla_plus/v1",
+            "reason": null
+          }
+        ],
+        "requested_family_count": 40
+      }
+    ],
+    "resume": {
+      "admitted": false,
+      "all_inputs_unchanged": true,
+      "archived_job_count": 9,
+      "attempt_count": 15,
+      "elapsed_seconds": 5.639518878888339,
+      "event_authenticity_verified": false,
+      "formalized": false,
+      "fresh_holdout": false,
+      "live_job_count": 0,
+      "max_rss_kib": 781168,
+      "model_inference_executed": false,
+      "native_job_count": 9,
+      "native_lake_status_counts": {
+        "passed": 9
+      },
+      "preparation_blocks": 6,
+      "preparation_seconds": 5.409938906086609,
+      "qualified": false,
+      "receipt": {
+        "admitted": false,
+        "archived_receipts_are_live_authority": false,
+        "budget_scope": "cumulative_new_admission_and_backoff_window_not_a_hard_deadline_for_admitted_native_steps",
+        "checkpoint_promoted": false,
+        "consumed_admission_seconds": 54.84268183587119,
+        "execution_authority": false,
+        "formalized": false,
+        "inflight": null,
+        "live_validation_complete": false,
+        "manifest_sha256": "b9f52b03ac332942f8bd6f73dff45d48b53b946eeabccf9b624b6cb7147a55a7",
+        "model_inference_executed": false,
+        "plan_sha256": "c15b21586be59d8a4acdded99f9e1a643ee9053a88367f22cf66c036072188a7",
+        "proof_authority": false,
+        "qualified": false,
+        "rounds": [
+          {
+            "path": "round-0000/result.json",
+            "sha256": "85f736ed5926b6c0ffda1e14c374dcf56a27c80f1a78311e6ddc1350a6b20399"
+          }
+        ],
+        "schema": "resumable-native-validation/v1",
+        "source_semantics_verified": false,
+        "status": "completed",
+        "stopped_reason": "all_jobs_settled",
+        "training_executed": false
+      },
+      "resume": true,
+      "rss_scope": "Python_process_only_excludes_native_children",
+      "schema": "bounded-ui-event-resume-regression/v1",
+      "scope": "authored_bounded_EC_and_unchanged_prepared_native_targets",
+      "source_prediction_repaired": false,
+      "source_semantics_verified": false,
+      "training_executed": false,
+      "validation_seconds": 0.1407220249529928,
+      "weights_modified": false
+    },
+    "strict_training_refusals": 9
+  },
+  "qualified": false,
+  "remaining_gaps": [
+    "missing full modality floors remain strict-training blockers",
+    "bounded UI EC does not establish timeout/release/concurrency semantics or event authenticity",
+    "source GRU composition fidelity still needs the predeclared conditioning ablation",
+    "learned action-head data still lacks right-hand requirements and repeated-operand combinations"
+  ],
+  "schema": "bounded-ui-event-validation-results/v1",
+  "source_semantics_verified": false,
+  "tests": {
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "tests": 208
+  },
+  "training_executed": false,
+  "validated_code_base": "a7e7a228e28dcf45e18af9c82544611f1ef16e60",
+  "weights_modified": false
+}

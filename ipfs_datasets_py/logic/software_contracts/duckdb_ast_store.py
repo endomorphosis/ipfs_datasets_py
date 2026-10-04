@@ -21,13 +21,15 @@ no DuckDB, network, or filesystem I/O.
 from __future__ import annotations
 
 import json
+import math
 import threading
 import time
 from collections import OrderedDict
 from collections.abc import Mapping, Sequence
+from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any, Final, Protocol, runtime_checkable
+from typing import Any, Callable, Final, Protocol, runtime_checkable
 
 from ipfs_datasets_py.logic.software_contracts.ast_ir import (
     ASTIRValidationError,
@@ -48,6 +50,12 @@ from ipfs_datasets_py.logic.software_contracts.schema_versions import (
 DUCKDB_AST_STORE_INTERFACE: Final = "DuckDBASTStore@1"
 DUCKDB_AST_STORE_SCHEMA_VERSION: Final = "duckdb-ast-store/v1"
 ASTS_CATALOG_NAME: Final = "asts"
+
+# Bound individual lookups and diagnostic/history queries. Large callers can
+# narrow queries by revision/blob rather than hydrating the entire catalog.
+MAX_STORED_PAYLOAD_BYTES: Final = 16 * 1024 * 1024
+MAX_BATCH_PAYLOAD_BYTES: Final = 64 * 1024 * 1024
+MAX_QUERY_ROWS: Final = 100_000
 
 # Closed catalog table family declared by the control-plane plan (DQK-G600).
 ASTS_CATALOG_TABLES: Final[tuple[str, ...]] = (
@@ -113,6 +121,17 @@ INVALIDATION_REASONS: Final[frozenset[str]] = frozenset(
 # code-evidence plane.  New codes may be added only via explicit schema bump.
 PARSE_FAILURE_DIAGNOSTIC_CODE: Final = "ast.parse_failure"
 PARSE_FAILURE_NODE_KIND: Final = "diagnostic"
+
+
+def _is_parse_failure(diagnostic: Any) -> bool:
+    return (
+        diagnostic.severity == "fatal"
+        or diagnostic.code == PARSE_FAILURE_DIAGNOSTIC_CODE
+        or diagnostic.code.endswith(
+            (".parse_error", ".invalid_encoding", ".resource_limit")
+        )
+    )
+
 
 # Supervisor-compatible evidence fields projected alongside the relational
 # schema so datasets and accelerate do not invent incompatible AST payloads.
@@ -455,6 +474,21 @@ class ParseStatus(StrEnum):
     OK = "ok"
     FAILED = "failed"
     PARTIAL = "partial"
+
+
+def classify_parse_status(record: ASTRecord) -> str:
+    """Classify frontend diagnostics consistently for ingest and storage.
+
+    A failed parse may still retain partial symbols. Their presence never
+    overrides explicit parser failures or fatal diagnostics.
+    """
+    if type(record) is not ASTRecord:
+        raise DuckDBASTStoreError("parse classification requires an exact ASTRecord")
+    if any(_is_parse_failure(item) for item in record.diagnostics):
+        return ParseStatus.FAILED.value
+    if any(item.severity == "error" for item in record.diagnostics):
+        return ParseStatus.PARTIAL.value
+    return ParseStatus.OK.value
 
 
 @dataclass(frozen=True, slots=True)
@@ -872,16 +906,18 @@ class ASTCatalogProjection:
             if item.imported_name:
                 imports.append(
                     f"from {item.module} import {item.imported_name}"
-                    + (f" as {item.local_name}" if item.local_name and item.local_name != item.imported_name else "")
+                    + (
+                        f" as {item.local_name}"
+                        if item.local_name and item.local_name != item.imported_name
+                        else ""
+                    )
                 )
             else:
                 imports.append(
                     f"import {item.module}"
                     + (f" as {item.local_name}" if item.local_name else "")
                 )
-        calls = [
-            f"{item.scope_id}->{item.callee_name}" for item in self.calls
-        ]
+        calls = [f"{item.scope_id}->{item.callee_name}" for item in self.calls]
         interfaces = [
             item.signature_text or item.qualified_name for item in self.interfaces
         ]
@@ -894,9 +930,7 @@ class ASTCatalogProjection:
             "imports": sorted(set(imports)),
             "calls": sorted(set(calls)),
             "interfaces": sorted(set(interfaces)),
-            "symbol_lines": {
-                key: symbol_lines[key] for key in sorted(symbol_lines)
-            },
+            "symbol_lines": {key: symbol_lines[key] for key in sorted(symbol_lines)},
             "parse_error": self.ast_blob.parse_error,
             "ast_cid": self.ast_cid,
             "ast_schema": self.ast_blob.ast_schema_identifier,
@@ -1024,7 +1058,9 @@ def _node(
     if node_kind not in AST_NODE_KINDS:
         raise DuckDBASTStoreError(f"unknown node kind: {node_kind}")
     span_columns = SpanColumns.from_span(span)
-    if span is not None and any(value is None for value in span_columns.to_dict().values()):
+    if span is not None and any(
+        value is None for value in span_columns.to_dict().values()
+    ):
         raise DuckDBASTStoreError("span columns must be fully populated")
     if span is None:
         # Nodes without spans use zeroed half-open sentinel at origin.
@@ -1092,6 +1128,8 @@ def project_ast_record(
         created_at=now,
     )
     payload_json = _json_dumps(record.to_dict())
+    failures = tuple(item for item in record.diagnostics if _is_parse_failure(item))
+    incomplete = tuple(item for item in record.diagnostics if item.severity == "error")
     ast_blob = ASTBlobRow(
         blob_id=blob_id,
         file_id=file_id,
@@ -1104,8 +1142,8 @@ def project_ast_record(
         frontend_toolchain_cid=frontend.toolchain_cid,
         ast_schema_identifier=AST_IR_SCHEMA_VERSION.identifier,
         store_schema_version=DUCKDB_AST_STORE_SCHEMA_VERSION,
-        parse_status=ParseStatus.OK.value,
-        parse_error="",
+        parse_status=classify_parse_status(record),
+        parse_error="; ".join(item.message for item in failures or incomplete),
         payload_json=payload_json,
         created_at=now,
     )
@@ -1207,16 +1245,14 @@ def project_ast_record(
 
     diagnostic_rows = tuple(
         DiagnosticRow(
-            diagnostic_row_id=_row_id(
-                blob_id, "diagnostic", f"{index}:{item.code}"
-            ),
+            diagnostic_row_id=_row_id(blob_id, "diagnostic", f"{index}:{item.code}"),
             blob_id=blob_id,
             file_id=file_id,
             revision_id=revision_id,
             code=item.code,
             severity=item.severity,
             message=item.message,
-            is_parse_failure=False,
+            is_parse_failure=_is_parse_failure(item),
             span=SpanColumns.from_span(item.span),
             created_at=now,
         )
@@ -1564,9 +1600,7 @@ def spans_survive_projection(
         row = by_effect.get(item.effect_id)
         if row is None or not row.span.matches(item.span):
             return False
-    module_nodes = [
-        node for node in projection.nodes if node.node_kind == "module"
-    ]
+    module_nodes = [node for node in projection.nodes if node.node_kind == "module"]
     if not module_nodes or not module_nodes[0].span.matches(record.module.span):
         return False
     return True
@@ -1589,9 +1623,22 @@ class DuckDBASTStoreProtocol(Protocol):
 
     def catalog_tables(self) -> tuple[str, ...]: ...
 
-    def put(self, record: ASTRecord, *, created_at: float | None = None) -> ASTCatalogProjection: ...
+    def put(
+        self, record: ASTRecord, *, created_at: float | None = None
+    ) -> ASTCatalogProjection: ...
 
-    def put_projection(self, projection: ASTCatalogProjection) -> ASTCatalogProjection: ...
+    def put_projection(
+        self, projection: ASTCatalogProjection
+    ) -> ASTCatalogProjection: ...
+
+    def apply_batch(
+        self,
+        projections: Sequence[ASTCatalogProjection],
+        invalidations: Sequence[InvalidationRow] = (),
+        *,
+        before_apply: Callable[[Any], None] | None = None,
+        before_commit: Callable[[Any], None] | None = None,
+    ) -> tuple[tuple[ASTCatalogProjection, ...], tuple[InvalidationRow, ...]]: ...
 
     def get(self, blob_id: str) -> ASTCatalogProjection | None: ...
 
@@ -1614,11 +1661,13 @@ class DuckDBASTStoreProtocol(Protocol):
 
 
 class DuckDBASTStore:
-    """In-process AST catalog store with optional DuckDB schema install.
+    """AST catalog with optional durable, transactional DuckDB authority.
 
-    Entries are keyed by blob identity (``blob:<ast_cid>``).  Lookups and
-    diagnostics queries are process-local; when a DuckDB connection is
-    provided the catalog DDL is installed for durable backends.
+    Without a connection, retain the process-local store. With a connection,
+    exact reads reconstruct and verify only the requested projection; startup
+    never hydrates the catalog. Mutations own a transaction on the supplied
+    connection, which must not already be in a caller-owned transaction.
+    Invalidation removes active projections and retains its audit rows.
     """
 
     def __init__(self, *, connection: Any | None = None) -> None:
@@ -1648,8 +1697,6 @@ class DuckDBASTStore:
 
     @staticmethod
     def install_schema(connection: Any) -> None:
-        """Apply asts-catalog DDL on a DuckDB-like connection."""
-
         if connection is None:
             raise DuckDBASTStoreError("connection is required to install schema")
         for statement in ASTS_CATALOG_DDL.split(";"):
@@ -1660,19 +1707,248 @@ class DuckDBASTStore:
     def catalog_tables(self) -> tuple[str, ...]:
         return ASTS_CATALOG_TABLES
 
+    @contextmanager
+    def _transaction(self):
+        connection = self._connection
+        if connection is None:
+            yield
+            return
+        # BEGIN stays outside the try: a nested transaction rejection must not
+        # roll back a transaction owned by the caller.
+        connection.execute("BEGIN TRANSACTION")
+        try:
+            yield
+            connection.execute("COMMIT")
+        except BaseException:
+            try:
+                connection.execute("ROLLBACK")
+            except Exception:
+                pass
+            raise
+
+    def _rows(
+        self,
+        table: str,
+        where: str = "",
+        parameters: Sequence[Any] = (),
+        *,
+        columns: str = "*",
+    ) -> list[dict[str, Any]]:
+        assert self._connection is not None
+        if table not in ASTS_CATALOG_TABLES:
+            raise DuckDBASTStoreError("unknown catalog table")
+        cursor = self._connection.execute(
+            f'SELECT {columns} FROM "{table}"'
+            + (" WHERE " + where if where else "")
+            + f" LIMIT {MAX_QUERY_ROWS + 1}",
+            list(parameters),
+        )
+        names = [column[0] for column in cursor.description]
+        raw = cursor.fetchall()
+        if len(raw) > MAX_QUERY_ROWS:
+            raise DuckDBASTStoreError(
+                "query row bound exceeded; narrow by revision or blob"
+            )
+        return [dict(zip(names, row)) for row in raw]
+
+    @staticmethod
+    def _one(rows: list[dict[str, Any]], label: str) -> dict[str, Any]:
+        if len(rows) != 1:
+            raise DuckDBASTStoreIntegrityError(
+                f"expected one {label} row, found {len(rows)}"
+            )
+        return rows[0]
+
+    @staticmethod
+    def _rebuild(
+        blob: Mapping[str, Any],
+        revision: Mapping[str, Any],
+        diagnostics: Sequence[Mapping[str, Any]],
+        invalidations: Sequence[Mapping[str, Any]],
+    ) -> ASTCatalogProjection:
+        """Reproject canonical payload bytes instead of trusting stored facts."""
+        try:
+            payload = blob["payload_json"]
+            if (
+                type(payload) is not str
+                or len(payload.encode("utf-8")) > MAX_STORED_PAYLOAD_BYTES
+            ):
+                raise ValueError("stored AST payload exceeds byte bound")
+            timestamp = blob["created_at"]
+            if type(timestamp) not in (int, float) or not math.isfinite(timestamp):
+                raise ValueError("invalid projection timestamp")
+            if (
+                blob["parse_status"] == ParseStatus.FAILED.value
+                and json.loads(payload).get("kind") == "parse_failure"
+            ):
+                data = json.loads(payload)
+                diagnostic = DuckDBASTStore._one(
+                    list(diagnostics), "parse-failure diagnostic"
+                )
+                invalidation = DuckDBASTStore._one(
+                    list(invalidations), "parse-failure invalidation"
+                )
+                spans = {
+                    name: diagnostic[name] for name in SpanColumns.__dataclass_fields__
+                }
+                span = (
+                    None
+                    if all(value is None for value in spans.values())
+                    else SourceSpan(**spans)
+                )
+                return project_parse_failure(
+                    provenance=SourceProvenance(
+                        source_cid=data["source_cid"],
+                        path=data["path"],
+                        repository_id=data["repository_id"],
+                        revision=data["revision"],
+                        repository_tree_cid=revision["repository_tree_cid"],
+                    ),
+                    language=data["language"],
+                    message=data["message"],
+                    code=data["code"],
+                    severity=diagnostic["severity"],
+                    span=span,
+                    frontend_name=blob["frontend_name"],
+                    frontend_version=blob["frontend_version"],
+                    frontend_toolchain_cid=blob["frontend_toolchain_cid"],
+                    actor_id=invalidation["actor_id"],
+                    created_at=timestamp,
+                )
+            if blob["parse_status"] not in {item.value for item in ParseStatus}:
+                raise ValueError("unsupported persisted parse status")
+            return project_ast_record(
+                ASTRecord.from_json(payload), created_at=timestamp
+            )
+        except (
+            AttributeError,
+            KeyError,
+            TypeError,
+            ValueError,
+            RecursionError,
+        ) as error:
+            raise DuckDBASTStoreIntegrityError(
+                f"invalid stored AST projection: {error}"
+            ) from error
+
+    @classmethod
+    def _validate_projection(
+        cls, projection: ASTCatalogProjection, *, canonical: bool = True
+    ) -> None:
+        if type(projection) is not ASTCatalogProjection:
+            raise DuckDBASTStoreError(
+                "put_projection requires an exact ASTCatalogProjection"
+            )
+        if projection.ast_blob.store_schema_version != DUCKDB_AST_STORE_SCHEMA_VERSION:
+            raise DuckDBASTStoreError(
+                "unsupported AST store schema version on projection"
+            )
+        if (
+            projection.ast_blob.ast_schema_identifier
+            != AST_IR_SCHEMA_VERSION.identifier
+        ):
+            raise DuckDBASTStoreError(
+                "projection must bind the shared software-contract AST IR schema"
+            )
+        if not canonical:
+            # Preserve the existing hermetic row-fixture surface. Durable
+            # publication always requires the complete canonical AST payload.
+            return
+        expected = cls._rebuild(
+            projection.ast_blob.to_dict(),
+            projection.source_revision.to_dict(),
+            [row.to_dict() for row in projection.diagnostics],
+            [row.to_dict() for row in projection.invalidations],
+        )
+        if expected != projection:
+            raise DuckDBASTStoreIntegrityError(
+                "projection rows differ from canonical AST payload"
+            )
+
+    def _load(self, blob_id: str) -> ASTCatalogProjection | None:
+        blobs = self._rows("ast_blobs", "blob_id=?", [blob_id])
+        if not blobs:
+            return None
+        blob = self._one(blobs, "AST blob")
+        revision = self._one(
+            self._rows("source_revisions", "revision_id=?", [blob["revision_id"]]),
+            "revision",
+        )
+        source_file = self._one(
+            self._rows("source_files", "file_id=?", [blob["file_id"]]), "source file"
+        )
+        diagnostics = self._rows("diagnostics", "blob_id=?", [blob_id])
+        intrinsic = (
+            self._rows(
+                "invalidations",
+                "invalidation_id=?",
+                [_row_id(blob_id, "invalidation", "parse_failure")],
+            )
+            if blob["parse_status"] == ParseStatus.FAILED.value
+            else []
+        )
+        expected = self._rebuild(blob, revision, diagnostics, intrinsic)
+        if (
+            expected.ast_blob.to_dict() != blob
+            or expected.source_file.to_dict() != source_file
+        ):
+            raise DuckDBASTStoreIntegrityError(
+                "stored AST/source identity or payload mismatch"
+            )
+        # The revision is shared across files, whose acquisition timestamps may
+        # differ. Its identity fields must still match every projection.
+        if {
+            k: v
+            for k, v in expected.source_revision.to_dict().items()
+            if k != "created_at"
+        } != {k: v for k, v in revision.items() if k != "created_at"}:
+            raise DuckDBASTStoreIntegrityError("stored revision identity mismatch")
+        if type(revision["created_at"]) not in (int, float) or not math.isfinite(
+            revision["created_at"]
+        ):
+            raise DuckDBASTStoreIntegrityError("invalid revision timestamp")
+        for table, attribute in (
+            ("ast_nodes", "nodes"),
+            ("scopes", "scopes"),
+            ("symbols", "symbols"),
+            ("imports", "imports"),
+            ("references", "references"),
+            ("calls", "calls"),
+            ("effects", "effects"),
+            ("interfaces", "interfaces"),
+            ("diagnostics", "diagnostics"),
+            ("invalidations", "invalidations"),
+        ):
+            actual = (
+                diagnostics
+                if table == "diagnostics"
+                else (
+                    intrinsic
+                    if table == "invalidations"
+                    else self._rows(table, "blob_id=?", [blob_id])
+                )
+            )
+            wanted = [row.to_dict() for row in getattr(expected, attribute)]
+            if sorted(map(_json_dumps, actual)) != sorted(map(_json_dumps, wanted)):
+                raise DuckDBASTStoreIntegrityError(
+                    f"stored {table} rows differ from canonical AST payload"
+                )
+        return expected
+
     def stats(self) -> dict[str, int]:
         with self._lock:
-            return {
-                **self._stats,
-                "size": len(self._by_blob),
-                "invalidation_count": len(self._invalidations),
-            }
+            if self._connection is None:
+                size, invalidations = len(self._by_blob), len(self._invalidations)
+            else:
+                size, invalidations = self._connection.execute(
+                    "SELECT (SELECT count(*) FROM ast_blobs), (SELECT count(*) FROM invalidations)"
+                ).fetchone()
+            return {**self._stats, "size": size, "invalidation_count": invalidations}
 
     def put(
         self, record: ASTRecord, *, created_at: float | None = None
     ) -> ASTCatalogProjection:
-        projection = project_ast_record(record, created_at=created_at)
-        return self.put_projection(projection)
+        return self.put_projection(project_ast_record(record, created_at=created_at))
 
     def put_parse_failure(
         self,
@@ -1702,83 +1978,176 @@ class DuckDBASTStore:
             created_at=created_at,
             actor_id=actor_id,
         )
+        result = self.put_projection(projection)
         with self._lock:
             self._stats["parse_failures"] += 1
-        return self.put_projection(projection)
+        return result
 
-    def put_projection(
-        self, projection: ASTCatalogProjection
-    ) -> ASTCatalogProjection:
-        if type(projection) is not ASTCatalogProjection:
-            raise DuckDBASTStoreError(
-                "put_projection requires an exact ASTCatalogProjection"
+    def put_projection(self, projection: ASTCatalogProjection) -> ASTCatalogProjection:
+        return self.apply_batch((projection,), ())[0][0]
+
+    def apply_batch(
+        self,
+        projections: Sequence[ASTCatalogProjection],
+        invalidations: Sequence[InvalidationRow] = (),
+        *,
+        before_apply: Callable[[Any], None] | None = None,
+        before_commit: Callable[[Any], None] | None = None,
+    ) -> tuple[tuple[ASTCatalogProjection, ...], tuple[InvalidationRow, ...]]:
+        """Publish a bounded batch and invalidations atomically.
+
+        Supplied invalidations run after projections, matching revision ingest.
+        The returned invalidations include only the supplied rows; implicit
+        replacement and parse-failure audit rows remain queryable in the store.
+        No memory or operation counters publish before SQL commit succeeds.
+        The optional trusted-owner callbacks share this lock and transaction:
+        they must not start another transaction or publish external side effects.
+        An exception from either callback rolls the complete batch back. They
+        permit a control-domain compare-and-swap to commit with its AST rows.
+        """
+        if any(hook is not None and not callable(hook)
+               for hook in (before_apply, before_commit)):
+            raise DuckDBASTStoreError("transaction hooks must be callable")
+        if len(projections) + len(invalidations) > MAX_QUERY_ROWS:
+            raise DuckDBASTStoreError("publication batch exceeds row bound")
+        projections, invalidations = tuple(projections), tuple(invalidations)
+        payload_bytes = 0
+        for projection in projections:
+            self._validate_projection(
+                projection, canonical=self._connection is not None
             )
-        if projection.ast_blob.store_schema_version != DUCKDB_AST_STORE_SCHEMA_VERSION:
-            raise DuckDBASTStoreError(
-                "unsupported AST store schema version on projection"
-            )
-        if projection.ast_blob.ast_schema_identifier != AST_IR_SCHEMA_VERSION.identifier:
-            raise DuckDBASTStoreError(
-                "projection must bind the shared software-contract AST IR schema"
-            )
-        # Reject unknown catalog families — datasets/supervisor must not invent
-        # incompatible table sets.
-        counts = projection.table_row_counts()
-        if set(counts) != set(ASTS_CATALOG_TABLES):
-            raise DuckDBASTStoreError(
-                "projection table family is not the closed asts catalog"
-            )
-        with self._lock:
-            previous = self._by_file.get(projection.source_file.file_id)
-            if previous is not None and previous != projection.blob_id:
-                # Supersede prior blob for the same revision path.
-                self._invalidate_locked(
-                    blob_id=previous,
-                    file_id=projection.source_file.file_id,
-                    revision_id=projection.source_revision.revision_id,
-                    reason="blob_replaced",
-                    actor_id="duckdb-ast-store",
-                    detail=f"replaced by {projection.blob_id}",
+            payload_bytes += len(projection.ast_blob.payload_json.encode("utf-8"))
+            if payload_bytes > MAX_BATCH_PAYLOAD_BYTES:
+                raise DuckDBASTStoreError(
+                    "publication batch exceeds payload byte bound"
                 )
-            self._by_blob[projection.blob_id] = projection
-            self._by_ast_cid[projection.ast_cid] = projection.blob_id
-            self._by_file[projection.source_file.file_id] = projection.blob_id
-            for item in projection.invalidations:
-                self._invalidations.append(item)
-                self._stats["invalidations"] += 1
-            self._stats["puts"] += 1
-            if self._connection is not None:
-                self._persist_projection(projection)
-            return projection
+        for row in invalidations:
+            self._validate_invalidation(row)
+        with self._lock:
+            snapshot = (
+                self._by_blob.copy(),
+                self._by_ast_cid.copy(),
+                self._by_file.copy(),
+                list(self._invalidations),
+            )
+            invalidation_count = 0
+            try:
+                with self._transaction():
+                    if before_apply is not None:
+                        before_apply(self._connection)
+                    for projection in projections:
+                        if self._connection is None:
+                            previous = self._by_file.get(projection.source_file.file_id)
+                        else:
+                            found = self._rows(
+                                "ast_blobs",
+                                "file_id=?",
+                                [projection.source_file.file_id],
+                                columns="blob_id",
+                            )
+                            previous = (
+                                self._one(found, "active file blob")["blob_id"]
+                                if found
+                                else None
+                            )
+                        if previous is not None and previous != projection.blob_id:
+                            row = self._make_invalidation(
+                                blob_id=previous,
+                                file_id=projection.source_file.file_id,
+                                revision_id=projection.source_revision.revision_id,
+                                reason="blob_replaced",
+                                actor_id="duckdb-ast-store",
+                                detail=f"replaced by {projection.blob_id}",
+                            )
+                            self._apply_invalidation(row)
+                            invalidation_count += 1
+                        if self._connection is None:
+                            self._by_blob[projection.blob_id] = projection
+                            self._by_ast_cid[projection.ast_cid] = projection.blob_id
+                            self._by_file[projection.source_file.file_id] = (
+                                projection.blob_id
+                            )
+                            self._invalidations.extend(projection.invalidations)
+                        else:
+                            self._delete_projection_rows(
+                                "blob_id=?", [projection.blob_id]
+                            )
+                            self._persist_projection(projection)
+                        invalidation_count += len(projection.invalidations)
+                    for row in invalidations:
+                        self._apply_invalidation(row)
+                        invalidation_count += 1
+                    if before_commit is not None:
+                        before_commit(self._connection)
+            except BaseException:
+                self._by_blob, self._by_ast_cid, self._by_file, self._invalidations = (
+                    snapshot
+                )
+                raise
+            self._stats["puts"] += len(projections)
+            self._stats["invalidations"] += invalidation_count
+            return projections, invalidations
 
-    def get(self, blob_id: str) -> ASTCatalogProjection | None:
-        key = _text(blob_id, "blob_id")
+    def _lookup(self, column: str, key: str) -> ASTCatalogProjection | None:
         with self._lock:
             self._stats["lookups"] += 1
-            found = self._by_blob.get(key)
+            if self._connection is None:
+                blob_id = (
+                    key
+                    if column == "blob_id"
+                    else (
+                        self._by_ast_cid if column == "ast_cid" else self._by_file
+                    ).get(key)
+                )
+                found = self._by_blob.get(blob_id)
+            else:
+                with self._transaction():
+                    rows = self._rows(
+                        "ast_blobs", f"{column}=?", [key], columns="blob_id"
+                    )
+                    found = (
+                        self._load(self._one(rows, "lookup blob")["blob_id"])
+                        if rows
+                        else None
+                    )
             if found is None:
                 self._stats["misses"] += 1
             return found
 
+    def get(self, blob_id: str) -> ASTCatalogProjection | None:
+        return self._lookup("blob_id", _text(blob_id, "blob_id"))
+
     def get_by_ast_cid(self, ast_cid: str) -> ASTCatalogProjection | None:
-        key = _text(ast_cid, "ast_cid")
-        with self._lock:
-            self._stats["lookups"] += 1
-            blob_id = self._by_ast_cid.get(key)
-            if blob_id is None:
-                self._stats["misses"] += 1
-                return None
-            return self._by_blob.get(blob_id)
+        return self._lookup("ast_cid", _text(ast_cid, "ast_cid"))
 
     def get_by_file_id(self, file_id: str) -> ASTCatalogProjection | None:
-        key = _text(file_id, "file_id")
-        with self._lock:
-            self._stats["lookups"] += 1
-            blob_id = self._by_file.get(key)
-            if blob_id is None:
-                self._stats["misses"] += 1
-                return None
-            return self._by_blob.get(blob_id)
+        return self._lookup("file_id", _text(file_id, "file_id"))
+
+    def _diagnostic_projections(
+        self, *, blob_id=None, revision_id=None, path=None, failures=False
+    ):
+        if self._connection is None:
+            return tuple(self._by_blob.values())
+        conditions, parameters = [], []
+        for name, value in (("blob_id", blob_id), ("revision_id", revision_id)):
+            if value is not None:
+                conditions.append(name + "=?")
+                parameters.append(_text(value, name))
+        if path is not None:
+            conditions.append(
+                "file_id IN (SELECT file_id FROM source_files WHERE path=?)"
+            )
+            parameters.append(_text(path, "path"))
+        if failures:
+            conditions.append(
+                "(parse_status='failed' OR blob_id IN (SELECT blob_id FROM diagnostics WHERE is_parse_failure))"
+            )
+        else:
+            conditions.append("blob_id IN (SELECT blob_id FROM diagnostics)")
+        rows = self._rows(
+            "ast_blobs", " AND ".join(conditions), parameters, columns="blob_id"
+        )
+        return (self._load(row["blob_id"]) for row in rows)
 
     def query_diagnostics(
         self,
@@ -1787,9 +2156,11 @@ class DuckDBASTStore:
         revision_id: str | None = None,
         parse_failures_only: bool = False,
     ) -> tuple[DiagnosticRow, ...]:
-        with self._lock:
-            rows: list[DiagnosticRow] = []
-            for projection in self._by_blob.values():
+        with self._lock, self._transaction():
+            rows = []
+            for projection in self._diagnostic_projections(
+                blob_id=blob_id, revision_id=revision_id, failures=parse_failures_only
+            ):
                 if blob_id is not None and projection.blob_id != blob_id:
                     continue
                 if (
@@ -1797,33 +2168,21 @@ class DuckDBASTStore:
                     and projection.source_revision.revision_id != revision_id
                 ):
                     continue
-                for diagnostic in projection.diagnostics:
-                    if parse_failures_only and not diagnostic.is_parse_failure:
-                        continue
-                    rows.append(diagnostic)
+                rows.extend(
+                    item
+                    for item in projection.diagnostics
+                    if not parse_failures_only or item.is_parse_failure
+                )
             return tuple(rows)
 
     def query_parse_failures(
         self, *, revision_id: str | None = None, path: str | None = None
     ) -> tuple[DiagnosticRow, ...]:
-        with self._lock:
-            rows: list[DiagnosticRow] = []
-            for projection in self._by_blob.values():
-                if projection.ast_blob.parse_status != ParseStatus.FAILED.value:
-                    # Still surface diagnostics marked as parse failures.
-                    failures = [
-                        item
-                        for item in projection.diagnostics
-                        if item.is_parse_failure
-                    ]
-                    if not failures:
-                        continue
-                else:
-                    failures = [
-                        item
-                        for item in projection.diagnostics
-                        if item.is_parse_failure
-                    ] or list(projection.diagnostics)
+        with self._lock, self._transaction():
+            rows = []
+            for projection in self._diagnostic_projections(
+                revision_id=revision_id, path=path, failures=True
+            ):
                 if (
                     revision_id is not None
                     and projection.source_revision.revision_id != revision_id
@@ -1831,20 +2190,82 @@ class DuckDBASTStore:
                     continue
                 if path is not None and projection.source_file.path != path:
                     continue
+                failures = [
+                    item for item in projection.diagnostics if item.is_parse_failure
+                ]
+                if projection.ast_blob.parse_status == ParseStatus.FAILED.value:
+                    failures = failures or list(projection.diagnostics)
                 rows.extend(failures)
             return tuple(rows)
+
+    @staticmethod
+    def _validate_invalidation(row: InvalidationRow) -> None:
+        if type(row) is not InvalidationRow:
+            raise DuckDBASTStoreError("invalidation requires an exact InvalidationRow")
+        _text(row.invalidation_id, "invalidation_id")
+        _choice(row.reason, "reason", INVALIDATION_REASONS)
+        _text(row.actor_id, "actor_id")
+        _text(row.detail, "detail", allow_empty=True)
+        for name in ("blob_id", "file_id", "revision_id"):
+            value = getattr(row, name)
+            if value is not None:
+                _text(value, name)
+        if type(row.created_at) not in (int, float) or not math.isfinite(
+            row.created_at
+        ):
+            raise DuckDBASTStoreError("invalid invalidation timestamp")
 
     def list_invalidations(
         self, *, blob_id: str | None = None
     ) -> tuple[InvalidationRow, ...]:
         with self._lock:
-            if blob_id is None:
-                return tuple(self._invalidations)
-            return tuple(
-                item
-                for item in self._invalidations
-                if item.blob_id == blob_id
+            if self._connection is None:
+                return tuple(
+                    row
+                    for row in self._invalidations
+                    if blob_id is None or row.blob_id == blob_id
+                )
+            values = self._rows(
+                "invalidations",
+                "blob_id=?" if blob_id is not None else "",
+                [_text(blob_id, "blob_id")] if blob_id is not None else [],
             )
+            try:
+                rows = tuple(InvalidationRow(**value) for value in values)
+                for row in rows:
+                    self._validate_invalidation(row)
+            except (TypeError, ValueError) as error:
+                raise DuckDBASTStoreIntegrityError(
+                    f"invalid stored invalidation: {error}"
+                ) from error
+            return tuple(
+                sorted(rows, key=lambda row: (row.created_at, row.invalidation_id))
+            )
+
+    @staticmethod
+    def _make_invalidation(
+        *,
+        blob_id=None,
+        file_id=None,
+        revision_id=None,
+        reason="manual",
+        actor_id="system",
+        detail="",
+        created_at=None,
+    ) -> InvalidationRow:
+        now = time.time() if created_at is None else float(created_at)
+        row = InvalidationRow(
+            f"inv:{blob_id or file_id or revision_id or 'global'}:{reason}:{int(now * 1_000_000)}",
+            blob_id,
+            file_id,
+            revision_id,
+            reason,
+            actor_id,
+            detail,
+            now,
+        )
+        DuckDBASTStore._validate_invalidation(row)
+        return row
 
     def invalidate(
         self,
@@ -1857,70 +2278,104 @@ class DuckDBASTStore:
         detail: str = "",
         created_at: float | None = None,
     ) -> InvalidationRow:
-        with self._lock:
-            return self._invalidate_locked(
-                blob_id=blob_id,
-                file_id=file_id,
-                revision_id=revision_id,
-                reason=reason,
-                actor_id=actor_id,
-                detail=detail,
-                created_at=created_at,
-            )
-
-    def _invalidate_locked(
-        self,
-        *,
-        blob_id: str | None,
-        file_id: str | None,
-        revision_id: str | None,
-        reason: str,
-        actor_id: str,
-        detail: str,
-        created_at: float | None = None,
-    ) -> InvalidationRow:
-        reason_text = _choice(reason, "reason", INVALIDATION_REASONS)
-        now = time.time() if created_at is None else float(created_at)
-        invalidation_id = (
-            f"inv:{blob_id or file_id or revision_id or 'global'}:"
-            f"{reason_text}:{int(now * 1_000_000)}"
-        )
-        row = InvalidationRow(
-            invalidation_id=invalidation_id,
+        row = self._make_invalidation(
             blob_id=blob_id,
             file_id=file_id,
             revision_id=revision_id,
-            reason=reason_text,
-            actor_id=_text(actor_id, "actor_id"),
-            detail=_text(detail, "detail", allow_empty=True),
-            created_at=now,
+            reason=reason,
+            actor_id=actor_id,
+            detail=detail,
+            created_at=created_at,
         )
-        if blob_id is not None and blob_id in self._by_blob:
-            projection = self._by_blob.pop(blob_id)
-            self._by_ast_cid.pop(projection.ast_cid, None)
-            mapped = self._by_file.get(projection.source_file.file_id)
-            if mapped == blob_id:
-                self._by_file.pop(projection.source_file.file_id, None)
-        self._invalidations.append(row)
-        self._stats["invalidations"] += 1
-        if self._connection is not None:
-            self._persist_invalidation(row)
+        self.apply_batch((), (row,))
         return row
 
+    def _apply_invalidation(self, row: InvalidationRow) -> None:
+        # Most specific selector wins: additional file/revision fields are
+        # provenance for a blob invalidation, not an OR over unrelated blobs.
+        selector = next(
+            (
+                name
+                for name in ("blob_id", "file_id", "revision_id")
+                if getattr(row, name) is not None
+            ),
+            None,
+        )
+        if self._connection is not None:
+            self._persist_invalidation(row)
+            if selector is not None:
+                self._delete_projection_rows(selector + "=?", [getattr(row, selector)])
+            return
+        for key, projection in tuple(self._by_blob.items()):
+            value = (
+                projection.blob_id
+                if selector == "blob_id"
+                else (
+                    projection.source_file.file_id
+                    if selector == "file_id"
+                    else projection.source_revision.revision_id
+                )
+            )
+            if selector is not None and value == getattr(row, selector):
+                del self._by_blob[key]
+                self._by_ast_cid.pop(projection.ast_cid, None)
+                if self._by_file.get(projection.source_file.file_id) == key:
+                    self._by_file.pop(projection.source_file.file_id, None)
+        self._invalidations.append(row)
+
+    def _delete_projection_rows(self, where: str, parameters: Sequence[Any]) -> None:
+        for table in (
+            "ast_nodes",
+            "scopes",
+            "symbols",
+            "imports",
+            "references",
+            "calls",
+            "effects",
+            "interfaces",
+            "diagnostics",
+        ):
+            self._connection.execute(
+                f'DELETE FROM "{table}" WHERE blob_id IN (SELECT blob_id FROM ast_blobs WHERE {where})',
+                list(parameters),
+            )
+        self._connection.execute(
+            "DELETE FROM ast_blobs WHERE " + where, list(parameters)
+        )
+
     def clear(self) -> None:
-        with self._lock:
+        with self._lock, self._transaction():
+            if self._connection is not None:
+                for table in ASTS_CATALOG_TABLES:
+                    self._connection.execute(f'DELETE FROM "{table}"')
             self._by_blob.clear()
             self._by_ast_cid.clear()
             self._by_file.clear()
             self._invalidations.clear()
 
-    # -- optional DuckDB persistence ----------------------------------------
+    # -- DuckDB persistence (caller holds the transaction) ------------------
 
     def _persist_projection(self, projection: ASTCatalogProjection) -> None:
         connection = self._connection
         if connection is None:
             return
+        # apply_batch has cleared every row owned by this blob in the same
+        # transaction. Plain INSERT avoids DuckDB conflict-update buffering
+        # per tiny row; shared source identities and audit rows still upsert.
         rev = projection.source_revision
+        existing = self._rows("source_revisions", "revision_id=?", [rev.revision_id])
+        if existing:
+            previous = self._one(existing, "revision")
+            if {
+                key: value for key, value in previous.items() if key != "created_at"
+            } != {
+                key: value
+                for key, value in rev.to_dict().items()
+                if key != "created_at"
+            }:
+                raise DuckDBASTStoreIntegrityError(
+                    "revision identity conflicts with persisted source"
+                )
         connection.execute(
             """
             INSERT OR REPLACE INTO source_revisions VALUES (?, ?, ?, ?, ?, ?)
@@ -1951,7 +2406,7 @@ class DuckDBASTStore:
         blob = projection.ast_blob
         connection.execute(
             """
-            INSERT OR REPLACE INTO ast_blobs VALUES (
+            INSERT INTO ast_blobs VALUES (
                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
             )
             """,
@@ -1976,7 +2431,7 @@ class DuckDBASTStore:
         for node in projection.nodes:
             connection.execute(
                 """
-                INSERT OR REPLACE INTO ast_nodes VALUES (
+                INSERT INTO ast_nodes VALUES (
                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                 )
                 """,
@@ -2001,7 +2456,7 @@ class DuckDBASTStore:
         for item in projection.scopes:
             connection.execute(
                 """
-                INSERT OR REPLACE INTO scopes VALUES (
+                INSERT INTO scopes VALUES (
                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                 )
                 """,
@@ -2023,7 +2478,7 @@ class DuckDBASTStore:
         for item in projection.symbols:
             connection.execute(
                 """
-                INSERT OR REPLACE INTO symbols VALUES (
+                INSERT INTO symbols VALUES (
                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                 )
                 """,
@@ -2051,7 +2506,7 @@ class DuckDBASTStore:
         for item in projection.imports:
             connection.execute(
                 """
-                INSERT OR REPLACE INTO imports VALUES (
+                INSERT INTO imports VALUES (
                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                 )
                 """,
@@ -2076,7 +2531,7 @@ class DuckDBASTStore:
         for item in projection.references:
             connection.execute(
                 """
-                INSERT OR REPLACE INTO "references" VALUES (
+                INSERT INTO "references" VALUES (
                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                 )
                 """,
@@ -2099,7 +2554,7 @@ class DuckDBASTStore:
         for item in projection.calls:
             connection.execute(
                 """
-                INSERT OR REPLACE INTO calls VALUES (
+                INSERT INTO calls VALUES (
                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                 )
                 """,
@@ -2125,7 +2580,7 @@ class DuckDBASTStore:
         for item in projection.effects:
             connection.execute(
                 """
-                INSERT OR REPLACE INTO effects VALUES (
+                INSERT INTO effects VALUES (
                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                 )
                 """,
@@ -2148,7 +2603,7 @@ class DuckDBASTStore:
         for item in projection.interfaces:
             connection.execute(
                 """
-                INSERT OR REPLACE INTO interfaces VALUES (
+                INSERT INTO interfaces VALUES (
                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                 )
                 """,
@@ -2172,7 +2627,7 @@ class DuckDBASTStore:
         for item in projection.diagnostics:
             connection.execute(
                 """
-                INSERT OR REPLACE INTO diagnostics VALUES (
+                INSERT INTO diagnostics VALUES (
                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                 )
                 """,
@@ -2282,6 +2737,7 @@ __all__ = [
     "SymbolRow",
     "ast_store_schema_descriptor",
     "build_duckdb_ast_store",
+    "classify_parse_status",
     "project_ast_record",
     "project_parse_failure",
     "spans_survive_projection",

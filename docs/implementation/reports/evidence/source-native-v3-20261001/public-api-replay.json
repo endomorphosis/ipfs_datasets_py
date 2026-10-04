@@ -1,0 +1,49 @@
+{
+  "api_sha256": "3237d133cf9c67c616e6cc9420e263534dfc4ba4bc1c2b866f3948fdcdcd417a",
+  "embedding": "fresh verified local GTE-small CPU",
+  "proof_authority": false,
+  "rows": [
+    {
+      "checkpoint_sha256": "6977665f7ba896a74c78817a8ae3c0dc092b3fc21c8b231268fa1e17a3d157f6",
+      "count": 120,
+      "domain": "intent_ir",
+      "exact_targets": 120,
+      "proof_authority": false,
+      "qualification_statuses": {
+        "not_requested": 120
+      }
+    },
+    {
+      "checkpoint_sha256": "be2ec82a1d2a71171d86c3ffee3f9023a884df13302c33879b38f401f34ff843",
+      "count": 120,
+      "domain": "security_ir",
+      "exact_targets": 120,
+      "proof_authority": false,
+      "qualification_statuses": {
+        "qualified": 120
+      }
+    },
+    {
+      "checkpoint_sha256": "b23a81faee539905936e74f4d721de391b6218266d473defb45ad1e7797fa725",
+      "count": 120,
+      "domain": "ui_ux_ir",
+      "exact_targets": 120,
+      "proof_authority": false,
+      "qualification_statuses": {
+        "projected_candidate": 120
+      }
+    },
+    {
+      "checkpoint_sha256": "c8e42b07f5a6a5374e96d2e2334fb5daf7a2c66ad8d0eccaf06e990425424e08",
+      "count": 120,
+      "domain": "legal_ir",
+      "exact_targets": 120,
+      "proof_authority": false,
+      "qualification_statuses": {
+        "not_requested": 120
+      }
+    }
+  ],
+  "schema": "native-source-public-replay/v1",
+  "test_used_for_further_training": false
+}

@@ -281,7 +281,8 @@ def _standalone_pytest_symbol(
 ) -> SymbolRecord:
     """Fallback when no Python binding exists (should be rare for valid AST)."""
     qualified = _python_qualified(facts.path, facts.qualified_name)
-    module_namespace = namespace or _module_name(facts.path).split(".")[0]
+    module = _module_name(facts.path)
+    module_namespace = namespace or module.split(".")[0] or module
     projection = _pytest_projection(facts)
     annotations = {"pytest": projection}
     # Minimal location-free projection so v2 identity verifies without a body.

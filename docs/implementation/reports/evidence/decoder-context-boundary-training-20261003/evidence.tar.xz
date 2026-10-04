@@ -1,0 +1,11 @@
+{
+  "filename": "releases/20261004-historical-git-assets-v1/objects/178cf075698ad20de36bc114e6bbd5102632f35b555ab861623a49c9cf42b0f0.bin",
+  "original_git_blob": "81530fd237ea4b1f929dd631cae0a6532d61c6bc",
+  "original_path": "docs/implementation/reports/evidence/decoder-context-boundary-training-20261003/evidence.tar.xz",
+  "repo_id": "Publicus/autoencoder-decoder-checkpoints",
+  "repository": "https://github.com/endomorphosis/ipfs_datasets_py",
+  "revision": "cce278a763b5f7435a9895333a8af99b7fe8ea43",
+  "schema": "huggingface-historical-git-asset@1",
+  "sha256": "178cf075698ad20de36bc114e6bbd5102632f35b555ab861623a49c9cf42b0f0",
+  "size_bytes": 119263308
+}

@@ -12,9 +12,10 @@ from __future__ import annotations
 
 import ast
 import hashlib
+import inspect
 import re
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from enum import Enum
 from pathlib import PurePosixPath
 from typing import Any, Final
@@ -61,7 +62,7 @@ from .properties import (
 
 
 SOURCE_SOFTWARE_VERIFICATION_ADAPTER: Final = "SourceSoftwareVerificationAdapter@1"
-SOURCE_ADAPTER_VERSION: Final = "software-verification-source-adapter/v1"
+SOURCE_ADAPTER_VERSION: Final = "software-verification-source-adapter/v1.0.1"
 SOURCE_ADAPTER_SCHEMA: Final = (
     "ipfs_datasets_py/logic/software-verification/source-adapter-result@1"
 )
@@ -137,11 +138,13 @@ def _safe_id(prefix: str, *parts: str) -> str:
 
 
 def _line_byte_offsets(source: str) -> list[int]:
+    # Python's parser recognizes CR/LF line endings, not the additional Unicode
+    # separators recognized by str.splitlines(). AST columns are UTF-8 bytes.
+    raw = source.encode("utf-8", errors="surrogatepass")
     offsets = [0]
-    total = 0
-    for line in source.splitlines(keepends=True):
-        total += len(line.encode("utf-8", errors="surrogatepass"))
-        offsets.append(total)
+    offsets.extend(match.end() for match in re.finditer(rb"\r\n|\r|\n", raw))
+    if offsets[-1] != len(raw):
+        offsets.append(len(raw))
     return offsets
 
 
@@ -151,32 +154,16 @@ def _ast_byte_span(
     source: str,
     offsets: Sequence[int],
 ) -> tuple[int, int, int, int, int, int]:
+    """Resolve AST UTF-8 columns against exact parser line starts."""
     lineno = int(getattr(node, "lineno", 1) or 1)
     end_lineno = int(getattr(node, "end_lineno", lineno) or lineno)
     col = int(getattr(node, "col_offset", 0) or 0)
     end_col = int(getattr(node, "end_col_offset", col) or col)
     start_line_idx = max(0, lineno - 1)
     end_line_idx = max(0, end_lineno - 1)
-    if start_line_idx >= len(offsets):
-        start_byte = 0
-    else:
-        start_byte = offsets[start_line_idx] + len(
-            source.splitlines(keepends=True)[start_line_idx][:col].encode(
-                "utf-8", errors="surrogatepass"
-            )
-            if start_line_idx < len(source.splitlines(keepends=True))
-            else b""
-        )
-    if end_line_idx >= len(offsets):
-        end_byte = len(source.encode("utf-8", errors="surrogatepass"))
-    else:
-        lines = source.splitlines(keepends=True)
-        if end_line_idx < len(lines):
-            end_byte = offsets[end_line_idx] + len(
-                lines[end_line_idx][:end_col].encode("utf-8", errors="surrogatepass")
-            )
-        else:
-            end_byte = offsets[min(end_line_idx, len(offsets) - 1)]
+    size = offsets[-1] if offsets else len(source.encode("utf-8", errors="surrogatepass"))
+    start_byte = min(size, offsets[start_line_idx] + col) if start_line_idx < len(offsets) else size
+    end_byte = min(size, offsets[end_line_idx] + end_col) if end_line_idx < len(offsets) else size
     if end_byte < start_byte:
         end_byte = start_byte
     return start_byte, end_byte, lineno, col + 1, end_lineno, max(1, end_col)
@@ -197,7 +184,8 @@ def _source_ref(
         source_id=posix.name or f"snippet.{language}",
         source_revision=revision,
         content_sha256=digest,
-        metadata={"language": language, "path": posix.as_posix()},
+        metadata={"language": language, "path": posix.as_posix(),
+                  "byte_length": len(source.encode("utf-8", errors="surrogatepass"))},
     )
 
 
@@ -228,6 +216,20 @@ def _mapped(source_ref_id: str, span_id: str) -> dict[str, tuple[str, ...]]:
     return {"source_ref_ids": (source_ref_id,), "span_ids": (span_id,)}
 
 
+def _source_only_document(source_ref: SourceRef, *, language: str, path: str,
+                          unsupported: Sequence[str],
+                          diagnostics: Sequence[Diagnostic]) -> SoftwareVerificationIR:
+    """Retain rejected source identity without declarations or proof requests."""
+    return SoftwareVerificationIR(
+        sources=(source_ref,), diagnostics=tuple(diagnostics),
+        metadata={"language": language, "path": path, "adapter": SOURCE_SOFTWARE_VERIFICATION_ADAPTER},
+        extensions={"lfv.source_adapter.version": SOURCE_ADAPTER_VERSION},
+        observations={"adapter_version": SOURCE_ADAPTER_VERSION,
+                      "interface": SOURCE_SOFTWARE_VERIFICATION_ADAPTER,
+                      "unsupported_constructs": list(sorted(set(unsupported)))},
+    )
+
+
 def _load_program_ast_adapter():
     try:
         from ipfs_accelerate_py.agent_supervisor.program_ast_adapters import (  # type: ignore
@@ -237,6 +239,92 @@ def _load_program_ast_adapter():
     except Exception:  # pragma: no cover - exercised when supervisor is unavailable
         return None, None
     return adapt_program_source, detect_program_language
+
+
+class ProgramASTProviderCompatibilityError(TypeError):
+    """The selected optional provider cannot declare the requested control.
+
+    ``diagnostic`` contains the same plain dictionary returned by
+    :func:`inspect_program_ast_provider`. No provider is invoked or retried to
+    probe support. Standard exception arguments preserve process serialization.
+    """
+
+
+def _program_ast_callable_identity(value: Any) -> dict[str, str | None] | None:
+    if value is None:
+        return None
+
+    def text(attribute: str, owner: Any = value) -> str | None:
+        try:
+            candidate = getattr(owner, attribute, None)
+        except Exception:
+            return None
+        if type(candidate) is not str:
+            return None
+        return candidate if len(candidate) <= 512 else candidate[:509] + "..."
+
+    try:
+        code = getattr(value, "__code__", None)
+    except Exception:
+        code = None
+    return {"module": text("__module__"),
+            "qualname": text("__qualname__") or text("__qualname__", type(value)),
+            "origin": text("co_filename", code)}
+
+
+def _program_ast_provider_diagnostic(adapter: Any, detector: Any) -> dict[str, Any]:
+    report = {
+        "schema": "program-ast-provider-inspection@1",
+        "status": "unavailable",
+        "reason": "optional_provider_unavailable",
+        "adapter": _program_ast_callable_identity(adapter),
+        "detector": _program_ast_callable_identity(detector),
+        "scope": "Callable signature declaration only; no detector/parser invocation or side-effect attestation.",
+    }
+    if adapter is None:
+        return report
+    if not callable(adapter):
+        report.update(status="unsupported", reason="adapter_not_callable")
+        return report
+    try:
+        # Inspect the callable that will actually receive the keyword. Following
+        # __wrapped__ could mistake an opaque forwarding wrapper for support.
+        signature = inspect.signature(adapter, follow_wrapped=False, eval_str=False)
+    except (TypeError, ValueError):
+        report.update(status="unknown", reason="signature_unavailable")
+        return report
+    parameter = signature.parameters.get("mirror")
+    if parameter is not None and parameter.kind in (
+        inspect.Parameter.POSITIONAL_OR_KEYWORD, inspect.Parameter.KEYWORD_ONLY,
+    ):
+        report.update(status="supported", reason="explicit_keyword_parameter")
+    elif parameter is not None and parameter.kind is inspect.Parameter.POSITIONAL_ONLY:
+        report.update(status="unsupported", reason="mirror_parameter_positional_only")
+    elif any(item.kind is inspect.Parameter.VAR_KEYWORD for item in signature.parameters.values()):
+        # Accepting an arbitrary keyword does not declare that it is honored.
+        report.update(status="unknown", reason="variadic_keywords_only")
+    elif parameter is not None:
+        report.update(status="unsupported", reason="mirror_parameter_not_keyword_capable")
+    else:
+        report.update(status="unsupported", reason="mirror_parameter_missing")
+    return report
+
+
+def inspect_program_ast_provider() -> dict[str, Any]:
+    """Describe mirroring-control support of the normally selected provider.
+
+    This explicitly loads the optional provider once through the existing
+    loader, without calling its detector or parser. Import side effects remain
+    the provider's responsibility; no path selection or upgrade is performed.
+
+    The plain dictionary has ``schema``, ``status`` (supported, unsupported,
+    unknown or unavailable), ``reason``, ``adapter``, ``detector`` and ``scope``
+    keys. Each callable identity is null or a dictionary with ``module``,
+    ``qualname`` and ``origin`` strings (at most 512 characters each) or nulls.
+    Origin is the callable's code filename when available. Signature support
+    declares an API; it does not establish provider behavior or provenance.
+    """
+    return _program_ast_provider_diagnostic(*_load_program_ast_adapter())
 
 
 @dataclass(frozen=True, slots=True)
@@ -373,10 +461,12 @@ class _PythonLowering:
         source: str,
         source_ref: SourceRef,
         path: str,
+        preserve_type_annotations: bool = False,
     ) -> None:
         self.source = source
         self.source_ref = source_ref
         self.path = path
+        self.preserve_type_annotations = preserve_type_annotations
         self.offsets = _line_byte_offsets(source)
         self.spans: list[SourceSpan] = []
         self.symbols: list[ProgramSymbol] = []
@@ -388,6 +478,39 @@ class _PythonLowering:
         self.diagnostics: list[Diagnostic] = []
         self._counter = 0
         self._symbol_index: dict[str, str] = {}
+
+    def _annotation_type_ref(self, annotation: ast.AST | None, *, declaration_id: str) -> str:
+        """Retain declared syntax; an annotation does not prove runtime types."""
+        if not self.preserve_type_annotations or annotation is None:
+            return "any"
+        if isinstance(annotation, ast.Name):
+            return annotation.id
+        if isinstance(annotation, ast.Constant) and isinstance(annotation.value, str):
+            spelling = annotation.value
+            try:
+                parsed = ast.parse(spelling, mode="eval").body
+            except (SyntaxError, ValueError):
+                parsed = None
+            if isinstance(parsed, ast.Name):
+                return parsed.id
+        else:
+            spelling = ast.unparse(annotation)
+        self._retain("python.annotation.complex", annotation, subject_ids=(declaration_id,))
+        return spelling or "unsupported_annotation"
+
+    def _preserve_local_annotation(self, symbol_id: str, type_ref: str,
+                                   annotation: ast.AST, declaration_id: str) -> None:
+        if not self.preserve_type_annotations:
+            return
+        for index, symbol in enumerate(self.symbols):
+            if symbol.symbol_id != symbol_id:
+                continue
+            if symbol.type_ref == "any":
+                self.symbols[index] = replace(symbol, type_ref=type_ref)
+            elif symbol.type_ref != type_ref:
+                self._retain("python.annotation.conflicting_redeclaration", annotation,
+                             subject_ids=(declaration_id,))
+            return
 
     def _next(self, kind: str) -> str:
         self._counter += 1
@@ -723,6 +846,7 @@ class _PythonLowering:
                 )
                 continue
             if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name):
+                declared_type = self._annotation_type_ref(stmt.annotation, declaration_id=function_decl_id)
                 if stmt.value is None:
                     complete = False
                     self._retain("python.annassign.no_value", stmt, subject_ids=(function_decl_id,))
@@ -737,11 +861,12 @@ class _PythonLowering:
                 symbol_id = locals_map.get(target) or self._symbol(
                     target,
                     SymbolKind.LOCAL,
-                    "any",
+                    declared_type,
                     span_id,
                     function=function,
                 )
                 locals_map[target] = symbol_id
+                self._preserve_local_annotation(symbol_id, declared_type, stmt.annotation, function_decl_id)
                 command_ids.append(
                     self._command(
                         CommandKind.ASSIGN,
@@ -851,7 +976,7 @@ class _PythonLowering:
             symbol_id = self._symbol(
                 arg.arg,
                 SymbolKind.PARAMETER,
-                "any",
+                self._annotation_type_ref(arg.annotation, declaration_id=decl_id),
                 arg_span,
                 function=node.name,
             )
@@ -866,13 +991,16 @@ class _PythonLowering:
         ):
             if unsupported_bucket:
                 self._retain(construct, node, subject_ids=(decl_id,))
-        if node.returns is not None and not isinstance(node.returns, (ast.Name, ast.Constant)):
+        if (not self.preserve_type_annotations and node.returns is not None
+                and not isinstance(node.returns, (ast.Name, ast.Constant))):
             self._retain("python.function.complex_return_annotation", node, subject_ids=(decl_id,))
+
+        return_type = self._annotation_type_ref(node.returns, declaration_id=decl_id)
 
         result_symbol = self._symbol(
             "result",
             SymbolKind.RESULT,
-            "any",
+            return_type,
             span_id,
             function=node.name,
         )
@@ -942,7 +1070,7 @@ class _PythonLowering:
                 parameter_symbol_ids=tuple(params),
                 local_symbol_ids=local_ids,
                 result_symbol_id=result_symbol,
-                return_type="any",
+                return_type=return_type,
                 purity=purity,
                 effects=effects,
                 **_mapped(self.source_ref.ref_id, span_id),
@@ -956,7 +1084,7 @@ class _PythonLowering:
                 payload={
                     "function_id": function_id,
                     "parameter_symbol_ids": list(params),
-                    "return_type": "any",
+                    "return_type": return_type,
                     "language": "python",
                     "complete_lowering": complete,
                 },
@@ -1283,12 +1411,14 @@ def _adapt_python(
     *,
     path: str,
     evidence: Any,
+    revision: str = "workspace:local",
+    preserve_type_annotations: bool = False,
 ) -> SourceAdapterResult:
     source_ref = SourceRef(
         ref_id=_safe_id("source", path or "snippet.py"),
         source_uri=f"file:///{(path or 'snippet.py').replace(chr(92), '/').lstrip('/')}",
         source_id=PurePosixPath(path or "snippet.py").name,
-        source_revision="workspace:local",
+        source_revision=revision,
         content_sha256=_sha256_hex(source),
         metadata={
             "language": "python",
@@ -1304,7 +1434,6 @@ def _adapt_python(
             message=str(exc),
             severity=DiagnosticSeverity.ERROR,
             location=DiagnosticLocation(
-                subject_ids=(source_ref.ref_id,),
                 source_ref_ids=(source_ref.ref_id,),
                 metadata={"lineno": getattr(exc, "lineno", None), "kind": "parse_error"},
             ),
@@ -1313,11 +1442,14 @@ def _adapt_python(
             status=SourceAdapterStatus.MALFORMED,
             language="python",
             path=path,
+            document=_source_only_document(source_ref, language="python", path=path,
+                                           unsupported=(), diagnostics=(diagnostic,)),
             evidence=evidence,
             diagnostics=(diagnostic,),
         )
 
-    lowerer = _PythonLowering(source=source, source_ref=source_ref, path=path)
+    lowerer = _PythonLowering(source=source, source_ref=source_ref, path=path,
+                              preserve_type_annotations=preserve_type_annotations)
     complete = lowerer.lower_module(tree)
     if not lowerer.functions:
         document, requests = _build_software_verification_ir(
@@ -1423,12 +1555,13 @@ def _adapt_ecmascript(
     path: str,
     language: str,
     evidence: Any,
+    revision: str = "workspace:local",
 ) -> SourceAdapterResult:
     source_ref = SourceRef(
         ref_id=_safe_id("source", path or f"snippet.{language}"),
         source_uri=f"file:///{(path or f'snippet.{language}').replace(chr(92), '/').lstrip('/')}",
         source_id=PurePosixPath(path or f"snippet.{language}").name,
-        source_revision="workspace:local",
+        source_revision=revision,
         content_sha256=_sha256_hex(source),
         metadata={
             "language": language,
@@ -1473,15 +1606,16 @@ def _adapt_ecmascript(
         ]
         param_names = [p for p in param_names if re.fullmatch(r"[A-Za-z_$][\w$]*", p)]
         span_id = _safe_id("span", "function", name)
-        # Approximate span from match indices.
+        # This is an opaque signature span, not a complete function body. Regex
+        # indices count characters; SourceSpan offsets must count UTF-8 bytes.
         start = match.start()
         end = match.end()
         spans.append(
             _make_span(
                 span_id=span_id,
                 source_ref_id=source_ref.ref_id,
-                start_byte=start,
-                end_byte=end,
+                start_byte=len(source[:start].encode("utf-8", errors="surrogatepass")),
+                end_byte=len(source[:end].encode("utf-8", errors="surrogatepass")),
                 start_line=source.count("\n", 0, start) + 1,
                 start_column=1,
                 end_line=source.count("\n", 0, end) + 1,
@@ -1677,23 +1811,50 @@ def adapt_source_to_software_verification(
     revision: str = "workspace:local",
     max_source_bytes: int = 2 * 1024 * 1024,
     include_supervisor_evidence: bool = True,
+    preserve_type_annotations: bool = False,
+    mirror: bool = True,
 ) -> SourceAdapterResult:
     """Adapt one source unit into shared software-verification artifacts.
 
     Set ``include_supervisor_evidence=False`` for native-only operation without
-    attempting to import the optional supervisor AST evidence provider.
+    attempting to import the optional supervisor AST evidence provider. Set
+    ``preserve_type_annotations=True`` to retain declared Python types for a
+    downstream admitted semantic profile; annotations never enforce input types.
+    ``mirror=False`` retains supervisor evidence while disabling its metadata
+    mirroring for this call. The default leaves the supervisor call unchanged.
+    An explicit opt-out requires a declared keyword-capable ``mirror`` parameter
+    and otherwise raises :class:`ProgramASTProviderCompatibilityError` before
+    detection or parsing, without retry. This control does not constrain
+    arbitrary import or provider side effects.
     """
 
     if not isinstance(source, str):
         raise SourceAdapterError("source must be text")
+    revision = _text(revision, "revision")
     if not isinstance(max_source_bytes, int) or isinstance(max_source_bytes, bool) or max_source_bytes < 1:
         raise SourceAdapterError("max_source_bytes must be a positive integer")
     if type(include_supervisor_evidence) is not bool:
         raise SourceAdapterError("include_supervisor_evidence must be a boolean")
+    if type(mirror) is not bool:
+        raise SourceAdapterError("metadata mirroring must be an exact boolean")
+    if type(preserve_type_annotations) is not bool:
+        raise SourceAdapterError("preserve_type_annotations must be a boolean")
     byte_count = len(source.encode("utf-8", errors="surrogatepass"))
     adapt_program_source, detect_program_language = (
         _load_program_ast_adapter() if include_supervisor_evidence else (None, None)
     )
+    if not mirror and adapt_program_source is not None:
+        diagnostic = _program_ast_provider_diagnostic(adapt_program_source, detect_program_language)
+        if diagnostic["status"] != "supported":
+            identity = diagnostic["adapter"]
+            error = ProgramASTProviderCompatibilityError(
+                f"Selected program AST provider {identity['module']}.{identity['qualname']} "
+                f"at {identity['origin']} does not declare keyword-capable mirror=False support "
+                f"({diagnostic['reason']}); use a mirror-aware provider or "
+                "include_supervisor_evidence=False."
+            )
+            error.diagnostic = diagnostic
+            raise error
     detected = language
     evidence = None
     if detect_program_language is not None:
@@ -1718,52 +1879,58 @@ def adapt_source_to_software_verification(
             path=path,
             language=language or detected,
             max_source_bytes=max_source_bytes,
+            **({"mirror": False} if not mirror else {}),
         )
         detected = getattr(evidence, "language", None) or detected
 
     if byte_count > max_source_bytes:
+        rejected_source = _source_ref(path=path, source=source, language=detected or "unknown",
+                                      revision=revision)
+        diagnostic = Diagnostic(
+            code=DiagnosticCode.UNSUPPORTED_FEATURE,
+            message=f"source contains {byte_count} bytes; adapter limit is {max_source_bytes}",
+            severity=DiagnosticSeverity.ERROR,
+            location=DiagnosticLocation(source_ref_ids=(rejected_source.ref_id,),
+                                        metadata={"observed_bytes": byte_count}),
+        )
         return SourceAdapterResult(
             status=SourceAdapterStatus.UNSUPPORTED,
             language=detected or "unknown",
             path=path,
+            document=_source_only_document(rejected_source, language=detected or "unknown", path=path,
+                                           unsupported=("source.size_bound",), diagnostics=(diagnostic,)),
             evidence=evidence,
             unsupported_constructs=("source.size_bound",),
-            diagnostics=(
-                Diagnostic(
-                    code=DiagnosticCode.UNSUPPORTED_FEATURE,
-                    message=(
-                        f"source contains {byte_count} bytes; adapter limit is "
-                        f"{max_source_bytes}"
-                    ),
-                    severity=DiagnosticSeverity.ERROR,
-                    location=DiagnosticLocation(metadata={"observed_bytes": byte_count}),
-                ),
-            ),
+            diagnostics=(diagnostic,),
         )
 
     if detected == "python":
-        result = _adapt_python(source, path=path, evidence=evidence)
+        result = _adapt_python(source, path=path, evidence=evidence, revision=revision,
+                               preserve_type_annotations=preserve_type_annotations)
         return result
     if detected in {"javascript", "jsx", "typescript", "tsx"}:
         return _adapt_ecmascript(
-            source, path=path, language=detected, evidence=evidence
+            source, path=path, language=detected, evidence=evidence, revision=revision
         )
+    rejected_source = _source_ref(path=path, source=source, language=detected or "unknown",
+                                  revision=revision)
+    unsupported = (f"language.{detected or 'unknown'}",)
+    diagnostic = Diagnostic(
+        code=DiagnosticCode.UNSUPPORTED_FEATURE,
+        message=f"no source software-verification adapter for language {detected!r}",
+        severity=DiagnosticSeverity.ERROR,
+        location=DiagnosticLocation(source_ref_ids=(rejected_source.ref_id,),
+                                    metadata={"language": detected, "path": path}),
+    )
     return SourceAdapterResult(
         status=SourceAdapterStatus.UNSUPPORTED,
         language=detected or "unknown",
         path=path,
+        document=_source_only_document(rejected_source, language=detected or "unknown", path=path,
+                                       unsupported=unsupported, diagnostics=(diagnostic,)),
         evidence=evidence,
-        unsupported_constructs=(f"language.{detected or 'unknown'}",),
-        diagnostics=(
-            Diagnostic(
-                code=DiagnosticCode.UNSUPPORTED_FEATURE,
-                message=f"no source software-verification adapter for language {detected!r}",
-                severity=DiagnosticSeverity.ERROR,
-                location=DiagnosticLocation(
-                    metadata={"language": detected, "path": path}
-                ),
-            ),
-        ),
+        unsupported_constructs=unsupported,
+        diagnostics=(diagnostic,),
     )
 
 
@@ -1775,6 +1942,7 @@ class SourceSoftwareVerificationAdapter:
     version: str = SOURCE_ADAPTER_VERSION
     max_source_bytes: int = 2 * 1024 * 1024
     include_supervisor_evidence: bool = True
+    preserve_type_annotations: bool = False
 
     def adapt(
         self,
@@ -1783,7 +1951,11 @@ class SourceSoftwareVerificationAdapter:
         path: str = "",
         language: str = "",
         revision: str = "workspace:local",
+        mirror: bool = True,
     ) -> SourceAdapterResult:
+        """Adapt source with an optional per-call metadata mirroring opt-out."""
+        if type(mirror) is not bool:
+            raise SourceAdapterError("metadata mirroring must be an exact boolean")
         return adapt_source_to_software_verification(
             source,
             path=path,
@@ -1791,6 +1963,8 @@ class SourceSoftwareVerificationAdapter:
             revision=revision,
             max_source_bytes=self.max_source_bytes,
             include_supervisor_evidence=self.include_supervisor_evidence,
+            preserve_type_annotations=self.preserve_type_annotations,
+            **({"mirror": False} if not mirror else {}),
         )
 
 
@@ -1800,9 +1974,11 @@ __all__ = [
     "SOURCE_ADAPTER_VERSION",
     "SOURCE_SOFTWARE_VERIFICATION_ADAPTER",
     "CanonicalBackendRequest",
+    "ProgramASTProviderCompatibilityError",
     "SourceAdapterError",
     "SourceAdapterResult",
     "SourceAdapterStatus",
     "SourceSoftwareVerificationAdapter",
     "adapt_source_to_software_verification",
+    "inspect_program_ast_provider",
 ]

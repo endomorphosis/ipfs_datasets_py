@@ -219,6 +219,9 @@ class ReconstructionEvidence:
             (computed automatically if left blank) — this is exactly the
             digest also stored as
             :attr:`~.models.ReconstructionRecord.kernel_output_digest`.
+        execution: Optional operational receipt retained for resource and
+            lifecycle diagnostics. It grants no proof authority and is omitted
+            from legacy payloads when absent.
     """
 
     schema_version: str = SCHEMA_VERSION
@@ -236,6 +239,9 @@ class ReconstructionEvidence:
     timed_out: bool = False
     wall_time_seconds: float = 0.0
     raw_output_digest: str = ""
+    # Optional non-authoritative operational metadata. Source/output digests
+    # and kernel acceptance remain independently computed from native evidence.
+    execution: Optional[Dict[str, Any]] = None
 
     def __post_init__(self) -> None:
         self.validate()
@@ -267,10 +273,14 @@ class ReconstructionEvidence:
             raise ValueError("ReconstructionEvidence.timed_out must be a boolean")
         if self.wall_time_seconds < 0:
             raise ValueError("ReconstructionEvidence.wall_time_seconds must be non-negative")
+        if self.execution is not None and not isinstance(self.execution, dict):
+            raise ValueError("ReconstructionEvidence.execution must be a dict if supplied")
 
     def to_dict(self) -> Dict[str, Any]:
         data = asdict(self)
         data["itp"] = self.itp.value
+        if self.execution is None:
+            data.pop("execution")
         return data
 
     @classmethod

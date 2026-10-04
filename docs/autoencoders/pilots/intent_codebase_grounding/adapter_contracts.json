@@ -1,0 +1,507 @@
+{
+  "schema": "intent-codebase-grounding-pilot-adapter-contract-plan/v1",
+  "status": "proposed_interfaces_not_runtime_adapters",
+  "guide": "README.md",
+  "pilot_spec": "pilot_spec.json",
+  "canonical_owner_policy": "Reference and decode existing canonical owner records. New outer adapter bindings are proposed; no duplicate canonical class/schema or new native enum value is introduced.",
+  "identity_layers": [
+    {
+      "name": "raw_source",
+      "owner": "software_contracts.content",
+      "meaning": "raw CID over exact bytes; content SHA256 is separately a diagnostic/exposure identity"
+    },
+    {
+      "name": "native_transition_identity",
+      "owner": "ProgramTransitionQuery/Observation identity_payload",
+      "meaning": "CID excludes the native claimed CID field"
+    },
+    {
+      "name": "pinned_transport",
+      "owner": "PinnedArtifactRef",
+      "meaning": "CID/digest over complete canonical serialized record, including its native claimed CID; differs from native identity CID"
+    },
+    {
+      "name": "target_envelope_digest",
+      "owner": "DomainTargetEnvelope.source_digest",
+      "meaning": "hash over target_schema, source_binding and authored_contracts; not raw source SHA"
+    },
+    {
+      "name": "vector_input_profile",
+      "owner": "embedding task/receipt contract",
+      "meaning": "complete source/span/context/encoder/tokenizer/assets/numerical profile, not either source digest alone"
+    }
+  ],
+  "proposed_outer_envelope": {
+    "schema_id_proposed": "codebase-transition-pilot-adapter@1",
+    "required_fields": [
+      "operation_id",
+      "owner",
+      "adapter_profile_ref",
+      "intent_artifact_ref",
+      "formalization_artifact_ref",
+      "transition_query_ref",
+      "producer_catalog_ref",
+      "runner_binding_catalog_ref",
+      "observer_profile_ref",
+      "bindings"
+    ],
+    "owner_fields": [
+      "cell_id",
+      "store_id",
+      "incarnation_epoch",
+      "inventory_ref"
+    ],
+    "current_binding_refs": [
+      "semantic_subject_ref",
+      "repository_binding_ref",
+      "source_evidence_ref",
+      "semantic_root_ref",
+      "environment_binding_ref",
+      "policy_ref"
+    ],
+    "planned_post_binding_refs": [
+      "planned_subject_ref",
+      "originating_current_subject_ref",
+      "intent_constraint_id",
+      "desired_property_ref",
+      "reviewed_operator_ref",
+      "reviewed_template_ref"
+    ],
+    "observed_post_optional_until_measured": [
+      "semantic_subject_ref",
+      "repository_binding_ref",
+      "source_evidence_ref",
+      "semantic_root_ref",
+      "environment_binding_ref",
+      "policy_ref",
+      "planned_to_actual_mapping_ref"
+    ],
+    "results_absent_until_produced": [
+      "transition_observation_ref",
+      "verification_plan_ref",
+      "receipt_refs",
+      "post_graph_ref",
+      "completion_mapping_ref"
+    ],
+    "unknown_fields_policy": "closed versioned decoder rejects unknown fields; expected outcomes do not enter runtime results",
+    "planned_subject_has_predicted_actual_tree_or_source_cid": false,
+    "native_semantic_identity_depends_on_cell_dimension": false,
+    "cell_routing": "exact cell/store/incarnation/version envelope; native subject/source/logic identity retains canonical owner semantics"
+  },
+  "interfaces": [
+    {
+      "adapter_id": "A01",
+      "name": "capture and policy observation",
+      "work_items": [
+        "C00",
+        "C01",
+        "C02"
+      ],
+      "canonical_types": [
+        "CodebaseHead",
+        "CodebaseIRManifest",
+        "CodebaseObservation"
+      ],
+      "owners": [
+        "RepositoryCodebaseIndex",
+        "CodebaseCatalog"
+      ],
+      "proposed_guards": [
+        "exact expected durable head",
+        "live admitted source bytes and active ASTs",
+        "source-mode and ignore policy",
+        "complete nonexcluded inventory accounting",
+        "reobservation after operation replay"
+      ],
+      "failure_outcomes": [
+        "stale",
+        "unsupported_capture_policy",
+        "incomplete_scope",
+        "unavailable"
+      ],
+      "runtime_implemented_by_this_pack": false
+    },
+    {
+      "adapter_id": "A02",
+      "name": "conditional receipt and attempt routing",
+      "work_items": [
+        "C04",
+        "C05",
+        "C06"
+      ],
+      "canonical_types": [
+        "IntegerOffsetContract",
+        "CanonicalProofCacheKey",
+        "CodebaseEvidenceRecord"
+      ],
+      "owners": [
+        "CodebaseIntegerVerifier",
+        "CodebaseEvidenceIndex"
+      ],
+      "proposed_guards": [
+        "source/contract/compilation/head/assumptions/bounds/checker exact binding",
+        "only proved/refuted in current historical index",
+        "fresh native checks for current use",
+        "conditional authority preserved",
+        "nonterminal and raised failures in separate attempt journal/owner extension"
+      ],
+      "failure_outcomes": [
+        "refuted_conditional_claim",
+        "unknown",
+        "timeout",
+        "unavailable",
+        "unsupported",
+        "stale",
+        "cancelled"
+      ],
+      "runtime_implemented_by_this_pack": false
+    },
+    {
+      "adapter_id": "A03",
+      "name": "bounded native transition and transport",
+      "work_items": [
+        "C01",
+        "C07"
+      ],
+      "canonical_types": [
+        "ProgramTransitionQuery@1",
+        "ProgramTransitionCandidate@1",
+        "ProgramTransitionPrediction@1",
+        "RepairOperator@1",
+        "PatchSketchIR@1",
+        "PinnedArtifactRef"
+      ],
+      "owners": [
+        "semantic_state.program_transition",
+        "supervisor IR transport"
+      ],
+      "proposed_guards": [
+        "repair query has authentic current_graph_cid",
+        "candidate restricted to admitted query universe",
+        "native repair enum unchanged",
+        "decode/recompute native identity separate from full-record transport identity",
+        "raw Python source CID never used as JSON PinnedArtifactRef",
+        "prediction cannot decode as observation"
+      ],
+      "failure_outcomes": [
+        "missing_current_graph",
+        "invalid_native_operator",
+        "wrong_identity_domain",
+        "wrong_payload_type",
+        "unavailable"
+      ],
+      "runtime_implemented_by_this_pack": false
+    },
+    {
+      "adapter_id": "A04",
+      "name": "read-only state-qualified intent grounding",
+      "work_items": [
+        "C07",
+        "C17"
+      ],
+      "canonical_types": [
+        "SemanticObjectEnvelope",
+        "TypedPredicate",
+        "ObservedFact",
+        "verified Intent/Formalization artifacts"
+      ],
+      "owners": [
+        "native source/semantic owners",
+        "IntentConstraintAdapter",
+        "typed federation adapter"
+      ],
+      "proposed_guards": [
+        "separate current versus planned-post semantic subject",
+        "predicate_id alone never separates states",
+        "keep H0 false conditional claim within exact declared scope",
+        "typed root/cell/role/incarnation and source/applicability bindings",
+        "current structural observations distinct from universal runtime behavior",
+        "no automatic promotion of conditional_smt into authoritative ProofReceipt/ObservedFact",
+        "unknown facts preserve review/observation workflow"
+      ],
+      "failure_outcomes": [
+        "unresolved",
+        "ambiguous",
+        "review",
+        "wrong_root",
+        "stale",
+        "insufficient_authority"
+      ],
+      "runtime_implemented_by_this_pack": false
+    },
+    {
+      "adapter_id": "A05",
+      "name": "reviewed producer and runner binding",
+      "work_items": [
+        "C07",
+        "C10"
+      ],
+      "canonical_types": [
+        "ProducerRule",
+        "TaskCandidate",
+        "CheckRunner",
+        "VerificationPlan"
+      ],
+      "owners": [
+        "symbolic planner",
+        "formal compiler/validator",
+        "runtime/verification owners"
+      ],
+      "proposed_guards": [
+        "actual runner/tool/args/allowed paths/checks/effects/leases/budgets",
+        "nonempty producer effects and task closures",
+        "required policies and evidence independently admitted",
+        "fallback marker cannot execute a check",
+        "no effects in first milestone"
+      ],
+      "failure_outcomes": [
+        "missing_producer",
+        "missing_runner",
+        "false_mandatory_precondition",
+        "review",
+        "unavailable"
+      ],
+      "runtime_implemented_by_this_pack": false
+    },
+    {
+      "adapter_id": "A06",
+      "name": "measured successor and post-state verification",
+      "work_items": [
+        "C01",
+        "C06",
+        "C10"
+      ],
+      "canonical_types": [
+        "ProgramTransitionObservation@1",
+        "ProgramTransitionAdmission@1",
+        "DirectExecutionObservation",
+        "VerificationReceiptKey",
+        "VerificationPlan"
+      ],
+      "owners": [
+        "trusted live observer",
+        "supervisor verification/admission owners"
+      ],
+      "proposed_guards": [
+        "query H0 subject retained in observation",
+        "H1 in observed_cid and measured mapping",
+        "new H1 verification plan and post-state graph",
+        "fresh pre/post source/environment observations",
+        "P-to-C1 mapping and receipt keys agree with new plan",
+        "conditional result not automatically authoritative ProofReceipt",
+        "affected tests remain separate TestReceipt",
+        "mutation/completion/equivalence flags in native transition admission remain false"
+      ],
+      "failure_outcomes": [
+        "stale",
+        "unmapped_subject",
+        "wrong_query_subject",
+        "insufficient_authority",
+        "timeout",
+        "cancelled"
+      ],
+      "runtime_implemented_by_this_pack": false
+    },
+    {
+      "adapter_id": "A07",
+      "name": "inherited model branch admission",
+      "work_items": [
+        "C03",
+        "C08",
+        "C09",
+        "C12",
+        "C13"
+      ],
+      "canonical_types": [
+        "cell inventory",
+        "variant and run contracts",
+        "captured source binding",
+        "DomainTargetEnvelope"
+      ],
+      "owners": [
+        "native target adapter",
+        "AutoencoderRegistry",
+        "compatible numerical trainer"
+      ],
+      "proposed_guards": [
+        "actual parent bytes and role/task/profile/codec",
+        "registered cohort and frozen evaluation roles",
+        "unknown critical atoms trigger basis migration",
+        "original-root replay and intermediate exposure history separate",
+        "exact vector profile identity",
+        "source384 two-operand scope",
+        "existing multilingual corpus domain allow-list excludes codebase_ir",
+        "structural embedding receipt completeness cannot assert verified production/tokenization"
+      ],
+      "failure_outcomes": [
+        "artifact_reuse_only",
+        "migration_required",
+        "wrong_profile",
+        "unsupported",
+        "unavailable"
+      ],
+      "runtime_implemented_by_this_pack": false
+    }
+  ],
+  "producer_step_templates": [
+    {
+      "step_id": "T01",
+      "task_kind": "edit_and_capture",
+      "depends_on": [],
+      "scope": "reviewed bounded integer-offset edit; unchanged one-return grammar",
+      "runner_registered": false
+    },
+    {
+      "step_id": "T02",
+      "task_kind": "formalize_current_successor",
+      "depends_on": [
+        "T01"
+      ],
+      "scope": "exact H1 source/native contract and translated obligation",
+      "runner_registered": false
+    },
+    {
+      "step_id": "T03",
+      "task_kind": "fresh_native_check",
+      "depends_on": [
+        "T02"
+      ],
+      "scope": "actual admitted Z3/CVC5 profile with measured environment/roots",
+      "runner_registered": false
+    },
+    {
+      "step_id": "T04",
+      "task_kind": "affected_tests",
+      "depends_on": [
+        "T01"
+      ],
+      "scope": "separate executed test receipt on H1",
+      "runner_registered": false
+    },
+    {
+      "step_id": "T05",
+      "task_kind": "reindex_and_post_grounding",
+      "depends_on": [
+        "T03",
+        "T04"
+      ],
+      "scope": "H1 graph and P-to-C1 completion mapping; current evidence eligibility",
+      "runner_registered": false
+    }
+  ],
+  "current_pilot_predicate_mapping": {
+    "predicate_type": "proposed scoped native-offset assertion, never unrestricted runtime behavior",
+    "current_subject_handle": "C0 actual H0 native subject/version",
+    "desired_subject_handle": "P canonical proposed-binding artifact",
+    "observed_subject_handle": "C1 actual H1 native subject/version",
+    "object_handle": "O2 offset2 contract plus exact scope/assumption binding",
+    "current_false_semantic_key": [
+      "scoped_native_offset",
+      "C0",
+      "O2"
+    ],
+    "desired_future_semantic_key": [
+      "scoped_native_offset",
+      "P",
+      "O2"
+    ],
+    "observed_post_semantic_key": [
+      "scoped_native_offset",
+      "C1",
+      "O2"
+    ],
+    "handles_are_actual_cids": false,
+    "actual_authoritative_fact_conversion_available": false
+  },
+  "implementation_slices": [
+    {
+      "slice_id": "B00",
+      "description": "Authenticate clean integrated source/model owners and create isolated fixture scope",
+      "depends_on": [],
+      "work_items": [
+        "C00",
+        "C01"
+      ]
+    },
+    {
+      "slice_id": "B01",
+      "description": "Capture/reobserve exact source and complete bounded inventory",
+      "depends_on": [
+        "B00"
+      ],
+      "work_items": [
+        "C02"
+      ]
+    },
+    {
+      "slice_id": "B02",
+      "description": "Execute conditional native checks and route terminal/nonterminal attempts",
+      "depends_on": [
+        "B01"
+      ],
+      "work_items": [
+        "C04",
+        "C05",
+        "C06"
+      ]
+    },
+    {
+      "slice_id": "B03",
+      "description": "Register typed formalization and read-only current/planned-post grounding",
+      "depends_on": [
+        "B02"
+      ],
+      "work_items": [
+        "C07",
+        "C17"
+      ]
+    },
+    {
+      "slice_id": "B04",
+      "description": "Register reviewed producer/runner/observer and post-state mapping contracts",
+      "depends_on": [
+        "B03"
+      ],
+      "work_items": [
+        "C07",
+        "C10"
+      ]
+    },
+    {
+      "slice_id": "B05",
+      "description": "Witness effectful H0-to-H1 change with new plan/graph/evidence",
+      "depends_on": [
+        "B04"
+      ],
+      "work_items": [
+        "C06",
+        "C10"
+      ]
+    },
+    {
+      "slice_id": "B06",
+      "description": "Qualify inherited corpus/basis migration and independent evaluation",
+      "depends_on": [
+        "B01"
+      ],
+      "work_items": [
+        "C08",
+        "C09",
+        "C12"
+      ]
+    },
+    {
+      "slice_id": "B07",
+      "description": "Run private compatible adaptation under frozen profile and retention gates",
+      "depends_on": [
+        "B06"
+      ],
+      "work_items": [
+        "C08",
+        "C09"
+      ]
+    }
+  ],
+  "effects_authorized_by_schema_or_fixture_validation": false,
+  "proof_or_execution_authority_created": false
+}

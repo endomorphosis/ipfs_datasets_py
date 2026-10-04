@@ -1,0 +1,11 @@
+{
+  "filename": "releases/20261004-historical-git-assets-v1/objects/1830569d1c79cfdd897531655ba3283799edf9da0f5891347cf8bbb82f487ec6.bin",
+  "original_git_blob": "3328ec7edccf75229b3d402d31a7af1fe8d1dfe5",
+  "original_path": "docs/implementation/reports/evidence/decoder-action-binding-20261003/evidence.tar.xz",
+  "repo_id": "Publicus/autoencoder-decoder-checkpoints",
+  "repository": "https://github.com/endomorphosis/ipfs_datasets_py",
+  "revision": "cce278a763b5f7435a9895333a8af99b7fe8ea43",
+  "schema": "huggingface-historical-git-asset@1",
+  "sha256": "1830569d1c79cfdd897531655ba3283799edf9da0f5891347cf8bbb82f487ec6",
+  "size_bytes": 106911344
+}

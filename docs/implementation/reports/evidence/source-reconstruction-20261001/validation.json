@@ -1,0 +1,20 @@
+{
+  "actual_lake_builds_passed": 3,
+  "both_experiment_freezes_preserved": true,
+  "files": {
+    "ipfs_datasets_py/logic/formalization/autoencoder/complete_training.py": "0c8a8b54c9d973b7fa18b064176f57d6a2db30e2df3940b7aeb1a7dd463c3096",
+    "ipfs_datasets_py/logic/formalization/autoencoder/source_training_v2.py": "8de8096e895de9df08ccf5352dfd704806823296821d98b5badf08bb553a52e4",
+    "ipfs_datasets_py/logic/formalization/autoencoder/structured_source_384.py": "3f9ca9ce7b4cf2a2d10d6aeb1fae78543c468133d2fa0df9fcb32f63f89e90f7",
+    "scripts/ops/autoencoder/benchmark_source_projection_384.py": "f11ad949e1f949ee77bde472a1bd8be1317c67d03386f17185e843cc89027386",
+    "scripts/ops/autoencoder/benchmark_source_training_v2.py": "2387eb53540637b9655073f4a0c1bead8fad79765cb59b20dfe1f671e9ad3653",
+    "scripts/ops/autoencoder/benchmark_structured_source_384.py": "86f4c772b8968fef37eab4a24cbafc0fe8043934fc283da09d6c510388e9e051",
+    "tests/fixtures/logic/source_reconstruction_v2.py": "f6e9f211ef764afa63b3650537141f0a5f00561b87688c5abc0650f43a9ef7e4"
+  },
+  "models_promoted": false,
+  "public_api_live_rows": 240,
+  "pytest_log_path": "/home/barberb/lift_coding/artifacts/source-reconstruction-v2-tests.log",
+  "pytest_log_sha256": "f23a8d6c46048f7942205f32c20a5c08f16bd0fd6570869f482fa0d90f98473d",
+  "pytest_passed": 93,
+  "schema": "source-training-validation-receipt/v1",
+  "source_semantics_verified": false
+}

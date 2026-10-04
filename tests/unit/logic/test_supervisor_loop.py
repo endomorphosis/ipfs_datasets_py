@@ -137,6 +137,24 @@ def test_router_prompt_names_the_approved_stage_or_refuses_to_guess() -> None:
         }),
     )
     assert rejected["reason"] == "decompiler_not_in_scope"
+    kept = resolve_gap_with_router(
+        {
+            "agrees": False,
+            "allowed_edit_paths": ["ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"],
+            "text": "The Senate shall send the notice to the requester.",
+        },
+        lambda prompt, temperature=0, task_kind="legal": (
+            "```json\n"
+            + json.dumps({
+                "parser": "```python\ndef parse_statute(text):\n    return text\n```",
+                "decompiler": "def decompile(rule):\n    return ''\n",
+            })
+            + "\n```"
+        ),
+    )
+    assert kept["reason"] == ""
+    assert kept["proposal_keys"] == ["parser"]
+    assert kept["proposal_sha256"]
     assert rejected["proposal_sha256"] == ""
     skipped = resolve_gap_with_router(
         {"agrees": False, "text": "The Senate shall send the notice to the requester."},

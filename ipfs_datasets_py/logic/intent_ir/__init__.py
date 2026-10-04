@@ -5,6 +5,7 @@ between untrusted skill corpora, GraphRAG projections, and formal-logic
 compilers without selecting a model backend or executing source instructions.
 """
 
+from .autoencoder import open_autoencoder, formalize_with_autoencoder
 from .canonicalize import (
     canonical_intent_ir_bytes,
     canonical_intent_ir_json,
@@ -51,6 +52,8 @@ from .schema import (
 )
 
 __all__ = [
+    "open_autoencoder",
+    "formalize_with_autoencoder",
     "INTENT_IR_COLLECTION_SCHEMA",
     "INTENT_IR_COLLECTION_SEMANTICS",
     "INTENT_IR_SCHEMA_REGISTRY",

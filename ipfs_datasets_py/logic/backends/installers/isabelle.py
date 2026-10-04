@@ -23,14 +23,23 @@ available and falls back to the reviewed checksum inventory below.
 from __future__ import annotations
 
 import hashlib
+import gzip
 import json
+import math
 import os
 import platform
+import posixpath
 import re
 import shutil
+import stat
 import subprocess
 import tarfile
+import tempfile
+import threading
+import time
+from functools import wraps
 from collections.abc import Callable, Mapping, Sequence
+from contextlib import contextmanager, nullcontext
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Final
@@ -60,6 +69,15 @@ ISABELLE_EXECUTABLE: Final = "isabelle"
 # Isabelle distribution archives are multi-gigabyte. Explicit budgets keep
 # large-kernel installs fail-closed when free space is insufficient.
 MAX_DOWNLOAD_BYTES: Final = 6 * 1024 * 1024 * 1024  # 6 GiB hard download cap
+MAX_EXTRACTED_BYTES: Final = 24 * 1024**3
+MAX_EXTRACTED_FILE_BYTES: Final = 4 * 1024**3
+MAX_ARCHIVE_MEMBERS: Final = 200_000  # includes extended tar headers
+MAX_ARCHIVE_PATH_BYTES: Final = 4096  # each UTF-8 path / link name
+MAX_ARCHIVE_TOTAL_PATH_BYTES: Final = 16 * 1024**2
+MIN_EXTRACTION_FREE_BYTES: Final = 1024**3
+_COPY_BYTES: Final = 64 * 1024
+_MAX_TAR_METADATA_BYTES: Final = 64 * 1024
+_MAX_TOTAL_TAR_METADATA_BYTES: Final = 16 * 1024**2
 MIN_FREE_STORAGE_BYTES: Final = 12 * 1024 * 1024 * 1024  # 12 GiB free required
 EXPECTED_ARCHIVE_SIZE_BYTES: Final = 4 * 1024 * 1024 * 1024  # ~4 GiB typical
 DOWNLOAD_TIMEOUT_SECONDS: Final = 3600.0
@@ -133,6 +151,60 @@ _VERSION_TOKEN = re.compile(r"Isabelle\d{4}(?:-\d+)?", re.IGNORECASE)
 
 class IsabelleInstallerError(RuntimeError):
     """Raised when a strict Isabelle install policy is violated."""
+
+
+class _InstallInterrupted(IsabelleInstallerError):
+    pass
+
+
+def _positive_int(value: int, name: str) -> int:
+    if type(value) is not int or value <= 0:
+        raise ValueError(f"{name} must be a positive integer")
+    return value
+
+
+def _operation_deadline(timeout: float, cancellation: Any, deadline: float | None = None) -> float:
+    if isinstance(timeout, bool) or not isinstance(timeout, (int, float)) or not math.isfinite(timeout) or timeout <= 0:
+        raise ValueError("timeout must be finite and positive")
+    if cancellation is not None and not callable(getattr(cancellation, "is_set", None)):
+        raise TypeError("cancellation must supply is_set()")
+    own = time.monotonic() + timeout
+    return min(own, deadline) if deadline is not None else own
+
+
+def _check_running(deadline: float, cancellation: Any) -> None:
+    if cancellation is not None and cancellation.is_set():
+        raise _InstallInterrupted("Isabelle installation cancelled")
+    if time.monotonic() >= deadline:
+        raise _InstallInterrupted("Isabelle installation deadline exceeded")
+
+
+def _open_regular(path: Path, max_bytes: int):
+    """Open without waiting on a FIFO or following a final symlink."""
+    descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NONBLOCK", 0) | getattr(os, "O_NOFOLLOW", 0))
+    try:
+        info = os.fstat(descriptor)
+        if not stat.S_ISREG(info.st_mode) or info.st_size > max_bytes:
+            raise IsabelleInstallerError("artifact must be a regular file within its byte cap")
+        return os.fdopen(descriptor, "rb")
+    except BaseException:
+        os.close(descriptor)
+        raise
+
+
+def _bounded_digest(handle, max_bytes: int, deadline: float, cancellation: Any) -> str:
+    digest = hashlib.sha256()
+    total = 0
+    while True:
+        _check_running(deadline, cancellation)
+        chunk = handle.read(min(_COPY_BYTES, max_bytes - total + 1))
+        _check_running(deadline, cancellation)
+        total += len(chunk)
+        if total > max_bytes:
+            raise IsabelleInstallerError("artifact exceeded its cumulative byte cap")
+        if not chunk:
+            return digest.hexdigest()
+        digest.update(chunk)
 
 
 # ---------------------------------------------------------------------------
@@ -537,6 +609,17 @@ def observed_version_matches_lock(banner: str | None, expected: str = ISABELLE_V
 # ---------------------------------------------------------------------------
 
 
+def probe_theory_processor(executable: str) -> bool:
+    """Distinguish a modern usable launcher from a version-only stub."""
+    try:
+        result = subprocess.run([executable, "process_theories", "-?"],
+                                capture_output=True, text=True, timeout=PROBE_TIMEOUT_SECONDS,
+                                shell=False, check=False)
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return result.returncode in (0, 1) and "Usage: isabelle process_theories" in result.stdout + result.stderr
+
+
 def verify_sha256(path: Path, expected: str) -> bool:
     return content_sha256(path) == expected.lower()
 
@@ -549,95 +632,299 @@ def download_artifact(
     timeout: float = DOWNLOAD_TIMEOUT_SECONDS,
     max_bytes: int = MAX_DOWNLOAD_BYTES,
     on_progress: ProgressCallback | None = None,
+    cancellation: Any | None = None,
+    _deadline: float | None = None,
+    _temporary_directory: Path | None = None,
 ) -> bool:
-    """Download ``url`` to ``destination`` and verify the checksum.
+    """Stream a pinned artifact, preserving the destination on any failure.
 
-    Enforces the large-kernel download budget: refuses responses that exceed
-    ``max_bytes``. Never mutates system package managers. Callers must already
-    hold ``yes=True`` authorization.
+    Cache hashing and downloads have cumulative byte bounds. The deadline is
+    cooperative: DNS, HTTP headers and individual socket operations can delay
+    checks; socket inactivity is capped at ten seconds. Atomic replacement is
+    visibility, not a directory-fsync crash-durability guarantee. This helper
+    does not provide scheduler admission or subprocess resource containment.
+    An admitted worker may supply its existing private staging directory for
+    partial files, keeping hard-kill leftovers inside controller quarantine.
+    That directory must share a filesystem with the destination for replace.
     """
-
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    if destination.is_file() and verify_sha256(destination, sha256):
-        if destination.stat().st_size > max_bytes:
-            destination.unlink(missing_ok=True)
-            _announce(
-                f"Cached artifact exceeds download budget of {max_bytes} bytes",
-                on_progress,
-                phase="failed",
-            )
-            return False
-        _announce(
-            f"Reusing checksummed artifact at {destination}",
-            on_progress,
-            phase="available",
-        )
-        return True
-    _announce(f"Downloading {url}", on_progress, phase="downloading")
-    request = Request(
-        url,
-        headers={"User-Agent": "ipfs-datasets-py-isabelle-installer/1"},
-    )
-    tmp = destination.with_suffix(destination.suffix + ".partial")
+    max_bytes = _positive_int(max_bytes, "max_bytes")
+    deadline = _operation_deadline(timeout, cancellation, _deadline)
+    if not isinstance(sha256, str) or not _HEX64.fullmatch(sha256.lower()):
+        raise ValueError("sha256 must be a 64-character hexadecimal digest")
+    destination = Path(destination)
+    temporary: Path | None = None
     try:
-        with urlopen(request, timeout=timeout) as response:  # noqa: S310 - reviewed pin URL
+        _check_running(deadline, cancellation)
+        # lstat includes FIFOs and dangling symlinks; neither is a cache miss.
+        if destination.exists() or destination.is_symlink():
+            with _open_regular(destination, max_bytes) as cached:
+                digest = _bounded_digest(cached, max_bytes, deadline, cancellation)
+            if digest == sha256.lower():
+                _announce(f"Reusing checksummed artifact at {destination}", on_progress, phase="available")
+                _check_running(deadline, cancellation)
+                return True
+        _announce(f"Downloading {url}", on_progress, phase="downloading")
+        _check_running(deadline, cancellation)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        request = Request(url, headers={"User-Agent": "ipfs-datasets-py-isabelle-installer/1"})
+        with urlopen(request, timeout=min(10.0, max(0.001, deadline - time.monotonic()))) as response:
+            _check_running(deadline, cancellation)
             content_length = response.headers.get("Content-Length")
+            declared = None
             if content_length is not None:
-                try:
-                    declared = int(content_length)
-                except ValueError:
-                    declared = -1
+                if not isinstance(content_length, str) or not re.fullmatch(r"[0-9]{1,20}", content_length):
+                    raise IsabelleInstallerError("invalid Content-Length")
+                declared = int(content_length)
                 if declared > max_bytes:
-                    _announce(
-                        f"Remote Content-Length {declared} exceeds download budget "
-                        f"{max_bytes}; refusing download",
-                        on_progress,
-                        phase="failed",
-                    )
-                    return False
+                    raise IsabelleInstallerError("Content-Length exceeds download byte cap")
+            descriptor, name = tempfile.mkstemp(prefix=destination.name + ".", suffix=".partial",
+                                               dir=destination.parent if _temporary_directory is None else _temporary_directory)
+            temporary = Path(name)
             hasher = hashlib.sha256()
             total = 0
-            with tmp.open("wb") as handle:
+            with os.fdopen(descriptor, "wb") as handle:
                 while True:
-                    chunk = response.read(1024 * 1024)
-                    if not chunk:
-                        break
+                    _check_running(deadline, cancellation)
+                    read = getattr(response, "read1", response.read)
+                    chunk = read(min(_COPY_BYTES, max_bytes - total + 1))
+                    _check_running(deadline, cancellation)
                     total += len(chunk)
                     if total > max_bytes:
-                        handle.close()
-                        tmp.unlink(missing_ok=True)
-                        _announce(
-                            f"Download exceeded budget of {max_bytes} bytes",
-                            on_progress,
-                            phase="failed",
-                        )
-                        return False
+                        raise IsabelleInstallerError("download exceeded its cumulative byte cap")
+                    if declared is not None and total > declared:
+                        raise IsabelleInstallerError("download exceeds declared Content-Length")
+                    if not chunk:
+                        break
                     hasher.update(chunk)
                     handle.write(chunk)
-    except Exception as exc:  # pragma: no cover - network failures host-specific
-        tmp.unlink(missing_ok=True)
+                if declared is not None and total != declared:
+                    raise IsabelleInstallerError("download does not match declared Content-Length")
+                if hasher.hexdigest() != sha256.lower():
+                    raise IsabelleInstallerError("checksum mismatch; refusing install")
+                _check_running(deadline, cancellation)
+                handle.flush()
+                os.fsync(handle.fileno())
+            _check_running(deadline, cancellation)
+            temporary.replace(destination)
+            temporary = None
+        return True
+    except Exception as exc:
         _announce(f"Download failed: {exc}", on_progress, phase="failed")
         return False
-    digest = hasher.hexdigest()
-    if digest != sha256.lower():
-        tmp.unlink(missing_ok=True)
-        _announce(
-            f"Checksum mismatch for {url}; refusing install",
-            on_progress,
-            phase="failed",
-        )
-        return False
-    tmp.replace(destination)
-    return True
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
 
 
-def _safe_extract_tar(archive: Path, destination: Path) -> None:
+def _safe_extract_tar(
+    archive: Path,
+    destination: Path,
+    *,
+    max_archive_bytes: int = MAX_DOWNLOAD_BYTES,
+    max_expanded_bytes: int = MAX_EXTRACTED_BYTES,
+    max_file_bytes: int = MAX_EXTRACTED_FILE_BYTES,
+    max_members: int = MAX_ARCHIVE_MEMBERS,
+    max_path_bytes: int = MAX_ARCHIVE_PATH_BYTES,
+    max_total_path_bytes: int = MAX_ARCHIVE_TOTAL_PATH_BYTES,
+    min_free_bytes: int = MIN_EXTRACTION_FREE_BYTES,
+    timeout: float = DOWNLOAD_TIMEOUT_SECONDS,
+    cancellation: Any | None = None,
+    _deadline: float | None = None,
+) -> None:
+    """Extract a bounded tar stream into an empty, private staging directory.
+
+    Only directories, regular files and contained relative links are accepted.
+    Sparse files, devices, FIFOs, duplicate files and writes through links are
+    refused. Header bounds apply *before* tarfile allocates PAX/longname data.
+    Checks are cooperative, including filesystem I/O and decompression; this is
+    not a native CPU/RSS guard. The caller owns removal of failed staging trees.
+    """
+    for name, value in (("max_archive_bytes", max_archive_bytes), ("max_expanded_bytes", max_expanded_bytes),
+                        ("max_file_bytes", max_file_bytes), ("max_members", max_members),
+                        ("max_path_bytes", max_path_bytes), ("max_total_path_bytes", max_total_path_bytes)):
+        _positive_int(value, name)
+    if type(min_free_bytes) is not int or min_free_bytes < 0:
+        raise ValueError("min_free_bytes must be a nonnegative integer")
+    deadline = _operation_deadline(timeout, cancellation, _deadline)
+    _check_running(deadline, cancellation)
+    destination = Path(destination)
+    if destination.is_symlink():
+        raise IsabelleInstallerError("extraction destination must not be a symlink")
     destination.mkdir(parents=True, exist_ok=True)
-    with tarfile.open(archive, "r:*") as handle:
-        try:
-            handle.extractall(destination, filter="data")  # type: ignore[call-arg]
-        except TypeError:  # pragma: no cover
-            handle.extractall(destination)
+    if next(destination.iterdir(), None) is not None:
+        raise IsabelleInstallerError("extraction destination must be empty")
+    root = destination.resolve()
+    header_count = metadata_bytes = header_depth = total_paths = expanded = 0
+
+    class LimitedTarInfo(tarfile.TarInfo):
+        def _proc_member(self, handle):
+            nonlocal header_count, metadata_bytes, header_depth
+            _check_running(deadline, cancellation)
+            header_count += 1
+            header_depth += 1
+            try:
+                if header_count > max_members or header_depth > 16:
+                    raise IsabelleInstallerError("archive member/header count exceeded")
+                if self.size < 0:
+                    raise IsabelleInstallerError("negative archive member size")
+                extended = self.type in (tarfile.GNUTYPE_LONGNAME, tarfile.GNUTYPE_LONGLINK,
+                                         tarfile.XHDTYPE, tarfile.XGLTYPE, tarfile.SOLARIS_XHDTYPE)
+                if extended:
+                    metadata_bytes += self.size
+                    if self.size > _MAX_TAR_METADATA_BYTES or metadata_bytes > _MAX_TOTAL_TAR_METADATA_BYTES:
+                        raise IsabelleInstallerError("archive metadata byte cap exceeded")
+                elif self.size > max_file_bytes:
+                    raise IsabelleInstallerError("archive per-file byte cap exceeded")
+                result = super()._proc_member(handle)
+                if result.size < 0 or result.size > max_file_bytes:
+                    raise IsabelleInstallerError("archive per-file byte cap exceeded")
+                if sum(len(str(k)) + len(str(v)) for k, v in handle.pax_headers.items()) > _MAX_TAR_METADATA_BYTES:
+                    raise IsabelleInstallerError("archive global metadata byte cap exceeded")
+                return result
+            finally:
+                header_depth -= 1
+
+        def _proc_sparse(self, *_):
+            raise IsabelleInstallerError("sparse archive members are unsupported")
+
+        _proc_gnusparse_00 = _proc_sparse
+        _proc_gnusparse_01 = _proc_sparse
+        _proc_gnusparse_10 = _proc_sparse
+
+    class LimitedReader:
+        def __init__(self, handle, cap, label):
+            self.handle = handle
+            self.total = 0
+            self.cap = cap
+            self.label = label
+
+        def read(self, size):
+            _check_running(deadline, cancellation)
+            size = min(size, _COPY_BYTES) if size >= 0 else _COPY_BYTES
+            data = self.handle.read(min(size, self.cap - self.total + 1))
+            _check_running(deadline, cancellation)
+            self.total += len(data)
+            if self.total > self.cap:
+                raise IsabelleInstallerError(f"archive exceeded {self.label} byte cap")
+            return data
+
+    def checked_name(name: str) -> str:
+        nonlocal total_paths
+        size = len(name.encode("utf-8", errors="strict"))
+        total_paths += size
+        if not name or size > max_path_bytes or total_paths > max_total_path_bytes or "\x00" in name or "\\" in name:
+            raise IsabelleInstallerError("archive path byte cap or encoding violated")
+        if name.startswith("/") or any(part == ".." for part in name.split("/")) or len(name.split("/")) > 64:
+            raise IsabelleInstallerError("archive path escapes destination or exceeds depth cap")
+        return posixpath.normpath(name)
+
+    def checked_parents(path: Path) -> None:
+        # Never follow an archive-created or pre-existing link during writes.
+        relative = path.relative_to(root)
+        current = root
+        for part in relative.parts[:-1]:
+            current = current / part
+            if current.is_symlink():
+                raise IsabelleInstallerError("archive extraction through a symlink is forbidden")
+            current.mkdir(exist_ok=True)
+            if not current.is_dir():
+                raise IsabelleInstallerError("archive parent is not a directory")
+
+    def storage_check(required: int = 0) -> None:
+        _check_running(deadline, cancellation)
+        if free_storage_bytes(root) < min_free_bytes + required:
+            raise IsabelleInstallerError("insufficient extraction disk headroom")
+
+    def _extract_stream(inflated):
+        nonlocal expanded, total_paths
+        with tarfile.open(fileobj=inflated, mode="r|", tarinfo=LimitedTarInfo) as handle:
+            for member in handle:
+                _check_running(deadline, cancellation)
+                # Streaming extraction must not retain all prior TarInfo objects.
+                handle.members.clear()
+                relative = checked_name(member.name)
+                path = root / relative
+                checked_parents(path)
+                storage_check()
+                if member.isdir():
+                    if member.size or path.is_symlink():
+                        raise IsabelleInstallerError("invalid archive directory")
+                    path.mkdir(exist_ok=True)
+                    continue
+                if path.exists() or path.is_symlink():
+                    raise IsabelleInstallerError("duplicate archive output path")
+                if member.isreg() and not member.sparse:
+                    expanded += member.size
+                    if expanded > max_expanded_bytes:
+                        raise IsabelleInstallerError("archive expanded byte cap exceeded")
+                    storage_check(member.size)
+                    source = handle.extractfile(member)
+                    if source is None:
+                        raise IsabelleInstallerError("archive regular file has no data")
+                    remaining = member.size
+                    with source, path.open("xb") as output:
+                        while remaining:
+                            storage_check(min(remaining, _COPY_BYTES))
+                            chunk = source.read(min(remaining, _COPY_BYTES))
+                            _check_running(deadline, cancellation)
+                            if not chunk:
+                                raise IsabelleInstallerError("truncated archive member")
+                            output.write(chunk)
+                            remaining -= len(chunk)
+                    # Preserve executable bits, never setuid/setgid/sticky bits.
+                    path.chmod(member.mode & 0o777)
+                elif member.issym() or member.islnk():
+                    if member.size:
+                        raise IsabelleInstallerError("archive link carries payload")
+                    link = member.linkname
+                    link_bytes = len(link.encode("utf-8", errors="strict"))
+                    total_paths += link_bytes
+                    if not link or link.startswith("/") or "\x00" in link or "\\" in link or link_bytes > max_path_bytes or total_paths > max_total_path_bytes:
+                        raise IsabelleInstallerError("invalid archive link path")
+                    target_name = posixpath.normpath(posixpath.join(posixpath.dirname(relative), link) if member.issym() else link)
+                    if target_name == ".." or target_name.startswith("../") or len(target_name.split("/")) > 64:
+                        raise IsabelleInstallerError("archive link escapes destination")
+                    target = root / target_name
+                    if not target.resolve().is_relative_to(root):
+                        raise IsabelleInstallerError("archive link resolves outside destination")
+                    if member.issym():
+                        path.symlink_to(link)
+                    else:
+                        if target.is_symlink() or not target.is_file():
+                            raise IsabelleInstallerError("hardlink target must be an earlier regular file")
+                        # Parent symlinks are forbidden even for link sources.
+                        checked_parents(target)
+                        os.link(target, path, follow_symlinks=False)
+                else:
+                    raise IsabelleInstallerError("unsupported nonregular archive member")
+                storage_check()
+            _check_running(deadline, cancellation)
+            # Consume bounded tar padding through gzip EOF to verify its CRC
+            # and length trailer. Hidden payload after the tar terminator is not
+            # a second installation stream.
+            while True:
+                trailing = handle.fileobj.read(_COPY_BYTES)
+                _check_running(deadline, cancellation)
+                if not trailing:
+                    break
+                if any(trailing):
+                    raise IsabelleInstallerError("nonzero data after tar terminator")
+
+    with _open_regular(Path(archive), max_archive_bytes) as raw:
+        _check_running(deadline, cancellation)
+        magic = raw.read(6)
+        _check_running(deadline, cancellation)
+        raw.seek(0)
+        if magic.startswith((b"BZh", b"\xfd7zXZ\x00")):
+            raise IsabelleInstallerError("only gzip or plain tar archives are supported")
+        reader = LimitedReader(raw, max_archive_bytes, "compressed")
+        # Avoid tarfile's automatic xz/bz2 decompression, whose dictionaries and
+        # returned blocks can allocate before a TarInfo reaches our guards.
+        stream = gzip.GzipFile(fileobj=reader, mode="rb") if magic.startswith(b"\x1f\x8b") else None
+        raw_tar_cap = max_expanded_bytes + _MAX_TOTAL_TAR_METADATA_BYTES + max_members * 1024 + _COPY_BYTES
+        with stream if stream is not None else nullcontext(reader) as uncompressed:
+            inflated = LimitedReader(uncompressed, raw_tar_cap, "decompressed stream")
+            _extract_stream(inflated)
 
 
 def write_launcher(
@@ -660,14 +947,20 @@ def write_launcher(
             for key, value in environment.items()
         ]
         env_exports = "\n".join(lines) + "\n"
-    launcher.write_text(
-        "#!/usr/bin/env bash\n"
-        "set -euo pipefail\n"
-        f"{env_exports}"
-        f'exec {_shell_quote(str(target.resolve()))} "$@"\n',
-        encoding="utf-8",
-    )
-    launcher.chmod(0o755)
+    descriptor, temporary = tempfile.mkstemp(prefix=f".{name}.", suffix=".new", dir=bin_dir)
+    temporary_launcher = Path(temporary)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            handle.write("#!/usr/bin/env bash\n"
+                         "set -euo pipefail\n"
+                         f"{env_exports}"
+                         f'exec {_shell_quote(str(target.resolve()))} "$@"\n')
+            handle.flush()
+            os.fchmod(handle.fileno(), 0o755)
+            os.fsync(handle.fileno())
+        temporary_launcher.replace(launcher)
+    finally:
+        temporary_launcher.unlink(missing_ok=True)
     return launcher
 
 
@@ -747,6 +1040,77 @@ def authorize_plugin_install(
 # ---------------------------------------------------------------------------
 
 
+_INSTALL_MUTEX = threading.RLock()
+
+
+@contextmanager
+def installation_lock(root: Path, *, checkpoint):
+    """Serialize legacy and bounded installation, including cancellable waits.
+
+    The caller supplies its own deadline/cancellation checkpoint. This lock is
+    also held for publication and ordinary-exception rollback.
+    """
+    acquired = False
+    try:
+        while not acquired:
+            checkpoint()
+            acquired = _INSTALL_MUTEX.acquire(timeout=0.05)
+        checkpoint()
+        root.mkdir(parents=True, exist_ok=True)
+        descriptor = os.open(root / ".isabelle-install.lock", os.O_RDWR | os.O_CREAT |
+                             getattr(os, "O_NONBLOCK", 0) | getattr(os, "O_NOFOLLOW", 0), 0o600)
+        with os.fdopen(descriptor, "r+") as handle:
+            if not stat.S_ISREG(os.fstat(handle.fileno()).st_mode):
+                raise IsabelleInstallerError("install lock must be a regular file")
+            try:
+                import fcntl
+            except ImportError:
+                checkpoint()
+                yield
+                return
+            locked = False
+            try:
+                while not locked:
+                    checkpoint()
+                    try:
+                        fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                        locked = True
+                    except BlockingIOError:
+                        time.sleep(0.05)
+                checkpoint()
+                yield
+            finally:
+                if locked:
+                    fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+    finally:
+        if acquired:
+            _INSTALL_MUTEX.release()
+
+
+def _serialized_install(function):
+    @wraps(function)
+    def wrapped(**kwargs):
+        cancellation = kwargs.get("cancellation")
+        deadline = _operation_deadline(kwargs.get("timeout_seconds", DOWNLOAD_TIMEOUT_SECONDS), cancellation)
+        kwargs["_deadline"] = deadline
+        try:
+            _check_running(deadline, cancellation)
+            if not kwargs.get("yes", False) or kwargs.get("dry_run", False):
+                return function(**kwargs)
+            root = expand_user_local_root(kwargs.get("install_root"))
+            with installation_lock(root, checkpoint=lambda: _check_running(deadline, cancellation)):
+                return function(**kwargs)
+        except _InstallInterrupted as exc:
+            if kwargs.get("strict", True):
+                raise
+            return InstallReceipt(tool_id="isabelle", requested_version=ISABELLE_VERSION,
+                                  yes=kwargs.get("yes", False), strict=False, status="failed", phase="interrupted",
+                                  reason_codes=["cancelled" if cancellation is not None and cancellation.is_set() else "deadline_exceeded"],
+                                  messages=[str(exc)])
+    return wrapped
+
+
+@_serialized_install
 def ensure_isabelle(
     *,
     yes: bool = False,
@@ -760,13 +1124,35 @@ def ensure_isabelle(
     test_mode: bool = False,
     lock: Mapping[str, Any] | None = None,
     skip_storage_budget: bool = False,
+    timeout_seconds: float = DOWNLOAD_TIMEOUT_SECONDS,
+    cancellation: Any | None = None,
+    max_download_bytes: int = MAX_DOWNLOAD_BYTES,
+    max_expanded_bytes: int = MAX_EXTRACTED_BYTES,
+    max_file_bytes: int = MAX_EXTRACTED_FILE_BYTES,
+    max_members: int = MAX_ARCHIVE_MEMBERS,
+    max_path_bytes: int = MAX_ARCHIVE_PATH_BYTES,
+    max_total_path_bytes: int = MAX_ARCHIVE_TOTAL_PATH_BYTES,
+    min_extraction_free_bytes: int = MIN_EXTRACTION_FREE_BYTES,
+    _deadline: float | None = None,
 ) -> InstallReceipt:
     """Ensure the pinned Isabelle2025-2 reconstruction kernel is present.
 
     Strict mode selects only the locked release archive for the host platform.
     Installation is user-local, checksummed, and gated on an explicit large
-    download/storage budget. Never installs on import.
+    download/storage budget. Never installs on import. Download, extraction and
+    lock waits share a cooperative deadline/cancellation signal. Legacy native
+    probes retain their separate subprocess timeout and are not resource-owner
+    admitted; use the installed-runtime preparation API for qualified probes.
     """
+
+    deadline = _operation_deadline(timeout_seconds, cancellation, _deadline)
+    for name, value in (("max_download_bytes", max_download_bytes), ("max_expanded_bytes", max_expanded_bytes),
+                        ("max_file_bytes", max_file_bytes), ("max_members", max_members),
+                        ("max_path_bytes", max_path_bytes), ("max_total_path_bytes", max_total_path_bytes)):
+        _positive_int(value, name)
+    if type(min_extraction_free_bytes) is not int or min_extraction_free_bytes < 0:
+        raise ValueError("min_extraction_free_bytes must be a nonnegative integer")
+    _check_running(deadline, cancellation)
 
     receipt = InstallReceipt(
         tool_id="isabelle",
@@ -808,17 +1194,27 @@ def ensure_isabelle(
         "authority_scope": "kernel_proof_checking_only",
         "hammer_is_proposal_only": True,
         "hammer_cannot_grant_kernel_authority": True,
-        "large_download_budget_bytes": MAX_DOWNLOAD_BYTES,
+        "large_download_budget_bytes": max_download_bytes,
         "min_free_storage_bytes": MIN_FREE_STORAGE_BYTES,
         "does_not_edit_shared_lock": True,
         "does_not_edit_central_certificate": True,
+        "archive_limits": {"compressed_bytes": max_download_bytes, "expanded_bytes": max_expanded_bytes,
+                           "per_file_bytes": max_file_bytes, "member_headers": max_members,
+                           "path_bytes": max_path_bytes, "total_path_bytes": max_total_path_bytes,
+                           "minimum_free_bytes": min_extraction_free_bytes},
+        "archive_limits_scope": "cooperative_io_and_expansion_not_native_process_containment",
     }
 
-    existing = which_executable(ISABELLE_EXECUTABLE)
+    managed = root / "bin" / ISABELLE_EXECUTABLE
+    existing = (str(managed) if managed.is_file() and os.access(managed, os.X_OK) else None) if install_root is not None else which_executable(ISABELLE_EXECUTABLE)
     if existing and not force:
         banner = read_version_banner(existing) or ""
+        _check_running(deadline, cancellation)
         version_ok = observed_version_matches_lock(banner, ISABELLE_VERSION)
-        if version_ok or not strict:
+        theory_processor_ok = probe_theory_processor(existing)
+        _check_running(deadline, cancellation)
+        receipt.bindings["theory_processing_ready"] = theory_processor_ok
+        if theory_processor_ok and (version_ok or not strict):
             receipt.executable_path = existing
             receipt.already_present = True
             receipt.installed = True
@@ -830,14 +1226,12 @@ def ensure_isabelle(
             )
             receipt.bindings["version_banner"] = banner
             return receipt
-        receipt.messages.append(
-            f"Isabelle at {existing} is not the locked pin {ISABELLE_VERSION}; "
-            "repairing managed runtime."
-        )
+        receipt.messages.append(f"Isabelle at {existing} needs a pinned, process_theories-capable runtime.")
         receipt.phase = "repairing"
-        receipt.reason_codes.append("locked_version_mismatch")
+        receipt.reason_codes.append("locked_version_mismatch" if not version_ok else "theory_processor_unavailable")
 
-    budget = check_storage_budget(root)
+    budget = check_storage_budget(root, max_download_bytes=max_download_bytes,
+                                  expected_archive_bytes=min(EXPECTED_ARCHIVE_SIZE_BYTES, max_download_bytes))
     receipt.storage_budget_ok = bool(budget["ok"])
     receipt.bindings["storage_budget"] = budget
 
@@ -891,27 +1285,6 @@ def ensure_isabelle(
             raise
         return receipt
 
-    if _try_legacy_ensure(
-        yes=yes, strict=strict, force=force, on_progress=on_progress
-    ):
-        path = which_executable(ISABELLE_EXECUTABLE)
-        if path and (
-            not strict
-            or observed_version_matches_lock(
-                read_version_banner(path), ISABELLE_VERSION
-            )
-        ):
-            receipt.executable_path = path
-            receipt.installed = True
-            receipt.install_attempted = True
-            receipt.status = "installed"
-            receipt.phase = "installed"
-            receipt.checksum_verified = True
-            receipt.messages.append(
-                f"Installed Isabelle {ISABELLE_VERSION} via managed installer"
-            )
-            return receipt
-
     archive_name = Path(pin.artifact_url).name or f"{pin.version}_{pin.platform}.tar.gz"
     archive = root / "downloads" / archive_name
     destination = root / pin.version
@@ -922,7 +1295,12 @@ def ensure_isabelle(
         archive,
         sha256=pin.sha256,
         on_progress=on_progress,
+        timeout=timeout_seconds,
+        max_bytes=max_download_bytes,
+        cancellation=cancellation,
+        _deadline=deadline,
     ):
+        _check_running(deadline, cancellation)
         receipt.status = "failed"
         receipt.phase = "download"
         receipt.reason_codes.append("download_or_checksum_failed")
@@ -935,58 +1313,112 @@ def ensure_isabelle(
         on_progress,
         phase="extracting",
     )
-    if destination.exists():
-        shutil.rmtree(destination)
-    extract_root = root / f".extract-{pin.version}"
-    if extract_root.exists():
-        shutil.rmtree(extract_root)
-    _safe_extract_tar(archive, extract_root)
-    # Archives typically nest Isabelle2025-2/ at the top level.
-    nested = extract_root / pin.version
-    if nested.is_dir():
-        nested.replace(destination)
-        shutil.rmtree(extract_root, ignore_errors=True)
-    else:
-        # Flat extract or alternate nesting: move extract_root into place.
-        if destination.exists():
-            shutil.rmtree(destination)
-        extract_root.replace(destination)
-
-    binary = locate_isabelle_binary(destination)
-    if binary is None:
-        receipt.status = "failed"
-        receipt.phase = "extract"
-        receipt.reason_codes.append("executable_missing")
-        if strict:
-            raise IsabelleInstallerError("Isabelle archive missing executable")
-        return receipt
-
-    launcher = write_launcher(
-        ISABELLE_EXECUTABLE,
-        binary,
-        install_root=root,
-        environment={
-            "ISABELLE_HOME": str(destination.resolve()),
-        },
-    )
-    banner = read_version_banner(str(launcher)) or ""
-    if strict and not observed_version_matches_lock(banner, ISABELLE_VERSION):
-        receipt.status = "failed"
-        receipt.phase = "validation"
-        receipt.reason_codes.append("locked_version_mismatch")
-        receipt.executable_path = str(launcher)
-        receipt.install_home = str(destination)
-        receipt.messages.append(
-            f"Installed Isabelle did not report locked version {ISABELLE_VERSION}"
-        )
-        if strict:
-            raise IsabelleInstallerError(
-                f"installed Isabelle is not the locked pin {ISABELLE_VERSION}"
-            )
-        return receipt
-
+    # Validate an extracted staging tree before touching an existing install.
+    # A unique staging directory also avoids colliding with interrupted extracts.
+    with tempfile.TemporaryDirectory(prefix=".extract-isabelle-", dir=root) as directory:
+        extract_root = Path(directory)
+        try:
+            _safe_extract_tar(archive, extract_root, max_archive_bytes=max_download_bytes,
+                              max_expanded_bytes=max_expanded_bytes, max_file_bytes=max_file_bytes,
+                              max_members=max_members, max_path_bytes=max_path_bytes,
+                              max_total_path_bytes=max_total_path_bytes, min_free_bytes=min_extraction_free_bytes,
+                              timeout=timeout_seconds, cancellation=cancellation, _deadline=deadline)
+        except (IsabelleInstallerError, OSError, tarfile.TarError) as exc:
+            if strict or isinstance(exc, _InstallInterrupted):
+                raise
+            receipt.status = "failed"
+            receipt.phase = "extract"
+            receipt.reason_codes.append("archive_extraction_failed")
+            receipt.messages.append(str(exc))
+            return receipt
+        _check_running(deadline, cancellation)
+        nested = extract_root / pin.version
+        candidate = nested if nested.is_dir() else extract_root
+        staged_binary = locate_isabelle_binary(candidate)
+        if staged_binary is None:
+            receipt.status = "failed"
+            receipt.phase = "extract"
+            receipt.reason_codes.append("executable_missing")
+            if strict:
+                raise IsabelleInstallerError("Isabelle archive missing executable")
+            return receipt
+        banner = read_version_banner(str(staged_binary)) or ""
+        _check_running(deadline, cancellation)
+        if strict and not observed_version_matches_lock(banner, ISABELLE_VERSION):
+            raise IsabelleInstallerError("staged Isabelle does not match the locked version")
+        theory_ready = probe_theory_processor(str(staged_binary))
+        _check_running(deadline, cancellation)
+        if not theory_ready:
+            receipt.status = "failed"
+            receipt.phase = "validation"
+            receipt.reason_codes.append("theory_processor_unavailable")
+            if strict:
+                raise IsabelleInstallerError("staged Isabelle lacks process_theories")
+            return receipt
+        backup = root / f".previous-{pin.version}"
+        launcher = root / "bin" / ISABELLE_EXECUTABLE
+        launcher_backup = launcher.with_name(".isabelle.previous")
+        if backup.exists() or backup.is_symlink() or launcher_backup.exists() or launcher_backup.is_symlink():
+            raise IsabelleInstallerError("Unresolved previous install; refusing overwrite")
+        if candidate.is_symlink():
+            raise IsabelleInstallerError("distribution root must not be a symlink")
+        _check_running(deadline, cancellation)
+        moved_tree = moved_launcher = published_tree = launcher_touched = False
+        try:
+            if destination.exists() or destination.is_symlink():
+                destination.replace(backup)
+                moved_tree = True
+            candidate.replace(destination)
+            published_tree = True
+            binary = locate_isabelle_binary(destination)
+            if binary is None:
+                raise IsabelleInstallerError("published Isabelle archive missing executable")
+            if launcher.exists() or launcher.is_symlink():
+                launcher.replace(launcher_backup)
+                moved_launcher = True
+            launcher_touched = True
+            write_launcher(ISABELLE_EXECUTABLE, binary, install_root=root,
+                           environment={"ISABELLE_HOME": str(destination.resolve())})
+            _check_running(deadline, cancellation)
+            banner = read_version_banner(str(launcher)) or ""
+            _check_running(deadline, cancellation)
+            if strict and not observed_version_matches_lock(banner, ISABELLE_VERSION):
+                raise IsabelleInstallerError("installed Isabelle does not match the locked version")
+            theory_ready = probe_theory_processor(str(launcher))
+            _check_running(deadline, cancellation)
+            if not theory_ready:
+                raise IsabelleInstallerError("installed Isabelle does not provide process_theories")
+        except BaseException as exc:
+            # Keep both previous paths until validation finishes. This is an
+            # exception rollback, not a crash-atomic multi-path transaction.
+            if launcher_touched:
+                launcher.unlink(missing_ok=True)
+            if moved_launcher:
+                launcher_backup.replace(launcher)
+            if published_tree:
+                shutil.rmtree(destination)
+            if moved_tree:
+                backup.replace(destination)
+            if strict or not isinstance(exc, Exception) or isinstance(exc, _InstallInterrupted):
+                raise
+            receipt.status = "failed"
+            receipt.phase = "validation"
+            receipt.reason_codes.append("publication_validation_failed")
+            receipt.messages.append(str(exc))
+            return receipt
+        # After validated publication, finish required cleanup. The previous
+        # installation may predate these archive limits; cleanup latency is
+        # not a hard wall bound and this is not a filesystem quota.
+        if moved_tree:
+            if backup.is_symlink() or not backup.is_dir():
+                backup.unlink()
+            else:
+                shutil.rmtree(backup)
+        if moved_launcher:
+            launcher_backup.unlink()
     receipt.executable_path = str(launcher)
     receipt.install_home = str(destination.resolve())
+    receipt.bindings["theory_processing_ready"] = True
     receipt.installed = True
     receipt.status = "installed"
     receipt.phase = "installed"
