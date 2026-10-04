@@ -1,8 +1,10 @@
 # Core dependencies only - for initial testing
 # Use this to test if basic setup works, then add more dependencies gradually
-# Deterministic theorem-prover Python bindings used by the base runtime are
-# listed below and mirrored in requirements-theorem-provers.txt.  Optional
-# advisor bindings such as SymbolicAI remain exclusive to that profile/extras.
+# FormalVerificationDistributionContract@1 (FVT-G215 / FVT-084): source-checkout
+# development/integration inventory.  Deterministic theorem-prover Python
+# bindings used by the base runtime are listed below and mirrored in
+# requirements-theorem-provers.txt.  Optional advisor bindings such as
+# SymbolicAI remain exclusive to that profile/extras.
 # Optional modules exposed through the lazy dependency proxy are also available
 # eagerly with: pip install -r requirements-lazy.txt
 
