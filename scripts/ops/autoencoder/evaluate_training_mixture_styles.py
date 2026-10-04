@@ -16,6 +16,7 @@ from types import SimpleNamespace
 TRAINER = 'scripts/ops/autoencoder/benchmark_training_paraphrase_mixture.py'
 ARMS = ('original-only', 'half-paraphrases')
 ROLES = ('selected', 'last-attempt')
+RESULT_SCHEMA = 'training-mixture-exposed-v3-results/v1'
 FALSE = dict(qualified=False, admitted=False, proof_authority=False, formalized=False,
     roundtrip_ok=False, checkpoint_promoted=False, convergence_proven=False,
     lake_executed=False, fresh_holdout=False, source_semantics_verified=False,
@@ -193,7 +194,7 @@ def execute(args):
             token_cross_entropy=score['teacher_forced']['token_cross_entropy']))
         del model,prediction,score
     after=runner.source_inventory(previous,ctx);require(all(after.get(k)==v for k,v in before.items()),'observer producer changed')
-    recheck();save(args.output/'summary.json',dict(schema='training-mixture-exposed-v3-results/v1',complete=True,
+    recheck();save(args.output/'summary.json',dict(schema=RESULT_SCHEMA,complete=True,
         panels=results,source_dependencies=after,elapsed_seconds=time.monotonic()-started,previously_exposed=True,
         references_sha256=ctx['core'].digest(refs),holdout_receipt_sha256=ctx['core'].digest(receipt),
         all_predictions_persisted_before_reference_load=True,recipe=FIXED,**FALSE))

@@ -299,7 +299,8 @@ def train(student, training_rows, validation_rows, *, training_references, valid
           generated_source_margin_replay=False, auxiliary_source_modality_bank=None,
           auxiliary_source_modality_weight=0., generated_boundary_retry_on_mismatch=False,
           auxiliary_source_modality_sampler="independent", auxiliary_source_object_bank=None,
-          auxiliary_source_object_weight=0., source_gradient_preconditioning=None):
+          auxiliary_source_object_weight=0., source_gradient_preconditioning=None,
+          source_training_mixture=None, training_deadline=None, paraphrase_modality_auxiliary=None):
     """Fresh reference-supervised fit; source fidelity gates experimental selection.
 
     The last complete attempt is retained as an explicitly unselected diagnostic.
@@ -333,10 +334,29 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     non-action projection gradient before the unchanged global clip and AdamW.
     Its fixed matrix uses unique TRAIN source features only. The None default
     performs no preparation/import/gradient arithmetic for this experiment.
+    Explicit contextual TRAIN mixtures retain original normalization/count/aux
+    ownership while substituting authenticated source/target rows in the normal
+    decoder losses. The None default does not import or prepare that helper.
+    An optional absolute monotonic deadline caps the entire existing fit budget.
+    A separate explicit paraphrase modality auxiliary preserves original decoder
+    rows and adds balanced TRAIN-only cached-source supervision. Weight zero
+    observes the same source forwards without attaching any auxiliary graph.
     """
     started = time.monotonic()
     core._require(config is None or type(config) is dict, "configuration must be a mapping")
     options = core._config({"alpha": 0., **(config or {})})
+    core._require(training_deadline is None or type(training_deadline) in (int, float)
+        and math.isfinite(training_deadline), "finite absolute training deadline required")
+    core._require(source_training_mixture is None or type(source_training_mixture) is dict,
+        "explicit source training mixture must be a mapping")
+    core._require(paraphrase_modality_auxiliary is None or type(paraphrase_modality_auxiliary) is dict
+        and set(paraphrase_modality_auxiliary)=={"source_inventory", "weight"}
+        and type(paraphrase_modality_auxiliary["source_inventory"]) is dict
+        and type(paraphrase_modality_auxiliary["weight"]) in (int, float)
+        and paraphrase_modality_auxiliary["weight"] in (0., .05),
+        "closed paraphrase modality auxiliary and explicit zero/.05 weight required")
+    if training_deadline is not None and time.monotonic() >= training_deadline:
+        raise TimeoutError("absolute training deadline expired before preparation")
     core._require(source_gradient_preconditioning is None or type(source_gradient_preconditioning) is str
         and source_gradient_preconditioning in ("identity", "train_covariance_inverse"),
         "unknown explicit source-gradient preconditioning policy")
@@ -421,11 +441,27 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     contextual = head_specification is not None and head_specification.get("schema") in (
         "clause-source-decoder-development/v1", "action-factorized-clause-source-decoder-development/v1",
         "ordered-clause-recurrent-source-decoder-development/v1", _ISOLATED_OBJECT_SCHEMA)
+    core._require(paraphrase_modality_auxiliary is None or contextual and student.dimension in (384, 768)
+        and head_specification.get("schema")=="ordered-clause-recurrent-source-decoder-development/v1"
+        and source_training_mixture is None and order_augmentation is None and source_gradient_preconditioning is None
+        and not (use_auxiliary_object or use_source_margin or use_joint_generated_replay)
+        and auxiliary_source_modality_sampler=="independent" and count_exposure=="balanced_all"
+        and source_value_weight>0 and options["batch_size"]<=8 and options["max_target_tokens"]==512
+        and len(codec["target_vocabulary"])==32 and generated_boundary_gradient_scope=="all_trainable",
+        "paraphrase auxiliary requires original384/768 contextual decoder/count/loss path")
     core._require(action_contrastive_weight == 0. or head_specification is not None
         and head_specification.get("schema") in ("action-factorized-clause-source-decoder-development/v1",
             "ordered-clause-recurrent-source-decoder-development/v1", _ISOLATED_OBJECT_SCHEMA),
         "positive action-contrastive weight requires action-factorized clause model")
     core._require(contextual == (source_contexts is not None), "clause source model and explicit contexts must be paired")
+    core._require(source_training_mixture is None or contextual and student.dimension in (384, 768)
+        and head_specification.get("schema") == "ordered-clause-recurrent-source-decoder-development/v1"
+        and count_exposure == "balanced_all" and options["batch_size"] <= 8
+        and options["max_target_tokens"] == 512 and len(codec["target_vocabulary"]) == 32
+        and source_gradient_preconditioning is None and order_augmentation is None
+        and not (use_auxiliary_object or use_source_margin or use_joint_generated_replay)
+        and generated_field_weight == 0. and generated_source_margin_replay is False,
+        "mixture requires the explicit384/768 original-loss contextual path")
     core._require(source_gradient_preconditioning is None or contextual and student.dimension == 8
         and head_specification.get("schema") == "ordered-clause-recurrent-source-decoder-development/v1"
         and not (use_auxiliary_modality or use_auxiliary_object or use_source_margin or use_joint_generated_replay)
@@ -476,6 +512,8 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     count_labels = _count_labels(training_references)
     _count_labels(validation_references)
     deadline = started + options["max_seconds"]
+    if training_deadline is not None:
+        deadline = min(deadline, training_deadline)
     torch = core._torch()
     core._model(student, torch)
     core._validate(codec, input_transform, lineage, student.dimension)
@@ -505,6 +543,16 @@ def train(student, training_rows, validation_rows, *, training_references, valid
         order_selector = order_training_augmentation.prepare(training_rows, validation_rows,
             training_references=training_references, codec=codec, **order_augmentation)
         effective_rows, effective_references = order_selector.effective_rows, order_selector.effective_references
+    mixture_selector = mixture_initial = None
+    if source_training_mixture is not None:
+        from . import contextual_training_mixture
+        mixture_selector = contextual_training_mixture.prepare(training_rows, validation_rows,
+            training_references=training_references, validation_references=validation_references,
+            source_contexts=source_contexts, codec=codec, validate_rule=validate_rule,
+            mixture=source_training_mixture, deadline=deadline)
+        effective_rows, effective_references = mixture_selector.effective_rows, mixture_selector.effective_references
+        training_contexts = mixture_selector.effective_contexts
+        mixture_initial = mixture_selector.snapshot()
     order_initial = None if order_selector is None else order_selector.snapshot()
     weights = reference_weights(effective_rows, effective_references, codec, strategy=strategy, validate_rule=validate_rule)
     reference_weights(validation_rows, validation_references, codec, strategy="reference_ce", validate_rule=validate_rule)
@@ -515,7 +563,7 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     action_owner = action_inventory = None
     if action_contrastive_weight:
         from . import action_contrastive_decoder_training as action_owner
-        action_inventory = action_owner.prepare_training_inventory(training_rows, training_references,
+        action_inventory = action_owner.prepare_training_inventory(effective_rows, effective_references,
             contexts=training_contexts, codec=codec, validate_rule=validate_rule)
     field_owner = field_inventory = None
     if use_joint_generated_replay:
@@ -531,6 +579,23 @@ def train(student, training_rows, validation_rows, *, training_references, valid
         # Reject unsupported inventories before copying a private model.
         margin_owner.recurrent_auxiliary_parameters(student)
     stages = core._curriculum(curriculum, training_rows, options)
+    paraphrase_owner = paraphrase_bank = paraphrase_cache = paraphrase_cache_receipt = None
+    paraphrase_preparation_timed_out = False
+    paraphrase_preparation_seconds = 0.
+    paraphrase_observations = []
+    paraphrase_forward_attempts = 0
+    if paraphrase_modality_auxiliary is not None:
+        from . import paraphrase_modality_auxiliary_training as paraphrase_owner
+        preparation_started = time.monotonic()
+        paraphrase_bank = paraphrase_owner.prepare_bank(training_rows, validation_rows,
+            training_references=training_references, validation_references=validation_references,
+            source_contexts=source_contexts, codec=codec, validate_rule=validate_rule,
+            source_inventory=paraphrase_modality_auxiliary["source_inventory"], deadline=deadline)
+        paraphrase_preparation_seconds = time.monotonic()-preparation_started
+        paraphrase_update_bound = min(options["max_optimizer_steps"], sum(
+            ((len(stage["training_ids"])+options["batch_size"]-1)//options["batch_size"])*stage["epochs"]
+            for stage in stages))
+        paraphrase_weight = float(paraphrase_modality_auxiliary["weight"])
     precondition_owner = precondition_cache = precondition_receipt = None
     precondition_preparation_timed_out = False
     if source_gradient_preconditioning is not None:
@@ -586,6 +651,11 @@ def train(student, training_rows, validation_rows, *, training_references, valid
         estimate += 128*len(validation_rows)*values.MAX_RULES*len(values.SOURCE_FIELDS)*len(codec["target_vocabulary"])
     if order_selector is not None:
         estimate += 32*len(effective_rows)*(student.dimension+options["max_target_tokens"])
+    if mixture_selector is not None:
+        # Bound retained Python inventories, copied source batches and compact
+        # draw/commit receipts separately from the existing tensor estimate.
+        estimate += 4*len(core._raw(dict(rows=effective_rows, references=effective_references, contexts=training_contexts)))
+        estimate += (options["max_optimizer_steps"]+1)*options["batch_size"]*2048
     if generated_boundary_weight:
         # Retained generated prefixes/labels and a differentiable replay, in
         # addition to the unchanged reference loss. This is not an RSS quota.
@@ -634,6 +704,9 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     if modality_owner is not None:
         estimate += modality_owner.estimate_training_work_bytes(auxiliary_source_modality_bank,
             max_optimizer_steps=modality_update_bound)
+    if paraphrase_owner is not None:
+        estimate += paraphrase_owner.estimate_training_work_bytes(paraphrase_bank,
+            max_optimizer_steps=paraphrase_update_bound)
     if object_owner is not None:
         estimate += object_owner.estimate_training_work_bytes(auxiliary_source_object_bank,
             max_optimizer_steps=object_update_bound)
@@ -648,7 +721,11 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     initial_selector = None if count_selector is None else count_selector.snapshot()
     before = core.tensor_digest(student)
     modes = {name: m.training for name, m in student.named_modules()}
+    if (mixture_selector is not None or paraphrase_owner is not None or training_deadline is not None) and time.monotonic() >= deadline:
+        raise TimeoutError("training deadline expired before private model copy")
     working = deepcopy(student)
+    if (mixture_selector is not None or paraphrase_owner is not None or training_deadline is not None) and time.monotonic() >= deadline:
+        raise TimeoutError("training deadline expired during private model copy")
     trainable = [p for p in working.parameters() if p.requires_grad]
     core._require(trainable, "no trainable decoder parameters")
     margin_parameters = ([] if margin_owner is None else margin_owner.recurrent_auxiliary_parameters(working))
@@ -668,6 +745,16 @@ def train(student, training_rows, validation_rows, *, training_references, valid
             factor=options["plateau_factor"], patience=options["plateau_patience"],
             min_lr=options["learning_rate"]*options["min_learning_rate_ratio"])
     generator = torch.Generator().manual_seed(options["seed"])
+    if paraphrase_owner is not None:
+        preparation_started = time.monotonic()
+        try:
+            paraphrase_cache = paraphrase_owner.prepare_tensor_cache(torch, working, paraphrase_bank,
+                codec=codec, input_transform=input_transform, seed=options["seed"], deadline=deadline,
+                max_optimizer_steps=paraphrase_update_bound)
+            paraphrase_cache_receipt = paraphrase_cache.receipt
+        except TimeoutError:
+            paraphrase_preparation_timed_out = True
+        paraphrase_preparation_seconds += time.monotonic()-preparation_started
     if precondition_owner is not None:
         try:
             precondition_cache = precondition_owner.prepare(torch, working,
@@ -701,7 +788,7 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     evaluate = lambda: _evaluate(torch, working, validation_rows, validation_references, input_transform,
         options, codec, deadline, validate_rule, validator_id, validation_source_labels,
         **({} if validation_contexts is None else {"source_contexts": validation_contexts}))
-    baseline = None if modality_preparation_timed_out or object_preparation_timed_out or precondition_preparation_timed_out else evaluate()
+    baseline = None if modality_preparation_timed_out or object_preparation_timed_out or precondition_preparation_timed_out or paraphrase_preparation_timed_out else evaluate()
     selected = last_complete = baseline
     last_complete_step = 0 if baseline is not None else None
     selected_epoch = 0 if baseline is not None else None
@@ -715,6 +802,8 @@ def train(student, training_rows, validation_rows, *, training_references, valid
         stopped = "deadline_during_auxiliary_object_preparation"
     if precondition_preparation_timed_out:
         stopped = "deadline_during_source_gradient_preparation"
+    if paraphrase_preparation_timed_out:
+        stopped = "deadline_during_paraphrase_modality_preparation"
     by_id = {row["id"]: row for row in training_rows}
     count_presentations = 0
     count_by_class = {str(value+1): 0 for value in sorted(set(count_labels.values()))}
@@ -757,6 +846,12 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                     break
                 parents = [current[index] for index in order[offset:offset+options["batch_size"]]]
                 part = parents if order_selector is None else order_selector.select(parents)
+                if mixture_selector is not None:
+                    try:
+                        part = mixture_selector.select(parents, deadline=deadline)
+                    except TimeoutError:
+                        stopped, complete = "deadline_during_training_mixture_selection", False
+                        break
                 data, labels = core._batch(torch, part, input_transform)
                 token_weights = torch.tensor([weights[row["id"]] + [0.]*(labels.shape[1]-len(weights[row["id"]]))
                     for row in part], dtype=torch.float32)[:, 1:]
@@ -889,6 +984,22 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                         break
                     object_base_objective = objective.detach()
                     objective = objective + auxiliary_source_object_weight*object_result["loss"]
+                paraphrase_result = paraphrase_base_objective = None
+                if paraphrase_cache is not None:
+                    paraphrase_forward_attempts += 1
+                    try:
+                        paraphrase_result = paraphrase_owner.modality_loss(torch, working, paraphrase_cache,
+                            committed_step=steps, deadline=deadline, requires_grad=paraphrase_weight>0.)
+                    except TimeoutError:
+                        optimizer.zero_grad(set_to_none=True)
+                        stopped, complete = "deadline_during_paraphrase_modality", False
+                        break
+                    paraphrase_observations.append(paraphrase_result["receipt"])
+                    paraphrase_base_objective = objective.detach()
+                    # A zero multiple would create otherwise absent gradients
+                    # and Adam state. This control never attaches that graph.
+                    if paraphrase_weight>0.:
+                        objective = objective + paraphrase_weight*paraphrase_result["loss"]
                 core._require(core._finite(torch, objective) and core._finite(torch, source_loss), "nonfinite objective")
                 if time.monotonic() >= deadline:
                     stopped, complete = "deadline", False
@@ -902,6 +1013,10 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                         stopped, complete = "deadline_after_source_margin_backward", False
                         break
                 objective.backward()
+                if paraphrase_result is not None and time.monotonic() >= deadline:
+                    optimizer.zero_grad(set_to_none=True)
+                    stopped, complete = "deadline_after_paraphrase_modality_backward", False
+                    break
                 if modality_result is not None and time.monotonic() >= deadline:
                     optimizer.zero_grad(set_to_none=True)
                     stopped, complete = "deadline_after_auxiliary_modality_backward", False
@@ -954,6 +1069,9 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                     token_ce=float(plain.detach()), weighted_token_ce=float(weighted.detach()),
                     count_ce=float(count_loss.detach()), source_value_ce=float(source_loss.detach()),
                     raw_reconstruction_mse=float(mse.detach()), objective=float(objective.detach())))
+                if mixture_selector is not None:
+                    committed_updates[-1]["source_training_mixture"] = mixture_selector.record_commit(steps-1)
+                    committed_updates[-1]["decoder_parent_row_ids"] = [row["id"] for row in parents]
                 if precondition_step is not None:
                     committed_updates[-1]["source_gradient_preconditioning"] = precondition_step
                 if modality_result is not None:
@@ -968,6 +1086,12 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                         base_objective=float(object_base_objective),
                         weighted_loss=float((auxiliary_source_object_weight*object_result["loss"]).detach()),
                         receipt=object_result["receipt"])
+                if paraphrase_result is not None:
+                    committed_updates[-1]["paraphrase_modality_auxiliary"] = dict(
+                        zero_based_committed_step=steps-1, weight=paraphrase_weight,
+                        base_objective=float(paraphrase_base_objective),
+                        weighted_loss=paraphrase_weight*float(paraphrase_result["loss"].detach()),
+                        receipt=paraphrase_result["receipt"])
                 if margin_result is not None:
                     margin_gradient_receipt.update(combined_preclip_norm=float(preclip_norm.detach()),
                         shared_clip_factor=float((options["max_grad_norm"]/(preclip_norm.detach()+1e-6)).clamp(max=1.)))
@@ -1255,6 +1379,36 @@ def train(student, training_rows, validation_rows, *, training_references, valid
             auxiliary_source_object_objective="ordinary_objective_plus_weight_times_full_vocabulary_object_CE",
             source_value_training_row_policy="primary scalar labels use decoder batch; auxiliary object bank adds supervised sources",
             source_context_training_policy="unique_source_clause_normalization; original_paragraph_supervision; plus explicit auxiliary source object bank")
+    if paraphrase_owner is not None:
+        auxiliary_updates = [u["paraphrase_modality_auxiliary"] for u in committed_updates]
+        report.update(paraphrase_modality_auxiliary=dict(weight=paraphrase_weight,
+            bank_receipt={k:deepcopy(v) for k,v in paraphrase_bank.items() if k!="rows"},
+            cache_receipt=paraphrase_cache_receipt,preparation_elapsed_seconds=paraphrase_preparation_seconds,
+            max_updates_estimated=paraphrase_update_bound,forward_attempts=paraphrase_forward_attempts,
+            completed_forward_observations=len(paraphrase_observations),
+            committed_updates=len(auxiliary_updates),observed_clause_presentations=6*len(paraphrase_observations),
+            committed_clause_presentations=6*len(auxiliary_updates),
+            positively_supervised_clause_presentations=6*len(auxiliary_updates) if paraphrase_weight>0. else 0,
+            committed_presentations_per_modality={m:2*len(auxiliary_updates) for m in ("O","P","F")},
+            committed_presentations_per_template={t:3*len(auxiliary_updates) for t in paraphrase_owner.mixture.authored.TEMPLATES},
+            uncommitted_observations=paraphrase_observations[len(auxiliary_updates):],
+            zero_weight_graph_attached=False,training_only=True,used_for_selection=False,
+            decoder_rows_replaced=False,normalization_refitted=False,
+            gradient_scope="modality readout and shared non-action projection; unchanged global clipping can affect all updates",
+            objective="ordinary objective plus positive weight times mean six-clause full32V modality CE"),
+            source_context_training_policy="original preprocessing and original paragraph contexts; separate authenticated TRAIN paraphrase modality clauses",
+            source_value_training_row_policy="original decoder scalar labels plus explicit paraphrase modality auxiliary; inherited auxiliary unchanged")
+    if mixture_selector is not None:
+        report.update(source_training_mixture=dict(initial=mixture_initial, final=mixture_selector.snapshot()),
+            source_context_training_policy="original preprocessing and auxiliary bank; authenticated effective TRAIN decoder contexts",
+            source_value_training_row_policy="authenticated effective decoder rows; original count stream and optional original113 modality auxiliary",
+            source_training_mixture_used_for_selection=False,
+            source_training_mixture_preprocessing_refitted=False,
+            source_training_mixture_effective_rows_sha256=core.digest(effective_rows),
+            source_training_mixture_effective_references_sha256=core.digest(effective_references),
+            source_training_mixture_effective_contexts_sha256=core.digest(training_contexts))
+    if training_deadline is not None:
+        report["absolute_training_deadline_supplied"] = True
     return dict(state_dict=best_state, report=report,
         last_complete_attempt_state_dict=diagnostic_state,
         predictions=[] if selected is None else deepcopy(selected["predictions"]),
