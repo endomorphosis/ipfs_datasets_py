@@ -76,8 +76,12 @@ def _policy_scope() -> dict[str, object]:
             _term(CVEfixesTermKind.PRECONDITION, "attacker_controls_path"),
             _term(CVEfixesTermKind.PRECONDITION, "missing_canonicalization"),
         ),
-        effects=(_term(CVEfixesTermKind.EFFECT, "read_outside_allowed_root"),),
-        mitigations=(_term(CVEfixesTermKind.MITIGATION, "canonicalize_and_confine"),),
+        effects=(
+            _term(CVEfixesTermKind.EFFECT, "read_outside_allowed_root"),
+        ),
+        mitigations=(
+            _term(CVEfixesTermKind.MITIGATION, "canonicalize_and_confine"),
+        ),
         language=_term(CVEfixesTermKind.LANGUAGE, "python"),
         scope=_term(CVEfixesTermKind.SCOPE, "filesystem"),
         cve_ids=("CVE-2026-0042",),
@@ -155,7 +159,9 @@ def _license() -> LicenseProvenance:
 
 
 def _stage(root: Path, dataset: DerivedDataset | None = None):
-    release = build_huggingface_release(dataset or _dataset(), license_provenance=_license())
+    release = build_huggingface_release(
+        dataset or _dataset(), license_provenance=_license()
+    )
     root.mkdir(parents=True)
     for artifact in release.artifacts:
         path = root / artifact.path
@@ -183,7 +189,9 @@ def _rewrite_manifest(root: Path, update) -> HuggingFaceSourcePin:
     )
 
 
-def _replace_descriptor(manifest: dict[str, object], path: str, artifact: ReleaseArtifact) -> None:
+def _replace_descriptor(
+    manifest: dict[str, object], path: str, artifact: ReleaseArtifact
+) -> None:
     descriptors = manifest["artifacts"]
     assert isinstance(descriptors, list)
     for index, descriptor in enumerate(descriptors):
@@ -202,7 +210,9 @@ def test_load_exact_revision_verifies_release_shards_rows_and_dataset(
 
     assert loaded.pin == pin
     assert loaded.dataset.cid == release.release_manifest.parent_cids[0]
-    assert {record.cid for record in loaded.records} == set(release.release_manifest.record_cids)
+    assert {record.cid for record in loaded.records} == set(
+        release.release_manifest.record_cids
+    )
     assert loaded.receipt.verified is True
     assert loaded.receipt.offline is True
     assert loaded.receipt.revision == HUB_REVISION
@@ -231,12 +241,16 @@ def test_manifest_drift_and_missing_shards_fail_closed(tmp_path: Path) -> None:
     manifest_path = root / "manifest.json"
     manifest_path.write_bytes(manifest_path.read_bytes() + b"\n")
 
-    with pytest.raises(HuggingFaceSourceIntegrityError, match="manifest digest"):
+    with pytest.raises(
+        HuggingFaceSourceIntegrityError, match="manifest digest"
+    ):
         load_huggingface_security_ir(root, pin)
 
     manifest_path.write_bytes(release.artifact("manifest.json").content)
     (root / release.parquet_artifacts[0].path).unlink()
-    with pytest.raises(HuggingFaceSourceIntegrityError, match="missing"):
+    with pytest.raises(
+        HuggingFaceSourceIntegrityError, match="missing"
+    ):
         load_huggingface_security_ir(root, pin)
 
 
@@ -276,7 +290,8 @@ def test_row_tampering_is_detected_even_with_rehashed_transport_metadata(
         _replace_descriptor(manifest, original.path, changed)
         old = ReleaseManifest.from_dict(manifest["release_manifest"])
         shard_cids = tuple(
-            changed.content_id if cid == original.content_id else cid for cid in old.shard_cids
+            changed.content_id if cid == original.content_id else cid
+            for cid in old.shard_cids
         )
         manifest["release_manifest"] = ReleaseManifest(
             source_cids=old.source_cids,
@@ -290,7 +305,9 @@ def test_row_tampering_is_detected_even_with_rehashed_transport_metadata(
         ).to_dict()
 
     pin = _rewrite_manifest(root, update)
-    with pytest.raises(HuggingFaceSourceIntegrityError, match="canonical row"):
+    with pytest.raises(
+        HuggingFaceSourceIntegrityError, match="canonical row"
+    ):
         load_huggingface_security_ir(root, pin)
 
 
@@ -327,7 +344,9 @@ def test_meta_index_pointer_tampering_fails_closed(
         indexes["corpus_chunks"] = changed.descriptor()
 
     pin = _rewrite_manifest(root, update)
-    with pytest.raises(HuggingFaceSourceIntegrityError, match="meta-index"):
+    with pytest.raises(
+        HuggingFaceSourceIntegrityError, match="meta-index"
+    ):
         load_huggingface_security_ir(root, pin)
 
 
@@ -347,9 +366,13 @@ def test_unknown_dataset_schema_fails_closed(tmp_path: Path) -> None:
 
     pin = _rewrite_manifest(
         root,
-        lambda manifest: _replace_descriptor(manifest, "dataset_infos.json", replacement),
+        lambda manifest: _replace_descriptor(
+            manifest, "dataset_infos.json", replacement
+        ),
     )
-    with pytest.raises(HuggingFaceSourceIntegrityError, match="dataset_infos schema"):
+    with pytest.raises(
+        HuggingFaceSourceIntegrityError, match="dataset_infos schema"
+    ):
         load_huggingface_security_ir(root, pin)
 
 
@@ -362,7 +385,9 @@ def test_candidate_cannot_smuggle_authority_from_verified_rows(
         _dataset(candidate_payload={"grants_execution_authority": True}),
     )
 
-    with pytest.raises(HuggingFaceSourceIntegrityError, match="cannot grant candidate authority"):
+    with pytest.raises(
+        HuggingFaceSourceIntegrityError, match="cannot grant candidate authority"
+    ):
         load_huggingface_security_ir(root, pin)
 
 
@@ -389,12 +414,16 @@ def test_policy_lookup_and_declarations_are_bounded_and_non_authoritative(
     assert response.revision == HUB_REVISION
     assert response.grants_execution_authority is False
 
-    results = loaded.security_ir_declarations(PolicyLookup(cve_id="CVE-2026-0042", max_results=1))
+    results = loaded.security_ir_declarations(
+        PolicyLookup(cve_id="CVE-2026-0042", max_results=1)
+    )
     assert len(results) == 1
     assert results[0].authority == "candidate"
     assert results[0].grants_execution_authority is False
     policy_metadata = results[0].declaration.policies[0].attributes
-    assert policy_metadata["security.cvefixes.adapter"]["requires_authoritative_adoption"] is True
+    assert policy_metadata["security.cvefixes.adapter"][
+        "requires_authoritative_adoption"
+    ] is True
 
 
 def test_resource_limits_fail_before_unbounded_scan(tmp_path: Path) -> None:
@@ -402,7 +431,9 @@ def test_resource_limits_fail_before_unbounded_scan(tmp_path: Path) -> None:
     _, pin = _stage(root)
 
     with pytest.raises(HuggingFaceSourceLimitError, match="shard limit"):
-        load_huggingface_security_ir(root, pin, limits=HuggingFaceSourceLimits(max_shards=1))
+        load_huggingface_security_ir(
+            root, pin, limits=HuggingFaceSourceLimits(max_shards=1)
+        )
 
 
 def test_offline_cache_preserves_and_reverifies_revision_identity(
@@ -426,7 +457,9 @@ def test_offline_cache_preserves_and_reverifies_revision_identity(
     assert fetched.receipt.offline is False
     assert cached.receipt.offline is True
     assert cached.pin.revision == HUB_REVISION
-    marker = json.loads((cache.path_for(pin) / cache._MARKER).read_bytes())
+    marker = json.loads(
+        (cache.path_for(pin) / cache._MARKER).read_bytes()
+    )
     assert marker["pin"]["revision"] == HUB_REVISION
 
     foreign = replace(pin, revision="8" * 40)
@@ -435,7 +468,9 @@ def test_offline_cache_preserves_and_reverifies_revision_identity(
 
     cached_manifest = cache.path_for(pin) / "manifest.json"
     cached_manifest.write_bytes(cached_manifest.read_bytes() + b"\n")
-    with pytest.raises(HuggingFaceSourceIntegrityError, match="manifest digest"):
+    with pytest.raises(
+        HuggingFaceSourceIntegrityError, match="manifest digest"
+    ):
         cache.load(pin)
 
 

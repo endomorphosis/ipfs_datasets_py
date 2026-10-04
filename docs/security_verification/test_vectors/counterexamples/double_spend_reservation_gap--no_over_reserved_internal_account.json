@@ -1,0 +1,182 @@
+{
+  "claim_id": "no_over_reserved_internal_account",
+  "counterexample": {
+    "account_ids": [
+      "account:alice_btc"
+    ],
+    "asset_ids": [],
+    "capability_ids": [
+      "{'account_id': 'account:alice_btc', 'reason': 'over-reserved'}",
+      "{'account_id': '<policy>', 'reason': 'atomic reservation policy disabled'}"
+    ],
+    "claim_id": "no_over_reserved_internal_account",
+    "compiler_artifact": {
+      "account_ids": [
+        "account:alice_btc"
+      ],
+      "kind": "internal_account_reservations",
+      "overdrawn_accounts": [
+        "<policy>",
+        "account:alice_btc"
+      ],
+      "violations": [
+        {
+          "account_id": "account:alice_btc",
+          "reason": "over-reserved"
+        },
+        {
+          "account_id": "<policy>",
+          "reason": "atomic reservation policy disabled"
+        }
+      ]
+    },
+    "deposit_ids": [],
+    "evidence_refs": [
+      {
+        "kind": "test_fixture",
+        "line_end": 65,
+        "line_start": 55,
+        "notes": "Fixture atomic reservation policy.",
+        "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+        "review_status": "trusted_fixture"
+      },
+      {
+        "kind": "test_fixture",
+        "line_end": 129,
+        "line_start": 8,
+        "notes": "Fixture account balance and reservations.",
+        "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+        "review_status": "trusted_fixture"
+      }
+    ],
+    "message": "Z3 found a satisfying violation trace.",
+    "soundness_notes": [],
+    "source_facts": [
+      {
+        "account_id": "account:alice_btc",
+        "asset_id": "asset:btc",
+        "block_height": 100,
+        "chain_id": "chain:btc",
+        "confirmations": 0,
+        "deposit_id": "deposit:1",
+        "event": "deposit_observed",
+        "evidence_refs": [
+          {
+            "kind": "test_fixture",
+            "line_end": 77,
+            "line_start": 66,
+            "notes": "Fixture deposit observed trace.",
+            "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+            "review_status": "trusted_fixture"
+          }
+        ],
+        "id": "event:deposit_observed:1",
+        "timestamp": 4,
+        "txid": "tx:1"
+      },
+      {
+        "account_id": "account:alice_btc",
+        "asset_id": "asset:btc",
+        "block_height": 106,
+        "chain_id": "chain:btc",
+        "confirmations": 6,
+        "deposit_id": "deposit:1",
+        "event": "deposit_finalized",
+        "evidence_refs": [
+          {
+            "kind": "test_fixture",
+            "line_end": 77,
+            "line_start": 66,
+            "notes": "Fixture deposit finalized trace.",
+            "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+            "review_status": "trusted_fixture"
+          }
+        ],
+        "finality_threshold": 6,
+        "id": "event:deposit_finalized:1",
+        "timestamp": 5,
+        "txid": "tx:1"
+      },
+      {
+        "account_id": "account:alice_btc",
+        "after_finality": true,
+        "asset_id": "asset:btc",
+        "block_height": 106,
+        "chain_id": "chain:btc",
+        "confirmations": 6,
+        "deposit_id": "deposit:1",
+        "event": "deposit_credited",
+        "evidence_refs": [
+          {
+            "kind": "test_fixture",
+            "line_end": 77,
+            "line_start": 66,
+            "notes": "Fixture deposit credited trace.",
+            "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+            "review_status": "trusted_fixture"
+          }
+        ],
+        "finality_threshold": 6,
+        "id": "event:deposit_credited:1",
+        "timestamp": 6,
+        "txid": "tx:1"
+      },
+      {
+        "asset_id": "asset:btc",
+        "balance": 5,
+        "evidence_refs": [
+          {
+            "kind": "test_fixture",
+            "line_end": 129,
+            "line_start": 8,
+            "notes": "Fixture account balance and reservations.",
+            "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+            "review_status": "trusted_fixture"
+          }
+        ],
+        "id": "account:alice_btc",
+        "owner": "principal:alice",
+        "reservation_requests": [
+          4,
+          4
+        ],
+        "wallet_id": "wallet:user_alice"
+      },
+      {
+        "account_id": "account:alice_btc",
+        "reason": "over-reserved"
+      },
+      {
+        "account_id": "<policy>",
+        "reason": "atomic reservation policy disabled"
+      }
+    ],
+    "trace": [],
+    "txids": [],
+    "violating_event_ids": [],
+    "wallet_ids": [],
+    "withdrawal_ids": [],
+    "witness": {
+      "account_0_reservation_0": "4",
+      "account_0_reservation_1": "4",
+      "account_balance_0": "5"
+    }
+  },
+  "expected_claims": [
+    "no_over_reserved_internal_account"
+  ],
+  "matched_claims": [
+    "no_over_reserved_internal_account"
+  ],
+  "model_id": "minimal-btc-exchange::double_spend_reservation_gap",
+  "mutators": [
+    "double_spend_reservation_gap"
+  ],
+  "proof_or_trace_cid": "bafkreidyyyycjf2kdp5yfqyk5hpwfqmtxgkd7zkciqd4powvtgtjqztobm",
+  "risk": "blocking",
+  "scenario": "double_spend_reservation_gap",
+  "schema_version": "crypto-exchange-counterexample-vector/v1",
+  "solver_name": "z3",
+  "solver_result": "sat",
+  "status": "DISPROVED"
+}

@@ -1,0 +1,264 @@
+{
+  "tools_analysis": {
+    "cli": {
+      "tools": [
+        "execute_command"
+      ],
+      "count": 1,
+      "path": "/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/cli"
+    },
+    "security_tools": {
+      "tools": [
+        "check_access_permission"
+      ],
+      "count": 1,
+      "path": "/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/security_tools"
+    },
+    "functions": {
+      "tools": [
+        "execute_python_snippet"
+      ],
+      "count": 1,
+      "path": "/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/functions"
+    },
+    "ipfs_tools": {
+      "tools": [
+        "get_from_ipfs",
+        "pin_to_ipfs"
+      ],
+      "count": 2,
+      "path": "/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/ipfs_tools"
+    },
+    "graph_tools": {
+      "tools": [
+        "query_knowledge_graph"
+      ],
+      "count": 1,
+      "path": "/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/graph_tools"
+    },
+    "audit_tools": {
+      "tools": [
+        "record_audit_event",
+        "generate_audit_report"
+      ],
+      "count": 2,
+      "path": "/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/audit_tools"
+    },
+    "vector_tools": {
+      "tools": [
+        "search_vector_index",
+        "create_vector_index"
+      ],
+      "count": 2,
+      "path": "/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/vector_tools"
+    },
+    "provenance_tools": {
+      "tools": [
+        "record_provenance"
+      ],
+      "count": 1,
+      "path": "/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/provenance_tools"
+    },
+    "web_archive_tools": {
+      "tools": [
+        "extract_dataset_from_cdxj",
+        "create_warc",
+        "extract_links_from_warc",
+        "index_warc",
+        "extract_metadata_from_warc",
+        "extract_text_from_warc"
+      ],
+      "count": 6,
+      "path": "/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/web_archive_tools"
+    },
+    "dataset_tools": {
+      "tools": [
+        "save_dataset",
+        "convert_dataset_format",
+        "load_dataset",
+        "process_dataset"
+      ],
+      "count": 4,
+      "path": "/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/dataset_tools"
+    }
+  },
+  "server_status": {
+    "server.py": "\u2705 Exists (Import error: No module named 'modelcontextp...)",
+    "simple_server.py": "\u2705 Exists",
+    "configs.py": "\u2705 Exists (Configs importable)",
+    "logger.py": "\u2705 Exists",
+    "__init__.py": "\u2705 Exists"
+  },
+  "missing_components": [],
+  "test_coverage": {
+    "import_results": {
+      "cli": [
+        {
+          "name": "execute_command",
+          "status": "\u2705 Import OK",
+          "has_function": true
+        }
+      ],
+      "security_tools": [
+        {
+          "name": "check_access_permission",
+          "status": "\u2705 Import OK",
+          "has_function": true
+        }
+      ],
+      "functions": [
+        {
+          "name": "execute_python_snippet",
+          "status": "\u2705 Import OK",
+          "has_function": true
+        }
+      ],
+      "ipfs_tools": [
+        {
+          "name": "get_from_ipfs",
+          "status": "\u2705 Import OK",
+          "has_function": true
+        },
+        {
+          "name": "pin_to_ipfs",
+          "status": "\u2705 Import OK",
+          "has_function": true
+        }
+      ],
+      "graph_tools": [
+        {
+          "name": "query_knowledge_graph",
+          "status": "\u2705 Import OK",
+          "has_function": true
+        }
+      ],
+      "audit_tools": [
+        {
+          "name": "record_audit_event",
+          "status": "\u2705 Import OK",
+          "has_function": true
+        },
+        {
+          "name": "generate_audit_report",
+          "status": "\u2705 Import OK",
+          "has_function": true
+        }
+      ],
+      "vector_tools": [
+        {
+          "name": "search_vector_index",
+          "status": "\u2705 Import OK",
+          "has_function": true
+        },
+        {
+          "name": "create_vector_index",
+          "status": "\u2705 Import OK",
+          "has_function": true
+        }
+      ],
+      "provenance_tools": [
+        {
+          "name": "record_provenance",
+          "status": "\u2705 Import OK",
+          "has_function": true
+        }
+      ],
+      "web_archive_tools": [
+        {
+          "name": "extract_dataset_from_cdxj",
+          "status": "\u2705 Import OK",
+          "has_function": true
+        },
+        {
+          "name": "create_warc",
+          "status": "\u2705 Import OK",
+          "has_function": true
+        },
+        {
+          "name": "extract_links_from_warc",
+          "status": "\u2705 Import OK",
+          "has_function": true
+        },
+        {
+          "name": "index_warc",
+          "status": "\u2705 Import OK",
+          "has_function": true
+        },
+        {
+          "name": "extract_metadata_from_warc",
+          "status": "\u2705 Import OK",
+          "has_function": true
+        },
+        {
+          "name": "extract_text_from_warc",
+          "status": "\u2705 Import OK",
+          "has_function": true
+        }
+      ],
+      "dataset_tools": [
+        {
+          "name": "save_dataset",
+          "status": "\u2705 Import OK",
+          "has_function": true
+        },
+        {
+          "name": "convert_dataset_format",
+          "status": "\u2705 Import OK",
+          "has_function": true
+        },
+        {
+          "name": "load_dataset",
+          "status": "\u2705 Import OK",
+          "has_function": true
+        },
+        {
+          "name": "process_dataset",
+          "status": "\u2705 Import OK",
+          "has_function": true
+        }
+      ]
+    },
+    "import_success_rate": "21/21 (100.0%)",
+    "test_files": [
+      "comprehensive_mcp_tools_test_suite.py",
+      "test_mcp_api_coverage.py",
+      "comprehensive_mcp_tools_tester.py",
+      "test_mcp_tools_comprehensive.py",
+      "test_mcp_tools_coverage.py",
+      "test_web_archive_mcp_tools.py",
+      "test_mcp_implementation.py",
+      "simple_mcp_tool_test.py",
+      "test_mcp_minimal_check.py",
+      "test_mcp_tools.py",
+      "mcp_tools_test_generator.py",
+      "simple_mcp_test_generator.py",
+      "test_mcp_functionality.py",
+      "test_mcp_integration.py",
+      "comprehensive_mcp_tools_test.py",
+      "test_mcp_import.py",
+      "mcp_tools_test_analyzer.py",
+      "test_mcp_minimal.py",
+      "test_mcp_feature_coverage.py",
+      "generate_mcp_test_suite.py",
+      "test_mcp_api_coverage_simple.py",
+      "test_mcp_coverage_simple.py",
+      "improved_mcp_tools_test.py"
+    ]
+  },
+  "integration_status": {
+    "ipfs_datasets.py": "\u2705 Available",
+    "web_archive_utils.py": "\u2705 Available",
+    "ipfs_knn_index.py": "\u2705 Available",
+    "data_provenance.py": "\u2705 Available",
+    "security.py": "\u2705 Available",
+    "knowledge_graph_extraction.py": "\u2705 Available"
+  },
+  "recommendations": [
+    "\ud83d\udd27 Fix tool import issues - not all tools are importing correctly",
+    "\ud83e\uddea Run comprehensive functional tests on all tools",
+    "\ud83d\udcdd Validate that all library features are properly exposed via MCP tools",
+    "\ud83d\ude80 Test the complete MCP server startup and tool registration process",
+    "\ud83d\udccb Create integration tests with actual MCP clients",
+    "\ud83d\udd0d Verify async/sync compatibility across all tools"
+  ]
+}

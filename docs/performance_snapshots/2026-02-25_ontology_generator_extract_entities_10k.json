@@ -1,0 +1,30 @@
+{
+  "benchmark_script": "benchmarks/bench_ontology_generator_extract_entities_10k.py",
+  "captured_on": "2026-02-25",
+  "notes": [
+    "Local development environment benchmark",
+    "Warnings about optional visualization dependencies do not affect extraction benchmark path"
+  ],
+  "results": {
+    "general_window_0": {
+      "iterations": 20,
+      "warmups": 3,
+      "avg_ms": 182.3669,
+      "median_ms": 179.4661,
+      "p95_ms": 203.2935,
+      "max_ms": 208.5739,
+      "avg_entities": 14,
+      "avg_relationships": 70
+    },
+    "legal_window_2": {
+      "iterations": 20,
+      "warmups": 3,
+      "avg_ms": 180.693,
+      "median_ms": 178.0631,
+      "p95_ms": 200.4689,
+      "max_ms": 214.7142,
+      "avg_entities": 14,
+      "avg_relationships": 58
+    }
+  }
+}

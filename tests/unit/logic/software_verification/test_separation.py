@@ -381,7 +381,9 @@ def test_heap_model_types_ownership_and_aliasing() -> None:
 
 def test_separating_and_ordinary_conjunction_differ() -> None:
     mapped = _mapped()
-    left = points_to_formula("formula:a", "loc:head", "val:node", **mapped)
+    left = points_to_formula(
+        "formula:a", "loc:head", "val:node", **mapped
+    )
     right = points_to_formula(
         "formula:b", "loc:payload", "val:payload", permission=Permission.half(), **mapped
     )
@@ -412,7 +414,9 @@ def test_separating_and_ordinary_conjunction_differ() -> None:
 def test_frame_inference_emits_explicit_obligations() -> None:
     mapped = _mapped()
     emp = emp_formula("formula:emp", **mapped)
-    head = points_to_formula("formula:head", "loc:head", "val:node", **mapped)
+    head = points_to_formula(
+        "formula:head", "loc:head", "val:node", **mapped
+    )
     payload = points_to_formula(
         "formula:payload",
         "loc:payload",
@@ -427,7 +431,9 @@ def test_frame_inference_emits_explicit_obligations() -> None:
         permission=Permission.half(),
         **mapped,
     )
-    pre = sep_conj("formula:pre", "formula:head", "formula:payload", **mapped)
+    pre = sep_conj(
+        "formula:pre", "formula:head", "formula:payload", **mapped
+    )
     obligation = infer_frame_obligation(
         obligation_id="frame:write-head",
         precondition_formula_id="formula:pre",
@@ -494,7 +500,9 @@ def test_ownership_transfer_is_typed_and_permission_aware() -> None:
         Permission.half(),
         **mapped,
     )
-    head = points_to_formula("formula:head", "loc:head", "val:node", **mapped)
+    head = points_to_formula(
+        "formula:head", "loc:head", "val:node", **mapped
+    )
     document = _document(
         formulas=(head,),
         root_formula_id="formula:head",
@@ -537,7 +545,9 @@ def test_ownership_transfer_is_typed_and_permission_aware() -> None:
 def test_unsupported_heap_theories_cannot_silently_lower_to_fol() -> None:
     mapped = _mapped()
     pure = pure_formula("formula:pure", "x > 0", **mapped)
-    head = points_to_formula("formula:head", "loc:head", "val:node", **mapped)
+    head = points_to_formula(
+        "formula:head", "loc:head", "val:node", **mapped
+    )
 
     # Spatial root: always rejected.
     spatial_doc = _document(
@@ -633,7 +643,9 @@ def test_wand_requires_admitting_heap_theory() -> None:
 
 
 def test_document_is_immutable_content_addressed_and_round_trips() -> None:
-    document = _document(observations={"started_at": "2026-07-29T00:00:00Z", "host": "runner-a"})
+    document = _document(
+        observations={"started_at": "2026-07-29T00:00:00Z", "host": "runner-a"}
+    )
     encoded = document.to_json()
     restored = SeparationLogicIR.from_json(encoded)
 
@@ -645,7 +657,9 @@ def test_document_is_immutable_content_addressed_and_round_trips() -> None:
     assert restored.to_dict()["observations"]["host"] == "runner-a"
 
     reordered = replace(
-        _document(observations={"started_at": "2030-01-01T00:00:00Z", "host": "runner-b"}),
+        _document(
+            observations={"started_at": "2030-01-01T00:00:00Z", "host": "runner-b"}
+        ),
         formulas=tuple(reversed(document.formulas)),
     )
     assert reordered.document_id == document.document_id
@@ -660,7 +674,10 @@ def test_document_is_immutable_content_addressed_and_round_trips() -> None:
 
 def test_resource_algebras_and_disjointness() -> None:
     heap = _heap()
-    assert any(item.kind is ResourceAlgebraKind.DISJOINT_HEAP for item in heap.resource_algebras)
+    assert any(
+        item.kind is ResourceAlgebraKind.DISJOINT_HEAP
+        for item in heap.resource_algebras
+    )
     assert heap.is_disjoint(("loc:head",), ("loc:payload",))
     assert not heap.is_disjoint(("loc:head", "loc:next"), ("loc:next",))
 
@@ -701,7 +718,9 @@ def test_source_maps_and_references_fail_closed() -> None:
 
     with pytest.raises(SeparationValidationError, match="unknown operand"):
         _document(
-            formulas=(sep_conj("formula:bad", "formula:missing", "formula:also", **mapped),),
+            formulas=(
+                sep_conj("formula:bad", "formula:missing", "formula:also", **mapped),
+            ),
             root_formula_id="formula:bad",
         )
 
@@ -730,7 +749,9 @@ def test_complete_model_covers_separation_vocabulary() -> None:
     mapped = _mapped()
     emp = emp_formula("formula:emp", **mapped)
     pure = pure_formula("formula:pure", "invariant(head)", **mapped)
-    head = points_to_formula("formula:head", "loc:head", "val:node", **mapped)
+    head = points_to_formula(
+        "formula:head", "loc:head", "val:node", **mapped
+    )
     payload = points_to_formula(
         "formula:payload",
         "loc:payload",
@@ -738,8 +759,12 @@ def test_complete_model_covers_separation_vocabulary() -> None:
         permission=Permission.half(),
         **mapped,
     )
-    spatial = sep_conj("formula:spatial", "formula:head", "formula:payload", **mapped)
-    classical = ordinary_and("formula:and", "formula:pure", "formula:spatial", **mapped)
+    spatial = sep_conj(
+        "formula:spatial", "formula:head", "formula:payload", **mapped
+    )
+    classical = ordinary_and(
+        "formula:and", "formula:pure", "formula:spatial", **mapped
+    )
     obligation = infer_frame_obligation(
         obligation_id="frame:call",
         precondition_formula_id="formula:spatial",

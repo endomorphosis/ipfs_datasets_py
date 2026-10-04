@@ -45,8 +45,12 @@ def test_checked_in_ast_baseline_is_current_complete_and_content_addressed() -> 
     assert receipt["authority"] == "STATIC_AST_BASELINE_ONLY"
     assert receipt["status"] == "complete"
     assert receipt["blockers"] == []
-    assert receipt["repository"]["commit"] == _git("rev-parse", "HEAD").decode().strip()
-    assert receipt["repository"]["tree"] == _git("rev-parse", "HEAD^{tree}").decode().strip()
+    assert receipt["repository"]["commit"] == _git(
+        "rev-parse", "HEAD"
+    ).decode().strip()
+    assert receipt["repository"]["tree"] == _git(
+        "rev-parse", "HEAD^{tree}"
+    ).decode().strip()
 
     coverage = receipt["coverage"]
     assert coverage["enumeration_complete"] is True
@@ -75,11 +79,14 @@ def test_checked_in_ast_baseline_is_current_complete_and_content_addressed() -> 
 
     leaves = result_index["result_leaves"]
     assert len(leaves) == coverage["eligible_blob_count"]
-    assert len({(leaf["path"], leaf["git_oid"]) for leaf in leaves}) == len(leaves)
+    assert len({(leaf["path"], leaf["git_oid"]) for leaf in leaves}) == len(
+        leaves
+    )
     assert not [
         leaf
         for leaf in leaves
-        if leaf["disposition"] in {"frontend_exception", "resource_exhausted", "source_unavailable"}
+        if leaf["disposition"]
+        in {"frontend_exception", "resource_exhausted", "source_unavailable"}
     ]
 
 
@@ -98,7 +105,9 @@ def test_tracked_paths_with_spaces_produce_ast_records() -> None:
             path=path,
             repository_id="repository:ipfs_datasets_py",
             revision=_git("rev-parse", "HEAD").decode().strip(),
-            repository_tree_cid=_load("ast-baseline.json")["repository"]["repository_root_cid"],
+            repository_tree_cid=_load("ast-baseline.json")["repository"][
+                "repository_root_cid"
+            ],
         )
         assert record.provenance.path == path
         assert record.cid

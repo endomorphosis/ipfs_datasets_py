@@ -1,0 +1,10 @@
+{
+  "original_entity_count": 4,
+  "filtered_entity_count": 2,
+  "filtered_entity_types": [
+    "Person"
+  ],
+  "original_rel_count": 3,
+  "filtered_rel_count": 0,
+  "confidence_preserved": true
+}

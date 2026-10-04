@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "v2_check_compliance.schema.json",
+  "title": "Hybrid Legal V2 check_compliance response",
+  "type": "object",
+  "required": [
+    "api",
+    "schema_version",
+    "status",
+    "violation_count",
+    "violations",
+    "proof_id",
+    "checked_norms",
+    "time_context"
+  ],
+  "properties": {
+    "api": { "type": "string" },
+    "schema_version": { "type": "string" },
+    "status": { "type": "string" },
+    "violation_count": { "type": "integer" },
+    "violations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["norm_id", "frame_id", "type"],
+        "properties": {
+          "norm_id": { "type": "string" },
+          "frame_id": { "type": "string" },
+          "type": { "type": "string" }
+        }
+      }
+    },
+    "proof_id": { "type": "string" },
+    "checked_norms": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "time_context": { "type": "object" }
+  },
+  "additionalProperties": true
+}

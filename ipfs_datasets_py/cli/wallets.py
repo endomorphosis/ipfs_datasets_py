@@ -63,7 +63,9 @@ def _add_bound_flags(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--max-items", type=int, default=1_000)
     parser.add_argument("--max-pages", type=int, default=100)
     parser.add_argument("--max-requests", type=int, default=100)
-    parser.add_argument("--max-response-bytes", type=int, default=16 * 1024 * 1024)
+    parser.add_argument(
+        "--max-response-bytes", type=int, default=16 * 1024 * 1024
+    )
     parser.add_argument("--max-time-seconds", type=float, default=300.0)
     parser.add_argument("--max-retries", type=int, default=3)
 
@@ -142,7 +144,9 @@ def create_parser() -> argparse.ArgumentParser:
     ingest.add_argument("--request-id")
 
     # ledger-ingest
-    ledger = sub.add_parser("ledger-ingest", help="Bounded finite ledger-range ingest")
+    ledger = sub.add_parser(
+        "ledger-ingest", help="Bounded finite ledger-range ingest"
+    )
     ledger.add_argument("--scope", required=True)
     _add_chain_flags(ledger)
     _add_bound_flags(ledger)
@@ -251,7 +255,9 @@ async def _dispatch(args: argparse.Namespace) -> int:
         return _print_json(api.list_families().to_dict())
 
     if cmd == "capabilities":
-        result = api.capabilities(CapabilitiesRequest(family=args.family, network=args.network))
+        result = api.capabilities(
+            CapabilitiesRequest(family=args.family, network=args.network)
+        )
         return _print_json(result.to_dict())
 
     if cmd == "ingest":
@@ -295,7 +301,9 @@ async def _dispatch(args: argparse.Namespace) -> int:
         return _print_json(result.to_dict())
 
     if cmd == "export":
-        formats = tuple(ExportFormat(f) for f in (args.formats or [ExportFormat.JSONL.value]))
+        formats = tuple(
+            ExportFormat(f) for f in (args.formats or [ExportFormat.JSONL.value])
+        )
         request = WalletExportRequest(
             scope=args.scope,
             chain=_chain_from_args(args),
@@ -338,7 +346,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     # Refuse to expose signing verbs even if someone aliases them later.
     if args.command in WalletProcessorAPI.FORBIDDEN_OPERATIONS:
         print(
-            f"command {args.command!r} is not supported: wallet processors never sign or broadcast",
+            f"command {args.command!r} is not supported: "
+            "wallet processors never sign or broadcast",
             file=sys.stderr,
         )
         return 2

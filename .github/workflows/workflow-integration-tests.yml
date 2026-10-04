@@ -1,0 +1,436 @@
+# Workflow Integration Tests
+#
+# Purpose: Test interactions between workflows, reusable workflows, and workflow triggers
+# Trigger: On demand and weekly
+# Duration: ~15 minutes
+# Maintainer: DevOps Team
+#
+# Tests complex workflow scenarios including trigger chains, reusable workflow calls,
+# runner gating logic, concurrency controls, and error handling.
+
+name: Workflow Integration Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_suite:
+        description: 'Test suite to run'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - triggers
+          - reusable
+          - concurrency
+          - error-handling
+  schedule:
+    # Run weekly on Sundays at 02:00 UTC
+    - cron: '0 2 * * 0'
+  push:
+    branches: [main, master]
+    paths:
+      - '.github/workflows/workflow-integration-tests.yml'
+
+permissions:
+  contents: read
+  actions: read
+  issues: write
+
+concurrency:
+  group: integration-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-workflow-triggers:
+    name: Test Workflow Trigger Chains
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: inputs.test_suite == 'all' || inputs.test_suite == 'triggers' || inputs.test_suite == ''
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+      
+      - name: Test Push Trigger Detection
+        run: |
+          echo "Testing push trigger configuration..."
+          workflows_with_push=$(grep -l "push:" .github/workflows/*.yml | wc -l)
+          echo "Found $workflows_with_push workflows with push triggers"
+          if [ $workflows_with_push -gt 0 ]; then
+            echo "✅ Push triggers are configured"
+          else
+            echo "⚠️ No workflows with push triggers found"
+          fi
+      
+      - name: Test Pull Request Trigger Detection
+        run: |
+          echo "Testing pull_request trigger configuration..."
+          workflows_with_pr=$(grep -l "pull_request:" .github/workflows/*.yml | wc -l)
+          echo "Found $workflows_with_pr workflows with pull_request triggers"
+          if [ $workflows_with_pr -gt 0 ]; then
+            echo "✅ Pull request triggers are configured"
+          else
+            echo "⚠️ No workflows with pull_request triggers found"
+          fi
+      
+      - name: Test Schedule Trigger Detection
+        run: |
+          echo "Testing schedule trigger configuration..."
+          workflows_with_schedule=$(grep -l "schedule:" .github/workflows/*.yml | wc -l)
+          echo "Found $workflows_with_schedule workflows with schedule triggers"
+          if [ $workflows_with_schedule -gt 0 ]; then
+            echo "✅ Schedule triggers are configured"
+          else
+            echo "⚠️ No workflows with schedule triggers found"
+          fi
+      
+      - name: Test workflow_dispatch Trigger Detection
+        run: |
+          echo "Testing workflow_dispatch trigger configuration..."
+          workflows_with_dispatch=$(grep -l "workflow_dispatch:" .github/workflows/*.yml | wc -l)
+          echo "Found $workflows_with_dispatch workflows with workflow_dispatch triggers"
+          if [ $workflows_with_dispatch -gt 0 ]; then
+            echo "✅ Manual triggers are configured"
+          else
+            echo "⚠️ No workflows with manual triggers found"
+          fi
+      
+      - name: Verify Trigger Paths Configuration
+        run: |
+          echo "Checking workflows with path filters..."
+          count=0
+          for workflow in .github/workflows/*.yml; do
+            if grep -q "paths:" "$workflow"; then
+              count=$((count + 1))
+              echo "  - $(basename $workflow)"
+            fi
+          done
+          echo "Found $count workflows with path filters"
+          if [ $count -gt 0 ]; then
+            echo "✅ Path filters are in use"
+          fi
+
+  test-reusable-workflows:
+    name: Test Reusable Workflow Patterns
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: inputs.test_suite == 'all' || inputs.test_suite == 'reusable' || inputs.test_suite == ''
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+      
+      - name: Detect Reusable Workflows
+        run: |
+          echo "Detecting reusable workflows..."
+          count=0
+          for workflow in .github/workflows/*.yml; do
+            if grep -q "workflow_call:" "$workflow"; then
+              count=$((count + 1))
+              echo "  - $(basename $workflow)"
+            fi
+          done
+          echo "Found $count reusable workflows"
+          if [ $count -gt 0 ]; then
+            echo "✅ Reusable workflows are defined"
+          else
+            echo "ℹ️ No reusable workflows found"
+          fi
+      
+      - name: Detect Workflow Calls
+        run: |
+          echo "Detecting workflows that call other workflows..."
+          count=0
+          for workflow in .github/workflows/*.yml; do
+            if grep -q "uses:.*/.github/workflows/" "$workflow"; then
+              count=$((count + 1))
+              echo "  - $(basename $workflow)"
+            fi
+          done
+          echo "Found $count workflows calling other workflows"
+          if [ $count -gt 0 ]; then
+            echo "✅ Workflow composition is in use"
+          else
+            echo "ℹ️ No workflow composition found"
+          fi
+      
+      - name: Verify Reusable Workflow Inputs
+        run: |
+          echo "Checking reusable workflow input definitions..."
+          workflows_with_inputs=0
+          for workflow in .github/workflows/*.yml; do
+            if grep -q "workflow_call:" "$workflow"; then
+              if grep -A 10 "workflow_call:" "$workflow" | grep -q "inputs:"; then
+                workflows_with_inputs=$((workflows_with_inputs + 1))
+              fi
+            fi
+          done
+          echo "Reusable workflows with inputs: $workflows_with_inputs"
+
+  test-concurrency-controls:
+    name: Test Concurrency Controls
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: inputs.test_suite == 'all' || inputs.test_suite == 'concurrency' || inputs.test_suite == ''
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+      
+      - name: Check Concurrency Configuration
+        id: check_concurrency
+        run: |
+          echo "Checking workflows with concurrency controls..."
+          count=0
+          for workflow in .github/workflows/*.yml; do
+            if grep -q "concurrency:" "$workflow"; then
+              count=$((count + 1))
+              echo "  - $(basename $workflow)"
+            fi
+          done
+          echo "count=$count" >> $GITHUB_OUTPUT
+          echo "Found $count workflows with concurrency controls"
+          
+          if [ $count -gt 5 ]; then
+            echo "✅ Good: $count workflows have concurrency controls"
+          elif [ $count -gt 0 ]; then
+            echo "⚠️ Only $count workflows have concurrency controls"
+          else
+            echo "❌ No workflows have concurrency controls"
+            exit 1
+          fi
+      
+      - name: Verify cancel-in-progress Usage
+        run: |
+          echo "Checking cancel-in-progress configuration..."
+          workflows_with_cancel=$(grep -l "cancel-in-progress:" .github/workflows/*.yml | wc -l)
+          echo "Found $workflows_with_cancel workflows with cancel-in-progress"
+          if [ $workflows_with_cancel -gt 0 ]; then
+            echo "✅ Cancel-in-progress is configured"
+          fi
+      
+      - name: Test Concurrency Groups
+        run: |
+          echo "Analyzing concurrency group patterns..."
+          echo "Common patterns:"
+          grep -h "group:" .github/workflows/*.yml | sort | uniq -c | sort -rn | head -10
+
+  test-error-handling:
+    name: Test Error Handling Patterns
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: inputs.test_suite == 'all' || inputs.test_suite == 'error-handling' || inputs.test_suite == ''
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+      
+      - name: Check Retry Logic Usage
+        run: |
+          echo "Checking for retry logic in workflows..."
+          retry_count=$(grep -c "nick-invision/retry@" .github/workflows/*.yml || echo "0")
+          echo "Found $retry_count uses of retry action"
+          if [ $retry_count -gt 0 ]; then
+            echo "✅ Retry logic is implemented in workflows"
+          else
+            echo "⚠️ No retry logic found in workflows"
+          fi
+      
+      - name: Check continue-on-error Usage
+        run: |
+          echo "Checking for continue-on-error in workflows..."
+          continue_count=$(grep -c "continue-on-error:" .github/workflows/*.yml || echo "0")
+          echo "Found $continue_count uses of continue-on-error"
+          if [ $continue_count -gt 0 ]; then
+            echo "✅ Error handling with continue-on-error is used"
+          else
+            echo "ℹ️ No continue-on-error found"
+          fi
+      
+      - name: Check Timeout Configuration
+        id: check_timeouts
+        run: |
+          echo "Checking for timeout configuration..."
+          workflows_with_timeout=$(grep -l "timeout-minutes:" .github/workflows/*.yml | wc -l)
+          echo "count=$workflows_with_timeout" >> $GITHUB_OUTPUT
+          echo "Found $workflows_with_timeout workflows with timeouts"
+          
+          if [ $workflows_with_timeout -gt 10 ]; then
+            echo "✅ Good: $workflows_with_timeout workflows have timeouts"
+          elif [ $workflows_with_timeout -gt 0 ]; then
+            echo "⚠️ Only $workflows_with_timeout workflows have timeouts"
+          else
+            echo "❌ No workflows have timeout configuration"
+            exit 1
+          fi
+      
+      - name: Verify Error Notification Patterns
+        run: |
+          echo "Checking for error notification patterns..."
+          notification_count=$(grep -c "issues.create\|slack\|email" .github/workflows/*.yml || echo "0")
+          echo "Found $notification_count potential notification patterns"
+
+  test-runner-gating:
+    name: Test Runner Gating Logic
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: inputs.test_suite == 'all' || inputs.test_suite == '' || inputs.test_suite == 'triggers'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+      
+      - name: Check Self-hosted Runner Usage
+        run: |
+          echo "Checking for self-hosted runner usage..."
+          self_hosted_count=$(grep -c "runs-on:.*self-hosted" .github/workflows/*.yml || echo "0")
+          echo "Found $self_hosted_count jobs using self-hosted runners"
+          if [ $self_hosted_count -gt 0 ]; then
+            echo "✅ Self-hosted runners are in use"
+          else
+            echo "ℹ️ No self-hosted runners configured"
+          fi
+      
+      - name: Check GitHub-hosted Runner Usage
+        run: |
+          echo "Checking for GitHub-hosted runner usage..."
+          github_hosted_count=$(grep -c "runs-on:.*ubuntu\|windows\|macos" .github/workflows/*.yml || echo "0")
+          echo "Found $github_hosted_count jobs using GitHub-hosted runners"
+          if [ $github_hosted_count -gt 0 ]; then
+            echo "✅ GitHub-hosted runners are in use"
+          else
+            echo "⚠️ No GitHub-hosted runners found"
+          fi
+      
+      - name: Check Runner Labels
+        run: |
+          echo "Analyzing runner label patterns..."
+          echo "Unique runner configurations:"
+          grep "runs-on:" .github/workflows/*.yml | sed 's/.*runs-on://' | sort | uniq -c | sort -rn
+      
+      - name: Verify Fallback Strategy
+        run: |
+          echo "Checking for runner fallback strategies..."
+          # Look for workflows that might have fallback logic
+          workflows_with_matrix=$(grep -l "matrix:" .github/workflows/*.yml | wc -l)
+          echo "Found $workflows_with_matrix workflows with matrix strategy"
+          if [ $workflows_with_matrix -gt 0 ]; then
+            echo "✅ Matrix strategies could provide fallback"
+          fi
+
+  integration-test-summary:
+    name: Integration Test Summary
+    runs-on: ubuntu-latest
+    needs: [test-workflow-triggers, test-reusable-workflows, test-concurrency-controls, test-error-handling, test-runner-gating]
+    if: always()
+    timeout-minutes: 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+      
+      - name: Evaluate Results
+        id: evaluate
+        env:
+          TRIGGERS: ${{ needs.test-workflow-triggers.result }}
+          REUSABLE: ${{ needs.test-reusable-workflows.result }}
+          CONCURRENCY: ${{ needs.test-concurrency-controls.result }}
+          ERROR_HANDLING: ${{ needs.test-error-handling.result }}
+          RUNNER_GATING: ${{ needs.test-runner-gating.result }}
+        run: |
+          echo "Test Results:"
+          echo "  Triggers: $TRIGGERS"
+          echo "  Reusable Workflows: $REUSABLE"
+          echo "  Concurrency: $CONCURRENCY"
+          echo "  Error Handling: $ERROR_HANDLING"
+          echo "  Runner Gating: $RUNNER_GATING"
+          
+          failed=0
+          [[ "$TRIGGERS" != "success" ]] && failed=$((failed + 1))
+          [[ "$REUSABLE" != "success" ]] && failed=$((failed + 1))
+          [[ "$CONCURRENCY" != "success" ]] && failed=$((failed + 1))
+          [[ "$ERROR_HANDLING" != "success" ]] && failed=$((failed + 1))
+          [[ "$RUNNER_GATING" != "success" ]] && failed=$((failed + 1))
+          
+          if [ $failed -gt 0 ]; then
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "failed_count=$failed" >> $GITHUB_OUTPUT
+          else
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "failed_count=0" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Create Issue on Failure
+        if: steps.evaluate.outputs.status == 'failure' && github.ref == 'refs/heads/main'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const failedCount = '${{ steps.evaluate.outputs.failed_count }}';
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            
+            const issueBody = `## ⚠️ Workflow Integration Tests Failed
+            
+            **Failed Tests:** ${failedCount} out of 5
+            **Run:** ${runUrl}
+            **Time:** ${new Date().toISOString()}
+            
+            ### Test Results
+            
+            | Test Suite | Result |
+            |-----------|--------|
+            | Workflow Triggers | ${{ needs.test-workflow-triggers.result }} |
+            | Reusable Workflows | ${{ needs.test-reusable-workflows.result }} |
+            | Concurrency Controls | ${{ needs.test-concurrency-controls.result }} |
+            | Error Handling | ${{ needs.test-error-handling.result }} |
+            | Runner Gating | ${{ needs.test-runner-gating.result }} |
+            
+            ### Action Required
+            
+            Please investigate the failing integration tests. These tests validate complex
+            workflow interactions and best practices.
+            
+            ### Next Steps
+            
+            1. Review the workflow run logs: ${runUrl}
+            2. Check the specific test suite that failed
+            3. Review recent workflow changes
+            4. Verify workflow configurations
+            5. Run tests locally if possible
+            
+            ---
+            *This issue was automatically created by the integration test workflow.*
+            `;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `⚠️ Workflow Integration Tests Failed - ${new Date().toISOString().split('T')[0]}`,
+              body: issueBody,
+              labels: ['workflow-integration', 'automated', 'test-failure']
+            });
+      
+      - name: Generate Summary
+        run: |
+          echo "## Workflow Integration Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Test Suite | Result |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Workflow Triggers | ${{ needs.test-workflow-triggers.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Reusable Workflows | ${{ needs.test-reusable-workflows.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Concurrency Controls | ${{ needs.test-concurrency-controls.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Error Handling | ${{ needs.test-error-handling.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Runner Gating | ${{ needs.test-runner-gating.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.evaluate.outputs.status }}" == "success" ]; then
+            echo "✅ **All integration tests passed**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **${{ steps.evaluate.outputs.failed_count }} test suite(s) failed**" >> $GITHUB_STEP_SUMMARY
+          fi

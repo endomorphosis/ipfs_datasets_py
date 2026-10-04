@@ -475,7 +475,8 @@ def _document(
             max_stratum=8,
             universe_size=64,
         ),
-        precedence=precedence or PrecedencePolicy(ConflictResolution.EXPLICIT_CONFLICT),
+        precedence=precedence
+        or PrecedencePolicy(ConflictResolution.EXPLICIT_CONFLICT),
         queries=queries,
         explanations=explanations,
         decisions=decisions,
@@ -510,7 +511,9 @@ def test_interface_and_complete_semantic_vocabulary() -> None:
         EffectKind.ALLOW,
         EffectKind.DENY,
     }
-    assert {decision.outcome for decision in document.decisions} == set(DecisionOutcome)
+    assert {decision.outcome for decision in document.decisions} == set(
+        DecisionOutcome
+    )
     assert distinct_decision_outcomes() == {
         "allow",
         "deny",
@@ -575,10 +578,12 @@ def test_decision_outcomes_are_distinct_and_precedence_maps_them() -> None:
     assert allow_overrides.resolve(True, True) is DecisionOutcome.ALLOW
     assert explicit.resolve(True, True) is DecisionOutcome.CONFLICT
     assert (
-        first_applicable.resolve(True, True, first_effect=EffectKind.ALLOW) is DecisionOutcome.ALLOW
+        first_applicable.resolve(True, True, first_effect=EffectKind.ALLOW)
+        is DecisionOutcome.ALLOW
     )
     assert (
-        first_applicable.resolve(True, True, first_effect=EffectKind.DENY) is DecisionOutcome.DENY
+        first_applicable.resolve(True, True, first_effect=EffectKind.DENY)
+        is DecisionOutcome.DENY
     )
     assert len({outcome.value for outcome in DecisionOutcome}) == 4
 
@@ -676,7 +681,9 @@ def test_authorization_decisions_cannot_masquerade_as_theorem_proof() -> None:
             outcome=DecisionOutcome.ALLOW,
             authority="theorem",  # type: ignore[arg-type]
         )
-    with pytest.raises(AuthorizationValidationError, match="not_established|generated-code"):
+    with pytest.raises(
+        AuthorizationValidationError, match="not_established|generated-code"
+    ):
         PolicyDecision(
             "decision:bad-correctness",
             query_id="query:alice-read-payroll",
@@ -690,7 +697,10 @@ def test_authorization_decisions_cannot_masquerade_as_theorem_proof() -> None:
         outcome=DecisionOutcome.ALLOW,
     )
     assert decision.authority is AuthorizationEvidenceAuthority.AUTHORIZATION
-    assert decision.generated_code_correctness is GeneratedCodeCorrectness.NOT_ESTABLISHED
+    assert (
+        decision.generated_code_correctness
+        is GeneratedCodeCorrectness.NOT_ESTABLISHED
+    )
     assert decision.is_theorem_authority is False
     assert authority_is_authorization_only("authorization")
     assert not authority_is_authorization_only("theorem")

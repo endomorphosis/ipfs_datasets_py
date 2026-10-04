@@ -1,0 +1,97 @@
+{
+  "complaint_type": "consumer",
+  "category": "consumer",
+  "description": "Decision tree for consumer complaints",
+  "root_questions": [
+    "q1",
+    "q2",
+    "q3"
+  ],
+  "questions": {
+    "q1": {
+      "id": "q1",
+      "question": "What is the name of the business?",
+      "field_name": "business_name",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q2": {
+      "id": "q2",
+      "question": "What product or service did you purchase?",
+      "field_name": "product_or_service",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q3": {
+      "id": "q3",
+      "question": "What type of problem occurred?",
+      "field_name": "fraud_type",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": [
+        "fraud",
+        "misrepresentation",
+        "defective",
+        "breach"
+      ]
+    },
+    "q4": {
+      "id": "q4",
+      "question": "Please describe the issue in detail.",
+      "field_name": "issue_description",
+      "required": true,
+      "depends_on": [
+        "fraud_type"
+      ],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q5": {
+      "id": "q5",
+      "question": "When did you make the purchase?",
+      "field_name": "date_of_purchase",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q6": {
+      "id": "q6",
+      "question": "How much money did you lose?",
+      "field_name": "amount_lost",
+      "required": false,
+      "depends_on": [
+        "issue_description"
+      ],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q7": {
+      "id": "q7",
+      "question": "Have you tried to resolve this with the business?",
+      "field_name": "attempts_to_resolve",
+      "required": false,
+      "depends_on": [
+        "issue_description"
+      ],
+      "follow_ups": [],
+      "keywords": []
+    }
+  },
+  "required_fields": [
+    "issue_description",
+    "date_of_purchase",
+    "business_name",
+    "product_or_service",
+    "fraud_type"
+  ],
+  "optional_fields": [
+    "amount_lost",
+    "attempts_to_resolve"
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "formula_id": "6ecf8fc29027",
+  "deontic_formula": {
+    "formula_id": "6ecf8fc29027",
+    "operator": "F",
+    "proposition": "subcontract_without_approval",
+    "agent": {
+      "identifier": "agent_3338",
+      "name": "Contractor",
+      "agent_type": "organization",
+      "properties": {},
+      "hash": "fd83345a"
+    },
+    "beneficiary": null,
+    "conditions": [],
+    "temporal_conditions": [],
+    "legal_context": {
+      "jurisdiction": "Illinois, USA",
+      "legal_domain": "contract",
+      "applicable_law": null,
+      "precedents": [],
+      "exceptions": []
+    },
+    "confidence": 0.95,
+    "source_text": "The Contractor shall not subcontract work without prior written approval",
+    "variables": {},
+    "quantifiers": [],
+    "fol_string": "F[agent_3338](subcontract_without_approval)",
+    "creation_timestamp": "2025-08-31T19:10:24.759134"
+  },
+  "source_document_cid": "mock_doc_cid",
+  "source_text_excerpt": "The Contractor shall not subcontract work without prior written approval",
+  "extraction_metadata": {
+    "collection": "Springfield Construction Contract"
+  },
+  "translations": {},
+  "translation_cids": {},
+  "provenance_chain": null,
+  "creation_timestamp": "2025-08-31T19:10:24.769395",
+  "confidence_score": 0.95,
+  "validation_results": {}
+}

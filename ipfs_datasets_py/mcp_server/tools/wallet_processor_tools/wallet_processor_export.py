@@ -67,7 +67,9 @@ async def wallet_processor_export(
             extra_hosts=allowed_provider_hosts,
             extra_secret_prefixes=allowed_secret_prefixes,
         )
-        fmt_tuple = tuple(ExportFormat(f) for f in (formats or [ExportFormat.JSONL.value]))
+        fmt_tuple = tuple(
+            ExportFormat(f) for f in (formats or [ExportFormat.JSONL.value])
+        )
         request = WalletExportRequest(
             scope=scope,
             chain=parse_chain(chain),

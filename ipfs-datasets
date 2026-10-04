@@ -1,0 +1,30 @@
+#!/bin/bash
+# IPFS Datasets CLI Wrapper
+# Provides easier access to the IPFS Datasets Python CLI tool
+
+set -e
+
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CLI_SCRIPT="$SCRIPT_DIR/ipfs_datasets_cli.py"
+
+# Pick the best Python interpreter (prefer project venv)
+if [ -x "$SCRIPT_DIR/.venv/bin/python" ]; then
+    PYTHON_BIN="$SCRIPT_DIR/.venv/bin/python"
+elif command -v python3 >/dev/null 2>&1; then
+    PYTHON_BIN="python3"
+elif command -v python >/dev/null 2>&1; then
+    PYTHON_BIN="python"
+else
+    echo "Error: No suitable Python interpreter found (looked for .venv/bin/python, python3, python)" >&2
+    exit 1
+fi
+
+# Check if the CLI script exists
+if [ ! -f "$CLI_SCRIPT" ]; then
+        echo "Error: CLI script not found at $CLI_SCRIPT" >&2
+        exit 1
+fi
+
+# Run the Python CLI with all arguments
+"$PYTHON_BIN" "$CLI_SCRIPT" "$@"

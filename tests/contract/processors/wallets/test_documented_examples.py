@@ -133,7 +133,8 @@ def test_docs_distinguish_world_id_world_chain_and_wld() -> None:
     chains = _read(CHAINS_DOC)
     # Non-interchangeable relationships stated explicitly.
     assert "not interchangeable" in _read(DOCS_README).lower() or (
-        "not a public-ledger scanner" in chains.lower() and "not a protocol" in chains.lower()
+        "not a public-ledger scanner" in chains.lower()
+        and "not a protocol" in chains.lower()
     )
     assert re.search(r"World ID.*protocol|protocol.*World ID", chains, re.I | re.S)
     assert re.search(r"World Chain.*ledger|ledger.*World Chain", chains, re.I | re.S)
@@ -292,9 +293,7 @@ def test_example_addresses_are_synthetic_only() -> None:
 # ---------------------------------------------------------------------------
 
 
-def _run_example(
-    script_name: str, *extra_args: str, env: dict[str, str] | None = None
-) -> subprocess.CompletedProcess[str]:
+def _run_example(script_name: str, *extra_args: str, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
     script = EXAMPLES_DIR / script_name
     cmd = [sys.executable, str(script), *extra_args]
     run_env = os.environ.copy()
@@ -326,7 +325,9 @@ def _run_example(
 def test_documented_example_runs_offline(script_name: str) -> None:
     result = _run_example(script_name)
     assert result.returncode == 0, (
-        f"{script_name} failed offline\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}"
+        f"{script_name} failed offline\n"
+        f"stdout:\n{result.stdout}\n"
+        f"stderr:\n{result.stderr}"
     )
     # Examples should report offline success in JSON or notes.
     combined = (result.stdout or "") + (result.stderr or "")

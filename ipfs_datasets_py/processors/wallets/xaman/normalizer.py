@@ -45,9 +45,21 @@ def parse_xaman_payload(
     policy = privacy or PayloadPrivacyPolicy()
 
     meta = _as_mapping(raw.get("meta")) or _as_mapping(raw.get("Meta")) or {}
-    payload_body = _as_mapping(raw.get("payload")) or _as_mapping(raw.get("Payload")) or raw
-    response = _as_mapping(raw.get("response")) or _as_mapping(raw.get("Response")) or {}
-    application = _as_mapping(raw.get("application")) or _as_mapping(raw.get("Application")) or {}
+    payload_body = (
+        _as_mapping(raw.get("payload"))
+        or _as_mapping(raw.get("Payload"))
+        or raw
+    )
+    response = (
+        _as_mapping(raw.get("response"))
+        or _as_mapping(raw.get("Response"))
+        or {}
+    )
+    application = (
+        _as_mapping(raw.get("application"))
+        or _as_mapping(raw.get("Application"))
+        or {}
+    )
 
     uuid = (
         _optional_str(meta.get("uuid"))
@@ -61,22 +73,18 @@ def parse_xaman_payload(
     bound_network = _resolve_network(
         raw, meta, response, default=network, require_match=require_network_match
     )
-    status = (
-        resolve_payload_status_from_meta(meta)
-        if meta
-        else resolve_payload_status_from_meta(
-            {
-                "status": raw.get("status"),
-                "signed": raw.get("signed"),
-                "cancelled": raw.get("cancelled"),
-                "expired": raw.get("expired"),
-                "opened": raw.get("opened"),
-                "resolved": raw.get("resolved"),
-                "submitted": raw.get("submitted"),
-                "validated": raw.get("validated"),
-                "uuid": uuid,
-            }
-        )
+    status = resolve_payload_status_from_meta(meta) if meta else resolve_payload_status_from_meta(
+        {
+            "status": raw.get("status"),
+            "signed": raw.get("signed"),
+            "cancelled": raw.get("cancelled"),
+            "expired": raw.get("expired"),
+            "opened": raw.get("opened"),
+            "resolved": raw.get("resolved"),
+            "submitted": raw.get("submitted"),
+            "validated": raw.get("validated"),
+            "uuid": uuid,
+        }
     )
 
     txjson = (
@@ -98,19 +106,27 @@ def parse_xaman_payload(
     )
     if account:
         try:
-            account = validate_classic_address(account, network=bound_network).address
+            account = validate_classic_address(
+                account, network=bound_network
+            ).address
         except (InvalidRequestError, NormalizationError) as exc:
             raise NormalizationError(f"invalid account: {exc}") from exc
     if destination:
         try:
-            destination = validate_classic_address(destination, network=bound_network).address
+            destination = validate_classic_address(
+                destination, network=bound_network
+            ).address
         except (InvalidRequestError, NormalizationError) as exc:
             raise NormalizationError(f"invalid destination: {exc}") from exc
 
     destination_tag = _optional_uint32(
-        txjson.get("DestinationTag") if "DestinationTag" in txjson else meta.get("destination_tag")
+        txjson.get("DestinationTag")
+        if "DestinationTag" in txjson
+        else meta.get("destination_tag")
     )
-    transaction_type = _optional_str(txjson.get("TransactionType") or meta.get("transaction_type"))
+    transaction_type = _optional_str(
+        txjson.get("TransactionType") or meta.get("transaction_type")
+    )
     transaction_hash = _optional_str(
         response.get("txid")
         or response.get("tx_hash")
@@ -122,7 +138,9 @@ def parse_xaman_payload(
         transaction_hash = transaction_hash.upper()
 
     application_uuid = _optional_str(
-        application.get("uuid") or meta.get("application_uuid") or raw.get("application_uuid")
+        application.get("uuid")
+        or meta.get("application_uuid")
+        or raw.get("application_uuid")
     )
 
     instruction = _optional_str(
@@ -135,7 +153,9 @@ def parse_xaman_payload(
     # Digest the original request content, not its policy-dependent projection.
     # Redacted and opt-in records for the same payload therefore retain the
     # same deterministic identity without storing the free-form body.
-    content_digest = policy.content_digest(uuid, instruction, txjson, transaction_hash)
+    content_digest = policy.content_digest(
+        uuid, instruction, txjson, transaction_hash
+    )
     raw_meta_digest = _digest_mapping(meta or {"uuid": uuid})
 
     return XamanPayload(
@@ -150,7 +170,9 @@ def parse_xaman_payload(
         application_uuid=application_uuid,
         user_token=_optional_str(meta.get("user_token") or raw.get("user_token")),
         created_at=_optional_datetime(meta.get("created_at") or raw.get("created_at")),
-        resolved_at=_optional_datetime(meta.get("resolved_at") or response.get("resolved_at")),
+        resolved_at=_optional_datetime(
+            meta.get("resolved_at") or response.get("resolved_at")
+        ),
         expires_at=_optional_datetime(meta.get("expires_at") or meta.get("expired_at")),
         api_resolved=_truthy(meta.get("resolved")),
         api_signed=_truthy(meta.get("signed")),
@@ -229,7 +251,8 @@ def _resolve_network(
         # Caller-selected processor network must match payload binding.
         if resolved is not default:
             raise NormalizationError(
-                f"payload network {resolved.value} does not match processor network {default.value}"
+                f"payload network {resolved.value} does not match "
+                f"processor network {default.value}"
             )
     return resolved
 

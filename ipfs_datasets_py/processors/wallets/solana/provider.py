@@ -74,7 +74,9 @@ def _commitment(value: object, *, default: Commitment) -> Commitment:
     try:
         return Commitment(value)
     except (TypeError, ValueError):
-        raise InvalidRequestError("commitment must be processed, confirmed, or finalized") from None
+        raise InvalidRequestError(
+            "commitment must be processed, confirmed, or finalized"
+        ) from None
 
 
 def _mapping(value: object, *, field_name: str) -> Mapping[str, Any]:
@@ -186,7 +188,9 @@ class SolanaLedgerProvider:
         return self._validated_chain
 
     async def validate_identity(self, *, context: OperationContext) -> ChainRef:
-        return await self._validate_identity(context=context, budget=_RequestBudget(context))
+        return await self._validate_identity(
+            context=context, budget=_RequestBudget(context)
+        )
 
     async def _ensure_identity(
         self, *, context: OperationContext, budget: _RequestBudget
@@ -195,7 +199,9 @@ class SolanaLedgerProvider:
             return await self._validate_identity(context=context, budget=budget)
         return self._validated_chain
 
-    async def validate_address(self, address: str, *, context: OperationContext) -> str:
+    async def validate_address(
+        self, address: str, *, context: OperationContext
+    ) -> str:
         context.check_active()
         return normalize_pubkey(address, field_name="address")
 
@@ -301,9 +307,15 @@ class SolanaLedgerProvider:
 
         budget = _RequestBudget(context)
         await self._ensure_identity(context=context, budget=budget)
-        processed = await self.get_slot(Commitment.PROCESSED, context=context, budget=budget)
-        confirmed = await self.get_slot(Commitment.CONFIRMED, context=context, budget=budget)
-        finalized = await self.get_slot(Commitment.FINALIZED, context=context, budget=budget)
+        processed = await self.get_slot(
+            Commitment.PROCESSED, context=context, budget=budget
+        )
+        confirmed = await self.get_slot(
+            Commitment.CONFIRMED, context=context, budget=budget
+        )
+        finalized = await self.get_slot(
+            Commitment.FINALIZED, context=context, budget=budget
+        )
         if not processed >= confirmed >= finalized:
             raise ProviderError("Solana commitment slot ordering is inconsistent")
         block = await self.get_block(
@@ -346,7 +358,9 @@ class SolanaLedgerProvider:
         )
 
     @staticmethod
-    def _signature_info(value: object, *, default_commitment: Commitment) -> SolanaSignatureInfo:
+    def _signature_info(
+        value: object, *, default_commitment: Commitment
+    ) -> SolanaSignatureInfo:
         item = _mapping(value, field_name="signature entry")
         status = item.get("confirmationStatus")
         if status is None:
@@ -386,7 +400,10 @@ class SolanaLedgerProvider:
         )
         if not isinstance(result, Sequence) or isinstance(result, (str, bytes)):
             raise ProviderError("getSignaturesForAddress must return a sequence")
-        return tuple(self._signature_info(item, default_commitment=commitment) for item in result)
+        return tuple(
+            self._signature_info(item, default_commitment=commitment)
+            for item in result
+        )
 
     @staticmethod
     def _transaction_bundle(
@@ -417,14 +434,20 @@ class SolanaLedgerProvider:
             commitment=commitment,
         )
 
-    async def ingest_wallet(self, request: BoundedRequest) -> AsyncIterator[RecordBatch]:
+    async def ingest_wallet(
+        self, request: BoundedRequest
+    ) -> AsyncIterator[RecordBatch]:
         """Paginate signatures without gaps/duplicates, then fetch every tx."""
 
         context = request.context
         context.check_active()
         address = normalize_pubkey(request.scope, field_name="scope")
-        commitment = _commitment(request.options.get("commitment"), default=Commitment.FINALIZED)
-        page_size_value = request.options.get("page_size", min(1_000, context.limits.max_items))
+        commitment = _commitment(
+            request.options.get("commitment"), default=Commitment.FINALIZED
+        )
+        page_size_value = request.options.get(
+            "page_size", min(1_000, context.limits.max_items)
+        )
         page_size = parse_non_negative_int(page_size_value, field_name="page_size")
         if page_size == 0 or page_size > 1_000:
             raise InvalidRequestError("page_size must be between 1 and 1000")
@@ -481,7 +504,9 @@ class SolanaLedgerProvider:
                     )
                     blockhash = containing_block.get("blockhash")
                     if not isinstance(blockhash, str) or not blockhash:
-                        raise ProviderError(f"Solana slot {slot} is missing canonical blockhash")
+                        raise ProviderError(
+                            f"Solana slot {slot} is missing canonical blockhash"
+                        )
                     slot_anchors[slot] = blockhash
                 bundles.append(
                     self._transaction_bundle(
@@ -514,7 +539,9 @@ class SolanaLedgerProvider:
             before = next_cursor
         raise ResourceLimitError("Solana signature pagination exceeds max_pages")
 
-    async def ingest_ledger(self, request: BoundedRequest) -> AsyncIterator[RecordBatch]:
+    async def ingest_ledger(
+        self, request: BoundedRequest
+    ) -> AsyncIterator[RecordBatch]:
         """Stream an inclusive finite slot range; missing slots fail closed."""
 
         context = request.context
@@ -526,7 +553,9 @@ class SolanaLedgerProvider:
         count = request.end_position - request.start_position + 1
         if count > context.limits.max_pages:
             raise ResourceLimitError("Solana slot range exceeds max_pages")
-        commitment = _commitment(request.options.get("commitment"), default=Commitment.FINALIZED)
+        commitment = _commitment(
+            request.options.get("commitment"), default=Commitment.FINALIZED
+        )
         budget = _RequestBudget(context)
         await self._ensure_identity(context=context, budget=budget)
         for slot in range(request.start_position, request.end_position + 1):
@@ -540,7 +569,9 @@ class SolanaLedgerProvider:
             if not isinstance(blockhash, str) or not blockhash:
                 raise ProviderError(f"Solana slot {slot} is missing blockhash")
             transactions = result.get("transactions")
-            if not isinstance(transactions, Sequence) or isinstance(transactions, (str, bytes)):
+            if not isinstance(transactions, Sequence) or isinstance(
+                transactions, (str, bytes)
+            ):
                 raise ProviderError("Solana block transactions must be a sequence")
             if len(transactions) > context.limits.max_items:
                 raise ResourceLimitError("Solana block exceeds max_items")
@@ -566,7 +597,9 @@ class SolanaLedgerProvider:
                 transactions=bundles,
                 commitment=commitment,
             )
-            response_bytes = len(json.dumps(result, separators=(",", ":")).encode("utf-8"))
+            response_bytes = len(
+                json.dumps(result, separators=(",", ":")).encode("utf-8")
+            )
             batch = RecordBatch(records=(block,), response_bytes=response_bytes)
             batch.enforce(context.limits)
             yield batch

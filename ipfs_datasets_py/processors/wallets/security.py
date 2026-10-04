@@ -70,8 +70,12 @@ class SecretReference:
     reference: str
 
     def __post_init__(self) -> None:
-        if not isinstance(self.reference, str) or not _REFERENCE_RE.fullmatch(self.reference):
-            raise InvalidRequestError("secret reference must use an explicit resolver URI")
+        if not isinstance(self.reference, str) or not _REFERENCE_RE.fullmatch(
+            self.reference
+        ):
+            raise InvalidRequestError(
+                "secret reference must use an explicit resolver URI"
+            )
 
     def __repr__(self) -> str:
         return "SecretReference(<redacted-reference>)"
@@ -99,7 +103,9 @@ class SecretHeaderValue(str):
 
 
 SecretLookupResult: TypeAlias = SecretValue | bytes | str
-SecretLookup: TypeAlias = Callable[[str], SecretLookupResult | Awaitable[SecretLookupResult]]
+SecretLookup: TypeAlias = Callable[
+    [str], SecretLookupResult | Awaitable[SecretLookupResult]
+]
 
 
 class SecretResolver:
@@ -126,7 +132,11 @@ class SecretResolver:
         context: OperationContext,
     ) -> SecretValue:
         context.check_active()
-        parsed = reference if isinstance(reference, SecretReference) else SecretReference(reference)
+        parsed = (
+            reference
+            if isinstance(reference, SecretReference)
+            else SecretReference(reference)
+        )
         try:
             result = self._lookup(parsed.reference)
             if inspect.isawaitable(result):
@@ -165,7 +175,9 @@ class EndpointPolicy:
             raise InvalidRequestError("endpoint allowlist contains an invalid hostname")
         ports = frozenset(self.allowed_ports)
         if not ports or any(
-            isinstance(port, bool) or not isinstance(port, int) or not 1 <= port <= 65_535
+            isinstance(port, bool)
+            or not isinstance(port, int)
+            or not 1 <= port <= 65_535
             for port in ports
         ):
             raise InvalidRequestError("allowed_ports must contain valid TCP ports")

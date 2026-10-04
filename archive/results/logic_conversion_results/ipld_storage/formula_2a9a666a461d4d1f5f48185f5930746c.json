@@ -1,0 +1,42 @@
+{
+  "formula_id": "266bffccc96a",
+  "deontic_formula": {
+    "formula_id": "266bffccc96a",
+    "operator": "F",
+    "proposition": "use_substandard_materials",
+    "agent": {
+      "identifier": "agent_2969",
+      "name": "Contractor",
+      "agent_type": "organization",
+      "properties": {},
+      "hash": "a905e155"
+    },
+    "beneficiary": null,
+    "conditions": [],
+    "temporal_conditions": [],
+    "legal_context": {
+      "jurisdiction": "Illinois, USA",
+      "legal_domain": "contract",
+      "applicable_law": null,
+      "precedents": [],
+      "exceptions": []
+    },
+    "confidence": 0.95,
+    "source_text": "The Contractor must not use materials that do not meet specification requirements",
+    "variables": {},
+    "quantifiers": [],
+    "fol_string": "F[agent_2969](use_substandard_materials)",
+    "creation_timestamp": "2025-08-31T19:15:31.058584"
+  },
+  "source_document_cid": null,
+  "source_text_excerpt": "The Contractor must not use materials that do not meet specification requirements",
+  "extraction_metadata": {
+    "source_method": "graphrag_conversion"
+  },
+  "translations": {},
+  "translation_cids": {},
+  "provenance_chain": null,
+  "creation_timestamp": "2025-08-31T19:15:31.061957",
+  "confidence_score": 0.95,
+  "validation_results": {}
+}

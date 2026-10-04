@@ -144,7 +144,9 @@ def test_classic_address_normalization() -> None:
         normalize_classic_address("not-an-address")
     with pytest.raises(InvalidRequestError, match="X-address"):
         # Length/shape matches X-address form (not checksum-verified).
-        normalize_classic_address("XV5sbjUmgPpvXv4ixFWZ5ptAYZ6PD28Sq49uo34VyjnmK5H")
+        normalize_classic_address(
+            "XV5sbjUmgPpvXv4ixFWZ5ptAYZ6PD28Sq49uo34VyjnmK5H"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -373,7 +375,9 @@ def test_xrp_cannot_be_issued_asset() -> None:
         ("SetHook", LedgerObjectKind.HOOK),
     ],
 )
-def test_default_object_kind_for_tx(tx_type: str, expected_kind: LedgerObjectKind) -> None:
+def test_default_object_kind_for_tx(
+    tx_type: str, expected_kind: LedgerObjectKind
+) -> None:
     assert default_object_kind_for_tx(tx_type) is expected_kind
 
 
@@ -442,7 +446,9 @@ def test_unknown_transaction_type_is_unknown(frontend: XRPLLedgerFrontend) -> No
 
 
 def test_hooks_absent_returns_unsupported(frontend: XRPLLedgerFrontend) -> None:
-    hooks = frontend.bind_hook_capability(chain_id=XRPL_MAINNET_CHAIN_ID, present=False)
+    hooks = frontend.bind_hook_capability(
+        chain_id=XRPL_MAINNET_CHAIN_ID, present=False
+    )
     assert hooks.state is HookCapabilityState.ABSENT
     assert hooks.is_supported is False
     assert hooks.evaluate_hook_claim() is SemanticPassStatus.UNSUPPORTED
@@ -530,11 +536,17 @@ def test_classify_routing_sidechain(frontend: XRPLLedgerFrontend) -> None:
         is SidechainRouting.EVM_SIDECHAIN
     )
     assert (
-        frontend.classify_routing(network="ripple-evm-sidechain") is SidechainRouting.EVM_SIDECHAIN
+        frontend.classify_routing(network="ripple-evm-sidechain")
+        is SidechainRouting.EVM_SIDECHAIN
     )
-    assert frontend.classify_routing(chain_id=XRPL_MAINNET_CHAIN_ID) is SidechainRouting.XRPL_NATIVE
     assert (
-        frontend.classify_routing(chain_id=XRPL_MAINNET_CHAIN_ID, namespace="eip155")
+        frontend.classify_routing(chain_id=XRPL_MAINNET_CHAIN_ID)
+        is SidechainRouting.XRPL_NATIVE
+    )
+    assert (
+        frontend.classify_routing(
+            chain_id=XRPL_MAINNET_CHAIN_ID, namespace="eip155"
+        )
         is SidechainRouting.REJECTED_CROSS_NETWORK
     )
 

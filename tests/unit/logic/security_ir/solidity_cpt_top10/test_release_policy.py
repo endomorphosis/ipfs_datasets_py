@@ -45,7 +45,8 @@ def test_exact_source_pin_and_ordered_schema() -> None:
     assert profile.revision == "23c0b2f279fa29c6b425543fe9c8bf41d574d028"
     assert profile.shard_path == "top10.parquet"
     assert (
-        profile.shard_sha256 == "185f1ac548f0df10a8166c8a2a10610bcc3422ce77f51567c3de86ddc8f5e455"
+        profile.shard_sha256
+        == "185f1ac548f0df10a8166c8a2a10610bcc3422ce77f51567c3de86ddc8f5e455"
     )
     assert profile.shard_size_bytes == 109_124_886
     assert profile.row_count == 23_471

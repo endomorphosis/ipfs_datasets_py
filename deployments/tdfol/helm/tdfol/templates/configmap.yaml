@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "tdfol.fullname" . }}-config
+  labels:
+    {{- include "tdfol.labels" . | nindent 4 }}
+data:
+  TDFOL_LOG_LEVEL: {{ .Values.config.logLevel | quote }}
+  TDFOL_WORKERS: {{ .Values.config.workers | quote }}
+  TDFOL_MAX_PROOF_DEPTH: {{ .Values.config.maxProofDepth | quote }}
+  TDFOL_CACHE_ENABLED: {{ .Values.config.cacheEnabled | quote }}
+  TDFOL_CACHE_TTL: {{ .Values.config.cacheTTL | quote }}
+  
+  API_HOST: {{ .Values.config.apiHost | quote }}
+  API_PORT: {{ .Values.config.apiPort | quote }}
+  API_CORS_ENABLED: {{ .Values.config.corsEnabled | quote }}
+  API_CORS_ORIGINS: {{ .Values.config.corsOrigins | quote }}
+  API_RATE_LIMIT: {{ .Values.config.rateLimit | quote }}
+  
+  DATABASE_URL: {{ .Values.config.databaseUrl | quote }}
+  DATABASE_POOL_SIZE: {{ .Values.config.databasePoolSize | quote }}
+  DATABASE_TIMEOUT: {{ .Values.config.databaseTimeout | quote }}
+  
+  {{- if .Values.redis.enabled }}
+  REDIS_URL: "redis://{{ include "tdfol.redis.fullname" . }}:6379/0"
+  {{- end }}
+  
+  MAX_CONCURRENT_PROOFS: {{ .Values.config.maxConcurrentProofs | quote }}
+  PROOF_TIMEOUT: {{ .Values.config.proofTimeout | quote }}
+  MAX_FORMULA_SIZE: {{ .Values.config.maxFormulaSize | quote }}
+  MAX_MEMORY_PER_PROOF: {{ .Values.config.maxMemoryPerProof | quote }}
+  
+  NLP_ENABLED: {{ .Values.config.nlpEnabled | quote }}
+  COUNTERMODEL_ENABLED: {{ .Values.config.countermodelEnabled | quote }}
+  VISUALIZATION_ENABLED: {{ .Values.config.visualizationEnabled | quote }}
+  PROOF_OPTIMIZATION: {{ .Values.config.proofOptimization | quote }}
+  PARALLEL_PROVING: {{ .Values.config.parallelProving | quote }}
+  PARALLEL_WORKERS: {{ .Values.config.parallelWorkers | quote }}
+  
+  PROMETHEUS_ENABLED: {{ .Values.config.prometheusEnabled | quote }}
+  PROMETHEUS_PORT: {{ .Values.config.prometheusPort | quote }}

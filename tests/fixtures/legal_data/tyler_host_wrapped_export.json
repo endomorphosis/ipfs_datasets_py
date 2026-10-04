@@ -1,0 +1,28 @@
+{
+  "result": {
+    "source_type": "tyler_host",
+    "case": {
+      "caseNumber": "TYLER-2025-099",
+      "caseTitle": "In re Example Petition",
+      "courtName": "Example County Probate Court",
+      "docketEntries": [
+        {
+          "documentId": "entry_1",
+          "documentTitle": "Petition for Appointment",
+          "text": "Petition seeking appointment of personal representative.",
+          "filedDate": "2025-01-07",
+          "docNumber": "1",
+          "documentUrl": "https://portal.example.gov/documents/1"
+        },
+        {
+          "documentId": "entry_5",
+          "documentTitle": "Order Setting Hearing",
+          "description": "Order setting hearing on the petition.",
+          "filedDate": "2025-01-20",
+          "docNumber": "5",
+          "documentUrl": "https://portal.example.gov/documents/5"
+        }
+      ]
+    }
+  }
+}

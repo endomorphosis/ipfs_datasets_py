@@ -36,10 +36,14 @@ from .hf_release import HF_META_SCHEMA_VERSION
 from .retrieval import NO_EMBEDDING_MODEL, RetrievalEntry, RetrievalIndex
 
 
-CVEFIXES_HF_VECTOR_CHUNK_SCHEMA_VERSION: Final = "cvefixes-hf-vector-chunk/v1"
+CVEFIXES_HF_VECTOR_CHUNK_SCHEMA_VERSION: Final = (
+    "cvefixes-hf-vector-chunk/v1"
+)
 VECTOR_CHUNK_ROWS: Final = 4096
 VECTOR_MAX_SHARDS_PER_CENTROID: Final = 2
-VECTOR_MAX_ROWS_PER_CENTROID: Final = VECTOR_CHUNK_ROWS * VECTOR_MAX_SHARDS_PER_CENTROID
+VECTOR_MAX_ROWS_PER_CENTROID: Final = (
+    VECTOR_CHUNK_ROWS * VECTOR_MAX_SHARDS_PER_CENTROID
+)
 VECTOR_TARGET_ROWS_PER_CENTROID: Final = 2048
 VECTOR_MAX_CENTROIDS: Final = 64
 VECTOR_DEFAULT_PROBE_CENTROIDS: Final = 4
@@ -216,37 +220,58 @@ def build_cvefixes_hf_vector_layout(
         _positive_int(value, label)
     if max_shards_per_centroid > VECTOR_MAX_SHARDS_PER_CENTROID:
         raise CVEfixesHFVectorLayoutError(
-            "SkillCenter-compatible routing permits at most two shards per centroid"
+            "SkillCenter-compatible routing permits at most two shards "
+            "per centroid"
         )
     if max_rows_per_shard > VECTOR_CHUNK_ROWS:
         raise CVEfixesHFVectorLayoutError(
-            f"SkillCenter-compatible vector shards permit at most {VECTOR_CHUNK_ROWS} rows"
+            f"SkillCenter-compatible vector shards permit at most "
+            f"{VECTOR_CHUNK_ROWS} rows"
         )
     max_rows_per_centroid = max_rows_per_shard * max_shards_per_centroid
     if target_rows_per_centroid > max_rows_per_centroid:
-        raise CVEfixesHFVectorLayoutError("target_rows_per_centroid exceeds centroid capacity")
+        raise CVEfixesHFVectorLayoutError(
+            "target_rows_per_centroid exceeds centroid capacity"
+        )
     if require_immutable_model_revision is None:
         require_immutable_model_revision = require_embeddings
     if type(require_embeddings) is not bool:
-        raise CVEfixesHFVectorLayoutError("require_embeddings must be a boolean")
+        raise CVEfixesHFVectorLayoutError(
+            "require_embeddings must be a boolean"
+        )
     if type(require_immutable_model_revision) is not bool:
-        raise CVEfixesHFVectorLayoutError("require_immutable_model_revision must be a boolean")
+        raise CVEfixesHFVectorLayoutError(
+            "require_immutable_model_revision must be a boolean"
+        )
 
     rows = _index_rows(index)
     if not rows:
-        raise CVEfixesHFVectorLayoutError("cannot publish an empty vector layout")
+        raise CVEfixesHFVectorLayoutError(
+            "cannot publish an empty vector layout"
+        )
     dimension = index.embedding_dimension
-    embedded_positions = tuple(row.document_index for row in rows if row.entry.embedding)
-    neutral_positions = tuple(row.document_index for row in rows if not row.entry.embedding)
+    embedded_positions = tuple(
+        row.document_index for row in rows if row.entry.embedding
+    )
+    neutral_positions = tuple(
+        row.document_index for row in rows if not row.entry.embedding
+    )
     if require_embeddings and neutral_positions:
         raise CVEfixesHFVectorLayoutError(
             "production vector layout requires an embedding for every row"
         )
     if require_embeddings and not embedded_positions:
-        raise CVEfixesHFVectorLayoutError("production vector layout cannot be embedding-free")
-    no_model = index.model_id == NO_EMBEDDING_MODEL or index.model_revision == NO_EMBEDDING_MODEL
+        raise CVEfixesHFVectorLayoutError(
+            "production vector layout cannot be embedding-free"
+        )
+    no_model = (
+        index.model_id == NO_EMBEDDING_MODEL
+        or index.model_revision == NO_EMBEDDING_MODEL
+    )
     if embedded_positions and no_model:
-        raise CVEfixesHFVectorLayoutError("embedded rows must bind a real model and revision")
+        raise CVEfixesHFVectorLayoutError(
+            "embedded rows must bind a real model and revision"
+        )
     if require_immutable_model_revision and not _IMMUTABLE_REVISION_RE.fullmatch(
         index.model_revision
     ):
@@ -260,7 +285,9 @@ def build_cvefixes_hf_vector_layout(
     for position in embedded_positions:
         vector = np.asarray(rows[position].entry.embedding, dtype=np.float64)
         if vector.shape != (dimension,) or not np.isfinite(vector).all():
-            raise CVEfixesHFVectorLayoutError("retrieval embedding matrix is malformed")
+            raise CVEfixesHFVectorLayoutError(
+                "retrieval embedding matrix is malformed"
+            )
         norm = float(np.linalg.norm(vector))
         if not math.isfinite(norm) or norm == 0.0:
             raise CVEfixesHFVectorLayoutError(
@@ -269,7 +296,9 @@ def build_cvefixes_hf_vector_layout(
         normalized = (vector / norm).astype(np.float32)
         normalized_norm = float(np.linalg.norm(normalized))
         if not math.isfinite(normalized_norm) or normalized_norm == 0.0:
-            raise CVEfixesHFVectorLayoutError("retrieval embedding cannot be normalized as float32")
+            raise CVEfixesHFVectorLayoutError(
+                "retrieval embedding cannot be normalized as float32"
+            )
         matrix[position] = normalized / normalized_norm
 
     groups = _routing_groups(
@@ -285,10 +314,13 @@ def build_cvefixes_hf_vector_layout(
     if (
         not groups
         or sum(len(group) for group in groups) != len(rows)
-        or sorted(position for group in groups for position in group) != list(range(len(rows)))
+        or sorted(position for group in groups for position in group)
+        != list(range(len(rows)))
         or max(map(len, groups)) > max_rows_per_centroid
     ):
-        raise CVEfixesHFVectorIntegrityError("vector centroid coverage is incomplete")
+        raise CVEfixesHFVectorIntegrityError(
+            "vector centroid coverage is incomplete"
+        )
 
     root = Path(output_root).expanduser().resolve()
     vector_dir = root / "data" / "vectors"
@@ -298,13 +330,17 @@ def build_cvefixes_hf_vector_layout(
     meta_path.parent.mkdir(parents=True, exist_ok=True)
 
     pinned_model_name = (
-        NO_EMBEDDING_MODEL if not embedded_positions else f"{index.model_id}@{index.model_revision}"
+        NO_EMBEDDING_MODEL
+        if not embedded_positions
+        else f"{index.model_id}@{index.model_revision}"
     )
     meta_rows: list[dict[str, Any]] = []
     shard_id = 0
     for cluster_id, group in enumerate(groups):
         group_positions = np.asarray(group, dtype=np.int64)
-        routing_centroid = _unit_centroid(matrix, group_positions, np=np)
+        routing_centroid = _unit_centroid(
+            matrix, group_positions, np=np
+        )
         physical_shards = _physical_shards(
             matrix,
             group_positions,
@@ -329,7 +365,9 @@ def build_cvefixes_hf_vector_layout(
                 ),
             )
             selected = selected[np.asarray(ordered_offsets, dtype=np.int64)]
-            has_embedding = has_embedding[np.asarray(ordered_offsets, dtype=np.int64)]
+            has_embedding = has_embedding[
+                np.asarray(ordered_offsets, dtype=np.int64)
+            ]
             scores = scores[np.asarray(ordered_offsets, dtype=np.int64)]
             chunk_name = f"vector-{shard_id:06d}"
             table = _vector_table(
@@ -371,7 +409,9 @@ def build_cvefixes_hf_vector_layout(
                     "cluster_id": cluster_id,
                     "dimension": dimension,
                     "model_name": pinned_model_name,
-                    "shard_centroid": _float32_list(shard_centroid, np=np),
+                    "shard_centroid": _float32_list(
+                        shard_centroid, np=np
+                    ),
                 }
             )
             shard_id += 1
@@ -400,7 +440,9 @@ def build_cvefixes_hf_vector_layout(
     manifest_config = {
         "assignment": "deterministic_balanced_spherical_kmeans",
         "centroid_count": len(groups),
-        "default_probe_centroids": min(VECTOR_DEFAULT_PROBE_CENTROIDS, searchable_clusters),
+        "default_probe_centroids": min(
+            VECTOR_DEFAULT_PROBE_CENTROIDS, searchable_clusters
+        ),
         "dimension": dimension,
         "embedded_rows": len(embedded_positions),
         "layout": "semantic_centroid_groups",
@@ -416,7 +458,10 @@ def build_cvefixes_hf_vector_layout(
         "rows_sorted_by": (
             "cosine_similarity_to_shard_centroid_desc"
             if not neutral_positions
-            else ("has_embedding_desc_cosine_similarity_to_shard_centroid_desc")
+            else (
+                "has_embedding_desc_"
+                "cosine_similarity_to_shard_centroid_desc"
+            )
         ),
         "searchable": bool(embedded_positions),
         "searchable_centroid_count": searchable_clusters,
@@ -434,7 +479,9 @@ def build_cvefixes_hf_vector_layout(
         searchable_cluster_count=searchable_clusters,
         vector_chunks=len(meta_rows),
         meta_index=MappingProxyType(meta_descriptor),
-        chunk_rows=tuple(MappingProxyType(dict(row)) for row in meta_rows),
+        chunk_rows=tuple(
+            MappingProxyType(dict(row)) for row in meta_rows
+        ),
         manifest_config=MappingProxyType(manifest_config),
     )
 
@@ -452,11 +499,15 @@ def read_cvefixes_vector_meta_index(
         )
     source = unresolved.resolve()
     if not source.is_file():
-        raise CVEfixesHFVectorIntegrityError(f"vector meta-index does not exist safely: {source}")
+        raise CVEfixesHFVectorIntegrityError(
+            f"vector meta-index does not exist safely: {source}"
+        )
     parquet = pq.ParquetFile(source)
     metadata = parquet.schema_arrow.metadata or {}
     if metadata.get(b"schema_version") != HF_META_SCHEMA_VERSION.encode():
-        raise CVEfixesHFVectorIntegrityError("vector meta-index schema version differs")
+        raise CVEfixesHFVectorIntegrityError(
+            "vector meta-index schema version differs"
+        )
     table = parquet.read()
     if tuple(table.column_names) != VECTOR_META_COLUMNS:
         raise CVEfixesHFVectorIntegrityError(
@@ -464,7 +515,9 @@ def read_cvefixes_vector_meta_index(
         )
     rows = tuple(dict(row) for row in table.to_pylist())
     if not rows:
-        raise CVEfixesHFVectorIntegrityError("vector meta-index must not be empty")
+        raise CVEfixesHFVectorIntegrityError(
+            "vector meta-index must not be empty"
+        )
     for row in rows:
         _validate_meta_row(row)
     return rows
@@ -481,39 +534,62 @@ def verify_cvefixes_vector_shard(
     relative_path = str(meta_row["relative_path"])
     match = _VECTOR_PATH_RE.fullmatch(relative_path)
     if match is None or int(match.group(1)) != int(meta_row["shard_id"]):
-        raise CVEfixesHFVectorIntegrityError("vector shard path and shard_id differ")
+        raise CVEfixesHFVectorIntegrityError(
+            "vector shard path and shard_id differ"
+        )
     parsed = PurePosixPath(relative_path)
     path = root.joinpath(*parsed.parts)
     try:
         path.relative_to(root)
     except ValueError as exc:
-        raise CVEfixesHFVectorIntegrityError("vector shard path escapes the release root") from exc
+        raise CVEfixesHFVectorIntegrityError(
+            "vector shard path escapes the release root"
+        ) from exc
     if path.is_symlink() or not path.is_file():
-        raise CVEfixesHFVectorIntegrityError(f"vector shard does not exist safely: {relative_path}")
+        raise CVEfixesHFVectorIntegrityError(
+            f"vector shard does not exist safely: {relative_path}"
+        )
     descriptor = _file_descriptor(path, root=root)
     for name in ("cid", "relative_path", "sha256", "size_bytes"):
         if descriptor[name] != meta_row[name]:
-            raise CVEfixesHFVectorIntegrityError(f"vector shard {name} differs: {relative_path}")
+            raise CVEfixesHFVectorIntegrityError(
+                f"vector shard {name} differs: {relative_path}"
+            )
 
     _, pq = _pyarrow()
     parquet = pq.ParquetFile(path)
     metadata = parquet.schema_arrow.metadata or {}
-    if metadata.get(b"schema_version") != CVEFIXES_HF_VECTOR_CHUNK_SCHEMA_VERSION.encode():
+    if (
+        metadata.get(b"schema_version")
+        != CVEFIXES_HF_VECTOR_CHUNK_SCHEMA_VERSION.encode()
+    ):
         raise CVEfixesHFVectorIntegrityError(
             f"vector shard schema version differs: {relative_path}"
         )
     table = parquet.read()
     if tuple(table.column_names) != VECTOR_DATA_COLUMNS:
-        raise CVEfixesHFVectorIntegrityError(f"vector shard columns differ: {relative_path}")
+        raise CVEfixesHFVectorIntegrityError(
+            f"vector shard columns differ: {relative_path}"
+        )
     if table.num_rows != int(meta_row["row_count"]):
-        raise CVEfixesHFVectorIntegrityError(f"vector shard row count differs: {relative_path}")
+        raise CVEfixesHFVectorIntegrityError(
+            f"vector shard row count differs: {relative_path}"
+        )
     if table.num_rows < 1 or table.num_rows > VECTOR_CHUNK_ROWS:
-        raise CVEfixesHFVectorIntegrityError(f"vector shard row bound differs: {relative_path}")
+        raise CVEfixesHFVectorIntegrityError(
+            f"vector shard row bound differs: {relative_path}"
+        )
     expected_chunk = f"vector-{int(meta_row['shard_id']):06d}"
     if set(table["chunk_id"].to_pylist()) != {expected_chunk}:
-        raise CVEfixesHFVectorIntegrityError(f"vector chunk identity differs: {relative_path}")
-    if set(table["cluster_id"].to_pylist()) != {int(meta_row["cluster_id"])}:
-        raise CVEfixesHFVectorIntegrityError(f"vector cluster identity differs: {relative_path}")
+        raise CVEfixesHFVectorIntegrityError(
+            f"vector chunk identity differs: {relative_path}"
+        )
+    if set(table["cluster_id"].to_pylist()) != {
+        int(meta_row["cluster_id"])
+    }:
+        raise CVEfixesHFVectorIntegrityError(
+            f"vector cluster identity differs: {relative_path}"
+        )
     entry_cids = table["entry_cid"].to_pylist()
     documents = [int(value) for value in table["document_index"].to_pylist()]
     if (
@@ -530,23 +606,32 @@ def verify_cvefixes_vector_shard(
     dimension = int(meta_row["dimension"])
     vectors = np.asarray(table["embedding"].to_pylist(), dtype=np.float32)
     if vectors.shape != (table.num_rows, dimension):
-        raise CVEfixesHFVectorIntegrityError(f"vector shard dimension differs: {relative_path}")
-    present = np.asarray(table["has_embedding"].to_pylist(), dtype=np.bool_)
+        raise CVEfixesHFVectorIntegrityError(
+            f"vector shard dimension differs: {relative_path}"
+        )
+    present = np.asarray(
+        table["has_embedding"].to_pylist(), dtype=np.bool_
+    )
     norms = np.linalg.norm(vectors, axis=1)
-    if bool((present & ~np.isclose(norms, 1.0, atol=2e-6)).any()) or bool(
-        (~present & ~np.isclose(norms, 0.0, atol=0.0)).any()
+    if (
+        bool((present & ~np.isclose(norms, 1.0, atol=2e-6)).any())
+        or bool((~present & ~np.isclose(norms, 0.0, atol=0.0)).any())
     ):
         raise CVEfixesHFVectorIntegrityError(
             f"vector normalization/neutral marker differs: {relative_path}"
         )
-    shard_centroid = np.asarray(meta_row["shard_centroid"], dtype=np.float32)
+    shard_centroid = np.asarray(
+        meta_row["shard_centroid"], dtype=np.float32
+    )
     expected_shard_centroid = _unit_centroid(
         vectors, np.arange(table.num_rows, dtype=np.int64), np=np
     )
     if shard_centroid.shape != (dimension,) or not np.allclose(
         shard_centroid, expected_shard_centroid, atol=2e-6, rtol=0.0
     ):
-        raise CVEfixesHFVectorIntegrityError(f"vector shard centroid differs: {relative_path}")
+        raise CVEfixesHFVectorIntegrityError(
+            f"vector shard centroid differs: {relative_path}"
+        )
     scores = vectors @ shard_centroid
     observed_order = [
         (
@@ -557,16 +642,22 @@ def verify_cvefixes_vector_shard(
         for offset in range(table.num_rows)
     ]
     if observed_order != sorted(observed_order):
-        raise CVEfixesHFVectorIntegrityError(f"vector shard ordering differs: {relative_path}")
+        raise CVEfixesHFVectorIntegrityError(
+            f"vector shard ordering differs: {relative_path}"
+        )
     embedded_scores = scores[present]
-    expected_min = float(embedded_scores.min()) if len(embedded_scores) else 0.0
+    expected_min = (
+        float(embedded_scores.min()) if len(embedded_scores) else 0.0
+    )
     if not math.isclose(
         float(meta_row["centroid_min_score"]),
         expected_min,
         abs_tol=2e-6,
         rel_tol=0.0,
     ):
-        raise CVEfixesHFVectorIntegrityError(f"vector shard minimum score differs: {relative_path}")
+        raise CVEfixesHFVectorIntegrityError(
+            f"vector shard minimum score differs: {relative_path}"
+        )
     return path
 
 
@@ -575,7 +666,10 @@ def route_cvefixes_vector_shards(
     query_embedding: Sequence[float],
     *,
     candidate_centroids: int = VECTOR_DEFAULT_PROBE_CENTROIDS,
-    max_shards: int = (VECTOR_DEFAULT_PROBE_CENTROIDS * VECTOR_MAX_SHARDS_PER_CENTROID),
+    max_shards: int = (
+        VECTOR_DEFAULT_PROBE_CENTROIDS
+        * VECTOR_MAX_SHARDS_PER_CENTROID
+    ),
     expected_model_name: str | None = None,
 ) -> tuple[VectorShardRoute, ...]:
     """Rank routing centroids without reading any vector data shard."""
@@ -583,13 +677,17 @@ def route_cvefixes_vector_shards(
     _positive_int(candidate_centroids, "candidate_centroids")
     _positive_int(max_shards, "max_shards")
     if not meta_rows:
-        raise CVEfixesHFVectorLayoutError("vector routing meta-index is empty")
+        raise CVEfixesHFVectorLayoutError(
+            "vector routing meta-index is empty"
+        )
     for row in meta_rows:
         _validate_meta_row(row)
     dimensions = {int(row["dimension"]) for row in meta_rows}
     model_names = {str(row["model_name"]) for row in meta_rows}
     if len(dimensions) != 1 or len(model_names) != 1:
-        raise CVEfixesHFVectorIntegrityError("vector routing metadata mixes dimensions or models")
+        raise CVEfixesHFVectorIntegrityError(
+            "vector routing metadata mixes dimensions or models"
+        )
     dimension = next(iter(dimensions))
     model_name = next(iter(model_names))
     if expected_model_name is not None and model_name != expected_model_name:
@@ -597,14 +695,20 @@ def route_cvefixes_vector_shards(
             "query model binding differs from vector routing metadata"
         )
     if dimension < 1:
-        raise CVEfixesHFVectorLayoutError("neutral vector layout is not semantically searchable")
+        raise CVEfixesHFVectorLayoutError(
+            "neutral vector layout is not semantically searchable"
+        )
     np = _numpy()
     query = np.asarray(query_embedding, dtype=np.float64)
     if query.shape != (dimension,) or not np.isfinite(query).all():
-        raise CVEfixesHFVectorLayoutError("query embedding dimension or values differ")
+        raise CVEfixesHFVectorLayoutError(
+            "query embedding dimension or values differ"
+        )
     norm = float(np.linalg.norm(query))
     if not math.isfinite(norm) or norm == 0.0:
-        raise CVEfixesHFVectorLayoutError("query embedding must be finite and non-zero")
+        raise CVEfixesHFVectorLayoutError(
+            "query embedding must be finite and non-zero"
+        )
     query = (query / norm).astype(np.float32)
 
     groups: dict[int, list[Mapping[str, Any]]] = {}
@@ -612,14 +716,27 @@ def route_cvefixes_vector_shards(
         groups.setdefault(int(row["cluster_id"]), []).append(row)
     ranked: list[tuple[float, int, list[Mapping[str, Any]]]] = []
     for cluster_id, group in groups.items():
-        ordered = sorted(group, key=lambda row: int(row["chunk_in_cluster"]))
-        if [int(row["chunk_in_cluster"]) for row in ordered] != list(range(len(ordered))):
-            raise CVEfixesHFVectorIntegrityError("vector centroid chunk numbering differs")
-        if any(int(row["centroid_shard_count"]) != len(ordered) for row in ordered):
-            raise CVEfixesHFVectorIntegrityError("vector centroid shard count differs")
+        ordered = sorted(
+            group, key=lambda row: int(row["chunk_in_cluster"])
+        )
+        if [int(row["chunk_in_cluster"]) for row in ordered] != list(
+            range(len(ordered))
+        ):
+            raise CVEfixesHFVectorIntegrityError(
+                "vector centroid chunk numbering differs"
+            )
+        if any(
+            int(row["centroid_shard_count"]) != len(ordered)
+            for row in ordered
+        ):
+            raise CVEfixesHFVectorIntegrityError(
+                "vector centroid shard count differs"
+            )
         centroid = np.asarray(ordered[0]["centroid"], dtype=np.float32)
         if centroid.shape != (dimension,) or any(
-            not np.array_equal(np.asarray(row["centroid"], dtype=np.float32), centroid)
+            not np.array_equal(
+                np.asarray(row["centroid"], dtype=np.float32), centroid
+            )
             for row in ordered[1:]
         ):
             raise CVEfixesHFVectorIntegrityError(
@@ -629,11 +746,19 @@ def route_cvefixes_vector_shards(
         if math.isclose(centroid_norm, 0.0, abs_tol=0.0):
             # Explicit neutral clusters never participate in semantic routing.
             continue
-        if not math.isclose(centroid_norm, 1.0, abs_tol=2e-6, rel_tol=0.0):
-            raise CVEfixesHFVectorIntegrityError("vector routing centroid is not normalized")
-        ranked.append((float(query @ centroid), cluster_id, ordered))
+        if not math.isclose(
+            centroid_norm, 1.0, abs_tol=2e-6, rel_tol=0.0
+        ):
+            raise CVEfixesHFVectorIntegrityError(
+                "vector routing centroid is not normalized"
+            )
+        ranked.append(
+            (float(query @ centroid), cluster_id, ordered)
+        )
     if not ranked:
-        raise CVEfixesHFVectorLayoutError("vector layout has no searchable semantic centroids")
+        raise CVEfixesHFVectorLayoutError(
+            "vector layout has no searchable semantic centroids"
+        )
     ranked.sort(key=lambda item: (-item[0], item[1]))
     routes: list[VectorShardRoute] = []
     for score, cluster_id, group in ranked[:candidate_centroids]:
@@ -656,7 +781,11 @@ def route_cvefixes_vector_shards(
 
 
 def _index_rows(index: RetrievalIndex) -> tuple[_VectorRow, ...]:
-    pairs = [(entry, shard.shard_id) for shard in index.shards for entry in shard.entries]
+    pairs = [
+        (entry, shard.shard_id)
+        for shard in index.shards
+        for entry in shard.entries
+    ]
     pairs.sort(key=lambda item: item[0].entry_id)
     return tuple(
         _VectorRow(
@@ -680,18 +809,31 @@ def _routing_groups(
     np: Any,
 ) -> list[list[int]]:
     if not embedded_positions:
-        cluster_count = math.ceil(len(neutral_positions) / max_rows_per_centroid)
+        cluster_count = math.ceil(
+            len(neutral_positions) / max_rows_per_centroid
+        )
         if cluster_count > max_centroids:
-            raise CVEfixesHFVectorLayoutError("neutral vector layout exceeds the centroid bound")
+            raise CVEfixesHFVectorLayoutError(
+                "neutral vector layout exceeds the centroid bound"
+            )
         return [
-            list(group) for group in _balanced_position_groups(neutral_positions, cluster_count)
+            list(group)
+            for group in _balanced_position_groups(
+                neutral_positions, cluster_count
+            )
         ]
 
-    required = math.ceil(len(embedded_positions) / max_rows_per_centroid)
-    desired = math.ceil(len(embedded_positions) / target_rows_per_centroid)
+    required = math.ceil(
+        len(embedded_positions) / max_rows_per_centroid
+    )
+    desired = math.ceil(
+        len(embedded_positions) / target_rows_per_centroid
+    )
     cluster_count = max(1, required, desired)
     if cluster_count > max_centroids:
-        raise CVEfixesHFVectorLayoutError("vector row count exceeds the bounded centroid layout")
+        raise CVEfixesHFVectorLayoutError(
+            "vector row count exceeds the bounded centroid layout"
+        )
     cluster_count = min(cluster_count, len(embedded_positions))
     embedded_array = np.asarray(embedded_positions, dtype=np.int64)
     centroids = _learn_centroids(
@@ -706,7 +848,12 @@ def _routing_groups(
         np=np,
     )
     groups = [
-        [int(value) for value in embedded_array[np.flatnonzero(assignments == cluster_id)]]
+        [
+            int(value)
+            for value in embedded_array[
+                np.flatnonzero(assignments == cluster_id)
+            ]
+        ]
         for cluster_id in range(cluster_count)
     ]
     for position in neutral_positions:
@@ -717,7 +864,9 @@ def _routing_groups(
         ]
         if not candidates:
             if len(groups) >= max_centroids:
-                raise CVEfixesHFVectorLayoutError("neutral rows exceed remaining centroid capacity")
+                raise CVEfixesHFVectorLayoutError(
+                    "neutral rows exceed remaining centroid capacity"
+                )
             groups.append([int(position)])
             continue
         _, cluster_id = min(candidates)
@@ -737,12 +886,18 @@ def _physical_shards(
     if shard_count == 1:
         return [positions]
     if shard_count > VECTOR_MAX_SHARDS_PER_CENTROID:
-        raise CVEfixesHFVectorIntegrityError("centroid requires more than two physical shards")
-    embedded = positions[np.linalg.norm(matrix[positions], axis=1) > 0.0]
+        raise CVEfixesHFVectorIntegrityError(
+            "centroid requires more than two physical shards"
+        )
+    embedded = positions[
+        np.linalg.norm(matrix[positions], axis=1) > 0.0
+    ]
     if len(embedded) < shard_count:
         return [
             np.asarray(group, dtype=np.int64)
-            for group in _balanced_position_groups([int(value) for value in positions], shard_count)
+            for group in _balanced_position_groups(
+                [int(value) for value in positions], shard_count
+            )
         ]
     centroids = _learn_centroids(
         matrix,
@@ -755,7 +910,10 @@ def _physical_shards(
         matrix[positions] @ centroids.T,
         np=np,
     )
-    return [positions[np.flatnonzero(assignments == shard_id)] for shard_id in range(shard_count)]
+    return [
+        positions[np.flatnonzero(assignments == shard_id)]
+        for shard_id in range(shard_count)
+    ]
 
 
 def _learn_centroids(
@@ -767,7 +925,9 @@ def _learn_centroids(
     np: Any,
 ) -> Any:
     if cluster_count < 1 or cluster_count > len(positions):
-        raise CVEfixesHFVectorLayoutError("semantic centroid count is malformed")
+        raise CVEfixesHFVectorLayoutError(
+            "semantic centroid count is malformed"
+        )
     selected: list[int] = [0]
     while len(selected) < cluster_count:
         centroids = matrix[positions[np.asarray(selected, dtype=np.int64)]]
@@ -775,12 +935,16 @@ def _learn_centroids(
         nearest[np.asarray(selected, dtype=np.int64)] = np.inf
         candidate = int(np.argmin(nearest))
         selected.append(candidate)
-    centroids = matrix[positions[np.asarray(selected, dtype=np.int64)]].copy()
+    centroids = matrix[
+        positions[np.asarray(selected, dtype=np.int64)]
+    ].copy()
     for _ in range(iterations):
         assignments = np.argmax(matrix[positions] @ centroids.T, axis=1)
         updated = centroids.copy()
         for cluster_id in range(cluster_count):
-            members = positions[np.flatnonzero(assignments == cluster_id)]
+            members = positions[
+                np.flatnonzero(assignments == cluster_id)
+            ]
             if not len(members):
                 continue
             candidate = _unit_centroid(matrix, members, np=np)
@@ -804,19 +968,25 @@ def _capacity_constrained_assignments(scores: Any, *, np: Any) -> Any:
         or values.shape[1] < 1
         or not np.isfinite(values).all()
     ):
-        raise CVEfixesHFVectorLayoutError("centroid score matrix is malformed")
+        raise CVEfixesHFVectorLayoutError(
+            "centroid score matrix is malformed"
+        )
     row_count, cluster_count = values.shape
     capacities = _balanced_capacities(row_count, cluster_count)
     preferences = np.argsort(-values, axis=1, kind="stable")
     next_preference = np.zeros(row_count, dtype=np.int32)
     assignments = np.full(row_count, -1, dtype=np.int32)
-    accepted: list[list[tuple[float, int, int]]] = [[] for _ in range(cluster_count)]
+    accepted: list[list[tuple[float, int, int]]] = [
+        [] for _ in range(cluster_count)
+    ]
     pending = deque(range(row_count))
     while pending:
         row_id = int(pending.popleft())
         rank = int(next_preference[row_id])
         if rank >= cluster_count:
-            raise CVEfixesHFVectorIntegrityError("capacity-constrained assignment did not converge")
+            raise CVEfixesHFVectorIntegrityError(
+                "capacity-constrained assignment did not converge"
+            )
         cluster_id = int(preferences[row_id, rank])
         next_preference[row_id] = rank + 1
         proposal = (
@@ -838,17 +1008,27 @@ def _capacity_constrained_assignments(scores: Any, *, np: Any) -> Any:
             pending.append(row_id)
     if (
         bool((assignments < 0).any())
-        or list(np.bincount(assignments, minlength=cluster_count)) != capacities
+        or list(np.bincount(assignments, minlength=cluster_count))
+        != capacities
     ):
-        raise CVEfixesHFVectorIntegrityError("balanced centroid assignment coverage differs")
+        raise CVEfixesHFVectorIntegrityError(
+            "balanced centroid assignment coverage differs"
+        )
     return assignments
 
 
-def _balanced_capacities(row_count: int, group_count: int) -> list[int]:
+def _balanced_capacities(
+    row_count: int, group_count: int
+) -> list[int]:
     if group_count < 1 or group_count > row_count:
-        raise CVEfixesHFVectorLayoutError("balanced group count is malformed")
+        raise CVEfixesHFVectorLayoutError(
+            "balanced group count is malformed"
+        )
     base, remainder = divmod(row_count, group_count)
-    return [base + (1 if group_id < remainder else 0) for group_id in range(group_count)]
+    return [
+        base + (1 if group_id < remainder else 0)
+        for group_id in range(group_count)
+    ]
 
 
 def _balanced_position_groups(
@@ -858,7 +1038,9 @@ def _balanced_position_groups(
     groups = []
     offset = 0
     for capacity in capacities:
-        groups.append(tuple(int(value) for value in positions[offset : offset + capacity]))
+        groups.append(
+            tuple(int(value) for value in positions[offset : offset + capacity])
+        )
         offset += capacity
     return tuple(groups)
 
@@ -873,7 +1055,9 @@ def _unit_centroid(matrix: Any, positions: Any, *, np: Any) -> Any:
     if not math.isfinite(norm) or norm == 0.0:
         # Opposing vectors can have an exact zero mean.  The lowest document
         # index is a deterministic, meaningful member-vector fallback.
-        centroid = selected[int(np.flatnonzero(present)[0])].astype(np.float64)
+        centroid = selected[int(np.flatnonzero(present)[0])].astype(
+            np.float64
+        )
         norm = float(np.linalg.norm(centroid))
     result = (centroid / norm).astype(np.float32)
     result_norm = float(np.linalg.norm(result))
@@ -893,7 +1077,10 @@ def _vector_table(
     dimension = matrix.shape[1]
     values = [rows[int(position)] for position in selected]
     documents = [item.document_index for item in values]
-    embeddings = [[float(value) for value in matrix[int(position)]] for position in selected]
+    embeddings = [
+        [float(value) for value in matrix[int(position)]]
+        for position in selected
+    ]
     schema = pa.schema(
         [
             ("chunk_id", pa.string(), False),
@@ -912,7 +1099,11 @@ def _vector_table(
             ("has_embedding", pa.bool_(), False),
             (
                 "embedding",
-                (pa.list_(pa.float32(), dimension) if dimension else pa.list_(pa.float32())),
+                (
+                    pa.list_(pa.float32(), dimension)
+                    if dimension
+                    else pa.list_(pa.float32())
+                ),
                 False,
             ),
             ("model_id", pa.string(), False),
@@ -921,7 +1112,11 @@ def _vector_table(
             ("retrieval_index_root", pa.string(), False),
             ("schema_version", pa.string(), False),
         ],
-        metadata={b"schema_version": (CVEFIXES_HF_VECTOR_CHUNK_SCHEMA_VERSION.encode())},
+        metadata={
+            b"schema_version": (
+                CVEFIXES_HF_VECTOR_CHUNK_SCHEMA_VERSION.encode()
+            )
+        },
     )
     return pa.Table.from_pydict(
         {
@@ -930,21 +1125,34 @@ def _vector_table(
             "entry_cid": [item.entry.entry_id for item in values],
             "faiss_id": documents,
             "document_index": documents,
-            "corpus_chunk_id": [value // VECTOR_CHUNK_ROWS for value in documents],
-            "corpus_row_offset": [value % VECTOR_CHUNK_ROWS for value in documents],
+            "corpus_chunk_id": [
+                value // VECTOR_CHUNK_ROWS for value in documents
+            ],
+            "corpus_row_offset": [
+                value % VECTOR_CHUNK_ROWS for value in documents
+            ],
             "node_cid": [item.entry.node_cid for item in values],
-            "retrieval_shard_id": [item.retrieval_shard_id for item in values],
+            "retrieval_shard_id": [
+                item.retrieval_shard_id for item in values
+            ],
             "partition": [item.entry.partition for item in values],
             "kind": [item.entry.kind for item in values],
             "authority": [item.entry.authority.value for item in values],
-            "source_cids": [list(item.entry.source_cids) for item in values],
-            "has_embedding": [bool(item.entry.embedding) for item in values],
+            "source_cids": [
+                list(item.entry.source_cids) for item in values
+            ],
+            "has_embedding": [
+                bool(item.entry.embedding) for item in values
+            ],
             "embedding": embeddings,
             "model_id": [index.model_id] * len(values),
             "model_revision": [index.model_revision] * len(values),
             "model_config_cid": [index.model_config_cid] * len(values),
             "retrieval_index_root": [index.index_root] * len(values),
-            "schema_version": [CVEFIXES_HF_VECTOR_CHUNK_SCHEMA_VERSION] * len(values),
+            "schema_version": [
+                CVEFIXES_HF_VECTOR_CHUNK_SCHEMA_VERSION
+            ]
+            * len(values),
         },
         schema=schema,
     )
@@ -959,8 +1167,12 @@ def _validate_layout(
     require_embeddings: bool,
 ) -> None:
     _, pq = _pyarrow()
-    if [int(row["shard_id"]) for row in meta_rows] != list(range(len(meta_rows))):
-        raise CVEfixesHFVectorIntegrityError("vector shard identifiers are not contiguous")
+    if [int(row["shard_id"]) for row in meta_rows] != list(
+        range(len(meta_rows))
+    ):
+        raise CVEfixesHFVectorIntegrityError(
+            "vector shard identifiers are not contiguous"
+        )
     observed_documents: list[int] = []
     observed_entry_cids: list[str] = []
     cluster_vectors: dict[int, list[Any]] = {}
@@ -977,13 +1189,19 @@ def _validate_layout(
                 "has_embedding",
             ],
         )
-        observed_documents.extend(int(value) for value in table["document_index"].to_pylist())
-        observed_entry_cids.extend(str(value) for value in table["entry_cid"].to_pylist())
+        observed_documents.extend(
+            int(value) for value in table["document_index"].to_pylist()
+        )
+        observed_entry_cids.extend(
+            str(value) for value in table["entry_cid"].to_pylist()
+        )
         vectors = table["embedding"].to_pylist()
         present = table["has_embedding"].to_pylist()
         embedded_rows += sum(bool(value) for value in present)
         cluster_vectors.setdefault(int(row["cluster_id"]), []).extend(
-            vector for vector, available in zip(vectors, present, strict=True) if bool(available)
+            vector
+            for vector, available in zip(vectors, present, strict=True)
+            if bool(available)
         )
         cluster_rows.setdefault(int(row["cluster_id"]), []).append(row)
     if (
@@ -992,22 +1210,37 @@ def _validate_layout(
         or set(observed_entry_cids) != expected_entry_cids
         or len(observed_entry_cids) != len(set(observed_entry_cids))
     ):
-        raise CVEfixesHFVectorIntegrityError("vector shard document/entry coverage differs")
+        raise CVEfixesHFVectorIntegrityError(
+            "vector shard document/entry coverage differs"
+        )
     if require_embeddings and embedded_rows != expected_rows:
-        raise CVEfixesHFVectorIntegrityError("production vector layout contains neutral rows")
+        raise CVEfixesHFVectorIntegrityError(
+            "production vector layout contains neutral rows"
+        )
     if sorted(cluster_rows) != list(range(len(cluster_rows))):
-        raise CVEfixesHFVectorIntegrityError("vector cluster identifiers are not contiguous")
+        raise CVEfixesHFVectorIntegrityError(
+            "vector cluster identifiers are not contiguous"
+        )
     np = _numpy()
     for cluster_id, rows in cluster_rows.items():
-        ordered = sorted(rows, key=lambda row: int(row["chunk_in_cluster"]))
-        if [int(row["chunk_in_cluster"]) for row in ordered] != list(range(len(ordered))) or any(
-            int(row["centroid_shard_count"]) != len(ordered) for row in ordered
+        ordered = sorted(
+            rows, key=lambda row: int(row["chunk_in_cluster"])
+        )
+        if (
+            [int(row["chunk_in_cluster"]) for row in ordered]
+            != list(range(len(ordered)))
+            or any(
+                int(row["centroid_shard_count"]) != len(ordered)
+                for row in ordered
+            )
         ):
             raise CVEfixesHFVectorIntegrityError(
                 f"vector cluster {cluster_id} shard coverage differs"
             )
         dimension = int(ordered[0]["dimension"])
-        vectors = np.asarray(cluster_vectors.get(cluster_id, []), dtype=np.float32)
+        vectors = np.asarray(
+            cluster_vectors.get(cluster_id, []), dtype=np.float32
+        )
         if len(vectors):
             expected = _unit_centroid(
                 vectors,
@@ -1041,7 +1274,9 @@ def _validate_meta_row(row: Mapping[str, Any]) -> None:
         if isinstance(value, bool) or not isinstance(value, int) or value < 1:
             if name == "dimension" and value == 0:
                 continue
-            raise CVEfixesHFVectorIntegrityError(f"vector meta row {name} is malformed")
+            raise CVEfixesHFVectorIntegrityError(
+                f"vector meta row {name} is malformed"
+            )
     for name in (
         "shard_id",
         "cluster_id",
@@ -1051,15 +1286,27 @@ def _validate_meta_row(row: Mapping[str, Any]) -> None:
     ):
         value = row[name]
         if isinstance(value, bool) or not isinstance(value, int) or value < 0:
-            raise CVEfixesHFVectorIntegrityError(f"vector meta row {name} is malformed")
-    if int(row["start_document_index"]) > int(row["end_document_index"]):
-        raise CVEfixesHFVectorIntegrityError("vector meta row document range is malformed")
+            raise CVEfixesHFVectorIntegrityError(
+                f"vector meta row {name} is malformed"
+            )
+    if int(row["start_document_index"]) > int(
+        row["end_document_index"]
+    ):
+        raise CVEfixesHFVectorIntegrityError(
+            "vector meta row document range is malformed"
+        )
     if row["kind"] != "vectors" or row["schema_version"] != HF_META_SCHEMA_VERSION:
-        raise CVEfixesHFVectorIntegrityError("vector meta row kind/schema version differs")
+        raise CVEfixesHFVectorIntegrityError(
+            "vector meta row kind/schema version differs"
+        )
     if not re.fullmatch(r"[0-9a-f]{64}", str(row["sha256"])):
-        raise CVEfixesHFVectorIntegrityError("vector meta row SHA-256 is malformed")
+        raise CVEfixesHFVectorIntegrityError(
+            "vector meta row SHA-256 is malformed"
+        )
     if not re.fullmatch(r"b[a-z2-7]{20,}", str(row["cid"])):
-        raise CVEfixesHFVectorIntegrityError("vector meta row CID is malformed")
+        raise CVEfixesHFVectorIntegrityError(
+            "vector meta row CID is malformed"
+        )
     dimension = int(row["dimension"])
     for name in ("centroid", "shard_centroid"):
         values = row[name]
@@ -1074,7 +1321,9 @@ def _validate_meta_row(row: Mapping[str, Any]) -> None:
                 for value in values
             )
         ):
-            raise CVEfixesHFVectorIntegrityError(f"vector meta row {name} is malformed")
+            raise CVEfixesHFVectorIntegrityError(
+                f"vector meta row {name} is malformed"
+            )
     score = row["centroid_min_score"]
     if (
         isinstance(score, bool)
@@ -1082,11 +1331,15 @@ def _validate_meta_row(row: Mapping[str, Any]) -> None:
         or not math.isfinite(float(score))
         or not -1.000001 <= float(score) <= 1.000001
     ):
-        raise CVEfixesHFVectorIntegrityError("vector meta row centroid_min_score is malformed")
+        raise CVEfixesHFVectorIntegrityError(
+            "vector meta row centroid_min_score is malformed"
+        )
     for name in ("first_key", "last_key", "model_name", "relative_path"):
         value = row[name]
         if not isinstance(value, str) or not value or value != value.strip():
-            raise CVEfixesHFVectorIntegrityError(f"vector meta row {name} is malformed")
+            raise CVEfixesHFVectorIntegrityError(
+                f"vector meta row {name} is malformed"
+            )
 
 
 def _assert_meta_rows_equal(
@@ -1094,21 +1347,29 @@ def _assert_meta_rows_equal(
     observed: Sequence[Mapping[str, Any]],
 ) -> None:
     if len(expected) != len(observed):
-        raise CVEfixesHFVectorIntegrityError("persisted vector meta-index row count differs")
+        raise CVEfixesHFVectorIntegrityError(
+            "persisted vector meta-index row count differs"
+        )
     for expected_row, observed_row in zip(expected, observed, strict=True):
         for name in VECTOR_META_COLUMNS:
             left = expected_row[name]
             right = observed_row[name]
             if isinstance(left, list):
-                if [float(value) for value in left] != [float(value) for value in right]:
+                if [float(value) for value in left] != [
+                    float(value) for value in right
+                ]:
                     raise CVEfixesHFVectorIntegrityError(
                         f"persisted vector meta-index {name} differs"
                     )
             elif left != right:
-                raise CVEfixesHFVectorIntegrityError(f"persisted vector meta-index {name} differs")
+                raise CVEfixesHFVectorIntegrityError(
+                    f"persisted vector meta-index {name} differs"
+                )
 
 
-def _write_meta_index(path: Path, rows: Sequence[Mapping[str, Any]]) -> None:
+def _write_meta_index(
+    path: Path, rows: Sequence[Mapping[str, Any]]
+) -> None:
     pa, _ = _pyarrow()
     schema = pa.schema(
         [
@@ -1156,12 +1417,18 @@ def _ensure_fresh_destination(vector_dir: Path, meta_path: Path) -> None:
         )
 
 
-def _write_parquet(path: Path, table: Any, *, max_rows: int | None) -> None:
+def _write_parquet(
+    path: Path, table: Any, *, max_rows: int | None
+) -> None:
     _, pq = _pyarrow()
     if table.num_rows < 1:
-        raise CVEfixesHFVectorLayoutError(f"cannot write an empty Parquet shard: {path}")
+        raise CVEfixesHFVectorLayoutError(
+            f"cannot write an empty Parquet shard: {path}"
+        )
     if max_rows is not None and table.num_rows > max_rows:
-        raise CVEfixesHFVectorLayoutError(f"Parquet shard exceeds {max_rows} rows: {path}")
+        raise CVEfixesHFVectorLayoutError(
+            f"Parquet shard exceeds {max_rows} rows: {path}"
+        )
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(f".{path.name}.partial")
     pq.write_table(
@@ -1177,7 +1444,9 @@ def _write_parquet(path: Path, table: Any, *, max_rows: int | None) -> None:
     compressions = {
         parquet.metadata.row_group(group).column(column).compression
         for group in range(parquet.num_row_groups)
-        for column in range(parquet.metadata.row_group(group).num_columns)
+        for column in range(
+            parquet.metadata.row_group(group).num_columns
+        )
     }
     if compressions and compressions != {"ZSTD"}:
         temporary.unlink(missing_ok=True)
@@ -1211,7 +1480,10 @@ def _centroid_norm(values: Sequence[float]) -> float:
 
 
 def _float32_list(values: Any, *, np: Any) -> list[float]:
-    return [float(value) for value in np.asarray(values, dtype=np.float32).tolist()]
+    return [
+        float(value)
+        for value in np.asarray(values, dtype=np.float32).tolist()
+    ]
 
 
 def _float32_scalar(value: float, *, np: Any) -> float:
@@ -1220,7 +1492,9 @@ def _float32_scalar(value: float, *, np: Any) -> float:
 
 def _positive_int(value: Any, label: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value < 1:
-        raise CVEfixesHFVectorLayoutError(f"{label} must be a positive integer")
+        raise CVEfixesHFVectorLayoutError(
+            f"{label} must be a positive integer"
+        )
     return value
 
 

@@ -34,10 +34,16 @@ TASK_ID: Final[str] = "DSCON-003"
 # Validation-gate repair task that re-proves DSCON-G020 after path evidence lands.
 REPAIR_TASK_ID: Final[str] = "DSCON-067"
 OBJECTIVE_VALIDATION_EVIDENCE: Final[str] = "objective validation repair"
-SCHEMA_REPOSITORY_ROOT: Final[str] = "datasets_contract_analysis/repository-root@1"
-SCHEMA_TRACKED_BLOB: Final[str] = "datasets_contract_analysis/tracked-blob@1"
+SCHEMA_REPOSITORY_ROOT: Final[str] = (
+    "datasets_contract_analysis/repository-root@1"
+)
+SCHEMA_TRACKED_BLOB: Final[str] = (
+    "datasets_contract_analysis/tracked-blob@1"
+)
 SCHEMA_GITLINK: Final[str] = "datasets_contract_analysis/gitlink-record@1"
-SCHEMA_SNAPSHOT: Final[str] = "datasets_contract_analysis/repository-snapshot@1"
+SCHEMA_SNAPSHOT: Final[str] = (
+    "datasets_contract_analysis/repository-snapshot@1"
+)
 
 DEFAULT_SELECTED_ROOTS: Final[tuple[str, ...]] = (
     "ipfs_accelerate_py",
@@ -323,7 +329,9 @@ class TrackedBlob:
             language=str(data["language"]),
             parser_disposition=str(data["parser_disposition"]),
             exclusion_reason=(
-                None if data.get("exclusion_reason") is None else str(data["exclusion_reason"])
+                None
+                if data.get("exclusion_reason") is None
+                else str(data["exclusion_reason"])
             ),
             coverage_status=str(data["coverage_status"]),
             logical_root=str(data["logical_root"]),
@@ -507,7 +515,9 @@ class RepositorySnapshot:
                     "blob_count": len(root_blobs),
                     "object_count": len(root_blobs),
                     "disposition_counts": _count_dispositions(root_blobs),
-                    "object_cid": cid_for_structured([b.identity_record() for b in root_blobs]),
+                    "object_cid": cid_for_structured(
+                        [b.identity_record() for b in root_blobs]
+                    ),
                 }
             )
 
@@ -582,7 +592,8 @@ class RepositorySnapshot:
             "dispositions_explicit": sorted(ALL_DISPOSITIONS),
             "shard_counts_sum_to_root": document["shard_count_sum"]
             == document["totals"]["tracked_objects"],
-            "dirty_or_missing_is_incomplete": self.status == STATUS_INCOMPLETE_SCAN
+            "dirty_or_missing_is_incomplete": self.status
+            == STATUS_INCOMPLETE_SCAN
             or not self.blockers,
             "deterministic_root_cid": True,
             # Non-identity repair markers (excluded from root_cid identity).
@@ -592,7 +603,10 @@ class RepositorySnapshot:
             "repair_task_id": REPAIR_TASK_ID,
         }
         if include_blob_sample > 0:
-            sample = [b.to_dict() for b in self.sorted_blobs()[: int(include_blob_sample)]]
+            sample = [
+                b.to_dict()
+                for b in self.sorted_blobs()[: int(include_blob_sample)]
+            ]
             document["blob_sample"] = sample
         return document
 
@@ -615,8 +629,14 @@ class RepositorySnapshot:
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "RepositorySnapshot":
-        blobs = [TrackedBlob.from_dict(item) for item in (data.get("blobs") or [])]
-        gitlinks = [GitlinkRecord.from_dict(item) for item in (data.get("gitlinks") or [])]
+        blobs = [
+            TrackedBlob.from_dict(item)
+            for item in (data.get("blobs") or [])
+        ]
+        gitlinks = [
+            GitlinkRecord.from_dict(item)
+            for item in (data.get("gitlinks") or [])
+        ]
         return cls(
             logical_roots=list(data.get("logical_roots") or []),
             blobs=blobs,
@@ -624,7 +644,9 @@ class RepositorySnapshot:
             mirror_cycles=list(data.get("mirror_cycles") or []),
             status=str(data.get("status") or STATUS_COMPLETE),
             blockers=list(data.get("blockers") or []),
-            max_blob_bytes=int(data.get("max_blob_bytes") or DEFAULT_MAX_BLOB_BYTES),
+            max_blob_bytes=int(
+                data.get("max_blob_bytes") or DEFAULT_MAX_BLOB_BYTES
+            ),
             shard_size=int(data.get("shard_size") or DEFAULT_SHARD_SIZE),
             schema=str(data.get("schema") or SCHEMA_SNAPSHOT),
             goal_id=str(data.get("goal_id") or GOAL_ID),
@@ -785,7 +807,9 @@ def classify_blob(
 def _count_dispositions(blobs: Sequence[TrackedBlob]) -> dict[str, int]:
     counts = {name: 0 for name in ALL_DISPOSITIONS}
     for blob in blobs:
-        counts[blob.parser_disposition] = counts.get(blob.parser_disposition, 0) + 1
+        counts[blob.parser_disposition] = (
+            counts.get(blob.parser_disposition, 0) + 1
+        )
     return counts
 
 
@@ -871,7 +895,8 @@ def list_tree_entries(
     )
     if result.returncode != 0:
         raise RepositoryManifestError(
-            f"git ls-tree failed in {repository}: {result.stderr.decode('utf-8', errors='replace')}"
+            f"git ls-tree failed in {repository}: "
+            f"{result.stderr.decode('utf-8', errors='replace')}"
         )
     entries: list[dict[str, Any]] = []
     text = result.stdout.decode("utf-8", errors="replace")
@@ -1031,7 +1056,9 @@ def build_tracked_blobs_for_root(
         return [], [], [str(exc)]
 
     blob_entries = [e for e in entries if e["type"] == "blob"]
-    gitlink_entries = [e for e in entries if e["type"] == "commit" or e["mode"] == MODE_GITLINK]
+    gitlink_entries = [
+        e for e in entries if e["type"] == "commit" or e["mode"] == MODE_GITLINK
+    ]
 
     oid_to_bytes: dict[str, bytes | None] = {}
     if hash_content and blob_entries:
@@ -1161,7 +1188,9 @@ def build_repository_snapshot(
 
     if not is_git_checkout(superproject):
         snapshot.status = STATUS_INCOMPLETE_SCAN
-        snapshot.blockers.append(f"superproject is not a git checkout: {superproject}")
+        snapshot.blockers.append(
+            f"superproject is not a git checkout: {superproject}"
+        )
         return snapshot
 
     super_id = checkout_identity(
@@ -1246,9 +1275,13 @@ def build_repository_snapshot(
                 snapshot.mirror_cycles.append(gl.to_dict())
             snapshot.gitlinks.append(gl)
 
-    if any(b.parser_disposition == DISPOSITION_MISSING for b in snapshot.blobs):
+    if any(
+        b.parser_disposition == DISPOSITION_MISSING for b in snapshot.blobs
+    ):
         snapshot.status = STATUS_INCOMPLETE_SCAN
-        snapshot.blockers.append("one or more tracked blobs were missing from the object store")
+        snapshot.blockers.append(
+            "one or more tracked blobs were missing from the object store"
+        )
 
     return snapshot
 
@@ -1277,7 +1310,9 @@ def build_snapshot_from_entries(
     )
     if not clean:
         snapshot.status = STATUS_INCOMPLETE_SCAN
-        snapshot.blockers.append(f"dirty synthetic root yields INCOMPLETE_SCAN: {logical_root}")
+        snapshot.blockers.append(
+            f"dirty synthetic root yields INCOMPLETE_SCAN: {logical_root}"
+        )
 
     content = content_by_oid or {}
     blobs: list[TrackedBlob] = []
@@ -1424,7 +1459,9 @@ def validate_repository_root_manifest(document: Mapping[str, Any]) -> list[str]:
         errors.append(f"task_id must be {TASK_ID}")
     status = document.get("status")
     if status not in {STATUS_COMPLETE, STATUS_INCOMPLETE_SCAN}:
-        errors.append(f"status must be {STATUS_COMPLETE!r} or {STATUS_INCOMPLETE_SCAN!r}")
+        errors.append(
+            f"status must be {STATUS_COMPLETE!r} or {STATUS_INCOMPLETE_SCAN!r}"
+        )
     totals = document.get("totals")
     if not isinstance(totals, dict):
         errors.append("totals must be an object")
@@ -1432,7 +1469,9 @@ def validate_repository_root_manifest(document: Mapping[str, Any]) -> list[str]:
     tracked = int(totals.get("tracked_objects") or 0)
     shard_sum = int(document.get("shard_count_sum") or 0)
     if shard_sum != tracked:
-        errors.append(f"shard_count_sum ({shard_sum}) must equal tracked_objects ({tracked})")
+        errors.append(
+            f"shard_count_sum ({shard_sum}) must equal tracked_objects ({tracked})"
+        )
     shards = document.get("shards")
     if not isinstance(shards, list):
         errors.append("shards must be a list")
@@ -1450,7 +1489,9 @@ def validate_repository_root_manifest(document: Mapping[str, Any]) -> list[str]:
             if name not in dispositions:
                 errors.append(f"disposition_counts missing key {name}")
         if sum(int(v) for v in dispositions.values()) != tracked:
-            errors.append("sum of disposition_counts must equal tracked_objects")
+            errors.append(
+                "sum of disposition_counts must equal tracked_objects"
+            )
     root_cid = document.get("root_cid")
     if not isinstance(root_cid, str) or not root_cid:
         errors.append("root_cid must be a nonempty string")
@@ -1464,7 +1505,9 @@ def validate_repository_root_manifest(document: Mapping[str, Any]) -> list[str]:
         try:
             recomputed_cid = cid_for_structured(identity)
             if recomputed_cid != root_cid:
-                errors.append("root_cid does not match recomputed identity payload")
+                errors.append(
+                    "root_cid does not match recomputed identity payload"
+                )
         except Exception as exc:  # pragma: no cover - defensive
             errors.append(f"root_cid recompute failed: {exc}")
     return errors

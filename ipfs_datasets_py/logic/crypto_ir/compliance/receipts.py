@@ -39,7 +39,9 @@ from .explain import (
 from .models import CRYPTO_IR_COMPLIANCE_DOMAIN
 
 
-COMPLIANCE_RECEIPT_SCHEMA_VERSION: Final[str] = "ipfs-datasets.crypto-ir.compliance-receipt@1.0.0"
+COMPLIANCE_RECEIPT_SCHEMA_VERSION: Final[str] = (
+    "ipfs-datasets.crypto-ir.compliance-receipt@1.0.0"
+)
 
 
 class ReceiptError(DecisionError):
@@ -69,10 +71,16 @@ class ComplianceReceipt:
     LAYER: ClassVar[AuthorityKind] = AuthorityKind.RESULT
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "receipt_id", _identifier(self.receipt_id, "receipt_id"))
-        object.__setattr__(self, "decision_id", _identifier(self.decision_id, "decision_id"))
+        object.__setattr__(
+            self, "receipt_id", _identifier(self.receipt_id, "receipt_id")
+        )
+        object.__setattr__(
+            self, "decision_id", _identifier(self.decision_id, "decision_id")
+        )
         if not isinstance(self.outcome, SanctionsPolicyOutcome):
-            object.__setattr__(self, "outcome", SanctionsPolicyOutcome(self.outcome))
+            object.__setattr__(
+                self, "outcome", SanctionsPolicyOutcome(self.outcome)
+            )
         if not isinstance(self.decision, ComplianceDecision):
             object.__setattr__(
                 self,
@@ -89,14 +97,23 @@ class ComplianceReceipt:
             _digest(self.decision_content_digest, "decision_content_digest"),
         )
         if self.decision_content_digest != self.decision.content_digest:
-            raise ReceiptError("decision_content_digest does not match decision.content_digest")
+            raise ReceiptError(
+                "decision_content_digest does not match decision.content_digest"
+            )
         object.__setattr__(
             self,
             "evidentiary_boundary_digest",
-            _digest(self.evidentiary_boundary_digest, "evidentiary_boundary_digest"),
+            _digest(
+                self.evidentiary_boundary_digest, "evidentiary_boundary_digest"
+            ),
         )
-        if self.evidentiary_boundary_digest != self.decision.evidentiary_boundary_digest:
-            raise ReceiptError("evidentiary_boundary_digest does not match decision bindings")
+        if (
+            self.evidentiary_boundary_digest
+            != self.decision.evidentiary_boundary_digest
+        ):
+            raise ReceiptError(
+                "evidentiary_boundary_digest does not match decision bindings"
+            )
         object.__setattr__(
             self,
             "explanation_digest",
@@ -104,7 +121,9 @@ class ComplianceReceipt:
         )
         object.__setattr__(self, "issued_at", _instant(self.issued_at, "issued_at"))
         if self.schema_version != COMPLIANCE_RECEIPT_SCHEMA_VERSION:
-            raise ReceiptError(f"unsupported compliance receipt schema: {self.schema_version}")
+            raise ReceiptError(
+                f"unsupported compliance receipt schema: {self.schema_version}"
+            )
 
     def receipt_body(self) -> dict[str, Any]:
         """Canonical receipt body (excludes derived receipt_id/digest fields).
@@ -191,10 +210,14 @@ class ComplianceReceipt:
             outcome=value.get("outcome", ""),
             decision=ComplianceDecision.from_dict(value.get("decision", {})),
             decision_content_digest=value.get("decision_content_digest", ""),
-            evidentiary_boundary_digest=value.get("evidentiary_boundary_digest", ""),
+            evidentiary_boundary_digest=value.get(
+                "evidentiary_boundary_digest", ""
+            ),
             explanation_digest=value.get("explanation_digest", ""),
             issued_at=value.get("issued_at", ""),
-            schema_version=value.get("schema_version", COMPLIANCE_RECEIPT_SCHEMA_VERSION),
+            schema_version=value.get(
+                "schema_version", COMPLIANCE_RECEIPT_SCHEMA_VERSION
+            ),
         )
 
     def verify_bytes(self, other: bytes) -> bool:
@@ -286,12 +309,15 @@ def reproduce_receipt_bytes(receipt: ComplianceReceipt) -> bytes:
     return rebuilt.canonical_bytes
 
 
-def assert_receipt_byte_identical(left: ComplianceReceipt, right: ComplianceReceipt) -> None:
+def assert_receipt_byte_identical(
+    left: ComplianceReceipt, right: ComplianceReceipt
+) -> None:
     """Fail closed unless two receipts produce identical canonical bytes."""
 
     if left.canonical_bytes != right.canonical_bytes:
         raise ReceiptError(
-            f"receipts are not byte-identical: {left.content_digest} != {right.content_digest}"
+            "receipts are not byte-identical: "
+            f"{left.content_digest} != {right.content_digest}"
         )
 
 

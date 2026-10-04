@@ -144,9 +144,9 @@ def _process_runner(
         invocations.append(invocation)
         if expected_suffix:
             # Ensure instrumented source was written into the private workspace.
-            written = (
-                list(invocation.input_files.values()) if hasattr(invocation, "input_files") else []
-            )
+            written = list(invocation.input_files.values()) if hasattr(
+                invocation, "input_files"
+            ) else []
             if not written and hasattr(invocation, "cwd"):
                 candidates = list(invocation.cwd.glob("*"))
                 assert candidates, "expected instrumented source in workspace"
@@ -196,7 +196,9 @@ def test_wasm_absence_is_explicit_and_separate_from_native():
 
 
 def test_wasm_probe_supports_injected_module_without_implying_native():
-    probe = WasmCapabilityProbe(module_locator=lambda module_id: f"/modules/{module_id}.wasm")
+    probe = WasmCapabilityProbe(
+        module_locator=lambda module_id: f"/modules/{module_id}.wasm"
+    )
     wasm = probe.probe(kernel_id="rocq", module_id="rocq-wasm")
     assert wasm.available is True
     assert wasm.module_id == "rocq-wasm"
@@ -296,7 +298,9 @@ def test_lean_sorry_is_rejected_and_never_proved():
         ),
         native_probe=lambda: _available_native("lean", "lean"),
     )
-    outcome = backend.run(_request(family="lean4", encoding="lean4", source=LEAN_SORRY))
+    outcome = backend.run(
+        _request(family="lean4", encoding="lean4", source=LEAN_SORRY)
+    )
 
     assert outcome.result.status is ResultStatus.MALFORMED
     assert outcome.receipt.accepted is False
@@ -309,7 +313,9 @@ def test_lean_sorry_can_explicitly_downgrade_authority():
         incomplete_disposition=LeanAuthorityDisposition.DOWNGRADE,
         native_probe=lambda: _available_native("lean", "lean"),
     )
-    outcome = backend.run(_request(family="lean4", encoding="lean4", source=LEAN_SORRY))
+    outcome = backend.run(
+        _request(family="lean4", encoding="lean4", source=LEAN_SORRY)
+    )
     assert isinstance(outcome.result, CandidateResult)
     assert outcome.result.authority is ResultAuthority.CANDIDATE
     assert outcome.result.status is ResultStatus.CANDIDATE
@@ -322,7 +328,9 @@ def test_lean_unsafe_axiom_is_rejected():
     backend = LeanKernelBackend(
         native_probe=lambda: _available_native("lean", "lean"),
     )
-    outcome = backend.run(_request(family="lean4", encoding="lean4", source=LEAN_UNSAFE))
+    outcome = backend.run(
+        _request(family="lean4", encoding="lean4", source=LEAN_UNSAFE)
+    )
     assert outcome.result.status is ResultStatus.MALFORMED
     assert "lean_source_contains_unsafe_or_unreviewed_axiom" in outcome.receipt.diagnostics
     assert outcome.receipt.accepted is False
@@ -338,7 +346,9 @@ def test_unavailable_lean_kernel_never_passes():
         ),
         wasm_probe=WasmCapabilityProbe(),
     )
-    outcome = backend.run(_request(family="lean4", encoding="lean4", source=LEAN_OK))
+    outcome = backend.run(
+        _request(family="lean4", encoding="lean4", source=LEAN_OK)
+    )
     assert outcome.result.status is ResultStatus.UNAVAILABLE
     assert outcome.receipt.accepted is False
     assert outcome.result.authority is ResultAuthority.THEOREM
@@ -347,7 +357,9 @@ def test_unavailable_lean_kernel_never_passes():
 
 
 def test_lean_wasm_plane_is_probe_only_and_not_confused_with_native_success():
-    probe = WasmCapabilityProbe(module_locator=lambda module_id: f"memory://{module_id}")
+    probe = WasmCapabilityProbe(
+        module_locator=lambda module_id: f"memory://{module_id}"
+    )
     backend = LeanKernelBackend(
         native_probe=lambda: _available_native("lean", "lean"),
         wasm_probe=probe,
@@ -410,7 +422,9 @@ def test_rocq_admitted_is_rejected_and_never_proved():
     backend = RocqKernelBackend(
         native_probe=lambda: _available_native("rocq", "coqtop"),
     )
-    outcome = backend.run(_request(family="rocq", encoding="coq", source=ROCQ_ADMITTED))
+    outcome = backend.run(
+        _request(family="rocq", encoding="coq", source=ROCQ_ADMITTED)
+    )
     assert outcome.result.status is ResultStatus.MALFORMED
     assert "rocq_source_contains_admit_or_admitted" in outcome.receipt.diagnostics
     assert outcome.receipt.accepted is False
@@ -422,7 +436,9 @@ def test_rocq_admitted_can_explicitly_downgrade_authority():
         incomplete_disposition=RocqAuthorityDisposition.DOWNGRADE,
         native_probe=lambda: _available_native("rocq", "coqtop"),
     )
-    outcome = backend.run(_request(family="rocq", encoding="coq", source=ROCQ_ADMITTED))
+    outcome = backend.run(
+        _request(family="rocq", encoding="coq", source=ROCQ_ADMITTED)
+    )
     assert isinstance(outcome.result, CandidateResult)
     assert outcome.result.authority is ResultAuthority.CANDIDATE
     assert outcome.result.witness["candidate_kind"] == "incomplete_or_admitted_rocq_proof"
@@ -438,7 +454,9 @@ def test_unavailable_rocq_kernel_never_passes():
             executable="coqtop",
         )
     )
-    outcome = backend.run(_request(family="rocq", encoding="rocq", source=ROCQ_OK))
+    outcome = backend.run(
+        _request(family="rocq", encoding="rocq", source=ROCQ_OK)
+    )
     assert outcome.result.status is ResultStatus.UNAVAILABLE
     assert outcome.receipt.accepted is False
     assert outcome.result.status is not ResultStatus.PROVED
@@ -461,7 +479,9 @@ def test_lean_hidden_sorry_ax_from_kernel_output_is_rejected():
         runner=runner,
         native_probe=lambda: _available_native("lean", "lean"),
     )
-    outcome = backend.run(_request(family="lean4", encoding="lean4", source=LEAN_OK))
+    outcome = backend.run(
+        _request(family="lean4", encoding="lean4", source=LEAN_OK)
+    )
     assert outcome.receipt.accepted is False
     assert outcome.result.status in {
         ResultStatus.MALFORMED,
@@ -481,10 +501,14 @@ def test_rocq_exit_zero_without_closed_context_is_rejected():
         runner=runner,
         native_probe=lambda: _available_native("rocq", "coqtop"),
     )
-    outcome = backend.run(_request(family="rocq", encoding="rocq", source=ROCQ_OK))
+    outcome = backend.run(
+        _request(family="rocq", encoding="rocq", source=ROCQ_OK)
+    )
     assert outcome.receipt.accepted is False
     assert outcome.result.status is not ResultStatus.PROVED
-    assert any("Closed under the global context" in item for item in outcome.receipt.diagnostics)
+    assert any(
+        "Closed under the global context" in item for item in outcome.receipt.diagnostics
+    )
 
 
 def test_interface_versions_are_stable():

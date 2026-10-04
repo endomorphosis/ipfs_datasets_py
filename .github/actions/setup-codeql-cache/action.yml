@@ -1,0 +1,203 @@
+name: 'Setup CodeQL Cache'
+description: 'Initialize CodeQL scan result caching to reduce redundant security scans'
+branding:
+  icon: 'shield'
+  color: 'green'
+
+inputs:
+  enable-caching:
+    description: 'Enable CodeQL result caching'
+    required: false
+    default: 'true'
+  cache-ttl:
+    description: 'Cache TTL in seconds (default: 24 hours)'
+    required: false
+    default: '86400'
+  github-token:
+    description: 'GitHub token for authentication'
+    required: true
+  commit-sha:
+    description: 'Commit SHA to check (defaults to current)'
+    required: false
+    default: ${{ github.sha }}
+
+outputs:
+  cache-status:
+    description: 'Status of cache initialization (success/disabled/error)'
+    value: ${{ steps.init-codeql-cache.outputs.status }}
+  should-skip-scan:
+    description: 'Whether CodeQL scan can be skipped (true/false)'
+    value: ${{ steps.check-cache.outputs.should_skip }}
+  cached-result:
+    description: 'Path to cached SARIF file if available'
+    value: ${{ steps.check-cache.outputs.sarif_path }}
+  cache-dir:
+    description: 'CodeQL cache directory path'
+    value: ${{ steps.init-codeql-cache.outputs.cache_dir }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Initialize CodeQL Cache
+      id: init-codeql-cache
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        CODEQL_CACHE_TTL: ${{ inputs.cache-ttl }}
+        ENABLE_CODEQL_CACHE: ${{ inputs.enable-caching }}
+      run: |
+        echo "::group::🛡️ Initializing CodeQL Cache"
+        
+        if [ "${{ inputs.enable-caching }}" != "true" ]; then
+          echo "::notice::CodeQL caching disabled"
+          echo "status=disabled" >> $GITHUB_OUTPUT
+          echo "cache_dir=" >> $GITHUB_OUTPUT
+          echo "::endgroup::"
+          exit 0
+        fi
+        
+        # Create cache directory
+        CACHE_DIR="${HOME}/.cache/codeql"
+        mkdir -p "$CACHE_DIR"
+        echo "cache_dir=$CACHE_DIR" >> $GITHUB_OUTPUT
+        
+        # Export environment variables
+        echo "CODEQL_CACHE_DIR=$CACHE_DIR" >> $GITHUB_ENV
+        echo "CODEQL_CACHE_TTL=${{ inputs.cache-ttl }}" >> $GITHUB_ENV
+        
+        echo "✅ CodeQL cache directory: $CACHE_DIR"
+        echo "✅ Cache TTL: ${{ inputs.cache-ttl }}s (~$(($((${{ inputs.cache-ttl }} / 3600))))h)"
+        
+        # Initialize CodeQL cache with Python
+        python3 << 'PYEOF'
+import os
+import sys
+
+try:
+    from ipfs_datasets_py.codeql_cache import CodeQLCache
+    
+    cache = CodeQLCache(
+        cache_dir=os.environ.get('CODEQL_CACHE_DIR'),
+        default_ttl=int(os.environ.get('CODEQL_CACHE_TTL', 86400))
+    )
+    
+    print("✅ CodeQL cache initialized successfully")
+    
+    # Get stats
+    stats = cache.get_stats()
+    print(f"📊 Cached scans: {stats.get('scans_cached', 0)}")
+    print(f"📊 Scans retrieved: {stats.get('scans_retrieved', 0)}")
+    print(f"📊 Time saved: {stats.get('scan_time_saved_hours', 0):.1f} hours")
+    
+    with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+        f.write("status=success\n")
+    
+    print("::notice::✅ CodeQL cache is ready - redundant scans will be skipped")
+    sys.exit(0)
+    
+except ImportError as e:
+    print(f"::warning::⚠️ CodeQL cache modules not available: {e}")
+    print("::notice::Continuing without CodeQL caching")
+    with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+        f.write("status=disabled\n")
+    sys.exit(0)
+    
+except Exception as e:
+    print(f"::error::❌ CodeQL cache initialization failed: {e}")
+    import traceback
+    traceback.print_exc()
+    with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+        f.write("status=error\n")
+    sys.exit(1)
+PYEOF
+        
+        echo "::endgroup::"
+    
+    - name: Check if Scan Can Be Skipped
+      id: check-cache
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        COMMIT_SHA: ${{ inputs.commit-sha }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+      run: |
+        echo "::group::🔍 Checking CodeQL Cache"
+        
+        if [ "${{ steps.init-codeql-cache.outputs.status }}" != "success" ]; then
+          echo "should_skip=false" >> $GITHUB_OUTPUT
+          echo "sarif_path=" >> $GITHUB_OUTPUT
+          echo "::notice::Cache not available, scan required"
+          echo "::endgroup::"
+          exit 0
+        fi
+        
+        # Check cache for this commit
+        python3 << 'PYEOF'
+import os
+import sys
+import json
+
+try:
+    from ipfs_datasets_py.codeql_cache import get_global_codeql_cache
+    
+    cache = get_global_codeql_cache()
+    
+    repo = os.environ.get('GITHUB_REPOSITORY')
+    commit_sha = os.environ.get('COMMIT_SHA')
+    
+    # Default scan configuration (can be customized)
+    scan_config = {
+        'queries': 'security-extended',
+        'languages': 'auto'
+    }
+    
+    should_skip, cached_result = cache.should_skip_scan(
+        repo=repo,
+        commit_sha=commit_sha,
+        scan_config=scan_config
+    )
+    
+    with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+        f.write(f"should_skip={str(should_skip).lower()}\n")
+        
+        if cached_result and cached_result.sarif_location:
+            f.write(f"sarif_path={cached_result.sarif_location}\n")
+            print(f"✅ Cached scan found for {commit_sha[:8]}")
+            print(f"   - Alerts: {cached_result.alerts_count}")
+            print(f"   - Age: {(time.time() - cached_result.timestamp) / 3600:.1f} hours")
+            print(f"   - SARIF: {cached_result.sarif_location}")
+        else:
+            f.write("sarif_path=\n")
+            print(f"ℹ️ No cached scan for {commit_sha[:8]}, scan required")
+    
+    if should_skip:
+        print("::notice::✅ Skipping CodeQL scan - using cached results")
+    else:
+        print("::notice::📊 Running CodeQL scan")
+    
+    sys.exit(0)
+    
+except Exception as e:
+    print(f"::warning::Cache check failed: {e}")
+    with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+        f.write("should_skip=false\n")
+        f.write("sarif_path=\n")
+    sys.exit(0)
+PYEOF
+        
+        echo "::endgroup::"
+    
+    - name: Export Cache Configuration
+      shell: bash
+      run: |
+        echo "::group::📊 CodeQL Cache Configuration"
+        echo "Cache Settings:"
+        echo "  - Status: ${{ steps.init-codeql-cache.outputs.status }}"
+        echo "  - Directory: ${{ steps.init-codeql-cache.outputs.cache_dir }}"
+        echo "  - TTL: ${{ inputs.cache-ttl }}s"
+        echo "  - Commit: ${{ inputs.commit-sha }}"
+        echo "  - Should Skip: ${{ steps.check-cache.outputs.should_skip }}"
+        if [ -n "${{ steps.check-cache.outputs.sarif_path }}" ]; then
+          echo "  - Cached SARIF: ${{ steps.check-cache.outputs.sarif_path }}"
+        fi
+        echo "::endgroup::"

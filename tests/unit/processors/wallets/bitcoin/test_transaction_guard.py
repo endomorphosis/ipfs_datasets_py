@@ -47,7 +47,12 @@ from ipfs_datasets_py.processors.wallets.bitcoin.transaction_guard import (
 )
 
 
-FIXTURE_DIR = Path(__file__).resolve().parents[4] / "fixtures" / "wallets" / "bitcoin"
+FIXTURE_DIR = (
+    Path(__file__).resolve().parents[4]
+    / "fixtures"
+    / "wallets"
+    / "bitcoin"
+)
 
 _ISSUED = "2026-07-28T12:00:00Z"
 _DEADLINE = "2026-07-28T12:05:00Z"
@@ -58,10 +63,14 @@ _NOW_OK = "2026-07-28T12:02:00Z"
 
 @pytest.fixture(scope="module")
 def multi_io() -> dict[str, Any]:
-    return json.loads((FIXTURE_DIR / "multi_input_output.json").read_text(encoding="utf-8"))
+    return json.loads(
+        (FIXTURE_DIR / "multi_input_output.json").read_text(encoding="utf-8")
+    )
 
 
-def _candidate_from_multi_io(multi_io: dict[str, Any], **overrides: Any) -> dict[str, Any]:
+def _candidate_from_multi_io(
+    multi_io: dict[str, Any], **overrides: Any
+) -> dict[str, Any]:
     tx = multi_io["transaction"]
     payload: dict[str, Any] = {
         "kind": "transaction_candidate",
@@ -93,7 +102,9 @@ def _candidate_from_multi_io(multi_io: dict[str, Any], **overrides: Any) -> dict
         ],
         "ancestry_edges": [
             {
-                "child_outpoint": outpoint_key(tx["vin"][0]["txid"], tx["vin"][0]["vout"]),
+                "child_outpoint": outpoint_key(
+                    tx["vin"][0]["txid"], tx["vin"][0]["vout"]
+                ),
                 "parent_outpoint": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee:0",
                 "depth": 1,
                 "value_sats": "100000",
@@ -321,7 +332,9 @@ def test_weak_sighash_flagged(multi_io: dict[str, Any]) -> None:
 def test_evaluate_allows_clean_multi_io(multi_io: dict[str, Any]) -> None:
     guard = _guard()
     binding = guard.bind_transaction(_candidate_from_multi_io(multi_io))
-    live = {p.outpoint: _utxo_available(p.outpoint) for p in binding.prevouts}
+    live = {
+        p.outpoint: _utxo_available(p.outpoint) for p in binding.prevouts
+    }
     decision = _allow(guard, binding, live_utxos=live)
     assert isinstance(decision, BitcoinGuardDecision)
     assert decision.outcome is TransactionVerdictOutcome.ALLOW
@@ -342,20 +355,17 @@ def test_evaluate_convenience_function(multi_io: dict[str, Any]) -> None:
         deadline=_DEADLINE,
         expiry=_EXPIRY,
         now=_NOW_OK,
-        security_results={
-            req: "pass"
-            for req in (
-                "sec:bitcoin-network-binding",
-                "sec:bitcoin-prevout-binding",
-                "sec:bitcoin-output-binding",
-                "sec:bitcoin-fee-rbf",
-                "sec:bitcoin-locktime-sequence",
-                "sec:bitcoin-sighash-commitment",
-                "sec:bitcoin-spend-path",
-                "sec:bitcoin-utxo-availability",
-                "sec:bitcoin-exact-candidate",
-            )
-        },
+        security_results={req: "pass" for req in (
+            "sec:bitcoin-network-binding",
+            "sec:bitcoin-prevout-binding",
+            "sec:bitcoin-output-binding",
+            "sec:bitcoin-fee-rbf",
+            "sec:bitcoin-locktime-sequence",
+            "sec:bitcoin-sighash-commitment",
+            "sec:bitcoin-spend-path",
+            "sec:bitcoin-utxo-availability",
+            "sec:bitcoin-exact-candidate",
+        )},
         compliance_results={
             "comp:direct-sanctions": "pass",
             "comp:bounded-exposure": "pass",
@@ -382,7 +392,9 @@ def test_evaluate_stale_compliance_blocks(multi_io: dict[str, Any]) -> None:
         binding,
         request=request,
         security_results={req: "pass" for req in request.security_requirement_ids},
-        compliance_results={req: "stale" for req in request.compliance_requirement_ids},
+        compliance_results={
+            req: "stale" for req in request.compliance_requirement_ids
+        },
         now=_NOW_OK,
     )
     assert decision.outcome is TransactionVerdictOutcome.STALE
@@ -414,7 +426,9 @@ def test_evaluate_spent_utxo_blocks(multi_io: dict[str, Any]) -> None:
     guard = _guard()
     binding = guard.bind_transaction(_candidate_from_multi_io(multi_io))
     spent_key = binding.prevouts[0].outpoint
-    live = {p.outpoint: _utxo_available(p.outpoint) for p in binding.prevouts}
+    live = {
+        p.outpoint: _utxo_available(p.outpoint) for p in binding.prevouts
+    }
     live[spent_key] = _utxo_available(spent_key, status=UtxoStatus.SPENT)
     decision = _allow(guard, binding, live_utxos=live)
     assert decision.allowed is False
@@ -563,7 +577,9 @@ def test_reorg_blocks_consumption(multi_io: dict[str, Any]) -> None:
     # Bind with tip height high so reorg (lower tip) is detectable.
     binding = guard.bind_transaction(_candidate_from_multi_io(multi_io))
     live = {
-        p.outpoint: _utxo_available(p.outpoint, tip_height=840100, tip_hash="a" * 64)
+        p.outpoint: _utxo_available(
+            p.outpoint, tip_height=840100, tip_hash="a" * 64
+        )
         for p in binding.prevouts
     }
     # Rebuild binding with explicit tip on availability epochs.
@@ -603,7 +619,10 @@ def test_reorg_blocks_consumption(multi_io: dict[str, Any]) -> None:
             now=_NOW_OK,
             live_utxos=reorged,
         )
-    assert "reorg" in str(excinfo.value).lower() or "reorg" in excinfo.value.reason_code
+    assert (
+        "reorg" in str(excinfo.value).lower()
+        or "reorg" in excinfo.value.reason_code
+    )
 
 
 def test_reorged_utxo_status_blocks_consumption(multi_io: dict[str, Any]) -> None:

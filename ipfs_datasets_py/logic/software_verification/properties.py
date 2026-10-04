@@ -25,7 +25,9 @@ VERIFICATION_PROPERTY_SCHEMA_VERSION: Final = "verification-property/v1"
 VERIFICATION_ASSUMPTION_SCHEMA_VERSION: Final = "verification-assumption/v1"
 
 _ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$")
-_EXTENSION_RE = re.compile(r"^[a-z][a-z0-9_-]*(?:[.:/][a-z0-9][a-z0-9_.:/-]*)+$")
+_EXTENSION_RE = re.compile(
+    r"^[a-z][a-z0-9_-]*(?:[.:/][a-z0-9][a-z0-9_.:/-]*)+$"
+)
 
 
 class PropertyValidationError(ValueError):
@@ -73,8 +75,12 @@ class AssumptionKind(str, Enum):
     TRANSLATION = "translation"
 
 
-PROPERTY_VOCABULARY: Final[tuple[str, ...]] = tuple(sorted(item.value for item in PropertyKind))
-ASSUMPTION_VOCABULARY: Final[tuple[str, ...]] = tuple(sorted(item.value for item in AssumptionKind))
+PROPERTY_VOCABULARY: Final[tuple[str, ...]] = tuple(
+    sorted(item.value for item in PropertyKind)
+)
+ASSUMPTION_VOCABULARY: Final[tuple[str, ...]] = tuple(
+    sorted(item.value for item in AssumptionKind)
+)
 
 
 def _text(value: object, label: str) -> str:
@@ -95,7 +101,9 @@ def _identifier(value: object, label: str) -> str:
 
 
 def _identifiers(values: Sequence[str], label: str) -> tuple[str, ...]:
-    if isinstance(values, (str, bytes, bytearray)) or not isinstance(values, Sequence):
+    if isinstance(values, (str, bytes, bytearray)) or not isinstance(
+        values, Sequence
+    ):
         raise PropertyValidationError(f"{label} must be a sequence of identifiers")
     result = tuple(_identifier(item, f"{label} item") for item in values)
     if len(result) != len(set(result)):
@@ -181,10 +189,14 @@ def _kind_value(value: Enum | str) -> str:
     return value.value if isinstance(value, Enum) else value
 
 
-def _reject_unknown(value: Mapping[str, Any], allowed: frozenset[str], label: str) -> None:
+def _reject_unknown(
+    value: Mapping[str, Any], allowed: frozenset[str], label: str
+) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise PropertyValidationError(f"unknown {label} field(s): {', '.join(unknown)}")
+        raise PropertyValidationError(
+            f"unknown {label} field(s): {', '.join(unknown)}"
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -286,7 +298,9 @@ class VerificationAssumption:
             source_ref_ids=tuple(source_ids),
             span_ids=tuple(value.get("span_ids", ())),
             extensions=FrozenMap(_mapping(value.get("extensions", {}), "extensions")),
-            schema_version=value.get("schema_version", VERIFICATION_ASSUMPTION_SCHEMA_VERSION),
+            schema_version=value.get(
+                "schema_version", VERIFICATION_ASSUMPTION_SCHEMA_VERSION
+            ),
         )
 
 
@@ -313,7 +327,9 @@ class VerificationProperty:
             self.span_ids,
             owner="VerificationProperty",
         )
-        object.__setattr__(self, "property_id", _identifier(self.property_id, "property_id"))
+        object.__setattr__(
+            self, "property_id", _identifier(self.property_id, "property_id")
+        )
         object.__setattr__(self, "kind", _property_kind(self.kind))
         object.__setattr__(self, "statement", _text(self.statement, "statement"))
         object.__setattr__(
@@ -410,7 +426,9 @@ class VerificationProperty:
             source_ref_ids=tuple(source_ids),
             span_ids=tuple(value.get("span_ids", ())),
             extensions=FrozenMap(_mapping(value.get("extensions", {}), "extensions")),
-            schema_version=value.get("schema_version", VERIFICATION_PROPERTY_SCHEMA_VERSION),
+            schema_version=value.get(
+                "schema_version", VERIFICATION_PROPERTY_SCHEMA_VERSION
+            ),
         )
 
 

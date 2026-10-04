@@ -760,9 +760,8 @@ def test_epochs_and_obligations_are_receipt_bound() -> None:
     request = _passing_request("evm")
     decision = evaluate_contract_safety(request, now=_NOW_OK)
     assert decision.obligation_set_digest == request.required_obligations.digest
-    assert (
-        decision.primary_code_epoch_digest
-        == request.epoch_by_id(request.primary_code_epoch_id).digest
-    )
+    assert decision.primary_code_epoch_digest == request.epoch_by_id(
+        request.primary_code_epoch_id
+    ).digest
     for epoch in request.code_epochs:
         assert epoch.epoch_id in decision.code_epoch_digests

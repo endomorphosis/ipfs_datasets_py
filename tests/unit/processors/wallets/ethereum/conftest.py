@@ -10,7 +10,9 @@ import pytest
 from ._helpers import FixtureJsonRpc
 
 
-FIXTURE_DIR = Path(__file__).resolve().parents[4] / "fixtures" / "wallets" / "ethereum"
+FIXTURE_DIR = (
+    Path(__file__).resolve().parents[4] / "fixtures" / "wallets" / "ethereum"
+)
 
 
 @pytest.fixture(scope="session")

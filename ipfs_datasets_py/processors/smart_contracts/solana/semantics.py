@@ -155,7 +155,9 @@ class AccountPrivilege:
         object.__setattr__(self, "is_signer", _bool(self.is_signer, "is_signer"))
         object.__setattr__(self, "is_writable", _bool(self.is_writable, "is_writable"))
         if self.owner:
-            object.__setattr__(self, "owner", normalize_pubkey(self.owner, field="owner"))
+            object.__setattr__(
+                self, "owner", normalize_pubkey(self.owner, field="owner")
+            )
         else:
             object.__setattr__(self, "owner", "")
         source = _required_text(str(self.source), "source")
@@ -230,7 +232,9 @@ class OwnerCheck:
         object.__setattr__(
             self,
             "diagnostics",
-            tuple(_required_text(item, "diagnostics item") for item in self.diagnostics),
+            tuple(
+                _required_text(item, "diagnostics item") for item in self.diagnostics
+            ),
         )
         if status is OwnerCheckStatus.UNKNOWN and not self.diagnostics:
             raise InvalidRequestError("UNKNOWN owner check requires diagnostics")
@@ -284,7 +288,9 @@ def check_account_owner(
         expected_owner=expected,
         observed_owner=observed,
         status=OwnerCheckStatus.MISMATCH,
-        diagnostics=(f"owner mismatch: expected {expected}, observed {observed}",),
+        diagnostics=(
+            f"owner mismatch: expected {expected}, observed {observed}",
+        ),
     )
 
 
@@ -311,7 +317,9 @@ class PDAConstraint:
         object.__setattr__(
             self, "program_id", normalize_pubkey(self.program_id, field="program_id")
         )
-        if isinstance(self.seeds, (str, bytes, bytearray)) or not isinstance(self.seeds, Sequence):
+        if isinstance(self.seeds, (str, bytes, bytearray)) or not isinstance(
+            self.seeds, Sequence
+        ):
             raise InvalidRequestError("seeds must be a sequence of bytes")
         seeds: list[bytes] = []
         for index, seed in enumerate(self.seeds):
@@ -344,7 +352,9 @@ class PDAConstraint:
         object.__setattr__(
             self,
             "diagnostics",
-            tuple(_required_text(item, "diagnostics item") for item in self.diagnostics),
+            tuple(
+                _required_text(item, "diagnostics item") for item in self.diagnostics
+            ),
         )
         object.__setattr__(self, "attributes", _freeze_mapping(self.attributes))
         object.__setattr__(
@@ -353,7 +363,9 @@ class PDAConstraint:
             _required_text(self.schema_version, "schema_version"),
         )
         if self.verified and not self.derived_address:
-            raise InvalidRequestError("verified PDA constraint requires derived_address")
+            raise InvalidRequestError(
+                "verified PDA constraint requires derived_address"
+            )
         ensure_secret_safe(self.to_dict())
 
     @property
@@ -447,11 +459,19 @@ class CPIEdge:
             "callee_program_id",
             normalize_pubkey(self.callee_program_id, field="callee_program_id"),
         )
-        kind = self.kind if isinstance(self.kind, CPIEdgeKind) else CPIEdgeKind(str(self.kind))
+        kind = (
+            self.kind
+            if isinstance(self.kind, CPIEdgeKind)
+            else CPIEdgeKind(str(self.kind))
+        )
         object.__setattr__(self, "kind", kind)
-        object.__setattr__(self, "outer_index", _non_negative(self.outer_index, "outer_index"))
+        object.__setattr__(
+            self, "outer_index", _non_negative(self.outer_index, "outer_index")
+        )
         if self.inner_index is not None:
-            object.__setattr__(self, "inner_index", _non_negative(self.inner_index, "inner_index"))
+            object.__setattr__(
+                self, "inner_index", _non_negative(self.inner_index, "inner_index")
+            )
         if self.stack_height is not None:
             object.__setattr__(
                 self,
@@ -462,7 +482,9 @@ class CPIEdge:
             self.account_indexes, Sequence
         ):
             raise InvalidRequestError("account_indexes must be a sequence of integers")
-        indexes = tuple(_non_negative(item, "account_index") for item in self.account_indexes)
+        indexes = tuple(
+            _non_negative(item, "account_index") for item in self.account_indexes
+        )
         object.__setattr__(self, "account_indexes", indexes)
         privileges = tuple(self.account_privileges)
         for index, priv in enumerate(privileges):
@@ -481,12 +503,16 @@ class CPIEdge:
         checks = tuple(self.owner_checks)
         for index, check in enumerate(checks):
             if not isinstance(check, OwnerCheck):
-                raise InvalidRequestError(f"owner_checks[{index}] must be an OwnerCheck")
+                raise InvalidRequestError(
+                    f"owner_checks[{index}] must be an OwnerCheck"
+                )
         object.__setattr__(self, "owner_checks", checks)
         object.__setattr__(
             self,
             "diagnostics",
-            tuple(_required_text(item, "diagnostics item") for item in self.diagnostics),
+            tuple(
+                _required_text(item, "diagnostics item") for item in self.diagnostics
+            ),
         )
         object.__setattr__(self, "attributes", _freeze_mapping(self.attributes))
         object.__setattr__(
@@ -551,17 +577,23 @@ class CPIGraph:
         privileges = tuple(self.privileges)
         for index, priv in enumerate(privileges):
             if not isinstance(priv, AccountPrivilege):
-                raise InvalidRequestError(f"privileges[{index}] must be an AccountPrivilege")
+                raise InvalidRequestError(
+                    f"privileges[{index}] must be an AccountPrivilege"
+                )
         object.__setattr__(self, "privileges", privileges)
         pdas = tuple(self.pda_constraints)
         for index, pda in enumerate(pdas):
             if not isinstance(pda, PDAConstraint):
-                raise InvalidRequestError(f"pda_constraints[{index}] must be a PDAConstraint")
+                raise InvalidRequestError(
+                    f"pda_constraints[{index}] must be a PDAConstraint"
+                )
         object.__setattr__(self, "pda_constraints", pdas)
         checks = tuple(self.owner_checks)
         for index, check in enumerate(checks):
             if not isinstance(check, OwnerCheck):
-                raise InvalidRequestError(f"owner_checks[{index}] must be an OwnerCheck")
+                raise InvalidRequestError(
+                    f"owner_checks[{index}] must be an OwnerCheck"
+                )
         object.__setattr__(self, "owner_checks", checks)
         object.__setattr__(
             self,
@@ -571,7 +603,9 @@ class CPIGraph:
         object.__setattr__(
             self,
             "coverage_notes",
-            tuple(_required_text(item, "coverage note") for item in self.coverage_notes),
+            tuple(
+                _required_text(item, "coverage note") for item in self.coverage_notes
+            ),
         )
         status = (
             self.pass_status
@@ -582,7 +616,9 @@ class CPIGraph:
         object.__setattr__(
             self,
             "diagnostics",
-            tuple(_required_text(item, "diagnostics item") for item in self.diagnostics),
+            tuple(
+                _required_text(item, "diagnostics item") for item in self.diagnostics
+            ),
         )
         object.__setattr__(self, "attributes", _freeze_mapping(self.attributes))
         object.__setattr__(
@@ -596,10 +632,16 @@ class CPIGraph:
                 raise InvalidRequestError(
                     "semantic pass forbidden without inner instruction coverage"
                 )
-            if any(check.status is OwnerCheckStatus.UNKNOWN for check in self.owner_checks):
-                raise InvalidRequestError("semantic pass forbidden with UNKNOWN owner checks")
+            if any(
+                check.status is OwnerCheckStatus.UNKNOWN for check in self.owner_checks
+            ):
+                raise InvalidRequestError(
+                    "semantic pass forbidden with UNKNOWN owner checks"
+                )
             if any(edge.kind is CPIEdgeKind.UNKNOWN for edge in self.edges):
-                raise InvalidRequestError("semantic pass forbidden with UNKNOWN CPI edges")
+                raise InvalidRequestError(
+                    "semantic pass forbidden with UNKNOWN CPI edges"
+                )
         ensure_secret_safe(self.to_dict())
 
     @property
@@ -649,7 +691,9 @@ def build_cpi_graph(
 
     if not inner_instruction_coverage:
         coverage_notes.append("inner instruction coverage incomplete")
-        diagnostics.append("inner instructions not fully covered; CPI graph remains incomplete")
+        diagnostics.append(
+            "inner instructions not fully covered; CPI graph remains incomplete"
+        )
     else:
         coverage_notes.append("inner instruction coverage complete")
 
@@ -664,7 +708,8 @@ def build_cpi_graph(
     signer_count = sum(1 for p in priv_list if p.is_signer)
     writable_count = sum(1 for p in priv_list if p.is_writable)
     coverage_notes.append(
-        f"privileges: {len(priv_list)} accounts, {signer_count} signers, {writable_count} writable"
+        f"privileges: {len(priv_list)} accounts, "
+        f"{signer_count} signers, {writable_count} writable"
     )
     if any(not p.owner for p in priv_list):
         coverage_notes.append("some account owners unbound on privilege records")

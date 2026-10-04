@@ -34,14 +34,28 @@ def _term(kind: SolidityTermKind, name: str) -> str:
 def _exact_attributes() -> SolidityPolicyAttributes:
     return SolidityPolicyAttributes(
         action=_term(SolidityTermKind.ACTION, "transfer_value"),
-        preconditions=(_term(SolidityTermKind.PRECONDITION, "missing_access_control"),),
-        effects=(_term(SolidityTermKind.EFFECT, "unauthorized_value_transfer"),),
-        mitigations=(_term(SolidityTermKind.MITIGATION, "enforce_access_control"),),
-        security_concepts=(_term(SolidityTermKind.SECURITY_CONCEPT, "access_control"),),
-        assumptions=(_term(SolidityTermKind.ASSUMPTION, "admin_keys_not_compromised"),),
+        preconditions=(
+            _term(SolidityTermKind.PRECONDITION, "missing_access_control"),
+        ),
+        effects=(
+            _term(
+                SolidityTermKind.EFFECT, "unauthorized_value_transfer"
+            ),
+        ),
+        mitigations=(
+            _term(SolidityTermKind.MITIGATION, "enforce_access_control"),
+        ),
+        security_concepts=(
+            _term(SolidityTermKind.SECURITY_CONCEPT, "access_control"),
+        ),
+        assumptions=(
+            _term(SolidityTermKind.ASSUMPTION, "admin_keys_not_compromised"),
+        ),
         language=_term(SolidityTermKind.LANGUAGE, "solidity"),
         scope=_term(SolidityTermKind.SCOPE, "value_transfer"),
-        authority_type=_term(SolidityTermKind.AUTHORITY_TYPE, "observed_syntax"),
+        authority_type=_term(
+            SolidityTermKind.AUTHORITY_TYPE, "observed_syntax"
+        ),
     )
 
 
@@ -50,7 +64,9 @@ def test_terms_are_typed_versioned_canonical_and_round_trip() -> None:
 
     assert action.kind is SolidityTermKind.ACTION
     assert action.schema_version == SOLIDITY_VOCABULARY_SCHEMA_VERSION
-    assert action.canonical == ("security.solidity-cpt/v1/action/transfer_value")
+    assert action.canonical == (
+        "security.solidity-cpt/v1/action/transfer_value"
+    )
     assert parse_solidity_term(action.canonical) == action
     assert SolidityTerm.from_dict(action.to_dict()) == action
     assert action.policy_role is SolidityPolicyRole.MATCH_CONSTRAINT
@@ -65,7 +81,9 @@ def test_four_authority_types_are_separate_and_non_interchangeable() -> None:
         "reviewed_claim",
         "verified_result",
     ]
-    terms = [authority_type_term(item) for item in SolidityAuthorityType]
+    terms = [
+        authority_type_term(item) for item in SolidityAuthorityType
+    ]
     assert len({item.canonical for item in terms}) == 4
     assert all(
         item.kind is SolidityTermKind.AUTHORITY_TYPE
@@ -73,8 +91,12 @@ def test_four_authority_types_are_separate_and_non_interchangeable() -> None:
         and item.grants_policy_authority is False
         for item in terms
     )
-    assert require_authority_type("observed_syntax") is (SolidityAuthorityType.OBSERVED_SYNTAX)
-    assert DEFAULT_SOLIDITY_VOCABULARY.authority_types() == tuple(SolidityAuthorityType)
+    assert require_authority_type("observed_syntax") is (
+        SolidityAuthorityType.OBSERVED_SYNTAX
+    )
+    assert DEFAULT_SOLIDITY_VOCABULARY.authority_types() == tuple(
+        SolidityAuthorityType
+    )
 
 
 def test_policy_attributes_are_canonical_security_ir_values() -> None:
@@ -85,7 +107,9 @@ def test_policy_attributes_are_canonical_security_ir_values() -> None:
     assert list(payload["preconditions"]) == sorted(payload["preconditions"])
     assert wrapped == {SOLIDITY_POLICY_ATTRIBUTES_KEY: payload}
     assert (
-        validate_solidity_policy_attributes(wrapped, require_exact_policy_constraints=True)
+        validate_solidity_policy_attributes(
+            wrapped, require_exact_policy_constraints=True
+        )
         == attributes
     )
     assert SolidityPolicyAttributes.from_dict(payload) == attributes
@@ -138,8 +162,12 @@ def test_version_category_and_payload_shape_drift_fail_closed() -> None:
         SolidityVocabularyError,
         match="unsupported Solidity CPT vocabulary version",
     ):
-        parse_solidity_term(canonical.replace("/v1/", "/v2/"))
-    with pytest.raises(SolidityVocabularyError, match="does not match its typed components"):
+        parse_solidity_term(
+            canonical.replace("/v1/", "/v2/")
+        )
+    with pytest.raises(
+        SolidityVocabularyError, match="does not match its typed components"
+    ):
         SolidityTerm.from_dict(
             {
                 "kind": "language",
@@ -154,7 +182,11 @@ def test_aliases_resolve_without_discarding_kind() -> None:
     resolved = resolve_solidity_term(SolidityTermKind.LANGUAGE, "sol")
     assert resolved.name == "solidity"
     aliases = validate_solidity_aliases(
-        (SolidityAlias(SolidityTermKind.SECURITY_CONCEPT, "reentry", "reentrancy"),)
+        (
+            SolidityAlias(
+                SolidityTermKind.SECURITY_CONCEPT, "reentry", "reentrancy"
+            ),
+        )
     )
     assert aliases[0].target.name == "reentrancy"
 
@@ -165,4 +197,6 @@ def test_vocabulary_registry_is_immutable_and_complete() -> None:
     assert vocab.contains(SolidityTermKind.NODE_TYPE, "verified_result")
     assert vocab.contains(SolidityTermKind.EDGE_TYPE, "grounded_in")
     with pytest.raises(SolidityVocabularyError):
-        SolidityVocabulary(terms={"action": frozenset({"transfer_value"})})
+        SolidityVocabulary(
+            terms={"action": frozenset({"transfer_value"})}
+        )

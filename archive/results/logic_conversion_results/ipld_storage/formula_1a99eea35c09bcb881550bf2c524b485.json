@@ -1,0 +1,42 @@
+{
+  "formula_id": "7721d579ab53",
+  "deontic_formula": {
+    "formula_id": "7721d579ab53",
+    "operator": "P",
+    "proposition": "terminate_agreement",
+    "agent": {
+      "identifier": "agent_8208",
+      "name": "party",
+      "agent_type": "party",
+      "properties": {},
+      "hash": "e40ef45a"
+    },
+    "beneficiary": null,
+    "conditions": [],
+    "temporal_conditions": [],
+    "legal_context": {
+      "jurisdiction": "Illinois, USA",
+      "legal_domain": "contract",
+      "applicable_law": null,
+      "precedents": [],
+      "exceptions": []
+    },
+    "confidence": 0.95,
+    "source_text": "Either party may terminate this agreement with 30 days written notice",
+    "variables": {},
+    "quantifiers": [],
+    "fol_string": "P[agent_8208](terminate_agreement)",
+    "creation_timestamp": "2025-08-31T19:16:24.346073"
+  },
+  "source_document_cid": "mock_doc_cid",
+  "source_text_excerpt": "Either party may terminate this agreement with 30 days written notice",
+  "extraction_metadata": {
+    "collection": "Springfield Construction Contract"
+  },
+  "translations": {},
+  "translation_cids": {},
+  "provenance_chain": null,
+  "creation_timestamp": "2025-08-31T19:16:24.358061",
+  "confidence_score": 0.95,
+  "validation_results": {}
+}

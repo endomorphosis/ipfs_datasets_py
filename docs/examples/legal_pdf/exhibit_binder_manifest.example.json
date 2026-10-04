@@ -1,0 +1,37 @@
+{
+  "$schema": "../../schemas/legal_pdf/exhibit_binder_manifest.schema.json",
+  "family": "Core Exhibit Binder",
+  "front_sheet_markdown": "covers/EXHIBIT_BINDER_FRONT_SHEET.md",
+  "working_dir": "compiled_from_manifest",
+  "output_pdf": "compiled_from_manifest/MASTER_Exhibit_Binder_Core_Set.pdf",
+  "exhibits_root": "exhibits",
+  "court_config": {
+    "case_number": "Case No. __________________",
+    "court_name": "IN THE COURT OF COMPETENT JURISDICTION",
+    "state_name": "STATE / JURISDICTION",
+    "contact_block_html": "Filing Party, pro se<br/>Party Role",
+    "caption_left_html": "PLAINTIFF OR PETITIONER,<br/>v.<br/>DEFENDANT OR RESPONDENT."
+  },
+  "caption_config": {
+    "court_lines": [
+      "IN THE COURT OF COMPETENT JURISDICTION",
+      "FOR THE APPROPRIATE COUNTY OR DISTRICT",
+      "CIVIL / PROBATE / HOUSING DIVISION"
+    ],
+    "case_number": "Case No. __________________",
+    "right_block_lines": [
+      "In the Matter of:",
+      "Protected Person / Party Name,",
+      "Party / Subject."
+    ],
+    "left_block_label": "EXHIBIT VOLUME"
+  },
+  "exhibits": [
+    {
+      "code": "A",
+      "title": "Sample Exhibit",
+      "divider_markdown": "covers/Exhibit_A_tab_divider.md",
+      "cover_markdown": "covers/Exhibit_A_cover_sheet.md"
+    }
+  ]
+}

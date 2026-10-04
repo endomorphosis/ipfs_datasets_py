@@ -1,0 +1,381 @@
+name: ARM64 Self-Hosted Runner
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_suite:
+        description: 'Test suite to run'
+        required: true
+        default: 'comprehensive'
+        type: choice
+        options:
+          - comprehensive
+          - mcp-dashboard
+          - docker-build
+          - integration
+  push:
+    branches: [main, develop]
+    paths:
+      - 'ipfs_datasets_py/**'
+      - 'tests/**'
+      - '.github/workflows/arm64-runner.yml'
+      - 'docker/Dockerfile*'
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  # ARM64 system validation
+  arm64-system-info:
+    runs-on: [self-hosted, linux, arm64]
+    if: ${{ !cancelled() }}
+    
+    steps:
+      - name: System Information
+        run: |
+          echo "## 🦾 ARM64 Runner Information" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Hardware" >> $GITHUB_STEP_SUMMARY
+          echo "- **Architecture**: $(uname -m)" >> $GITHUB_STEP_SUMMARY
+          echo "- **OS**: $(cat /etc/os-release | grep PRETTY_NAME | cut -d= -f2 | tr -d '\"')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Kernel**: $(uname -r)" >> $GITHUB_STEP_SUMMARY
+          echo "- **CPU**: $(lscpu | grep 'Model name' | cut -d: -f2 | xargs)" >> $GITHUB_STEP_SUMMARY
+          echo "- **CPU Cores**: $(nproc)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Memory**: $(free -h | grep Mem | awk '{print $2}')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Disk**: $(df -h / | tail -1 | awk '{print $4}') available" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Software" >> $GITHUB_STEP_SUMMARY
+          echo "- **Python**: $(python3 --version)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Docker**: $(docker --version 2>/dev/null || echo 'Not installed')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Git**: $(git --version)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Check Performance
+        run: |
+          echo "### Performance Metrics" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "CPU Benchmark (calculating π to 1000 places):" >> $GITHUB_STEP_SUMMARY
+          time python3 -c "
+          from decimal import Decimal, getcontext
+          import time
+          getcontext().prec = 1000
+          start = time.time()
+          pi = sum(1/Decimal(16)**k * (Decimal(4)/(8*k+1) - Decimal(2)/(8*k+4) - Decimal(1)/(8*k+5) - Decimal(1)/(8*k+6)) for k in range(500))
+          end = time.time()
+          print(f'Completed in {end-start:.3f} seconds')
+          " >> $GITHUB_STEP_SUMMARY 2>&1
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+  # ARM64 MCP Dashboard validation
+  arm64-mcp-dashboard:
+    runs-on: [self-hosted, linux, arm64]
+    needs: arm64-system-info
+    if: ${{ !cancelled() && (github.event.inputs.test_suite == 'comprehensive' || github.event.inputs.test_suite == 'mcp-dashboard' || github.event_name != 'workflow_dispatch') }}
+    
+    steps:
+      - name: Clean up submodules before checkout
+        run: |
+          cd $GITHUB_WORKSPACE || exit 0
+          if [ -d ".git" ]; then
+            echo "Deinitializing all submodules to prevent recursive cleanup errors..."
+            git submodule deinit --all -f || true
+            rm -rf .git/modules || true
+          fi
+        continue-on-error: true
+      
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          submodules: false
+      
+      - name: Set up Python
+        run: |
+          # Ensure we have Python 3.12 on ARM64
+          python3 --version
+          python3 -m pip install --upgrade pip
+      
+      - name: Create virtual environment
+        run: |
+          python3 -m venv .venv-arm64
+          source .venv-arm64/bin/activate
+          pip install --upgrade pip setuptools wheel
+      
+      - name: Install dependencies
+        run: |
+          source .venv-arm64/bin/activate
+          # Install without 'all' extra to avoid ipld-car issues
+          pip install -e .[test]
+          pip install flask mcp pytest pytest-cov
+      
+      - name: Validate MCP Dashboard
+        run: |
+          source .venv-arm64/bin/activate
+          echo "🧪 Running MCP Dashboard validation on ARM64..."
+          python validate_mcp_dashboard.py
+          echo "✅ MCP Dashboard validation completed" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Test MCP Tools
+        run: |
+          source .venv-arm64/bin/activate
+          echo "🔧 Testing MCP tools availability..."
+          python -c "
+          try:
+              from ipfs_datasets_py.mcp_server.tools import get_all_tools
+              tools = get_all_tools()
+              print(f'✅ Found {len(tools)} MCP tools')
+              print('Sample tools:')
+              for i, (name, desc) in enumerate(list(tools.items())[:5]):
+                  print(f'  {i+1}. {name}: {desc}')
+          except Exception as e:
+              print(f'⚠️ Error loading MCP tools: {e}')
+          "
+      
+      - name: ARM64 Performance Test
+        run: |
+          source .venv-arm64/bin/activate
+          echo "⚡ Running ARM64-specific performance tests..."
+          python -c "
+          import time
+          import numpy as np
+          
+          # Test numpy performance on ARM64
+          print('Testing NumPy performance...')
+          start = time.time()
+          a = np.random.rand(1000, 1000)
+          b = np.random.rand(1000, 1000)
+          c = np.dot(a, b)
+          end = time.time()
+          print(f'Matrix multiplication (1000x1000): {end-start:.3f}s')
+          
+          # Test dataset loading
+          print('Testing dataset operations...')
+          from ipfs_datasets_py import IPFSDatasets
+          import inspect
+          if IPFSDatasets is not None and inspect.isclass(IPFSDatasets):
+              print('✅ IPFSDatasets class is available')
+          else:
+              print('⚠️ IPFSDatasets class not available (missing dependencies)')
+          "
+
+  # ARM64 Docker builds
+  arm64-docker-build:
+    runs-on: [self-hosted, linux, arm64]
+    needs: arm64-system-info
+    if: ${{ !cancelled() && (github.event.inputs.test_suite == 'comprehensive' || github.event.inputs.test_suite == 'docker-build' || github.event_name != 'workflow_dispatch') }}
+    
+    steps:
+      - name: Clean up submodules before checkout
+        run: |
+          cd $GITHUB_WORKSPACE || exit 0
+          if [ -d ".git" ]; then
+            echo "Deinitializing all submodules to prevent recursive cleanup errors..."
+            git submodule deinit --all -f || true
+            rm -rf .git/modules || true
+          fi
+        continue-on-error: true
+      
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          submodules: false
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build ARM64 Docker Image
+        run: |
+          echo "🔨 Building Docker image for ARM64..."
+          docker buildx build \
+            --platform linux/arm64 \
+            --tag ipfs-datasets-py:arm64-test \
+            --file docker/Dockerfile.test \
+            --load \
+            .
+          echo "✅ ARM64 Docker image built successfully" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Test ARM64 Docker Container
+        run: |
+          echo "🧪 Testing ARM64 Docker container..."
+          docker run --rm --platform linux/arm64 ipfs-datasets-py:arm64-test python -c "
+          import sys, platform, os
+          print(f'Python: {sys.version}')
+          print(f'Platform: {platform.platform()}')
+          print(f'Machine: {platform.machine()}')
+          print(f'Processor: {platform.processor()}')
+          
+          # Test package import
+          try:
+              import ipfs_datasets_py
+              import inspect
+              print('✅ Package imported successfully')
+              
+              # Test IPFSDatasets class is available
+              from ipfs_datasets_py import IPFSDatasets
+              print(f'✅ IPFSDatasets class available: {IPFSDatasets}')
+              
+              # Verify it's a class (not None when dependencies are available)
+              if IPFSDatasets is not None and inspect.isclass(IPFSDatasets):
+                  print('✅ IPFSDatasets class loaded successfully')
+              else:
+                  print('⚠️ IPFSDatasets is None (dependencies may be missing, but import succeeded)')
+              
+          except Exception as e:
+              print(f'❌ Error: {e}')
+              sys.exit(1)
+          "
+          echo "✅ ARM64 Docker container test passed" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Build MCP Dashboard Docker (ARM64)
+        run: |
+          echo "🎛️ Building MCP Dashboard Docker image for ARM64..."
+          docker buildx build \
+            --platform linux/arm64 \
+            --tag ipfs-datasets-mcp-dashboard:arm64 \
+            --file docker/Dockerfile.dashboard-minimal \
+            --load \
+            .
+      
+      - name: Test MCP Dashboard Container
+        run: |
+          echo "🧪 Testing MCP Dashboard container..."
+          # Start container in background
+          docker run -d --rm --name mcp-dashboard-arm64-test \
+            --platform linux/arm64 \
+            -p 8900:8899 \
+            -e MCP_DASHBOARD_HOST=0.0.0.0 \
+            -e MCP_DASHBOARD_PORT=8899 \
+            ipfs-datasets-mcp-dashboard:arm64
+          
+          # Wait for startup
+          sleep 10
+          
+          # Test endpoint
+          if curl -f http://localhost:8900/api/mcp/status; then
+            echo "✅ MCP Dashboard container working on ARM64" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ MCP Dashboard container failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Stop container
+          docker stop mcp-dashboard-arm64-test || true
+      
+      - name: Cleanup ARM64 Images
+        if: always()
+        run: |
+          docker rmi ipfs-datasets-py:arm64-test || true
+          docker rmi ipfs-datasets-mcp-dashboard:arm64 || true
+          docker system prune -f || true
+
+  # ARM64 Integration Tests
+  arm64-integration-tests:
+    runs-on: [self-hosted, linux, arm64]
+    needs: [arm64-mcp-dashboard, arm64-docker-build]
+    if: ${{ !cancelled() && (github.event.inputs.test_suite == 'comprehensive' || github.event.inputs.test_suite == 'integration' || github.event_name != 'workflow_dispatch') }}
+    
+    steps:
+      - name: Clean up submodules before checkout
+        run: |
+          cd $GITHUB_WORKSPACE || exit 0
+          if [ -d ".git" ]; then
+            echo "Deinitializing all submodules to prevent recursive cleanup errors..."
+            git submodule deinit --all -f || true
+            rm -rf .git/modules || true
+          fi
+        continue-on-error: true
+      
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          submodules: false
+      
+      - name: Set up test environment
+        run: |
+          python3 -m venv .venv-integration
+          source .venv-integration/bin/activate
+          # Install without 'all' extra to avoid ipld-car issues on ARM64
+          pip install -e .[test]
+      
+      - name: Run Integration Tests
+        run: |
+          source .venv-integration/bin/activate
+          echo "🔗 Running ARM64 integration tests..."
+          
+          # Create comprehensive test suite
+          python -c "
+          import pytest
+          import sys
+          import os
+          
+          # Run tests with ARM64-specific markers
+          exit_code = pytest.main([
+              'tests/',
+              '-v',
+              '-m', 'not gpu',  # Skip GPU tests on ARM64 for now
+              '--tb=short',
+              '--junit-xml=arm64-integration-results.xml'
+          ])
+          
+          sys.exit(exit_code)
+          " || echo "Some integration tests failed on ARM64"
+      
+      - name: Upload ARM64 Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: arm64-integration-results
+          path: |
+            arm64-integration-results.xml
+            test_outputs/
+
+  # Multi-architecture comparison
+  architecture-comparison:
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
+    needs: [arm64-system-info, arm64-mcp-dashboard, arm64-docker-build, arm64-integration-tests]
+    if: always()
+    
+    steps:
+      - name: Generate Architecture Summary
+        run: |
+          echo "## 🏗️ Multi-Architecture Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Architecture | System Info | MCP Dashboard | Docker Build | Integration Tests |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------------|-------------|---------------|--------------|-------------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| ARM64 | ${{ needs.arm64-system-info.result }} | ${{ needs.arm64-mcp-dashboard.result }} | ${{ needs.arm64-docker-build.result }} | ${{ needs.arm64-integration-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Recommendations based on results
+          echo "### Recommendations" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.arm64-system-info.result }}" = "success" ]; then
+            echo "✅ ARM64 self-hosted runner is properly configured" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ ARM64 runner setup needs attention" >> $GITHUB_STEP_SUMMARY
+            echo "- Check runner labels: \`self-hosted\`, \`linux\`, \`arm64\`" >> $GITHUB_STEP_SUMMARY
+            echo "- Verify Python 3.12 installation" >> $GITHUB_STEP_SUMMARY
+            echo "- Ensure Docker is installed and running" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.arm64-mcp-dashboard.result }}" = "success" ]; then
+            echo "✅ MCP Dashboard works correctly on ARM64" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ MCP Dashboard may have ARM64-specific issues" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.arm64-docker-build.result }}" = "success" ]; then
+            echo "✅ Docker builds work on ARM64 architecture" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Docker builds may need ARM64-specific optimization" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "For complete multi-architecture support, ensure both x86_64 and ARM64 runners are available." >> $GITHUB_STEP_SUMMARY

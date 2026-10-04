@@ -24,12 +24,8 @@ PACKAGE_ROOT = _TEST_FILE.parents[3]  # ipfs_datasets_py package checkout
 REPO_ROOT = _TEST_FILE.parents[4]  # 211-AI workspace root
 
 FIXTURES = PACKAGE_ROOT / "tests" / "fixtures" / "dataset_manipulator"
-BASELINE = (
-    REPO_ROOT / "data" / "datasets_contract_analysis" / "audit" / "dataset-contract-baseline.json"
-)
-DRIFT = (
-    REPO_ROOT / "data" / "datasets_contract_analysis" / "audit" / "datasets-manipulator-drift.json"
-)
+BASELINE = REPO_ROOT / "data" / "datasets_contract_analysis" / "audit" / "dataset-contract-baseline.json"
+DRIFT = REPO_ROOT / "data" / "datasets_contract_analysis" / "audit" / "datasets-manipulator-drift.json"
 
 REQUIRED_FIXTURE_FILES = {
     "README.md",
@@ -193,14 +189,7 @@ def test_surface_inventory_lists_required_channels(surface_inventory: dict[str, 
     for required in surface_inventory["required_channels"]:
         assert required in channel_ids, required
     kinds = {item["kind"] for item in surface_inventory["channels"]}
-    for kind in (
-        "direct_python",
-        "mcp_tool",
-        "mcp_client",
-        "http_service",
-        "swissknife",
-        "ipfs_kit",
-    ):
+    for kind in ("direct_python", "mcp_tool", "mcp_client", "http_service", "swissknife", "ipfs_kit"):
         assert kind in kinds, kind
 
 
@@ -359,10 +348,9 @@ def test_core_saver_and_converter_placeholders_are_no_ops(tmp_path: Path) -> Non
     assert not dest.exists()
     assert convert_result["status"] == "success"
     assert "successfully" in convert_result.get("message", "").lower()
-    assert (
-        "output_path" not in convert_result
-        or not Path(convert_result.get("output_path") or "").exists()
-    )
+    assert "output_path" not in convert_result or not Path(
+        convert_result.get("output_path") or ""
+    ).exists()
 
 
 def test_dataset_manipulator_and_contracts_missing() -> None:
@@ -380,8 +368,12 @@ def test_dataset_manipulator_and_contracts_missing() -> None:
     )
 
     assert DatasetLoader and DatasetSaver and DatasetConverter and DataProcessor
-    manip_path = PACKAGE_ROOT / "ipfs_datasets_py" / "core_operations" / "dataset_manipulator.py"
-    contracts_path = PACKAGE_ROOT / "ipfs_datasets_py" / "core_operations" / "dataset_contracts.py"
+    manip_path = (
+        PACKAGE_ROOT / "ipfs_datasets_py" / "core_operations" / "dataset_manipulator.py"
+    )
+    contracts_path = (
+        PACKAGE_ROOT / "ipfs_datasets_py" / "core_operations" / "dataset_contracts.py"
+    )
     assert not manip_path.exists()
     assert not contracts_path.exists()
 
@@ -402,17 +394,23 @@ def test_duplicate_dataset_manager_shadow_definitions() -> None:
     for path in paths:
         assert path.is_file(), f"missing shadow surface: {path}"
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-        class_names = {node.name for node in tree.body if isinstance(node, ast.ClassDef)}
+        class_names = {
+            node.name for node in tree.body if isinstance(node, ast.ClassDef)
+        }
         assert "DatasetManager" in class_names, f"DatasetManager missing in {path}"
 
 
 def test_kit_integration_lacks_top_level_load_dataset_export() -> None:
     _repo_on_path()
-    integration_path = REPO_ROOT / "ipfs_kit_py" / "ipfs_kit_py" / "ipfs_datasets_integration.py"
+    integration_path = (
+        REPO_ROOT / "ipfs_kit_py" / "ipfs_kit_py" / "ipfs_datasets_integration.py"
+    )
     assert integration_path.is_file()
     source = integration_path.read_text(encoding="utf-8")
     tree = ast.parse(source, filename=str(integration_path))
-    top_level_funcs = {node.name for node in tree.body if isinstance(node, ast.FunctionDef)}
+    top_level_funcs = {
+        node.name for node in tree.body if isinstance(node, ast.FunctionDef)
+    }
     assert "load_dataset" not in top_level_funcs
     # Class method exists on DatasetIPFSBackend (adapter), not package export.
     assert "class DatasetIPFSBackend" in source
@@ -420,7 +418,9 @@ def test_kit_integration_lacks_top_level_load_dataset_export() -> None:
 
 
 def test_weak_wrapper_unit_tests_do_not_assert_side_effects() -> None:
-    weak_test = PACKAGE_ROOT / "tests" / "mcp" / "unit" / "test_dataset_tools.py"
+    weak_test = (
+        PACKAGE_ROOT / "tests" / "mcp" / "unit" / "test_dataset_tools.py"
+    )
     assert weak_test.is_file()
     text = weak_test.read_text(encoding="utf-8")
     assert "isinstance(result, dict)" in text
@@ -466,7 +466,9 @@ def test_safe_vectors_reject_dangerous_ops_and_executable_destinations(
     )
     assert exec_result["status"] == "error"
 
-    empty_ops = _run(process_dataset({"data": list(sample_dataset["data"])}, operations=[]))
+    empty_ops = _run(
+        process_dataset({"data": list(sample_dataset["data"])}, operations=[])
+    )
     assert empty_ops["status"] == "error"
 
     exe_dest = _run(
@@ -565,11 +567,8 @@ def test_save_and_convert_source_contain_mock_markers() -> None:
         / "convert_dataset_format.py"
     )
     manager_path = PACKAGE_ROOT / "ipfs_datasets_py" / "dataset_manager.py"
-    assert "mock_dataset_{hash(str(dataset_data))}" in save_path.read_text(encoding="utf-8")
+    assert 'mock_dataset_{hash(str(dataset_data))}' in save_path.read_text(encoding="utf-8")
     convert_text = convert_path.read_text(encoding="utf-8")
     assert "Using mock conversion response" in convert_text
-    assert (
-        '"conversion_method": "mock"' in convert_text
-        or 'conversion_method": "mock"' in convert_text
-    )
+    assert '"conversion_method": "mock"' in convert_text or "conversion_method\": \"mock\"" in convert_text
     assert "Mock successful save" in manager_path.read_text(encoding="utf-8")

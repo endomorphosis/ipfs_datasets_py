@@ -188,19 +188,14 @@ def test_world_id_secret_config_unset_repr_is_safe() -> None:
     [
         ({"WORLD_ID_APP_ID": ""}, "WORLD_ID_APP_ID"),
         ({"WORLD_ID_RP_ID": ""}, "WORLD_ID_RP_ID"),
-        (
-            {"WORLD_ID_RP_SIGNING_KEY": "", "WORLD_ID_RP_SIGNING_KEY_SECRET_REF": ""},
-            "WORLD_ID_RP_SIGNING_KEY",
-        ),
+        ({"WORLD_ID_RP_SIGNING_KEY": "", "WORLD_ID_RP_SIGNING_KEY_SECRET_REF": ""}, "WORLD_ID_RP_SIGNING_KEY"),
         (
             {"WORLD_ID_NULLIFIER_HMAC_KEY": "", "WORLD_ID_NULLIFIER_HMAC_KEY_SECRET_REF": ""},
             "WORLD_ID_NULLIFIER_HMAC_KEY",
         ),
     ],
 )
-def test_world_id_enabled_config_requires_backend_fields(
-    override: dict[str, str], message: str
-) -> None:
+def test_world_id_enabled_config_requires_backend_fields(override: dict[str, str], message: str) -> None:
     with pytest.raises(WorldIdConfigError, match=message):
         load_world_id_config(env=enabled_env(**override))
 
@@ -210,9 +205,7 @@ def test_world_id_config_rejects_browser_exposed_secret_env_vars() -> None:
         load_world_id_config(env={**enabled_env(), "VITE_WORLD_ID_RP_SIGNING_KEY": "leaked"})
 
     with pytest.raises(WorldIdConfigError, match="browser-exposed"):
-        load_world_id_config(
-            env={**enabled_env(), "ABBY_RUNTIME_WORLD_ID_NULLIFIER_HMAC_KEY": "leaked"}
-        )
+        load_world_id_config(env={**enabled_env(), "ABBY_RUNTIME_WORLD_ID_NULLIFIER_HMAC_KEY": "leaked"})
 
 
 @pytest.mark.parametrize(
@@ -225,10 +218,7 @@ def test_world_id_config_rejects_browser_exposed_secret_env_vars() -> None:
         ({"WORLD_ID_VERIFY_BASE_URL": "developer.world.org"}, "WORLD_ID_VERIFY_BASE_URL"),
         ({"WORLD_ID_ALLOWED_ACTIONS": "bad action"}, "actions"),
         (
-            {
-                "WORLD_ID_ALLOWED_ACTIONS": DEFAULT_WORLD_ID_ACTION,
-                "WORLD_ID_DEFAULT_ACTION": "other-action",
-            },
+            {"WORLD_ID_ALLOWED_ACTIONS": DEFAULT_WORLD_ID_ACTION, "WORLD_ID_DEFAULT_ACTION": "other-action"},
             "WORLD_ID_DEFAULT_ACTION",
         ),
         ({"WORLD_ID_APP_ID": "not-app"}, "WORLD_ID_APP_ID"),
@@ -246,17 +236,9 @@ def test_golden_default_constants(golden_vectors: dict) -> None:
 
     assert package.DEFAULT_WORLD_ID_ACTION == constants["DEFAULT_WORLD_ID_ACTION"]
     assert package.DEFAULT_WORLD_ID_VERIFY_BASE_URL == constants["DEFAULT_WORLD_ID_VERIFY_BASE_URL"]
-    assert (
-        package.DEFAULT_WORLD_ID_SIGNATURE_TTL_SECONDS
-        == constants["DEFAULT_WORLD_ID_SIGNATURE_TTL_SECONDS"]
-    )
-    assert (
-        package.DEFAULT_WORLD_ID_HTTP_TIMEOUT_SECONDS
-        == constants["DEFAULT_WORLD_ID_HTTP_TIMEOUT_SECONDS"]
-    )
-    assert set(package.SUPPORTED_WORLD_ID_ENVIRONMENTS) == set(
-        constants["SUPPORTED_WORLD_ID_ENVIRONMENTS"]
-    )
+    assert package.DEFAULT_WORLD_ID_SIGNATURE_TTL_SECONDS == constants["DEFAULT_WORLD_ID_SIGNATURE_TTL_SECONDS"]
+    assert package.DEFAULT_WORLD_ID_HTTP_TIMEOUT_SECONDS == constants["DEFAULT_WORLD_ID_HTTP_TIMEOUT_SECONDS"]
+    assert set(package.SUPPORTED_WORLD_ID_ENVIRONMENTS) == set(constants["SUPPORTED_WORLD_ID_ENVIRONMENTS"])
 
 
 # --- WALPROC-063: bounded safe verify endpoint policy ---
@@ -293,10 +275,7 @@ def test_validate_verify_base_url_rejects_metadata_private_and_non_allowlisted(
 
 def test_validate_verify_base_url_accepts_allowlisted_https_default() -> None:
     assert validate_verify_base_url("https://developer.world.org/") == "https://developer.world.org"
-    assert (
-        validate_verify_base_url(DEFAULT_WORLD_ID_VERIFY_BASE_URL)
-        == DEFAULT_WORLD_ID_VERIFY_BASE_URL
-    )
+    assert validate_verify_base_url(DEFAULT_WORLD_ID_VERIFY_BASE_URL) == DEFAULT_WORLD_ID_VERIFY_BASE_URL
 
 
 def test_world_id_config_public_dict_exposes_endpoint_fingerprint_not_raw_url() -> None:

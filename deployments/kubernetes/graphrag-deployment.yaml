@@ -1,0 +1,306 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: website-graphrag-processor
+  namespace: graphrag-system
+  labels:
+    app: website-graphrag-processor
+    version: v1
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: website-graphrag-processor
+  template:
+    metadata:
+      labels:
+        app: website-graphrag-processor
+        version: v1
+    spec:
+      containers:
+      - name: graphrag-processor
+        image: ipfs-datasets-py:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: POSTGRES_URL
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: postgres-url
+        - name: REDIS_URL
+          value: redis://redis-service:6379/0
+        - name: ELASTICSEARCH_URL
+          value: http://elasticsearch-service:9200
+        - name: IPFS_API_URL
+          value: http://ipfs-service:5001
+        - name: IPFS_GATEWAY_URL
+          value: http://ipfs-service:8080
+        - name: JWT_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: api-credentials
+              key: jwt-secret-key
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: api-keys
+              key: openai-api-key
+        - name: HUGGINGFACE_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: api-keys
+              key: huggingface-token
+        - name: MAX_PARALLEL_JOBS
+          value: "5"
+        - name: MAX_CONTENT_SIZE_MB
+          value: "500"
+        - name: PERFORMANCE_PROFILE
+          value: "balanced"
+        - name: LOG_LEVEL
+          value: "INFO"
+        - name: ENABLE_MONITORING
+          value: "true"
+        ports:
+        - containerPort: 8000
+          name: http
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/config
+        - name: data-volume
+          mountPath: /app/data
+        - name: cache-volume
+          mountPath: /app/cache
+        resources:
+          requests:
+            memory: "4Gi"
+            cpu: "2000m"
+          limits:
+            memory: "8Gi"
+            cpu: "4000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 2
+      volumes:
+      - name: config-volume
+        configMap:
+          name: graphrag-config
+      - name: data-volume
+        persistentVolumeClaim:
+          claimName: graphrag-data-pvc
+      - name: cache-volume
+        emptyDir:
+          sizeLimit: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: website-graphrag-service
+  namespace: graphrag-system
+  labels:
+    app: website-graphrag-processor
+spec:
+  selector:
+    app: website-graphrag-processor
+  ports:
+  - port: 8000
+    targetPort: 8000
+    name: http
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: job-worker
+  namespace: graphrag-system
+  labels:
+    app: job-worker
+    version: v1
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: job-worker
+  template:
+    metadata:
+      labels:
+        app: job-worker
+        version: v1
+    spec:
+      containers:
+      - name: worker
+        image: ipfs-datasets-py:latest
+        imagePullPolicy: IfNotPresent
+        command: ["python", "-m", "ipfs_datasets_py.enterprise_api", "--worker-only"]
+        env:
+        - name: POSTGRES_URL
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: postgres-url
+        - name: REDIS_URL
+          value: redis://redis-service:6379/0
+        - name: ELASTICSEARCH_URL
+          value: http://elasticsearch-service:9200
+        - name: IPFS_API_URL
+          value: http://ipfs-service:5001
+        - name: IPFS_GATEWAY_URL
+          value: http://ipfs-service:8080
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: api-keys
+              key: openai-api-key
+        - name: HUGGINGFACE_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: api-keys
+              key: huggingface-token
+        - name: MAX_PARALLEL_JOBS
+          value: "3"
+        - name: WORKER_MODE
+          value: "true"
+        - name: LOG_LEVEL
+          value: "INFO"
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/config
+        - name: data-volume
+          mountPath: /app/data
+        - name: cache-volume
+          mountPath: /app/cache
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+        livenessProbe:
+          exec:
+            command:
+            - python
+            - -c
+            - "import redis; r = redis.Redis(host='redis-service', port=6379); r.ping()"
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          exec:
+            command:
+            - python
+            - -c
+            - "import redis; r = redis.Redis(host='redis-service', port=6379); r.ping()"
+          initialDelaySeconds: 10
+          periodSeconds: 10
+      volumes:
+      - name: config-volume
+        configMap:
+          name: graphrag-config
+      - name: data-volume
+        persistentVolumeClaim:
+          claimName: graphrag-data-pvc
+      - name: cache-volume
+        emptyDir:
+          sizeLimit: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: graphrag-data-pvc
+  namespace: graphrag-system
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Gi
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: website-graphrag-hpa
+  namespace: graphrag-system
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: website-graphrag-processor
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: job-worker-hpa
+  namespace: graphrag-system
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: job-worker
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 75
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 85
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 30
+      policies:
+      - type: Percent
+        value: 200
+        periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 25
+        periodSeconds: 60

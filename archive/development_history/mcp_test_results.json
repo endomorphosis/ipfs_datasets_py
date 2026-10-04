@@ -1,0 +1,653 @@
+{
+  "dataset_tools": {
+    "load_dataset": {
+      "passed": true,
+      "message": "success",
+      "result": {
+        "status": "success",
+        "dataset_id": "dataset_imdb_137818427698416",
+        "metadata": {
+          "description": "",
+          "citation": "",
+          "homepage": "",
+          "license": "",
+          "version": "0.0.0",
+          "features": "{'text': Value(dtype='string', id=None), 'label': ClassLabel(names=['neg', 'pos'], id=None)}"
+        },
+        "summary": {
+          "num_records": 10,
+          "schema": "{'text': Value(dtype='string', id=None), 'label': ClassLabel(names=['neg', 'pos'], id=None)}",
+          "source": "imdb",
+          "format": "auto-detected"
+        }
+      }
+    },
+    "process_dataset": {
+      "passed": true,
+      "message": "success",
+      "result": {
+        "status": "success",
+        "original_dataset_id": "{'data': [{'id': 1, 'text': 'Hello world', 'label'",
+        "dataset_id": "processed_2920079846989290026",
+        "num_operations": 1,
+        "num_records": 1,
+        "operations_summary": [
+          "filter"
+        ],
+        "transformation_ratio": 0.5
+      }
+    },
+    "save_dataset": {
+      "passed": true,
+      "message": "success",
+      "result": {
+        "status": "success",
+        "dataset_id": "mock_dataset_-8590150590938349895",
+        "destination": "/tmp/test_dataset.json",
+        "format": "json",
+        "location": "/tmp/test_dataset.json",
+        "size": 38,
+        "record_count": 1
+      }
+    }
+  },
+  "ipfs_tools": {
+    "get_from_ipfs": {
+      "passed": false,
+      "message": "Tool error: module 'ipfs_kit_py' has no attribute 'get_async'",
+      "result": {
+        "status": "error",
+        "message": "module 'ipfs_kit_py' has no attribute 'get_async'",
+        "cid": "QmTest123"
+      }
+    },
+    "pin_to_ipfs": {
+      "passed": true,
+      "message": "success",
+      "result": {
+        "status": "success",
+        "cid": "Qm445458705",
+        "content_type": "file",
+        "size": 21,
+        "hash_algo": "sha2-256",
+        "recursive": true,
+        "wrap_with_directory": false
+      }
+    }
+  },
+  "audit_tools": {
+    "record_audit_event": {
+      "passed": true,
+      "message": "success",
+      "result": {
+        "status": "success",
+        "event_id": "f4da62bb-9205-4ef4-8465-4fb0f755034b",
+        "action": "test_action",
+        "severity": "info",
+        "resource_id": "test_resource",
+        "resource_type": null
+      }
+    },
+    "generate_audit_report": {
+      "passed": true,
+      "message": "success",
+      "result": {
+        "status": "success",
+        "report_type": "comprehensive",
+        "output_format": "json",
+        "report": {
+          "report_type": "comprehensive",
+          "timestamp": "2025-06-24T09:40:48.087004",
+          "report_id": "88a7b9af-4af0-4b26-8418-f63550cd3ba8",
+          "executive_summary": {
+            "total_events": 0,
+            "overall_risk_score": 0.0,
+            "overall_compliance_percentage": 0.0,
+            "error_percentage": 0,
+            "critical_findings": [
+              {
+                "type": "compliance",
+                "finding": "Non-compliance with General Data Protection Regulation requirement",
+                "details": "All data access must be logged",
+                "severity": "high"
+              },
+              {
+                "type": "compliance",
+                "finding": "Non-compliance with Health Insurance Portability and Accountability Act requirement",
+                "details": "Implement technical policies and procedures for electronic PHI access",
+                "severity": "high"
+              },
+              {
+                "type": "compliance",
+                "finding": "Non-compliance with Health Insurance Portability and Accountability Act requirement",
+                "details": "Implement hardware, software, and procedural mechanisms to record and examine activity",
+                "severity": "high"
+              }
+            ],
+            "key_metrics": {
+              "total_events": 0,
+              "event_distribution": {
+                "by_category": {},
+                "by_level": {}
+              },
+              "error_percentage": 0,
+              "security_metrics": {
+                "authentication_failures": 0,
+                "security_events": 0,
+                "critical_events": 0
+              },
+              "compliance_status": {
+                "overall_percentage": 0.0
+              }
+            }
+          },
+          "security": {
+            "report_type": "security",
+            "timestamp": "2025-06-24T09:40:48.086568",
+            "report_id": "161c9e8d-338d-4783-b320-947678ef68a2",
+            "summary": {
+              "total_events": 0,
+              "security_events": 0,
+              "authentication_events": 0,
+              "authentication_failures": 0,
+              "critical_events": 0,
+              "overall_risk_score": 0.0,
+              "risk_scores": {
+                "authentication": 0.0,
+                "access_control": 0.0,
+                "system_integrity": 0.0,
+                "compliance": 0.0,
+                "overall": 0.0
+              },
+              "anomalies_detected": 0
+            },
+            "risk_assessment": {
+              "scores": {
+                "authentication": 0.0,
+                "access_control": 0.0,
+                "system_integrity": 0.0,
+                "compliance": 0.0,
+                "overall": 0.0
+              },
+              "factors": [],
+              "trends": {
+                "trend_available": false,
+                "message": "Risk trends require historical data across multiple reports"
+              }
+            },
+            "anomalies": [],
+            "top_security_events": [],
+            "recommendations": [
+              "Maintain current security controls and monitoring"
+            ]
+          },
+          "compliance": {
+            "report_type": "compliance",
+            "timestamp": "2025-06-24T09:40:48.086862",
+            "report_id": "4a143351-7ace-4e4c-b134-103fd7574fa0",
+            "summary": {
+              "overall_compliance_percentage": 0.0,
+              "frameworks_analyzed": 3,
+              "compliant_requirements": 0,
+              "non_compliant_requirements": 15
+            },
+            "frameworks": {
+              "gdpr": {
+                "name": "General Data Protection Regulation",
+                "compliance_percentage": 0.0,
+                "compliant_count": 0,
+                "total_requirements": 5,
+                "requirements": {
+                  "data_access_logging": {
+                    "description": "All data access must be logged",
+                    "compliant": false,
+                    "details": {
+                      "access_events_count": 0,
+                      "modification_events_count": 0,
+                      "user_information_present": false,
+                      "resource_information_present": false,
+                      "missing_controls": [
+                        "No data access events logged"
+                      ],
+                      "recommendation": "Implement comprehensive data access logging"
+                    }
+                  },
+                  "breach_notification": {
+                    "description": "Security breaches must be detected and reported",
+                    "compliant": false,
+                    "details": {
+                      "relevant_events": 0,
+                      "violations": 0,
+                      "missing_controls": [
+                        "Unable to automatically verify this requirement"
+                      ],
+                      "recommendation": "Manually verify compliance with breach_notification"
+                    }
+                  },
+                  "consent_tracking": {
+                    "description": "User consent for data processing must be tracked",
+                    "compliant": false,
+                    "details": {
+                      "relevant_events": 0,
+                      "violations": 0,
+                      "missing_controls": [
+                        "Unable to automatically verify this requirement"
+                      ],
+                      "recommendation": "Manually verify compliance with consent_tracking"
+                    }
+                  },
+                  "data_minimization": {
+                    "description": "Only necessary data should be processed",
+                    "compliant": false,
+                    "details": {
+                      "relevant_events": 0,
+                      "violations": 0,
+                      "missing_controls": [
+                        "Unable to automatically verify this requirement"
+                      ],
+                      "recommendation": "Manually verify compliance with data_minimization"
+                    }
+                  },
+                  "accountability": {
+                    "description": "Evidence of compliance must be maintained",
+                    "compliant": false,
+                    "details": {
+                      "relevant_events": 0,
+                      "violations": 0,
+                      "missing_controls": [
+                        "Unable to automatically verify this requirement"
+                      ],
+                      "recommendation": "Manually verify compliance with accountability"
+                    }
+                  }
+                }
+              },
+              "hipaa": {
+                "name": "Health Insurance Portability and Accountability Act",
+                "compliance_percentage": 0.0,
+                "compliant_count": 0,
+                "total_requirements": 5,
+                "requirements": {
+                  "access_controls": {
+                    "description": "Implement technical policies and procedures for electronic PHI access",
+                    "compliant": false,
+                    "details": {
+                      "relevant_events": 0,
+                      "violations": 0,
+                      "missing_controls": [
+                        "No authentication events logged"
+                      ],
+                      "recommendation": "Implement access_controls controls and ensure they are logged"
+                    }
+                  },
+                  "audit_controls": {
+                    "description": "Implement hardware, software, and procedural mechanisms to record and examine activity",
+                    "compliant": false,
+                    "details": {
+                      "authentication_logging": false,
+                      "access_logging": false,
+                      "modification_logging": false,
+                      "security_logging": false,
+                      "missing_controls": [
+                        "No authentication events logged",
+                        "No data access events logged",
+                        "No data modification events logged",
+                        "No security-related events logged"
+                      ],
+                      "recommendation": "Implement comprehensive audit logging across all required categories"
+                    }
+                  },
+                  "integrity_controls": {
+                    "description": "Implement policies and procedures to protect electronic PHI from improper alteration or destruction",
+                    "compliant": false,
+                    "details": {
+                      "relevant_events": 0,
+                      "violations": 0,
+                      "missing_controls": [
+                        "No data_modification events logged"
+                      ],
+                      "recommendation": "Implement integrity_controls controls and ensure they are logged"
+                    }
+                  },
+                  "authentication": {
+                    "description": "Implement procedures to verify that a person seeking access is the claimed identity",
+                    "compliant": false,
+                    "details": {
+                      "relevant_events": 0,
+                      "violations": 0,
+                      "missing_controls": [
+                        "No authentication events logged"
+                      ],
+                      "recommendation": "Implement authentication controls and ensure they are logged"
+                    }
+                  },
+                  "transmission_security": {
+                    "description": "Implement technical security measures to guard against unauthorized access during transmission",
+                    "compliant": false,
+                    "details": {
+                      "relevant_events": 0,
+                      "violations": 0,
+                      "missing_controls": [
+                        "No security events logged"
+                      ],
+                      "recommendation": "Implement transmission_security controls and ensure they are logged"
+                    }
+                  }
+                }
+              },
+              "soc2": {
+                "name": "Service Organization Control 2",
+                "compliance_percentage": 0.0,
+                "compliant_count": 0,
+                "total_requirements": 5,
+                "requirements": {
+                  "access_control": {
+                    "description": "Access to data and systems should be restricted and monitored",
+                    "compliant": false,
+                    "details": {
+                      "relevant_events": 0,
+                      "violations": 0,
+                      "missing_controls": [
+                        "No authentication events logged"
+                      ],
+                      "recommendation": "Implement access_control controls and ensure they are logged"
+                    }
+                  },
+                  "change_management": {
+                    "description": "Changes to systems should be authorized and logged",
+                    "compliant": false,
+                    "details": {
+                      "relevant_events": 0,
+                      "violations": 0,
+                      "missing_controls": [
+                        "No configuration events logged"
+                      ],
+                      "recommendation": "Implement change_management controls and ensure they are logged"
+                    }
+                  },
+                  "incident_response": {
+                    "description": "Security incidents should be detected, reported, and addressed",
+                    "compliant": false,
+                    "details": {
+                      "relevant_events": 0,
+                      "violations": 0,
+                      "missing_controls": [
+                        "No security events logged"
+                      ],
+                      "recommendation": "Implement incident_response controls and ensure they are logged"
+                    }
+                  },
+                  "risk_management": {
+                    "description": "Risks should be identified and mitigated",
+                    "compliant": false,
+                    "details": {
+                      "relevant_events": 0,
+                      "violations": 0,
+                      "missing_controls": [
+                        "No security events logged"
+                      ],
+                      "recommendation": "Implement risk_management controls and ensure they are logged"
+                    }
+                  },
+                  "monitoring": {
+                    "description": "Systems should be monitored for security and availability",
+                    "compliant": false,
+                    "details": {
+                      "system_events_count": 0,
+                      "security_events_count": 0,
+                      "operational_events_count": 0,
+                      "error_monitoring": false,
+                      "critical_event_monitoring": false,
+                      "missing_controls": [
+                        "No system monitoring events logged",
+                        "No security monitoring events logged",
+                        "No evidence of error or critical event monitoring"
+                      ],
+                      "recommendation": "Enhance system monitoring to cover all required areas"
+                    }
+                  }
+                }
+              }
+            },
+            "top_issues": [
+              {
+                "framework": "General Data Protection Regulation",
+                "requirement": "All data access must be logged",
+                "details": {
+                  "access_events_count": 0,
+                  "modification_events_count": 0,
+                  "user_information_present": false,
+                  "resource_information_present": false,
+                  "missing_controls": [
+                    "No data access events logged"
+                  ],
+                  "recommendation": "Implement comprehensive data access logging"
+                },
+                "recommendation": "Implement comprehensive data access logging"
+              },
+              {
+                "framework": "Health Insurance Portability and Accountability Act",
+                "requirement": "Implement technical policies and procedures for electronic PHI access",
+                "details": {
+                  "relevant_events": 0,
+                  "violations": 0,
+                  "missing_controls": [
+                    "No authentication events logged"
+                  ],
+                  "recommendation": "Implement access_controls controls and ensure they are logged"
+                },
+                "recommendation": "Implement access_controls controls and ensure they are logged"
+              },
+              {
+                "framework": "Health Insurance Portability and Accountability Act",
+                "requirement": "Implement hardware, software, and procedural mechanisms to record and examine activity",
+                "details": {
+                  "authentication_logging": false,
+                  "access_logging": false,
+                  "modification_logging": false,
+                  "security_logging": false,
+                  "missing_controls": [
+                    "No authentication events logged",
+                    "No data access events logged",
+                    "No data modification events logged",
+                    "No security-related events logged"
+                  ],
+                  "recommendation": "Implement comprehensive audit logging across all required categories"
+                },
+                "recommendation": "Implement comprehensive audit logging across all required categories"
+              }
+            ],
+            "recommendations": [
+              "Implement comprehensive data access logging",
+              "Implement access_controls controls and ensure they are logged",
+              "Implement comprehensive audit logging across all required categories",
+              "Develop a comprehensive compliance program addressing major gaps"
+            ]
+          },
+          "operations": {
+            "report_type": "operational",
+            "timestamp": "2025-06-24T09:40:48.086958",
+            "report_id": "b4cea635-1cfd-4323-9852-d9752a2635fb",
+            "summary": {
+              "total_events": 0,
+              "event_distribution": {
+                "by_category": {},
+                "by_level": {},
+                "by_status": {}
+              },
+              "error_percentage": 0
+            },
+            "performance_metrics": {
+              "operation_durations": {},
+              "slowest_operations": [],
+              "error_rates": {}
+            },
+            "resource_usage": {
+              "data_available": false,
+              "message": "Resource usage metrics require system monitoring integration"
+            },
+            "top_users": [],
+            "top_resources": [],
+            "recommendations": [
+              "Current operational metrics indicate good performance"
+            ]
+          },
+          "top_recommendations": [
+            {
+              "category": "security",
+              "recommendation": "Maintain current security controls and monitoring"
+            },
+            {
+              "category": "compliance",
+              "recommendation": "Implement comprehensive data access logging"
+            },
+            {
+              "category": "compliance",
+              "recommendation": "Implement access_controls controls and ensure they are logged"
+            },
+            {
+              "category": "operational",
+              "recommendation": "Current operational metrics indicate good performance"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "vector_tools": {
+    "create_vector_index": {
+      "passed": true,
+      "message": "success",
+      "result": {
+        "status": "success",
+        "index_id": "test_index",
+        "num_vectors": 3,
+        "dimension": 4,
+        "metric": "cosine",
+        "vector_ids": null
+      }
+    },
+    "search_vector_index": {
+      "passed": true,
+      "message": "success",
+      "result": {
+        "status": "success",
+        "index_id": "test_index",
+        "top_k": 5,
+        "num_results": 3,
+        "results": [
+          {
+            "id": 0,
+            "distance": 0.95,
+            "metadata": {
+              "text": "result_0"
+            }
+          },
+          {
+            "id": 1,
+            "distance": 0.85,
+            "metadata": {
+              "text": "result_1"
+            }
+          },
+          {
+            "id": 2,
+            "distance": 0.75,
+            "metadata": {
+              "text": "result_2"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "provenance_tools": {
+    "record_provenance": {
+      "passed": true,
+      "message": "success",
+      "result": {
+        "status": "success",
+        "provenance_id": "ad24677e-8a79-4b6b-8180-52dde7381a4d",
+        "dataset_id": "test_dataset_123",
+        "operation": "test_transformation",
+        "timestamp": 1750750848.131739,
+        "record": {
+          "id": "ad24677e-8a79-4b6b-8180-52dde7381a4d",
+          "record_type": "transformation",
+          "timestamp": 1750750848.131739,
+          "agent_id": "b6d447ab-ca6a-403d-9d36-218da0c23722",
+          "description": "Operation: test_transformation",
+          "metadata": {
+            "tags": [],
+            "timestamp": null
+          },
+          "input_ids": [
+            "input_dataset_1"
+          ],
+          "output_ids": [],
+          "parameters": {
+            "test_param": "test_value"
+          },
+          "cid": null,
+          "transformation_type": "test_transformation",
+          "tool": "mcp-tool",
+          "version": "",
+          "execution_time": null,
+          "success": true,
+          "error_message": null
+        }
+      }
+    }
+  },
+  "security_tools": {
+    "check_access_permission": {
+      "passed": true,
+      "message": "success",
+      "result": {
+        "status": "success",
+        "allowed": false,
+        "user_id": "test_user",
+        "resource_id": "test_resource_123",
+        "permission_type": "read",
+        "resource_type": null
+      }
+    }
+  },
+  "graph_tools": {},
+  "web_archive_tools": {
+    "extract_text_from_warc": {
+      "passed": false,
+      "message": "Exception: extract_text_from_warc() got an unexpected keyword argument 'warc_file_path'",
+      "result": {}
+    },
+    "index_warc": {
+      "passed": false,
+      "message": "Exception: index_warc() got an unexpected keyword argument 'warc_file_path'",
+      "result": {}
+    }
+  },
+  "development_tools": {
+    "generate_test_cases": {
+      "passed": false,
+      "message": "Import error: cannot import name 'generate_test_cases' from 'ipfs_datasets_py.mcp_server.tools.development_tools.test_generator' (/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/development_tools/test_generator.py)",
+      "result": {}
+    },
+    "lint_python_codebase": {
+      "passed": false,
+      "message": "Exception: lint_python_codebase() got an unexpected keyword argument 'include_patterns'",
+      "result": {}
+    }
+  },
+  "lizardpersons_function_tools": {
+    "use_function_as_tool": {
+      "passed": false,
+      "message": "Exception: use_function_as_tool() got an unexpected keyword argument 'args'",
+      "result": {}
+    },
+    "use_cli_program_as_tool": {
+      "passed": false,
+      "message": "Exception: use_cli_program_as_tool() got an unexpected keyword argument 'args'",
+      "result": {}
+    }
+  }
+}

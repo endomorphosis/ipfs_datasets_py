@@ -109,7 +109,9 @@ def _specialize_common(
     """Bind a common rule to one or more chain namespaces."""
 
     if rule.chain_namespaces:
-        raise CryptoIRValidationError(f"cannot specialize non-common rule {rule.rule_id!r}")
+        raise CryptoIRValidationError(
+            f"cannot specialize non-common rule {rule.rule_id!r}"
+        )
     namespaces = tuple(chain_namespaces)
     if not namespaces:
         raise CryptoIRValidationError("chain specialization requires namespaces")
@@ -125,11 +127,15 @@ def _specialize_common(
         semantic_preconditions=tuple(
             dict.fromkeys((*rule.semantic_preconditions, *extra_semantic))
         ),
-        required_evidence=tuple(dict.fromkeys((*rule.required_evidence, *extra_evidence))),
+        required_evidence=tuple(
+            dict.fromkeys((*rule.required_evidence, *extra_evidence))
+        ),
         violation_witness=rule.violation_witness,
         unsupported_fallback=rule.unsupported_fallback,
         chain_namespaces=namespaces,
-        trusted_assumptions=tuple(dict.fromkeys((*rule.trusted_assumptions, *extra_assumptions))),
+        trusted_assumptions=tuple(
+            dict.fromkeys((*rule.trusted_assumptions, *extra_assumptions))
+        ),
         fact_id_templates=rule.fact_id_templates,
         summary=rule.summary,
         pack_version=CHAIN_RULE_PACK_VERSION,
@@ -376,7 +382,8 @@ def bitcoin_chain_rules() -> tuple[SecurityRule, ...]:
             rule_id_prefix="bitcoin",
             extra_semantic=(
                 ("spend_paths", "sighash")
-                if rule.category in {ObligationCategory.AUTHORIZATION, ObligationCategory.TIMELOCK}
+                if rule.category
+                in {ObligationCategory.AUTHORIZATION, ObligationCategory.TIMELOCK}
                 else ()
             ),
             extra_evidence=(
@@ -428,7 +435,9 @@ def bitcoin_chain_rules() -> tuple[SecurityRule, ...]:
                 "locktime conditions encoded in the script and transaction "
                 "fields are satisfied."
             ),
-            formal_target=("spend enabled iff cltv_csv_and_tx_locktime_satisfied"),
+            formal_target=(
+                "spend enabled iff cltv_csv_and_tx_locktime_satisfied"
+            ),
             formal_target_kind=FormalTargetKind.TEMPORAL,
             chain_namespaces=(CHAIN_NS_BIP122,),
             semantic_preconditions=("workflow_time", "spend_paths"),
@@ -492,7 +501,9 @@ def xrpl_chain_rules() -> tuple[SecurityRule, ...]:
                 "Each accepted transaction consumes a unique account sequence "
                 "or ticket and is bound to the ledger network id."
             ),
-            formal_target=("accept(tx) once per (account, sequence_or_ticket, network_id)"),
+            formal_target=(
+                "accept(tx) once per (account, sequence_or_ticket, network_id)"
+            ),
             formal_target_kind=FormalTargetKind.FOL,
             chain_namespaces=(CHAIN_NS_XRPL,),
             semantic_preconditions=("replay_domain", "ledger_objects"),
@@ -567,7 +578,8 @@ def worldcoin_chain_rules() -> tuple[SecurityRule, ...]:
             ),
             extra_assumptions=(
                 ("worldcoin.verifier_code_epoch_pinned",)
-                if rule.category in {ObligationCategory.REPLAY, ObligationCategory.UPGRADE}
+                if rule.category
+                in {ObligationCategory.REPLAY, ObligationCategory.UPGRADE}
                 else ()
             ),
         )
@@ -615,7 +627,9 @@ def worldcoin_chain_rules() -> tuple[SecurityRule, ...]:
                 "worldcoin.proof_not_payment_authority",
             ),
             fact_id_templates=("binding:*", "epoch:*"),
-            summary=("World ID proof domain binding; never elevates to payment auth"),
+            summary=(
+                "World ID proof domain binding; never elevates to payment auth"
+            ),
         ),
         _chain_rule(
             rule_id="worldcoin.proof.not_payment",
@@ -672,20 +686,25 @@ class ChainRulePack:
         if not isinstance(self.chain_namespace, str) or not self.chain_namespace.strip():
             raise CryptoIRValidationError("chain_namespace must be a non-empty string")
         if self.chain_namespace != self.chain_namespace.strip():
-            raise CryptoIRValidationError("chain_namespace must not have surrounding whitespace")
+            raise CryptoIRValidationError(
+                "chain_namespace must not have surrounding whitespace"
+            )
         if not isinstance(self.pack_version, str) or not self.pack_version:
             raise CryptoIRValidationError("pack_version must be a non-empty string")
         if not isinstance(self.rules, tuple):
             object.__setattr__(self, "rules", tuple(self.rules))
         ids = [rule.rule_id for rule in self.rules]
         if len(ids) != len(set(ids)):
-            raise CryptoIRValidationError(f"duplicate rule ids in pack for {self.chain_namespace}")
+            raise CryptoIRValidationError(
+                f"duplicate rule ids in pack for {self.chain_namespace}"
+            )
         for rule in self.rules:
             if not isinstance(rule, SecurityRule):
                 raise CryptoIRValidationError("pack rules must be SecurityRule")
             if not rule.supports_chain(self.chain_namespace):
                 raise CryptoIRValidationError(
-                    f"rule {rule.rule_id} does not support pack namespace {self.chain_namespace}"
+                    f"rule {rule.rule_id} does not support pack namespace "
+                    f"{self.chain_namespace}"
                 )
 
     def rule_ids(self) -> tuple[str, ...]:
@@ -695,7 +714,9 @@ class ChainRulePack:
         for rule in self.rules:
             if rule.rule_id == rule_id:
                 return rule
-        raise CryptoIRValidationError(f"unknown rule {rule_id!r} in pack {self.chain_namespace}")
+        raise CryptoIRValidationError(
+            f"unknown rule {rule_id!r} in pack {self.chain_namespace}"
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {

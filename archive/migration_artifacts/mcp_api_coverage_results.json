@@ -1,0 +1,116 @@
+{
+  "feature_coverage": {
+    "dataset_operations": {
+      "present_tools": [
+        "dataset_tools/load_dataset.py",
+        "dataset_tools/save_dataset.py",
+        "dataset_tools/process_dataset.py",
+        "dataset_tools/convert_dataset_format.py"
+      ],
+      "missing_tools": [],
+      "coverage_percentage": 100.0
+    },
+    "ipfs_operations": {
+      "present_tools": [
+        "ipfs_tools/get_from_ipfs.py",
+        "ipfs_tools/pin_to_ipfs.py"
+      ],
+      "missing_tools": [],
+      "coverage_percentage": 100.0
+    },
+    "vector_operations": {
+      "present_tools": [
+        "vector_tools/create_vector_index.py",
+        "vector_tools/search_vector_index.py"
+      ],
+      "missing_tools": [],
+      "coverage_percentage": 100.0
+    },
+    "graph_operations": {
+      "present_tools": [
+        "graph_tools/query_knowledge_graph.py"
+      ],
+      "missing_tools": [],
+      "coverage_percentage": 100.0
+    },
+    "audit_operations": {
+      "present_tools": [
+        "audit_tools/record_audit_event.py",
+        "audit_tools/generate_audit_report.py"
+      ],
+      "missing_tools": [],
+      "coverage_percentage": 100.0
+    },
+    "security_operations": {
+      "present_tools": [
+        "security_tools/check_access_permission.py"
+      ],
+      "missing_tools": [],
+      "coverage_percentage": 100.0
+    },
+    "provenance_operations": {
+      "present_tools": [
+        "provenance_tools/record_provenance.py"
+      ],
+      "missing_tools": [],
+      "coverage_percentage": 100.0
+    },
+    "web_archive_operations": {
+      "present_tools": [
+        "web_archive_tools/create_warc.py",
+        "web_archive_tools/index_warc.py",
+        "web_archive_tools/extract_dataset_from_cdxj.py",
+        "web_archive_tools/extract_text_from_warc.py",
+        "web_archive_tools/extract_links_from_warc.py",
+        "web_archive_tools/extract_metadata_from_warc.py"
+      ],
+      "missing_tools": [],
+      "coverage_percentage": 100.0
+    }
+  },
+  "available_tools": {
+    "cli": [
+      "execute_command.py"
+    ],
+    "security_tools": [
+      "check_access_permission.py"
+    ],
+    "functions": [
+      "execute_python_snippet.py"
+    ],
+    "ipfs_tools": [
+      "get_from_ipfs.py",
+      "pin_to_ipfs.py"
+    ],
+    "graph_tools": [
+      "query_knowledge_graph.py"
+    ],
+    "audit_tools": [
+      "record_audit_event.py",
+      "generate_audit_report.py"
+    ],
+    "vector_tools": [
+      "search_vector_index.py",
+      "create_vector_index.py"
+    ],
+    "provenance_tools": [
+      "record_provenance.py"
+    ],
+    "web_archive_tools": [
+      "extract_dataset_from_cdxj.py",
+      "create_warc.py",
+      "extract_links_from_warc.py",
+      "index_warc.py",
+      "extract_metadata_from_warc.py",
+      "extract_text_from_warc.py"
+    ],
+    "dataset_tools": [
+      "save_dataset.py",
+      "convert_dataset_format.py",
+      "load_dataset.py",
+      "process_dataset.py"
+    ]
+  },
+  "overall_coverage": 100.0,
+  "missing_features": []
+}

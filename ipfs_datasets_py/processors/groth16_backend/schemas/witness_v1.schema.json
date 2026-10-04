@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/ipfs_datasets_py/groth16_backend/witness_v1.schema.json",
+  "title": "Groth16 WitnessInput (V1)",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "private_axioms",
+    "theorem",
+    "axioms_commitment_hex",
+    "theorem_hash_hex",
+    "circuit_version",
+    "ruleset_id"
+  ],
+  "properties": {
+    "private_axioms": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "theorem": { "type": "string", "minLength": 1 },
+    "axioms_commitment_hex": {
+      "type": "string",
+      "pattern": "^(0x)?[0-9a-fA-F]{64}$"
+    },
+    "theorem_hash_hex": {
+      "type": "string",
+      "pattern": "^(0x)?[0-9a-fA-F]{64}$"
+    },
+    "circuit_version": { "type": "integer", "minimum": 0 },
+    "ruleset_id": { "type": "string", "minLength": 1 },
+    "security_level": { "type": "integer", "minimum": 0 }
+  }
+}

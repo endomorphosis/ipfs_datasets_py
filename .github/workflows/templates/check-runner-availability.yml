@@ -1,0 +1,113 @@
+name: Check Self-Hosted Runner Availability
+
+on:
+  workflow_call:
+    inputs:
+      runner_labels:
+        description: 'Comma-separated list of required runner labels'
+        required: true
+        type: string
+      skip_if_unavailable:
+        description: 'Skip workflow if runners unavailable (true) or fail (false)'
+        required: false
+        type: boolean
+        default: true
+    outputs:
+      runners_available:
+        description: 'Whether self-hosted runners with required labels are available'
+        value: ${{ jobs.check.outputs.available }}
+      should_run:
+        description: 'Whether workflow should proceed'
+        value: ${{ jobs.check.outputs.should_run }}
+
+jobs:
+  check:
+    name: Check Runner Availability
+    runs-on: ubuntu-latest
+    outputs:
+      available: ${{ steps.check.outputs.available }}
+      should_run: ${{ steps.check.outputs.should_run }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+      
+      - name: Check runner availability
+        id: check
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          set +e  # Don't exit on error
+          
+          echo "## 🏃 Runner Availability Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Required labels:** ${{ inputs.runner_labels }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Run availability check
+          python .github/scripts/check_runner_availability.py \
+            --labels "${{ inputs.runner_labels }}" \
+            --retries 3 \
+            --delay 2
+          
+          exit_code=$?
+          
+          # Interpret exit codes
+          if [ $exit_code -eq 0 ]; then
+            # Runners available
+            echo "available=true" >> $GITHUB_OUTPUT
+            echo "should_run=true" >> $GITHUB_OUTPUT
+            echo "✅ **Status:** Runners available" >> $GITHUB_STEP_SUMMARY
+            echo "🎯 **Action:** Workflow will proceed" >> $GITHUB_STEP_SUMMARY
+            exit 0
+          elif [ $exit_code -eq 1 ]; then
+            # No runners available
+            echo "available=false" >> $GITHUB_OUTPUT
+            if [ "${{ inputs.skip_if_unavailable }}" == "true" ]; then
+              echo "should_run=false" >> $GITHUB_OUTPUT
+              echo "⚠️ **Status:** No runners available" >> $GITHUB_STEP_SUMMARY
+              echo "⏭️ **Action:** Workflow will skip gracefully" >> $GITHUB_STEP_SUMMARY
+              exit 0  # Success - graceful skip
+            else
+              echo "should_run=false" >> $GITHUB_OUTPUT
+              echo "❌ **Status:** No runners available" >> $GITHUB_STEP_SUMMARY
+              echo "🛑 **Action:** Workflow will fail" >> $GITHUB_STEP_SUMMARY
+              exit 1  # Fail workflow
+            fi
+          else
+            # Error checking runners
+            echo "available=unknown" >> $GITHUB_OUTPUT
+            if [ "${{ inputs.skip_if_unavailable }}" == "true" ]; then
+              echo "should_run=false" >> $GITHUB_OUTPUT
+              echo "⚠️ **Status:** Error checking runners (exit code: $exit_code)" >> $GITHUB_STEP_SUMMARY
+              echo "⏭️ **Action:** Workflow will skip gracefully" >> $GITHUB_STEP_SUMMARY
+              exit 0  # Success - graceful skip on error
+            else
+              echo "should_run=false" >> $GITHUB_OUTPUT
+              echo "❌ **Status:** Error checking runners (exit code: $exit_code)" >> $GITHUB_STEP_SUMMARY
+              echo "🛑 **Action:** Workflow will fail" >> $GITHUB_STEP_SUMMARY
+              exit 1  # Fail workflow
+            fi
+          fi
+      
+      - name: Summary
+        if: always()
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Configuration:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Skip if unavailable: ${{ inputs.skip_if_unavailable }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Repository: ${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Triggered by: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY

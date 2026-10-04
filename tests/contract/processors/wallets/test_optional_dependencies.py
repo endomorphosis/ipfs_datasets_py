@@ -26,9 +26,16 @@ REPO_ROOT = Path(__file__).resolve().parents[5]
 IPFS_DATASETS_ROOT = REPO_ROOT / "ipfs_datasets_py"
 PYPROJECT = IPFS_DATASETS_ROOT / "pyproject.toml"
 SETUP_PY = IPFS_DATASETS_ROOT / "setup.py"
-DEPENDENCIES_DOC = IPFS_DATASETS_ROOT / "docs" / "dependencies" / "WALLET_PROCESSOR_DEPENDENCIES.md"
+DEPENDENCIES_DOC = (
+    IPFS_DATASETS_ROOT / "docs" / "dependencies" / "WALLET_PROCESSOR_DEPENDENCIES.md"
+)
 GOLDEN_VECTORS = (
-    IPFS_DATASETS_ROOT / "tests" / "fixtures" / "wallets" / "worldcoin" / "golden_vectors.json"
+    IPFS_DATASETS_ROOT
+    / "tests"
+    / "fixtures"
+    / "wallets"
+    / "worldcoin"
+    / "golden_vectors.json"
 )
 ROOT_PYPROJECT = REPO_ROOT / "pyproject.toml"
 
@@ -188,9 +195,9 @@ def test_pyproject_and_setup_wallet_extras_match(
     setup_extras: dict[str, list[str]],
 ) -> None:
     for name in REQUIRED_WALLET_EXTRAS:
-        assert _sorted_req_set(pyproject_extras[name]) == _sorted_req_set(setup_extras[name]), (
-            f"mismatched pins for extra {name!r}"
-        )
+        assert _sorted_req_set(pyproject_extras[name]) == _sorted_req_set(
+            setup_extras[name]
+        ), f"mismatched pins for extra {name!r}"
 
 
 def test_worldcoin_extra_pins_eth_hash_and_eth_keys(
@@ -198,7 +205,9 @@ def test_worldcoin_extra_pins_eth_hash_and_eth_keys(
 ) -> None:
     names = {_requirement_name(r) for r in pyproject_extras["wallets-worldcoin"]}
     for required in WORLDCOIN_REQUIRED_PACKAGES:
-        assert required in names, f"wallets-worldcoin must pin {required!r}; got {sorted(names)}"
+        assert required in names, (
+            f"wallets-worldcoin must pin {required!r}; got {sorted(names)}"
+        )
 
 
 def test_wallets_all_is_superset_of_chain_extras(
@@ -209,7 +218,9 @@ def test_wallets_all_is_superset_of_chain_extras(
         if name in {"wallets-all"}:
             continue
         for req in pyproject_extras[name]:
-            assert _normalize_req(req) in all_pins, f"wallets-all missing pin from {name}: {req}"
+            assert _normalize_req(req) in all_pins, (
+                f"wallets-all missing pin from {name}: {req}"
+            )
 
 
 def test_no_forbidden_chain_sdks_in_wallet_extras(
@@ -270,7 +281,9 @@ def test_chain_ledger_extras_have_no_sdk_packages(
         "SDK convenience",
     ],
 )
-def test_dependencies_doc_covers_acceptance_terms(dependencies_doc: str, term: str) -> None:
+def test_dependencies_doc_covers_acceptance_terms(
+    dependencies_doc: str, term: str
+) -> None:
     assert term in dependencies_doc, f"dependencies doc missing term: {term!r}"
 
 
@@ -382,11 +395,14 @@ def test_wallet_extras_not_required_for_base_package_metadata() -> None:
     setup_text = SETUP_PY.read_text(encoding="utf-8")
     for forbidden in ("web3", "solana", "xrpl-py", "xumm-sdk", "bitcoinlib"):
         # Allow comments mentioning rejection; forbid requirement-like pins.
-        for match in re.finditer(rf"['\"]({re.escape(forbidden)}[^'\"]*)['\"]", setup_text):
+        for match in re.finditer(
+            rf"['\"]({re.escape(forbidden)}[^'\"]*)['\"]", setup_text
+        ):
             snippet = match.group(1)
             # Only fail if it looks like a requirement entry (version bound or bare).
             if snippet.startswith(forbidden) and (
-                snippet == forbidden or snippet[len(forbidden) : len(forbidden) + 1] in "><=!["
+                snippet == forbidden
+                or snippet[len(forbidden) : len(forbidden) + 1] in "><=!["
             ):
                 # wallet extras section may discuss them in comments only — string
                 # literals in comments are not captured by this regex. Fail only
@@ -428,7 +444,9 @@ print(json.dumps({
     "xrpl": present("xrpl"),
     "coincurve": present("coincurve"),
 }))
-""" % (str(IPFS_DATASETS_ROOT),)
+""" % (
+        str(IPFS_DATASETS_ROOT),
+    )
     result = subprocess.run(
         [sys.executable, "-c", code],
         cwd=str(REPO_ROOT),

@@ -1,0 +1,56 @@
+[
+  {
+    "id": "jrm_01",
+    "jurisdiction": "US-FEDERAL",
+    "sentence": "The contractor shall submit the report within 30 days",
+    "events": [],
+    "expected_status": "non_compliant",
+    "expected_violation_type": "omission",
+    "expected_proof_id_stable": true
+  },
+  {
+    "id": "jrm_02",
+    "jurisdiction": "US-FEDERAL",
+    "sentence": "The vendor shall not disclose confidential information",
+    "events": [],
+    "expected_status": "compliant",
+    "expected_violation_type": null,
+    "expected_proof_id_stable": true
+  },
+  {
+    "id": "jrm_03",
+    "jurisdiction": "US-CA",
+    "sentence": "The contractor shall file the document within 60 days",
+    "events": [],
+    "expected_status": "non_compliant",
+    "expected_violation_type": "omission",
+    "expected_proof_id_stable": true
+  },
+  {
+    "id": "jrm_04",
+    "jurisdiction": "US-CA",
+    "sentence": "The agency shall not share personal data",
+    "events": [],
+    "expected_status": "compliant",
+    "expected_violation_type": null,
+    "expected_proof_id_stable": true
+  },
+  {
+    "id": "jrm_05",
+    "jurisdiction": "US-NY",
+    "sentence": "The employer shall provide written notice within 90 days",
+    "events": [],
+    "expected_status": "non_compliant",
+    "expected_violation_type": "omission",
+    "expected_proof_id_stable": true
+  },
+  {
+    "id": "jrm_06",
+    "jurisdiction": "US-NY",
+    "sentence": "The operator shall not charge excessive fees",
+    "events": [],
+    "expected_status": "compliant",
+    "expected_violation_type": null,
+    "expected_proof_id_stable": true
+  }
+]

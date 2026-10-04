@@ -30,7 +30,9 @@ import pytest
 # Constants (must match main.nr)
 # ---------------------------------------------------------------------------
 
-P_BN254: int = 21888242871839275222246405745257275088548364400416034343698204186575808495617
+P_BN254: int = (
+    21888242871839275222246405745257275088548364400416034343698204186575808495617
+)
 
 MAX_TRACE_STEPS: int = 16
 CANONICAL_TRACE_LENGTH: int = 8
@@ -263,7 +265,9 @@ def encode_public_commitment_fields(public_strings: Mapping[str, str]) -> dict[s
     for key in PUBLIC_COMMITMENT_KEYS:
         value = public_strings[key]
         if not isinstance(value, str) or not value.strip():
-            raise ProgramContractTraceError("public input %s must be a non-empty string" % key)
+            raise ProgramContractTraceError(
+                "public input %s must be a non-empty string" % key
+            )
         fields[f"{key}_field"] = field_element_from_text(value.strip())
     return fields
 
@@ -348,11 +352,7 @@ class ProgramContractTraceVectors:
         """Combined public + private map suitable for a prover frontend."""
 
         return {
-            **{
-                name: self.public_fields[name]
-                for name in PUBLIC_NOIR_FIELD_NAMES
-                if name.endswith("_field")
-            },
+            **{name: self.public_fields[name] for name in PUBLIC_NOIR_FIELD_NAMES if name.endswith("_field")},
             "trace_length": self.trace_length,
             "circuit_version": self.circuit_version,
             **self.witness_vector(),
@@ -433,7 +433,9 @@ def check_circuit_constraints(vectors: ProgramContractTraceVectors) -> int:
     for key, opening_name in zip(PUBLIC_COMMITMENT_KEYS, OPENING_WITNESS_NAMES):
         field_name = f"{key}_field"
         if vectors.witness_openings.get(opening_name) != f[field_name]:
-            raise ProgramContractTraceError("commitment opening mismatch for %s" % key)
+            raise ProgramContractTraceError(
+                "commitment opening mismatch for %s" % key
+            )
 
     for key in (
         "forest_commitment",
@@ -455,7 +457,8 @@ def check_circuit_constraints(vectors: ProgramContractTraceVectors) -> int:
 
     if vectors.trace_length != CANONICAL_TRACE_LENGTH:
         raise ProgramContractTraceError(
-            "trace_length must equal %s (got %s)" % (CANONICAL_TRACE_LENGTH, vectors.trace_length)
+            "trace_length must equal %s (got %s)"
+            % (CANONICAL_TRACE_LENGTH, vectors.trace_length)
         )
     if vectors.trace_length <= 0 or vectors.trace_length > MAX_TRACE_STEPS:
         raise ProgramContractTraceError("trace_length out of bounds")
@@ -467,7 +470,9 @@ def check_circuit_constraints(vectors: ProgramContractTraceVectors) -> int:
         ("step_binding_fields", vectors.step_binding_fields),
     ):
         if len(arr) != MAX_TRACE_STEPS:
-            raise ProgramContractTraceError("%s must have length %s" % (name, MAX_TRACE_STEPS))
+            raise ProgramContractTraceError(
+                "%s must have length %s" % (name, MAX_TRACE_STEPS)
+            )
 
     n = vectors.trace_length
     for i in range(MAX_TRACE_STEPS):
@@ -478,57 +483,19 @@ def check_circuit_constraints(vectors: ProgramContractTraceVectors) -> int:
                 or vectors.step_target_states[i] != 0
                 or vectors.step_binding_fields[i] != 0
             ):
-                raise ProgramContractTraceError("padding ambiguity at index %s" % i)
+                raise ProgramContractTraceError(
+                    "padding ambiguity at index %s" % i
+                )
 
     expected_steps = (
-        (
-            KIND_CODES["open_forest"],
-            STATE_CODES["init"],
-            STATE_CODES["forest_opened"],
-            f["forest_commitment_field"],
-        ),
-        (
-            KIND_CODES["open_inventory"],
-            STATE_CODES["forest_opened"],
-            STATE_CODES["inventory_opened"],
-            f["inventory_commitment_field"],
-        ),
-        (
-            KIND_CODES["open_contract"],
-            STATE_CODES["inventory_opened"],
-            STATE_CODES["contract_opened"],
-            f["contract_commitment_field"],
-        ),
-        (
-            KIND_CODES["open_call_slice"],
-            STATE_CODES["contract_opened"],
-            STATE_CODES["call_slice_opened"],
-            f["call_slice_commitment_field"],
-        ),
-        (
-            KIND_CODES["open_assumptions"],
-            STATE_CODES["call_slice_opened"],
-            STATE_CODES["assumptions_opened"],
-            f["assumptions_commitment_field"],
-        ),
-        (
-            KIND_CODES["bind_versions"],
-            STATE_CODES["assumptions_opened"],
-            STATE_CODES["versions_bound"],
-            _versions_binding(f),
-        ),
-        (
-            KIND_CODES["commit_result"],
-            STATE_CODES["versions_bound"],
-            STATE_CODES["result_committed"],
-            f["result_commitment_field"],
-        ),
-        (
-            KIND_CODES["terminate"],
-            STATE_CODES["result_committed"],
-            STATE_CODES["terminal"],
-            _key_identity_binding(f),
-        ),
+        (KIND_CODES["open_forest"], STATE_CODES["init"], STATE_CODES["forest_opened"], f["forest_commitment_field"]),
+        (KIND_CODES["open_inventory"], STATE_CODES["forest_opened"], STATE_CODES["inventory_opened"], f["inventory_commitment_field"]),
+        (KIND_CODES["open_contract"], STATE_CODES["inventory_opened"], STATE_CODES["contract_opened"], f["contract_commitment_field"]),
+        (KIND_CODES["open_call_slice"], STATE_CODES["contract_opened"], STATE_CODES["call_slice_opened"], f["call_slice_commitment_field"]),
+        (KIND_CODES["open_assumptions"], STATE_CODES["call_slice_opened"], STATE_CODES["assumptions_opened"], f["assumptions_commitment_field"]),
+        (KIND_CODES["bind_versions"], STATE_CODES["assumptions_opened"], STATE_CODES["versions_bound"], _versions_binding(f)),
+        (KIND_CODES["commit_result"], STATE_CODES["versions_bound"], STATE_CODES["result_committed"], f["result_commitment_field"]),
+        (KIND_CODES["terminate"], STATE_CODES["result_committed"], STATE_CODES["terminal"], _key_identity_binding(f)),
     )
     for i, (kind, source, target, binding) in enumerate(expected_steps):
         if vectors.step_kinds[i] != kind:
@@ -563,16 +530,24 @@ def _mutate_vectors(
         ),
         step_kinds=list(step_kinds if step_kinds is not None else vectors.step_kinds),
         step_source_states=list(
-            step_source_states if step_source_states is not None else vectors.step_source_states
+            step_source_states
+            if step_source_states is not None
+            else vectors.step_source_states
         ),
         step_target_states=list(
-            step_target_states if step_target_states is not None else vectors.step_target_states
+            step_target_states
+            if step_target_states is not None
+            else vectors.step_target_states
         ),
         step_binding_fields=list(
-            step_binding_fields if step_binding_fields is not None else vectors.step_binding_fields
+            step_binding_fields
+            if step_binding_fields is not None
+            else vectors.step_binding_fields
         ),
         trace_length=vectors.trace_length if trace_length is None else trace_length,
-        circuit_version=(vectors.circuit_version if circuit_version is None else circuit_version),
+        circuit_version=(
+            vectors.circuit_version if circuit_version is None else circuit_version
+        ),
     )
 
 
@@ -626,10 +601,16 @@ def test_circuit_pins_expected_identity_fields() -> None:
     code = _nr_code()
     assert f"global EXPECTED_CIRCUIT_ID_FIELD: Field = {EXPECTED_CIRCUIT_ID_FIELD};" in code
     assert f"global EXPECTED_CODEC_ID_FIELD: Field = {EXPECTED_CODEC_ID_FIELD};" in code
-    assert f"global EXPECTED_CODEC_VERSION_FIELD: Field = {EXPECTED_CODEC_VERSION_FIELD};" in code
+    assert (
+        f"global EXPECTED_CODEC_VERSION_FIELD: Field = {EXPECTED_CODEC_VERSION_FIELD};"
+        in code
+    )
     assert "assert(circuit_id_field == EXPECTED_CIRCUIT_ID_FIELD);" in code
     assert "assert(public_input_codec_id_field == EXPECTED_CODEC_ID_FIELD);" in code
-    assert "assert(public_input_codec_version_field == EXPECTED_CODEC_VERSION_FIELD);" in code
+    assert (
+        "assert(public_input_codec_version_field == EXPECTED_CODEC_VERSION_FIELD);"
+        in code
+    )
 
 
 def test_circuit_binds_openings_to_public_fields() -> None:
@@ -700,7 +681,9 @@ def test_field_encoding_is_deterministic_and_in_range() -> None:
 def test_expected_identity_fields_match_python_codec() -> None:
     assert EXPECTED_CIRCUIT_ID_FIELD == field_element_from_text(CIRCUIT_ID)
     assert EXPECTED_CODEC_ID_FIELD == field_element_from_text(PUBLIC_INPUT_CODEC_ID)
-    assert EXPECTED_CODEC_VERSION_FIELD == field_element_from_text(PUBLIC_INPUT_CODEC_VERSION)
+    assert EXPECTED_CODEC_VERSION_FIELD == field_element_from_text(
+        PUBLIC_INPUT_CODEC_VERSION
+    )
 
 
 def test_canonical_vectors_pass_reference_checker() -> None:
@@ -778,9 +761,13 @@ def test_reject_omitted_steps_via_wrong_length() -> None:
 def test_reject_overflow_trace_length() -> None:
     vectors = build_canonical_vectors()
     with pytest.raises(ProgramContractTraceError, match="trace_length"):
-        check_circuit_constraints(_mutate_vectors(vectors, trace_length=MAX_TRACE_STEPS + 1))
+        check_circuit_constraints(
+            _mutate_vectors(vectors, trace_length=MAX_TRACE_STEPS + 1)
+        )
     with pytest.raises(ProgramContractTraceError, match="trace_length"):
-        check_circuit_constraints(_mutate_vectors(vectors, trace_length=MAX_TRACE_STEPS))
+        check_circuit_constraints(
+            _mutate_vectors(vectors, trace_length=MAX_TRACE_STEPS)
+        )
 
 
 def test_reject_forged_result() -> None:
@@ -838,7 +825,9 @@ def test_reject_wrong_version_binding() -> None:
     openings = dict(vectors.witness_openings)
     openings["open_analyzer_version"] = fields["analyzer_version_field"]
     # step 5 still binds old versions sum
-    mutated = _mutate_vectors(vectors, public_fields=fields, witness_openings=openings)
+    mutated = _mutate_vectors(
+        vectors, public_fields=fields, witness_openings=openings
+    )
     with pytest.raises(ProgramContractTraceError, match="binding mismatch"):
         check_circuit_constraints(mutated)
 
@@ -846,7 +835,9 @@ def test_reject_wrong_version_binding() -> None:
 def test_reject_opening_mismatch() -> None:
     vectors = build_canonical_vectors()
     openings = dict(vectors.witness_openings)
-    openings["open_forest_commitment"] = (openings["open_forest_commitment"] + 1) % P_BN254
+    openings["open_forest_commitment"] = (
+        openings["open_forest_commitment"] + 1
+    ) % P_BN254
     mutated = _mutate_vectors(vectors, witness_openings=openings)
     with pytest.raises(ProgramContractTraceError, match="opening mismatch"):
         check_circuit_constraints(mutated)
@@ -899,7 +890,9 @@ def test_reject_altered_key_identity() -> None:
     openings = dict(vectors.witness_openings)
     openings["open_proving_key_id"] = fields["proving_key_id_field"]
     # terminate binding still uses old key identity sum
-    mutated = _mutate_vectors(vectors, public_fields=fields, witness_openings=openings)
+    mutated = _mutate_vectors(
+        vectors, public_fields=fields, witness_openings=openings
+    )
     with pytest.raises(ProgramContractTraceError, match="binding mismatch"):
         check_circuit_constraints(mutated)
 
@@ -956,9 +949,9 @@ def test_nargo_check_when_toolchain_available() -> None:
         timeout=120,
         check=False,
     )
-    assert result.returncode == 0, "nargo check failed:\nstdout=%s\nstderr=%s" % (
-        result.stdout,
-        result.stderr,
+    assert result.returncode == 0, (
+        "nargo check failed:\nstdout=%s\nstderr=%s"
+        % (result.stdout, result.stderr)
     )
 
 

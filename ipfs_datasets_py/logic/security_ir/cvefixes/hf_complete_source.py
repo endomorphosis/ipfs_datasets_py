@@ -46,16 +46,24 @@ from .hf_source import (
 from .schemas import ReleaseManifest
 
 
-HF_COMPLETE_SOURCE_SCHEMA_VERSION: Final = "cvefixes-huggingface-complete-source/v1"
-HF_COMPLETE_SOURCE_CACHE_SCHEMA_VERSION: Final = "cvefixes-huggingface-complete-source-cache/v1"
+HF_COMPLETE_SOURCE_SCHEMA_VERSION: Final = (
+    "cvefixes-huggingface-complete-source/v1"
+)
+HF_COMPLETE_SOURCE_CACHE_SCHEMA_VERSION: Final = (
+    "cvefixes-huggingface-complete-source-cache/v1"
+)
 COMPLETE_BUILD_SCHEMA_VERSION: Final = "cvefixes-complete-hf-build/v1"
 COMPLETE_METADATA_PATH: Final = "release-metadata.json"
 ORIGINAL_MIRROR_PROFILE: Final = "cvefixes-byte-preserving-mirror/v1"
 DERIVED_SECURITY_IR_PROFILE: Final = "public-metadata-and-body-digests"
 META_SCHEMA_VERSION: Final = "cvefixes-hf-shard-meta/v1"
-ORIGINAL_ROW_INDEX_SCHEMA_VERSION: Final = "cvefixes-hf-original-row-index/v1"
+ORIGINAL_ROW_INDEX_SCHEMA_VERSION: Final = (
+    "cvefixes-hf-original-row-index/v1"
+)
 PINNED_SOURCE_DATASET_ID: Final = "hitoshura25/cvefixes"
-PINNED_SOURCE_REVISION: Final = "d4f5c4ea65329d9ccbb8a3b3149e5d06eda5edb2"
+PINNED_SOURCE_REVISION: Final = (
+    "d4f5c4ea65329d9ccbb8a3b3149e5d06eda5edb2"
+)
 PINNED_SOURCE_PROFILE_SHA256: Final = (
     "163e267f9ffd9b5d0193dc26014b775c8ebb7dc804772473ef8a6aa8bd3eb3d1"
 )
@@ -91,7 +99,9 @@ _MANIFEST_FIELDS: Final = frozenset(
         "vector",
     }
 )
-_ARTIFACT_FIELDS: Final = frozenset({"byte_length", "content_id", "media_type", "path", "sha256"})
+_ARTIFACT_FIELDS: Final = frozenset(
+    {"byte_length", "content_id", "media_type", "path", "sha256"}
+)
 _PARQUET_ARTIFACT_FIELDS: Final = _ARTIFACT_FIELDS | {
     "config_name",
     "row_count",
@@ -118,7 +128,8 @@ _DATA_CONFIG_PREFIXES: Final[Mapping[str, str]] = {
     "vectors": "data/vectors/",
 }
 _DATA_CONFIG_PATTERNS: Final[Mapping[str, str]] = {
-    name: f"{prefix}*.parquet" for name, prefix in _DATA_CONFIG_PREFIXES.items()
+    name: f"{prefix}*.parquet"
+    for name, prefix in _DATA_CONFIG_PREFIXES.items()
 }
 _INDEX_CONFIGS: Final[Mapping[str, str]] = {
     "bm25_document_chunks": "bm25_document_chunk_index",
@@ -259,21 +270,27 @@ PINNED_ORIGINAL_SHARDS: Final[tuple[_OriginalShardContract, ...]] = (
     _OriginalShardContract(
         release_path="data/original/part-000000.parquet",
         source_path="data/train-00000-of-00003.parquet",
-        sha256=("2e25e84e85e1560d41acacbfc7eb359349f5417bc9bf31318cdf0c4aafccb7d1"),
+        sha256=(
+            "2e25e84e85e1560d41acacbfc7eb359349f5417bc9bf31318cdf0c4aafccb7d1"
+        ),
         size_bytes=211_599_861,
         row_count=4_329,
     ),
     _OriginalShardContract(
         release_path="data/original/part-000001.parquet",
         source_path="data/train-00001-of-00003.parquet",
-        sha256=("3a4251f39955f95c232b4aea98daa59bbe0c7b5e27c9189c1b09f64b960a35d7"),
+        sha256=(
+            "3a4251f39955f95c232b4aea98daa59bbe0c7b5e27c9189c1b09f64b960a35d7"
+        ),
         size_bytes=428_366_432,
         row_count=4_329,
     ),
     _OriginalShardContract(
         release_path="data/original/part-000002.parquet",
         source_path="data/train-00002-of-00003.parquet",
-        sha256=("55488d569ac978ea077be643233355f43458d636d04ad3ae1cb973895b02a3ac"),
+        sha256=(
+            "55488d569ac978ea077be643233355f43458d636d04ad3ae1cb973895b02a3ac"
+        ),
         size_bytes=580_353_186,
         row_count=4_329,
     ),
@@ -298,12 +315,16 @@ def _strict_json_object(content: bytes, label: str) -> Mapping[str, Any]:
         result: dict[str, Any] = {}
         for key, value in pairs:
             if key in result:
-                raise HuggingFaceSourceIntegrityError(f"{label} contains duplicate key {key!r}")
+                raise HuggingFaceSourceIntegrityError(
+                    f"{label} contains duplicate key {key!r}"
+                )
             result[key] = value
         return result
 
     def reject_constant(value: str) -> Any:
-        raise HuggingFaceSourceIntegrityError(f"{label} contains non-finite number {value}")
+        raise HuggingFaceSourceIntegrityError(
+            f"{label} contains non-finite number {value}"
+        )
 
     try:
         value = json.loads(
@@ -314,14 +335,21 @@ def _strict_json_object(content: bytes, label: str) -> Mapping[str, Any]:
     except HuggingFaceSourceIntegrityError:
         raise
     except (UnicodeError, ValueError, TypeError) as exc:
-        raise HuggingFaceSourceIntegrityError(f"{label} is not strict UTF-8 JSON") from exc
+        raise HuggingFaceSourceIntegrityError(
+            f"{label} is not strict UTF-8 JSON"
+        ) from exc
     if not isinstance(value, Mapping):
         raise HuggingFaceSourceIntegrityError(f"{label} must contain an object")
     return value
 
 
 def _relative_path(value: Any) -> str:
-    if not isinstance(value, str) or not value or "\\" in value or "\x00" in value:
+    if (
+        not isinstance(value, str)
+        or not value
+        or "\\" in value
+        or "\x00" in value
+    ):
         raise HuggingFaceSourceIntegrityError(
             "artifact path must be normalized root-relative POSIX text"
         )
@@ -372,27 +400,43 @@ class _ArtifactDescriptor:
     @classmethod
     def from_dict(cls, value: Any) -> "_ArtifactDescriptor":
         if not isinstance(value, Mapping):
-            raise HuggingFaceSourceIntegrityError("artifact descriptor must be an object")
+            raise HuggingFaceSourceIntegrityError(
+                "artifact descriptor must be an object"
+            )
         path = _relative_path(value.get("path"))
-        expected = _PARQUET_ARTIFACT_FIELDS if path.endswith(".parquet") else _ARTIFACT_FIELDS
+        expected = (
+            _PARQUET_ARTIFACT_FIELDS
+            if path.endswith(".parquet")
+            else _ARTIFACT_FIELDS
+        )
         if set(value) != expected:
-            raise HuggingFaceSourceIntegrityError(f"artifact descriptor fields differ: {path}")
+            raise HuggingFaceSourceIntegrityError(
+                f"artifact descriptor fields differ: {path}"
+            )
         sha256 = value.get("sha256")
         content_id = value.get("content_id")
         byte_length = value.get("byte_length")
         media_type = value.get("media_type")
         if not isinstance(sha256, str) or not _SHA256_RE.fullmatch(sha256):
-            raise HuggingFaceSourceIntegrityError(f"artifact SHA-256 is invalid: {path}")
+            raise HuggingFaceSourceIntegrityError(
+                f"artifact SHA-256 is invalid: {path}"
+            )
         if (
             not isinstance(content_id, str)
             or not _CID_RE.fullmatch(content_id)
             or content_id != _raw_sha256_cid(bytes.fromhex(sha256))
         ):
-            raise HuggingFaceSourceIntegrityError(f"artifact CID is invalid: {path}")
+            raise HuggingFaceSourceIntegrityError(
+                f"artifact CID is invalid: {path}"
+            )
         if type(byte_length) is not int or byte_length <= 0:
-            raise HuggingFaceSourceIntegrityError(f"artifact byte length is invalid: {path}")
+            raise HuggingFaceSourceIntegrityError(
+                f"artifact byte length is invalid: {path}"
+            )
         if not isinstance(media_type, str) or not media_type:
-            raise HuggingFaceSourceIntegrityError(f"artifact media type is invalid: {path}")
+            raise HuggingFaceSourceIntegrityError(
+                f"artifact media type is invalid: {path}"
+            )
         if path.endswith(".parquet"):
             config_name = value.get("config_name")
             row_count = value.get("row_count")
@@ -403,7 +447,9 @@ class _ArtifactDescriptor:
                 or type(row_count) is not int
                 or row_count <= 0
             ):
-                raise HuggingFaceSourceIntegrityError(f"Parquet descriptor is invalid: {path}")
+                raise HuggingFaceSourceIntegrityError(
+                    f"Parquet descriptor is invalid: {path}"
+                )
         else:
             config_name = ""
             row_count = 0
@@ -482,7 +528,9 @@ class HuggingFaceCompleteReleaseReceipt:
 
     def __post_init__(self) -> None:
         if self.verified is not True:
-            raise HuggingFaceSourceIntegrityError("complete-release receipt must be verified")
+            raise HuggingFaceSourceIntegrityError(
+                "complete-release receipt must be verified"
+            )
         if self.raw_originals_loaded is not False:
             raise HuggingFaceSourceIntegrityError(
                 "complete-release verifier cannot load raw originals"
@@ -504,7 +552,9 @@ class LoadedHuggingFaceCompleteRelease:
         if not isinstance(self.pin, HuggingFaceSourcePin):
             raise TypeError("pin must be a HuggingFaceSourcePin")
         if not isinstance(self.receipt, HuggingFaceCompleteReleaseReceipt):
-            raise TypeError("receipt must be a HuggingFaceCompleteReleaseReceipt")
+            raise TypeError(
+                "receipt must be a HuggingFaceCompleteReleaseReceipt"
+            )
         if (
             self.receipt.dataset_id != self.pin.dataset_id
             or self.receipt.revision != self.pin.revision
@@ -524,9 +574,13 @@ def _verify_file(
 ) -> Path:
     path = _safe_file(root, descriptor.path)
     if descriptor.byte_length > maximum or path.stat().st_size > maximum:
-        raise HuggingFaceSourceLimitError(f"control artifact exceeds byte limit: {descriptor.path}")
+        raise HuggingFaceSourceLimitError(
+            f"control artifact exceeds byte limit: {descriptor.path}"
+        )
     if path.stat().st_size != descriptor.byte_length:
-        raise HuggingFaceSourceIntegrityError(f"control artifact size differs: {descriptor.path}")
+        raise HuggingFaceSourceIntegrityError(
+            f"control artifact size differs: {descriptor.path}"
+        )
     digest = hashlib.sha256()
     try:
         with path.open("rb") as handle:
@@ -564,7 +618,9 @@ def _validate_artifact_inventory(
         or not raw
         or len(raw) > limits.max_artifacts
     ):
-        raise HuggingFaceSourceLimitError("complete artifact inventory is empty or exceeds limit")
+        raise HuggingFaceSourceLimitError(
+            "complete artifact inventory is empty or exceeds limit"
+        )
     artifacts = tuple(_ArtifactDescriptor.from_dict(item) for item in raw)
     paths = tuple(item.path for item in artifacts)
     if paths != tuple(sorted(paths)) or len(paths) != len(set(paths)):
@@ -577,7 +633,9 @@ def _validate_artifact_inventory(
         )
     required = {"README.md", COMPLETE_METADATA_PATH, "evaluation-report.json"}
     if not required <= set(paths):
-        raise HuggingFaceSourceIntegrityError("complete release is missing public metadata")
+        raise HuggingFaceSourceIntegrityError(
+            "complete release is missing public metadata"
+        )
     unknown = tuple(
         item.path
         for item in artifacts
@@ -586,25 +644,39 @@ def _validate_artifact_inventory(
         and item.path not in set(_INDEX_PATHS.values())
     )
     if unknown:
-        raise HuggingFaceSourceIntegrityError("complete release contains an unknown artifact path")
+        raise HuggingFaceSourceIntegrityError(
+            "complete release contains an unknown artifact path"
+        )
     data = tuple(item for item in artifacts if _data_config(item.path))
     if not data or len(data) > limits.max_data_shards:
-        raise HuggingFaceSourceLimitError("complete data-shard inventory is empty or exceeds limit")
+        raise HuggingFaceSourceLimitError(
+            "complete data-shard inventory is empty or exceeds limit"
+        )
     observed_configs = {_data_config(item.path) for item in data}
     if observed_configs != set(_DATA_CONFIG_PREFIXES):
-        raise HuggingFaceSourceIntegrityError("complete data-family inventory is incomplete")
+        raise HuggingFaceSourceIntegrityError(
+            "complete data-family inventory is incomplete"
+        )
     for item in data:
         if item.config_name != _data_config(item.path):
-            raise HuggingFaceSourceIntegrityError(f"data config differs from path: {item.path}")
+            raise HuggingFaceSourceIntegrityError(
+                f"data config differs from path: {item.path}"
+            )
     indexes = tuple(item for item in artifacts if item.path.startswith("indexes/"))
     if len(indexes) > limits.max_indexes:
         raise HuggingFaceSourceLimitError("complete release exceeds index limit")
     if {item.path for item in indexes} != set(_INDEX_PATHS.values()):
-        raise HuggingFaceSourceIntegrityError("complete physical-index inventory is incomplete")
-    expected_index_config = {_INDEX_PATHS[name]: config for name, config in _INDEX_CONFIGS.items()}
+        raise HuggingFaceSourceIntegrityError(
+            "complete physical-index inventory is incomplete"
+        )
+    expected_index_config = {
+        _INDEX_PATHS[name]: config for name, config in _INDEX_CONFIGS.items()
+    }
     for item in indexes:
         if item.config_name != expected_index_config[item.path]:
-            raise HuggingFaceSourceIntegrityError(f"index config differs from path: {item.path}")
+            raise HuggingFaceSourceIntegrityError(
+                f"index config differs from path: {item.path}"
+            )
     return artifacts
 
 
@@ -617,13 +689,20 @@ def _validate_config_routes(
         raise HuggingFaceSourceIntegrityError("manifest configs must be an object")
     expected = {
         **_DATA_CONFIG_PATTERNS,
-        **{_INDEX_CONFIGS[name]: path for name, path in _INDEX_PATHS.items()},
+        **{
+            _INDEX_CONFIGS[name]: path
+            for name, path in _INDEX_PATHS.items()
+        },
     }
     if dict(configs) != expected:
-        raise HuggingFaceSourceIntegrityError("complete manifest config routes differ")
+        raise HuggingFaceSourceIntegrityError(
+            "complete manifest config routes differ"
+        )
     indexes = manifest.get("indexes")
     if not isinstance(indexes, Mapping) or set(indexes) != set(_INDEX_PATHS):
-        raise HuggingFaceSourceIntegrityError("complete manifest index inventory differs")
+        raise HuggingFaceSourceIntegrityError(
+            "complete manifest index inventory differs"
+        )
     by_path = {item.path: item for item in artifacts}
     for name, path in _INDEX_PATHS.items():
         value = indexes[name]
@@ -632,7 +711,9 @@ def _validate_config_routes(
             or set(value) != _COMPACT_DESCRIPTOR_FIELDS
             or dict(value) != by_path[path].compact()
         ):
-            raise HuggingFaceSourceIntegrityError(f"manifest index descriptor differs: {name}")
+            raise HuggingFaceSourceIntegrityError(
+                f"manifest index descriptor differs: {name}"
+            )
 
 
 def _read_index_table(
@@ -647,14 +728,20 @@ def _read_index_table(
 
         parquet = pq.ParquetFile(path)
         if parquet.metadata.num_rows > limits.max_index_rows:
-            raise HuggingFaceSourceLimitError(f"index exceeds row limit: {descriptor.path}")
+            raise HuggingFaceSourceLimitError(
+                f"index exceeds row limit: {descriptor.path}"
+            )
         table = parquet.read()
     except HuggingFaceSourceLimitError:
         raise
     except Exception as exc:
-        raise HuggingFaceSourceIntegrityError(f"cannot decode index: {descriptor.path}") from exc
+        raise HuggingFaceSourceIntegrityError(
+            f"cannot decode index: {descriptor.path}"
+        ) from exc
     if table.num_rows != descriptor.row_count:
-        raise HuggingFaceSourceIntegrityError(f"index row count differs: {descriptor.path}")
+        raise HuggingFaceSourceIntegrityError(
+            f"index row count differs: {descriptor.path}"
+        )
     return table
 
 
@@ -670,7 +757,9 @@ def _validate_route_indexes(
         descriptor = by_path[_INDEX_PATHS[name]]
         table = _read_index_table(root, descriptor, limits=limits)
         if tuple(table.schema.names) != _INDEX_COLUMNS[name]:
-            raise HuggingFaceSourceIntegrityError(f"index schema differs: {descriptor.path}")
+            raise HuggingFaceSourceIntegrityError(
+                f"index schema differs: {descriptor.path}"
+            )
         metadata = table.schema.metadata or {}
         if metadata.get(b"schema_version") != META_SCHEMA_VERSION.encode("ascii"):
             raise HuggingFaceSourceIntegrityError(
@@ -715,7 +804,9 @@ def _validate_route_indexes(
             )
         covered.update(routed)
     expected = {
-        item.path for item in artifacts if _data_config(item.path) not in {None, "original_data"}
+        item.path
+        for item in artifacts
+        if _data_config(item.path) not in {None, "original_data"}
     }
     if covered != expected:
         raise HuggingFaceSourceIntegrityError(
@@ -730,11 +821,15 @@ def _validate_original_manifest(
     release_manifest: ReleaseManifest,
 ) -> tuple[int, int, int]:
     by_path = {item.path: item for item in artifacts}
-    originals = tuple(item for item in artifacts if item.config_name == "original_data")
+    originals = tuple(
+        item for item in artifacts if item.config_name == "original_data"
+    )
     if tuple(item.path for item in originals) != tuple(
         contract.release_path for contract in PINNED_ORIGINAL_SHARDS
     ):
-        raise HuggingFaceSourceIntegrityError("pinned original-shard inventory differs")
+        raise HuggingFaceSourceIntegrityError(
+            "pinned original-shard inventory differs"
+        )
     for item, contract in zip(originals, PINNED_ORIGINAL_SHARDS, strict=True):
         if (
             item.sha256 != contract.sha256
@@ -750,13 +845,20 @@ def _validate_original_manifest(
         or release_manifest.payload.get("derived_security_ir_profile")
         != DERIVED_SECURITY_IR_PROFILE
     ):
-        raise HuggingFaceSourceIntegrityError("complete release mirror profile differs")
+        raise HuggingFaceSourceIntegrityError(
+            "complete release mirror profile differs"
+        )
     source = manifest.get("source")
     runtime = manifest.get("build_runtime")
     counts = manifest.get("counts")
     parquet = manifest.get("parquet")
-    if not all(isinstance(value, Mapping) for value in (source, runtime, counts, parquet)):
-        raise HuggingFaceSourceIntegrityError("complete original-data metadata is malformed")
+    if not all(
+        isinstance(value, Mapping)
+        for value in (source, runtime, counts, parquet)
+    ):
+        raise HuggingFaceSourceIntegrityError(
+            "complete original-data metadata is malformed"
+        )
     assert isinstance(source, Mapping)
     assert isinstance(runtime, Mapping)
     assert isinstance(counts, Mapping)
@@ -765,9 +867,12 @@ def _validate_original_manifest(
     source_verification = runtime.get("source_verification")
     compression = parquet.get("compression")
     if not all(
-        isinstance(value, Mapping) for value in (original, source_verification, compression)
+        isinstance(value, Mapping)
+        for value in (original, source_verification, compression)
     ):
-        raise HuggingFaceSourceIntegrityError("complete source runtime metadata is malformed")
+        raise HuggingFaceSourceIntegrityError(
+            "complete source runtime metadata is malformed"
+        )
     assert isinstance(original, Mapping)
     assert isinstance(source_verification, Mapping)
     assert isinstance(compression, Mapping)
@@ -795,10 +900,12 @@ def _validate_original_manifest(
         or original.get("row_index_config_name") != "original_row_index"
         or original.get("source_dataset_id") != PINNED_SOURCE_DATASET_ID
         or original.get("source_revision") != PINNED_SOURCE_REVISION
-        or original.get("source_profile_sha256") != PINNED_SOURCE_PROFILE_SHA256
+        or original.get("source_profile_sha256")
+        != PINNED_SOURCE_PROFILE_SHA256
         or original.get("shards") != expected_runtime_shards
         or source_verification.get("verified") is not True
-        or source_verification.get("profile_sha256") != PINNED_SOURCE_PROFILE_SHA256
+        or source_verification.get("profile_sha256")
+        != PINNED_SOURCE_PROFILE_SHA256
         or source_verification.get("row_count") != original_rows
         or source_verification.get("shard_count") != len(originals)
         or counts.get("original_data_bytes") != original_bytes
@@ -810,7 +917,9 @@ def _validate_original_manifest(
         or compression.get("original_data") != "upstream_byte_exact"
         or parquet.get("physical_index_count") != len(_INDEX_PATHS)
     ):
-        raise HuggingFaceSourceIntegrityError("complete original-data binding differs")
+        raise HuggingFaceSourceIntegrityError(
+            "complete original-data binding differs"
+        )
     return len(originals), original_rows, original_bytes
 
 
@@ -825,19 +934,25 @@ def _validate_original_row_index(
     descriptor = by_path[_INDEX_PATHS["original_rows"]]
     table = _read_index_table(root, descriptor, limits=limits)
     if tuple(table.schema.names) != _ORIGINAL_ROW_COLUMNS:
-        raise HuggingFaceSourceIntegrityError("original-row index schema differs")
+        raise HuggingFaceSourceIntegrityError(
+            "original-row index schema differs"
+        )
     metadata = table.schema.metadata or {}
     if (
-        metadata.get(b"schema_version") != ORIGINAL_ROW_INDEX_SCHEMA_VERSION.encode("ascii")
+        metadata.get(b"schema_version")
+        != ORIGINAL_ROW_INDEX_SCHEMA_VERSION.encode("ascii")
         or metadata.get(b"primary_key") != b"security_ir_source_cid"
     ):
-        raise HuggingFaceSourceIntegrityError("original-row index schema metadata differs")
+        raise HuggingFaceSourceIntegrityError(
+            "original-row index schema metadata differs"
+        )
     positions = bytearray(descriptor.row_count)
     source_rows = bytearray(descriptor.row_count)
     source_cids: set[str] = set()
     status_counts = {name: 0 for name in _STATUS_IDENTITY}
     contract_by_release = {
-        item.release_path: (index, item) for index, item in enumerate(PINNED_ORIGINAL_SHARDS)
+        item.release_path: (index, item)
+        for index, item in enumerate(PINNED_ORIGINAL_SHARDS)
     }
     shard_base: list[int] = []
     offset = 0
@@ -863,7 +978,9 @@ def _validate_original_row_index(
             or source_rows[source_row]
             or type(shard_row) is not int
         ):
-            raise HuggingFaceSourceIntegrityError("original-row index identity differs")
+            raise HuggingFaceSourceIntegrityError(
+                "original-row index identity differs"
+            )
         shard_index, contract = pair
         position = shard_base[shard_index] + shard_row
         if (
@@ -879,7 +996,9 @@ def _validate_original_row_index(
             or row.get("source_identity_domain") != identity[0]
             or row.get("source_identity_schema_version") != identity[1]
         ):
-            raise HuggingFaceSourceIntegrityError("original-row index position binding differs")
+            raise HuggingFaceSourceIntegrityError(
+                "original-row index position binding differs"
+            )
         positions[position] = 1
         source_rows[source_row] = 1
         source_cids.add(source_cid)
@@ -890,7 +1009,10 @@ def _validate_original_row_index(
         any(value != 1 for value in positions)
         or any(value != 1 for value in source_rows)
         or status_counts["admitted"] != counts.get("admitted_rows")
-        or (status_counts["adaptation_rejected"] + status_counts["publication_rejected"])
+        or (
+            status_counts["adaptation_rejected"]
+            + status_counts["publication_rejected"]
+        )
         != counts.get("rejected_rows")
     ):
         raise HuggingFaceSourceIntegrityError(
@@ -912,37 +1034,55 @@ def _validate_release_metadata(
         COMPLETE_METADATA_PATH,
     )
     if (
-        set(metadata) != {"configs", "dataset_id", "derived_dataset_root", "schema_version"}
+        set(metadata)
+        != {"configs", "dataset_id", "derived_dataset_root", "schema_version"}
         or metadata.get("dataset_id") != manifest.get("dataset_id")
-        or metadata.get("derived_dataset_root") != manifest.get("derived_dataset_root")
+        or metadata.get("derived_dataset_root")
+        != manifest.get("derived_dataset_root")
         or metadata.get("schema_version") != HF_PARQUET_SCHEMA_VERSION
     ):
-        raise HuggingFaceSourceIntegrityError("complete release metadata identity differs")
+        raise HuggingFaceSourceIntegrityError(
+            "complete release metadata identity differs"
+        )
     configs = metadata.get("configs")
     if not isinstance(configs, Mapping) or set(configs) != _VIEWER_CONFIGS:
-        raise HuggingFaceSourceIntegrityError("complete Viewer config inventory differs")
+        raise HuggingFaceSourceIntegrityError(
+            "complete Viewer config inventory differs"
+        )
     for config_name, value in configs.items():
         if not isinstance(value, Mapping) or set(value) != {"features", "splits"}:
-            raise HuggingFaceSourceIntegrityError(f"Viewer config is malformed: {config_name}")
+            raise HuggingFaceSourceIntegrityError(
+                f"Viewer config is malformed: {config_name}"
+            )
         features = value.get("features")
         splits = value.get("splits")
         train = splits.get("train") if isinstance(splits, Mapping) else None
-        matching = tuple(item for item in artifacts if item.config_name == config_name)
+        matching = tuple(
+            item for item in artifacts if item.config_name == config_name
+        )
         if (
             not isinstance(features, Mapping)
             or not features
             or not isinstance(train, Mapping)
             or set(train) != {"num_bytes", "num_examples"}
             or not matching
-            or train.get("num_bytes") != sum(item.byte_length for item in matching)
-            or train.get("num_examples") != sum(item.row_count for item in matching)
+            or train.get("num_bytes")
+            != sum(item.byte_length for item in matching)
+            or train.get("num_examples")
+            != sum(item.row_count for item in matching)
         ):
-            raise HuggingFaceSourceIntegrityError(f"Viewer config counts differ: {config_name}")
+            raise HuggingFaceSourceIntegrityError(
+                f"Viewer config counts differ: {config_name}"
+            )
 
 
-def _exact_count(counts: Mapping[str, Any], name: str, expected: int) -> None:
+def _exact_count(
+    counts: Mapping[str, Any], name: str, expected: int
+) -> None:
     if type(counts.get(name)) is not int or counts[name] != expected:
-        raise HuggingFaceSourceIntegrityError(f"complete manifest count differs: {name}")
+        raise HuggingFaceSourceIntegrityError(
+            f"complete manifest count differs: {name}"
+        )
 
 
 def _validate_complete_counts(
@@ -954,15 +1094,21 @@ def _validate_complete_counts(
     graph = manifest.get("graph")
     vector = manifest.get("vector")
     runtime = manifest.get("build_runtime")
-    if not all(isinstance(value, Mapping) for value in (counts, graph, vector, runtime)):
-        raise HuggingFaceSourceIntegrityError("complete release count metadata is malformed")
+    if not all(
+        isinstance(value, Mapping) for value in (counts, graph, vector, runtime)
+    ):
+        raise HuggingFaceSourceIntegrityError(
+            "complete release count metadata is malformed"
+        )
     assert isinstance(counts, Mapping)
     assert isinstance(graph, Mapping)
     assert isinstance(vector, Mapping)
     assert isinstance(runtime, Mapping)
 
     def rows(config: str) -> int:
-        return sum(item.row_count for item in artifacts if item.config_name == config)
+        return sum(
+            item.row_count for item in artifacts if item.config_name == config
+        )
 
     _exact_count(
         counts,
@@ -1000,7 +1146,8 @@ def _validate_complete_counts(
         or not _CID_RE.fullmatch(graph_root)
         or not isinstance(retrieval_root, str)
         or not _CID_RE.fullmatch(retrieval_root)
-        or vector.get("rows_sorted_by") != "cosine_similarity_to_shard_centroid_desc"
+        or vector.get("rows_sorted_by")
+        != "cosine_similarity_to_shard_centroid_desc"
         or vector.get("searchable") is not True
         or vector.get("embedded_rows") != counts["vector_rows"]
         or vector.get("neutral_rows") != 0
@@ -1016,7 +1163,9 @@ def _validate_complete_counts(
         or cuda.get("embedding_dimension") != vector["dimension"]
         or cuda.get("model_revision") != vector["model_revision"]
     ):
-        raise HuggingFaceSourceIntegrityError("complete graph/vector runtime binding differs")
+        raise HuggingFaceSourceIntegrityError(
+            "complete graph/vector runtime binding differs"
+        )
 
 
 def load_huggingface_complete_release(
@@ -1037,7 +1186,9 @@ def load_huggingface_complete_release(
         raise TypeError("offline must be boolean")
     snapshot_root = Path(root).expanduser()
     if snapshot_root.is_symlink() or not snapshot_root.is_dir():
-        raise HuggingFaceSourceIntegrityError("complete snapshot root must be a real directory")
+        raise HuggingFaceSourceIntegrityError(
+            "complete snapshot root must be a real directory"
+        )
     snapshot_root = snapshot_root.resolve(strict=True)
     manifest_path = _safe_file(snapshot_root, "manifest.json")
     manifest_content = _bounded_bytes(
@@ -1047,7 +1198,9 @@ def load_huggingface_complete_release(
         raise HuggingFaceSourceIntegrityError("pinned manifest digest mismatch")
     manifest = _strict_json_object(manifest_content, "manifest.json")
     if set(manifest) != _MANIFEST_FIELDS:
-        raise HuggingFaceSourceIntegrityError("complete manifest fields differ")
+        raise HuggingFaceSourceIntegrityError(
+            "complete manifest fields differ"
+        )
     if (
         manifest.get("schema_version") != HF_RELEASE_SCHEMA_VERSION
         or manifest.get("dataset_id") != pin.dataset_id
@@ -1056,8 +1209,12 @@ def load_huggingface_complete_release(
         or not isinstance(manifest.get("derived_dataset_root"), str)
         or not _CID_RE.fullmatch(manifest["derived_dataset_root"])
     ):
-        raise HuggingFaceSourceIntegrityError("complete manifest identity differs")
-    artifacts = _validate_artifact_inventory(manifest.get("artifacts"), limits=active_limits)
+        raise HuggingFaceSourceIntegrityError(
+            "complete manifest identity differs"
+        )
+    artifacts = _validate_artifact_inventory(
+        manifest.get("artifacts"), limits=active_limits
+    )
     index_root = snapshot_root / "indexes"
     if index_root.is_symlink() or not index_root.is_dir():
         raise HuggingFaceSourceIntegrityError(
@@ -1077,7 +1234,9 @@ def load_huggingface_complete_release(
     _validate_config_routes(manifest, artifacts)
     by_path = {item.path: item for item in artifacts}
     try:
-        release_manifest = ReleaseManifest.from_dict(manifest["release_manifest"])
+        release_manifest = ReleaseManifest.from_dict(
+            manifest["release_manifest"]
+        )
     except Exception as exc:
         raise HuggingFaceSourceIntegrityError(
             "canonical complete-release manifest is invalid"
@@ -1085,22 +1244,31 @@ def load_huggingface_complete_release(
     data = tuple(item for item in artifacts if _data_config(item.path))
     if (
         release_manifest.dataset_id != pin.dataset_id
-        or release_manifest.parent_cids != (manifest["derived_dataset_root"],)
+        or release_manifest.parent_cids
+        != (manifest["derived_dataset_root"],)
         or release_manifest.payload.get("release_root") != pin.release_root
-        or release_manifest.payload.get("release_schema_version") != HF_RELEASE_SCHEMA_VERSION
+        or release_manifest.payload.get("release_schema_version")
+        != HF_RELEASE_SCHEMA_VERSION
         or release_manifest.payload.get("derived_dataset_schema_version")
         != COMPLETE_BUILD_SCHEMA_VERSION
         or release_manifest.payload.get("grants_execution_authority") is not False
         or len(release_manifest.shard_cids) != len(data)
-        or set(release_manifest.shard_cids) != {item.content_id for item in data}
+        or set(release_manifest.shard_cids)
+        != {item.content_id for item in data}
     ):
-        raise HuggingFaceSourceIntegrityError("canonical complete-release binding differs")
-    original_shards, original_rows, original_bytes = _validate_original_manifest(
-        manifest, artifacts, release_manifest
+        raise HuggingFaceSourceIntegrityError(
+            "canonical complete-release binding differs"
+        )
+    original_shards, original_rows, original_bytes = (
+        _validate_original_manifest(manifest, artifacts, release_manifest)
     )
     _validate_complete_counts(manifest, artifacts, release_manifest)
-    _validate_route_indexes(snapshot_root, artifacts, limits=active_limits)
-    _validate_original_row_index(snapshot_root, artifacts, manifest, limits=active_limits)
+    _validate_route_indexes(
+        snapshot_root, artifacts, limits=active_limits
+    )
+    _validate_original_row_index(
+        snapshot_root, artifacts, manifest, limits=active_limits
+    )
     metadata_descriptor = by_path[COMPLETE_METADATA_PATH]
     _validate_release_metadata(
         snapshot_root,
@@ -1146,7 +1314,8 @@ class HuggingFaceCompleteReleaseFetcher(Protocol):
 
     def __call__(
         self, pin: HuggingFaceSourcePin, destination: Path
-    ) -> None | str | os.PathLike[str]: ...
+    ) -> None | str | os.PathLike[str]:
+        ...
 
 
 class HuggingFaceHubCompleteReleaseFetcher:
@@ -1155,7 +1324,9 @@ class HuggingFaceHubCompleteReleaseFetcher:
     def __init__(self, *, local_files_only: bool = False) -> None:
         self.local_files_only = bool(local_files_only)
 
-    def __call__(self, pin: HuggingFaceSourcePin, destination: Path) -> Path:
+    def __call__(
+        self, pin: HuggingFaceSourcePin, destination: Path
+    ) -> Path:
         try:
             from huggingface_hub import snapshot_download
         except ImportError as exc:  # pragma: no cover - optional dependency
@@ -1180,7 +1351,9 @@ class HuggingFaceHubCompleteReleaseFetcher:
 
 def _copy_control_plane(source: Path, destination: Path) -> None:
     if source.is_symlink() or not source.is_dir():
-        raise HuggingFaceSourceIntegrityError("fetcher must return a real snapshot directory")
+        raise HuggingFaceSourceIntegrityError(
+            "fetcher must return a real snapshot directory"
+        )
     selected = (
         source / "manifest.json",
         source / COMPLETE_METADATA_PATH,
@@ -1188,7 +1361,9 @@ def _copy_control_plane(source: Path, destination: Path) -> None:
     )
     for path in selected:
         if path.is_symlink() or not path.is_file():
-            raise HuggingFaceSourceIntegrityError("fetcher returned an incomplete control plane")
+            raise HuggingFaceSourceIntegrityError(
+                "fetcher returned an incomplete control plane"
+            )
         relative = path.relative_to(source)
         target = destination / relative
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -1235,16 +1410,22 @@ class HuggingFaceCompleteReleaseCache:
             raise TypeError("pin must be a HuggingFaceSourcePin")
         return self.snapshots / pin.cache_key
 
-    def load(self, pin: HuggingFaceSourcePin) -> LoadedHuggingFaceCompleteRelease:
+    def load(
+        self, pin: HuggingFaceSourcePin
+    ) -> LoadedHuggingFaceCompleteRelease:
         path = self.path_for(pin)
         if not path.exists():
             raise HuggingFaceSourceCacheMiss(
                 f"offline complete-release cache miss for {pin.logical_source}"
             )
         self._verify_marker(path, pin)
-        return load_huggingface_complete_release(path, pin, limits=self.limits, offline=True)
+        return load_huggingface_complete_release(
+            path, pin, limits=self.limits, offline=True
+        )
 
-    def materialize(self, pin: HuggingFaceSourcePin) -> LoadedHuggingFaceCompleteRelease:
+    def materialize(
+        self, pin: HuggingFaceSourcePin
+    ) -> LoadedHuggingFaceCompleteRelease:
         path = self.path_for(pin)
         if path.exists():
             return self.load(pin)
@@ -1252,7 +1433,9 @@ class HuggingFaceCompleteReleaseCache:
             raise HuggingFaceSourceCacheMiss(
                 f"offline complete-release cache miss for {pin.logical_source}"
             )
-        temporary = Path(tempfile.mkdtemp(prefix=f".{pin.cache_key}.", dir=self.snapshots))
+        temporary = Path(
+            tempfile.mkdtemp(prefix=f".{pin.cache_key}.", dir=self.snapshots)
+        )
         try:
             returned = self.fetcher(pin, temporary)
             if returned is not None:
@@ -1294,9 +1477,12 @@ class HuggingFaceCompleteReleaseCache:
         )
         if (
             set(marker) != {"pin", "schema_version"}
-            or marker.get("schema_version") != HF_COMPLETE_SOURCE_CACHE_SCHEMA_VERSION
+            or marker.get("schema_version")
+            != HF_COMPLETE_SOURCE_CACHE_SCHEMA_VERSION
         ):
-            raise HuggingFaceSourceIntegrityError("complete-release cache marker schema differs")
+            raise HuggingFaceSourceIntegrityError(
+                "complete-release cache marker schema differs"
+            )
         try:
             cached_pin = HuggingFaceSourcePin.from_dict(marker["pin"])
         except Exception as exc:
@@ -1304,7 +1490,9 @@ class HuggingFaceCompleteReleaseCache:
                 "complete-release cache marker pin is invalid"
             ) from exc
         if cached_pin != pin:
-            raise HuggingFaceSourceIntegrityError("complete-release cache pin differs")
+            raise HuggingFaceSourceIntegrityError(
+                "complete-release cache pin differs"
+            )
 
 
 __all__ = [

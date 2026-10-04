@@ -106,7 +106,9 @@ def _rules() -> tuple[PolicyRule, ...]:
         SanctionsMatchLevel.NAMED_DESIGNATED_PARTY: SanctionsPolicyOutcome.DENY,
         SanctionsMatchLevel.OWNED_ENTITY: SanctionsPolicyOutcome.DENY,
         SanctionsMatchLevel.DIRECT_ASSOCIATION: SanctionsPolicyOutcome.REVIEW,
-        SanctionsMatchLevel.BOUNDED_INDIRECT_EXPOSURE: (SanctionsPolicyOutcome.REVIEW),
+        SanctionsMatchLevel.BOUNDED_INDIRECT_EXPOSURE: (
+            SanctionsPolicyOutcome.REVIEW
+        ),
         SanctionsMatchLevel.HEURISTIC_ASSOCIATION: SanctionsPolicyOutcome.REVIEW,
         SanctionsMatchLevel.NO_MATCH: SanctionsPolicyOutcome.ALLOW,
     }
@@ -251,7 +253,9 @@ def test_policy_requires_closed_non_interchangeable_rule_levels() -> None:
     rules = _rules()[:-1]
     with pytest.raises(ComplianceModelError, match="every evidence level"):
         dataclasses.replace(_policy(approved=False), rules=rules)
-    assert {rule.level for rule in _policy().rules} == {
+    assert {
+        rule.level for rule in _policy().rules
+    } == {
         SanctionsMatchLevel.EXACT_LISTED_IDENTIFIER,
         SanctionsMatchLevel.NAMED_DESIGNATED_PARTY,
         SanctionsMatchLevel.OWNED_ENTITY,
@@ -294,7 +298,9 @@ def test_legal_owner_approval_binds_exact_versioned_rule_inputs() -> None:
         reason_code="fixture.changed",
     )
     changed_rules = tuple(
-        changed_rule if item.level is SanctionsMatchLevel.HEURISTIC_ASSOCIATION else item
+        changed_rule
+        if item.level is SanctionsMatchLevel.HEURISTIC_ASSOCIATION
+        else item
         for item in approved.rules
     )
     with pytest.raises(ComplianceModelError, match="exact policy rules digest"):
@@ -346,7 +352,9 @@ def test_exact_identifier_and_named_party_remain_separate_matches() -> None:
     }
     by_level = {match.level: match for match in decision.matches}
     assert by_level[SanctionsMatchLevel.EXACT_LISTED_IDENTIFIER].identifier_id
-    assert not by_level[SanctionsMatchLevel.NAMED_DESIGNATED_PARTY].identifier_id
+    assert not by_level[
+        SanctionsMatchLevel.NAMED_DESIGNATED_PARTY
+    ].identifier_id
 
 
 def test_ownership_threshold_is_versioned_input_not_universal_conclusion() -> None:
@@ -363,7 +371,9 @@ def test_ownership_threshold_is_versioned_input_not_universal_conclusion() -> No
         _request(ownership_evidence=(evidence,)),
     )
     assert lower_reviewed_threshold.outcome is SanctionsPolicyOutcome.DENY
-    assert SanctionsMatchLevel.OWNED_ENTITY in (lower_reviewed_threshold.matched_levels)
+    assert SanctionsMatchLevel.OWNED_ENTITY in (
+        lower_reviewed_threshold.matched_levels
+    )
     match = lower_reviewed_threshold.matches[0]
     assert match.ownership_evidence_id == evidence.evidence_id
     assert match.level is SanctionsMatchLevel.OWNED_ENTITY
@@ -385,7 +395,9 @@ def test_association_evidence_classes_are_non_interchangeable(
     expected_level: SanctionsMatchLevel,
 ) -> None:
     evidence = _association(kind)
-    decision = evaluate_sanctions_policy(_policy(), _request(association_evidence=(evidence,)))
+    decision = evaluate_sanctions_policy(
+        _policy(), _request(association_evidence=(evidence,))
+    )
     assert decision.outcome is SanctionsPolicyOutcome.REVIEW
     assert decision.matched_levels == (expected_level,)
     assert decision.matches[0].association_evidence_id == evidence.evidence_id
@@ -427,7 +439,9 @@ def test_license_is_scoped_typed_and_policy_selected() -> None:
     assert decision.applicable_license_ids == ("license:fixture",)
     assert "applicable_scoped_license" in decision.reason_codes
 
-    wrong_activity = dataclasses.replace(license_record, activity_ids=("activity:withdraw",))
+    wrong_activity = dataclasses.replace(
+        license_record, activity_ids=("activity:withdraw",)
+    )
     no_license = evaluate_sanctions_policy(
         _policy(),
         _request(identifiers=(_identifier(),), licenses=(wrong_activity,)),
@@ -441,7 +455,9 @@ def test_stale_or_incomplete_snapshot_fails_closed() -> None:
     assert stale.outcome is SanctionsPolicyOutcome.STALE
     assert stale.reason_codes == ("stale_snapshot",)
 
-    incomplete = evaluate_sanctions_policy(_policy(), _request(snapshot=_snapshot(complete=False)))
+    incomplete = evaluate_sanctions_policy(
+        _policy(), _request(snapshot=_snapshot(complete=False))
+    )
     assert incomplete.outcome is SanctionsPolicyOutcome.INCONCLUSIVE
     assert incomplete.reason_codes == ("incomplete_snapshot",)
 

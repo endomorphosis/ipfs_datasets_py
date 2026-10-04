@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "v2_explain_proof.schema.json",
+  "title": "Hybrid Legal V2 explain_proof response",
+  "type": "object",
+  "required": [
+    "api",
+    "schema_version",
+    "proof_id",
+    "format",
+    "root_conclusion",
+    "steps"
+  ],
+  "properties": {
+    "api": { "type": "string" },
+    "schema_version": { "type": "string" },
+    "proof_id": { "type": "string" },
+    "format": { "type": "string" },
+    "root_conclusion": { "type": "string" },
+    "text": { "type": "string" },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["step_id", "rule_id", "premises", "conclusion", "ir_refs", "source_refs"],
+        "properties": {
+          "step_id": { "type": "string" },
+          "rule_id": { "type": "string" },
+          "premises": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "conclusion": { "type": "string" },
+          "ir_refs": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "source_refs": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": true
+}

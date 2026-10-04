@@ -1,0 +1,26 @@
+[
+  {
+    "id": "obligation_with_window",
+    "sentence": "Company A shall file report within 30 days.",
+    "jurisdiction": "us/federal",
+    "fail_on_ambiguity": false
+  },
+  {
+    "id": "prohibition_simple",
+    "sentence": "Company A shall not dump waste.",
+    "jurisdiction": "us/federal",
+    "fail_on_ambiguity": false
+  },
+  {
+    "id": "permission_with_activation",
+    "sentence": "Agency may disclose notice when authorized.",
+    "jurisdiction": "us/federal",
+    "fail_on_ambiguity": false
+  },
+  {
+    "id": "ambiguous_non_strict",
+    "sentence": "Company A may and shall file report.",
+    "jurisdiction": "us/federal",
+    "fail_on_ambiguity": false
+  }
+]

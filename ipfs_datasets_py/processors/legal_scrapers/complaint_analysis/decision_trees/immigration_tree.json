@@ -1,0 +1,70 @@
+{
+  "complaint_type": "immigration",
+  "category": "immigration",
+  "description": "Decision tree for immigration complaints",
+  "root_questions": [
+    "q1",
+    "q2"
+  ],
+  "questions": {
+    "q1": {
+      "id": "q1",
+      "question": "Which government agency is involved?",
+      "field_name": "government_agency",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": [
+        "uscis",
+        "ice",
+        "cbp",
+        "immigration"
+      ]
+    },
+    "q2": {
+      "id": "q2",
+      "question": "What type of violation occurred?",
+      "field_name": "violation_type",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q3": {
+      "id": "q3",
+      "question": "What is your current immigration status?",
+      "field_name": "immigration_status",
+      "required": false,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q4": {
+      "id": "q4",
+      "question": "When did this occur?",
+      "field_name": "date_of_incident",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q5": {
+      "id": "q5",
+      "question": "What relief or remedy are you seeking?",
+      "field_name": "relief_sought",
+      "required": false,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": []
+    }
+  },
+  "required_fields": [
+    "government_agency",
+    "date_of_incident",
+    "violation_type"
+  ],
+  "optional_fields": [
+    "immigration_status",
+    "relief_sought"
+  ]
+}

@@ -183,7 +183,9 @@ def _available_native(kernel_id: str = "isabelle", executable: str = "isabelle")
 
 
 def test_isabelle_path_metadata_is_corrected_from_theory_header():
-    meta = correct_isabelle_path_metadata(ISABELLE_OK, caller_path="Goal.thy", session_dir=".")
+    meta = correct_isabelle_path_metadata(
+        ISABELLE_OK, caller_path="Goal.thy", session_dir="."
+    )
     assert meta.theory_name == "AndComm"
     assert meta.theory_path == "AndComm.thy"
     assert meta.caller_path == "Goal.thy"
@@ -273,12 +275,19 @@ def test_isabelle_sorry_can_explicitly_downgrade_authority():
         incomplete_disposition=IsabelleAuthorityDisposition.DOWNGRADE,
         native_probe=lambda: _available_native(),
     )
-    outcome = backend.run(_request(family="isabelle", encoding="isabelle", source=ISABELLE_SORRY))
+    outcome = backend.run(
+        _request(family="isabelle", encoding="isabelle", source=ISABELLE_SORRY)
+    )
     assert isinstance(outcome.result, CandidateResult)
     assert outcome.result.authority is ResultAuthority.CANDIDATE
     assert outcome.result.status is ResultStatus.CANDIDATE
-    assert outcome.result.witness["candidate_kind"] == "incomplete_or_unreviewed_isabelle_proof"
-    assert outcome.receipt.authority_disposition is IsabelleAuthorityDisposition.DOWNGRADE
+    assert (
+        outcome.result.witness["candidate_kind"]
+        == "incomplete_or_unreviewed_isabelle_proof"
+    )
+    assert (
+        outcome.receipt.authority_disposition is IsabelleAuthorityDisposition.DOWNGRADE
+    )
     assert outcome.receipt.accepted is False
 
 
@@ -286,9 +295,14 @@ def test_isabelle_unreviewed_axiomatization_is_rejected():
     backend = IsabelleKernelBackend(
         native_probe=lambda: _available_native(),
     )
-    outcome = backend.run(_request(family="isabelle", encoding="isabelle", source=ISABELLE_AXIOM))
+    outcome = backend.run(
+        _request(family="isabelle", encoding="isabelle", source=ISABELLE_AXIOM)
+    )
     assert outcome.result.status is ResultStatus.MALFORMED
-    assert "isabelle_source_contains_unreviewed_axiomatization" in outcome.receipt.diagnostics
+    assert (
+        "isabelle_source_contains_unreviewed_axiomatization"
+        in outcome.receipt.diagnostics
+    )
     assert outcome.receipt.accepted is False
 
 
@@ -302,7 +316,9 @@ def test_unavailable_isabelle_kernel_never_passes():
         ),
         wasm_probe=WasmCapabilityProbe(),
     )
-    outcome = backend.run(_request(family="isabelle", encoding="isabelle", source=ISABELLE_OK))
+    outcome = backend.run(
+        _request(family="isabelle", encoding="isabelle", source=ISABELLE_OK)
+    )
     assert outcome.result.status is ResultStatus.UNAVAILABLE
     assert outcome.receipt.accepted is False
     assert outcome.result.status is not ResultStatus.PROVED
@@ -466,7 +482,9 @@ def test_hammer_full_pipeline_keeps_stages_ordered_and_distinct():
         isabelle_kernel=kernel,
     )
     hammer.register_solver_id("z3", available=True, runner=unknown_solver)
-    hammer.register_reconstructor_id("isabelle", available=True, runner=recon)
+    hammer.register_reconstructor_id(
+        "isabelle", available=True, runner=recon
+    )
 
     outcome = hammer.run(
         _request(

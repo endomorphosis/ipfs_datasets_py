@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tdfol-config
+  namespace: tdfol
+  labels:
+    app: tdfol
+    component: config
+data:
+  # Application settings
+  TDFOL_LOG_LEVEL: "INFO"
+  TDFOL_WORKERS: "4"
+  TDFOL_MAX_PROOF_DEPTH: "100"
+  TDFOL_CACHE_ENABLED: "true"
+  TDFOL_CACHE_TTL: "3600"
+  
+  # API settings
+  API_HOST: "0.0.0.0"
+  API_PORT: "8080"
+  API_CORS_ENABLED: "true"
+  API_CORS_ORIGINS: "*"
+  API_RATE_LIMIT: "100"
+  
+  # Redis settings
+  REDIS_URL: "redis://tdfol-redis:6379/0"
+  REDIS_TIMEOUT: "5"
+  
+  # Monitoring settings
+  PROMETHEUS_ENABLED: "true"
+  PROMETHEUS_PORT: "9090"
+  
+  # Resource limits
+  MAX_CONCURRENT_PROOFS: "10"
+  PROOF_TIMEOUT: "300"
+  MAX_FORMULA_SIZE: "1000"
+  MAX_MEMORY_PER_PROOF: "512"
+  
+  # Feature flags
+  NLP_ENABLED: "true"
+  COUNTERMODEL_ENABLED: "true"
+  VISUALIZATION_ENABLED: "true"
+  PROOF_OPTIMIZATION: "true"
+  PARALLEL_PROVING: "true"
+  PARALLEL_WORKERS: "4"
+  
+  # Storage settings
+  TDFOL_DATA_DIR: "/app/data"
+  TDFOL_LOG_DIR: "/app/logs"
+  TDFOL_CACHE_DIR: "/app/cache"
+  
+  # Database settings
+  DATABASE_URL: "sqlite:///app/data/tdfol.db"
+  DATABASE_POOL_SIZE: "10"
+  DATABASE_TIMEOUT: "30"

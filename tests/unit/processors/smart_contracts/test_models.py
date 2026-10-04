@@ -185,7 +185,9 @@ def test_importing_models_does_not_open_network_or_install(
         if name.startswith("ipfs_datasets_py.processors.smart_contracts"):
             del sys.modules[name]
 
-    module = importlib.import_module("ipfs_datasets_py.processors.smart_contracts.models")
+    module = importlib.import_module(
+        "ipfs_datasets_py.processors.smart_contracts.models"
+    )
     assert hasattr(module, "ContractAcquisitionRequest")
     assert hasattr(module, "ContractAcquisitionResult")
     # Standard library only plus package-local modules (no live clients).
@@ -237,7 +239,9 @@ def test_request_is_immutable_and_round_trips(
     assert restored.to_dict() == request_model.to_dict()
     assert restored.to_canonical_json() == request_model.to_canonical_json()
     assert content_digest(restored.to_dict()) == request_model.content_digest()
-    assert list(json.loads(restored.to_canonical_json())) == sorted(restored.to_dict())
+    assert list(json.loads(restored.to_canonical_json())) == sorted(
+        restored.to_dict()
+    )
 
 
 def test_request_rejects_empty_fields_and_naive_deadline(chain: ChainRef) -> None:
@@ -413,7 +417,9 @@ def test_canonical_encoding_rejects_bytes_and_floats() -> None:
         canonical_json_bytes({"amount": 1.5})
     digest = content_digest({"a": 1, "b": 2})
     assert digest.startswith("sha256:")
-    assert deterministic_id("artifact-ref", {"x": 1}).startswith("urn:smart-contract:artifact-ref:")
+    assert deterministic_id("artifact-ref", {"x": 1}).startswith(
+        "urn:smart-contract:artifact-ref:"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -638,7 +644,9 @@ def test_artifact_ref_and_provenance_are_content_addressed(
     restored = ArtifactRef.from_dict(artifact.to_dict())
     assert restored.to_dict() == artifact.to_dict()
     assert provenance.to_dict()["observed_at"] == "2026-07-29T12:00:00.000000Z"
-    assert AcquisitionProvenance.from_dict(provenance.to_dict()).provider_id == ("fixture-rpc")
+    assert AcquisitionProvenance.from_dict(provenance.to_dict()).provider_id == (
+        "fixture-rpc"
+    )
 
 
 def test_provider_policy_permits_helpers(provider_policy: ProviderPolicy) -> None:

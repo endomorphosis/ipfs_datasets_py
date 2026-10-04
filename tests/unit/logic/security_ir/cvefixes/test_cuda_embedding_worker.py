@@ -126,7 +126,9 @@ class _FakeModel:
     def encode(self, texts: list[str], **kwargs: Any) -> np.ndarray:
         assert texts == self.expected_texts
         self.encode_arguments = kwargs
-        return np.asarray([[1.0, 0.0, 0.0], [0.0, 0.6, 0.8]], dtype=np.float32)
+        return np.asarray(
+            [[1.0, 0.0, 0.0], [0.0, 0.6, 0.8]], dtype=np.float32
+        )
 
 
 def _dependencies(
@@ -188,8 +190,12 @@ def test_worker_writes_deterministic_normalized_npy_and_receipt(
     assert stat.S_IMODE(output.stat().st_mode) == 0o644
     assert stat.S_IMODE(receipt_path.stat().st_mode) == 0o644
     assert receipt["cuda_required"] is True
-    assert receipt["input_sha256"] == hashlib.sha256(input_path.read_bytes()).hexdigest()
-    assert receipt["output_sha256"] == hashlib.sha256(output.read_bytes()).hexdigest()
+    assert receipt["input_sha256"] == hashlib.sha256(
+        input_path.read_bytes()
+    ).hexdigest()
+    assert receipt["output_sha256"] == hashlib.sha256(
+        output.read_bytes()
+    ).hexdigest()
     assert receipt["record_count"] == 2
     assert receipt["embedding_dimension"] == 3
     assert receipt["model_id"] == MODEL_ID
@@ -300,11 +306,15 @@ def test_worker_rejects_symlink_input(tmp_path: Path) -> None:
     ("values", "message"),
     [
         (
-            np.asarray([[np.nan, 0.0, 0.0], [0.0, 0.6, 0.8]], dtype=np.float32),
+            np.asarray(
+                [[np.nan, 0.0, 0.0], [0.0, 0.6, 0.8]], dtype=np.float32
+            ),
             "non-finite",
         ),
         (
-            np.asarray([[0.5, 0.0, 0.0], [0.0, 0.6, 0.8]], dtype=np.float32),
+            np.asarray(
+                [[0.5, 0.0, 0.0], [0.0, 0.6, 0.8]], dtype=np.float32
+            ),
             "unit normalized",
         ),
     ],

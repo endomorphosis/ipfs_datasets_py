@@ -28,9 +28,7 @@ def test_world_id_hash_to_field_matches_test_action_vector(golden_vectors: dict)
     assert hash_to_field_hex("test-action") == expected
 
 
-def test_world_id_compute_rp_signature_message_matches_official_vector(
-    golden_vectors: dict,
-) -> None:
+def test_world_id_compute_rp_signature_message_matches_official_vector(golden_vectors: dict) -> None:
     rp = golden_vectors["rp_signing"]
     without = rp["without_action"]
     message = compute_rp_signature_message(
@@ -43,9 +41,7 @@ def test_world_id_compute_rp_signature_message_matches_official_vector(
     assert message.hex() == without["message_hex"]
 
 
-def test_world_id_compute_rp_signature_message_with_action_is_81_bytes(
-    golden_vectors: dict,
-) -> None:
+def test_world_id_compute_rp_signature_message_with_action_is_81_bytes(golden_vectors: dict) -> None:
     rp = golden_vectors["rp_signing"]
     with_action = rp["with_action_test_action"]
     nonce = bytes.fromhex(rp["without_action"]["nonce"].removeprefix("0x"))
@@ -117,9 +113,7 @@ def test_world_id_sign_request_from_config_uses_allowed_action_and_rp_context() 
         ({"created_at": -1}, "created_at"),
     ],
 )
-def test_world_id_sign_request_rejects_invalid_inputs(
-    kwargs: dict[str, object], message: str
-) -> None:
+def test_world_id_sign_request_rejects_invalid_inputs(kwargs: dict[str, object], message: str) -> None:
     params = {
         "signing_key_hex": "0x" + "ab" * 32,
         "random_bytes": bytes(range(32)),

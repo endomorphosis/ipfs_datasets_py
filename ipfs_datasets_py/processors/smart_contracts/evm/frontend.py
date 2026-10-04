@@ -146,7 +146,9 @@ class EVMCodeEpoch:
             object.__setattr__(
                 self, "block_number", _non_negative(self.block_number, "block_number")
             )
-        object.__setattr__(self, "code_epoch", self.code_epoch.strip() if self.code_epoch else "")
+        object.__setattr__(
+            self, "code_epoch", self.code_epoch.strip() if self.code_epoch else ""
+        )
         object.__setattr__(
             self,
             "creation_bytecode_digest",
@@ -154,13 +156,17 @@ class EVMCodeEpoch:
             if self.creation_bytecode_digest
             else "",
         )
-        object.__setattr__(self, "compiler", self.compiler.strip() if self.compiler else "")
+        object.__setattr__(
+            self, "compiler", self.compiler.strip() if self.compiler else ""
+        )
         object.__setattr__(
             self,
             "compiler_version",
             self.compiler_version.strip() if self.compiler_version else "",
         )
-        object.__setattr__(self, "compiler_flags", _freeze_mapping(self.compiler_flags))
+        object.__setattr__(
+            self, "compiler_flags", _freeze_mapping(self.compiler_flags)
+        )
         libraries = {
             _required_text(k, "library name"): normalize_address(v)
             for k, v in dict(self.libraries).items()
@@ -183,7 +189,9 @@ class EVMCodeEpoch:
             "abi_digest",
             _optional_digest(self.abi_digest, "abi_digest") if self.abi_digest else "",
         )
-        object.__setattr__(self, "network", self.network.strip() if self.network else "")
+        object.__setattr__(
+            self, "network", self.network.strip() if self.network else ""
+        )
         object.__setattr__(
             self, "genesis_hash", self.genesis_hash.strip() if self.genesis_hash else ""
         )
@@ -243,7 +251,9 @@ class EVMCodeEpoch:
 
         if not isinstance(fixture, EVMContractFixture):
             raise InvalidRequestError("fixture must be an EVMContractFixture")
-        runtime_digest = bytes_digest(fixture.runtime_bytecode) if fixture.runtime_bytecode else ""
+        runtime_digest = (
+            bytes_digest(fixture.runtime_bytecode) if fixture.runtime_bytecode else ""
+        )
         creation_digest = (
             bytes_digest(fixture.creation_bytecode) if fixture.creation_bytecode else ""
         )
@@ -304,7 +314,9 @@ class EVMNormalizationResult:
         effects = tuple(self.storage_effects)
         for index, effect in enumerate(effects):
             if not isinstance(effect, StorageEffect):
-                raise InvalidRequestError(f"storage_effects[{index}] must be a StorageEffect")
+                raise InvalidRequestError(
+                    f"storage_effects[{index}] must be a StorageEffect"
+                )
         object.__setattr__(self, "storage_effects", effects)
         object.__setattr__(
             self,
@@ -501,11 +513,16 @@ class EVMContractFrontend:
         if not isinstance(source_manifest, SourceManifest):
             raise InvalidRequestError("source_manifest must be a SourceManifest")
 
-        runtime_bytes = normalize_bytecode(runtime) if runtime is not None else None
-        creation_bytes = normalize_bytecode(creation) if creation is not None else None
+        runtime_bytes = (
+            normalize_bytecode(runtime) if runtime is not None else None
+        )
+        creation_bytes = (
+            normalize_bytecode(creation) if creation is not None else None
+        )
 
         has_declared = bool(
-            source_manifest.runtime_bytecode_digest or source_manifest.creation_bytecode_digest
+            source_manifest.runtime_bytecode_digest
+            or source_manifest.creation_bytecode_digest
         )
         if not has_declared:
             return SourceEquivalenceStatus.NOT_DECLARED
@@ -639,7 +656,9 @@ class EVMContractFrontend:
         if source_manifest is None:
             source_status = SourceEquivalenceStatus.INDEPENDENT_RUNTIME
             analysis_mode = AnalysisMode.RUNTIME_ONLY
-            diagnostics.append("no source manifest; analyzing deployed runtime independently")
+            diagnostics.append(
+                "no source manifest; analyzing deployed runtime independently"
+            )
         else:
             source_status = self.reproduce_source_equivalence(
                 source_manifest,
@@ -662,7 +681,9 @@ class EVMContractFrontend:
                 )
             else:
                 analysis_mode = AnalysisMode.RUNTIME_ONLY
-                diagnostics.append("source binding unavailable; analyzing runtime independently")
+                diagnostics.append(
+                    "source binding unavailable; analyzing runtime independently"
+                )
 
         # Static-only CFG pass: allowed only when caller claims static_cfg and
         # the CFG itself has pass status with no unsupported ops.
@@ -680,7 +701,9 @@ class EVMContractFrontend:
             semantic_status = SemanticPassStatus.PASS
             attrs["static_cfg_only"] = True
             attrs["trace_complete"] = False
-            diagnostics.append("static CFG pass only; execution-trace pass not claimed")
+            diagnostics.append(
+                "static CFG pass only; execution-trace pass not claimed"
+            )
         elif claim_semantic_pass:
             if semantic_status is SemanticPassStatus.PASS:
                 semantic_status = SemanticPassStatus.FAIL_CLOSED
@@ -793,7 +816,8 @@ class EVMContractFrontend:
             compiler_version=compiler_version,
             settings=dict(settings or {}),
             libraries={
-                name: normalize_address(addr) for name, addr in dict(libraries or {}).items()
+                name: normalize_address(addr)
+                for name, addr in dict(libraries or {}).items()
             },
             target="evm",
         )

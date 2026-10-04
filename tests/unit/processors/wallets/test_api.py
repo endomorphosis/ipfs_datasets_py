@@ -76,7 +76,11 @@ from ipfs_datasets_py.processors.wallets.protocols import (
 NOW = datetime(2025, 6, 1, 12, 0, 0, tzinfo=timezone.utc)
 GENESIS = "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3"
 API_PATH = (
-    Path(__file__).resolve().parents[4] / "ipfs_datasets_py" / "processors" / "wallets" / "api.py"
+    Path(__file__).resolve().parents[4]
+    / "ipfs_datasets_py"
+    / "processors"
+    / "wallets"
+    / "api.py"
 )
 
 
@@ -129,19 +133,25 @@ class FakeWalletLedgerProvider:
         self.capabilities = Capabilities(
             provider="fixture-rpc",
             chain_namespaces=frozenset({"eip155"}),
-            features=frozenset({Capability.WALLET_HISTORY, Capability.LEDGER_RANGE}),
+            features=frozenset(
+                {Capability.WALLET_HISTORY, Capability.LEDGER_RANGE}
+            ),
         )
 
     async def validate_address(self, address: str, *, context: OperationContext) -> object:
         context.check_active()
         return {"address": address, "valid": True}
 
-    async def ingest_wallet(self, request: BoundedRequest) -> AsyncIterator[RecordBatch]:
+    async def ingest_wallet(
+        self, request: BoundedRequest
+    ) -> AsyncIterator[RecordBatch]:
         request.context.check_active()
         for page in self._pages:
             yield RecordBatch(page, next_cursor=None, response_bytes=128)
 
-    async def ingest_ledger(self, request: BoundedRequest) -> AsyncIterator[RecordBatch]:
+    async def ingest_ledger(
+        self, request: BoundedRequest
+    ) -> AsyncIterator[RecordBatch]:
         request.context.check_active()
         for page in self._pages:
             yield RecordBatch(page, next_cursor=None, response_bytes=128)
@@ -155,7 +165,9 @@ class IdentityNormalizer:
             features=frozenset({Capability.WALLET_HISTORY, Capability.LEDGER_RANGE}),
         )
 
-    def normalize(self, records: Sequence[object], *, context: OperationContext) -> list[object]:
+    def normalize(
+        self, records: Sequence[object], *, context: OperationContext
+    ) -> list[object]:
         context.check_active()
         return list(records)
 
@@ -201,11 +213,7 @@ def api(processor: WalletLedgerProcessor) -> WalletProcessorAPI:
 def test_ast_symbols_wallet_processor_api_wallet_ingest_wallet_export() -> None:
     source = API_PATH.read_text(encoding="utf-8")
     tree = ast.parse(source)
-    names = {
-        node.name
-        for node in ast.walk(tree)
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
-    }
+    names = {node.name for node in ast.walk(tree) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))}
     assert "WalletProcessorAPI" in names
     assert "wallet_ingest" in names
     assert "wallet_export" in names
@@ -493,7 +501,9 @@ def test_untrusted_rejects_inline_secrets_and_secret_refs(
     api = WalletProcessorAPI(
         processor=processor,
         trust=TrustLevel.UNTRUSTED,
-        trust_policy=TrustPolicy(allowed_secret_prefixes=frozenset({"vault://wallets/"})),
+        trust_policy=TrustPolicy(
+            allowed_secret_prefixes=frozenset({"vault://wallets/"})
+        ),
     )
     with pytest.raises(InvalidRequestError):
         _run(
@@ -528,7 +538,9 @@ def test_untrusted_rejects_inline_secrets_and_secret_refs(
     assert result.records_accepted >= 0
 
 
-def test_forbidden_sign_option_rejected(api: WalletProcessorAPI, chain: ChainRef) -> None:
+def test_forbidden_sign_option_rejected(
+    api: WalletProcessorAPI, chain: ChainRef
+) -> None:
     with pytest.raises(UnsupportedCapabilityError):
         _run(
             api.wallet_ingest(

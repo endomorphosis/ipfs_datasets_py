@@ -99,7 +99,9 @@ def _intent(**overrides: Any) -> TransactionIntent:
     return TransactionIntent(**base)
 
 
-def _candidate(intent: TransactionIntent | None = None, **overrides: Any) -> TransactionCandidate:
+def _candidate(
+    intent: TransactionIntent | None = None, **overrides: Any
+) -> TransactionCandidate:
     intent = intent or _intent()
     base: dict[str, Any] = {
         "candidate_id": "candidate:tx-001",
@@ -411,7 +413,9 @@ def test_revalidate_and_consume_succeeds_once() -> None:
 
 def test_replay_consumption_fails_closed() -> None:
     engine, request, capability = _allow_capability()
-    engine.revalidate_and_consume(capability, request, phase=PreflightPhase.PRE_SIGN, now=_NOW_OK)
+    engine.revalidate_and_consume(
+        capability, request, phase=PreflightPhase.PRE_SIGN, now=_NOW_OK
+    )
     with pytest.raises(GuardConsumptionRaceError):
         engine.revalidate_and_consume(
             capability, request, phase=PreflightPhase.PRE_BROADCAST, now=_NOW_OK
@@ -546,7 +550,9 @@ def test_utxo_intent_round_trip() -> None:
             UtxoRef(outpoint="aa:0", amount="100000", script_digest=_DIGEST_B),
             UtxoRef(outpoint="bb:1", amount="50000", script_digest=_DIGEST_C),
         ),
-        assets=(AssetAmount(asset_id="asset:btc", amount="150000", symbol="BTC"),),
+        assets=(
+            AssetAmount(asset_id="asset:btc", amount="150000", symbol="BTC"),
+        ),
         fees=(FeeSpec(amount="250", asset_id="asset:btc"),),
     )
     request = _request(intent=intent, candidate=_candidate(intent, encoding="psbt"))

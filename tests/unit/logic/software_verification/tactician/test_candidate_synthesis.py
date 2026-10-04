@@ -123,7 +123,9 @@ def _legal_hole() -> ProofHole:
 
 
 def test_portfolio_interface_constant() -> None:
-    assert ProofCandidatePortfolio.INTERFACE == PROOF_CANDIDATE_PORTFOLIO_INTERFACE
+    assert (
+        ProofCandidatePortfolio.INTERFACE == PROOF_CANDIDATE_PORTFOLIO_INTERFACE
+    )
     assert PROOF_CANDIDATE_PORTFOLIO_INTERFACE == "ProofCandidatePortfolio@1"
     assert PORTFOLIO_ALGORITHM_VERSION.startswith("proof-candidate-portfolio/")
 
@@ -195,7 +197,9 @@ def test_every_candidate_records_source_provider_provenance_trust_budget_holes()
     )
     templates = ReviewedTemplateSource(
         templates={
-            HoleKind.LOOP_INVARIANT.value: ("template: loop head preserves bound and ownership",)
+            HoleKind.LOOP_INVARIANT.value: (
+                "template: loop head preserves bound and ownership",
+            )
         }
     )
     smt = StaticCandidateSource(
@@ -302,7 +306,9 @@ def test_multi_source_portfolio_composes_all_typed_sources() -> None:
             )
         )
     sources.append(
-        ReviewedTemplateSource(templates={HoleKind.LOOP_INVARIANT.value: ("template inv",)})
+        ReviewedTemplateSource(
+            templates={HoleKind.LOOP_INVARIANT.value: ("template inv",)}
+        )
     )
     result = ProofCandidatePortfolio(
         sources=tuple(sources),
@@ -351,7 +357,9 @@ def test_learned_sources_remain_proposal_only() -> None:
     ).synthesize([hole])
 
     assert len(result.proposals) == len(learned_kinds)
-    assert set(result.proposal_only_candidate_ids) == {p.candidate_id for p in result.proposals}
+    assert set(result.proposal_only_candidate_ids) == {
+        p.candidate_id for p in result.proposals
+    }
     for proposal in result.proposals:
         assert proposal.proposal_only is True
         assert proposal.trust is CandidateTrust.LEARNED_PROPOSAL
@@ -399,7 +407,11 @@ def test_portfolio_result_rejects_proof_claims() -> None:
     hole = _hole()
     result = synthesize_candidate_portfolio(
         [hole],
-        sources=(ReviewedTemplateSource(templates={HoleKind.LOOP_INVARIANT.value: ("inv",)}),),
+        sources=(
+            ReviewedTemplateSource(
+                templates={HoleKind.LOOP_INVARIANT.value: ("inv",)}
+            ),
+        ),
         include_builtin_legal_adapter=False,
     )
     payload = result.to_dict()
@@ -463,7 +475,9 @@ def test_builtin_legal_adapter_activates_for_missing_evidence_holes() -> None:
         sources=(),
         include_builtin_legal_adapter=True,
     ).synthesize([legal, loop])
-    legal_props = result.proposals_of_source(CandidateSourceKind.LEGAL_EVIDENCE_ROUTING)
+    legal_props = result.proposals_of_source(
+        CandidateSourceKind.LEGAL_EVIDENCE_ROUTING
+    )
     assert len(legal_props) == 1
     assert legal_props[0].targeted_hole_ids == (legal.hole_id,)
     # Loop invariant is not a legal hole — no legal candidate for it.
@@ -546,7 +560,9 @@ def test_non_proof_holes_are_skipped() -> None:
 def test_duplicate_hole_ids_fail_closed() -> None:
     hole = _hole()
     with pytest.raises(CandidateSynthesisError, match="duplicate hole"):
-        ProofCandidatePortfolio(include_builtin_legal_adapter=False).synthesize([hole, hole])
+        ProofCandidatePortfolio(include_builtin_legal_adapter=False).synthesize(
+            [hole, hole]
+        )
 
 
 def test_max_candidates_budget_is_respected() -> None:
@@ -554,7 +570,9 @@ def test_max_candidates_budget_is_respected() -> None:
     statements = [f"template inv {i}" for i in range(10)]
     result = ProofCandidatePortfolio(
         sources=(
-            ReviewedTemplateSource(templates={HoleKind.LOOP_INVARIANT.value: tuple(statements)}),
+            ReviewedTemplateSource(
+                templates={HoleKind.LOOP_INVARIANT.value: tuple(statements)}
+            ),
         ),
         include_builtin_legal_adapter=False,
         max_candidates_per_hole=3,
@@ -569,7 +587,9 @@ def test_ranking_prefers_exact_corpus_over_learned() -> None:
         StaticCandidateSource(
             source_kind=CandidateSourceKind.LEARNED_MODEL,
             hits_by_hole={
-                hole.hole_id: ({"statement": "learned guess", "provider_id": "provider:model"},)
+                hole.hole_id: (
+                    {"statement": "learned guess", "provider_id": "provider:model"},
+                )
             },
         ),
         StaticCandidateSource(
@@ -632,7 +652,9 @@ def test_candidate_source_hit_defaults_and_round_trip() -> None:
 
 
 def test_empty_holes_yields_empty_portfolio() -> None:
-    result = ProofCandidatePortfolio(include_builtin_legal_adapter=False).synthesize([])
+    result = ProofCandidatePortfolio(
+        include_builtin_legal_adapter=False
+    ).synthesize([])
     assert result.proposals == ()
     assert result.targeted_hole_ids == ()
     assert result.proof_claimed is False

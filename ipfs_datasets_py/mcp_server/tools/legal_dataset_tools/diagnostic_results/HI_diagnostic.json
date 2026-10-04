@@ -1,0 +1,502 @@
+{
+  "state_code": "HI",
+  "state_name": "Hawaii",
+  "timestamp": "2025-10-16T22:19:56.844092",
+  "success": true,
+  "diagnostics": {
+    "url_accessibility": {
+      "accessible": false,
+      "status_code": 403,
+      "content_length": 4521,
+      "content_type": "text/html; charset=UTF-8",
+      "final_url": "https://www.capitol.hawaii.gov/hrscurrent/",
+      "redirected": false
+    },
+    "fallback_methods": {
+      "success": true,
+      "method": "Internet Archive",
+      "url": "http://web.archive.org/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/"
+    },
+    "html_analysis": {
+      "html_content": "<html><head><script type=\"text/javascript\" src=\"https://web-static.archive.org/_static/js/bundle-playback.js?v=FC38Hc5A\" charset=\"utf-8\"></script>\n<script type=\"text/javascript\" src=\"https://web-static.archive.org/_static/js/wombat.js?v=txqj7nKC\" charset=\"utf-8\"></script>\n<script>window.RufflePlayer=window.RufflePlayer||{};window.RufflePlayer.config={\"autoplay\":\"on\",\"unmuteOverlay\":\"hidden\",\"showSwfDownload\":true};</script>\n<script type=\"text/javascript\" src=\"https://web-static.archive.org/_static/js/ruffle/ruffle.js\"></script>\n<script type=\"text/javascript\">\n    __wm.init(\"http://web.archive.org/web\");\n  __wm.wombat(\"https://www.capitol.hawaii.gov/hrscurrent/\",\"20251010215648\",\"http://web.archive.org/\",\"web\",\"https://web-static.archive.org/_static/\",\n\t      \"1760133408\");\n</script>\n<link rel=\"stylesheet\" type=\"text/css\" href=\"https://web-static.archive.org/_static/css/banner-styles.css?v=p7PEIJWi\" />\n<link rel=\"stylesheet\" type=\"text/css\" href=\"https://web-static.archive.org/_static/css/iconochive.css?v=3PDvdIFv\" />\n<!-- End Wayback Rewrite JS Include -->\n<title>www.capitol.hawaii.gov - /hrscurrent/</title></head><body><h1>www.capitol.hawaii.gov - /hrscurrent/</h1><hr>\n\n<pre><a href=\"/web/20251010215648/https://www.capitol.hawaii.gov/\">[To Parent Directory]</a><br><br>  1/7/2025  3:51 PM        &lt;dir&gt; <a href=\"/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol01_Ch0001-0042F/\">Vol01_Ch0001-0042F</a><br>  1/7/2025  3:50 PM        &lt;dir&gt; <a href=\"/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol02_Ch0046-0115/\">Vol02_Ch0046-0115</a><br>  1/7/2025  3:50 PM        &lt;dir&gt; <a href=\"/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol03_Ch0121-0200D/\">Vol03_Ch0121-0200D</a><br>  1/7/2025  3:50 PM        &lt;dir&gt; <a href=\"/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol04_Ch0201-0257/\">Vol04_Ch0201-0257</a><br>  1/7/2025  3:50 PM        &lt;dir&gt; <a href=\"/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol05_Ch0261-0319/\">Vol05_Ch0261-0319</a><br>  1/7/2025  3:50 PM        &lt;dir&gt; <a href=\"/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol06_Ch0321-0344/\">Vol06_Ch0321-0344</a><br>  1/7/2025  3:50 PM        &lt;dir&gt; <a href=\"/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol07_Ch0346-0398/\">Vol07_Ch0346-0398</a><br>  1/7/2025  3:50 PM        &lt;dir&gt; <a href=\"/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol08_Ch0401-0429/\">Vol08_Ch0401-0429</a><br>  1/7/2025  3:50 PM        &lt;dir&gt; <a href=\"/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol09_Ch0431-0435H/\">Vol09_Ch0431-0435H</a><br>  1/7/2025  3:50 PM        &lt;dir&gt; <a href=\"/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol10_Ch0436-0474/\">Vol10_Ch0436-0474</a><br>  1/7/2025  3:50 PM        &lt;dir&gt; <a href=\"/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol11_Ch0476-0490/\">Vol11_Ch0476-0490</a><br>  1/7/2025  3:50 PM        &lt;dir&gt; <a href=\"/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol12_Ch0501-0588/\">Vol12_Ch0501-0588</a><br>  1/7/2025  3:50 PM        &lt;dir&gt; <a href=\"/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol13_Ch0601-0676/\">Vol13_Ch0601-0676</a><br>  1/7/2025  3:51 PM        &lt;dir&gt; <a href=\"/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol14_Ch0701-0853/\">Vol14_Ch0701-0853</a><br>  1/9/2018  3:14 PM          168 <a href=\"/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/web.config\">web.config</a><br></pre><hr></body></html><!--\n     FILE ARCHIVED ON 21:56:48 Oct 10, 2025 AND RETRIEVED FROM THE\n     INTERNET ARCHIVE ON 05:19:58 Oct 17, 2025.\n     JAVASCRIPT APPENDED BY WAYBACK MACHINE, COPYRIGHT INTERNET ARCHIVE.\n\n     ALL OTHER CONTENT MAY ALSO BE PROTECTED BY COPYRIGHT (17 U.S.C.\n     SECTION 108(a)(3)).\n-->\n<!--\nplayback timings (ms):\n  captures_list: 1.488\n  exclusion.robots: 0.069\n  exclusion.robots.policy: 0.043\n  esindex: 0.019\n  cdx.remote: 263.124\n  LoadShardBlock: 244.97 (3)\n  PetaboxLoader3.datanode: 268.226 (4)\n  load_resource: 250.861\n  PetaboxLoader3.resolve: 175.001\n-->",
+      "total_links": 16,
+      "has_tables": false,
+      "has_lists": false,
+      "has_divs": false,
+      "title": "www.capitol.hawaii.gov - /hrscurrent/",
+      "encoding": "UTF-8",
+      "uses_javascript": true
+    },
+    "link_analysis": {
+      "total_links": 16,
+      "links_with_keywords": 14,
+      "links_with_numbers": 14,
+      "accepted_count": 14,
+      "rejected_count": 2,
+      "all_links": [
+        {
+          "text": "[To Parent Directory]",
+          "href": "/web/20251010215648/https://www.capitol.hawaii.gov/",
+          "length": 21,
+          "reject_reason": "no_keywords_or_numbers"
+        },
+        {
+          "text": "Vol01_Ch0001-0042F",
+          "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol01_Ch0001-0042F/",
+          "length": 18,
+          "has_keywords": true,
+          "has_numbers": true
+        },
+        {
+          "text": "Vol02_Ch0046-0115",
+          "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol02_Ch0046-0115/",
+          "length": 17,
+          "has_keywords": true,
+          "has_numbers": true
+        },
+        {
+          "text": "Vol03_Ch0121-0200D",
+          "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol03_Ch0121-0200D/",
+          "length": 18,
+          "has_keywords": true,
+          "has_numbers": true
+        },
+        {
+          "text": "Vol04_Ch0201-0257",
+          "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol04_Ch0201-0257/",
+          "length": 17,
+          "has_keywords": true,
+          "has_numbers": true
+        },
+        {
+          "text": "Vol05_Ch0261-0319",
+          "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol05_Ch0261-0319/",
+          "length": 17,
+          "has_keywords": true,
+          "has_numbers": true
+        },
+        {
+          "text": "Vol06_Ch0321-0344",
+          "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol06_Ch0321-0344/",
+          "length": 17,
+          "has_keywords": true,
+          "has_numbers": true
+        },
+        {
+          "text": "Vol07_Ch0346-0398",
+          "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol07_Ch0346-0398/",
+          "length": 17,
+          "has_keywords": true,
+          "has_numbers": true
+        },
+        {
+          "text": "Vol08_Ch0401-0429",
+          "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol08_Ch0401-0429/",
+          "length": 17,
+          "has_keywords": true,
+          "has_numbers": true
+        },
+        {
+          "text": "Vol09_Ch0431-0435H",
+          "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol09_Ch0431-0435H/",
+          "length": 18,
+          "has_keywords": true,
+          "has_numbers": true
+        },
+        {
+          "text": "Vol10_Ch0436-0474",
+          "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol10_Ch0436-0474/",
+          "length": 17,
+          "has_keywords": true,
+          "has_numbers": true
+        },
+        {
+          "text": "Vol11_Ch0476-0490",
+          "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol11_Ch0476-0490/",
+          "length": 17,
+          "has_keywords": true,
+          "has_numbers": true
+        },
+        {
+          "text": "Vol12_Ch0501-0588",
+          "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol12_Ch0501-0588/",
+          "length": 17,
+          "has_keywords": true,
+          "has_numbers": true
+        },
+        {
+          "text": "Vol13_Ch0601-0676",
+          "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol13_Ch0601-0676/",
+          "length": 17,
+          "has_keywords": true,
+          "has_numbers": true
+        },
+        {
+          "text": "Vol14_Ch0701-0853",
+          "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol14_Ch0701-0853/",
+          "length": 17,
+          "has_keywords": true,
+          "has_numbers": true
+        },
+        {
+          "text": "web.config",
+          "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/web.config",
+          "length": 10,
+          "reject_reason": "no_keywords_or_numbers"
+        }
+      ],
+      "accepted_links": [
+        {
+          "text": "Vol01_Ch0001-0042F",
+          "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol01_Ch0001-0042F/",
+          "length": 18,
+          "has_keywords": true,
+          "has_numbers": true
+        },
+        {
+          "text": "Vol02_Ch0046-0115",
+          "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol02_Ch0046-0115/",
+          "length": 17,
+          "has_keywords": true,
+          "has_numbers": true
+        },
+        {
+          "text": "Vol03_Ch0121-0200D",
+          "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol03_Ch0121-0200D/",
+          "length": 18,
+          "has_keywords": true,
+          "has_numbers": true
+        },
+        {
+          "text": "Vol04_Ch0201-0257",
+          "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol04_Ch0201-0257/",
+          "length": 17,
+          "has_keywords": true,
+          "has_numbers": true
+        },
+        {
+          "text": "Vol05_Ch0261-0319",
+          "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol05_Ch0261-0319/",
+          "length": 17,
+          "has_keywords": true,
+          "has_numbers": true
+        },
+        {
+          "text": "Vol06_Ch0321-0344",
+          "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol06_Ch0321-0344/",
+          "length": 17,
+          "has_keywords": true,
+          "has_numbers": true
+        },
+        {
+          "text": "Vol07_Ch0346-0398",
+          "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol07_Ch0346-0398/",
+          "length": 17,
+          "has_keywords": true,
+          "has_numbers": true
+        },
+        {
+          "text": "Vol08_Ch0401-0429",
+          "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol08_Ch0401-0429/",
+          "length": 17,
+          "has_keywords": true,
+          "has_numbers": true
+        },
+        {
+          "text": "Vol09_Ch0431-0435H",
+          "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol09_Ch0431-0435H/",
+          "length": 18,
+          "has_keywords": true,
+          "has_numbers": true
+        },
+        {
+          "text": "Vol10_Ch0436-0474",
+          "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol10_Ch0436-0474/",
+          "length": 17,
+          "has_keywords": true,
+          "has_numbers": true
+        },
+        {
+          "text": "Vol11_Ch0476-0490",
+          "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol11_Ch0476-0490/",
+          "length": 17,
+          "has_keywords": true,
+          "has_numbers": true
+        },
+        {
+          "text": "Vol12_Ch0501-0588",
+          "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol12_Ch0501-0588/",
+          "length": 17,
+          "has_keywords": true,
+          "has_numbers": true
+        },
+        {
+          "text": "Vol13_Ch0601-0676",
+          "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol13_Ch0601-0676/",
+          "length": 17,
+          "has_keywords": true,
+          "has_numbers": true
+        },
+        {
+          "text": "Vol14_Ch0701-0853",
+          "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol14_Ch0701-0853/",
+          "length": 17,
+          "has_keywords": true,
+          "has_numbers": true
+        }
+      ],
+      "rejected_links": [
+        {
+          "text": "[To Parent Directory]",
+          "href": "/web/20251010215648/https://www.capitol.hawaii.gov/",
+          "length": 21,
+          "reject_reason": "no_keywords_or_numbers"
+        },
+        {
+          "text": "web.config",
+          "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/web.config",
+          "length": 10,
+          "reject_reason": "no_keywords_or_numbers"
+        }
+      ]
+    }
+  },
+  "recommendations": [
+    "\u26a0\ufe0f  URL not accessible - Check if site is online or blocking automated access",
+    "\ud83d\udca1 Try accessing URL in browser manually to verify",
+    "\ud83d\udca1 Consider using Internet Archive or other fallback sources",
+    "\u26a0\ufe0f  Page uses JavaScript - May need Playwright for rendering",
+    "\ud83d\udca1 Install Playwright: pip install playwright && playwright install chromium"
+  ],
+  "html_sample": "diagnostic_results/HI_sample.html",
+  "links_found": [
+    {
+      "text": "[To Parent Directory]",
+      "href": "/web/20251010215648/https://www.capitol.hawaii.gov/",
+      "length": 21,
+      "reject_reason": "no_keywords_or_numbers"
+    },
+    {
+      "text": "Vol01_Ch0001-0042F",
+      "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol01_Ch0001-0042F/",
+      "length": 18,
+      "has_keywords": true,
+      "has_numbers": true
+    },
+    {
+      "text": "Vol02_Ch0046-0115",
+      "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol02_Ch0046-0115/",
+      "length": 17,
+      "has_keywords": true,
+      "has_numbers": true
+    },
+    {
+      "text": "Vol03_Ch0121-0200D",
+      "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol03_Ch0121-0200D/",
+      "length": 18,
+      "has_keywords": true,
+      "has_numbers": true
+    },
+    {
+      "text": "Vol04_Ch0201-0257",
+      "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol04_Ch0201-0257/",
+      "length": 17,
+      "has_keywords": true,
+      "has_numbers": true
+    },
+    {
+      "text": "Vol05_Ch0261-0319",
+      "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol05_Ch0261-0319/",
+      "length": 17,
+      "has_keywords": true,
+      "has_numbers": true
+    },
+    {
+      "text": "Vol06_Ch0321-0344",
+      "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol06_Ch0321-0344/",
+      "length": 17,
+      "has_keywords": true,
+      "has_numbers": true
+    },
+    {
+      "text": "Vol07_Ch0346-0398",
+      "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol07_Ch0346-0398/",
+      "length": 17,
+      "has_keywords": true,
+      "has_numbers": true
+    },
+    {
+      "text": "Vol08_Ch0401-0429",
+      "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol08_Ch0401-0429/",
+      "length": 17,
+      "has_keywords": true,
+      "has_numbers": true
+    },
+    {
+      "text": "Vol09_Ch0431-0435H",
+      "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol09_Ch0431-0435H/",
+      "length": 18,
+      "has_keywords": true,
+      "has_numbers": true
+    },
+    {
+      "text": "Vol10_Ch0436-0474",
+      "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol10_Ch0436-0474/",
+      "length": 17,
+      "has_keywords": true,
+      "has_numbers": true
+    },
+    {
+      "text": "Vol11_Ch0476-0490",
+      "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol11_Ch0476-0490/",
+      "length": 17,
+      "has_keywords": true,
+      "has_numbers": true
+    },
+    {
+      "text": "Vol12_Ch0501-0588",
+      "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol12_Ch0501-0588/",
+      "length": 17,
+      "has_keywords": true,
+      "has_numbers": true
+    },
+    {
+      "text": "Vol13_Ch0601-0676",
+      "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol13_Ch0601-0676/",
+      "length": 17,
+      "has_keywords": true,
+      "has_numbers": true
+    },
+    {
+      "text": "Vol14_Ch0701-0853",
+      "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol14_Ch0701-0853/",
+      "length": 17,
+      "has_keywords": true,
+      "has_numbers": true
+    },
+    {
+      "text": "web.config",
+      "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/web.config",
+      "length": 10,
+      "reject_reason": "no_keywords_or_numbers"
+    }
+  ],
+  "links_accepted": [
+    {
+      "text": "Vol01_Ch0001-0042F",
+      "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol01_Ch0001-0042F/",
+      "length": 18,
+      "has_keywords": true,
+      "has_numbers": true
+    },
+    {
+      "text": "Vol02_Ch0046-0115",
+      "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol02_Ch0046-0115/",
+      "length": 17,
+      "has_keywords": true,
+      "has_numbers": true
+    },
+    {
+      "text": "Vol03_Ch0121-0200D",
+      "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol03_Ch0121-0200D/",
+      "length": 18,
+      "has_keywords": true,
+      "has_numbers": true
+    },
+    {
+      "text": "Vol04_Ch0201-0257",
+      "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol04_Ch0201-0257/",
+      "length": 17,
+      "has_keywords": true,
+      "has_numbers": true
+    },
+    {
+      "text": "Vol05_Ch0261-0319",
+      "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol05_Ch0261-0319/",
+      "length": 17,
+      "has_keywords": true,
+      "has_numbers": true
+    },
+    {
+      "text": "Vol06_Ch0321-0344",
+      "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol06_Ch0321-0344/",
+      "length": 17,
+      "has_keywords": true,
+      "has_numbers": true
+    },
+    {
+      "text": "Vol07_Ch0346-0398",
+      "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol07_Ch0346-0398/",
+      "length": 17,
+      "has_keywords": true,
+      "has_numbers": true
+    },
+    {
+      "text": "Vol08_Ch0401-0429",
+      "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol08_Ch0401-0429/",
+      "length": 17,
+      "has_keywords": true,
+      "has_numbers": true
+    },
+    {
+      "text": "Vol09_Ch0431-0435H",
+      "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol09_Ch0431-0435H/",
+      "length": 18,
+      "has_keywords": true,
+      "has_numbers": true
+    },
+    {
+      "text": "Vol10_Ch0436-0474",
+      "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol10_Ch0436-0474/",
+      "length": 17,
+      "has_keywords": true,
+      "has_numbers": true
+    },
+    {
+      "text": "Vol11_Ch0476-0490",
+      "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol11_Ch0476-0490/",
+      "length": 17,
+      "has_keywords": true,
+      "has_numbers": true
+    },
+    {
+      "text": "Vol12_Ch0501-0588",
+      "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol12_Ch0501-0588/",
+      "length": 17,
+      "has_keywords": true,
+      "has_numbers": true
+    },
+    {
+      "text": "Vol13_Ch0601-0676",
+      "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol13_Ch0601-0676/",
+      "length": 17,
+      "has_keywords": true,
+      "has_numbers": true
+    },
+    {
+      "text": "Vol14_Ch0701-0853",
+      "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/Vol14_Ch0701-0853/",
+      "length": 17,
+      "has_keywords": true,
+      "has_numbers": true
+    }
+  ],
+  "links_rejected": [
+    {
+      "text": "[To Parent Directory]",
+      "href": "/web/20251010215648/https://www.capitol.hawaii.gov/",
+      "length": 21,
+      "reject_reason": "no_keywords_or_numbers"
+    },
+    {
+      "text": "web.config",
+      "href": "/web/20251010215648/https://www.capitol.hawaii.gov/hrscurrent/web.config",
+      "length": 10,
+      "reject_reason": "no_keywords_or_numbers"
+    }
+  ],
+  "errors": [],
+  "base_url": "https://www.capitol.hawaii.gov",
+  "codes_available": 1,
+  "statutes_scraped": 16
+}

@@ -445,13 +445,17 @@ class SmtDatatypeConstructor:
     def render(self) -> str:
         if not self.selectors:
             return f"({self.name})"
-        parts = " ".join(f"({selector} {sort.render()})" for selector, sort in self.selectors)
+        parts = " ".join(
+            f"({selector} {sort.render()})" for selector, sort in self.selectors
+        )
         return f"({self.name} {parts})"
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
-            "selectors": [{"name": name, "sort": sort.to_dict()} for name, sort in self.selectors],
+            "selectors": [
+                {"name": name, "sort": sort.to_dict()} for name, sort in self.selectors
+            ],
         }
 
     @classmethod
@@ -514,10 +518,8 @@ class SmtBinder:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "name", _text(self.name, "binder name"))
-        sort = (
-            self.sort
-            if isinstance(self.sort, SmtSort)
-            else SmtSort.from_dict(_mapping(self.sort, "binder sort"))
+        sort = self.sort if isinstance(self.sort, SmtSort) else SmtSort.from_dict(
+            _mapping(self.sort, "binder sort")
         )
         object.__setattr__(self, "sort", sort)
 
@@ -558,7 +560,9 @@ class SmtTerm:
         )
         object.__setattr__(self, "binders", binders)
         if self.sort is not None and not isinstance(self.sort, SmtSort):
-            object.__setattr__(self, "sort", SmtSort.from_dict(_mapping(self.sort, "term sort")))
+            object.__setattr__(
+                self, "sort", SmtSort.from_dict(_mapping(self.sort, "term sort"))
+            )
         self._validate_shape()
 
     def _validate_shape(self) -> None:
@@ -837,10 +841,8 @@ class HornClause:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "clause_id", _identifier(self.clause_id, "clause_id"))
-        head = (
-            self.head
-            if isinstance(self.head, SmtTerm)
-            else SmtTerm.from_dict(_mapping(self.head, "horn head"))
+        head = self.head if isinstance(self.head, SmtTerm) else SmtTerm.from_dict(
+            _mapping(self.head, "horn head")
         )
         object.__setattr__(self, "head", head)
         body = tuple(
@@ -971,12 +973,18 @@ class SmtObligation:
     schema_version: str = SMT_OBLIGATION_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "obligation_id", _identifier(self.obligation_id, "obligation_id"))
-        object.__setattr__(self, "query_mode", _enum(self.query_mode, SmtQueryMode, "query_mode"))
+        object.__setattr__(
+            self, "obligation_id", _identifier(self.obligation_id, "obligation_id")
+        )
+        object.__setattr__(
+            self, "query_mode", _enum(self.query_mode, SmtQueryMode, "query_mode")
+        )
         features = tuple(_enum(item, SmtFeature, "features item") for item in self.features)
         if not features:
             raise SmtCompilerError("obligation requires at least one feature tag")
-        object.__setattr__(self, "features", tuple(sorted(features, key=lambda item: item.value)))
+        object.__setattr__(
+            self, "features", tuple(sorted(features, key=lambda item: item.value))
+        )
         hard = [item for item in features if item in _HARD_UNSUPPORTED]
         if hard:
             raise UnsupportedSmtFeatureError(
@@ -1019,7 +1027,9 @@ class SmtObligation:
             else SmtFunDecl.from_dict(_mapping(item, "function"))
             for item in self.functions
         )
-        object.__setattr__(self, "functions", tuple(sorted(functions, key=lambda item: item.name)))
+        object.__setattr__(
+            self, "functions", tuple(sorted(functions, key=lambda item: item.name))
+        )
 
         datatypes = tuple(
             item
@@ -1027,7 +1037,9 @@ class SmtObligation:
             else SmtDatatypeDecl.from_dict(_mapping(item, "datatype"))
             for item in self.datatypes
         )
-        object.__setattr__(self, "datatypes", tuple(sorted(datatypes, key=lambda item: item.name)))
+        object.__setattr__(
+            self, "datatypes", tuple(sorted(datatypes, key=lambda item: item.name))
+        )
 
         horn_clauses = tuple(
             item
@@ -1061,7 +1073,9 @@ class SmtObligation:
             "source_family_version",
             _text(self.source_family_version, "source_family_version"),
         )
-        property_ids = tuple(_identifier(item, "property_ids item") for item in self.property_ids)
+        property_ids = tuple(
+            _identifier(item, "property_ids item") for item in self.property_ids
+        )
         object.__setattr__(self, "property_ids", tuple(sorted(set(property_ids))))
 
         bounds = tuple(
@@ -1090,7 +1104,9 @@ class SmtObligation:
         object.__setattr__(self, "attributes", _frozen(self.attributes, "attributes"))
 
         if self.schema_version != SMT_OBLIGATION_SCHEMA_VERSION:
-            raise SmtCompilerError(f"unsupported obligation schema_version {self.schema_version!r}")
+            raise SmtCompilerError(
+                f"unsupported obligation schema_version {self.schema_version!r}"
+            )
         self._validate_query_payload()
 
     def _validate_query_payload(self) -> None:
@@ -1110,11 +1126,7 @@ class SmtObligation:
                 raise SmtCompilerError(
                     f"{mode.value} obligations must not carry Horn clauses; use fixed_point"
                 )
-            if (
-                mode is SmtQueryMode.THEOREM_BY_NEGATION
-                and self.request_model
-                and not self.request_unsat_core
-            ):
+            if mode is SmtQueryMode.THEOREM_BY_NEGATION and self.request_model and not self.request_unsat_core:
                 # Models of theorem-by-negation are counter-models; allowed.
                 pass
 
@@ -1161,12 +1173,16 @@ class SmtObligation:
             request_unsat_core=value.get("request_unsat_core", False),
             logic=value.get("logic", ""),
             source_family_id=value.get("source_family_id", SMT_SOURCE_FAMILY_ID),
-            source_family_version=value.get("source_family_version", SMT_SOURCE_FAMILY_VERSION),
+            source_family_version=value.get(
+                "source_family_version", SMT_SOURCE_FAMILY_VERSION
+            ),
             property_ids=tuple(value.get("property_ids", ())),
             bounds=tuple(value.get("bounds", ())),
             unsupported_constructs=tuple(value.get("unsupported_constructs", ())),
             semantic_mutations=tuple(value.get("semantic_mutations", ())),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
             schema_version=value.get("schema_version", SMT_OBLIGATION_SCHEMA_VERSION),
         )
 
@@ -1251,19 +1267,25 @@ class SmtScript:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "logic", _text(self.logic, "logic"))
-        object.__setattr__(self, "query_mode", _enum(self.query_mode, SmtQueryMode, "query_mode"))
+        object.__setattr__(
+            self, "query_mode", _enum(self.query_mode, SmtQueryMode, "query_mode")
+        )
         lines = tuple(_text(item, "script line") for item in self.lines)
         if not lines:
             raise SmtCompilerError("SMT script requires at least one line")
         object.__setattr__(self, "lines", lines)
         theories = tuple(_enum(item, SmtTheory, "theories item") for item in self.theories)
-        object.__setattr__(self, "theories", tuple(sorted(theories, key=lambda item: item.value)))
+        object.__setattr__(
+            self, "theories", tuple(sorted(theories, key=lambda item: item.value))
+        )
         object.__setattr__(self, "request_model", _bool(self.request_model, "request_model"))
         object.__setattr__(
             self, "request_unsat_core", _bool(self.request_unsat_core, "request_unsat_core")
         )
         if self.schema_version != SMT_SCRIPT_SCHEMA_VERSION:
-            raise SmtCompilerError(f"unsupported script schema_version {self.schema_version!r}")
+            raise SmtCompilerError(
+                f"unsupported script schema_version {self.schema_version!r}"
+            )
 
     @property
     def source(self) -> str:
@@ -1305,7 +1327,9 @@ class SmtCompilation:
     INTERFACE: ClassVar[str] = SOFTWARE_VERIFICATION_SMT_COMPILER_INTERFACE
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "obligation_id", _identifier(self.obligation_id, "obligation_id"))
+        object.__setattr__(
+            self, "obligation_id", _identifier(self.obligation_id, "obligation_id")
+        )
         if not isinstance(self.script, SmtScript):
             raise SmtCompilerError("script must be an SmtScript")
         if not isinstance(self.receipt, LogicTranslationReceipt):
@@ -1322,10 +1346,18 @@ class SmtCompilation:
             tuple(sorted(capabilities, key=lambda item: item.feature.value)),
         )
         features = tuple(_enum(item, SmtFeature, "features item") for item in self.features)
-        object.__setattr__(self, "features", tuple(sorted(features, key=lambda item: item.value)))
-        object.__setattr__(self, "query_mode", _enum(self.query_mode, SmtQueryMode, "query_mode"))
-        object.__setattr__(self, "source_identity", _text(self.source_identity, "source_identity"))
-        object.__setattr__(self, "target_identity", _text(self.target_identity, "target_identity"))
+        object.__setattr__(
+            self, "features", tuple(sorted(features, key=lambda item: item.value))
+        )
+        object.__setattr__(
+            self, "query_mode", _enum(self.query_mode, SmtQueryMode, "query_mode")
+        )
+        object.__setattr__(
+            self, "source_identity", _text(self.source_identity, "source_identity")
+        )
+        object.__setattr__(
+            self, "target_identity", _text(self.target_identity, "target_identity")
+        )
         object.__setattr__(
             self, "compiler_version", _text(self.compiler_version, "compiler_version")
         )
@@ -1536,7 +1568,9 @@ def _preservation_for(obligation: SmtObligation) -> PreservationClaim:
             kind=PreservationKind.EQUISATISFIABLE,
             preserved_property_ids=property_ids,
             permitted_result_classes=("satisfiable", "unsatisfiable", "unknown"),
-            description=("Horn/CHC clauses are compiled as an explicit fixed-point query."),
+            description=(
+                "Horn/CHC clauses are compiled as an explicit fixed-point query."
+            ),
         )
     if any(feature in _CAPABILITY_BOUND for feature in obligation.features):
         return PreservationClaim(
@@ -1653,7 +1687,11 @@ class SoftwareVerificationSMTCompiler:
     compiler_version: ClassVar[str] = SMT_COMPILER_VERSION
 
     def __init__(self, *, capabilities: Sequence[SmtCapability] | None = None) -> None:
-        caps = tuple(capabilities) if capabilities is not None else default_capabilities()
+        caps = (
+            tuple(capabilities)
+            if capabilities is not None
+            else default_capabilities()
+        )
         self._capabilities = tuple(
             sorted(
                 (
@@ -1686,7 +1724,10 @@ class SoftwareVerificationSMTCompiler:
     def is_capability_bound(self, feature: SmtFeature | str) -> bool:
         feature = _enum(feature, SmtFeature, "feature")
         capability = self._capability_index.get(feature)
-        return capability is not None and capability.kind is SmtCapabilityKind.CAPABILITY_BOUND
+        return (
+            capability is not None
+            and capability.kind is SmtCapabilityKind.CAPABILITY_BOUND
+        )
 
     def reject_unsupported(self, feature: SmtFeature | str, *, detail: str = "") -> None:
         """Fail closed for features that must not become uninterpreted claims."""
@@ -1694,13 +1735,16 @@ class SoftwareVerificationSMTCompiler:
         feature = _enum(feature, SmtFeature, "feature")
         capability = self._capability_index.get(feature)
         if capability is None or capability.kind is SmtCapabilityKind.UNSUPPORTED:
-            message = f"feature {feature.value} cannot become an uninterpreted native SMT claim"
+            message = (
+                f"feature {feature.value} cannot become an uninterpreted native SMT claim"
+            )
             if detail:
                 message = f"{message}: {detail}"
             raise UnsupportedSmtFeatureError(message)
         if capability.kind is SmtCapabilityKind.CAPABILITY_BOUND:
             message = (
-                f"feature {feature.value} is capability-bound and is not a native SMT-LIB encoding"
+                f"feature {feature.value} is capability-bound and is not a native "
+                "SMT-LIB encoding"
             )
             if detail:
                 message = f"{message}: {detail}"
@@ -1755,7 +1799,9 @@ class SoftwareVerificationSMTCompiler:
             source_identity=source_identity,
             target_identity=target_identity,
         )
-        used_capabilities = tuple(self.capability(feature) for feature in obligation.features)
+        used_capabilities = tuple(
+            self.capability(feature) for feature in obligation.features
+        )
         return SmtCompilation(
             obligation_id=obligation.obligation_id,
             script=script,
@@ -2154,7 +2200,9 @@ class SoftwareVerificationSMTCompiler:
                     bound_id=f"bound:matching-{max_matching_steps}",
                     kind=BoundednessKind.STEP_BOUNDED,
                     limits={"matching_steps": max_matching_steps},
-                    description=(f"Simulation matching is limited to {max_matching_steps} steps."),
+                    description=(
+                        f"Simulation matching is limited to {max_matching_steps} steps."
+                    ),
                 )
             )
         # Forward simulation fragment: R /\\ abstract_step => exists concrete matching.

@@ -169,7 +169,9 @@ class SolanaNormalizer:
             )
         }
 
-    def _provenance(self, payload: object, *, context: OperationContext, scope: str) -> Provenance:
+    def _provenance(
+        self, payload: object, *, context: OperationContext, scope: str
+    ) -> Provenance:
         observed_at = self._clock()
         if observed_at.tzinfo is None or observed_at.utcoffset() is None:
             raise NormalizationError("normalizer clock must be timezone-aware")
@@ -194,7 +196,8 @@ class SolanaNormalizer:
                 output.extend(self.normalize_transaction(value, context=context))
             else:
                 raise NormalizationError(
-                    "Solana normalizer expects SolanaBlockBundle or SolanaTransactionBundle"
+                    "Solana normalizer expects SolanaBlockBundle or "
+                    "SolanaTransactionBundle"
                 )
             if len(output) > context.limits.max_items:
                 raise ResourceLimitError("normalized Solana records exceed max_items")
@@ -202,7 +205,11 @@ class SolanaNormalizer:
 
     @staticmethod
     def _block_time(value: int | None) -> datetime | None:
-        return None if value is None else datetime.fromtimestamp(value, tz=timezone.utc)
+        return (
+            None
+            if value is None
+            else datetime.fromtimestamp(value, tz=timezone.utc)
+        )
 
     def normalize_block(
         self, bundle: SolanaBlockBundle, *, context: OperationContext
@@ -220,7 +227,9 @@ class SolanaNormalizer:
                     context=context,
                     scope="ledger",
                 ),
-                ledger_position=LedgerPosition(sequence=bundle.slot, hash=bundle.blockhash),
+                ledger_position=LedgerPosition(
+                    sequence=bundle.slot, hash=bundle.blockhash
+                ),
                 finality=finality,
                 block_hash=bundle.blockhash,
                 parent_hash=bundle.previous_blockhash,
@@ -238,7 +247,9 @@ class SolanaNormalizer:
             output.extend(self.normalize_transaction(transaction, context=context))
         return tuple(output)
 
-    def _account(self, address: object, *, kind: AccountKind = AccountKind.ADDRESS) -> AccountRef:
+    def _account(
+        self, address: object, *, kind: AccountKind = AccountKind.ADDRESS
+    ) -> AccountRef:
         return AccountRef(
             self._network.to_chain_ref(),
             normalize_pubkey(address, field_name="account"),
@@ -267,7 +278,9 @@ class SolanaNormalizer:
             asset_namespace="spl-token",
             asset_reference=mint,
             decimals=decimals,
-            kind=(metadata.kind if metadata is not None else AssetKind.FUNGIBLE_TOKEN),
+            kind=(
+                metadata.kind if metadata is not None else AssetKind.FUNGIBLE_TOKEN
+            ),
             symbol=metadata.symbol if metadata is not None else None,
         )
 
@@ -293,7 +306,9 @@ class SolanaNormalizer:
         if not isinstance(outer, Sequence) or isinstance(outer, (str, bytes)):
             raise NormalizationError("message.instructions must be a sequence")
         inner_groups = meta.get("innerInstructions") or ()
-        if not isinstance(inner_groups, Sequence) or isinstance(inner_groups, (str, bytes)):
+        if not isinstance(inner_groups, Sequence) or isinstance(
+            inner_groups, (str, bytes)
+        ):
             raise NormalizationError("meta.innerInstructions must be a sequence")
         inner_by_outer: dict[int, Sequence[object]] = {}
         for group in inner_groups:
@@ -318,7 +333,9 @@ class SolanaNormalizer:
             for inner_index, inner in enumerate(inner_by_outer.get(outer_index, ())):
                 if not isinstance(inner, Mapping):
                     raise NormalizationError("inner instruction must be a mapping")
-                result.append(_Instruction(inner, outer_index, inner_index, event_index))
+                result.append(
+                    _Instruction(inner, outer_index, inner_index, event_index)
+                )
                 event_index += 1
         unknown_groups = set(inner_by_outer) - set(range(len(outer)))
         if unknown_groups:
@@ -326,7 +343,9 @@ class SolanaNormalizer:
         return tuple(result)
 
     @staticmethod
-    def _program_id(instruction: Mapping[str, Any], account_keys: tuple[str, ...]) -> str:
+    def _program_id(
+        instruction: Mapping[str, Any], account_keys: tuple[str, ...]
+    ) -> str:
         if instruction.get("programId") is not None:
             return normalize_pubkey(instruction["programId"], field_name="programId")
         program_index = parse_non_negative_int(
@@ -354,7 +373,9 @@ class SolanaNormalizer:
                         "instruction account index is outside resolved account keys"
                     ) from None
             else:
-                result.append(normalize_pubkey(value, field_name="instruction account"))
+                result.append(
+                    normalize_pubkey(value, field_name="instruction account")
+                )
         return tuple(result)
 
     @staticmethod
@@ -406,7 +427,9 @@ class SolanaNormalizer:
                 if decimals > 255:
                     raise NormalizationError("token decimals must not exceed 255")
                 amount = str(
-                    parse_non_negative_int(ui_amount.get("amount"), field_name="token amount")
+                    parse_non_negative_int(
+                        ui_amount.get("amount"), field_name="token amount"
+                    )
                 )
                 owner_raw = value.get("owner")
                 owner = (
@@ -478,13 +501,17 @@ class SolanaNormalizer:
         output: list[object] = [
             TransactionRecord(
                 chain=self._network.to_chain_ref(),
-                provenance=self._provenance(bundle.transaction, context=context, scope="ledger"),
+                provenance=self._provenance(
+                    bundle.transaction, context=context, scope="ledger"
+                ),
                 ledger_position=position,
                 finality=finality,
                 transaction_hash=signature,
                 status=status,
                 participants=participants,
-                fee=ExactAmount.from_int(fee, decimals=self._network.native_decimals),
+                fee=ExactAmount.from_int(
+                    fee, decimals=self._network.native_decimals
+                ),
                 block_time=self._block_time(bundle.block_time),
                 extensions=self._extension(
                     {
@@ -506,7 +533,9 @@ class SolanaNormalizer:
         for native in instructions:
             program_id = self._program_id(native.value, account_keys)
             parsed_type, info = self._parsed_instruction(native.value)
-            instruction_accounts = self._instruction_accounts(native.value, account_keys)
+            instruction_accounts = self._instruction_accounts(
+                native.value, account_keys
+            )
             instruction_extension = {
                 "outer_index": native.outer_index,
                 "inner_index": native.inner_index,
@@ -524,7 +553,9 @@ class SolanaNormalizer:
             output.append(
                 ContractEventRecord(
                     chain=self._network.to_chain_ref(),
-                    provenance=self._provenance(native.value, context=context, scope="ledger"),
+                    provenance=self._provenance(
+                        native.value, context=context, scope="ledger"
+                    ),
                     ledger_position=LedgerPosition(
                         sequence=bundle.slot,
                         hash=bundle.blockhash,
@@ -586,7 +617,9 @@ class SolanaNormalizer:
             asset = self._native_asset()
             kind = TransferKind.NATIVE
         elif program_id in TOKEN_PROGRAM_IDS:
-            source_key = normalize_pubkey(info.get("source"), field_name="token transfer source")
+            source_key = normalize_pubkey(
+                info.get("source"), field_name="token transfer source"
+            )
             destination_key = normalize_pubkey(
                 info.get("destination"), field_name="token transfer destination"
             )
@@ -610,18 +643,24 @@ class SolanaNormalizer:
                         "unchecked SPL transfer requires token-balance mint/decimals"
                     )
                 mint, decimals, _owner, _balance_amount = balance
-                amount = parse_non_negative_int(info.get("amount"), field_name="SPL token amount")
+                amount = parse_non_negative_int(
+                    info.get("amount"), field_name="SPL token amount"
+                )
             if decimals > 255:
                 raise NormalizationError("SPL token decimals must not exceed 255")
             source = self._account(source_key, kind=AccountKind.TOKEN_ACCOUNT)
-            destination = self._account(destination_key, kind=AccountKind.TOKEN_ACCOUNT)
+            destination = self._account(
+                destination_key, kind=AccountKind.TOKEN_ACCOUNT
+            )
             asset = self._token_asset(mint, decimals)
             kind = TransferKind.TOKEN
         else:
             return None
         return TransferRecord(
             chain=self._network.to_chain_ref(),
-            provenance=self._provenance(native.value, context=context, scope="ledger"),
+            provenance=self._provenance(
+                native.value, context=context, scope="ledger"
+            ),
             ledger_position=LedgerPosition(
                 sequence=bundle.slot,
                 hash=bundle.blockhash,
@@ -662,12 +701,16 @@ class SolanaNormalizer:
         )
         output: list[object] = []
         post_balances = meta.get("postBalances") or ()
-        if not isinstance(post_balances, Sequence) or isinstance(post_balances, (str, bytes)):
+        if not isinstance(post_balances, Sequence) or isinstance(
+            post_balances, (str, bytes)
+        ):
             raise NormalizationError("meta.postBalances must be a sequence")
         if len(post_balances) != len(account_keys):
             raise NormalizationError("postBalances/accountKeys length mismatch")
         for index, value in enumerate(post_balances):
-            lamports = parse_non_negative_int(value, field_name=f"postBalances[{index}]")
+            lamports = parse_non_negative_int(
+                value, field_name=f"postBalances[{index}]"
+            )
             output.append(
                 BalanceSnapshot(
                     chain=self._network.to_chain_ref(),
@@ -680,8 +723,12 @@ class SolanaNormalizer:
                     finality=finality,
                     account=self._account(account_keys[index]),
                     asset=self._native_asset(),
-                    amount=ExactAmount.from_int(lamports, decimals=self._network.native_decimals),
-                    extensions=self._extension({"commitment": bundle.commitment.value}),
+                    amount=ExactAmount.from_int(
+                        lamports, decimals=self._network.native_decimals
+                    ),
+                    extensions=self._extension(
+                        {"commitment": bundle.commitment.value}
+                    ),
                 )
             )
 
@@ -707,10 +754,14 @@ class SolanaNormalizer:
             output.append(
                 TokenAccountRecord(
                     chain=self._network.to_chain_ref(),
-                    provenance=self._provenance(value, context=context, scope="ledger"),
+                    provenance=self._provenance(
+                        value, context=context, scope="ledger"
+                    ),
                     ledger_position=position,
                     finality=finality,
-                    token_account=self._account(token_account_key, kind=AccountKind.TOKEN_ACCOUNT),
+                    token_account=self._account(
+                        token_account_key, kind=AccountKind.TOKEN_ACCOUNT
+                    ),
                     owner=None if owner is None else self._account(owner),
                     asset=asset,
                     amount=ExactAmount(amount, decimals),

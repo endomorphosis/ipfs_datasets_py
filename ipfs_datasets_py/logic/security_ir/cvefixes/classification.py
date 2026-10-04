@@ -47,9 +47,15 @@ from .vocabulary import (
 )
 
 
-CLASSIFICATION_MATERIALIZER_VERSION: Final = "cvefixes-classification-materializer/v1"
-CLASSIFICATION_CONFIG_SCHEMA_VERSION: Final = "cvefixes-classification-materializer-config/v1"
-UNRESOLVED_FORMALISM: Final = "cvefixes-unresolved-forbidden-constraints-json/v1"
+CLASSIFICATION_MATERIALIZER_VERSION: Final = (
+    "cvefixes-classification-materializer/v1"
+)
+CLASSIFICATION_CONFIG_SCHEMA_VERSION: Final = (
+    "cvefixes-classification-materializer-config/v1"
+)
+UNRESOLVED_FORMALISM: Final = (
+    "cvefixes-unresolved-forbidden-constraints-json/v1"
+)
 CLASSIFICATION_CONFIG_CID: Final = canonical_config_cid(
     {
         "candidate_effect": "audit",
@@ -124,7 +130,9 @@ def _unresolved_expression(
         "projection_cid": projection.cid,
         "proof_authoritative": False,
         "resolution": "unresolved",
-        "statement": ("Exact forbidden action and scope constraints remain unresolved."),
+        "statement": (
+            "Exact forbidden action and scope constraints remain unresolved."
+        ),
     }
     return canonical_json_bytes(expression).decode("utf-8")
 
@@ -168,7 +176,9 @@ def materialize_classification(
     # This is an invariant, not a recoverable branch: changing the fields
     # above must never silently turn this materializer into policy inference.
     if not attributes.classification_only or attributes.policy_match_terms:
-        raise AssertionError("classification materializer created policy match constraints")
+        raise AssertionError(
+            "classification materializer created policy match constraints"
+        )
 
     candidate = PolicyCandidate(
         source_cids=(source_cid,),
@@ -185,7 +195,9 @@ def materialize_classification(
             "exact_policy_constraints_present": False,
             "forbidden_constraint_resolution": "unresolved",
             "grants_execution_authority": False,
-            "language_annotation": (language.to_dict() if language is not None else None),
+            "language_annotation": (
+                language.to_dict() if language is not None else None
+            ),
             "language_annotation_is_policy_constraint": False,
             "language_annotation_status": language_status,
             "materializer_version": CLASSIFICATION_MATERIALIZER_VERSION,

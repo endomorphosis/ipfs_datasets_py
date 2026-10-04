@@ -222,7 +222,9 @@ def test_world_id_binding_domain_and_nullifier() -> None:
     wid = WorldIDBinding.from_dict(_world_id())
     assert wid.rp_id == "app_staging_example"
     assert wid.action == "claim-airdrop"
-    assert wid.nullifier_commitment.startswith("sha256:") or len(wid.nullifier_commitment) >= 8
+    assert wid.nullifier_commitment.startswith("sha256:") or len(
+        wid.nullifier_commitment
+    ) >= 8
     assert wid.external_nullifier_domain
     assert "claim-airdrop" in wid.external_nullifier_domain
     assert wid.proof_implies_authorization is False
@@ -373,7 +375,9 @@ def test_evaluate_stale_compliance_blocks() -> None:
         binding,
         request=request,
         security_results={req: "pass" for req in request.security_requirement_ids},
-        compliance_results={req: "stale" for req in request.compliance_requirement_ids},
+        compliance_results={
+            req: "stale" for req in request.compliance_requirement_ids
+        },
         now=_NOW_OK,
     )
     assert decision.outcome is TransactionVerdictOutcome.STALE
@@ -523,11 +527,9 @@ def test_nullifier_domain_substitution_at_consumption() -> None:
             live_world_id=mutated_wid,
             live_verifier_epochs={"verifier:world-id-v3": _verifier_epoch()},
         )
-    assert (
-        "world_id" in str(excinfo.value).lower()
-        or "domain" in str(excinfo.value).lower()
-        or "substituted" in str(excinfo.value).lower()
-    )
+    assert "world_id" in str(excinfo.value).lower() or "domain" in str(
+        excinfo.value
+    ).lower() or "substituted" in str(excinfo.value).lower()
 
 
 def test_verifier_upgrade_blocks_consumption() -> None:
@@ -660,7 +662,9 @@ def test_stale_list_revision_at_consumption() -> None:
                 now=_NOW_OK,
                 live_verifier_epochs={"verifier:world-id-v3": _verifier_epoch()},
             )
-        assert "stale" in str(excinfo.value).lower() or "list" in str(excinfo.value).lower()
+        assert "stale" in str(excinfo.value).lower() or "list" in str(
+            excinfo.value
+        ).lower()
 
 
 # ---------------------------------------------------------------------------

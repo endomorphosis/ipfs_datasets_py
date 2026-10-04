@@ -195,7 +195,9 @@ _FAMILY_SPECS: tuple[ProcessorFamilySpec, ...] = (
             "utxo_model": True,
             "supports_sign": False,
             "supports_broadcast": False,
-            "transaction_guard": ("ipfs_datasets_py.processors.wallets.bitcoin.transaction_guard"),
+            "transaction_guard": (
+                "ipfs_datasets_py.processors.wallets.bitcoin.transaction_guard"
+            ),
             "transaction_guard_symbol": "BitcoinTransactionGuard",
         },
     ),
@@ -220,7 +222,9 @@ _FAMILY_SPECS: tuple[ProcessorFamilySpec, ...] = (
         metadata={
             "supports_sign": False,
             "supports_broadcast": False,
-            "transaction_guard": ("ipfs_datasets_py.processors.wallets.ethereum.transaction_guard"),
+            "transaction_guard": (
+                "ipfs_datasets_py.processors.wallets.ethereum.transaction_guard"
+            ),
             "transaction_guard_symbol": "EthereumTransactionGuard",
         },
     ),
@@ -238,7 +242,9 @@ _FAMILY_SPECS: tuple[ProcessorFamilySpec, ...] = (
         metadata={
             "supports_sign": False,
             "supports_broadcast": False,
-            "transaction_guard": ("ipfs_datasets_py.processors.wallets.solana.transaction_guard"),
+            "transaction_guard": (
+                "ipfs_datasets_py.processors.wallets.solana.transaction_guard"
+            ),
             "transaction_guard_symbol": "SolanaTransactionGuard",
         },
     ),
@@ -267,7 +273,9 @@ _FAMILY_SPECS: tuple[ProcessorFamilySpec, ...] = (
             "supports_submit": False,
             "supports_broadcast": False,
             "xaman_payloads": False,
-            "transaction_guard": ("ipfs_datasets_py.processors.wallets.xrpl.transaction_guard"),
+            "transaction_guard": (
+                "ipfs_datasets_py.processors.wallets.xrpl.transaction_guard"
+            ),
             "transaction_guard_symbol": "XRPLTransactionGuard",
         },
     ),
@@ -305,7 +313,9 @@ _FAMILY_SPECS: tuple[ProcessorFamilySpec, ...] = (
             "supports_broadcast": False,
             "settlement_via": "xrpl",
             "composed_xrpl": True,
-            "transaction_guard": ("ipfs_datasets_py.processors.wallets.xaman.transaction_guard"),
+            "transaction_guard": (
+                "ipfs_datasets_py.processors.wallets.xaman.transaction_guard"
+            ),
             "transaction_guard_symbol": "XamanTransactionGuard",
         },
     ),
@@ -417,9 +427,7 @@ def _import_family_module(spec: ProcessorFamilySpec) -> Any:
         ) from exc
 
 
-def _build_bitcoin(
-    spec: ProcessorFamilySpec, *, network: str | None, options: Mapping[str, Any]
-) -> Any:
+def _build_bitcoin(spec: ProcessorFamilySpec, *, network: str | None, options: Mapping[str, Any]) -> Any:
     module = _import_family_module(spec)
     BitcoinNetwork = module.BitcoinNetwork
     BitcoinWalletProcessor = module.BitcoinWalletProcessor
@@ -440,7 +448,8 @@ def _build_bitcoin(
     }
     if key not in mapping:
         raise InvalidRequestError(
-            f"unknown bitcoin network {selected!r}; expected one of {sorted(mapping)}"
+            f"unknown bitcoin network {selected!r}; "
+            f"expected one of {sorted(mapping)}"
         )
     return BitcoinWalletProcessor(
         network=mapping[key],
@@ -452,9 +461,7 @@ def _build_bitcoin(
     )
 
 
-def _build_ethereum(
-    spec: ProcessorFamilySpec, *, network: str | None, options: Mapping[str, Any]
-) -> Any:
+def _build_ethereum(spec: ProcessorFamilySpec, *, network: str | None, options: Mapping[str, Any]) -> Any:
     module = _import_family_module(spec)
     ETHEREUM_MAINNET = module.ETHEREUM_MAINNET
     EvmNetwork = module.EvmNetwork
@@ -573,9 +580,7 @@ def _build_ethereum(
     return EthereumWalletFacade()
 
 
-def _build_solana(
-    spec: ProcessorFamilySpec, *, network: str | None, options: Mapping[str, Any]
-) -> Any:
+def _build_solana(spec: ProcessorFamilySpec, *, network: str | None, options: Mapping[str, Any]) -> Any:
     module = _import_family_module(spec)
     SOLANA_MAINNET = module.SOLANA_MAINNET
     SolanaNetwork = module.SolanaNetwork
@@ -669,9 +674,7 @@ def _build_solana(
     return SolanaWalletFacade()
 
 
-def _build_xrpl(
-    spec: ProcessorFamilySpec, *, network: str | None, options: Mapping[str, Any]
-) -> Any:
+def _build_xrpl(spec: ProcessorFamilySpec, *, network: str | None, options: Mapping[str, Any]) -> Any:
     module = _import_family_module(spec)
     XRPLNetwork = module.XRPLNetwork
     XRPLWalletProcessor = module.XRPLWalletProcessor
@@ -700,9 +703,7 @@ def _build_xrpl(
     )
 
 
-def _build_xaman(
-    spec: ProcessorFamilySpec, *, network: str | None, options: Mapping[str, Any]
-) -> Any:
+def _build_xaman(spec: ProcessorFamilySpec, *, network: str | None, options: Mapping[str, Any]) -> Any:
     """Xaman always composes XRPL; settlement is never treated as API success."""
 
     module = _import_family_module(spec)
@@ -774,7 +775,8 @@ def _build_world_chain(
             chain_id: int | str = int(key)
         except ValueError as exc:
             raise InvalidRequestError(
-                f"unknown world-chain network {selected!r}; expected one of {sorted(chain_id_map)}"
+                f"unknown world-chain network {selected!r}; "
+                f"expected one of {sorted(chain_id_map)}"
             ) from exc
     else:
         chain_id = chain_id_map[key]
@@ -795,9 +797,7 @@ def _build_world_chain(
     )
 
 
-def _build_worldcoin(
-    spec: ProcessorFamilySpec, *, network: str | None, options: Mapping[str, Any]
-) -> Any:
+def _build_worldcoin(spec: ProcessorFamilySpec, *, network: str | None, options: Mapping[str, Any]) -> Any:
     """Return a World ID package handle; World Chain is available via composition."""
 
     module = _import_family_module(spec)
@@ -1034,7 +1034,9 @@ class WalletProcessorRegistry:
         shadow_store: Any | None = None,
     ) -> None:
         family_specs = tuple(specs) if specs is not None else _FAMILY_SPECS
-        self._specs: dict[str, ProcessorFamilySpec] = {spec.family: spec for spec in family_specs}
+        self._specs: dict[str, ProcessorFamilySpec] = {
+            spec.family: spec for spec in family_specs
+        }
         self._aliases: dict[str, str] = {}
         for spec in family_specs:
             self._aliases[spec.family.lower()] = spec.family
@@ -1241,7 +1243,8 @@ class WalletProcessorRegistry:
             declared = spec.declared_capabilities()
             if not declared.supports(require_capability):
                 raise UnsupportedCapabilityError(
-                    f"family {resolved!r} does not declare capability {require_capability.value!r}"
+                    f"family {resolved!r} does not declare capability "
+                    f"{require_capability.value!r}"
                 )
 
         cache_key = (resolved, network)

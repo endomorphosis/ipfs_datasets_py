@@ -185,9 +185,7 @@ def _assert_source_free_and_non_granting(value: Any, *, label: str) -> None:
             if folded in _SOURCE_BODY_KEYS:
                 raise SolidityCPTSchemaError(f"{location} cannot embed a source body")
             if folded in _GRANT_KEYS and item not in (False, None, ""):
-                raise SolidityCPTSchemaError(
-                    f"{location} cannot grant authority or assert bytecode equality"
-                )
+                raise SolidityCPTSchemaError(f"{location} cannot grant authority or assert bytecode equality")
             if folded == "authority" and item not in (
                 "candidate",
                 "non_authoritative",
@@ -203,13 +201,9 @@ def _authority(value: Any, expected: DerivedAuthority) -> DerivedAuthority:
     try:
         result = value if isinstance(value, DerivedAuthority) else DerivedAuthority(value)
     except (TypeError, ValueError) as exc:
-        raise SolidityCPTSchemaError(
-            "derived authority must be candidate or non_authoritative"
-        ) from exc
+        raise SolidityCPTSchemaError("derived authority must be candidate or non_authoritative") from exc
     if result is not expected:
-        raise SolidityCPTSchemaError(
-            f"record requires authority={expected.value}; authority cannot broaden"
-        )
+        raise SolidityCPTSchemaError(f"record requires authority={expected.value}; authority cannot broaden")
     return result
 
 
@@ -317,9 +311,7 @@ class TrustedLineage:
         ):
             raise SolidityCPTSchemaError("producer_configs must be a sequence")
         configs = tuple(
-            item
-            if isinstance(item, ProducerConfig)
-            else ProducerConfig.from_dict(_mapping(item, "producer config"))
+            item if isinstance(item, ProducerConfig) else ProducerConfig.from_dict(_mapping(item, "producer config"))
             for item in self.producer_configs
         )
         if not configs:
@@ -332,14 +324,10 @@ class TrustedLineage:
             "producer_configs",
             tuple(sorted(configs, key=lambda item: item.config_cid)),
         )
-        if isinstance(self.source_rows, (str, bytes, bytearray)) or not isinstance(
-            self.source_rows, Sequence
-        ):
+        if isinstance(self.source_rows, (str, bytes, bytearray)) or not isinstance(self.source_rows, Sequence):
             raise SolidityCPTSchemaError("source_rows must be a sequence")
         rows = tuple(
-            item
-            if isinstance(item, SolidityCPTRow)
-            else SolidityCPTRow.from_dict(_mapping(item, "source row"))
+            item if isinstance(item, SolidityCPTRow) else SolidityCPTRow.from_dict(_mapping(item, "source row"))
             for item in self.source_rows
         )
         if not rows:
@@ -347,10 +335,7 @@ class TrustedLineage:
         row_ids = tuple(item.row_id for item in rows)
         if len(row_ids) != len(set(row_ids)):
             raise SolidityCPTSchemaError("source_rows contain duplicate IDs")
-        if any(
-            item.source_snapshot_cid not in self.source_cids or item.config_cid not in config_ids
-            for item in rows
-        ):
+        if any(item.source_snapshot_cid not in self.source_cids or item.config_cid not in config_ids for item in rows):
             raise SolidityCPTSchemaError("source_rows differ from trusted source/config roots")
         object.__setattr__(
             self,
@@ -409,19 +394,12 @@ class TrustedLineage:
         if not value["context_id"]:
             raise SolidityCPTSchemaError("persisted trusted lineage requires context_id")
         raw_configs = value["producer_configs"]
-        if isinstance(raw_configs, (str, bytes, bytearray)) or not isinstance(
-            raw_configs, Sequence
-        ):
+        if isinstance(raw_configs, (str, bytes, bytearray)) or not isinstance(raw_configs, Sequence):
             raise SolidityCPTSchemaError("producer_configs must be a sequence")
         return cls(
             source_cids=value["source_cids"],
-            producer_configs=tuple(
-                ProducerConfig.from_dict(_mapping(item, "producer config")) for item in raw_configs
-            ),
-            source_rows=tuple(
-                SolidityCPTRow.from_dict(_mapping(item, "source row"))
-                for item in value["source_rows"]
-            ),
+            producer_configs=tuple(ProducerConfig.from_dict(_mapping(item, "producer config")) for item in raw_configs),
+            source_rows=tuple(SolidityCPTRow.from_dict(_mapping(item, "source row")) for item in value["source_rows"]),
             external_parent_cids=value["external_parent_cids"],
             context_id=value["context_id"],
             schema_version=value["schema_version"],
@@ -460,9 +438,7 @@ class CanonicalDerivedRecord:
         self._validate_specific()
         computed = self.identity.cid
         if self.record_id and self.record_id != computed:
-            raise SolidityCPTSchemaError(
-                f"{self.RECORD_TYPE} record_id does not match rehashed content"
-            )
+            raise SolidityCPTSchemaError(f"{self.RECORD_TYPE} record_id does not match rehashed content")
         object.__setattr__(self, "record_id", computed)
 
     def _validate_specific(self) -> None:
@@ -624,12 +600,10 @@ class SourceRecord(CanonicalDerivedRecord):
         unknown_payload = set(self.payload) - set(_SOURCE_RECORD_PAYLOAD_FIELDS)
         if unknown_payload:
             raise SolidityCPTSchemaError(
-                "source_record payload contains non-projection field(s): "
-                + ", ".join(sorted(unknown_payload))
+                "source_record payload contains non-projection field(s): " + ", ".join(sorted(unknown_payload))
             )
         if any(
-            isinstance(value, (Mapping, Sequence))
-            and not isinstance(value, (str, bytes, bytearray))
+            isinstance(value, (Mapping, Sequence)) and not isinstance(value, (str, bytes, bytearray))
             for value in self.payload.values()
         ):
             raise SolidityCPTSchemaError("source_record payload values must be source-free scalars")
@@ -727,9 +701,7 @@ class GraphEdge(CanonicalDerivedRecord):
 
     RECORD_TYPE: ClassVar[str] = "graph_edge"
     IDENTITY_DOMAIN: ClassVar[str] = f"{SOLIDITY_CPT_IDENTITY_DOMAIN_PREFIX}/graph-edge"
-    SPECIFIC_FIELDS: ClassVar[frozenset[str]] = frozenset(
-        {"edge_type", "source_node_cid", "target_node_cid"}
-    )
+    SPECIFIC_FIELDS: ClassVar[frozenset[str]] = frozenset({"edge_type", "source_node_cid", "target_node_cid"})
 
     def _validate_specific(self) -> None:
         object.__setattr__(self, "edge_type", _text(self.edge_type, "edge_type"))
@@ -864,9 +836,7 @@ class ReleaseManifest(CanonicalDerivedRecord):
 
     RECORD_TYPE: ClassVar[str] = "release_manifest"
     IDENTITY_DOMAIN: ClassVar[str] = f"{SOLIDITY_CPT_IDENTITY_DOMAIN_PREFIX}/release-manifest"
-    SPECIFIC_FIELDS: ClassVar[frozenset[str]] = frozenset(
-        {"dataset_name", "profile", "record_cids", "shard_cids"}
-    )
+    SPECIFIC_FIELDS: ClassVar[frozenset[str]] = frozenset({"dataset_name", "profile", "record_cids", "shard_cids"})
 
     def _validate_specific(self) -> None:
         object.__setattr__(self, "dataset_name", _text(self.dataset_name, "dataset_name"))
@@ -895,14 +865,7 @@ class ReleaseManifest(CanonicalDerivedRecord):
 
 
 DerivedRecord = (
-    SourceRecord
-    | CodeUnit
-    | GraphNode
-    | GraphEdge
-    | PolicyCandidate
-    | FormalView
-    | EvaluationRecord
-    | ReleaseManifest
+    SourceRecord | CodeUnit | GraphNode | GraphEdge | PolicyCandidate | FormalView | EvaluationRecord | ReleaseManifest
 )
 
 _RECORD_TYPES: Final[dict[str, type[CanonicalDerivedRecord]]] = {
@@ -945,9 +908,7 @@ class DerivedDataset:
             raise SolidityCPTSchemaError("unsupported dataset schema_version")
         if not isinstance(self.lineage, TrustedLineage):
             raise SolidityCPTSchemaError("lineage must be TrustedLineage")
-        if isinstance(self.records, (str, bytes, bytearray)) or not isinstance(
-            self.records, Sequence
-        ):
+        if isinstance(self.records, (str, bytes, bytearray)) or not isinstance(self.records, Sequence):
             raise SolidityCPTSchemaError("records must be a sequence")
         records = tuple(self.records)
         if not records or any(not isinstance(item, CanonicalDerivedRecord) for item in records):
@@ -962,26 +923,18 @@ class DerivedDataset:
         allowed_parents = record_id_set | set(self.lineage.external_parent_cids)
         for record in records:
             if not set(record.source_cids) <= source_roots:
-                raise SolidityCPTSchemaError(
-                    f"record {record.record_id} has foreign source lineage"
-                )
+                raise SolidityCPTSchemaError(f"record {record.record_id} has foreign source lineage")
             if record.config_cid not in config_roots:
-                raise SolidityCPTSchemaError(
-                    f"record {record.record_id} has foreign producer config"
-                )
+                raise SolidityCPTSchemaError(f"record {record.record_id} has foreign producer config")
             if not set(record.parent_cids) <= allowed_parents:
-                raise SolidityCPTSchemaError(
-                    f"record {record.record_id} has unresolved parent lineage"
-                )
+                raise SolidityCPTSchemaError(f"record {record.record_id} has unresolved parent lineage")
             if record.record_id in record.parent_cids:
                 raise SolidityCPTSchemaError("record cannot parent itself")
             if isinstance(record, SourceRecord):
                 try:
                     source_row = source_rows[record.source_row_id]
                 except KeyError as exc:
-                    raise SolidityCPTSchemaError(
-                        "source record is not bound to an admitted source row"
-                    ) from exc
+                    raise SolidityCPTSchemaError("source record is not bound to an admitted source row") from exc
                 if (
                     record.raw_row_cid != source_row.raw_row_cid
                     or record.source_body_cid != source_row.source_body_cid
@@ -990,9 +943,7 @@ class DerivedDataset:
                     or set(record.source_cids) != {source_row.source_snapshot_cid}
                     or record.row_key != f"train:{source_row.row_index}"
                 ):
-                    raise SolidityCPTSchemaError(
-                        "source record differs from admitted row/body identity"
-                    )
+                    raise SolidityCPTSchemaError("source record differs from admitted row/body identity")
                 expected_payload = {
                     "address": source_row.address,
                     "compiler": source_row.compiler,
@@ -1004,12 +955,9 @@ class DerivedDataset:
                     "source_provider": source_row.source,
                 }
                 if thaw_json(record.payload) != expected_payload:
-                    raise SolidityCPTSchemaError(
-                        "source record metadata differs from admitted normalized row"
-                    )
+                    raise SolidityCPTSchemaError("source record metadata differs from admitted normalized row")
             if isinstance(record, GraphEdge) and (
-                record.source_node_cid not in record_id_set
-                or record.target_node_cid not in record_id_set
+                record.source_node_cid not in record_id_set or record.target_node_cid not in record_id_set
             ):
                 raise SolidityCPTSchemaError("graph edge endpoints must resolve inside the dataset")
         ordered = tuple(sorted(records, key=lambda item: item.record_id))
@@ -1070,9 +1018,7 @@ class DerivedDataset:
         if persisted_lineage != expected_lineage:
             raise SolidityCPTSchemaError("persisted dataset lineage differs from trusted context")
         raw_records = value["records"]
-        if isinstance(raw_records, (str, bytes, bytearray)) or not isinstance(
-            raw_records, Sequence
-        ):
+        if isinstance(raw_records, (str, bytes, bytearray)) or not isinstance(raw_records, Sequence):
             raise SolidityCPTSchemaError("records must be a sequence")
         return cls(
             records=tuple(record_from_dict(_mapping(item, "record")) for item in raw_records),

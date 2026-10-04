@@ -16,7 +16,9 @@ from ipfs_datasets_py.processors.wallets.bitcoin import (
 )
 from ipfs_datasets_py.processors.wallets.protocols import OperationContext, RequestLimits
 
-FIXTURE_ROOT = Path(__file__).resolve().parents[4] / "fixtures" / "wallets" / "bitcoin"
+FIXTURE_ROOT = (
+    Path(__file__).resolve().parents[4] / "fixtures" / "wallets" / "bitcoin"
+)
 
 
 @pytest.fixture

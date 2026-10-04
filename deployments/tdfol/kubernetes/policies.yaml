@@ -1,0 +1,60 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: tdfol-pdb
+  namespace: tdfol
+  labels:
+    app: tdfol
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: tdfol
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: tdfol-network-policy
+  namespace: tdfol
+  labels:
+    app: tdfol
+spec:
+  podSelector:
+    matchLabels:
+      app: tdfol
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: tdfol
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 8080
+    - protocol: TCP
+      port: 9090
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: tdfol
+    ports:
+    - protocol: TCP
+      port: 6379
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 53
+    - protocol: UDP
+      port: 53
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 443

@@ -263,7 +263,9 @@ def test_goal_tactician_import_is_side_effect_free(monkeypatch) -> None:
         assert "ipfs_datasets_py.logic.external_provers.lazy_installer" not in sys.modules
     assert catalog.status is VerificationStatus.DECLARATIVE
     ipfs_warnings = [
-        item for item in recorded if "ipfs_datasets_py" in (getattr(item, "filename", "") or "")
+        item
+        for item in recorded
+        if "ipfs_datasets_py" in (getattr(item, "filename", "") or "")
     ]
     assert ipfs_warnings == []
 
@@ -463,7 +465,9 @@ def test_cancellation_is_honored_across_goal_operations() -> None:
         ("formalize_goal", lambda: api.formalize_goal(_formalize_request(), cancellation=token)),
         (
             "compare_interpretations",
-            lambda: api.compare_interpretations({"source": "reaches ready"}, cancellation=token),
+            lambda: api.compare_interpretations(
+                {"source": "reaches ready"}, cancellation=token
+            ),
         ),
         (
             "discover_missing_proofs",
@@ -483,15 +487,21 @@ def test_cancellation_is_honored_across_goal_operations() -> None:
         ),
         (
             "minimize_counterexample",
-            lambda: api.minimize_counterexample({"witness": _witness()}, cancellation=token),
+            lambda: api.minimize_counterexample(
+                {"witness": _witness()}, cancellation=token
+            ),
         ),
         (
             "explain_counterexample_causal",
-            lambda: api.explain_counterexample_causal({"witness": _witness()}, cancellation=token),
+            lambda: api.explain_counterexample_causal(
+                {"witness": _witness()}, cancellation=token
+            ),
         ),
         (
             "replay_counterexample",
-            lambda: api.replay_counterexample({"witness": _witness()}, cancellation=token),
+            lambda: api.replay_counterexample(
+                {"witness": _witness()}, cancellation=token
+            ),
         ),
     ]
     for operation, call in ops:
@@ -504,10 +514,7 @@ def test_cancellation_is_honored_across_goal_operations() -> None:
 def test_invoke_dispatcher_covers_catalog() -> None:
     api = get_verification_api(reset=True)
     for operation in GOAL_TACTICIAN_OPERATIONS:
-        assert (
-            hasattr(LogicVerificationAPI, operation)
-            or operation == "list_goal_tactician_operations"
-        )
+        assert hasattr(LogicVerificationAPI, operation) or operation == "list_goal_tactician_operations"
         if operation == "list_goal_tactician_operations":
             response = api.invoke_goal_tactician(operation)
         elif operation == "formalize_goal":
@@ -537,7 +544,9 @@ def test_invoke_dispatcher_covers_catalog() -> None:
                 },
             )
         elif operation == "proof_status":
-            response = api.invoke_goal_tactician(operation, {"plan_id": "plan:d", "status": "open"})
+            response = api.invoke_goal_tactician(
+                operation, {"plan_id": "plan:d", "status": "open"}
+            )
         elif operation in {
             "minimize_counterexample",
             "explain_counterexample_causal",

@@ -59,7 +59,9 @@ def _raw_row(**changes: object) -> dict[str, object]:
         "cve_id": "CVE-2024-12345",
         "hash": "a" * 40,
         "repo_url": "https://github.com/example/project",
-        "cve_description": ('[{"lang":"en","value":"Untrusted paths could escape the root."}]'),
+        "cve_description": (
+            '[{"lang":"en","value":"Untrusted paths could escape the root."}]'
+        ),
         "cvss2_base_score": None,
         "cvss3_base_score": 7.5,
         "published_date": "2024-01-02T03:04Z",
@@ -119,9 +121,15 @@ def test_python_projection_is_deterministic_paired_and_provenance_bound() -> Non
         assert unit.payload["grants_execution_authority"] is False
         assert len(unit.payload["body_sha256"]) == 64
         if unit.polarity == "vulnerable":
-            assert unit.payload["evidence_polarity"] == EvidencePolarity.VULNERABLE_POSITIVE.value
+            assert (
+                unit.payload["evidence_polarity"]
+                == EvidencePolarity.VULNERABLE_POSITIVE.value
+            )
         else:
-            assert unit.payload["evidence_polarity"] == EvidencePolarity.FIXED_NEGATIVE.value
+            assert (
+                unit.payload["evidence_polarity"]
+                == EvidencePolarity.FIXED_NEGATIVE.value
+            )
 
     # The public record contains bounded excerpts and body identities rather
     # than relying on an unbounded body as its only evidence.
@@ -137,7 +145,9 @@ def test_python_projection_is_deterministic_paired_and_provenance_bound() -> Non
 
 def test_nul_body_identity_is_preserved_but_public_excerpt_is_escaped() -> None:
     body = "value = '" + "\x00" + "'"
-    result = project_cvefixes_row(_row(vulnerable_code=body, fixed_code=body, diff_with_context=""))
+    result = project_cvefixes_row(
+        _row(vulnerable_code=body, fixed_code=body, diff_with_context="")
+    )
 
     assert result.code_units
     assert all("\x00" not in unit.payload["excerpt"] for unit in result.code_units)
@@ -171,7 +181,9 @@ def test_grounded_facts_cover_semantic_kinds_without_granting_authority() -> Non
         and item.predicate.startswith("added_guard:")
         for item in result.semantic_facts
     )
-    assert {item.evidence_polarity for item in result.semantic_facts} == {
+    assert {
+        item.evidence_polarity for item in result.semantic_facts
+    } == {
         EvidencePolarity.VULNERABLE_POSITIVE,
         EvidencePolarity.FIXED_NEGATIVE,
     }
@@ -181,13 +193,19 @@ def test_fixed_code_remains_negative_evidence_not_a_forbidden_positive() -> None
     result = project_cvefixes_row(_row())
     units = {item.cid: item for item in result.code_units}
     fixed_facts = [
-        item for item in result.semantic_facts if units[item.code_unit_cid].polarity == "fixed"
+        item
+        for item in result.semantic_facts
+        if units[item.code_unit_cid].polarity == "fixed"
     ]
 
     assert fixed_facts
-    assert all(item.evidence_polarity is EvidencePolarity.FIXED_NEGATIVE for item in fixed_facts)
     assert all(
-        item.evidence_polarity is not EvidencePolarity.VULNERABLE_POSITIVE for item in fixed_facts
+        item.evidence_polarity is EvidencePolarity.FIXED_NEGATIVE
+        for item in fixed_facts
+    )
+    assert all(
+        item.evidence_polarity is not EvidencePolarity.VULNERABLE_POSITIVE
+        for item in fixed_facts
     )
 
 
@@ -212,7 +230,10 @@ def test_unsupported_language_retains_pairs_and_explicitly_abstains() -> None:
         "vulnerable",
         "fixed",
     }
-    assert all(item.payload["grants_execution_authority"] is False for item in result.code_units)
+    assert all(
+        item.payload["grants_execution_authority"] is False
+        for item in result.code_units
+    )
 
 
 def test_ambiguous_multifile_bodies_and_hunks_are_retained_without_assignment() -> None:
@@ -230,7 +251,8 @@ def test_ambiguous_multifile_bodies_and_hunks_are_retained_without_assignment() 
     assert DiagnosticCode.AMBIGUOUS_HUNK in _codes(result)
     assert {item.path for item in result.pairs} == {AMBIGUOUS_PATH}
     assert all(
-        tuple(item.payload["candidate_paths"]) == ("a.go", "b.go") for item in result.code_units
+        tuple(item.payload["candidate_paths"]) == ("a.go", "b.go")
+        for item in result.code_units
     )
     serialized = result.to_dict()
     assert "a.go" in str(serialized) and "b.go" in str(serialized)
@@ -256,7 +278,10 @@ def test_unpaired_side_is_retained_with_diagnostic(
     assert result.code_units
     assert result.complete_pairs == ()
     assert code in _codes(result)
-    assert all(bool(item.vulnerable_cid) != bool(item.fixed_cid) for item in result.pairs)
+    assert all(
+        bool(item.vulnerable_cid) != bool(item.fixed_cid)
+        for item in result.pairs
+    )
 
 
 def test_malformed_supported_syntax_is_retained_with_parse_diagnostics() -> None:
@@ -316,7 +341,9 @@ def test_model_candidate_binding_and_polarity_fail_closed() -> None:
     row = _row()
     result = project_cvefixes_row(row)
     fixed_unit = next(
-        item for item in result.code_units if item.unit_kind == "file" and item.polarity == "fixed"
+        item
+        for item in result.code_units
+        if item.unit_kind == "file" and item.polarity == "fixed"
     )
 
     with pytest.raises(ProjectionError, match="outside this projection"):
@@ -371,21 +398,35 @@ def test_diff_hunks_preserve_old_new_lines_and_context_pairing() -> None:
 def test_resource_limits_are_explicit_and_deterministic() -> None:
     config = ProjectorConfig(max_hunks=1, max_symbols_per_unit=1)
     row = _row(
-        vulnerable_code=("def first():\n    return one()\ndef second():\n    return two()\n"),
-        fixed_code=("def first():\n    return safe_one()\ndef second():\n    return safe_two()\n"),
-        diff_with_context=("@@ -1 +1 @@\n-one()\n+safe_one()\n@@ -3 +3 @@\n-two()\n+safe_two()\n"),
+        vulnerable_code=(
+            "def first():\n    return one()\n"
+            "def second():\n    return two()\n"
+        ),
+        fixed_code=(
+            "def first():\n    return safe_one()\n"
+            "def second():\n    return safe_two()\n"
+        ),
+        diff_with_context=(
+            "@@ -1 +1 @@\n-one()\n+safe_one()\n"
+            "@@ -3 +3 @@\n-two()\n+safe_two()\n"
+        ),
     )
 
     result = project_cvefixes_row(row, config=config)
 
     assert DiagnosticCode.LIMIT_EXCEEDED in _codes(result)
     assert len([item for item in result.pairs if item.unit_kind is UnitKind.HUNK]) == 1
-    assert len([item for item in result.pairs if item.unit_kind is UnitKind.SYMBOL]) == 1
+    assert (
+        len([item for item in result.pairs if item.unit_kind is UnitKind.SYMBOL])
+        == 1
+    )
     assert result == project_cvefixes_row(row, config=config)
 
 
 def test_registry_versions_are_bound_into_effective_config_identity() -> None:
-    default = VulnerableFixedProjector(ProjectorConfig(), DEFAULT_LANGUAGE_ADAPTERS)
+    default = VulnerableFixedProjector(
+        ProjectorConfig(), DEFAULT_LANGUAGE_ADAPTERS
+    )
 
     class VersionedPythonAdapter:
         language = "python"
@@ -403,7 +444,10 @@ def test_registry_versions_are_bound_into_effective_config_identity() -> None:
     )
 
     assert default.config_cid != changed.config_cid
-    assert default.project(_row()).projection_id != changed.project(_row()).projection_id
+    assert (
+        default.project(_row()).projection_id
+        != changed.project(_row()).projection_id
+    )
 
 
 def test_invalid_external_source_cid_fails_even_for_diagnostic_only_row() -> None:

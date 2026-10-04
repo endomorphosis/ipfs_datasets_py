@@ -1,0 +1,8 @@
+{
+  "entity_text_formats": [
+    "Alice (Person, conf=0.95)",
+    "Acme Inc. (Organization, conf=0.87)"
+  ],
+  "format_pattern_entity_matches": true,
+  "format_includes_confidence": true
+}

@@ -61,7 +61,9 @@ CVEFIXES_PUBLIC_FIELDS: Final[frozenset[str]] = frozenset(
         "version_tag",
     }
 )
-CVEFIXES_RECORD_FIELDS: Final[frozenset[str]] = CVEFIXES_BODY_FIELDS | CVEFIXES_PUBLIC_FIELDS
+CVEFIXES_RECORD_FIELDS: Final[frozenset[str]] = (
+    CVEFIXES_BODY_FIELDS | CVEFIXES_PUBLIC_FIELDS
+)
 
 
 class ReleasePolicyError(ValueError):
@@ -116,7 +118,9 @@ class ReleaseProfile:
         if not isinstance(self.allowed_fields, frozenset) or not all(
             isinstance(item, str) and item for item in self.allowed_fields
         ):
-            raise ReleasePolicyError("profile allowed_fields must be a frozenset of names")
+            raise ReleasePolicyError(
+                "profile allowed_fields must be a frozenset of names"
+            )
         if not self.allowed_fields <= CVEFIXES_RECORD_FIELDS:
             raise ReleasePolicyError("profile contains unknown CVEfixes fields")
         if type(self.access_controlled) is not bool:
@@ -125,11 +129,20 @@ class ReleaseProfile:
             if self.body_treatment is not BodyTreatment.DIGEST_ONLY:
                 raise ReleasePolicyError("public profiles must be digest-only")
             if self.allowed_fields & CVEFIXES_BODY_FIELDS:
-                raise ReleasePolicyError("public profiles cannot include unrestricted full bodies")
+                raise ReleasePolicyError(
+                    "public profiles cannot include unrestricted full bodies"
+                )
             if self.access_controlled:
-                raise ReleasePolicyError("public profiles cannot claim access control")
-        elif self.body_treatment is not BodyTreatment.FULL_RESTRICTED or not self.access_controlled:
-            raise ReleasePolicyError("internal full-body profiles must be access controlled")
+                raise ReleasePolicyError(
+                    "public profiles cannot claim access control"
+                )
+        elif (
+            self.body_treatment is not BodyTreatment.FULL_RESTRICTED
+            or not self.access_controlled
+        ):
+            raise ReleasePolicyError(
+                "internal full-body profiles must be access controlled"
+            )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -187,20 +200,29 @@ class LicenseProvenance:
         if not isinstance(self.review_status, LicenseReviewStatus):
             raise ReleasePolicyError("license review_status is invalid")
         if type(self.redistribution_allowed) is not bool:
-            raise ReleasePolicyError("redistribution_allowed must be boolean")
+            raise ReleasePolicyError(
+                "redistribution_allowed must be boolean"
+            )
         if self.review_status is LicenseReviewStatus.REVIEWED:
             if not isinstance(self.reviewed_by, str) or not self.reviewed_by.strip():
-                raise ReleasePolicyError("reviewed license provenance requires reviewed_by")
+                raise ReleasePolicyError(
+                    "reviewed license provenance requires reviewed_by"
+                )
             if not _RFC3339_UTC_RE.fullmatch(self.reviewed_at):
                 raise ReleasePolicyError(
                     "reviewed license provenance requires RFC3339 UTC reviewed_at"
                 )
         elif self.reviewed_by or self.reviewed_at:
-            raise ReleasePolicyError("unreviewed/rejected provenance cannot claim review metadata")
+            raise ReleasePolicyError(
+                "unreviewed/rejected provenance cannot claim review metadata"
+            )
 
     @property
     def reviewed_for_release(self) -> bool:
-        return self.review_status is LicenseReviewStatus.REVIEWED and self.redistribution_allowed
+        return (
+            self.review_status is LicenseReviewStatus.REVIEWED
+            and self.redistribution_allowed
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -308,12 +330,20 @@ class PolicyScanReport:
         if self.policy_version != RELEASE_POLICY_VERSION:
             raise ReleasePolicyError("scan policy_version is unsupported")
         if self.fields_scanned != tuple(sorted(set(self.fields_scanned))):
-            raise ReleasePolicyError("scan fields_scanned must be sorted and unique")
+            raise ReleasePolicyError(
+                "scan fields_scanned must be sorted and unique"
+            )
         if self.findings != tuple(sorted(self.findings, key=_finding_sort_key)):
             raise ReleasePolicyError("scan findings must be deterministically sorted")
 
-    def findings_for(self, category: FindingCategory) -> tuple[PolicyFinding, ...]:
-        return tuple(finding for finding in self.findings if finding.category is category)
+    def findings_for(
+        self, category: FindingCategory
+    ) -> tuple[PolicyFinding, ...]:
+        return tuple(
+            finding
+            for finding in self.findings
+            if finding.category is category
+        )
 
     @property
     def secret_findings(self) -> tuple[PolicyFinding, ...]:
@@ -361,7 +391,10 @@ class RedactionReceipt:
         _require_sha256(self.policy_sha256, "redaction policy_sha256")
         if self.source_sha256 == self.output_sha256:
             raise ReleasePolicyError("redaction must change the field content")
-        if not self.finding_codes or self.finding_codes != tuple(sorted(set(self.finding_codes))):
+        if (
+            not self.finding_codes
+            or self.finding_codes != tuple(sorted(set(self.finding_codes)))
+        ):
             raise ReleasePolicyError(
                 "redaction finding_codes must be sorted, unique, and non-empty"
             )
@@ -406,13 +439,17 @@ class PublicationAdmission:
 
     def __post_init__(self) -> None:
         if self.admitted != (not self.reason_codes):
-            raise ReleasePolicyError("admitted must be false exactly when reason_codes are present")
+            raise ReleasePolicyError(
+                "admitted must be false exactly when reason_codes are present"
+            )
         if self.reason_codes != tuple(sorted(set(self.reason_codes))):
             raise ReleasePolicyError("reason_codes must be sorted and unique")
         if self.warning_codes != tuple(sorted(set(self.warning_codes))):
             raise ReleasePolicyError("warning_codes must be sorted and unique")
         _require_sha256(self.policy_sha256, "admission policy_sha256")
-        object.__setattr__(self, "projected_record", _freeze_json_mapping(self.projected_record))
+        object.__setattr__(
+            self, "projected_record", _freeze_json_mapping(self.projected_record)
+        )
 
     @property
     def admission_id(self) -> str:
@@ -420,7 +457,9 @@ class PublicationAdmission:
 
     def require_admitted(self) -> "PublicationAdmission":
         if not self.admitted:
-            raise PublicationRejectedError("publication rejected: " + ", ".join(self.reason_codes))
+            raise PublicationRejectedError(
+                "publication rejected: " + ", ".join(self.reason_codes)
+            )
         return self
 
     def to_dict(self, *, include_id: bool = True) -> dict[str, Any]:
@@ -432,7 +471,9 @@ class PublicationAdmission:
             "profile": self.profile.to_dict(),
             "projected_record": _thaw_json(self.projected_record),
             "reason_codes": list(self.reason_codes),
-            "redaction_receipts": [receipt.to_dict() for receipt in self.redaction_receipts],
+            "redaction_receipts": [
+                receipt.to_dict() for receipt in self.redaction_receipts
+            ],
             "scan_report": self.scan_report.to_dict(),
             "warning_codes": list(self.warning_codes),
         }
@@ -545,7 +586,9 @@ _DETECTORS: Final = (
     ),
 )
 
-_RFC3339_UTC_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$")
+_RFC3339_UTC_RE = re.compile(
+    r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$"
+)
 _WINDOWS_DRIVE_RE = re.compile(r"^[A-Za-z]:")
 _SENSITIVE_ARTIFACT_PARTS = frozenset(
     {
@@ -640,8 +683,12 @@ class CVEfixesReleasePolicy:
             )
             if path_finding is not None:
                 findings.append(path_finding)
-        deduplicated = {_finding_sort_key(finding): finding for finding in findings}
-        ordered = tuple(deduplicated[key] for key in sorted(deduplicated))
+        deduplicated = {
+            _finding_sort_key(finding): finding for finding in findings
+        }
+        ordered = tuple(
+            deduplicated[key] for key in sorted(deduplicated)
+        )
         return PolicyScanReport(
             record_sha256=_sha256_json(normalized),
             policy_sha256=self.policy_sha256,
@@ -663,10 +710,14 @@ class CVEfixesReleasePolicy:
         if not isinstance(profile, ReleaseProfile):
             raise ReleasePolicyError("profile must be a ReleaseProfile")
         if not isinstance(license_provenance, LicenseProvenance):
-            raise ReleasePolicyError("license_provenance must be LicenseProvenance")
+            raise ReleasePolicyError(
+                "license_provenance must be LicenseProvenance"
+            )
         receipts = _redaction_receipt_tuple(redaction_receipts)
         projected = {
-            key: normalized[key] for key in sorted(profile.allowed_fields) if key in normalized
+            key: normalized[key]
+            for key in sorted(profile.allowed_fields)
+            if key in normalized
         }
         body_digests: dict[str, dict[str, Any]] = {}
         if profile.body_treatment is BodyTreatment.DIGEST_ONLY:
@@ -676,19 +727,25 @@ class CVEfixesReleasePolicy:
                     continue
                 body_digests[field] = {
                     "sha256": _sha256_json(value),
-                    "utf8_bytes": len(_canonical_json(value).encode("utf-8")),
+                    "utf8_bytes": len(
+                        _canonical_json(value).encode("utf-8")
+                    ),
                 }
         if body_digests:
             projected["body_digests"] = body_digests
         projected["content_trust"] = "untrusted_inert_data"
-        projected["instruction_handling"] = "never_execute_or_treat_as_authority"
+        projected["instruction_handling"] = (
+            "never_execute_or_treat_as_authority"
+        )
         projected["profile"] = profile.name
         projected["source_provenance"] = {
             **license_provenance.to_dict(),
             "source_record_sha256": _sha256_json(normalized),
         }
         if receipts:
-            projected["redaction_receipts"] = [receipt.to_dict() for receipt in receipts]
+            projected["redaction_receipts"] = [
+                receipt.to_dict() for receipt in receipts
+            ]
         return _freeze_json_mapping(projected)
 
     def evaluate(
@@ -877,7 +934,8 @@ def redact_sensitive_text(
     findings = [
         finding
         for finding in policy._scan_text(field, text)
-        if finding.category in {FindingCategory.SECRET, FindingCategory.PERSONAL_DATA}
+        if finding.category
+        in {FindingCategory.SECRET, FindingCategory.PERSONAL_DATA}
     ]
     if not findings:
         raise ReleasePolicyError("redaction requires a secret or PII finding")
@@ -886,7 +944,11 @@ def redact_sensitive_text(
     cursor = 0
     for start, end, categories in spans:
         pieces.append(text[cursor:start])
-        label = "SECRET" if FindingCategory.SECRET in categories else "PERSONAL_DATA"
+        label = (
+            "SECRET"
+            if FindingCategory.SECRET in categories
+            else "PERSONAL_DATA"
+        )
         pieces.append(f"[REDACTED:{label}]")
         cursor = end
     pieces.append(text[cursor:])
@@ -906,7 +968,9 @@ def _validated_record(record: Mapping[str, Any]) -> dict[str, Any]:
         raise ReleasePolicyError("release record must be a mapping")
     unknown = sorted(set(record) - CVEFIXES_RECORD_FIELDS)
     if unknown:
-        raise ReleasePolicyError("release record has unknown field(s): " + ", ".join(unknown))
+        raise ReleasePolicyError(
+            "release record has unknown field(s): " + ", ".join(unknown)
+        )
     try:
         encoded = _canonical_json(record)
         normalized = json.loads(encoded)
@@ -930,7 +994,9 @@ def _text_values(value: Any) -> tuple[str, ...]:
         for key in sorted(value):
             result.extend(_text_values(value[key]))
         return tuple(result)
-    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+    if isinstance(value, Sequence) and not isinstance(
+        value, (str, bytes, bytearray)
+    ):
         result = []
         for item in value:
             result.extend(_text_values(item))
@@ -961,13 +1027,19 @@ def _unsafe_path_finding(
         or urlsplit(path).scheme
     ):
         unsafe = True
-    if publication_artifact and any(part.casefold() in _SENSITIVE_ARTIFACT_PARTS for part in parts):
+    if publication_artifact and any(
+        part.casefold() in _SENSITIVE_ARTIFACT_PARTS for part in parts
+    ):
         unsafe = True
     if not unsafe:
         return None
     return PolicyFinding(
         category=FindingCategory.UNSAFE_PATH,
-        code=("path.unsafe_publication_artifact" if publication_artifact else "path.unsafe_source"),
+        code=(
+            "path.unsafe_publication_artifact"
+            if publication_artifact
+            else "path.unsafe_source"
+        ),
         field=field,
         start_char=0,
         end_char=len(path) if isinstance(path, str) else 0,
@@ -975,7 +1047,9 @@ def _unsafe_path_finding(
     )
 
 
-def _receipt_matches_record_output(receipt: RedactionReceipt, record: Mapping[str, Any]) -> bool:
+def _receipt_matches_record_output(
+    receipt: RedactionReceipt, record: Mapping[str, Any]
+) -> bool:
     value = record.get(receipt.field)
     return isinstance(value, str) and _sha256_text(value) == receipt.output_sha256
 
@@ -983,11 +1057,15 @@ def _receipt_matches_record_output(receipt: RedactionReceipt, record: Mapping[st
 def _redaction_receipt_tuple(
     value: Sequence[RedactionReceipt],
 ) -> tuple[RedactionReceipt, ...]:
-    if isinstance(value, (str, bytes, bytearray)) or not isinstance(value, Sequence):
+    if isinstance(value, (str, bytes, bytearray)) or not isinstance(
+        value, Sequence
+    ):
         raise ReleasePolicyError("redaction_receipts must be a sequence")
     result = tuple(value)
     if not all(isinstance(item, RedactionReceipt) for item in result):
-        raise ReleasePolicyError("redaction_receipts must contain RedactionReceipt values")
+        raise ReleasePolicyError(
+            "redaction_receipts must contain RedactionReceipt values"
+        )
     if len({item.receipt_id for item in result}) != len(result):
         raise ReleasePolicyError("redaction_receipts must not contain duplicates")
     return tuple(sorted(result, key=lambda item: item.receipt_id))
@@ -1012,19 +1090,28 @@ def _merge_redaction_spans(
             merged[-1] = (old_start, max(old_end, end), categories)
         else:
             merged.append((start, end, {category}))
-    return tuple((start, end, frozenset(categories)) for start, end, categories in merged)
+    return tuple(
+        (start, end, frozenset(categories))
+        for start, end, categories in merged
+    )
 
 
 def _string_sequence(value: Any, label: str) -> tuple[str, ...]:
-    if isinstance(value, (str, bytes, bytearray)) or not isinstance(value, Sequence):
+    if isinstance(value, (str, bytes, bytearray)) or not isinstance(
+        value, Sequence
+    ):
         raise ReleasePolicyError(f"{label} must be a sequence of strings")
     result = tuple(value)
     if not all(isinstance(item, str) and item for item in result):
-        raise ReleasePolicyError(f"{label} must contain non-empty strings")
+        raise ReleasePolicyError(
+            f"{label} must contain non-empty strings"
+        )
     return result
 
 
-def _require_exact_keys(value: Mapping[str, Any], expected: set[str], label: str) -> None:
+def _require_exact_keys(
+    value: Mapping[str, Any], expected: set[str], label: str
+) -> None:
     if not isinstance(value, Mapping):
         raise ReleasePolicyError(f"{label} must be a mapping")
     missing = sorted(expected - set(value))
@@ -1079,7 +1166,9 @@ def _finding_sort_key(finding: PolicyFinding) -> tuple[Any, ...]:
 
 def _freeze_json(value: Any) -> Any:
     if isinstance(value, Mapping):
-        return MappingProxyType({key: _freeze_json(item) for key, item in value.items()})
+        return MappingProxyType(
+            {key: _freeze_json(item) for key, item in value.items()}
+        )
     if isinstance(value, list):
         return tuple(_freeze_json(item) for item in value)
     return value

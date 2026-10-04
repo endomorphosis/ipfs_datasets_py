@@ -411,11 +411,7 @@ def test_repair_hypotheses_never_claim_proof() -> None:
     for hyp in explanation.repair_hypotheses:
         assert hyp.status is HypothesisStatus.HYPOTHESIS
         assert hyp.authority == "hypothesis"
-        assert (
-            "proof" not in hyp.detail.lower()
-            or "does not claim" in hyp.detail.lower()
-            or "hypothesis" in hyp.detail.lower()
-        )
+        assert "proof" not in hyp.detail.lower() or "does not claim" in hyp.detail.lower() or "hypothesis" in hyp.detail.lower()
         assert hyp.schema == REPAIR_HYPOTHESIS_SCHEMA
         encoded = json.dumps(hyp.to_dict()).lower()
         assert "proof_claimed" not in encoded or "false" in encoded

@@ -163,7 +163,9 @@ def test_import_xrpl_adapter_has_no_network_side_effects(
     monkeypatch.setattr(socket, "create_connection", _blocked)
 
     for name in list(sys.modules):
-        if name.endswith(".crypto_ir.adapters.xrpl") or name.endswith("crypto_ir.adapters.xrpl"):
+        if name.endswith(".crypto_ir.adapters.xrpl") or name.endswith(
+            "crypto_ir.adapters.xrpl"
+        ):
             del sys.modules[name]
 
     from ipfs_datasets_py.logic.crypto_ir.adapters import xrpl as xrpl_mod
@@ -224,7 +226,9 @@ def test_x_address_testnet_flag() -> None:
 
 def test_account_identity_in_conversion_is_lossless() -> None:
     x_dest = encode_x_address(ADDR_B, tag=42, test=False)
-    result = convert_xrpl_payload(_full_observation(destination=x_dest, destination_tag=None))
+    result = convert_xrpl_payload(
+        _full_observation(destination=x_dest, destination_tag=None)
+    )
     assert result.status is AdapterConversionStatus.SUCCEEDED
     dest = result.result_payload["accounts"]["destination"]
     assert dest["classic_address"] == ADDR_B
@@ -297,7 +301,9 @@ def test_issued_payment_preserves_issuer_currency() -> None:
     assert transfer["issued_asset"]["issuer"] == ADDR_ISSUER
     assert transfer["issued_asset"]["currency"] == "USD"
     assert transfer["amount"]["base_units"] == "25.5"
-    assert result.result_payload["issued_asset"]["asset_reference"] == (f"{ADDR_ISSUER}/USD")
+    assert result.result_payload["issued_asset"]["asset_reference"] == (
+        f"{ADDR_ISSUER}/USD"
+    )
     # Native XRP asset still distinct in payload
     native = result.result_payload["native_xrp_asset"]
     assert native["asset_reference"] == NATIVE_ASSET_REFERENCE
@@ -388,7 +394,9 @@ def test_partial_payment_requires_delivered_amount() -> None:
 
 
 def test_sequence_and_ticket_are_typed() -> None:
-    result = convert_xrpl_payload(_full_observation(sequence=None, ticket_sequence=55))
+    result = convert_xrpl_payload(
+        _full_observation(sequence=None, ticket_sequence=55)
+    )
     assert result.result_payload["typed_facts"]["ticket_sequence"] == 55
     assert result.result_payload["typed_facts"]["sequence"] is None
 
@@ -403,7 +411,9 @@ def test_signer_list_preserved() -> None:
         {"Signer": {"Account": ADDR_A, "SigningPubKey": "AB", "TxnSignature": "CD"}},
         {"Signer": {"Account": ADDR_B, "SigningPubKey": "EF", "TxnSignature": "01"}},
     ]
-    result = convert_xrpl_payload(_full_observation(signers=signers, signer_quorum=2))
+    result = convert_xrpl_payload(
+        _full_observation(signers=signers, signer_quorum=2)
+    )
     facts = result.result_payload["typed_facts"]
     assert facts["signer_quorum"] == 2
     assert len(facts["signers"]) == 2
@@ -411,11 +421,16 @@ def test_signer_list_preserved() -> None:
 
 
 def test_validated_ledger_maps_to_finalized() -> None:
-    result = convert_xrpl_payload(_full_observation(validated=True, finality=""))
-    assert (
-        result.result_payload["observed_transaction"]["finality"] == FinalityStatus.FINALIZED.value
+    result = convert_xrpl_payload(
+        _full_observation(validated=True, finality="")
     )
-    unvalidated = convert_xrpl_payload(_full_observation(validated=False, finality=""))
+    assert (
+        result.result_payload["observed_transaction"]["finality"]
+        == FinalityStatus.FINALIZED.value
+    )
+    unvalidated = convert_xrpl_payload(
+        _full_observation(validated=False, finality="")
+    )
     assert (
         unvalidated.result_payload["observed_transaction"]["finality"]
         == FinalityStatus.PROPOSED.value
@@ -501,7 +516,9 @@ def test_set_hook_without_capability_is_partial() -> None:
     )
     # amount missing + hooks capability missing
     assert result.status is AdapterConversionStatus.PARTIAL
-    assert any(f.path == "hooks_capability_present" for f in result.unsupported_fields)
+    assert any(
+        f.path == "hooks_capability_present" for f in result.unsupported_fields
+    )
 
 
 def test_not_modeled_as_evm_calls() -> None:
@@ -564,7 +581,9 @@ def test_payment_intent_conversion() -> None:
     assert dest["destination_tag"] == 99
     assert dest["classic_address"] == ADDR_B
 
-    unsigned = UnsignedTransactionIntent.from_dict(payload["unsigned_transaction_intent"])
+    unsigned = UnsignedTransactionIntent.from_dict(
+        payload["unsigned_transaction_intent"]
+    )
     assert unsigned.intent_id == "intent-1"
     assert len(unsigned.transfers) == 1
     assert unsigned.transfers[0].amount.base_units == "500000"

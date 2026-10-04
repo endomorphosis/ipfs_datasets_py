@@ -21,7 +21,9 @@ from .schema import (
 )
 
 ABBY_VOICE_RESPONSE_DAG_APPEND_SCHEMA_VERSION = "abby_voice_response_dag_append_v1"
-ABBY_VOICE_RESPONSE_DAG_RELEASE_SCHEMA_VERSION = "abby_voice_response_dag_release_manifest_v1"
+ABBY_VOICE_RESPONSE_DAG_RELEASE_SCHEMA_VERSION = (
+    "abby_voice_response_dag_release_manifest_v1"
+)
 
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _SECRET_KEY_MARKERS = (
@@ -56,7 +58,9 @@ def _text(value: Any, *, field_name: str, required: bool = True) -> str:
 def _digest(value: Any, *, field_name: str) -> str:
     result = _text(value, field_name=field_name).casefold()
     if not _SHA256_RE.fullmatch(result):
-        raise AbbyVoiceResponseDAGError(f"{field_name} must be a full lowercase SHA-256")
+        raise AbbyVoiceResponseDAGError(
+            f"{field_name} must be a full lowercase SHA-256"
+        )
     return result
 
 
@@ -70,15 +74,22 @@ def _json_safe(value: Any, *, path: str = "value") -> Any:
         for key, item in value.items():
             name = str(key)
             if any(marker in name.casefold() for marker in _SECRET_KEY_MARKERS):
-                raise AbbyVoiceResponseDAGError(f"{path}.{name} must not contain credentials")
+                raise AbbyVoiceResponseDAGError(
+                    f"{path}.{name} must not contain credentials"
+                )
             result[name] = _json_safe(item, path=f"{path}.{name}")
         return result
     if isinstance(value, Sequence) and not isinstance(value, str):
-        return [_json_safe(item, path=f"{path}[{index}]") for index, item in enumerate(value)]
+        return [
+            _json_safe(item, path=f"{path}[{index}]")
+            for index, item in enumerate(value)
+        ]
     to_dict = getattr(value, "to_dict", None)
     if callable(to_dict):
         return _json_safe(to_dict(), path=path)
-    raise AbbyVoiceResponseDAGError(f"{path} must contain deterministic JSON values")
+    raise AbbyVoiceResponseDAGError(
+        f"{path} must contain deterministic JSON values"
+    )
 
 
 def _mapping(value: Any, *, field_name: str) -> Mapping[str, Any]:
@@ -105,7 +116,9 @@ def _placeholder_names(template_text: str) -> tuple[str, ...]:
                 if root and root not in names:
                     names.append(root)
     except ValueError as exc:
-        raise AbbyVoiceResponseDAGError(f"template_text has invalid slot syntax: {exc}") from exc
+        raise AbbyVoiceResponseDAGError(
+            f"template_text has invalid slot syntax: {exc}"
+        ) from exc
     return tuple(names)
 
 
@@ -115,7 +128,9 @@ def _render_slotted_template(
 ) -> str:
     values = {str(binding["slot_name"]): binding["value"] for binding in bindings}
     try:
-        for _literal, field_name, format_spec, conversion in Formatter().parse(template_text):
+        for _literal, field_name, format_spec, conversion in Formatter().parse(
+            template_text
+        ):
             if not field_name:
                 continue
             if field_name not in values or "." in field_name or "[" in field_name:
@@ -137,7 +152,9 @@ def _render_slotted_template(
 
 def _freeze_json(value: Any) -> Any:
     if isinstance(value, Mapping):
-        return MappingProxyType({str(key): _freeze_json(item) for key, item in value.items()})
+        return MappingProxyType(
+            {str(key): _freeze_json(item) for key, item in value.items()}
+        )
     if isinstance(value, Sequence) and not isinstance(value, str):
         return tuple(_freeze_json(item) for item in value)
     return value
@@ -165,33 +182,51 @@ def _edge(source: str, target: str, kind: str) -> dict[str, str]:
 
 def _normalize_audio_descriptor(value: Any) -> dict[str, Any]:
     audio = dict(_mapping(value, field_name="audio_descriptor"))
-    content_sha = _digest(audio.get("content_sha256"), field_name="audio_descriptor.content_sha256")
+    content_sha = _digest(
+        audio.get("content_sha256"), field_name="audio_descriptor.content_sha256"
+    )
     audio_id = _text(
         audio.get("audio_id") or stable_audio_id(content_sha),
         field_name="audio_descriptor.audio_id",
     )
     byte_length = audio.get("byte_length")
-    if isinstance(byte_length, bool) or not isinstance(byte_length, int) or byte_length <= 0:
-        raise AbbyVoiceResponseDAGError("audio_descriptor.byte_length must be a positive integer")
+    if (
+        isinstance(byte_length, bool)
+        or not isinstance(byte_length, int)
+        or byte_length <= 0
+    ):
+        raise AbbyVoiceResponseDAGError(
+            "audio_descriptor.byte_length must be a positive integer"
+        )
     media_type = _text(
         audio.get("media_type") or audio.get("mime_type"),
         field_name="audio_descriptor.media_type",
     )
     if not media_type.startswith("audio/"):
-        raise AbbyVoiceResponseDAGError("audio_descriptor.media_type must be audio/*")
-    uri = _text(audio.get("uri"), field_name="audio_descriptor.uri", required=False)
+        raise AbbyVoiceResponseDAGError(
+            "audio_descriptor.media_type must be audio/*"
+        )
+    uri = _text(
+        audio.get("uri"), field_name="audio_descriptor.uri", required=False
+    )
     ipfs_cid = _text(
         audio.get("ipfs_cid"),
         field_name="audio_descriptor.ipfs_cid",
         required=False,
     )
     if not uri and not ipfs_cid:
-        raise AbbyVoiceResponseDAGError("validated audio requires an external uri or ipfs_cid")
+        raise AbbyVoiceResponseDAGError(
+            "validated audio requires an external uri or ipfs_cid"
+        )
     if uri:
         if any(character.isspace() for character in uri):
-            raise AbbyVoiceResponseDAGError("audio_descriptor.uri must not contain whitespace")
+            raise AbbyVoiceResponseDAGError(
+                "audio_descriptor.uri must not contain whitespace"
+            )
         if re.search(r"(?i)(?:token|signature|secret|credential)=", uri):
-            raise AbbyVoiceResponseDAGError("audio_descriptor.uri must not contain credentials")
+            raise AbbyVoiceResponseDAGError(
+                "audio_descriptor.uri must not contain credentials"
+            )
     return {
         "audio_id": audio_id,
         "byte_length": byte_length,
@@ -217,13 +252,22 @@ def _normalize_slot_bindings(
             value = _json_safe(raw_binding, path=f"slot.{name}.value")
             source_cids_raw = ()
         if value in (None, "", [], {}):
-            raise AbbyVoiceResponseDAGError(f"slot binding {name!r} must not be empty")
+            raise AbbyVoiceResponseDAGError(
+                f"slot binding {name!r} must not be empty"
+            )
         if isinstance(source_cids_raw, str):
             source_cids_raw = (source_cids_raw,)
         if not isinstance(source_cids_raw, Sequence):
-            raise AbbyVoiceResponseDAGError(f"slot binding {name!r} source_cids must be a sequence")
+            raise AbbyVoiceResponseDAGError(
+                f"slot binding {name!r} source_cids must be a sequence"
+            )
         source_cids = tuple(
-            sorted({_text(cid, field_name=f"slot.{name}.source_cid") for cid in source_cids_raw})
+            sorted(
+                {
+                    _text(cid, field_name=f"slot.{name}.source_cid")
+                    for cid in source_cids_raw
+                }
+            )
         )
         node_id = _stable_id(
             "vocabulary",
@@ -257,10 +301,18 @@ class ResponseDAGAppendCandidate:
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        event_id = _text(self.cache_miss_event_id, field_name="cache_miss_event_id")
-        validation_id = _text(self.validation_receipt_id, field_name="validation_receipt_id")
-        text_digest = _digest(self.rendered_text_sha256, field_name="rendered_text_sha256")
-        audio_digest = _digest(self.output_audio_sha256, field_name="output_audio_sha256")
+        event_id = _text(
+            self.cache_miss_event_id, field_name="cache_miss_event_id"
+        )
+        validation_id = _text(
+            self.validation_receipt_id, field_name="validation_receipt_id"
+        )
+        text_digest = _digest(
+            self.rendered_text_sha256, field_name="rendered_text_sha256"
+        )
+        audio_digest = _digest(
+            self.output_audio_sha256, field_name="output_audio_sha256"
+        )
         if self.schema_version != ABBY_VOICE_RESPONSE_DAG_APPEND_SCHEMA_VERSION:
             raise AbbyVoiceResponseDAGError(
                 f"unsupported response-DAG append schema: {self.schema_version}"
@@ -284,7 +336,9 @@ class ResponseDAGAppendCandidate:
             )
         )
         if not nodes or not edges:
-            raise AbbyVoiceResponseDAGError("response-DAG append requires nodes and edges")
+            raise AbbyVoiceResponseDAGError(
+                "response-DAG append requires nodes and edges"
+            )
         node_ids = [_text(node.get("id"), field_name="node.id") for node in nodes]
         edge_ids = [_text(edge.get("id"), field_name="edge.id") for edge in edges]
         if len(node_ids) != len(set(node_ids)):
@@ -297,7 +351,8 @@ class ResponseDAGAppendCandidate:
         )
         if unsupported_kinds:
             raise AbbyVoiceResponseDAGError(
-                "response-DAG contains unsupported node kinds: " + ", ".join(unsupported_kinds)
+                "response-DAG contains unsupported node kinds: "
+                + ", ".join(unsupported_kinds)
             )
         if node_kinds.count("response") != 1 or node_kinds.count("audio") != 1:
             raise AbbyVoiceResponseDAGError(
@@ -333,7 +388,9 @@ class ResponseDAGAppendCandidate:
 
         computed = _stable_id("response-dag-candidate", self.identity_dict())
         if self.candidate_id and self.candidate_id != computed:
-            raise AbbyVoiceResponseDAGError("candidate_id does not match deterministic DAG content")
+            raise AbbyVoiceResponseDAGError(
+                "candidate_id does not match deterministic DAG content"
+            )
         object.__setattr__(self, "candidate_id", computed)
 
     def identity_dict(self) -> dict[str, Any]:
@@ -358,19 +415,29 @@ class ResponseDAGAppendCandidate:
     def template_rows(self) -> tuple[dict[str, Any], ...]:
         """Canonical reusable template rows carried by this append."""
 
-        return tuple(_thaw_json(node) for node in self.nodes if node.get("kind") == "template")
+        return tuple(
+            _thaw_json(node)
+            for node in self.nodes
+            if node.get("kind") == "template"
+        )
 
     @property
     def vocabulary_rows(self) -> tuple[dict[str, Any], ...]:
         """Canonical grounded vocabulary rows carried by this append."""
 
-        return tuple(_thaw_json(node) for node in self.nodes if node.get("kind") == "vocabulary")
+        return tuple(
+            _thaw_json(node)
+            for node in self.nodes
+            if node.get("kind") == "vocabulary"
+        )
 
     def file_payloads(self) -> dict[str, bytes]:
         """Return deterministic immutable files for Hub materialization."""
 
         prefix = f"response_dag/candidates/{self.candidate_id}"
-        payloads = {f"{prefix}/candidate.json": _canonical_bytes(self.to_dict()) + b"\n"}
+        payloads = {
+            f"{prefix}/candidate.json": _canonical_bytes(self.to_dict()) + b"\n"
+        }
         for node in self.nodes:
             path = f"{prefix}/nodes/{node['id']}.json"
             payloads[path] = _canonical_bytes(_thaw_json(node)) + b"\n"
@@ -416,13 +483,17 @@ class ResponseDAGAppendCandidate:
 
         requested_root = Path(root).expanduser()
         if requested_root.is_symlink():
-            raise AbbyVoiceResponseDAGError("response-DAG output root must not be a symlink")
+            raise AbbyVoiceResponseDAGError(
+                "response-DAG output root must not be a symlink"
+            )
         output_root = requested_root.resolve()
         output_root.mkdir(parents=True, exist_ok=True)
         for relative, body in self.file_payloads().items():
             safe = PurePosixPath(relative)
             if safe.is_absolute() or ".." in safe.parts:
-                raise AbbyVoiceResponseDAGError(f"unsafe response-DAG path: {relative}")
+                raise AbbyVoiceResponseDAGError(
+                    f"unsafe response-DAG path: {relative}"
+                )
             target = output_root.joinpath(*safe.parts)
             resolved_target = target.resolve(strict=False)
             if not resolved_target.is_relative_to(output_root):
@@ -463,7 +534,9 @@ def append_response_dag_candidate(
 
     event = _mapping(cache_miss_event, field_name="cache_miss_event")
     if event.get("ready_for_dag_append") is not True:
-        raise AbbyVoiceResponseDAGError("cache miss must pass ASR validation before DAG append")
+        raise AbbyVoiceResponseDAGError(
+            "cache miss must pass ASR validation before DAG append"
+        )
     event_id = _text(event.get("event_id"), field_name="cache_miss_event.event_id")
     validation_id = _text(
         event.get("validation_receipt_id"),
@@ -500,14 +573,22 @@ def append_response_dag_candidate(
         field_name="cache_miss_event.template_id",
         required=False,
     )
-    normalized_template = _text(template_text, field_name="template_text", required=False)
+    normalized_template = _text(
+        template_text, field_name="template_text", required=False
+    )
     placeholders = _placeholder_names(normalized_template) if normalized_template else ()
     if normalized_template and set(placeholders) != set(binding_names):
-        raise AbbyVoiceResponseDAGError("template placeholders must exactly match slot bindings")
+        raise AbbyVoiceResponseDAGError(
+            "template placeholders must exactly match slot bindings"
+        )
     if bindings and not normalized_template:
-        raise AbbyVoiceResponseDAGError("slot bindings require a reusable slotted template")
+        raise AbbyVoiceResponseDAGError(
+            "slot bindings require a reusable slotted template"
+        )
     if normalized_template:
-        rendered_from_template = _render_slotted_template(normalized_template, bindings)
+        rendered_from_template = _render_slotted_template(
+            normalized_template, bindings
+        )
         if rendered_from_template != rendered:
             raise AbbyVoiceResponseDAGError(
                 "slotted template and vocabulary do not render response_text"

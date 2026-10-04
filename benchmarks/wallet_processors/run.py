@@ -103,7 +103,9 @@ def main(argv: list[str] | None = None) -> int:
             )
             return 2
         try:
-            fingerprints = tuple(endpoint_fingerprint(url) for url in args.approve_endpoint)
+            fingerprints = tuple(
+                endpoint_fingerprint(url) for url in args.approve_endpoint
+            )
             policy = LiveSmokePolicy(
                 gate=LiveSmokeGate.APPROVED,
                 approved_endpoint_fingerprints=fingerprints,
@@ -147,7 +149,8 @@ def main(argv: list[str] | None = None) -> int:
     # Non-zero only on hard budget failure so CI can gate regressions.
     if not result.budget_ok:
         print(
-            "WARNING: fixture budget not met: " + ", ".join(result.budget_failures),
+            "WARNING: fixture budget not met: "
+            + ", ".join(result.budget_failures),
             file=sys.stderr,
         )
         # Soft signal: still exit 0 for informational CI; budget_ok is in JSON.

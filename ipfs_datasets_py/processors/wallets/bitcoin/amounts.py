@@ -22,7 +22,9 @@ def parse_sats(value: Any, *, field: str = "amount") -> int:
     if isinstance(value, bool):
         raise NormalizationError(f"{field} must not be a boolean")
     if isinstance(value, float):
-        raise InvalidRequestError(f"{field} must not be a binary float; use integer satoshis")
+        raise InvalidRequestError(
+            f"{field} must not be a binary float; use integer satoshis"
+        )
     if isinstance(value, int):
         sats = value
     elif isinstance(value, str):
@@ -47,7 +49,9 @@ def exact_sats(value: Any, *, field: str = "amount") -> ExactAmount:
 
 def require_no_float_amount(value: Any, *, field: str = "amount") -> None:
     if isinstance(value, float):
-        raise InvalidRequestError(f"{field} must not be a binary float; use integer satoshis")
+        raise InvalidRequestError(
+            f"{field} must not be a binary float; use integer satoshis"
+        )
 
 
 __all__ = [

@@ -1,0 +1,301 @@
+{
+  "results": [
+    {
+      "file": "arm64-runner.yml",
+      "fixes": 0,
+      "suggestions": [
+        "Job 'arm64-system-info' uses self-hosted runner without container isolation. Consider adding:\n    container:\n      image: python:3.12-slim\n      options: --user root",
+        "Job 'arm64-mcp-dashboard' uses self-hosted runner without container isolation. Consider adding:\n    container:\n      image: python:3.12-slim\n      options: --user root",
+        "Job 'arm64-docker-build' uses self-hosted runner without container isolation. Consider adding:\n    container:\n      image: python:3.12-slim\n      options: --user root",
+        "Job 'arm64-integration-tests' uses self-hosted runner without container isolation. Consider adding:\n    container:\n      image: python:3.12-slim\n      options: --user root"
+      ],
+      "valid": true
+    },
+    {
+      "file": "comprehensive-scraper-validation.yml",
+      "fixes": 0,
+      "suggestions": [],
+      "valid": true
+    },
+    {
+      "file": "continuous-queue-management.yml",
+      "fixes": 3,
+      "suggestions": [
+        "Job 'analyze-queue-status' uses self-hosted runner without container isolation. Consider adding:\n    container:\n      image: python:3.12-slim\n      options: --user root",
+        "Job 'process-pr-queue' uses self-hosted runner without container isolation. Consider adding:\n    container:\n      image: python:3.12-slim\n      options: --user root",
+        "Job 'process-issue-queue' uses self-hosted runner without container isolation. Consider adding:\n    container:\n      image: python:3.12-slim\n      options: --user root"
+      ],
+      "valid": true
+    },
+    {
+      "file": "copilot-agent-autofix.yml",
+      "fixes": 2,
+      "suggestions": [],
+      "valid": true
+    },
+    {
+      "file": "docker-build-test.yml",
+      "fixes": 0,
+      "suggestions": [
+        "Job 'test-self-hosted-x86' uses self-hosted runner without container isolation. Consider adding:\n    container:\n      image: python:3.12-slim\n      options: --user root",
+        "Job 'test-self-hosted-arm64' uses self-hosted runner without container isolation. Consider adding:\n    container:\n      image: python:3.12-slim\n      options: --user root"
+      ],
+      "valid": true
+    },
+    {
+      "file": "docker-ci.yml",
+      "fixes": 0,
+      "suggestions": [],
+      "valid": true
+    },
+    {
+      "file": "documentation-maintenance.yml",
+      "fixes": 0,
+      "suggestions": [],
+      "valid": true
+    },
+    {
+      "file": "enhanced-pr-completion-monitor.yml",
+      "fixes": 1,
+      "suggestions": [
+        "Job 'enhanced-pr-monitor' uses self-hosted runner without container isolation. Consider adding:\n    container:\n      image: python:3.12-slim\n      options: --user root"
+      ],
+      "valid": true
+    },
+    {
+      "file": "fix-docker-permissions.yml",
+      "fixes": 0,
+      "suggestions": [
+        "Job 'diagnose-docker-permissions' uses self-hosted runner without container isolation. Consider adding:\n    container:\n      image: python:3.12-slim\n      options: --user root",
+        "Job 'fix-docker-permissions' uses self-hosted runner without container isolation. Consider adding:\n    container:\n      image: python:3.12-slim\n      options: --user root",
+        "Job 'test-docker-after-fix' uses self-hosted runner without container isolation. Consider adding:\n    container:\n      image: python:3.12-slim\n      options: --user root"
+      ],
+      "valid": true
+    },
+    {
+      "file": "gpu-tests.yml",
+      "fixes": 0,
+      "suggestions": [
+        "Job 'gpu-tests' uses self-hosted runner without container isolation. Consider adding:\n    container:\n      image: python:3.12-slim\n      options: --user root",
+        "Job 'cpu-tests' uses self-hosted runner without container isolation. Consider adding:\n    container:\n      image: python:3.12-slim\n      options: --user root",
+        "Job 'gpu-docker-tests' uses self-hosted runner without container isolation. Consider adding:\n    container:\n      image: python:3.12-slim\n      options: --user root",
+        "Job 'test-summary' uses self-hosted runner without container isolation. Consider adding:\n    container:\n      image: python:3.12-slim\n      options: --user root"
+      ],
+      "valid": true
+    },
+    {
+      "file": "graphrag-production-ci.yml",
+      "fixes": 0,
+      "suggestions": [
+        "Job 'test' uses self-hosted runner without container isolation. Consider adding:\n    container:\n      image: python:3.12-slim\n      options: --user root",
+        "Job 'security' uses self-hosted runner without container isolation. Consider adding:\n    container:\n      image: python:3.12-slim\n      options: --user root"
+      ],
+      "valid": true
+    },
+    {
+      "file": "issue-to-draft-pr.yml",
+      "fixes": 1,
+      "suggestions": [],
+      "valid": true
+    },
+    {
+      "file": "mcp-dashboard-tests.yml",
+      "fixes": 0,
+      "suggestions": [],
+      "valid": true
+    },
+    {
+      "file": "mcp-integration-tests.yml",
+      "fixes": 0,
+      "suggestions": [],
+      "valid": true
+    },
+    {
+      "file": "pdf_processing_ci.yml",
+      "fixes": 0,
+      "suggestions": [],
+      "valid": true
+    },
+    {
+      "file": "pdf_processing_simple_ci.yml",
+      "fixes": 0,
+      "suggestions": [],
+      "valid": true
+    },
+    {
+      "file": "pr-completion-monitor.yml",
+      "fixes": 2,
+      "suggestions": [
+        "Job 'check-pr-completion' uses self-hosted runner without container isolation. Consider adding:\n    container:\n      image: python:3.12-slim\n      options: --user root"
+      ],
+      "valid": true
+    },
+    {
+      "file": "pr-copilot-monitor.yml",
+      "fixes": 2,
+      "suggestions": [],
+      "valid": true
+    },
+    {
+      "file": "pr-copilot-reviewer.yml",
+      "fixes": 2,
+      "suggestions": [
+        "Job 'analyze-and-assign-copilot' uses self-hosted runner without container isolation. Consider adding:\n    container:\n      image: python:3.12-slim\n      options: --user root"
+      ],
+      "valid": true
+    },
+    {
+      "file": "publish_to_pipy.yml",
+      "fixes": 0,
+      "suggestions": [
+        "Job 'build' uses self-hosted runner without container isolation. Consider adding:\n    container:\n      image: python:3.12-slim\n      options: --user root",
+        "Job 'publish-to-pypi' uses self-hosted runner without container isolation. Consider adding:\n    container:\n      image: python:3.12-slim\n      options: --user root"
+      ],
+      "valid": true
+    },
+    {
+      "file": "runner-validation-clean.yml",
+      "fixes": 0,
+      "suggestions": [
+        "Job 'validate-runner' uses self-hosted runner without container isolation. Consider adding:\n    container:\n      image: python:3.12-slim\n      options: --user root",
+        "Job 'runner-health-check' uses self-hosted runner without container isolation. Consider adding:\n    container:\n      image: python:3.12-slim\n      options: --user root"
+      ],
+      "valid": true
+    },
+    {
+      "file": "runner-validation.yml",
+      "fixes": 1,
+      "suggestions": [
+        "Job 'validate-runner' uses self-hosted runner without container isolation. Consider adding:\n    container:\n      image: python:3.12-slim\n      options: --user root",
+        "Job 'runner-health-check' uses self-hosted runner without container isolation. Consider adding:\n    container:\n      image: python:3.12-slim\n      options: --user root"
+      ],
+      "valid": true
+    },
+    {
+      "file": "scraper-validation.yml",
+      "fixes": 0,
+      "suggestions": [
+        "Job 'test-scrapers-self-hosted' uses self-hosted runner without container isolation. Consider adding:\n    container:\n      image: python:3.12-slim\n      options: --user root"
+      ],
+      "valid": true
+    },
+    {
+      "file": "self-hosted-runner.yml",
+      "fixes": 0,
+      "suggestions": [
+        "Job 'test-self-hosted-x86' uses self-hosted runner without container isolation. Consider adding:\n    container:\n      image: python:3.12-slim\n      options: --user root"
+      ],
+      "valid": true
+    },
+    {
+      "file": "test-datasets-runner.yml",
+      "fixes": 0,
+      "suggestions": [
+        "Job 'test-datasets-runner' uses self-hosted runner without container isolation. Consider adding:\n    container:\n      image: python:3.12-slim\n      options: --user root"
+      ],
+      "valid": true
+    },
+    {
+      "file": "test-github-hosted.yml",
+      "fixes": 0,
+      "suggestions": [],
+      "valid": true
+    },
+    {
+      "file": "update-autohealing-list.yml",
+      "fixes": 0,
+      "suggestions": [],
+      "valid": true
+    }
+  ],
+  "changes": [
+    {
+      "file": "continuous-queue-management.yml",
+      "type": "add_gh_token",
+      "job": "analyze-queue-status",
+      "description": "Added GH_TOKEN to step using gh CLI"
+    },
+    {
+      "file": "continuous-queue-management.yml",
+      "type": "add_gh_token",
+      "job": "process-pr-queue",
+      "description": "Added GH_TOKEN to step using gh CLI"
+    },
+    {
+      "file": "continuous-queue-management.yml",
+      "type": "add_gh_token",
+      "job": "process-issue-queue",
+      "description": "Added GH_TOKEN to step using gh CLI"
+    },
+    {
+      "file": "copilot-agent-autofix.yml",
+      "type": "add_gh_token",
+      "job": "autofix-with-copilot-agent",
+      "description": "Added GH_TOKEN to step using gh CLI"
+    },
+    {
+      "file": "copilot-agent-autofix.yml",
+      "type": "copilot_suggestion",
+      "description": "Consider adding gh copilot commands for code analysis and suggestions"
+    },
+    {
+      "file": "enhanced-pr-completion-monitor.yml",
+      "type": "add_gh_token",
+      "job": "enhanced-pr-monitor",
+      "description": "Added GH_TOKEN to step using gh CLI"
+    },
+    {
+      "file": "issue-to-draft-pr.yml",
+      "type": "add_gh_token",
+      "job": "create-draft-pr-with-copilot",
+      "description": "Added GH_TOKEN to step using gh CLI"
+    },
+    {
+      "file": "pr-completion-monitor.yml",
+      "type": "add_gh_token",
+      "job": "check-pr-completion",
+      "description": "Added GH_TOKEN to step using gh CLI"
+    },
+    {
+      "file": "pr-completion-monitor.yml",
+      "type": "add_gh_token",
+      "job": "check-pr-completion",
+      "description": "Added GH_TOKEN to step using gh CLI"
+    },
+    {
+      "file": "pr-copilot-monitor.yml",
+      "type": "add_gh_token",
+      "job": "assign-copilot-intelligent",
+      "description": "Added GH_TOKEN to step using gh CLI"
+    },
+    {
+      "file": "pr-copilot-monitor.yml",
+      "type": "add_gh_token",
+      "job": "report-results",
+      "description": "Added GH_TOKEN to step using gh CLI"
+    },
+    {
+      "file": "pr-copilot-reviewer.yml",
+      "type": "add_gh_token",
+      "job": "analyze-and-assign-copilot",
+      "description": "Added GH_TOKEN to step using gh CLI"
+    },
+    {
+      "file": "pr-copilot-reviewer.yml",
+      "type": "add_gh_token",
+      "job": "analyze-and-assign-copilot",
+      "description": "Added GH_TOKEN to step using gh CLI"
+    },
+    {
+      "file": "runner-validation.yml",
+      "type": "add_gh_token",
+      "job": "runner-health-check",
+      "description": "Added GH_TOKEN to step using gh CLI"
+    }
+  ],
+  "summary": {
+    "total_workflows": 27,
+    "total_fixes": 14,
+    "total_suggestions": 30
+  }
+}

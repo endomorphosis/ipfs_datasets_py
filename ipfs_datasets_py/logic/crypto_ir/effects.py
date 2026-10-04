@@ -91,10 +91,14 @@ def _as_mapping(value: Any, name: str) -> Mapping[str, Any]:
     return value
 
 
-def _known_fields(value: Mapping[str, Any], allowed: frozenset[str], name: str) -> None:
+def _known_fields(
+    value: Mapping[str, Any], allowed: frozenset[str], name: str
+) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise CryptoIRValidationError(f"unknown {name} field(s): {', '.join(unknown)}")
+        raise CryptoIRValidationError(
+            f"unknown {name} field(s): {', '.join(unknown)}"
+        )
 
 
 def _attributes(value: Mapping[str, Any] | None) -> Mapping[str, Any]:
@@ -212,7 +216,9 @@ class AssetEffect:
     def __post_init__(self) -> None:
         object.__setattr__(self, "effect_id", _identifier(self.effect_id, "effect_id"))
         object.__setattr__(self, "kind", _enum(EffectKind, self.kind, "kind"))
-        object.__setattr__(self, "order_index", _non_negative_int(self.order_index, "order_index"))
+        object.__setattr__(
+            self, "order_index", _non_negative_int(self.order_index, "order_index")
+        )
         fact = self.fact_id or f"effect:{self.effect_id}"
         object.__setattr__(self, "fact_id", _identifier(fact, "fact_id"))
         object.__setattr__(self, "asset", _optional_asset(self.asset, "asset"))
@@ -220,7 +226,9 @@ class AssetEffect:
         object.__setattr__(
             self, "from_account", _optional_account(self.from_account, "from_account")
         )
-        object.__setattr__(self, "to_account", _optional_account(self.to_account, "to_account"))
+        object.__setattr__(
+            self, "to_account", _optional_account(self.to_account, "to_account")
+        )
         object.__setattr__(
             self,
             "principal_id",
@@ -242,7 +250,9 @@ class AssetEffect:
         )
         if self.state_epoch_id and not _ID_RE.fullmatch(self.state_epoch_id):
             raise CryptoIRValidationError("state_epoch_id is not a stable identifier")
-        object.__setattr__(self, "summary", _text(self.summary, "summary", allow_empty=True))
+        object.__setattr__(
+            self, "summary", _text(self.summary, "summary", allow_empty=True)
+        )
         object.__setattr__(
             self, "assumption_ids", _unique_ids(self.assumption_ids, "assumption_ids")
         )
@@ -252,7 +262,9 @@ class AssetEffect:
             _unique_ids(self.source_provenance_ids, "source_provenance_ids"),
         )
         object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
 
         kind = self.kind if isinstance(self.kind, EffectKind) else EffectKind(self.kind)
         if kind in self._MONETARY_KINDS:
@@ -274,7 +286,9 @@ class AssetEffect:
             "control_edge_id": self.control_edge_id,
             "effect_id": self.effect_id,
             "fact_id": self.fact_id,
-            "from_account": (None if self.from_account is None else self.from_account.to_dict()),
+            "from_account": (
+                None if self.from_account is None else self.from_account.to_dict()
+            ),
             "kind": self.kind.value if isinstance(self.kind, EffectKind) else self.kind,
             "order_index": self.order_index,
             "principal_id": self.principal_id,
@@ -348,7 +362,9 @@ class AssetEffect:
             assumption_ids=tuple(value.get("assumption_ids", ())),
             source_provenance_ids=tuple(value.get("source_provenance_ids", ())),
             attributes=value.get("attributes", {}),
-            schema_version=value.get("schema_version", CRYPTO_IR_EFFECTS_SCHEMA_VERSION),
+            schema_version=value.get(
+                "schema_version", CRYPTO_IR_EFFECTS_SCHEMA_VERSION
+            ),
         )
 
     def canonical_bytes(self) -> bytes:

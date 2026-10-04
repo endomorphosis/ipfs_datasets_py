@@ -25,7 +25,9 @@ async def wallet_processor_verify_manifest(
     """Verify a manifest path or in-memory mapping."""
     try:
         api = mcp_api()
-        result = api.verify_manifest(VerifyManifestRequest(path=path, manifest=manifest))
+        result = api.verify_manifest(
+            VerifyManifestRequest(path=path, manifest=manifest)
+        )
         return success_response(result.to_dict())
     except Exception as exc:
         return error_response(exc)

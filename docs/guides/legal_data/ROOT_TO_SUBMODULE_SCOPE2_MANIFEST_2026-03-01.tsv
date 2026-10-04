@@ -1,0 +1,7 @@
+source_path	target_path	action	status	notes
+src/municipal_scrape_workspace/hybrid_legal_ir.py	ipfs_datasets_py/ipfs_datasets_py/processors/legal_data/reasoner/hybrid_legal_ir.py	move	completed	Canonical module moved to submodule reasoner package.
+src/municipal_scrape_workspace/hybrid_legal_ir.py	src/municipal_scrape_workspace/hybrid_legal_ir.py	keep-shim	completed	Root path now compatibility shim importing canonical module.
+tests/reasoner/*.py	ipfs_datasets_py/tests/reasoner/*.py	move	completed	All root reasoner tests moved to submodule tests/reasoner.
+tests/reasoner/test_queries.json	ipfs_datasets_py/tests/reasoner/test_queries.json	move	completed	Reasoner query matrix fixture moved with tests.
+tests/reasoner/fixtures/*.json	ipfs_datasets_py/tests/reasoner/fixtures/*.json	move	completed	All reasoner fixtures moved to submodule fixtures directory.
+ipfs_datasets_py/tests/reasoner/*.py	ipfs_datasets_py/tests/reasoner/*.py	refactor	completed	Imports updated from municipal_scrape_workspace.hybrid_legal_ir to ipfs_datasets_py.processors.legal_data.reasoner.hybrid_legal_ir.

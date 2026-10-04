@@ -39,7 +39,9 @@ CHAIN_REF_SCHEMA_VERSION = "smart-contract-chain-ref-v1"
 
 _DIGEST = re.compile(r"^[a-z0-9][a-z0-9._-]*:[A-Za-z0-9_-]+$")
 _CID = re.compile(r"^(?:Qm[1-9A-HJ-NP-Za-km-z]{44}|b[a-z2-7][a-z2-7]+)$")
-_URN_ID = re.compile(r"^urn:smart-contract:[a-z][a-z0-9_-]*:sha256:[0-9a-f]{64}$")
+_URN_ID = re.compile(
+    r"^urn:smart-contract:[a-z][a-z0-9_-]*:sha256:[0-9a-f]{64}$"
+)
 
 SECRET_SAFE_MAX_DEPTH = 32
 SECRET_SAFE_MAX_NODES = 10_000
@@ -115,7 +117,9 @@ _SECRET_VALUE_PATTERNS = (
     ),
     re.compile(r"(?i)^(?:vault|keyring|secret|env|file)://"),
     re.compile(r"(?i)^[a-z][a-z0-9+.-]*://[^/\s:@]+:[^/\s@]+@"),
-    re.compile(r"(?i)^[a-z0-9][a-z0-9_-]{15,}-(?:secret|password|passwd|passphrase)$"),
+    re.compile(
+        r"(?i)^[a-z0-9][a-z0-9_-]{15,}-(?:secret|password|passwd|passphrase)$"
+    ),
 )
 
 
@@ -194,14 +198,20 @@ def ensure_secret_safe(value: Any) -> None:
 
         if isinstance(item, str):
             if len(item) > SECRET_SAFE_MAX_STRING_CHARS:
-                raise ValueError("smart-contract serialization security policy limit exceeded")
+                raise ValueError(
+                    "smart-contract serialization security policy limit exceeded"
+                )
             if _is_concrete_secret(item):
-                raise ValueError("smart-contract serialization rejects concrete secret values")
+                raise ValueError(
+                    "smart-contract serialization rejects concrete secret values"
+                )
             return
 
         if isinstance(item, Mapping):
             if len(item) > SECRET_SAFE_MAX_COLLECTION_ITEMS:
-                raise ValueError("smart-contract serialization security policy limit exceeded")
+                raise ValueError(
+                    "smart-contract serialization security policy limit exceeded"
+                )
             for key, child in item.items():
                 if isinstance(key, str):
                     if len(key) > SECRET_SAFE_MAX_STRING_CHARS:
@@ -210,14 +220,19 @@ def ensure_secret_safe(value: Any) -> None:
                         )
                     if _is_secret_field(key) or _is_concrete_secret(key):
                         raise SigningForbiddenError(
-                            "public smart-contract records reject private-key or signing surfaces"
+                            "public smart-contract records reject private-key "
+                            "or signing surfaces"
                         )
                 visit(child, depth + 1)
             return
 
-        if isinstance(item, Sequence) and not isinstance(item, (str, bytes, bytearray, memoryview)):
+        if isinstance(item, Sequence) and not isinstance(
+            item, (str, bytes, bytearray, memoryview)
+        ):
             if len(item) > SECRET_SAFE_MAX_COLLECTION_ITEMS:
-                raise ValueError("smart-contract serialization security policy limit exceeded")
+                raise ValueError(
+                    "smart-contract serialization security policy limit exceeded"
+                )
             for child in item:
                 visit(child, depth + 1)
             return
@@ -310,14 +325,20 @@ class ChainRef:
     def __post_init__(self) -> None:
         object.__setattr__(self, "chain", _required(self.chain, "chain"))
         object.__setattr__(self, "network", _required(self.network, "network"))
-        object.__setattr__(self, "chain_id", self.chain_id.strip() if self.chain_id else "")
+        object.__setattr__(
+            self, "chain_id", self.chain_id.strip() if self.chain_id else ""
+        )
         object.__setattr__(
             self,
             "genesis_hash",
             self.genesis_hash.strip() if self.genesis_hash else "",
         )
-        object.__setattr__(self, "namespace", self.namespace.strip() if self.namespace else "")
-        object.__setattr__(self, "schema_version", _required(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "namespace", self.namespace.strip() if self.namespace else ""
+        )
+        object.__setattr__(
+            self, "schema_version", _required(self.schema_version, "schema_version")
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -339,7 +360,9 @@ class ChainRef:
             chain_id=str(value.get("chain_id", "")),
             genesis_hash=str(value.get("genesis_hash", "")),
             namespace=str(value.get("namespace", "")),
-            schema_version=str(value.get("schema_version", CHAIN_REF_SCHEMA_VERSION)),
+            schema_version=str(
+                value.get("schema_version", CHAIN_REF_SCHEMA_VERSION)
+            ),
         )
 
 
@@ -356,7 +379,9 @@ class AcquisitionBounds:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "max_items", _positive(self.max_items, "max_items"))
-        object.__setattr__(self, "max_requests", _positive(self.max_requests, "max_requests"))
+        object.__setattr__(
+            self, "max_requests", _positive(self.max_requests, "max_requests")
+        )
         object.__setattr__(
             self,
             "max_response_bytes",
@@ -402,7 +427,9 @@ class ProviderPolicy:
 
     allowed_providers: frozenset[str] = field(default_factory=frozenset)
     allowed_hosts: frozenset[str] = field(default_factory=frozenset)
-    allowed_schemes: frozenset[str] = field(default_factory=lambda: frozenset({"https"}))
+    allowed_schemes: frozenset[str] = field(
+        default_factory=lambda: frozenset({"https"})
+    )
     trust_mode: ProviderTrustMode = ProviderTrustMode.PRESERVE_DISAGREEMENT
     require_content_digest: bool = True
     allow_http_loopback: bool = False
@@ -411,27 +438,37 @@ class ProviderPolicy:
 
     def __post_init__(self) -> None:
         providers = frozenset(
-            _required(provider, "allowed_providers item") for provider in self.allowed_providers
+            _required(provider, "allowed_providers item")
+            for provider in self.allowed_providers
         )
-        hosts = frozenset(_required(host, "allowed_hosts item") for host in self.allowed_hosts)
+        hosts = frozenset(
+            _required(host, "allowed_hosts item") for host in self.allowed_hosts
+        )
         schemes = frozenset(
-            _required(scheme, "allowed_schemes item").casefold() for scheme in self.allowed_schemes
+            _required(scheme, "allowed_schemes item").casefold()
+            for scheme in self.allowed_schemes
         )
         if not schemes:
             raise InvalidRequestError("allowed_schemes must not be empty")
         for scheme in schemes:
             if scheme not in {"http", "https"}:
-                raise InvalidRequestError(f"unsupported URL scheme in provider policy: {scheme!r}")
+                raise InvalidRequestError(
+                    f"unsupported URL scheme in provider policy: {scheme!r}"
+                )
         # Pure open HTTP is rejected; loopback HTTP or HTTPS-first policies pass.
         if "http" in schemes and "https" not in schemes and not self.allow_http_loopback:
-            raise InvalidRequestError("http scheme requires allow_http_loopback=True or https")
+            raise InvalidRequestError(
+                "http scheme requires allow_http_loopback=True or https"
+            )
         object.__setattr__(self, "allowed_providers", providers)
         object.__setattr__(self, "allowed_hosts", hosts)
         object.__setattr__(self, "allowed_schemes", schemes)
         object.__setattr__(
             self, "trust_mode", _as_enum(ProviderTrustMode, self.trust_mode, "trust_mode")
         )
-        object.__setattr__(self, "max_providers", _positive(self.max_providers, "max_providers"))
+        object.__setattr__(
+            self, "max_providers", _positive(self.max_providers, "max_providers")
+        )
         object.__setattr__(self, "metadata", _freeze_mapping(self.metadata))
 
     def permits_provider(self, provider_id: str) -> bool:
@@ -470,7 +507,9 @@ class ProviderPolicy:
             allowed_providers=frozenset(value.get("allowed_providers", ())),
             allowed_hosts=frozenset(value.get("allowed_hosts", ())),
             allowed_schemes=frozenset(value.get("allowed_schemes", ("https",))),
-            trust_mode=value.get("trust_mode", ProviderTrustMode.PRESERVE_DISAGREEMENT.value),
+            trust_mode=value.get(
+                "trust_mode", ProviderTrustMode.PRESERVE_DISAGREEMENT.value
+            ),
             require_content_digest=bool(value.get("require_content_digest", True)),
             allow_http_loopback=bool(value.get("allow_http_loopback", False)),
             max_providers=int(value.get("max_providers", 4)),
@@ -492,14 +531,26 @@ class ArtifactRef:
     schema_version: str = ARTIFACT_REF_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "kind", _as_enum(ArtifactKind, self.kind, "kind"))
-        object.__setattr__(self, "content_digest", _digest(self.content_digest, "content_digest"))
+        object.__setattr__(
+            self, "kind", _as_enum(ArtifactKind, self.kind, "kind")
+        )
+        object.__setattr__(
+            self, "content_digest", _digest(self.content_digest, "content_digest")
+        )
         object.__setattr__(self, "media_type", _required(self.media_type, "media_type"))
-        object.__setattr__(self, "byte_length", _non_negative(self.byte_length, "byte_length"))
-        object.__setattr__(self, "content_cid", _optional_cid(self.content_cid, "content_cid"))
-        object.__setattr__(self, "label", self.label.strip() if self.label else "")
+        object.__setattr__(
+            self, "byte_length", _non_negative(self.byte_length, "byte_length")
+        )
+        object.__setattr__(
+            self, "content_cid", _optional_cid(self.content_cid, "content_cid")
+        )
+        object.__setattr__(
+            self, "label", self.label.strip() if self.label else ""
+        )
         object.__setattr__(self, "attributes", _freeze_mapping(self.attributes))
-        object.__setattr__(self, "schema_version", _required(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "schema_version", _required(self.schema_version, "schema_version")
+        )
         ensure_secret_safe(self.to_dict())
 
     @property
@@ -509,7 +560,9 @@ class ArtifactRef:
             {
                 "byte_length": self.byte_length,
                 "content_digest": self.content_digest,
-                "kind": self.kind.value if isinstance(self.kind, ArtifactKind) else str(self.kind),
+                "kind": self.kind.value
+                if isinstance(self.kind, ArtifactKind)
+                else str(self.kind),
                 "media_type": self.media_type,
             },
         )
@@ -520,7 +573,9 @@ class ArtifactRef:
             "byte_length": self.byte_length,
             "content_cid": self.content_cid,
             "content_digest": self.content_digest,
-            "kind": self.kind.value if isinstance(self.kind, ArtifactKind) else str(self.kind),
+            "kind": self.kind.value
+            if isinstance(self.kind, ArtifactKind)
+            else str(self.kind),
             "label": self.label,
             "media_type": self.media_type,
             "schema_version": self.schema_version,
@@ -541,7 +596,9 @@ class ArtifactRef:
             content_cid=str(value.get("content_cid", "")),
             label=str(value.get("label", "")),
             attributes=value.get("attributes", {}),
-            schema_version=str(value.get("schema_version", ARTIFACT_REF_SCHEMA_VERSION)),
+            schema_version=str(
+                value.get("schema_version", ARTIFACT_REF_SCHEMA_VERSION)
+            ),
         )
 
 
@@ -558,9 +615,13 @@ class AcquisitionProvenance:
     attributes: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "provider_id", _required(self.provider_id, "provider_id"))
+        object.__setattr__(
+            self, "provider_id", _required(self.provider_id, "provider_id")
+        )
         object.__setattr__(self, "transport", _required(self.transport, "transport"))
-        object.__setattr__(self, "observed_at", _aware(self.observed_at, "observed_at"))
+        object.__setattr__(
+            self, "observed_at", _aware(self.observed_at, "observed_at")
+        )
         for name in ("request_digest", "response_digest"):
             raw = getattr(self, name)
             if raw:
@@ -632,12 +693,12 @@ class ContractAcquisitionRequest:
     FORBIDDEN_FIELDS: ClassVar[frozenset[str]] = _FORBIDDEN_PUBLIC_SURFACE_FIELDS
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "request_id", _required(self.request_id, "request_id"))
+        object.__setattr__(
+            self, "request_id", _required(self.request_id, "request_id")
+        )
         if not isinstance(self.chain, ChainRef):
             object.__setattr__(
-                self,
-                "chain",
-                ChainRef.from_dict(self.chain),  # type: ignore[arg-type]
+                self, "chain", ChainRef.from_dict(self.chain)  # type: ignore[arg-type]
             )
         object.__setattr__(
             self,
@@ -647,9 +708,7 @@ class ContractAcquisitionRequest:
         object.__setattr__(self, "locator", _required(self.locator, "locator"))
         if not isinstance(self.bounds, AcquisitionBounds):
             object.__setattr__(
-                self,
-                "bounds",
-                AcquisitionBounds.from_dict(self.bounds),  # type: ignore[arg-type]
+                self, "bounds", AcquisitionBounds.from_dict(self.bounds)  # type: ignore[arg-type]
             )
         if not isinstance(self.provider_policy, ProviderPolicy):
             object.__setattr__(
@@ -665,9 +724,13 @@ class ContractAcquisitionRequest:
                 "cancellation_token_id",
                 _required(self.cancellation_token_id, "cancellation_token_id"),
             )
-        object.__setattr__(self, "code_epoch", self.code_epoch.strip() if self.code_epoch else "")
+        object.__setattr__(
+            self, "code_epoch", self.code_epoch.strip() if self.code_epoch else ""
+        )
         object.__setattr__(self, "attributes", _freeze_mapping(self.attributes))
-        object.__setattr__(self, "schema_version", _required(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "schema_version", _required(self.schema_version, "schema_version")
+        )
         ensure_secret_safe(self.to_dict())
 
     @property
@@ -700,7 +763,9 @@ class ContractAcquisitionRequest:
             "cancellation_token_id": self.cancellation_token_id,
             "chain": self.chain.to_dict(),
             "code_epoch": self.code_epoch,
-            "deadline": format_datetime(self.deadline) if self.deadline is not None else None,
+            "deadline": format_datetime(self.deadline)
+            if self.deadline is not None
+            else None,
             "locator": self.locator,
             "network": self.chain.network,
             "provider_policy": self.provider_policy.to_dict(),
@@ -734,12 +799,16 @@ class ContractAcquisitionRequest:
             artifact_kind=value.get("artifact_kind", ArtifactKind.OTHER.value),
             locator=str(value.get("locator", "")),
             bounds=AcquisitionBounds.from_dict(value.get("bounds", {})),
-            provider_policy=ProviderPolicy.from_dict(value.get("provider_policy", {})),
+            provider_policy=ProviderPolicy.from_dict(
+                value.get("provider_policy", {})
+            ),
             deadline=deadline,
             cancellation_token_id=value.get("cancellation_token_id"),
             code_epoch=str(value.get("code_epoch", "")),
             attributes=value.get("attributes", {}),
-            schema_version=str(value.get("schema_version", ACQUISITION_REQUEST_SCHEMA_VERSION)),
+            schema_version=str(
+                value.get("schema_version", ACQUISITION_REQUEST_SCHEMA_VERSION)
+            ),
         )
 
 
@@ -766,28 +835,49 @@ class ContractAcquisitionResult:
     )
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "request_id", _required(self.request_id, "request_id"))
-        object.__setattr__(self, "status", _as_enum(AcquisitionStatus, self.status, "status"))
+        object.__setattr__(
+            self, "request_id", _required(self.request_id, "request_id")
+        )
+        object.__setattr__(
+            self, "status", _as_enum(AcquisitionStatus, self.status, "status")
+        )
         artifacts = tuple(self.artifacts)
         for index, artifact in enumerate(artifacts):
             if not isinstance(artifact, ArtifactRef):
-                raise InvalidRequestError(f"artifacts[{index}] must be an ArtifactRef")
+                raise InvalidRequestError(
+                    f"artifacts[{index}] must be an ArtifactRef"
+                )
         object.__setattr__(self, "artifacts", artifacts)
         provenances = tuple(self.provenances)
         for index, provenance in enumerate(provenances):
             if not isinstance(provenance, AcquisitionProvenance):
-                raise InvalidRequestError(f"provenances[{index}] must be an AcquisitionProvenance")
+                raise InvalidRequestError(
+                    f"provenances[{index}] must be an AcquisitionProvenance"
+                )
         object.__setattr__(self, "provenances", provenances)
-        diagnostics = tuple(_required(item, "diagnostics item") for item in self.diagnostics)
+        diagnostics = tuple(
+            _required(item, "diagnostics item") for item in self.diagnostics
+        )
         object.__setattr__(self, "diagnostics", diagnostics)
-        coverage = tuple(_required(item, "coverage_notes item") for item in self.coverage_notes)
+        coverage = tuple(
+            _required(item, "coverage_notes item") for item in self.coverage_notes
+        )
         object.__setattr__(self, "coverage_notes", coverage)
         object.__setattr__(self, "attributes", _freeze_mapping(self.attributes))
-        object.__setattr__(self, "schema_version", _required(self.schema_version, "schema_version"))
-        if self.status == AcquisitionStatus.AVAILABLE and not self.artifacts:
-            raise InvalidRequestError("available results must include at least one artifact")
+        object.__setattr__(
+            self, "schema_version", _required(self.schema_version, "schema_version")
+        )
+        if (
+            self.status == AcquisitionStatus.AVAILABLE
+            and not self.artifacts
+        ):
+            raise InvalidRequestError(
+                "available results must include at least one artifact"
+            )
         if self.status == AcquisitionStatus.UNSUPPORTED and self.artifacts:
-            raise InvalidRequestError("unsupported results must not include artifacts")
+            raise InvalidRequestError(
+                "unsupported results must not include artifacts"
+            )
         ensure_secret_safe(self.to_dict())
 
     @property
@@ -836,14 +926,19 @@ class ContractAcquisitionResult:
     def from_dict(cls, value: Mapping[str, Any]) -> "ContractAcquisitionResult":
         if not isinstance(value, Mapping):
             raise InvalidRequestError("ContractAcquisitionResult must be a mapping")
-        forbidden = sorted(set(value) & ContractAcquisitionRequest.FORBIDDEN_FIELDS)
+        forbidden = sorted(
+            set(value) & ContractAcquisitionRequest.FORBIDDEN_FIELDS
+        )
         if forbidden:
             raise SigningForbiddenError(
                 "public smart-contract records reject private-key or signing surfaces"
             )
-        artifacts = tuple(ArtifactRef.from_dict(item) for item in value.get("artifacts", ()))
+        artifacts = tuple(
+            ArtifactRef.from_dict(item) for item in value.get("artifacts", ())
+        )
         provenances = tuple(
-            AcquisitionProvenance.from_dict(item) for item in value.get("provenances", ())
+            AcquisitionProvenance.from_dict(item)
+            for item in value.get("provenances", ())
         )
         return cls(
             request_id=str(value.get("request_id", "")),
@@ -853,7 +948,9 @@ class ContractAcquisitionResult:
             diagnostics=tuple(value.get("diagnostics", ())),
             coverage_notes=tuple(value.get("coverage_notes", ())),
             attributes=value.get("attributes", {}),
-            schema_version=str(value.get("schema_version", ACQUISITION_RESULT_SCHEMA_VERSION)),
+            schema_version=str(
+                value.get("schema_version", ACQUISITION_RESULT_SCHEMA_VERSION)
+            ),
         )
 
 

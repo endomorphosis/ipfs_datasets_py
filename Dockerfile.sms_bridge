@@ -1,0 +1,39 @@
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app \
+    IPFS_DATASETS_AUTO_INSTALL=false \
+    IPFS_AUTO_INSTALL=false \
+    IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 \
+    IPFS_DATASETS_PY_INCLUDE_VCS_DEPENDENCIES=0 \
+    IPFS_DATASETS_PY_AUTO_NLTK_DOWNLOAD=0 \
+    IPFS_DATASETS_PY_AUTO_GROTH16_BUILD=0
+
+WORKDIR /app
+
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y git \
+    && rm -rf /var/lib/apt/lists/* \
+    && python -m pip install --no-cache-dir --upgrade pip \
+    && python -m pip install --no-cache-dir \
+        "fastapi>=0.110" \
+        "uvicorn[standard]>=0.29" \
+        pydantic \
+        "python-multipart>=0.0.9" \
+        duckdb \
+        cryptography \
+        "multiformats>=0.3.0" \
+        "ipfshttpclient>=0.7.0" \
+        requests \
+        urllib3 \
+        boto3 \
+        "jsonschema>=4.0.0" \
+        "cachetools>=5.3.0"
+
+COPY . /app
+RUN python -m pip install --no-cache-dir --no-deps -e /app
+
+EXPOSE 8061
+
+CMD ["python", "-m", "ipfs_datasets_py.messaging.sms_bridge", "--host", "0.0.0.0", "--port", "8061"]

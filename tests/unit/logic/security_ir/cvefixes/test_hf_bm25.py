@@ -39,7 +39,8 @@ def _rows() -> list[dict[str, object]]:
             "authority": "candidate",
             "record_id": _cid("policy"),
             "record_json": (
-                '{"effect":"deny","operation":"unsafe-parser","reason":"parser parser"}'
+                '{"effect":"deny","operation":"unsafe-parser",'
+                '"reason":"parser parser"}'
             ),
             "record_type": "policy_candidate",
             "title": "CVE-2026-0042 unsafe parser",
@@ -47,14 +48,18 @@ def _rows() -> list[dict[str, object]]:
         {
             "authority": "non_authoritative",
             "record_id": _cid("graph"),
-            "record_json": ('{"cve_id":"CVE-2026-0042","component":"parser"}'),
+            "record_json": (
+                '{"cve_id":"CVE-2026-0042","component":"parser"}'
+            ),
             "record_type": "graph_node",
             "title": "Parser graph evidence",
         },
         {
             "authority": "non_authoritative",
             "record_id": _cid("source"),
-            "record_json": ('{"cve_id":"CVE-2026-0042","language":"Python"}'),
+            "record_json": (
+                '{"cve_id":"CVE-2026-0042","language":"Python"}'
+            ),
             "record_type": "source_record",
             "title": "Pinned source evidence",
         },
@@ -81,7 +86,9 @@ def _all_rows(root, relative: str) -> list[dict[str, object]]:
 
 def test_tokenizer_is_code_aware_versioned_and_deterministic() -> None:
     assert CVEFIXES_BM25_TOKENIZER.endswith("/v1")
-    assert tokenize_cvefixes_bm25("ＣＶＥ-2026-0042 foo/bar foo_bar") == (
+    assert tokenize_cvefixes_bm25(
+        "ＣＶＥ-2026-0042 foo/bar foo_bar"
+    ) == (
         "cve-2026-0042",
         "cve",
         "2026",
@@ -102,7 +109,9 @@ def test_tokenizer_is_code_aware_versioned_and_deterministic() -> None:
 def test_build_exports_skillcenter_layout_and_exact_meta_indexes(
     tmp_path,
 ) -> None:
-    summary = build_cvefixes_bm25_hf_layout(list(reversed(_rows())), tmp_path, config=_config())
+    summary = build_cvefixes_bm25_hf_layout(
+        list(reversed(_rows())), tmp_path, config=_config()
+    )
 
     assert summary.document_count == 3
     assert summary.document_shard_count == 2
@@ -124,7 +133,9 @@ def test_build_exports_skillcenter_layout_and_exact_meta_indexes(
     assert fragment["bm25"]["tokenizer"] == CVEFIXES_BM25_TOKENIZER
     assert fragment["counts"] == summary.counts
 
-    document_index = pq.read_table(tmp_path / "indexes" / "bm25_document_chunks.parquet")
+    document_index = pq.read_table(
+        tmp_path / "indexes" / "bm25_document_chunks.parquet"
+    )
     assert document_index.schema.names == [
         "cid",
         "end_document_index",
@@ -139,7 +150,9 @@ def test_build_exports_skillcenter_layout_and_exact_meta_indexes(
         "size_bytes",
         "start_document_index",
     ]
-    keyword_index = pq.read_table(tmp_path / "indexes" / "bm25_keyword_shards.parquet")
+    keyword_index = pq.read_table(
+        tmp_path / "indexes" / "bm25_keyword_shards.parquet"
+    )
     assert keyword_index.schema.names == [
         *document_index.schema.names,
         "posting_count",
@@ -155,7 +168,9 @@ def test_build_exports_skillcenter_layout_and_exact_meta_indexes(
         assert row["sha256"] == digest.hex()
         assert row["cid"] == cid_v1_from_digest(digest)
         assert row["size_bytes"] == len(content)
-        assert row["row_count"] == pq.ParquetFile(target).metadata.num_rows
+        assert row["row_count"] == pq.ParquetFile(
+            target
+        ).metadata.num_rows
         assert row["schema_version"] == CVEFIXES_HF_META_SCHEMA_VERSION
         covered.add(row["relative_path"])
     assert covered == {
@@ -167,19 +182,27 @@ def test_build_exports_skillcenter_layout_and_exact_meta_indexes(
 def test_documents_and_postings_preserve_reproducible_scoring_inputs(
     tmp_path,
 ) -> None:
-    summary = build_cvefixes_bm25_hf_layout(_rows(), tmp_path, config=_config())
+    summary = build_cvefixes_bm25_hf_layout(
+        _rows(), tmp_path, config=_config()
+    )
     documents = _all_rows(tmp_path, "data/bm25/documents")
     postings = _all_rows(tmp_path, "data/bm25/postings")
 
     assert [row["document_index"] for row in documents] == [0, 1, 2]
     assert [(row["record_type"], row["entry_cid"]) for row in documents] == (
-        sorted((row["record_type"], row["record_id"]) for row in _rows())
+        sorted(
+            (row["record_type"], row["record_id"]) for row in _rows()
+        )
     )
     assert all(
-        row["schema_version"] == CVEFIXES_HF_BM25_DOCUMENT_SCHEMA_VERSION for row in documents
+        row["schema_version"]
+        == CVEFIXES_HF_BM25_DOCUMENT_SCHEMA_VERSION
+        for row in documents
     )
     assert all(
-        row["document_length"] == row["title_length"] + row["body_length"] for row in documents
+        row["document_length"]
+        == row["title_length"] + row["body_length"]
+        for row in documents
     )
     assert math.isclose(
         summary.average_document_length,
@@ -190,28 +213,53 @@ def test_documents_and_postings_preserve_reproducible_scoring_inputs(
 
     parser_rows = [row for row in postings if row["term"] == "parser"]
     assert parser_rows
-    assert [row["posting_chunk_index"] for row in parser_rows] == list(range(len(parser_rows)))
-    document_indices = [index for row in parser_rows for index in row["document_indices"]]
-    title_frequencies = [frequency for row in parser_rows for frequency in row["title_frequencies"]]
-    body_frequencies = [frequency for row in parser_rows for frequency in row["body_frequencies"]]
+    assert [row["posting_chunk_index"] for row in parser_rows] == list(
+        range(len(parser_rows))
+    )
+    document_indices = [
+        index
+        for row in parser_rows
+        for index in row["document_indices"]
+    ]
+    title_frequencies = [
+        frequency
+        for row in parser_rows
+        for frequency in row["title_frequencies"]
+    ]
+    body_frequencies = [
+        frequency
+        for row in parser_rows
+        for frequency in row["body_frequencies"]
+    ]
     assert document_indices == sorted(document_indices)
     assert len(document_indices) == 2
     assert sum(title_frequencies) >= 2
     assert sum(body_frequencies) >= 3
     assert all(
-        row["schema_version"] == CVEFIXES_HF_BM25_POSTING_SCHEMA_VERSION
+        row["schema_version"]
+        == CVEFIXES_HF_BM25_POSTING_SCHEMA_VERSION
         and row["document_frequency"] == len(document_indices)
-        and row["corpus_frequency"] == sum(title_frequencies) + sum(body_frequencies)
+        and row["corpus_frequency"]
+        == sum(title_frequencies) + sum(body_frequencies)
         and row["document_lengths"]
-        == [documents[index]["document_length"] for index in row["document_indices"]]
+        == [
+            documents[index]["document_length"]
+            for index in row["document_indices"]
+        ]
         for row in parser_rows
     )
     expected_idf = max(
-        math.log((len(documents) - len(document_indices) + 0.5) / (len(document_indices) + 0.5)),
+        math.log(
+            (len(documents) - len(document_indices) + 0.5)
+            / (len(document_indices) + 0.5)
+        ),
         1.0e-6,
     )
     assert all(
-        math.isclose(row["idf"], expected_idf, rel_tol=0.0, abs_tol=1e-15) for row in parser_rows
+        math.isclose(
+            row["idf"], expected_idf, rel_tol=0.0, abs_tol=1e-15
+        )
+        for row in parser_rows
     )
 
 
@@ -220,7 +268,9 @@ def test_build_is_byte_reproducible_without_explicit_document_indices(
 ) -> None:
     first = tmp_path / "first"
     second = tmp_path / "second"
-    first_summary = build_cvefixes_bm25_hf_layout(_rows(), first, config=_config())
+    first_summary = build_cvefixes_bm25_hf_layout(
+        _rows(), first, config=_config()
+    )
     second_summary = build_cvefixes_bm25_hf_layout(
         list(reversed(_rows())), second, config=_config()
     )
@@ -228,25 +278,37 @@ def test_build_is_byte_reproducible_without_explicit_document_indices(
     assert first_summary.counts == second_summary.counts
     assert first_summary.indexes == second_summary.indexes
     first_files = {
-        path.relative_to(first).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+        path.relative_to(first).as_posix(): hashlib.sha256(
+            path.read_bytes()
+        ).hexdigest()
         for path in first.rglob("*.parquet")
     }
     second_files = {
-        path.relative_to(second).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+        path.relative_to(second).as_posix(): hashlib.sha256(
+            path.read_bytes()
+        ).hexdigest()
         for path in second.rglob("*.parquet")
     }
     assert first_files == second_files
 
 
 def test_validation_fails_closed_for_tampered_shard(tmp_path) -> None:
-    build_cvefixes_bm25_hf_layout(_rows(), tmp_path, config=_config())
-    shard = next((tmp_path / "data" / "bm25" / "postings").glob("*.parquet"))
+    build_cvefixes_bm25_hf_layout(
+        _rows(), tmp_path, config=_config()
+    )
+    shard = next(
+        (tmp_path / "data" / "bm25" / "postings").glob("*.parquet")
+    )
     content = bytearray(shard.read_bytes())
     content[-1] ^= 1
     shard.write_bytes(content)
 
-    with pytest.raises(CVEfixesBM25LayoutError, match="descriptor differs"):
-        validate_cvefixes_bm25_hf_layout(tmp_path, config=_config())
+    with pytest.raises(
+        CVEfixesBM25LayoutError, match="descriptor differs"
+    ):
+        validate_cvefixes_bm25_hf_layout(
+            tmp_path, config=_config()
+        )
 
 
 @pytest.mark.parametrize(
@@ -278,6 +340,10 @@ def test_validation_fails_closed_for_tampered_shard(tmp_path) -> None:
         ),
     ],
 )
-def test_invalid_corpus_identity_or_order_is_rejected(tmp_path, rows, match) -> None:
+def test_invalid_corpus_identity_or_order_is_rejected(
+    tmp_path, rows, match
+) -> None:
     with pytest.raises(CVEfixesBM25LayoutError, match=match):
-        build_cvefixes_bm25_hf_layout(rows, tmp_path, config=_config())
+        build_cvefixes_bm25_hf_layout(
+            rows, tmp_path, config=_config()
+        )

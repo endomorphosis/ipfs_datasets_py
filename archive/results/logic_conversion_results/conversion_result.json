@@ -1,0 +1,689 @@
+{
+  "deontic_formulas": [
+    {
+      "formula_id": "7a354f52f4b8",
+      "operator": "O",
+      "proposition": "complete_all_construction_work_by_december_31",
+      "agent": {
+        "identifier": "contractor_abc",
+        "name": "ABC Construction LLC",
+        "agent_type": "unknown",
+        "properties": {},
+        "hash": "406a81d3"
+      },
+      "beneficiary": null,
+      "conditions": [
+        "December 31"
+      ],
+      "temporal_conditions": [
+        {
+          "operator": "U",
+          "condition": "December 31",
+          "start_time": null,
+          "end_time": "December 31",
+          "duration": null
+        }
+      ],
+      "legal_context": {
+        "jurisdiction": "Illinois, USA",
+        "legal_domain": "contract",
+        "applicable_law": null,
+        "precedents": [],
+        "exceptions": []
+      },
+      "confidence": 0.95,
+      "source_text": "The Contractor shall complete all construction work by December 31, 2024",
+      "variables": {},
+      "quantifiers": [],
+      "fol_string": "O[contractor_abc](U((December 31) \u2192 (complete_all_construction_work_by_december_31)))",
+      "creation_timestamp": "2025-08-31T19:16:24.344729"
+    },
+    {
+      "formula_id": "66968508ba3a",
+      "operator": "O",
+      "proposition": "pay_the_contractor_within_30_days_of_completion",
+      "agent": {
+        "identifier": "client_springfield",
+        "name": "City of Springfield",
+        "agent_type": "unknown",
+        "properties": {},
+        "hash": "88b001c2"
+      },
+      "beneficiary": null,
+      "conditions": [
+        "30 days of completion"
+      ],
+      "temporal_conditions": [
+        {
+          "operator": "U",
+          "condition": "30 days",
+          "start_time": null,
+          "end_time": "30 days",
+          "duration": null
+        }
+      ],
+      "legal_context": {
+        "jurisdiction": "Illinois, USA",
+        "legal_domain": "contract",
+        "applicable_law": null,
+        "precedents": [],
+        "exceptions": []
+      },
+      "confidence": 0.95,
+      "source_text": "The Client shall pay the Contractor within 30 days of completion",
+      "variables": {},
+      "quantifiers": [],
+      "fol_string": "O[client_springfield](U((30 days of completion) \u2192 (pay_the_contractor_within_30_days_of_completion)))",
+      "creation_timestamp": "2025-08-31T19:16:24.344913"
+    },
+    {
+      "formula_id": "86678e82f15b",
+      "operator": "O",
+      "proposition": "complete_construction_work",
+      "agent": {
+        "identifier": "agent_3583",
+        "name": "Contractor",
+        "agent_type": "organization",
+        "properties": {},
+        "hash": "acb68628"
+      },
+      "beneficiary": null,
+      "conditions": [
+        "December 31"
+      ],
+      "temporal_conditions": [
+        {
+          "operator": "U",
+          "condition": "December 31",
+          "start_time": null,
+          "end_time": "December 31",
+          "duration": null
+        }
+      ],
+      "legal_context": {
+        "jurisdiction": "Illinois, USA",
+        "legal_domain": "contract",
+        "applicable_law": null,
+        "precedents": [],
+        "exceptions": []
+      },
+      "confidence": 0.95,
+      "source_text": "The Contractor shall complete all construction work by December 31, 2024",
+      "variables": {},
+      "quantifiers": [],
+      "fol_string": "O[agent_3583](U((December 31) \u2192 (complete_construction_work)))",
+      "creation_timestamp": "2025-08-31T19:16:24.345099"
+    },
+    {
+      "formula_id": "f4082bef632b",
+      "operator": "O",
+      "proposition": "pay_contractor",
+      "agent": {
+        "identifier": "agent_3583",
+        "name": "Contractor",
+        "agent_type": "organization",
+        "properties": {},
+        "hash": "acb68628"
+      },
+      "beneficiary": null,
+      "conditions": [
+        "30 days of completion"
+      ],
+      "temporal_conditions": [
+        {
+          "operator": "U",
+          "condition": "30 days",
+          "start_time": null,
+          "end_time": "30 days",
+          "duration": null
+        }
+      ],
+      "legal_context": {
+        "jurisdiction": "Illinois, USA",
+        "legal_domain": "contract",
+        "applicable_law": null,
+        "precedents": [],
+        "exceptions": []
+      },
+      "confidence": 0.95,
+      "source_text": "The Client shall pay the Contractor within 30 days of completion",
+      "variables": {},
+      "quantifiers": [],
+      "fol_string": "O[agent_3583](U((30 days of completion) \u2192 (pay_contractor)))",
+      "creation_timestamp": "2025-08-31T19:16:24.345284"
+    },
+    {
+      "formula_id": "ea1a95d26ece",
+      "operator": "P",
+      "proposition": "inspect_work",
+      "agent": {
+        "identifier": "agent_9415",
+        "name": "Client",
+        "agent_type": "person",
+        "properties": {},
+        "hash": "d2a70473"
+      },
+      "beneficiary": null,
+      "conditions": [],
+      "temporal_conditions": [],
+      "legal_context": {
+        "jurisdiction": "Illinois, USA",
+        "legal_domain": "contract",
+        "applicable_law": null,
+        "precedents": [],
+        "exceptions": []
+      },
+      "confidence": 0.95,
+      "source_text": "The Client may inspect the work at any time with 24 hours advance notice",
+      "variables": {},
+      "quantifiers": [],
+      "fol_string": "P[agent_9415](inspect_work)",
+      "creation_timestamp": "2025-08-31T19:16:24.345459"
+    },
+    {
+      "formula_id": "b88d30bbdb6d",
+      "operator": "F",
+      "proposition": "use_substandard_materials",
+      "agent": {
+        "identifier": "agent_3583",
+        "name": "Contractor",
+        "agent_type": "organization",
+        "properties": {},
+        "hash": "acb68628"
+      },
+      "beneficiary": null,
+      "conditions": [],
+      "temporal_conditions": [],
+      "legal_context": {
+        "jurisdiction": "Illinois, USA",
+        "legal_domain": "contract",
+        "applicable_law": null,
+        "precedents": [],
+        "exceptions": []
+      },
+      "confidence": 0.95,
+      "source_text": "The Contractor must not use materials that do not meet specification requirements",
+      "variables": {},
+      "quantifiers": [],
+      "fol_string": "F[agent_3583](use_substandard_materials)",
+      "creation_timestamp": "2025-08-31T19:16:24.345621"
+    },
+    {
+      "formula_id": "2690e9024e9b",
+      "operator": "F",
+      "proposition": "subcontract_without_approval",
+      "agent": {
+        "identifier": "agent_3583",
+        "name": "Contractor",
+        "agent_type": "organization",
+        "properties": {},
+        "hash": "acb68628"
+      },
+      "beneficiary": null,
+      "conditions": [],
+      "temporal_conditions": [],
+      "legal_context": {
+        "jurisdiction": "Illinois, USA",
+        "legal_domain": "contract",
+        "applicable_law": null,
+        "precedents": [],
+        "exceptions": []
+      },
+      "confidence": 0.95,
+      "source_text": "The Contractor shall not subcontract work without prior written approval",
+      "variables": {},
+      "quantifiers": [],
+      "fol_string": "F[agent_3583](subcontract_without_approval)",
+      "creation_timestamp": "2025-08-31T19:16:24.345769"
+    },
+    {
+      "formula_id": "cd1c0b812ab7",
+      "operator": "O",
+      "proposition": "maintain_insurance_coverage",
+      "agent": {
+        "identifier": "agent_3583",
+        "name": "Contractor",
+        "agent_type": "organization",
+        "properties": {},
+        "hash": "acb68628"
+      },
+      "beneficiary": null,
+      "conditions": [],
+      "temporal_conditions": [],
+      "legal_context": {
+        "jurisdiction": "Illinois, USA",
+        "legal_domain": "contract",
+        "applicable_law": null,
+        "precedents": [],
+        "exceptions": []
+      },
+      "confidence": 0.95,
+      "source_text": "The Contractor is required to maintain comprehensive insurance coverage",
+      "variables": {},
+      "quantifiers": [],
+      "fol_string": "O[agent_3583](maintain_insurance_coverage)",
+      "creation_timestamp": "2025-08-31T19:16:24.345925"
+    },
+    {
+      "formula_id": "7721d579ab53",
+      "operator": "P",
+      "proposition": "terminate_agreement",
+      "agent": {
+        "identifier": "agent_8208",
+        "name": "party",
+        "agent_type": "party",
+        "properties": {},
+        "hash": "e40ef45a"
+      },
+      "beneficiary": null,
+      "conditions": [],
+      "temporal_conditions": [],
+      "legal_context": {
+        "jurisdiction": "Illinois, USA",
+        "legal_domain": "contract",
+        "applicable_law": null,
+        "precedents": [],
+        "exceptions": []
+      },
+      "confidence": 0.95,
+      "source_text": "Either party may terminate this agreement with 30 days written notice",
+      "variables": {},
+      "quantifiers": [],
+      "fol_string": "P[agent_8208](terminate_agreement)",
+      "creation_timestamp": "2025-08-31T19:16:24.346073"
+    },
+    {
+      "formula_id": "e5b63ec1da26",
+      "operator": "O",
+      "proposition": "resolve_disputes_through_arbitration",
+      "agent": null,
+      "beneficiary": null,
+      "conditions": [],
+      "temporal_conditions": [],
+      "legal_context": {
+        "jurisdiction": "Illinois, USA",
+        "legal_domain": "contract",
+        "applicable_law": null,
+        "precedents": [],
+        "exceptions": []
+      },
+      "confidence": 0.95,
+      "source_text": "All disputes shall be resolved through binding arbitration in Springfield, Illinois",
+      "variables": {},
+      "quantifiers": [],
+      "fol_string": "O(resolve_disputes_through_arbitration)",
+      "creation_timestamp": "2025-08-31T19:16:24.346230"
+    }
+  ],
+  "rule_set": {
+    "rule_set_id": "de120e2495",
+    "name": "Springfield Construction Contract",
+    "description": "Deontic logic rules extracted from sample_contract.txt",
+    "version": "1.0",
+    "source_document": "sample_contract.txt",
+    "legal_context": {
+      "jurisdiction": "Illinois, USA",
+      "legal_domain": "contract",
+      "applicable_law": null,
+      "precedents": [],
+      "exceptions": []
+    },
+    "formulas": [
+      {
+        "formula_id": "7a354f52f4b8",
+        "operator": "O",
+        "proposition": "complete_all_construction_work_by_december_31",
+        "agent": {
+          "identifier": "contractor_abc",
+          "name": "ABC Construction LLC",
+          "agent_type": "unknown",
+          "properties": {},
+          "hash": "406a81d3"
+        },
+        "beneficiary": null,
+        "conditions": [
+          "December 31"
+        ],
+        "temporal_conditions": [
+          {
+            "operator": "U",
+            "condition": "December 31",
+            "start_time": null,
+            "end_time": "December 31",
+            "duration": null
+          }
+        ],
+        "legal_context": {
+          "jurisdiction": "Illinois, USA",
+          "legal_domain": "contract",
+          "applicable_law": null,
+          "precedents": [],
+          "exceptions": []
+        },
+        "confidence": 0.95,
+        "source_text": "The Contractor shall complete all construction work by December 31, 2024",
+        "variables": {},
+        "quantifiers": [],
+        "fol_string": "O[contractor_abc](U((December 31) \u2192 (complete_all_construction_work_by_december_31)))",
+        "creation_timestamp": "2025-08-31T19:16:24.344729"
+      },
+      {
+        "formula_id": "66968508ba3a",
+        "operator": "O",
+        "proposition": "pay_the_contractor_within_30_days_of_completion",
+        "agent": {
+          "identifier": "client_springfield",
+          "name": "City of Springfield",
+          "agent_type": "unknown",
+          "properties": {},
+          "hash": "88b001c2"
+        },
+        "beneficiary": null,
+        "conditions": [
+          "30 days of completion"
+        ],
+        "temporal_conditions": [
+          {
+            "operator": "U",
+            "condition": "30 days",
+            "start_time": null,
+            "end_time": "30 days",
+            "duration": null
+          }
+        ],
+        "legal_context": {
+          "jurisdiction": "Illinois, USA",
+          "legal_domain": "contract",
+          "applicable_law": null,
+          "precedents": [],
+          "exceptions": []
+        },
+        "confidence": 0.95,
+        "source_text": "The Client shall pay the Contractor within 30 days of completion",
+        "variables": {},
+        "quantifiers": [],
+        "fol_string": "O[client_springfield](U((30 days of completion) \u2192 (pay_the_contractor_within_30_days_of_completion)))",
+        "creation_timestamp": "2025-08-31T19:16:24.344913"
+      },
+      {
+        "formula_id": "86678e82f15b",
+        "operator": "O",
+        "proposition": "complete_construction_work",
+        "agent": {
+          "identifier": "agent_3583",
+          "name": "Contractor",
+          "agent_type": "organization",
+          "properties": {},
+          "hash": "acb68628"
+        },
+        "beneficiary": null,
+        "conditions": [
+          "December 31"
+        ],
+        "temporal_conditions": [
+          {
+            "operator": "U",
+            "condition": "December 31",
+            "start_time": null,
+            "end_time": "December 31",
+            "duration": null
+          }
+        ],
+        "legal_context": {
+          "jurisdiction": "Illinois, USA",
+          "legal_domain": "contract",
+          "applicable_law": null,
+          "precedents": [],
+          "exceptions": []
+        },
+        "confidence": 0.95,
+        "source_text": "The Contractor shall complete all construction work by December 31, 2024",
+        "variables": {},
+        "quantifiers": [],
+        "fol_string": "O[agent_3583](U((December 31) \u2192 (complete_construction_work)))",
+        "creation_timestamp": "2025-08-31T19:16:24.345099"
+      },
+      {
+        "formula_id": "f4082bef632b",
+        "operator": "O",
+        "proposition": "pay_contractor",
+        "agent": {
+          "identifier": "agent_3583",
+          "name": "Contractor",
+          "agent_type": "organization",
+          "properties": {},
+          "hash": "acb68628"
+        },
+        "beneficiary": null,
+        "conditions": [
+          "30 days of completion"
+        ],
+        "temporal_conditions": [
+          {
+            "operator": "U",
+            "condition": "30 days",
+            "start_time": null,
+            "end_time": "30 days",
+            "duration": null
+          }
+        ],
+        "legal_context": {
+          "jurisdiction": "Illinois, USA",
+          "legal_domain": "contract",
+          "applicable_law": null,
+          "precedents": [],
+          "exceptions": []
+        },
+        "confidence": 0.95,
+        "source_text": "The Client shall pay the Contractor within 30 days of completion",
+        "variables": {},
+        "quantifiers": [],
+        "fol_string": "O[agent_3583](U((30 days of completion) \u2192 (pay_contractor)))",
+        "creation_timestamp": "2025-08-31T19:16:24.345284"
+      },
+      {
+        "formula_id": "ea1a95d26ece",
+        "operator": "P",
+        "proposition": "inspect_work",
+        "agent": {
+          "identifier": "agent_9415",
+          "name": "Client",
+          "agent_type": "person",
+          "properties": {},
+          "hash": "d2a70473"
+        },
+        "beneficiary": null,
+        "conditions": [],
+        "temporal_conditions": [],
+        "legal_context": {
+          "jurisdiction": "Illinois, USA",
+          "legal_domain": "contract",
+          "applicable_law": null,
+          "precedents": [],
+          "exceptions": []
+        },
+        "confidence": 0.95,
+        "source_text": "The Client may inspect the work at any time with 24 hours advance notice",
+        "variables": {},
+        "quantifiers": [],
+        "fol_string": "P[agent_9415](inspect_work)",
+        "creation_timestamp": "2025-08-31T19:16:24.345459"
+      },
+      {
+        "formula_id": "b88d30bbdb6d",
+        "operator": "F",
+        "proposition": "use_substandard_materials",
+        "agent": {
+          "identifier": "agent_3583",
+          "name": "Contractor",
+          "agent_type": "organization",
+          "properties": {},
+          "hash": "acb68628"
+        },
+        "beneficiary": null,
+        "conditions": [],
+        "temporal_conditions": [],
+        "legal_context": {
+          "jurisdiction": "Illinois, USA",
+          "legal_domain": "contract",
+          "applicable_law": null,
+          "precedents": [],
+          "exceptions": []
+        },
+        "confidence": 0.95,
+        "source_text": "The Contractor must not use materials that do not meet specification requirements",
+        "variables": {},
+        "quantifiers": [],
+        "fol_string": "F[agent_3583](use_substandard_materials)",
+        "creation_timestamp": "2025-08-31T19:16:24.345621"
+      },
+      {
+        "formula_id": "2690e9024e9b",
+        "operator": "F",
+        "proposition": "subcontract_without_approval",
+        "agent": {
+          "identifier": "agent_3583",
+          "name": "Contractor",
+          "agent_type": "organization",
+          "properties": {},
+          "hash": "acb68628"
+        },
+        "beneficiary": null,
+        "conditions": [],
+        "temporal_conditions": [],
+        "legal_context": {
+          "jurisdiction": "Illinois, USA",
+          "legal_domain": "contract",
+          "applicable_law": null,
+          "precedents": [],
+          "exceptions": []
+        },
+        "confidence": 0.95,
+        "source_text": "The Contractor shall not subcontract work without prior written approval",
+        "variables": {},
+        "quantifiers": [],
+        "fol_string": "F[agent_3583](subcontract_without_approval)",
+        "creation_timestamp": "2025-08-31T19:16:24.345769"
+      },
+      {
+        "formula_id": "cd1c0b812ab7",
+        "operator": "O",
+        "proposition": "maintain_insurance_coverage",
+        "agent": {
+          "identifier": "agent_3583",
+          "name": "Contractor",
+          "agent_type": "organization",
+          "properties": {},
+          "hash": "acb68628"
+        },
+        "beneficiary": null,
+        "conditions": [],
+        "temporal_conditions": [],
+        "legal_context": {
+          "jurisdiction": "Illinois, USA",
+          "legal_domain": "contract",
+          "applicable_law": null,
+          "precedents": [],
+          "exceptions": []
+        },
+        "confidence": 0.95,
+        "source_text": "The Contractor is required to maintain comprehensive insurance coverage",
+        "variables": {},
+        "quantifiers": [],
+        "fol_string": "O[agent_3583](maintain_insurance_coverage)",
+        "creation_timestamp": "2025-08-31T19:16:24.345925"
+      },
+      {
+        "formula_id": "7721d579ab53",
+        "operator": "P",
+        "proposition": "terminate_agreement",
+        "agent": {
+          "identifier": "agent_8208",
+          "name": "party",
+          "agent_type": "party",
+          "properties": {},
+          "hash": "e40ef45a"
+        },
+        "beneficiary": null,
+        "conditions": [],
+        "temporal_conditions": [],
+        "legal_context": {
+          "jurisdiction": "Illinois, USA",
+          "legal_domain": "contract",
+          "applicable_law": null,
+          "precedents": [],
+          "exceptions": []
+        },
+        "confidence": 0.95,
+        "source_text": "Either party may terminate this agreement with 30 days written notice",
+        "variables": {},
+        "quantifiers": [],
+        "fol_string": "P[agent_8208](terminate_agreement)",
+        "creation_timestamp": "2025-08-31T19:16:24.346073"
+      },
+      {
+        "formula_id": "e5b63ec1da26",
+        "operator": "O",
+        "proposition": "resolve_disputes_through_arbitration",
+        "agent": null,
+        "beneficiary": null,
+        "conditions": [],
+        "temporal_conditions": [],
+        "legal_context": {
+          "jurisdiction": "Illinois, USA",
+          "legal_domain": "contract",
+          "applicable_law": null,
+          "precedents": [],
+          "exceptions": []
+        },
+        "confidence": 0.95,
+        "source_text": "All disputes shall be resolved through binding arbitration in Springfield, Illinois",
+        "variables": {},
+        "quantifiers": [],
+        "fol_string": "O(resolve_disputes_through_arbitration)",
+        "creation_timestamp": "2025-08-31T19:16:24.346230"
+      }
+    ],
+    "creation_timestamp": "2025-08-31T19:16:24.346542",
+    "formula_count": 10
+  },
+  "conversion_metadata": {
+    "conversion_timestamp": "2025-08-31T19:16:24.346563",
+    "context": {
+      "source_document_path": "sample_contract.txt",
+      "document_title": "Springfield Construction Contract",
+      "legal_domain": "contract",
+      "jurisdiction": "Illinois, USA",
+      "confidence_threshold": 0.6,
+      "enable_temporal_analysis": true,
+      "enable_agent_inference": true,
+      "enable_condition_extraction": true
+    },
+    "input_statistics": {
+      "entity_count": 10,
+      "relationship_count": 10
+    },
+    "conversion_statistics": {
+      "total_entities_processed": 10,
+      "total_relationships_processed": 10,
+      "obligations_extracted": 6,
+      "permissions_extracted": 2,
+      "prohibitions_extracted": 2,
+      "agents_identified": 0,
+      "temporal_conditions_extracted": 4
+    },
+    "symbolic_ai_enabled": true,
+    "domain_knowledge_version": "1.0"
+  },
+  "errors": [],
+  "warnings": [],
+  "statistics": {
+    "total_entities_processed": 10,
+    "total_relationships_processed": 10,
+    "obligations_extracted": 6,
+    "permissions_extracted": 2,
+    "prohibitions_extracted": 2,
+    "agents_identified": 0,
+    "temporal_conditions_extracted": 4
+  }
+}

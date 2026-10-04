@@ -1,0 +1,74 @@
+{
+  "complaint_type": "tax_law",
+  "category": "tax",
+  "description": "Decision tree for tax law complaints",
+  "root_questions": [
+    "q1",
+    "q2"
+  ],
+  "questions": {
+    "q1": {
+      "id": "q1",
+      "question": "Which tax authority is involved?",
+      "field_name": "tax_authority",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": [
+        "irs",
+        "state",
+        "local"
+      ]
+    },
+    "q2": {
+      "id": "q2",
+      "question": "What type of dispute is this?",
+      "field_name": "dispute_type",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": [
+        "assessment",
+        "collection",
+        "refund",
+        "audit"
+      ]
+    },
+    "q3": {
+      "id": "q3",
+      "question": "What tax year is involved?",
+      "field_name": "tax_year",
+      "required": false,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q4": {
+      "id": "q4",
+      "question": "What is the amount in dispute?",
+      "field_name": "amount_in_dispute",
+      "required": false,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q5": {
+      "id": "q5",
+      "question": "Have you filed any prior appeals?",
+      "field_name": "prior_appeals",
+      "required": false,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": []
+    }
+  },
+  "required_fields": [
+    "tax_authority",
+    "dispute_type"
+  ],
+  "optional_fields": [
+    "tax_year",
+    "prior_appeals",
+    "amount_in_dispute"
+  ]
+}

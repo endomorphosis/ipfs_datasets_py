@@ -123,7 +123,9 @@ def test_observed_syntax_covers_declarations_and_effects() -> None:
     assert UnitKind.ERROR.value in kinds
     assert UnitKind.CALL_SITE.value in kinds
 
-    observed = result.facts_by_authority(SolidityAuthorityType.OBSERVED_SYNTAX)
+    observed = result.facts_by_authority(
+        SolidityAuthorityType.OBSERVED_SYNTAX
+    )
     assert observed
     assert all(
         item.extraction_method is ExtractionMethod.DETERMINISTIC_SYNTAX
@@ -146,7 +148,9 @@ def test_observed_syntax_covers_declarations_and_effects() -> None:
 
 def test_inferred_candidates_are_separate_authority_type() -> None:
     result = project_solidity_row(_adapted().row, _adapted().source_body)
-    inferred = result.facts_by_authority(SolidityAuthorityType.INFERRED_CANDIDATE)
+    inferred = result.facts_by_authority(
+        SolidityAuthorityType.INFERRED_CANDIDATE
+    )
 
     assert inferred
     assert all(
@@ -158,7 +162,10 @@ def test_inferred_candidates_are_separate_authority_type() -> None:
     )
     # Must remain distinct from observed syntax facts.
     observed_ids = {
-        item.cid for item in result.facts_by_authority(SolidityAuthorityType.OBSERVED_SYNTAX)
+        item.cid
+        for item in result.facts_by_authority(
+            SolidityAuthorityType.OBSERVED_SYNTAX
+        )
     }
     assert observed_ids.isdisjoint({item.cid for item in inferred})
 
@@ -168,7 +175,9 @@ def test_reviewed_and_verified_facts_require_supply_and_stay_separate() -> None:
     projector = SolidityGraphProjector()
     base = projector.project_adapted(adapted)
     unit_cid = next(
-        item.cid for item in base.code_units if item.unit_kind == UnitKind.FUNCTION.value
+        item.cid
+        for item in base.code_units
+        if item.unit_kind == UnitKind.FUNCTION.value
     )
 
     with pytest.raises(ProjectionError, match="review_id"):
@@ -200,15 +209,23 @@ def test_reviewed_and_verified_facts_require_supply_and_stay_separate() -> None:
         code_unit_cid=unit_cid,
         verification_id="verify:fixture-1",
     )
-    result = projector.project_adapted(adapted, supplied_facts=(reviewed, verified))
+    result = projector.project_adapted(
+        adapted, supplied_facts=(reviewed, verified)
+    )
 
-    reviewed_facts = result.facts_by_authority(SolidityAuthorityType.REVIEWED_CLAIM)
-    verified_facts = result.facts_by_authority(SolidityAuthorityType.VERIFIED_RESULT)
+    reviewed_facts = result.facts_by_authority(
+        SolidityAuthorityType.REVIEWED_CLAIM
+    )
+    verified_facts = result.facts_by_authority(
+        SolidityAuthorityType.VERIFIED_RESULT
+    )
     assert len(reviewed_facts) == 1
     assert len(verified_facts) == 1
     assert reviewed_facts[0].review_id == "review:fixture-1"
     assert verified_facts[0].verification_id == "verify:fixture-1"
-    assert reviewed_facts[0].authority_type is not (verified_facts[0].authority_type)
+    assert reviewed_facts[0].authority_type is not (
+        verified_facts[0].authority_type
+    )
     # Projector never invents reviewed/verified without supply.
     assert not base.facts_by_authority(SolidityAuthorityType.REVIEWED_CLAIM)
     assert not base.facts_by_authority(SolidityAuthorityType.VERIFIED_RESULT)
@@ -266,4 +283,6 @@ def test_disable_inferred_candidates() -> None:
     result = SolidityGraphProjector(
         ProjectorConfig(emit_inferred_candidates=False)
     ).project_adapted(adapted)
-    assert not result.facts_by_authority(SolidityAuthorityType.INFERRED_CANDIDATE)
+    assert not result.facts_by_authority(
+        SolidityAuthorityType.INFERRED_CANDIDATE
+    )

@@ -21,7 +21,9 @@ class _Record:
     def __init__(self, sequence: int, state: Finality = Finality.OBSERVED) -> None:
         self.ledger_position = LedgerPosition(sequence=sequence, hash="0x" + "10" * 32)
         self.finality = state
-        self.record_id = "urn:wallet:transaction:sha256:" + "aa" * 32
+        self.record_id = (
+            "urn:wallet:transaction:sha256:" + "aa" * 32
+        )
 
 
 def test_explicit_safe_and_finalized_tags_override_depth_fallback(
@@ -37,9 +39,15 @@ def test_explicit_safe_and_finalized_tags_override_depth_fallback(
         safe_fallback_depth=100,
         finalized_fallback_depth=200,
     )
-    finalized = policy.classify(_Record(16), head=head, context=OperationContext("finality"))
-    safe = policy.classify(_Record(31), head=head, context=OperationContext("finality"))
-    observed = policy.classify(_Record(32), head=head, context=OperationContext("finality"))
+    finalized = policy.classify(
+        _Record(16), head=head, context=OperationContext("finality")
+    )
+    safe = policy.classify(
+        _Record(31), head=head, context=OperationContext("finality")
+    )
+    observed = policy.classify(
+        _Record(32), head=head, context=OperationContext("finality")
+    )
     assert finalized.state is Finality.FINALIZED
     assert finalized.source == "finalized_tag"
     assert safe.state is Finality.SAFE
@@ -61,7 +69,9 @@ def test_confirmation_fallback_is_explicitly_labeled(
         safe_fallback_depth=12,
         finalized_fallback_depth=16,
     )
-    result = policy.classify(_Record(16), head=head, context=OperationContext("finality"))
+    result = policy.classify(
+        _Record(16), head=head, context=OperationContext("finality")
+    )
     assert result.state is Finality.FINALIZED
     assert result.confirmations == 16
     assert result.source == "confirmation_fallback"
@@ -97,8 +107,7 @@ def test_shallow_reorg_emits_corrections_and_rewinds(
     )
     observed_data = replacement["observed"]  # type: ignore[index]
     observed = HashAnchor(
-        observed_data["sequence"],
-        observed_data["block_hash"],  # type: ignore[index]
+        observed_data["sequence"], observed_data["block_hash"]  # type: ignore[index]
     )
     record_id = replacement["orphaned_record_ids"][0]  # type: ignore[index]
     policy = EthereumFinalityPolicy(max_reorg_depth=8)

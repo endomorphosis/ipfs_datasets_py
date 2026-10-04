@@ -1,0 +1,279 @@
+name: 'Inject Credentials'
+description: 'Securely inject credentials into auto-scaled runners'
+branding:
+  icon: 'key'
+  color: 'red'
+
+inputs:
+  credentials:
+    description: 'JSON array of credentials to inject (name, value, scope, ttl)'
+    required: false
+    default: '[]'
+  credential-names:
+    description: 'Comma-separated list of credential names to retrieve'
+    required: false
+    default: ''
+  github-token:
+    description: 'GitHub token for authentication'
+    required: true
+  runner-id:
+    description: 'Runner ID for scoped credentials'
+    required: false
+    default: ''
+
+outputs:
+  credentials-injected:
+    description: 'Number of credentials successfully injected'
+    value: ${{ steps.inject.outputs.count }}
+  status:
+    description: 'Status of credential injection (success/partial/error)'
+    value: ${{ steps.inject.outputs.status }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Initialize Credential Manager
+      id: init
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+      run: |
+        echo "::group::🔐 Initializing Credential Manager"
+        
+        # Create secure credentials directory
+        CREDS_DIR="${HOME}/.credentials"
+        mkdir -p "$CREDS_DIR"
+        chmod 700 "$CREDS_DIR"
+        
+        export CREDENTIALS_DIR="$CREDS_DIR"
+        echo "CREDENTIALS_DIR=$CREDS_DIR" >> $GITHUB_ENV
+        
+        echo "✅ Credentials directory: $CREDS_DIR"
+        
+        # Test credential manager availability
+        python3 << 'PYEOF'
+import os
+import sys
+
+try:
+    from ipfs_datasets_py.credential_manager import CredentialManager
+    
+    manager = CredentialManager(
+        storage_dir=os.environ.get('CREDENTIALS_DIR')
+    )
+    
+    print("✅ Credential manager initialized")
+    
+    # Get stats
+    stats = manager.get_stats()
+    print(f"📊 Active credentials: {stats.get('active_credentials', 0)}")
+    print(f"📊 Expired credentials: {stats.get('expired_credentials', 0)}")
+    
+    sys.exit(0)
+    
+except ImportError as e:
+    print(f"::error::❌ Credential manager not available: {e}")
+    print("::error::Install with: pip install cryptography keyring")
+    sys.exit(1)
+    
+except Exception as e:
+    print(f"::error::❌ Initialization failed: {e}")
+    import traceback
+    traceback.print_exc()
+    sys.exit(1)
+PYEOF
+        
+        if [ $? -ne 0 ]; then
+          echo "::error::Credential manager initialization failed"
+          exit 1
+        fi
+        
+        echo "::endgroup::"
+    
+    - name: Inject Credentials
+      id: inject
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        CREDENTIALS_JSON: ${{ inputs.credentials }}
+        CREDENTIAL_NAMES: ${{ inputs.credential-names }}
+        RUNNER_ID: ${{ inputs.runner-id }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+        WORKFLOW_NAME: ${{ github.workflow }}
+      run: |
+        echo "::group::💉 Injecting Credentials"
+        
+        python3 << 'PYEOF'
+import os
+import sys
+import json
+
+try:
+    from ipfs_datasets_py.credential_manager import (
+        get_global_credential_manager,
+        CredentialScope
+    )
+    
+    manager = get_global_credential_manager(
+        storage_dir=os.environ.get('CREDENTIALS_DIR')
+    )
+    
+    injected_count = 0
+    failed_count = 0
+    
+    # Parse credentials to inject
+    credentials_json = os.environ.get('CREDENTIALS_JSON', '[]')
+    if credentials_json and credentials_json != '[]':
+        credentials = json.loads(credentials_json)
+        
+        print(f"📝 Injecting {len(credentials)} credential(s)")
+        
+        for cred in credentials:
+            name = cred.get('name')
+            value = cred.get('value')
+            scope = cred.get('scope', 'global')
+            ttl_hours = cred.get('ttl_hours', 24)
+            
+            if not name or not value:
+                print(f"::warning::Skipping invalid credential (missing name or value)")
+                failed_count += 1
+                continue
+            
+            try:
+                # Map scope string to enum
+                scope_map = {
+                    'global': CredentialScope.GLOBAL,
+                    'repo': CredentialScope.REPO,
+                    'workflow': CredentialScope.WORKFLOW,
+                    'runner': CredentialScope.RUNNER
+                }
+                scope_enum = scope_map.get(scope.lower(), CredentialScope.GLOBAL)
+                
+                # Determine scope filter
+                scope_filter = None
+                if scope_enum == CredentialScope.REPO:
+                    scope_filter = os.environ.get('GITHUB_REPOSITORY')
+                elif scope_enum == CredentialScope.WORKFLOW:
+                    scope_filter = os.environ.get('WORKFLOW_NAME')
+                elif scope_enum == CredentialScope.RUNNER:
+                    scope_filter = os.environ.get('RUNNER_ID')
+                
+                manager.store_credential(
+                    name=name,
+                    value=value,
+                    scope=scope_enum,
+                    scope_filter=scope_filter,
+                    ttl_hours=ttl_hours
+                )
+                
+                # Export to environment (masked)
+                print(f"::add-mask::{value}")
+                os.environ[name] = value
+                with open(os.environ['GITHUB_ENV'], 'a') as f:
+                    f.write(f"{name}={value}\n")
+                
+                print(f"✅ Injected: {name} (scope: {scope})")
+                injected_count += 1
+                
+            except Exception as e:
+                print(f"::error::Failed to inject {name}: {e}")
+                failed_count += 1
+    
+    # Retrieve existing credentials by name
+    credential_names = os.environ.get('CREDENTIAL_NAMES', '')
+    if credential_names:
+        names = [n.strip() for n in credential_names.split(',') if n.strip()]
+        
+        print(f"📥 Retrieving {len(names)} credential(s)")
+        
+        for name in names:
+            try:
+                value = manager.get_credential(
+                    name=name,
+                    repo=os.environ.get('GITHUB_REPOSITORY'),
+                    workflow=os.environ.get('WORKFLOW_NAME'),
+                    runner_id=os.environ.get('RUNNER_ID')
+                )
+                
+                if value:
+                    # Export to environment (masked)
+                    print(f"::add-mask::{value}")
+                    os.environ[name] = value
+                    with open(os.environ['GITHUB_ENV'], 'a') as f:
+                        f.write(f"{name}={value}\n")
+                    
+                    print(f"✅ Retrieved: {name}")
+                    injected_count += 1
+                else:
+                    print(f"::warning::Credential not found: {name}")
+                    failed_count += 1
+                    
+            except Exception as e:
+                print(f"::error::Failed to retrieve {name}: {e}")
+                failed_count += 1
+    
+    # Determine status
+    if failed_count == 0 and injected_count > 0:
+        status = "success"
+    elif injected_count > 0:
+        status = "partial"
+    else:
+        status = "error"
+    
+    with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+        f.write(f"count={injected_count}\n")
+        f.write(f"status={status}\n")
+    
+    print(f"\n📊 Summary:")
+    print(f"  - Successfully injected: {injected_count}")
+    print(f"  - Failed: {failed_count}")
+    print(f"  - Status: {status}")
+    
+    if injected_count > 0:
+        print("::notice::✅ Credentials injected successfully")
+    
+    sys.exit(0 if failed_count == 0 else 1)
+    
+except Exception as e:
+    print(f"::error::❌ Credential injection failed: {e}")
+    import traceback
+    traceback.print_exc()
+    with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+        f.write("count=0\n")
+        f.write("status=error\n")
+    sys.exit(1)
+PYEOF
+        
+        echo "::endgroup::"
+    
+    - name: Cleanup Expired Credentials
+      if: success()
+      shell: bash
+      run: |
+        echo "::group::🧹 Cleanup Expired Credentials"
+        
+        python3 << 'PYEOF'
+import os
+import sys
+
+try:
+    from ipfs_datasets_py.credential_manager import get_global_credential_manager
+    
+    manager = get_global_credential_manager(
+        storage_dir=os.environ.get('CREDENTIALS_DIR')
+    )
+    
+    removed = manager.cleanup_expired()
+    
+    if removed > 0:
+        print(f"✅ Removed {removed} expired credential(s)")
+    else:
+        print("✅ No expired credentials to remove")
+    
+except Exception as e:
+    print(f"::warning::Cleanup failed: {e}")
+
+sys.exit(0)
+PYEOF
+        
+        echo "::endgroup::"

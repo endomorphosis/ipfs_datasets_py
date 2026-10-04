@@ -20,10 +20,7 @@ def test_network_identity_and_base58_shapes_are_exact(rpc_session: dict) -> None
     assert chain.network == "solana-mainnet-beta"
     assert chain.genesis_hash == rpc_session["network"]["genesis_hash"]
     assert normalize_pubkey(rpc_session["addresses"]["alice"]) == rpc_session["addresses"]["alice"]
-    assert (
-        normalize_signature(rpc_session["signatures"]["versioned"])
-        == rpc_session["signatures"]["versioned"]
-    )
+    assert normalize_signature(rpc_session["signatures"]["versioned"]) == rpc_session["signatures"]["versioned"]
     with pytest.raises(NormalizationError, match="32 bytes"):
         normalize_pubkey("111")
     with pytest.raises(NormalizationError, match="non-base58"):
@@ -31,10 +28,7 @@ def test_network_identity_and_base58_shapes_are_exact(rpc_session: dict) -> None
 
 
 def test_exact_integer_parser_rejects_float_bool_sign_and_exponent() -> None:
-    assert (
-        parse_non_negative_int("900719925474099312345", field_name="amount")
-        == 900719925474099312345
-    )
+    assert parse_non_negative_int("900719925474099312345", field_name="amount") == 900719925474099312345
     for value in (1.0, True, "-1", "1e9", ""):
         with pytest.raises(NormalizationError):
             parse_non_negative_int(value, field_name="amount")

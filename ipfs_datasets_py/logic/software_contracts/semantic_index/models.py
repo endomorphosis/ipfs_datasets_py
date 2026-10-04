@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 import posixpath
-from types import FunctionType, MappingProxyType
+from types import MappingProxyType
 import unicodedata
 from typing import Any, ClassVar, Iterable, Mapping, Sequence
 
@@ -447,16 +447,6 @@ class RepositoryState:
     def state_cid(self) -> str: return cid_for_structured(self.identity_payload())
 
     def to_dict(self) -> dict[str, Any]:
-        if _state_payload_reusable(self):
-            # The identity envelope has a different schema from the public
-            # record. Hash it before adapting that envelope, using the same
-            # detached child dictionaries for both identity and output.
-            value = self.identity_payload()
-            identity = cid_for_structured(value)
-            if _state_payload_bindings() == _state_payload_native_bindings:
-                value["schema"] = value.pop("semantic_index_schema")
-                value["state_cid"] = identity
-                return value
         return {"schema": self.schema, "repository_id": self.repository_id, "symbols": [item.to_dict() for item in self.symbols], "artifacts": [item.to_dict() for item in self.artifacts], "edges": [item.to_dict() for item in self.edges], "extractor_name": self.extractor_name, "extractor_version": self.extractor_version, "state_cid": self.state_cid}
 
     @classmethod
@@ -469,67 +459,6 @@ class RepositoryState:
         result = cls(**value)
         if state_cid != result.state_cid: raise SemanticIndexModelError("RepositoryState state_cid does not verify")
         return result
-
-
-def _state_payload_bindings():
-    """Only the native serializers may share a call-local output traversal."""
-    result = []
-    for cls, names in (
-        (RepositoryState, ("identity_payload", "state_cid")),
-        (SymbolRecord, ("to_dict",)), (ArtifactRecord, ("to_dict",)),
-        (DependencyEdge, ("to_dict", "identity_payload", "edge_id")),
-        (SourceSpan, ("to_dict",)),
-    ):
-        for name in names:
-            descriptor = vars(cls).get(name)
-            function = descriptor.fget if type(descriptor) is property else descriptor
-            if type(function) is not FunctionType:
-                return None
-            result.append((descriptor, function.__code__, function.__defaults__,
-                           tuple(sorted((function.__kwdefaults__ or {}).items()))))
-        # Field-descriptor replacements can introduce dynamic reads too.
-        result.extend((cls, name, vars(cls).get(name)) for name in cls.__slots__)
-    for function in (_thaw_structured, cid_for_structured):
-        if type(function) is not FunctionType:
-            return None
-        result.append((function, function.__code__, function.__defaults__,
-                       tuple(sorted((function.__kwdefaults__ or {}).items()))))
-    return tuple(result)
-
-
-def _state_payload_reusable(state):
-    """Custom records and mutable replacement containers keep historical reads.
-
-    Native constructors already freeze strict structured fields recursively.
-    This checks dispatch and outer representation, without rescanning bodies;
-    the unchanged content owner still validates and hashes each current payload.
-    No identity or output is retained between calls.
-    """
-    try:
-        if (type(state) is not RepositoryState
-                or _state_payload_bindings() != _state_payload_native_bindings):
-            return False
-        for rows, cls in ((state.symbols, SymbolRecord), (state.artifacts, ArtifactRecord),
-                          (state.edges, DependencyEdge)):
-            if type(rows) is not tuple:
-                return False
-            for row in rows:
-                if type(row) is not cls or type(row.metadata) is not MappingProxyType:
-                    return False
-                if cls in (SymbolRecord, DependencyEdge) and row.span is not None and type(row.span) is not SourceSpan:
-                    return False
-                if cls is SymbolRecord and (type(row.signature) is not MappingProxyType
-                        or type(row.annotations) is not MappingProxyType
-                        or type(row.decorators) is not tuple):
-                    return False
-        return True
-    except (AttributeError, TypeError, ValueError):
-        return False
-
-
-# Lowercase deliberately: manifest producer binding scans uppercase durable
-# constants. These dispatch anchors contain code/descriptors, never payloads.
-_state_payload_native_bindings = _state_payload_bindings()
 
 
 @dataclass(frozen=True, slots=True)

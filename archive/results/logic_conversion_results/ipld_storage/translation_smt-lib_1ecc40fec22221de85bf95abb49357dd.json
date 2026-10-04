@@ -1,0 +1,17 @@
+{
+  "target": "smt-lib",
+  "translated_formula": "(forbidden agent_3338 use_substandard_materials)",
+  "success": true,
+  "confidence": 0.9,
+  "errors": [],
+  "warnings": [],
+  "metadata": {
+    "logic": "QF_UF",
+    "deontic_operator": "F"
+  },
+  "dependencies": [
+    "z3",
+    "cvc4",
+    "smt-lib2"
+  ]
+}

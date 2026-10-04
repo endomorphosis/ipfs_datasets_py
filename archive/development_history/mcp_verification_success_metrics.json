@@ -1,0 +1,10 @@
+{
+  "verification_date": "2025-06-25T13:54:19.446827",
+  "total_tools": 34,
+  "import_success_rate": 97.05882352941177,
+  "functionality_success_rate": 0,
+  "library_coverage": 0,
+  "mcp_server_working": false,
+  "tools_registered": 0,
+  "remaining_issues": 0
+}

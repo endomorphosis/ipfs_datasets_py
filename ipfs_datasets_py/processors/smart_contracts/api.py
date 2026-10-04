@@ -229,10 +229,16 @@ class SmartContractProcessorAPI:
             if hasattr(ContractAcquisitionRequest, "from_dict"):
                 request = ContractAcquisitionRequest.from_dict(request)
             else:
-                raise InvalidRequestError("request must be a ContractAcquisitionRequest")
+                raise InvalidRequestError(
+                    "request must be a ContractAcquisitionRequest"
+                )
         if not isinstance(request, ContractAcquisitionRequest):
-            raise InvalidRequestError("request must be a ContractAcquisitionRequest")
-        assert_no_signing_surface(request.to_dict() if hasattr(request, "to_dict") else request)
+            raise InvalidRequestError(
+                "request must be a ContractAcquisitionRequest"
+            )
+        assert_no_signing_surface(
+            request.to_dict() if hasattr(request, "to_dict") else request
+        )
 
         provider = self._provider
         if provider is None and self._processor is not None:
@@ -241,7 +247,8 @@ class SmartContractProcessorAPI:
             )
         if provider is None:
             raise UnsupportedCapabilityError(
-                "no ArtifactProvider is configured; acquisition is explicit and separately injected"
+                "no ArtifactProvider is configured; acquisition is explicit "
+                "and separately injected"
             )
 
         acquire_fn = getattr(provider, "acquire", None) or getattr(
@@ -268,8 +275,14 @@ class SmartContractProcessorAPI:
 
         artifacts = getattr(result, "artifacts", ()) or ()
         status_obj = getattr(result, "status", None)
-        status = status_obj.value if hasattr(status_obj, "value") else str(status_obj or "error")
-        request_id = getattr(result, "request_id", None) or getattr(request, "request_id", None)
+        status = (
+            status_obj.value
+            if hasattr(status_obj, "value")
+            else str(status_obj or "error")
+        )
+        request_id = getattr(result, "request_id", None) or getattr(
+            request, "request_id", None
+        )
         assert_no_signing_surface(result.to_dict())
         return SmartContractAcquireResult(
             status=status,
@@ -296,7 +309,9 @@ class SmartContractProcessorAPI:
     def __getattr__(self, name: str) -> Any:
         if name in self.FORBIDDEN_OPERATIONS or name.startswith("sign_"):
             reject_signing_surface(name)
-        raise AttributeError(f"{type(self).__name__!r} object has no attribute {name!r}")
+        raise AttributeError(
+            f"{type(self).__name__!r} object has no attribute {name!r}"
+        )
 
     @staticmethod
     def _capabilities_entry(

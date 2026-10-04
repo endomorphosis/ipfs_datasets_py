@@ -79,7 +79,9 @@ def prohibition_expected_for_control(
         "vulnerable": CVEfixesControlPolarity.VULNERABLE_POSITIVE,
         "fixed": CVEfixesControlPolarity.FIXED_NEGATIVE,
     }
-    if isinstance(polarity, str) and not isinstance(polarity, CVEfixesControlPolarity):
+    if isinstance(polarity, str) and not isinstance(
+        polarity, CVEfixesControlPolarity
+    ):
         polarity = aliases.get(polarity, polarity)
     try:
         normalized = (
@@ -88,13 +90,17 @@ def prohibition_expected_for_control(
             else CVEfixesControlPolarity(polarity)
         )
     except (TypeError, ValueError) as exc:
-        raise CVEfixesFormalizationError(f"unsupported control polarity: {polarity!r}") from exc
+        raise CVEfixesFormalizationError(
+            f"unsupported control polarity: {polarity!r}"
+        ) from exc
     return normalized is CVEfixesControlPolarity.VULNERABLE_POSITIVE
 
 
 def _validated_result(value: Any) -> CVEfixesAdapterResult:
     if not isinstance(value, CVEfixesAdapterResult):
-        raise CVEfixesFormalizationError("formalization requires a CVEfixesAdapterResult")
+        raise CVEfixesFormalizationError(
+            "formalization requires a CVEfixesAdapterResult"
+        )
     try:
         rebuilt = adapt_cvefixes_candidate(
             value.candidate,
@@ -103,10 +109,13 @@ def _validated_result(value: Any) -> CVEfixesAdapterResult:
             declaration_id=value.declaration.declaration_id,
         )
     except (TypeError, ValueError) as exc:
-        raise CVEfixesFormalizationError(f"invalid CVEfixes adapter result: {exc}") from exc
+        raise CVEfixesFormalizationError(
+            f"invalid CVEfixes adapter result: {exc}"
+        ) from exc
     if rebuilt.declaration.to_dict() != value.declaration.to_dict():
         raise CVEfixesFormalizationError(
-            "CVEfixes declaration does not match its candidate/source/review binding"
+            "CVEfixes declaration does not match its candidate/source/review "
+            "binding"
         )
     return value
 
@@ -148,7 +157,10 @@ def _typed_terms(attributes: CVEfixesPolicyAttributes) -> tuple[CVEfixesTerm, ..
 
 def _symbol_id(candidate_digest: str, term: CVEfixesTerm) -> str:
     digest = hashlib.sha256(term.canonical.encode("utf-8")).hexdigest()[:20]
-    return f"symbol:cvefixes:{candidate_digest[:24]}:{term.kind.value}:{digest}"
+    return (
+        f"symbol:cvefixes:{candidate_digest[:24]}:"
+        f"{term.kind.value}:{digest}"
+    )
 
 
 def _term_symbol(
@@ -226,11 +238,17 @@ def _specialize_artifact(
                         "action": attributes.action.to_dict(),
                         "candidate_cid": result.candidate.cid,
                         "classifications": {
-                            "cve_ids": [item.to_dict() for item in attributes.cve_ids],
-                            "cwe_ids": [item.to_dict() for item in attributes.cwe_ids],
+                            "cve_ids": [
+                                item.to_dict() for item in attributes.cve_ids
+                            ],
+                            "cwe_ids": [
+                                item.to_dict() for item in attributes.cwe_ids
+                            ],
                         },
                         "deontic_operator": CVEFIXES_DEONTIC_OPERATOR,
-                        "effects": [item.to_dict() for item in attributes.effects],
+                        "effects": [
+                            item.to_dict() for item in attributes.effects
+                        ],
                         "grants_execution_authority": False,
                         "kind": "deontic_prohibition",
                         "language": (
@@ -238,10 +256,14 @@ def _specialize_artifact(
                             if attributes.language is not None
                             else None
                         ),
-                        "mitigations": [item.to_dict() for item in attributes.mitigations],
+                        "mitigations": [
+                            item.to_dict() for item in attributes.mitigations
+                        ],
                         "modality": CVEFIXES_PROHIBITION_MODALITY,
                         "policy": result.declaration.policies[0].to_dict(),
-                        "preconditions": [item.to_dict() for item in attributes.preconditions],
+                        "preconditions": [
+                            item.to_dict() for item in attributes.preconditions
+                        ],
                         "source_policy_effect": "deny",
                         "typed_scope": typed_scope,
                         "typed_symbol_ids": list(typed_symbol_ids),
@@ -249,7 +271,9 @@ def _specialize_artifact(
                     symbol_ids=typed_symbol_ids,
                     metadata={
                         **metadata,
-                        "cvefixes_formalization_version": (CVEFIXES_FORMALIZATION_VERSION),
+                        "cvefixes_formalization_version": (
+                            CVEFIXES_FORMALIZATION_VERSION
+                        ),
                         "deontic_operator": CVEFIXES_DEONTIC_OPERATOR,
                         "exact_scope": exact_scope,
                         "modality": CVEFIXES_PROHIBITION_MODALITY,
@@ -323,7 +347,9 @@ class CVEfixesFormalizationAdapter:
             )
         self._shared_adapter = shared_adapter or SecurityIRFormalizationAdapter()
 
-    def default_config(self, result: CVEfixesAdapterResult) -> FormalizationCompilerConfig:
+    def default_config(
+        self, result: CVEfixesAdapterResult
+    ) -> FormalizationCompilerConfig:
         """Request every Security view so absent semantics get diagnostics."""
 
         result = _validated_result(result)
@@ -334,7 +360,9 @@ class CVEfixesFormalizationAdapter:
             target_view_ids=CVEFIXES_FORMALIZATION_TARGET_VIEWS,
             options={
                 **base.options.to_dict(),
-                "cvefixes_formalization_version": (CVEFIXES_FORMALIZATION_VERSION),
+                "cvefixes_formalization_version": (
+                    CVEFIXES_FORMALIZATION_VERSION
+                ),
                 "domain_specialization": "security.cvefixes",
                 "proof_backend_execution": False,
                 "result_artifacts_are_features": False,

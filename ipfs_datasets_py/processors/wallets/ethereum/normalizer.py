@@ -39,9 +39,15 @@ from .rpc import (
 
 
 ETHEREUM_EXTENSION_VERSION = "wallet-ethereum-v1"
-TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
-ERC1155_TRANSFER_SINGLE_TOPIC = "0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62"
-ERC1155_TRANSFER_BATCH_TOPIC = "0x4a39dc06d4c0dbc64b70af90fd698a233a518aa5d07e595d983b8c0526c8f7fb"
+TRANSFER_TOPIC = (
+    "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+)
+ERC1155_TRANSFER_SINGLE_TOPIC = (
+    "0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62"
+)
+ERC1155_TRANSFER_BATCH_TOPIC = (
+    "0x4a39dc06d4c0dbc64b70af90fd698a233a518aa5d07e595d983b8c0526c8f7fb"
+)
 ZERO_ADDRESS = "0x" + "00" * 20
 
 
@@ -127,7 +133,8 @@ def _decode_uint_array(data: str, offset: int, *, field: str) -> tuple[int, ...]
     if end > len(payload):
         raise NormalizationError(f"{field} ABI array is truncated")
     return tuple(
-        int(payload[cursor + index * 64 : cursor + (index + 1) * 64], 16) for index in range(count)
+        int(payload[cursor + index * 64 : cursor + (index + 1) * 64], 16)
+        for index in range(count)
     )
 
 
@@ -249,7 +256,8 @@ class EthereumNormalizer:
         self._network = network
         self._provider = provider
         self._token_metadata = {
-            normalize_address(key): value for key, value in (token_metadata or {}).items()
+            normalize_address(key): value
+            for key, value in (token_metadata or {}).items()
         }
         if any(not isinstance(value, TokenMetadata) for value in self._token_metadata.values()):
             raise NormalizationError("token_metadata values must be TokenMetadata")
@@ -338,7 +346,9 @@ class EthereumNormalizer:
             tz=timezone.utc,
         )
         transactions = block.get("transactions")
-        if not isinstance(transactions, Sequence) or isinstance(transactions, (str, bytes)):
+        if not isinstance(transactions, Sequence) or isinstance(
+            transactions, (str, bytes)
+        ):
             raise NormalizationError("block.transactions must be a sequence")
         receipts_by_hash = {
             normalize_hash(receipt.get("transactionHash"), field="receipt.transactionHash"): receipt
@@ -360,9 +370,7 @@ class EthereumNormalizer:
                         "base_fee_per_gas": (
                             None
                             if block.get("baseFeePerGas") is None
-                            else str(
-                                parse_quantity(block["baseFeePerGas"], field="block.baseFeePerGas")
-                            )
+                            else str(parse_quantity(block["baseFeePerGas"], field="block.baseFeePerGas"))
                         )
                     }
                 ),
@@ -427,7 +435,9 @@ class EthereumNormalizer:
         )
         if receipt_hash != tx_hash:
             raise NormalizationError("receipt transaction hash does not match")
-        receipt_block_hash = normalize_hash(receipt.get("blockHash"), field="receipt.blockHash")
+        receipt_block_hash = normalize_hash(
+            receipt.get("blockHash"), field="receipt.blockHash"
+        )
         if receipt_block_hash != block_hash:
             raise NormalizationError("receipt block hash does not match block")
         tx_index = parse_quantity(
@@ -450,7 +460,11 @@ class EthereumNormalizer:
         )
         participants = (source,) if destination is None else (source, destination)
         status_value = parse_quantity(receipt.get("status", "0x0"), field="receipt.status")
-        status = TransactionStatus.SUCCEEDED if status_value == 1 else TransactionStatus.FAILED
+        status = (
+            TransactionStatus.SUCCEEDED
+            if status_value == 1
+            else TransactionStatus.FAILED
+        )
         gas_used = parse_quantity(receipt.get("gasUsed"), field="receipt.gasUsed")
         gas_price_raw = receipt.get("effectiveGasPrice", transaction.get("gasPrice"))
         gas_price = parse_quantity(gas_price_raw, field="receipt.effectiveGasPrice")
@@ -471,25 +485,18 @@ class EthereumNormalizer:
                 "max_fee_per_gas": (
                     None
                     if transaction.get("maxFeePerGas") is None
-                    else str(
-                        parse_quantity(
-                            transaction["maxFeePerGas"], field="transaction.maxFeePerGas"
-                        )
-                    )
+                    else str(parse_quantity(transaction["maxFeePerGas"], field="transaction.maxFeePerGas"))
                 ),
                 "max_priority_fee_per_gas": (
                     None
                     if transaction.get("maxPriorityFeePerGas") is None
-                    else str(
-                        parse_quantity(
-                            transaction["maxPriorityFeePerGas"],
-                            field="transaction.maxPriorityFeePerGas",
-                        )
-                    )
+                    else str(parse_quantity(transaction["maxPriorityFeePerGas"], field="transaction.maxPriorityFeePerGas"))
                 ),
                 "contract_creation": transaction.get("to") is None,
                 "contract_address": (
-                    None if contract_address is None else normalize_address(contract_address)
+                    None
+                    if contract_address is None
+                    else normalize_address(contract_address)
                 ),
                 "receipt_status": status_value,
                 "trace_capability": trace_capability,
@@ -506,9 +513,7 @@ class EthereumNormalizer:
                     scope="ledger",
                 ),
                 ledger_position=position,
-                finality=Finality.REVERTED
-                if status is TransactionStatus.FAILED
-                else Finality.OBSERVED,
+                finality=Finality.REVERTED if status is TransactionStatus.FAILED else Finality.OBSERVED,
                 transaction_hash=tx_hash,
                 status=status,
                 participants=participants,
@@ -523,7 +528,9 @@ class EthereumNormalizer:
             output.append(
                 TransferRecord(
                     chain=self._network.to_chain_ref(),
-                    provenance=self._provenance(transaction, context=context, scope="ledger"),
+                    provenance=self._provenance(
+                        transaction, context=context, scope="ledger"
+                    ),
                     ledger_position=position,
                     finality=(
                         Finality.REVERTED
@@ -533,7 +540,9 @@ class EthereumNormalizer:
                     transaction_hash=tx_hash,
                     transfer_index=0,
                     asset=self._native_asset(),
-                    amount=ExactAmount.from_int(value, decimals=self._network.native_decimals),
+                    amount=ExactAmount.from_int(
+                        value, decimals=self._network.native_decimals
+                    ),
                     source_account=source,
                     destination_account=destination,
                     transfer_kind=TransferKind.NATIVE,
@@ -586,7 +595,9 @@ class EthereumNormalizer:
         transaction_index: int,
         context: OperationContext,
     ) -> tuple[object, ...]:
-        log_tx_hash = normalize_hash(log.get("transactionHash"), field="log.transactionHash")
+        log_tx_hash = normalize_hash(
+            log.get("transactionHash"), field="log.transactionHash"
+        )
         if log_tx_hash != transaction_hash:
             raise NormalizationError("log transaction hash does not match receipt")
         log_index = parse_quantity(log.get("logIndex"), field="log.logIndex")
@@ -594,7 +605,9 @@ class EthereumNormalizer:
         topics = log.get("topics")
         if not isinstance(topics, Sequence) or isinstance(topics, (str, bytes)):
             raise NormalizationError("log.topics must be a sequence")
-        normalized_topics = tuple(normalize_hash(topic, field="log.topic") for topic in topics)
+        normalized_topics = tuple(
+            normalize_hash(topic, field="log.topic") for topic in topics
+        )
         finality = Finality.ORPHANED if removed else Finality.OBSERVED
         position = LedgerPosition(
             sequence=block_number,
@@ -648,9 +661,15 @@ class EthereumNormalizer:
                 kind=kind,
                 symbol=symbol,
             )
-            source = None if decoded.source == ZERO_ADDRESS else self._account(decoded.source)
+            source = (
+                None
+                if decoded.source == ZERO_ADDRESS
+                else self._account(decoded.source)
+            )
             destination = (
-                None if decoded.destination == ZERO_ADDRESS else self._account(decoded.destination)
+                None
+                if decoded.destination == ZERO_ADDRESS
+                else self._account(decoded.destination)
             )
             transfer_kind = (
                 TransferKind.MINT
@@ -662,11 +681,15 @@ class EthereumNormalizer:
             output.append(
                 TransferRecord(
                     chain=self._network.to_chain_ref(),
-                    provenance=self._provenance(log, context=context, scope="ledger"),
+                    provenance=self._provenance(
+                        log, context=context, scope="ledger"
+                    ),
                     ledger_position=position,
                     finality=Finality.ORPHANED if decoded.removed else Finality.OBSERVED,
                     transaction_hash=transaction_hash,
-                    transfer_index=_token_transfer_index(decoded.log_index, decoded.item_index),
+                    transfer_index=_token_transfer_index(
+                        decoded.log_index, decoded.item_index
+                    ),
                     asset=asset,
                     amount=ExactAmount.from_int(decoded.value, decimals=decimals),
                     source_account=source,
@@ -676,14 +699,17 @@ class EthereumNormalizer:
                         {
                             "standard": decoded.standard,
                             "token_id": (
-                                None if decoded.token_id is None else str(decoded.token_id)
+                                None
+                                if decoded.token_id is None
+                                else str(decoded.token_id)
                             ),
                             "operator": decoded.operator,
                             "removed": decoded.removed,
                             "log_index": decoded.log_index,
                             "batch_item_index": decoded.item_index,
                             "token_metadata_complete": (
-                                metadata is not None or decoded.standard != "erc20"
+                                metadata is not None
+                                or decoded.standard != "erc20"
                             ),
                             "base_units_exact": True,
                         }
@@ -715,7 +741,9 @@ class EthereumNormalizer:
             output.append(
                 TransferRecord(
                     chain=self._network.to_chain_ref(),
-                    provenance=self._provenance(trace, context=context, scope="ledger"),
+                    provenance=self._provenance(
+                        trace, context=context, scope="ledger"
+                    ),
                     ledger_position=LedgerPosition(
                         sequence=block_number,
                         hash=block_hash,
@@ -725,7 +753,9 @@ class EthereumNormalizer:
                     transaction_hash=transaction_hash,
                     transfer_index=2 + 3 * trace_index,
                     asset=self._native_asset(),
-                    amount=ExactAmount.from_int(value, decimals=self._network.native_decimals),
+                    amount=ExactAmount.from_int(
+                        value, decimals=self._network.native_decimals
+                    ),
                     source_account=self._account(action["from"]),
                     destination_account=self._account(action["to"]),
                     transfer_kind=TransferKind.NATIVE,

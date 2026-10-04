@@ -147,7 +147,9 @@ def _full_auth_model(
             f"cov-{dim}",
             dim,
             covered_fact_ids=(
-                facts if dim in {"control_flow", "privileges", "asset_effects"} else facts[:3]
+                facts
+                if dim in {"control_flow", "privileges", "asset_effects"}
+                else facts[:3]
             ),
         )
         for dim in dims
@@ -422,7 +424,9 @@ class TestRuleApplicability:
         assert app.fallback_outcome is AnalysisOutcome.UNSUPPORTED
 
     def test_wrong_chain_does_not_silently_apply(self) -> None:
-        solana_cpi = next(r for r in solana_chain_rules() if r.category is ObligationCategory.CPI)
+        solana_cpi = next(
+            r for r in solana_chain_rules() if r.category is ObligationCategory.CPI
+        )
         assert CHAIN_NS_SOLANA in solana_cpi.chain_namespaces
         assert not solana_cpi.supports_chain(CHAIN_NS_BIP122)
 
@@ -465,7 +469,9 @@ class TestRuleApplicability:
         assert app.fallback_outcome is AnalysisOutcome.INCONCLUSIVE
 
         # Binding concrete covered facts can admit under partial coverage.
-        app2 = evaluate_rule_applicability(rule, model, required_fact_ids=("effect:1",))
+        app2 = evaluate_rule_applicability(
+            rule, model, required_fact_ids=("effect:1",)
+        )
         assert app2.status is ApplicabilityStatus.APPLICABLE
 
     def test_applicability_round_trip(self) -> None:
@@ -558,10 +564,9 @@ class TestSecurityConclusions:
             name_security_conclusions((auth,), {})
 
     def test_assert_not_universal_secure(self) -> None:
-        assert (
-            assert_not_universal_secure("Only owner may call setAdmin")
-            == "Only owner may call setAdmin"
-        )
+        assert assert_not_universal_secure(
+            "Only owner may call setAdmin"
+        ) == "Only owner may call setAdmin"
         with pytest.raises(CryptoIRValidationError):
             assert_not_universal_secure("no vulnerabilities remain")
 
@@ -645,7 +650,9 @@ class TestChainRulePacks:
             r for r in bitcoin_chain_rules() if r.rule_id == "bitcoin.spend_path.unintended"
         )
         model = _full_auth_model(chain_namespace=CHAIN_NS_SOLANA)
-        app = evaluate_rule_applicability(btc_rule, model, chain_namespace=CHAIN_NS_SOLANA)
+        app = evaluate_rule_applicability(
+            btc_rule, model, chain_namespace=CHAIN_NS_SOLANA
+        )
         assert app.status is ApplicabilityStatus.NOT_APPLICABLE
 
     def test_rules_for_chain_includes_common_baseline(self) -> None:

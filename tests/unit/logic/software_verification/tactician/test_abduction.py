@@ -162,7 +162,9 @@ def _request(
 
 def test_interface_constant() -> None:
     assert MISSING_PROOF_ABDUCTION_INTERFACE == "MissingProofAbduction@1"
-    assert MissingProofAbduction.INTERFACE == MISSING_PROOF_ABDUCTION_INTERFACE
+    assert (
+        MissingProofAbduction.INTERFACE == MISSING_PROOF_ABDUCTION_INTERFACE
+    )
     assert ABDUCTION_ALGORITHM_VERSION.startswith("missing-proof-abduction/")
 
 
@@ -182,13 +184,34 @@ def test_premise_classes_cover_required_taxonomy() -> None:
 
 
 def test_classify_hole_kind_mapping() -> None:
-    assert classify_hole_kind(HoleKind.LOOP_INVARIANT) is PremiseClass.SYNTHESIZE_INVARIANT
-    assert classify_hole_kind(HoleKind.CALLEE_PRECONDITION) is PremiseClass.SYNTHESIZE_CONTRACT
-    assert classify_hole_kind(HoleKind.BRIDGE_LEMMA) is PremiseClass.SYNTHESIZE_LEMMA
-    assert classify_hole_kind(HoleKind.TEMPORAL_FAIRNESS) is PremiseClass.ENVIRONMENT_ASSUMPTION
-    assert classify_hole_kind(HoleKind.MISSING_SOURCE_FACT) is PremiseClass.FACT_TO_PROVE
-    assert classify_hole_kind(HoleKind.UNSUPPORTED_SEMANTICS) is PremiseClass.UNSUPPORTED_SEMANTICS
-    assert classify_hole_kind(HoleKind.UNAVAILABLE_TOOL) is PremiseClass.UNAVAILABLE_AUTHORITY
+    assert (
+        classify_hole_kind(HoleKind.LOOP_INVARIANT)
+        is PremiseClass.SYNTHESIZE_INVARIANT
+    )
+    assert (
+        classify_hole_kind(HoleKind.CALLEE_PRECONDITION)
+        is PremiseClass.SYNTHESIZE_CONTRACT
+    )
+    assert (
+        classify_hole_kind(HoleKind.BRIDGE_LEMMA)
+        is PremiseClass.SYNTHESIZE_LEMMA
+    )
+    assert (
+        classify_hole_kind(HoleKind.TEMPORAL_FAIRNESS)
+        is PremiseClass.ENVIRONMENT_ASSUMPTION
+    )
+    assert (
+        classify_hole_kind(HoleKind.MISSING_SOURCE_FACT)
+        is PremiseClass.FACT_TO_PROVE
+    )
+    assert (
+        classify_hole_kind(HoleKind.UNSUPPORTED_SEMANTICS)
+        is PremiseClass.UNSUPPORTED_SEMANTICS
+    )
+    assert (
+        classify_hole_kind(HoleKind.UNAVAILABLE_TOOL)
+        is PremiseClass.UNAVAILABLE_AUTHORITY
+    )
     assert (
         classify_hole_kind(HoleKind.REQUIRED_IMPLEMENTATION_CHANGE)
         is PremiseClass.IMPLEMENTATION_CHANGE
@@ -198,9 +221,18 @@ def test_classify_hole_kind_mapping() -> None:
 
 
 def test_cap_candidate_authority() -> None:
-    assert cap_candidate_authority(AuthorityCeiling.THEOREM) is AuthorityCeiling.CANDIDATE
-    assert cap_candidate_authority(AuthorityCeiling.ADVISORY) is AuthorityCeiling.ADVISORY
-    assert cap_candidate_authority(AuthorityCeiling.CANDIDATE) is AuthorityCeiling.CANDIDATE
+    assert (
+        cap_candidate_authority(AuthorityCeiling.THEOREM)
+        is AuthorityCeiling.CANDIDATE
+    )
+    assert (
+        cap_candidate_authority(AuthorityCeiling.ADVISORY)
+        is AuthorityCeiling.ADVISORY
+    )
+    assert (
+        cap_candidate_authority(AuthorityCeiling.CANDIDATE)
+        is AuthorityCeiling.CANDIDATE
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -472,7 +504,10 @@ def test_goal_entailing_assumption_rejected() -> None:
     assert RejectionReason.GOAL_ENTAILING in reasons
     # No admitted candidate is the goal itself
     for cand in result.candidates:
-        assert cand.statement.lower().strip() != theory.goal_statement.lower().strip()
+        assert (
+            cand.statement.lower().strip()
+            != theory.goal_statement.lower().strip()
+        )
 
 
 def test_contradiction_premise_rejected() -> None:
@@ -496,10 +531,8 @@ def test_contradiction_premise_rejected() -> None:
     )
     reasons = {r.reason for r in result.rejected}
     assert RejectionReason.CONTRADICTION in reasons
-    assert all(
-        not c.admissible or c.statement.lower() not in {"false", "contradiction"}
-        for c in result.candidates
-    )
+    assert all(not c.admissible or c.statement.lower() not in {"false", "contradiction"}
+               for c in result.candidates)
 
 
 def test_engine_rejects_goal_and_contradiction_in_mixed_batch() -> None:
@@ -542,7 +575,9 @@ def test_impossible_goal_returns_unsat_core() -> None:
     assert isinstance(core, UnsatCoreWitness)
     assert "owner_holds_token" in core.conflicting_statements
 
-    result = MissingProofAbduction().abduct(_request(holes=(_hole(),), theory=theory))
+    result = MissingProofAbduction().abduct(
+        _request(holes=(_hole(),), theory=theory)
+    )
     assert result.status is AbductionStatus.IMPOSSIBLE
     assert result.unsat_core is not None
     assert result.unsat_core.conflicting_statements
@@ -698,7 +733,9 @@ def test_budget_exhaustion_is_explicit() -> None:
     result = MissingProofAbduction(
         bounds=_bounds(max_steps=3, max_candidates=2),
         max_candidates_per_hole=1,
-    ).abduct(_request(holes=holes, bounds=_bounds(max_steps=3, max_candidates=2)))
+    ).abduct(
+        _request(holes=holes, bounds=_bounds(max_steps=3, max_candidates=2))
+    )
     assert result.budget_exhausted is True or result.status in {
         AbductionStatus.BOUNDED,
         AbductionStatus.PARTIAL,
@@ -722,7 +759,9 @@ def test_result_round_trips_to_dict() -> None:
 
 
 def test_empty_request_returns_empty_status() -> None:
-    result = abduct_missing_premises(_request(holes=(), proposed=(), tree_id="tree:repo@abc"))
+    result = abduct_missing_premises(
+        _request(holes=(), proposed=(), tree_id="tree:repo@abc")
+    )
     assert result.status is AbductionStatus.EMPTY
     assert result.candidates == ()
 

@@ -1,0 +1,6 @@
+{
+  "e1_equals_e2": true,
+  "e1_not_equals_e3": true,
+  "e1_hash_equals_e2_hash": true,
+  "e1_hash_equals_e3_hash": true
+}

@@ -1,0 +1,42 @@
+{
+  "create_vector_index": "success",
+  "create_vector_index_details": {
+    "status": "success",
+    "index_id": "index_f88b4920",
+    "num_vectors": 2,
+    "dimension": 3,
+    "metric": "cosine",
+    "vector_ids": null
+  },
+  "search_vector_index": "success",
+  "search_vector_index_details": {
+    "status": "success",
+    "index_id": "test_index_id",
+    "top_k": 5,
+    "num_results": 3,
+    "results": [
+      {
+        "id": 0,
+        "distance": 0.95,
+        "metadata": {
+          "text": "result_0"
+        }
+      },
+      {
+        "id": 1,
+        "distance": 0.85,
+        "metadata": {
+          "text": "result_1"
+        }
+      },
+      {
+        "id": 2,
+        "distance": 0.75,
+        "metadata": {
+          "text": "result_2"
+        }
+      }
+    ]
+  },
+  "pin_to_ipfs": "success"
+}

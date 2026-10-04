@@ -62,7 +62,10 @@ def smt_model_witness(**overrides: Any) -> dict[str, Any]:
         "tree_id": "tree:corpus-smt@1",
         "policy_id": "policy:public-counterexample-drop@1",
         "summary": "resource invariant violated under finite bound",
-        "content_id": ("sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+        "content_id": (
+            "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        ),
         "counterexample_id": "cex:smt-resource-1",
         "authority": "satisfiability",
     }
@@ -85,7 +88,10 @@ def syntactic_variant_of_smt(base: dict[str, Any] | None = None) -> dict[str, An
         assignments=reordered,
         model=dict(reordered),
         counterexample_id="cex:smt-resource-1-syn-variant",
-        content_id=("sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"),
+        content_id=(
+            "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        ),
         tool_id="solver.cvc5",
         tool_version="1.0.5",
         provider_id="solver.cvc5",
@@ -105,7 +111,10 @@ def different_causal_smt() -> dict[str, Any]:
         assignments={"x": 9, "y": 9, "z": 0},
         model={"x": 9, "y": 9, "z": 0},
         counterexample_id="cex:smt-resource-other-path",
-        content_id=("sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"),
+        content_id=(
+            "sha256:cccccccccccccccccccccccccccccccc"
+            "cccccccccccccccccccccccccccccccc"
+        ),
     )
 
 
@@ -114,7 +123,10 @@ def different_property_smt() -> dict[str, Any]:
         property_id="prop:other-invariant",
         violated_property="prop:other-invariant",
         counterexample_id="cex:smt-other-prop",
-        content_id=("sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"),
+        content_id=(
+            "sha256:dddddddddddddddddddddddddddddddd"
+            "dddddddddddddddddddddddddddddddd"
+        ),
     )
 
 
@@ -134,7 +146,10 @@ def trace_witness(steps: list[Any] | None = None, **overrides: Any) -> dict[str,
         "tool_id": "model-checker.tlc",
         "tool_version": "1.0.0",
         "tree_id": "tree:corpus-trace@1",
-        "content_id": ("sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"),
+        "content_id": (
+            "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+            "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+        ),
         "counterexample_id": "cex:trace-lease-1",
     }
     payload.update(overrides)
@@ -152,7 +167,10 @@ def hypertrace_witness(**overrides: Any) -> dict[str, Any]:
         "finite_bounds": {"traces": 2},
         "tool_id": "hyper.checker",
         "counterexample_id": "cex:hyper-1",
-        "content_id": ("sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),
+        "content_id": (
+            "sha256:ffffffffffffffffffffffffffffffff"
+            "ffffffffffffffffffffffffffffffff"
+        ),
     }
     payload.update(overrides)
     return payload
@@ -169,7 +187,10 @@ def protocol_witness(**overrides: Any) -> dict[str, Any]:
         "assumption_ids": ["asm:dy-adversary"],
         "finite_bounds": {"sessions": 2},
         "counterexample_id": "cex:proto-1",
-        "content_id": ("sha256:1111111111111111111111111111111111111111111111111111111111111111"),
+        "content_id": (
+            "sha256:11111111111111111111111111111111"
+            "11111111111111111111111111111111"
+        ),
     }
     payload.update(overrides)
     return payload
@@ -181,7 +202,10 @@ def protocol_witness(**overrides: Any) -> dict[str, Any]:
 
 
 def test_interface_and_schema_constants() -> None:
-    assert COUNTEREXAMPLE_SEMANTIC_EQUIVALENCE_INTERFACE == "CounterexampleSemanticEquivalence@1"
+    assert (
+        COUNTEREXAMPLE_SEMANTIC_EQUIVALENCE_INTERFACE
+        == "CounterexampleSemanticEquivalence@1"
+    )
     assert EQUIVALENCE_REPORT_SCHEMA.endswith("@1")
     assert DIVERSITY_SELECTION_SCHEMA.endswith("@1")
     assert DIFFERENTIAL_COMPARISON_SCHEMA.endswith("@1")
@@ -393,7 +417,9 @@ def test_cross_provider_agreement_can_claim_consensus_without_raising_authority(
             authority="satisfiability",
         ),
     ]
-    comparison = differential_compare_providers(observations, witness=smt_model_witness())
+    comparison = differential_compare_providers(
+        observations, witness=smt_model_witness()
+    )
     assert comparison.status == DifferentialStatus.AGREEMENT
     assert comparison.agreed is True
     assert comparison.is_consensus is True
@@ -462,7 +488,9 @@ def test_quarantine_refuses_authority_raise_and_keeps_all_receipts() -> None:
     )
     assert comparison.requires_quarantine
 
-    quarantine = quarantine_provider_disagreement(comparison, requested_authority="theorem")
+    quarantine = quarantine_provider_disagreement(
+        comparison, requested_authority="theorem"
+    )
     assert quarantine.status == "quarantined"
     assert quarantine.authority_raised is False
     assert quarantine.is_consensus is False
@@ -472,7 +500,9 @@ def test_quarantine_refuses_authority_raise_and_keeps_all_receipts() -> None:
     assert set(quarantine.provider_ids) == {"solver.z3", "solver.cvc5"}
     # Requested theorem authority must not stick.
     assert quarantine.authority_ceiling in {"none", "advisory"}
-    assert _authority_rank_local(quarantine.authority_ceiling) <= _authority_rank_local("advisory")
+    assert _authority_rank_local(quarantine.authority_ceiling) <= _authority_rank_local(
+        "advisory"
+    )
     assert quarantine.quarantine_id.startswith("eq-quarantine:")
     body = quarantine.to_dict()
     assert body["authority_raised"] is False

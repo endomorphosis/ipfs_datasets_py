@@ -52,7 +52,9 @@ PINNED_NODE_IDENTITY: Final[str] = (
 PINNED_TYPESCRIPT_IDENTITY: Final[str] = (
     "sha256:7372ce6f9939dbc90ebcbd3874dfdecae9440dc503ecf2cf61510ccea54da4f4"
 )
-TYPESCRIPT_WORKER_PROTOCOL: Final[str] = "ipfs-datasets.software-contracts.typescript-worker@1"
+TYPESCRIPT_WORKER_PROTOCOL: Final[str] = (
+    "ipfs-datasets.software-contracts.typescript-worker@1"
+)
 TYPESCRIPT_SOURCE_EXTENSIONS: Final[tuple[str, ...]] = (
     ".cjs",
     ".js",
@@ -124,14 +126,21 @@ class TypeScriptASTWorker:
             raise ValueError("node_binary must be a non-empty exact string")
         if type(typescript_module) is not str or not typescript_module.strip():
             raise ValueError("typescript_module must be a non-empty exact string")
-        if type(expected_compiler_version) is not str or not expected_compiler_version.strip():
-            raise ValueError("expected_compiler_version must be a non-empty exact string")
+        if (
+            type(expected_compiler_version) is not str
+            or not expected_compiler_version.strip()
+        ):
+            raise ValueError(
+                "expected_compiler_version must be a non-empty exact string"
+            )
         if type(expected_node_version) is not str or not expected_node_version.strip():
             raise ValueError("expected_node_version must be a non-empty exact string")
         if type(timeout_seconds) not in {int, float} or timeout_seconds <= 0:
             raise ValueError("timeout_seconds must be positive")
         if timeout_seconds > MAX_TIMEOUT_SECONDS:
-            raise ValueError(f"timeout_seconds cannot exceed {MAX_TIMEOUT_SECONDS:g}")
+            raise ValueError(
+                f"timeout_seconds cannot exceed {MAX_TIMEOUT_SECONDS:g}"
+            )
         self.node_binary = node_binary
         self.typescript_module = typescript_module
         self.expected_compiler_version = expected_compiler_version
@@ -139,7 +148,9 @@ class TypeScriptASTWorker:
         self.timeout_seconds = float(timeout_seconds)
         self.max_output_bytes = _positive_int(max_output_bytes, "max_output_bytes")
         if self.max_output_bytes > DEFAULT_MAX_OUTPUT_BYTES:
-            raise ValueError(f"max_output_bytes cannot exceed {DEFAULT_MAX_OUTPUT_BYTES}")
+            raise ValueError(
+                f"max_output_bytes cannot exceed {DEFAULT_MAX_OUTPUT_BYTES}"
+            )
 
     def _command(self) -> list[str]:
         return [
@@ -153,7 +164,9 @@ class TypeScriptASTWorker:
 
     def _invoke(self, request: Mapping[str, Any]) -> dict[str, Any]:
         if not self.worker_path.is_file():
-            raise TypeScriptFrontendError(f"TypeScript worker is absent: {self.worker_path}")
+            raise TypeScriptFrontendError(
+                f"TypeScript worker is absent: {self.worker_path}"
+            )
         encoded = (
             json.dumps(
                 dict(request),
@@ -181,7 +194,9 @@ class TypeScriptASTWorker:
                 start_new_session=True,
             )
         except OSError as exc:
-            raise TypeScriptFrontendError(f"unable to start TypeScript worker: {exc}") from exc
+            raise TypeScriptFrontendError(
+                f"unable to start TypeScript worker: {exc}"
+            ) from exc
         try:
             stdout, stderr = process.communicate(
                 encoded,
@@ -207,11 +222,14 @@ class TypeScriptASTWorker:
         if process.returncode != 0:
             error = stderr.decode("utf-8", errors="replace").strip()
             raise TypeScriptFrontendError(
-                f"TypeScript worker exited {process.returncode}: {error[:2048] or 'no diagnostic'}"
+                f"TypeScript worker exited {process.returncode}: "
+                f"{error[:2048] or 'no diagnostic'}"
             )
         lines = stdout.splitlines()
         if len(lines) != 1:
-            raise TypeScriptFrontendError("TypeScript worker must return exactly one JSONL record")
+            raise TypeScriptFrontendError(
+                "TypeScript worker must return exactly one JSONL record"
+            )
 
         def reject_constant(value: str) -> None:
             raise TypeScriptFrontendError(
@@ -236,9 +254,13 @@ class TypeScriptASTWorker:
                 object_pairs_hook=reject_duplicate,
             )
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-            raise TypeScriptFrontendError("TypeScript worker returned invalid JSON") from exc
+            raise TypeScriptFrontendError(
+                "TypeScript worker returned invalid JSON"
+            ) from exc
         if type(response) is not dict:
-            raise TypeScriptFrontendError("TypeScript worker response must be an exact object")
+            raise TypeScriptFrontendError(
+                "TypeScript worker response must be an exact object"
+            )
         if response.get("protocol") != TYPESCRIPT_WORKER_PROTOCOL:
             raise TypeScriptFrontendError("TypeScript worker protocol mismatch")
         if response.get("request_id") != request.get("request_id"):
@@ -260,7 +282,10 @@ class TypeScriptASTWorker:
         compiler_version = response.get("compiler_version", "")
         node_version = response.get("node_version", "")
         reason = response.get("reason", "")
-        if not all(type(value) is str for value in (compiler_version, node_version, reason)):
+        if not all(
+            type(value) is str
+            for value in (compiler_version, node_version, reason)
+        ):
             return TypeScriptCapability(
                 False,
                 "",
@@ -282,7 +307,10 @@ class TypeScriptASTWorker:
                 False,
                 compiler_version,
                 node_version,
-                (f"Node version {node_version} does not match {self.expected_node_version}"),
+                (
+                    f"Node version {node_version} does not match "
+                    f"{self.expected_node_version}"
+                ),
             )
         return TypeScriptCapability(
             supported,
@@ -306,7 +334,9 @@ class TypeScriptASTWorker:
                 "operation": "parse",
                 "path": path,
                 "source": source,
-                "max_source_bytes": _positive_int(max_source_bytes, "max_source_bytes"),
+                "max_source_bytes": _positive_int(
+                    max_source_bytes, "max_source_bytes"
+                ),
                 "max_ast_nodes": _positive_int(max_ast_nodes, "max_ast_nodes"),
             }
         )
@@ -323,12 +353,18 @@ class TypeScriptFrontend:
         max_ast_nodes: int = DEFAULT_MAX_AST_NODES,
     ) -> None:
         self.worker = worker or TypeScriptASTWorker()
-        self.max_source_bytes = _positive_int(max_source_bytes, "max_source_bytes")
+        self.max_source_bytes = _positive_int(
+            max_source_bytes, "max_source_bytes"
+        )
         self.max_ast_nodes = _positive_int(max_ast_nodes, "max_ast_nodes")
         if self.max_source_bytes > DEFAULT_MAX_SOURCE_BYTES:
-            raise ValueError(f"max_source_bytes cannot exceed {DEFAULT_MAX_SOURCE_BYTES}")
+            raise ValueError(
+                f"max_source_bytes cannot exceed {DEFAULT_MAX_SOURCE_BYTES}"
+            )
         if self.max_ast_nodes > DEFAULT_MAX_AST_NODES:
-            raise ValueError(f"max_ast_nodes cannot exceed {DEFAULT_MAX_AST_NODES}")
+            raise ValueError(
+                f"max_ast_nodes cannot exceed {DEFAULT_MAX_AST_NODES}"
+            )
 
     @property
     def capability(self) -> FrontendCapability:
@@ -451,7 +487,10 @@ class TypeScriptFrontend:
                 module_name=module_name,
                 code="typescript.resource_limit",
                 construct="source_size",
-                reason=(f"Source has {len(source_bytes)} bytes; limit is {self.max_source_bytes}."),
+                reason=(
+                    f"Source has {len(source_bytes)} bytes; limit is "
+                    f"{self.max_source_bytes}."
+                ),
             )
         try:
             response = self.worker.parse(
@@ -561,14 +600,31 @@ class TypeScriptFrontend:
                 provenance=provenance,
                 frontend=self.capability,
                 module=ModuleDefinition.from_dict(facts["module"]),
-                scopes=[ScopeDefinition.from_dict(item) for item in facts["scopes"]],
-                symbols=[SymbolDefinition.from_dict(item) for item in facts["symbols"]],
-                imports=[ImportDefinition.from_dict(item) for item in facts["imports"]],
-                references=[ReferenceRecord.from_dict(item) for item in facts["references"]],
+                scopes=[
+                    ScopeDefinition.from_dict(item) for item in facts["scopes"]
+                ],
+                symbols=[
+                    SymbolDefinition.from_dict(item) for item in facts["symbols"]
+                ],
+                imports=[
+                    ImportDefinition.from_dict(item) for item in facts["imports"]
+                ],
+                references=[
+                    ReferenceRecord.from_dict(item)
+                    for item in facts["references"]
+                ],
                 calls=[CallRecord.from_dict(item) for item in facts["calls"]],
-                effects=[EffectRecord.from_dict(item) for item in facts["effects"]],
-                diagnostics=[DiagnosticRecord.from_dict(item) for item in facts["diagnostics"]],
-                unsupported=[UnsupportedConstruct.from_dict(item) for item in facts["unsupported"]],
+                effects=[
+                    EffectRecord.from_dict(item) for item in facts["effects"]
+                ],
+                diagnostics=[
+                    DiagnosticRecord.from_dict(item)
+                    for item in facts["diagnostics"]
+                ],
+                unsupported=[
+                    UnsupportedConstruct.from_dict(item)
+                    for item in facts["unsupported"]
+                ],
             )
         except (KeyError, TypeError, ValueError, ASTIRValidationError) as exc:
             return self._unsupported_record(

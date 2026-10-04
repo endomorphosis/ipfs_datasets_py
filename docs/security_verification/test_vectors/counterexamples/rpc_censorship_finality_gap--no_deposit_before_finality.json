@@ -1,0 +1,177 @@
+{
+  "claim_id": "no_deposit_before_finality",
+  "counterexample": {
+    "account_ids": [],
+    "asset_ids": [],
+    "capability_ids": [
+      "{'event_id': 'event:deposit_credited:1', 'deposit_id': 'deposit:rpc-censored', 'txid': 'tx:rpc-censored', 'conditions': {'observed_ok': True, 'finalized_ok': False, 'confirmation_ok': False, 'finalized_before_credit': False, 'domain_fields_ok': True, 'reorg_ok': True}}"
+    ],
+    "claim_id": "no_deposit_before_finality",
+    "compiler_artifact": {
+      "deposit_ids": [
+        "deposit:rpc-censored"
+      ],
+      "kind": "deposit_policy",
+      "offending_ids": [
+        "deposit:rpc-censored"
+      ],
+      "txids": [
+        "tx:rpc-censored"
+      ],
+      "violating_event_ids": [
+        "event:deposit_credited:1"
+      ],
+      "violations": [
+        {
+          "conditions": {
+            "confirmation_ok": false,
+            "domain_fields_ok": true,
+            "finalized_before_credit": false,
+            "finalized_ok": false,
+            "observed_ok": true,
+            "reorg_ok": true
+          },
+          "deposit_id": "deposit:rpc-censored",
+          "event_id": "event:deposit_credited:1",
+          "txid": "tx:rpc-censored"
+        }
+      ]
+    },
+    "deposit_ids": [
+      "deposit:rpc-censored"
+    ],
+    "evidence_refs": [
+      {
+        "kind": "test_fixture",
+        "line_end": 65,
+        "line_start": 55,
+        "notes": "Fixture deposit finality policy.",
+        "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+        "review_status": "trusted_fixture"
+      },
+      {
+        "kind": "test_fixture",
+        "line_end": 77,
+        "line_start": 66,
+        "notes": "Fixture deposit credited trace.",
+        "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+        "review_status": "trusted_fixture"
+      },
+      {
+        "kind": "test_fixture",
+        "line_end": 77,
+        "line_start": 66,
+        "notes": "Fixture deposit observed trace.",
+        "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+        "review_status": "trusted_fixture"
+      },
+      {
+        "kind": "test_fixture",
+        "line_end": 77,
+        "line_start": 66,
+        "notes": "Fixture deposit finalized trace.",
+        "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+        "review_status": "trusted_fixture"
+      }
+    ],
+    "message": "Z3 found a satisfying violation trace.",
+    "soundness_notes": [],
+    "source_facts": [
+      {
+        "account_id": "account:alice_btc",
+        "asset_id": "asset:btc",
+        "block_height": 100,
+        "chain_id": "chain:btc",
+        "confirmations": 0,
+        "deposit_id": "deposit:rpc-censored",
+        "event": "deposit_observed",
+        "evidence_refs": [
+          {
+            "kind": "test_fixture",
+            "line_end": 77,
+            "line_start": 66,
+            "notes": "Fixture deposit observed trace.",
+            "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+            "review_status": "trusted_fixture"
+          }
+        ],
+        "id": "event:deposit_observed:1",
+        "rpc_observation": "censored",
+        "timestamp": 70,
+        "txid": "tx:rpc-censored"
+      },
+      {
+        "account_id": "account:alice_btc",
+        "after_finality": false,
+        "asset_id": "asset:btc",
+        "block_height": 106,
+        "chain_id": "chain:btc",
+        "confirmations": 0,
+        "deposit_id": "deposit:rpc-censored",
+        "event": "deposit_credited",
+        "evidence_refs": [
+          {
+            "kind": "test_fixture",
+            "line_end": 77,
+            "line_start": 66,
+            "notes": "Fixture deposit credited trace.",
+            "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+            "review_status": "trusted_fixture"
+          }
+        ],
+        "finality_threshold": 6,
+        "id": "event:deposit_credited:1",
+        "rpc_observation": "censored",
+        "timestamp": 71,
+        "txid": "tx:rpc-censored"
+      },
+      {
+        "conditions": {
+          "confirmation_ok": false,
+          "domain_fields_ok": true,
+          "finalized_before_credit": false,
+          "finalized_ok": false,
+          "observed_ok": true,
+          "reorg_ok": true
+        },
+        "deposit_id": "deposit:rpc-censored",
+        "event_id": "event:deposit_credited:1",
+        "txid": "tx:rpc-censored"
+      }
+    ],
+    "trace": [],
+    "txids": [
+      "tx:rpc-censored"
+    ],
+    "violating_event_ids": [
+      "event:deposit_credited:1"
+    ],
+    "wallet_ids": [],
+    "withdrawal_ids": [],
+    "witness": {
+      "deposit_0_confirmation_ok": "False",
+      "deposit_0_domain_fields_ok": "True",
+      "deposit_0_finalized_before_credit": "False",
+      "deposit_0_finalized_ok": "False",
+      "deposit_0_observed_ok": "True",
+      "deposit_0_reorg_ok": "True"
+    }
+  },
+  "expected_claims": [
+    "no_deposit_before_finality"
+  ],
+  "matched_claims": [
+    "no_deposit_before_finality"
+  ],
+  "model_id": "minimal-btc-exchange::rpc_censorship_finality_gap",
+  "mutators": [
+    "rpc_censorship_finality_gap"
+  ],
+  "proof_or_trace_cid": "bafkreihk2vjalkotk25qels4upyqrdy4kaif2avveviw4s5jen2ajqqgxu",
+  "risk": "high",
+  "scenario": "rpc_censorship_finality_gap",
+  "schema_version": "crypto-exchange-counterexample-vector/v1",
+  "solver_name": "z3",
+  "solver_result": "sat",
+  "status": "DISPROVED"
+}

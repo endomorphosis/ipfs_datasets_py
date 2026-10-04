@@ -65,9 +65,15 @@ VALIDATION_BINDING_SCHEMA: Final = (
 VALIDATION_REQUEST_SCHEMA: Final = (
     "ipfs_datasets_py/logic/software_verification/validation-request@1"
 )
-VALIDATION_CHECK_SCHEMA: Final = "ipfs_datasets_py/logic/software_verification/validation-check@1"
-MINIMALITY_REPORT_SCHEMA: Final = "ipfs_datasets_py/logic/software_verification/minimality-report@1"
-REPLAY_OUTCOME_SCHEMA: Final = "ipfs_datasets_py/logic/software_verification/replay-outcome@1"
+VALIDATION_CHECK_SCHEMA: Final = (
+    "ipfs_datasets_py/logic/software_verification/validation-check@1"
+)
+MINIMALITY_REPORT_SCHEMA: Final = (
+    "ipfs_datasets_py/logic/software_verification/minimality-report@1"
+)
+REPLAY_OUTCOME_SCHEMA: Final = (
+    "ipfs_datasets_py/logic/software_verification/replay-outcome@1"
+)
 DISAGREEMENT_RECORD_SCHEMA: Final = (
     "ipfs_datasets_py/logic/software_verification/disagreement-record@1"
 )
@@ -75,7 +81,8 @@ CANDIDATE_VALIDATION_RESULT_SCHEMA: Final = (
     "ipfs_datasets_py/logic/software_verification/candidate-validation-result@1"
 )
 CANDIDATE_SET_VALIDATION_RESULT_SCHEMA: Final = (
-    "ipfs_datasets_py/logic/software_verification/candidate-set-validation-result@1"
+    "ipfs_datasets_py/logic/software_verification/"
+    "candidate-set-validation-result@1"
 )
 VALIDATOR_ALGORITHM_VERSION: Final = "proof-candidate-validator/1.0.0"
 
@@ -267,7 +274,9 @@ def _text(
     if not optional and not text:
         raise CandidateValidationError(f"{label} is required")
     if len(text) > maximum:
-        raise CandidateValidationError(f"{label} exceeds maximum length of {maximum}")
+        raise CandidateValidationError(
+            f"{label} exceeds maximum length of {maximum}"
+        )
     return text
 
 
@@ -279,7 +288,9 @@ def _enum(value: object, enum_type: type[StrEnum], label: str) -> Any:
             return enum_type(value.strip())
         except ValueError as error:
             allowed = ", ".join(item.value for item in enum_type)
-            raise CandidateValidationError(f"{label} must be one of: {allowed}") from error
+            raise CandidateValidationError(
+                f"{label} must be one of: {allowed}"
+            ) from error
     raise CandidateValidationError(f"{label} must be a {enum_type.__name__}")
 
 
@@ -294,9 +305,12 @@ def _string_tuple(
         items: tuple[str, ...] = ()
     elif isinstance(values, str):
         items = (_text(values, label, maximum=512),)
-    elif isinstance(values, Sequence) and not isinstance(values, (bytes, bytearray, memoryview)):
+    elif isinstance(values, Sequence) and not isinstance(
+        values, (bytes, bytearray, memoryview)
+    ):
         items = tuple(
-            _text(item, f"{label}[{index}]", maximum=512) for index, item in enumerate(values)
+            _text(item, f"{label}[{index}]", maximum=512)
+            for index, item in enumerate(values)
         )
     else:
         raise CandidateValidationError(f"{label} must be a sequence of strings")
@@ -316,7 +330,9 @@ def _string_tuple(
 
 def _nonnegative_int(value: object, label: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value < 0:
-        raise CandidateValidationError(f"{label} must be a non-negative integer")
+        raise CandidateValidationError(
+            f"{label} must be a non-negative integer"
+        )
     return value
 
 
@@ -360,7 +376,9 @@ def _proof_hole(value: object, label: str = "hole") -> ProofHole:
     raise CandidateValidationError(f"{label} must be a ProofHole")
 
 
-def _candidate_step(value: object, label: str = "candidate") -> CandidateProofStep:
+def _candidate_step(
+    value: object, label: str = "candidate"
+) -> CandidateProofStep:
     if isinstance(value, CandidateProofStep):
         return value
     if isinstance(value, Mapping):
@@ -396,7 +414,9 @@ def _recipe(value: object, label: str = "recipe") -> ValidationRecipe | None:
 
 
 def _stable_id(prefix: str, *parts: str) -> str:
-    digest = hashlib.sha256("|".join(parts).encode("utf-8", errors="replace")).hexdigest()[:16]
+    digest = hashlib.sha256(
+        "|".join(parts).encode("utf-8", errors="replace")
+    ).hexdigest()[:16]
     return f"{prefix}:{digest}"
 
 
@@ -405,7 +425,11 @@ def _normalize_statement(statement: str) -> str:
 
 
 def _statement_tokens(statement: str) -> frozenset[str]:
-    return frozenset(token.lower() for token in _TOKEN_RE.findall(statement) if len(token) > 1)
+    return frozenset(
+        token.lower()
+        for token in _TOKEN_RE.findall(statement)
+        if len(token) > 1
+    )
 
 
 def _is_negation_of(a: str, b: str) -> bool:
@@ -560,7 +584,9 @@ class ValidationBinding:
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "tree_id", _text(self.tree_id, "tree_id", maximum=256))
+        object.__setattr__(
+            self, "tree_id", _text(self.tree_id, "tree_id", maximum=256)
+        )
         object.__setattr__(
             self,
             "formal_goal_id",
@@ -585,7 +611,9 @@ class ValidationBinding:
         object.__setattr__(
             self,
             "snapshot_id",
-            _text(self.snapshot_id, "snapshot_id", optional=True, maximum=256),
+            _text(
+                self.snapshot_id, "snapshot_id", optional=True, maximum=256
+            ),
         )
         object.__setattr__(
             self,
@@ -597,11 +625,15 @@ class ValidationBinding:
                 maximum=256,
             ),
         )
-        object.__setattr__(self, "source", _source_binding(self.source, "source"))
+        object.__setattr__(
+            self, "source", _source_binding(self.source, "source")
+        )
         object.__setattr__(
             self,
             "known_facts",
-            _string_tuple(self.known_facts, "known_facts", preserve_order=True),
+            _string_tuple(
+                self.known_facts, "known_facts", preserve_order=True
+            ),
         )
         object.__setattr__(
             self,
@@ -672,7 +704,9 @@ class ValidationBinding:
             known_facts=tuple(payload.get("known_facts") or ()),
             axioms=tuple(payload.get("axioms") or ()),
             premise_ids=tuple(payload.get("premise_ids") or ()),
-            selected_premise_ids=tuple(payload.get("selected_premise_ids") or ()),
+            selected_premise_ids=tuple(
+                payload.get("selected_premise_ids") or ()
+            ),
             metadata=payload.get("metadata") or {},
         )
 
@@ -700,7 +734,9 @@ class ReplayOutcome:
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "status", _enum(self.status, ReplayStatus, "status"))
+        object.__setattr__(
+            self, "status", _enum(self.status, ReplayStatus, "status")
+        )
         object.__setattr__(
             self,
             "backend_kind",
@@ -734,7 +770,9 @@ class ReplayOutcome:
         object.__setattr__(
             self,
             "core_premise_ids",
-            _string_tuple(self.core_premise_ids, "core_premise_ids", preserve_order=True),
+            _string_tuple(
+                self.core_premise_ids, "core_premise_ids", preserve_order=True
+            ),
         )
         object.__setattr__(
             self,
@@ -769,7 +807,9 @@ class ReplayOutcome:
             raise CandidateValidationError("replay outcome must be an object")
         return cls(
             status=payload.get("status", ReplayStatus.UNKNOWN),
-            backend_kind=payload.get("backend_kind", ReplayBackendKind.SYNTHETIC),
+            backend_kind=payload.get(
+                "backend_kind", ReplayBackendKind.SYNTHETIC
+            ),
             provider_id=payload.get("provider_id", ""),
             provider_version=payload.get("provider_version", ""),
             authority=payload.get("authority", AuthorityCeiling.CANDIDATE),
@@ -848,7 +888,8 @@ class StaticReplayBackend:
         if not isinstance(self.holds_for, Mapping):
             raise CandidateValidationError("holds_for must be a mapping")
         normalized_holds = {
-            _text(k, "holds_for key", maximum=256): bool(v) for k, v in self.holds_for.items()
+            _text(k, "holds_for key", maximum=256): bool(v)
+            for k, v in self.holds_for.items()
         }
         object.__setattr__(self, "holds_for", normalized_holds)
         if not isinstance(self.critical_premises, Mapping):
@@ -859,12 +900,19 @@ class StaticReplayBackend:
             if isinstance(values, str):
                 vals = (values,)
             elif isinstance(values, Sequence):
-                vals = tuple(_text(v, f"critical_premises[{k}]", maximum=256) for v in values)
+                vals = tuple(
+                    _text(v, f"critical_premises[{k}]", maximum=256)
+                    for v in values
+                )
             else:
-                raise CandidateValidationError(f"critical_premises[{k}] must be a sequence")
+                raise CandidateValidationError(
+                    f"critical_premises[{k}] must be a sequence"
+                )
             normalized_crit[k] = vals
         object.__setattr__(self, "critical_premises", normalized_crit)
-        object.__setattr__(self, "default_holds", _bool(self.default_holds, "default_holds"))
+        object.__setattr__(
+            self, "default_holds", _bool(self.default_holds, "default_holds")
+        )
         if self.force_status is not None:
             object.__setattr__(
                 self,
@@ -893,8 +941,14 @@ class StaticReplayBackend:
             )
 
         holds = self.holds_for.get(candidate.candidate_id, self.default_holds)
-        critical = tuple(self.critical_premises.get(candidate.candidate_id, ()))
-        dropped = {_text(p, "drop_premise_ids", maximum=256) for p in (drop_premise_ids or ()) if p}
+        critical = tuple(
+            self.critical_premises.get(candidate.candidate_id, ())
+        )
+        dropped = {
+            _text(p, "drop_premise_ids", maximum=256)
+            for p in (drop_premise_ids or ())
+            if p
+        }
         if dropped and any(p in dropped for p in critical):
             holds = False
         # If binding.selected_premise_ids empty and we drop from premise_ids
@@ -914,7 +968,11 @@ class StaticReplayBackend:
                 )
 
         status = ReplayStatus.HOLDS if holds else ReplayStatus.FAILS
-        evidence = (f"evidence:{self.provider_id}:{candidate.candidate_id}",) if holds else ()
+        evidence = (
+            (f"evidence:{self.provider_id}:{candidate.candidate_id}",)
+            if holds
+            else ()
+        )
         return ReplayOutcome(
             status=status,
             backend_kind=self.backend_kind,
@@ -986,8 +1044,12 @@ class ValidationCheck:
     evidence_ids: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "stage", _text(self.stage, "stage", maximum=128))
-        object.__setattr__(self, "status", _enum(self.status, ValidationCheckStatus, "status"))
+        object.__setattr__(
+            self, "stage", _text(self.stage, "stage", maximum=128)
+        )
+        object.__setattr__(
+            self, "status", _enum(self.status, ValidationCheckStatus, "status")
+        )
         object.__setattr__(
             self,
             "detail",
@@ -1035,8 +1097,12 @@ class MinimalityReport:
     detail: str = ""
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "kind", _enum(self.kind, MinimalityKind, "kind"))
-        object.__setattr__(self, "checked", _bool(self.checked, "checked"))
+        object.__setattr__(
+            self, "kind", _enum(self.kind, MinimalityKind, "kind")
+        )
+        object.__setattr__(
+            self, "checked", _bool(self.checked, "checked")
+        )
         object.__setattr__(
             self,
             "deletion_breaks_proof",
@@ -1045,12 +1111,16 @@ class MinimalityReport:
         object.__setattr__(
             self,
             "redundant_premise_ids",
-            _string_tuple(self.redundant_premise_ids, "redundant_premise_ids"),
+            _string_tuple(
+                self.redundant_premise_ids, "redundant_premise_ids"
+            ),
         )
         object.__setattr__(
             self,
             "critical_premise_ids",
-            _string_tuple(self.critical_premise_ids, "critical_premise_ids"),
+            _string_tuple(
+                self.critical_premise_ids, "critical_premise_ids"
+            ),
         )
         object.__setattr__(
             self,
@@ -1078,13 +1148,21 @@ class MinimalityReport:
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "MinimalityReport":
         if not isinstance(payload, Mapping):
-            raise CandidateValidationError("minimality report payload must be an object")
+            raise CandidateValidationError(
+                "minimality report payload must be an object"
+            )
         return cls(
             kind=payload.get("kind", MinimalityKind.UNKNOWN),
             checked=bool(payload.get("checked", False)),
-            deletion_breaks_proof=bool(payload.get("deletion_breaks_proof", False)),
-            redundant_premise_ids=tuple(payload.get("redundant_premise_ids") or ()),
-            critical_premise_ids=tuple(payload.get("critical_premise_ids") or ()),
+            deletion_breaks_proof=bool(
+                payload.get("deletion_breaks_proof", False)
+            ),
+            redundant_premise_ids=tuple(
+                payload.get("redundant_premise_ids") or ()
+            ),
+            critical_premise_ids=tuple(
+                payload.get("critical_premise_ids") or ()
+            ),
             guarantee_limited=bool(payload.get("guarantee_limited", False)),
             detail=payload.get("detail", ""),
         )
@@ -1109,7 +1187,9 @@ class DisagreementRecord:
             "disagreement_id",
             _text(self.disagreement_id, "disagreement_id", maximum=256),
         )
-        object.__setattr__(self, "reason", _enum(self.reason, QuarantineReason, "reason"))
+        object.__setattr__(
+            self, "reason", _enum(self.reason, QuarantineReason, "reason")
+        )
         object.__setattr__(
             self,
             "candidate_id",
@@ -1145,7 +1225,9 @@ class DisagreementRecord:
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "DisagreementRecord":
         if not isinstance(payload, Mapping):
-            raise CandidateValidationError("disagreement payload must be an object")
+            raise CandidateValidationError(
+                "disagreement payload must be an object"
+            )
         return cls(
             disagreement_id=payload.get("disagreement_id", ""),
             reason=payload.get("reason", QuarantineReason.NONE),
@@ -1177,13 +1259,17 @@ class ValidationRequest:
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "candidate", _candidate_step(self.candidate, "candidate"))
+        object.__setattr__(
+            self, "candidate", _candidate_step(self.candidate, "candidate")
+        )
         object.__setattr__(self, "hole", _proof_hole(self.hole, "hole"))
         binding = self.binding
         if isinstance(binding, Mapping):
             binding = ValidationBinding.from_dict(binding)
         elif not isinstance(binding, ValidationBinding):
-            raise CandidateValidationError("binding must be a ValidationBinding")
+            raise CandidateValidationError(
+                "binding must be a ValidationBinding"
+            )
         object.__setattr__(self, "binding", binding)
         object.__setattr__(self, "recipe", _recipe(self.recipe, "recipe"))
         object.__setattr__(
@@ -1207,7 +1293,9 @@ class ValidationRequest:
             ),
         )
         if not isinstance(self.proposed_provider_verdicts, Mapping):
-            raise CandidateValidationError("proposed_provider_verdicts must be a mapping")
+            raise CandidateValidationError(
+                "proposed_provider_verdicts must be a mapping"
+            )
         normalized: dict[str, str] = {}
         for key, value in self.proposed_provider_verdicts.items():
             k = _text(key, "proposed_provider_verdicts key", maximum=256)
@@ -1252,9 +1340,16 @@ class ValidationRequest:
                 if isinstance(recipe_raw, Mapping)
                 else recipe_raw
             ),
-            expected_candidate_content_id=payload.get("expected_candidate_content_id", ""),
-            expected_hole_content_id=payload.get("expected_hole_content_id", ""),
-            proposed_provider_verdicts=payload.get("proposed_provider_verdicts") or {},
+            expected_candidate_content_id=payload.get(
+                "expected_candidate_content_id", ""
+            ),
+            expected_hole_content_id=payload.get(
+                "expected_hole_content_id", ""
+            ),
+            proposed_provider_verdicts=payload.get(
+                "proposed_provider_verdicts"
+            )
+            or {},
             metadata=payload.get("metadata") or {},
         )
 
@@ -1288,15 +1383,21 @@ class CandidateValidationResult:
     completion_claimed: bool = False
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "result_id", _text(self.result_id, "result_id", maximum=256))
+        object.__setattr__(
+            self, "result_id", _text(self.result_id, "result_id", maximum=256)
+        )
         validation = self.validation
         if isinstance(validation, Mapping):
             try:
                 validation = CandidateValidation.from_dict(validation)
             except TacticianContractError as error:
-                raise CandidateValidationError(f"validation: {error}") from error
+                raise CandidateValidationError(
+                    f"validation: {error}"
+                ) from error
         elif not isinstance(validation, CandidateValidation):
-            raise CandidateValidationError("validation must be a CandidateValidation")
+            raise CandidateValidationError(
+                "validation must be a CandidateValidation"
+            )
         object.__setattr__(self, "validation", validation)
         checks: list[ValidationCheck] = []
         for index, raw in enumerate(self.checks or ()):
@@ -1305,7 +1406,9 @@ class CandidateValidationResult:
             elif isinstance(raw, Mapping):
                 checks.append(ValidationCheck.from_dict(raw))
             else:
-                raise CandidateValidationError(f"checks[{index}] must be a ValidationCheck")
+                raise CandidateValidationError(
+                    f"checks[{index}] must be a ValidationCheck"
+                )
         object.__setattr__(self, "checks", tuple(checks))
         report = self.minimality_report
         if report is None:
@@ -1313,7 +1416,9 @@ class CandidateValidationResult:
         elif isinstance(report, Mapping):
             report = MinimalityReport.from_dict(report)
         elif not isinstance(report, MinimalityReport):
-            raise CandidateValidationError("minimality_report must be a MinimalityReport")
+            raise CandidateValidationError(
+                "minimality_report must be a MinimalityReport"
+            )
         object.__setattr__(self, "minimality_report", report)
         outcomes: list[ReplayOutcome] = []
         for index, raw in enumerate(self.replay_outcomes or ()):
@@ -1322,7 +1427,9 @@ class CandidateValidationResult:
             elif isinstance(raw, Mapping):
                 outcomes.append(ReplayOutcome.from_dict(raw))
             else:
-                raise CandidateValidationError(f"replay_outcomes[{index}] must be a ReplayOutcome")
+                raise CandidateValidationError(
+                    f"replay_outcomes[{index}] must be a ReplayOutcome"
+                )
         object.__setattr__(self, "replay_outcomes", tuple(outcomes))
         object.__setattr__(
             self,
@@ -1333,16 +1440,22 @@ class CandidateValidationResult:
                 "discharge_eligibility",
             ),
         )
-        object.__setattr__(self, "validated", _bool(self.validated, "validated"))
+        object.__setattr__(
+            self, "validated", _bool(self.validated, "validated")
+        )
         object.__setattr__(self, "stale", _bool(self.stale, "stale"))
-        object.__setattr__(self, "quarantined", _bool(self.quarantined, "quarantined"))
+        object.__setattr__(
+            self, "quarantined", _bool(self.quarantined, "quarantined")
+        )
         disagreement = self.disagreement
         if disagreement is None:
             pass
         elif isinstance(disagreement, Mapping):
             disagreement = DisagreementRecord.from_dict(disagreement)
         elif not isinstance(disagreement, DisagreementRecord):
-            raise CandidateValidationError("disagreement must be a DisagreementRecord")
+            raise CandidateValidationError(
+                "disagreement must be a DisagreementRecord"
+            )
         object.__setattr__(self, "disagreement", disagreement)
         object.__setattr__(
             self,
@@ -1395,14 +1508,20 @@ class CandidateValidationResult:
             "validation": self.validation.to_dict(),
             "checks": [c.to_dict() for c in self.checks],
             "minimality_report": (
-                None if self.minimality_report is None else self.minimality_report.to_dict()
+                None
+                if self.minimality_report is None
+                else self.minimality_report.to_dict()
             ),
             "replay_outcomes": [o.to_dict() for o in self.replay_outcomes],
             "discharge_eligibility": self.discharge_eligibility.value,
             "validated": self.validated,
             "stale": self.stale,
             "quarantined": self.quarantined,
-            "disagreement": (None if self.disagreement is None else self.disagreement.to_dict()),
+            "disagreement": (
+                None
+                if self.disagreement is None
+                else self.disagreement.to_dict()
+            ),
             "binding_content_id": self.binding_content_id,
             "algorithm_version": self.algorithm_version,
             "may_discharge": self.may_discharge,
@@ -1412,10 +1531,14 @@ class CandidateValidationResult:
         }
 
     @classmethod
-    def from_dict(cls, payload: Mapping[str, Any]) -> "CandidateValidationResult":
+    def from_dict(
+        cls, payload: Mapping[str, Any]
+    ) -> "CandidateValidationResult":
         if not isinstance(payload, Mapping):
             raise CandidateValidationError("result payload must be an object")
-        if payload.get("proof_claimed") is True or payload.get("completion_claimed") is True:
+        if payload.get("proof_claimed") is True or payload.get(
+            "completion_claimed"
+        ) is True:
             raise CandidateValidationError(
                 "CandidateValidationResult cannot claim proof or completion"
             )
@@ -1448,7 +1571,9 @@ class CandidateValidationResult:
                 else disagreement_raw
             ),
             binding_content_id=payload.get("binding_content_id", ""),
-            algorithm_version=payload.get("algorithm_version", VALIDATOR_ALGORITHM_VERSION),
+            algorithm_version=payload.get(
+                "algorithm_version", VALIDATOR_ALGORITHM_VERSION
+            ),
             metadata=payload.get("metadata") or {},
             proof_claimed=False,
             completion_claimed=False,
@@ -1494,17 +1619,23 @@ class CandidateSetValidationResult:
         object.__setattr__(
             self,
             "accepted_candidate_ids",
-            _string_tuple(self.accepted_candidate_ids, "accepted_candidate_ids"),
+            _string_tuple(
+                self.accepted_candidate_ids, "accepted_candidate_ids"
+            ),
         )
         object.__setattr__(
             self,
             "rejected_candidate_ids",
-            _string_tuple(self.rejected_candidate_ids, "rejected_candidate_ids"),
+            _string_tuple(
+                self.rejected_candidate_ids, "rejected_candidate_ids"
+            ),
         )
         object.__setattr__(
             self,
             "quarantined_candidate_ids",
-            _string_tuple(self.quarantined_candidate_ids, "quarantined_candidate_ids"),
+            _string_tuple(
+                self.quarantined_candidate_ids, "quarantined_candidate_ids"
+            ),
         )
         object.__setattr__(
             self,
@@ -1557,7 +1688,9 @@ class CandidateSetValidationResult:
             "accepted_candidate_ids": list(self.accepted_candidate_ids),
             "rejected_candidate_ids": list(self.rejected_candidate_ids),
             "quarantined_candidate_ids": list(self.quarantined_candidate_ids),
-            "dischargeable_candidate_ids": list(self.dischargeable_candidate_ids),
+            "dischargeable_candidate_ids": list(
+                self.dischargeable_candidate_ids
+            ),
             "disagreements": [d.to_dict() for d in self.disagreements],
             "algorithm_version": self.algorithm_version,
             "metadata": dict(self.metadata),
@@ -1566,22 +1699,38 @@ class CandidateSetValidationResult:
         }
 
     @classmethod
-    def from_dict(cls, payload: Mapping[str, Any]) -> "CandidateSetValidationResult":
+    def from_dict(
+        cls, payload: Mapping[str, Any]
+    ) -> "CandidateSetValidationResult":
         if not isinstance(payload, Mapping):
-            raise CandidateValidationError("set result payload must be an object")
-        if payload.get("proof_claimed") is True or payload.get("completion_claimed") is True:
+            raise CandidateValidationError(
+                "set result payload must be an object"
+            )
+        if payload.get("proof_claimed") is True or payload.get(
+            "completion_claimed"
+        ) is True:
             raise CandidateValidationError(
                 "CandidateSetValidationResult cannot claim proof or completion"
             )
         return cls(
             set_result_id=payload.get("set_result_id", ""),
             results=tuple(payload.get("results") or ()),
-            accepted_candidate_ids=tuple(payload.get("accepted_candidate_ids") or ()),
-            rejected_candidate_ids=tuple(payload.get("rejected_candidate_ids") or ()),
-            quarantined_candidate_ids=tuple(payload.get("quarantined_candidate_ids") or ()),
-            dischargeable_candidate_ids=tuple(payload.get("dischargeable_candidate_ids") or ()),
+            accepted_candidate_ids=tuple(
+                payload.get("accepted_candidate_ids") or ()
+            ),
+            rejected_candidate_ids=tuple(
+                payload.get("rejected_candidate_ids") or ()
+            ),
+            quarantined_candidate_ids=tuple(
+                payload.get("quarantined_candidate_ids") or ()
+            ),
+            dischargeable_candidate_ids=tuple(
+                payload.get("dischargeable_candidate_ids") or ()
+            ),
             disagreements=tuple(payload.get("disagreements") or ()),
-            algorithm_version=payload.get("algorithm_version", VALIDATOR_ALGORITHM_VERSION),
+            algorithm_version=payload.get(
+                "algorithm_version", VALIDATOR_ALGORITHM_VERSION
+            ),
             metadata=payload.get("metadata") or {},
             proof_claimed=False,
             completion_claimed=False,
@@ -1686,28 +1835,40 @@ def _check_exact_binding(
     cand_tree = candidate.source.tree_id
     hole_tree = hole.source.tree_id
     if cand_tree and cand_tree != binding.tree_id:
-        problems.append(f"candidate tree_id {cand_tree!r} != binding {binding.tree_id!r}")
+        problems.append(
+            f"candidate tree_id {cand_tree!r} != binding {binding.tree_id!r}"
+        )
     if hole_tree and hole_tree != binding.tree_id:
-        problems.append(f"hole tree_id {hole_tree!r} != binding {binding.tree_id!r}")
+        problems.append(
+            f"hole tree_id {hole_tree!r} != binding {binding.tree_id!r}"
+        )
 
     # Goal binding
     if not binding.formal_goal_id:
         problems.append("binding.formal_goal_id is required")
     if hole.formal_goal_id and hole.formal_goal_id != binding.formal_goal_id:
         problems.append(
-            f"hole formal_goal_id {hole.formal_goal_id!r} != binding {binding.formal_goal_id!r}"
+            f"hole formal_goal_id {hole.formal_goal_id!r} != binding "
+            f"{binding.formal_goal_id!r}"
         )
 
     # Snapshot / source scope when declared
     if binding.snapshot_id:
-        if candidate.source.snapshot_id and candidate.source.snapshot_id != binding.snapshot_id:
+        if (
+            candidate.source.snapshot_id
+            and candidate.source.snapshot_id != binding.snapshot_id
+        ):
             problems.append(
                 f"candidate snapshot {candidate.source.snapshot_id!r} != "
                 f"binding {binding.snapshot_id!r}"
             )
-        if hole.source.snapshot_id and hole.source.snapshot_id != binding.snapshot_id:
+        if (
+            hole.source.snapshot_id
+            and hole.source.snapshot_id != binding.snapshot_id
+        ):
             problems.append(
-                f"hole snapshot {hole.source.snapshot_id!r} != binding {binding.snapshot_id!r}"
+                f"hole snapshot {hole.source.snapshot_id!r} != binding "
+                f"{binding.snapshot_id!r}"
             )
 
     # Assumption ids: candidate new assumptions must be subset of binding
@@ -1715,7 +1876,9 @@ def _check_exact_binding(
     if candidate.new_assumption_ids and binding.assumption_ids:
         extra = set(candidate.new_assumption_ids) - set(binding.assumption_ids)
         if extra:
-            problems.append(f"candidate assumptions not bound: {sorted(extra)}")
+            problems.append(
+                f"candidate assumptions not bound: {sorted(extra)}"
+            )
 
     # Tool binding from recipe / binding / candidate providers
     tool = binding.tool_id
@@ -1725,7 +1888,8 @@ def _check_exact_binding(
             # candidate providers when it matches recipe.
             if tool not in candidate.provider_ids:
                 problems.append(
-                    f"tool_id {tool!r} not in recipe providers {list(recipe.provider_ids)}"
+                    f"tool_id {tool!r} not in recipe providers "
+                    f"{list(recipe.provider_ids)}"
                 )
         # When tool is empty, bind first recipe provider as expected tool
         # without failing — exactness means "if declared, must match".
@@ -1734,26 +1898,42 @@ def _check_exact_binding(
         # only when recipe is absent; when recipe present, already checked.
         if recipe is None:
             problems.append(
-                f"tool_id {tool!r} not among candidate providers {list(candidate.provider_ids)}"
+                f"tool_id {tool!r} not among candidate providers "
+                f"{list(candidate.provider_ids)}"
             )
 
     # Policy: if policy_id declared, bounds.network_allowed and extras must
     # not violate a fail-closed offline policy (default).
     if binding.policy_id:
-        if "offline" in binding.policy_id.lower() or "hermetic" in binding.policy_id.lower():
+        if (
+            "offline" in binding.policy_id.lower()
+            or "hermetic" in binding.policy_id.lower()
+        ):
             if binding.bounds.network_allowed:
-                problems.append("hermetic/offline policy forbids network_allowed bounds")
+                problems.append(
+                    "hermetic/offline policy forbids network_allowed bounds"
+                )
             if candidate.provenance.get("network_allowed") is True:
-                problems.append("hermetic/offline policy forbids networked candidate")
+                problems.append(
+                    "hermetic/offline policy forbids networked candidate"
+                )
 
     # Bounds: hole bounds must not exceed binding bounds when both set.
     hb = hole.bounds
     bb = binding.bounds
     if hb.wall_time_ms and bb.wall_time_ms and hb.wall_time_ms > bb.wall_time_ms:
-        problems.append(f"hole wall_time_ms {hb.wall_time_ms} exceeds binding {bb.wall_time_ms}")
-    if hb.max_candidates and bb.max_candidates and hb.max_candidates > bb.max_candidates:
         problems.append(
-            f"hole max_candidates {hb.max_candidates} exceeds binding {bb.max_candidates}"
+            f"hole wall_time_ms {hb.wall_time_ms} exceeds binding "
+            f"{bb.wall_time_ms}"
+        )
+    if (
+        hb.max_candidates
+        and bb.max_candidates
+        and hb.max_candidates > bb.max_candidates
+    ):
+        problems.append(
+            f"hole max_candidates {hb.max_candidates} exceeds binding "
+            f"{bb.max_candidates}"
         )
     if bb.network_allowed is False and hb.network_allowed is True:
         problems.append("hole allows network but binding forbids it")
@@ -1811,7 +1991,10 @@ def _check_stale(
             return ValidationCheck(
                 stage="stale_freshness",
                 status=ValidationCheckStatus.FAIL,
-                detail=(f"stale hole: content_id {actual} != expected {expected_hole_content_id}"),
+                detail=(
+                    f"stale hole: content_id {actual} != expected "
+                    f"{expected_hole_content_id}"
+                ),
             )
     # Superseded candidates are always stale for discharge purposes.
     if candidate.status is CandidateStatus.SUPERSEDED:
@@ -1956,7 +2139,9 @@ def _run_replay(
             outcomes.append(
                 ReplayOutcome(
                     status=ReplayStatus.ERROR,
-                    backend_kind=getattr(backend, "backend_kind", ReplayBackendKind.SYNTHETIC),
+                    backend_kind=getattr(
+                        backend, "backend_kind", ReplayBackendKind.SYNTHETIC
+                    ),
                     provider_id=getattr(backend, "provider_id", "provider:error"),
                     detail=str(error)[:512],
                 )
@@ -1970,7 +2155,9 @@ def _run_replay(
                     ReplayOutcome(
                         status=ReplayStatus.ERROR,
                         backend_kind=ReplayBackendKind.SYNTHETIC,
-                        provider_id=getattr(backend, "provider_id", "provider:error"),
+                        provider_id=getattr(
+                            backend, "provider_id", "provider:error"
+                        ),
                         detail="backend returned non-ReplayOutcome",
                     )
                 )
@@ -1984,7 +2171,9 @@ def _run_replay(
                 stage="replay",
                 status=ValidationCheckStatus.QUARANTINED,
                 detail="backends disagree on holds vs fails; quarantined",
-                evidence_ids=tuple(eid for o in outcomes for eid in o.evidence_ids),
+                evidence_ids=tuple(
+                    eid for o in outcomes for eid in o.evidence_ids
+                ),
             ),
             tuple(outcomes),
         )
@@ -2025,7 +2214,9 @@ def _run_replay(
                 stage="replay",
                 status=ValidationCheckStatus.PASS,
                 detail="replay holds only under declared bounds",
-                evidence_ids=tuple(eid for o in outcomes for eid in o.evidence_ids),
+                evidence_ids=tuple(
+                    eid for o in outcomes for eid in o.evidence_ids
+                ),
             ),
             tuple(outcomes),
         )
@@ -2059,7 +2250,9 @@ def _check_minimality(
     selected = list(binding.selected_premise_ids) or list(binding.premise_ids)
     # Also consider candidate-local premise ids from provenance.
     prov_premises = candidate.provenance.get("premise_ids")
-    if isinstance(prov_premises, Sequence) and not isinstance(prov_premises, (str, bytes)):
+    if isinstance(prov_premises, Sequence) and not isinstance(
+        prov_premises, (str, bytes)
+    ):
         for item in prov_premises:
             if isinstance(item, str) and item and item not in selected:
                 selected.append(item)
@@ -2195,7 +2388,10 @@ def _check_minimality(
             critical_premise_ids=(),
             redundant_premise_ids=tuple(redundant),
             guarantee_limited=True,
-            detail=("selected premises are redundant under deletion; acceptance guarantee limited"),
+            detail=(
+                "selected premises are redundant under deletion; "
+                "acceptance guarantee limited"
+            ),
         )
         return (
             ValidationCheck(
@@ -2232,7 +2428,11 @@ def _detect_provider_disagreement(
 
     # Provider-proposed verdicts (advisory only — never authoritative alone).
     if proposed_provider_verdicts:
-        normalized = {k: v.strip().lower() for k, v in proposed_provider_verdicts.items() if v}
+        normalized = {
+            k: v.strip().lower()
+            for k, v in proposed_provider_verdicts.items()
+            if v
+        }
         accept_like = {
             "accepted",
             "accept",
@@ -2262,7 +2462,9 @@ def _detect_provider_disagreement(
                 reason=QuarantineReason.PROVIDER_DISAGREEMENT,
                 candidate_id=candidate.candidate_id,
                 provider_ids=tuple(sorted(normalized)),
-                outcomes=tuple(f"{k}:{v}" for k, v in sorted(normalized.items())),
+                outcomes=tuple(
+                    f"{k}:{v}" for k, v in sorted(normalized.items())
+                ),
                 detail="proposed provider verdicts disagree; quarantined",
             )
 
@@ -2278,8 +2480,12 @@ def _detect_provider_disagreement(
             ),
             reason=QuarantineReason.REPLAY_DISAGREEMENT,
             candidate_id=candidate.candidate_id,
-            provider_ids=tuple(sorted({o.provider_id for o in replay_outcomes if o.provider_id})),
-            outcomes=tuple(f"{o.provider_id}:{o.status.value}" for o in replay_outcomes),
+            provider_ids=tuple(
+                sorted({o.provider_id for o in replay_outcomes if o.provider_id})
+            ),
+            outcomes=tuple(
+                f"{o.provider_id}:{o.status.value}" for o in replay_outcomes
+            ),
             detail="independent replay backends disagree; quarantined",
         )
     return None
@@ -2343,7 +2549,10 @@ def _decide_verdict(
             )
 
     stale_check = by_stage.get("stale_freshness")
-    if stale_check is not None and stale_check.status is ValidationCheckStatus.FAIL:
+    if (
+        stale_check is not None
+        and stale_check.status is ValidationCheckStatus.FAIL
+    ):
         return (
             ValidationVerdict.REJECTED,
             AuthorityCeiling.CANDIDATE,
@@ -2396,21 +2605,29 @@ def _decide_verdict(
         )
 
     # Replay passed (holds or bounded).
-    holds_outcomes = [o for o in replay_outcomes if o.status is ReplayStatus.HOLDS]
-    bounded_outcomes = [o for o in replay_outcomes if o.status is ReplayStatus.BOUNDED]
+    holds_outcomes = [
+        o for o in replay_outcomes if o.status is ReplayStatus.HOLDS
+    ]
+    bounded_outcomes = [
+        o for o in replay_outcomes if o.status is ReplayStatus.BOUNDED
+    ]
     authority = AuthorityCeiling.BOUNDED
     if holds_outcomes:
         # Prefer highest non-forbidden authority from holding backends.
         for outcome in holds_outcomes:
             authority = outcome.authority
             break
-        authority = cap_validation_authority(authority, verdict=ValidationVerdict.ACCEPTED)
+        authority = cap_validation_authority(
+            authority, verdict=ValidationVerdict.ACCEPTED
+        )
     elif bounded_outcomes:
         authority = cap_validation_authority(
             AuthorityCeiling.BOUNDED, verdict=ValidationVerdict.BOUNDED
         )
 
-    guarantee_limited = bool(minimality is not None and minimality.guarantee_limited)
+    guarantee_limited = bool(
+        minimality is not None and minimality.guarantee_limited
+    )
     if (
         minimality is not None
         and minimality.checked
@@ -2430,9 +2647,15 @@ def _decide_verdict(
     if holds_outcomes or bounded_outcomes:
         return (
             ValidationVerdict.BOUNDED,
-            cap_validation_authority(AuthorityCeiling.BOUNDED, verdict=ValidationVerdict.BOUNDED),
+            cap_validation_authority(
+                AuthorityCeiling.BOUNDED, verdict=ValidationVerdict.BOUNDED
+            ),
             DischargeEligibility.BOUNDED,
-            (minimality.kind.value if minimality is not None else MinimalityKind.BOUNDED.value),
+            (
+                minimality.kind.value
+                if minimality is not None
+                else MinimalityKind.BOUNDED.value
+            ),
             True,
         )
 
@@ -2473,14 +2696,18 @@ class ProofCandidateValidator:
         normalized: list[Any] = []
         for index, backend in enumerate(self.backends or ()):
             if not hasattr(backend, "replay"):
-                raise CandidateValidationError(f"backends[{index}] must provide replay(...)")
+                raise CandidateValidationError(
+                    f"backends[{index}] must provide replay(...)"
+                )
             normalized.append(backend)
         object.__setattr__(self, "backends", tuple(normalized))
         object.__setattr__(self, "bounds", _bounds(self.bounds, "bounds"))
         object.__setattr__(
             self,
             "require_replay_for_accept",
-            _bool(self.require_replay_for_accept, "require_replay_for_accept"),
+            _bool(
+                self.require_replay_for_accept, "require_replay_for_accept"
+            ),
         )
         object.__setattr__(
             self,
@@ -2499,9 +2726,13 @@ class ProofCandidateValidator:
         if isinstance(request, Mapping):
             request = ValidationRequest.from_dict(request)
         elif not isinstance(request, ValidationRequest):
-            raise CandidateValidationError("request must be a ValidationRequest")
+            raise CandidateValidationError(
+                "request must be a ValidationRequest"
+            )
 
-        active_bounds = _bounds(bounds if bounds is not None else self.bounds, "bounds")
+        active_bounds = _bounds(
+            bounds if bounds is not None else self.bounds, "bounds"
+        )
         # Prefer recipe bounds when tighter.
         recipe = request.recipe or request.hole.validation_recipe
         if recipe is not None and recipe.bounds.wall_time_ms:
@@ -2534,7 +2765,9 @@ class ProofCandidateValidator:
             )
 
         # 2. Exact binding
-        checks.append(_check_exact_binding(candidate, hole, binding, recipe))
+        checks.append(
+            _check_exact_binding(candidate, hole, binding, recipe)
+        )
         if checks[-1].status is ValidationCheckStatus.FAIL:
             return self._finalize(
                 candidate=candidate,
@@ -2568,7 +2801,9 @@ class ProofCandidateValidator:
                 minimality=None,
                 replay_outcomes=(),
                 disagreement=DisagreementRecord(
-                    disagreement_id=_stable_id("disagree", candidate.candidate_id, "stale"),
+                    disagreement_id=_stable_id(
+                        "disagree", candidate.candidate_id, "stale"
+                    ),
                     reason=QuarantineReason.STALE_CANDIDATE,
                     candidate_id=candidate.candidate_id,
                     detail=stale_check.detail,
@@ -2641,10 +2876,14 @@ class ProofCandidateValidator:
             request.proposed_provider_verdicts,
             replay_outcomes,
         )
-        if disagreement is not None or (replay_check.status is ValidationCheckStatus.QUARANTINED):
+        if disagreement is not None or (
+            replay_check.status is ValidationCheckStatus.QUARANTINED
+        ):
             if disagreement is None:
                 disagreement = DisagreementRecord(
-                    disagreement_id=_stable_id("disagree", candidate.candidate_id, "replay"),
+                    disagreement_id=_stable_id(
+                        "disagree", candidate.candidate_id, "replay"
+                    ),
                     reason=QuarantineReason.REPLAY_DISAGREEMENT,
                     candidate_id=candidate.candidate_id,
                     detail=replay_check.detail,
@@ -2723,7 +2962,9 @@ class ProofCandidateValidator:
         if not isinstance(requests, Sequence) or isinstance(
             requests, (str, bytes, bytearray, memoryview)
         ):
-            raise CandidateValidationError("requests must be a sequence of ValidationRequest")
+            raise CandidateValidationError(
+                "requests must be a sequence of ValidationRequest"
+            )
 
         results: list[CandidateValidationResult] = []
         for index, raw in enumerate(requests):
@@ -2732,7 +2973,9 @@ class ProofCandidateValidator:
             elif isinstance(raw, ValidationRequest):
                 req = raw
             else:
-                raise CandidateValidationError(f"requests[{index}] must be a ValidationRequest")
+                raise CandidateValidationError(
+                    f"requests[{index}] must be a ValidationRequest"
+                )
             results.append(self.validate(req, bounds=bounds))
 
         # Cross-candidate disagreement on same hole: accept vs reject
@@ -2747,7 +2990,8 @@ class ProofCandidateValidator:
         for hole_id, group in sorted(by_hole.items()):
             verdicts = {item.validation.verdict for item in group}
             conflict = (
-                ValidationVerdict.ACCEPTED in verdicts or ValidationVerdict.BOUNDED in verdicts
+                ValidationVerdict.ACCEPTED in verdicts
+                or ValidationVerdict.BOUNDED in verdicts
             ) and ValidationVerdict.REJECTED in verdicts
             if conflict and len(group) > 1:
                 for item in group:
@@ -2776,14 +3020,20 @@ class ProofCandidateValidator:
                                 )
                             ),
                             outcomes=tuple(
-                                f"{r.validation.candidate_id}:{r.validation.verdict.value}"
+                                f"{r.validation.candidate_id}:"
+                                f"{r.validation.verdict.value}"
                                 for r in group
                             ),
-                            detail=(f"candidate set disagrees on hole {hole_id}; quarantined"),
+                            detail=(
+                                f"candidate set disagrees on hole {hole_id}; "
+                                "quarantined"
+                            ),
                         )
                         disagreements.append(record)
                         # Rewrite result as quarantined / inconclusive
-                        adjusted.append(self._requarantine_result(item, record))
+                        adjusted.append(
+                            self._requarantine_result(item, record)
+                        )
                     else:
                         adjusted.append(item)
             else:
@@ -2791,28 +3041,38 @@ class ProofCandidateValidator:
 
         # Preserve original order
         by_id = {r.validation.candidate_id: r for r in adjusted}
-        ordered = [by_id.get(r.validation.candidate_id, r) for r in results]
+        ordered = [
+            by_id.get(r.validation.candidate_id, r) for r in results
+        ]
 
         accepted = tuple(
             r.validation.candidate_id
             for r in ordered
-            if r.validation.verdict in {ValidationVerdict.ACCEPTED, ValidationVerdict.BOUNDED}
+            if r.validation.verdict
+            in {ValidationVerdict.ACCEPTED, ValidationVerdict.BOUNDED}
             and not r.quarantined
         )
         rejected = tuple(
             r.validation.candidate_id
             for r in ordered
-            if r.validation.verdict is ValidationVerdict.REJECTED and not r.quarantined
+            if r.validation.verdict is ValidationVerdict.REJECTED
+            and not r.quarantined
         )
-        quarantined = tuple(r.validation.candidate_id for r in ordered if r.quarantined)
-        dischargeable = tuple(r.validation.candidate_id for r in ordered if r.may_discharge)
+        quarantined = tuple(
+            r.validation.candidate_id for r in ordered if r.quarantined
+        )
+        dischargeable = tuple(
+            r.validation.candidate_id for r in ordered if r.may_discharge
+        )
 
         set_id = (
             "setval:"
             + hashlib.sha256(
                 json.dumps(
                     {
-                        "candidate_ids": [r.validation.candidate_id for r in ordered],
+                        "candidate_ids": [
+                            r.validation.candidate_id for r in ordered
+                        ],
                         "algorithm": self.ALGORITHM_VERSION,
                     },
                     sort_keys=True,
@@ -2908,12 +3168,14 @@ class ProofCandidateValidator:
         forced_stale: bool,
         forced_quarantine: bool,
     ) -> CandidateValidationResult:
-        verdict, authority, eligibility, minimality_label, validated = _decide_verdict(
-            checks,
-            minimality=minimality,
-            replay_outcomes=replay_outcomes,
-            quarantined=forced_quarantine,
-            stale=forced_stale,
+        verdict, authority, eligibility, minimality_label, validated = (
+            _decide_verdict(
+                checks,
+                minimality=minimality,
+                replay_outcomes=replay_outcomes,
+                quarantined=forced_quarantine,
+                stale=forced_stale,
+            )
         )
 
         # Authority stage check
@@ -2950,7 +3212,11 @@ class ProofCandidateValidator:
         )
         discharge_check = ValidationCheck(
             stage="discharge_gate",
-            status=(ValidationCheckStatus.PASS if discharge_ok else ValidationCheckStatus.FAIL),
+            status=(
+                ValidationCheckStatus.PASS
+                if discharge_ok
+                else ValidationCheckStatus.FAIL
+            ),
             detail=(
                 "eligible to discharge bound graph node"
                 if discharge_ok
@@ -2984,7 +3250,9 @@ class ProofCandidateValidator:
             for outcome in replay_outcomes:
                 if outcome.status is ReplayStatus.HOLDS and outcome.provider_id:
                     provider_id = outcome.provider_id
-                    provider_version = outcome.provider_version or provider_version
+                    provider_version = (
+                        outcome.provider_version or provider_version
+                    )
                     break
 
         validation_id = _stable_id(
@@ -3016,7 +3284,9 @@ class ProofCandidateValidator:
                 f"failed to build CandidateValidation: {error}"
             ) from error
 
-        result_id = _stable_id("vresult", validation_id, self.ALGORITHM_VERSION)
+        result_id = _stable_id(
+            "vresult", validation_id, self.ALGORITHM_VERSION
+        )
         return CandidateValidationResult(
             result_id=result_id,
             validation=validation,

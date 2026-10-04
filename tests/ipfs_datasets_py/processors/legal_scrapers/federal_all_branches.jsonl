@@ -1,0 +1,2 @@
+{"id":"epa","name":"Environmental Protection Agency","branch":"executive","website":"https://www.epa.gov","host":"www.epa.gov","aliases":["EPA"],"description":"Federal environmental protection agency","seed_urls":["https://www.epa.gov/laws-regulations"]}
+{"id":"osha","name":"Occupational Safety and Health Administration","branch":"executive","website":"https://www.osha.gov","host":"www.osha.gov","aliases":["OSHA"],"description":"Federal workplace safety agency","seed_urls":["https://www.osha.gov/laws-regs"]}

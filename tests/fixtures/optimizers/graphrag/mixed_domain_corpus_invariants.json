@@ -1,0 +1,36 @@
+{
+  "cases": [
+    {
+      "id": "legal_contract_terms",
+      "domain": "legal",
+      "text": "The plaintiff and defendant agreed to arbitration under Section 12.3 and warranty terms.",
+      "min_entities": 5,
+      "required_entity_texts": ["plaintiff", "defendant", "Section 12.3", "arbitration", "warranty"],
+      "required_entity_types": ["LegalParty", "LegalReference", "LegalConcept"]
+    },
+    {
+      "id": "medical_prescription",
+      "domain": "medical",
+      "text": "The patient presented symptoms and the physician prescribed 5 mg dosage.",
+      "min_entities": 3,
+      "required_entity_texts": ["patient", "physician", "5 mg"],
+      "required_entity_types": ["MedicalRole", "Dosage"]
+    },
+    {
+      "id": "technical_api_version",
+      "domain": "technical",
+      "text": "The API provides REST and JSON support in version v2.3.1 endpoint.",
+      "min_entities": 4,
+      "required_entity_texts": ["API", "REST", "JSON", "v2.3.1"],
+      "required_entity_types": ["Protocol", "Version"]
+    },
+    {
+      "id": "general_org_person_location",
+      "domain": "general",
+      "text": "Alice works at Acme Corp in Seattle and manages billing operations.",
+      "min_entities": 4,
+      "required_entity_texts": ["Alice", "Acme Corp", "Seattle"],
+      "required_entity_types": ["Person", "Organization"]
+    }
+  ]
+}

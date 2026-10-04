@@ -118,7 +118,9 @@ assert crypto_ir.NullCryptoIRAdapter is adapters.NullCryptoIRAdapter
     )
 
     assert result.returncode == 0, (
-        f"isolated Crypto IR import failed\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}"
+        "isolated Crypto IR import failed\n"
+        f"stdout:\n{result.stdout}\n"
+        f"stderr:\n{result.stderr}"
     )
 
 
@@ -224,7 +226,9 @@ def test_probe_missing_required_surface() -> None:
         implementation_version="1.0.0",
         semantic_version="1.0.0",
     )
-    probe = probe_capability(cap, required_surfaces=(CapabilitySurface.ANALYSIS,))
+    probe = probe_capability(
+        cap, required_surfaces=(CapabilitySurface.ANALYSIS,)
+    )
     assert probe.available is False
     assert "analysis" in probe.missing_surfaces
 
@@ -694,5 +698,7 @@ def test_registry_list_available_and_has_available() -> None:
     assert registry.has_available("adapter.up") is True
     assert registry.has_available("adapter.down") is False
     assert registry.has_available("missing") is False
-    surface_filtered = registry.list_available(required_surfaces=(CapabilitySurface.ANALYSIS,))
+    surface_filtered = registry.list_available(
+        required_surfaces=(CapabilitySurface.ANALYSIS,)
+    )
     assert surface_filtered == ()

@@ -77,7 +77,11 @@ class EthereumFinalityPolicy(DepthFinalityPolicy):
             position = record.get("ledger_position") or {}
             sequence = position.get("sequence") if isinstance(position, dict) else None
         latest_number = head.sequence
-        confirmations = max(0, latest_number - sequence) if isinstance(sequence, int) else 0
+        confirmations = (
+            max(0, latest_number - sequence)
+            if isinstance(sequence, int)
+            else 0
+        )
         prior = getattr(record, "finality", None)
         if prior in {Finality.ORPHANED, Finality.REVERTED, Finality.FAILED}:
             return EthereumFinalityAssessment(

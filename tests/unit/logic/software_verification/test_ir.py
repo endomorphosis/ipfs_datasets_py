@@ -147,8 +147,12 @@ def test_property_vocabulary_matches_the_canonical_taxonomy() -> None:
 @pytest.mark.parametrize(
     "factory",
     [
-        lambda: VerificationProperty("property:unmapped", PropertyKind.SAFETY, "Always safe."),
-        lambda: VerificationAssumption("assumption:unmapped", "The environment is fair."),
+        lambda: VerificationProperty(
+            "property:unmapped", PropertyKind.SAFETY, "Always safe."
+        ),
+        lambda: VerificationAssumption(
+            "assumption:unmapped", "The environment is fair."
+        ),
     ],
 )
 def test_every_property_and_assumption_must_be_source_mapped(factory: object) -> None:

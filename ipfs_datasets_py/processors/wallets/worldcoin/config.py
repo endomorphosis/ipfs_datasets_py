@@ -213,9 +213,7 @@ def load_world_id_config(env: Mapping[str, str] | None = None) -> WorldIdConfig:
     default_action = _str_env(env, "WORLD_ID_DEFAULT_ACTION", DEFAULT_WORLD_ID_ACTION)
     allowed_actions = _actions_from_env(env, default_action)
     if default_action not in allowed_actions:
-        raise WorldIdConfigError(
-            "WORLD_ID_DEFAULT_ACTION must be included in WORLD_ID_ALLOWED_ACTIONS"
-        )
+        raise WorldIdConfigError("WORLD_ID_DEFAULT_ACTION must be included in WORLD_ID_ALLOWED_ACTIONS")
 
     config = WorldIdConfig(
         enabled=enabled,
@@ -224,9 +222,7 @@ def load_world_id_config(env: Mapping[str, str] | None = None) -> WorldIdConfig:
         rp_id=_str_env(env, "WORLD_ID_RP_ID", ""),
         allowed_actions=tuple(allowed_actions),
         default_action=default_action,
-        credential_policy=_str_env(
-            env, "WORLD_ID_CREDENTIAL_POLICY", DEFAULT_WORLD_ID_CREDENTIAL_POLICY
-        ),
+        credential_policy=_str_env(env, "WORLD_ID_CREDENTIAL_POLICY", DEFAULT_WORLD_ID_CREDENTIAL_POLICY),
         # Safe default: legacy (v3) evidence is rejected unless explicitly enabled.
         allow_legacy_proofs=_bool_env(env, "WORLD_ID_ALLOW_LEGACY_PROOFS", default=False),
         require_user_presence=_bool_env(env, "WORLD_ID_REQUIRE_USER_PRESENCE", default=False),
@@ -346,9 +342,7 @@ def _actions_from_env(env: Mapping[str, str] | None, default_action: str) -> lis
 
 def _reject_public_secret_leaks(env: Mapping[str, str] | None) -> None:
     source = env if env is not None else os.environ
-    leaked = sorted(
-        name for name in _PUBLIC_SECRET_ENV_NAMES if str(source.get(name) or "").strip()
-    )
+    leaked = sorted(name for name in _PUBLIC_SECRET_ENV_NAMES if str(source.get(name) or "").strip())
     if leaked:
         raise WorldIdConfigError(
             "World ID signing/nullifier secrets must not be configured in browser-exposed env vars: "
@@ -411,9 +405,7 @@ def _url_env(env: Mapping[str, str] | None, name: str, default: str) -> str:
         message = str(exc)
         if "base URL must be an absolute" in message:
             raise WorldIdConfigError(f"{name} must be an absolute http(s) URL") from None
-        raise WorldIdConfigError(
-            f"{name} is not an allowed World ID verify endpoint: {message}"
-        ) from None
+        raise WorldIdConfigError(f"{name} is not an allowed World ID verify endpoint: {message}") from None
 
 
 __all__ = [

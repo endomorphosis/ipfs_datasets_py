@@ -98,14 +98,20 @@ NATIVE_ASSET_REFERENCE: Final[str] = "60"
 NATIVE_DECIMALS: Final[int] = 18
 NATIVE_SYMBOL: Final[str] = "ETH"
 
-TRANSFER_TOPIC: Final[str] = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+TRANSFER_TOPIC: Final[str] = (
+    "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+)
 
 _ADDRESS_RE: Final[re.Pattern[str]] = re.compile(r"^0x[0-9a-fA-F]{40}$")
 _HASH_RE: Final[re.Pattern[str]] = re.compile(r"^0x[0-9a-fA-F]{64}$")
 _HEX_DATA_RE: Final[re.Pattern[str]] = re.compile(r"^0x(?:[0-9a-fA-F]{2})*$")
-_QUANTITY_RE: Final[re.Pattern[str]] = re.compile(r"^0x(?:0|[1-9a-fA-F][0-9a-fA-F]*)$")
+_QUANTITY_RE: Final[re.Pattern[str]] = re.compile(
+    r"^0x(?:0|[1-9a-fA-F][0-9a-fA-F]*)$"
+)
 _DECIMAL_INTEGER: Final[re.Pattern[str]] = re.compile(r"^-?(0|[1-9][0-9]*)$")
-_ID_RE: Final[re.Pattern[str]] = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$")
+_ID_RE: Final[re.Pattern[str]] = re.compile(
+    r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+)
 
 
 class EVMAdapterError(CryptoIRAdapterError):
@@ -283,7 +289,9 @@ def _keccak_f1600(state: bytearray) -> None:
     """In-place Keccak-f[1600] permutation over a 200-byte state."""
 
     # Convert to 25 little-endian 64-bit lanes.
-    lanes = [int.from_bytes(state[i * 8 : (i + 1) * 8], "little") for i in range(25)]
+    lanes = [
+        int.from_bytes(state[i * 8 : (i + 1) * 8], "little") for i in range(25)
+    ]
     round_constants = (
         0x0000000000000001,
         0x0000000000008082,
@@ -324,10 +332,7 @@ def _keccak_f1600(state: bytearray) -> None:
 
     for rc in round_constants:
         # θ
-        c = [
-            lanes[x] ^ lanes[x + 5] ^ lanes[x + 10] ^ lanes[x + 15] ^ lanes[x + 20]
-            for x in range(5)
-        ]
+        c = [lanes[x] ^ lanes[x + 5] ^ lanes[x + 10] ^ lanes[x + 15] ^ lanes[x + 20] for x in range(5)]
         d = [c[(x - 1) % 5] ^ rol(c[(x + 1) % 5], 1) for x in range(5)]
         for x in range(5):
             for y in range(5):
@@ -341,7 +346,8 @@ def _keccak_f1600(state: bytearray) -> None:
         for x in range(5):
             for y in range(5):
                 lanes[x + 5 * y] = (
-                    b[x + 5 * y] ^ ((~b[((x + 1) % 5) + 5 * y]) & b[((x + 2) % 5) + 5 * y])
+                    b[x + 5 * y]
+                    ^ ((~b[((x + 1) % 5) + 5 * y]) & b[((x + 2) % 5) + 5 * y])
                 ) & mask
         # ι
         lanes[0] ^= rc
@@ -504,7 +510,9 @@ def resolve_network(
     if resolved_id is None:
         raise EVMAdapterError("chain_id is required for EVM conversion")
     if not genesis_hash:
-        raise EVMAdapterError("unknown EVM chain_id requires an explicit genesis_hash")
+        raise EVMAdapterError(
+            "unknown EVM chain_id requires an explicit genesis_hash"
+        )
     net_name = network or f"eip155-{resolved_id}"
     return EVMNetworkAnchor(
         chain_id=resolved_id,
@@ -694,7 +702,9 @@ class EVMCallIntent:
             raise EVMAdapterError("value_wei must be a non-negative decimal integer string")
         object.__setattr__(self, "value_wei", value)
         object.__setattr__(self, "data", normalize_hex_data(self.data, field="data"))
-        object.__setattr__(self, "method", _text(self.method, "method", allow_empty=True))
+        object.__setattr__(
+            self, "method", _text(self.method, "method", allow_empty=True)
+        )
         object.__setattr__(
             self, "gas_limit", _optional_non_negative_int(self.gas_limit, "gas_limit")
         )
@@ -706,10 +716,16 @@ class EVMCallIntent:
         object.__setattr__(
             self,
             "max_priority_fee_per_gas",
-            _optional_non_negative_int(self.max_priority_fee_per_gas, "max_priority_fee_per_gas"),
+            _optional_non_negative_int(
+                self.max_priority_fee_per_gas, "max_priority_fee_per_gas"
+            ),
         )
-        object.__setattr__(self, "nonce", _optional_non_negative_int(self.nonce, "nonce"))
-        object.__setattr__(self, "network", _text(self.network, "network", allow_empty=True))
+        object.__setattr__(
+            self, "nonce", _optional_non_negative_int(self.nonce, "nonce")
+        )
+        object.__setattr__(
+            self, "network", _text(self.network, "network", allow_empty=True)
+        )
         object.__setattr__(
             self,
             "genesis_hash",
@@ -803,7 +819,9 @@ class EVMTransactionObservation:
             or self.chain_id <= 0
         ):
             raise EVMAdapterError("chain_id must be a positive integer")
-        object.__setattr__(self, "tx_hash", normalize_hash(self.tx_hash, field="tx_hash"))
+        object.__setattr__(
+            self, "tx_hash", normalize_hash(self.tx_hash, field="tx_hash")
+        )
         for name in ("from_address", "to_address"):
             raw = getattr(self, name)
             if raw in (None, ""):
@@ -818,7 +836,9 @@ class EVMTransactionObservation:
                 object.__setattr__(self, "value_wei", str(self.value_wei))
             value = _text(self.value_wei, "value_wei")
             if not _DECIMAL_INTEGER.fullmatch(value) or value.startswith("-"):
-                raise EVMAdapterError("value_wei must be a non-negative decimal integer string")
+                raise EVMAdapterError(
+                    "value_wei must be a non-negative decimal integer string"
+                )
             object.__setattr__(self, "value_wei", value)
         if self.input_data is not None:
             object.__setattr__(
@@ -851,9 +871,13 @@ class EVMTransactionObservation:
             "network",
             "genesis_hash",
         ):
-            object.__setattr__(self, name, _text(getattr(self, name), name, allow_empty=True))
+            object.__setattr__(
+                self, name, _text(getattr(self, name), name, allow_empty=True)
+            )
         if self.receipt is not None:
-            object.__setattr__(self, "receipt", _attributes(_as_mapping(self.receipt, "receipt")))
+            object.__setattr__(
+                self, "receipt", _attributes(_as_mapping(self.receipt, "receipt"))
+            )
         if self.logs is not None:
             if isinstance(self.logs, (str, bytes, bytearray)) or not isinstance(
                 self.logs, Sequence
@@ -912,7 +936,9 @@ class EVMTransactionObservation:
             "token_transfers": None
             if self.token_transfers is None
             else [thaw_json(item) for item in self.token_transfers],
-            "traces": None if self.traces is None else [thaw_json(item) for item in self.traces],
+            "traces": None
+            if self.traces is None
+            else [thaw_json(item) for item in self.traces],
             "transaction_index": self.transaction_index,
             "tx_hash": self.tx_hash,
             "validity_end": self.validity_end,
@@ -933,7 +959,9 @@ class EVMTransactionObservation:
             input_data=value.get("input_data", value.get("input", value.get("data"))),
             block_number=value.get("block_number", value.get("blockNumber")),
             block_hash=value.get("block_hash", value.get("blockHash", "")),
-            transaction_index=value.get("transaction_index", value.get("transactionIndex")),
+            transaction_index=value.get(
+                "transaction_index", value.get("transactionIndex")
+            ),
             finality=value.get("finality", ""),
             retraction=value.get("retraction", ""),
             observed_at=value.get("observed_at", ""),
@@ -1056,12 +1084,12 @@ class EVMWalletAdapter:
             result_authority = source_authority
 
             if kind is EVMPayloadKind.TRANSACTION_OBSERVATION:
-                result_payload, unsupported, diagnostics, status = self._convert_observation(
-                    payload_map
+                result_payload, unsupported, diagnostics, status = (
+                    self._convert_observation(payload_map)
                 )
             elif kind is EVMPayloadKind.CALL_INTENT:
-                result_payload, unsupported, diagnostics, status = self._convert_call_intent(
-                    payload_map
+                result_payload, unsupported, diagnostics, status = (
+                    self._convert_call_intent(payload_map)
                 )
             elif kind is EVMPayloadKind.SERIALIZED_CANDIDATE:
                 result_payload, unsupported, diagnostics, status = (
@@ -1196,7 +1224,9 @@ class EVMWalletAdapter:
 
         to_account = None
         if obs.to_address:
-            to_account = account_identity(obs.to_address, chain, account_kind="contract_or_eoa")
+            to_account = account_identity(
+                obs.to_address, chain, account_kind="contract_or_eoa"
+            )
         else:
             missing_coverage.append("to_address")
             # Contract creation may legitimately omit `to`; preserve absence.
@@ -1212,7 +1242,11 @@ class EVMWalletAdapter:
                     reason="finality absent; left as unknown (not invented)",
                 )
             )
-        retraction = map_retraction(obs.retraction) if obs.retraction else RetractionStatus.UNKNOWN
+        retraction = (
+            map_retraction(obs.retraction)
+            if obs.retraction
+            else RetractionStatus.UNKNOWN
+        )
         if not obs.retraction:
             missing_coverage.append("retraction")
 
@@ -1235,7 +1269,11 @@ class EVMWalletAdapter:
         if obs.logs is not None:
             logs_list = [thaw_json(item) for item in obs.logs]
         elif receipt_dict is not None and isinstance(receipt_dict.get("logs"), list):
-            logs_list = [dict(item) for item in receipt_dict["logs"] if isinstance(item, Mapping)]
+            logs_list = [
+                dict(item)
+                for item in receipt_dict["logs"]
+                if isinstance(item, Mapping)
+            ]
         else:
             logs_list = None
             missing_coverage.append("logs")
@@ -1290,7 +1328,9 @@ class EVMWalletAdapter:
             native_transfer = {
                 "asset": asset.to_dict(),
                 "amount": amount.to_dict(),
-                "from_account": None if from_account is None else from_account.to_dict(),
+                "from_account": None
+                if from_account is None
+                else from_account.to_dict(),
                 "to_account": None if to_account is None else to_account.to_dict(),
                 "kind": "native",
             }
@@ -1299,7 +1339,9 @@ class EVMWalletAdapter:
         token_records: list[dict[str, Any]] = []
         if obs.token_transfers is not None:
             for index, item in enumerate(obs.token_transfers):
-                token_records.append(self._normalize_token_transfer(item, chain, index=index))
+                token_records.append(
+                    self._normalize_token_transfer(item, chain, index=index)
+                )
         elif logs_list is not None:
             for index, log in enumerate(logs_list):
                 decoded = self._try_decode_erc20_transfer(log, chain, index=index)
@@ -1337,7 +1379,9 @@ class EVMWalletAdapter:
             coordinate=coordinate,
             finality=finality,
             retraction=retraction,
-            validity=ValidityWindow(start=obs.validity_start, end=obs.validity_end),
+            validity=ValidityWindow(
+                start=obs.validity_start, end=obs.validity_end
+            ),
             from_account=from_account,
             to_account=to_account,
             provenance=provenance,
@@ -1428,9 +1472,12 @@ class EVMWalletAdapter:
             else AdapterConversionStatus.PARTIAL
         )
         if missing_coverage:
-            diagnostics.append("missing_coverage=" + ",".join(sorted(set(missing_coverage))))
+            diagnostics.append(
+                "missing_coverage=" + ",".join(sorted(set(missing_coverage)))
+            )
         diagnostics.append(
-            f"chain_id={network.chain_id};network={network.network};genesis={network.genesis_hash}"
+            f"chain_id={network.chain_id};network={network.network};"
+            f"genesis={network.genesis_hash}"
         )
         return result_payload, tuple(unsupported), tuple(diagnostics), status
 
@@ -1445,10 +1492,8 @@ class EVMWalletAdapter:
         if not contract:
             raise EVMAdapterError(f"token_transfers[{index}].contract is required")
         decimals_raw = item.get("decimals")
-        decimals = (
-            None
-            if decimals_raw is None
-            else _non_negative_int(decimals_raw, f"token_transfers[{index}].decimals")
+        decimals = None if decimals_raw is None else _non_negative_int(
+            decimals_raw, f"token_transfers[{index}].decimals"
         )
         asset = token_asset(
             chain,
@@ -1479,8 +1524,12 @@ class EVMWalletAdapter:
         return {
             "asset": asset.to_dict(),
             "amount": amount.to_dict(),
-            "from_account": None if not source else account_identity(str(source), chain).to_dict(),
-            "to_account": None if not dest else account_identity(str(dest), chain).to_dict(),
+            "from_account": None
+            if not source
+            else account_identity(str(source), chain).to_dict(),
+            "to_account": None
+            if not dest
+            else account_identity(str(dest), chain).to_dict(),
             "kind": "token",
             "log_index": item.get("log_index", item.get("logIndex", index)),
             "raw": thaw_json(item),
@@ -1547,8 +1596,12 @@ class EVMWalletAdapter:
         )
         chain = network.to_chain_identity()
         origin = account_identity(intent.from_address, chain, account_kind="eoa")
-        target = account_identity(intent.to_address, chain, account_kind="contract_or_eoa")
-        calldata_digest = f"sha256:{hashlib.sha256(bytes.fromhex(intent.data[2:])).hexdigest()}"
+        target = account_identity(
+            intent.to_address, chain, account_kind="contract_or_eoa"
+        )
+        calldata_digest = (
+            f"sha256:{hashlib.sha256(bytes.fromhex(intent.data[2:])).hexdigest()}"
+        )
         method = intent.method
         unsupported: list[UnsupportedField] = []
         diagnostics: list[str] = []
@@ -1556,7 +1609,9 @@ class EVMWalletAdapter:
             # Do not invent a method name from the selector alone.
             if intent.data != "0x" and len(intent.data) >= 10:
                 method = f"selector:{intent.data[2:10]}"
-                diagnostics.append("method label absent; selector preserved without ABI decode")
+                diagnostics.append(
+                    "method label absent; selector preserved without ABI decode"
+                )
             else:
                 method = "unknown"
                 unsupported.append(
@@ -1566,11 +1621,15 @@ class EVMWalletAdapter:
                     )
                 )
 
-        value_amount = ExactAmount(base_units=intent.value_wei, decimals=network.native_decimals)
+        value_amount = ExactAmount(
+            base_units=intent.value_wei, decimals=network.native_decimals
+        )
         call = CallIntent(
             target=target,
             method=method,
-            calldata_digest=calldata_digest if calldata_digest else f"sha256:{'00' * 32}",
+            calldata_digest=calldata_digest
+            if calldata_digest
+            else f"sha256:{'00' * 32}",
             value=value_amount,
             attributes={
                 "calldata": intent.data,
@@ -1639,7 +1698,8 @@ class EVMWalletAdapter:
             else AdapterConversionStatus.PARTIAL
         )
         diagnostics.append(
-            f"chain_id={network.chain_id};network={network.network};genesis={network.genesis_hash}"
+            f"chain_id={network.chain_id};network={network.network};"
+            f"genesis={network.genesis_hash}"
         )
         return result_payload, tuple(unsupported), tuple(diagnostics), status
 
@@ -1680,7 +1740,9 @@ class EVMWalletAdapter:
         else:
             data = None
             if not payload_digest:
-                raise EVMAdapterError("serialized candidate requires raw_tx or payload_digest")
+                raise EVMAdapterError(
+                    "serialized candidate requires raw_tx or payload_digest"
+                )
             if byte_length is None:
                 missing = "byte_length"
                 unsupported.append(
@@ -1752,7 +1814,8 @@ class EVMWalletAdapter:
             else AdapterConversionStatus.PARTIAL
         )
         diagnostics.append(
-            f"chain_id={network.chain_id};network={network.network};genesis={network.genesis_hash}"
+            f"chain_id={network.chain_id};network={network.network};"
+            f"genesis={network.genesis_hash}"
         )
         return result_payload, tuple(unsupported), tuple(diagnostics), status
 
@@ -1765,7 +1828,9 @@ def convert_evm_payload(
 ) -> AdapterConversionResult:
     """Module-level helper around :class:`EVMWalletAdapter.convert`."""
 
-    return (adapter or EVMWalletAdapter()).convert(payload, source_provenance=source_provenance)
+    return (adapter or EVMWalletAdapter()).convert(
+        payload, source_provenance=source_provenance
+    )
 
 
 __all__ = [

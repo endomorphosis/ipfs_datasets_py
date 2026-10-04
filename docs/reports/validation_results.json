@@ -1,0 +1,3834 @@
+{
+  "results": [
+    {
+      "file": "agentic-optimization.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/agentic-optimization.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: check-trigger, optimize",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"optimize\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"check-trigger\": Potential injection risk with github.event",
+          "line_number": null,
+          "fix_suggestion": "Validate/sanitize github.event inputs before use",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"optimize\": Potential injection risk with github.event",
+          "line_number": null,
+          "fix_suggestion": "Validate/sanitize github.event inputs before use",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"optimize\": Potential injection risk with github.event",
+          "line_number": null,
+          "fix_suggestion": "Validate/sanitize github.event inputs before use",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"optimize\": Potential injection risk with github.event",
+          "line_number": null,
+          "fix_suggestion": "Validate/sanitize github.event inputs before use",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"optimize\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: check-trigger, optimize",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "approve-optimization.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/approve-optimization.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Missing explicit permissions (security risk)",
+          "line_number": null,
+          "fix_suggestion": "Add explicit permissions: contents: read, etc.",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: approve-optimization",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"approve-optimization\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"approve-optimization\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"approve-optimization\": Potential injection risk with github.event",
+          "line_number": null,
+          "fix_suggestion": "Validate/sanitize github.event inputs before use",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"approve-optimization\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: approve-optimization",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "arm64-runner.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/arm64-runner.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: arm64-system-info, arm64-mcp-dashboard, arm64-docker-build...",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"arm64-mcp-dashboard\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"arm64-docker-build\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"arm64-integration-tests\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"arm64-system-info\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"arm64-mcp-dashboard\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"arm64-docker-build\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"arm64-integration-tests\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"architecture-comparison\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"arm64-docker-build\": curl | sh pattern detected (security risk)",
+          "line_number": null,
+          "fix_suggestion": "Download and verify scripts before execution",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"arm64-mcp-dashboard\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"arm64-integration-tests\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: arm64-system-info, arm64-mcp-dashboard, arm64-docker-build",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "cli-error-monitoring-unified.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/cli-error-monitoring-unified.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: cli-tools-monitoring",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: cli-tools-monitoring",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "cli-error-monitoring.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/cli-error-monitoring.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: cli-smoke-tests, cli-comprehensive-tests, cli-error-reporting-test...",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"cli-smoke-tests\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"cli-comprehensive-tests\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"cli-error-reporting-test\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"cli-stress-test\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"cli-smoke-tests\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"cli-comprehensive-tests\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"cli-error-reporting-test\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"cli-stress-test\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"cli-smoke-tests\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"cli-comprehensive-tests\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"cli-error-reporting-test\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"cli-stress-test\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: cli-smoke-tests, cli-comprehensive-tests, cli-error-reporting-test",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "close-stale-draft-prs.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/close-stale-draft-prs.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: close-stale-drafts",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"close-stale-drafts\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"close-stale-drafts\": Potential injection risk with github.event",
+          "line_number": null,
+          "fix_suggestion": "Validate/sanitize github.event inputs before use",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"close-stale-drafts\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: close-stale-drafts",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "comprehensive-scraper-validation.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/comprehensive-scraper-validation.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: comprehensive-validation",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"comprehensive-validation\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"comprehensive-validation\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "continuous-queue-management.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/continuous-queue-management.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "security",
+          "message": "contents: write permission - review if necessary",
+          "line_number": null,
+          "fix_suggestion": "Use contents: read unless write is required",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: analyze-queue-status, process-pr-queue, process-issue-queue...",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"process-pr-queue\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"process-issue-queue\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"analyze-queue-status\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"process-pr-queue\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"process-issue-queue\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"monitor-agent-progress\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"analyze-queue-status\": curl | sh pattern detected (security risk)",
+          "line_number": null,
+          "fix_suggestion": "Download and verify scripts before execution",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"analyze-queue-status\": Potential injection risk with github.event",
+          "line_number": null,
+          "fix_suggestion": "Validate/sanitize github.event inputs before use",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"generate-final-report\": Potential injection risk with github.event",
+          "line_number": null,
+          "fix_suggestion": "Validate/sanitize github.event inputs before use",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"analyze-queue-status\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"process-pr-queue\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"process-issue-queue\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "copilot-agent-autofix.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/copilot-agent-autofix.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "medium",
+          "category": "security",
+          "message": "contents: write permission - review if necessary",
+          "line_number": null,
+          "fix_suggestion": "Use contents: read unless write is required",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"autofix-with-copilot-agent\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"autofix-with-copilot-agent\": Potential injection risk with github.event",
+          "line_number": null,
+          "fix_suggestion": "Validate/sanitize github.event inputs before use",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"autofix-with-copilot-agent\": Potential injection risk with github.event",
+          "line_number": null,
+          "fix_suggestion": "Validate/sanitize github.event inputs before use",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"autofix-with-copilot-agent\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: autofix-with-copilot-agent",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "copilot-issue-assignment.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/copilot-issue-assignment.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "security",
+          "message": "contents: write permission - review if necessary",
+          "line_number": null,
+          "fix_suggestion": "Use contents: read unless write is required",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: assign-to-copilot",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"assign-to-copilot\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"assign-to-copilot\": Potential injection risk with github.event",
+          "line_number": null,
+          "fix_suggestion": "Validate/sanitize github.event inputs before use",
+          "auto_fixable": false
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: assign-to-copilot",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "docker-build-test.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/docker-build-test.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "security",
+          "message": "packages: write permission - ensure justified",
+          "line_number": null,
+          "fix_suggestion": "Verify package publishing is intended",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: check-runner-x64, check-runner-arm64",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"test-self-hosted-x86\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"test-self-hosted-arm64\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"build-multi-arch\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"test-summary\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"build-multi-arch\": Potential injection risk with github.event",
+          "line_number": null,
+          "fix_suggestion": "Validate/sanitize github.event inputs before use",
+          "auto_fixable": false
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: check-runner-x64, check-runner-arm64, test-github-x86",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "docker-ci.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/docker-ci.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "security",
+          "message": "packages: write permission - ensure justified",
+          "line_number": null,
+          "fix_suggestion": "Verify package publishing is intended",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: build-and-test, test-docker-compose, build-multi-arch...",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"build-and-test\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"test-docker-compose\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"build-multi-arch\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"build-and-test\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"test-docker-compose\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"build-multi-arch\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"test-summary\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: build-and-test, test-docker-compose, build-multi-arch",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "documentation-maintenance.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/documentation-maintenance.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "security",
+          "message": "contents: write permission - review if necessary",
+          "line_number": null,
+          "fix_suggestion": "Use contents: read unless write is required",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: documentation-audit, notify-results",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"documentation-audit\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"documentation-audit\": Potential injection risk with github.event",
+          "line_number": null,
+          "fix_suggestion": "Validate/sanitize github.event inputs before use",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"documentation-audit\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: notify-results",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "enhanced-pr-completion-monitor.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/enhanced-pr-completion-monitor.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "security",
+          "message": "contents: write permission - review if necessary",
+          "line_number": null,
+          "fix_suggestion": "Use contents: read unless write is required",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: enhanced-pr-monitor, monitor-copilot-activity, report-results",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"enhanced-pr-monitor\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"enhanced-pr-monitor\": curl | sh pattern detected (security risk)",
+          "line_number": null,
+          "fix_suggestion": "Download and verify scripts before execution",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"enhanced-pr-monitor\": Potential injection risk with github.event",
+          "line_number": null,
+          "fix_suggestion": "Validate/sanitize github.event inputs before use",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"enhanced-pr-monitor\": Potential injection risk with github.event",
+          "line_number": null,
+          "fix_suggestion": "Validate/sanitize github.event inputs before use",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"report-results\": Potential injection risk with github.event",
+          "line_number": null,
+          "fix_suggestion": "Validate/sanitize github.event inputs before use",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"enhanced-pr-monitor\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: enhanced-pr-monitor",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "example-cached-workflow.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/example-cached-workflow.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Missing explicit permissions (security risk)",
+          "line_number": null,
+          "fix_suggestion": "Add explicit permissions: contents: read, etc.",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: setup-cache, test-with-cache, security-scan...",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"setup-cache\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"test-with-cache\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"security-scan\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"autoscaler-integration\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"performance-summary\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"setup-cache\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"test-with-cache\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"security-scan\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"performance-summary\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"setup-cache\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"test-with-cache\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"security-scan\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "example-github-api-tracking.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/example-github-api-tracking.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: example-with-tracking",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"example-with-tracking\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"example-with-tracking\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: example-with-tracking",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "fix-docker-permissions.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/fix-docker-permissions.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: diagnose-docker-permissions, fix-docker-permissions, test-docker-after-fix...",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"diagnose-docker-permissions\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"fix-docker-permissions\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"test-docker-after-fix\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"diagnose-docker-permissions\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"fix-docker-permissions\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"test-docker-after-fix\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"summary\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: diagnose-docker-permissions, fix-docker-permissions, test-docker-after-fix",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "github-api-usage-monitor.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/github-api-usage-monitor.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: monitor-api-usage",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"monitor-api-usage\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"monitor-api-usage\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"monitor-api-usage\": Potential injection risk with github.event",
+          "line_number": null,
+          "fix_suggestion": "Validate/sanitize github.event inputs before use",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"monitor-api-usage\": Potential injection risk with github.event",
+          "line_number": null,
+          "fix_suggestion": "Validate/sanitize github.event inputs before use",
+          "auto_fixable": false
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: monitor-api-usage",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "gpu-tests-gated.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/gpu-tests-gated.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: check-gpu-runner, check-x64-runner",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"gpu-tests\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"cpu-tests\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"gpu-docker-tests\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"gpu-tests\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"cpu-tests\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"gpu-docker-tests\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"test-summary\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"gpu-tests\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: check-gpu-runner, check-x64-runner, gpu-tests",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "gpu-tests.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/gpu-tests.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: cpu-tests, gpu-docker-tests, test-summary",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"gpu-tests\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"cpu-tests\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"gpu-docker-tests\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"gpu-tests\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"cpu-tests\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"gpu-docker-tests\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"test-summary\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"gpu-tests\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: gpu-tests, cpu-tests, gpu-docker-tests",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "graphrag-production-ci.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/graphrag-production-ci.yml",
+      "valid": false,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "YAML syntax error: mapping values are not allowed here\n  in \"<unicode string>\", line 80, column 13:\n            with:\n                ^",
+          "line_number": null,
+          "fix_suggestion": "Fix YAML syntax errors",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "issue-to-draft-pr.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/issue-to-draft-pr.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "medium",
+          "category": "security",
+          "message": "contents: write permission - review if necessary",
+          "line_number": null,
+          "fix_suggestion": "Use contents: read unless write is required",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: create-draft-pr-with-copilot",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"create-draft-pr-with-copilot\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"create-draft-pr-with-copilot\": Potential injection risk with github.event",
+          "line_number": null,
+          "fix_suggestion": "Validate/sanitize github.event inputs before use",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"create-draft-pr-with-copilot\": Potential injection risk with github.event",
+          "line_number": null,
+          "fix_suggestion": "Validate/sanitize github.event inputs before use",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"create-draft-pr-with-copilot\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: create-draft-pr-with-copilot",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "javascript-sdk-monitoring-unified.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/javascript-sdk-monitoring-unified.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: javascript-sdk-monitoring",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: javascript-sdk-monitoring",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "javascript-sdk-monitoring.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/javascript-sdk-monitoring.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: sdk-static-analysis, sdk-functionality-tests, js-error-reporter-test...",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"sdk-static-analysis\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"sdk-functionality-tests\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"js-error-reporter-test\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"sdk-browser-tests\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"sdk-static-analysis\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"sdk-functionality-tests\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"js-error-reporter-test\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"sdk-browser-tests\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"sdk-monitoring-summary\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"sdk-static-analysis\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"sdk-functionality-tests\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"sdk-browser-tests\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: sdk-static-analysis, sdk-functionality-tests, js-error-reporter-test",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "logic-benchmarks.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/logic-benchmarks.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"benchmark\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"benchmark\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: benchmark",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "mcp-dashboard-tests.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/mcp-dashboard-tests.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: dashboard-smoke-tests, dashboard-comprehensive-tests, dashboard-endpoint-tests...",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"dashboard-smoke-tests\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"dashboard-comprehensive-tests\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"dashboard-endpoint-tests\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"dashboard-self-hosted-tests\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"dashboard-smoke-tests\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"dashboard-comprehensive-tests\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"dashboard-endpoint-tests\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"dashboard-self-hosted-tests\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"dashboard-test-summary\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"dashboard-comprehensive-tests\": curl | sh pattern detected (security risk)",
+          "line_number": null,
+          "fix_suggestion": "Download and verify scripts before execution",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"dashboard-endpoint-tests\": curl | sh pattern detected (security risk)",
+          "line_number": null,
+          "fix_suggestion": "Download and verify scripts before execution",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"dashboard-self-hosted-tests\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: dashboard-smoke-tests, dashboard-comprehensive-tests, dashboard-endpoint-tests",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "mcp-integration-tests.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/mcp-integration-tests.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "security",
+          "message": "packages: write permission - ensure justified",
+          "line_number": null,
+          "fix_suggestion": "Verify package publishing is intended",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: check-runner",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"basic-integration-tests\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"comprehensive-integration-tests\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"tools-integration-tests\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"performance-integration-tests\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"multi-arch-integration-tests\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"basic-integration-tests\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"comprehensive-integration-tests\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"tools-integration-tests\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"performance-integration-tests\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"multi-arch-integration-tests\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"integration-test-summary\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"basic-integration-tests\": curl | sh pattern detected (security risk)",
+          "line_number": null,
+          "fix_suggestion": "Download and verify scripts before execution",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"comprehensive-integration-tests\": curl | sh pattern detected (security risk)",
+          "line_number": null,
+          "fix_suggestion": "Download and verify scripts before execution",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"multi-arch-integration-tests\": curl | sh pattern detected (security risk)",
+          "line_number": null,
+          "fix_suggestion": "Download and verify scripts before execution",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"performance-integration-tests\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"multi-arch-integration-tests\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: check-runner, basic-integration-tests, comprehensive-integration-tests",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "mcp-tools-monitoring-unified.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/mcp-tools-monitoring-unified.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: mcp-tools-monitoring",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: mcp-tools-monitoring",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "mcp-tools-monitoring.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/mcp-tools-monitoring.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: discover-tool-categories, test-tool-loading, test-tool-execution...",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"discover-tool-categories\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"test-tool-loading\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"test-tool-execution\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"test-tool-categories\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"test-error-reporting\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"comprehensive-tool-health\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"test-tool-loading\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"test-tool-execution\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"test-tool-categories\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"test-error-reporting\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"comprehensive-tool-health\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"mcp-tools-monitoring-summary\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"test-tool-categories\": Potential injection risk with github.event",
+          "line_number": null,
+          "fix_suggestion": "Validate/sanitize github.event inputs before use",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"test-tool-loading\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"test-tool-execution\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"test-tool-categories\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"test-error-reporting\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"comprehensive-tool-health\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: discover-tool-categories, test-tool-loading, test-tool-execution",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "pdf_processing_ci.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/pdf_processing_ci.yml",
+      "valid": false,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "YAML syntax error: mapping values are not allowed here\n  in \"<unicode string>\", line 74, column 13:\n            with:\n                ^",
+          "line_number": null,
+          "fix_suggestion": "Fix YAML syntax errors",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "pdf_processing_simple_ci.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/pdf_processing_simple_ci.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: test, lint, security",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"test\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"lint\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"security\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"test\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"lint\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"security\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "pr-completion-monitor-unified.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/pr-completion-monitor-unified.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: monitor",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: monitor",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "pr-completion-monitor.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/pr-completion-monitor.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "security",
+          "message": "contents: write permission - review if necessary",
+          "line_number": null,
+          "fix_suggestion": "Use contents: read unless write is required",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: check-pr-completion",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"check-pr-completion\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"check-pr-completion\": curl | sh pattern detected (security risk)",
+          "line_number": null,
+          "fix_suggestion": "Download and verify scripts before execution",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"check-pr-completion\": Potential injection risk with github.event",
+          "line_number": null,
+          "fix_suggestion": "Validate/sanitize github.event inputs before use",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"check-pr-completion\": Potential injection risk with github.event",
+          "line_number": null,
+          "fix_suggestion": "Validate/sanitize github.event inputs before use",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"check-pr-completion\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: check-pr-completion",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "pr-copilot-monitor.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/pr-copilot-monitor.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Missing explicit permissions (security risk)",
+          "line_number": null,
+          "fix_suggestion": "Add explicit permissions: contents: read, etc.",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: draft-pr-copilot-monitor",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"draft-pr-copilot-monitor\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"draft-pr-copilot-monitor\": Potential injection risk with github.event",
+          "line_number": null,
+          "fix_suggestion": "Validate/sanitize github.event inputs before use",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "pr-copilot-reviewer.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/pr-copilot-reviewer.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: analyze-and-assign-copilot",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"analyze-and-assign-copilot\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"analyze-and-assign-copilot\": curl | sh pattern detected (security risk)",
+          "line_number": null,
+          "fix_suggestion": "Download and verify scripts before execution",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"analyze-and-assign-copilot\": Potential injection risk with github.event",
+          "line_number": null,
+          "fix_suggestion": "Validate/sanitize github.event inputs before use",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"analyze-and-assign-copilot\": Potential injection risk with github.event",
+          "line_number": null,
+          "fix_suggestion": "Validate/sanitize github.event inputs before use",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"analyze-and-assign-copilot\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: analyze-and-assign-copilot",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "pr-draft-creation-unified.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/pr-draft-creation-unified.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: monitor",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: monitor",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "pr-progressive-monitor-unified.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/pr-progressive-monitor-unified.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: monitor",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: monitor",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "publish_to_pipy.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/publish_to_pipy.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: build, publish-to-pypi",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"build\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"build\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"publish-to-pypi\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"build\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "runner-validation-clean.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/runner-validation-clean.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"validate-runner\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"validate-runner\": curl | sh pattern detected (security risk)",
+          "line_number": null,
+          "fix_suggestion": "Download and verify scripts before execution",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "runner-validation-unified.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/runner-validation-unified.yml",
+      "valid": false,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "YAML syntax error: while parsing a flow sequence\n  in \"<unicode string>\", line 72, column 14:\n        runs-on: [self-hosted, linux, ${{ matrix. ... \n                 ^\nexpected ',' or ']', but got '{'\n  in \"<unicode string>\", line 72, column 36:\n        runs-on: [self-hosted, linux, ${{ matrix.arch }}]\n                                       ^",
+          "line_number": null,
+          "fix_suggestion": "Fix YAML syntax errors",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "runner-validation.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/runner-validation.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"validate-runner\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"validate-runner\": Potential injection risk with github.event",
+          "line_number": null,
+          "fix_suggestion": "Validate/sanitize github.event inputs before use",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"validate-runner\": curl | sh pattern detected (security risk)",
+          "line_number": null,
+          "fix_suggestion": "Download and verify scripts before execution",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"validate-runner\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "scraper-validation.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/scraper-validation.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: setup, test-scrapers-docker, test-scrapers-self-hosted...",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"test-scrapers-docker\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"test-scrapers-self-hosted\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"generate-report\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"test-scrapers-docker\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"test-scrapers-self-hosted\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"generate-report\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"setup\": Potential injection risk with github.event",
+          "line_number": null,
+          "fix_suggestion": "Validate/sanitize github.event inputs before use",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"setup\": Potential injection risk with github.event",
+          "line_number": null,
+          "fix_suggestion": "Validate/sanitize github.event inputs before use",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"test-scrapers-docker\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"test-scrapers-self-hosted\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: setup, test-scrapers-docker, test-scrapers-self-hosted",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "self-hosted-runner.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/self-hosted-runner.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: test-self-hosted-x86, test-github-hosted, compare-runners",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"test-self-hosted-x86\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"test-github-hosted\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"test-self-hosted-x86\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"test-github-hosted\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: test-self-hosted-x86, test-github-hosted, compare-runners",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "setup-p2p-cache.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/setup-p2p-cache.yml",
+      "valid": false,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "YAML syntax error: while scanning a simple key\n  in \"<unicode string>\", line 89, column 1:\n    import os\n    ^\ncould not find expected ':'\n  in \"<unicode string>\", line 90, column 1:\n    import sys\n    ^",
+          "line_number": null,
+          "fix_suggestion": "Fix YAML syntax errors",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "test-datasets-runner.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/test-datasets-runner.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: test-datasets-runner",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"test-datasets-runner\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: test-datasets-runner",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "test-github-hosted.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/test-github-hosted.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: test-github-hosted",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"test-github-hosted\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"test-github-hosted\": Potential injection risk with github.event",
+          "line_number": null,
+          "fix_suggestion": "Validate/sanitize github.event inputs before use",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"test-github-hosted\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: test-github-hosted",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "update-autohealing-list.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/update-autohealing-list.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "security",
+          "message": "contents: write permission - review if necessary",
+          "line_number": null,
+          "fix_suggestion": "Use contents: read unless write is required",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: update-workflow-list",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"update-workflow-list\": checkout without fetch-depth optimization",
+          "line_number": null,
+          "fix_suggestion": "Add with: fetch-depth: 1 for faster checkout",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"update-workflow-list\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"update-workflow-list\": Potential injection risk with github.event",
+          "line_number": null,
+          "fix_suggestion": "Validate/sanitize github.event inputs before use",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"update-workflow-list\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: update-workflow-list",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "workflow-alert-manager.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/workflow-alert-manager.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"check-and-alert\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"check-and-alert\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "workflow-health-check.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/workflow-health-check.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "performance",
+          "message": "Missing concurrency control (may waste resources)",
+          "line_number": null,
+          "fix_suggestion": "Add concurrency: group + cancel-in-progress",
+          "auto_fixable": true
+        },
+        {
+          "severity": "medium",
+          "category": "reliability",
+          "message": "Jobs missing timeout-minutes: validate-workflows",
+          "line_number": null,
+          "fix_suggestion": "Add timeout-minutes to prevent hanging jobs",
+          "auto_fixable": true
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"validate-workflows\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "high",
+          "category": "security",
+          "message": "Job \"validate-workflows\": Potential injection risk with github.event",
+          "line_number": null,
+          "fix_suggestion": "Validate/sanitize github.event inputs before use",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"validate-workflows\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        },
+        {
+          "severity": "info",
+          "category": "documentation",
+          "message": "Jobs without descriptive names: validate-workflows",
+          "line_number": null,
+          "fix_suggestion": "Add name: field to jobs for better readability",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "workflow-health-dashboard.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/workflow-health-dashboard.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "medium",
+          "category": "security",
+          "message": "contents: write permission - review if necessary",
+          "line_number": null,
+          "fix_suggestion": "Use contents: read unless write is required",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"collect-metrics\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"generate-dashboard\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"collect-metrics\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "workflow-integration-tests.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/workflow-integration-tests.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "workflow-smoke-tests.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/workflow-smoke-tests.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"smoke-test-infrastructure\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"smoke-test-critical-workflows\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "file": "workflow-validation-ci.yml",
+      "path": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/workflow-validation-ci.yml",
+      "valid": true,
+      "has_issues": true,
+      "issues": [
+        {
+          "severity": "critical",
+          "category": "syntax",
+          "message": "Missing trigger configuration (on:)",
+          "line_number": null,
+          "fix_suggestion": "Add workflow triggers (on: push, pull_request, etc.)",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "reliability",
+          "message": "Job \"validate-workflows\": Consider retry for critical steps",
+          "line_number": null,
+          "fix_suggestion": "Add retry action for docker/install/api steps",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "category": "performance",
+          "message": "Job \"validate-workflows\": Consider caching dependencies",
+          "line_number": null,
+          "fix_suggestion": "Add actions/cache for pip/npm/cargo dependencies",
+          "auto_fixable": false
+        }
+      ]
+    }
+  ],
+  "stats": {
+    "total_workflows": 53,
+    "valid_workflows": 0,
+    "workflows_with_issues": 53,
+    "total_issues": 424,
+    "critical_issues": 49,
+    "high_issues": 47,
+    "medium_issues": 89,
+    "low_issues": 203,
+    "info_issues": 36,
+    "auto_fixable_issues": 143
+  },
+  "timestamp": "2026-02-16T05:20:50.564485",
+  "validator_version": "2.0.0"
+}

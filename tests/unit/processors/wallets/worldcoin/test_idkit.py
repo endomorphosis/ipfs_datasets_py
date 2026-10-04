@@ -102,18 +102,9 @@ def test_fixture_idkit_payloads_match_expected_normalization(fixtures_dir: Path)
     ("payload", "message"),
     [
         ([], "JSON object"),
-        (
-            {"protocol_version": "2.0", "nonce": "n", "environment": "staging", "responses": [{}]},
-            "protocol_version",
-        ),
-        (
-            {"protocol_version": "4.0", "nonce": "n", "environment": "dev", "responses": [{}]},
-            "environment",
-        ),
-        (
-            {"protocol_version": "4.0", "nonce": "n", "environment": "staging", "responses": []},
-            "responses",
-        ),
+        ({"protocol_version": "2.0", "nonce": "n", "environment": "staging", "responses": [{}]}, "protocol_version"),
+        ({"protocol_version": "4.0", "nonce": "n", "environment": "dev", "responses": [{}]}, "environment"),
+        ({"protocol_version": "4.0", "nonce": "n", "environment": "staging", "responses": []}, "responses"),
         (
             {
                 "protocol_version": "4.0",
@@ -166,12 +157,7 @@ def test_fixture_idkit_payloads_match_expected_normalization(fixtures_dir: Path)
                 "action": DEFAULT_WORLD_ID_ACTION,
                 "environment": "staging",
                 "responses": [
-                    {
-                        "identifier": "orb",
-                        "signal_hash": "0xsignal",
-                        "proof": "0xproof",
-                        "merkle_root": "0xroot",
-                    }
+                    {"identifier": "orb", "signal_hash": "0xsignal", "proof": "0xproof", "merkle_root": "0xroot"}
                 ],
             },
             "nullifier",

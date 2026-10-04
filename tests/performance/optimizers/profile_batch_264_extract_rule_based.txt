@@ -1,0 +1,47 @@
+========================================================================
+BATCH 264: _extract_rule_based() Profile
+========================================================================
+
+Tokens: 5009
+Elapsed ms: 18.50
+Entities: 15
+Relationships: 105
+
+         6153 function calls in 0.018 seconds
+
+   Ordered by: cumulative time
+   List reduced from 55 to 30 due to restriction <30>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.018    0.018 /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/optimizers/graphrag/ontology_generator.py:4547(_extract_rule_based)
+        1    0.006    0.006    0.007    0.007 /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/optimizers/graphrag/ontology_generator.py:3166(infer_relationships)
+      216    0.007    0.000    0.007    0.000 {method 'search' of 're.Pattern' objects}
+        1    0.000    0.000    0.007    0.007 /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/optimizers/graphrag/ontology_generator.py:4519(_promote_person_entities)
+       26    0.000    0.000    0.007    0.000 /home/barberb/miniforge3/lib/python3.12/re/__init__.py:174(search)
+        1    0.004    0.004    0.004    0.004 /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/optimizers/graphrag/ontology_generator.py:4716(_extract_entities_from_patterns)
+      119    0.001    0.000    0.001    0.000 {method 'find' of 'str' objects}
+       19    0.000    0.000    0.001    0.000 /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/optimizers/graphrag/ontology_generator.py:3105(_infer_type_from_context)
+     1546    0.000    0.000    0.000    0.000 {method 'lower' of 'str' objects}
+     1217    0.000    0.000    0.000    0.000 {method 'group' of 're.Match' objects}
+      190    0.000    0.000    0.000    0.000 /home/barberb/miniforge3/lib/python3.12/re/__init__.py:226(compile)
+      223    0.000    0.000    0.000    0.000 /home/barberb/miniforge3/lib/python3.12/re/__init__.py:280(_compile)
+       54    0.000    0.000    0.000    0.000 /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/optimizers/graphrag/ontology_generator.py:3063(_is_impossible_type_pair)
+       15    0.000    0.000    0.000    0.000 /home/barberb/miniforge3/lib/python3.12/uuid.py:723(uuid4)
+      516    0.000    0.000    0.000    0.000 {method 'get' of 'dict' objects}
+      641    0.000    0.000    0.000    0.000 {method 'strip' of 'str' objects}
+      350    0.000    0.000    0.000    0.000 {built-in method builtins.isinstance}
+       15    0.000    0.000    0.000    0.000 /home/barberb/miniforge3/lib/python3.12/uuid.py:139(__init__)
+       19    0.000    0.000    0.000    0.000 /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/optimizers/graphrag/ontology_generator.py:3011(_extract_context_window)
+      105    0.000    0.000    0.000    0.000 /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/optimizers/graphrag/ontology_generator.py:3211(_make_rel_id)
+        7    0.000    0.000    0.000    0.000 /home/barberb/miniforge3/lib/python3.12/re/__init__.py:219(finditer)
+      141    0.000    0.000    0.000    0.000 {built-in method builtins.getattr}
+       92    0.000    0.000    0.000    0.000 {built-in method builtins.max}
+      120    0.000    0.000    0.000    0.000 {method 'append' of 'list' objects}
+      104    0.000    0.000    0.000    0.000 {built-in method builtins.abs}
+        1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}
+       49    0.000    0.000    0.000    0.000 {built-in method builtins.min}
+       15    0.000    0.000    0.000    0.000 {built-in method posix.urandom}
+       18    0.000    0.000    0.000    0.000 {method 'finditer' of 're.Pattern' objects}
+       54    0.000    0.000    0.000    0.000 {built-in method builtins.len}
+
+

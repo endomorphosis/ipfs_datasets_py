@@ -1,0 +1,9 @@
+source_path	target_path	action	status	notes
+scripts/ops/analyze_formal_logic_entropy.py	ipfs_datasets_py/scripts/ops/legal_data/analyze_formal_logic_entropy.py	move	completed	Canonical analyzer moved into submodule legal_data scripts.
+scripts/ops/analyze_formal_logic_entropy.py	scripts/ops/analyze_formal_logic_entropy.py	keep-wrapper	completed	Root entrypoint converted to thin compatibility wrapper.
+docs/HYBRID_LEGAL_IR_SPEC.md	ipfs_datasets_py/docs/guides/legal_data/HYBRID_LEGAL_IR_SPEC.md	keep-pointer	completed	Root file is compatibility pointer stub to canonical submodule doc.
+docs/HYBRID_LEGAL_REASONING_EXECUTION_PLAYBOOK.md	ipfs_datasets_py/docs/guides/legal_data/HYBRID_LEGAL_REASONING_EXECUTION_PLAYBOOK.md	keep-pointer	completed	Root file is compatibility pointer stub to canonical submodule doc.
+docs/HYBRID_LEGAL_REASONING_IMPROVEMENT_PLAN.md	ipfs_datasets_py/docs/guides/legal_data/HYBRID_LEGAL_REASONING_IMPROVEMENT_PLAN.md	keep-pointer	completed	Root file is compatibility pointer stub to canonical submodule doc.
+docs/HYBRID_LEGAL_REASONING_TODO.md	ipfs_datasets_py/docs/guides/legal_data/HYBRID_LEGAL_REASONING_TODO.md	keep-pointer	completed	Root file is compatibility pointer stub to canonical submodule doc.
+docs/REASONER_ARCHITECTURE.md	ipfs_datasets_py/docs/guides/legal_data/REASONER_ARCHITECTURE.md	keep-pointer	completed	Root file is compatibility pointer stub to canonical submodule doc.
+data/state_laws/*/parsed/jsonld/*.json*	(no migration in current plan window)	exclude	deferred-by-user	Do not migrate while state-law parsing workflow is still in active development; keep artifacts in root workspace for now.

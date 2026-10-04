@@ -34,7 +34,8 @@ PROVIDER_NAME = "bitcoin-esplora"
 class BitcoinResponseBackend(Protocol):
     """Injected response source for offline fixtures or HTTP transport."""
 
-    async def get_json(self, path: str, *, context: OperationContext) -> Any: ...
+    async def get_json(self, path: str, *, context: OperationContext) -> Any:
+        ...
 
 
 @dataclass
@@ -79,7 +80,9 @@ class EsploraHttpBackend:
         request = HttpRequest(
             method="GET",
             url=url,
-            max_response_bytes=min(self.max_response_bytes, context.limits.max_response_bytes),
+            max_response_bytes=min(
+                self.max_response_bytes, context.limits.max_response_bytes
+            ),
             headers={"accept": "application/json"},
         )
         if hasattr(self.transport, "request_json"):
@@ -202,7 +205,9 @@ class BitcoinLedgerProvider:
     def ingest_wallet(self, request: BoundedRequest) -> AsyncIterator[RecordBatch]:
         return self._ingest_wallet(request)
 
-    async def _ingest_wallet(self, request: BoundedRequest) -> AsyncIterator[RecordBatch]:
+    async def _ingest_wallet(
+        self, request: BoundedRequest
+    ) -> AsyncIterator[RecordBatch]:
         request.context.check_active()
         address = str(request.scope).strip()
         if not address:
@@ -236,7 +241,9 @@ class BitcoinLedgerProvider:
                     raise ProviderError("Esplora tx entry must be a mapping")
                 tx = parse_esplora_transaction(item, network=self.network)
                 records.append(tx)
-                raw_bytes += len(json.dumps(item, separators=(",", ":"), sort_keys=True).encode())
+                raw_bytes += len(
+                    json.dumps(item, separators=(",", ":"), sort_keys=True).encode()
+                )
                 last_seen = tx.txid
                 items += 1
                 if items >= request.context.limits.max_items:
@@ -267,12 +274,16 @@ class BitcoinLedgerProvider:
     def ingest_ledger(self, request: BoundedRequest) -> AsyncIterator[RecordBatch]:
         return self._ingest_ledger(request)
 
-    async def _ingest_ledger(self, request: BoundedRequest) -> AsyncIterator[RecordBatch]:
+    async def _ingest_ledger(
+        self, request: BoundedRequest
+    ) -> AsyncIterator[RecordBatch]:
         request.context.check_active()
         start = request.start_position
         end = request.end_position
         if start is None or end is None:
-            raise InvalidRequestError("ledger ingestion requires start_position and end_position")
+            raise InvalidRequestError(
+                "ledger ingestion requires start_position and end_position"
+            )
         if start > end:
             raise InvalidRequestError("start_position must not exceed end_position")
 
@@ -293,7 +304,9 @@ class BitcoinLedgerProvider:
             if not block_hash_s:
                 raise ProviderError(f"missing block hash at height {height}")
             # Prefer /block/{hash}/txs when available; fall back to single-page list.
-            txs_payload = await self._get(f"/block/{block_hash_s}/txs", context=request.context)
+            txs_payload = await self._get(
+                f"/block/{block_hash_s}/txs", context=request.context
+            )
             if not isinstance(txs_payload, list):
                 raise ProviderError("Esplora block txs must be a list")
             records: list[BitcoinTransaction] = []
@@ -303,7 +316,9 @@ class BitcoinLedgerProvider:
                     raise ProviderError("Esplora tx entry must be a mapping")
                 tx = parse_esplora_transaction(item, network=self.network)
                 records.append(tx)
-                raw_bytes += len(json.dumps(item, separators=(",", ":"), sort_keys=True).encode())
+                raw_bytes += len(
+                    json.dumps(item, separators=(",", ":"), sort_keys=True).encode()
+                )
                 items += 1
                 if items >= request.context.limits.max_items:
                     batch = RecordBatch(
@@ -376,7 +391,9 @@ def fixture_backend_from_transactions(
             ]
             # Preserve insertion order from transactions sequence.
             ordered = [
-                tx for tx in transactions if (tx.get("status") or {}).get("block_height") == height
+                tx
+                for tx in transactions
+                if (tx.get("status") or {}).get("block_height") == height
             ]
             responses[f"/block/{block_hash}/txs"] = ordered or height_txs
 
@@ -417,7 +434,11 @@ def _utxos_for_address(
                     "status": tx.get("status") or {},
                 }
             )
-    return [item for item in created if f"{item['txid']}:{item['vout']}" not in spent]
+    return [
+        item
+        for item in created
+        if f"{item['txid']}:{item['vout']}" not in spent
+    ]
 
 
 __all__ = [

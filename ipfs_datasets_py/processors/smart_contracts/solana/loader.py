@@ -198,7 +198,9 @@ class UpgradeAuthority:
             object.__setattr__(
                 self,
                 "program_data_address",
-                normalize_pubkey(self.program_data_address, field="program_data_address"),
+                normalize_pubkey(
+                    self.program_data_address, field="program_data_address"
+                ),
             )
         else:
             object.__setattr__(self, "program_data_address", "")
@@ -211,7 +213,9 @@ class UpgradeAuthority:
         object.__setattr__(
             self,
             "diagnostics",
-            tuple(_required_text(item, "diagnostics item") for item in self.diagnostics),
+            tuple(
+                _required_text(item, "diagnostics item") for item in self.diagnostics
+            ),
         )
         object.__setattr__(self, "attributes", _freeze_mapping(self.attributes))
         object.__setattr__(
@@ -220,13 +224,17 @@ class UpgradeAuthority:
             _required_text(self.schema_version, "schema_version"),
         )
         if state is UpgradeAuthorityState.AUTHORITY_SET and not self.authority_pubkey:
-            raise InvalidRequestError("AUTHORITY_SET requires a non-empty authority_pubkey")
+            raise InvalidRequestError(
+                "AUTHORITY_SET requires a non-empty authority_pubkey"
+            )
         if state is UpgradeAuthorityState.IMMUTABLE and self.authority_pubkey:
             raise InvalidRequestError(
                 "IMMUTABLE upgrade authority must not carry an authority_pubkey"
             )
         if state is UpgradeAuthorityState.UNKNOWN and not self.diagnostics:
-            raise InvalidRequestError("UNKNOWN upgrade authority requires diagnostics")
+            raise InvalidRequestError(
+                "UNKNOWN upgrade authority requires diagnostics"
+            )
         ensure_secret_safe(self.to_dict())
 
     @property
@@ -296,7 +304,9 @@ class ProgramAccountRelation:
             object.__setattr__(
                 self,
                 "program_data_address",
-                normalize_pubkey(self.program_data_address, field="program_data_address"),
+                normalize_pubkey(
+                    self.program_data_address, field="program_data_address"
+                ),
             )
         else:
             object.__setattr__(self, "program_data_address", "")
@@ -429,7 +439,9 @@ def bind_upgrade_authority(
             state=UpgradeAuthorityState.NOT_APPLICABLE,
             program_data_address=program_data_address,
             slot_observed=slot_observed,
-            diagnostics=(f"upgrade authority not applicable for loader {loader.value}",),
+            diagnostics=(
+                f"upgrade authority not applicable for loader {loader.value}",
+            ),
             attributes=dict(attributes or {}),
         )
     if authority_pubkey is None:

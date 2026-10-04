@@ -1,0 +1,1569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Data Management Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #5865F2 0%, #7289DA 100%);
+            color: white;
+            padding: 30px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .discord-icon {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            font-size: 14px;
+        }
+        
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-dot.online { background: #43B581; }
+        .status-dot.offline { background: #F04747; }
+        .status-dot.warning { background: #FAA61A; }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            min-height: 600px;
+        }
+        
+        .sidebar {
+            background: #F2F3F5;
+            border-right: 1px solid #E3E5E8;
+            padding: 20px;
+        }
+        
+        .nav-section {
+            margin-bottom: 30px;
+        }
+        
+        .nav-section h3 {
+            font-size: 12px;
+            font-weight: 700;
+            color: #8E9297;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+        
+        .nav-item {
+            padding: 10px 15px;
+            margin-bottom: 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #4F545C;
+            font-weight: 500;
+        }
+        
+        .nav-item:hover {
+            background: #E3E5E8;
+            color: #2C2F33;
+        }
+        
+        .nav-item.active {
+            background: #5865F2;
+            color: white;
+        }
+        
+        .nav-icon {
+            font-size: 18px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .content-area {
+            padding: 30px 40px;
+            overflow-y: auto;
+            max-height: calc(100vh - 200px);
+        }
+        
+        .page-header {
+            margin-bottom: 30px;
+        }
+        
+        .page-header h2 {
+            font-size: 28px;
+            color: #2C2F33;
+            margin-bottom: 8px;
+        }
+        
+        .page-header p {
+            color: #72767D;
+            font-size: 15px;
+        }
+        
+        .card {
+            background: white;
+            border: 1px solid #E3E5E8;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #F2F3F5;
+        }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2C2F33;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #2C2F33;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #E3E5E8;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #5865F2;
+            box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.1);
+        }
+        
+        select.form-control {
+            cursor: pointer;
+            background: white;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: #5865F2;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #4752C4;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(88, 101, 242, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #4F545C;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #3C3F44;
+        }
+        
+        .btn-success {
+            background: #43B581;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #3CA374;
+        }
+        
+        .btn-danger {
+            background: #F04747;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #D84040;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        .server-list {
+            list-style: none;
+        }
+        
+        .server-item {
+            padding: 15px;
+            border: 2px solid #E3E5E8;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .server-item:hover {
+            border-color: #5865F2;
+            background: #F2F3F5;
+        }
+        
+        .server-item.selected {
+            background: #5865F2;
+            color: white;
+            border-color: #5865F2;
+        }
+        
+        .server-info h4 {
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        
+        .server-info p {
+            font-size: 13px;
+            opacity: 0.7;
+        }
+        
+        .channel-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .channel-item {
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .channel-item:hover {
+            background: #F2F3F5;
+        }
+        
+        .channel-item.selected {
+            background: #5865F2;
+            color: white;
+        }
+        
+        .channel-icon {
+            font-size: 16px;
+            opacity: 0.6;
+        }
+        
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .alert-success {
+            background: #43B581;
+            color: white;
+        }
+        
+        .alert-error {
+            background: #F04747;
+            color: white;
+        }
+        
+        .alert-warning {
+            background: #FAA61A;
+            color: white;
+        }
+        
+        .alert-info {
+            background: #5865F2;
+            color: white;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #E3E5E8;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #5865F2 0%, #7289DA 100%);
+            transition: width 0.3s;
+            animation: progressAnimation 2s infinite;
+        }
+        
+        @keyframes progressAnimation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .export-history {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .export-item {
+            padding: 15px;
+            border: 1px solid #E3E5E8;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .export-details h5 {
+            font-size: 14px;
+            margin-bottom: 5px;
+            color: #2C2F33;
+        }
+        
+        .export-details p {
+            font-size: 12px;
+            color: #72767D;
+        }
+        
+        .export-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .analytics-chart {
+            width: 100%;
+            height: 300px;
+            background: #F2F3F5;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #72767D;
+            font-style: italic;
+        }
+        
+        .loader {
+            border: 4px solid #E3E5E8;
+            border-top: 4px solid #5865F2;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .token-input-group {
+            position: relative;
+        }
+        
+        .token-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #72767D;
+            font-size: 18px;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 5px;
+            border-bottom: 2px solid #E3E5E8;
+            margin-bottom: 25px;
+        }
+        
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            color: #72767D;
+            font-weight: 500;
+            transition: all 0.2s;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab:hover {
+            color: #2C2F33;
+        }
+        
+        .tab.active {
+            color: #5865F2;
+            border-bottom-color: #5865F2;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                border-right: none;
+                border-bottom: 1px solid #E3E5E8;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <h1>
+                <span class="discord-icon">💬</span>
+                Discord Data Management
+            </h1>
+            <div class="status-indicator" id="status-indicator">
+                <span class="status-dot online" id="status-dot"></span>
+                <span id="status-text">Checking status...</span>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="nav-section">
+                    <h3>Main</h3>
+                    <div class="nav-item active" data-page="overview">
+                        <span class="nav-icon">📊</span>
+                        <span>Overview</span>
+                    </div>
+                    <div class="nav-item" data-page="servers">
+                        <span class="nav-icon">🏰</span>
+                        <span>Servers</span>
+                    </div>
+                    <div class="nav-item" data-page="channels">
+                        <span class="nav-icon">💬</span>
+                        <span>Channels</span>
+                    </div>
+                    <div class="nav-item" data-page="dms">
+                        <span class="nav-icon">✉️</span>
+                        <span>Direct Messages</span>
+                    </div>
+                </div>
+                
+                <div class="nav-section">
+                    <h3>Actions</h3>
+                    <div class="nav-item" data-page="export">
+                        <span class="nav-icon">📤</span>
+                        <span>Export Data</span>
+                    </div>
+                    <div class="nav-item" data-page="analyze">
+                        <span class="nav-icon">📈</span>
+                        <span>Analytics</span>
+                    </div>
+                    <div class="nav-item" data-page="convert">
+                        <span class="nav-icon">🔄</span>
+                        <span>Convert Formats</span>
+                    </div>
+                </div>
+                
+                <div class="nav-section">
+                    <h3>Settings</h3>
+                    <div class="nav-item" data-page="token">
+                        <span class="nav-icon">🔑</span>
+                        <span>Token Config</span>
+                    </div>
+                    <div class="nav-item" data-page="history">
+                        <span class="nav-icon">📋</span>
+                        <span>Export History</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="content-area">
+                <!-- Overview Page -->
+                <div class="page-content" id="page-overview">
+                    <div class="page-header">
+                        <h2>Dashboard Overview</h2>
+                        <p>Monitor your Discord data integration status and recent activity</p>
+                    </div>
+                    
+                    <div class="stats-grid" id="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Accessible Servers</div>
+                            <div class="stat-value" id="stat-servers">--</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Total Channels</div>
+                            <div class="stat-value" id="stat-channels">--</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Exports Today</div>
+                            <div class="stat-value" id="stat-exports">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Integration Status</div>
+                            <div class="stat-value" id="stat-status">Loading...</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">System Status</h3>
+                            <button class="btn btn-secondary" onclick="refreshStatus()">🔄 Refresh</button>
+                        </div>
+                        <div id="system-status-details">
+                            <div class="loader"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Servers Page -->
+                <div class="page-content hidden" id="page-servers">
+                    <div class="page-header">
+                        <h2>Discord Servers</h2>
+                        <p>Browse and manage accessible Discord servers (guilds)</p>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Server List</h3>
+                            <button class="btn btn-primary" onclick="loadServers()">🔄 Refresh Servers</button>
+                        </div>
+                        <div id="alert-container-servers"></div>
+                        <ul class="server-list" id="server-list">
+                            <li style="text-align: center; padding: 40px; color: #72767D;">
+                                Click "Refresh Servers" to load your Discord servers
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Channels Page -->
+                <div class="page-content hidden" id="page-channels">
+                    <div class="page-header">
+                        <h2>Server Channels</h2>
+                        <p>View channels in a selected server</p>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Select Server</h3>
+                        </div>
+                        <div class="form-group">
+                            <label for="server-select">Choose a server:</label>
+                            <select class="form-control" id="server-select" onchange="loadChannels()">
+                                <option value="">Select a server first...</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="card" id="channels-card" style="display: none;">
+                        <div class="card-header">
+                            <h3 class="card-title">Channels</h3>
+                        </div>
+                        <div id="alert-container-channels"></div>
+                        <div class="channel-list" id="channel-list"></div>
+                    </div>
+                </div>
+                
+                <!-- DMs Page -->
+                <div class="page-content hidden" id="page-dms">
+                    <div class="page-header">
+                        <h2>Direct Messages</h2>
+                        <p>View and export your direct message conversations</p>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">DM Channels</h3>
+                            <button class="btn btn-primary" onclick="loadDMs()">🔄 Load DMs</button>
+                        </div>
+                        <div id="alert-container-dms"></div>
+                        <div class="channel-list" id="dm-list">
+                            <p style="text-align: center; padding: 40px; color: #72767D;">
+                                Click "Load DMs" to view your direct message channels
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Export Page -->
+                <div class="page-content hidden" id="page-export">
+                    <div class="page-header">
+                        <h2>Export Discord Data</h2>
+                        <p>Export channels, servers, or DMs with advanced options</p>
+                    </div>
+                    
+                    <div class="tabs">
+                        <button class="tab active" onclick="switchExportTab('channel')">Channel</button>
+                        <button class="tab" onclick="switchExportTab('server')">Server</button>
+                        <button class="tab" onclick="switchExportTab('dms')">All DMs</button>
+                    </div>
+                    
+                    <!-- Channel Export -->
+                    <div class="tab-content active" id="export-tab-channel">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Export Channel</h3>
+                            </div>
+                            <div id="alert-container-export-channel"></div>
+                            <form id="export-channel-form" onsubmit="exportChannel(event)">
+                                <div class="form-group">
+                                    <label for="export-channel-id">Channel ID:</label>
+                                    <input type="text" class="form-control" id="export-channel-id" placeholder="123456789012345678" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="export-channel-format">Format:</label>
+                                    <select class="form-control" id="export-channel-format">
+                                        <option value="Json">JSON</option>
+                                        <option value="HtmlDark">HTML (Dark)</option>
+                                        <option value="HtmlLight">HTML (Light)</option>
+                                        <option value="Csv">CSV</option>
+                                        <option value="PlainText">Plain Text</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="export-after-date">After Date (optional):</label>
+                                    <input type="date" class="form-control" id="export-after-date">
+                                </div>
+                                <div class="form-group">
+                                    <label for="export-before-date">Before Date (optional):</label>
+                                    <input type="date" class="form-control" id="export-before-date">
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="export-download-media">
+                                    <label for="export-download-media">Download media attachments</label>
+                                </div>
+                                <button type="submit" class="btn btn-primary" id="export-channel-btn">📤 Export Channel</button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Server Export -->
+                    <div class="tab-content" id="export-tab-server">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Export Entire Server</h3>
+                            </div>
+                            <div id="alert-container-export-server"></div>
+                            <form id="export-server-form" onsubmit="exportServer(event)">
+                                <div class="form-group">
+                                    <label for="export-server-id">Server ID:</label>
+                                    <input type="text" class="form-control" id="export-server-id" placeholder="987654321098765432" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="export-server-format">Format:</label>
+                                    <select class="form-control" id="export-server-format">
+                                        <option value="Json">JSON</option>
+                                        <option value="HtmlDark">HTML (Dark)</option>
+                                        <option value="HtmlLight">HTML (Light)</option>
+                                        <option value="Csv">CSV</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="export-include-threads">Include Threads:</label>
+                                    <select class="form-control" id="export-include-threads">
+                                        <option value="none">None</option>
+                                        <option value="active">Active only</option>
+                                        <option value="archived">Archived only</option>
+                                        <option value="all">All threads</option>
+                                    </select>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="export-include-vc" checked>
+                                    <label for="export-include-vc">Include voice channels</label>
+                                </div>
+                                <button type="submit" class="btn btn-primary" id="export-server-btn">📤 Export Server</button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- DMs Export -->
+                    <div class="tab-content" id="export-tab-dms">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Export All DMs</h3>
+                            </div>
+                            <div id="alert-container-export-dms"></div>
+                            <p style="margin-bottom: 20px; color: #72767D;">
+                                This will export all your direct message conversations using the native exportdm command.
+                            </p>
+                            <div class="form-group">
+                                <label for="export-dms-format">Format:</label>
+                                <select class="form-control" id="export-dms-format">
+                                    <option value="Json">JSON</option>
+                                    <option value="HtmlDark">HTML (Dark)</option>
+                                    <option value="HtmlLight">HTML (Light)</option>
+                                </select>
+                            </div>
+                            <button type="button" class="btn btn-primary" onclick="exportAllDMs()" id="export-dms-btn">📤 Export All DMs</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Analytics Page -->
+                <div class="page-content hidden" id="page-analyze">
+                    <div class="page-header">
+                        <h2>Discord Analytics</h2>
+                        <p>Analyze Discord channel data and export files</p>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Analyze Channel</h3>
+                        </div>
+                        <div id="alert-container-analyze"></div>
+                        <form id="analyze-form" onsubmit="analyzeChannel(event)">
+                            <div class="form-group">
+                                <label for="analyze-channel-id">Channel ID:</label>
+                                <input type="text" class="form-control" id="analyze-channel-id" placeholder="123456789012345678" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Analysis Types:</label>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="analyze-message-stats" checked>
+                                    <label for="analyze-message-stats">Message Statistics</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="analyze-user-activity" checked>
+                                    <label for="analyze-user-activity">User Activity</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="analyze-content-patterns">
+                                    <label for="analyze-content-patterns">Content Patterns</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="analyze-temporal-patterns">
+                                    <label for="analyze-temporal-patterns">Temporal Patterns</label>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary" id="analyze-btn">📈 Analyze</button>
+                        </form>
+                    </div>
+                    
+                    <div class="card hidden" id="analysis-results">
+                        <div class="card-header">
+                            <h3 class="card-title">Analysis Results</h3>
+                        </div>
+                        <div id="analysis-output"></div>
+                    </div>
+                </div>
+                
+                <!-- Convert Page -->
+                <div class="page-content hidden" id="page-convert">
+                    <div class="page-header">
+                        <h2>Format Conversion</h2>
+                        <p>Convert Discord exports between different formats</p>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Convert Export File</h3>
+                        </div>
+                        <div id="alert-container-convert"></div>
+                        <form id="convert-form" onsubmit="convertFile(event)">
+                            <div class="form-group">
+                                <label for="convert-input-path">Input File Path:</label>
+                                <input type="text" class="form-control" id="convert-input-path" placeholder="/path/to/export.json" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="convert-output-path">Output File Path:</label>
+                                <input type="text" class="form-control" id="convert-output-path" placeholder="/path/to/output.parquet" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="convert-format">Target Format:</label>
+                                <select class="form-control" id="convert-format">
+                                    <option value="json">JSON</option>
+                                    <option value="jsonl">JSONL</option>
+                                    <option value="jsonld">JSON-LD</option>
+                                    <option value="jsonld-logic">JSON-LD-LOGIC</option>
+                                    <option value="parquet">Parquet</option>
+                                    <option value="csv">CSV</option>
+                                    <option value="ipld">IPLD</option>
+                                    <option value="car">CAR</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary" id="convert-btn">🔄 Convert</button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Token Configuration Page -->
+                <div class="page-content hidden" id="page-token">
+                    <div class="page-header">
+                        <h2>Token Configuration</h2>
+                        <p>Configure and test your Discord authentication token</p>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Discord Token</h3>
+                        </div>
+                        <div id="alert-container-token"></div>
+                        <p style="margin-bottom: 20px; color: #72767D;">
+                            Your Discord token is required to access Discord data. You can set it via the DISCORD_TOKEN environment variable or enter it here for testing.
+                        </p>
+                        <form id="token-form" onsubmit="testToken(event)">
+                            <div class="form-group">
+                                <label for="discord-token">Discord Token:</label>
+                                <div class="token-input-group">
+                                    <input type="password" class="form-control" id="discord-token" placeholder="Enter your Discord token">
+                                    <span class="token-toggle" onclick="toggleTokenVisibility()">👁️</span>
+                                </div>
+                                <small style="color: #72767D; margin-top: 5px; display: block;">
+                                    ⚠️ Never share your token with anyone. It provides full access to your Discord account.
+                                </small>
+                            </div>
+                            <button type="submit" class="btn btn-primary" id="test-token-btn">🧪 Test Token</button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Export History Page -->
+                <div class="page-content hidden" id="page-history">
+                    <div class="page-header">
+                        <h2>Export History</h2>
+                        <p>View and manage your previous exports</p>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Recent Exports</h3>
+                            <button class="btn btn-secondary" onclick="refreshHistory()">🔄 Refresh</button>
+                        </div>
+                        <div class="export-history" id="export-history">
+                            <p style="text-align: center; padding: 40px; color: #72767D;">
+                                No export history available yet. Start by exporting some data!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Global state
+        let currentPage = 'overview';
+        let guilds = [];
+        let selectedGuildId = null;
+        let exportHistory = [];
+        
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDashboard();
+        });
+        
+        function initializeDashboard() {
+            setupNavigation();
+            checkStatus();
+            loadInitialData();
+        }
+        
+        function setupNavigation() {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const page = this.getAttribute('data-page');
+                    navigateToPage(page);
+                });
+            });
+        }
+        
+        function navigateToPage(page) {
+            // Update nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.getAttribute('data-page') === page) {
+                    item.classList.add('active');
+                }
+            });
+            
+            // Update page content
+            document.querySelectorAll('.page-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            document.getElementById(`page-${page}`).classList.remove('hidden');
+            
+            currentPage = page;
+        }
+        
+        async function checkStatus() {
+            try {
+                const response = await fetch('/mcp/discord/api/status');
+                const data = await response.json();
+                
+                updateStatusIndicator(data);
+                updateSystemStatus(data);
+            } catch (error) {
+                console.error('Status check failed:', error);
+                updateStatusIndicator({ status: 'error' });
+            }
+        }
+        
+        function updateStatusIndicator(data) {
+            const statusDot = document.getElementById('status-dot');
+            const statusText = document.getElementById('status-text');
+            
+            statusDot.className = 'status-dot';
+            
+            if (data.status === 'available') {
+                statusDot.classList.add('online');
+                statusText.textContent = 'Online';
+            } else if (data.status === 'partial') {
+                statusDot.classList.add('warning');
+                statusText.textContent = 'Partial';
+            } else {
+                statusDot.classList.add('offline');
+                statusText.textContent = 'Offline';
+            }
+            
+            document.getElementById('stat-status').textContent = data.status || 'Unknown';
+        }
+        
+        function updateSystemStatus(data) {
+            const container = document.getElementById('system-status-details');
+            container.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                    <div>
+                        <strong>Discord Integration:</strong> ${data.discord_available ? '✅ Available' : '❌ Not Available'}
+                    </div>
+                    <div>
+                        <strong>Exporter Installed:</strong> ${data.exporter_installed ? '✅ Yes' : '❌ No'}
+                    </div>
+                    <div>
+                        <strong>Token Configured:</strong> ${data.token_configured ? '✅ Yes' : '❌ No'}
+                    </div>
+                    <div>
+                        <strong>Platform:</strong> ${data.platform || 'Unknown'} (${data.architecture || 'Unknown'})
+                    </div>
+                    ${data.exporter_version ? `<div><strong>Exporter Version:</strong> ${data.exporter_version}</div>` : ''}
+                </div>
+            `;
+        }
+        
+        async function loadInitialData() {
+            try {
+                const response = await fetch('/mcp/discord/api/list_guilds');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.status === 'success') {
+                        document.getElementById('stat-servers').textContent = data.count;
+                        guilds = data.guilds || [];
+                        populateServerSelect();
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load initial data:', error);
+            }
+        }
+        
+        function refreshStatus() {
+            checkStatus();
+        }
+        
+        async function loadServers() {
+            showAlert('servers', 'info', 'Loading servers...');
+            
+            try {
+                const response = await fetch('/mcp/discord/api/list_guilds');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    guilds = data.guilds || [];
+                    displayServers(guilds);
+                    populateServerSelect();
+                    showAlert('servers', 'success', `Loaded ${guilds.length} servers successfully`);
+                } else {
+                    showAlert('servers', 'error', data.error || 'Failed to load servers');
+                }
+            } catch (error) {
+                showAlert('servers', 'error', 'Network error: ' + error.message);
+            }
+        }
+        
+        function displayServers(serverList) {
+            const container = document.getElementById('server-list');
+            if (!serverList || serverList.length === 0) {
+                container.innerHTML = '<li style="text-align: center; padding: 40px; color: #72767D;">No servers found</li>';
+                return;
+            }
+            
+            container.innerHTML = serverList.map(server => `
+                <li class="server-item" data-server-id="${server.id}">
+                    <div class="server-info">
+                        <h4>${server.name}</h4>
+                        <p>ID: ${server.id} • ${server.member_count || 0} members</p>
+                    </div>
+                    <button class="btn btn-secondary" onclick="selectServer('${server.id}')">View Channels</button>
+                </li>
+            `).join('');
+        }
+        
+        function populateServerSelect() {
+            const select = document.getElementById('server-select');
+            select.innerHTML = '<option value="">Select a server...</option>' +
+                guilds.map(server => `<option value="${server.id}">${server.name}</option>`).join('');
+        }
+        
+        function selectServer(serverId) {
+            navigateToPage('channels');
+            document.getElementById('server-select').value = serverId;
+            loadChannels();
+        }
+        
+        async function loadChannels() {
+            const serverId = document.getElementById('server-select').value;
+            if (!serverId) {
+                document.getElementById('channels-card').style.display = 'none';
+                return;
+            }
+            
+            showAlert('channels', 'info', 'Loading channels...');
+            document.getElementById('channels-card').style.display = 'block';
+            
+            try {
+                const response = await fetch(`/mcp/discord/api/list_channels/${serverId}`);
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    displayChannels(data.channels || []);
+                    showAlert('channels', 'success', `Loaded ${data.count} channels`);
+                } else {
+                    showAlert('channels', 'error', data.error || 'Failed to load channels');
+                }
+            } catch (error) {
+                showAlert('channels', 'error', 'Network error: ' + error.message);
+            }
+        }
+        
+        function displayChannels(channelList) {
+            const container = document.getElementById('channel-list');
+            if (!channelList || channelList.length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 40px; color: #72767D;">No channels found</p>';
+                return;
+            }
+            
+            container.innerHTML = channelList.map(channel => `
+                <div class="channel-item">
+                    <span class="channel-icon">#</span>
+                    <div style="flex: 1;">
+                        <strong>${channel.name}</strong>
+                        <div style="font-size: 12px; color: #72767D;">ID: ${channel.id}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        async function loadDMs() {
+            showAlert('dms', 'info', 'Loading DM channels...');
+            
+            try {
+                const response = await fetch('/mcp/discord/api/list_dm_channels');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    displayDMs(data.channels || []);
+                    showAlert('dms', 'success', `Loaded ${data.count} DM channels`);
+                } else {
+                    showAlert('dms', 'error', data.error || 'Failed to load DMs');
+                }
+            } catch (error) {
+                showAlert('dms', 'error', 'Network error: ' + error.message);
+            }
+        }
+        
+        function displayDMs(dmList) {
+            const container = document.getElementById('dm-list');
+            if (!dmList || dmList.length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 40px; color: #72767D;">No DM channels found</p>';
+                return;
+            }
+            
+            container.innerHTML = dmList.map(dm => `
+                <div class="channel-item">
+                    <span class="channel-icon">✉️</span>
+                    <div style="flex: 1;">
+                        <strong>${dm.name || 'Direct Message'}</strong>
+                        <div style="font-size: 12px; color: #72767D;">ID: ${dm.id}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function switchExportTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(`export-tab-${tab}`).classList.add('active');
+        }
+        
+        async function exportChannel(event) {
+            event.preventDefault();
+            
+            const channelId = document.getElementById('export-channel-id').value;
+            const format = document.getElementById('export-channel-format').value;
+            const afterDate = document.getElementById('export-after-date').value;
+            const beforeDate = document.getElementById('export-before-date').value;
+            const downloadMedia = document.getElementById('export-download-media').checked;
+            
+            const btn = document.getElementById('export-channel-btn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Exporting...';
+            
+            showAlert('export-channel', 'info', 'Starting channel export...');
+            
+            try {
+                const response = await fetch('/mcp/discord/api/export_channel', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        channel_id: channelId,
+                        format: format,
+                        after_date: afterDate || undefined,
+                        before_date: beforeDate || undefined,
+                        download_media: downloadMedia
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    showAlert('export-channel', 'success', `Export completed! File: ${data.output_path}`);
+                    addToHistory('Channel', channelId, format, data.output_path);
+                } else {
+                    showAlert('export-channel', 'error', data.error || 'Export failed');
+                }
+            } catch (error) {
+                showAlert('export-channel', 'error', 'Network error: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '📤 Export Channel';
+            }
+        }
+        
+        async function exportServer(event) {
+            event.preventDefault();
+            
+            const serverId = document.getElementById('export-server-id').value;
+            const format = document.getElementById('export-server-format').value;
+            const includeThreads = document.getElementById('export-include-threads').value;
+            const includeVC = document.getElementById('export-include-vc').checked;
+            
+            const btn = document.getElementById('export-server-btn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Exporting...';
+            
+            showAlert('export-server', 'info', 'Starting server export...');
+            
+            try {
+                const response = await fetch('/mcp/discord/api/export_guild', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        guild_id: serverId,
+                        format: format,
+                        include_threads: includeThreads,
+                        include_vc: includeVC
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    showAlert('export-server', 'success', `Export completed! File: ${data.output_path}`);
+                    addToHistory('Server', serverId, format, data.output_path);
+                } else {
+                    showAlert('export-server', 'error', data.error || 'Export failed');
+                }
+            } catch (error) {
+                showAlert('export-server', 'error', 'Network error: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '📤 Export Server';
+            }
+        }
+        
+        async function exportAllDMs() {
+            const format = document.getElementById('export-dms-format').value;
+            
+            const btn = document.getElementById('export-dms-btn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Exporting...';
+            
+            showAlert('export-dms', 'info', 'Starting DM export (this may take a while)...');
+            
+            try {
+                const response = await fetch('/mcp/discord/api/export_dm_channels', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ format: format })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    showAlert('export-dms', 'success', `DM export completed! File: ${data.output_path}`);
+                    addToHistory('All DMs', 'all', format, data.output_path);
+                } else {
+                    showAlert('export-dms', 'error', data.error || 'Export failed');
+                }
+            } catch (error) {
+                showAlert('export-dms', 'error', 'Network error: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '📤 Export All DMs';
+            }
+        }
+        
+        async function analyzeChannel(event) {
+            event.preventDefault();
+            
+            const channelId = document.getElementById('analyze-channel-id').value;
+            const analysisTypes = [];
+            
+            if (document.getElementById('analyze-message-stats').checked) analysisTypes.push('message_stats');
+            if (document.getElementById('analyze-user-activity').checked) analysisTypes.push('user_activity');
+            if (document.getElementById('analyze-content-patterns').checked) analysisTypes.push('content_patterns');
+            if (document.getElementById('analyze-temporal-patterns').checked) analysisTypes.push('temporal_patterns');
+            
+            const btn = document.getElementById('analyze-btn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Analyzing...';
+            
+            showAlert('analyze', 'info', 'Running analysis...');
+            
+            try {
+                const response = await fetch(`/mcp/discord/api/analyze_channel/${channelId}?analysis_types=${analysisTypes.join(',')}`);
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    displayAnalysisResults(data.analysis);
+                    showAlert('analyze', 'success', 'Analysis completed successfully');
+                } else {
+                    showAlert('analyze', 'error', data.error || 'Analysis failed');
+                }
+            } catch (error) {
+                showAlert('analyze', 'error', 'Network error: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '📈 Analyze';
+            }
+        }
+        
+        function displayAnalysisResults(analysis) {
+            const resultsCard = document.getElementById('analysis-results');
+            const output = document.getElementById('analysis-output');
+            
+            resultsCard.classList.remove('hidden');
+            output.innerHTML = '<pre style="background: #F2F3F5; padding: 20px; border-radius: 8px; overflow-x: auto;">' +
+                JSON.stringify(analysis, null, 2) + '</pre>';
+        }
+        
+        async function convertFile(event) {
+            event.preventDefault();
+            
+            const inputPath = document.getElementById('convert-input-path').value;
+            const outputPath = document.getElementById('convert-output-path').value;
+            const format = document.getElementById('convert-format').value;
+            
+            const btn = document.getElementById('convert-btn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Converting...';
+            
+            showAlert('convert', 'info', 'Converting file...');
+            
+            try {
+                const response = await fetch('/mcp/discord/api/convert_export', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        input_path: inputPath,
+                        output_path: outputPath,
+                        to_format: format
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    showAlert('convert', 'success', `Conversion completed! Output: ${data.output_path}`);
+                } else {
+                    showAlert('convert', 'error', data.error || 'Conversion failed');
+                }
+            } catch (error) {
+                showAlert('convert', 'error', 'Network error: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🔄 Convert';
+            }
+        }
+        
+        async function testToken(event) {
+            event.preventDefault();
+            
+            const token = document.getElementById('discord-token').value;
+            
+            if (!token) {
+                showAlert('token', 'error', 'Please enter a token');
+                return;
+            }
+            
+            const btn = document.getElementById('test-token-btn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Testing...';
+            
+            showAlert('token', 'info', 'Testing token...');
+            
+            try {
+                const response = await fetch('/mcp/discord/api/test_token', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: token })
+                });
+                
+                const data = await response.json();
+                
+                if (data.valid) {
+                    showAlert('token', 'success', data.message || 'Token is valid!');
+                } else {
+                    showAlert('token', 'error', data.error || 'Token is invalid');
+                }
+            } catch (error) {
+                showAlert('token', 'error', 'Network error: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🧪 Test Token';
+            }
+        }
+        
+        function toggleTokenVisibility() {
+            const input = document.getElementById('discord-token');
+            const toggle = document.querySelector('.token-toggle');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                toggle.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                toggle.textContent = '👁️';
+            }
+        }
+        
+        function addToHistory(type, id, format, path) {
+            exportHistory.unshift({
+                type: type,
+                id: id,
+                format: format,
+                path: path,
+                timestamp: new Date().toISOString()
+            });
+            
+            // Keep only last 20 exports
+            if (exportHistory.length > 20) {
+                exportHistory = exportHistory.slice(0, 20);
+            }
+            
+            // Update stats
+            const currentCount = parseInt(document.getElementById('stat-exports').textContent) || 0;
+            document.getElementById('stat-exports').textContent = currentCount + 1;
+        }
+        
+        function refreshHistory() {
+            const container = document.getElementById('export-history');
+            
+            if (exportHistory.length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 40px; color: #72767D;">No export history available yet.</p>';
+                return;
+            }
+            
+            container.innerHTML = exportHistory.map(item => `
+                <div class="export-item">
+                    <div class="export-details">
+                        <h5>${item.type} Export (${item.format})</h5>
+                        <p>ID: ${item.id} • ${new Date(item.timestamp).toLocaleString()}</p>
+                        <p style="font-size: 11px; font-family: monospace; color: #4F545C;">${item.path}</p>
+                    </div>
+                    <div class="export-actions">
+                        <button class="btn btn-secondary" style="font-size: 12px; padding: 8px 16px;">📋 Copy Path</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function showAlert(page, type, message) {
+            const container = document.getElementById(`alert-container-${page}`);
+            if (!container) return;
+            
+            const alertClass = `alert-${type}`;
+            container.innerHTML = `
+                <div class="alert ${alertClass}">
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

@@ -117,7 +117,9 @@ def _transport(
     return HttpTransport(
         delegate,
         endpoint=ProviderEndpoint(ENDPOINT, "review"),
-        endpoint_policy=EndpointPolicy(allowed_hosts=frozenset({"rpc.wallet-provider.example"})),
+        endpoint_policy=EndpointPolicy(
+            allowed_hosts=frozenset({"rpc.wallet-provider.example"})
+        ),
         address_resolver=_Resolver(),
         limits=TransportLimits(
             max_request_bytes=max_request_bytes,

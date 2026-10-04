@@ -221,13 +221,9 @@ def test_siwe_bootstrap_placeholder_is_not_promoted() -> None:
 
 def test_processor_rejects_wrong_provider_identity_and_binds_wld() -> None:
     processor = WorldChainProcessor(network=WORLD_CHAIN_MAINNET, ethereum=_FakeEthereumProcessor())
-    processor.validate_provider_identity(
-        chain_id=480, genesis_hash=WORLD_CHAIN_MAINNET_GENESIS_HASH
-    )
+    processor.validate_provider_identity(chain_id=480, genesis_hash=WORLD_CHAIN_MAINNET_GENESIS_HASH)
     with pytest.raises(WorldChainConfigError):
-        processor.validate_provider_identity(
-            chain_id=480, genesis_hash=WORLD_CHAIN_SEPOLIA_GENESIS_HASH
-        )
+        processor.validate_provider_identity(chain_id=480, genesis_hash=WORLD_CHAIN_SEPOLIA_GENESIS_HASH)
 
     wld = processor.bind_wld_asset()
     assert wld.symbol == "WLD"

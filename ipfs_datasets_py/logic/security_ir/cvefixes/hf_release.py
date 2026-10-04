@@ -171,7 +171,9 @@ def _canonical_json(value: Any) -> bytes:
     try:
         return canonical_json_bytes(value)
     except (TypeError, ValueError) as exc:
-        raise HuggingFaceReleaseError("release values must be finite canonical JSON") from exc
+        raise HuggingFaceReleaseError(
+            "release values must be finite canonical JSON"
+        ) from exc
 
 
 def _clean_text(value: Any, label: str, *, maximum: int = 4096) -> str:
@@ -182,7 +184,9 @@ def _clean_text(value: Any, label: str, *, maximum: int = 4096) -> str:
         or "\x00" in value
         or len(value) > maximum
     ):
-        raise HuggingFaceReleaseError(f"{label} must be bounded, non-empty trimmed text")
+        raise HuggingFaceReleaseError(
+            f"{label} must be bounded, non-empty trimmed text"
+        )
     return value
 
 
@@ -211,10 +215,17 @@ def _artifact_path(value: Any) -> str:
         canonical_record = (
             len(parsed.parts) == 3
             and _RECORD_TYPE_RE.fullmatch(parsed.parts[1]) is not None
-            and re.fullmatch(r"train-\d{5}-of-\d{5}\.parquet", parsed.parts[2]) is not None
+            and re.fullmatch(
+                r"train-\d{5}-of-\d{5}\.parquet", parsed.parts[2]
+            )
+            is not None
         )
-        if not canonical_record and _RETRIEVAL_DATA_PATH_RE.fullmatch(relative) is None:
-            raise ReleaseSafetyError(f"unexpected release artifact path: {path!r}")
+        if not canonical_record and _RETRIEVAL_DATA_PATH_RE.fullmatch(
+            relative
+        ) is None:
+            raise ReleaseSafetyError(
+                f"unexpected release artifact path: {path!r}"
+            )
     elif (
         len(parsed.parts) != 2
         or parsed.parts[0] != "indexes"
@@ -236,7 +247,9 @@ def _walk_public_value(value: Any, *, location: str = "$") -> None:
     if isinstance(value, Mapping):
         for raw_key, item in value.items():
             if not isinstance(raw_key, str):
-                raise ReleaseSafetyError(f"non-string mapping key at {location}")
+                raise ReleaseSafetyError(
+                    f"non-string mapping key at {location}"
+                )
             key = raw_key.casefold()
             child = f"{location}.{raw_key}"
             if key in CVEFIXES_BODY_FIELDS:
@@ -251,25 +264,36 @@ def _walk_public_value(value: Any, *, location: str = "$") -> None:
                 )
                 if not digest_only:
                     raise ReleaseSafetyError(
-                        f"internal body field cannot enter public staging: {child}"
+                        "internal body field cannot enter public staging: "
+                        f"{child}"
                     )
             if key in _CREDENTIAL_KEYS:
-                raise ReleaseSafetyError(f"credential field cannot enter staging: {child}")
+                raise ReleaseSafetyError(
+                    f"credential field cannot enter staging: {child}"
+                )
             if key in _CACHE_KEYS or key.endswith("_cache"):
-                raise ReleaseSafetyError(f"cache material cannot enter staging: {child}")
+                raise ReleaseSafetyError(
+                    f"cache material cannot enter staging: {child}"
+                )
             _walk_public_value(item, location=child)
         return
-    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+    if isinstance(value, Sequence) and not isinstance(
+        value, (str, bytes, bytearray)
+    ):
         for index, item in enumerate(value):
             _walk_public_value(item, location=f"{location}[{index}]")
         return
     if isinstance(value, str):
         if _SECRET_VALUE_RE.search(value):
-            raise ReleaseSafetyError(f"secret-like value cannot enter staging: {location}")
+            raise ReleaseSafetyError(
+                f"secret-like value cannot enter staging: {location}"
+            )
         normalized = value.replace("\\", "/")
         parts = {part.casefold() for part in PurePosixPath(normalized).parts}
         if parts & _CACHE_PATH_PARTS:
-            raise ReleaseSafetyError(f"cache path cannot enter staging: {location}")
+            raise ReleaseSafetyError(
+                f"cache path cannot enter staging: {location}"
+            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -294,9 +318,13 @@ class ParquetReleaseConfig:
         ):
             _positive_int(getattr(self, name), name)
         if self.max_rows_per_shard > self.max_records:
-            raise HuggingFaceReleaseError("max_rows_per_shard cannot exceed max_records")
+            raise HuggingFaceReleaseError(
+                "max_rows_per_shard cannot exceed max_records"
+            )
         if self.row_group_size > self.max_rows_per_shard:
-            raise HuggingFaceReleaseError("row_group_size cannot exceed max_rows_per_shard")
+            raise HuggingFaceReleaseError(
+                "row_group_size cannot exceed max_rows_per_shard"
+            )
         if self.compression not in {"none", "snappy", "gzip", "brotli", "zstd"}:
             raise HuggingFaceReleaseError("unsupported Parquet compression")
         if self.schema_version != HF_PARQUET_SCHEMA_VERSION:
@@ -315,7 +343,9 @@ class ParquetReleaseConfig:
 
     @property
     def cid(self) -> str:
-        return canonical_config_cid(self.to_dict(), schema_version=self.schema_version)
+        return canonical_config_cid(
+            self.to_dict(), schema_version=self.schema_version
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -345,11 +375,17 @@ class ReleaseArtifact:
             raise ReleaseIntegrityError("artifact CID does not match content")
         if self.path.endswith(".parquet"):
             if not _RECORD_TYPE_RE.fullmatch(self.config_name):
-                raise HuggingFaceReleaseError("Parquet artifacts require a valid config_name")
+                raise HuggingFaceReleaseError(
+                    "Parquet artifacts require a valid config_name"
+                )
             if self.row_count <= 0:
-                raise HuggingFaceReleaseError("Parquet artifacts require a positive row_count")
+                raise HuggingFaceReleaseError(
+                    "Parquet artifacts require a positive row_count"
+                )
         elif self.config_name or self.row_count:
-            raise HuggingFaceReleaseError("only Parquet artifacts may declare config_name or rows")
+            raise HuggingFaceReleaseError(
+                "only Parquet artifacts may declare config_name or rows"
+            )
         object.__setattr__(self, "sha256", digest)
         object.__setattr__(self, "content_id", content_id)
 
@@ -394,7 +430,9 @@ class HuggingFaceRelease:
             or self.license_provenance.source_revision != self.source_revision
             or not self.license_provenance.reviewed_for_release
         ):
-            raise ReleaseIntegrityError("release source does not match reviewed license provenance")
+            raise ReleaseIntegrityError(
+                "release source does not match reviewed license provenance"
+            )
         _clean_text(self.profile, "profile", maximum=256)
         if not _CID_RE.fullmatch(self.release_root):
             raise ReleaseIntegrityError("release_root must be a CIDv1 string")
@@ -404,7 +442,9 @@ class HuggingFaceRelease:
             raise ReleaseIntegrityError("unsupported release schema version")
         artifacts = tuple(sorted(self.artifacts, key=lambda item: item.path))
         if not artifacts or len({item.path for item in artifacts}) != len(artifacts):
-            raise ReleaseIntegrityError("artifacts must be non-empty with unique paths")
+            raise ReleaseIntegrityError(
+                "artifacts must be non-empty with unique paths"
+            )
         required = {
             "README.md",
             "dataset_infos.json",
@@ -443,7 +483,9 @@ class HuggingFaceRelease:
 
     @property
     def all_parquet_artifacts(self) -> tuple[ReleaseArtifact, ...]:
-        return tuple(item for item in self.artifacts if item.path.endswith(".parquet"))
+        return tuple(
+            item for item in self.artifacts if item.path.endswith(".parquet")
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -474,7 +516,9 @@ class ReleaseQuery:
             raise ReleaseLimitError("query text must be at most 4096 characters")
         for name in ("record_types", "authorities"):
             value = getattr(self, name)
-            if isinstance(value, (str, bytes, bytearray)) or not isinstance(value, Sequence):
+            if isinstance(value, (str, bytes, bytearray)) or not isinstance(
+                value, Sequence
+            ):
                 raise HuggingFaceReleaseError(f"{name} must be a sequence")
             normalized = tuple(sorted({_clean_text(item, name) for item in value}))
             if len(normalized) != len(tuple(value)):
@@ -502,7 +546,9 @@ class ReleaseQueryResponse:
 
     def __post_init__(self) -> None:
         if self.grants_execution_authority is not False:
-            raise HuggingFaceReleaseError("release queries cannot grant execution authority")
+            raise HuggingFaceReleaseError(
+                "release queries cannot grant execution authority"
+            )
 
 
 def _pyarrow() -> tuple[Any, Any]:
@@ -510,7 +556,9 @@ def _pyarrow() -> tuple[Any, Any]:
         import pyarrow as pa
         import pyarrow.parquet as pq
     except ImportError as exc:  # pragma: no cover - dependency is in project extras
-        raise HuggingFaceReleaseError("pyarrow is required to build or validate a release") from exc
+        raise HuggingFaceReleaseError(
+            "pyarrow is required to build or validate a release"
+        ) from exc
     return pa, pq
 
 
@@ -526,7 +574,9 @@ def _parquet_schema() -> Any:
             pa.field("config_cid", pa.string(), nullable=False),
             pa.field("record_json", pa.string(), nullable=False),
         ],
-        metadata={b"cvefixes_schema_version": HF_PARQUET_SCHEMA_VERSION.encode("ascii")},
+        metadata={
+            b"cvefixes_schema_version": HF_PARQUET_SCHEMA_VERSION.encode("ascii")
+        },
     )
 
 
@@ -582,7 +632,9 @@ def _meta_parquet_schema() -> Any:
     )
 
 
-def _write_meta_parquet(rows: Sequence[Mapping[str, Any]], config: ParquetReleaseConfig) -> bytes:
+def _write_meta_parquet(
+    rows: Sequence[Mapping[str, Any]], config: ParquetReleaseConfig
+) -> bytes:
     pa, pq = _pyarrow()
     table = pa.Table.from_pylist(list(rows), schema=_meta_parquet_schema())
     output = io.BytesIO()
@@ -608,10 +660,16 @@ def _meta_groups(
     record types form the remotely routable corpus index.
     """
 
-    graph_nodes = tuple(item for item in artifacts if item.config_name == "graph_node")
-    graph_edges = tuple(item for item in artifacts if item.config_name == "graph_edge")
+    graph_nodes = tuple(
+        item for item in artifacts if item.config_name == "graph_node"
+    )
+    graph_edges = tuple(
+        item for item in artifacts if item.config_name == "graph_edge"
+    )
     corpus = tuple(
-        item for item in artifacts if item.config_name not in {"graph_node", "graph_edge"}
+        item
+        for item in artifacts
+        if item.config_name not in {"graph_node", "graph_edge"}
     )
     return tuple(
         (name, rows)
@@ -632,10 +690,14 @@ def _build_meta_index_artifacts(
     for index_name, shards in _meta_groups(artifacts):
         rows: list[dict[str, Any]] = []
         document_index = 0
-        for shard_id, artifact in enumerate(sorted(shards, key=lambda item: item.path)):
+        for shard_id, artifact in enumerate(
+            sorted(shards, key=lambda item: item.path)
+        ):
             shard_rows = _read_parquet_rows(artifact)
             if not shard_rows:
-                raise ReleaseIntegrityError(f"record shard is empty: {artifact.path}")
+                raise ReleaseIntegrityError(
+                    f"record shard is empty: {artifact.path}"
+                )
             keys = tuple(str(row["record_id"]) for row in shard_rows)
             end_document_index = document_index + len(shard_rows) - 1
             rows.append(
@@ -657,7 +719,9 @@ def _build_meta_index_artifacts(
             document_index = end_document_index + 1
         content = _write_meta_parquet(rows, config)
         if len(content) > config.max_shard_bytes:
-            raise ReleaseLimitError(f"meta-index exceeds max_shard_bytes: {index_name}")
+            raise ReleaseLimitError(
+                f"meta-index exceeds max_shard_bytes: {index_name}"
+            )
         result.append(
             ReleaseArtifact(
                 path=f"indexes/{index_name}.parquet",
@@ -687,7 +751,9 @@ def _partition_rows(
             result.append(chunk)
             continue
         if len(chunk) == 1:
-            raise ReleaseLimitError("one Parquet row exceeds max_shard_bytes")
+            raise ReleaseLimitError(
+                "one Parquet row exceeds max_shard_bytes"
+            )
         midpoint = len(chunk) // 2
         pending[0:0] = [chunk[:midpoint], chunk[midpoint:]]
     if len(result) > config.max_shards_per_config:
@@ -757,7 +823,9 @@ def _dataset_card(
     config_paths: Mapping[str, str],
     limitations: Sequence[str],
 ) -> bytes:
-    safe_limitations = tuple(_clean_text(item, "limitation", maximum=2048) for item in limitations)
+    safe_limitations = tuple(
+        _clean_text(item, "limitation", maximum=2048) for item in limitations
+    )
     if not safe_limitations:
         raise HuggingFaceReleaseError("dataset card requires limitations")
     card_data = {
@@ -839,15 +907,21 @@ def _dataset_card(
 def _evaluation_record(
     dataset: DerivedDataset, evaluation: EvaluationRecord | None
 ) -> EvaluationRecord:
-    candidates = tuple(item for item in dataset.records if isinstance(item, EvaluationRecord))
+    candidates = tuple(
+        item for item in dataset.records if isinstance(item, EvaluationRecord)
+    )
     if evaluation is None:
         if len(candidates) != 1:
-            raise HuggingFaceReleaseError("release requires exactly one EvaluationRecord")
+            raise HuggingFaceReleaseError(
+                "release requires exactly one EvaluationRecord"
+            )
         return candidates[0]
     if not isinstance(evaluation, EvaluationRecord):
         raise HuggingFaceReleaseError("evaluation must be an EvaluationRecord")
     if evaluation.record_id not in {item.record_id for item in candidates}:
-        raise HuggingFaceReleaseError("evaluation record must be present in the derived dataset")
+        raise HuggingFaceReleaseError(
+            "evaluation record must be present in the derived dataset"
+        )
     return evaluation
 
 
@@ -889,17 +963,27 @@ def build_huggingface_release(
     if not isinstance(dataset, DerivedDataset):
         raise HuggingFaceReleaseError("dataset must be a DerivedDataset")
     if not isinstance(license_provenance, LicenseProvenance):
-        raise HuggingFaceReleaseError("license_provenance must be LicenseProvenance")
+        raise HuggingFaceReleaseError(
+            "license_provenance must be LicenseProvenance"
+        )
     if not _DATASET_ID_RE.fullmatch(dataset_id):
         raise HuggingFaceReleaseError("dataset_id must be owner/name")
     if not license_provenance.reviewed_for_release:
-        raise ReleaseSafetyError("release requires reviewed, redistributable license provenance")
+        raise ReleaseSafetyError(
+            "release requires reviewed, redistributable license provenance"
+        )
     config = parquet_config or ParquetReleaseConfig()
     if not isinstance(config, ParquetReleaseConfig):
-        raise HuggingFaceReleaseError("parquet_config must be ParquetReleaseConfig")
-    records = tuple(item for item in dataset.records if not isinstance(item, ReleaseManifest))
+        raise HuggingFaceReleaseError(
+            "parquet_config must be ParquetReleaseConfig"
+        )
+    records = tuple(
+        item for item in dataset.records if not isinstance(item, ReleaseManifest)
+    )
     if len(records) != len(dataset.records):
-        raise HuggingFaceReleaseError("input dataset must not contain a prior release manifest")
+        raise HuggingFaceReleaseError(
+            "input dataset must not contain a prior release manifest"
+        )
     if len(records) > config.max_records:
         raise ReleaseLimitError("dataset exceeds max_records")
     evaluation_record = _evaluation_record(dataset, evaluation)
@@ -919,7 +1003,10 @@ def build_huggingface_release(
             content = _write_parquet(chunk, config)
             artifacts.append(
                 ReleaseArtifact(
-                    path=(f"data/{config_name}/train-{index:05d}-of-{shard_total:05d}.parquet"),
+                    path=(
+                        f"data/{config_name}/"
+                        f"train-{index:05d}-of-{shard_total:05d}.parquet"
+                    ),
                     media_type="application/vnd.apache.parquet",
                     content=content,
                     config_name=config_name,
@@ -930,8 +1017,15 @@ def build_huggingface_release(
     parquet_artifacts = tuple(artifacts)
     index_artifacts = _build_meta_index_artifacts(parquet_artifacts, config)
     artifacts.extend(index_artifacts)
-    config_paths = {name: f"data/{name}/*.parquet" for name in sorted(grouped)}
-    config_paths.update({artifact.config_name: artifact.path for artifact in index_artifacts})
+    config_paths = {
+        name: f"data/{name}/*.parquet" for name in sorted(grouped)
+    }
+    config_paths.update(
+        {
+            artifact.config_name: artifact.path
+            for artifact in index_artifacts
+        }
+    )
     card = _dataset_card(
         dataset_id=dataset_id,
         source=license_provenance,
@@ -939,7 +1033,11 @@ def build_huggingface_release(
         config_paths=config_paths,
         limitations=limitations,
     )
-    artifacts.append(ReleaseArtifact("README.md", "text/markdown; charset=utf-8", card))
+    artifacts.append(
+        ReleaseArtifact(
+            "README.md", "text/markdown; charset=utf-8", card
+        )
+    )
     artifacts.append(
         ReleaseArtifact(
             "evaluation-report.json",
@@ -959,7 +1057,9 @@ def build_huggingface_release(
         dataset_root=dataset.cid,
     )
     artifacts.append(
-        ReleaseArtifact("dataset_infos.json", "application/json", _canonical_json(infos))
+        ReleaseArtifact(
+            "dataset_infos.json", "application/json", _canonical_json(infos)
+        )
     )
     root = _release_root(
         artifacts,
@@ -969,7 +1069,9 @@ def build_huggingface_release(
         dataset_root=dataset.cid,
         config_cid=config.cid,
     )
-    source_cids = tuple(sorted({cid for record in records for cid in record.source_cids}))
+    source_cids = tuple(
+        sorted({cid for record in records for cid in record.source_cids})
+    )
     manifest_record = ReleaseManifest(
         source_cids=source_cids,
         parent_cids=(dataset.cid,),
@@ -986,7 +1088,9 @@ def build_huggingface_release(
         },
     )
     manifest_value = {
-        "artifacts": [item.descriptor() for item in sorted(artifacts, key=lambda item: item.path)],
+        "artifacts": [
+            item.descriptor() for item in sorted(artifacts, key=lambda item: item.path)
+        ],
         "dataset_id": dataset_id,
         "derived_dataset_root": dataset.cid,
         "indexes": {
@@ -1000,7 +1104,9 @@ def build_huggingface_release(
     }
     _walk_public_value(manifest_value)
     artifacts.append(
-        ReleaseArtifact("manifest.json", "application/json", _canonical_json(manifest_value))
+        ReleaseArtifact(
+            "manifest.json", "application/json", _canonical_json(manifest_value)
+        )
     )
     release = HuggingFaceRelease(
         dataset_id=dataset_id,
@@ -1022,12 +1128,20 @@ def _read_parquet_rows(artifact: ReleaseArtifact) -> tuple[dict[str, Any], ...]:
     try:
         table = pq.read_table(io.BytesIO(artifact.content))
     except Exception as exc:
-        raise ReleaseIntegrityError(f"cannot read Parquet artifact {artifact.path}") from exc
+        raise ReleaseIntegrityError(
+            f"cannot read Parquet artifact {artifact.path}"
+        ) from exc
     if tuple(table.schema.names) != _PARQUET_COLUMNS:
-        raise ReleaseIntegrityError(f"unexpected Parquet schema in {artifact.path}")
+        raise ReleaseIntegrityError(
+            f"unexpected Parquet schema in {artifact.path}"
+        )
     metadata = table.schema.metadata or {}
-    if metadata.get(b"cvefixes_schema_version") != HF_PARQUET_SCHEMA_VERSION.encode("ascii"):
-        raise ReleaseIntegrityError(f"missing Parquet schema version in {artifact.path}")
+    if metadata.get(b"cvefixes_schema_version") != HF_PARQUET_SCHEMA_VERSION.encode(
+        "ascii"
+    ):
+        raise ReleaseIntegrityError(
+            f"missing Parquet schema version in {artifact.path}"
+        )
     return tuple(table.to_pylist())
 
 
@@ -1036,18 +1150,26 @@ def _read_meta_rows(artifact: ReleaseArtifact) -> tuple[dict[str, Any], ...]:
     try:
         table = pq.read_table(io.BytesIO(artifact.content))
     except Exception as exc:
-        raise ReleaseIntegrityError(f"cannot read meta-index artifact {artifact.path}") from exc
+        raise ReleaseIntegrityError(
+            f"cannot read meta-index artifact {artifact.path}"
+        ) from exc
     if tuple(table.schema.names) != _META_COLUMNS:
-        raise ReleaseIntegrityError(f"unexpected meta-index schema in {artifact.path}")
+        raise ReleaseIntegrityError(
+            f"unexpected meta-index schema in {artifact.path}"
+        )
     metadata = table.schema.metadata or {}
     if metadata.get(b"schema_version") != HF_META_SCHEMA_VERSION.encode("ascii"):
-        raise ReleaseIntegrityError(f"missing meta-index schema version in {artifact.path}")
+        raise ReleaseIntegrityError(
+            f"missing meta-index schema version in {artifact.path}"
+        )
     return tuple(table.to_pylist())
 
 
 def _validate_meta_indexes(release: HuggingFaceRelease) -> None:
     expected_groups = dict(_meta_groups(release.parquet_artifacts))
-    actual_indexes = {PurePosixPath(item.path).stem: item for item in release.index_artifacts}
+    actual_indexes = {
+        PurePosixPath(item.path).stem: item for item in release.index_artifacts
+    }
     if set(actual_indexes) != set(expected_groups):
         raise ReleaseIntegrityError("meta-index inventory mismatch")
 
@@ -1081,13 +1203,17 @@ def _validate_meta_indexes(release: HuggingFaceRelease) -> None:
                 "start_document_index": document_index,
             }
             if row != expected:
-                raise ReleaseIntegrityError(f"meta-index pointer mismatch: {shard.path}")
+                raise ReleaseIntegrityError(
+                    f"meta-index pointer mismatch: {shard.path}"
+                )
             if shard.path in covered_paths:
                 raise ReleaseIntegrityError("data shard is indexed more than once")
             covered_paths.add(shard.path)
             document_index = end_document_index + 1
     if covered_paths != {item.path for item in release.parquet_artifacts}:
-        raise ReleaseIntegrityError("meta-index pointers do not cover data shards exactly")
+        raise ReleaseIntegrityError(
+            "meta-index pointers do not cover data shards exactly"
+        )
 
 
 def validate_huggingface_release(
@@ -1106,14 +1232,19 @@ def validate_huggingface_release(
         raise ReleaseIntegrityError("manifest license provenance mismatch")
     indexes = manifest.get("indexes")
     expected_indexes = {
-        PurePosixPath(item.path).stem: item.descriptor() for item in release.index_artifacts
+        PurePosixPath(item.path).stem: item.descriptor()
+        for item in release.index_artifacts
     }
     if indexes != expected_indexes:
         raise ReleaseIntegrityError("manifest meta-index inventory mismatch")
     described = manifest.get("artifacts")
     if not isinstance(described, list):
         raise ReleaseIntegrityError("manifest artifacts must be a list")
-    expected = [item.descriptor() for item in release.artifacts if item.path != "manifest.json"]
+    expected = [
+        item.descriptor()
+        for item in release.artifacts
+        if item.path != "manifest.json"
+    ]
     if described != expected:
         raise ReleaseIntegrityError("artifact inventory mismatch")
     computed_root = _release_root(
@@ -1138,7 +1269,9 @@ def validate_huggingface_release(
             raise ReleaseIntegrityError("Parquet row count mismatch")
         if len(rows) > release.parquet_config.max_rows_per_shard:
             raise ReleaseLimitError("Parquet artifact exceeds row bound")
-        config_shards[artifact.config_name] = config_shards.get(artifact.config_name, 0) + 1
+        config_shards[artifact.config_name] = (
+            config_shards.get(artifact.config_name, 0) + 1
+        )
         for row in rows:
             if row["record_type"] != artifact.config_name:
                 raise ReleaseIntegrityError("record crossed Parquet config")
@@ -1166,7 +1299,8 @@ def validate_huggingface_release(
     if row_count > release.parquet_config.max_records:
         raise ReleaseLimitError("release exceeds max_records")
     if any(
-        count > release.parquet_config.max_shards_per_config for count in config_shards.values()
+        count > release.parquet_config.max_shards_per_config
+        for count in config_shards.values()
     ):
         raise ReleaseLimitError("release config exceeds shard bound")
     if rows_seen != set(release.release_manifest.record_cids):

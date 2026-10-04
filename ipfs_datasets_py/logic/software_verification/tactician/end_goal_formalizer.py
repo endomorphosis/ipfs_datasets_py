@@ -103,9 +103,7 @@ _ASSUME_RE: Final = re.compile(
 _IDENT_RE: Final = re.compile(r"\b([A-Za-z_][A-Za-z0-9_\-]{0,127})\b")
 
 # Free-prose property / quantifier detectors (deterministic, ordered).
-_PROSE_PROPERTY_RULES: Final[
-    tuple[tuple[re.Pattern[str], PropertyClass, tuple[QuantifierKind, ...]], ...]
-] = (
+_PROSE_PROPERTY_RULES: Final[tuple[tuple[re.Pattern[str], PropertyClass, tuple[QuantifierKind, ...]], ...]] = (
     (
         re.compile(
             r"\bevery\s+(?:execution|path|run|trace)\b.*\beventually\b",
@@ -418,7 +416,9 @@ def _text(
     if not optional and not text:
         raise EndGoalFormalizerError(f"{label} is required")
     if len(text) > maximum:
-        raise EndGoalFormalizerError(f"{label} exceeds maximum length of {maximum}")
+        raise EndGoalFormalizerError(
+            f"{label} exceeds maximum length of {maximum}"
+        )
     return text
 
 
@@ -432,7 +432,9 @@ def _string_tuple(
         items: Iterable[Any] = ()
     elif isinstance(value, str):
         items = (value,)
-    elif isinstance(value, Sequence) and not isinstance(value, (bytes, bytearray, memoryview)):
+    elif isinstance(value, Sequence) and not isinstance(
+        value, (bytes, bytearray, memoryview)
+    ):
         items = value
     else:
         raise EndGoalFormalizerError(f"{label} must be a sequence of strings")
@@ -520,7 +522,9 @@ def _property_class(raw: object) -> PropertyClass:
     try:
         return PropertyClass(key)
     except ValueError as exc:
-        raise EndGoalFormalizerError(f"unsupported property class: {raw!r}") from exc
+        raise EndGoalFormalizerError(
+            f"unsupported property class: {raw!r}"
+        ) from exc
 
 
 def _quantifier(raw: object) -> QuantifierKind:
@@ -532,7 +536,9 @@ def _quantifier(raw: object) -> QuantifierKind:
     try:
         return QuantifierKind(key)
     except ValueError as exc:
-        raise EndGoalFormalizerError(f"unsupported quantifier: {raw!r}") from exc
+        raise EndGoalFormalizerError(
+            f"unsupported quantifier: {raw!r}"
+        ) from exc
 
 
 def _assumption_class(raw: object) -> AssumptionClass:
@@ -544,7 +550,9 @@ def _assumption_class(raw: object) -> AssumptionClass:
     try:
         return AssumptionClass(key)
     except ValueError as exc:
-        raise EndGoalFormalizerError(f"unsupported assumption class: {raw!r}") from exc
+        raise EndGoalFormalizerError(
+            f"unsupported assumption class: {raw!r}"
+        ) from exc
 
 
 def _assurance(raw: object) -> AuthorityCeiling:
@@ -556,16 +564,22 @@ def _assurance(raw: object) -> AuthorityCeiling:
     try:
         return AuthorityCeiling(key)
     except ValueError as exc:
-        raise EndGoalFormalizerError(f"unsupported assurance target: {raw!r}") from exc
+        raise EndGoalFormalizerError(
+            f"unsupported assurance target: {raw!r}"
+        ) from exc
 
 
-def _reject_forbidden_claims(payload: Mapping[str, Any], *, context: str) -> None:
+def _reject_forbidden_claims(
+    payload: Mapping[str, Any], *, context: str
+) -> None:
     for key in _FORBIDDEN_ADMISSION_KEYS:
         if key not in payload:
             continue
         value = payload[key]
         if value is True:
-            raise EndGoalFormalizerError(f"{context} cannot claim {key.replace('_', ' ')}")
+            raise EndGoalFormalizerError(
+                f"{context} cannot claim {key.replace('_', ' ')}"
+            )
         if isinstance(value, str) and value.strip().lower() in {
             "true",
             "yes",
@@ -576,10 +590,14 @@ def _reject_forbidden_claims(payload: Mapping[str, Any], *, context: str) -> Non
             "selected",
             "confirmed",
         }:
-            raise EndGoalFormalizerError(f"{context} cannot claim {key.replace('_', ' ')}")
+            raise EndGoalFormalizerError(
+                f"{context} cannot claim {key.replace('_', ' ')}"
+            )
 
 
-def _source_from_mapping(raw: object, *, fallback_tree: str = "") -> SourceSpanBinding:
+def _source_from_mapping(
+    raw: object, *, fallback_tree: str = ""
+) -> SourceSpanBinding:
     if isinstance(raw, SourceSpanBinding):
         return raw
     if raw is None:
@@ -596,7 +614,12 @@ def _source_from_mapping(raw: object, *, fallback_tree: str = "") -> SourceSpanB
     return SourceSpanBinding(
         tree_id=tree_id,
         source_ref_ids=tuple(
-            str(x) for x in (raw.get("source_ref_ids") or raw.get("code_references") or ())
+            str(x)
+            for x in (
+                raw.get("source_ref_ids")
+                or raw.get("code_references")
+                or ()
+            )
         ),
         span_ids=tuple(str(x) for x in (raw.get("span_ids") or ())),
         ast_scope_ids=tuple(str(x) for x in (raw.get("ast_scope_ids") or ())),
@@ -699,18 +722,26 @@ class EndGoalFormalizerRequest:
         object.__setattr__(
             self,
             "repository_source_ref_ids",
-            _string_tuple(self.repository_source_ref_ids, "repository_source_ref_ids"),
+            _string_tuple(
+                self.repository_source_ref_ids, "repository_source_ref_ids"
+            ),
         )
-        object.__setattr__(self, "intent_overlay", _mapping(self.intent_overlay, "intent_overlay"))
+        object.__setattr__(
+            self, "intent_overlay", _mapping(self.intent_overlay, "intent_overlay")
+        )
         learned = self.learned_proposal
         if learned is not None:
             if not isinstance(learned, Mapping):
-                raise EndGoalFormalizerError("learned_proposal must be an object when provided")
+                raise EndGoalFormalizerError(
+                    "learned_proposal must be an object when provided"
+                )
             object.__setattr__(self, "learned_proposal", dict(learned))
         object.__setattr__(
             self,
             "prefer_controlled_language",
-            _bool(self.prefer_controlled_language, "prefer_controlled_language"),
+            _bool(
+                self.prefer_controlled_language, "prefer_controlled_language"
+            ),
         )
         if (
             not isinstance(self.max_candidates, int)
@@ -718,7 +749,9 @@ class EndGoalFormalizerRequest:
             or self.max_candidates < 1
             or self.max_candidates > 64
         ):
-            raise EndGoalFormalizerError("max_candidates must be an integer in [1, 64]")
+            raise EndGoalFormalizerError(
+                "max_candidates must be an integer in [1, 64]"
+            )
         object.__setattr__(
             self,
             "logic_family",
@@ -738,7 +771,9 @@ class EndGoalFormalizerRequest:
         object.__setattr__(self, "meta", _mapping(self.meta, "meta"))
         _reject_forbidden_claims(self.meta, context="request meta")
         if self.learned_proposal is not None:
-            _reject_forbidden_claims(self.learned_proposal, context="learned_proposal")
+            _reject_forbidden_claims(
+                self.learned_proposal, context="learned_proposal"
+            )
 
     @property
     def request_digest(self) -> str:
@@ -757,7 +792,9 @@ class EndGoalFormalizerRequest:
             "repository_source_ref_ids": list(self.repository_source_ref_ids),
             "intent_overlay": dict(self.intent_overlay),
             "learned_proposal": (
-                dict(self.learned_proposal) if self.learned_proposal is not None else None
+                dict(self.learned_proposal)
+                if self.learned_proposal is not None
+                else None
             ),
             "prefer_controlled_language": self.prefer_controlled_language,
             "max_candidates": self.max_candidates,
@@ -783,10 +820,14 @@ class EndGoalFormalizerRequest:
             goal_id=str(payload.get("goal_id") or ""),
             root_goal_id=str(payload.get("root_goal_id") or ""),
             known_identifiers=tuple(payload.get("known_identifiers") or ()),
-            repository_source_ref_ids=tuple(payload.get("repository_source_ref_ids") or ()),
+            repository_source_ref_ids=tuple(
+                payload.get("repository_source_ref_ids") or ()
+            ),
             intent_overlay=payload.get("intent_overlay") or {},
             learned_proposal=payload.get("learned_proposal"),
-            prefer_controlled_language=bool(payload.get("prefer_controlled_language", True)),
+            prefer_controlled_language=bool(
+                payload.get("prefer_controlled_language", True)
+            ),
             max_candidates=int(payload.get("max_candidates") or 8),
             logic_family=str(payload.get("logic_family") or ""),
             provider_ids=tuple(payload.get("provider_ids") or ()),
@@ -842,9 +883,13 @@ class EndGoalCandidate:
             AuthorityCeiling.ADVISORY,
             AuthorityCeiling.CANDIDATE,
         }:
-            raise EndGoalFormalizerError("end-goal candidate authority cannot exceed candidate")
+            raise EndGoalFormalizerError(
+                "end-goal candidate authority cannot exceed candidate"
+            )
         if self.end_goal.proof_claimed or self.end_goal.completion_claimed:
-            raise EndGoalFormalizerError("end-goal candidate cannot claim proof or completion")
+            raise EndGoalFormalizerError(
+                "end-goal candidate cannot claim proof or completion"
+            )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -880,7 +925,9 @@ class EndGoalFormalizerResult:
 
     def __post_init__(self) -> None:
         if self.admitted:
-            raise EndGoalFormalizerError("EndGoalFormalizerResult cannot admit a candidate")
+            raise EndGoalFormalizerError(
+                "EndGoalFormalizerResult cannot admit a candidate"
+            )
         object.__setattr__(self, "admitted", False)
 
     @property
@@ -935,7 +982,9 @@ def render_controlled_language(spec: EndGoalSpec) -> str:
     for key in sorted(spec.interference):
         lines.append(f"INTERFERENCE {key}={spec.interference[key]}")
     for assumption in sorted(spec.assumptions, key=lambda a: a.assumption_id):
-        lines.append(f"ASSUME {assumption.assumption_class.value}: {assumption.statement}")
+        lines.append(
+            f"ASSUME {assumption.assumption_class.value}: {assumption.statement}"
+        )
     bounds = spec.bounds
     if bounds.wall_time_ms:
         lines.append(f"BOUND wall_time_ms={bounds.wall_time_ms}")
@@ -975,19 +1024,31 @@ def render_controlled_english(spec: EndGoalSpec) -> str:
     parts: list[str] = []
     prop = spec.property_class.value.replace("_", " ")
     if spec.actors:
-        parts.append(f"Actors {', '.join(sorted(spec.actors))} participate.")
+        parts.append(
+            f"Actors {', '.join(sorted(spec.actors))} participate."
+        )
     if spec.current_state:
-        state = ", ".join(f"{k}={v}" for k, v in sorted(spec.current_state.items()))
+        state = ", ".join(
+            f"{k}={v}" for k, v in sorted(spec.current_state.items())
+        )
         parts.append(f"Current state: {state}.")
     if spec.target_state:
-        state = ", ".join(f"{k}={v}" for k, v in sorted(spec.target_state.items()))
+        state = ", ".join(
+            f"{k}={v}" for k, v in sorted(spec.target_state.items())
+        )
         parts.append(f"Target state: {state}.")
     quant = ", ".join(q.value for q in spec.quantifiers) or "unspecified"
-    parts.append(f"Property class is {prop} under quantifiers [{quant}].")
+    parts.append(
+        f"Property class is {prop} under quantifiers [{quant}]."
+    )
     if spec.transitions:
-        parts.append(f"Transitions: {', '.join(sorted(spec.transitions))}.")
+        parts.append(
+            f"Transitions: {', '.join(sorted(spec.transitions))}."
+        )
     if spec.environment:
-        env = ", ".join(f"{k}={v}" for k, v in sorted(spec.environment.items()))
+        env = ", ".join(
+            f"{k}={v}" for k, v in sorted(spec.environment.items())
+        )
         parts.append(f"Environment: {env}.")
     if spec.assumptions:
         parts.append(
@@ -999,7 +1060,9 @@ def render_controlled_english(spec: EndGoalSpec) -> str:
             + "."
         )
     if spec.unsupported_semantics:
-        parts.append("Unsupported: " + ", ".join(sorted(spec.unsupported_semantics)) + ".")
+        parts.append(
+            "Unsupported: " + ", ".join(sorted(spec.unsupported_semantics)) + "."
+        )
     if not parts:
         parts.append(f"Underspecified end goal ({prop}).")
     return " ".join(parts)
@@ -1109,7 +1172,9 @@ class EndGoalFormalizer:
         if isinstance(request, Mapping):
             request = EndGoalFormalizerRequest.from_dict(request)
         elif not isinstance(request, EndGoalFormalizerRequest):
-            raise EndGoalFormalizerError("request must be EndGoalFormalizerRequest or mapping")
+            raise EndGoalFormalizerError(
+                "request must be EndGoalFormalizerRequest or mapping"
+            )
 
         # Freeze digest before any work so callers can detect mutation attempts.
         request_digest = request.request_digest
@@ -1128,14 +1193,18 @@ class EndGoalFormalizer:
                 )
 
             extracted = self._extract(request)
-            grounding_errors = self._check_identifier_grounding(request, extracted)
+            grounding_errors = self._check_identifier_grounding(
+                request, extracted
+            )
             if grounding_errors:
                 return EndGoalFormalizerResult(
                     status=FormalizationStatus.REJECTED,
                     request_digest=request_digest,
                     frozen_caller_text=frozen_text,
                     rejections=tuple(grounding_errors),
-                    unsupported_semantics=tuple(sorted(extracted.unsupported_semantics)),
+                    unsupported_semantics=tuple(
+                        sorted(extracted.unsupported_semantics)
+                    ),
                     admitted=False,
                 )
 
@@ -1144,7 +1213,9 @@ class EndGoalFormalizer:
 
             # Optional learned path: candidate-only, never elevated.
             if request.learned_proposal is not None:
-                learned = self._absorb_learned_proposal(request, request.learned_proposal)
+                learned = self._absorb_learned_proposal(
+                    request, request.learned_proposal
+                )
                 if isinstance(learned, FormalizationDiagnostic):
                     rejections.append(learned)
                 else:
@@ -1156,7 +1227,8 @@ class EndGoalFormalizer:
             underspecified = self._underspecified_fields(extracted)
             unsupported = tuple(sorted(extracted.unsupported_semantics))
             if unsupported and not any(
-                c.end_goal.property_class is not PropertyClass.UNSPECIFIED for c in candidates
+                c.end_goal.property_class is not PropertyClass.UNSPECIFIED
+                for c in candidates
             ):
                 status = FormalizationStatus.UNSUPPORTED
             elif underspecified and extracted.property_class is PropertyClass.UNSPECIFIED:
@@ -1166,9 +1238,13 @@ class EndGoalFormalizer:
 
             # Integrity: frozen request must be unchanged.
             if request.request_digest != request_digest:
-                raise EndGoalFormalizerError("caller request was mutated during formalization")
+                raise EndGoalFormalizerError(
+                    "caller request was mutated during formalization"
+                )
             if request.caller_text != frozen_text:
-                raise EndGoalFormalizerError("caller text was mutated during formalization")
+                raise EndGoalFormalizerError(
+                    "caller text was mutated during formalization"
+                )
 
             try:
                 from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
@@ -1259,7 +1335,9 @@ class EndGoalFormalizer:
         )
         second = self.formalize(second_request)
         if not second.candidates:
-            raise EndGoalFormalizerError("round_trip reparse produced no candidates")
+            raise EndGoalFormalizerError(
+                "round_trip reparse produced no candidates"
+            )
         replayed = second.candidates[0].end_goal
         return (
             original,
@@ -1302,11 +1380,15 @@ class EndGoalFormalizer:
 
         # Default quantifiers from property class when still empty.
         if not extracted.quantifiers:
-            extracted.quantifiers.extend(self._default_quantifiers(extracted.property_class))
+            extracted.quantifiers.extend(
+                self._default_quantifiers(extracted.property_class)
+            )
 
         # Seed provenance for any collected phrase hits.
         prompt_ref = self._prompt_source_ref(request)
-        for index, (kind, phrase, start, end) in enumerate(extracted.phrase_hits):
+        for index, (kind, phrase, start, end) in enumerate(
+            extracted.phrase_hits
+        ):
             extracted.provenance.append(
                 PhraseProvenance(
                     phrase=phrase,
@@ -1474,10 +1556,14 @@ class EndGoalFormalizer:
                     if q not in extracted.quantifiers:
                         extracted.quantifiers.append(q)
                 start, end = match.start(), match.end()
-                extracted.phrase_hits.append(("property", match.group(0), start, end))
+                extracted.phrase_hits.append(
+                    ("property", match.group(0), start, end)
+                )
                 break
         else:
-            extracted.unsupported_semantics.append("underspecified_property_class")
+            extracted.unsupported_semantics.append(
+                "underspecified_property_class"
+            )
             extracted.diagnostics.append(
                 FormalizationDiagnostic(
                     code="underspecified_property",
@@ -1543,7 +1629,9 @@ class EndGoalFormalizer:
                 if actor:
                     extracted.actors.append(actor)
                     extracted.declared_identifiers.add(actor)
-            extracted.phrase_hits.append(("actor", match.group(0), match.start(), match.end()))
+            extracted.phrase_hits.append(
+                ("actor", match.group(0), match.start(), match.end())
+            )
 
         # Transitions: "via claim/release" or "transition claim".
         for match in re.finditer(
@@ -1556,7 +1644,9 @@ class EndGoalFormalizer:
                 if token:
                     extracted.transitions.append(token)
                     extracted.declared_identifiers.add(token)
-            extracted.phrase_hits.append(("transition", match.group(0), match.start(), match.end()))
+            extracted.phrase_hits.append(
+                ("transition", match.group(0), match.start(), match.end())
+            )
 
         # Environment: "environment network=async" or "under fair scheduling".
         env_match = re.search(
@@ -1611,7 +1701,9 @@ class EndGoalFormalizer:
                     reviewable=True,
                 )
             )
-            extracted.phrase_hits.append(("assume", match.group(0), match.start(), match.end()))
+            extracted.phrase_hits.append(
+                ("assume", match.group(0), match.start(), match.end())
+            )
 
         # Bounds in prose: "within 5000ms", "max_steps=32".
         for match in re.finditer(
@@ -1621,7 +1713,9 @@ class EndGoalFormalizer:
             re.IGNORECASE,
         ):
             self._apply_bound(f"{match.group(1)}={match.group(2)}", extracted)
-            extracted.phrase_hits.append(("bound", match.group(0), match.start(), match.end()))
+            extracted.phrase_hits.append(
+                ("bound", match.group(0), match.start(), match.end())
+            )
         time_match = re.search(
             r"\bwithin\s+(\d+)\s*(ms|milliseconds|s|seconds)?\b",
             text,
@@ -1651,7 +1745,9 @@ class EndGoalFormalizer:
             token = match.group(1).rstrip(".,;:!?")
             if token:
                 extracted.acceptance_evidence.append(token)
-            extracted.phrase_hits.append(("accept", match.group(0), match.start(), match.end()))
+            extracted.phrase_hits.append(
+                ("accept", match.group(0), match.start(), match.end())
+            )
 
         # Unsupported markers.
         for match in re.finditer(
@@ -1714,7 +1810,9 @@ class EndGoalFormalizer:
         _reject_forbidden_claims(overlay, context="intent_overlay")
         if "property_class" in overlay and extracted.property_class is PropertyClass.UNSPECIFIED:
             try:
-                extracted.property_class = _property_class(overlay["property_class"])
+                extracted.property_class = _property_class(
+                    overlay["property_class"]
+                )
             except EndGoalFormalizerError as exc:
                 extracted.diagnostics.append(
                     FormalizationDiagnostic(
@@ -1752,7 +1850,9 @@ class EndGoalFormalizer:
                 if q not in extracted.quantifiers:
                     extracted.quantifiers.append(q)
             except EndGoalFormalizerError:
-                extracted.unsupported_semantics.append(f"overlay_quantifier:{quant}")
+                extracted.unsupported_semantics.append(
+                    f"overlay_quantifier:{quant}"
+                )
         if overlay.get("logic_family") and not extracted.logic_family:
             extracted.logic_family = str(overlay["logic_family"])
         for item in overlay.get("unsupported_semantics") or ():
@@ -1776,19 +1876,27 @@ class EndGoalFormalizer:
                 extracted.diagnostics.append(
                     FormalizationDiagnostic(
                         code="hidden_assumption",
-                        message=("overlay assumption statement is not present in caller text"),
+                        message=(
+                            "overlay assumption statement is not present in "
+                            "caller text"
+                        ),
                         severity="error",
                         phrase=statement,
                     )
                 )
                 # Surface as rejection later via required check.
-                extracted.required_identifiers.add(f"__hidden_assumption__{index}")
+                extracted.required_identifiers.add(
+                    f"__hidden_assumption__{index}"
+                )
                 continue
-            klass = _assumption_class(item.get("assumption_class", AssumptionClass.HYPOTHETICAL))
+            klass = _assumption_class(
+                item.get("assumption_class", AssumptionClass.HYPOTHETICAL)
+            )
             extracted.assumptions.append(
                 AssumptionBinding(
                     assumption_id=str(
-                        item.get("assumption_id") or f"assumption:overlay:{index + 1}"
+                        item.get("assumption_id")
+                        or f"assumption:overlay:{index + 1}"
                     ),
                     assumption_class=klass,
                     kind=str(item.get("kind") or "semantic"),
@@ -1829,13 +1937,15 @@ class EndGoalFormalizer:
         ungrounded = sorted(
             ident
             for ident in proposed_ids
-            if ident not in grounded and ident.lower() not in {g.lower() for g in grounded}
+            if ident not in grounded
+            and ident.lower() not in {g.lower() for g in grounded}
         )
         if ungrounded:
             return FormalizationDiagnostic(
                 code="learned_ungrounded_identifier",
                 message=(
-                    "learned proposal references ungrounded identifiers: " + ", ".join(ungrounded)
+                    "learned proposal references ungrounded identifiers: "
+                    + ", ".join(ungrounded)
                 ),
                 severity="error",
             )
@@ -1849,7 +1959,9 @@ class EndGoalFormalizer:
             if statement and statement not in request.caller_text:
                 return FormalizationDiagnostic(
                     code="learned_hidden_assumption",
-                    message=("learned proposal assumption is not present in caller text"),
+                    message=(
+                        "learned proposal assumption is not present in caller text"
+                    ),
                     severity="error",
                     phrase=statement,
                 )
@@ -1857,7 +1969,9 @@ class EndGoalFormalizer:
         extracted = _Extracted(mode=FormalizationMode.LEARNED_CANDIDATE)
         if proposal.get("property_class"):
             try:
-                extracted.property_class = _property_class(proposal["property_class"])
+                extracted.property_class = _property_class(
+                    proposal["property_class"]
+                )
             except EndGoalFormalizerError as exc:
                 return FormalizationDiagnostic(
                     code="learned_property_rejected",
@@ -1880,16 +1994,22 @@ class EndGoalFormalizer:
                 {str(k): v for k, v in proposal["current_state"].items()}
             )
         if isinstance(proposal.get("target_state"), Mapping):
-            extracted.target_state.update({str(k): v for k, v in proposal["target_state"].items()})
+            extracted.target_state.update(
+                {str(k): v for k, v in proposal["target_state"].items()}
+            )
         if isinstance(proposal.get("environment"), Mapping):
-            extracted.environment.update({str(k): v for k, v in proposal["environment"].items()})
+            extracted.environment.update(
+                {str(k): v for k, v in proposal["environment"].items()}
+            )
         for item in proposal.get("unsupported_semantics") or ():
             extracted.unsupported_semantics.append(str(item))
         if proposal.get("logic_family"):
             extracted.logic_family = str(proposal["logic_family"])
         if proposal.get("assurance_target"):
             try:
-                extracted.assurance_target = _assurance(proposal["assurance_target"])
+                extracted.assurance_target = _assurance(
+                    proposal["assurance_target"]
+                )
             except EndGoalFormalizerError:
                 extracted.assurance_target = AuthorityCeiling.CANDIDATE
         # Force candidate authority for learned path.
@@ -1941,18 +2061,30 @@ class EndGoalFormalizer:
 
         bounds_payload: dict[str, Any] = {
             "schema": ResourceBounds.SCHEMA,
-            "wall_time_ms": extracted.bound_fields.get("wall_time_ms", request.bounds.wall_time_ms),
-            "memory_bytes": extracted.bound_fields.get("memory_bytes", request.bounds.memory_bytes),
-            "max_steps": extracted.bound_fields.get("max_steps", request.bounds.max_steps),
-            "max_depth": extracted.bound_fields.get("max_depth", request.bounds.max_depth),
-            "max_nodes": extracted.bound_fields.get("max_nodes", request.bounds.max_nodes),
+            "wall_time_ms": extracted.bound_fields.get(
+                "wall_time_ms", request.bounds.wall_time_ms
+            ),
+            "memory_bytes": extracted.bound_fields.get(
+                "memory_bytes", request.bounds.memory_bytes
+            ),
+            "max_steps": extracted.bound_fields.get(
+                "max_steps", request.bounds.max_steps
+            ),
+            "max_depth": extracted.bound_fields.get(
+                "max_depth", request.bounds.max_depth
+            ),
+            "max_nodes": extracted.bound_fields.get(
+                "max_nodes", request.bounds.max_nodes
+            ),
             "max_candidates": extracted.bound_fields.get(
                 "max_candidates", request.bounds.max_candidates
             ),
             "model_token_limit": extracted.bound_fields.get(
                 "model_token_limit", request.bounds.model_token_limit
             ),
-            "network_allowed": (extracted.network_allowed or request.bounds.network_allowed),
+            "network_allowed": (
+                extracted.network_allowed or request.bounds.network_allowed
+            ),
             "extra": {
                 **dict(request.bounds.extra),
                 **extracted.extra_bounds,
@@ -1965,7 +2097,9 @@ class EndGoalFormalizer:
         state_variables = tuple(dict.fromkeys(extracted.state_variables))
         transitions = tuple(dict.fromkeys(extracted.transitions))
         provider_ids = tuple(
-            dict.fromkeys(list(extracted.provider_ids) + list(request.provider_ids))
+            dict.fromkeys(
+                list(extracted.provider_ids) + list(request.provider_ids)
+            )
         )
         quantifiers = tuple(dict.fromkeys(extracted.quantifiers))
         acceptance = tuple(dict.fromkeys(extracted.acceptance_evidence))
@@ -2108,7 +2242,9 @@ class EndGoalFormalizer:
                 completion_claimed=False,
             )
 
-        candidate_id = f"candidate:{mode.value}:{end_goal.content_id[7:23]}"
+        candidate_id = (
+            f"candidate:{mode.value}:{end_goal.content_id[7:23]}"
+        )
         return EndGoalCandidate(
             candidate_id=candidate_id,
             end_goal=end_goal,
@@ -2129,7 +2265,9 @@ class EndGoalFormalizer:
 
     # -- policy checks -----------------------------------------------------
 
-    def _scan_hidden_assumptions(self, text: str) -> list[FormalizationDiagnostic]:
+    def _scan_hidden_assumptions(
+        self, text: str
+    ) -> list[FormalizationDiagnostic]:
         findings: list[FormalizationDiagnostic] = []
         for pattern in _HIDDEN_ASSUMPTION_PATTERNS:
             match = pattern.search(text)
@@ -2147,7 +2285,9 @@ class EndGoalFormalizer:
                 )
         return findings
 
-    def _grounded_identifier_set(self, request: EndGoalFormalizerRequest) -> set[str]:
+    def _grounded_identifier_set(
+        self, request: EndGoalFormalizerRequest
+    ) -> set[str]:
         grounded = set(request.known_identifiers)
         grounded.update(_extract_identifiers(request.caller_text))
         # Tokens that appear literally in the prompt are grounded even if reserved.
@@ -2179,17 +2319,23 @@ class EndGoalFormalizer:
                 errors.append(
                     FormalizationDiagnostic(
                         code="hidden_assumption",
-                        message=("assumption statement is not grounded in caller text"),
+                        message=(
+                            "assumption statement is not grounded in caller text"
+                        ),
                         severity="error",
                     )
                 )
                 continue
-            if ident not in grounded and ident.lower() not in grounded_lower:
+            if (
+                ident not in grounded
+                and ident.lower() not in grounded_lower
+            ):
                 errors.append(
                     FormalizationDiagnostic(
                         code="ungrounded_identifier",
                         message=(
-                            f"identifier {ident!r} is not present in prompt or repository bindings"
+                            f"identifier {ident!r} is not present in prompt "
+                            "or repository bindings"
                         ),
                         severity="error",
                         phrase=ident,
@@ -2345,7 +2491,9 @@ class EndGoalFormalizer:
     def _split_kv(body: str, label: str) -> tuple[str, str]:
         match = _KV_RE.match(body)
         if not match:
-            raise EndGoalFormalizerError(f"{label} expects key=value, got {body!r}")
+            raise EndGoalFormalizerError(
+                f"{label} expects key=value, got {body!r}"
+            )
         return match.group("k"), match.group("v")
 
     @staticmethod
@@ -2361,7 +2509,9 @@ class EndGoalFormalizer:
 
     def _apply_bound(self, body: str, extracted: _Extracted) -> None:
         key, value = self._split_kv(body, "BOUND")
-        field_name = _BOUND_FIELD_ALIASES.get(key.strip().lower().replace("-", "_"), key.strip())
+        field_name = _BOUND_FIELD_ALIASES.get(
+            key.strip().lower().replace("-", "_"), key.strip()
+        )
         if field_name == "network_allowed":
             parsed = _parse_boolish(value)
             if parsed is None:
@@ -2433,29 +2583,43 @@ class EndGoalFormalizer:
         if actors:
             parts.append(f"Actors {', '.join(sorted(actors))} participate.")
         if current_state:
-            state = ", ".join(f"{k}={v}" for k, v in sorted(current_state.items()))
+            state = ", ".join(
+                f"{k}={v}" for k, v in sorted(current_state.items())
+            )
             parts.append(f"Current state: {state}.")
         if target_state:
-            state = ", ".join(f"{k}={v}" for k, v in sorted(target_state.items()))
+            state = ", ".join(
+                f"{k}={v}" for k, v in sorted(target_state.items())
+            )
             parts.append(f"Target state: {state}.")
         quant = ", ".join(q.value for q in quantifiers) or "unspecified"
-        parts.append(f"Property class is {prop} under quantifiers [{quant}].")
+        parts.append(
+            f"Property class is {prop} under quantifiers [{quant}]."
+        )
         if transitions:
-            parts.append(f"Transitions: {', '.join(sorted(transitions))}.")
+            parts.append(
+                f"Transitions: {', '.join(sorted(transitions))}."
+            )
         if environment:
-            env = ", ".join(f"{k}={v}" for k, v in sorted(environment.items()))
+            env = ", ".join(
+                f"{k}={v}" for k, v in sorted(environment.items())
+            )
             parts.append(f"Environment: {env}.")
         if assumptions:
             parts.append(
                 "Assumptions: "
                 + "; ".join(
                     f"{a.assumption_class.value}:{a.statement}"
-                    for a in sorted(assumptions, key=lambda x: x.assumption_id)
+                    for a in sorted(
+                        assumptions, key=lambda x: x.assumption_id
+                    )
                 )
                 + "."
             )
         if unsupported:
-            parts.append("Unsupported: " + ", ".join(sorted(unsupported)) + ".")
+            parts.append(
+                "Unsupported: " + ", ".join(sorted(unsupported)) + "."
+            )
         if not parts:
             parts.append(f"Underspecified end goal ({prop}).")
         return " ".join(parts)

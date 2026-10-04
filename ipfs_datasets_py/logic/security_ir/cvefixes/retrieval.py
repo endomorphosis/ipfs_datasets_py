@@ -112,7 +112,9 @@ def _bounded_float(value: Any, label: str, low: float, high: float) -> float:
         raise RetrievalValidationError(f"{label} must be numeric")
     result = float(value)
     if not math.isfinite(result) or not low <= result <= high:
-        raise RetrievalValidationError(f"{label} must be finite and between {low} and {high}")
+        raise RetrievalValidationError(
+            f"{label} must be finite and between {low} and {high}"
+        )
     return result
 
 
@@ -123,11 +125,16 @@ def _strings(
     maximum_items: int = RETRIEVAL_MAX_LIST_ITEMS,
     maximum_length: int = RETRIEVAL_MAX_LIST_ITEM_LENGTH,
 ) -> tuple[str, ...]:
-    if isinstance(value, (str, bytes, bytearray)) or not isinstance(value, Sequence):
+    if isinstance(value, (str, bytes, bytearray)) or not isinstance(
+        value, Sequence
+    ):
         raise RetrievalValidationError(f"{label} must be a sequence of strings")
     result = tuple(
         sorted(
-            (_clean_text(item, f"{label} item", maximum=maximum_length) for item in value),
+            (
+                _clean_text(item, f"{label} item", maximum=maximum_length)
+                for item in value
+            ),
             key=lambda item: (item.casefold(), item),
         )
     )
@@ -139,11 +146,16 @@ def _strings(
 
 
 def _vector(value: Any, label: str) -> tuple[float, ...]:
-    if isinstance(value, (str, bytes, bytearray)) or not isinstance(value, Sequence):
+    if isinstance(value, (str, bytes, bytearray)) or not isinstance(
+        value, Sequence
+    ):
         raise RetrievalValidationError(f"{label} must be a numeric sequence")
     if len(value) > 8192:
         raise RetrievalValidationError(f"{label} exceeds 8192 dimensions")
-    result = tuple(_bounded_float(item, f"{label} item", -1.0e100, 1.0e100) for item in value)
+    result = tuple(
+        _bounded_float(item, f"{label} item", -1.0e100, 1.0e100)
+        for item in value
+    )
     if result and not any(item != 0.0 for item in result):
         raise RetrievalValidationError(f"{label} must not be an all-zero vector")
     return result
@@ -165,7 +177,9 @@ def _identity(value: Mapping[str, Any], suffix: str) -> str:
     ).cid
 
 
-def _strict_fields(value: Mapping[str, Any], allowed: frozenset[str], label: str) -> None:
+def _strict_fields(
+    value: Mapping[str, Any], allowed: frozenset[str], label: str
+) -> None:
     if not isinstance(value, Mapping):
         raise RetrievalIntegrityError(f"{label} must be a mapping")
     unknown = sorted(set(value) - allowed)
@@ -181,7 +195,11 @@ def _strict_fields(value: Mapping[str, Any], allowed: frozenset[str], label: str
 
 def _authority(value: Any) -> RetrievalAuthority:
     try:
-        return value if isinstance(value, RetrievalAuthority) else RetrievalAuthority(value)
+        return (
+            value
+            if isinstance(value, RetrievalAuthority)
+            else RetrievalAuthority(value)
+        )
     except (TypeError, ValueError) as exc:
         raise RetrievalValidationError(
             "retrieval authority must be non_authoritative or candidate"
@@ -235,7 +253,9 @@ class RetrievalConfig:
 
     @property
     def cid(self) -> str:
-        return canonical_config_cid(self.to_dict(), schema_version=self.schema_version)
+        return canonical_config_cid(
+            self.to_dict(), schema_version=self.schema_version
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -262,9 +282,13 @@ class RetrievalEntry:
 
     def __post_init__(self) -> None:
         for name in ("node_cid", "partition", "shard_key", "kind"):
-            object.__setattr__(self, name, _clean_text(getattr(self, name), name, maximum=512))
+            object.__setattr__(
+                self, name, _clean_text(getattr(self, name), name, maximum=512)
+            )
         object.__setattr__(self, "text", _optional_text(self.text, "text"))
-        object.__setattr__(self, "source_cids", _strings(self.source_cids, "source_cids"))
+        object.__setattr__(
+            self, "source_cids", _strings(self.source_cids, "source_cids")
+        )
         if not self.source_cids:
             raise RetrievalValidationError("source_cids must not be empty")
         object.__setattr__(self, "authority", _authority(self.authority))
@@ -281,10 +305,14 @@ class RetrievalEntry:
         if type(self.graph_node) is not bool:
             raise RetrievalValidationError("graph_node must be a boolean")
         if self.grants_execution_authority is not False:
-            raise RetrievalValidationError("retrieval entries can never grant execution authority")
+            raise RetrievalValidationError(
+                "retrieval entries can never grant execution authority"
+            )
         computed = _identity(self.deterministic_dict(), "entry")
         if self.entry_id and self.entry_id != computed:
-            raise RetrievalIntegrityError("entry_id does not match retrieval entry content")
+            raise RetrievalIntegrityError(
+                "entry_id does not match retrieval entry content"
+            )
         object.__setattr__(self, "entry_id", computed)
 
     def deterministic_dict(self) -> dict[str, Any]:
@@ -370,8 +398,12 @@ class RetrievalShard:
     shard_root: str = ""
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "shard_id", _clean_text(self.shard_id, "shard_id", maximum=512))
-        object.__setattr__(self, "partition", _clean_text(self.partition, "partition", maximum=512))
+        object.__setattr__(
+            self, "shard_id", _clean_text(self.shard_id, "shard_id", maximum=512)
+        )
+        object.__setattr__(
+            self, "partition", _clean_text(self.partition, "partition", maximum=512)
+        )
         entries = tuple(sorted(self.entries, key=lambda item: item.entry_id))
         if not entries:
             raise RetrievalValidationError("retrieval shard must not be empty")
@@ -393,7 +425,9 @@ class RetrievalShard:
             "shard",
         )
         if self.shard_root and self.shard_root != computed:
-            raise RetrievalIntegrityError("shard_root does not match retrieval shard content")
+            raise RetrievalIntegrityError(
+                "shard_root does not match retrieval shard content"
+            )
         object.__setattr__(self, "shard_root", computed)
 
     def to_dict(self) -> dict[str, Any]:
@@ -447,7 +481,9 @@ class RetrievalIndex:
             "model_revision",
             "model_config_cid",
         ):
-            object.__setattr__(self, name, _clean_text(getattr(self, name), name, maximum=512))
+            object.__setattr__(
+                self, name, _clean_text(getattr(self, name), name, maximum=512)
+            )
         if self.schema_version != RETRIEVAL_SCHEMA_VERSION:
             raise RetrievalIntegrityError("unsupported retrieval index schema")
         shards = tuple(sorted(self.shards, key=lambda item: item.shard_id))
@@ -459,20 +495,29 @@ class RetrievalIndex:
         if len(entry_ids) != len(set(entry_ids)):
             raise RetrievalIntegrityError("entry appears in multiple shards")
         dimensions = {
-            len(entry.embedding) for shard in shards for entry in shard.entries if entry.embedding
+            len(entry.embedding)
+            for shard in shards
+            for entry in shard.entries
+            if entry.embedding
         }
         if len(dimensions) > 1:
             raise RetrievalIntegrityError("index embeddings have mixed dimensions")
         has_vectors = bool(dimensions)
         no_model = self.model_id == self.model_revision == NO_EMBEDDING_MODEL
         if has_vectors and no_model:
-            raise RetrievalIntegrityError("vector index must bind an embedding model and revision")
+            raise RetrievalIntegrityError(
+                "vector index must bind an embedding model and revision"
+            )
         if not has_vectors and not no_model:
-            raise RetrievalIntegrityError("model binding supplied for an index without vectors")
+            raise RetrievalIntegrityError(
+                "model binding supplied for an index without vectors"
+            )
         object.__setattr__(self, "shards", shards)
         computed = _identity(self.deterministic_dict(), "index")
         if self.index_root and self.index_root != computed:
-            raise RetrievalIntegrityError("index_root does not match retrieval index content")
+            raise RetrievalIntegrityError(
+                "index_root does not match retrieval index content"
+            )
         object.__setattr__(self, "index_root", computed)
 
     @property
@@ -558,7 +603,9 @@ class RetrievalIndex:
             )
 
         try:
-            decoded = json.loads(value, object_pairs_hook=pairs, parse_constant=reject_constant)
+            decoded = json.loads(
+                value, object_pairs_hook=pairs, parse_constant=reject_constant
+            )
         except RetrievalError:
             raise
         except (TypeError, ValueError, UnicodeDecodeError) as exc:
@@ -573,10 +620,14 @@ class RetrievalScope:
     """Caller-owned scope that query fields are only allowed to narrow."""
 
     partition: str
-    authorities: tuple[RetrievalAuthority, ...] = (RetrievalAuthority.NON_AUTHORITATIVE,)
+    authorities: tuple[RetrievalAuthority, ...] = (
+        RetrievalAuthority.NON_AUTHORITATIVE,
+    )
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "partition", _clean_text(self.partition, "partition", maximum=512))
+        object.__setattr__(
+            self, "partition", _clean_text(self.partition, "partition", maximum=512)
+        )
         if isinstance(self.authorities, (str, bytes, bytearray)):
             raise RetrievalScopeError("authorities must be a sequence")
         values = tuple(sorted((_authority(item) for item in self.authorities), key=str))
@@ -614,7 +665,9 @@ class RetrievalQuery:
         )
         if isinstance(self.authorities, (str, bytes, bytearray)):
             raise RetrievalValidationError("authorities must be a sequence")
-        authorities = tuple(sorted((_authority(item) for item in self.authorities), key=str))
+        authorities = tuple(
+            sorted((_authority(item) for item in self.authorities), key=str)
+        )
         if len(authorities) != len(set(authorities)):
             raise RetrievalValidationError("authorities contains duplicates")
         object.__setattr__(self, "authorities", authorities)
@@ -669,7 +722,10 @@ class RetrievalHit:
     grants_execution_authority: bool = False
 
     def __post_init__(self) -> None:
-        if self.authorizes_execution is not False or self.grants_execution_authority is not False:
+        if (
+            self.authorizes_execution is not False
+            or self.grants_execution_authority is not False
+        ):
             raise RetrievalValidationError("retrieval hits cannot return a grant")
 
     def to_dict(self) -> dict[str, Any]:
@@ -709,7 +765,10 @@ class RetrievalResponse:
     grants_execution_authority: bool = False
 
     def __post_init__(self) -> None:
-        if self.authorizes_execution is not False or self.grants_execution_authority is not False:
+        if (
+            self.authorizes_execution is not False
+            or self.grants_execution_authority is not False
+        ):
             raise RetrievalValidationError("retrieval responses cannot return a grant")
 
     def to_dict(self) -> dict[str, Any]:
@@ -738,7 +797,9 @@ def _payload_values(payload: Mapping[str, Any]) -> tuple[str, ...]:
             text = str(value).strip()
             if text:
                 values.extend((str(key), text))
-        elif isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        elif isinstance(value, Sequence) and not isinstance(
+            value, (str, bytes, bytearray)
+        ):
             for item in value[:32]:
                 if isinstance(item, (str, int, float)) and not isinstance(item, bool):
                     values.append(str(item))
@@ -805,7 +866,9 @@ def graph_entries(
         raise RetrievalScopeError("partition_by_node must be a mapping")
     node_ids = {node.cid for node in graph.nodes}
     if set(partition_by_node) != node_ids:
-        raise RetrievalScopeError("partition_by_node must bind every and only graph node")
+        raise RetrievalScopeError(
+            "partition_by_node must bind every and only graph node"
+        )
     entries: list[RetrievalEntry] = []
     for node in graph.nodes:
         partition = _clean_text(
@@ -859,7 +922,9 @@ def build_retrieval_index(
     if not isinstance(config, RetrievalConfig):
         raise RetrievalValidationError("config must be RetrievalConfig")
     entries = list(
-        graph_entries(graph, partition_by_node=partition_by_node, shard_count=shard_count)
+        graph_entries(
+            graph, partition_by_node=partition_by_node, shard_count=shard_count
+        )
     )
     if isinstance(extra_entries, (str, bytes, bytearray)) or not isinstance(
         extra_entries, Sequence
@@ -875,7 +940,9 @@ def build_retrieval_index(
         model_id = _clean_text(model_id, "model_id", maximum=512)
         model_revision = _clean_text(model_revision, "model_revision", maximum=512)
         if model_id == NO_EMBEDDING_MODEL or model_revision == NO_EMBEDDING_MODEL:
-            raise RetrievalValidationError("embedding model_id and revision must be pinned")
+            raise RetrievalValidationError(
+                "embedding model_id and revision must be pinned"
+            )
         try:
             vectors = tuple(embedding_port.embed_documents([item.text for item in entries]))
         except Exception as exc:
@@ -883,7 +950,9 @@ def build_retrieval_index(
                 f"embedding accelerator failed closed: {type(exc).__name__}: {exc}"
             ) from exc
         if len(vectors) != len(entries):
-            raise RetrievalValidationError("embedding accelerator returned the wrong vector count")
+            raise RetrievalValidationError(
+                "embedding accelerator returned the wrong vector count"
+            )
         embedded: list[RetrievalEntry] = []
         for entry, vector in zip(entries, vectors, strict=True):
             values = entry.to_dict()
@@ -898,7 +967,9 @@ def build_retrieval_index(
         )
     else:
         if model_id != NO_EMBEDDING_MODEL or model_revision != NO_EMBEDDING_MODEL:
-            raise RetrievalValidationError("model binding requires an embedding accelerator")
+            raise RetrievalValidationError(
+                "model binding requires an embedding accelerator"
+            )
         if any(item.embedding for item in entries):
             raise RetrievalValidationError(
                 "precomputed vectors require an embedding accelerator binding"
@@ -939,7 +1010,8 @@ def _cosine(left: Sequence[float], right: Sequence[float]) -> float:
 
 def _matches_filter(required: tuple[str, ...], actual: tuple[str, ...]) -> bool:
     return not required or bool(
-        {item.casefold() for item in required} & {item.casefold() for item in actual}
+        {item.casefold() for item in required}
+        & {item.casefold() for item in actual}
     )
 
 
@@ -985,7 +1057,9 @@ class BoundedHybridRetriever:
             requested = getattr(query, name)
             ceiling = getattr(self.config, name)
             if requested is not None and requested > ceiling:
-                raise RetrievalValidationError(f"{name} exceeds configured ceiling {ceiling}")
+                raise RetrievalValidationError(
+                    f"{name} exceeds configured ceiling {ceiling}"
+                )
             values.append(requested or ceiling)
         return tuple(values)  # type: ignore[return-value]
 
@@ -1016,7 +1090,10 @@ class BoundedHybridRetriever:
             distance = distances[node_id]
             if distance >= max_hops:
                 continue
-            edge_ids = tuple(self.graph.outgoing[node_id]) + tuple(self.graph.incoming[node_id])
+            edge_ids = (
+                tuple(self.graph.outgoing[node_id])
+                + tuple(self.graph.incoming[node_id])
+            )
             for edge_id in sorted(set(edge_ids)):
                 edge = edge_by_id[edge_id]
                 # Similarity remains usable as approximate retrieval evidence,
@@ -1031,7 +1108,9 @@ class BoundedHybridRetriever:
                     queue.append(neighbor)
         return distances, visited, truncated
 
-    def retrieve(self, query: RetrievalQuery, *, scope: RetrievalScope) -> RetrievalResponse:
+    def retrieve(
+        self, query: RetrievalQuery, *, scope: RetrievalScope
+    ) -> RetrievalResponse:
         """Execute one query, failing closed on any binding or scope mismatch."""
 
         if not isinstance(query, RetrievalQuery):
@@ -1072,7 +1151,9 @@ class BoundedHybridRetriever:
         if query_vector and len(query_vector) != self.index.embedding_dimension:
             raise RetrievalValidationError("query/index embedding dimensions differ")
 
-        eligible_shards = [item for item in self.index.shards if item.partition == partition]
+        eligible_shards = [
+            item for item in self.index.shards if item.partition == partition
+        ]
         selected_shards = eligible_shards[:max_shards]
         truncated_shards = len(eligible_shards) > len(selected_shards)
         distances, graph_visited, graph_truncated = self._distances(
@@ -1119,7 +1200,9 @@ class BoundedHybridRetriever:
                     )
                 )
                 lexical = (
-                    len(query_tokens & entry_tokens) / len(query_tokens) if query_tokens else 0.0
+                    len(query_tokens & entry_tokens) / len(query_tokens)
+                    if query_tokens
+                    else 0.0
                 )
                 vector = (
                     _cosine(query_vector, entry.embedding)
@@ -1127,7 +1210,9 @@ class BoundedHybridRetriever:
                     else 0.0
                 )
                 distance = distances.get(entry.node_cid)
-                graph_score = 1.0 / (1.0 + distance) if distance is not None else 0.0
+                graph_score = (
+                    1.0 / (1.0 + distance) if distance is not None else 0.0
+                )
                 matched = tuple(
                     sorted(
                         name

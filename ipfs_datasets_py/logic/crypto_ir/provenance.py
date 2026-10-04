@@ -89,10 +89,14 @@ def _text(value: Any, name: str, *, allow_empty: bool = False) -> str:
     return value
 
 
-def _known_fields(value: Mapping[str, Any], allowed: frozenset[str], name: str) -> None:
+def _known_fields(
+    value: Mapping[str, Any], allowed: frozenset[str], name: str
+) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise CryptoIRProvenanceError(f"unknown {name} field(s): {', '.join(unknown)}")
+        raise CryptoIRProvenanceError(
+            f"unknown {name} field(s): {', '.join(unknown)}"
+        )
 
 
 def _as_mapping(value: Any, name: str) -> Mapping[str, Any]:
@@ -116,7 +120,9 @@ def coerce_authority_kind(value: AuthorityKind | str) -> AuthorityKind:
     try:
         return AuthorityKind(value)
     except (TypeError, ValueError) as exc:
-        raise CryptoIRProvenanceError(f"unknown authority kind: {value!r}") from exc
+        raise CryptoIRProvenanceError(
+            f"unknown authority kind: {value!r}"
+        ) from exc
 
 
 def assert_authority_not_elevated(
@@ -163,7 +169,9 @@ class AuthorityBinding:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "kind", coerce_authority_kind(self.kind))
-        object.__setattr__(self, "policy_id", _text(self.policy_id, "policy_id", allow_empty=True))
+        object.__setattr__(
+            self, "policy_id", _text(self.policy_id, "policy_id", allow_empty=True)
+        )
         object.__setattr__(self, "notes", _text(self.notes, "notes", allow_empty=True))
         object.__setattr__(self, "attributes", _attributes(self.attributes))
 
@@ -204,7 +212,9 @@ class AcquisitionProvenance:
     attributes: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "provider_id", _text(self.provider_id, "provider_id"))
+        object.__setattr__(
+            self, "provider_id", _text(self.provider_id, "provider_id")
+        )
         object.__setattr__(self, "transport", _text(self.transport, "transport"))
         for name in (
             "request_digest",
@@ -212,7 +222,9 @@ class AcquisitionProvenance:
             "endpoint_id",
             "observed_at",
         ):
-            object.__setattr__(self, name, _text(getattr(self, name), name, allow_empty=True))
+            object.__setattr__(
+                self, name, _text(getattr(self, name), name, allow_empty=True)
+            )
         object.__setattr__(self, "attributes", _attributes(self.attributes))
 
     def to_dict(self) -> dict[str, Any]:
@@ -363,26 +375,40 @@ class CryptoIRProvenance:
     def __post_init__(self) -> None:
         if not isinstance(self.authority, AuthorityBinding):
             if isinstance(self.authority, Mapping):
-                object.__setattr__(self, "authority", AuthorityBinding.from_dict(self.authority))
+                object.__setattr__(
+                    self, "authority", AuthorityBinding.from_dict(self.authority)
+                )
             else:
                 raise CryptoIRProvenanceError("authority must be an AuthorityBinding")
         object.__setattr__(self, "producer_id", _text(self.producer_id, "producer_id"))
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
-        if self.acquisition is not None and not isinstance(self.acquisition, AcquisitionProvenance):
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
+        if self.acquisition is not None and not isinstance(
+            self.acquisition, AcquisitionProvenance
+        ):
             object.__setattr__(
                 self,
                 "acquisition",
-                AcquisitionProvenance.from_dict(_as_mapping(self.acquisition, "acquisition")),
+                AcquisitionProvenance.from_dict(
+                    _as_mapping(self.acquisition, "acquisition")
+                ),
             )
-        if self.observation is not None and not isinstance(self.observation, ObservationProvenance):
+        if self.observation is not None and not isinstance(
+            self.observation, ObservationProvenance
+        ):
             object.__setattr__(
                 self,
                 "observation",
-                ObservationProvenance.from_dict(_as_mapping(self.observation, "observation")),
+                ObservationProvenance.from_dict(
+                    _as_mapping(self.observation, "observation")
+                ),
             )
         for name in ("source_refs", "producer_ids", "config_ids"):
             raw = getattr(self, name)
-            if isinstance(raw, (str, bytes, bytearray)) or not isinstance(raw, Sequence):
+            if isinstance(raw, (str, bytes, bytearray)) or not isinstance(
+                raw, Sequence
+            ):
                 raise CryptoIRProvenanceError(f"{name} must be a sequence of strings")
             values = tuple(_text(item, name) for item in raw)
             if len(values) != len(set(values)):
@@ -394,17 +420,26 @@ class CryptoIRProvenance:
             _text(self.ir_provenance_digest, "ir_provenance_digest", allow_empty=True),
         )
         object.__setattr__(self, "attributes", _attributes(self.attributes))
-        if self.authority.kind is AuthorityKind.OBSERVATION and self.observation is None:
-            raise CryptoIRProvenanceError("observation authority requires ObservationProvenance")
+        if (
+            self.authority.kind is AuthorityKind.OBSERVATION
+            and self.observation is None
+        ):
+            raise CryptoIRProvenanceError(
+                "observation authority requires ObservationProvenance"
+            )
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "acquisition": None if self.acquisition is None else self.acquisition.to_dict(),
+            "acquisition": None
+            if self.acquisition is None
+            else self.acquisition.to_dict(),
             "attributes": thaw_json(self.attributes),
             "authority": self.authority.to_dict(),
             "config_ids": list(self.config_ids),
             "ir_provenance_digest": self.ir_provenance_digest,
-            "observation": None if self.observation is None else self.observation.to_dict(),
+            "observation": None
+            if self.observation is None
+            else self.observation.to_dict(),
             "producer_id": self.producer_id,
             "producer_ids": list(self.producer_ids),
             "schema_version": self.schema_version,
@@ -439,13 +474,19 @@ class CryptoIRProvenance:
                 _as_mapping(value.get("authority", {}), "authority")
             ),
             producer_id=value.get("producer_id", ""),
-            schema_version=value.get("schema_version", CRYPTO_IR_KERNEL_SCHEMA_VERSION),
+            schema_version=value.get(
+                "schema_version", CRYPTO_IR_KERNEL_SCHEMA_VERSION
+            ),
             acquisition=None
             if acquisition_raw is None
-            else AcquisitionProvenance.from_dict(_as_mapping(acquisition_raw, "acquisition")),
+            else AcquisitionProvenance.from_dict(
+                _as_mapping(acquisition_raw, "acquisition")
+            ),
             observation=None
             if observation_raw is None
-            else ObservationProvenance.from_dict(_as_mapping(observation_raw, "observation")),
+            else ObservationProvenance.from_dict(
+                _as_mapping(observation_raw, "observation")
+            ),
             source_refs=tuple(value.get("source_refs", ())),
             producer_ids=tuple(value.get("producer_ids", ())),
             config_ids=tuple(value.get("config_ids", ())),

@@ -1,0 +1,38 @@
+{
+  "assertion_count": null,
+  "assumptions": [
+    "A4"
+  ],
+  "claim_id": "claim:test",
+  "claim_version": "1.0",
+  "compiler_cid": "cid:compiler",
+  "counterexample": null,
+  "created_at": "2026-07-05T00:00:00+00:00",
+  "deterministic_payload_cid": "bafkreigahdcl36opaxgalmc6cfklnpuchqbdphvtngoi6d4c7zyfsydchu",
+  "evidence_refs": [
+    {
+      "kind": "test_fixture",
+      "line_end": 20,
+      "line_start": 1,
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+      "review_status": "trusted_fixture"
+    }
+  ],
+  "generated_at": "2026-07-05T00:00:00+00:00",
+  "model_cid": "bafkreihwg5gmkqycnq73geeudvfscbjssaaudj4n4bgvgj6t6fp3gmnbhi",
+  "model_schema_version": "security-model-ir/v1",
+  "nondeterministic_report_cid": "bafkreic3qpaxqmlltvnt3dt7nxb5ivignqaltuk3yoapq66lliobbcop6q",
+  "proof_or_trace_cid": "cid:proof",
+  "prover": "z3",
+  "reason_unknown": null,
+  "risk": "blocking",
+  "schema_version": "proof-report/v1",
+  "signatures": [],
+  "solver_name": "z3",
+  "solver_result": "unsat",
+  "solver_version": "4.16.0",
+  "soundness_notes": [],
+  "status": "PROVED",
+  "timeout_ms": null,
+  "unsat_core": null
+}

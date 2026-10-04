@@ -88,7 +88,12 @@ class ResourceAlgebraKind(StrEnum):
 def _text(value: object, label: str, *, optional: bool = False) -> str:
     if optional and value == "":
         return ""
-    if not isinstance(value, str) or not value or value.strip() != value or "\x00" in value:
+    if (
+        not isinstance(value, str)
+        or not value
+        or value.strip() != value
+        or "\x00" in value
+    ):
         qualifier = "an empty or " if optional else "a "
         raise HeapValidationError(
             f"{label} must be {qualifier}non-empty trimmed string without NUL bytes"
@@ -124,7 +129,9 @@ def _identifiers(
     sort: bool = True,
     allow_empty: bool = True,
 ) -> tuple[str, ...]:
-    result = tuple(_identifier(item, f"{label} item") for item in _sequence(values, label))
+    result = tuple(
+        _identifier(item, f"{label} item") for item in _sequence(values, label)
+    )
     if not allow_empty and not result:
         raise HeapValidationError(f"{label} must not be empty")
     if len(result) != len(set(result)):
@@ -142,10 +149,14 @@ def _frozen(value: Mapping[str, Any] | FrozenMap, label: str) -> FrozenMap:
     try:
         return value if isinstance(value, FrozenMap) else FrozenMap(value)
     except (TypeError, ValueError) as error:
-        raise HeapValidationError(f"{label} must contain immutable JSON-compatible data") from error
+        raise HeapValidationError(
+            f"{label} must contain immutable JSON-compatible data"
+        ) from error
 
 
-def _reject_unknown(value: Mapping[str, Any], allowed: frozenset[str], label: str) -> None:
+def _reject_unknown(
+    value: Mapping[str, Any], allowed: frozenset[str], label: str
+) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
         raise HeapValidationError(f"unknown {label} field(s): {', '.join(unknown)}")
@@ -161,7 +172,9 @@ def _source_map(
     sources = _identifiers(source_ref_ids, f"{owner}.source_ref_ids")
     spans = _identifiers(span_ids, f"{owner}.span_ids")
     if required and not sources and not spans:
-        raise HeapValidationError(f"{owner} must be source mapped with source_ref_ids or span_ids")
+        raise HeapValidationError(
+            f"{owner} must be source mapped with source_ref_ids or span_ids"
+        )
     return sources, spans
 
 
@@ -179,7 +192,9 @@ class Permission:
     def __post_init__(self) -> None:
         if isinstance(self.numerator, bool) or not isinstance(self.numerator, int):
             raise HeapValidationError("permission numerator must be an integer")
-        if isinstance(self.denominator, bool) or not isinstance(self.denominator, int):
+        if isinstance(self.denominator, bool) or not isinstance(
+            self.denominator, int
+        ):
             raise HeapValidationError("permission denominator must be an integer")
         if self.denominator <= 0:
             raise HeapValidationError("permission denominator must be positive")
@@ -254,7 +269,8 @@ class Permission:
         total = self.fraction + other.fraction
         if total > 1:
             raise HeapValidationError(
-                f"permission conservation violated: {self.fraction} + {other.fraction} exceeds 1"
+                f"permission conservation violated: {self.fraction} + "
+                f"{other.fraction} exceeds 1"
             )
         return Permission(total.numerator, total.denominator)
 
@@ -294,12 +310,18 @@ class HeapLocation:
     attributes: FrozenMap = field(default_factory=FrozenMap)
 
     def __post_init__(self) -> None:
-        sources, spans = _source_map(self.source_ref_ids, self.span_ids, owner="HeapLocation")
-        object.__setattr__(self, "location_id", _identifier(self.location_id, "location_id"))
+        sources, spans = _source_map(
+            self.source_ref_ids, self.span_ids, owner="HeapLocation"
+        )
+        object.__setattr__(
+            self, "location_id", _identifier(self.location_id, "location_id")
+        )
         object.__setattr__(self, "name", _text(self.name, "name"))
         object.__setattr__(self, "kind", _enum(self.kind, LocationKind, "kind"))
         object.__setattr__(self, "type_name", _text(self.type_name, "type_name"))
-        object.__setattr__(self, "owner_id", _text(self.owner_id, "owner_id", optional=True))
+        object.__setattr__(
+            self, "owner_id", _text(self.owner_id, "owner_id", optional=True)
+        )
         object.__setattr__(self, "attributes", _frozen(self.attributes, "attributes"))
         object.__setattr__(self, "source_ref_ids", sources)
         object.__setattr__(self, "span_ids", spans)
@@ -343,7 +365,9 @@ class HeapLocation:
             owner_id=value.get("owner_id", ""),
             source_ref_ids=tuple(value.get("source_ref_ids", ())),
             span_ids=tuple(value.get("span_ids", ())),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
         )
 
 
@@ -361,13 +385,19 @@ class HeapValue:
     attributes: FrozenMap = field(default_factory=FrozenMap)
 
     def __post_init__(self) -> None:
-        sources, spans = _source_map(self.source_ref_ids, self.span_ids, owner="HeapValue")
+        sources, spans = _source_map(
+            self.source_ref_ids, self.span_ids, owner="HeapValue"
+        )
         kind = _enum(self.kind, ValueKind, "kind")
         object.__setattr__(self, "value_id", _identifier(self.value_id, "value_id"))
         object.__setattr__(self, "kind", kind)
         object.__setattr__(self, "type_name", _text(self.type_name, "type_name"))
-        object.__setattr__(self, "literal", _text(self.literal, "literal", optional=True))
-        target = _text(self.points_to_location_id, "points_to_location_id", optional=True)
+        object.__setattr__(
+            self, "literal", _text(self.literal, "literal", optional=True)
+        )
+        target = _text(
+            self.points_to_location_id, "points_to_location_id", optional=True
+        )
         if kind is ValueKind.POINTER and not target and self.literal != "null":
             # Null pointer literals may omit a target; non-null pointers must name one.
             if not self.literal:
@@ -375,7 +405,9 @@ class HeapValue:
                     "pointer values require points_to_location_id or a null literal"
                 )
         if kind is not ValueKind.POINTER and target:
-            raise HeapValidationError("points_to_location_id is only valid on pointer values")
+            raise HeapValidationError(
+                "points_to_location_id is only valid on pointer values"
+            )
         if kind is ValueKind.NULL and target:
             raise HeapValidationError("null values cannot point to a location")
         object.__setattr__(self, "points_to_location_id", target)
@@ -422,7 +454,9 @@ class HeapValue:
             points_to_location_id=value.get("points_to_location_id", ""),
             source_ref_ids=tuple(value.get("source_ref_ids", ())),
             span_ids=tuple(value.get("span_ids", ())),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
         )
 
 
@@ -439,12 +473,18 @@ class PointsToCell:
     attributes: FrozenMap = field(default_factory=FrozenMap)
 
     def __post_init__(self) -> None:
-        sources, spans = _source_map(self.source_ref_ids, self.span_ids, owner="PointsToCell")
+        sources, spans = _source_map(
+            self.source_ref_ids, self.span_ids, owner="PointsToCell"
+        )
         permission = Permission.from_fraction(self.permission)
         if permission.is_empty:
-            raise HeapValidationError("points-to cells require a strictly positive permission")
+            raise HeapValidationError(
+                "points-to cells require a strictly positive permission"
+            )
         object.__setattr__(self, "cell_id", _identifier(self.cell_id, "cell_id"))
-        object.__setattr__(self, "location_id", _identifier(self.location_id, "location_id"))
+        object.__setattr__(
+            self, "location_id", _identifier(self.location_id, "location_id")
+        )
         object.__setattr__(self, "value_id", _identifier(self.value_id, "value_id"))
         object.__setattr__(self, "permission", permission)
         object.__setattr__(self, "attributes", _frozen(self.attributes, "attributes"))
@@ -487,7 +527,9 @@ class PointsToCell:
             permission=Permission.from_fraction(value.get("permission", {"numerator": 1})),
             source_ref_ids=tuple(value.get("source_ref_ids", ())),
             span_ids=tuple(value.get("span_ids", ())),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
         )
 
 
@@ -505,13 +547,19 @@ class OwnershipRecord:
     attributes: FrozenMap = field(default_factory=FrozenMap)
 
     def __post_init__(self) -> None:
-        sources, spans = _source_map(self.source_ref_ids, self.span_ids, owner="OwnershipRecord")
+        sources, spans = _source_map(
+            self.source_ref_ids, self.span_ids, owner="OwnershipRecord"
+        )
         kind = _enum(self.kind, OwnershipKind, "kind")
         permission = Permission.from_fraction(self.permission)
         if kind is OwnershipKind.NONE and not permission.is_empty:
-            raise HeapValidationError("ownership kind 'none' requires empty permission")
+            raise HeapValidationError(
+                "ownership kind 'none' requires empty permission"
+            )
         if kind is OwnershipKind.EXCLUSIVE and not permission.is_full:
-            raise HeapValidationError("exclusive ownership requires full permission")
+            raise HeapValidationError(
+                "exclusive ownership requires full permission"
+            )
         if kind is OwnershipKind.SHARED and permission.is_full:
             raise HeapValidationError(
                 "shared ownership requires a fractional permission strictly less than 1"
@@ -520,8 +568,12 @@ class OwnershipRecord:
             raise HeapValidationError(
                 f"ownership kind {kind.value!r} requires a positive permission"
             )
-        object.__setattr__(self, "ownership_id", _identifier(self.ownership_id, "ownership_id"))
-        object.__setattr__(self, "location_id", _identifier(self.location_id, "location_id"))
+        object.__setattr__(
+            self, "ownership_id", _identifier(self.ownership_id, "ownership_id")
+        )
+        object.__setattr__(
+            self, "location_id", _identifier(self.location_id, "location_id")
+        )
         object.__setattr__(self, "owner_id", _identifier(self.owner_id, "owner_id"))
         object.__setattr__(self, "kind", kind)
         object.__setattr__(self, "permission", permission)
@@ -565,10 +617,14 @@ class OwnershipRecord:
             location_id=value.get("location_id", ""),
             owner_id=value.get("owner_id", ""),
             kind=value.get("kind", ""),
-            permission=Permission.from_fraction(value.get("permission", {"numerator": 1})),
+            permission=Permission.from_fraction(
+                value.get("permission", {"numerator": 1})
+            ),
             source_ref_ids=tuple(value.get("source_ref_ids", ())),
             span_ids=tuple(value.get("span_ids", ())),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
         )
 
 
@@ -585,14 +641,22 @@ class AliasClass:
     attributes: FrozenMap = field(default_factory=FrozenMap)
 
     def __post_init__(self) -> None:
-        sources, spans = _source_map(self.source_ref_ids, self.span_ids, owner="AliasClass")
-        locations = _identifiers(self.location_ids, "location_ids", allow_empty=False)
+        sources, spans = _source_map(
+            self.source_ref_ids, self.span_ids, owner="AliasClass"
+        )
+        locations = _identifiers(
+            self.location_ids, "location_ids", allow_empty=False
+        )
         if len(locations) < 2:
-            raise HeapValidationError("alias classes require at least two location identifiers")
+            raise HeapValidationError(
+                "alias classes require at least two location identifiers"
+            )
         object.__setattr__(self, "alias_id", _identifier(self.alias_id, "alias_id"))
         object.__setattr__(self, "kind", _enum(self.kind, AliasClassKind, "kind"))
         object.__setattr__(self, "location_ids", locations)
-        object.__setattr__(self, "type_name", _text(self.type_name, "type_name", optional=True))
+        object.__setattr__(
+            self, "type_name", _text(self.type_name, "type_name", optional=True)
+        )
         object.__setattr__(self, "attributes", _frozen(self.attributes, "attributes"))
         object.__setattr__(self, "source_ref_ids", sources)
         object.__setattr__(self, "span_ids", spans)
@@ -633,7 +697,9 @@ class AliasClass:
             type_name=value.get("type_name", ""),
             source_ref_ids=tuple(value.get("source_ref_ids", ())),
             span_ids=tuple(value.get("span_ids", ())),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
         )
 
 
@@ -651,20 +717,22 @@ class ResourceUnit:
     attributes: FrozenMap = field(default_factory=FrozenMap)
 
     def __post_init__(self) -> None:
-        sources, spans = _source_map(self.source_ref_ids, self.span_ids, owner="ResourceUnit")
+        sources, spans = _source_map(
+            self.source_ref_ids, self.span_ids, owner="ResourceUnit"
+        )
         kind = _enum(self.algebra_kind, ResourceAlgebraKind, "algebra_kind")
         permission = Permission.from_fraction(self.permission)
         location_id = _text(self.location_id, "location_id", optional=True)
         if kind is ResourceAlgebraKind.DISJOINT_HEAP and not location_id:
-            raise HeapValidationError("disjoint_heap resource units require location_id")
+            raise HeapValidationError(
+                "disjoint_heap resource units require location_id"
+            )
         if kind is ResourceAlgebraKind.CUSTOM:
             # Custom algebras are admitted only when named in attributes so
             # downstream lowering cannot treat them as a known theory.
-            custom_name = (
-                self.attributes.get("custom.algebra_name")
-                if isinstance(self.attributes, FrozenMap)
-                else None
-            )
+            custom_name = self.attributes.get("custom.algebra_name") if isinstance(
+                self.attributes, FrozenMap
+            ) else None
             # attributes not yet frozen; check raw mapping after freeze below
         object.__setattr__(self, "unit_id", _identifier(self.unit_id, "unit_id"))
         object.__setattr__(self, "name", _text(self.name, "name"))
@@ -718,10 +786,14 @@ class ResourceUnit:
             name=value.get("name", ""),
             algebra_kind=value.get("algebra_kind", ""),
             location_id=value.get("location_id", ""),
-            permission=Permission.from_fraction(value.get("permission", {"numerator": 1})),
+            permission=Permission.from_fraction(
+                value.get("permission", {"numerator": 1})
+            ),
             source_ref_ids=tuple(value.get("source_ref_ids", ())),
             span_ids=tuple(value.get("span_ids", ())),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
         )
 
 
@@ -738,7 +810,9 @@ class ResourceAlgebra:
     attributes: FrozenMap = field(default_factory=FrozenMap)
 
     def __post_init__(self) -> None:
-        sources, spans = _source_map(self.source_ref_ids, self.span_ids, owner="ResourceAlgebra")
+        sources, spans = _source_map(
+            self.source_ref_ids, self.span_ids, owner="ResourceAlgebra"
+        )
         kind = _enum(self.kind, ResourceAlgebraKind, "kind")
         composition = _text(self.composition, "composition")
         allowed = {
@@ -748,12 +822,20 @@ class ResourceAlgebra:
             "custom",
         }
         if composition not in allowed:
-            raise HeapValidationError(f"composition must be one of {sorted(allowed)}")
+            raise HeapValidationError(
+                f"composition must be one of {sorted(allowed)}"
+            )
         if kind is ResourceAlgebraKind.CUSTOM and composition != "custom":
-            raise HeapValidationError("custom resource algebras require composition='custom'")
-        object.__setattr__(self, "algebra_id", _identifier(self.algebra_id, "algebra_id"))
+            raise HeapValidationError(
+                "custom resource algebras require composition='custom'"
+            )
+        object.__setattr__(
+            self, "algebra_id", _identifier(self.algebra_id, "algebra_id")
+        )
         object.__setattr__(self, "kind", kind)
-        object.__setattr__(self, "unit_ids", _identifiers(self.unit_ids, "unit_ids"))
+        object.__setattr__(
+            self, "unit_ids", _identifiers(self.unit_ids, "unit_ids")
+        )
         object.__setattr__(self, "composition", composition)
         object.__setattr__(self, "attributes", _frozen(self.attributes, "attributes"))
         object.__setattr__(self, "source_ref_ids", sources)
@@ -795,7 +877,9 @@ class ResourceAlgebra:
             composition=value.get("composition", "disjoint_sum"),
             source_ref_ids=tuple(value.get("source_ref_ids", ())),
             span_ids=tuple(value.get("span_ids", ())),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
         )
 
 
@@ -870,7 +954,9 @@ class HeapModel:
             )
         object.__setattr__(self, "metadata", _frozen(self.metadata, "metadata"))
         if self.schema_version != HEAP_MODEL_SCHEMA_VERSION:
-            raise HeapValidationError(f"unsupported schema_version {self.schema_version!r}")
+            raise HeapValidationError(
+                f"unsupported schema_version {self.schema_version!r}"
+            )
         self.validate()
         if self.model_id:
             # model_id is advisory here; SeparationLogicIR owns content addressing.
@@ -893,9 +979,7 @@ class HeapModel:
                 total = total + cell.permission
         return total
 
-    def is_disjoint(
-        self, left_location_ids: Sequence[str], right_location_ids: Sequence[str]
-    ) -> bool:
+    def is_disjoint(self, left_location_ids: Sequence[str], right_location_ids: Sequence[str]) -> bool:
         return locations_are_disjoint(left_location_ids, right_location_ids)
 
     def validate(self) -> None:
@@ -932,7 +1016,8 @@ class HeapModel:
         for cell in self.cells:
             if cell.location_id not in location_ids:
                 raise HeapValidationError(
-                    f"cell {cell.cell_id} references unknown location {cell.location_id!r}"
+                    f"cell {cell.cell_id} references unknown location "
+                    f"{cell.location_id!r}"
                 )
             if cell.value_id not in value_ids:
                 raise HeapValidationError(
@@ -961,7 +1046,8 @@ class HeapModel:
                 permission_totals[cell.location_id] = prior + cell.permission
             except HeapValidationError as error:
                 raise HeapValidationError(
-                    f"permission conservation violated at location {cell.location_id!r}: {error}"
+                    f"permission conservation violated at location "
+                    f"{cell.location_id!r}: {error}"
                 ) from error
 
         # Ownership typing and exclusivity.
@@ -984,7 +1070,8 @@ class HeapModel:
                 ownership_permission[record.location_id] = prior + record.permission
             except HeapValidationError as error:
                 raise HeapValidationError(
-                    f"ownership permission conservation violated at {record.location_id!r}: {error}"
+                    f"ownership permission conservation violated at "
+                    f"{record.location_id!r}: {error}"
                 ) from error
 
         for alias in self.aliases:
@@ -1014,7 +1101,8 @@ class HeapModel:
         for unit in self.resource_units:
             if unit.location_id and unit.location_id not in location_ids:
                 raise HeapValidationError(
-                    f"resource unit {unit.unit_id} references unknown location {unit.location_id!r}"
+                    f"resource unit {unit.unit_id} references unknown location "
+                    f"{unit.location_id!r}"
                 )
 
         for algebra in self.resource_algebras:
@@ -1074,7 +1162,9 @@ class HeapModel:
             aliases=tuple(value.get("aliases", ())),
             resource_units=tuple(value.get("resource_units", ())),
             resource_algebras=tuple(value.get("resource_algebras", ())),
-            metadata=_frozen(_mapping(value.get("metadata", {}), "metadata"), "metadata"),
+            metadata=_frozen(
+                _mapping(value.get("metadata", {}), "metadata"), "metadata"
+            ),
             model_id=value.get("model_id", ""),
             schema_version=value.get("schema_version", HEAP_MODEL_SCHEMA_VERSION),
         )

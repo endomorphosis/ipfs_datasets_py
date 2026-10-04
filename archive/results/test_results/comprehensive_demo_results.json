@@ -1,0 +1,823 @@
+{
+  "sources_tested": [
+    "Reuters",
+    "AP",
+    "Bloomberg"
+  ],
+  "total_articles": 75,
+  "entities_extracted": 321,
+  "queries_executed": [
+    {
+      "type": "semantic",
+      "query": "What are the key factors affecting market volatility?",
+      "user_type": "data_scientist",
+      "processing_time": 0.8429555892944336,
+      "results_count": 15,
+      "results": [
+        {
+          "title": "Market Analysis: Energy sector transformation",
+          "source": "Bloomberg",
+          "relevance_score": 0.93,
+          "summary": "Analysis of market conditions and economic indicators...",
+          "entities": [
+            {
+              "name": "Federal Reserve",
+              "type": "organization",
+              "confidence": 0.95
+            },
+            {
+              "name": "inflation",
+              "type": "economic_indicator",
+              "confidence": 0.91
+            },
+            {
+              "name": "Wall Street",
+              "type": "location",
+              "confidence": 0.87
+            }
+          ]
+        },
+        {
+          "title": "Market Analysis: Energy sector transformation",
+          "source": "Bloomberg",
+          "relevance_score": 0.73,
+          "summary": "Analysis of market conditions and economic indicators...",
+          "entities": [
+            {
+              "name": "S&P 500",
+              "type": "index",
+              "confidence": 0.98
+            },
+            {
+              "name": "Wall Street",
+              "type": "location",
+              "confidence": 0.87
+            },
+            {
+              "name": "Jerome Powell",
+              "type": "person",
+              "confidence": 0.94
+            }
+          ]
+        },
+        {
+          "title": "Market Analysis: Economic policy changes impact markets",
+          "source": "Reuters",
+          "relevance_score": 0.7,
+          "summary": "Analysis of market conditions and economic indicators...",
+          "entities": [
+            {
+              "name": "JPMorgan Chase",
+              "type": "organization",
+              "confidence": 0.92
+            },
+            {
+              "name": "S&P 500",
+              "type": "index",
+              "confidence": 0.98
+            },
+            {
+              "name": "Wall Street",
+              "type": "location",
+              "confidence": 0.87
+            }
+          ]
+        },
+        {
+          "title": "Market Analysis: Federal Reserve interest rate decision",
+          "source": "Reuters",
+          "relevance_score": 0.77,
+          "summary": "Analysis of market conditions and economic indicators...",
+          "entities": [
+            {
+              "name": "Jerome Powell",
+              "type": "person",
+              "confidence": 0.94
+            },
+            {
+              "name": "Wall Street",
+              "type": "location",
+              "confidence": 0.87
+            },
+            {
+              "name": "NASDAQ",
+              "type": "index",
+              "confidence": 0.96
+            }
+          ]
+        },
+        {
+          "title": "Market Analysis: Banking sector quarterly earnings",
+          "source": "Bloomberg",
+          "relevance_score": 0.77,
+          "summary": "Analysis of market conditions and economic indicators...",
+          "entities": [
+            {
+              "name": "inflation",
+              "type": "economic_indicator",
+              "confidence": 0.91
+            },
+            {
+              "name": "Wall Street",
+              "type": "location",
+              "confidence": 0.87
+            },
+            {
+              "name": "NASDAQ",
+              "type": "index",
+              "confidence": 0.96
+            }
+          ]
+        },
+        {
+          "title": "Market Analysis: Banking sector quarterly earnings",
+          "source": "Bloomberg",
+          "relevance_score": 0.84,
+          "summary": "Analysis of market conditions and economic indicators...",
+          "entities": [
+            {
+              "name": "Jerome Powell",
+              "type": "person",
+              "confidence": 0.94
+            },
+            {
+              "name": "inflation",
+              "type": "economic_indicator",
+              "confidence": 0.91
+            },
+            {
+              "name": "JPMorgan Chase",
+              "type": "organization",
+              "confidence": 0.92
+            }
+          ]
+        },
+        {
+          "title": "Market Analysis: Economic policy changes impact markets",
+          "source": "Bloomberg",
+          "relevance_score": 0.93,
+          "summary": "Analysis of market conditions and economic indicators...",
+          "entities": [
+            {
+              "name": "JPMorgan Chase",
+              "type": "organization",
+              "confidence": 0.92
+            },
+            {
+              "name": "S&P 500",
+              "type": "index",
+              "confidence": 0.98
+            },
+            {
+              "name": "NASDAQ",
+              "type": "index",
+              "confidence": 0.96
+            }
+          ]
+        },
+        {
+          "title": "Market Analysis: Economic policy changes impact markets",
+          "source": "Bloomberg",
+          "relevance_score": 0.88,
+          "summary": "Analysis of market conditions and economic indicators...",
+          "entities": [
+            {
+              "name": "JPMorgan Chase",
+              "type": "organization",
+              "confidence": 0.92
+            },
+            {
+              "name": "NASDAQ",
+              "type": "index",
+              "confidence": 0.96
+            },
+            {
+              "name": "S&P 500",
+              "type": "index",
+              "confidence": 0.98
+            }
+          ]
+        },
+        {
+          "title": "Market Analysis: Trade war effects on global economy",
+          "source": "AP",
+          "relevance_score": 0.73,
+          "summary": "Analysis of market conditions and economic indicators...",
+          "entities": [
+            {
+              "name": "inflation",
+              "type": "economic_indicator",
+              "confidence": 0.91
+            },
+            {
+              "name": "Federal Reserve",
+              "type": "organization",
+              "confidence": 0.95
+            },
+            {
+              "name": "S&P 500",
+              "type": "index",
+              "confidence": 0.98
+            }
+          ]
+        },
+        {
+          "title": "Market Analysis: Economic policy changes impact markets",
+          "source": "Reuters",
+          "relevance_score": 0.75,
+          "summary": "Analysis of market conditions and economic indicators...",
+          "entities": [
+            {
+              "name": "Jerome Powell",
+              "type": "person",
+              "confidence": 0.94
+            },
+            {
+              "name": "Federal Reserve",
+              "type": "organization",
+              "confidence": 0.95
+            },
+            {
+              "name": "NASDAQ",
+              "type": "index",
+              "confidence": 0.96
+            }
+          ]
+        },
+        {
+          "title": "Market Analysis: Tech stocks surge amid AI developments",
+          "source": "Reuters",
+          "relevance_score": 0.84,
+          "summary": "Analysis of market conditions and economic indicators...",
+          "entities": [
+            {
+              "name": "Federal Reserve",
+              "type": "organization",
+              "confidence": 0.95
+            },
+            {
+              "name": "Wall Street",
+              "type": "location",
+              "confidence": 0.87
+            },
+            {
+              "name": "S&P 500",
+              "type": "index",
+              "confidence": 0.98
+            }
+          ]
+        },
+        {
+          "title": "Market Analysis: Banking sector quarterly earnings",
+          "source": "AP",
+          "relevance_score": 0.76,
+          "summary": "Analysis of market conditions and economic indicators...",
+          "entities": [
+            {
+              "name": "S&P 500",
+              "type": "index",
+              "confidence": 0.98
+            },
+            {
+              "name": "Federal Reserve",
+              "type": "organization",
+              "confidence": 0.95
+            },
+            {
+              "name": "Jerome Powell",
+              "type": "person",
+              "confidence": 0.94
+            }
+          ]
+        },
+        {
+          "title": "Market Analysis: Tech stocks surge amid AI developments",
+          "source": "Bloomberg",
+          "relevance_score": 0.84,
+          "summary": "Analysis of market conditions and economic indicators...",
+          "entities": [
+            {
+              "name": "S&P 500",
+              "type": "index",
+              "confidence": 0.98
+            },
+            {
+              "name": "JPMorgan Chase",
+              "type": "organization",
+              "confidence": 0.92
+            },
+            {
+              "name": "NASDAQ",
+              "type": "index",
+              "confidence": 0.96
+            }
+          ]
+        },
+        {
+          "title": "Market Analysis: Stock market volatility amid inflation concerns",
+          "source": "AP",
+          "relevance_score": 0.85,
+          "summary": "Analysis of market conditions and economic indicators...",
+          "entities": [
+            {
+              "name": "JPMorgan Chase",
+              "type": "organization",
+              "confidence": 0.92
+            },
+            {
+              "name": "Bitcoin",
+              "type": "cryptocurrency",
+              "confidence": 0.89
+            },
+            {
+              "name": "NASDAQ",
+              "type": "index",
+              "confidence": 0.96
+            }
+          ]
+        },
+        {
+          "title": "Market Analysis: Trade war effects on global economy",
+          "source": "AP",
+          "relevance_score": 0.89,
+          "summary": "Analysis of market conditions and economic indicators...",
+          "entities": [
+            {
+              "name": "Bitcoin",
+              "type": "cryptocurrency",
+              "confidence": 0.89
+            },
+            {
+              "name": "Jerome Powell",
+              "type": "person",
+              "confidence": 0.94
+            },
+            {
+              "name": "S&P 500",
+              "type": "index",
+              "confidence": 0.98
+            }
+          ]
+        }
+      ],
+      "status": "success"
+    },
+    {
+      "type": "entity",
+      "query": "Federal Reserve",
+      "user_type": "historian",
+      "processing_time": 0.5657048225402832,
+      "results_count": 12,
+      "results": [
+        {
+          "entity_mention": "Federal Reserve",
+          "context": "Referenced in context of Federal Reserve interest rate decision",
+          "source": "Reuters",
+          "confidence": 0.93,
+          "related_entities": [
+            {
+              "name": "inflation",
+              "type": "economic_indicator",
+              "confidence": 0.91
+            },
+            {
+              "name": "Wall Street",
+              "type": "location",
+              "confidence": 0.87
+            }
+          ]
+        },
+        {
+          "entity_mention": "Federal Reserve",
+          "context": "Referenced in context of Tech stocks surge amid AI developments",
+          "source": "AP",
+          "confidence": 0.97,
+          "related_entities": [
+            {
+              "name": "Jerome Powell",
+              "type": "person",
+              "confidence": 0.94
+            },
+            {
+              "name": "Wall Street",
+              "type": "location",
+              "confidence": 0.87
+            }
+          ]
+        },
+        {
+          "entity_mention": "Federal Reserve",
+          "context": "Referenced in context of Federal Reserve interest rate decision",
+          "source": "Reuters",
+          "confidence": 0.91,
+          "related_entities": [
+            {
+              "name": "NASDAQ",
+              "type": "index",
+              "confidence": 0.96
+            },
+            {
+              "name": "Federal Reserve",
+              "type": "organization",
+              "confidence": 0.95
+            }
+          ]
+        },
+        {
+          "entity_mention": "Federal Reserve",
+          "context": "Referenced in context of Tech stocks surge amid AI developments",
+          "source": "Bloomberg",
+          "confidence": 0.85,
+          "related_entities": [
+            {
+              "name": "Wall Street",
+              "type": "location",
+              "confidence": 0.87
+            },
+            {
+              "name": "NASDAQ",
+              "type": "index",
+              "confidence": 0.96
+            }
+          ]
+        },
+        {
+          "entity_mention": "Federal Reserve",
+          "context": "Referenced in context of Energy sector transformation",
+          "source": "Reuters",
+          "confidence": 0.94,
+          "related_entities": [
+            {
+              "name": "NASDAQ",
+              "type": "index",
+              "confidence": 0.96
+            },
+            {
+              "name": "inflation",
+              "type": "economic_indicator",
+              "confidence": 0.91
+            }
+          ]
+        },
+        {
+          "entity_mention": "Federal Reserve",
+          "context": "Referenced in context of Economic policy changes impact markets",
+          "source": "Reuters",
+          "confidence": 0.89,
+          "related_entities": [
+            {
+              "name": "Wall Street",
+              "type": "location",
+              "confidence": 0.87
+            },
+            {
+              "name": "Federal Reserve",
+              "type": "organization",
+              "confidence": 0.95
+            }
+          ]
+        },
+        {
+          "entity_mention": "Federal Reserve",
+          "context": "Referenced in context of Trade war effects on global economy",
+          "source": "AP",
+          "confidence": 0.97,
+          "related_entities": [
+            {
+              "name": "Federal Reserve",
+              "type": "organization",
+              "confidence": 0.95
+            },
+            {
+              "name": "NASDAQ",
+              "type": "index",
+              "confidence": 0.96
+            }
+          ]
+        },
+        {
+          "entity_mention": "Federal Reserve",
+          "context": "Referenced in context of Federal Reserve interest rate decision",
+          "source": "Bloomberg",
+          "confidence": 0.93,
+          "related_entities": [
+            {
+              "name": "Jerome Powell",
+              "type": "person",
+              "confidence": 0.94
+            },
+            {
+              "name": "NASDAQ",
+              "type": "index",
+              "confidence": 0.96
+            }
+          ]
+        },
+        {
+          "entity_mention": "Federal Reserve",
+          "context": "Referenced in context of Tech stocks surge amid AI developments",
+          "source": "Bloomberg",
+          "confidence": 0.92,
+          "related_entities": [
+            {
+              "name": "JPMorgan Chase",
+              "type": "organization",
+              "confidence": 0.92
+            },
+            {
+              "name": "Bitcoin",
+              "type": "cryptocurrency",
+              "confidence": 0.89
+            }
+          ]
+        },
+        {
+          "entity_mention": "Federal Reserve",
+          "context": "Referenced in context of Trade war effects on global economy",
+          "source": "Bloomberg",
+          "confidence": 0.93,
+          "related_entities": [
+            {
+              "name": "JPMorgan Chase",
+              "type": "organization",
+              "confidence": 0.92
+            },
+            {
+              "name": "Wall Street",
+              "type": "location",
+              "confidence": 0.87
+            }
+          ]
+        },
+        {
+          "entity_mention": "Federal Reserve",
+          "context": "Referenced in context of Banking sector quarterly earnings",
+          "source": "Reuters",
+          "confidence": 0.96,
+          "related_entities": [
+            {
+              "name": "Bitcoin",
+              "type": "cryptocurrency",
+              "confidence": 0.89
+            },
+            {
+              "name": "inflation",
+              "type": "economic_indicator",
+              "confidence": 0.91
+            }
+          ]
+        },
+        {
+          "entity_mention": "Federal Reserve",
+          "context": "Referenced in context of Banking sector quarterly earnings",
+          "source": "Bloomberg",
+          "confidence": 0.81,
+          "related_entities": [
+            {
+              "name": "Bitcoin",
+              "type": "cryptocurrency",
+              "confidence": 0.89
+            },
+            {
+              "name": "JPMorgan Chase",
+              "type": "organization",
+              "confidence": 0.92
+            }
+          ]
+        }
+      ],
+      "status": "success"
+    },
+    {
+      "type": "temporal",
+      "query": "interest rate policy changes",
+      "user_type": "data_scientist",
+      "processing_time": 0.749896764755249,
+      "results_count": 8,
+      "results": [
+        {
+          "timestamp": "2025-09-02T23:32:48.319054",
+          "event": "Market event: Cryptocurrency regulation updates",
+          "source": "Bloomberg",
+          "impact_score": 0.83
+        },
+        {
+          "timestamp": "2025-08-30T23:32:48.319090",
+          "event": "Market event: Federal Reserve interest rate decision",
+          "source": "AP",
+          "impact_score": 0.8
+        },
+        {
+          "timestamp": "2025-09-02T23:32:48.319100",
+          "event": "Market event: Tech stocks surge amid AI developments",
+          "source": "Reuters",
+          "impact_score": 0.84
+        },
+        {
+          "timestamp": "2025-08-30T23:32:48.319106",
+          "event": "Market event: Cryptocurrency regulation updates",
+          "source": "AP",
+          "impact_score": 0.63
+        },
+        {
+          "timestamp": "2025-09-02T23:32:48.319111",
+          "event": "Market event: Economic policy changes impact markets",
+          "source": "AP",
+          "impact_score": 0.72
+        },
+        {
+          "timestamp": "2025-08-28T23:32:48.319115",
+          "event": "Market event: Stock market volatility amid inflation concerns",
+          "source": "Reuters",
+          "impact_score": 0.83
+        },
+        {
+          "timestamp": "2025-08-31T23:32:48.319120",
+          "event": "Market event: Federal Reserve interest rate decision",
+          "source": "Reuters",
+          "impact_score": 0.87
+        },
+        {
+          "timestamp": "2025-08-29T23:32:48.319124",
+          "event": "Market event: Cryptocurrency regulation updates",
+          "source": "AP",
+          "impact_score": 0.78
+        }
+      ],
+      "status": "success"
+    },
+    {
+      "type": "relationship",
+      "query": "N/A",
+      "user_type": "lawyer",
+      "processing_time": 1.0672121047973633,
+      "results_count": 10,
+      "results": [
+        {
+          "content": "Analysis result 1 for relationship query",
+          "source": "AP",
+          "confidence": 0.83
+        },
+        {
+          "content": "Analysis result 2 for relationship query",
+          "source": "AP",
+          "confidence": 0.82
+        },
+        {
+          "content": "Analysis result 3 for relationship query",
+          "source": "AP",
+          "confidence": 0.79
+        },
+        {
+          "content": "Analysis result 4 for relationship query",
+          "source": "AP",
+          "confidence": 0.76
+        },
+        {
+          "content": "Analysis result 5 for relationship query",
+          "source": "Reuters",
+          "confidence": 0.76
+        },
+        {
+          "content": "Analysis result 6 for relationship query",
+          "source": "Bloomberg",
+          "confidence": 0.75
+        },
+        {
+          "content": "Analysis result 7 for relationship query",
+          "source": "Bloomberg",
+          "confidence": 0.76
+        },
+        {
+          "content": "Analysis result 8 for relationship query",
+          "source": "Reuters",
+          "confidence": 0.92
+        },
+        {
+          "content": "Analysis result 9 for relationship query",
+          "source": "Reuters",
+          "confidence": 0.87
+        },
+        {
+          "content": "Analysis result 10 for relationship query",
+          "source": "AP",
+          "confidence": 0.88
+        }
+      ],
+      "status": "success"
+    },
+    {
+      "type": "cross_document",
+      "query": "banking sector earnings consensus",
+      "user_type": "historian",
+      "processing_time": 1.0371971130371094,
+      "results_count": 6,
+      "results": [
+        {
+          "content": "Analysis result 1 for cross_document query",
+          "source": "AP",
+          "confidence": 0.81
+        },
+        {
+          "content": "Analysis result 2 for cross_document query",
+          "source": "Bloomberg",
+          "confidence": 0.78
+        },
+        {
+          "content": "Analysis result 3 for cross_document query",
+          "source": "Reuters",
+          "confidence": 0.93
+        },
+        {
+          "content": "Analysis result 4 for cross_document query",
+          "source": "Bloomberg",
+          "confidence": 0.77
+        },
+        {
+          "content": "Analysis result 5 for cross_document query",
+          "source": "AP",
+          "confidence": 0.86
+        },
+        {
+          "content": "Analysis result 6 for cross_document query",
+          "source": "AP",
+          "confidence": 0.89
+        }
+      ],
+      "status": "success"
+    }
+  ],
+  "analysis_results": {
+    "graph_exploration": {
+      "graph_statistics": {
+        "nodes": 321,
+        "edges": 577,
+        "node_types": [
+          "organization",
+          "person",
+          "location",
+          "index",
+          "cryptocurrency",
+          "economic_indicator"
+        ],
+        "communities": 8,
+        "density": 0.218,
+        "modularity": 0.585
+      },
+      "community_analysis": {
+        "communities_found": 8,
+        "modularity_score": 0.585
+      },
+      "path_analysis": {
+        "average_path_length": 3,
+        "graph_diameter": 5
+      },
+      "centrality_analysis": {
+        "top_nodes": [
+          "S&P 500",
+          "Wall Street",
+          "Jerome Powell"
+        ],
+        "centrality_scores": [
+          0.722,
+          0.791,
+          0.8
+        ]
+      }
+    },
+    "professional_reports": {
+      "data_scientist": {
+        "articles_analyzed": 75,
+        "entities_extracted": 321,
+        "sentiment_distribution": {
+          "positive": 0.35,
+          "neutral": 0.45,
+          "negative": 0.2
+        },
+        "topic_clusters": 8,
+        "model_accuracy": 0.87
+      },
+      "historian": {
+        "temporal_coverage": "7 days",
+        "source_diversity": 3,
+        "key_events_identified": 12,
+        "cross_references": 45,
+        "citation_count": 75
+      },
+      "lawyer": {
+        "total_documents": 75,
+        "verified_sources": 3,
+        "chain_of_custody": "Maintained",
+        "evidence_integrity": "Verified",
+        "admissible_documents": 69
+      }
+    }
+  },
+  "performance_metrics": {
+    "total_demo_time": 6.654091119766235,
+    "articles_per_second": 11.271261341343763,
+    "queries_per_minute": 45.08504536537505,
+    "avg_query_time": 0.8525932788848877
+  },
+  "demo_timestamp": "2025-09-03T23:32:45.172227"
+}

@@ -1,0 +1,14 @@
+{
+  "report": {
+    "bytes": 613574,
+    "cid": "bafkreidurzbpirb2jbrmyfddbnlsucunqt42nu5m2wwrwfwv7og36wca5q",
+    "path": "semantic-roundtrip-report.json"
+  },
+  "run_id": "semantic-roundtrip-final-audited-v2-20260726T174709Z",
+  "schema_version": "ipfs-datasets.semantic-logic-roundtrip-artifacts.v1",
+  "summary": {
+    "bytes": 1791,
+    "cid": "bafkreigsce4jaypgoe3g4hulsnqmulcwhontrcih3sngvqjmroa23gwx7e",
+    "path": "semantic-roundtrip-summary.md"
+  }
+}

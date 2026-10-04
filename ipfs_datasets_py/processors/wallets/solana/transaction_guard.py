@@ -78,11 +78,19 @@ from ..guard.preflight import TransactionPreflight
 # ---------------------------------------------------------------------------
 
 SOLANA_TRANSACTION_GUARD_INTERFACE: Final = "SolanaTransactionGuard@1"
-SOLANA_TRANSACTION_GUARD_SCHEMA_VERSION: Final = "wallet-guard.solana-transaction-guard/v1"
+SOLANA_TRANSACTION_GUARD_SCHEMA_VERSION: Final = (
+    "wallet-guard.solana-transaction-guard/v1"
+)
 ADDRESS_TABLE_EPOCH_SCHEMA_VERSION: Final = "wallet-guard.solana-address-table-epoch/v1"
-EXECUTABLE_PROGRAM_EPOCH_SCHEMA_VERSION: Final = "wallet-guard.solana-executable-program-epoch/v1"
-SOLANA_MESSAGE_BINDING_SCHEMA_VERSION: Final = "wallet-guard.solana-message-binding/v1"
-SOLANA_GUARD_DECISION_SCHEMA_VERSION: Final = "wallet-guard.solana-guard-decision/v1"
+EXECUTABLE_PROGRAM_EPOCH_SCHEMA_VERSION: Final = (
+    "wallet-guard.solana-executable-program-epoch/v1"
+)
+SOLANA_MESSAGE_BINDING_SCHEMA_VERSION: Final = (
+    "wallet-guard.solana-message-binding/v1"
+)
+SOLANA_GUARD_DECISION_SCHEMA_VERSION: Final = (
+    "wallet-guard.solana-guard-decision/v1"
+)
 
 DEFAULT_PRODUCER_ID: Final = "producer:wallet-guard-solana-v1"
 DEFAULT_POLICY_ID: Final = "policy:solana-wallet-guard-v1"
@@ -189,7 +197,9 @@ def _digest(value: Any, name: str) -> str:
 def _timestamp(value: Any, name: str) -> str:
     text = _text(value, name, max_chars=64)
     if not _ISO8601_RE.fullmatch(text):
-        raise GuardValidationError(f"{name} must be an ISO-8601 UTC/offset timestamp")
+        raise GuardValidationError(
+            f"{name} must be an ISO-8601 UTC/offset timestamp"
+        )
     return text
 
 
@@ -208,7 +218,9 @@ def _amount(value: Any, name: str) -> str:
         return str(value)
     text = _text(value, name, max_chars=128)
     if not _DECIMAL_RE.fullmatch(text):
-        raise GuardValidationError(f"{name} must be a non-negative decimal integer string")
+        raise GuardValidationError(
+            f"{name} must be a non-negative decimal integer string"
+        )
     return text
 
 
@@ -222,7 +234,8 @@ def _reject_forbidden(value: Mapping[str, Any], record_name: str) -> None:
     hit = sorted(set(value) & _FORBIDDEN_FIELDS)
     if hit:
         raise GuardForbiddenSurfaceError(
-            f"{record_name} contains forbidden custody/approval field(s): {', '.join(hit)}",
+            f"{record_name} contains forbidden custody/approval field(s): "
+            f"{', '.join(hit)}",
             details={"fields": hit},
         )
 
@@ -240,7 +253,12 @@ def _attributes(value: Mapping[str, Any] | None) -> FrozenMap:
 
 
 def _iso_now() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return (
+        datetime.now(timezone.utc)
+        .replace(microsecond=0)
+        .isoformat()
+        .replace("+00:00", "Z")
+    )
 
 
 def _is_expired(expiry: str, now: str) -> bool:
@@ -304,16 +322,24 @@ class AddressTableEpoch:
     schema_version: str = ADDRESS_TABLE_EPOCH_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "account_key", _pubkey(self.account_key, "account_key"))
+        object.__setattr__(
+            self, "account_key", _pubkey(self.account_key, "account_key")
+        )
         object.__setattr__(
             self,
             "writable_indexes",
-            tuple(_non_negative_int(i, "writable_indexes item") for i in self.writable_indexes),
+            tuple(
+                _non_negative_int(i, "writable_indexes item")
+                for i in self.writable_indexes
+            ),
         )
         object.__setattr__(
             self,
             "readonly_indexes",
-            tuple(_non_negative_int(i, "readonly_indexes item") for i in self.readonly_indexes),
+            tuple(
+                _non_negative_int(i, "readonly_indexes item")
+                for i in self.readonly_indexes
+            ),
         )
         object.__setattr__(
             self,
@@ -326,9 +352,13 @@ class AddressTableEpoch:
             tuple(_pubkey(a, "readonly_addresses item") for a in self.readonly_addresses),
         )
         if len(self.writable_indexes) != len(self.writable_addresses):
-            raise GuardValidationError("writable_indexes and writable_addresses length mismatch")
+            raise GuardValidationError(
+                "writable_indexes and writable_addresses length mismatch"
+            )
         if len(self.readonly_indexes) != len(self.readonly_addresses):
-            raise GuardValidationError("readonly_indexes and readonly_addresses length mismatch")
+            raise GuardValidationError(
+                "readonly_indexes and readonly_addresses length mismatch"
+            )
         if self.last_extended_slot is not None:
             object.__setattr__(
                 self,
@@ -350,7 +380,9 @@ class AddressTableEpoch:
         if not self.table_epoch:
             object.__setattr__(self, "table_epoch", self.compute_epoch_digest())
         else:
-            object.__setattr__(self, "table_epoch", _digest(self.table_epoch, "table_epoch"))
+            object.__setattr__(
+                self, "table_epoch", _digest(self.table_epoch, "table_epoch")
+            )
 
     def compute_epoch_digest(self) -> str:
         return content_sha256_hex(
@@ -383,8 +415,12 @@ class AddressTableEpoch:
         _reject_forbidden(value, "AddressTableEpoch")
         return cls(
             account_key=value.get("account_key", value.get("accountKey", "")),
-            writable_indexes=tuple(value.get("writable_indexes", value.get("writableIndexes", ()))),
-            readonly_indexes=tuple(value.get("readonly_indexes", value.get("readonlyIndexes", ()))),
+            writable_indexes=tuple(
+                value.get("writable_indexes", value.get("writableIndexes", ()))
+            ),
+            readonly_indexes=tuple(
+                value.get("readonly_indexes", value.get("readonlyIndexes", ()))
+            ),
             writable_addresses=tuple(
                 value.get("writable_addresses", value.get("writableAddresses", ()))
             ),
@@ -392,9 +428,13 @@ class AddressTableEpoch:
                 value.get("readonly_addresses", value.get("readonlyAddresses", ()))
             ),
             table_epoch=value.get("table_epoch", value.get("tableEpoch", "")),
-            last_extended_slot=value.get("last_extended_slot", value.get("lastExtendedSlot")),
+            last_extended_slot=value.get(
+                "last_extended_slot", value.get("lastExtendedSlot")
+            ),
             attributes=value.get("attributes", {}),
-            schema_version=value.get("schema_version", ADDRESS_TABLE_EPOCH_SCHEMA_VERSION),
+            schema_version=value.get(
+                "schema_version", ADDRESS_TABLE_EPOCH_SCHEMA_VERSION
+            ),
         )
 
     @classmethod
@@ -437,10 +477,16 @@ class ExecutableProgramEpoch:
     schema_version: str = EXECUTABLE_PROGRAM_EPOCH_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "program_id", _pubkey(self.program_id, "program_id"))
-        object.__setattr__(self, "code_epoch", _text(self.code_epoch, "code_epoch", max_chars=256))
+        object.__setattr__(
+            self, "program_id", _pubkey(self.program_id, "program_id")
+        )
+        object.__setattr__(
+            self, "code_epoch", _text(self.code_epoch, "code_epoch", max_chars=256)
+        )
         if self.binary_digest:
-            object.__setattr__(self, "binary_digest", _digest(self.binary_digest, "binary_digest"))
+            object.__setattr__(
+                self, "binary_digest", _digest(self.binary_digest, "binary_digest")
+            )
         else:
             object.__setattr__(self, "binary_digest", "")
         if self.deployment_slot is not None:
@@ -476,7 +522,9 @@ class ExecutableProgramEpoch:
             )
         else:
             object.__setattr__(self, "loader_program_id", "")
-        object.__setattr__(self, "chain_id", _text(self.chain_id, "chain_id", max_chars=128))
+        object.__setattr__(
+            self, "chain_id", _text(self.chain_id, "chain_id", max_chars=128)
+        )
         if not isinstance(self.attributes, FrozenMap):
             object.__setattr__(self, "attributes", _attributes(self.attributes))
         object.__setattr__(
@@ -485,7 +533,9 @@ class ExecutableProgramEpoch:
             _text(self.schema_version, "schema_version"),
         )
         if self.schema_version != EXECUTABLE_PROGRAM_EPOCH_SCHEMA_VERSION:
-            raise GuardValidationError(f"unsupported program epoch schema: {self.schema_version!r}")
+            raise GuardValidationError(
+                f"unsupported program epoch schema: {self.schema_version!r}"
+            )
 
     @property
     def epoch_digest(self) -> str:
@@ -524,15 +574,23 @@ class ExecutableProgramEpoch:
             program_id=value.get("program_id", value.get("programId", "")),
             code_epoch=value.get("code_epoch", value.get("codeEpoch", "")),
             binary_digest=value.get("binary_digest", value.get("binaryDigest", "")),
-            deployment_slot=value.get("deployment_slot", value.get("deploymentSlot")),
+            deployment_slot=value.get(
+                "deployment_slot", value.get("deploymentSlot")
+            ),
             program_data_address=value.get(
                 "program_data_address", value.get("programDataAddress", "")
             ),
-            upgrade_authority=value.get("upgrade_authority", value.get("upgradeAuthority", "")),
-            loader_program_id=value.get("loader_program_id", value.get("loaderProgramId", "")),
+            upgrade_authority=value.get(
+                "upgrade_authority", value.get("upgradeAuthority", "")
+            ),
+            loader_program_id=value.get(
+                "loader_program_id", value.get("loaderProgramId", "")
+            ),
             chain_id=value.get("chain_id", value.get("chainId", SOLANA_MAINNET_CHAIN_ID)),
             attributes=value.get("attributes", {}),
-            schema_version=value.get("schema_version", EXECUTABLE_PROGRAM_EPOCH_SCHEMA_VERSION),
+            schema_version=value.get(
+                "schema_version", EXECUTABLE_PROGRAM_EPOCH_SCHEMA_VERSION
+            ),
         )
 
 
@@ -578,11 +636,21 @@ class SolanaMessageBinding:
     schema_version: str = SOLANA_MESSAGE_BINDING_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "binding_id", _identifier(self.binding_id, "binding_id"))
-        object.__setattr__(self, "intent_id", _identifier(self.intent_id, "intent_id"))
-        object.__setattr__(self, "candidate_id", _identifier(self.candidate_id, "candidate_id"))
-        object.__setattr__(self, "chain_id", _text(self.chain_id, "chain_id", max_chars=128))
-        object.__setattr__(self, "network", _text(self.network, "network", max_chars=128))
+        object.__setattr__(
+            self, "binding_id", _identifier(self.binding_id, "binding_id")
+        )
+        object.__setattr__(
+            self, "intent_id", _identifier(self.intent_id, "intent_id")
+        )
+        object.__setattr__(
+            self, "candidate_id", _identifier(self.candidate_id, "candidate_id")
+        )
+        object.__setattr__(
+            self, "chain_id", _text(self.chain_id, "chain_id", max_chars=128)
+        )
+        object.__setattr__(
+            self, "network", _text(self.network, "network", max_chars=128)
+        )
         object.__setattr__(
             self,
             "genesis_hash",
@@ -603,7 +671,9 @@ class SolanaMessageBinding:
         if not self.recent_blockhash:
             raise GuardValidationError("recent_blockhash is required for binding")
         object.__setattr__(self, "fee_payer", _pubkey(self.fee_payer, "fee_payer"))
-        object.__setattr__(self, "fee_lamports", _amount(self.fee_lamports, "fee_lamports"))
+        object.__setattr__(
+            self, "fee_lamports", _amount(self.fee_lamports, "fee_lamports")
+        )
         if not self.account_order:
             raise GuardValidationError("account_order must be non-empty")
         if len(self.account_order) > MAX_COLLECTION_ITEMS:
@@ -619,17 +689,21 @@ class SolanaMessageBinding:
         for index, priv in enumerate(privileges):
             if not isinstance(priv, AccountPrivilege):
                 if isinstance(priv, Mapping):
-                    privileges = (
-                        privileges[:index]
-                        + (AccountPrivilege.from_dict(priv),)
-                        + privileges[index + 1 :]
-                    )
+                    privileges = privileges[:index] + (
+                        AccountPrivilege.from_dict(priv),
+                    ) + privileges[index + 1 :]
                 else:
-                    raise GuardValidationError("privileges items must be AccountPrivilege")
+                    raise GuardValidationError(
+                        "privileges items must be AccountPrivilege"
+                    )
         object.__setattr__(self, "privileges", privileges)
         if len(self.privileges) != len(self.account_order):
-            raise GuardValidationError("privileges length must match account_order length")
-        for index, (priv, key) in enumerate(zip(self.privileges, self.account_order, strict=True)):
+            raise GuardValidationError(
+                "privileges length must match account_order length"
+            )
+        for index, (priv, key) in enumerate(
+            zip(self.privileges, self.account_order, strict=True)
+        ):
             if priv.account_index != index:
                 raise GuardValidationError(
                     f"privilege account_index {priv.account_index} != order index {index}"
@@ -645,7 +719,9 @@ class SolanaMessageBinding:
             elif isinstance(item, Mapping):
                 instructions.append(SolanaInstruction.from_dict(item))
             else:
-                raise GuardValidationError("instructions items must be SolanaInstruction")
+                raise GuardValidationError(
+                    "instructions items must be SolanaInstruction"
+                )
         object.__setattr__(self, "instructions", tuple(instructions))
         tables: list[AddressTableEpoch] = []
         for item in self.address_table_epochs:
@@ -654,7 +730,9 @@ class SolanaMessageBinding:
             elif isinstance(item, Mapping):
                 tables.append(AddressTableEpoch.from_dict(item))
             else:
-                raise GuardValidationError("address_table_epochs items must be AddressTableEpoch")
+                raise GuardValidationError(
+                    "address_table_epochs items must be AddressTableEpoch"
+                )
         object.__setattr__(self, "address_table_epochs", tuple(tables))
         programs: list[ExecutableProgramEpoch] = []
         for item in self.program_epochs:
@@ -663,7 +741,9 @@ class SolanaMessageBinding:
             elif isinstance(item, Mapping):
                 programs.append(ExecutableProgramEpoch.from_dict(item))
             else:
-                raise GuardValidationError("program_epochs items must be ExecutableProgramEpoch")
+                raise GuardValidationError(
+                    "program_epochs items must be ExecutableProgramEpoch"
+                )
         object.__setattr__(self, "program_epochs", tuple(programs))
         object.__setattr__(
             self,
@@ -680,7 +760,9 @@ class SolanaMessageBinding:
             "lamport_effects",
             tuple(dict(item) for item in self.lamport_effects),
         )
-        object.__setattr__(self, "message_digest", _digest(self.message_digest, "message_digest"))
+        object.__setattr__(
+            self, "message_digest", _digest(self.message_digest, "message_digest")
+        )
         object.__setattr__(
             self, "candidate_digest", _digest(self.candidate_digest, "candidate_digest")
         )
@@ -689,8 +771,12 @@ class SolanaMessageBinding:
             "serialized_digest",
             _digest(self.serialized_digest, "serialized_digest"),
         )
-        object.__setattr__(self, "encoding", _identifier(self.encoding, "encoding"))
-        object.__setattr__(self, "byte_length", _non_negative_int(self.byte_length, "byte_length"))
+        object.__setattr__(
+            self, "encoding", _identifier(self.encoding, "encoding")
+        )
+        object.__setattr__(
+            self, "byte_length", _non_negative_int(self.byte_length, "byte_length")
+        )
         if self.byte_length == 0:
             raise GuardValidationError("byte_length must be positive")
         if not isinstance(self.attributes, FrozenMap):
@@ -782,7 +868,9 @@ class SolanaMessageBinding:
             byte_length=value.get("byte_length", 0),
             binding_digest=value.get("binding_digest", ""),
             attributes=value.get("attributes", {}),
-            schema_version=value.get("schema_version", SOLANA_MESSAGE_BINDING_SCHEMA_VERSION),
+            schema_version=value.get(
+                "schema_version", SOLANA_MESSAGE_BINDING_SCHEMA_VERSION
+            ),
         )
 
 
@@ -817,19 +905,31 @@ class SolanaGuardDecision:
 
     def __post_init__(self) -> None:
         if not isinstance(self.outcome, TransactionVerdictOutcome):
-            object.__setattr__(self, "outcome", TransactionVerdictOutcome(str(self.outcome)))
-        object.__setattr__(self, "blocks_automation", bool(self.blocks_automation))
-        object.__setattr__(self, "reason_codes", tuple(str(c) for c in self.reason_codes))
+            object.__setattr__(
+                self, "outcome", TransactionVerdictOutcome(str(self.outcome))
+            )
+        object.__setattr__(
+            self, "blocks_automation", bool(self.blocks_automation)
+        )
+        object.__setattr__(
+            self, "reason_codes", tuple(str(c) for c in self.reason_codes)
+        )
         object.__setattr__(self, "reasons", tuple(str(r) for r in self.reasons))
-        object.__setattr__(self, "binding_digest", _digest(self.binding_digest, "binding_digest"))
+        object.__setattr__(
+            self, "binding_digest", _digest(self.binding_digest, "binding_digest")
+        )
         if self.request_digest:
             object.__setattr__(
                 self, "request_digest", _digest(self.request_digest, "request_digest")
             )
         else:
             object.__setattr__(self, "request_digest", "")
-        object.__setattr__(self, "security_results", dict(self.security_results or {}))
-        object.__setattr__(self, "compliance_results", dict(self.compliance_results or {}))
+        object.__setattr__(
+            self, "security_results", dict(self.security_results or {})
+        )
+        object.__setattr__(
+            self, "compliance_results", dict(self.compliance_results or {})
+        )
         if not isinstance(self.attributes, FrozenMap):
             object.__setattr__(self, "attributes", _attributes(self.attributes))
         object.__setattr__(
@@ -840,7 +940,10 @@ class SolanaGuardDecision:
 
     @property
     def allowed(self) -> bool:
-        return self.outcome is TransactionVerdictOutcome.ALLOW and not self.blocks_automation
+        return (
+            self.outcome is TransactionVerdictOutcome.ALLOW
+            and not self.blocks_automation
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -863,7 +966,9 @@ class SolanaGuardDecision:
 # ---------------------------------------------------------------------------
 
 AddressTableResolver = Callable[[str], AddressTableEpoch | Mapping[str, Any] | None]
-ProgramEpochResolver = Callable[[str], ExecutableProgramEpoch | Mapping[str, Any] | None]
+ProgramEpochResolver = Callable[
+    [str], ExecutableProgramEpoch | Mapping[str, Any] | None
+]
 BlockhashFreshnessChecker = Callable[[str, str], bool]
 
 
@@ -906,7 +1011,9 @@ def _coerce_program_epoch(
         return value
     if isinstance(value, Mapping):
         return ExecutableProgramEpoch.from_dict(value)
-    raise GuardValidationError(f"{field_name} must be ExecutableProgramEpoch or mapping")
+    raise GuardValidationError(
+        f"{field_name} must be ExecutableProgramEpoch or mapping"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -940,9 +1047,13 @@ class SolanaTransactionGuard:
         if self.preflight is None:
             self.preflight = TransactionPreflight(producer_id=self.producer_id)
         if self.interface != SOLANA_TRANSACTION_GUARD_INTERFACE:
-            raise GuardValidationError(f"unsupported solana guard interface: {self.interface!r}")
+            raise GuardValidationError(
+                f"unsupported solana guard interface: {self.interface!r}"
+            )
         if self.schema_version != SOLANA_TRANSACTION_GUARD_SCHEMA_VERSION:
-            raise GuardValidationError(f"unsupported solana guard schema: {self.schema_version!r}")
+            raise GuardValidationError(
+                f"unsupported solana guard schema: {self.schema_version!r}"
+            )
         if self.blockhash_is_fresh is None:
             # Offline default: any non-empty blockhash is treated as fresh
             # unless the caller injects a freshness checker that fails closed.
@@ -955,8 +1066,10 @@ class SolanaTransactionGuard:
         candidate: SolanaMessageCandidate | Mapping[str, Any],
         *,
         loaded_addresses: Mapping[str, Any] | None = None,
-        program_epochs: Sequence[ExecutableProgramEpoch | Mapping[str, Any]] | None = None,
-        address_table_epochs: Sequence[AddressTableEpoch | Mapping[str, Any]] | None = None,
+        program_epochs: Sequence[ExecutableProgramEpoch | Mapping[str, Any]]
+        | None = None,
+        address_table_epochs: Sequence[AddressTableEpoch | Mapping[str, Any]]
+        | None = None,
         declared_cpi_effects: Sequence[Mapping[str, Any]] | None = None,
         declared_token_effects: Sequence[Mapping[str, Any]] | None = None,
         declared_lamport_effects: Sequence[Mapping[str, Any]] | None = None,
@@ -1000,7 +1113,9 @@ class SolanaTransactionGuard:
 
         # Resolve privileges + address tables (fail closed on partial ALT).
         meta_for_resolve: dict[str, Any] | None = None
-        lookups = message.get("addressTableLookups") or message.get("address_table_lookups")
+        lookups = message.get("addressTableLookups") or message.get(
+            "address_table_lookups"
+        )
         if loaded_addresses is not None:
             meta_for_resolve = {"loadedAddresses": dict(loaded_addresses)}
         elif lookups:
@@ -1030,8 +1145,12 @@ class SolanaTransactionGuard:
                 )
 
         try:
-            privileges, lookup_refs = resolve_account_privileges(message, meta_for_resolve)
-            instructions, _missing, _unsupported = parse_instructions(message, None, privileges)
+            privileges, lookup_refs = resolve_account_privileges(
+                message, meta_for_resolve
+            )
+            instructions, _missing, _unsupported = parse_instructions(
+                message, None, privileges
+            )
         except SolanaAdapterError as exc:
             raise GuardValidationError(
                 f"failed to resolve Solana message semantics: {exc}"
@@ -1042,7 +1161,9 @@ class SolanaTransactionGuard:
         if not fee_payer:
             signers = [p for p in privileges if p.is_signer]
             if not signers:
-                raise GuardValidationError("message requires fee_payer or at least one signer")
+                raise GuardValidationError(
+                    "message requires fee_payer or at least one signer"
+                )
             fee_payer = signers[0].pubkey
 
         # Address table epochs: prefer explicit, else derive from lookup refs.
@@ -1063,7 +1184,9 @@ class SolanaTransactionGuard:
             for ref in lookup_refs:
                 epoch = by_key.get(ref.account_key)
                 if epoch is None:
-                    raise GuardValidationError(f"missing address table epoch for {ref.account_key}")
+                    raise GuardValidationError(
+                        f"missing address table epoch for {ref.account_key}"
+                    )
                 # Cross-check resolved addresses against the lookup ref.
                 if (
                     epoch.writable_addresses != ref.writable_addresses
@@ -1176,7 +1299,9 @@ class SolanaTransactionGuard:
     ) -> TransactionPreflightRequest:
         """Project a Solana binding into the common preflight request surface."""
 
-        intent = self._intent_from_binding(binding, expires_at=intent_expires_at or expiry)
+        intent = self._intent_from_binding(
+            binding, expires_at=intent_expires_at or expiry
+        )
         candidate = TransactionCandidate(
             candidate_id=binding.candidate_id,
             intent_id=binding.intent_id,
@@ -1234,8 +1359,10 @@ class SolanaTransactionGuard:
         security_results: Mapping[str, Any] | None = None,
         compliance_results: Mapping[str, Any] | None = None,
         now: str | None = None,
-        live_address_tables: Mapping[str, AddressTableEpoch | Mapping[str, Any]] | None = None,
-        live_program_epochs: Mapping[str, ExecutableProgramEpoch | Mapping[str, Any]] | None = None,
+        live_address_tables: Mapping[str, AddressTableEpoch | Mapping[str, Any]]
+        | None = None,
+        live_program_epochs: Mapping[str, ExecutableProgramEpoch | Mapping[str, Any]]
+        | None = None,
         request_id: str = "req:solana-guard",
         tenant_id: str = "tenant:default",
         actor_id: str = "actor:policy-engine",
@@ -1384,8 +1511,10 @@ class SolanaTransactionGuard:
         *,
         phase: PreflightPhase | SolanaGuardPhase | str = PreflightPhase.PRE_SIGN,
         now: str | None = None,
-        live_address_tables: Mapping[str, AddressTableEpoch | Mapping[str, Any]] | None = None,
-        live_program_epochs: Mapping[str, ExecutableProgramEpoch | Mapping[str, Any]] | None = None,
+        live_address_tables: Mapping[str, AddressTableEpoch | Mapping[str, Any]]
+        | None = None,
+        live_program_epochs: Mapping[str, ExecutableProgramEpoch | Mapping[str, Any]]
+        | None = None,
         live_loaded_addresses: Mapping[str, Any] | None = None,
         live_message: Mapping[str, Any] | None = None,
     ) -> PreflightConsumptionResult:
@@ -1402,12 +1531,16 @@ class SolanaTransactionGuard:
             if isinstance(capability, Mapping):
                 capability = AdmissibilityCapability.from_dict(capability)
             else:
-                raise GuardValidationError("capability must be an AdmissibilityCapability")
+                raise GuardValidationError(
+                    "capability must be an AdmissibilityCapability"
+                )
         if not isinstance(live_request, TransactionPreflightRequest):
             if isinstance(live_request, Mapping):
                 live_request = TransactionPreflightRequest.from_dict(live_request)
             else:
-                raise GuardValidationError("live_request must be a TransactionPreflightRequest")
+                raise GuardValidationError(
+                    "live_request must be a TransactionPreflightRequest"
+                )
 
         if isinstance(phase, PreflightPhase):
             phase_value = phase.value
@@ -1447,7 +1580,8 @@ class SolanaTransactionGuard:
         )
         if structural["blocking"] is not None:
             raise GuardCapabilityError(
-                "; ".join(structural["reasons"]) or "solana live revalidation failed",
+                "; ".join(structural["reasons"])
+                or "solana live revalidation failed",
                 reason_code=structural["reason_codes"][0]
                 if structural["reason_codes"]
                 else "solana.consumption_blocked",
@@ -1500,18 +1634,25 @@ class SolanaTransactionGuard:
         if isinstance(candidate, Mapping):
             _reject_forbidden(candidate, "SolanaMessageCandidate")
             return SolanaMessageCandidate.from_dict(candidate)
-        raise GuardValidationError("candidate must be a SolanaMessageCandidate or mapping")
+        raise GuardValidationError(
+            "candidate must be a SolanaMessageCandidate or mapping"
+        )
 
     def _bind_program_epochs(
         self,
         instructions: Sequence[SolanaInstruction],
         *,
-        program_epochs: Sequence[ExecutableProgramEpoch | Mapping[str, Any]] | None,
+        program_epochs: Sequence[ExecutableProgramEpoch | Mapping[str, Any]]
+        | None,
         chain_id: str,
     ) -> list[ExecutableProgramEpoch]:
         well_known = {SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID}
         required_ids = sorted(
-            {instr.program_id for instr in instructions if instr.program_id not in well_known}
+            {
+                instr.program_id
+                for instr in instructions
+                if instr.program_id not in well_known
+            }
         )
         provided: dict[str, ExecutableProgramEpoch] = {}
         if program_epochs is not None:
@@ -1529,7 +1670,9 @@ class SolanaTransactionGuard:
                 bound.append(provided[program_id])
             elif program_epochs is not None:
                 # Caller supplied an epoch set but omitted this program — fail.
-                raise GuardValidationError(f"missing executable program epoch for {program_id}")
+                raise GuardValidationError(
+                    f"missing executable program epoch for {program_id}"
+                )
             else:
                 # Synthetic binding: code_epoch is the program id itself so
                 # consumption re-resolution still has a stable expected value
@@ -1633,8 +1776,10 @@ class SolanaTransactionGuard:
         binding: SolanaMessageBinding,
         *,
         now: str,
-        live_address_tables: Mapping[str, AddressTableEpoch | Mapping[str, Any]] | None,
-        live_program_epochs: Mapping[str, ExecutableProgramEpoch | Mapping[str, Any]] | None,
+        live_address_tables: Mapping[str, AddressTableEpoch | Mapping[str, Any]]
+        | None,
+        live_program_epochs: Mapping[str, ExecutableProgramEpoch | Mapping[str, Any]]
+        | None,
         phase: SolanaGuardPhase,
         re_resolve: bool = False,
     ) -> dict[str, Any]:
@@ -1667,9 +1812,13 @@ class SolanaTransactionGuard:
                 and blocking is not TransactionVerdictOutcome.DENY
             ):
                 blocking = outcome
-            elif outcome is TransactionVerdictOutcome.STALE and blocking not in (
-                TransactionVerdictOutcome.DENY,
-                TransactionVerdictOutcome.STALE,
+            elif (
+                outcome is TransactionVerdictOutcome.STALE
+                and blocking
+                not in (
+                    TransactionVerdictOutcome.DENY,
+                    TransactionVerdictOutcome.STALE,
+                )
             ):
                 blocking = outcome
 
@@ -1743,7 +1892,8 @@ class SolanaTransactionGuard:
                         _block(
                             TransactionVerdictOutcome.ERROR,
                             "solana.address_table_resolve_error",
-                            f"address table re-resolve failed for {epoch.account_key}: {exc}",
+                            f"address table re-resolve failed for "
+                            f"{epoch.account_key}: {exc}",
                             "sec:solana-address-table-epoch",
                         )
                         continue
@@ -1757,7 +1907,9 @@ class SolanaTransactionGuard:
                             "sec:solana-address-table-epoch",
                         )
                     continue
-                live_epoch = _coerce_table_epoch(live_value, field_name="live address table epoch")
+                live_epoch = _coerce_table_epoch(
+                    live_value, field_name="live address table epoch"
+                )
                 assert live_epoch is not None
                 if live_epoch.table_epoch != epoch.table_epoch:
                     _block(
@@ -1773,7 +1925,8 @@ class SolanaTransactionGuard:
                     _block(
                         TransactionVerdictOutcome.DENY,
                         "solana.address_table_accounts_substituted",
-                        f"address table resolved accounts substituted for {epoch.account_key}",
+                        f"address table resolved accounts substituted for "
+                        f"{epoch.account_key}",
                         "sec:solana-address-table-epoch",
                     )
             if "sec:solana-address-table-epoch" not in security_results:
@@ -1795,7 +1948,8 @@ class SolanaTransactionGuard:
                         _block(
                             TransactionVerdictOutcome.ERROR,
                             "solana.program_epoch_resolve_error",
-                            f"program epoch re-resolve failed for {epoch.program_id}: {exc}",
+                            f"program epoch re-resolve failed for "
+                            f"{epoch.program_id}: {exc}",
                             "sec:solana-program-epoch",
                         )
                         continue
@@ -1807,11 +1961,14 @@ class SolanaTransactionGuard:
                         _block(
                             TransactionVerdictOutcome.STALE,
                             "solana.program_epoch_unresolved",
-                            f"program {epoch.program_id} could not be re-resolved at {phase.value}",
+                            f"program {epoch.program_id} could not be "
+                            f"re-resolved at {phase.value}",
                             "sec:solana-program-epoch",
                         )
                     continue
-                live_epoch_p = _coerce_program_epoch(live_value, field_name="live program epoch")
+                live_epoch_p = _coerce_program_epoch(
+                    live_value, field_name="live program epoch"
+                )
                 assert live_epoch_p is not None
                 if live_epoch_p.code_epoch != epoch.code_epoch:
                     _block(
@@ -1896,7 +2053,11 @@ class SolanaTransactionGuard:
     ) -> None:
         """Fail closed when live message substitutes accounts or escalates privileges."""
 
-        meta = {"loadedAddresses": dict(loaded_addresses)} if loaded_addresses is not None else None
+        meta = (
+            {"loadedAddresses": dict(loaded_addresses)}
+            if loaded_addresses is not None
+            else None
+        )
         try:
             privileges, _tables = resolve_account_privileges(live_message, meta)
         except SolanaAdapterError as exc:
@@ -2049,7 +2210,9 @@ class SolanaTransactionGuard:
                 )
             )
 
-        signers = tuple(f"signer:{p.pubkey}" for p in binding.privileges if p.is_signer)
+        signers = tuple(
+            f"signer:{p.pubkey}" for p in binding.privileges if p.is_signer
+        )
         if not signers:
             signers = (f"signer:{binding.fee_payer}",)
 
@@ -2078,8 +2241,12 @@ class SolanaTransactionGuard:
                 "genesis_hash": binding.genesis_hash,
                 "message_version": binding.message_version,
                 "account_order": list(binding.account_order),
-                "address_table_epochs": [t.table_epoch for t in binding.address_table_epochs],
-                "program_epochs": [p.epoch_digest for p in binding.program_epochs],
+                "address_table_epochs": [
+                    t.table_epoch for t in binding.address_table_epochs
+                ],
+                "program_epochs": [
+                    p.epoch_digest for p in binding.program_epochs
+                ],
             },
         )
 
@@ -2093,28 +2260,25 @@ def evaluate_solana_transaction_guard(
     """Convenience: bind a message candidate and evaluate in one call."""
 
     guard = guard or SolanaTransactionGuard()
-    binding = guard.bind_message(
-        candidate,
-        **{
-            k: kwargs.pop(k)
-            for k in list(kwargs)
-            if k
-            in {
-                "loaded_addresses",
-                "program_epochs",
-                "address_table_epochs",
-                "declared_cpi_effects",
-                "declared_token_effects",
-                "declared_lamport_effects",
-                "fee_lamports",
-                "serialized_bytes",
-                "encoding",
-                "candidate_id",
-                "binding_id",
-                "attributes",
-            }
-        },
-    )
+    binding = guard.bind_message(candidate, **{
+        k: kwargs.pop(k)
+        for k in list(kwargs)
+        if k
+        in {
+            "loaded_addresses",
+            "program_epochs",
+            "address_table_epochs",
+            "declared_cpi_effects",
+            "declared_token_effects",
+            "declared_lamport_effects",
+            "fee_lamports",
+            "serialized_bytes",
+            "encoding",
+            "candidate_id",
+            "binding_id",
+            "attributes",
+        }
+    })
     return guard.evaluate(binding, **kwargs)
 
 

@@ -36,7 +36,9 @@ def _raw_row(**changes: object) -> dict[str, object]:
         "cve_id": "CVE-2024-12345",
         "hash": "a" * 40,
         "repo_url": "https://github.com/example/project",
-        "cve_description": ('[{"lang":"en","value":"Untrusted input reached an evaluator."}]'),
+        "cve_description": (
+            '[{"lang":"en","value":"Untrusted input reached an evaluator."}]'
+        ),
         "cvss2_base_score": None,
         "cvss3_base_score": 8.1,
         "published_date": "2024-01-02T03:04Z",
@@ -66,7 +68,9 @@ def _row(*, row_index: int = 7, **changes: object) -> CVEfixesSourceRow:
 
 
 def _attributes(candidate: PolicyCandidate) -> CVEfixesPolicyAttributes:
-    return CVEfixesPolicyAttributes.from_dict(candidate.scope[CVEFIXES_POLICY_ATTRIBUTES_KEY])
+    return CVEfixesPolicyAttributes.from_dict(
+        candidate.scope[CVEFIXES_POLICY_ATTRIBUTES_KEY]
+    )
 
 
 def test_materialization_is_deterministic_classification_only_and_bound() -> None:
@@ -96,14 +100,21 @@ def test_materialization_is_deterministic_classification_only_and_bound() -> Non
     assert attributes.classification_only is True
     assert attributes.has_exact_policy_constraints is False
     assert attributes.policy_match_terms == ()
-    assert [item.name for item in attributes.cve_ids] == ["CVE-2024-12345"]
+    assert [item.name for item in attributes.cve_ids] == [
+        "CVE-2024-12345"
+    ]
     assert [item.name for item in attributes.cwe_ids] == ["CWE-95"]
     assert first.candidate.payload["candidate_role"] == "classification_only"
     assert first.candidate.payload["grants_execution_authority"] is False
     assert first.candidate.payload["semantic_facts_promoted"] is False
-    assert first.candidate.payload["semantic_fact_count"] == len(projection.semantic_facts)
+    assert first.candidate.payload["semantic_fact_count"] == len(
+        projection.semantic_facts
+    )
     assert first.candidate.payload["language_annotation"]["name"] == "python"
-    assert first.candidate.payload["language_annotation_is_policy_constraint"] is False
+    assert (
+        first.candidate.payload["language_annotation_is_policy_constraint"]
+        is False
+    )
 
     assert first.formal_view.formalism == UNRESOLVED_FORMALISM
     assert expression["candidate_cid"] == first.candidate.cid
@@ -146,10 +157,13 @@ def test_invalid_optional_vocabulary_values_are_omitted_not_inferred() -> None:
         "cwe": "omitted_invalid",
     }
     assert result.candidate.payload["language_annotation"] is None
-    assert result.candidate.payload["language_annotation_status"] == "omitted_invalid"
     assert (
-        json.loads(result.formal_view.expression)["exact_forbidden_constraints"]["action"] is None
+        result.candidate.payload["language_annotation_status"]
+        == "omitted_invalid"
     )
+    assert json.loads(result.formal_view.expression)[
+        "exact_forbidden_constraints"
+    ]["action"] is None
 
 
 def test_projection_language_alias_is_descriptive_not_a_policy_term() -> None:

@@ -145,10 +145,14 @@ def _as_mapping(value: Any, name: str) -> Mapping[str, Any]:
     return value
 
 
-def _known_fields(value: Mapping[str, Any], allowed: frozenset[str], name: str) -> None:
+def _known_fields(
+    value: Mapping[str, Any], allowed: frozenset[str], name: str
+) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise CryptoIRValidationError(f"unknown {name} field(s): {', '.join(unknown)}")
+        raise CryptoIRValidationError(
+            f"unknown {name} field(s): {', '.join(unknown)}"
+        )
 
 
 def _attributes(value: Mapping[str, Any] | None) -> Mapping[str, Any]:
@@ -202,7 +206,9 @@ def _sequence_of(
         elif from_dict is not None and isinstance(item, Mapping):
             converted.append(from_dict(item))
         else:
-            raise CryptoIRValidationError(f"{name} items must be {item_type.__name__} or mappings")
+            raise CryptoIRValidationError(
+                f"{name} items must be {item_type.__name__} or mappings"
+            )
     return tuple(converted)
 
 
@@ -247,15 +253,23 @@ class ControlEdge:
         object.__setattr__(
             self, "target_node_id", _identifier(self.target_node_id, "target_node_id")
         )
-        object.__setattr__(self, "order_index", _non_negative_int(self.order_index, "order_index"))
+        object.__setattr__(
+            self, "order_index", _non_negative_int(self.order_index, "order_index")
+        )
         fact = self.fact_id or f"edge:{self.edge_id}"
         object.__setattr__(self, "fact_id", _identifier(fact, "fact_id"))
         if not isinstance(self.privileges, PrivilegeSet):
             if isinstance(self.privileges, Mapping):
-                object.__setattr__(self, "privileges", PrivilegeSet.from_dict(self.privileges))
+                object.__setattr__(
+                    self, "privileges", PrivilegeSet.from_dict(self.privileges)
+                )
             else:
-                object.__setattr__(self, "privileges", PrivilegeSet(flags=self.privileges))
-        object.__setattr__(self, "principal_ids", _unique_ids(self.principal_ids, "principal_ids"))
+                object.__setattr__(
+                    self, "privileges", PrivilegeSet(flags=self.privileges)
+                )
+        object.__setattr__(
+            self, "principal_ids", _unique_ids(self.principal_ids, "principal_ids")
+        )
         object.__setattr__(
             self,
             "state_epoch_id",
@@ -277,7 +291,9 @@ class ControlEdge:
             _unique_ids(self.source_provenance_ids, "source_provenance_ids"),
         )
         object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -341,7 +357,9 @@ class ControlEdge:
             assumption_ids=tuple(value.get("assumption_ids", ())),
             source_provenance_ids=tuple(value.get("source_provenance_ids", ())),
             attributes=value.get("attributes", {}),
-            schema_version=value.get("schema_version", CRYPTO_IR_SEMANTICS_SCHEMA_VERSION),
+            schema_version=value.get(
+                "schema_version", CRYPTO_IR_SEMANTICS_SCHEMA_VERSION
+            ),
         )
 
     def canonical_bytes(self) -> bytes:
@@ -398,9 +416,13 @@ class SemanticCoverage:
     LAYER: ClassVar[AuthorityKind] = AuthorityKind.EVIDENCE
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "coverage_id", _identifier(self.coverage_id, "coverage_id"))
+        object.__setattr__(
+            self, "coverage_id", _identifier(self.coverage_id, "coverage_id")
+        )
         object.__setattr__(self, "dimension", _text(self.dimension, "dimension"))
-        object.__setattr__(self, "status", _enum(CoverageStatus, self.status, "status"))
+        object.__setattr__(
+            self, "status", _enum(CoverageStatus, self.status, "status")
+        )
         fact = self.fact_id or f"coverage:{self.coverage_id}"
         object.__setattr__(self, "fact_id", _identifier(fact, "fact_id"))
         object.__setattr__(
@@ -426,16 +448,24 @@ class SemanticCoverage:
             "source_provenance_ids",
             _unique_ids(self.source_provenance_ids, "source_provenance_ids"),
         )
-        object.__setattr__(self, "summary", _text(self.summary, "summary", allow_empty=True))
+        object.__setattr__(
+            self, "summary", _text(self.summary, "summary", allow_empty=True)
+        )
         object.__setattr__(self, "attributes", _attributes(self.attributes))
 
         status = (
-            self.status if isinstance(self.status, CoverageStatus) else CoverageStatus(self.status)
+            self.status
+            if isinstance(self.status, CoverageStatus)
+            else CoverageStatus(self.status)
         )
         if status is CoverageStatus.COVERED and self.missing_fact_ids:
-            raise CryptoIRValidationError("covered status cannot declare missing_fact_ids")
+            raise CryptoIRValidationError(
+                "covered status cannot declare missing_fact_ids"
+            )
         if status is CoverageStatus.UNSUPPORTED and self.covered_fact_ids:
-            raise CryptoIRValidationError("unsupported status cannot declare covered_fact_ids")
+            raise CryptoIRValidationError(
+                "unsupported status cannot declare covered_fact_ids"
+            )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -449,7 +479,9 @@ class SemanticCoverage:
             "missing_fact_ids": list(self.missing_fact_ids),
             "source_provenance_ids": list(self.source_provenance_ids),
             "status": (
-                self.status.value if isinstance(self.status, CoverageStatus) else self.status
+                self.status.value
+                if isinstance(self.status, CoverageStatus)
+                else self.status
             ),
             "summary": self.summary,
         }
@@ -531,7 +563,9 @@ class UnsupportedSemantic:
             "chain_namespace",
             _text(self.chain_namespace, "chain_namespace", allow_empty=True),
         )
-        object.__setattr__(self, "dimension", _text(self.dimension, "dimension", allow_empty=True))
+        object.__setattr__(
+            self, "dimension", _text(self.dimension, "dimension", allow_empty=True)
+        )
         object.__setattr__(
             self,
             "discarded_fact_ids",
@@ -617,7 +651,9 @@ class ProofObligationDependency:
     attributes: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "obligation_id", _identifier(self.obligation_id, "obligation_id"))
+        object.__setattr__(
+            self, "obligation_id", _identifier(self.obligation_id, "obligation_id")
+        )
         object.__setattr__(
             self,
             "required_fact_ids",
@@ -627,7 +663,9 @@ class ProofObligationDependency:
             raise CryptoIRValidationError(
                 "proof obligation must declare at least one required fact"
             )
-        object.__setattr__(self, "summary", _text(self.summary, "summary", allow_empty=True))
+        object.__setattr__(
+            self, "summary", _text(self.summary, "summary", allow_empty=True)
+        )
         object.__setattr__(self, "attributes", _attributes(self.attributes))
 
     def to_dict(self) -> dict[str, Any]:
@@ -643,7 +681,9 @@ class ProofObligationDependency:
         value = _as_mapping(value, "ProofObligationDependency")
         _known_fields(
             value,
-            frozenset({"obligation_id", "required_fact_ids", "summary", "attributes"}),
+            frozenset(
+                {"obligation_id", "required_fact_ids", "summary", "attributes"}
+            ),
             "ProofObligationDependency",
         )
         return cls(
@@ -688,7 +728,9 @@ class ContractSemanticModel:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "model_id", _identifier(self.model_id, "model_id"))
-        object.__setattr__(self, "chain_namespace", _text(self.chain_namespace, "chain_namespace"))
+        object.__setattr__(
+            self, "chain_namespace", _text(self.chain_namespace, "chain_namespace")
+        )
         object.__setattr__(
             self,
             "state_epochs",
@@ -769,7 +811,9 @@ class ContractSemanticModel:
             _unique_ids(self.source_provenance_ids, "source_provenance_ids"),
         )
         object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
         self._assert_unique_ids()
 
     def _assert_unique_ids(self) -> None:
@@ -893,7 +937,9 @@ class ContractSemanticModel:
             unsupported=tuple(value.get("unsupported", ())),
             source_provenance_ids=tuple(value.get("source_provenance_ids", ())),
             attributes=value.get("attributes", {}),
-            schema_version=value.get("schema_version", CRYPTO_IR_SEMANTICS_SCHEMA_VERSION),
+            schema_version=value.get(
+                "schema_version", CRYPTO_IR_SEMANTICS_SCHEMA_VERSION
+            ),
         )
 
     def canonical_bytes(self) -> bytes:
@@ -928,7 +974,9 @@ def project_semantic_model(
 
     unsupported = list(model.unsupported)
     unsupported.extend(
-        item if isinstance(item, UnsupportedSemantic) else UnsupportedSemantic.from_dict(item)
+        item
+        if isinstance(item, UnsupportedSemantic)
+        else UnsupportedSemantic.from_dict(item)
         for item in mark_unsupported
     )
     if drop:
@@ -950,11 +998,17 @@ def project_semantic_model(
     return ContractSemanticModel(
         model_id=f"{model.model_id}:projected",
         chain_namespace=model.chain_namespace,
-        state_epochs=tuple(item for item in model.state_epochs if _keep_fact(item.fact_id)),
+        state_epochs=tuple(
+            item for item in model.state_epochs if _keep_fact(item.fact_id)
+        ),
         principals=model.principals,
-        control_edges=tuple(item for item in model.control_edges if _keep_fact(item.fact_id)),
+        control_edges=tuple(
+            item for item in model.control_edges if _keep_fact(item.fact_id)
+        ),
         effects=tuple(item for item in model.effects if _keep_fact(item.fact_id)),
-        invariants=tuple(item for item in model.invariants if _keep_fact(item.fact_id)),
+        invariants=tuple(
+            item for item in model.invariants if _keep_fact(item.fact_id)
+        ),
         assumptions=model.assumptions,
         coverage=model.coverage,
         unsupported=tuple(unsupported),
@@ -976,14 +1030,20 @@ def assert_obligation_admissible(
     """
 
     if not isinstance(obligation, ProofObligationDependency):
-        obligation = ProofObligationDependency.from_dict(_as_mapping(obligation, "obligation"))
+        obligation = ProofObligationDependency.from_dict(
+            _as_mapping(obligation, "obligation")
+        )
     discarded = model.discarded_fact_ids()
     covered = model.covered_fact_ids()
     missing_from_cover = [
-        fact_id for fact_id in obligation.required_fact_ids if fact_id not in covered
+        fact_id
+        for fact_id in obligation.required_fact_ids
+        if fact_id not in covered
     ]
     depends_on_discarded = [
-        fact_id for fact_id in obligation.required_fact_ids if fact_id in discarded
+        fact_id
+        for fact_id in obligation.required_fact_ids
+        if fact_id in discarded
     ]
     if depends_on_discarded:
         raise CryptoIRValidationError(
@@ -999,7 +1059,9 @@ def assert_obligation_admissible(
         )
 
 
-def control_kinds_are_distinct(left: ControlEdgeKind | str, right: ControlEdgeKind | str) -> bool:
+def control_kinds_are_distinct(
+    left: ControlEdgeKind | str, right: ControlEdgeKind | str
+) -> bool:
     """Return True when two control kinds are different labels.
 
     Used by tests and adapters to refuse false equivalences (e.g. mapping CPI

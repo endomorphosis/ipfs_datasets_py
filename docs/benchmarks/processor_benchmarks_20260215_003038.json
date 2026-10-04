@@ -1,0 +1,74 @@
+{
+  "timestamp": "2026-02-15 00:30:38",
+  "mode": "quick",
+  "results": [
+    {
+      "name": "Batch Processing (5 files)",
+      "duration": 0.5008161067962646,
+      "memory_peak_mb": 0.00218963623046875,
+      "items_processed": 5,
+      "throughput": 9.983704461873534,
+      "success_rate": 1.0,
+      "errors": [],
+      "metadata": {
+        "batch_size": 5,
+        "mode": "mock",
+        "note": "Actual performance will vary with real files"
+      }
+    },
+    {
+      "name": "Batch Processing (10 files)",
+      "duration": 1.001288652420044,
+      "memory_peak_mb": 0.0023345947265625,
+      "items_processed": 10,
+      "throughput": 9.987130060678014,
+      "success_rate": 1.0,
+      "errors": [],
+      "metadata": {
+        "batch_size": 10,
+        "mode": "mock",
+        "note": "Actual performance will vary with real files"
+      }
+    },
+    {
+      "name": "Input Routing Performance",
+      "duration": 0.08376431465148926,
+      "memory_peak_mb": 0.33550071716308594,
+      "items_processed": 800,
+      "throughput": 9550.60640474991,
+      "success_rate": 1.0,
+      "errors": [],
+      "metadata": {
+        "iterations": 100,
+        "unique_inputs": 8,
+        "total_classifications": 800
+      }
+    },
+    {
+      "name": "Processor Registration & Lookup",
+      "duration": 0.012971639633178711,
+      "memory_peak_mb": 0.059139251708984375,
+      "items_processed": 1000,
+      "throughput": 77091.25663977061,
+      "success_rate": 1.0,
+      "errors": [],
+      "metadata": {
+        "iterations": 100,
+        "processors_per_iteration": 10
+      }
+    },
+    {
+      "name": "Memory Baseline (Processor Creation)",
+      "duration": 0.1419377326965332,
+      "memory_peak_mb": 0.8564586639404297,
+      "items_processed": 10,
+      "throughput": 70.45342919053299,
+      "success_rate": 1.0,
+      "errors": [],
+      "metadata": {
+        "instances_created": 10,
+        "note": "Peak memory includes all adapters and registry"
+      }
+    }
+  ]
+}

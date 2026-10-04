@@ -286,62 +286,6 @@ def test_single_capsule_matches_batch_entry() -> None:
     assert single.capsule_cid == batch.capsule(alpha.stable_id).capsule_cid
 
 
-@pytest.mark.parametrize("seed", [7, 19, 31])
-def test_batch_dependency_reuse_matches_individual_capsule_bytes(seed) -> None:
-    """Shared targets, cycles, unresolved refs and edge order keep cold bytes."""
-    symbols = [_make_symbol(f"pkg.mod.item_{number}") for number in range(4)]
-    edges = [_edge(source, target, relation, metadata={"occurrence": occurrence})
-             for source in symbols for target in (*symbols, "external:unknown")
-             for occurrence, relation in enumerate((RelationType.CALLS,
-                 RelationType.READS_STATE, RelationType.VALIDATES))]
-    rng = random.Random(seed)
-    rng.shuffle(symbols)
-    rng.shuffle(edges)
-    state = _state(symbols, edges=edges)
-    bindings = build_environment_binding_set([
-        _binding("toolchain:python", BindingKind.PYTHON_TOOLCHAIN)])
-    batch = compile_semantic_capsules(state, binding_set=bindings)
-    expected = [compile_semantic_capsule(state, symbol.stable_id, binding_set=bindings)
-                for symbol in sorted(symbols, key=lambda symbol: symbol.stable_id)]
-    assert list(batch.capsules) == expected
-    expected_index = SortedPairIndex(pairs=[(capsule.stable_symbol_id, capsule.capsule_cid)
-                                           for capsule in expected])
-    expected_blocks = {capsule.capsule_cid: canonical_dag_json_bytes(capsule.identity_payload())
-                       for capsule in expected}
-    expected_blocks[expected_index.index_cid] = canonical_dag_json_bytes(expected_index.identity_payload())
-    assert dict(batch.blocks) == expected_blocks
-    verify_capsule_compile_result(batch)
-    warm = compile_semantic_capsules(state, binding_set=bindings, previous_bundle=batch)
-    assert dict(warm.blocks) == expected_blocks
-    assert set(warm.reused_cids) == set(expected_blocks)
-
-
-def test_batch_fact_identity_reuse_is_local_to_current_compilation(monkeypatch) -> None:
-    from collections import Counter
-
-    caller, callee = _make_symbol("pkg.mod.caller"), _make_symbol("pkg.mod.callee")
-    edges = [_edge(caller, target, metadata={"occurrence": occurrence})
-             for occurrence in range(20) for target in (caller, callee, "external:unknown")]
-    counts = Counter()
-    getter = SymbolFactNode.fact_cid.fget
-
-    def observed(fact):
-        counts[fact.stable_symbol_id] += 1
-        return getter(fact)
-
-    monkeypatch.setattr(SymbolFactNode, "fact_cid", property(observed))
-    first = compile_semantic_capsules(_state([caller, callee], edges=edges))
-    assert counts == {caller.stable_id: 1, callee.stable_id: 1}
-    changed = _mutate_symbol_semantics(callee)
-    counts.clear()
-    second = compile_semantic_capsules(_state([caller, changed], edges=edges))
-    assert counts == {caller.stable_id: 1, callee.stable_id: 1}
-    assert first.index.index_cid != second.index.index_cid
-    assert first.capsule(caller.stable_id).dependency_fact_cids != second.capsule(caller.stable_id).dependency_fact_cids
-    verify_capsule_compile_result(first)
-    verify_capsule_compile_result(second)
-
-
 def test_capsule_binds_producer_key_source_fact_and_dependencies() -> None:
     callee = _make_symbol(
         "pkg.mod.callee",

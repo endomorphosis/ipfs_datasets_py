@@ -1,7 +1,4 @@
 # Eager superset of the runtime lazy dependency catalog.
-# FormalVerificationDistributionContract@1 (FVT-G215 / FVT-084): formal-logic
-# Python bindings below must stay parity-aligned with requirements.txt,
-# requirements-theorem-provers.txt, and setup.py/pyproject extras.
 #
 # Some deterministic formal-logic bindings are also base dependencies; they
 # are repeated here so profile parity is machine-checkable.  Other entries can

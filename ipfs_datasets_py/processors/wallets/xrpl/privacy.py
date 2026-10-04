@@ -41,7 +41,9 @@ class MemoPrivacyPolicy:
             or not isinstance(self.max_memo_data_bytes, int)
             or self.max_memo_data_bytes <= 0
         ):
-            raise InvalidRequestError("max_memo_data_bytes must be a positive integer")
+            raise InvalidRequestError(
+                "max_memo_data_bytes must be a positive integer"
+            )
         if (
             isinstance(self.max_memos, bool)
             or not isinstance(self.max_memos, int)

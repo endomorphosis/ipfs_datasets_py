@@ -1,0 +1,274 @@
+name: Security Logic CI
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'ipfs_datasets_py/logic/security_models/**'
+      - 'tests/logic/security_models/crypto_exchange/**'
+      - 'docs/security_verification/**'
+      - 'scripts/ops/security_verification/**'
+      - '.github/workflows/security-logic-ci.yml'
+  push:
+    branches: [main, develop]
+    paths:
+      - 'ipfs_datasets_py/logic/security_models/**'
+      - 'tests/logic/security_models/crypto_exchange/**'
+      - 'docs/security_verification/**'
+      - 'scripts/ops/security_verification/**'
+      - '.github/workflows/security-logic-ci.yml'
+  workflow_dispatch:
+    inputs:
+      strict_unknown:
+        description: Fail on blocking UNKNOWN reports
+        required: false
+        default: 'false'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install focused test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest pyyaml z3-solver multiformats
+      - name: Install TypeScript toolchain
+        run: |
+          npm install --no-save typescript
+      - name: Check hidden Unicode and newline normalization
+        id: hidden_unicode
+        run: |
+          python scripts/ops/security_verification/check_no_hidden_unicode.py --verbose --report hidden_unicode_report.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = Path("hidden_unicode_report.json")
+          assert report.exists(), "hidden unicode report was not emitted"
+          payload = json.loads(report.read_text(encoding="utf-8"))
+          assert payload["violations"] == [], payload
+          print("hidden unicode report clean")
+          PY
+      - name: Summarize hidden Unicode report
+        id: hidden_unicode_summary
+        if: always()
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+
+          from scripts.ops.security_verification.check_no_hidden_unicode import (
+              build_github_summary_lines,
+              load_report_json,
+          )
+
+          report = Path("hidden_unicode_report.json")
+          summary_path = Path(os.environ["GITHUB_STEP_SUMMARY"])
+          missing_report_message = "hidden unicode report was not emitted"
+          if not report.exists():
+              summary_path.write_text(
+                  "## Hidden Unicode report\n\n- status: missing hidden_unicode_report.json\n",
+                  encoding="utf-8",
+              )
+              raise SystemExit(missing_report_message)
+
+          try:
+              payload = load_report_json(report)
+          except ValueError as exc:
+              summary_path.write_text(
+                  f"## Hidden Unicode report\n\n- status: invalid hidden_unicode_report.json\n- error: {exc}\n",
+                  encoding="utf-8",
+              )
+              raise SystemExit(str(exc)) from exc
+
+          lines = build_github_summary_lines(payload)
+          summary_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+          print(summary_path.read_text(encoding="utf-8"), end="")
+          PY
+      - name: Compile focused security verification sources
+        id: compileall
+        run: |
+          python -m compileall ipfs_datasets_py/logic/security_models scripts/ops/security_verification tests/logic/security_models/crypto_exchange
+      - name: Parse workflow YAML
+        id: workflow_yaml
+        run: |
+          python - <<'PY'
+          import yaml
+          from pathlib import Path
+          yaml.safe_load(Path(".github/workflows/security-logic-ci.yml").read_text(encoding="utf-8"))
+          print("yaml ok")
+          PY
+      - name: Run focused security model tests
+        id: pytest_security_logic
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          IPFS_DATASETS_PY_MINIMAL_IMPORTS: '1'
+          IPFS_DATASETS_AUTO_INSTALL: '0'
+          IPFS_KIT_AUTO_INSTALL_DEPS: '0'
+        run: |
+          pytest tests/logic/security_models/crypto_exchange -v --tb=short
+      - name: Run proof CLI with strict validation
+        id: proof_cli_strict
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          IPFS_DATASETS_PY_MINIMAL_IMPORTS: '1'
+          IPFS_DATASETS_AUTO_INSTALL: '0'
+          IPFS_KIT_AUTO_INSTALL_DEPS: '0'
+        run: |
+          python -m ipfs_datasets_py.logic.security_models.crypto_exchange.prove_all \
+            --example \
+            --strict-validation \
+            --out proof_report_strict.json
+      - name: Run proof CLI with reviewed evidence policy on trusted fixture
+        id: proof_cli_reviewed
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          IPFS_DATASETS_PY_MINIMAL_IMPORTS: '1'
+          IPFS_DATASETS_AUTO_INSTALL: '0'
+          IPFS_KIT_AUTO_INSTALL_DEPS: '0'
+        run: |
+          python -m ipfs_datasets_py.logic.security_models.crypto_exchange.prove_all \
+            --example \
+            --strict-validation \
+            --require-reviewed-evidence \
+            --emit-proof-receipts \
+            --accepted-assumptions A1,A2,A3,A4,A5,A6,A7,A8,A9,A10 \
+            --out proof_report_reviewed.json
+      - name: Run proof CLI in fail-closed mode
+        id: proof_cli_fail_closed
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          IPFS_DATASETS_PY_MINIMAL_IMPORTS: '1'
+          IPFS_DATASETS_AUTO_INSTALL: '0'
+          IPFS_KIT_AUTO_INSTALL_DEPS: '0'
+        run: |
+          args=(--example --strict-validation --fail-on disproof --require-real-ergoai --forbid-simulated-zkp --emit-counterexamples-dir counterexamples --out proof_report.json)
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.strict_unknown }}" = "true" ]; then
+            args+=(--fail-on unknown-critical)
+          fi
+          python -m ipfs_datasets_py.logic.security_models.crypto_exchange.prove_all "${args[@]}"
+      - name: Run built-in assurance baseline
+        id: assurance_baseline
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          IPFS_DATASETS_PY_MINIMAL_IMPORTS: '1'
+          IPFS_DATASETS_AUTO_INSTALL: '0'
+          IPFS_KIT_AUTO_INSTALL_DEPS: '0'
+        run: |
+          python scripts/ops/security_verification/run_security_ir_assurance_baseline.py \
+            --example \
+            --out-dir security_ir_artifacts/ci-assurance-run \
+            --fuzz-rounds 8 \
+            --seed 7 \
+            --min-modeled-blocking-claims 3 \
+            --min-proved-blocking-claims 3
+      - name: Run disproof suite with counterexample vectors
+        id: disproof_counterexample_vectors
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          IPFS_DATASETS_PY_MINIMAL_IMPORTS: '1'
+          IPFS_DATASETS_AUTO_INSTALL: '0'
+          IPFS_KIT_AUTO_INSTALL_DEPS: '0'
+        run: |
+          python scripts/ops/security_verification/run_security_ir_disproof_suite.py \
+            --example \
+            --out disproof_report.json \
+            --fuzz-rounds 8 \
+            --seed 7 \
+            --emit-counterexamples-dir disproof_counterexample_vectors
+      - name: Emit TypeScript proof-consumer schema artifact
+        id: emit_typescript_schema
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          IPFS_DATASETS_PY_MINIMAL_IMPORTS: '1'
+          IPFS_DATASETS_AUTO_INSTALL: '0'
+          IPFS_KIT_AUTO_INSTALL_DEPS: '0'
+        run: |
+          python scripts/ops/security_verification/emit_security_typescript_schema.py --example --out emitted_security_schema.ts
+      - name: Run emitted TypeScript schema compile tests
+        id: typescript_compile
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          IPFS_DATASETS_PY_MINIMAL_IMPORTS: '1'
+          IPFS_DATASETS_AUTO_INSTALL: '0'
+          IPFS_KIT_AUTO_INSTALL_DEPS: '0'
+          IPFS_SECURITY_REQUIRE_NODE_TOOLCHAIN: '1'
+        run: |
+          npx tsc --version
+          pytest \
+            tests/logic/security_models/crypto_exchange/test_typescript_schema_compiles.py::test_typescript_schema_compiles_when_tsc_is_available \
+            tests/logic/security_models/crypto_exchange/test_typescript_schema_compiles.py::test_typescript_schema_cli_emitter_outputs_strict_compilable_module \
+            -v --tb=short
+      - name: Run emitted TypeScript runtime verifier tests
+        id: typescript_runtime
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          IPFS_DATASETS_PY_MINIMAL_IMPORTS: '1'
+          IPFS_DATASETS_AUTO_INSTALL: '0'
+          IPFS_KIT_AUTO_INSTALL_DEPS: '0'
+          IPFS_SECURITY_REQUIRE_NODE_TOOLCHAIN: '1'
+        run: |
+          pytest tests/logic/security_models/crypto_exchange/test_typescript_schema_compiles.py::test_typescript_runtime_verifier_rejects_bad_receipts_and_accepts_valid_fixture -v --tb=short
+      - name: Upload security logic artifacts
+        id: upload_security_logic_artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-logic-proof-reports
+          if-no-files-found: warn
+          path: |
+            emitted_security_schema.ts
+            hidden_unicode_report.json
+            counterexamples
+            disproof_counterexample_vectors
+            disproof_report.json
+            proof_report.json
+            proof_report_reviewed.json
+            proof_report_strict.json
+            security_ir_artifacts/ci-assurance-run
+      - name: Emit merge readiness summary
+        id: merge_readiness_summary
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          step_outcomes = {
+              "hidden_unicode_clean": "${{ steps.hidden_unicode.outcome }}",
+              "python_compileall_passed": "${{ steps.compileall.outcome }}",
+              "workflow_yaml_parsed": "${{ steps.workflow_yaml.outcome }}",
+              "pytest_passed": "${{ steps.pytest_security_logic.outcome }}",
+              "proof_cli_strict_passed": "${{ steps.proof_cli_strict.outcome }}",
+              "proof_cli_reviewed_evidence_passed": "${{ steps.proof_cli_reviewed.outcome }}",
+              "proof_cli_fail_closed_passed": "${{ steps.proof_cli_fail_closed.outcome }}",
+              "assurance_baseline_passed": "${{ steps.assurance_baseline.outcome }}",
+              "disproof_counterexample_vectors_passed": "${{ steps.disproof_counterexample_vectors.outcome }}",
+              "typescript_compile_passed": "${{ steps.typescript_compile.outcome }}",
+              "typescript_runtime_verifier_passed": "${{ steps.typescript_runtime.outcome }}",
+              "proof_reports_uploaded": "${{ steps.upload_security_logic_artifacts.outcome }}",
+          }
+          summary = {key: outcome == "success" for key, outcome in step_outcomes.items()}
+          summary["security_logic_v1_ready"] = all(summary.values())
+          payload = Path("security_logic_v1_summary.json")
+          payload.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+          print(payload.read_text(encoding="utf-8"), end="")
+          assert summary["security_logic_v1_ready"], summary
+          PY
+      - name: Upload security logic summary artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-logic-v1-summary
+          if-no-files-found: error
+          path: |
+            security_logic_v1_summary.json

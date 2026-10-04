@@ -1,0 +1,117 @@
+# Logic Module Configuration
+# This file provides default configuration for the neurosymbolic reasoning system
+
+# Theorem Provers Configuration
+provers:
+  # Native prover (TDFOL + CEC)
+  native:
+    enabled: true
+    timeout: 5.0  # seconds
+    max_memory_mb: 2048
+    options: {}
+  
+  # Z3 SMT Solver
+  z3:
+    enabled: true
+    timeout: 5.0
+    max_memory_mb: 2048
+    options: {}
+  
+  # CVC5 SMT Solver
+  cvc5:
+    enabled: false  # Enable when CVC5 integration complete
+    timeout: 10.0
+    max_memory_mb: 2048
+    options: {}
+  
+  # Lean 4 Interactive Prover
+  lean:
+    enabled: false  # Enable when Lean integration complete
+    timeout: 30.0
+    max_memory_mb: 4096
+    options:
+      tactics: ["simp", "omega", "aesop"]
+  
+  # Coq Interactive Prover
+  coq:
+    enabled: false  # Enable when Coq integration complete
+    timeout: 30.0
+    max_memory_mb: 4096
+    options:
+      tactics: ["auto", "tauto", "omega"]
+  
+  # SymbolicAI Neural Prover
+  symbolicai:
+    enabled: false  # Requires SYMBOLICAI_API_KEY environment variable
+    timeout: 10.0
+    max_memory_mb: 1024
+    options:
+      model: "gpt-4"
+      temperature: 0.0
+      confidence_threshold: 0.8
+
+# Proof Caching Configuration
+cache:
+  backend: "memory"  # "memory" or "redis"
+  maxsize: 10000  # Maximum number of cached proofs
+  ttl: 3600  # Time-to-live in seconds (1 hour)
+  
+  # Redis configuration (if backend: redis)
+  redis_url: null  # e.g., "redis://localhost:6379"
+  redis_db: 0
+  
+  # Persistence (optional)
+  enable_persistence: false
+  persistence_path: null  # e.g., "./cache/proofs.db"
+
+# Security Configuration
+security:
+  # Rate limiting (DoS protection)
+  rate_limit_calls: 100  # Max calls per period
+  rate_limit_period: 60  # Period in seconds
+  
+  # Input validation
+  max_text_length: 10000  # Max characters in text input
+  max_formula_depth: 100  # Max nesting depth
+  max_formula_complexity: 1000  # Max node count
+  
+  # Audit logging
+  enable_audit_log: true
+  audit_log_path: "./logs/audit.log"  # null for stderr
+  
+  # Input validation toggle
+  enable_input_validation: true
+
+# Monitoring Configuration
+monitoring:
+  enabled: true
+  port: 9090  # Prometheus metrics port
+  log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  
+  # Metrics backend
+  metrics_backend: "prometheus"  # "prometheus" or "statsd"
+  
+  # Distributed tracing
+  enable_tracing: false  # OpenTelemetry tracing
+  tracing_backend: "opentelemetry"
+
+# Environment-specific overrides
+# The following can be overridden via environment variables:
+#
+# Provers:
+#   Z3_ENABLED=true/false
+#   Z3_TIMEOUT=5.0
+#   SYMBOLICAI_API_KEY=sk-...
+#   SYMBOLICAI_MODEL=gpt-4
+#
+# Cache:
+#   CACHE_BACKEND=memory/redis
+#   REDIS_URL=redis://localhost:6379
+#
+# Security:
+#   RATE_LIMIT_CALLS=100
+#   RATE_LIMIT_PERIOD=60
+#
+# Monitoring:
+#   ENABLE_MONITORING=true/false
+#   LOG_LEVEL=INFO

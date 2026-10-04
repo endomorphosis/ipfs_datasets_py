@@ -37,7 +37,9 @@ from ipfs_datasets_py.logic.software_contracts.contracts import (
 )
 
 
-REGISTRY_SCHEMA: Final[str] = "ipfs-datasets.software-contracts.contract-registry@1"
+REGISTRY_SCHEMA: Final[str] = (
+    "ipfs-datasets.software-contracts.contract-registry@1"
+)
 
 
 class ContractRegistryError(ContractIRError):
@@ -184,7 +186,9 @@ def detect_callable_conflicts(
                 )
             )
 
-    existing_effects = {_effect_conflict_key(item): item for item in existing.effects}
+    existing_effects = {
+        _effect_conflict_key(item): item for item in existing.effects
+    }
     for effect in incoming.effects:
         key = _effect_conflict_key(effect)
         prior = existing_effects.get(key)
@@ -216,7 +220,9 @@ def detect_callable_conflicts(
                     finding_id=f"{base}:effect-contradiction:{prior.effect_id}",
                     kind="contradiction",
                     severity="error",
-                    message=(f"contradictory effect permissions for {key[0]}/{key[1]}"),
+                    message=(
+                        f"contradictory effect permissions for {key[0]}/{key[1]}"
+                    ),
                     subject=existing.qualified_name,
                     left_contract_id=existing.contract_id,
                     right_contract_id=incoming.contract_id,
@@ -224,7 +230,9 @@ def detect_callable_conflicts(
                 )
             )
 
-    existing_resources = {_resource_conflict_key(item): item for item in existing.resources}
+    existing_resources = {
+        _resource_conflict_key(item): item for item in existing.resources
+    }
     for resource in incoming.resources:
         key = _resource_conflict_key(resource)
         prior = existing_resources.get(key)
@@ -233,7 +241,9 @@ def detect_callable_conflicts(
         if prior.minimum == resource.minimum and prior.maximum == resource.maximum:
             continue
         # Disjoint bounds are a contradiction at equal rank.
-        disjoint = resource.maximum < prior.minimum or resource.minimum > prior.maximum
+        disjoint = (
+            resource.maximum < prior.minimum or resource.minimum > prior.maximum
+        )
         prior_rank = prior.provenance.authority.rank_order
         new_rank = resource.provenance.authority.rank_order
         if not disjoint and new_rank < prior_rank:
@@ -256,7 +266,9 @@ def detect_callable_conflicts(
                 )
             )
         elif new_rank == prior_rank and (
-            disjoint or prior.minimum != resource.minimum or prior.maximum != resource.maximum
+            disjoint
+            or prior.minimum != resource.minimum
+            or prior.maximum != resource.maximum
         ):
             findings.append(
                 ContractFinding(
@@ -314,17 +326,22 @@ class ContractRegistry:
             if type(key) is not str or not key:
                 raise ContractRegistryError("contract keys must be non-empty strings")
             if not isinstance(value, CallableContract):
-                raise ContractRegistryError("registry values must be CallableContract instances")
+                raise ContractRegistryError(
+                    "registry values must be CallableContract instances"
+                )
             if value.contract_id != key:
                 raise ContractRegistryError(
-                    f"contract map key {key!r} does not match contract_id {value.contract_id!r}"
+                    f"contract map key {key!r} does not match "
+                    f"contract_id {value.contract_id!r}"
                 )
         object.__setattr__(self, "contracts", frozen)
         if not isinstance(self.findings, tuple):
             object.__setattr__(self, "findings", tuple(self.findings))
         for finding in self.findings:
             if not isinstance(finding, ContractFinding):
-                raise ContractRegistryError("findings must contain only ContractFinding records")
+                raise ContractRegistryError(
+                    "findings must contain only ContractFinding records"
+                )
 
     # -- construction -------------------------------------------------------
 
@@ -347,7 +364,9 @@ class ContractRegistry:
 
         items = list(callables)
         if not all(isinstance(item, CallableContract) for item in items):
-            raise ContractRegistryError("from_callables requires CallableContract instances")
+            raise ContractRegistryError(
+                "from_callables requires CallableContract instances"
+            )
 
         # Sort for deterministic assembly: higher authority first.
         items.sort(
@@ -369,7 +388,9 @@ class ContractRegistry:
                         finding_id=f"dup:{contract.contract_id}",
                         kind="contradiction",
                         severity="error",
-                        message=(f"duplicate contract_id {contract.contract_id!r}"),
+                        message=(
+                            f"duplicate contract_id {contract.contract_id!r}"
+                        ),
                         subject=contract.qualified_name,
                         left_contract_id=contract.contract_id,
                         right_contract_id=contract.contract_id,
@@ -385,7 +406,9 @@ class ContractRegistry:
                 # Keep higher-authority (already present, admitted first).
                 # Only replace when incoming has strictly higher authority
                 # (lower rank_order) and no authority_override finding.
-                override_blocked = any(item.kind == "authority_override" for item in conflicts)
+                override_blocked = any(
+                    item.kind == "authority_override" for item in conflicts
+                )
                 if (
                     not override_blocked
                     and contract.provenance.authority.rank_order
@@ -399,14 +422,18 @@ class ContractRegistry:
             by_id[contract.contract_id] = contract
             by_name[contract.qualified_name] = contract
 
-        findings_tuple = tuple(sorted(findings, key=lambda item: item.finding_id))
+        findings_tuple = tuple(
+            sorted(findings, key=lambda item: item.finding_id)
+        )
         if reject_on_findings and findings_tuple:
             raise ContractRegistryError(
                 f"registry rejected: {len(findings_tuple)} conflict finding(s)"
             )
 
         # Deterministic map order by contract_id.
-        ordered = {key: by_id[key] for key in sorted(by_id)}
+        ordered = {
+            key: by_id[key] for key in sorted(by_id)
+        }
         return cls(
             registry_id=registry_id,
             revision=revision,
@@ -420,13 +447,17 @@ class ContractRegistry:
         try:
             return self.contracts[contract_id]
         except KeyError as exc:
-            raise ContractRegistryError(f"unknown contract_id: {contract_id}") from exc
+            raise ContractRegistryError(
+                f"unknown contract_id: {contract_id}"
+            ) from exc
 
     def get_by_qualified_name(self, qualified_name: str) -> CallableContract:
         for contract in self.contracts.values():
             if contract.qualified_name == qualified_name:
                 return contract
-        raise ContractRegistryError(f"unknown qualified_name: {qualified_name}")
+        raise ContractRegistryError(
+            f"unknown qualified_name: {qualified_name}"
+        )
 
     def __contains__(self, contract_id: object) -> bool:
         return isinstance(contract_id, str) and contract_id in self.contracts
@@ -443,7 +474,11 @@ class ContractRegistry:
 
     @property
     def error_findings(self) -> tuple[ContractFinding, ...]:
-        return tuple(item for item in self.findings if item.severity in {"error", "fatal"})
+        return tuple(
+            item
+            for item in self.findings
+            if item.severity in {"error", "fatal"}
+        )
 
     # -- serialization ------------------------------------------------------
 
@@ -452,7 +487,9 @@ class ContractRegistry:
 
         return ContractDocument(
             document_id=self.registry_id,
-            callables=tuple(self.contracts[key] for key in sorted(self.contracts)),
+            callables=tuple(
+                self.contracts[key] for key in sorted(self.contracts)
+            ),
             findings=self.findings,
             registry_revision=self.revision,
             owner_goal=self.owner_goal,
@@ -467,7 +504,9 @@ class ContractRegistry:
             "owner_goal": self.owner_goal,
             "task_id": TASK_ID,
             "contract_schema": SOFTWARE_CONTRACT_SCHEMA,
-            "contracts": [self.contracts[key].to_dict() for key in sorted(self.contracts)],
+            "contracts": [
+                self.contracts[key].to_dict() for key in sorted(self.contracts)
+            ],
             "findings": [item.to_dict() for item in self.findings],
             "authority_rank_order": list(AUTHORITY_RANK_ORDER),
         }
@@ -508,7 +547,9 @@ class ContractRegistry:
                 f"registry fields are closed (missing={missing}, extra={extra})"
             )
         if value["schema"] != REGISTRY_SCHEMA:
-            raise ContractRegistryError(f"unsupported registry schema: {value['schema']!r}")
+            raise ContractRegistryError(
+                f"unsupported registry schema: {value['schema']!r}"
+            )
         if value["owner_goal"] != GOAL_ID:
             raise ContractRegistryError("owner_goal mismatch")
         if value["task_id"] != TASK_ID:
@@ -518,8 +559,12 @@ class ContractRegistry:
         if list(value["authority_rank_order"]) != list(AUTHORITY_RANK_ORDER):
             raise ContractRegistryError("authority_rank_order mismatch")
 
-        contracts = [CallableContract.from_dict(item) for item in value["contracts"]]
-        findings = [ContractFinding.from_dict(item) for item in value["findings"]]
+        contracts = [
+            CallableContract.from_dict(item) for item in value["contracts"]
+        ]
+        findings = [
+            ContractFinding.from_dict(item) for item in value["findings"]
+        ]
         ordered = {item.contract_id: item for item in contracts}
         if len(ordered) != len(contracts):
             raise ContractRegistryError("duplicate contract_id in registry payload")

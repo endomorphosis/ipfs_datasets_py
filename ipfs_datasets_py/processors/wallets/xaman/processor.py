@@ -59,7 +59,9 @@ class XamanWalletProcessor:
         self._privacy = self.privacy or PayloadPrivacyPolicy(redact_instruction=False)
         self._xrpl = self.xrpl_processor or XRPLWalletProcessor(network=self.network)
         if self._xrpl.network is not self.network:
-            raise InvalidRequestError("xrpl_processor network must match Xaman processor network")
+            raise InvalidRequestError(
+                "xrpl_processor network must match Xaman processor network"
+            )
         self._payload_provider = self.payload_provider
         features = {
             Capability.DATASET_EXPORT,
@@ -130,9 +132,15 @@ class XamanWalletProcessor:
                     )
                 out.append(item)
             elif isinstance(item, Mapping):
-                out.append(parse_xaman_payload(item, network=self.network, privacy=self._privacy))
+                out.append(
+                    parse_xaman_payload(
+                        item, network=self.network, privacy=self._privacy
+                    )
+                )
             else:
-                raise InvalidRequestError(f"unsupported payload type: {type(item)!r}")
+                raise InvalidRequestError(
+                    f"unsupported payload type: {type(item)!r}"
+                )
         return tuple(out)
 
     def bind_identity(
@@ -156,7 +164,8 @@ class XamanWalletProcessor:
         payload: XamanPayload,
         *,
         context: OperationContext,
-        xrpl_transactions: Sequence[XRPLTransaction] | Sequence[Mapping[str, Any]] = (),
+        xrpl_transactions: Sequence[XRPLTransaction]
+        | Sequence[Mapping[str, Any]] = (),
     ) -> XamanPayload:
         """Verify settlement through XRPL evidence only."""
 
@@ -166,7 +175,9 @@ class XamanWalletProcessor:
                 f"payload network {payload.network.value} mismatches "
                 f"processor network {self.network.value}"
             )
-        return verify_settlement_against_xrpl(payload, xrpl_transactions=xrpl_transactions)
+        return verify_settlement_against_xrpl(
+            payload, xrpl_transactions=xrpl_transactions
+        )
 
     def correlate_activity(
         self,
@@ -174,7 +185,8 @@ class XamanWalletProcessor:
         *,
         account: str,
         context: OperationContext,
-        xrpl_transactions: Sequence[XRPLTransaction] | Sequence[Mapping[str, Any]] = (),
+        xrpl_transactions: Sequence[XRPLTransaction]
+        | Sequence[Mapping[str, Any]] = (),
     ) -> AccountActivityCorrelation:
         """Correlate payload lifecycle with XRPL account activity."""
 
@@ -223,8 +235,12 @@ class XamanWalletProcessor:
                         fields = {
                             "custom_instruction": None,
                             "custom_instruction_redacted": True,
-                            "custom_instruction_truncated": fields["custom_instruction_truncated"],
-                            "original_instruction_bytes": fields["original_instruction_bytes"],
+                            "custom_instruction_truncated": fields[
+                                "custom_instruction_truncated"
+                            ],
+                            "original_instruction_bytes": fields[
+                                "original_instruction_bytes"
+                            ],
                         }
                 projection.update(fields)
             # Never export user_token in redacted export.
@@ -254,7 +270,9 @@ class XamanWalletProcessor:
         """Ingest payload metadata pages from the payload provider."""
 
         if self._payload_provider is None:
-            raise InvalidRequestError("payload_provider is required for ingest_payloads")
+            raise InvalidRequestError(
+                "payload_provider is required for ingest_payloads"
+            )
         request.context.check_active()
         async for batch in self._payload_provider.ingest_payloads(
             context=request.context,
@@ -283,7 +301,9 @@ class XamanWalletProcessor:
         """Ingest XRPL wallet history via the composed XRPL processor."""
 
         if self._xrpl.ledger_provider is None:
-            raise InvalidRequestError("xrpl ledger provider is required for ingest_wallet")
+            raise InvalidRequestError(
+                "xrpl ledger provider is required for ingest_wallet"
+            )
         async for batch in self._xrpl.ingest_wallet(request):
             yield batch
 
@@ -307,9 +327,13 @@ class XamanWalletProcessor:
                 # Only public callables count; properties without call are fine.
                 attr = getattr(self, name)
                 if callable(attr) and not name.startswith("_"):
-                    raise InvalidRequestError(f"prohibited mutative method present: {name}")
+                    raise InvalidRequestError(
+                        f"prohibited mutative method present: {name}"
+                    )
 
-    def settlement_is_never_api_success(self, payload: XamanPayload) -> bool:
+    def settlement_is_never_api_success(
+        self, payload: XamanPayload
+    ) -> bool:
         """Return True when API success does not imply ledger settlement."""
 
         if payload.is_api_success and payload.settlement is SettlementVerdict.API_SUCCESS_ONLY:

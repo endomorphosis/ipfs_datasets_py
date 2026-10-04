@@ -91,11 +91,7 @@ class SolidityCPTUnknownAuthorityError(SolidityCPTRowError):
 
 
 def _is_sha256(value: Any) -> bool:
-    return (
-        isinstance(value, str)
-        and len(value) == 64
-        and all(character in _SHA256_RE for character in value)
-    )
+    return isinstance(value, str) and len(value) == 64 and all(character in _SHA256_RE for character in value)
 
 
 def _is_cid(value: Any) -> bool:
@@ -144,16 +140,10 @@ def _parse_columns(value: Any) -> tuple[tuple[str, str], ...]:
                 f"columns[{index}]",
             )
             name, field_type = item["name"], item["type"]
-        elif (
-            isinstance(item, Sequence)
-            and not isinstance(item, (str, bytes, bytearray))
-            and len(item) == 2
-        ):
+        elif isinstance(item, Sequence) and not isinstance(item, (str, bytes, bytearray)) and len(item) == 2:
             name, field_type = item
         else:
-            raise SourceSnapshotVerificationError(
-                f"columns[{index}] must contain exactly name and type"
-            )
+            raise SourceSnapshotVerificationError(f"columns[{index}] must contain exactly name and type")
         if not isinstance(name, str) or not isinstance(field_type, str):
             raise SourceSnapshotVerificationError("column names and types must be strings")
         columns.append((name, field_type))
@@ -311,9 +301,7 @@ class SolidityCPTSourceSnapshot:
                 raise SourceSnapshotVerificationError(f"{name} differs from reviewed source pin")
         computed = self.identity.cid
         if self.snapshot_id and self.snapshot_id != computed:
-            raise SourceSnapshotVerificationError(
-                "snapshot_id does not match rehashed source profile"
-            )
+            raise SourceSnapshotVerificationError("snapshot_id does not match rehashed source profile")
         object.__setattr__(self, "snapshot_id", computed)
 
     def deterministic_dict(self) -> dict[str, Any]:
@@ -424,9 +412,7 @@ class SourceSnapshotVerification:
             raise SourceSnapshotVerificationError("unknown verification method")
         expected_bytes_verified = self.verification_method != "metadata_only"
         if self.bytes_verified is not expected_bytes_verified:
-            raise SourceSnapshotVerificationError(
-                "bytes_verified does not match verification method"
-            )
+            raise SourceSnapshotVerificationError("bytes_verified does not match verification method")
         if self.schema_version != SOURCE_SNAPSHOT_SCHEMA_VERSION:
             raise SourceSnapshotVerificationError("unknown verification schema")
         computed = canonical_identity(
@@ -474,9 +460,7 @@ class SourceSnapshotVerification:
             "source verification",
         )
         if not value["receipt_id"]:
-            raise SourceSnapshotVerificationError(
-                "persisted source verification requires receipt_id"
-            )
+            raise SourceSnapshotVerificationError("persisted source verification requires receipt_id")
         return cls(**value)
 
 
@@ -488,9 +472,7 @@ def verify_source_snapshot(
     if isinstance(observation, Mapping):
         observation = SourceSnapshotObservation.from_dict(observation)
     if not isinstance(observation, SourceSnapshotObservation):
-        raise SourceSnapshotVerificationError(
-            "observation must be SourceSnapshotObservation or mapping"
-        )
+        raise SourceSnapshotVerificationError("observation must be SourceSnapshotObservation or mapping")
     expected = SourceSnapshotObservation(
         dataset_id=SOLIDITY_CPT_DATASET_ID,
         revision=SOLIDITY_CPT_REVISION,
@@ -512,9 +494,7 @@ def verify_source_snapshot(
         if getattr(observation, name) != getattr(expected, name)
     ]
     if mismatches:
-        raise SourceSnapshotVerificationError(
-            "source snapshot verification failed: " + ", ".join(mismatches)
-        )
+        raise SourceSnapshotVerificationError("source snapshot verification failed: " + ", ".join(mismatches))
     return SourceSnapshotVerification(
         snapshot_id=PINNED_SOURCE_SNAPSHOT.cid,
         shard_sha256=observation.shard.sha256,
@@ -551,9 +531,7 @@ def read_verified_shard_bytes(
     try:
         descriptor = os.open(file_path, flags)
     except OSError as exc:
-        raise SourceSnapshotVerificationError(
-            "source shard is missing, not regular, or a symlink"
-        ) from exc
+        raise SourceSnapshotVerificationError("source shard is missing, not regular, or a symlink") from exc
     try:
         file_stat = os.fstat(descriptor)
         if not stat.S_ISREG(file_stat.st_mode):
@@ -573,9 +551,7 @@ def read_verified_shard_bytes(
                     break
                 counted += len(chunk)
                 if counted > shard.size_bytes:
-                    raise SourceSnapshotVerificationError(
-                        "source shard exceeded pinned byte size while hashing"
-                    )
+                    raise SourceSnapshotVerificationError("source shard exceeded pinned byte size while hashing")
                 digest.update(chunk)
                 chunks.append(chunk)
     except SourceSnapshotVerificationError:
@@ -607,9 +583,7 @@ def verify_shard_bytes(
     if hashlib.sha256(raw).hexdigest() != PINNED_SOURCE_SHARD.sha256:
         raise SourceSnapshotVerificationError("source shard sha256 mismatch")
     if verification_method not in {"injected_bytes", "local_bytes"}:
-        raise SourceSnapshotVerificationError(
-            "byte verification method must be injected_bytes or local_bytes"
-        )
+        raise SourceSnapshotVerificationError("byte verification method must be injected_bytes or local_bytes")
     return SourceSnapshotVerification(
         snapshot_id=metadata.snapshot_id,
         shard_sha256=metadata.shard_sha256,
@@ -905,9 +879,7 @@ class AdaptedSolidityCPTRow:
         )
         return cls(
             row=SolidityCPTRow.from_dict(_strict_mapping(value["row"], "normalized row")),
-            source_body=SolidityCPTSourceBody.from_dict(
-                _strict_mapping(value["source_body"], "source body")
-            ),
+            source_body=SolidityCPTSourceBody.from_dict(_strict_mapping(value["source_body"], "source body")),
         )
 
 
@@ -934,11 +906,7 @@ class QuarantineDiagnostic:
 
     def __post_init__(self) -> None:
         try:
-            reason = (
-                self.reason
-                if isinstance(self.reason, QuarantineReason)
-                else QuarantineReason(self.reason)
-            )
+            reason = self.reason if isinstance(self.reason, QuarantineReason) else QuarantineReason(self.reason)
         except (TypeError, ValueError) as exc:
             raise SolidityCPTRowError("unknown quarantine reason") from exc
         object.__setattr__(self, "reason", reason)
@@ -1087,12 +1055,8 @@ class SolidityCPTRowAdapter:
         if len(value) > self._bounds.max_fields:
             raise SolidityCPTRowOversizeError("source row exceeds field bound")
         for name, item in value.items():
-            if isinstance(item, (Mapping, Sequence)) and not isinstance(
-                item, (str, bytes, bytearray)
-            ):
-                raise SolidityCPTRowDriftError(
-                    f"{name} must be a scalar; nested input is not admitted"
-                )
+            if isinstance(item, (Mapping, Sequence)) and not isinstance(item, (str, bytes, bytearray)):
+                raise SolidityCPTRowDriftError(f"{name} must be a scalar; nested input is not admitted")
             if isinstance(item, (bytes, bytearray, memoryview)):
                 raise SolidityCPTRowDriftError(f"{name} must be decoded scalar data")
 
@@ -1121,9 +1085,7 @@ class SolidityCPTRowAdapter:
         }
         path = _safe_path(value["path"], self._bounds)
         total_chars = len(text) + sum(len(item) for item in metadata.values()) + len(path)
-        total_bytes = body.byte_length + sum(
-            len(item.encode("utf-8")) for item in (*metadata.values(), path)
-        )
+        total_bytes = body.byte_length + sum(len(item.encode("utf-8")) for item in (*metadata.values(), path))
         if total_chars > self._bounds.max_total_chars:
             raise SolidityCPTRowOversizeError("source row exceeds total character bound")
         if total_bytes > self._bounds.max_total_bytes:
@@ -1195,9 +1157,7 @@ def adapt_solidity_cpt_row(
     return SolidityCPTRowAdapter(bounds).adapt(value, row_index=row_index)
 
 
-SOLIDITY_CPT_COLUMN_TYPE_MAP: Final[Mapping[str, str]] = MappingProxyType(
-    dict(SOLIDITY_CPT_COLUMN_TYPES)
-)
+SOLIDITY_CPT_COLUMN_TYPE_MAP: Final[Mapping[str, str]] = MappingProxyType(dict(SOLIDITY_CPT_COLUMN_TYPES))
 
 
 __all__ = [

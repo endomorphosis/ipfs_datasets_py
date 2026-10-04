@@ -350,7 +350,9 @@ class VerificationObligation:
     attributes: FrozenMap = field(default_factory=FrozenMap)
 
     def __post_init__(self) -> None:
-        sources, spans = _vc_source(self.source_ref_ids, self.span_ids, "VerificationObligation")
+        sources, spans = _vc_source(
+            self.source_ref_ids, self.span_ids, "VerificationObligation"
+        )
         object.__setattr__(
             self, "obligation_id", _vc_identifier(self.obligation_id, "obligation_id")
         )
@@ -360,7 +362,9 @@ class VerificationObligation:
             "parent_contract_id",
             _vc_identifier(self.parent_contract_id, "parent_contract_id"),
         )
-        object.__setattr__(self, "function_id", _vc_identifier(self.function_id, "function_id"))
+        object.__setattr__(
+            self, "function_id", _vc_identifier(self.function_id, "function_id")
+        )
         object.__setattr__(
             self,
             "source_construct_kind",
@@ -441,7 +445,9 @@ class VerificationObligation:
             assumption_expression_ids=tuple(value.get("assumption_expression_ids", ())),
             goal_expression_ids=tuple(value.get("goal_expression_ids", ())),
             generated_symbol_ids=tuple(value.get("generated_symbol_ids", ())),
-            path_condition_expression_ids=tuple(value.get("path_condition_expression_ids", ())),
+            path_condition_expression_ids=tuple(
+                value.get("path_condition_expression_ids", ())
+            ),
             statement=value.get("statement", ""),
             source_ref_ids=tuple(value.get("source_ref_ids", ())),
             span_ids=tuple(value.get("span_ids", ())),
@@ -473,7 +479,9 @@ class WeakestPrecondition:
     def __post_init__(self) -> None:
         sources, spans = _vc_source(self.source_ref_ids, self.span_ids, "WeakestPrecondition")
         object.__setattr__(self, "wp_id", _vc_identifier(self.wp_id, "wp_id"))
-        object.__setattr__(self, "function_id", _vc_identifier(self.function_id, "function_id"))
+        object.__setattr__(
+            self, "function_id", _vc_identifier(self.function_id, "function_id")
+        )
         object.__setattr__(
             self,
             "program_point_kind",
@@ -615,7 +623,9 @@ class VerificationConditionSet:
         if self.schema_version != VC_SET_SCHEMA_VERSION:
             raise VCValidationError(f"unsupported schema_version {self.schema_version!r}")
         object.__setattr__(self, "program_id", _vc_identifier(self.program_id, "program_id"))
-        object.__setattr__(self, "function_id", _vc_identifier(self.function_id, "function_id"))
+        object.__setattr__(
+            self, "function_id", _vc_identifier(self.function_id, "function_id")
+        )
         object.__setattr__(
             self,
             "parent_contract_id",
@@ -673,7 +683,9 @@ class VerificationConditionSet:
 
     def frame_construct_ids(self) -> frozenset[str]:
         return frozenset(
-            item.source_construct_id for item in self.obligations if item.rule is VCRuleKind.FRAME
+            item.source_construct_id
+            for item in self.obligations
+            if item.rule is VCRuleKind.FRAME
         )
 
     def semantic_dict(self) -> dict[str, Any]:
@@ -742,7 +754,9 @@ class VerificationConditionSet:
                 UnsupportedEffect.from_dict(_mapping(item, "unsupported_effect"))
                 for item in value.get("unsupported_effects", ())
             ),
-            loop_variant_policy=value.get("loop_variant_policy", LoopVariantPolicy.OPTIONAL.value),
+            loop_variant_policy=value.get(
+                "loop_variant_policy", LoopVariantPolicy.OPTIONAL.value
+            ),
             attributes=_vc_frozen(
                 _mapping(value.get("attributes", {}), "attributes"),
                 "attributes",
@@ -833,7 +847,8 @@ class VerificationConditionGenerator:
         pre_ids = tuple(item.expression_id for item in contract.preconditions)
         post_ids = tuple(item.expression_id for item in contract.postconditions)
         exceptional_by_type = {
-            item.exception_type: item.expression_id for item in contract.exceptional_postconditions
+            item.exception_type: item.expression_id
+            for item in contract.exceptional_postconditions
         }
 
         # Entry: preconditions are assumed at the function boundary.
@@ -919,7 +934,9 @@ class VerificationConditionGenerator:
                 if goal is None:
                     unsupported.append(
                         UnsupportedEffect(
-                            effect_id=(f"unsupported:exception:{block_id}:{exception_type}"),
+                            effect_id=(
+                                f"unsupported:exception:{block_id}:{exception_type}"
+                            ),
                             kind=UnsupportedEffectKind.UNMODELED_CALL,
                             construct_kind=SourceConstructKind.EXCEPTION,
                             construct_id=block_id,
@@ -1038,7 +1055,9 @@ class VerificationConditionGenerator:
             unsupported.extend(loop_unsup)
 
         # Function-level unsupported effects not localized to a command.
-        unsupported.extend(self._function_level_unsupported(contract=contract, function=function))
+        unsupported.extend(
+            self._function_level_unsupported(contract=contract, function=function)
+        )
 
         if self.require_source_maps:
             for item in obligations:
@@ -1089,7 +1108,9 @@ class VerificationConditionGenerator:
         frame_targets = set(contract.frame.writable_symbol_ids)
         if not contract.frame.allows_all_writes:
             modified = set(
-                contract.effects.writes + contract.effects.allocates + contract.effects.deallocates
+                contract.effects.writes
+                + contract.effects.allocates
+                + contract.effects.deallocates
             )
             # Every non-wildcard write must have a frame obligation construct id.
             covered_frames = vc_set.frame_construct_ids()
@@ -1116,7 +1137,8 @@ class VerificationConditionGenerator:
             if policy is LoopVariantPolicy.REQUIRED:
                 if not loop.variants and not loop.total_correctness:
                     raise VCValidationError(
-                        f"loop {loop.loop_id} requires a variant under policy {policy.value}"
+                        f"loop {loop.loop_id} requires a variant under policy "
+                        f"{policy.value}"
                     )
                 if not loop.variants:
                     raise VCValidationError(
@@ -1127,7 +1149,9 @@ class VerificationConditionGenerator:
                     f"loop {loop.loop_id} supplies variants under policy {policy.value}"
                 )
             if loop.total_correctness and not loop.variants:
-                raise VCValidationError(f"total-correctness loop {loop.loop_id} requires a variant")
+                raise VCValidationError(
+                    f"total-correctness loop {loop.loop_id} requires a variant"
+                )
 
     def _obligation(
         self,
@@ -1298,7 +1322,8 @@ class VerificationConditionGenerator:
                     source_ref_ids=sources,
                     span_ids=spans,
                     generated_symbol_ids=tuple(
-                        f"gen:{command.command_id}:{target}" for target in command.target_symbol_ids
+                        f"gen:{command.command_id}:{target}"
+                        for target in command.target_symbol_ids
                     ),
                 )
             )
@@ -1406,7 +1431,9 @@ class VerificationConditionGenerator:
                     assumptions=pre_ids,
                     goals=goals,
                     path=pre_ids,
-                    statement=(f"Resource assertion for allocate {command.command_id}."),
+                    statement=(
+                        f"Resource assertion for allocate {command.command_id}."
+                    ),
                     source_ref_ids=sources,
                     span_ids=spans,
                     suffix="resource",
@@ -1442,7 +1469,9 @@ class VerificationConditionGenerator:
                     assumptions=pre_ids,
                     goals=goals,
                     path=pre_ids,
-                    statement=(f"Resource assertion for deallocate {command.command_id}."),
+                    statement=(
+                        f"Resource assertion for deallocate {command.command_id}."
+                    ),
                     source_ref_ids=sources,
                     span_ids=spans,
                     suffix="resource",
@@ -1509,7 +1538,10 @@ class VerificationConditionGenerator:
                     contract=contract,
                     function=function,
                     assumptions=pre_ids,
-                    goals=tuple(item.expression_id for item in command.undefined_behavior) or goals,
+                    goals=tuple(
+                        item.expression_id for item in command.undefined_behavior
+                    )
+                    or goals,
                     path=pre_ids,
                     statement=(
                         f"Undefined command {command.command_id} remains an explicit "
@@ -1577,7 +1609,8 @@ class VerificationConditionGenerator:
                         goals=(ub.expression_id,),
                         path=pre_ids,
                         statement=(
-                            f"Undefined-behavior guard {ub.condition_id} on {command.command_id}."
+                            f"Undefined-behavior guard {ub.condition_id} on "
+                            f"{command.command_id}."
                         ),
                         source_ref_ids=ub.source_ref_ids or sources,
                         span_ids=ub.span_ids or spans,
@@ -1606,7 +1639,9 @@ class VerificationConditionGenerator:
                 rule=rule,
                 parent_contract_id=contract.contract_id,
                 generated_symbol_ids=tuple(
-                    item.symbol_id for item in generated if item.construct_id == command.command_id
+                    item.symbol_id
+                    for item in generated
+                    if item.construct_id == command.command_id
                 ),
                 source_ref_ids=sources,
                 span_ids=spans,
@@ -1695,7 +1730,8 @@ class VerificationConditionGenerator:
                 goals=invariant_ids,
                 path=pre_ids,
                 statement=(
-                    f"Loop {loop.loop_id} invariant must hold on entry to {loop.header_block_id}."
+                    f"Loop {loop.loop_id} invariant must hold on entry to "
+                    f"{loop.header_block_id}."
                 ),
                 source_ref_ids=sources,
                 span_ids=spans,
@@ -1712,7 +1748,9 @@ class VerificationConditionGenerator:
                 assumptions=tuple(pre_ids) + invariant_ids,
                 goals=invariant_ids,
                 path=tuple(pre_ids) + invariant_ids,
-                statement=(f"Loop {loop.loop_id} body must preserve its invariant."),
+                statement=(
+                    f"Loop {loop.loop_id} body must preserve its invariant."
+                ),
                 source_ref_ids=sources,
                 span_ids=spans,
                 suffix="preserve",
@@ -1720,7 +1758,8 @@ class VerificationConditionGenerator:
         )
 
         requires_variant = (
-            loop.total_correctness or self.loop_variant_policy is LoopVariantPolicy.REQUIRED
+            loop.total_correctness
+            or self.loop_variant_policy is LoopVariantPolicy.REQUIRED
         )
         if requires_variant:
             if not variant_ids:
@@ -1737,7 +1776,9 @@ class VerificationConditionGenerator:
                     assumptions=tuple(pre_ids) + invariant_ids,
                     goals=variant_ids,
                     path=tuple(pre_ids) + invariant_ids,
-                    statement=(f"Loop {loop.loop_id} variant must strictly decrease."),
+                    statement=(
+                        f"Loop {loop.loop_id} variant must strictly decrease."
+                    ),
                     source_ref_ids=sources,
                     span_ids=spans,
                     suffix="decrease",
@@ -1753,7 +1794,9 @@ class VerificationConditionGenerator:
                     assumptions=tuple(pre_ids) + invariant_ids,
                     goals=variant_ids,
                     path=tuple(pre_ids) + invariant_ids,
-                    statement=(f"Loop {loop.loop_id} variant must be well-founded / bounded."),
+                    statement=(
+                        f"Loop {loop.loop_id} variant must be well-founded / bounded."
+                    ),
                     source_ref_ids=sources,
                     span_ids=spans,
                     suffix="bounded",
@@ -1866,7 +1909,9 @@ class VerificationConditionGenerator:
                 if symbol_id not in writable:
                     records.append(
                         UnsupportedEffect(
-                            effect_id=(f"unsupported:{prefix}:alloc:{construct_id}:{symbol_id}"),
+                            effect_id=(
+                                f"unsupported:{prefix}:alloc:{construct_id}:{symbol_id}"
+                            ),
                             kind=UnsupportedEffectKind.UNFRAMED_ALLOCATION,
                             construct_kind=construct_kind,
                             construct_id=construct_id,
@@ -1882,7 +1927,9 @@ class VerificationConditionGenerator:
                 if symbol_id not in writable:
                     records.append(
                         UnsupportedEffect(
-                            effect_id=(f"unsupported:{prefix}:dealloc:{construct_id}:{symbol_id}"),
+                            effect_id=(
+                                f"unsupported:{prefix}:dealloc:{construct_id}:{symbol_id}"
+                            ),
                             kind=UnsupportedEffectKind.UNFRAMED_DEALLOCATION,
                             construct_kind=construct_kind,
                             construct_id=construct_id,
@@ -1942,7 +1989,9 @@ class VerificationConditionGenerator:
                 f"{VERIFICATION_CONDITION_GENERATOR_INTERFACE}"
             )
         return cls(
-            loop_variant_policy=value.get("loop_variant_policy", LoopVariantPolicy.OPTIONAL.value),
+            loop_variant_policy=value.get(
+                "loop_variant_policy", LoopVariantPolicy.OPTIONAL.value
+            ),
             require_source_maps=value.get("require_source_maps", True),
         )
 
@@ -1956,9 +2005,9 @@ def generate_verification_conditions(
 ) -> VerificationConditionSet:
     """Module-level convenience wrapper around :class:`VerificationConditionGenerator`."""
 
-    return VerificationConditionGenerator(loop_variant_policy=loop_variant_policy).generate(
-        program, contract, loop_contracts
-    )
+    return VerificationConditionGenerator(
+        loop_variant_policy=loop_variant_policy
+    ).generate(program, contract, loop_contracts)
 
 
 __all__ = [

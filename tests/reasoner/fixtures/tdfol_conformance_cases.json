@@ -1,0 +1,34 @@
+[
+  {
+    "id": "obligation_with_window",
+    "sentence": "Company A shall file report within 30 days.",
+    "jurisdiction": "us/federal",
+    "expected_temporal_deontic_fol": [
+      "forall t. (true and TemporalGuard(tmp:d0f22920d2410c6f, t) and not (false)) -> O_t(Act_38d25bf5ed(ent:b07a3f60ed185ffa, t))."
+    ]
+  },
+  {
+    "id": "prohibition_simple",
+    "sentence": "Company A shall not dump waste.",
+    "jurisdiction": "us/federal",
+    "expected_temporal_deontic_fol": [
+      "forall t. (true and true and not (false)) -> F_t(Act_43ab82618d(ent:b07a3f60ed185ffa, t))."
+    ]
+  },
+  {
+    "id": "exception_with_window",
+    "sentence": "Company A shall submit backup report within 10 days unless emergency.",
+    "jurisdiction": "us/federal",
+    "expected_temporal_deontic_fol": [
+      "forall t. (true and TemporalGuard(tmp:8eda31331c259801, t) and not (exception_clause(unless emergency.))) -> O_t(Act_6f49afa86e(ent:b07a3f60ed185ffa, t))."
+    ]
+  },
+  {
+    "id": "permission_with_activation",
+    "sentence": "Agency may disclose notice when authorized.",
+    "jurisdiction": "us/federal",
+    "expected_temporal_deontic_fol": [
+      "forall t. (activation_clause(when authorized.) and true and not (false)) -> P_t(Act_0f290e2c02(ent:8c886bd360b01796, t))."
+    ]
+  }
+]

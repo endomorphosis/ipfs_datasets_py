@@ -1,0 +1,12 @@
+{
+  "entity_count": 50,
+  "relationship_count": 100,
+  "metadata_keys": [
+    "batch_size",
+    "source"
+  ],
+  "min_entity_conf": 0.85,
+  "max_entity_conf": 0.899,
+  "min_rel_conf": 0.8,
+  "max_rel_conf": 0.99
+}

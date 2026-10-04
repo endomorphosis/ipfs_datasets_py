@@ -108,9 +108,15 @@ class RocqSourceBinding:
     schema_version: str = ROCQ_SOURCE_BINDING_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "request_digest", _digest(self.request_digest, "request_digest"))
-        object.__setattr__(self, "source_digest", _digest(self.source_digest, "source_digest"))
-        object.__setattr__(self, "source_format", _text(self.source_format, "source_format"))
+        object.__setattr__(
+            self, "request_digest", _digest(self.request_digest, "request_digest")
+        )
+        object.__setattr__(
+            self, "source_digest", _digest(self.source_digest, "source_digest")
+        )
+        object.__setattr__(
+            self, "source_format", _text(self.source_format, "source_format")
+        )
         if self.schema_version != ROCQ_SOURCE_BINDING_VERSION:
             raise RocqKernelError(
                 f"unsupported Rocq source binding schema: {self.schema_version!r}"
@@ -145,14 +151,18 @@ class RocqAssumptionReport:
     schema_version: str = ROCQ_ASSUMPTION_REPORT_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "declaration", _text(self.declaration, "declaration"))
+        object.__setattr__(
+            self, "declaration", _text(self.declaration, "declaration")
+        )
         object.__setattr__(
             self, "report_text", _text(self.report_text, "report_text", optional=True)
         )
         if not isinstance(self.closed_under_global_context, bool):
             raise RocqKernelError("closed_under_global_context must be a boolean")
         if self.schema_version != ROCQ_ASSUMPTION_REPORT_VERSION:
-            raise RocqKernelError(f"unsupported assumption report schema: {self.schema_version!r}")
+            raise RocqKernelError(
+                f"unsupported assumption report schema: {self.schema_version!r}"
+            )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -185,13 +195,19 @@ class RocqKernelReceipt:
     schema_version: str = ROCQ_KERNEL_RECEIPT_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "request_digest", _digest(self.request_digest, "request_digest"))
+        object.__setattr__(
+            self, "request_digest", _digest(self.request_digest, "request_digest")
+        )
         if not isinstance(self.source_binding, RocqSourceBinding):
             raise RocqKernelError("source_binding must be a RocqSourceBinding")
         if self.request_digest != self.source_binding.request_digest:
             raise RocqKernelError("receipt request does not match source binding")
-        object.__setattr__(self, "theorem_name", _text(self.theorem_name, "theorem_name"))
-        object.__setattr__(self, "theorem_digest", _digest(self.theorem_digest, "theorem_digest"))
+        object.__setattr__(
+            self, "theorem_name", _text(self.theorem_name, "theorem_name")
+        )
+        object.__setattr__(
+            self, "theorem_digest", _digest(self.theorem_digest, "theorem_digest")
+        )
         imports = tuple(_text(item, "imports item") for item in self.imports)
         if len(imports) != len(set(imports)):
             raise RocqKernelError("imports must not contain duplicates")
@@ -230,13 +246,16 @@ class RocqKernelReceipt:
                 "authority_disposition",
             ),
         )
-        object.__setattr__(self, "diagnostics", bound_diagnostics(self.diagnostics))
+        object.__setattr__(
+            self, "diagnostics", bound_diagnostics(self.diagnostics)
+        )
         if self.schema_version != ROCQ_KERNEL_RECEIPT_VERSION:
             raise RocqKernelError(
                 f"unsupported Rocq kernel receipt schema: {self.schema_version!r}"
             )
         if self.accepted and (
-            self.assumption_report is None or not self.assumption_report.closed_under_global_context
+            self.assumption_report is None
+            or not self.assumption_report.closed_under_global_context
         ):
             raise RocqKernelError(
                 "accepted Rocq receipts require a closed-under-global-context assumption report"
@@ -246,7 +265,9 @@ class RocqKernelReceipt:
         return {
             "accepted": self.accepted,
             "assumption_report": (
-                self.assumption_report.to_dict() if self.assumption_report is not None else None
+                self.assumption_report.to_dict()
+                if self.assumption_report is not None
+                else None
             ),
             "authority_disposition": self.authority_disposition.value,
             "diagnostics": list(self.diagnostics),
@@ -261,7 +282,9 @@ class RocqKernelReceipt:
             "theorem_digest": self.theorem_digest,
             "theorem_name": self.theorem_name,
             "toolchain": self.toolchain.to_dict(),
-            "translation": (self.translation.to_dict() if self.translation is not None else None),
+            "translation": (
+                self.translation.to_dict() if self.translation is not None else None
+            ),
         }
 
     @property
@@ -286,7 +309,9 @@ class RocqKernelOutcome:
     interface_version: str = ROCQ_KERNEL_BACKEND_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "request_digest", _digest(self.request_digest, "request_digest"))
+        object.__setattr__(
+            self, "request_digest", _digest(self.request_digest, "request_digest")
+        )
         if not isinstance(self.source_binding, RocqSourceBinding):
             raise RocqKernelError("source_binding must be a RocqSourceBinding")
         if not isinstance(self.result, TypedBackendResult):
@@ -300,7 +325,9 @@ class RocqKernelOutcome:
         if self.request_digest != self.receipt.request_digest:
             raise RocqKernelError("outcome request does not match receipt")
         if self.interface_version != ROCQ_KERNEL_BACKEND_VERSION:
-            raise RocqKernelError(f"unsupported Rocq kernel interface: {self.interface_version!r}")
+            raise RocqKernelError(
+                f"unsupported Rocq kernel interface: {self.interface_version!r}"
+            )
         if self.result.status is ResultStatus.PROVED and not self.receipt.accepted:
             raise RocqKernelError("proved results require an accepted kernel receipt")
 
@@ -318,7 +345,12 @@ class RocqKernelOutcome:
 def _text(value: object, field_name: str, *, optional: bool = False) -> str:
     if optional and value == "":
         return ""
-    if not isinstance(value, str) or not value or value != value.strip() or "\x00" in value:
+    if (
+        not isinstance(value, str)
+        or not value
+        or value != value.strip()
+        or "\x00" in value
+    ):
         qualifier = "an empty or " if optional else "a "
         raise RocqKernelError(
             f"{field_name} must be {qualifier}non-empty trimmed string without NUL bytes"
@@ -383,7 +415,9 @@ def instrument_rocq_source_for_assumptions(source: str, declaration: str) -> str
     return source.rstrip() + f"\n\nPrint Assumptions {decl}.\n"
 
 
-def parse_rocq_assumption_report(stdout: str, declaration: str) -> RocqAssumptionReport | None:
+def parse_rocq_assumption_report(
+    stdout: str, declaration: str
+) -> RocqAssumptionReport | None:
     text = stdout or ""
     if not text.strip():
         return None
@@ -414,7 +448,9 @@ def evaluate_rocq_kernel_output(
     if process.error:
         diagnostics.append(sanitize_diagnostic(process.error))
     if process.timed_out:
-        diagnostics.append("rocq/coq invocation timed out under its bounded wall-clock budget")
+        diagnostics.append(
+            "rocq/coq invocation timed out under its bounded wall-clock budget"
+        )
         return False, None, bound_diagnostics(diagnostics)
     if process.unavailable:
         diagnostics.append("rocq/coq kernel is unavailable")
@@ -440,12 +476,17 @@ def evaluate_rocq_kernel_output(
         return False, None, bound_diagnostics(diagnostics)
 
     if process.returncode not in (0, None) and process.returncode != 0:
-        diagnostics.append(f"rocq/coq exited with non-zero status {process.returncode}")
+        diagnostics.append(
+            f"rocq/coq exited with non-zero status {process.returncode}"
+        )
         return False, None, bound_diagnostics(diagnostics)
 
     report = parse_rocq_assumption_report(process.stdout, declaration)
     if report is None:
-        if process.returncode == 0 and _CLOSED_UNDER_GLOBAL_CONTEXT in process.stdout:
+        if (
+            process.returncode == 0
+            and _CLOSED_UNDER_GLOBAL_CONTEXT in process.stdout
+        ):
             report = RocqAssumptionReport(
                 declaration=declaration,
                 report_text=sanitize_diagnostic(process.stdout, max_chars=1024),
@@ -461,19 +502,24 @@ def evaluate_rocq_kernel_output(
 
     if not report.closed_under_global_context:
         diagnostics.append(
-            f"rocq/coq Print Assumptions did not report {_CLOSED_UNDER_GLOBAL_CONTEXT!r}"
+            "rocq/coq Print Assumptions did not report "
+            f"{_CLOSED_UNDER_GLOBAL_CONTEXT!r}"
         )
         return False, report, bound_diagnostics(diagnostics)
 
     if process.returncode != 0:
-        diagnostics.append(f"rocq/coq exited with non-zero status {process.returncode}")
+        diagnostics.append(
+            f"rocq/coq exited with non-zero status {process.returncode}"
+        )
         return False, report, bound_diagnostics(diagnostics)
 
     return True, report, bound_diagnostics(diagnostics)
 
 
 def _usage_from_process(process: ToolRunResult) -> ResourceUsage:
-    output_bytes = len(process.stdout.encode("utf-8")) + len(process.stderr.encode("utf-8"))
+    output_bytes = len(process.stdout.encode("utf-8")) + len(
+        process.stderr.encode("utf-8")
+    )
     return ResourceUsage(
         elapsed_ms=max(0, round(process.elapsed_seconds * 1000)),
         output_bytes=output_bytes,
@@ -506,7 +552,9 @@ def _payload_source(
         translation = KernelTranslationBinding(
             translation_id=str(raw_translation["translation_id"]),
             translation_digest=str(raw_translation["translation_digest"]),
-            source_family=str(raw_translation.get("source_family", "software_verification")),
+            source_family=str(
+                raw_translation.get("source_family", "software_verification")
+            ),
             target_family=str(raw_translation.get("target_family", "rocq")),
             fidelity=str(raw_translation.get("fidelity", "exact")),
         )
@@ -592,7 +640,9 @@ class RocqKernelBackend:
         return KernelCapabilityState.unavailable(
             plane=CapabilityPlane.NATIVE,
             kernel_id=self.backend_id,
-            reason=(f"native Rocq/Coq executable {self.executable!r} was not found"),
+            reason=(
+                f"native Rocq/Coq executable {self.executable!r} was not found"
+            ),
             executable=self.executable,
         )
 
@@ -636,7 +686,9 @@ class RocqKernelBackend:
                 f"{request.query_kind.value}"
             )
         if request.query_kind is not QueryKind.THEOREM_PROOF:
-            raise RocqKernelError("Rocq kernel backend only answers theorem_proof queries")
+            raise RocqKernelError(
+                "Rocq kernel backend only answers theorem_proof queries"
+            )
 
     def _tool_request(self, source: str, bounds: ExecutionBounds) -> ToolRunRequest:
         instrumented = instrument_rocq_source_for_assumptions(
@@ -723,7 +775,9 @@ class RocqKernelBackend:
                 "source_tree": receipt.source_tree.to_dict(),
                 "toolchain": receipt.toolchain.to_dict(),
                 "translation": (
-                    receipt.translation.to_dict() if receipt.translation is not None else None
+                    receipt.translation.to_dict()
+                    if receipt.translation is not None
+                    else None
                 ),
                 "assumption_report": (
                     receipt.assumption_report.to_dict()
@@ -788,7 +842,8 @@ class RocqKernelBackend:
 
         if not plane_state.available:
             reason = (
-                plane_state.reason or f"Rocq/Coq kernel plane {resolved_plane.value} is unavailable"
+                plane_state.reason
+                or f"Rocq/Coq kernel plane {resolved_plane.value} is unavailable"
             )
             receipt = RocqKernelReceipt(
                 request_digest=request.digest,
@@ -941,7 +996,10 @@ class RocqKernelBackend:
             reason = process.error or "rocq/coq kernel execution was cancelled"
             accepted = False
         elif not accepted:
-            if assumption_report is not None and not assumption_report.closed_under_global_context:
+            if (
+                assumption_report is not None
+                and not assumption_report.closed_under_global_context
+            ):
                 if self.incomplete_disposition is RocqAuthorityDisposition.DOWNGRADE:
                     status = ResultStatus.CANDIDATE
                     reason = "rocq/coq assumptions report is not closed under the global context"
@@ -950,7 +1008,9 @@ class RocqKernelBackend:
                     reason = "rocq/coq assumptions report is not closed under the global context"
             else:
                 status = ResultStatus.ERROR
-                reason = next(iter(eval_diagnostics), "rocq/coq kernel rejected the proof")
+                reason = next(
+                    iter(eval_diagnostics), "rocq/coq kernel rejected the proof"
+                )
         else:
             status = ResultStatus.PROVED
             reason = ""
@@ -986,7 +1046,9 @@ class RocqKernelBackend:
             reason=reason,
             diagnostics=receipt.diagnostics,
             candidate_kind=(
-                "incomplete_or_admitted_rocq_proof" if status is ResultStatus.CANDIDATE else ""
+                "incomplete_or_admitted_rocq_proof"
+                if status is ResultStatus.CANDIDATE
+                else ""
             ),
         )
         return RocqKernelOutcome(

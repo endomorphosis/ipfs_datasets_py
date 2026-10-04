@@ -59,7 +59,9 @@ from .samples import (
 from .views import FormalFormula, FormalizationView, ViewRegistry
 
 
-AUTOENCODER_ADVISOR_CONFIG_SCHEMA_VERSION: Final = "formalization-autoencoder-advisor-config/v1"
+AUTOENCODER_ADVISOR_CONFIG_SCHEMA_VERSION: Final = (
+    "formalization-autoencoder-advisor-config/v1"
+)
 AUTOENCODER_CHECKPOINT_BINDING_SCHEMA_VERSION: Final = (
     "formalization-autoencoder-checkpoint-binding/v1"
 )
@@ -70,10 +72,14 @@ INTROSPECTION_SCHEMA_VERSION: Final = "formalization-autoencoder-introspection/v
 AUTOENCODER_ADVICE_SCHEMA_VERSION: Final = "formalization-autoencoder-advice/v1"
 SPLIT_EXAMPLE_SCHEMA_VERSION: Final = "formalization-split-example/v1"
 SPLIT_MANIFEST_SCHEMA_VERSION: Final = "formalization-split-manifest/v1"
-FEATURE_CONTRIBUTION_SCHEMA_VERSION: Final = "formalization-autoencoder-feature-contribution/v1"
+FEATURE_CONTRIBUTION_SCHEMA_VERSION: Final = (
+    "formalization-autoencoder-feature-contribution/v1"
+)
 
 FORMALIZATION_AUTOENCODER_ADVISOR_ID: Final = "formalization:autoencoder-advisor"
-FORMALIZATION_AUTOENCODER_ADVISOR_VERSION: Final = "formalization-autoencoder-advisor/v1"
+FORMALIZATION_AUTOENCODER_ADVISOR_VERSION: Final = (
+    "formalization-autoencoder-advisor/v1"
+)
 UNVERIFIED_AUTHORITY: Final = "unverified_candidate_only"
 
 _PARTITIONS: Final = frozenset({"train", "validation", "test", "held_out"})
@@ -123,7 +129,9 @@ class PartitionName(str, Enum):
 
 def _positive_int(value: Any, field_name: str, *, maximum: int) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value < 1:
-        raise AutoencoderAdvisorValidationError(f"{field_name} must be a positive integer")
+        raise AutoencoderAdvisorValidationError(
+            f"{field_name} must be a positive integer"
+        )
     if value > maximum:
         raise AutoencoderAdvisorValidationError(
             f"{field_name} must not exceed the hard limit {maximum}"
@@ -133,7 +141,9 @@ def _positive_int(value: Any, field_name: str, *, maximum: int) -> int:
 
 def _non_negative_int(value: Any, field_name: str, *, maximum: int) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value < 0:
-        raise AutoencoderAdvisorValidationError(f"{field_name} must be a non-negative integer")
+        raise AutoencoderAdvisorValidationError(
+            f"{field_name} must be a non-negative integer"
+        )
     if value > maximum:
         raise AutoencoderAdvisorValidationError(
             f"{field_name} must not exceed the hard limit {maximum}"
@@ -161,7 +171,9 @@ def _finite_score(value: Any, field_name: str = "score") -> float:
 def _unit_interval(value: Any, field_name: str) -> float:
     result = _finite_score(value, field_name)
     if result < 0.0 or result > 1.0:
-        raise AutoencoderAdvisorValidationError(f"{field_name} must be between zero and one")
+        raise AutoencoderAdvisorValidationError(
+            f"{field_name} must be between zero and one"
+        )
     return result
 
 
@@ -176,7 +188,9 @@ def _canonical_json(value: Any) -> str:
 
 
 def _content_digest(value: Any) -> str:
-    return "sha256:" + hashlib.sha256(_canonical_json(value).encode("utf-8")).hexdigest()
+    return "sha256:" + hashlib.sha256(
+        _canonical_json(value).encode("utf-8")
+    ).hexdigest()
 
 
 def _reject_authority_payload(value: Any, *, path: str = "") -> None:
@@ -186,7 +200,8 @@ def _reject_authority_payload(value: Any, *, path: str = "") -> None:
             child_path = f"{path}/{raw_key}"
             if key in _AUTHORITY_CLAIM_KEYS:
                 raise AutoencoderAdvisorValidationError(
-                    f"autoencoder output cannot claim proof or execution authority at {child_path}"
+                    f"autoencoder output cannot claim proof or execution "
+                    f"authority at {child_path}"
                 )
             if key in {"status", "verdict"} and isinstance(child, str):
                 if re.sub(r"[^a-z0-9]+", "_", child.lower()).strip("_") in {
@@ -201,7 +216,9 @@ def _reject_authority_payload(value: Any, *, path: str = "") -> None:
                         f"authority at {child_path}"
                     )
             _reject_authority_payload(child, path=child_path)
-    elif isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+    elif isinstance(value, Sequence) and not isinstance(
+        value, (str, bytes, bytearray)
+    ):
         for index, child in enumerate(value):
             _reject_authority_payload(child, path=f"{path}/{index}")
 
@@ -210,7 +227,9 @@ def _softmax(scores: Mapping[str, float]) -> dict[str, float]:
     if not scores:
         return {}
     peak = max(scores.values())
-    exps = {key: math.exp(float(value) - peak) for key, value in scores.items()}
+    exps = {
+        key: math.exp(float(value) - peak) for key, value in scores.items()
+    }
     total = sum(exps.values())
     if total <= _SCORE_EPS:
         equal = 1.0 / len(scores)
@@ -237,13 +256,17 @@ class AutoencoderAdvisorConfig:
     schema_version: str = AUTOENCODER_ADVISOR_CONFIG_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "advisor_id", _identifier(self.advisor_id, "advisor_id"))
+        object.__setattr__(
+            self, "advisor_id", _identifier(self.advisor_id, "advisor_id")
+        )
         object.__setattr__(
             self,
             "advisor_version",
             _identifier(self.advisor_version, "advisor_version"),
         )
-        object.__setattr__(self, "config_id", _identifier(self.config_id, "config_id"))
+        object.__setattr__(
+            self, "config_id", _identifier(self.config_id, "config_id")
+        )
         for name, maximum in (
             ("max_ranked_views", _MAX_RANKED_ITEMS),
             ("max_ranked_premises", _MAX_RANKED_ITEMS),
@@ -260,13 +283,17 @@ class AutoencoderAdvisorConfig:
                 _positive_int(getattr(self, name), name, maximum=maximum),
             )
         extras = tuple(
-            _identifier(item, "protected_field_names") for item in self.protected_field_names
+            _identifier(item, "protected_field_names")
+            for item in self.protected_field_names
         )
         object.__setattr__(self, "protected_field_names", tuple(sorted(set(extras))))
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
         if self.schema_version != AUTOENCODER_ADVISOR_CONFIG_SCHEMA_VERSION:
             raise AutoencoderAdvisorValidationError(
-                f"unsupported autoencoder advisor config schema: {self.schema_version!r}"
+                f"unsupported autoencoder advisor config schema: "
+                f"{self.schema_version!r}"
             )
 
     def to_advisor_config(self) -> AdvisorConfig:
@@ -342,14 +369,20 @@ class AutoencoderAdvisorConfig:
             "autoencoder advisor config",
         )
         return cls(
-            advisor_id=value.get("advisor_id", FORMALIZATION_AUTOENCODER_ADVISOR_ID),
-            advisor_version=value.get("advisor_version", FORMALIZATION_AUTOENCODER_ADVISOR_VERSION),
+            advisor_id=value.get(
+                "advisor_id", FORMALIZATION_AUTOENCODER_ADVISOR_ID
+            ),
+            advisor_version=value.get(
+                "advisor_version", FORMALIZATION_AUTOENCODER_ADVISOR_VERSION
+            ),
             config_id=value.get("config_id", "default"),
             max_ranked_views=value.get("max_ranked_views", 16),
             max_ranked_premises=value.get("max_ranked_premises", 32),
             max_compression_features=value.get("max_compression_features", 64),
             max_candidates=value.get("max_candidates", 4),
-            max_formulas_per_candidate=value.get("max_formulas_per_candidate", 8),
+            max_formulas_per_candidate=value.get(
+                "max_formulas_per_candidate", 8
+            ),
             max_expression_nodes=value.get("max_expression_nodes", 512),
             max_expression_depth=value.get("max_expression_depth", 32),
             max_expression_bytes=value.get("max_expression_bytes", 16_384),
@@ -359,11 +392,15 @@ class AutoencoderAdvisorConfig:
                     "protected_field_names",
                 )
             ),
-            schema_version=value.get("schema_version", AUTOENCODER_ADVISOR_CONFIG_SCHEMA_VERSION),
+            schema_version=value.get(
+                "schema_version", AUTOENCODER_ADVISOR_CONFIG_SCHEMA_VERSION
+            ),
         )
 
     @classmethod
-    def from_json(cls, value: str | bytes | bytearray) -> "AutoencoderAdvisorConfig":
+    def from_json(
+        cls, value: str | bytes | bytearray
+    ) -> "AutoencoderAdvisorConfig":
         try:
             decoded = json.loads(value)
         except (TypeError, ValueError, UnicodeDecodeError) as exc:
@@ -392,11 +429,15 @@ class AutoencoderCheckpointBinding:
     schema_version: str = AUTOENCODER_CHECKPOINT_BINDING_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "checkpoint", validate_checkpoint_manifest(self.checkpoint))
+        object.__setattr__(
+            self, "checkpoint", validate_checkpoint_manifest(self.checkpoint)
+        )
         object.__setattr__(
             self,
             "feature_schema_version",
-            _identifier(self.feature_schema_version, "feature_schema_version"),
+            _identifier(
+                self.feature_schema_version, "feature_schema_version"
+            ),
         )
         object.__setattr__(
             self,
@@ -413,7 +454,9 @@ class AutoencoderCheckpointBinding:
             "data_snapshot_identity",
             _digest(self.data_snapshot_identity, "data_snapshot_identity"),
         )
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
         if self.schema_version != AUTOENCODER_CHECKPOINT_BINDING_SCHEMA_VERSION:
             raise AutoencoderAdvisorValidationError(
                 f"unsupported checkpoint binding schema: {self.schema_version!r}"
@@ -443,12 +486,22 @@ class AutoencoderCheckpointBinding:
             feature_schema_version=feature_schema_version,
         )
         expected = {
-            "feature_schema_version": _identifier(feature_schema_version, "feature_schema_version"),
-            "advisor_config_identity": _digest(advisor_config_identity, "advisor_config_identity"),
+            "feature_schema_version": _identifier(
+                feature_schema_version, "feature_schema_version"
+            ),
+            "advisor_config_identity": _digest(
+                advisor_config_identity, "advisor_config_identity"
+            ),
             "code_fingerprint": _digest(code_fingerprint, "code_fingerprint"),
-            "data_snapshot_identity": _digest(data_snapshot_identity, "data_snapshot_identity"),
+            "data_snapshot_identity": _digest(
+                data_snapshot_identity, "data_snapshot_identity"
+            ),
         }
-        mismatches = [name for name, wanted in expected.items() if getattr(self, name) != wanted]
+        mismatches = [
+            name
+            for name, wanted in expected.items()
+            if getattr(self, name) != wanted
+        ]
         if mismatches:
             raise AutoencoderAdvisorValidationError(
                 "autoencoder checkpoint binding is incompatible with "
@@ -525,7 +578,9 @@ class FeatureContribution:
         object.__setattr__(self, "name", _identifier(self.name, "name"))
         object.__setattr__(self, "score", _finite_score(self.score))
         object.__setattr__(self, "kind", _identifier(self.kind, "kind"))
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
         if self.schema_version != FEATURE_CONTRIBUTION_SCHEMA_VERSION:
             raise AutoencoderAdvisorValidationError(
                 f"unsupported feature contribution schema: {self.schema_version!r}"
@@ -551,7 +606,9 @@ class FeatureContribution:
             name=value.get("name", ""),
             score=value.get("score", 0.0),
             kind=value.get("kind", "feature"),
-            schema_version=value.get("schema_version", FEATURE_CONTRIBUTION_SCHEMA_VERSION),
+            schema_version=value.get(
+                "schema_version", FEATURE_CONTRIBUTION_SCHEMA_VERSION
+            ),
         )
 
 
@@ -569,7 +626,9 @@ class RankedView:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "view_id", _identifier(self.view_id, "view_id"))
-        object.__setattr__(self, "logic_family", _identifier(self.logic_family, "logic_family"))
+        object.__setattr__(
+            self, "logic_family", _identifier(self.logic_family, "logic_family")
+        )
         object.__setattr__(
             self, "rank", _non_negative_int(self.rank, "rank", maximum=_MAX_RANKED_ITEMS)
         )
@@ -582,7 +641,9 @@ class RankedView:
             raise AutoencoderAdvisorValidationError(
                 "ranked views are candidate-only and cannot claim authority"
             )
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
         if self.schema_version != RANKED_VIEW_SCHEMA_VERSION:
             raise AutoencoderAdvisorValidationError(
                 f"unsupported ranked view schema: {self.schema_version!r}"
@@ -649,10 +710,14 @@ class RankedPremise:
     authority: str = UNVERIFIED_AUTHORITY
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "premise_id", _identifier(self.premise_id, "premise_id"))
+        object.__setattr__(
+            self, "premise_id", _identifier(self.premise_id, "premise_id")
+        )
         statement = _text(self.statement, "statement")
         if len(statement) > 4_096:
-            raise AutoencoderAdvisorValidationError("premise statement exceeds 4096 characters")
+            raise AutoencoderAdvisorValidationError(
+                "premise statement exceeds 4096 characters"
+            )
         object.__setattr__(self, "statement", statement)
         object.__setattr__(
             self,
@@ -661,15 +726,20 @@ class RankedPremise:
         )
         if not self.source_ref_ids:
             raise AutoencoderAdvisorValidationError(
-                f"premise {self.premise_id!r} is ungrounded: source_ref_ids must be non-empty"
+                f"premise {self.premise_id!r} is ungrounded: "
+                "source_ref_ids must be non-empty"
             )
-        object.__setattr__(self, "logic_family", _identifier(self.logic_family, "logic_family"))
+        object.__setattr__(
+            self, "logic_family", _identifier(self.logic_family, "logic_family")
+        )
         object.__setattr__(
             self, "rank", _non_negative_int(self.rank, "rank", maximum=_MAX_RANKED_ITEMS)
         )
         object.__setattr__(self, "score", _finite_score(self.score))
         if self.formula_id:
-            object.__setattr__(self, "formula_id", _identifier(self.formula_id, "formula_id"))
+            object.__setattr__(
+                self, "formula_id", _identifier(self.formula_id, "formula_id")
+            )
         if not isinstance(self.reason, str) or len(self.reason) > 1_024:
             raise AutoencoderAdvisorValidationError(
                 "reason must be a string of at most 1024 characters"
@@ -678,7 +748,9 @@ class RankedPremise:
             raise AutoencoderAdvisorValidationError(
                 "ranked premises are candidate-only and cannot claim authority"
             )
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
         if self.schema_version != RANKED_PREMISE_SCHEMA_VERSION:
             raise AutoencoderAdvisorValidationError(
                 f"unsupported ranked premise schema: {self.schema_version!r}"
@@ -722,13 +794,17 @@ class RankedPremise:
         return cls(
             premise_id=value.get("premise_id", ""),
             statement=value.get("statement", ""),
-            source_ref_ids=tuple(_sequence(value.get("source_ref_ids", ()), "source_ref_ids")),
+            source_ref_ids=tuple(
+                _sequence(value.get("source_ref_ids", ()), "source_ref_ids")
+            ),
             logic_family=value.get("logic_family", "unspecified"),
             rank=value.get("rank", 0),
             score=value.get("score", 0.0),
             formula_id=value.get("formula_id", ""),
             reason=value.get("reason", ""),
-            schema_version=value.get("schema_version", RANKED_PREMISE_SCHEMA_VERSION),
+            schema_version=value.get(
+                "schema_version", RANKED_PREMISE_SCHEMA_VERSION
+            ),
             authority=value.get("authority", UNVERIFIED_AUTHORITY),
         )
 
@@ -751,7 +827,9 @@ class CompressionPlan:
     authority: str = UNVERIFIED_AUTHORITY
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "sample_id", _identifier(self.sample_id, "sample_id"))
+        object.__setattr__(
+            self, "sample_id", _identifier(self.sample_id, "sample_id")
+        )
         retained = _unique_identifiers(
             self.retained_feature_names, "retained_feature_names", sort=True
         )
@@ -767,12 +845,16 @@ class CompressionPlan:
         object.__setattr__(
             self,
             "retained_view_ids",
-            _unique_identifiers(self.retained_view_ids, "retained_view_ids", sort=True),
+            _unique_identifiers(
+                self.retained_view_ids, "retained_view_ids", sort=True
+            ),
         )
         object.__setattr__(
             self,
             "estimated_compression_ratio",
-            _finite_score(self.estimated_compression_ratio, "estimated_compression_ratio"),
+            _finite_score(
+                self.estimated_compression_ratio, "estimated_compression_ratio"
+            ),
         )
         if self.estimated_compression_ratio < 1.0:
             raise AutoencoderAdvisorValidationError(
@@ -787,7 +869,9 @@ class CompressionPlan:
             raise AutoencoderAdvisorValidationError(
                 "compression plans are candidate-only and cannot claim authority"
             )
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
         if self.schema_version != COMPRESSION_PLAN_SCHEMA_VERSION:
             raise AutoencoderAdvisorValidationError(
                 f"unsupported compression plan schema: {self.schema_version!r}"
@@ -841,9 +925,13 @@ class CompressionPlan:
             retained_view_ids=tuple(
                 _sequence(value.get("retained_view_ids", ()), "retained_view_ids")
             ),
-            estimated_compression_ratio=value.get("estimated_compression_ratio", 1.0),
+            estimated_compression_ratio=value.get(
+                "estimated_compression_ratio", 1.0
+            ),
             reconstruction_score=value.get("reconstruction_score", 1.0),
-            schema_version=value.get("schema_version", COMPRESSION_PLAN_SCHEMA_VERSION),
+            schema_version=value.get(
+                "schema_version", COMPRESSION_PLAN_SCHEMA_VERSION
+            ),
             authority=value.get("authority", UNVERIFIED_AUTHORITY),
         )
 
@@ -871,7 +959,9 @@ class FormalizationIntrospection:
     authority: str = UNVERIFIED_AUTHORITY
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "sample_id", _identifier(self.sample_id, "sample_id"))
+        object.__setattr__(
+            self, "sample_id", _identifier(self.sample_id, "sample_id")
+        )
         object.__setattr__(self, "domain", _identifier(self.domain, "domain"))
         object.__setattr__(
             self,
@@ -918,11 +1008,15 @@ class FormalizationIntrospection:
         contributions = tuple(
             item
             if isinstance(item, FeatureContribution)
-            else FeatureContribution.from_dict(_mapping(item, "feature contribution"))
+            else FeatureContribution.from_dict(
+                _mapping(item, "feature contribution")
+            )
             for item in self.top_feature_contributions
         )
         if len(contributions) > _MAX_RANKED_ITEMS:
-            raise AutoencoderAdvisorValidationError("top_feature_contributions exceeds hard bound")
+            raise AutoencoderAdvisorValidationError(
+                "top_feature_contributions exceeds hard bound"
+            )
         object.__setattr__(
             self,
             "top_feature_contributions",
@@ -942,7 +1036,9 @@ class FormalizationIntrospection:
             raise AutoencoderAdvisorValidationError(
                 "introspection is candidate-only and cannot claim authority"
             )
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
         if self.schema_version != INTROSPECTION_SCHEMA_VERSION:
             raise AutoencoderAdvisorValidationError(
                 f"unsupported introspection schema: {self.schema_version!r}"
@@ -1000,21 +1096,29 @@ class FormalizationIntrospection:
             family_margin=value.get("family_margin", 0.0),
             reconstruction_score=value.get("reconstruction_score", 0.0),
             view_distribution=value.get("view_distribution", {}),
-            predicted_view_distribution=value.get("predicted_view_distribution", {}),
+            predicted_view_distribution=value.get(
+                "predicted_view_distribution", {}
+            ),
             top_feature_contributions=tuple(
-                FeatureContribution.from_dict(_mapping(item, "feature contribution"))
+                FeatureContribution.from_dict(
+                    _mapping(item, "feature contribution")
+                )
                 for item in _sequence(
                     value.get("top_feature_contributions", ()),
                     "top_feature_contributions",
                 )
             ),
-            synthesis_focus=tuple(_sequence(value.get("synthesis_focus", ()), "synthesis_focus")),
+            synthesis_focus=tuple(
+                _sequence(value.get("synthesis_focus", ()), "synthesis_focus")
+            ),
             schema_version=value.get("schema_version", INTROSPECTION_SCHEMA_VERSION),
             authority=value.get("authority", UNVERIFIED_AUTHORITY),
         )
 
     @classmethod
-    def from_json(cls, value: str | bytes | bytearray) -> "FormalizationIntrospection":
+    def from_json(
+        cls, value: str | bytes | bytearray
+    ) -> "FormalizationIntrospection":
         try:
             decoded = json.loads(value)
         except (TypeError, ValueError, UnicodeDecodeError) as exc:
@@ -1039,18 +1143,24 @@ class FormalizationSplitExample:
     schema_version: str = SPLIT_EXAMPLE_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "sample_id", _identifier(self.sample_id, "sample_id"))
+        object.__setattr__(
+            self, "sample_id", _identifier(self.sample_id, "sample_id")
+        )
         object.__setattr__(self, "domain", _identifier(self.domain, "domain"))
         partition = _identifier(self.partition, "partition")
         if partition not in _PARTITIONS:
-            raise AutoencoderAdvisorValidationError(f"unknown split partition: {partition!r}")
+            raise AutoencoderAdvisorValidationError(
+                f"unknown split partition: {partition!r}"
+            )
         object.__setattr__(self, "partition", partition)
         object.__setattr__(
             self,
             "source_family_id",
             _identifier(self.source_family_id, "source_family_id"),
         )
-        object.__setattr__(self, "content_digest", _digest(self.content_digest, "content_digest"))
+        object.__setattr__(
+            self, "content_digest", _digest(self.content_digest, "content_digest")
+        )
         if self.duplicate_family_id:
             object.__setattr__(
                 self,
@@ -1063,8 +1173,12 @@ class FormalizationSplitExample:
                 "generation_family_id",
                 _identifier(self.generation_family_id, "generation_family_id"),
             )
-        object.__setattr__(self, "tags", _unique_identifiers(self.tags, "tags", sort=True))
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "tags", _unique_identifiers(self.tags, "tags", sort=True)
+        )
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
         if self.schema_version != SPLIT_EXAMPLE_SCHEMA_VERSION:
             raise AutoencoderAdvisorValidationError(
                 f"unsupported split example schema: {self.schema_version!r}"
@@ -1125,7 +1239,9 @@ class FormalizationSplitExample:
             duplicate_family_id=value.get("duplicate_family_id", ""),
             generation_family_id=value.get("generation_family_id", ""),
             tags=tuple(_sequence(value.get("tags", ()), "tags")),
-            schema_version=value.get("schema_version", SPLIT_EXAMPLE_SCHEMA_VERSION),
+            schema_version=value.get(
+                "schema_version", SPLIT_EXAMPLE_SCHEMA_VERSION
+            ),
         )
 
     @classmethod
@@ -1141,10 +1257,14 @@ class FormalizationSplitExample:
         """Build a split row from a domain-neutral formalization sample."""
 
         if not isinstance(sample, FormalizationSample):
-            raise AutoencoderAdvisorValidationError("sample must be a FormalizationSample")
+            raise AutoencoderAdvisorValidationError(
+                "sample must be a FormalizationSample"
+            )
         sample.validate()
         family = source_family_id or (
-            sorted(sample.source_ref_ids)[0] if sample.source_ref_ids else sample.declaration_id
+            sorted(sample.source_ref_ids)[0]
+            if sample.source_ref_ids
+            else sample.declaration_id
         )
         return cls(
             sample_id=sample.sample_id,
@@ -1172,30 +1292,41 @@ class FormalizationSplitManifest:
     schema_version: str = SPLIT_MANIFEST_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "manifest_id", _identifier(self.manifest_id, "manifest_id"))
+        object.__setattr__(
+            self, "manifest_id", _identifier(self.manifest_id, "manifest_id")
+        )
         object.__setattr__(self, "domain", _identifier(self.domain, "domain"))
         examples = tuple(
             item
             if isinstance(item, FormalizationSplitExample)
-            else FormalizationSplitExample.from_dict(_mapping(item, "split example"))
+            else FormalizationSplitExample.from_dict(
+                _mapping(item, "split example")
+            )
             for item in self.examples
         )
         if not examples:
-            raise AutoencoderAdvisorValidationError("split manifest requires at least one example")
+            raise AutoencoderAdvisorValidationError(
+                "split manifest requires at least one example"
+            )
         sample_ids = [item.sample_id for item in examples]
         if len(sample_ids) != len(set(sample_ids)):
-            raise AutoencoderAdvisorValidationError("split example sample_ids must be unique")
+            raise AutoencoderAdvisorValidationError(
+                "split example sample_ids must be unique"
+            )
         foreign = [item.sample_id for item in examples if item.domain != self.domain]
         if foreign:
             raise AutoencoderAdvisorValidationError(
-                "split examples must share the manifest domain: " + ", ".join(sorted(foreign)[:8])
+                "split examples must share the manifest domain: "
+                + ", ".join(sorted(foreign)[:8])
             )
         object.__setattr__(
             self,
             "examples",
             tuple(sorted(examples, key=lambda item: item.sample_id)),
         )
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
         if self.schema_version != SPLIT_MANIFEST_SCHEMA_VERSION:
             raise AutoencoderAdvisorValidationError(
                 f"unsupported split manifest schema: {self.schema_version!r}"
@@ -1209,16 +1340,25 @@ class FormalizationSplitManifest:
         for example in self.examples:
             for key in example.family_keys():
                 key_partitions.setdefault(key, set()).add(example.partition)
-        leaks = sorted(key for key, partitions in key_partitions.items() if len(partitions) > 1)
+        leaks = sorted(
+            key
+            for key, partitions in key_partitions.items()
+            if len(partitions) > 1
+        )
         if leaks:
             raise SplitLeakageError(
-                "split leaks source/duplicate families across partitions: " + ", ".join(leaks[:12])
+                "split leaks source/duplicate families across partitions: "
+                + ", ".join(leaks[:12])
             )
         return self
 
     def partition_samples(self, partition: str) -> tuple[str, ...]:
         partition = _identifier(partition, "partition")
-        return tuple(item.sample_id for item in self.examples if item.partition == partition)
+        return tuple(
+            item.sample_id
+            for item in self.examples
+            if item.partition == partition
+        )
 
     @property
     def identity(self) -> CanonicalIdentity:
@@ -1252,17 +1392,23 @@ class FormalizationSplitManifest:
         value = _mapping(value, "split manifest")
         _reject_unknown(
             value,
-            frozenset({"domain", "examples", "manifest_id", "schema_version"}),
+            frozenset(
+                {"domain", "examples", "manifest_id", "schema_version"}
+            ),
             "split manifest",
         )
         return cls(
             manifest_id=value.get("manifest_id", ""),
             domain=value.get("domain", ""),
             examples=tuple(
-                FormalizationSplitExample.from_dict(_mapping(item, "split example"))
+                FormalizationSplitExample.from_dict(
+                    _mapping(item, "split example")
+                )
                 for item in _sequence(value.get("examples", ()), "examples")
             ),
-            schema_version=value.get("schema_version", SPLIT_MANIFEST_SCHEMA_VERSION),
+            schema_version=value.get(
+                "schema_version", SPLIT_MANIFEST_SCHEMA_VERSION
+            ),
         )
 
 
@@ -1291,7 +1437,9 @@ class AutoencoderAdviceResult:
     authority: str = UNVERIFIED_AUTHORITY
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "sample_id", _identifier(self.sample_id, "sample_id"))
+        object.__setattr__(
+            self, "sample_id", _identifier(self.sample_id, "sample_id")
+        )
         object.__setattr__(self, "domain", _identifier(self.domain, "domain"))
         views = tuple(
             item
@@ -1307,10 +1455,14 @@ class AutoencoderAdviceResult:
         )
         view_ids = [item.view_id for item in views]
         if len(view_ids) != len(set(view_ids)):
-            raise AutoencoderAdvisorValidationError("ranked view IDs must be unique")
+            raise AutoencoderAdvisorValidationError(
+                "ranked view IDs must be unique"
+            )
         premise_ids = [item.premise_id for item in premises]
         if len(premise_ids) != len(set(premise_ids)):
-            raise AutoencoderAdvisorValidationError("ranked premise IDs must be unique")
+            raise AutoencoderAdvisorValidationError(
+                "ranked premise IDs must be unique"
+            )
         object.__setattr__(
             self,
             "ranked_views",
@@ -1319,15 +1471,21 @@ class AutoencoderAdviceResult:
         object.__setattr__(
             self,
             "ranked_premises",
-            tuple(sorted(premises, key=lambda item: (item.rank, item.premise_id))),
+            tuple(
+                sorted(premises, key=lambda item: (item.rank, item.premise_id))
+            ),
         )
         if not isinstance(self.compression_plan, CompressionPlan):
-            raise AutoencoderAdvisorValidationError("compression_plan must be a CompressionPlan")
+            raise AutoencoderAdvisorValidationError(
+                "compression_plan must be a CompressionPlan"
+            )
         if not isinstance(self.introspection, FormalizationIntrospection):
             raise AutoencoderAdvisorValidationError(
                 "introspection must be a FormalizationIntrospection"
             )
-        if self.repair_result is not None and not isinstance(self.repair_result, AdvisorResult):
+        if self.repair_result is not None and not isinstance(
+            self.repair_result, AdvisorResult
+        ):
             raise AutoencoderAdvisorValidationError(
                 "repair_result must be an AdvisorResult or None"
             )
@@ -1343,7 +1501,9 @@ class AutoencoderAdviceResult:
             raise AutoencoderAdvisorValidationError(
                 "autoencoder advice cannot claim proof or execution authority"
             )
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
         if self.schema_version != AUTOENCODER_ADVICE_SCHEMA_VERSION:
             raise AutoencoderAdvisorValidationError(
                 f"unsupported autoencoder advice schema: {self.schema_version!r}"
@@ -1380,7 +1540,9 @@ class AutoencoderAdviceResult:
             "ranked_premises": [item.to_dict() for item in self.ranked_premises],
             "ranked_views": [item.to_dict() for item in self.ranked_views],
             "repair_result": (
-                self.repair_result.to_dict() if self.repair_result is not None else None
+                self.repair_result.to_dict()
+                if self.repair_result is not None
+                else None
             ),
             "sample_id": self.sample_id,
             "schema_version": self.schema_version,
@@ -1424,7 +1586,9 @@ class AutoencoderAdviceResult:
             ),
             ranked_premises=tuple(
                 RankedPremise.from_dict(_mapping(item, "ranked premise"))
-                for item in _sequence(value.get("ranked_premises", ()), "ranked_premises")
+                for item in _sequence(
+                    value.get("ranked_premises", ()), "ranked_premises"
+                )
             ),
             compression_plan=CompressionPlan.from_dict(
                 _mapping(value.get("compression_plan", {}), "compression plan")
@@ -1433,7 +1597,9 @@ class AutoencoderAdviceResult:
                 _mapping(value.get("introspection", {}), "introspection")
             ),
             config_identity=value.get("config_identity", ""),
-            checkpoint_binding_identity=value.get("checkpoint_binding_identity", ""),
+            checkpoint_binding_identity=value.get(
+                "checkpoint_binding_identity", ""
+            ),
             input_features_identity=value.get("input_features_identity", ""),
             input_artifact_identity=value.get("input_artifact_identity", ""),
             ontology_identity=value.get("ontology_identity", ""),
@@ -1442,7 +1608,9 @@ class AutoencoderAdviceResult:
                 if repair is not None
                 else None
             ),
-            schema_version=value.get("schema_version", AUTOENCODER_ADVICE_SCHEMA_VERSION),
+            schema_version=value.get(
+                "schema_version", AUTOENCODER_ADVICE_SCHEMA_VERSION
+            ),
             authority=value.get("authority", UNVERIFIED_AUTHORITY),
         )
 
@@ -1487,9 +1655,13 @@ class FormalizationAutoencoderRequest:
 
     def __post_init__(self) -> None:
         if not isinstance(self.artifact, FormalizationArtifact):
-            raise AutoencoderAdvisorValidationError("artifact must be a FormalizationArtifact")
+            raise AutoencoderAdvisorValidationError(
+                "artifact must be a FormalizationArtifact"
+            )
         self.artifact.validate()
-        object.__setattr__(self, "features", validate_source_free_features(self.features))
+        object.__setattr__(
+            self, "features", validate_source_free_features(self.features)
+        )
         if not isinstance(self.checkpoint_binding, AutoencoderCheckpointBinding):
             raise AutoencoderAdvisorValidationError(
                 "checkpoint_binding must be an AutoencoderCheckpointBinding"
@@ -1499,12 +1671,17 @@ class FormalizationAutoencoderRequest:
             "ontology_identity",
             _digest(self.ontology_identity, "ontology_identity"),
         )
-        if self.repair_scope is not None and not isinstance(self.repair_scope, RepairScope):
-            raise AutoencoderAdvisorValidationError("repair_scope must be a RepairScope or None")
+        if self.repair_scope is not None and not isinstance(
+            self.repair_scope, RepairScope
+        ):
+            raise AutoencoderAdvisorValidationError(
+                "repair_scope must be a RepairScope or None"
+            )
         if (
             self.features.sample_id != self.artifact.sample_id
             or self.features.domain != self.artifact.domain
-            or self.features.declaration_digest != self.artifact.declaration_digest
+            or self.features.declaration_digest
+            != self.artifact.declaration_digest
         ):
             raise AutoencoderAdvisorValidationError(
                 "features do not identify the input artifact declaration"
@@ -1522,7 +1699,9 @@ class FormalizationAutoencoderRequest:
             for item in self.premise_candidates
         )
         object.__setattr__(self, "premise_candidates", premises)
-        known_sources = {item.ref_id for item in self.artifact.source_map.sources}
+        known_sources = {
+            item.ref_id for item in self.artifact.source_map.sources
+        }
         for premise in premises:
             unknown = set(premise.source_ref_ids) - known_sources
             if unknown:
@@ -1531,7 +1710,9 @@ class FormalizationAutoencoderRequest:
                     f"sources: {', '.join(sorted(unknown))}"
                 )
         if self.repair_scope is not None:
-            known_formula_ids = {item.formula_id for item in self.artifact.formulas}
+            known_formula_ids = {
+                item.formula_id for item in self.artifact.formulas
+            }
             unknown_formulas = set(self.repair_scope.formula_ids) - known_formula_ids
             if unknown_formulas:
                 raise AutoencoderAdvisorValidationError(
@@ -1562,7 +1743,9 @@ class FormalizationAutoencoderAdvisor:
         data_snapshot_identity: str | None = None,
     ) -> None:
         self.config = (
-            config if isinstance(config, AutoencoderAdvisorConfig) else AutoencoderAdvisorConfig()
+            config
+            if isinstance(config, AutoencoderAdvisorConfig)
+            else AutoencoderAdvisorConfig()
         )
         if model is not None:
             method = getattr(model, "generate_candidates", None)
@@ -1571,7 +1754,9 @@ class FormalizationAutoencoderAdvisor:
         self._model = model
         self._scoring_backend = scoring_backend
         self._code_fingerprint = (
-            _digest(code_fingerprint, "code_fingerprint") if code_fingerprint is not None else None
+            _digest(code_fingerprint, "code_fingerprint")
+            if code_fingerprint is not None
+            else None
         )
         self._data_snapshot_identity = (
             _digest(data_snapshot_identity, "data_snapshot_identity")
@@ -1584,7 +1769,9 @@ class FormalizationAutoencoderAdvisor:
                 model, self.config.to_advisor_config()
             )
 
-    def advise(self, request: FormalizationAutoencoderRequest) -> AutoencoderAdviceResult:
+    def advise(
+        self, request: FormalizationAutoencoderRequest
+    ) -> AutoencoderAdviceResult:
         """Produce ranking, compression, introspection, and optional repairs."""
 
         if not isinstance(request, FormalizationAutoencoderRequest):
@@ -1653,7 +1840,9 @@ class FormalizationAutoencoderAdvisor:
             repair_result=repair_result,
         )
 
-    def rank_views(self, request: FormalizationAutoencoderRequest) -> tuple[RankedView, ...]:
+    def rank_views(
+        self, request: FormalizationAutoencoderRequest
+    ) -> tuple[RankedView, ...]:
         """Rank registered views using backend scores or feature heuristics."""
 
         registry = request.artifact.view_registry
@@ -1665,7 +1854,9 @@ class FormalizationAutoencoderAdvisor:
         scores = self._view_scores(request.features, view_ids, families)
         formula_counts: dict[str, int] = {}
         for formula in request.artifact.formulas:
-            formula_counts[formula.view_id] = formula_counts.get(formula.view_id, 0) + 1
+            formula_counts[formula.view_id] = (
+                formula_counts.get(formula.view_id, 0) + 1
+            )
         # Blend sparse feature mass and formula occupancy into a stable score.
         for view in views:
             occupancy = float(formula_counts.get(view.view_id, 0))
@@ -1678,7 +1869,9 @@ class FormalizationAutoencoderAdvisor:
                 if view.logic_family in name or view.view_id in name
             )
             scores[view.view_id] = (
-                float(scores.get(view.view_id, 0.0)) + 0.5 * occupancy + 0.25 * family_hits
+                float(scores.get(view.view_id, 0.0))
+                + 0.5 * occupancy
+                + 0.25 * family_hits
             )
         ordered = sorted(
             views,
@@ -1695,7 +1888,9 @@ class FormalizationAutoencoderAdvisor:
             for index, item in enumerate(ordered)
         )
 
-    def rank_premises(self, request: FormalizationAutoencoderRequest) -> tuple[RankedPremise, ...]:
+    def rank_premises(
+        self, request: FormalizationAutoencoderRequest
+    ) -> tuple[RankedPremise, ...]:
         """Rank grounded premise candidates; invent none from the model alone."""
 
         candidates = list(request.premise_candidates)
@@ -1723,7 +1918,9 @@ class FormalizationAutoencoderAdvisor:
                 )
         if not candidates:
             return ()
-        scores = self._premise_scores(request.features, [item.premise_id for item in candidates])
+        scores = self._premise_scores(
+            request.features, [item.premise_id for item in candidates]
+        )
         for index, premise in enumerate(candidates):
             feature_mass = sum(
                 abs(value)
@@ -1778,7 +1975,9 @@ class FormalizationAutoencoderAdvisor:
         views = (
             tuple(item.view_id for item in ranked_views)
             if ranked_views is not None
-            else tuple(item.view_id for item in self.rank_views(request))
+            else tuple(
+                item.view_id for item in self.rank_views(request)
+            )
         )
         total = max(len(pairs), 1)
         ratio = float(total) / float(max(len(retained), 1))
@@ -1810,7 +2009,11 @@ class FormalizationAutoencoderAdvisor:
     ) -> FormalizationIntrospection:
         """Emit domain-neutral introspection for ranking and reconstruction."""
 
-        views = tuple(ranked_views) if ranked_views is not None else self.rank_views(request)
+        views = (
+            tuple(ranked_views)
+            if ranked_views is not None
+            else self.rank_views(request)
+        )
         plan = (
             compression_plan
             if compression_plan is not None
@@ -1821,18 +2024,26 @@ class FormalizationAutoencoderAdvisor:
         # Observed occupancy from formulas is the "target" distribution.
         formula_counts: dict[str, float] = {}
         for formula in request.artifact.formulas:
-            formula_counts[formula.view_id] = formula_counts.get(formula.view_id, 0.0) + 1.0
+            formula_counts[formula.view_id] = (
+                formula_counts.get(formula.view_id, 0.0) + 1.0
+            )
         total_formulas = sum(formula_counts.values()) or 1.0
-        target_dist = {key: value / total_formulas for key, value in formula_counts.items()}
+        target_dist = {
+            key: value / total_formulas for key, value in formula_counts.items()
+        }
         for view_id in distribution:
             target_dist.setdefault(view_id, 0.0)
         for view_id in target_dist:
             distribution.setdefault(view_id, 0.0)
 
-        predicted_family = views[0].logic_family if views else "unspecified"
+        predicted_family = (
+            views[0].logic_family if views else "unspecified"
+        )
         target_family = request.target_logic_family or predicted_family
         if request.target_logic_family and views:
-            matching = [item for item in views if item.logic_family == target_family]
+            matching = [
+                item for item in views if item.logic_family == target_family
+            ]
             if matching:
                 predicted_family = matching[0].logic_family
         family_scores: dict[str, float] = {}
@@ -1842,7 +2053,11 @@ class FormalizationAutoencoderAdvisor:
             )
         family_probs = _softmax(family_scores)
         target_prob = family_probs.get(target_family, 0.0)
-        others = [prob for family, prob in family_probs.items() if family != target_family]
+        others = [
+            prob
+            for family, prob in family_probs.items()
+            if family != target_family
+        ]
         best_other = max(others) if others else 0.0
         contributions = tuple(
             FeatureContribution(
@@ -1855,7 +2070,11 @@ class FormalizationAutoencoderAdvisor:
                 request.features.feature_values,
             )
         )
-        contributions = tuple(sorted(contributions, key=lambda item: (-item.score, item.name))[:8])
+        contributions = tuple(
+            sorted(contributions, key=lambda item: (-item.score, item.name))[
+                :8
+            ]
+        )
         focus: list[str] = []
         if plan.dropped_feature_names:
             focus.append("compression")
@@ -1929,7 +2148,9 @@ class FormalizationAutoencoderAdvisor:
             )
         for premise_id in premise_ids:
             if premise_id in raw:
-                scores[premise_id] = _finite_score(raw[premise_id], f"score[{premise_id}]")
+                scores[premise_id] = _finite_score(
+                    raw[premise_id], f"score[{premise_id}]"
+                )
         return scores
 
     @staticmethod
@@ -1953,7 +2174,9 @@ class FormalizationAutoencoderAdvisor:
         return formula.formula_id
 
     @staticmethod
-    def _formula_family(registry: ViewRegistry, formula: FormalFormula) -> str:
+    def _formula_family(
+        registry: ViewRegistry, formula: FormalFormula
+    ) -> str:
         try:
             view: FormalizationView = registry.resolve(formula.view_id)
         except Exception:  # noqa: BLE001 - defensive for missing views
@@ -1985,9 +2208,13 @@ def build_data_snapshot_identity(
 
     payload = {
         "domain": _identifier(domain, "domain"),
-        "sample_ids": sorted(_identifier(item, "sample_ids") for item in sample_ids),
+        "sample_ids": sorted(
+            _identifier(item, "sample_ids") for item in sample_ids
+        ),
         "split_manifest_digest": (
-            _digest(split_manifest_digest, "split_manifest_digest") if split_manifest_digest else ""
+            _digest(split_manifest_digest, "split_manifest_digest")
+            if split_manifest_digest
+            else ""
         ),
     }
     return _content_digest(payload)

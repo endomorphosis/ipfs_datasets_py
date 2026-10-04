@@ -276,7 +276,9 @@ class TimeInterval:
                 "an unbounded upper boundary must use upper_closed=True canonically"
             )
         if self.schema_version != RUNTIME_MTL_INTERVAL_SCHEMA_VERSION:
-            raise RuntimeMTLError(f"unsupported interval schema_version {self.schema_version!r}")
+            raise RuntimeMTLError(
+                f"unsupported interval schema_version {self.schema_version!r}"
+            )
 
     @classmethod
     def closed(
@@ -285,13 +287,7 @@ class TimeInterval:
         upper: TimeValue | int,
         unit: TimeUnit | str,
     ) -> TimeInterval:
-        return cls(
-            TimeValue.from_value(lower),
-            TimeValue.from_value(upper),
-            _enum(unit, TimeUnit, "unit"),
-            True,
-            True,
-        )
+        return cls(TimeValue.from_value(lower), TimeValue.from_value(upper), _enum(unit, TimeUnit, "unit"), True, True)
 
     @classmethod
     def unbounded(cls, unit: TimeUnit | str, lower: TimeValue | int = 0) -> TimeInterval:
@@ -299,22 +295,16 @@ class TimeInterval:
 
     def contains(self, elapsed: Fraction | TimeValue | int) -> bool:
         value = elapsed.fraction if isinstance(elapsed, TimeValue) else Fraction(elapsed)
-        lower_ok = (
-            value >= self.lower.fraction if self.lower_closed else value > self.lower.fraction
-        )
+        lower_ok = value >= self.lower.fraction if self.lower_closed else value > self.lower.fraction
         if self.upper is None:
             return lower_ok
-        upper_ok = (
-            value <= self.upper.fraction if self.upper_closed else value < self.upper.fraction
-        )
+        upper_ok = value <= self.upper.fraction if self.upper_closed else value < self.upper.fraction
         return lower_ok and upper_ok
 
     def horizon_is_past(self, elapsed: Fraction) -> bool:
         if self.upper is None:
             return False
-        return (
-            elapsed > self.upper.fraction if self.upper_closed else elapsed >= self.upper.fraction
-        )
+        return elapsed > self.upper.fraction if self.upper_closed else elapsed >= self.upper.fraction
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -378,7 +368,9 @@ class Formula:
             raise RuntimeMTLError("interval must be a TimeInterval")
         object.__setattr__(self, "interval", interval)
         if self.schema_version != RUNTIME_MTL_FORMULA_SCHEMA_VERSION:
-            raise RuntimeMTLError(f"unsupported formula schema_version {self.schema_version!r}")
+            raise RuntimeMTLError(
+                f"unsupported formula schema_version {self.schema_version!r}"
+            )
         self._validate()
         if not self.node_id:
             object.__setattr__(self, "node_id", self._compute_node_id())
@@ -454,9 +446,7 @@ class Formula:
             logic=value.get("logic", Logic.LTLF.value),
             operands=tuple(value.get("operands", ())),
             proposition=value.get("proposition", ""),
-            interval=None
-            if interval is None
-            else TimeInterval.from_dict(_mapping(interval, "interval")),
+            interval=None if interval is None else TimeInterval.from_dict(_mapping(interval, "interval")),
             node_id=value.get("node_id", ""),
             schema_version=value.get("schema_version", RUNTIME_MTL_FORMULA_SCHEMA_VERSION),
         )
@@ -591,17 +581,7 @@ class Event:
         value = _mapping(value, "event")
         _reject_unknown(
             value,
-            frozenset(
-                {
-                    "event_id",
-                    "event_type",
-                    "time",
-                    "true",
-                    "false",
-                    "true_propositions",
-                    "false_propositions",
-                }
-            ),
+            frozenset({"event_id", "event_type", "time", "true", "false", "true_propositions", "false_propositions"}),
             "event",
         )
         true_values = value.get("true", value.get("true_propositions", ()))
@@ -626,11 +606,7 @@ class Trace:
     schema_version: str = RUNTIME_MTL_TRACE_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        clock = (
-            self.clock
-            if isinstance(self.clock, Clock)
-            else Clock.from_dict(_mapping(self.clock, "clock"))
-        )
+        clock = self.clock if isinstance(self.clock, Clock) else Clock.from_dict(_mapping(self.clock, "clock"))
         events = tuple(
             item if isinstance(item, Event) else Event.from_dict(_mapping(item, "event"))
             for item in self.events
@@ -658,9 +634,7 @@ class Trace:
                     f"event {event.event_id} time is not a multiple of clock resolution"
                 )
             if previous is not None and event.time.fraction < previous.fraction:
-                raise RuntimeMTLError(
-                    "event timestamps must be non-decreasing on the primary clock"
-                )
+                raise RuntimeMTLError("event timestamps must be non-decreasing on the primary clock")
             previous = event.time
 
     @property
@@ -731,7 +705,9 @@ class MonitorEvaluation:
     def __post_init__(self) -> None:
         object.__setattr__(self, "verdict", _enum(self.verdict, Verdict, "verdict"))
         object.__setattr__(self, "status", _enum(self.status, MonitorStatus, "status"))
-        object.__setattr__(self, "authority", _enum(self.authority, MonitorAuthority, "authority"))
+        object.__setattr__(
+            self, "authority", _enum(self.authority, MonitorAuthority, "authority")
+        )
         object.__setattr__(self, "logic", _enum(self.logic, Logic, "logic"))
         object.__setattr__(self, "trace_kind", _enum(self.trace_kind, TraceKind, "trace_kind"))
         object.__setattr__(
@@ -744,7 +720,9 @@ class MonitorEvaluation:
         if self.authorizes_global_proof:
             raise RuntimeMTLError("no-violation-observed never becomes proof")
         if self.schema_version != RUNTIME_MTL_RESULT_SCHEMA_VERSION:
-            raise RuntimeMTLError(f"unsupported result schema_version {self.schema_version!r}")
+            raise RuntimeMTLError(
+                f"unsupported result schema_version {self.schema_version!r}"
+            )
         if self.interface != RUNTIME_MTL_INTERFACE:
             raise RuntimeMTLError(f"unsupported interface {self.interface!r}")
         # Guard: satisfied under monitor authority is observation, not proof.
@@ -969,7 +947,9 @@ def _metric_values(
     results: list[Observation] = []
     for start in range(count):
         eligible = [
-            index for index in range(start, count) if interval.contains(times[index] - times[start])
+            index
+            for index in range(start, count)
+            if interval.contains(times[index] - times[start])
         ]
         elapsed = times[-1] - times[start]
         horizon_complete = not monitoring or interval.horizon_is_past(elapsed)
@@ -1180,11 +1160,7 @@ class RuntimeMTLMonitor:
     def __post_init__(self) -> None:
         if not isinstance(self.formula, Formula):
             self.formula = Formula.from_dict(_mapping(self.formula, "formula"))
-        if (
-            isinstance(self.position, bool)
-            or not isinstance(self.position, int)
-            or self.position < 0
-        ):
+        if isinstance(self.position, bool) or not isinstance(self.position, int) or self.position < 0:
             raise RuntimeMTLError("position must be a non-negative integer")
 
     def evaluate(self, trace: Trace | Mapping[str, Any]) -> MonitorEvaluation:
@@ -1214,7 +1190,9 @@ class RuntimeMTLMonitor:
         value = tables[formula.node_id][self.position]
         verdict = _to_verdict(value)
         if monitoring:
-            reason = "conservative finite-prefix verdict; no-violation-observed never becomes proof"
+            reason = (
+                "conservative finite-prefix verdict; no-violation-observed never becomes proof"
+            )
         elif formula.logic is Logic.MTL:
             reason = "exact MTL semantics over the supplied complete finite timed trace"
         else:

@@ -171,11 +171,7 @@ def test_array_map_fragment_golden_smtlib() -> None:
     assert SmtFeature.ARRAYS in result.features
     assert "(declare-const mem (Array Int Int))" in smtlib
     assert "(assert (not (= (select (store mem 2 9) 2) 9)))" in smtlib
-    assert (
-        "QF_A" in result.script.logic
-        or "AUFLIA" in result.script.logic
-        or "AUF" in result.script.logic
-    )
+    assert "QF_A" in result.script.logic or "AUFLIA" in result.script.logic or "AUF" in result.script.logic
 
 
 def test_datatype_fragment_golden_smtlib() -> None:
@@ -316,7 +312,9 @@ def test_verification_condition_lowering_with_path_assumptions() -> None:
     result = compiler.compile_verification_condition(
         obligation_id="obl:vc-post",
         goal=SmtTerm(SmtTermKind.GE, arguments=(x, term_int(0))),
-        path_assumptions=(SmtTerm(SmtTermKind.GT, arguments=(x, term_int(-1))),),
+        path_assumptions=(
+            SmtTerm(SmtTermKind.GT, arguments=(x, term_int(-1))),
+        ),
         symbols=(("x", INT_SORT),),
         request_unsat_core=True,
     )
@@ -471,14 +469,13 @@ def test_compilation_is_deterministic_and_receipt_bound() -> None:
         EvidenceAuthority.BOUNDED,
     }
     # Function declarations are sorted for determinism.
-    assert first.smtlib.index("(declare-const a Int)") < first.smtlib.index("(declare-const b Int)")
+    assert first.smtlib.index("(declare-const a Int)") < first.smtlib.index(
+        "(declare-const b Int)"
+    )
 
 
 def test_select_smt_logic_and_sanitize_helpers() -> None:
-    assert (
-        select_smt_logic((SmtTheory.CORE, SmtTheory.EQUALITY), SmtQueryMode.SATISFIABILITY)
-        == "QF_UF"
-    )
+    assert select_smt_logic((SmtTheory.CORE, SmtTheory.EQUALITY), SmtQueryMode.SATISFIABILITY) == "QF_UF"
     assert (
         select_smt_logic(
             (SmtTheory.CORE, SmtTheory.EQUALITY, SmtTheory.ARITHMETIC),

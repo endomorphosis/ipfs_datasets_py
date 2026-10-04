@@ -169,70 +169,72 @@ _TRANSACTION_BLOCKS_AUTOMATION: Final[frozenset[TransactionVerdictOutcome]] = fr
 
 # Explicitly forbidden silent promotions.  Keys are source families; values are
 # families that must never be produced by coercion from the source.
-_FORBIDDEN_COERCIONS: Final[Mapping[VerdictFamily, frozenset[VerdictFamily]]] = MappingProxyType(
-    {
-        VerdictFamily.SATISFIABILITY: frozenset(
-            {
-                VerdictFamily.ANALYSIS,
-                VerdictFamily.POLICY,
-                VerdictFamily.AUTHORIZATION,
-                VerdictFamily.SANCTIONS,
-            }
-        ),
-        VerdictFamily.MONITOR: frozenset(
-            {
-                VerdictFamily.ANALYSIS,
-                VerdictFamily.POLICY,
-                VerdictFamily.AUTHORIZATION,
-                VerdictFamily.SANCTIONS,
-            }
-        ),
-        VerdictFamily.READINESS: frozenset(
-            {
-                VerdictFamily.ANALYSIS,
-                VerdictFamily.POLICY,
-                VerdictFamily.AUTHORIZATION,
-                VerdictFamily.SANCTIONS,
-            }
-        ),
-        VerdictFamily.HEURISTIC: frozenset(
-            {
-                VerdictFamily.ANALYSIS,
-                VerdictFamily.POLICY,
-                VerdictFamily.AUTHORIZATION,
-                VerdictFamily.SANCTIONS,
-            }
-        ),
-        VerdictFamily.ANALYSIS: frozenset(
-            {
-                VerdictFamily.AUTHORIZATION,
-                VerdictFamily.SANCTIONS,
-            }
-        ),
-        VerdictFamily.SANCTIONS: frozenset(
-            {
-                VerdictFamily.ANALYSIS,
-                VerdictFamily.AUTHORIZATION,
-            }
-        ),
-        VerdictFamily.POLICY: frozenset(
-            {
-                VerdictFamily.ANALYSIS,
-                VerdictFamily.AUTHORIZATION,
-            }
-        ),
-        VerdictFamily.AUTHORIZATION: frozenset(
-            {
-                VerdictFamily.ANALYSIS,
-                VerdictFamily.SATISFIABILITY,
-                VerdictFamily.MONITOR,
-                VerdictFamily.READINESS,
-                VerdictFamily.HEURISTIC,
-                VerdictFamily.SANCTIONS,
-                VerdictFamily.POLICY,
-            }
-        ),
-    }
+_FORBIDDEN_COERCIONS: Final[Mapping[VerdictFamily, frozenset[VerdictFamily]]] = (
+    MappingProxyType(
+        {
+            VerdictFamily.SATISFIABILITY: frozenset(
+                {
+                    VerdictFamily.ANALYSIS,
+                    VerdictFamily.POLICY,
+                    VerdictFamily.AUTHORIZATION,
+                    VerdictFamily.SANCTIONS,
+                }
+            ),
+            VerdictFamily.MONITOR: frozenset(
+                {
+                    VerdictFamily.ANALYSIS,
+                    VerdictFamily.POLICY,
+                    VerdictFamily.AUTHORIZATION,
+                    VerdictFamily.SANCTIONS,
+                }
+            ),
+            VerdictFamily.READINESS: frozenset(
+                {
+                    VerdictFamily.ANALYSIS,
+                    VerdictFamily.POLICY,
+                    VerdictFamily.AUTHORIZATION,
+                    VerdictFamily.SANCTIONS,
+                }
+            ),
+            VerdictFamily.HEURISTIC: frozenset(
+                {
+                    VerdictFamily.ANALYSIS,
+                    VerdictFamily.POLICY,
+                    VerdictFamily.AUTHORIZATION,
+                    VerdictFamily.SANCTIONS,
+                }
+            ),
+            VerdictFamily.ANALYSIS: frozenset(
+                {
+                    VerdictFamily.AUTHORIZATION,
+                    VerdictFamily.SANCTIONS,
+                }
+            ),
+            VerdictFamily.SANCTIONS: frozenset(
+                {
+                    VerdictFamily.ANALYSIS,
+                    VerdictFamily.AUTHORIZATION,
+                }
+            ),
+            VerdictFamily.POLICY: frozenset(
+                {
+                    VerdictFamily.ANALYSIS,
+                    VerdictFamily.AUTHORIZATION,
+                }
+            ),
+            VerdictFamily.AUTHORIZATION: frozenset(
+                {
+                    VerdictFamily.ANALYSIS,
+                    VerdictFamily.SATISFIABILITY,
+                    VerdictFamily.MONITOR,
+                    VerdictFamily.READINESS,
+                    VerdictFamily.HEURISTIC,
+                    VerdictFamily.SANCTIONS,
+                    VerdictFamily.POLICY,
+                }
+            ),
+        }
+    )
 )
 
 
@@ -261,7 +263,9 @@ def _as_mapping(value: Any, name: str) -> Mapping[str, Any]:
     return value
 
 
-def _known_fields(value: Mapping[str, Any], allowed: frozenset[str], name: str) -> None:
+def _known_fields(
+    value: Mapping[str, Any], allowed: frozenset[str], name: str
+) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
         raise CryptoIRVerdictError(f"unknown {name} field(s): {', '.join(unknown)}")
@@ -377,23 +381,35 @@ class AnalysisVerdict:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "verdict_id", _text(self.verdict_id, "verdict_id"))
-        object.__setattr__(self, "outcome", _enum(AnalysisOutcome, self.outcome, "outcome"))
-        object.__setattr__(self, "obligation_id", _text(self.obligation_id, "obligation_id"))
+        object.__setattr__(
+            self, "outcome", _enum(AnalysisOutcome, self.outcome, "outcome")
+        )
+        object.__setattr__(
+            self, "obligation_id", _text(self.obligation_id, "obligation_id")
+        )
         family = _enum(VerdictFamily, self.family, "family")
         if family is not VerdictFamily.ANALYSIS:
             raise CryptoIRVerdictError(
-                f"AnalysisVerdict family must be analysis (got {family.value!r})"
+                "AnalysisVerdict family must be analysis "
+                f"(got {family.value!r})"
             )
         object.__setattr__(self, "family", family)
         object.__setattr__(
             self, "assumption_ids", _unique_ids(self.assumption_ids, "assumption_ids")
         )
         for name in ("model_digest", "backend_id", "code_epoch", "summary"):
-            object.__setattr__(self, name, _text(getattr(self, name), name, allow_empty=True))
+            object.__setattr__(
+                self, name, _text(getattr(self, name), name, allow_empty=True)
+            )
         object.__setattr__(self, "payload", _payload(self.payload))
         object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
-        if self.schema_version != CRYPTO_IR_ANALYSIS_VERDICT_SCHEMA_VERSION.identifier:
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
+        if (
+            self.schema_version
+            != CRYPTO_IR_ANALYSIS_VERDICT_SCHEMA_VERSION.identifier
+        ):
             raise CryptoIRVerdictError(
                 f"unsupported analysis verdict schema: {self.schema_version}"
             )
@@ -499,9 +515,13 @@ class PolicyVerdict:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "verdict_id", _text(self.verdict_id, "verdict_id"))
-        object.__setattr__(self, "outcome", _enum(PolicyOutcome, self.outcome, "outcome"))
+        object.__setattr__(
+            self, "outcome", _enum(PolicyOutcome, self.outcome, "outcome")
+        )
         object.__setattr__(self, "policy_id", _text(self.policy_id, "policy_id"))
-        object.__setattr__(self, "policy_revision", _text(self.policy_revision, "policy_revision"))
+        object.__setattr__(
+            self, "policy_revision", _text(self.policy_revision, "policy_revision")
+        )
         family = _enum(VerdictFamily, self.family, "family")
         if family is not VerdictFamily.POLICY:
             raise CryptoIRVerdictError(
@@ -509,12 +529,21 @@ class PolicyVerdict:
             )
         object.__setattr__(self, "family", family)
         for name in ("jurisdiction", "summary"):
-            object.__setattr__(self, name, _text(getattr(self, name), name, allow_empty=True))
+            object.__setattr__(
+                self, name, _text(getattr(self, name), name, allow_empty=True)
+            )
         object.__setattr__(self, "payload", _payload(self.payload))
         object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
-        if self.schema_version != CRYPTO_IR_POLICY_VERDICT_SCHEMA_VERSION.identifier:
-            raise CryptoIRVerdictError(f"unsupported policy verdict schema: {self.schema_version}")
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
+        if (
+            self.schema_version
+            != CRYPTO_IR_POLICY_VERDICT_SCHEMA_VERSION.identifier
+        ):
+            raise CryptoIRVerdictError(
+                f"unsupported policy verdict schema: {self.schema_version}"
+            )
 
     @property
     def fail_closed(self) -> bool:
@@ -618,19 +647,28 @@ class TransactionVerdict:
             _enum(TransactionVerdictOutcome, self.outcome, "outcome"),
         )
         object.__setattr__(self, "intent_id", _text(self.intent_id, "intent_id"))
-        object.__setattr__(self, "candidate_id", _text(self.candidate_id, "candidate_id"))
+        object.__setattr__(
+            self, "candidate_id", _text(self.candidate_id, "candidate_id")
+        )
         object.__setattr__(self, "policy_id", _text(self.policy_id, "policy_id"))
         family = _enum(VerdictFamily, self.family, "family")
         if family is not VerdictFamily.AUTHORIZATION:
             raise CryptoIRVerdictError(
-                f"TransactionVerdict family must be authorization (got {family.value!r})"
+                "TransactionVerdict family must be authorization "
+                f"(got {family.value!r})"
             )
         object.__setattr__(self, "family", family)
-        object.__setattr__(self, "summary", _text(self.summary, "summary", allow_empty=True))
-        object.__setattr__(self, "reason_codes", _unique_ids(self.reason_codes, "reason_codes"))
+        object.__setattr__(
+            self, "summary", _text(self.summary, "summary", allow_empty=True)
+        )
+        object.__setattr__(
+            self, "reason_codes", _unique_ids(self.reason_codes, "reason_codes")
+        )
         object.__setattr__(self, "payload", _payload(self.payload))
         object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
 
     @property
     def blocks_automation(self) -> bool:
@@ -746,10 +784,14 @@ class TypedFamilyVerdict:
         object.__setattr__(
             self, "subject_id", _text(self.subject_id, "subject_id", allow_empty=True)
         )
-        object.__setattr__(self, "summary", _text(self.summary, "summary", allow_empty=True))
+        object.__setattr__(
+            self, "summary", _text(self.summary, "summary", allow_empty=True)
+        )
         object.__setattr__(self, "payload", _payload(self.payload))
         object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
 
     @property
     def authority_kind(self) -> AuthorityKind:
@@ -825,7 +867,9 @@ def _validate_family_outcome(family: VerdictFamily, outcome: str) -> None:
     try:
         enum_type(outcome)
     except ValueError as exc:
-        raise CryptoIRVerdictError(f"unsupported {family.value} outcome: {outcome!r}") from exc
+        raise CryptoIRVerdictError(
+            f"unsupported {family.value} outcome: {outcome!r}"
+        ) from exc
 
 
 def result_family_of(value: Any) -> VerdictFamily:
@@ -839,7 +883,9 @@ def result_family_of(value: Any) -> VerdictFamily:
         return VerdictFamily.AUTHORIZATION
     if isinstance(value, TypedFamilyVerdict):
         return value.family
-    raise CryptoIRVerdictError(f"value is not a Crypto IR verdict: {type(value).__name__}")
+    raise CryptoIRVerdictError(
+        f"value is not a Crypto IR verdict: {type(value).__name__}"
+    )
 
 
 def unavailable_analysis_verdict(

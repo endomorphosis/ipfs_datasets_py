@@ -195,7 +195,10 @@ def test_witness_assumptions_bounds_ceiling_and_resource_usage_are_preserved() -
         "assumption:precondition",
     )
     assert restored.bounds == result.bounds
-    assert restored.translation_ceiling is EvidenceAuthority.INDEPENDENTLY_CHECKABLE
+    assert (
+        restored.translation_ceiling
+        is EvidenceAuthority.INDEPENDENTLY_CHECKABLE
+    )
     assert restored.usage == result.usage
     assert restored.exceeded_bounds == ("timeout_ms", "max_steps")
 
@@ -427,7 +430,10 @@ def test_exact_legacy_result_composition_preserves_evidence_and_bindings() -> No
     assert normalized.witness == legacy.payload
     assert normalized.diagnostics == legacy.diagnostics
     assert normalized.metadata["core_result"]["result_digest"] == legacy.digest
-    assert normalized.translation_ceiling is EvidenceAuthority.INDEPENDENTLY_CHECKABLE
+    assert (
+        normalized.translation_ceiling
+        is EvidenceAuthority.INDEPENDENTLY_CHECKABLE
+    )
 
 
 def test_legacy_policy_decision_is_not_recast_as_authorization() -> None:

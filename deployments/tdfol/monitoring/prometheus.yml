@@ -1,0 +1,33 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'tdfol-cluster'
+    environment: 'production'
+
+scrape_configs:
+  - job_name: 'tdfol'
+    static_configs:
+      - targets: ['tdfol:9090']
+        labels:
+          service: 'tdfol'
+          component: 'backend'
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['tdfol-redis:6379']
+        labels:
+          service: 'redis'
+          component: 'cache'
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
+          component: 'monitoring'

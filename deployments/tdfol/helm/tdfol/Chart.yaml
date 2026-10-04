@@ -1,0 +1,23 @@
+apiVersion: v2
+name: tdfol
+description: A Helm chart for TDFOL (Temporal Dynamic First-Order Logic) Service
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - tdfol
+  - logic
+  - theorem-proving
+  - ipfs
+  - ai
+home: https://github.com/endomorphosis/ipfs_datasets_py
+sources:
+  - https://github.com/endomorphosis/ipfs_datasets_py
+maintainers:
+  - name: IPFS Datasets Team
+    email: support@ipfs-datasets.example.com
+icon: https://ipfs.io/ipfs/QmIcon
+dependencies: []
+annotations:
+  category: AI/ML
+  licenses: Apache-2.0

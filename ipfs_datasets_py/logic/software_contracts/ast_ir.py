@@ -38,9 +38,15 @@ from ipfs_datasets_py.logic.software_contracts.schema_versions import (
 
 
 MAX_SAFE_INTEGER: Final[int] = (1 << 53) - 1
-AST_IR_DESCRIPTOR_SCHEMA: Final[str] = "ipfs-datasets.software-contracts.ast-ir-descriptor@1"
-_ID_RE: Final[re.Pattern[str]] = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/#@-]{0,511}$")
-_CAPABILITY_RE: Final[re.Pattern[str]] = re.compile(r"^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$")
+AST_IR_DESCRIPTOR_SCHEMA: Final[str] = (
+    "ipfs-datasets.software-contracts.ast-ir-descriptor@1"
+)
+_ID_RE: Final[re.Pattern[str]] = re.compile(
+    r"^[A-Za-z0-9][A-Za-z0-9._:/#@-]{0,511}$"
+)
+_CAPABILITY_RE: Final[re.Pattern[str]] = re.compile(
+    r"^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$"
+)
 
 SYMBOL_KINDS: Final[frozenset[str]] = frozenset(
     {
@@ -142,7 +148,9 @@ EFFECT_OPERATIONS: Final[frozenset[str]] = frozenset(
         "unknown",
     }
 )
-DIAGNOSTIC_SEVERITIES: Final[frozenset[str]] = frozenset({"info", "warning", "error", "fatal"})
+DIAGNOSTIC_SEVERITIES: Final[frozenset[str]] = frozenset(
+    {"info", "warning", "error", "fatal"}
+)
 
 
 class ASTIRValidationError(ValueError):
@@ -162,12 +170,14 @@ def _text(
     if not allow_empty and not value:
         raise ASTIRValidationError(f"{field_name} must not be empty")
     if value != value.strip() and value:
-        raise ASTIRValidationError(f"{field_name} must not contain surrounding whitespace")
+        raise ASTIRValidationError(
+            f"{field_name} must not contain surrounding whitespace"
+        )
     if len(value) > maximum:
         raise ASTIRValidationError(f"{field_name} exceeds {maximum} characters")
     if unicodedata.normalize("NFC", value) != value:
         raise ASTIRValidationError(f"{field_name} must be NFC-normalized")
-    if value and not value.isprintable():
+    if any(not character.isprintable() for character in value):
         raise ASTIRValidationError(f"{field_name} contains a control character")
     if no_whitespace and any(character.isspace() for character in value):
         raise ASTIRValidationError(f"{field_name} must not contain whitespace")
@@ -209,7 +219,9 @@ def _boolean(value: Any, field_name: str) -> bool:
 def _choice(value: Any, field_name: str, allowed: frozenset[str]) -> str:
     result = _text(value, field_name, no_whitespace=True, maximum=128)
     if result not in allowed:
-        raise ASTIRValidationError(f"{field_name} must be one of {sorted(allowed)}, got {result!r}")
+        raise ASTIRValidationError(
+            f"{field_name} must be one of {sorted(allowed)}, got {result!r}"
+        )
     return result
 
 
@@ -224,7 +236,9 @@ def _path(value: Any, field_name: str) -> str:
         or "//" in result
         or any(part in {"", ".", ".."} for part in result.split("/"))
     ):
-        raise ASTIRValidationError(f"{field_name} must be a normalized relative POSIX path")
+        raise ASTIRValidationError(
+            f"{field_name} must be a normalized relative POSIX path"
+        )
     return result
 
 
@@ -243,7 +257,9 @@ def _records(
     try:
         result = tuple(value)
     except TypeError as exc:
-        raise ASTIRValidationError(f"{field_name} must be an ordered sequence") from exc
+        raise ASTIRValidationError(
+            f"{field_name} must be an ordered sequence"
+        ) from exc
     if not all(type(item) is expected_type for item in result):
         raise ASTIRValidationError(
             f"{field_name} may contain only exact {expected_type.__name__} records"
@@ -264,7 +280,9 @@ def _strings(
     try:
         raw = tuple(value)
     except TypeError as exc:
-        raise ASTIRValidationError(f"{field_name} must be an ordered sequence") from exc
+        raise ASTIRValidationError(
+            f"{field_name} must be an ordered sequence"
+        ) from exc
     result: list[str] = []
     for index, item in enumerate(raw):
         name = f"{field_name}[{index}]"
@@ -294,7 +312,9 @@ def _closed_mapping(
     try:
         validate_structured_value(value)
     except (TypeError, ValueError) as exc:
-        raise ASTIRValidationError(f"{record_name} must be a strict canonical mapping") from exc
+        raise ASTIRValidationError(
+            f"{record_name} must be a strict canonical mapping"
+        ) from exc
     if type(value) is not dict:
         raise ASTIRValidationError(f"{record_name} must be an exact mapping")
     missing = sorted(expected - set(value))
@@ -308,11 +328,17 @@ def _closed_mapping(
 
 def _schema(value: Any, expected: SchemaVersion, field_name: str) -> SchemaVersion:
     try:
-        result = value if type(value) is SchemaVersion else SchemaVersion.from_dict(value)
+        result = (
+            value
+            if type(value) is SchemaVersion
+            else SchemaVersion.from_dict(value)
+        )
     except (SchemaVersionError, TypeError, ValueError) as exc:
         raise ASTIRValidationError(f"{field_name} is invalid") from exc
     if result != expected:
-        raise ASTIRValidationError(f"{field_name} must be exactly {expected.identifier}")
+        raise ASTIRValidationError(
+            f"{field_name} must be exactly {expected.identifier}"
+        )
     return result
 
 
@@ -355,13 +381,17 @@ class SourceProvenance(CanonicalASTRecord):
         try:
             source_cid = validate_cid(self.source_cid, codecs={SOURCE_CODEC})
             tree_cid = (
-                None if self.repository_tree_cid is None else validate_cid(self.repository_tree_cid)
+                None
+                if self.repository_tree_cid is None
+                else validate_cid(self.repository_tree_cid)
             )
         except (TypeError, ValueError) as exc:
             raise ASTIRValidationError("provenance contains an invalid CID") from exc
         object.__setattr__(self, "source_cid", source_cid)
         object.__setattr__(self, "path", _path(self.path, "path"))
-        object.__setattr__(self, "repository_id", _identifier(self.repository_id, "repository_id"))
+        object.__setattr__(
+            self, "repository_id", _identifier(self.repository_id, "repository_id")
+        )
         object.__setattr__(
             self,
             "revision",
@@ -408,9 +438,13 @@ class SourceSpan(CanonicalASTRecord):
 
     def __post_init__(self) -> None:
         for name in ("start_byte", "end_byte", "start_column", "end_column"):
-            object.__setattr__(self, name, _integer(getattr(self, name), name, minimum=0))
+            object.__setattr__(
+                self, name, _integer(getattr(self, name), name, minimum=0)
+            )
         for name in ("start_line", "end_line"):
-            object.__setattr__(self, name, _integer(getattr(self, name), name, minimum=1))
+            object.__setattr__(
+                self, name, _integer(getattr(self, name), name, minimum=1)
+            )
         if self.end_byte < self.start_byte:
             raise ASTIRValidationError("span end_byte precedes start_byte")
         if (self.end_line, self.end_column) < (
@@ -488,9 +522,13 @@ class FrontendCapability(CanonicalASTRecord):
                 sorted_set=True,
             ),
         )
-        extensions = _strings(self.source_extensions, "source_extensions", sorted_set=True)
+        extensions = _strings(
+            self.source_extensions, "source_extensions", sorted_set=True
+        )
         if any(not item.startswith(".") or item != item.lower() for item in extensions):
-            raise ASTIRValidationError("source_extensions must be lowercase dot-prefixed suffixes")
+            raise ASTIRValidationError(
+                "source_extensions must be lowercase dot-prefixed suffixes"
+            )
         object.__setattr__(self, "source_extensions", extensions)
         try:
             toolchain_cid = validate_cid(self.toolchain_cid)
@@ -556,7 +594,9 @@ class ModuleDefinition(CanonicalASTRecord):
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "module_id", _identifier(self.module_id, "module_id"))
-        object.__setattr__(self, "name", _text(self.name, "name", no_whitespace=True, maximum=1024))
+        object.__setattr__(
+            self, "name", _text(self.name, "name", no_whitespace=True, maximum=1024)
+        )
         object.__setattr__(self, "scope_id", _identifier(self.scope_id, "scope_id"))
         object.__setattr__(self, "span", _span(self.span, "span"))
         object.__setattr__(
@@ -649,9 +689,13 @@ class ParameterDefinition(CanonicalASTRecord):
     )
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "name", _text(self.name, "name", no_whitespace=True, maximum=512))
+        object.__setattr__(
+            self, "name", _text(self.name, "name", no_whitespace=True, maximum=512)
+        )
         object.__setattr__(self, "kind", _choice(self.kind, "kind", PARAMETER_KINDS))
-        object.__setattr__(self, "position", _integer(self.position, "position", minimum=0))
+        object.__setattr__(
+            self, "position", _integer(self.position, "position", minimum=0)
+        )
         object.__setattr__(
             self,
             "annotation",
@@ -716,7 +760,9 @@ class SignatureDefinition(CanonicalASTRecord):
             ),
         )
         object.__setattr__(self, "is_async", _boolean(self.is_async, "is_async"))
-        object.__setattr__(self, "is_generator", _boolean(self.is_generator, "is_generator"))
+        object.__setattr__(
+            self, "is_generator", _boolean(self.is_generator, "is_generator")
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -730,7 +776,9 @@ class SignatureDefinition(CanonicalASTRecord):
     def from_dict(cls, value: Mapping[str, Any]) -> "SignatureDefinition":
         data = _closed_mapping(value, cls._FIELDS, cls.__name__)
         return cls(
-            parameters=[ParameterDefinition.from_dict(item) for item in data["parameters"]],
+            parameters=[
+                ParameterDefinition.from_dict(item) for item in data["parameters"]
+            ],
             return_annotation=data["return_annotation"],
             is_async=data["is_async"],
             is_generator=data["is_generator"],
@@ -783,8 +831,13 @@ class SymbolDefinition(CanonicalASTRecord):
             "definition_ordinal",
             _integer(self.definition_ordinal, "definition_ordinal", minimum=0),
         )
-        if self.signature is not None and type(self.signature) is not SignatureDefinition:
-            raise ASTIRValidationError("signature must be an exact SignatureDefinition")
+        if (
+            self.signature is not None
+            and type(self.signature) is not SignatureDefinition
+        ):
+            raise ASTIRValidationError(
+                "signature must be an exact SignatureDefinition"
+            )
         object.__setattr__(
             self,
             "visibility",
@@ -802,11 +855,15 @@ class SymbolDefinition(CanonicalASTRecord):
         object.__setattr__(
             self,
             "flags",
-            _strings(self.flags, "flags", capabilities=True, sorted_set=True),
+            _strings(
+                self.flags, "flags", capabilities=True, sorted_set=True
+            ),
         )
         callable_kinds = {"function", "method", "constructor"}
         if self.signature is not None and self.kind not in callable_kinds:
-            raise ASTIRValidationError("only callable symbol kinds may carry a signature")
+            raise ASTIRValidationError(
+                "only callable symbol kinds may carry a signature"
+            )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -887,7 +944,9 @@ class ImportDefinition(CanonicalASTRecord):
                     name,
                     _text(value, name, no_whitespace=True, maximum=1024),
                 )
-        object.__setattr__(self, "is_type_only", _boolean(self.is_type_only, "is_type_only"))
+        object.__setattr__(
+            self, "is_type_only", _boolean(self.is_type_only, "is_type_only")
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -932,8 +991,12 @@ class ReferenceRecord(CanonicalASTRecord):
     )
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "reference_id", _identifier(self.reference_id, "reference_id"))
-        object.__setattr__(self, "name", _text(self.name, "name", no_whitespace=True, maximum=2048))
+        object.__setattr__(
+            self, "reference_id", _identifier(self.reference_id, "reference_id")
+        )
+        object.__setattr__(
+            self, "name", _text(self.name, "name", no_whitespace=True, maximum=2048)
+        )
         object.__setattr__(self, "scope_id", _identifier(self.scope_id, "scope_id"))
         object.__setattr__(
             self,
@@ -941,7 +1004,9 @@ class ReferenceRecord(CanonicalASTRecord):
             _choice(self.context, "context", REFERENCE_CONTEXTS),
         )
         object.__setattr__(self, "span", _span(self.span, "span"))
-        object.__setattr__(self, "is_qualified", _boolean(self.is_qualified, "is_qualified"))
+        object.__setattr__(
+            self, "is_qualified", _boolean(self.is_qualified, "is_qualified")
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -1017,16 +1082,22 @@ class CallRecord(CanonicalASTRecord):
         object.__setattr__(
             self,
             "callee_reference_id",
-            _optional_identifier(self.callee_reference_id, "callee_reference_id"),
+            _optional_identifier(
+                self.callee_reference_id, "callee_reference_id"
+            ),
         )
         object.__setattr__(
             self,
             "named_argument_names",
             _strings(self.named_argument_names, "named_argument_names"),
         )
-        object.__setattr__(self, "is_awaited", _boolean(self.is_awaited, "is_awaited"))
+        object.__setattr__(
+            self, "is_awaited", _boolean(self.is_awaited, "is_awaited")
+        )
         if len(self.named_argument_names) > self.argument_count:
-            raise ASTIRValidationError("named_argument_names cannot exceed argument_count")
+            raise ASTIRValidationError(
+                "named_argument_names cannot exceed argument_count"
+            )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -1116,16 +1187,22 @@ class DiagnosticRecord(CanonicalASTRecord):
     message: str
     span: SourceSpan | None = None
 
-    _FIELDS: ClassVar[frozenset[str]] = frozenset({"code", "severity", "message", "span"})
+    _FIELDS: ClassVar[frozenset[str]] = frozenset(
+        {"code", "severity", "message", "span"}
+    )
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "code", _text(self.code, "code", no_whitespace=True, maximum=256))
+        object.__setattr__(
+            self, "code", _text(self.code, "code", no_whitespace=True, maximum=256)
+        )
         object.__setattr__(
             self,
             "severity",
             _choice(self.severity, "severity", DIAGNOSTIC_SEVERITIES),
         )
-        object.__setattr__(self, "message", _text(self.message, "message", maximum=16_384))
+        object.__setattr__(
+            self, "message", _text(self.message, "message", maximum=16_384)
+        )
         if self.span is not None:
             object.__setattr__(self, "span", _span(self.span, "span"))
 
@@ -1166,13 +1243,17 @@ class UnsupportedConstruct(CanonicalASTRecord):
             "unsupported_id",
             _identifier(self.unsupported_id, "unsupported_id"),
         )
-        object.__setattr__(self, "code", _text(self.code, "code", no_whitespace=True, maximum=256))
+        object.__setattr__(
+            self, "code", _text(self.code, "code", no_whitespace=True, maximum=256)
+        )
         object.__setattr__(
             self,
             "construct",
             _text(self.construct, "construct", no_whitespace=True, maximum=512),
         )
-        object.__setattr__(self, "reason", _text(self.reason, "reason", maximum=4096))
+        object.__setattr__(
+            self, "reason", _text(self.reason, "reason", maximum=4096)
+        )
         object.__setattr__(self, "span", _span(self.span, "span"))
 
     def to_dict(self) -> dict[str, Any]:
@@ -1256,7 +1337,9 @@ class ASTRecord(CanonicalASTRecord):
 
     def __post_init__(self) -> None:
         if type(self) is not ASTRecord:
-            raise ASTIRValidationError("frontend results must be exact ASTRecord instances")
+            raise ASTIRValidationError(
+                "frontend results must be exact ASTRecord instances"
+            )
         if type(self.provenance) is not SourceProvenance:
             raise ASTIRValidationError("provenance must be exact SourceProvenance")
         if type(self.frontend) is not FrontendCapability:
@@ -1308,12 +1391,24 @@ class ASTRecord(CanonicalASTRecord):
             raise ASTIRValidationError(
                 "AST must have exactly one root scope matching module.scope_id"
             )
-        parent_by_scope = {item.scope_id: item.parent_scope_id for item in self.scopes}
+        parent_by_scope = {
+            item.scope_id: item.parent_scope_id for item in self.scopes
+        }
         for item in self.scopes:
-            if item.parent_scope_id is not None and item.parent_scope_id not in scope_ids:
-                raise ASTIRValidationError(f"scope {item.scope_id} has unknown parent_scope_id")
-            if item.owner_symbol_id is not None and item.owner_symbol_id not in symbol_ids:
-                raise ASTIRValidationError(f"scope {item.scope_id} has unknown owner_symbol_id")
+            if (
+                item.parent_scope_id is not None
+                and item.parent_scope_id not in scope_ids
+            ):
+                raise ASTIRValidationError(
+                    f"scope {item.scope_id} has unknown parent_scope_id"
+                )
+            if (
+                item.owner_symbol_id is not None
+                and item.owner_symbol_id not in symbol_ids
+            ):
+                raise ASTIRValidationError(
+                    f"scope {item.scope_id} has unknown owner_symbol_id"
+                )
             seen: set[str] = set()
             current: str | None = item.scope_id
             while current is not None:
@@ -1381,11 +1476,17 @@ class ASTRecord(CanonicalASTRecord):
             scopes=[ScopeDefinition.from_dict(item) for item in data["scopes"]],
             symbols=[SymbolDefinition.from_dict(item) for item in data["symbols"]],
             imports=[ImportDefinition.from_dict(item) for item in data["imports"]],
-            references=[ReferenceRecord.from_dict(item) for item in data["references"]],
+            references=[
+                ReferenceRecord.from_dict(item) for item in data["references"]
+            ],
             calls=[CallRecord.from_dict(item) for item in data["calls"]],
             effects=[EffectRecord.from_dict(item) for item in data["effects"]],
-            diagnostics=[DiagnosticRecord.from_dict(item) for item in data["diagnostics"]],
-            unsupported=[UnsupportedConstruct.from_dict(item) for item in data["unsupported"]],
+            diagnostics=[
+                DiagnosticRecord.from_dict(item) for item in data["diagnostics"]
+            ],
+            unsupported=[
+                UnsupportedConstruct.from_dict(item) for item in data["unsupported"]
+            ],
         )
 
     @classmethod

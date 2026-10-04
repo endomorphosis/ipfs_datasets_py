@@ -1,0 +1,85 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Responsive Dashboard</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; background: #f8fafc; }
+        .mobile-container { max-width: 375px; margin: 2rem auto; background: white; border-radius: 1rem; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .mobile-header { background: linear-gradient(135deg, #1e40af, #6366f1); color: white; padding: 1rem; text-align: center; }
+        .mobile-nav { padding: 1rem 0; }
+        .nav-section { margin-bottom: 1rem; }
+        .nav-section-title { font-size: 0.75rem; font-weight: 600; color: #6b7280; padding: 0 1rem; margin-bottom: 0.5rem; text-transform: uppercase; }
+        .nav-item { display: flex; align-items: center; padding: 0.875rem 1rem; color: #374151; gap: 0.75rem; }
+        .nav-item.active { background: #1e40af; color: white; }
+        .mobile-content { padding: 1rem; }
+        .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1rem; }
+        .stat-card { text-align: center; padding: 1rem; background: #f8fafc; border-radius: 0.5rem; }
+        .stat-value { font-size: 1.5rem; font-weight: bold; color: #1e40af; }
+        .stat-label { font-size: 0.75rem; color: #6b7280; }
+        .responsive-note { background: #f0f9ff; padding: 1rem; border-left: 4px solid #1e40af; margin: 2rem auto; max-width: 600px; }
+    </style>
+</head>
+<body>
+    <div class="responsive-note">
+        <strong>Responsive Design:</strong> The unified dashboard adapts seamlessly to mobile devices while maintaining full functionality and professional appearance.
+    </div>
+    
+    <div class="mobile-container">
+        <div class="mobile-header">
+            <h2>🔍 Investigation Hub</h2>
+            <p style="font-size: 0.875rem; opacity: 0.9;">Mobile Interface</p>
+        </div>
+        
+        <nav class="mobile-nav">
+            <div class="nav-section">
+                <div class="nav-section-title">Investigation</div>
+                <div class="nav-item active">
+                    <span>📊</span>
+                    <span>Overview</span>
+                </div>
+                <div class="nav-item">
+                    <span>🔍</span>
+                    <span>Entity Explorer</span>
+                </div>
+                <div class="nav-item">
+                    <span>🕸️</span>
+                    <span>Relationships</span>
+                </div>
+            </div>
+            
+            <div class="nav-section">
+                <div class="nav-section-title">Data</div>
+                <div class="nav-item">
+                    <span>📥</span>
+                    <span>Ingestion</span>
+                </div>
+                <div class="nav-item">
+                    <span>📚</span>
+                    <span>Corpus</span>
+                </div>
+            </div>
+        </nav>
+        
+        <div class="mobile-content">
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <div class="stat-value">5.6K</div>
+                    <div class="stat-label">Entities</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">2.9K</div>
+                    <div class="stat-label">Relations</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="responsive-note" style="margin-top: 2rem;">
+        <strong>Key Features:</strong> Touch-friendly navigation, optimized content layout, full functionality preserved, professional mobile experience for field research.
+    </div>
+</body>
+</html>
+        

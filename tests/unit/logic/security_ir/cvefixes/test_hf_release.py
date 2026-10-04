@@ -36,7 +36,9 @@ from ipfs_datasets_py.logic.security_ir.cvefixes.schemas import (
 
 
 def _cid(label: str) -> str:
-    return canonical_identity({"label": label}, domain="test", schema_version="test/v1").cid
+    return canonical_identity(
+        {"label": label}, domain="test", schema_version="test/v1"
+    ).cid
 
 
 SOURCE_CID = _cid("pinned-source")
@@ -125,17 +127,21 @@ def test_build_is_reproducible_and_manifest_binds_every_artifact() -> None:
 
     assert first.release_root == second.release_root
     assert first.release_manifest == second.release_manifest
-    assert [(item.path, item.sha256, item.content_id) for item in first.artifacts] == [
+    assert [
+        (item.path, item.sha256, item.content_id) for item in first.artifacts
+    ] == [
         (item.path, item.sha256, item.content_id) for item in second.artifacts
     ]
-    assert first.artifact("manifest.json").content == second.artifact("manifest.json").content
+    assert first.artifact("manifest.json").content == second.artifact(
+        "manifest.json"
+    ).content
 
     manifest = json.loads(first.artifact("manifest.json").content)
     assert manifest["release_root"] == first.release_root
     assert manifest["derived_dataset_root"] == _dataset().cid
-    assert {item["path"] for item in manifest["artifacts"]} == {
-        item.path for item in first.artifacts if item.path != "manifest.json"
-    }
+    assert {
+        item["path"] for item in manifest["artifacts"]
+    } == {item.path for item in first.artifacts if item.path != "manifest.json"}
     assert set(first.release_manifest.shard_cids) == {
         item.content_id for item in first.parquet_artifacts
     }
@@ -181,9 +187,10 @@ def test_parquet_configs_are_bounded_strict_and_round_trip_records() -> None:
         "policy_candidate",
         "source_record",
     }
-    assert (
-        sum(config["splits"]["train"]["num_examples"] for config in infos["configs"].values()) == 8
-    )
+    assert sum(
+        config["splits"]["train"]["num_examples"]
+        for config in infos["configs"].values()
+    ) == 8
 
 
 def test_skillcenter_compatible_meta_indexes_bind_every_data_shard() -> None:
@@ -229,8 +236,8 @@ def test_skillcenter_compatible_meta_indexes_bind_every_data_shard() -> None:
     manifest = json.loads(release.artifact("manifest.json").content)
     assert set(manifest["indexes"]) == {"corpus_chunks", "graph_node_chunks"}
     card = release.artifact("README.md").content.decode()
-    assert 'config_name: "corpus_chunk_index"' in card
-    assert 'path: "indexes/corpus_chunks.parquet"' in card
+    assert "config_name: \"corpus_chunk_index\"" in card
+    assert "path: \"indexes/corpus_chunks.parquet\"" in card
 
 
 def test_dataset_card_documents_source_license_profile_and_limitations() -> None:
@@ -251,21 +258,24 @@ def test_evaluation_report_is_canonical_and_explicitly_non_authoritative() -> No
     report_artifact = release.artifact("evaluation-report.json")
     report = json.loads(report_artifact.content)
 
-    assert (
-        report_artifact.content
-        == json.dumps(report, ensure_ascii=True, separators=(",", ":"), sort_keys=True).encode()
-    )
+    assert report_artifact.content == json.dumps(
+        report, ensure_ascii=True, separators=(",", ":"), sort_keys=True
+    ).encode()
     assert report["evaluation"]["record_type"] == "evaluation"
     assert report["evaluation"]["metrics"]["promotion_review"]["decision"] == "promote"
     assert report["grants_execution_authority"] is False
 
 
-def test_validate_only_requires_no_credentials_and_writes_nothing(tmp_path, monkeypatch) -> None:
+def test_validate_only_requires_no_credentials_and_writes_nothing(
+    tmp_path, monkeypatch
+) -> None:
     for name in ("HF_TOKEN", "HUGGING_FACE_HUB_TOKEN", "HF_HOME"):
         monkeypatch.delenv(name, raising=False)
     target = tmp_path / "release"
 
-    result = stage_huggingface_release(_release(), target, validate_only=True)
+    result = stage_huggingface_release(
+        _release(), target, validate_only=True
+    )
 
     assert result.valid
     assert result.credentials_required is False
@@ -278,9 +288,15 @@ def test_staging_writes_only_the_validated_inventory(tmp_path) -> None:
 
     stage_huggingface_release(release, target, validate_only=False)
 
-    staged = {path.relative_to(target).as_posix() for path in target.rglob("*") if path.is_file()}
+    staged = {
+        path.relative_to(target).as_posix()
+        for path in target.rglob("*")
+        if path.is_file()
+    }
     assert staged == {item.path for item in release.artifacts}
-    assert (target / "manifest.json").read_bytes() == release.artifact("manifest.json").content
+    assert (target / "manifest.json").read_bytes() == release.artifact(
+        "manifest.json"
+    ).content
     with pytest.raises(ReleaseSafetyError, match="empty"):
         stage_huggingface_release(release, target, validate_only=False)
 
@@ -369,7 +385,8 @@ def test_validation_detects_artifact_tampering() -> None:
     changed = replace(
         release,
         artifacts=tuple(
-            tampered if item.path == original.path else item for item in release.artifacts
+            tampered if item.path == original.path else item
+            for item in release.artifacts
         ),
     )
 
@@ -386,9 +403,13 @@ def test_bounded_query_client_caps_shards_rows_and_results() -> None:
             row_group_size=1,
         )
     )
-    client = BoundedReleaseQueryClient(release, max_shards=2, max_rows=2, max_results=1)
+    client = BoundedReleaseQueryClient(
+        release, max_shards=2, max_rows=2, max_results=1
+    )
 
-    response = client.query(ReleaseQuery(text="cve", max_shards=999, max_rows=999, max_results=999))
+    response = client.query(
+        ReleaseQuery(text="cve", max_shards=999, max_rows=999, max_results=999)
+    )
 
     assert response.shards_scanned == 2
     assert response.rows_scanned == 2

@@ -1,0 +1,30 @@
+========================================================================
+BATCH 269: Consistency Cycle Profiling
+========================================================================
+
+Entities: 800
+Relationships: 1200
+With cycle: True
+Elapsed ms: 3.77
+Score: 0.9700
+
+         20457 function calls in 0.004 seconds
+
+   Ordered by: cumulative time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.002    0.002    0.004    0.004 /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/optimizers/graphrag/ontology_critic_consistency.py:46(evaluate_consistency)
+        1    0.001    0.001    0.001    0.001 /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/optimizers/graphrag/ontology_critic_consistency.py:10(_has_cycle_from_edges)
+    10420    0.001    0.000    0.001    0.000 {method 'get' of 'dict' objects}
+     5209    0.000    0.000    0.000    0.000 {built-in method builtins.isinstance}
+     2406    0.000    0.000    0.000    0.000 {method 'setdefault' of 'dict' objects}
+     2406    0.000    0.000    0.000    0.000 {method 'append' of 'list' objects}
+        1    0.000    0.000    0.000    0.000 {method 'sort' of 'list' objects}
+        1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}
+        1    0.000    0.000    0.000    0.000 {built-in method builtins.round}
+        3    0.000    0.000    0.000    0.000 {built-in method builtins.max}
+        6    0.000    0.000    0.000    0.000 {built-in method builtins.len}
+        1    0.000    0.000    0.000    0.000 {built-in method builtins.min}
+        1    0.000    0.000    0.000    0.000 {method 'items' of 'dict' objects}
+
+

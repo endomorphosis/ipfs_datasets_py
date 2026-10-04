@@ -210,7 +210,9 @@ def test_spend_analysis_requires_prevout_for_pass(
 def test_spend_analysis_pass_with_bound_prevout(
     frontend: BitcoinScriptFrontend,
 ) -> None:
-    prev = frontend.bind_prevout(txid=TXID, vout=0, value_sats=100_000, script_pubkey=P2PKH)
+    prev = frontend.bind_prevout(
+        txid=TXID, vout=0, value_sats=100_000, script_pubkey=P2PKH
+    )
     result = frontend.analyze_spend(
         chain_id="bitcoin-mainnet",
         network="mainnet",
@@ -235,7 +237,9 @@ def test_spend_analysis_pass_with_bound_prevout(
 
 
 def test_weak_sighash_never_passes(frontend: BitcoinScriptFrontend) -> None:
-    prev = frontend.bind_prevout(txid=TXID, vout=0, value_sats=1_000, script_pubkey=P2PKH)
+    prev = frontend.bind_prevout(
+        txid=TXID, vout=0, value_sats=1_000, script_pubkey=P2PKH
+    )
     for flag in (
         int(SighashFlag.NONE),
         int(SighashFlag.SINGLE),
@@ -276,7 +280,9 @@ def test_sighash_all_not_weak(frontend: BitcoinScriptFrontend) -> None:
 def test_csv_timelock_extraction_and_satisfaction(
     frontend: BitcoinScriptFrontend,
 ) -> None:
-    prev = frontend.bind_prevout(txid=TXID, vout=0, value_sats=5_000, script_pubkey=CSV_ONLY)
+    prev = frontend.bind_prevout(
+        txid=TXID, vout=0, value_sats=5_000, script_pubkey=CSV_ONLY
+    )
     # Sequence too low → unsatisfied.
     unsat = frontend.analyze_spend(
         chain_id="bitcoin-mainnet",
@@ -306,7 +312,9 @@ def test_csv_timelock_extraction_and_satisfaction(
 
 
 def test_cltv_timelock(frontend: BitcoinScriptFrontend) -> None:
-    prev = frontend.bind_prevout(txid=TXID, vout=2, value_sats=2_000, script_pubkey=CLTV_ONLY)
+    prev = frontend.bind_prevout(
+        txid=TXID, vout=2, value_sats=2_000, script_pubkey=CLTV_ONLY
+    )
     result = frontend.analyze_spend(
         chain_id="bitcoin-mainnet",
         prevout=prev,
@@ -324,7 +332,9 @@ def test_cltv_timelock(frontend: BitcoinScriptFrontend) -> None:
 
 
 def test_alternative_spend_paths_recorded(frontend: BitcoinScriptFrontend) -> None:
-    prev = frontend.bind_prevout(txid=TXID, vout=0, value_sats=9_000, script_pubkey=P2SH)
+    prev = frontend.bind_prevout(
+        txid=TXID, vout=0, value_sats=9_000, script_pubkey=P2SH
+    )
     result = frontend.analyze_spend(
         chain_id="bitcoin-mainnet",
         prevout=prev,
@@ -375,7 +385,9 @@ def test_control_block_parse_and_leaf(frontend: BitcoinScriptFrontend) -> None:
 
 
 def test_hidden_tap_branch_incomplete(frontend: BitcoinScriptFrontend) -> None:
-    leaf = frontend.bind_tapscript_leaf(TAP_LEAF_SCRIPT, availability=LeafAvailability.HIDDEN)
+    leaf = frontend.bind_tapscript_leaf(
+        TAP_LEAF_SCRIPT, availability=LeafAvailability.HIDDEN
+    )
     assert leaf.is_hidden
     commitment = frontend.bind_taproot(
         internal_key=INTERNAL_KEY,
@@ -397,7 +409,9 @@ def test_hidden_tap_branch_incomplete(frontend: BitcoinScriptFrontend) -> None:
             commitment_complete=True,
         )
 
-    prev = frontend.bind_prevout(txid=TXID, vout=0, value_sats=1_000, script_pubkey=P2TR)
+    prev = frontend.bind_prevout(
+        txid=TXID, vout=0, value_sats=1_000, script_pubkey=P2TR
+    )
     result = frontend.analyze_spend(
         chain_id="bitcoin-mainnet",
         prevout=prev,
@@ -409,7 +423,10 @@ def test_hidden_tap_branch_incomplete(frontend: BitcoinScriptFrontend) -> None:
         SemanticPassStatus.INCOMPLETE,
         SemanticPassStatus.FAIL_CLOSED,
     }
-    assert any(p.path_id == "taproot:hidden" and not p.available for p in result.spending_paths)
+    assert any(
+        p.path_id == "taproot:hidden" and not p.available
+        for p in result.spending_paths
+    )
 
 
 def test_malformed_control_block_incomplete(frontend: BitcoinScriptFrontend) -> None:
@@ -452,7 +469,10 @@ def test_policy_equality_proven(frontend: BitcoinScriptFrontend) -> None:
     left = "and(pk(A),pk(B))"
     right = "and(pk(A),pk(B))"
     assert frontend.compare_policies(left, right) is PolicyEquivalenceStatus.PROVEN_EQUAL
-    assert frontend.compare_policies("pk(A)", "pk(B)") is PolicyEquivalenceStatus.PROVEN_UNEQUAL
+    assert (
+        frontend.compare_policies("pk(A)", "pk(B)")
+        is PolicyEquivalenceStatus.PROVEN_UNEQUAL
+    )
 
 
 def test_descriptor_parse_and_mismatch(frontend: BitcoinScriptFrontend) -> None:
@@ -465,7 +485,9 @@ def test_descriptor_parse_and_mismatch(frontend: BitcoinScriptFrontend) -> None:
     result = frontend.analyze_spend(
         chain_id="bitcoin-mainnet",
         script_pubkey=P2WSH,
-        prevout=frontend.bind_prevout(txid=TXID, vout=0, value_sats=10_000, script_pubkey=P2WSH),
+        prevout=frontend.bind_prevout(
+            txid=TXID, vout=0, value_sats=10_000, script_pubkey=P2WSH
+        ),
         policy_expression="pk(OnlyAlice)",
         descriptor="wsh(multi(2,A,B,C))",
         claim_pass=True,
@@ -496,7 +518,9 @@ def test_unknown_policy_equality() -> None:
 
 
 def test_psbt_input_and_binding(frontend: BitcoinScriptFrontend) -> None:
-    prev = frontend.bind_prevout(txid=TXID, vout=0, value_sats=25_000, script_pubkey=P2WPKH)
+    prev = frontend.bind_prevout(
+        txid=TXID, vout=0, value_sats=25_000, script_pubkey=P2WPKH
+    )
     inp = frontend.bind_psbt_input(
         input_index=0,
         prevout=prev,
@@ -602,7 +626,9 @@ def test_incomplete_spend_never_passes_helper() -> None:
 
 
 def test_hashlock_extraction(frontend: BitcoinScriptFrontend) -> None:
-    prev = frontend.bind_prevout(txid=TXID, vout=0, value_sats=500, script_pubkey=HASHLOCK)
+    prev = frontend.bind_prevout(
+        txid=TXID, vout=0, value_sats=500, script_pubkey=HASHLOCK
+    )
     result = frontend.analyze_spend(
         chain_id="bitcoin-mainnet",
         prevout=prev,
@@ -646,7 +672,9 @@ def test_policy_only_cannot_claim_execution_pass(
 
 
 def test_normalization_result_serializable(frontend: BitcoinScriptFrontend) -> None:
-    prev = frontend.bind_prevout(txid=TXID, vout=0, value_sats=1, script_pubkey=P2PKH)
+    prev = frontend.bind_prevout(
+        txid=TXID, vout=0, value_sats=1, script_pubkey=P2PKH
+    )
     result = frontend.analyze_spend(
         chain_id="bitcoin-mainnet",
         prevout=prev,

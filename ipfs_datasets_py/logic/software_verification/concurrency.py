@@ -206,7 +206,8 @@ def _coerce_records(
     id_field: str,
 ) -> tuple[Any, ...]:
     records = tuple(
-        item if isinstance(item, cls) else cls.from_dict(_mapping(item, label)) for item in values
+        item if isinstance(item, cls) else cls.from_dict(_mapping(item, label))
+        for item in values
     )
     return tuple(sorted(records, key=lambda item: getattr(item, id_field)))
 
@@ -250,7 +251,9 @@ class ConcurrentComponent:
     schema_version: str = COMPONENT_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "component_id", _identifier(self.component_id, "component_id"))
+        object.__setattr__(
+            self, "component_id", _identifier(self.component_id, "component_id")
+        )
         object.__setattr__(self, "kind", _enum(self.kind, ComponentKind, "kind"))
         object.__setattr__(self, "name", _text(self.name, "name"))
         object.__setattr__(
@@ -300,7 +303,9 @@ class ConcurrentComponent:
             name=value.get("name", ""),
             local_variable_ids=tuple(value.get("local_variable_ids", ())),
             step_ids=tuple(value.get("step_ids", ())),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
             schema_version=value.get("schema_version", COMPONENT_SCHEMA_VERSION),
         )
 
@@ -331,7 +336,9 @@ class ConcurrentStep:
         owner = _enum(self.owner, StepOwner, "owner")
         object.__setattr__(self, "owner", owner)
         object.__setattr__(self, "label", _text(self.label, "label"))
-        object.__setattr__(self, "guard_statement", _text(self.guard_statement, "guard_statement"))
+        object.__setattr__(
+            self, "guard_statement", _text(self.guard_statement, "guard_statement")
+        )
         object.__setattr__(
             self, "effect_statement", _text(self.effect_statement, "effect_statement")
         )
@@ -424,7 +431,9 @@ class ConcurrentStep:
             atomic_region_id=value.get("atomic_region_id", ""),
             read_variable_ids=tuple(value.get("read_variable_ids", ())),
             write_variable_ids=tuple(value.get("write_variable_ids", ())),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
             schema_version=value.get("schema_version", STEP_SCHEMA_VERSION),
         )
 
@@ -443,12 +452,16 @@ class AtomicRegion:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "region_id", _identifier(self.region_id, "region_id"))
-        object.__setattr__(self, "component_id", _identifier(self.component_id, "component_id"))
+        object.__setattr__(
+            self, "component_id", _identifier(self.component_id, "component_id")
+        )
         step_ids = _ids(self.step_ids, "step_ids", preserve_order=True)
         if not step_ids:
             raise ConcurrencyValidationError("atomic region requires at least one step")
         object.__setattr__(self, "step_ids", step_ids)
-        object.__setattr__(self, "atomicity", _enum(self.atomicity, AtomicityKind, "atomicity"))
+        object.__setattr__(
+            self, "atomicity", _enum(self.atomicity, AtomicityKind, "atomicity")
+        )
         if self.atomicity is AtomicityKind.NONE:
             raise ConcurrencyValidationError(
                 "atomic region atomicity must not be 'none'; use non-atomic steps"
@@ -495,7 +508,9 @@ class AtomicRegion:
             step_ids=tuple(value.get("step_ids", ())),
             atomicity=value.get("atomicity", AtomicityKind.ATOMIC),
             statement=value.get("statement", "atomic"),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
             schema_version=value.get("schema_version", ATOMIC_REGION_SCHEMA_VERSION),
         )
 
@@ -549,7 +564,10 @@ class InterferenceAssumption:
             raise ConcurrencyValidationError(
                 "interference requires an interferer component or environment flag"
             )
-        if not interferer_is_environment and interferer_component_id == self.subject_component_id:
+        if (
+            not interferer_is_environment
+            and interferer_component_id == self.subject_component_id
+        ):
             raise ConcurrencyValidationError(
                 "interference interferer must differ from the subject component"
             )
@@ -607,7 +625,9 @@ class InterferenceAssumption:
             interferer_component_id=value.get("interferer_component_id", ""),
             interferer_is_environment=value.get("interferer_is_environment", False),
             shared_variable_ids=tuple(value.get("shared_variable_ids", ())),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
             schema_version=value.get("schema_version", INTERFERENCE_SCHEMA_VERSION),
         )
 
@@ -625,14 +645,17 @@ class ConcurrencyFairness:
     schema_version: str = FAIRNESS_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "fairness_id", _identifier(self.fairness_id, "fairness_id"))
+        object.__setattr__(
+            self, "fairness_id", _identifier(self.fairness_id, "fairness_id")
+        )
         object.__setattr__(self, "kind", _enum(self.kind, FairnessKind, "kind"))
         object.__setattr__(self, "statement", _text(self.statement, "statement"))
         step_ids = _ids(self.step_ids, "step_ids")
         component_ids = _ids(self.component_ids, "component_ids")
         if not step_ids and not component_ids:
             raise ConcurrencyValidationError(
-                "fairness assumptions require step_ids or component_ids; fairness is never implicit"
+                "fairness assumptions require step_ids or component_ids; "
+                "fairness is never implicit"
             )
         object.__setattr__(self, "step_ids", step_ids)
         object.__setattr__(self, "component_ids", component_ids)
@@ -677,7 +700,9 @@ class ConcurrencyFairness:
             statement=value.get("statement", ""),
             step_ids=tuple(value.get("step_ids", ())),
             component_ids=tuple(value.get("component_ids", ())),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
             schema_version=value.get("schema_version", FAIRNESS_SCHEMA_VERSION),
         )
 
@@ -700,9 +725,15 @@ class RelyGuaranteeContract:
     schema_version: str = RELY_GUARANTEE_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "contract_id", _identifier(self.contract_id, "contract_id"))
-        object.__setattr__(self, "component_id", _identifier(self.component_id, "component_id"))
-        object.__setattr__(self, "rely_statement", _text(self.rely_statement, "rely_statement"))
+        object.__setattr__(
+            self, "contract_id", _identifier(self.contract_id, "contract_id")
+        )
+        object.__setattr__(
+            self, "component_id", _identifier(self.component_id, "component_id")
+        )
+        object.__setattr__(
+            self, "rely_statement", _text(self.rely_statement, "rely_statement")
+        )
         object.__setattr__(
             self,
             "guarantee_statement",
@@ -760,7 +791,9 @@ class RelyGuaranteeContract:
             guarantee_statement=value.get("guarantee_statement", ""),
             shared_variable_ids=tuple(value.get("shared_variable_ids", ())),
             interference_ids=tuple(value.get("interference_ids", ())),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
             schema_version=value.get("schema_version", RELY_GUARANTEE_SCHEMA_VERSION),
         )
 
@@ -779,26 +812,40 @@ class ConcurrentChannel:
     schema_version: str = CHANNEL_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "channel_id", _identifier(self.channel_id, "channel_id"))
+        object.__setattr__(
+            self, "channel_id", _identifier(self.channel_id, "channel_id")
+        )
         object.__setattr__(self, "name", _text(self.name, "name"))
         mode = _enum(self.mode, ChannelMode, "mode")
         object.__setattr__(self, "mode", mode)
-        endpoints = _ids(self.endpoint_component_ids, "endpoint_component_ids", preserve_order=True)
+        endpoints = _ids(
+            self.endpoint_component_ids, "endpoint_component_ids", preserve_order=True
+        )
         if len(endpoints) < 2:
-            raise ConcurrencyValidationError("channel requires at least two endpoint components")
+            raise ConcurrencyValidationError(
+                "channel requires at least two endpoint components"
+            )
         object.__setattr__(self, "endpoint_component_ids", endpoints)
-        object.__setattr__(self, "payload_sort", _text(self.payload_sort, "payload_sort"))
+        object.__setattr__(
+            self, "payload_sort", _text(self.payload_sort, "payload_sort")
+        )
         capacity = self.capacity
         if capacity is not None:
             capacity = _non_bool_int(capacity, "capacity")
             if capacity < 0:
                 raise ConcurrencyValidationError("channel capacity must be non-negative")
         if mode is ChannelMode.BUFFERED and capacity is None:
-            raise ConcurrencyValidationError("buffered channels require an explicit capacity")
+            raise ConcurrencyValidationError(
+                "buffered channels require an explicit capacity"
+            )
         if mode is not ChannelMode.BUFFERED and capacity is not None:
-            raise ConcurrencyValidationError("capacity is only valid for buffered channels")
+            raise ConcurrencyValidationError(
+                "capacity is only valid for buffered channels"
+            )
         if mode is ChannelMode.SYNCHRONOUS and capacity not in (None, 0):
-            raise ConcurrencyValidationError("synchronous channels do not admit positive capacity")
+            raise ConcurrencyValidationError(
+                "synchronous channels do not admit positive capacity"
+            )
         object.__setattr__(self, "capacity", capacity)
         object.__setattr__(self, "attributes", _frozen(self.attributes, "attributes"))
         if self.schema_version != CHANNEL_SCHEMA_VERSION:
@@ -844,7 +891,9 @@ class ConcurrentChannel:
             endpoint_component_ids=tuple(value.get("endpoint_component_ids", ())),
             payload_sort=value.get("payload_sort", "message"),
             capacity=value.get("capacity"),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
             schema_version=value.get("schema_version", CHANNEL_SCHEMA_VERSION),
         )
 
@@ -868,7 +917,9 @@ class SessionAction:
         object.__setattr__(self, "label", _text(self.label, "label"))
         payload_sort = _optional_text(self.payload_sort, "payload_sort")
         if polarity in (SessionPolarity.SEND, SessionPolarity.RECEIVE) and not payload_sort:
-            raise ConcurrencyValidationError("send/receive session actions require payload_sort")
+            raise ConcurrencyValidationError(
+                "send/receive session actions require payload_sort"
+            )
         if polarity in (SessionPolarity.INTERNAL, SessionPolarity.END) and payload_sort:
             raise ConcurrencyValidationError(
                 "internal/end session actions must not declare payload_sort"
@@ -880,7 +931,9 @@ class SessionAction:
             _ids(self.continuation_action_ids, "continuation_action_ids"),
         )
         if polarity is SessionPolarity.END and self.continuation_action_ids:
-            raise ConcurrencyValidationError("end session actions must not have continuations")
+            raise ConcurrencyValidationError(
+                "end session actions must not have continuations"
+            )
         object.__setattr__(self, "attributes", _frozen(self.attributes, "attributes"))
         if self.schema_version != SESSION_ACTION_SCHEMA_VERSION:
             raise ConcurrencyValidationError(
@@ -935,7 +988,9 @@ class SessionAction:
             label=value.get("label", ""),
             payload_sort=value.get("payload_sort", ""),
             continuation_action_ids=tuple(value.get("continuation_action_ids", ())),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
             schema_version=value.get("schema_version", SESSION_ACTION_SCHEMA_VERSION),
         )
 
@@ -960,7 +1015,9 @@ class SessionProtocol:
     schema_version: str = SESSION_PROTOCOL_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "protocol_id", _identifier(self.protocol_id, "protocol_id"))
+        object.__setattr__(
+            self, "protocol_id", _identifier(self.protocol_id, "protocol_id")
+        )
         object.__setattr__(self, "name", _text(self.name, "name"))
         object.__setattr__(self, "role", _enum(self.role, SessionRole, "role"))
         actions = tuple(
@@ -990,7 +1047,9 @@ class SessionProtocol:
         if dual_protocol_id:
             dual_protocol_id = _identifier(dual_protocol_id, "dual_protocol_id")
             if dual_protocol_id == self.protocol_id:
-                raise ConcurrencyValidationError("session protocol cannot be dual of itself")
+                raise ConcurrencyValidationError(
+                    "session protocol cannot be dual of itself"
+                )
         object.__setattr__(self, "actions", actions)
         object.__setattr__(self, "entry_action_id", entry)
         object.__setattr__(self, "dual_protocol_id", dual_protocol_id)
@@ -1037,7 +1096,9 @@ class SessionProtocol:
                 return False
             if action.payload_sort != dual_action.payload_sort:
                 return False
-            if set(action.continuation_action_ids) != set(dual_action.continuation_action_ids):
+            if set(action.continuation_action_ids) != set(
+                dual_action.continuation_action_ids
+            ):
                 return False
         return True
 
@@ -1082,7 +1143,9 @@ class SessionProtocol:
             ),
             entry_action_id=value.get("entry_action_id", ""),
             dual_protocol_id=value.get("dual_protocol_id", ""),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
             schema_version=value.get("schema_version", SESSION_PROTOCOL_SCHEMA_VERSION),
         )
 
@@ -1145,7 +1208,9 @@ class LinearizabilityPoint:
             step_id=value.get("step_id", ""),
             abstract_operation=value.get("abstract_operation", ""),
             statement=value.get("statement", ""),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
             schema_version=value.get("schema_version", LINEARIZABILITY_SCHEMA_VERSION),
         )
 
@@ -1168,16 +1233,22 @@ class BoundedSchedule:
     schema_version: str = BOUNDED_SCHEDULE_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "schedule_id", _identifier(self.schedule_id, "schedule_id"))
+        object.__setattr__(
+            self, "schedule_id", _identifier(self.schedule_id, "schedule_id")
+        )
         max_steps = _non_bool_int(self.max_steps, "max_steps")
         if max_steps < 1:
             raise ConcurrencyValidationError("max_steps must be a positive integer")
         object.__setattr__(self, "max_steps", max_steps)
-        object.__setattr__(self, "component_ids", _ids(self.component_ids, "component_ids"))
+        object.__setattr__(
+            self, "component_ids", _ids(self.component_ids, "component_ids")
+        )
         object.__setattr__(self, "step_ids", _ids(self.step_ids, "step_ids"))
         claims = _bool(self.claims_unbounded_refinement, "claims_unbounded_refinement")
         if claims:
-            raise ConcurrencyValidationError("bounded schedules never claim unbounded refinement")
+            raise ConcurrencyValidationError(
+                "bounded schedules never claim unbounded refinement"
+            )
         object.__setattr__(self, "claims_unbounded_refinement", claims)
         object.__setattr__(self, "statement", _text(self.statement, "statement"))
         object.__setattr__(self, "attributes", _frozen(self.attributes, "attributes"))
@@ -1224,7 +1295,9 @@ class BoundedSchedule:
             step_ids=tuple(value.get("step_ids", ())),
             claims_unbounded_refinement=value.get("claims_unbounded_refinement", False),
             statement=value.get("statement", "bounded schedule"),
-            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
+            attributes=_frozen(
+                _mapping(value.get("attributes", {}), "attributes"), "attributes"
+            ),
             schema_version=value.get("schema_version", BOUNDED_SCHEDULE_SCHEMA_VERSION),
         )
 
@@ -1266,7 +1339,9 @@ class ConcurrencyIR:
         object.__setattr__(
             self,
             "components",
-            _coerce_records(self.components, ConcurrentComponent, "component", "component_id"),
+            _coerce_records(
+                self.components, ConcurrentComponent, "component", "component_id"
+            ),
         )
         object.__setattr__(
             self,
@@ -1281,7 +1356,9 @@ class ConcurrencyIR:
         object.__setattr__(
             self,
             "atomic_regions",
-            _coerce_records(self.atomic_regions, AtomicRegion, "atomic region", "region_id"),
+            _coerce_records(
+                self.atomic_regions, AtomicRegion, "atomic region", "region_id"
+            ),
         )
         object.__setattr__(
             self,
@@ -1296,7 +1373,9 @@ class ConcurrencyIR:
         object.__setattr__(
             self,
             "fairness",
-            _coerce_records(self.fairness, ConcurrencyFairness, "fairness", "fairness_id"),
+            _coerce_records(
+                self.fairness, ConcurrencyFairness, "fairness", "fairness_id"
+            ),
         )
         object.__setattr__(
             self,
@@ -1337,7 +1416,9 @@ class ConcurrencyIR:
         object.__setattr__(
             self,
             "schedules",
-            _coerce_records(self.schedules, BoundedSchedule, "schedule", "schedule_id"),
+            _coerce_records(
+                self.schedules, BoundedSchedule, "schedule", "schedule_id"
+            ),
         )
         object.__setattr__(
             self, "require_interference", _bool(self.require_interference, "require_interference")
@@ -1347,7 +1428,9 @@ class ConcurrencyIR:
         )
         object.__setattr__(self, "metadata", _frozen(self.metadata, "metadata"))
         if self.schema_version != CONCURRENCY_IR_SCHEMA_VERSION:
-            raise ConcurrencyValidationError(f"unsupported schema_version {self.schema_version!r}")
+            raise ConcurrencyValidationError(
+                f"unsupported schema_version {self.schema_version!r}"
+            )
         self.validate()
         identity = self._compute_identity()
         if self.document_id and self.document_id != identity.cid:
@@ -1391,7 +1474,9 @@ class ConcurrencyIR:
                 "ConcurrencyIR requires at least one concurrent component"
             )
         if not self.steps:
-            raise ConcurrencyValidationError("ConcurrencyIR requires at least one concurrent step")
+            raise ConcurrencyValidationError(
+                "ConcurrencyIR requires at least one concurrent step"
+            )
 
         component_ids = unique(self.components, "component_id", "component")
         step_ids = unique(self.steps, "step_id", "step")
@@ -1443,7 +1528,8 @@ class ConcurrencyIR:
             if step.owner is StepOwner.COMPONENT:
                 if step.component_id not in component_ids:
                     raise ConcurrencyValidationError(
-                        f"step {step.step_id} references unknown component {step.component_id}"
+                        f"step {step.step_id} references unknown component "
+                        f"{step.component_id}"
                     )
                 owner = components_by_id[step.component_id]
                 if step.step_id not in owner.step_ids:
@@ -1479,7 +1565,8 @@ class ConcurrencyIR:
                     )
                 if step.atomic_region_id and step.atomic_region_id != region.region_id:
                     raise ConcurrencyValidationError(
-                        f"step {step_id} atomic_region_id mismatch with region {region.region_id}"
+                        f"step {step_id} atomic_region_id mismatch with region "
+                        f"{region.region_id}"
                     )
 
         # Interference must be explicit when required and multi-component.
@@ -1575,7 +1662,8 @@ class ConcurrencyIR:
             step = steps_by_id[point.step_id]
             if step.owner is not StepOwner.COMPONENT:
                 raise ConcurrencyValidationError(
-                    f"linearizability point {point.point_id} must attach to a component step"
+                    f"linearizability point {point.point_id} must attach to a "
+                    "component step"
                 )
 
         for schedule in self.schedules:
@@ -1602,7 +1690,9 @@ class ConcurrencyIR:
             "fairness": [item.to_dict() for item in self.fairness],
             "interference": [item.to_dict() for item in self.interference],
             "interface": CONCURRENCY_IR_INTERFACE,
-            "linearizability_points": [item.to_dict() for item in self.linearizability_points],
+            "linearizability_points": [
+                item.to_dict() for item in self.linearizability_points
+            ],
             "metadata": self.metadata.to_dict(),
             "rely_guarantee": [item.to_dict() for item in self.rely_guarantee],
             "require_fairness": self.require_fairness,
@@ -1668,7 +1758,8 @@ class ConcurrencyIR:
                 for item in value.get("components", ())
             ),
             steps=tuple(
-                ConcurrentStep.from_dict(_mapping(item, "step")) for item in value.get("steps", ())
+                ConcurrentStep.from_dict(_mapping(item, "step"))
+                for item in value.get("steps", ())
             ),
             shared_variable_ids=tuple(value.get("shared_variable_ids", ())),
             atomic_regions=tuple(
@@ -1705,7 +1796,9 @@ class ConcurrencyIR:
             ),
             require_interference=value.get("require_interference", True),
             require_fairness=value.get("require_fairness", False),
-            metadata=_frozen(_mapping(value.get("metadata", {}), "metadata"), "metadata"),
+            metadata=_frozen(
+                _mapping(value.get("metadata", {}), "metadata"), "metadata"
+            ),
             document_id=value.get("document_id", ""),
             schema_version=value.get("schema_version", CONCURRENCY_IR_SCHEMA_VERSION),
         )

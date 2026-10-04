@@ -1,0 +1,49 @@
+# Dockerfile for Browser Testing
+FROM mcr.microsoft.com/playwright/python:v1.55.0-jammy
+
+# Set working directory
+WORKDIR /app
+
+# Set environment variables
+ENV PYTHONFAULTHANDLER=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and install
+COPY requirements.txt requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Install testing dependencies
+RUN pip install --no-cache-dir \
+    playwright>=1.55.0 \
+    pytest-playwright>=0.7.0 \
+    pytest-asyncio>=1.1.0 \
+    pytest-html>=4.0.0 \
+    requests>=2.25.0
+
+# Copy the project
+COPY . .
+
+# Install the package
+RUN pip install -e .
+
+# Create test output directory
+RUN mkdir -p /app/test_outputs
+
+# Verify Playwright installation
+RUN playwright --version
+
+# Default command runs comprehensive tests
+CMD ["pytest", "tests/integration/dashboard/comprehensive_mcp_dashboard_test.py", "-v", "--html=test_outputs/report.html", "--self-contained-html"]
+
+# Usage:
+# 1. Build: docker build -f Dockerfile.testing -t ipfs-datasets-testing .
+# 2. Run: docker run -v $(pwd)/test_outputs:/app/test_outputs ipfs-datasets-testing

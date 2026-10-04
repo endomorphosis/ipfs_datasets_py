@@ -104,7 +104,9 @@ def _tx(
         finality=finality,
         transaction_hash=tx_hash,
         status=TransactionStatus.SUCCEEDED,
-        participants=(AccountRef(chain, "0xabc", AccountKind.ADDRESS),),
+        participants=(
+            AccountRef(chain, "0xabc", AccountKind.ADDRESS),
+        ),
     )
 
 
@@ -230,10 +232,7 @@ def test_streaming_wallet_ingest_does_not_accumulate_whole_history(
 ) -> None:
     pages = [
         [_tx(chain, tx_hash=f"0x{i:02x}", sequence=10 + i, block_hash=f"0xb{i}") for i in range(3)],
-        [
-            _tx(chain, tx_hash=f"0x1{i:02x}", sequence=20 + i, block_hash=f"0xc{i}")
-            for i in range(2)
-        ],
+        [_tx(chain, tx_hash=f"0x1{i:02x}", sequence=20 + i, block_hash=f"0xc{i}") for i in range(2)],
     ]
     provider = FakeWalletLedgerProvider(pages)
     processor = WalletLedgerProcessor(

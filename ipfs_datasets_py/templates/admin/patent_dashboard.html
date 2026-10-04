@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patent Dataset Analysis - IPFS Datasets Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .patent-header { 
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); 
+            color: white; 
+            padding: 20px; 
+            margin-bottom: 20px; 
+            border-radius: 8px;
+        }
+        .patent-card {
+            border-left: 4px solid #3b82f6;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+        .patent-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        .classification-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: bold;
+            background-color: #3b82f6;
+            color: white;
+            margin: 2px;
+        }
+        .status-active { color: #10b981; }
+        .status-pending { color: #f59e0b; }
+        .status-complete { color: #6366f1; }
+        .demo-note {
+            background-color: #dbeafe;
+            border: 1px solid #93c5fd;
+            color: #1e40af;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        .sidebar {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+            padding: 48px 0 0;
+            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+        }
+        .sidebar-sticky {
+            position: relative;
+            top: 0;
+            height: calc(100vh - 48px);
+            padding-top: .5rem;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+        main {
+            margin-left: 240px;
+        }
+        .nav-link {
+            font-weight: 500;
+            color: #333;
+        }
+        .nav-link.active {
+            color: #3b82f6;
+        }
+        .nav-link:hover {
+            color: #3b82f6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <nav class="col-md-2 d-none d-md-block bg-light sidebar">
+                <div class="sidebar-sticky">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">
+                                <i class="fas fa-home"></i> Main Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/mcp">
+                                <i class="fas fa-server"></i> MCP Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/mcp/caselaw">
+                                <i class="fas fa-gavel"></i> Caselaw Analysis
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/mcp/patents">
+                                <i class="fas fa-lightbulb"></i> Patent Datasets
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
+                <!-- Header -->
+                <div class="patent-header">
+                    <h1><i class="fas fa-lightbulb"></i> Patent Dataset Analysis System</h1>
+                    <p class="lead mb-0">Build legal datasets from USPTO patent filings for GraphRAG knowledge graphs</p>
+                </div>
+
+                <!-- System Info -->
+                <div class="demo-note">
+                    <h5><i class="fas fa-info-circle"></i> Patent Dataset Builder</h5>
+                    <p class="mb-0">This system scrapes patent data from the USPTO PatentsView API and prepares it for GraphRAG ingestion. 
+                    Search patents by keywords, inventors, assignees, or classifications, then build structured datasets for knowledge graph construction.</p>
+                </div>
+
+                <!-- System Status -->
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="fas fa-database"></i> System Status</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <strong>System Status:</strong>
+                                        <span class="badge bg-success">Ready</span>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Data Source:</strong> USPTO PatentsView API
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>GraphRAG Status:</strong>
+                                        <span class="badge bg-success">Connected</span>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Patents Indexed:</strong> <span id="patentCount">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs for different functionalities -->
+                <ul class="nav nav-tabs" id="patentTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="search-tab" data-bs-toggle="tab" data-bs-target="#search" type="button">
+                            <i class="fas fa-search"></i> Search Patents
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="build-tab" data-bs-toggle="tab" data-bs-target="#build" type="button">
+                            <i class="fas fa-database"></i> Build Dataset
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="results-tab" data-bs-toggle="tab" data-bs-target="#results" type="button">
+                            <i class="fas fa-list"></i> Patent Results
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="graphrag-tab" data-bs-toggle="tab" data-bs-target="#graphrag" type="button">
+                            <i class="fas fa-project-diagram"></i> GraphRAG Integration
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="patentTabsContent">
+                    <!-- Search Patents Tab -->
+                    <div class="tab-pane fade show active" id="search" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5><i class="fas fa-search"></i> Search USPTO Patents</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="patentSearchForm">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Keywords (comma-separated)</label>
+                                                <input type="text" class="form-control" id="keywords" placeholder="artificial intelligence, machine learning">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Inventor Name</label>
+                                                <input type="text" class="form-control" id="inventorName" placeholder="Last name">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Assignee/Organization</label>
+                                                <input type="text" class="form-control" id="assigneeName" placeholder="Company name">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Patent Number</label>
+                                                <input type="text" class="form-control" id="patentNumber" placeholder="US1234567">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Date From (YYYY-MM-DD)</label>
+                                                <input type="date" class="form-control" id="dateFrom">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Date To (YYYY-MM-DD)</label>
+                                                <input type="date" class="form-control" id="dateTo">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">CPC Classifications (comma-separated)</label>
+                                                <input type="text" class="form-control" id="cpcClass" placeholder="G06F, H04L">
+                                                <small class="text-muted">Cooperative Patent Classification codes</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Max Results</label>
+                                                <select class="form-control" id="limit">
+                                                    <option value="10">10</option>
+                                                    <option value="25">25</option>
+                                                    <option value="50">50</option>
+                                                    <option value="100" selected>100</option>
+                                                    <option value="250">250</option>
+                                                    <option value="500">500</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-search"></i> Search Patents
+                                    </button>
+                                </form>
+                                
+                                <div class="loading-spinner" id="searchSpinner">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p>Searching USPTO patents...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Build Dataset Tab -->
+                    <div class="tab-pane fade" id="build" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5><i class="fas fa-database"></i> Build Patent Dataset for GraphRAG</h5>
+                            </div>
+                            <div class="card-body">
+                                <p>Use the search results to build a structured dataset for GraphRAG ingestion.</p>
+                                <form id="buildDatasetForm">
+                                    <div class="mb-3">
+                                        <label class="form-label">Output Format</label>
+                                        <select class="form-control" id="outputFormat">
+                                            <option value="json">JSON</option>
+                                            <option value="parquet">Parquet</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Dataset Name</label>
+                                        <input type="text" class="form-control" id="datasetName" placeholder="patent_dataset_2024">
+                                    </div>
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="includeCitations" checked>
+                                        <label class="form-check-label" for="includeCitations">
+                                            Include Citation Graph
+                                        </label>
+                                    </div>
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="includeClassifications" checked>
+                                        <label class="form-check-label" for="includeClassifications">
+                                            Include Classifications
+                                        </label>
+                                    </div>
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="graphragFormat" checked>
+                                        <label class="form-check-label" for="graphragFormat">
+                                            Format for GraphRAG Ingestion
+                                        </label>
+                                    </div>
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-database"></i> Build Dataset
+                                    </button>
+                                </form>
+                                
+                                <div class="loading-spinner" id="buildSpinner">
+                                    <div class="spinner-border text-success" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p>Building patent dataset...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Results Tab -->
+                    <div class="tab-pane fade" id="results" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5><i class="fas fa-list"></i> Patent Search Results</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="patentResults">
+                                    <p class="text-muted">No search results yet. Use the Search tab to find patents.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- GraphRAG Integration Tab -->
+                    <div class="tab-pane fade" id="graphrag" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5><i class="fas fa-project-diagram"></i> GraphRAG Integration Status</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6>Entity Types Available</h6>
+                                        <ul>
+                                            <li>Patent</li>
+                                            <li>Inventor</li>
+                                            <li>Assignee/Organization</li>
+                                            <li>Classification (CPC/IPC)</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6>Relationship Types Available</h6>
+                                        <ul>
+                                            <li>INVENTED_BY</li>
+                                            <li>ASSIGNED_TO</li>
+                                            <li>CLASSIFIED_AS</li>
+                                            <li>CITES</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="alert alert-info mt-3">
+                                    <strong>Integration Ready:</strong> Patent datasets can be directly ingested into GraphRAG for knowledge graph construction.
+                                    The system automatically formats data with entity and relationship types suitable for graph analysis.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Handle patent search
+        document.getElementById('patentSearchForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const spinner = document.getElementById('searchSpinner');
+            spinner.style.display = 'block';
+            
+            // Get form values
+            const keywords = document.getElementById('keywords').value.split(',').map(k => k.trim()).filter(k => k);
+            const inventorName = document.getElementById('inventorName').value.trim();
+            const assigneeName = document.getElementById('assigneeName').value.trim();
+            const patentNumber = document.getElementById('patentNumber').value.trim();
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            const cpcClass = document.getElementById('cpcClass').value.split(',').map(c => c.trim()).filter(c => c);
+            const limit = parseInt(document.getElementById('limit').value);
+            
+            // Build request
+            const payload = {
+                keywords: keywords.length > 0 ? keywords : null,
+                inventor_name: inventorName || null,
+                assignee_name: assigneeName || null,
+                patent_number: patentNumber || null,
+                date_from: dateFrom || null,
+                date_to: dateTo || null,
+                cpc_classification: cpcClass.length > 0 ? cpcClass : null,
+                limit: limit
+            };
+            
+            try {
+                const response = await fetch('/api/mcp/patents/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await response.json();
+                displayResults(data);
+                
+                // Update patent count
+                document.getElementById('patentCount').textContent = data.patents ? data.patents.length : 0;
+                
+                // Switch to results tab
+                document.getElementById('results-tab').click();
+            } catch (error) {
+                console.error('Search error:', error);
+                alert('Error searching patents: ' + error.message);
+            } finally {
+                spinner.style.display = 'none';
+            }
+        });
+        
+        // Handle dataset building
+        document.getElementById('buildDatasetForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const spinner = document.getElementById('buildSpinner');
+            spinner.style.display = 'block';
+            
+            const payload = {
+                output_format: document.getElementById('outputFormat').value,
+                dataset_name: document.getElementById('datasetName').value,
+                include_citations: document.getElementById('includeCitations').checked,
+                include_classifications: document.getElementById('includeClassifications').checked,
+                graphrag_format: document.getElementById('graphragFormat').checked
+            };
+            
+            try {
+                const response = await fetch('/api/mcp/patents/build_dataset', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await response.json();
+                alert('Dataset built successfully! Check the GraphRAG Integration tab for details.');
+                
+                // Switch to GraphRAG tab
+                document.getElementById('graphrag-tab').click();
+            } catch (error) {
+                console.error('Build error:', error);
+                alert('Error building dataset: ' + error.message);
+            } finally {
+                spinner.style.display = 'none';
+            }
+        });
+        
+        // Display search results
+        function displayResults(data) {
+            const resultsDiv = document.getElementById('patentResults');
+            
+            if (!data.patents || data.patents.length === 0) {
+                resultsDiv.innerHTML = '<p class="text-muted">No patents found for your search criteria.</p>';
+                return;
+            }
+            
+            let html = '<div class="row">';
+            data.patents.forEach(patent => {
+                html += `
+                    <div class="col-md-12 mb-3">
+                        <div class="card patent-card">
+                            <div class="card-body">
+                                <h5 class="card-title">${patent.patent_number}: ${patent.patent_title}</h5>
+                                <p class="card-text">${patent.patent_abstract || 'No abstract available'}</p>
+                                <div class="mb-2">
+                                    <strong>Date:</strong> ${patent.patent_date || 'N/A'}<br>
+                                    <strong>Inventors:</strong> ${formatInventors(patent.inventors)}<br>
+                                    <strong>Assignees:</strong> ${formatAssignees(patent.assignees)}
+                                </div>
+                                ${patent.cpc_classifications ? formatClassifications(patent.cpc_classifications) : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            
+            resultsDiv.innerHTML = html;
+        }
+        
+        function formatInventors(inventors) {
+            if (!inventors || inventors.length === 0) return 'N/A';
+            return inventors.map(i => `${i.first_name} ${i.last_name}`).join(', ');
+        }
+        
+        function formatAssignees(assignees) {
+            if (!assignees || assignees.length === 0) return 'N/A';
+            return assignees.map(a => a.organization).join(', ');
+        }
+        
+        function formatClassifications(classifications) {
+            if (!classifications || classifications.length === 0) return '';
+            return '<div>' + classifications.map(c => `<span class="classification-badge">${c}</span>`).join(' ') + '</div>';
+        }
+    </script>
+</body>
+</html>

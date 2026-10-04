@@ -45,7 +45,9 @@ TRUSTED_PROOF_RECEIPT_SCHEMA_VERSION: Final = "trusted-proof-receipt/v1"
 ATTESTATION_BACKEND_POLICY_SCHEMA_VERSION: Final = "attestation-backend-policy/v1"
 ATTESTATION_STATEMENT_SCHEMA_VERSION: Final = "proof-receipt-attestation-statement/v1"
 ATTESTATION_ENVELOPE_SCHEMA_VERSION: Final = "proof-receipt-attestation-envelope/v1"
-ATTESTATION_VERIFICATION_SCHEMA_VERSION: Final = "proof-receipt-attestation-verification/v1"
+ATTESTATION_VERIFICATION_SCHEMA_VERSION: Final = (
+    "proof-receipt-attestation-verification/v1"
+)
 ATTESTATION_RECORD_SCHEMA_VERSION: Final = "proof-receipt-attestation-record/v1"
 
 # Normative public-input keys for production receipt attestation (LFV-G063).
@@ -161,7 +163,12 @@ class AttestationGate(StrEnum):
 def _text(value: object, field_name: str, *, optional: bool = False) -> str:
     if optional and value in (None, ""):
         return ""
-    if not isinstance(value, str) or not value or value != value.strip() or "\x00" in value:
+    if (
+        not isinstance(value, str)
+        or not value
+        or value != value.strip()
+        or "\x00" in value
+    ):
         qualifier = "an empty or " if optional else "a "
         raise ProofReceiptAttestationError(
             f"{field_name} must be {qualifier}non-empty trimmed string without NUL"
@@ -174,7 +181,9 @@ def _enum(value: object, enum_type: type[StrEnum], field_name: str) -> Any:
         return value if isinstance(value, enum_type) else enum_type(str(value))
     except (TypeError, ValueError) as error:
         choices = ", ".join(repr(member.value) for member in enum_type)
-        raise ProofReceiptAttestationError(f"{field_name} must be one of {choices}") from error
+        raise ProofReceiptAttestationError(
+            f"{field_name} must be one of {choices}"
+        ) from error
 
 
 def _bool(value: object, field_name: str) -> bool:
@@ -191,19 +200,29 @@ def _timestamp(value: object, field_name: str, *, optional: bool = False) -> str
     try:
         parsed = datetime.fromisoformat(normalized)
     except ValueError as error:
-        raise ProofReceiptAttestationError(f"{field_name} must be an RFC3339 timestamp") from error
+        raise ProofReceiptAttestationError(
+            f"{field_name} must be an RFC3339 timestamp"
+        ) from error
     if parsed.tzinfo is None:
-        raise ProofReceiptAttestationError(f"{field_name} must include a timezone")
+        raise ProofReceiptAttestationError(
+            f"{field_name} must include a timezone"
+        )
     return parsed.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
 def _timestamp_value(value: str) -> datetime:
-    return datetime.fromisoformat(value[:-1] + "+00:00" if value.endswith("Z") else value)
+    return datetime.fromisoformat(
+        value[:-1] + "+00:00" if value.endswith("Z") else value
+    )
 
 
 def _backend_id_is_simulated(backend_id: str) -> bool:
     lowered = backend_id.lower()
-    tokens = {part for part in lowered.replace("/", ":").replace("_", "-").split(":") if part}
+    tokens = {
+        part
+        for part in lowered.replace("/", ":").replace("_", "-").split(":")
+        if part
+    }
     if tokens & _SIMULATED_BACKEND_MARKERS:
         return True
     return any(marker in lowered for marker in ("simulated", "simulation", "/sim"))
@@ -221,7 +240,9 @@ def _mapping(value: object, field_name: str) -> dict[str, Any]:
 
 def _canonical_public(value: Any) -> Any:
     if isinstance(value, PrivateWitness):
-        raise WitnessDisclosureError("private witness cannot enter a public artifact")
+        raise WitnessDisclosureError(
+            "private witness cannot enter a public artifact"
+        )
     if isinstance(value, AttestationRequest):
         return value.to_public_artifact()
     if hasattr(value, "to_public_artifact") and callable(value.to_public_artifact):
@@ -393,9 +414,13 @@ class TrustedProofReceipt:
             backend_id=payload.get("backend_id", ""),
             backend_version=payload.get("backend_version", ""),
             assumptions=tuple(payload.get("assumptions", ())),
-            translation_ceiling=payload.get("translation_ceiling", EvidenceAuthority.NONE.value),
+            translation_ceiling=payload.get(
+                "translation_ceiling", EvidenceAuthority.NONE.value
+            ),
             metadata=FrozenMap(payload.get("metadata", {})),
-            schema_version=payload.get("schema_version", TRUSTED_PROOF_RECEIPT_SCHEMA_VERSION),
+            schema_version=payload.get(
+                "schema_version", TRUSTED_PROOF_RECEIPT_SCHEMA_VERSION
+            ),
         )
         claimed = payload.get("content_id")
         if claimed and claimed != receipt.content_id:
@@ -419,7 +444,9 @@ class TrustedProofReceipt:
         """Build a trusted receipt from a conclusive typed backend result."""
 
         if not isinstance(result, TypedBackendResult):
-            raise ProofReceiptAttestationError("trusted receipt requires a TypedBackendResult")
+            raise ProofReceiptAttestationError(
+                "trusted receipt requires a TypedBackendResult"
+            )
         if not result.is_conclusive:
             raise ProofReceiptAttestationError(
                 "trusted receipt requires a conclusive backend result"
@@ -504,13 +531,16 @@ class AttestationBackendPolicy:
                 optional=True,
             ),
         )
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
         if self.schema_version != ATTESTATION_BACKEND_POLICY_SCHEMA_VERSION:
             raise ProofReceiptAttestationError(
                 f"unsupported backend policy schema: {self.schema_version}"
             )
-        if self.backend_mode is AttestationBackendMode.CRYPTOGRAPHIC and _backend_id_is_simulated(
-            self.backend_id
+        if (
+            self.backend_mode is AttestationBackendMode.CRYPTOGRAPHIC
+            and _backend_id_is_simulated(self.backend_id)
         ):
             raise ProofReceiptAttestationError(
                 "a simulated backend identity cannot be pinned as cryptographic"
@@ -528,7 +558,9 @@ class AttestationBackendPolicy:
         checked = _timestamp(timestamp, "timestamp")
         if not self.verification_key_expires_at:
             return True
-        return _timestamp_value(checked) < _timestamp_value(self.verification_key_expires_at)
+        return _timestamp_value(checked) < _timestamp_value(
+            self.verification_key_expires_at
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -562,13 +594,21 @@ class AttestationBackendPolicy:
             proving_key_id=payload.get("proving_key_id", ""),
             verification_key_id=payload.get("verification_key_id", ""),
             revocation_policy_id=payload.get("revocation_policy_id", ""),
-            backend_mode=payload.get("backend_mode", AttestationBackendMode.CRYPTOGRAPHIC),
-            verification_key_expires_at=payload.get("verification_key_expires_at", ""),
-            schema_version=payload.get("schema_version", ATTESTATION_BACKEND_POLICY_SCHEMA_VERSION),
+            backend_mode=payload.get(
+                "backend_mode", AttestationBackendMode.CRYPTOGRAPHIC
+            ),
+            verification_key_expires_at=payload.get(
+                "verification_key_expires_at", ""
+            ),
+            schema_version=payload.get(
+                "schema_version", ATTESTATION_BACKEND_POLICY_SCHEMA_VERSION
+            ),
         )
         claimed = payload.get("policy_id")
         if claimed and claimed != policy.policy_id:
-            raise ProofReceiptAttestationError("backend policy identity does not match payload")
+            raise ProofReceiptAttestationError(
+                "backend policy identity does not match payload"
+            )
         return policy
 
 
@@ -585,7 +625,9 @@ class RevocationPolicy:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "policy_id", _text(self.policy_id, "policy_id"))
-        object.__setattr__(self, "as_of", _timestamp(self.as_of, "as_of", optional=True))
+        object.__setattr__(
+            self, "as_of", _timestamp(self.as_of, "as_of", optional=True)
+        )
         for name in (
             "revoked_circuit_ids",
             "revoked_crs_ids",
@@ -616,7 +658,9 @@ class RevocationPolicy:
     def require_current(self, policy: AttestationBackendPolicy) -> None:
         reason = self.rejects(policy)
         if reason:
-            raise RevokedAttestationError(f"attestation material is revoked: {reason}")
+            raise RevokedAttestationError(
+                f"attestation material is revoked: {reason}"
+            )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -649,14 +693,24 @@ class AttestationStatement:
 
     def __post_init__(self) -> None:
         if not isinstance(self.receipt, TrustedProofReceipt):
-            raise ProofReceiptAttestationError("statement requires a TrustedProofReceipt")
+            raise ProofReceiptAttestationError(
+                "statement requires a TrustedProofReceipt"
+            )
         if not isinstance(self.backend_policy, AttestationBackendPolicy):
-            raise ProofReceiptAttestationError("statement requires an AttestationBackendPolicy")
+            raise ProofReceiptAttestationError(
+                "statement requires an AttestationBackendPolicy"
+            )
         object.__setattr__(self, "issued_at", _timestamp(self.issued_at, "issued_at"))
-        object.__setattr__(self, "expires_at", _timestamp(self.expires_at, "expires_at"))
+        object.__setattr__(
+            self, "expires_at", _timestamp(self.expires_at, "expires_at")
+        )
         if _timestamp_value(self.expires_at) <= _timestamp_value(self.issued_at):
-            raise ProofReceiptAttestationError("expires_at must be strictly after issued_at")
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+            raise ProofReceiptAttestationError(
+                "expires_at must be strictly after issued_at"
+            )
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
         if self.schema_version != ATTESTATION_STATEMENT_SCHEMA_VERSION:
             raise ProofReceiptAttestationError(
                 f"unsupported statement schema: {self.schema_version}"
@@ -723,13 +777,16 @@ class AttestationStatement:
     def is_fresh_at(self, timestamp: str) -> bool:
         now = _timestamp(timestamp, "timestamp")
         now_dt = _timestamp_value(now)
-        return _timestamp_value(self.issued_at) <= now_dt < _timestamp_value(
-            self.expires_at
-        ) and self.backend_policy.key_is_current_at(now)
+        return (
+            _timestamp_value(self.issued_at) <= now_dt < _timestamp_value(self.expires_at)
+            and self.backend_policy.key_is_current_at(now)
+        )
 
     def require_fresh_at(self, timestamp: str) -> None:
         if not self.is_fresh_at(timestamp):
-            raise StaleAttestationError("attestation is stale or outside its freshness window")
+            raise StaleAttestationError(
+                "attestation is stale or outside its freshness window"
+            )
 
     def matches_backend_policy(self, policy: AttestationBackendPolicy) -> bool:
         return (
@@ -773,10 +830,14 @@ class AttestationStatement:
         payload = _mapping(value, "attestation statement")
         statement = cls(
             receipt=TrustedProofReceipt.from_dict(payload.get("receipt", {})),
-            backend_policy=AttestationBackendPolicy.from_dict(payload.get("backend_policy", {})),
+            backend_policy=AttestationBackendPolicy.from_dict(
+                payload.get("backend_policy", {})
+            ),
             issued_at=payload.get("issued_at", ""),
             expires_at=payload.get("expires_at", ""),
-            schema_version=payload.get("schema_version", ATTESTATION_STATEMENT_SCHEMA_VERSION),
+            schema_version=payload.get(
+                "schema_version", ATTESTATION_STATEMENT_SCHEMA_VERSION
+            ),
         )
         claimed = payload.get("statement_id")
         if claimed and claimed != statement.statement_id:
@@ -807,7 +868,9 @@ class PrivateWitness:
         normalized: dict[str, Any] = {}
         for raw_name, value in values.items():
             if not isinstance(raw_name, str) or not raw_name.strip():
-                raise ProofReceiptAttestationError("witness field names must be non-empty strings")
+                raise ProofReceiptAttestationError(
+                    "witness field names must be non-empty strings"
+                )
             normalized[raw_name] = value
         if not normalized:
             raise ProofReceiptAttestationError("witness values must not be empty")
@@ -827,13 +890,19 @@ class PrivateWitness:
 
     def __reduce_ex__(self, protocol: int) -> Any:
         del protocol
-        raise WitnessDisclosureError("private witness cannot be serialized or cached")
+        raise WitnessDisclosureError(
+            "private witness cannot be serialized or cached"
+        )
 
     def __getstate__(self) -> Any:
-        raise WitnessDisclosureError("private witness cannot be serialized or cached")
+        raise WitnessDisclosureError(
+            "private witness cannot be serialized or cached"
+        )
 
     def to_dict(self) -> dict[str, Any]:
-        raise WitnessDisclosureError("private witness has no public dictionary representation")
+        raise WitnessDisclosureError(
+            "private witness has no public dictionary representation"
+        )
 
     def use(self, consumer: Callable[[Mapping[str, Any]], T]) -> T:
         if not callable(consumer):
@@ -853,22 +922,29 @@ class AttestationRequest:
 
     def __post_init__(self) -> None:
         if not isinstance(self.statement, AttestationStatement):
-            raise ProofReceiptAttestationError("request requires an AttestationStatement")
+            raise ProofReceiptAttestationError(
+                "request requires an AttestationStatement"
+            )
         if not isinstance(self._witness, PrivateWitness):
-            raise ProofReceiptAttestationError("_witness must be a PrivateWitness")
+            raise ProofReceiptAttestationError(
+                "_witness must be a PrivateWitness"
+            )
         # Force complete public-input binding at prepare time.
         self.statement.require_complete_public_inputs()
 
     def __repr__(self) -> str:
         return (
-            "AttestationRequest(statement_id=%r, witness=<redacted>)" % self.statement.statement_id
+            "AttestationRequest(statement_id=%r, witness=<redacted>)"
+            % self.statement.statement_id
         )
 
     __str__ = __repr__
 
     def __reduce_ex__(self, protocol: int) -> Any:
         del protocol
-        raise WitnessDisclosureError("attestation proving requests cannot be serialized or cached")
+        raise WitnessDisclosureError(
+            "attestation proving requests cannot be serialized or cached"
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -906,7 +982,9 @@ class AttestationEnvelope:
 
     def __post_init__(self) -> None:
         if not isinstance(self.statement, AttestationStatement):
-            raise ProofReceiptAttestationError("envelope requires an AttestationStatement")
+            raise ProofReceiptAttestationError(
+                "envelope requires an AttestationStatement"
+            )
         object.__setattr__(
             self,
             "backend_mode",
@@ -914,21 +992,30 @@ class AttestationEnvelope:
         )
         for name in ("proof_artifact_id", "proof_digest"):
             object.__setattr__(self, name, _text(getattr(self, name), name))
-        object.__setattr__(self, "prover_id", _text(self.prover_id, "prover_id", optional=True))
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "prover_id", _text(self.prover_id, "prover_id", optional=True)
+        )
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
         if self.schema_version != ATTESTATION_ENVELOPE_SCHEMA_VERSION:
             raise ProofReceiptAttestationError(
                 f"unsupported envelope schema: {self.schema_version}"
             )
-        if self.backend_mode is AttestationBackendMode.CRYPTOGRAPHIC and (
-            self.statement.backend_policy.simulated
-            or _backend_id_is_simulated(self.statement.backend_policy.backend_id)
+        if (
+            self.backend_mode is AttestationBackendMode.CRYPTOGRAPHIC
+            and (
+                self.statement.backend_policy.simulated
+                or _backend_id_is_simulated(self.statement.backend_policy.backend_id)
+            )
         ):
             raise ProofReceiptAttestationError(
                 "a simulated backend cannot emit a cryptographic envelope"
             )
         if self.backend_mode is not self.statement.backend_policy.backend_mode:
-            raise ProofReceiptAttestationError("envelope mode does not match backend policy mode")
+            raise ProofReceiptAttestationError(
+                "envelope mode does not match backend policy mode"
+            )
 
     @property
     def envelope_id(self) -> str:
@@ -971,7 +1058,9 @@ class AttestationEnvelope:
             proof_artifact_id=payload.get("proof_artifact_id", ""),
             proof_digest=payload.get("proof_digest", ""),
             prover_id=payload.get("prover_id", ""),
-            schema_version=payload.get("schema_version", ATTESTATION_ENVELOPE_SCHEMA_VERSION),
+            schema_version=payload.get(
+                "schema_version", ATTESTATION_ENVELOPE_SCHEMA_VERSION
+            ),
         )
         claimed = payload.get("envelope_id")
         if claimed and claimed != envelope.envelope_id:
@@ -995,14 +1084,18 @@ class AttestationVerification:
 
     def __post_init__(self) -> None:
         if not isinstance(self.envelope, AttestationEnvelope):
-            raise ProofReceiptAttestationError("verification requires an AttestationEnvelope")
+            raise ProofReceiptAttestationError(
+                "verification requires an AttestationEnvelope"
+            )
         object.__setattr__(
             self,
             "verdict",
             _enum(self.verdict, AttestationVerificationVerdict, "verdict"),
         )
         object.__setattr__(self, "verifier_id", _text(self.verifier_id, "verifier_id"))
-        object.__setattr__(self, "independent", _bool(self.independent, "independent"))
+        object.__setattr__(
+            self, "independent", _bool(self.independent, "independent")
+        )
         object.__setattr__(
             self,
             "diagnostic_code",
@@ -1013,14 +1106,18 @@ class AttestationVerification:
             "verified_at",
             _timestamp(self.verified_at, "verified_at", optional=True),
         )
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
         if self.schema_version != ATTESTATION_VERIFICATION_SCHEMA_VERSION:
             raise ProofReceiptAttestationError(
                 f"unsupported verification schema: {self.schema_version}"
             )
         if self.verdict is AttestationVerificationVerdict.VERIFIED:
             if not self.independent:
-                raise ProofReceiptAttestationError("verified attestations must be independent")
+                raise ProofReceiptAttestationError(
+                    "verified attestations must be independent"
+                )
             if self.envelope.simulated:
                 raise ProofReceiptAttestationError(
                     "simulated envelopes cannot receive a verified verdict"
@@ -1057,7 +1154,9 @@ class AttestationVerification:
 
     def require_gate(self, gate: AttestationGate | str) -> None:
         if not self.satisfies_gate(gate):
-            raise CryptographicBackendFailure(f"attestation does not satisfy gate {gate!s}")
+            raise CryptographicBackendFailure(
+                f"attestation does not satisfy gate {gate!s}"
+            )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -1090,9 +1189,15 @@ class AttestationRecord:
 
     def __post_init__(self) -> None:
         if not isinstance(self.verification, AttestationVerification):
-            raise ProofReceiptAttestationError("record requires an AttestationVerification")
-        object.__setattr__(self, "created_at", _timestamp(self.created_at, "created_at"))
-        object.__setattr__(self, "expires_at", _timestamp(self.expires_at, "expires_at"))
+            raise ProofReceiptAttestationError(
+                "record requires an AttestationVerification"
+            )
+        object.__setattr__(
+            self, "created_at", _timestamp(self.created_at, "created_at")
+        )
+        object.__setattr__(
+            self, "expires_at", _timestamp(self.expires_at, "expires_at")
+        )
         if _timestamp_value(self.expires_at) <= _timestamp_value(self.created_at):
             raise ProofReceiptAttestationError(
                 "record expires_at must be strictly after created_at"
@@ -1102,9 +1207,13 @@ class AttestationRecord:
             raise ProofReceiptAttestationError(
                 "record expiry must match statement freshness window"
             )
-        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
+        object.__setattr__(
+            self, "schema_version", _text(self.schema_version, "schema_version")
+        )
         if self.schema_version != ATTESTATION_RECORD_SCHEMA_VERSION:
-            raise ProofReceiptAttestationError(f"unsupported record schema: {self.schema_version}")
+            raise ProofReceiptAttestationError(
+                f"unsupported record schema: {self.schema_version}"
+            )
 
     @property
     def record_id(self) -> str:
@@ -1121,9 +1230,12 @@ class AttestationRecord:
     def is_current_at(self, timestamp: str) -> bool:
         now = _timestamp(timestamp, "timestamp")
         now_dt = _timestamp_value(now)
-        return _timestamp_value(self.created_at) <= now_dt < _timestamp_value(
-            self.expires_at
-        ) and self.verification.envelope.statement.is_fresh_at(now)
+        return (
+            _timestamp_value(self.created_at)
+            <= now_dt
+            < _timestamp_value(self.expires_at)
+            and self.verification.envelope.statement.is_fresh_at(now)
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -1160,7 +1272,9 @@ class AttestationRecord:
         verified = self.verification.authoritative_for_attestation and self.is_current_at(
             self.created_at
         )
-        status = ResultStatus.ATTESTED if verified else ResultStatus.ATTESTATION_INVALID
+        status = (
+            ResultStatus.ATTESTED if verified else ResultStatus.ATTESTATION_INVALID
+        )
         statement = self.verification.envelope.statement
         metadata = {
             "attestation_record_id": self.record_id,
@@ -1227,12 +1341,18 @@ def build_attestation_statement(
     """Build a public statement after fencing revoked material."""
 
     if not isinstance(receipt, TrustedProofReceipt):
-        raise ProofReceiptAttestationError("attestation requires a TrustedProofReceipt")
+        raise ProofReceiptAttestationError(
+            "attestation requires a TrustedProofReceipt"
+        )
     if not isinstance(backend_policy, AttestationBackendPolicy):
-        raise ProofReceiptAttestationError("attestation requires an AttestationBackendPolicy")
+        raise ProofReceiptAttestationError(
+            "attestation requires an AttestationBackendPolicy"
+        )
     if revocation_policy is not None:
         if not isinstance(revocation_policy, RevocationPolicy):
-            raise ProofReceiptAttestationError("revocation_policy must be a RevocationPolicy")
+            raise ProofReceiptAttestationError(
+                "revocation_policy must be a RevocationPolicy"
+            )
         revocation_policy.require_current(backend_policy)
     statement = AttestationStatement(
         receipt=receipt,
@@ -1305,7 +1425,9 @@ def record_attestation_verification(
     """Create a fail-closed independent verification result."""
 
     if not isinstance(envelope, AttestationEnvelope):
-        raise ProofReceiptAttestationError("verification requires an AttestationEnvelope")
+        raise ProofReceiptAttestationError(
+            "verification requires an AttestationEnvelope"
+        )
     checked = _bool(verified, "verified")
     evaluated_at = _timestamp(
         verified_at or now or envelope.statement.issued_at,
@@ -1315,9 +1437,13 @@ def record_attestation_verification(
         revocation_policy.require_current(envelope.statement.backend_policy)
     if checked:
         if envelope.simulated:
-            raise ProofReceiptAttestationError("simulated envelopes cannot be marked verified")
+            raise ProofReceiptAttestationError(
+                "simulated envelopes cannot be marked verified"
+            )
         envelope.statement.require_fresh_at(evaluated_at)
-        envelope.statement.require_matches_backend_policy(envelope.statement.backend_policy)
+        envelope.statement.require_matches_backend_policy(
+            envelope.statement.backend_policy
+        )
     return AttestationVerification(
         envelope=envelope,
         verdict=(
@@ -1372,9 +1498,13 @@ def execute_cryptographic_attestation(
     try:
         output = prover(request)
     except Exception as exc:
-        raise CryptographicBackendFailure("cryptographic proof generation failed") from exc
+        raise CryptographicBackendFailure(
+            "cryptographic proof generation failed"
+        ) from exc
     if not isinstance(output, Mapping):
-        raise CryptographicBackendFailure("cryptographic prover returned a malformed result")
+        raise CryptographicBackendFailure(
+            "cryptographic prover returned a malformed result"
+        )
     try:
         envelope = create_attestation_envelope(
             request,
@@ -1429,7 +1559,9 @@ def build_attestation_record(
     """Persist a public record from an independent verification result."""
 
     if not isinstance(verification, AttestationVerification):
-        raise ProofReceiptAttestationError("record requires an AttestationVerification")
+        raise ProofReceiptAttestationError(
+            "record requires an AttestationVerification"
+        )
     return AttestationRecord(
         verification=verification,
         created_at=created_at,

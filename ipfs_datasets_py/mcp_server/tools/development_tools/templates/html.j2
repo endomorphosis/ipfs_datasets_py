@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+        }
+        .toc {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .toc h2 {
+            margin-top: 0;
+            color: #667eea;
+        }
+        .module {
+            background: white;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .module-header {
+            background: #667eea;
+            color: white;
+            padding: 20px;
+        }
+        .module-header h2 {
+            margin: 0;
+        }
+        .module-content {
+            padding: 20px;
+        }
+        .class, .function {
+            border-left: 4px solid #667eea;
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 0 5px 5px 0;
+        }
+        .class h4, .function h4 {
+            margin-top: 0;
+            color: #667eea;
+        }
+        .docstring {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border-left: 3px solid #28a745;
+        }
+        .parameters, .returns {
+            margin: 15px 0;
+        }
+        .parameters h5, .returns h5 {
+            margin: 0 0 10px 0;
+            color: #495057;
+        }
+        .param-list, .return-info {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        .param {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 2px solid #ffc107;
+            background: #fff3cd;
+        }
+        .param code {
+            background: #e9ecef;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        code {
+            background: #e9ecef;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        pre {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 20px;
+            color: #666;
+            border-top: 1px solid #dee2e6;
+        }
+        ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        ul li {
+            margin: 5px 0;
+            padding: 5px;
+            background: white;
+            border-radius: 3px;
+            border-left: 3px solid #17a2b8;
+        }
+        ul li a {
+            text-decoration: none;
+            color: #667eea;
+        }
+        ul li a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ title }}</h1>
+        {% if description %}
+        <p>{{ description }}</p>
+        {% endif %}
+    </div>
+
+    <div class="toc">
+        <h2>Table of Contents</h2>
+        <ul>
+        {% for module in modules %}
+            <li><a href="#{{ module.name|lower|replace('.', '') }}">{{ module.name }}</a>
+                <ul>
+                {% for cls in module.classes %}
+                    <li><a href="#{{ cls.name|lower }}">{{ cls.name }}</a></li>
+                {% endfor %}
+                {% for func in module.functions %}
+                    <li><a href="#{{ func.name|lower }}">{{ func.name }}()</a></li>
+                {% endfor %}
+                </ul>
+            </li>
+        {% endfor %}
+        </ul>
+    </div>
+
+    {% for module in modules %}
+    <div class="module" id="{{ module.name|lower|replace('.', '') }}">
+        <div class="module-header">
+            <h2>{{ module.name }}</h2>
+        </div>
+        <div class="module-content">
+            {% if module.docstring %}
+            <div class="docstring">
+                <pre>{{ module.docstring }}</pre>
+            </div>
+            {% endif %}
+
+            {% if module.classes %}
+            <h3>Classes</h3>
+            {% for cls in module.classes %}
+            <div class="class" id="{{ cls.name|lower }}">
+                <h4>{{ cls.name }}</h4>
+                {% if cls.docstring %}
+                <div class="docstring">
+                    <pre>{{ cls.docstring }}</pre>
+                </div>
+                {% endif %}
+
+                {% if cls.methods %}
+                <div class="parameters">
+                    <h5>Methods:</h5>
+                    <div class="param-list">
+                    {% for method in cls.methods %}
+                        <div class="param">
+                            <code>{{ method.name }}()</code> - {{ method.docstring.split('\n')[0] if method.docstring else 'No description' }}
+                        </div>
+                    {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if cls.attributes %}
+                <div class="parameters">
+                    <h5>Attributes:</h5>
+                    <div class="param-list">
+                    {% for attr in cls.attributes %}
+                        <div class="param">
+                            <code>{{ attr.name }}</code> - {{ attr.docstring if attr.docstring else 'No description' }}
+                        </div>
+                    {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            {% if module.functions %}
+            <h3>Functions</h3>
+            {% for func in module.functions %}
+            <div class="function" id="{{ func.name|lower }}">
+                <h4>{{ func.name }}()</h4>
+                {% if func.docstring %}
+                <div class="docstring">
+                    <pre>{{ func.docstring }}</pre>
+                </div>
+                {% endif %}
+
+                {% if func.parameters %}
+                <div class="parameters">
+                    <h5>Parameters:</h5>
+                    <div class="param-list">
+                    {% for param in func.parameters %}
+                        <div class="param">
+                            <code>{{ param.name }}</code> 
+                            ({{ param.type_annotation if param.type_annotation else 'Any' }})
+                            {% if param.default %} = {{ param.default }}{% endif %}
+                            - {{ param.description if param.description else 'No description' }}
+                        </div>
+                    {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if func.returns %}
+                <div class="returns">
+                    <h5>Returns:</h5>
+                    <div class="return-info">
+                        {{ func.returns.type_annotation if func.returns.type_annotation else 'Any' }} - 
+                        {{ func.returns.description if func.returns.description else 'No description' }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+
+    <div class="footer">
+        <p>Generated on {{ generation_date }} by Documentation Generator</p>
+    </div>
+</body>
+</html>

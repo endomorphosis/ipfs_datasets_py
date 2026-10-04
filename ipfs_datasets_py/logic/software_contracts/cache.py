@@ -24,8 +24,6 @@ import os
 import tempfile
 import threading
 import time
-import sys
-from types import BuiltinMethodType, FunctionType, ModuleType
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
@@ -42,7 +40,6 @@ from ipfs_datasets_py.logic.software_contracts.content import (
     decode_and_recompute_structured,
     validate_cid,
 )
-from ipfs_datasets_py.logic.software_contracts import content as _structured_content
 
 try:  # pragma: no cover - exercised on POSIX, optional elsewhere
     import fcntl
@@ -51,11 +48,21 @@ except ImportError:  # pragma: no cover
 
 
 GOAL_ID: Final[str] = "DSCON-G100"
-PROFILE_SCHEMA: Final[str] = "ipfs-datasets.software-contract-analysis-cache-profile.v1"
-KEY_SCHEMA: Final[str] = "ipfs-datasets.software-contract-analysis-cache-key.v1"
-RECEIPT_SCHEMA: Final[str] = "ipfs-datasets.software-contract-analysis-cache-receipt.v1"
-SNAPSHOT_SCHEMA: Final[str] = "ipfs-datasets.software-contract-analysis-snapshot-receipt.v1"
-INDEX_SCHEMA: Final[str] = "ipfs-datasets.software-contract-analysis-cache-index.v1"
+PROFILE_SCHEMA: Final[str] = (
+    "ipfs-datasets.software-contract-analysis-cache-profile.v1"
+)
+KEY_SCHEMA: Final[str] = (
+    "ipfs-datasets.software-contract-analysis-cache-key.v1"
+)
+RECEIPT_SCHEMA: Final[str] = (
+    "ipfs-datasets.software-contract-analysis-cache-receipt.v1"
+)
+SNAPSHOT_SCHEMA: Final[str] = (
+    "ipfs-datasets.software-contract-analysis-snapshot-receipt.v1"
+)
+INDEX_SCHEMA: Final[str] = (
+    "ipfs-datasets.software-contract-analysis-cache-index.v1"
+)
 
 OUTCOME_PROVED: Final[str] = "PROVED_WITHIN_MODEL"
 OUTCOME_VIOLATED: Final[str] = "VIOLATED_WITH_COUNTEREXAMPLE"
@@ -168,7 +175,9 @@ def _closed_fields(
     missing = sorted(expected - fields)
     extra = sorted(fields - expected)
     if missing or extra:
-        raise CacheIntegrityError(f"{name} fields are closed (missing={missing}, extra={extra})")
+        raise CacheIntegrityError(
+            f"{name} fields are closed (missing={missing}, extra={extra})"
+        )
 
 
 def _integer(value: Any, name: str, *, minimum: int = 0) -> int:
@@ -240,7 +249,9 @@ class AnalysisCacheKey:
             "toolchain_cid",
         ):
             object.__setattr__(self, name, _structured_cid(getattr(self, name), name))
-        object.__setattr__(self, "result_schema", _nonempty(self.result_schema, "result_schema"))
+        object.__setattr__(
+            self, "result_schema", _nonempty(self.result_schema, "result_schema")
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -307,7 +318,9 @@ class CacheReceipt:
     def __post_init__(self) -> None:
         if not isinstance(self.key, AnalysisCacheKey):
             raise CacheIntegrityError("receipt key must be AnalysisCacheKey")
-        object.__setattr__(self, "result_cid", _structured_cid(self.result_cid, "result_cid"))
+        object.__setattr__(
+            self, "result_cid", _structured_cid(self.result_cid, "result_cid")
+        )
         if self.outcome not in ALL_OUTCOMES:
             raise CacheIntegrityError(f"unsupported cache outcome {self.outcome!r}")
         _integer(self.created_at, "created_at")
@@ -394,7 +407,9 @@ class AggregateSnapshotReceipt:
             for index, item in enumerate(self.shard_receipt_cids)
         )
         if not receipts or len(set(receipts)) != len(receipts):
-            raise CacheIntegrityError("shard_receipt_cids must be non-empty and unique")
+            raise CacheIntegrityError(
+                "shard_receipt_cids must be non-empty and unique"
+            )
         object.__setattr__(self, "shard_receipt_cids", tuple(sorted(receipts)))
         _integer(self.created_at, "created_at")
 
@@ -446,7 +461,9 @@ class ImmutableCAS:
         self.source_root.mkdir(parents=True, exist_ok=True)
 
     def path_for(self, cid: str, *, source: bool = False) -> Path:
-        canonical = validate_cid(cid, codecs={SOURCE_CODEC if source else STRUCTURED_CODEC})
+        canonical = validate_cid(
+            cid, codecs={SOURCE_CODEC if source else STRUCTURED_CODEC}
+        )
         base = self.source_root if source else self.structured_root
         return base / canonical[:4] / canonical
 
@@ -498,8 +515,7 @@ class ImmutableCAS:
 
     put_structured = put
 
-    def _read_structured_payload(self, cid: str) -> bytes:
-        """Bounded raw read; this alone grants no canonical/schema authority."""
+    def get(self, cid: str, *, expected_schema: str | None = None) -> Any:
         target = self.path_for(cid)
         try:
             with target.open("rb") as stream:
@@ -510,11 +526,6 @@ class ImmutableCAS:
             raise CacheIntegrityError(f"cannot read CAS object {cid}") from exc
         if len(payload) > self.max_object_bytes:
             raise CacheIntegrityError("stored CAS object exceeds max_object_bytes")
-        return payload
-
-    @staticmethod
-    def _decode_structured_payload(cid: str, payload: bytes, *, expected_schema: str | None = None) -> Any:
-        """The original structured read validation, with unchanged failures."""
         try:
             value = json.loads(payload.decode("utf-8"))
             canonical = canonical_dag_json_bytes(value)
@@ -528,12 +539,10 @@ class ImmutableCAS:
             raise CacheIntegrityError("stored structured object CID mismatch") from exc
         if expected_schema is not None:
             if not isinstance(value, dict) or value.get("schema") != expected_schema:
-                raise CacheIntegrityError(f"stored object schema is not {expected_schema!r}")
+                raise CacheIntegrityError(
+                    f"stored object schema is not {expected_schema!r}"
+                )
         return value
-
-    def get(self, cid: str, *, expected_schema: str | None = None) -> Any:
-        payload = self._read_structured_payload(cid)
-        return self._decode_structured_payload(cid, payload, expected_schema=expected_schema)
 
     read = get
     get_structured = get
@@ -565,149 +574,6 @@ class ImmutableCAS:
         return payload
 
 
-def _structured_callable_binding(function):
-    # Native reader/JSON defaults are scalars, types or immutable callables.
-    # Capture values inside the mutable kwdefaults dictionary, not its id.
-    return (function, function.__code__,
-            tuple((type(value), id(value)) for value in (function.__defaults__ or ())),
-            tuple((name, type(value), id(value)) for name, value in sorted((function.__kwdefaults__ or {}).items())))
-
-
-def _structured_reader_bindings():
-    bindings = [ImmutableCAS, json]
-    for function in (canonical_dag_json_bytes, cid_for_structured,
-                     decode_and_recompute_structured, validate_cid):
-        bindings.append(_structured_callable_binding(function))
-    for cls in (ImmutableCAS, json.JSONDecoder, json.JSONEncoder):
-        bindings.append(cls)
-        for name, value in sorted(vars(cls).items()):
-            if isinstance(value, (classmethod, staticmethod)):
-                value = value.__func__
-            if type(value) is FunctionType:
-                bindings.append((cls, name, _structured_callable_binding(value)))
-            else:
-                bindings.append((cls, name, type(value), id(value)))
-    for module in (json, json.decoder, json.encoder, json.scanner, _structured_content):
-        bindings.append(module)
-        for name, value in sorted(vars(module).items()):
-            if type(value) is ModuleType:
-                bindings.append((module.__name__, name, type(value), id(value)))
-            elif type(value) is FunctionType:
-                bindings.append((module.__name__, name, _structured_callable_binding(value)))
-            elif name in {"c_make_encoder", "c_make_scanner", "scanstring",
-                          "encode_basestring", "encode_basestring_ascii"}:
-                bindings.append((module.__name__, name, type(value), id(value)))
-    for name in ("_default_decoder", "_default_encoder"):
-        value = getattr(json, name)
-        bindings.append((name, type(value), id(value),
-                         tuple((key, type(item), id(item)) for key, item in sorted(vars(value).items()))))
-    return tuple(bindings)
-
-
-def _structured_json_provenance():
-    """Conservative stdlib eligibility, never a substitute JSON validator.
-
-    Wrappers installed before this module imports must keep the ordinary get
-    path too. Unsupported interpreter/layouts merely lose private byte replay.
-    """
-    try:
-        modules = (json, json.decoder, json.encoder, json.scanner)
-        for module in modules:
-            if type(module) is not ModuleType or sys.modules.get(module.__name__) is not module:
-                return False
-            for value in vars(module).values():
-                if type(value) is FunctionType:
-                    if not value.__module__.startswith("json"):
-                        return False
-                    source = sys.modules.get(value.__module__)
-                    if source not in modules or value.__code__.co_filename != source.__file__:
-                        return False
-        for function in (json.loads, json.dumps):
-            if (type(function) is not FunctionType or function.__module__ != "json"
-                    or function.__code__.co_filename != json.__file__ or function.__defaults__ is not None):
-                return False
-        expected = ((json.loads, dict(cls=None, object_hook=None, parse_float=None, parse_int=None,
-                                     parse_constant=None, object_pairs_hook=None)),
-                    (json.dumps, dict(skipkeys=False, ensure_ascii=True, check_circular=True,
-                                     allow_nan=True, cls=None, indent=None, separators=None,
-                                     default=None, sort_keys=False)))
-        for function, defaults in expected:
-            actual = function.__kwdefaults__
-            if type(actual) is not dict or set(actual) != set(defaults) or any(
-                    actual[key] is not value for key, value in defaults.items()):
-                return False
-        for cls, module in ((json.JSONDecoder, json.decoder), (json.JSONEncoder, json.encoder)):
-            if cls.__module__ != module.__name__:
-                return False
-            for value in vars(cls).values():
-                if type(value) is FunctionType and (value.__module__ != module.__name__
-                        or value.__code__.co_filename != module.__file__):
-                    return False
-        defaults = json.JSONDecoder.decode.__defaults__
-        if type(defaults) is not tuple or len(defaults) != 1:
-            return False
-        whitespace = defaults[0]
-        if (not isinstance(whitespace, BuiltinMethodType)
-                or whitespace.__self__ is not json.decoder.WHITESPACE
-                or whitespace.__name__ != "match"
-                or json.decoder.WHITESPACE.pattern != r"[ \t\n\r]*"
-                or json.decoder.WHITESPACE.flags != 120):
-            return False
-        decoder, encoder = json._default_decoder, json._default_encoder
-        if type(decoder) is not json.JSONDecoder or type(encoder) is not json.JSONEncoder:
-            return False
-        native_encoder = dict(skipkeys=False, ensure_ascii=True, check_circular=True,
-                              allow_nan=True, sort_keys=False, indent=None)
-        if set(vars(encoder)) != set(native_encoder) or any(
-                vars(encoder)[key] is not value for key, value in native_encoder.items()):
-            return False
-        native_decoder = dict(object_hook=None, object_pairs_hook=None, parse_float=float,
-                              parse_int=int, strict=True, parse_object=json.decoder.JSONObject,
-                              parse_array=json.decoder.JSONArray, parse_string=json.decoder.scanstring)
-        if set(vars(decoder)) != set(native_decoder) | {"parse_constant", "memo", "scan_once"}:
-            return False
-        if any(vars(decoder)[key] is not value for key, value in native_decoder.items()):
-            return False
-        if type(decoder.memo) is not dict or decoder.memo:
-            return False
-        scanner = decoder.scan_once
-        if (type(scanner) is not json.scanner.c_make_scanner
-                or type(scanner).__module__ != "_json"):
-            return False
-        for name in ("strict", "object_hook", "object_pairs_hook", "parse_float", "parse_int"):
-            if getattr(scanner, name) is not native_decoder[name]:
-                return False
-        for function in (decoder.parse_constant, scanner.parse_constant):
-            if (not isinstance(function, BuiltinMethodType)
-                    or function.__self__ is not json.decoder._CONSTANTS
-                    or function.__name__ != "__getitem__"):
-                return False
-        if _structured_content.json is not json:
-            return False
-        for function in (canonical_dag_json_bytes, cid_for_structured,
-                         decode_and_recompute_structured, validate_cid):
-            if (type(function) is not FunctionType
-                    or function.__module__ != _structured_content.__name__
-                    or function.__code__.co_filename != _structured_content.__file__):
-                return False
-        return True
-    except (AttributeError, TypeError, ValueError):
-        return False
-
-
-def _structured_reader_is_native():
-    try:
-        return _native_structured_json and _structured_reader_bindings() == _native_structured_bindings
-    except (AttributeError, TypeError, ValueError):
-        return False
-
-
-# Cache-owned anchors precede any later import of the manifest consumer. They
-# cannot bless a reader installed between importing cache and codebase_ir.
-_native_structured_json = _structured_json_provenance()
-_native_structured_bindings = _structured_reader_bindings() if _native_structured_json else None
-
-
 @dataclass(frozen=True)
 class CacheLookup:
     """Result of a cache lookup; misses never carry completion authority."""
@@ -720,7 +586,9 @@ class CacheLookup:
     @property
     def satisfies_completion(self) -> bool:
         return bool(
-            self.hit and self.receipt is not None and self.receipt.outcome == OUTCOME_PROVED
+            self.hit
+            and self.receipt is not None
+            and self.receipt.outcome == OUTCOME_PROVED
         )
 
 
@@ -736,7 +604,9 @@ class AnalysisCache:
         max_object_bytes: int = DEFAULT_MAX_OBJECT_BYTES,
     ) -> None:
         self.root = Path(root)
-        self.cas = ImmutableCAS(self.root / "cas", max_object_bytes=max_object_bytes)
+        self.cas = ImmutableCAS(
+            self.root / "cas", max_object_bytes=max_object_bytes
+        )
         self.index_root = self.root / "index"
         self.index_root.mkdir(parents=True, exist_ok=True)
         self.lock_path = self.root / ".index.lock"
@@ -796,7 +666,9 @@ class AnalysisCache:
             "key_cid": key_cid,
             "receipt_cid": receipt_cid,
         }
-        self._replace_atomic(self._index_path(key_cid), canonical_dag_json_bytes(record))
+        self._replace_atomic(
+            self._index_path(key_cid), canonical_dag_json_bytes(record)
+        )
 
     def _read_index(self, key_cid: str) -> str | None:
         path = self._index_path(key_cid)
@@ -823,7 +695,9 @@ class AnalysisCache:
         ):
             raise CacheIntegrityError("cache index membership is invalid")
         try:
-            return validate_cid(record.get("receipt_cid"), codecs={STRUCTURED_CODEC})
+            return validate_cid(
+                record.get("receipt_cid"), codecs={STRUCTURED_CODEC}
+            )
         except (ContentIdentityError, TypeError, ValueError) as exc:
             raise CacheIntegrityError("cache index receipt CID is invalid") from exc
 
@@ -860,7 +734,9 @@ class AnalysisCache:
         if not isinstance(key, AnalysisCacheKey):
             raise TypeError("key must be AnalysisCacheKey")
         if not isinstance(result, Mapping) or result.get("schema") != key.result_schema:
-            raise CacheIntegrityError(f"result must be an object with schema {key.result_schema!r}")
+            raise CacheIntegrityError(
+                f"result must be an object with schema {key.result_schema!r}"
+            )
         now = self._now()
         expires: int | None = None
         if outcome in LEASED_OUTCOMES:
@@ -909,13 +785,19 @@ class AnalysisCache:
             with self._locked():
                 self._index_path(key.cid).unlink(missing_ok=True)
             return CacheLookup(hit=False, reason="expired")
-        result = self.cas.get(receipt.result_cid, expected_schema=key.result_schema)
-        return CacheLookup(hit=True, reason="hit", result=result, receipt=receipt)
+        result = self.cas.get(
+            receipt.result_cid, expected_schema=key.result_schema
+        )
+        return CacheLookup(
+            hit=True, reason="hit", result=result, receipt=receipt
+        )
 
     def get(self, key: AnalysisCacheKey) -> Any | None:
         return self.lookup(key).result
 
-    def invalidate_source_closure(self, changed_cids: str | Sequence[str]) -> tuple[str, ...]:
+    def invalidate_source_closure(
+        self, changed_cids: str | Sequence[str]
+    ) -> tuple[str, ...]:
         """Drop only indexes whose source closure intersects ``changed_cids``.
 
         Immutable CAS objects are retained.  Keys must already contain their
@@ -937,7 +819,9 @@ class AnalysisCache:
                     receipt_cid = self._read_index(key_cid)
                     if receipt_cid is None:
                         continue
-                    raw = self.cas.get(receipt_cid, expected_schema=RECEIPT_SCHEMA)
+                    raw = self.cas.get(
+                        receipt_cid, expected_schema=RECEIPT_SCHEMA
+                    )
                     receipt = CacheReceipt.from_dict(raw)
                 except (AnalysisCacheError, ContentIdentityError, ValueError):
                     # Corrupt indexes cannot safely remain reusable.
@@ -1007,7 +891,9 @@ class AnalysisCache:
             cid = _structured_cid(cid, f"shard_receipts[{index}]")
             receipt = self._read_receipt(cid)
             if receipt.key_cid in key_cids:
-                raise CacheIntegrityError("snapshot must contain exactly one receipt per shard key")
+                raise CacheIntegrityError(
+                    "snapshot must contain exactly one receipt per shard key"
+                )
             key_cids.add(receipt.key_cid)
             receipt_cids.append(cid)
         snapshot = AggregateSnapshotReceipt(
@@ -1030,7 +916,9 @@ class AnalysisCache:
         if (
             expected_repository_tree_cid is not None
             and snapshot.repository_tree_cid
-            != _structured_cid(expected_repository_tree_cid, "expected_repository_tree_cid")
+            != _structured_cid(
+                expected_repository_tree_cid, "expected_repository_tree_cid"
+            )
         ):
             raise CacheIntegrityError("snapshot repository-tree membership mismatch")
         actual_keys: list[str] = []
@@ -1038,7 +926,9 @@ class AnalysisCache:
             receipt = self._read_receipt(receipt_cid)
             actual_keys.append(receipt.key_cid)
         if len(set(actual_keys)) != len(actual_keys):
-            raise CacheIntegrityError("snapshot contains duplicate shard-key membership")
+            raise CacheIntegrityError(
+                "snapshot contains duplicate shard-key membership"
+            )
         if expected_key_cids is not None:
             if isinstance(expected_key_cids, (str, bytes, bytearray)):
                 raise CacheIntegrityError("expected_key_cids must be an array")
@@ -1047,7 +937,9 @@ class AnalysisCache:
                 for index, item in enumerate(expected_key_cids)
             )
             if len(set(expected)) != len(expected):
-                raise CacheIntegrityError("expected_key_cids must contain unique shard keys")
+                raise CacheIntegrityError(
+                    "expected_key_cids must contain unique shard keys"
+                )
             if tuple(sorted(actual_keys)) != tuple(sorted(expected)):
                 raise CacheIntegrityError("snapshot shard membership mismatch")
         return snapshot

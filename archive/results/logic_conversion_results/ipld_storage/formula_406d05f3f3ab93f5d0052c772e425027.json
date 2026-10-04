@@ -1,0 +1,52 @@
+{
+  "formula_id": "66968508ba3a",
+  "deontic_formula": {
+    "formula_id": "66968508ba3a",
+    "operator": "O",
+    "proposition": "pay_the_contractor_within_30_days_of_completion",
+    "agent": {
+      "identifier": "client_springfield",
+      "name": "City of Springfield",
+      "agent_type": "unknown",
+      "properties": {},
+      "hash": "88b001c2"
+    },
+    "beneficiary": null,
+    "conditions": [
+      "30 days of completion"
+    ],
+    "temporal_conditions": [
+      {
+        "operator": "U",
+        "condition": "30 days",
+        "start_time": null,
+        "end_time": "30 days",
+        "duration": null
+      }
+    ],
+    "legal_context": {
+      "jurisdiction": "Illinois, USA",
+      "legal_domain": "contract",
+      "applicable_law": null,
+      "precedents": [],
+      "exceptions": []
+    },
+    "confidence": 0.95,
+    "source_text": "The Client shall pay the Contractor within 30 days of completion",
+    "variables": {},
+    "quantifiers": [],
+    "fol_string": "O[client_springfield](U((30 days of completion) \u2192 (pay_the_contractor_within_30_days_of_completion)))",
+    "creation_timestamp": "2025-08-31T19:10:24.758353"
+  },
+  "source_document_cid": null,
+  "source_text_excerpt": "The Client shall pay the Contractor within 30 days of completion",
+  "extraction_metadata": {
+    "source_method": "graphrag_conversion"
+  },
+  "translations": {},
+  "translation_cids": {},
+  "provenance_chain": null,
+  "creation_timestamp": "2025-08-31T19:10:24.760837",
+  "confidence_score": 0.95,
+  "validation_results": {}
+}

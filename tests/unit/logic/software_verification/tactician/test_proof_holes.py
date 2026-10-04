@@ -295,10 +295,12 @@ def test_unsupported_semantics_distinct_from_missing_proof() -> None:
     assert non_proof[0].validation_recipe is not None
     assert "do_not_discharge" in non_proof[0].validation_recipe.steps
     # Partition is disjoint and complete.
-    assert set(emission.missing_proof_hole_ids).isdisjoint(set(emission.non_proof_hole_ids))
-    assert set(emission.missing_proof_hole_ids) | set(emission.non_proof_hole_ids) == {
-        hole.hole_id for hole in emission.holes
-    }
+    assert set(emission.missing_proof_hole_ids).isdisjoint(
+        set(emission.non_proof_hole_ids)
+    )
+    assert set(emission.missing_proof_hole_ids) | set(
+        emission.non_proof_hole_ids
+    ) == {hole.hole_id for hole in emission.holes}
 
 
 def test_unavailable_tool_is_non_proof_unavailable() -> None:
@@ -324,9 +326,15 @@ def test_unavailable_tool_is_non_proof_unavailable() -> None:
 
 def test_hole_status_for_role_partition() -> None:
     assert hole_status_for_role(AnnotationRole.LOOP_INVARIANT) is HoleStatus.OPEN
-    assert hole_status_for_role(AnnotationRole.UNSUPPORTED_SEMANTICS) is (HoleStatus.UNSUPPORTED)
-    assert hole_status_for_role(AnnotationRole.UNAVAILABLE_TOOL) is (HoleStatus.UNAVAILABLE)
-    assert hole_status_for_role(AnnotationRole.REQUIRED_IMPLEMENTATION_CHANGE) is (HoleStatus.FALSE)
+    assert hole_status_for_role(AnnotationRole.UNSUPPORTED_SEMANTICS) is (
+        HoleStatus.UNSUPPORTED
+    )
+    assert hole_status_for_role(AnnotationRole.UNAVAILABLE_TOOL) is (
+        HoleStatus.UNAVAILABLE
+    )
+    assert hole_status_for_role(AnnotationRole.REQUIRED_IMPLEMENTATION_CHANGE) is (
+        HoleStatus.FALSE
+    )
     assert is_missing_proof_role(AnnotationRole.BRIDGE_LEMMA)
     assert not is_missing_proof_role(AnnotationRole.UNSUPPORTED_SEMANTICS)
 
@@ -379,7 +387,9 @@ def test_require_source_spans_fail_closed() -> None:
 
 def test_without_annotation_unknown_site_fails() -> None:
     with pytest.raises(ProofHoleEmissionError, match="unknown site"):
-        _complete_surface().without_annotation("site:missing", AnnotationRole.LOOP_INVARIANT)
+        _complete_surface().without_annotation(
+            "site:missing", AnnotationRole.LOOP_INVARIANT
+        )
 
 
 def test_duplicate_site_ids_rejected() -> None:
@@ -571,7 +581,9 @@ def test_required_implementation_change_is_false_status() -> None:
                 site_id="site:impl",
                 site_kind=SiteKind.IMPLEMENTATION,
                 source=_source(span_ids=("span:impl",)),
-                required_roles=frozenset({AnnotationRole.REQUIRED_IMPLEMENTATION_CHANGE}),
+                required_roles=frozenset(
+                    {AnnotationRole.REQUIRED_IMPLEMENTATION_CHANGE}
+                ),
                 present_roles=frozenset(),
                 statement="goal is false of the current program",
                 rationale="A proof cannot close a false goal of the implementation.",

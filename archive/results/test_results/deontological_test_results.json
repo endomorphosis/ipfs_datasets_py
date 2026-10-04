@@ -1,0 +1,967 @@
+{
+  "test_suite": "Deontological Reasoning",
+  "timestamp": "2025-09-04T07:27:14.613586",
+  "summary": {
+    "total_tests": 5,
+    "passed": 5,
+    "failed": 0,
+    "success_rate": "100.0%"
+  },
+  "detailed_results": [
+    {
+      "test": "Legal Obligations",
+      "status": "passed",
+      "result": {
+        "analysis_type": "deontological_conflicts",
+        "status": "completed",
+        "result": {
+          "analysis_id": "deontic_analysis_1756970834",
+          "timestamp": "2025-09-04T07:27:14.518231",
+          "processing_stats": {
+            "documents_processed": 3,
+            "statements_extracted": 11,
+            "extraction_errors": 0
+          },
+          "statements_summary": {
+            "total_statements": 11,
+            "by_modality": {
+              "obligation": 4,
+              "prohibition": 3,
+              "exception": 1,
+              "permission": 3
+            },
+            "by_entity": {
+              "all financial institutions": 1,
+              "banks": 3,
+              "all banks": 2,
+              "institutions": 1,
+              "financial institutions": 2,
+              "credit unions": 2
+            }
+          },
+          "conflicts_summary": {
+            "total_conflicts": 1,
+            "by_type": {
+              "obligation_prohibition": 1
+            },
+            "by_severity": {
+              "high": 1
+            }
+          },
+          "entity_reports": {
+            "all financial institutions": {
+              "total_statements": 1,
+              "statement_breakdown": {
+                "obligation": 1,
+                "permission": 0,
+                "prohibition": 0,
+                "conditional": 0,
+                "exception": 0
+              },
+              "total_conflicts": 0,
+              "conflict_severity": {
+                "high": 0,
+                "medium": 0,
+                "low": 0
+              },
+              "top_conflicts": []
+            },
+            "banks": {
+              "total_statements": 3,
+              "statement_breakdown": {
+                "obligation": 0,
+                "permission": 0,
+                "prohibition": 2,
+                "conditional": 0,
+                "exception": 1
+              },
+              "total_conflicts": 0,
+              "conflict_severity": {
+                "high": 0,
+                "medium": 0,
+                "low": 0
+              },
+              "top_conflicts": []
+            },
+            "all banks": {
+              "total_statements": 2,
+              "statement_breakdown": {
+                "obligation": 1,
+                "permission": 0,
+                "prohibition": 1,
+                "conditional": 0,
+                "exception": 0
+              },
+              "total_conflicts": 1,
+              "conflict_severity": {
+                "high": 1,
+                "medium": 0,
+                "low": 0
+              },
+              "top_conflicts": [
+                {
+                  "id": "conflict_stmt_4_stmt_9",
+                  "type": "obligation_prohibition",
+                  "severity": "high",
+                  "entity": "all banks",
+                  "explanation": "Entity 'all banks' has conflicting obligations: must not engage in discriminatory lending practices based on race, \n                gender, or religious affiliation but must not engage in discriminatory lending practices based on race, \n                gender, or religious affiliation",
+                  "statement1_text": "All banks must not engage in discriminatory lending practices based on race, \n                gender, or religious affiliation",
+                  "statement2_text": "All banks must not engage in discriminatory lending practices based on race, \n                gender, or religious affiliation",
+                  "sources": [
+                    "legal_doc_2",
+                    "legal_doc_2"
+                  ],
+                  "resolution_suggestions": [
+                    "Check for exceptions or conditions that might resolve the conflict",
+                    "Determine if one statement supersedes the other"
+                  ]
+                }
+              ]
+            },
+            "institutions": {
+              "total_statements": 1,
+              "statement_breakdown": {
+                "obligation": 1,
+                "permission": 0,
+                "prohibition": 0,
+                "conditional": 0,
+                "exception": 0
+              },
+              "total_conflicts": 0,
+              "conflict_severity": {
+                "high": 0,
+                "medium": 0,
+                "low": 0
+              },
+              "top_conflicts": []
+            },
+            "financial institutions": {
+              "total_statements": 2,
+              "statement_breakdown": {
+                "obligation": 1,
+                "permission": 1,
+                "prohibition": 0,
+                "conditional": 0,
+                "exception": 0
+              },
+              "total_conflicts": 0,
+              "conflict_severity": {
+                "high": 0,
+                "medium": 0,
+                "low": 0
+              },
+              "top_conflicts": []
+            },
+            "credit unions": {
+              "total_statements": 2,
+              "statement_breakdown": {
+                "obligation": 0,
+                "permission": 2,
+                "prohibition": 0,
+                "conditional": 0,
+                "exception": 0
+              },
+              "total_conflicts": 0,
+              "conflict_severity": {
+                "high": 0,
+                "medium": 0,
+                "low": 0
+              },
+              "top_conflicts": []
+            }
+          },
+          "high_priority_conflicts": [
+            {
+              "id": "conflict_stmt_4_stmt_9",
+              "type": "obligation_prohibition",
+              "severity": "high",
+              "entity": "all banks",
+              "explanation": "Entity 'all banks' has conflicting obligations: must not engage in discriminatory lending practices based on race, \n                gender, or religious affiliation but must not engage in discriminatory lending practices based on race, \n                gender, or religious affiliation",
+              "statement1_text": "All banks must not engage in discriminatory lending practices based on race, \n                gender, or religious affiliation",
+              "statement2_text": "All banks must not engage in discriminatory lending practices based on race, \n                gender, or religious affiliation",
+              "sources": [
+                "legal_doc_2",
+                "legal_doc_2"
+              ],
+              "resolution_suggestions": [
+                "Check for exceptions or conditions that might resolve the conflict",
+                "Determine if one statement supersedes the other"
+              ]
+            }
+          ],
+          "recommendations": [
+            "Address 1 high-severity conflicts that create direct contradictions"
+          ]
+        },
+        "processing_time": "2025-09-04T07:27:14.518231",
+        "documents_analyzed": 3
+      }
+    },
+    {
+      "test": "Regulatory Conflicts",
+      "status": "passed",
+      "result": {
+        "analysis_type": "deontological_conflicts",
+        "status": "completed",
+        "result": {
+          "analysis_id": "deontic_analysis_1756970834",
+          "timestamp": "2025-09-04T07:27:14.578021",
+          "processing_stats": {
+            "documents_processed": 2,
+            "statements_extracted": 13,
+            "extraction_errors": 0
+          },
+          "statements_summary": {
+            "total_statements": 13,
+            "by_modality": {
+              "obligation": 7,
+              "prohibition": 2,
+              "permission": 3,
+              "conditional": 1
+            },
+            "by_entity": {
+              "telecommunications \n                companies": 1,
+              "companies": 4,
+              "telecom providers": 2,
+              "all carriers": 1,
+              "all telecom companies": 2,
+              "telecommunications companies": 1,
+              "providers": 2
+            }
+          },
+          "conflicts_summary": {
+            "total_conflicts": 2,
+            "by_type": {
+              "obligation_prohibition": 2
+            },
+            "by_severity": {
+              "high": 2
+            }
+          },
+          "entity_reports": {
+            "telecommunications \n                companies": {
+              "total_statements": 1,
+              "statement_breakdown": {
+                "obligation": 1,
+                "permission": 0,
+                "prohibition": 0,
+                "conditional": 0,
+                "exception": 0
+              },
+              "total_conflicts": 0,
+              "conflict_severity": {
+                "high": 0,
+                "medium": 0,
+                "low": 0
+              },
+              "top_conflicts": []
+            },
+            "companies": {
+              "total_statements": 4,
+              "statement_breakdown": {
+                "obligation": 3,
+                "permission": 0,
+                "prohibition": 0,
+                "conditional": 1,
+                "exception": 0
+              },
+              "total_conflicts": 0,
+              "conflict_severity": {
+                "high": 0,
+                "medium": 0,
+                "low": 0
+              },
+              "top_conflicts": []
+            },
+            "telecom providers": {
+              "total_statements": 2,
+              "statement_breakdown": {
+                "obligation": 1,
+                "permission": 0,
+                "prohibition": 1,
+                "conditional": 0,
+                "exception": 0
+              },
+              "total_conflicts": 1,
+              "conflict_severity": {
+                "high": 1,
+                "medium": 0,
+                "low": 0
+              },
+              "top_conflicts": [
+                {
+                  "id": "conflict_stmt_14_stmt_17",
+                  "type": "obligation_prohibition",
+                  "severity": "high",
+                  "entity": "telecom providers",
+                  "explanation": "Entity 'telecom providers' has conflicting obligations: must not block emergency calls under any circumstances but must not block emergency calls under any circumstances",
+                  "statement1_text": "Telecom providers shall not block emergency calls under any circumstances",
+                  "statement2_text": "Telecom providers shall not block emergency calls under any circumstances",
+                  "sources": [
+                    "fed_reg_1",
+                    "fed_reg_1"
+                  ],
+                  "resolution_suggestions": [
+                    "Check for exceptions or conditions that might resolve the conflict",
+                    "Determine if one statement supersedes the other"
+                  ]
+                }
+              ]
+            },
+            "all carriers": {
+              "total_statements": 1,
+              "statement_breakdown": {
+                "obligation": 1,
+                "permission": 0,
+                "prohibition": 0,
+                "conditional": 0,
+                "exception": 0
+              },
+              "total_conflicts": 0,
+              "conflict_severity": {
+                "high": 0,
+                "medium": 0,
+                "low": 0
+              },
+              "top_conflicts": []
+            },
+            "all telecom companies": {
+              "total_statements": 2,
+              "statement_breakdown": {
+                "obligation": 1,
+                "permission": 0,
+                "prohibition": 1,
+                "conditional": 0,
+                "exception": 0
+              },
+              "total_conflicts": 1,
+              "conflict_severity": {
+                "high": 1,
+                "medium": 0,
+                "low": 0
+              },
+              "top_conflicts": [
+                {
+                  "id": "conflict_stmt_18_stmt_23",
+                  "type": "obligation_prohibition",
+                  "severity": "high",
+                  "entity": "all telecom companies",
+                  "explanation": "Entity 'all telecom companies' has conflicting obligations: must not discriminate based on geographic location when \n                providing basic services but must not discriminate based on geographic location when \n                providing basic services",
+                  "statement1_text": "All telecom companies must not discriminate based on geographic location when \n                providing basic services",
+                  "statement2_text": "All telecom companies must not discriminate based on geographic location when \n                providing basic services",
+                  "sources": [
+                    "state_reg_1",
+                    "state_reg_1"
+                  ],
+                  "resolution_suggestions": [
+                    "Check for exceptions or conditions that might resolve the conflict",
+                    "Determine if one statement supersedes the other"
+                  ]
+                }
+              ]
+            },
+            "telecommunications companies": {
+              "total_statements": 1,
+              "statement_breakdown": {
+                "obligation": 0,
+                "permission": 1,
+                "prohibition": 0,
+                "conditional": 0,
+                "exception": 0
+              },
+              "total_conflicts": 0,
+              "conflict_severity": {
+                "high": 0,
+                "medium": 0,
+                "low": 0
+              },
+              "top_conflicts": []
+            },
+            "providers": {
+              "total_statements": 2,
+              "statement_breakdown": {
+                "obligation": 0,
+                "permission": 2,
+                "prohibition": 0,
+                "conditional": 0,
+                "exception": 0
+              },
+              "total_conflicts": 0,
+              "conflict_severity": {
+                "high": 0,
+                "medium": 0,
+                "low": 0
+              },
+              "top_conflicts": []
+            }
+          },
+          "high_priority_conflicts": [
+            {
+              "id": "conflict_stmt_14_stmt_17",
+              "type": "obligation_prohibition",
+              "severity": "high",
+              "entity": "telecom providers",
+              "explanation": "Entity 'telecom providers' has conflicting obligations: must not block emergency calls under any circumstances but must not block emergency calls under any circumstances",
+              "statement1_text": "Telecom providers shall not block emergency calls under any circumstances",
+              "statement2_text": "Telecom providers shall not block emergency calls under any circumstances",
+              "sources": [
+                "fed_reg_1",
+                "fed_reg_1"
+              ],
+              "resolution_suggestions": [
+                "Check for exceptions or conditions that might resolve the conflict",
+                "Determine if one statement supersedes the other"
+              ]
+            },
+            {
+              "id": "conflict_stmt_18_stmt_23",
+              "type": "obligation_prohibition",
+              "severity": "high",
+              "entity": "all telecom companies",
+              "explanation": "Entity 'all telecom companies' has conflicting obligations: must not discriminate based on geographic location when \n                providing basic services but must not discriminate based on geographic location when \n                providing basic services",
+              "statement1_text": "All telecom companies must not discriminate based on geographic location when \n                providing basic services",
+              "statement2_text": "All telecom companies must not discriminate based on geographic location when \n                providing basic services",
+              "sources": [
+                "state_reg_1",
+                "state_reg_1"
+              ],
+              "resolution_suggestions": [
+                "Check for exceptions or conditions that might resolve the conflict",
+                "Determine if one statement supersedes the other"
+              ]
+            }
+          ],
+          "recommendations": [
+            "Address 2 high-severity conflicts that create direct contradictions"
+          ]
+        },
+        "processing_time": "2025-09-04T07:27:14.578021",
+        "documents_analyzed": 2
+      }
+    },
+    {
+      "test": "Government Policies",
+      "status": "passed",
+      "result": {
+        "analysis_type": "deontological_conflicts",
+        "status": "completed",
+        "result": {
+          "analysis_id": "deontic_analysis_1756970834",
+          "timestamp": "2025-09-04T07:27:14.595143",
+          "processing_stats": {
+            "documents_processed": 2,
+            "statements_extracted": 10,
+            "extraction_errors": 0
+          },
+          "statements_summary": {
+            "total_statements": 10,
+            "by_modality": {
+              "obligation": 6,
+              "prohibition": 2,
+              "permission": 1,
+              "conditional": 1
+            },
+            "by_entity": {
+              "federal agencies": 1,
+              "all government contractors": 2,
+              "federal employees": 1,
+              "agencies": 1,
+              "all dod personnel": 1,
+              "contractors": 3,
+              "military contractors": 1
+            }
+          },
+          "conflicts_summary": {
+            "total_conflicts": 1,
+            "by_type": {
+              "obligation_prohibition": 1
+            },
+            "by_severity": {
+              "high": 1
+            }
+          },
+          "entity_reports": {
+            "federal agencies": {
+              "total_statements": 1,
+              "statement_breakdown": {
+                "obligation": 1,
+                "permission": 0,
+                "prohibition": 0,
+                "conditional": 0,
+                "exception": 0
+              },
+              "total_conflicts": 0,
+              "conflict_severity": {
+                "high": 0,
+                "medium": 0,
+                "low": 0
+              },
+              "top_conflicts": []
+            },
+            "all government contractors": {
+              "total_statements": 2,
+              "statement_breakdown": {
+                "obligation": 2,
+                "permission": 0,
+                "prohibition": 0,
+                "conditional": 0,
+                "exception": 0
+              },
+              "total_conflicts": 0,
+              "conflict_severity": {
+                "high": 0,
+                "medium": 0,
+                "low": 0
+              },
+              "top_conflicts": []
+            },
+            "federal employees": {
+              "total_statements": 1,
+              "statement_breakdown": {
+                "obligation": 1,
+                "permission": 0,
+                "prohibition": 0,
+                "conditional": 0,
+                "exception": 0
+              },
+              "total_conflicts": 0,
+              "conflict_severity": {
+                "high": 0,
+                "medium": 0,
+                "low": 0
+              },
+              "top_conflicts": []
+            },
+            "agencies": {
+              "total_statements": 1,
+              "statement_breakdown": {
+                "obligation": 0,
+                "permission": 0,
+                "prohibition": 1,
+                "conditional": 0,
+                "exception": 0
+              },
+              "total_conflicts": 0,
+              "conflict_severity": {
+                "high": 0,
+                "medium": 0,
+                "low": 0
+              },
+              "top_conflicts": []
+            },
+            "all dod personnel": {
+              "total_statements": 1,
+              "statement_breakdown": {
+                "obligation": 1,
+                "permission": 0,
+                "prohibition": 0,
+                "conditional": 0,
+                "exception": 0
+              },
+              "total_conflicts": 0,
+              "conflict_severity": {
+                "high": 0,
+                "medium": 0,
+                "low": 0
+              },
+              "top_conflicts": []
+            },
+            "contractors": {
+              "total_statements": 3,
+              "statement_breakdown": {
+                "obligation": 1,
+                "permission": 0,
+                "prohibition": 1,
+                "conditional": 1,
+                "exception": 0
+              },
+              "total_conflicts": 1,
+              "conflict_severity": {
+                "high": 1,
+                "medium": 0,
+                "low": 0
+              },
+              "top_conflicts": [
+                {
+                  "id": "conflict_stmt_31_stmt_33",
+                  "type": "obligation_prohibition",
+                  "severity": "high",
+                  "entity": "contractors",
+                  "explanation": "Entity 'contractors' has conflicting obligations: must not share classified information with non-us persons but must not share classified information with non-us persons",
+                  "statement1_text": "Contractors shall not share classified information with non-US persons",
+                  "statement2_text": "Contractors shall not share classified information with non-US persons",
+                  "sources": [
+                    "dept_memo_1",
+                    "dept_memo_1"
+                  ],
+                  "resolution_suggestions": [
+                    "Check for exceptions or conditions that might resolve the conflict",
+                    "Determine if one statement supersedes the other"
+                  ]
+                }
+              ]
+            },
+            "military contractors": {
+              "total_statements": 1,
+              "statement_breakdown": {
+                "obligation": 0,
+                "permission": 1,
+                "prohibition": 0,
+                "conditional": 0,
+                "exception": 0
+              },
+              "total_conflicts": 0,
+              "conflict_severity": {
+                "high": 0,
+                "medium": 0,
+                "low": 0
+              },
+              "top_conflicts": []
+            }
+          },
+          "high_priority_conflicts": [
+            {
+              "id": "conflict_stmt_31_stmt_33",
+              "type": "obligation_prohibition",
+              "severity": "high",
+              "entity": "contractors",
+              "explanation": "Entity 'contractors' has conflicting obligations: must not share classified information with non-us persons but must not share classified information with non-us persons",
+              "statement1_text": "Contractors shall not share classified information with non-US persons",
+              "statement2_text": "Contractors shall not share classified information with non-US persons",
+              "sources": [
+                "dept_memo_1",
+                "dept_memo_1"
+              ],
+              "resolution_suggestions": [
+                "Check for exceptions or conditions that might resolve the conflict",
+                "Determine if one statement supersedes the other"
+              ]
+            }
+          ],
+          "recommendations": [
+            "Address 1 high-severity conflicts that create direct contradictions"
+          ]
+        },
+        "processing_time": "2025-09-04T07:27:14.595143",
+        "documents_analyzed": 2
+      }
+    },
+    {
+      "test": "Corporate Governance",
+      "status": "passed",
+      "result": {
+        "analysis_type": "deontological_conflicts",
+        "status": "completed",
+        "result": {
+          "analysis_id": "deontic_analysis_1756970834",
+          "timestamp": "2025-09-04T07:27:14.613244",
+          "processing_stats": {
+            "documents_processed": 2,
+            "statements_extracted": 7,
+            "extraction_errors": 0
+          },
+          "statements_summary": {
+            "total_statements": 7,
+            "by_modality": {
+              "obligation": 4,
+              "prohibition": 2,
+              "permission": 1
+            },
+            "by_entity": {
+              "all employees": 1,
+              "all staff": 1,
+              "employees": 2,
+              "all workers": 2,
+              "staff members": 1
+            }
+          },
+          "conflicts_summary": {
+            "total_conflicts": 1,
+            "by_type": {
+              "obligation_prohibition": 1
+            },
+            "by_severity": {
+              "high": 1
+            }
+          },
+          "entity_reports": {
+            "all employees": {
+              "total_statements": 1,
+              "statement_breakdown": {
+                "obligation": 1,
+                "permission": 0,
+                "prohibition": 0,
+                "conditional": 0,
+                "exception": 0
+              },
+              "total_conflicts": 0,
+              "conflict_severity": {
+                "high": 0,
+                "medium": 0,
+                "low": 0
+              },
+              "top_conflicts": []
+            },
+            "all staff": {
+              "total_statements": 1,
+              "statement_breakdown": {
+                "obligation": 1,
+                "permission": 0,
+                "prohibition": 0,
+                "conditional": 0,
+                "exception": 0
+              },
+              "total_conflicts": 0,
+              "conflict_severity": {
+                "high": 0,
+                "medium": 0,
+                "low": 0
+              },
+              "top_conflicts": []
+            },
+            "employees": {
+              "total_statements": 2,
+              "statement_breakdown": {
+                "obligation": 1,
+                "permission": 0,
+                "prohibition": 1,
+                "conditional": 0,
+                "exception": 0
+              },
+              "total_conflicts": 0,
+              "conflict_severity": {
+                "high": 0,
+                "medium": 0,
+                "low": 0
+              },
+              "top_conflicts": []
+            },
+            "all workers": {
+              "total_statements": 2,
+              "statement_breakdown": {
+                "obligation": 1,
+                "permission": 0,
+                "prohibition": 1,
+                "conditional": 0,
+                "exception": 0
+              },
+              "total_conflicts": 1,
+              "conflict_severity": {
+                "high": 1,
+                "medium": 0,
+                "low": 0
+              },
+              "top_conflicts": [
+                {
+                  "id": "conflict_stmt_38_stmt_41",
+                  "type": "obligation_prohibition",
+                  "severity": "high",
+                  "entity": "all workers",
+                  "explanation": "Entity 'all workers' has conflicting obligations: must not engage in insider trading or share material non-public \n                information but must not engage in insider trading or share material non-public \n                information",
+                  "statement1_text": "All workers must not engage in insider trading or share material non-public \n                information",
+                  "statement2_text": "All workers must not engage in insider trading or share material non-public \n                information",
+                  "sources": [
+                    "hr_handbook",
+                    "hr_handbook"
+                  ],
+                  "resolution_suggestions": [
+                    "Check for exceptions or conditions that might resolve the conflict",
+                    "Determine if one statement supersedes the other"
+                  ]
+                }
+              ]
+            },
+            "staff members": {
+              "total_statements": 1,
+              "statement_breakdown": {
+                "obligation": 0,
+                "permission": 1,
+                "prohibition": 0,
+                "conditional": 0,
+                "exception": 0
+              },
+              "total_conflicts": 0,
+              "conflict_severity": {
+                "high": 0,
+                "medium": 0,
+                "low": 0
+              },
+              "top_conflicts": []
+            }
+          },
+          "high_priority_conflicts": [
+            {
+              "id": "conflict_stmt_38_stmt_41",
+              "type": "obligation_prohibition",
+              "severity": "high",
+              "entity": "all workers",
+              "explanation": "Entity 'all workers' has conflicting obligations: must not engage in insider trading or share material non-public \n                information but must not engage in insider trading or share material non-public \n                information",
+              "statement1_text": "All workers must not engage in insider trading or share material non-public \n                information",
+              "statement2_text": "All workers must not engage in insider trading or share material non-public \n                information",
+              "sources": [
+                "hr_handbook",
+                "hr_handbook"
+              ],
+              "resolution_suggestions": [
+                "Check for exceptions or conditions that might resolve the conflict",
+                "Determine if one statement supersedes the other"
+              ]
+            }
+          ],
+          "recommendations": [
+            "Address 1 high-severity conflicts that create direct contradictions"
+          ]
+        },
+        "processing_time": "2025-09-04T07:27:14.613244",
+        "documents_analyzed": 2
+      }
+    },
+    {
+      "test": "Query Capabilities",
+      "status": "passed",
+      "statements": {
+        "query_type": "deontic_statements",
+        "total_results": 1,
+        "statements": [
+          {
+            "id": "stmt_4",
+            "entity": "all banks",
+            "action": "not engage in discriminatory lending practices based on race, \n                gender, or religious affiliation",
+            "modality": "obligation",
+            "source_document": "legal_doc_2",
+            "source_text": "All banks must not engage in discriminatory lending practices based on race, \n                gender, or religious affiliation",
+            "confidence": 0.8999999999999999,
+            "conditions": [],
+            "exceptions": []
+          }
+        ]
+      },
+      "conflicts": {
+        "query_type": "deontic_conflicts",
+        "total_results": 5,
+        "conflicts": [
+          {
+            "id": "conflict_stmt_4_stmt_9",
+            "type": "obligation_prohibition",
+            "severity": "high",
+            "entity": "all banks",
+            "explanation": "Entity 'all banks' has conflicting obligations: must not engage in discriminatory lending practices based on race, \n                gender, or religious affiliation but must not engage in discriminatory lending practices based on race, \n                gender, or religious affiliation",
+            "statement1": {
+              "text": "All banks must not engage in discriminatory lending practices based on race, \n                gender, or religious affiliation",
+              "modality": "obligation",
+              "action": "not engage in discriminatory lending practices based on race, \n                gender, or religious affiliation",
+              "source": "legal_doc_2"
+            },
+            "statement2": {
+              "text": "All banks must not engage in discriminatory lending practices based on race, \n                gender, or religious affiliation",
+              "modality": "prohibition",
+              "action": "engage in discriminatory lending practices based on race, \n                gender, or religious affiliation",
+              "source": "legal_doc_2"
+            },
+            "resolution_suggestions": [
+              "Check for exceptions or conditions that might resolve the conflict",
+              "Determine if one statement supersedes the other",
+              "Look for temporal ordering of the requirements"
+            ]
+          },
+          {
+            "id": "conflict_stmt_14_stmt_17",
+            "type": "obligation_prohibition",
+            "severity": "high",
+            "entity": "telecom providers",
+            "explanation": "Entity 'telecom providers' has conflicting obligations: must not block emergency calls under any circumstances but must not block emergency calls under any circumstances",
+            "statement1": {
+              "text": "Telecom providers shall not block emergency calls under any circumstances",
+              "modality": "obligation",
+              "action": "not block emergency calls under any circumstances",
+              "source": "fed_reg_1"
+            },
+            "statement2": {
+              "text": "Telecom providers shall not block emergency calls under any circumstances",
+              "modality": "prohibition",
+              "action": "block emergency calls under any circumstances",
+              "source": "fed_reg_1"
+            },
+            "resolution_suggestions": [
+              "Check for exceptions or conditions that might resolve the conflict",
+              "Determine if one statement supersedes the other",
+              "Look for temporal ordering of the requirements"
+            ]
+          },
+          {
+            "id": "conflict_stmt_18_stmt_23",
+            "type": "obligation_prohibition",
+            "severity": "high",
+            "entity": "all telecom companies",
+            "explanation": "Entity 'all telecom companies' has conflicting obligations: must not discriminate based on geographic location when \n                providing basic services but must not discriminate based on geographic location when \n                providing basic services",
+            "statement1": {
+              "text": "All telecom companies must not discriminate based on geographic location when \n                providing basic services",
+              "modality": "obligation",
+              "action": "not discriminate based on geographic location when \n                providing basic services",
+              "source": "state_reg_1"
+            },
+            "statement2": {
+              "text": "All telecom companies must not discriminate based on geographic location when \n                providing basic services",
+              "modality": "prohibition",
+              "action": "discriminate based on geographic location when \n                providing basic services",
+              "source": "state_reg_1"
+            },
+            "resolution_suggestions": [
+              "Check for exceptions or conditions that might resolve the conflict",
+              "Determine if one statement supersedes the other",
+              "Look for temporal ordering of the requirements"
+            ]
+          },
+          {
+            "id": "conflict_stmt_31_stmt_33",
+            "type": "obligation_prohibition",
+            "severity": "high",
+            "entity": "contractors",
+            "explanation": "Entity 'contractors' has conflicting obligations: must not share classified information with non-us persons but must not share classified information with non-us persons",
+            "statement1": {
+              "text": "Contractors shall not share classified information with non-US persons",
+              "modality": "obligation",
+              "action": "not share classified information with non-us persons",
+              "source": "dept_memo_1"
+            },
+            "statement2": {
+              "text": "Contractors shall not share classified information with non-US persons",
+              "modality": "prohibition",
+              "action": "share classified information with non-us persons",
+              "source": "dept_memo_1"
+            },
+            "resolution_suggestions": [
+              "Check for exceptions or conditions that might resolve the conflict",
+              "Determine if one statement supersedes the other",
+              "Look for temporal ordering of the requirements"
+            ]
+          },
+          {
+            "id": "conflict_stmt_38_stmt_41",
+            "type": "obligation_prohibition",
+            "severity": "high",
+            "entity": "all workers",
+            "explanation": "Entity 'all workers' has conflicting obligations: must not engage in insider trading or share material non-public \n                information but must not engage in insider trading or share material non-public \n                information",
+            "statement1": {
+              "text": "All workers must not engage in insider trading or share material non-public \n                information",
+              "modality": "obligation",
+              "action": "not engage in insider trading or share material non-public \n                information",
+              "source": "hr_handbook"
+            },
+            "statement2": {
+              "text": "All workers must not engage in insider trading or share material non-public \n                information",
+              "modality": "prohibition",
+              "action": "engage in insider trading or share material non-public \n                information",
+              "source": "hr_handbook"
+            },
+            "resolution_suggestions": [
+              "Check for exceptions or conditions that might resolve the conflict",
+              "Determine if one statement supersedes the other",
+              "Look for temporal ordering of the requirements"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

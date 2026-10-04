@@ -138,7 +138,9 @@ def test_immutable_cas_rejects_poisoning_truncation_and_noncanonical_json(
 
     canonical_value = {"schema": RESULT_SCHEMA, "a": 1, "b": 2}
     object_cid = cas.put(canonical_value)
-    cas.path_for(object_cid).write_bytes(json.dumps(canonical_value, indent=2).encode("utf-8"))
+    cas.path_for(object_cid).write_bytes(
+        json.dumps(canonical_value, indent=2).encode("utf-8")
+    )
     with pytest.raises(CacheIntegrityError, match="not canonical"):
         cas.get(object_cid)
 
@@ -198,7 +200,9 @@ def test_index_poisoning_and_wrong_key_membership_are_rejected(
         "key_cid": first_key.cid,
         "receipt_cid": second_receipt.cid,
     }
-    cache._index_path(first_key.cid).write_bytes(canonical_dag_json_bytes(poisoned))
+    cache._index_path(first_key.cid).write_bytes(
+        canonical_dag_json_bytes(poisoned)
+    )
     with pytest.raises(CacheIntegrityError, match="wrong shard key"):
         cache.lookup(first_key)
 
@@ -335,19 +339,18 @@ def test_snapshot_receipt_binds_tree_and_exact_shard_membership(
     assert snapshot.repository_tree_cid == tree_cid
     assert "repository_tree_cid" in snapshot.to_dict()
     assert "repository_tree_cid" not in first.key.to_dict()
-    assert (
-        cache.read_snapshot_receipt(
-            snapshot.cid,
-            expected_repository_tree_cid=tree_cid,
-            expected_key_cids=(first.key_cid, second.key_cid),
-        )
-        == snapshot
-    )
+    assert cache.read_snapshot_receipt(
+        snapshot.cid,
+        expected_repository_tree_cid=tree_cid,
+        expected_key_cids=(first.key_cid, second.key_cid),
+    ) == snapshot
 
     with pytest.raises(CacheIntegrityError, match="repository-tree"):
         cache.read_snapshot_receipt(
             snapshot.cid,
-            expected_repository_tree_cid=cid_for_structured({"repository": "tree-b"}),
+            expected_repository_tree_cid=cid_for_structured(
+                {"repository": "tree-b"}
+            ),
         )
     with pytest.raises(CacheIntegrityError, match="shard membership"):
         cache.read_snapshot_receipt(

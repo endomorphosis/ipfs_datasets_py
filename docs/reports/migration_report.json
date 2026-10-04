@@ -1,0 +1,1909 @@
+{
+  "total": 258,
+  "migrated": 258,
+  "errors": 0,
+  "needs_review": 41,
+  "fully_migrated": 217,
+  "results": [
+    {
+      "file": "migrate_to_anyio.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "anyio_migration_helpers.py",
+      "changed": true,
+      "simple_replacements": 2,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/integration/dashboard/test_news_analysis_dashboard.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/integration/dashboard/comprehensive_mcp_dashboard_test.py",
+      "changed": true,
+      "simple_replacements": 2,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/integration/dashboard/run_mcp_dashboard_tests.py",
+      "changed": true,
+      "simple_replacements": 2,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/integration/dashboard/comprehensive_gui_testing.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/integration/dashboard/test_utilities.py",
+      "changed": true,
+      "simple_replacements": 2,
+      "complex_patterns": [
+        "asyncio\\.create_task\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "tests/integration/dashboard/screenshot_gui_test.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/integration/geospatial/test_geospatial_simple.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/integration/geospatial/test_geospatial_mcp_tools.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/integration/news/simple_news_sources_test.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/integration/news/test_news_sources_integration.py",
+      "changed": true,
+      "simple_replacements": 4,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/integration/news/government_sources_test.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/test_stubs_from_gherkin/deontological_reasoning_callables/test_query_deontic_statements.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/test_stubs_from_gherkin/deontological_reasoning_callables/test_deontological_reasoning_engine_init.py",
+      "changed": true,
+      "simple_replacements": 4,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/test_stubs_from_gherkin/deontological_reasoning_callables/test_analyze_corpus_for_deontic_conflicts.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/test_stubs_from_gherkin/p2p_callables/test_p2p_workflow_demo_demo_mcp_tools.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/test_pdf_processor_malformed_pdf.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/test_pdf_processor_file_system_errors.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/scraper_tests/test_caselaw_scrapers.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/web_archive/test_web_search_integrations.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/query_engine/test_query_engine_initialization.py",
+      "changed": true,
+      "simple_replacements": 2,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/query_engine/test_query_engine_get_query_analytics.py",
+      "changed": true,
+      "simple_replacements": 2,
+      "complex_patterns": [
+        "asyncio\\.gather\\(",
+        "asyncio\\.get_event_loop\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/query_engine/test_query_engine_query.py",
+      "changed": true,
+      "simple_replacements": 8,
+      "complex_patterns": [
+        "asyncio\\.gather\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/batch_processor_/test_batch_job_result_data_class.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/batch_processor_/test_batch_processor_initialization.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/batch_processor_/test_batch_processor_status_management.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/batch_processor_/test_processing_job_data_class.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/batch_processor_/test_process_directory_batch.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/batch_processor_/test_batch_status_data_class.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/batch_processor_/test_batch_processor_process_batch.py",
+      "changed": true,
+      "simple_replacements": 2,
+      "complex_patterns": [
+        "asyncio\\.gather\\(",
+        "asyncio\\.create_task\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/batch_processor_/test_batch_processor_batch_operations.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/batch_processor_/test_batch_processor_statistics_and_monitoring.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/graphrag_integrator_/test_QueryGraph.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [
+        "asyncio\\.gather\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/graphrag_integrator_/test_GraphRAGIntegratorInit.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/graphrag_integrator_/test_GetEntityNeighborhood.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [
+        "asyncio\\.gather\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/graphrag_integrator_/conftest.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [
+        "asyncio\\.create_task\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/graphrag_integrator_/test_IntegrateDocument.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [
+        "asyncio\\.gather\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/llm_optimizer_/test_llm_optimizer_optimize_for_llm.py",
+      "changed": true,
+      "simple_replacements": 2,
+      "complex_patterns": [
+        "asyncio\\.gather\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/llm_optimizer_/test_llm_optimizer_integration.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/llm_optimizer_/conftest.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/llm_optimizer_/test_llm_optimizer_initialization.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/pdf_processor_/process_pdf/test_process_pdf_bad_inputs.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/pdf_processor_/process_pdf/test_pdf_processor_fatal_errors.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/pdf_processor_/process_pdf/test_process_pdf.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [
+        "asyncio\\.gather\\(",
+        "asyncio\\.create_task\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/pdf_processor_/process_pdf/conftest.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/pdf_processor_/process_pdf/test_pdf_processor_vertical_slice.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/llm_optimizer_/llm_document/test_llm_document_field_validation.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/llm_optimizer_/llm_document/test_llm_document_pydantic_model_methods.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/llm_optimizer_/llm_document/test_llm_document_chunk_management.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/llm_optimizer_/llm_document/test_llm_document_pydantic_model_structure.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/llm_optimizer_/llm_document/test_llm_document_embedding_handling.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/llm_optimizer_/llm_document/test_llm_document_attribute_access.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/llm_optimizer_/llm_document/test_llm_document_metadata_management.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/llm_optimizer_/llm_document/test_llm_document_integration.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/llm_optimizer_/llm_document/test_llm_document_entity_management.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/llm_optimizer_/llm_document/test_llm_document_instantiation.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/llm_optimizer_/text_processor/test_text_processor_initialization.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/llm_optimizer_/text_processor/test_text_processor_edge_cases_and_error_handling.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/llm_optimizer_/text_processor/test_text_processor_integration.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/llm_optimizer_/chunk_optimizer/test_chunk_optimizer_initialization.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/llm_optimizer_/chunk_optimizer/test_chunk_optimizer_optimize_chunk_boundaries.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/llm_optimizer_/chunk_optimizer/test_chunk_optimizer_edge_cases_and_performance.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/llm_optimizer_/classify_with_llm/test_classify_with_llm.py",
+      "changed": true,
+      "simple_replacements": 4,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/llm_optimizer_/llm_chunk/test_llm_chunk_pydantic_basemodel_structure.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/llm_optimizer_/llm_chunk/test_llm_chunk_attribute_access.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/llm_optimizer_/llm_chunk/test_llm_chunk_initialization.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/llm_optimizer_/llm_chunk/test_llm_chunk_field_validation.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/llm_optimizer_/llm_chunk/test_llm_chunk_semantic_type_classification.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/llm_optimizer_/llm_chunk/test_llm_chunk_embedding_handling.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/pdf_processing_/llm_optimizer_/llm_chunk/test_llm_chunk_dataclass_methods.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/scraper_tests/law_repos/test_proxy.py",
+      "changed": true,
+      "simple_replacements": 45,
+      "complex_patterns": [
+        "asyncio\\.gather\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "tests/unit_tests/scraper_tests/law_repos/proxy.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/scraper_tests/hugging_face_pipeline/upload_to_hugging_face_in_parallel/conftest.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/scraper_tests/law_repos/municode/conftest.py",
+      "changed": true,
+      "simple_replacements": 2,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/scraper_tests/law_repos/american_legal/conftest.py",
+      "changed": true,
+      "simple_replacements": 2,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/scraper_tests/law_repos/ecode360/conftest.py",
+      "changed": true,
+      "simple_replacements": 2,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/multimedia_/ffmpeg_wrapper_/test_convert_video_working_functionality.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/multimedia_/media_processor_/test_media_processor_core_functionality.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/multimedia_/media_processor_/test_media_processor_download_and_convert_disk_space_handling.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/multimedia_/media_processor_/test_media_processor_metadata_completeness_rate.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/multimedia_/media_processor_/test_media_processor_exception_coverage_rate.py",
+      "changed": true,
+      "simple_replacements": 2,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/multimedia_/media_processor_/test_media_processor_format_conversion_logic.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [
+        "asyncio\\.gather\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "tests/unit_tests/multimedia_/media_processor_/test_media_processor_resource_leak_prevention.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [
+        "asyncio\\.gather\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "tests/unit_tests/multimedia_/media_processor_/test_media_processor_metadata_extraction_and_cleanup.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/multimedia_/media_processor_/test_media_processor_sequential_operation_isolation.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/multimedia_/media_processor_/test_media_processor_url_edge_case_handling.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/multimedia_/media_processor_/test_media_processor_async_behavior.py",
+      "changed": true,
+      "simple_replacements": 2,
+      "complex_patterns": [
+        "asyncio\\.gather\\(",
+        "asyncio\\.create_task\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "tests/unit_tests/multimedia_/media_processor_/test_media_processor_platform_support_coverage.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/multimedia_/ffmpeg_wrapper_/extract_audio/test_invalid_inputs.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/multimedia_/ffmpeg_wrapper_/extract_audio/test_valid_inputs.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/multimedia_/ffmpeg_wrapper_/extract_audio/test_integration.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [
+        "asyncio\\.gather\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "tests/unit_tests/multimedia_/ffmpeg_wrapper_/extract_audio/test_edge_cases.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/multimedia_/ffmpeg_wrapper_/analyze_media/test_invalid_inputs.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/multimedia_/ffmpeg_wrapper_/analyze_media/test_valid_inputs.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/multimedia_/ffmpeg_wrapper_/analyze_media/test_integration.py",
+      "changed": true,
+      "simple_replacements": 2,
+      "complex_patterns": [
+        "asyncio\\.gather\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "tests/unit_tests/multimedia_/ffmpeg_wrapper_/analyze_media/test_edge_cases.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/multimedia_/ffmpeg_wrapper_/generate_thumbnail/test_invalid_inputs.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/multimedia_/ffmpeg_wrapper_/generate_thumbnail/test_valid_inputs.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/multimedia_/ffmpeg_wrapper_/generate_thumbnail/test_integration.py",
+      "changed": true,
+      "simple_replacements": 2,
+      "complex_patterns": [
+        "asyncio\\.gather\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "tests/unit_tests/multimedia_/ffmpeg_wrapper_/generate_thumbnail/test_edge_cases.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/multimedia_/ffmpeg_wrapper_/convert_video/test_invalid_inputs.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/multimedia_/ffmpeg_wrapper_/convert_video/test_valid_inputs.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/multimedia_/ffmpeg_wrapper_/convert_video/test_integration.py",
+      "changed": true,
+      "simple_replacements": 2,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/multimedia_/ffmpeg_wrapper_/convert_video/test_edge_cases.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/multimedia_/ffmpeg_wrapper_/compress_media/test_invalid_inputs.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/multimedia_/ffmpeg_wrapper_/compress_media/test_valid_inputs.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/multimedia_/ffmpeg_wrapper_/compress_media/test_integration.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [
+        "asyncio\\.gather\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "tests/unit_tests/multimedia_/ffmpeg_wrapper_/compress_media/test_edge_cases.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit_tests/multimedia_/media_processor_/download_and_convert_method/_test_dowload_and_convert_happy_path.py",
+      "changed": true,
+      "simple_replacements": 8,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit/test_stubs_from_gherkin/test_federal_register_scraper_verification.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit/test_stubs_from_gherkin/test_municipal_laws_scraper.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "tests/unit/test_stubs_from_gherkin/test_us_code_scraper_verification.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/ipfs_embeddings_py/ipfs_embeddings.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/ipfs_embeddings_py/embeddings_engine.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/alerts/discord_notifier.py",
+      "changed": true,
+      "simple_replacements": 3,
+      "complex_patterns": [
+        "asyncio\\.create_task\\(",
+        "asyncio\\.wait_for\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "ipfs_datasets_py/alerts/alert_manager.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/multimedia/ytdlp_wrapper.py",
+      "changed": true,
+      "simple_replacements": 4,
+      "complex_patterns": [
+        "asyncio\\.gather\\(",
+        "asyncio\\.create_task\\(",
+        "asyncio\\.get_event_loop\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "ipfs_datasets_py/multimedia/media_processor.py",
+      "changed": true,
+      "simple_replacements": 2,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_tools/temporal_deontic_mcp_server.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/vector_stores/qdrant_store.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/vector_stores/elasticsearch_store.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/vector_stores/base.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [
+        "asyncio\\.get_event_loop\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "ipfs_datasets_py/embeddings/create_embeddings.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/embeddings/core.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/scripts/init_database.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/logic_integration/caselaw_bulk_processor.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/search/search_embeddings.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/ml/quality_models.py",
+      "changed": true,
+      "simple_replacements": 2,
+      "complex_patterns": [
+        "asyncio\\.gather\\(",
+        "asyncio\\.Queue\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "ipfs_datasets_py/ml/content_classification.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [
+        "asyncio\\.create_task\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "ipfs_datasets_py/pdf_processing/query_engine.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [
+        "asyncio\\.get_event_loop\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "ipfs_datasets_py/pdf_processing/batch_processor.py",
+      "changed": true,
+      "simple_replacements": 2,
+      "complex_patterns": [
+        "asyncio\\.create_task\\(",
+        "asyncio\\.get_event_loop\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "ipfs_datasets_py/pdf_processing/classify_with_llm.py",
+      "changed": true,
+      "simple_replacements": 6,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/pdf_processing/llm_optimizer.py",
+      "changed": true,
+      "simple_replacements": 3,
+      "complex_patterns": [
+        "asyncio\\.get_event_loop\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "ipfs_datasets_py/pdf_processing/pdf_processor.py",
+      "changed": true,
+      "simple_replacements": 2,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/pdf_processing/graphrag_integrator.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [
+        "asyncio\\.Queue\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "ipfs_datasets_py/analytics/cross_website_analyzer.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/server.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/monitoring.py",
+      "changed": true,
+      "simple_replacements": 9,
+      "complex_patterns": [
+        "asyncio\\.create_task\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/mock_modelcontextprotocol_for_testing.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/_test_server.py",
+      "changed": true,
+      "simple_replacements": 3,
+      "complex_patterns": [
+        "asyncio\\.create_task\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/client.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/standalone_server.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/simple_server.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/__main__.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/_test_mcp_server.py",
+      "changed": true,
+      "simple_replacements": 3,
+      "complex_patterns": [
+        "asyncio\\.create_task\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_tools/tools/geospatial_tools.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_tools/tools/legal_dataset_mcp_tools.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_tools/tools/patent_scraper.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [
+        "asyncio\\.get_event_loop\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_tools/tools/temporal_deontic_logic_tools.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_tools/tools/patent_dataset_mcp_tools.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [
+        "asyncio\\.get_event_loop\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "ipfs_datasets_py/logic_integration/old_tests/_test_integration.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/utils/_run_tool.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [
+        "asyncio\\.get_event_loop\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/tool_wrapper.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/workflow_tools/workflow_tools.py",
+      "changed": true,
+      "simple_replacements": 9,
+      "complex_patterns": [
+        "asyncio\\.gather\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/workflow_tools/enhanced_workflow_tools.py",
+      "changed": true,
+      "simple_replacements": 4,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/vector_store_tools/enhanced_vector_store_tools.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/cache_tools/enhanced_cache_tools.py",
+      "changed": true,
+      "simple_replacements": 4,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/cache_tools/cache_tools.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/data_processing_tools/data_processing_tools.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/graph_tools/query_knowledge_graph.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/monitoring_tools/monitoring_tools.py",
+      "changed": true,
+      "simple_replacements": 2,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/monitoring_tools/enhanced_monitoring_tools.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/alert_tools/discord_alert_tools.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/storage_tools/storage_tools.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/background_task_tools/background_task_tools.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/background_task_tools/enhanced_background_task_tools.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/admin_tools/admin_tools.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/admin_tools/enhanced_admin_tools.py",
+      "changed": true,
+      "simple_replacements": 6,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/web_archive_tools/serpstack_search.py",
+      "changed": true,
+      "simple_replacements": 2,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/web_archive_tools/openverse_search.py",
+      "changed": true,
+      "simple_replacements": 2,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/web_archive_tools/archive_is_integration.py",
+      "changed": true,
+      "simple_replacements": 3,
+      "complex_patterns": [
+        "asyncio\\.gather\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/web_archive_tools/github_search.py",
+      "changed": true,
+      "simple_replacements": 2,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/web_archive_tools/google_search.py",
+      "changed": true,
+      "simple_replacements": 2,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/web_archive_tools/huggingface_search.py",
+      "changed": true,
+      "simple_replacements": 2,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/web_archive_tools/brave_search.py",
+      "changed": true,
+      "simple_replacements": 2,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/media_tools/ffmpeg_stream.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/media_tools/ffmpeg_mux_demux.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/media_tools/ffmpeg_convert.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/media_tools/ffmpeg_filters.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/media_tools/ffmpeg_info.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [
+        "asyncio\\.create_subprocess"
+      ],
+      "migrated": false
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/media_tools/ffmpeg_edit.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/media_tools/ffmpeg_batch.py",
+      "changed": true,
+      "simple_replacements": 2,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/media_tools/ffmpeg_utils.py",
+      "changed": true,
+      "simple_replacements": 2,
+      "complex_patterns": [
+        "asyncio\\.wait_for\\(",
+        "asyncio\\.create_subprocess"
+      ],
+      "migrated": false
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/media_tools/ytdlp_download.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/development_tools/linting_tools.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [
+        "asyncio\\.gather\\(",
+        "asyncio\\.get_event_loop\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/development_tools/test_generator.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/development_tools/test_runner.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [
+        "asyncio\\.gather\\(",
+        "asyncio\\.get_event_loop\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/development_tools/base_tool.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/session_tools/session_tools.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/security_tools/check_access_permission.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/pdf_tools/pdf_ingest_to_graphrag.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/pdf_tools/pdf_extract_entities.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/pdf_tools/pdf_cross_document_analysis.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/pdf_tools/pdf_batch_process.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/pdf_tools/pdf_analyze_relationships.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/pdf_tools/pdf_query_corpus.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/pdf_tools/pdf_optimize_for_llm.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/vector_tools/vector_store_management.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/vector_tools/create_vector_index.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/vector_tools/search_vector_index.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/vector_tools/vector_stores.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/sparse_embedding_tools/sparse_embedding_tools.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/auth_tools/auth_tools.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/index_management_tools/index_management_tools.py",
+      "changed": true,
+      "simple_replacements": 11,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/medical_research_scrapers/medical_research_mcp_tools.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/ipfs_tools/pin_to_ipfs.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/ipfs_tools/get_from_ipfs.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/rate_limiting_tools/rate_limiting_tools.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/analysis_tools/analysis_tools.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/investigation_tools/geospatial_analysis_tools.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/investigation_tools/deontological_reasoning_tools.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/investigation_tools/relationship_timeline_tools.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/investigation_tools/entity_analysis_tools.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/investigation_tools/data_ingestion_tools.py",
+      "changed": true,
+      "simple_replacements": 5,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/bespoke_tools/cache_stats.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/bespoke_tools/system_status.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/bespoke_tools/system_health.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/bespoke_tools/execute_workflow.py",
+      "changed": true,
+      "simple_replacements": 2,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/audit_tools/record_audit_event.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/audit_tools/generate_audit_report.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/dataset_tools/process_dataset.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/dataset_tools/load_dataset.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/dataset_tools/convert_dataset_format.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/dataset_tools/legal_text_to_deontic.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/dataset_tools/save_dataset.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/dataset_tools/text_to_fol.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/provenance_tools/record_provenance.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/test_state_laws_integration.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/validate_all_state_scrapers.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/verify_us_code_scraper.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/state_laws_scheduler.py",
+      "changed": true,
+      "simple_replacements": 2,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/quick_test_fixes.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/test_all_states_with_parquet.py",
+      "changed": true,
+      "simple_replacements": 2,
+      "complex_patterns": [
+        "asyncio\\.gather\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/test_sample_states.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/verify_federal_register_scraper.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/us_code_scraper.py",
+      "changed": true,
+      "simple_replacements": 2,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/analyze_failed_state.py",
+      "changed": true,
+      "simple_replacements": 2,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/test_all_scrapers.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/verify_all_scrapers.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/test_dashboard_integration.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/setup_periodic_updates.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/state_laws_cron.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/ipfs_cluster_tools/enhanced_ipfs_cluster_tools.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/embedding_tools/embedding_generation.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/embedding_tools/shard_embeddings.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [
+        "asyncio\\.get_event_loop\\("
+      ],
+      "migrated": false
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/embedding_tools/enhanced_embedding_tools.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/embedding_tools/advanced_embedding_generation.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/embedding_tools/advanced_search.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/dataset_tools/tests/test_logic_utils.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/dataset_tools/tests/test_text_to_fol.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/dataset_tools/tests/test_legal_text_to_deontic.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/municipal_law_database_scrapers/hugging_face_pipeline.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/municipal_law_database_scrapers/american_legal_scraper.py",
+      "changed": true,
+      "simple_replacements": 8,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/municipal_law_database_scrapers/ecode360_scraper.py",
+      "changed": true,
+      "simple_replacements": 6,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/municipal_law_database_scrapers/municode_scraper.py",
+      "changed": true,
+      "simple_replacements": 8,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/municipal_law_database_scrapers/_utils/make_openai_embeddings.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/municipal_law_database_scrapers/_utils/mysql_to_parquet.py",
+      "changed": true,
+      "simple_replacements": 1,
+      "complex_patterns": [],
+      "migrated": true
+    }
+  ]
+}

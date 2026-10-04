@@ -1,0 +1,17 @@
+{
+  "target": "coq",
+  "translated_formula": "(id_30_days_of_completion) -> (Obligatory pay_the_contractor_within_30_days_of_completion)",
+  "success": true,
+  "confidence": 0.85,
+  "errors": [],
+  "warnings": [],
+  "metadata": {
+    "syntax_version": "coq8.15",
+    "deontic_operator": "O"
+  },
+  "dependencies": [
+    "Coq.Logic.Classical",
+    "Coq.Sets.Ensembles",
+    "Coq.Logic.Classical_Pred_Type"
+  ]
+}

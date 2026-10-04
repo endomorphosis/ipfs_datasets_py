@@ -40,7 +40,8 @@ def create_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="ipfs-datasets logic",
         description=(
-            "Logic tools (FOL + deontic + temporal-deontic helpers + software-verification facade)"
+            "Logic tools (FOL + deontic + temporal-deontic helpers + "
+            "software-verification facade)"
         ),
     )
     parser.add_argument("--json", action="store_true", help="Output JSON")

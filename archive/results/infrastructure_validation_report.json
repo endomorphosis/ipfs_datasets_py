@@ -1,0 +1,18 @@
+{
+  "timestamp": "2025-08-31T22:16:03.672572",
+  "status": "FAIL",
+  "errors": [
+    "Kubernetes validation failed for ingress.yaml: error: error validating \"/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/deployments/kubernetes/ingress.yaml\": error validating data: failed to download openapi: Get \"http://localhost:8080/openapi/v2?timeout=32s\": dial tcp [::1]:8080: connect: connection refused; if you choose to ignore these errors, turn validation off with --validate=false\n"
+  ],
+  "warnings": [
+    "docker-compose not available for validation"
+  ],
+  "checks_run": [
+    "docker_compose_config",
+    "kubernetes_manifests",
+    "environment_files",
+    "database_schema",
+    "deployment_scripts",
+    "monitoring_config"
+  ]
+}

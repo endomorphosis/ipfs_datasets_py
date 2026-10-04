@@ -61,7 +61,11 @@ from ipfs_datasets_py.logic.crypto_ir.adapters.solana import (
 
 
 FIXTURE_PATH = (
-    Path(__file__).resolve().parents[4] / "fixtures" / "wallets" / "solana" / "rpc_session.json"
+    Path(__file__).resolve().parents[4]
+    / "fixtures"
+    / "wallets"
+    / "solana"
+    / "rpc_session.json"
 )
 
 
@@ -117,10 +121,8 @@ def _legacy_failed_observation(rpc: dict[str, Any], **overrides: Any) -> dict[st
     blockhash = rpc["blocks"][slot]["blockhash"]
     # failed_legacy accountKeys are plain strings; supply header for privileges.
     message = native["transaction"]["message"]
-    if (
-        "header" not in message
-        and message.get("accountKeys")
-        and isinstance(message["accountKeys"][0], str)
+    if "header" not in message and message.get("accountKeys") and isinstance(
+        message["accountKeys"][0], str
     ):
         # fee payer signer writable, destination writable, system program readonly
         message["header"] = {
@@ -339,7 +341,9 @@ def test_privileges_from_header_order_and_bits(rpc_session: dict[str, Any]) -> N
     assert privileges[1].is_signer is False and privileges[1].is_writable is True
     assert privileges[2].is_signer is False and privileges[2].is_writable is False
     # Order is semantic: reordering changes privilege identity at each index.
-    reordered = privileges_from_header([addrs["bob"], addrs["alice"], SYSTEM_PROGRAM_ID], header)
+    reordered = privileges_from_header(
+        [addrs["bob"], addrs["alice"], SYSTEM_PROGRAM_ID], header
+    )
     assert reordered[0].pubkey == addrs["bob"]
     assert reordered[0].is_signer is True
     assert privileges[0].pubkey != reordered[0].pubkey
@@ -432,9 +436,10 @@ def test_versioned_observation_preserves_instructions_privileges_transfers(
 
     transfers = result.result_payload["transfers"]
     kinds_amounts = [
-        (t["kind"], t["amount"]["base_units"], t["amount"]["decimals"]) for t in transfers
+        (t["kind"], t["amount"]["base_units"], t["amount"]["decimals"])
+        for t in transfers
     ]
-    assert ("native", "18446744073709551615", 9) in kinds_amounts
+    assert ( "native", "18446744073709551615", 9) in kinds_amounts
     assert ("native", "42", 9) in kinds_amounts
     assert ("token", "900719925474099312345", 6) in kinds_amounts
 
@@ -523,7 +528,9 @@ def test_commitment_levels_remain_distinct(
     expected: FinalityStatus,
 ) -> None:
     assert map_commitment(commitment) is expected
-    result = convert_solana_payload(_legacy_failed_observation(rpc_session, commitment=commitment))
+    result = convert_solana_payload(
+        _legacy_failed_observation(rpc_session, commitment=commitment)
+    )
     assert result.result_payload["commitment"] == expected.value
     assert result.result_payload["commitment_raw"] == commitment
     observed = result.result_payload["observed_transaction"]
@@ -577,7 +584,9 @@ def test_unsupported_message_version_fails_closed(rpc_session: dict[str, Any]) -
         normalize_message_version(1)
     with pytest.raises(SolanaAdapterError, match="unsupported versioned message"):
         normalize_message_version("v1")
-    result = convert_solana_payload(_versioned_observation(rpc_session, version=1))
+    result = convert_solana_payload(
+        _versioned_observation(rpc_session, version=1)
+    )
     assert result.status is AdapterConversionStatus.ERROR
     assert any("unsupported" in d.lower() for d in result.diagnostics)
 
@@ -590,7 +599,8 @@ def test_partial_lookup_resolution_fails_closed(rpc_session: dict[str, Any]) -> 
     result = convert_solana_payload(payload)
     assert result.status is AdapterConversionStatus.ERROR
     assert any(
-        "unresolved" in d.lower() or "not fully described" in d.lower() for d in result.diagnostics
+        "unresolved" in d.lower() or "not fully described" in d.lower()
+        for d in result.diagnostics
     )
 
 
@@ -701,7 +711,9 @@ def test_observation_round_trip_does_not_promote_to_proof(
         observed_at="2026-07-29T00:00:00Z",
         finality=FinalityStatus.FINALIZED,
     )
-    again = convert_solana_payload(_versioned_observation(rpc_session), source_provenance=prov)
+    again = convert_solana_payload(
+        _versioned_observation(rpc_session), source_provenance=prov
+    )
     assert again.result_authority is AuthorityKind.OBSERVATION
     assert again.result_authority is not AuthorityKind.AUTHORIZATION
     assert again.result_authority is not AuthorityKind.RESULT
@@ -724,7 +736,9 @@ def test_authorization_source_is_rejected(rpc_session: dict[str, Any]) -> None:
 def test_transaction_observation_dataclass_round_trip(
     rpc_session: dict[str, Any],
 ) -> None:
-    obs = SolanaTransactionObservation.from_dict(_versioned_observation(rpc_session))
+    obs = SolanaTransactionObservation.from_dict(
+        _versioned_observation(rpc_session)
+    )
     restored = SolanaTransactionObservation.from_dict(obs.to_dict())
     assert restored.observation_id == obs.observation_id
     assert restored.signature == rpc_session["signatures"]["versioned"]
@@ -751,10 +765,9 @@ def test_devnet_observation_is_distinct_cluster(rpc_session: dict[str, Any]) -> 
         genesis_hash=SOLANA_DEVNET_GENESIS_HASH,
     )
     dev = convert_solana_payload(dev_payload)
-    assert (
-        main.result_payload["chain"]["genesis_digest"]
-        != dev.result_payload["chain"]["genesis_digest"]
-    )
+    assert main.result_payload["chain"]["genesis_digest"] != dev.result_payload["chain"][
+        "genesis_digest"
+    ]
     assert dev.result_payload["chain"]["chain_id"] == SOLANA_DEVNET_CHAIN_ID
 
 

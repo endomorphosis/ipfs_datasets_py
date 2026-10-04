@@ -41,7 +41,9 @@ from .models import (
 )
 
 
-SANCTIONS_SCREENING_SCHEMA_VERSION: Final[str] = "ipfs-datasets.crypto-ir.sanctions-screening@1.0.0"
+SANCTIONS_SCREENING_SCHEMA_VERSION: Final[str] = (
+    "ipfs-datasets.crypto-ir.sanctions-screening@1.0.0"
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -70,7 +72,9 @@ class SanctionsScreeningRequest:
             _identifier(self.subject_party_id, "subject_party_id"),
         )
         object.__setattr__(self, "at_time", _instant(self.at_time, "at_time"))
-        object.__setattr__(self, "activity_id", _identifier(self.activity_id, "activity_id"))
+        object.__setattr__(
+            self, "activity_id", _identifier(self.activity_id, "activity_id")
+        )
         if not isinstance(self.snapshot, SanctionsSnapshot):
             object.__setattr__(
                 self,
@@ -91,7 +95,9 @@ class SanctionsScreeningRequest:
         object.__setattr__(
             self,
             "ownership_evidence",
-            _tuple(self.ownership_evidence, OwnershipEvidence, "ownership_evidence"),
+            _tuple(
+                self.ownership_evidence, OwnershipEvidence, "ownership_evidence"
+            ),
         )
         object.__setattr__(
             self,
@@ -102,19 +108,25 @@ class SanctionsScreeningRequest:
                 "association_evidence",
             ),
         )
-        object.__setattr__(self, "licenses", _tuple(self.licenses, LicenseRecord, "licenses"))
+        object.__setattr__(
+            self, "licenses", _tuple(self.licenses, LicenseRecord, "licenses")
+        )
         if type(self.production_enforcement) is not bool:
             raise ComplianceModelError("production_enforcement must be a boolean")
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "asserted_party_ids": list(self.asserted_party_ids),
-            "association_evidence": [item.to_dict() for item in self.association_evidence],
+            "association_evidence": [
+                item.to_dict() for item in self.association_evidence
+            ],
             "at_time": self.at_time,
             "activity_id": self.activity_id,
             "identifiers": [item.to_dict() for item in self.identifiers],
             "licenses": [item.to_dict() for item in self.licenses],
-            "ownership_evidence": [item.to_dict() for item in self.ownership_evidence],
+            "ownership_evidence": [
+                item.to_dict() for item in self.ownership_evidence
+            ],
             "production_enforcement": self.production_enforcement,
             "request_id": self.request_id,
             "snapshot": self.snapshot.to_dict(),
@@ -222,7 +234,9 @@ class SanctionsDecision:
         if len(levels) != len(set(levels)):
             raise ComplianceModelError("matched_levels must be unique")
         object.__setattr__(self, "matched_levels", levels)
-        object.__setattr__(self, "matches", _tuple(self.matches, SanctionsMatch, "matches"))
+        object.__setattr__(
+            self, "matches", _tuple(self.matches, SanctionsMatch, "matches")
+        )
         for name in ("reason_codes", "applicable_license_ids"):
             values = tuple(_identifier(item, name) for item in getattr(self, name))
             if len(values) != len(set(values)):
@@ -234,10 +248,17 @@ class SanctionsDecision:
         ):
             if type(getattr(self, name)) is not bool:
                 raise ComplianceModelError(f"{name} must be a boolean")
-        if self.production_policy_enforceable and not self.legal_policy_authority_present:
-            raise ComplianceModelError("production enforcement requires legal policy authority")
+        if (
+            self.production_policy_enforceable
+            and not self.legal_policy_authority_present
+        ):
+            raise ComplianceModelError(
+                "production enforcement requires legal policy authority"
+            )
         if self.schema_version != SANCTIONS_SCREENING_SCHEMA_VERSION:
-            raise ComplianceModelError(f"unsupported screening schema: {self.schema_version}")
+            raise ComplianceModelError(
+                f"unsupported screening schema: {self.schema_version}"
+            )
 
     @property
     def is_legal_certification(self) -> bool:
@@ -262,7 +283,9 @@ class SanctionsDecision:
         return {
             "applicable_license_ids": list(self.applicable_license_ids),
             "decision_id": self.decision_id,
-            "legal_policy_authority_present": (self.legal_policy_authority_present),
+            "legal_policy_authority_present": (
+                self.legal_policy_authority_present
+            ),
             "matched_levels": [item.value for item in self.matched_levels],
             "matches": [item.to_dict() for item in self.matches],
             "outcome": self.outcome.value,
@@ -315,10 +338,18 @@ class SanctionsDecision:
             matched_levels=tuple(value.get("matched_levels", ())),
             matches=_tuple(value.get("matches", ()), SanctionsMatch, "matches"),
             reason_codes=tuple(value.get("reason_codes", ())),
-            applicable_license_ids=tuple(value.get("applicable_license_ids", ())),
-            legal_policy_authority_present=value.get("legal_policy_authority_present"),
-            production_policy_enforceable=value.get("production_policy_enforceable"),
-            schema_version=value.get("schema_version", SANCTIONS_SCREENING_SCHEMA_VERSION),
+            applicable_license_ids=tuple(
+                value.get("applicable_license_ids", ())
+            ),
+            legal_policy_authority_present=value.get(
+                "legal_policy_authority_present"
+            ),
+            production_policy_enforceable=value.get(
+                "production_policy_enforceable"
+            ),
+            schema_version=value.get(
+                "schema_version", SANCTIONS_SCREENING_SCHEMA_VERSION
+            ),
         )
 
 
@@ -410,10 +441,15 @@ def _ownership_matches(
             for interest in evidence.interests
             if set(interest.designation_ids) & active_ids
         )
-        if relevant_ids and relevant_total >= policy.ownership_threshold_basis_points:
+        if (
+            relevant_ids
+            and relevant_total >= policy.ownership_threshold_basis_points
+        ):
             matches.append(
                 SanctionsMatch(
-                    match_id=_match_id(SanctionsMatchLevel.OWNED_ENTITY, evidence.evidence_id),
+                    match_id=_match_id(
+                        SanctionsMatchLevel.OWNED_ENTITY, evidence.evidence_id
+                    ),
                     level=SanctionsMatchLevel.OWNED_ENTITY,
                     subject_party_id=request.subject_party_id,
                     snapshot_id=request.snapshot.snapshot_id,
@@ -432,7 +468,9 @@ def _association_matches(
     incomplete = False
     by_party: dict[str, list[str]] = {}
     for designation in designations:
-        by_party.setdefault(designation.party_id, []).append(designation.designation_id)
+        by_party.setdefault(designation.party_id, []).append(
+            designation.designation_id
+        )
     for evidence in request.association_evidence:
         if evidence.subject_party_id != request.subject_party_id:
             continue
@@ -502,7 +540,9 @@ def _decision(
         )
     ).encode("utf-8")
     decision_id = f"decision:{hashlib.sha256(material).hexdigest()}"
-    levels = tuple(sorted({item.level for item in matches}, key=lambda item: item.value))
+    levels = tuple(
+        sorted({item.level for item in matches}, key=lambda item: item.value)
+    )
     unique_reasons = tuple(dict.fromkeys(reasons))
     return SanctionsDecision(
         decision_id=decision_id,
@@ -612,8 +652,12 @@ def evaluate_sanctions_policy(
 
     designations = _active_designations(policy, snapshot, request.at_time)
     matches = _snapshot_matches(request, designations)
-    ownership_matches, ownership_incomplete = _ownership_matches(policy, request, designations)
-    association_matches, association_incomplete = _association_matches(request, designations)
+    ownership_matches, ownership_incomplete = _ownership_matches(
+        policy, request, designations
+    )
+    association_matches, association_incomplete = _association_matches(
+        request, designations
+    )
     matches.extend(ownership_matches)
     matches.extend(association_matches)
     if ownership_incomplete or association_incomplete:
@@ -644,7 +688,9 @@ def evaluate_sanctions_policy(
         outcomes.append(policy.license_outcome)
         reasons.append("applicable_scoped_license")
 
-    precedence = {outcome: index for index, outcome in enumerate(policy.outcome_precedence)}
+    precedence = {
+        outcome: index for index, outcome in enumerate(policy.outcome_precedence)
+    }
     outcome = max(outcomes, key=lambda item: precedence[item])
     return _decision(
         policy=policy,

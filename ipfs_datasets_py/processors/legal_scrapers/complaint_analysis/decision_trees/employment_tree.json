@@ -1,0 +1,129 @@
+{
+  "complaint_type": "employment",
+  "category": "employment",
+  "description": "Decision tree for employment complaints",
+  "root_questions": [
+    "q1",
+    "q2",
+    "q3"
+  ],
+  "questions": {
+    "q1": {
+      "id": "q1",
+      "question": "What is the name of your employer?",
+      "field_name": "employer_name",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q2": {
+      "id": "q2",
+      "question": "What was/is your position or job title?",
+      "field_name": "position",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q3": {
+      "id": "q3",
+      "question": "What type of employment issue are you experiencing?",
+      "field_name": "issue_type",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": [
+        "discrimination",
+        "termination",
+        "harassment",
+        "wage"
+      ]
+    },
+    "q4": {
+      "id": "q4",
+      "question": "Can you describe what happened in detail?",
+      "field_name": "incident_description",
+      "required": true,
+      "depends_on": [
+        "issue_type"
+      ],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q5": {
+      "id": "q5",
+      "question": "When did this occur?",
+      "field_name": "date_of_incident",
+      "required": true,
+      "depends_on": [
+        "incident_description"
+      ],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q6": {
+      "id": "q6",
+      "question": "Did you report this to HR or management?",
+      "field_name": "hr_complaints",
+      "required": false,
+      "depends_on": [
+        "incident_description"
+      ],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q7": {
+      "id": "q7",
+      "question": "Were there any witnesses?",
+      "field_name": "witnesses",
+      "required": false,
+      "depends_on": [
+        "incident_description"
+      ],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q8": {
+      "id": "q8",
+      "question": "If this involves discrimination, what protected class are you a member of?",
+      "field_name": "protected_class",
+      "required": false,
+      "depends_on": [
+        "issue_type"
+      ],
+      "follow_ups": [],
+      "keywords": [
+        "race",
+        "age",
+        "gender",
+        "disability",
+        "religion"
+      ]
+    },
+    "q9": {
+      "id": "q9",
+      "question": "How long were you employed there?",
+      "field_name": "years_employed",
+      "required": false,
+      "depends_on": [
+        "employer_name"
+      ],
+      "follow_ups": [],
+      "keywords": []
+    }
+  },
+  "required_fields": [
+    "issue_type",
+    "date_of_incident",
+    "incident_description",
+    "position",
+    "employer_name"
+  ],
+  "optional_fields": [
+    "witnesses",
+    "hr_complaints",
+    "protected_class",
+    "years_employed"
+  ]
+}

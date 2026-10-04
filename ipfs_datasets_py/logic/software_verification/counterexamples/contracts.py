@@ -25,8 +25,12 @@ from typing import Any, Final
 
 COUNTEREXAMPLE_ENVELOPE_INTERFACE: Final = "CounterexampleEnvelope@2"
 PUBLIC_COUNTEREXAMPLE_BOUNDARY_INTERFACE: Final = "PublicCounterexampleBoundary@1"
-COUNTEREXAMPLE_ENVELOPE_SCHEMA: Final = "ipfs_datasets_py/logic/counterexample-envelope@2"
-PRIVATE_ARTIFACT_REFERENCE_SCHEMA: Final = "ipfs_datasets_py/logic/private-artifact-reference@1"
+COUNTEREXAMPLE_ENVELOPE_SCHEMA: Final = (
+    "ipfs_datasets_py/logic/counterexample-envelope@2"
+)
+PRIVATE_ARTIFACT_REFERENCE_SCHEMA: Final = (
+    "ipfs_datasets_py/logic/private-artifact-reference@1"
+)
 PUBLIC_COUNTEREXAMPLE_BOUNDARY_VERSION: Final = 1
 
 # Default retention label for material that was discarded rather than stored.
@@ -257,7 +261,9 @@ def _authority(value: object) -> CounterexampleAuthority:
         return CounterexampleAuthority(str(raw).strip().lower())
     except (TypeError, ValueError) as exc:
         allowed = ", ".join(item.value for item in CounterexampleAuthority)
-        raise CounterexampleBoundaryError(f"authority must be one of: {allowed}") from exc
+        raise CounterexampleBoundaryError(
+            f"authority must be one of: {allowed}"
+        ) from exc
 
 
 def _sha256_hex(payload: bytes) -> str:
@@ -291,7 +297,8 @@ def _channel_digest(channel: str, *, retained: bool) -> str:
 def _is_private_or_forbidden_key(key: str) -> bool:
     normalized = key.lower().replace("-", "_")
     return bool(
-        _PRIVATE_CHANNEL_KEY_RE.search(normalized) or _FORBIDDEN_CHANNEL_KEY_RE.match(normalized)
+        _PRIVATE_CHANNEL_KEY_RE.search(normalized)
+        or _FORBIDDEN_CHANNEL_KEY_RE.match(normalized)
     )
 
 
@@ -312,7 +319,9 @@ def _collect_private_channels(
                 acc.add(key.lower().replace("-", "_"))
                 continue
             _collect_private_channels(child, path=child_path, found=acc)
-    elif isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray, memoryview)):
+    elif isinstance(value, Sequence) and not isinstance(
+        value, (str, bytes, bytearray, memoryview)
+    ):
         for index, child in enumerate(value):
             _collect_private_channels(child, path=f"{path}[{index}]", found=acc)
     return acc
@@ -385,7 +394,9 @@ def _assert_public_safe(value: Any, *, label: str = "projection") -> None:
                 nested_allow = key_l == "private_artifacts"
                 walk(child, path=child_path, allow_channel_class=nested_allow)
             return
-        if isinstance(node, Sequence) and not isinstance(node, (str, bytes, bytearray, memoryview)):
+        if isinstance(node, Sequence) and not isinstance(
+            node, (str, bytes, bytearray, memoryview)
+        ):
             for index, child in enumerate(node):
                 # Sequence elements of private_artifacts remain channel-aware.
                 walk(
@@ -412,7 +423,9 @@ def _reject_unknown_keys(
 ) -> None:
     unknown = sorted(set(payload) - allowed)
     if unknown:
-        raise CounterexampleBoundaryError(f"{label} contains unknown fields: {', '.join(unknown)}")
+        raise CounterexampleBoundaryError(
+            f"{label} contains unknown fields: {', '.join(unknown)}"
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -433,8 +446,12 @@ class PrivateArtifactReference:
     schema: str = PRIVATE_ARTIFACT_REFERENCE_SCHEMA
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "channel", _text(self.channel, "channel", maximum=128))
-        object.__setattr__(self, "digest", _text(self.digest, "digest", maximum=256))
+        object.__setattr__(
+            self, "channel", _text(self.channel, "channel", maximum=128)
+        )
+        object.__setattr__(
+            self, "digest", _text(self.digest, "digest", maximum=256)
+        )
         object.__setattr__(
             self,
             "retention_policy_id",
@@ -448,7 +465,8 @@ class PrivateArtifactReference:
         object.__setattr__(
             self,
             "schema",
-            _text(self.schema, "schema", maximum=256) or PRIVATE_ARTIFACT_REFERENCE_SCHEMA,
+            _text(self.schema, "schema", maximum=256)
+            or PRIVATE_ARTIFACT_REFERENCE_SCHEMA,
         )
         if self.schema != PRIVATE_ARTIFACT_REFERENCE_SCHEMA:
             raise CounterexampleBoundaryError(
@@ -486,12 +504,16 @@ class PrivateArtifactReference:
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> "PrivateArtifactReference":
         if not isinstance(value, Mapping):
-            raise CounterexampleBoundaryError("private artifact reference must be an object")
+            raise CounterexampleBoundaryError(
+                "private artifact reference must be an object"
+            )
         _reject_unknown_keys(value, _PRIVATE_ARTIFACT_KEYS, label="private artifact")
         return cls(
             channel=value.get("channel", ""),
             digest=value.get("digest", ""),
-            retention_policy_id=value.get("retention_policy_id", DEFAULT_DROP_RETENTION_POLICY),
+            retention_policy_id=value.get(
+                "retention_policy_id", DEFAULT_DROP_RETENTION_POLICY
+            ),
             retained=bool(value.get("retained", False)),
             byte_size=value.get("byte_size"),
             media_type=value.get("media_type", ""),
@@ -572,23 +594,31 @@ class CounterexampleEnvelope:
             "violated_property",
             _text(self.violated_property, "violated_property", maximum=256),
         )
-        object.__setattr__(self, "summary", _text(self.summary, "summary", maximum=512))
+        object.__setattr__(
+            self, "summary", _text(self.summary, "summary", maximum=512)
+        )
         object.__setattr__(self, "payload", MappingProxyType(_mapping(self.payload, "payload")))
         object.__setattr__(
             self, "source_map", MappingProxyType(_mapping(self.source_map, "source_map"))
         )
         object.__setattr__(self, "tool", MappingProxyType(_mapping(self.tool, "tool")))
-        object.__setattr__(self, "assumptions", _string_tuple(self.assumptions, "assumptions"))
+        object.__setattr__(
+            self, "assumptions", _string_tuple(self.assumptions, "assumptions")
+        )
         object.__setattr__(self, "bounds", MappingProxyType(_mapping(self.bounds, "bounds")))
         object.__setattr__(self, "authority", _authority(self.authority))
-        object.__setattr__(self, "bindings", MappingProxyType(_mapping(self.bindings, "bindings")))
+        object.__setattr__(
+            self, "bindings", MappingProxyType(_mapping(self.bindings, "bindings"))
+        )
         artifacts = tuple(self.private_artifacts)
         if any(not isinstance(item, PrivateArtifactReference) for item in artifacts):
             raise CounterexampleBoundaryError(
                 "private_artifacts must be PrivateArtifactReference values"
             )
         # Stable order by channel then digest.
-        artifacts = tuple(sorted(artifacts, key=lambda item: (item.channel, item.digest)))
+        artifacts = tuple(
+            sorted(artifacts, key=lambda item: (item.channel, item.digest))
+        )
         object.__setattr__(self, "private_artifacts", artifacts)
         object.__setattr__(
             self, "redaction", MappingProxyType(_mapping(self.redaction, "redaction"))
@@ -620,7 +650,8 @@ class CounterexampleEnvelope:
         object.__setattr__(
             self,
             "interface",
-            _text(self.interface, "interface", maximum=128) or COUNTEREXAMPLE_ENVELOPE_INTERFACE,
+            _text(self.interface, "interface", maximum=128)
+            or COUNTEREXAMPLE_ENVELOPE_INTERFACE,
         )
         object.__setattr__(
             self,
@@ -629,7 +660,9 @@ class CounterexampleEnvelope:
             or PUBLIC_COUNTEREXAMPLE_BOUNDARY_INTERFACE,
         )
         if self.minimized is not True:
-            raise CounterexampleBoundaryError("public counterexample envelopes must be minimized")
+            raise CounterexampleBoundaryError(
+                "public counterexample envelopes must be minimized"
+            )
         if not isinstance(self.truncated, bool):
             raise CounterexampleBoundaryError("truncated must be boolean")
 
@@ -639,7 +672,9 @@ class CounterexampleEnvelope:
         if self.content_id:
             claimed = _text(self.content_id, "content_id", maximum=256)
             if claimed != computed_content_id:
-                raise CounterexampleBoundaryError("counterexample content identity does not match")
+                raise CounterexampleBoundaryError(
+                    "counterexample content identity does not match"
+                )
             object.__setattr__(self, "content_id", claimed)
         else:
             object.__setattr__(self, "content_id", computed_content_id)
@@ -770,7 +805,9 @@ class CounterexampleEnvelope:
             "contains_source",
         ):
             if value.get(forbidden_flag) not in (None, False):
-                raise CounterexampleBoundaryError(f"envelope claims {forbidden_flag}")
+                raise CounterexampleBoundaryError(
+                    f"envelope claims {forbidden_flag}"
+                )
 
         private_raw = value.get("private_artifacts") or ()
         if not isinstance(private_raw, Sequence) or isinstance(
@@ -786,10 +823,14 @@ class CounterexampleEnvelope:
         assumptions = value.get("assumptions", value.get("assumption_ids", ()))
         bounds = value.get("bounds", value.get("finite_bounds", {}))
         envelope = cls(
-            counterexample_id=value.get("counterexample_id") or value.get("semantic_id") or "",
+            counterexample_id=value.get("counterexample_id")
+            or value.get("semantic_id")
+            or "",
             kind=value.get("kind", ""),
             property_class=value.get("property_class", ""),
-            violated_property=value.get("violated_property") or value.get("property_id") or "",
+            violated_property=value.get("violated_property")
+            or value.get("property_id")
+            or "",
             summary=value.get("summary", ""),
             payload=value.get("payload") or {},
             source_map=value.get("source_map") or {},
@@ -817,7 +858,9 @@ class CounterexampleEnvelope:
         ):
             claimed = value.get(name)
             if claimed not in (None, "", actual):
-                raise CounterexampleBoundaryError("counterexample content identity does not match")
+                raise CounterexampleBoundaryError(
+                    "counterexample content identity does not match"
+                )
         return envelope
 
 
@@ -837,12 +880,14 @@ def _kind_to_authority(kind: str) -> CounterexampleAuthority:
     return mapping.get(str(kind).lower(), CounterexampleAuthority.BOUNDED)
 
 
-def _source_map_from_bindings(
-    bindings: Mapping[str, Any], raw: Mapping[str, Any]
-) -> dict[str, Any]:
+def _source_map_from_bindings(bindings: Mapping[str, Any], raw: Mapping[str, Any]) -> dict[str, Any]:
     source_map: dict[str, Any] = {
         "ast_scope_ids": list(bindings.get("ast_scope_ids") or ()),
-        "source_ref_ids": list(raw.get("source_ref_ids") or bindings.get("source_ref_ids") or ()),
+        "source_ref_ids": list(
+            raw.get("source_ref_ids")
+            or bindings.get("source_ref_ids")
+            or ()
+        ),
         "span_ids": list(raw.get("span_ids") or bindings.get("span_ids") or ()),
         "tree_ids": list(bindings.get("tree_ids") or ()),
     }
@@ -896,14 +941,19 @@ def _private_artifacts_for_raw(
                 channel_class,
                 digest=str(stored["digest"]),
                 retention_policy_id=str(
-                    stored.get("retention_policy_id") or DEFAULT_PRIVATE_RETENTION_POLICY
+                    stored.get("retention_policy_id")
+                    or DEFAULT_PRIVATE_RETENTION_POLICY
                 ),
                 byte_size=stored.get("byte_size"),
                 media_type=str(stored.get("media_type") or ""),
             )
         elif channel_class not in by_class:
-            by_class[channel_class] = PrivateArtifactReference.for_dropped_channel(channel_class)
-    return tuple(sorted(by_class.values(), key=lambda item: (item.channel, item.digest)))
+            by_class[channel_class] = PrivateArtifactReference.for_dropped_channel(
+                channel_class
+            )
+    return tuple(
+        sorted(by_class.values(), key=lambda item: (item.channel, item.digest))
+    )
 
 
 def project_public_counterexample(
@@ -1004,9 +1054,13 @@ def project_public_counterexample(
         if hasattr(formal.redaction, "to_dict")
         else dict(formal_dict.get("redaction") or {})
     )
-    kind_value = formal.kind.value if hasattr(formal.kind, "value") else str(formal.kind)
+    kind_value = (
+        formal.kind.value if hasattr(formal.kind, "value") else str(formal.kind)
+    )
     selected_authority = (
-        _authority(authority) if authority is not None else _kind_to_authority(kind_value)
+        _authority(authority)
+        if authority is not None
+        else _kind_to_authority(kind_value)
     )
     private_artifacts = _private_artifacts_for_raw(raw_view, private_store=private_store)
 
@@ -1027,7 +1081,8 @@ def project_public_counterexample(
         redaction=redaction,
         observation_policy_id=formal.observation_policy_id,
         repair_classes=tuple(
-            item.value if hasattr(item, "value") else str(item) for item in formal.repair_classes
+            item.value if hasattr(item, "value") else str(item)
+            for item in formal.repair_classes
         ),
         minimized=True,
         truncated=bool(formal.truncated),

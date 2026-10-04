@@ -97,7 +97,9 @@ def _parse_amount(raw: Any, *, field: str = "Amount") -> XRPLAmount | None:
         issuer = raw.get("issuer")
         value = raw.get("value")
         if currency is None or issuer is None or value is None:
-            raise NormalizationError(f"{field} issued amount requires currency, issuer, and value")
+            raise NormalizationError(
+                f"{field} issued amount requires currency, issuer, and value"
+            )
         require_no_float_amount(value, field=f"{field}.value")
         return XRPLAmount(
             kind=AmountKind.ISSUED,
@@ -218,7 +220,9 @@ def parse_account_tx_entry(
 
     amount = _parse_amount(tx_json.get("Amount"), field="Amount") if "Amount" in tx_json else None
     send_max = (
-        _parse_amount(tx_json.get("SendMax"), field="SendMax") if "SendMax" in tx_json else None
+        _parse_amount(tx_json.get("SendMax"), field="SendMax")
+        if "SendMax" in tx_json
+        else None
     )
     # Always prefer delivered_amount for settlement projection.
     delivered = delivered_amount(tx_json, meta if isinstance(meta, Mapping) else None)
@@ -360,8 +364,12 @@ class XRPLNormalizer:
                 )
             return item
         if isinstance(item, Mapping):
-            return parse_account_tx_entry(item, network=self.network, privacy=self.privacy)
-        raise NormalizationError(f"unsupported XRPL native record type: {type(item)!r}")
+            return parse_account_tx_entry(
+                item, network=self.network, privacy=self.privacy
+            )
+        raise NormalizationError(
+            f"unsupported XRPL native record type: {type(item)!r}"
+        )
 
     def _project_tx(
         self,
@@ -416,9 +424,13 @@ class XRPLNormalizer:
                 "validated": tx.validated,
                 "partial_payment": tx.partial_payment,
                 "destination_tag": (
-                    tx.destination_tag if self.privacy.preserve_destination_tags else None
+                    tx.destination_tag
+                    if self.privacy.preserve_destination_tags
+                    else None
                 ),
-                "source_tag": (tx.source_tag if self.privacy.preserve_source_tags else None),
+                "source_tag": (
+                    tx.source_tag if self.privacy.preserve_source_tags else None
+                ),
                 "memos": [m.to_dict() for m in tx.memos],
                 "amount": tx.amount.to_dict() if tx.amount else None,
                 "delivered_amount": (
@@ -463,21 +475,19 @@ class XRPLNormalizer:
             amount = _amount_to_exact(settlement)
             # Align decimals: issued_asset already matched exact decimals.
             if amount.decimals != asset.decimals:  # type: ignore[union-attr]
-                asset = (
-                    issued_asset(
-                        self._chain,
-                        currency=settlement.currency or "",
-                        issuer=settlement.issuer or "",
-                        decimals=amount.decimals,
-                        symbol=settlement.currency,
-                    )
-                    if settlement.kind is AmountKind.ISSUED
-                    else xrp_asset(self._chain)
-                )
+                asset = issued_asset(
+                    self._chain,
+                    currency=settlement.currency or "",
+                    issuer=settlement.issuer or "",
+                    decimals=amount.decimals,
+                    symbol=settlement.currency,
+                ) if settlement.kind is AmountKind.ISSUED else xrp_asset(self._chain)
                 if settlement.kind is AmountKind.XRP:
                     amount = exact_drops(settlement.value)
             kind = (
-                TransferKind.TOKEN if settlement.kind is AmountKind.ISSUED else TransferKind.NATIVE
+                TransferKind.TOKEN
+                if settlement.kind is AmountKind.ISSUED
+                else TransferKind.NATIVE
             )
             records.append(
                 TransferRecord(

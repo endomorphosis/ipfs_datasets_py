@@ -47,7 +47,11 @@ from conformance import (  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[5]
 REPORT_PATH = (
-    REPO_ROOT / "data" / "wallet_processor_migration" / "validation" / "conformance-report.json"
+    REPO_ROOT
+    / "data"
+    / "wallet_processor_migration"
+    / "validation"
+    / "conformance-report.json"
 )
 
 # Five ledger/processor families that must pass the shared contract.
@@ -192,7 +196,9 @@ def results_to_mapping(results: Sequence[ConformanceResult]) -> dict[str, Any]:
         "passed": all(item.passed for item in results),
         "check_names": sorted(item.name for item in results),
         "failed": [
-            {"name": item.name, "detail": item.detail} for item in results if not item.passed
+            {"name": item.name, "detail": item.detail}
+            for item in results
+            if not item.passed
         ],
     }
 
@@ -314,7 +320,9 @@ def test_two_consecutive_clean_runs_across_all_families() -> None:
             )
             family_payloads[family] = mapped
         fingerprint = hashlib.sha256(
-            json.dumps(family_payloads, sort_keys=True, separators=(",", ":")).encode("utf-8")
+            json.dumps(family_payloads, sort_keys=True, separators=(",", ":")).encode(
+                "utf-8"
+            )
         ).hexdigest()
         runs.append(
             {
@@ -377,7 +385,9 @@ def test_cross_chain_schema_queries_preserve_identity_and_exact_quantities() -> 
     """Normalized queries must not collapse chains or coerce amounts to floats."""
 
     contracts = {name: family_contract(name) for name in FAMILY_NAMES}
-    chain_ids = {name: contracts[name].chain_ref().chain_ref_id for name in FAMILY_NAMES}
+    chain_ids = {
+        name: contracts[name].chain_ref().chain_ref_id for name in FAMILY_NAMES
+    }
 
     # Distinct namespaces must never share a chain_ref_id.
     by_namespace: dict[str, set[str]] = {}
@@ -393,7 +403,9 @@ def test_cross_chain_schema_queries_preserve_identity_and_exact_quantities() -> 
 
     # Same address bytes on different chains must produce distinct account ids.
     address = "0x1111111111111111111111111111111111111111"
-    eth_account = AccountRef(contracts["ethereum"].chain_ref(), address, AccountKind.ADDRESS)
+    eth_account = AccountRef(
+        contracts["ethereum"].chain_ref(), address, AccountKind.ADDRESS
+    )
     # Bitcoin uses a different address form; prove network separation via chain refs.
     btc_chain = contracts["bitcoin"].chain_ref()
     eth_chain = contracts["ethereum"].chain_ref()
@@ -435,7 +447,9 @@ def test_cross_chain_schema_queries_preserve_identity_and_exact_quantities() -> 
             chain_id=chain_data["chain_id"],
             genesis_hash=chain_data["genesis_hash"],
         )
-        account = AccountRef(chain, item["address"], AccountKind(item.get("kind") or "address"))
+        account = AccountRef(
+            chain, item["address"], AccountKind(item.get("kind") or "address")
+        )
         built[item["id"]] = account.account_id
         if "must_differ_from" in item:
             assert built[item["id"]] != built[item["must_differ_from"]]
@@ -486,7 +500,6 @@ def test_ast_symbol_wallet_processor_conformance_is_reachable() -> None:
     assert suite.required_checks == REQUIRED_SHARED_CHECKS
     assert callable(suite.run_shared_checks)
     assert callable(suite.run_all)
-
 
 __all__ = [
     "FAMILY_NAMES",

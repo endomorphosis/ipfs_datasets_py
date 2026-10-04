@@ -1,0 +1,445 @@
+{
+  "timestamp": "2025-09-04T17:59:31.698499",
+  "test_summary": {
+    "entities_test": {
+      "total_entities": 11,
+      "mappable_entities": 11,
+      "success": true
+    },
+    "events_test": {
+      "total_events": 5,
+      "temporal_clusters": 5,
+      "spatial_clusters": 5,
+      "success": true
+    },
+    "query_test": {
+      "queries_tested": 3,
+      "success": true
+    },
+    "dashboard_integration": {
+      "query": "New York events",
+      "entities": 11,
+      "events": 5,
+      "mappable_locations": 11,
+      "query_results": 4,
+      "geographic_bounds": {
+        "north": 61.524,
+        "south": -14.235,
+        "east": 139.6503,
+        "west": -122.4194
+      },
+      "clusters": 5
+    }
+  },
+  "detailed_results": {
+    "entities": {
+      "total_entities": 11,
+      "mappable_entities": 11,
+      "entities": [
+        {
+          "entity": "New York",
+          "entity_type": "LOCATION",
+          "confidence": 0.9,
+          "frequency": 1,
+          "coordinates": [
+            40.7128,
+            -74.006
+          ],
+          "latitude": 40.7128,
+          "longitude": -74.006,
+          "documents": [
+            "doc_1"
+          ],
+          "context_snippet": "breaking news from new york: the financial markets crashed today. wall street traders were in panic...."
+        },
+        {
+          "entity": "Washington",
+          "entity_type": "LOCATION",
+          "confidence": 0.9,
+          "frequency": 1,
+          "coordinates": [
+            38.9072,
+            -77.0369
+          ],
+          "latitude": 38.9072,
+          "longitude": -77.0369,
+          "documents": [
+            "doc_2"
+          ],
+          "context_snippet": "in washington dc, the president announced new trade policies affecting china and russia...."
+        },
+        {
+          "entity": "China",
+          "entity_type": "LOCATION",
+          "confidence": 0.9,
+          "frequency": 1,
+          "coordinates": [
+            35.8617,
+            104.1954
+          ],
+          "latitude": 35.8617,
+          "longitude": 104.1954,
+          "documents": [
+            "doc_2"
+          ],
+          "context_snippet": "in washington dc, the president announced new trade policies affecting china and russia...."
+        },
+        {
+          "entity": "Russia",
+          "entity_type": "LOCATION",
+          "confidence": 0.9,
+          "frequency": 1,
+          "coordinates": [
+            61.524,
+            105.3188
+          ],
+          "latitude": 61.524,
+          "longitude": 105.3188,
+          "documents": [
+            "doc_2"
+          ],
+          "context_snippet": "in washington dc, the president announced new trade policies affecting china and russia...."
+        },
+        {
+          "entity": "Tokyo",
+          "entity_type": "LOCATION",
+          "confidence": 0.9,
+          "frequency": 1,
+          "coordinates": [
+            35.6762,
+            139.6503
+          ],
+          "latitude": 35.6762,
+          "longitude": 139.6503,
+          "documents": [
+            "doc_3"
+          ],
+          "context_snippet": "a major earthquake struck japan near tokyo, causing significant damage...."
+        },
+        {
+          "entity": "Japan",
+          "entity_type": "LOCATION",
+          "confidence": 0.9,
+          "frequency": 1,
+          "coordinates": [
+            36.2048,
+            138.2529
+          ],
+          "latitude": 36.2048,
+          "longitude": 138.2529,
+          "documents": [
+            "doc_3"
+          ],
+          "context_snippet": "a major earthquake struck japan near tokyo, causing significant damage...."
+        },
+        {
+          "entity": "San Francisco",
+          "entity_type": "LOCATION",
+          "confidence": 0.9,
+          "frequency": 1,
+          "coordinates": [
+            37.7749,
+            -122.4194
+          ],
+          "latitude": 37.7749,
+          "longitude": -122.4194,
+          "documents": [
+            "doc_4"
+          ],
+          "context_snippet": "technology conference held in san francisco attracted major companies...."
+        },
+        {
+          "entity": "Paris",
+          "entity_type": "LOCATION",
+          "confidence": 0.9,
+          "frequency": 1,
+          "coordinates": [
+            48.8566,
+            2.3522
+          ],
+          "latitude": 48.8566,
+          "longitude": 2.3522,
+          "documents": [
+            "doc_5"
+          ],
+          "context_snippet": "climate summit in paris brought together world leaders from brazil, india, and germany...."
+        },
+        {
+          "entity": "Brazil",
+          "entity_type": "LOCATION",
+          "confidence": 0.9,
+          "frequency": 1,
+          "coordinates": [
+            -14.235,
+            -51.9253
+          ],
+          "latitude": -14.235,
+          "longitude": -51.9253,
+          "documents": [
+            "doc_5"
+          ],
+          "context_snippet": "climate summit in paris brought together world leaders from brazil, india, and germany...."
+        },
+        {
+          "entity": "India",
+          "entity_type": "LOCATION",
+          "confidence": 0.9,
+          "frequency": 1,
+          "coordinates": [
+            20.5937,
+            78.9629
+          ],
+          "latitude": 20.5937,
+          "longitude": 78.9629,
+          "documents": [
+            "doc_5"
+          ],
+          "context_snippet": "climate summit in paris brought together world leaders from brazil, india, and germany...."
+        },
+        {
+          "entity": "Germany",
+          "entity_type": "LOCATION",
+          "confidence": 0.9,
+          "frequency": 1,
+          "coordinates": [
+            51.1657,
+            10.4515
+          ],
+          "latitude": 51.1657,
+          "longitude": 10.4515,
+          "documents": [
+            "doc_5"
+          ],
+          "context_snippet": "climate summit in paris brought together world leaders from brazil, india, and germany...."
+        }
+      ],
+      "geographic_coverage": {
+        "regions": [
+          "Americas",
+          "Europe",
+          "Asia"
+        ],
+        "coordinate_bounds": {
+          "north": 61.524,
+          "south": -14.235,
+          "east": 139.6503,
+          "west": -122.4194
+        }
+      },
+      "timestamp": "2025-09-04T17:59:31.696861"
+    },
+    "events": {
+      "total_events": 5,
+      "events": [
+        {
+          "event_id": "doc_1_new york_crashed",
+          "document_id": "doc_1",
+          "entity": "New York",
+          "event_type": "crashed",
+          "latitude": 40.7128,
+          "longitude": -74.006,
+          "timestamp": "2024-01-15T10:30:00Z",
+          "context": "breaking news from new york: the financial markets crashed today. wall street traders were in panic....",
+          "confidence": 0.85,
+          "temporal_cluster": "2024-01-15",
+          "spatial_cluster": "cluster_new york"
+        },
+        {
+          "event_id": "doc_2_washington_announced",
+          "document_id": "doc_2",
+          "entity": "Washington",
+          "event_type": "announced",
+          "latitude": 38.9072,
+          "longitude": -77.0369,
+          "timestamp": "2024-01-20T14:15:00Z",
+          "context": "in washington dc, the president announced new trade policies affecting china and russia....",
+          "confidence": 0.85,
+          "temporal_cluster": "2024-01-20",
+          "spatial_cluster": "cluster_washington"
+        },
+        {
+          "event_id": "doc_3_tokyo_struck",
+          "document_id": "doc_3",
+          "entity": "Tokyo",
+          "event_type": "struck",
+          "latitude": 35.6762,
+          "longitude": 139.6503,
+          "timestamp": "2024-01-25T08:45:00Z",
+          "context": "a major earthquake struck japan near tokyo, causing significant damage....",
+          "confidence": 0.85,
+          "temporal_cluster": "2024-01-25",
+          "spatial_cluster": "cluster_tokyo"
+        },
+        {
+          "event_id": "doc_4_san francisco_held",
+          "document_id": "doc_4",
+          "entity": "San Francisco",
+          "event_type": "held",
+          "latitude": 37.7749,
+          "longitude": -122.4194,
+          "timestamp": "2024-02-01T16:00:00Z",
+          "context": "technology conference held in san francisco attracted major companies....",
+          "confidence": 0.85,
+          "temporal_cluster": "2024-02-01",
+          "spatial_cluster": "cluster_san francisco"
+        },
+        {
+          "event_id": "doc_5_paris_summit",
+          "document_id": "doc_5",
+          "entity": "Paris",
+          "event_type": "summit",
+          "latitude": 48.8566,
+          "longitude": 2.3522,
+          "timestamp": "2024-02-10T12:00:00Z",
+          "context": "climate summit in paris brought together world leaders from brazil, india, and germany....",
+          "confidence": 0.85,
+          "temporal_cluster": "2024-02-10",
+          "spatial_cluster": "cluster_paris"
+        }
+      ],
+      "temporal_clusters": {
+        "2024-01-15": [
+          "doc_1_new york_crashed"
+        ],
+        "2024-01-20": [
+          "doc_2_washington_announced"
+        ],
+        "2024-01-25": [
+          "doc_3_tokyo_struck"
+        ],
+        "2024-02-01": [
+          "doc_4_san francisco_held"
+        ],
+        "2024-02-10": [
+          "doc_5_paris_summit"
+        ]
+      },
+      "spatial_clusters": {
+        "cluster_new york": [
+          "doc_1_new york_crashed"
+        ],
+        "cluster_washington": [
+          "doc_2_washington_announced"
+        ],
+        "cluster_tokyo": [
+          "doc_3_tokyo_struck"
+        ],
+        "cluster_san francisco": [
+          "doc_4_san francisco_held"
+        ],
+        "cluster_paris": [
+          "doc_5_paris_summit"
+        ]
+      },
+      "statistics": {
+        "event_types": {
+          "crashed": 1,
+          "announced": 1,
+          "struck": 1,
+          "held": 1,
+          "summit": 1
+        },
+        "top_locations": {
+          "New York": 1,
+          "Washington": 1,
+          "Tokyo": 1,
+          "San Francisco": 1,
+          "Paris": 1
+        },
+        "unique_locations": 5,
+        "unique_event_types": 5
+      },
+      "timestamp": "2025-09-04T17:59:31.697133"
+    },
+    "dashboard_query": {
+      "query": "New York events",
+      "total_results": 4,
+      "results": [
+        {
+          "entity": "New York",
+          "entity_type": "LOCATION",
+          "confidence": 0.9,
+          "frequency": 1,
+          "coordinates": [
+            40.7128,
+            -74.006
+          ],
+          "latitude": 40.7128,
+          "longitude": -74.006,
+          "documents": [
+            "doc_1"
+          ],
+          "context_snippet": "breaking news from new york: the financial markets crashed today. wall street traders were in panic....",
+          "relevance_score": 6.0,
+          "query_matches": [
+            "new",
+            "york"
+          ]
+        },
+        {
+          "entity": "Washington",
+          "entity_type": "LOCATION",
+          "confidence": 0.9,
+          "frequency": 1,
+          "coordinates": [
+            38.9072,
+            -77.0369
+          ],
+          "latitude": 38.9072,
+          "longitude": -77.0369,
+          "documents": [
+            "doc_2"
+          ],
+          "context_snippet": "in washington dc, the president announced new trade policies affecting china and russia....",
+          "relevance_score": 1.0,
+          "query_matches": [
+            "new"
+          ]
+        },
+        {
+          "entity": "China",
+          "entity_type": "LOCATION",
+          "confidence": 0.9,
+          "frequency": 1,
+          "coordinates": [
+            35.8617,
+            104.1954
+          ],
+          "latitude": 35.8617,
+          "longitude": 104.1954,
+          "documents": [
+            "doc_2"
+          ],
+          "context_snippet": "in washington dc, the president announced new trade policies affecting china and russia....",
+          "relevance_score": 1.0,
+          "query_matches": [
+            "new"
+          ]
+        },
+        {
+          "entity": "Russia",
+          "entity_type": "LOCATION",
+          "confidence": 0.9,
+          "frequency": 1,
+          "coordinates": [
+            61.524,
+            105.3188
+          ],
+          "latitude": 61.524,
+          "longitude": 105.3188,
+          "documents": [
+            "doc_2"
+          ],
+          "context_snippet": "in washington dc, the president announced new trade policies affecting china and russia....",
+          "relevance_score": 1.0,
+          "query_matches": [
+            "new"
+          ]
+        }
+      ],
+      "center_location": "New York",
+      "search_radius_km": 100,
+      "timestamp": "2025-09-04T17:59:31.698234"
+    }
+  }
+}

@@ -232,7 +232,8 @@ class DomainProjection:
     def __post_init__(self) -> None:
         if self.domain not in PROJECTION_DOMAINS:
             raise ValueError(
-                f"unknown projection domain {self.domain!r}; expected one of {PROJECTION_DOMAINS}"
+                f"unknown projection domain {self.domain!r}; "
+                f"expected one of {PROJECTION_DOMAINS}"
             )
         if not isinstance(self.status, AssuranceStatus):
             raise ValueError("status must be AssuranceStatus")
@@ -272,7 +273,9 @@ class RuntimeAssuranceProjection:
     payload_uuid: str = ""
     network: str | None = None
     account: str | None = None
-    domains: Mapping[str, DomainProjection] = field(default_factory=dict, hash=False)
+    domains: Mapping[str, DomainProjection] = field(
+        default_factory=dict, hash=False
+    )
     source_record_kind: str = "xaman_payload"
     is_runtime_authorization: bool = False
     is_release_proof: bool = False
@@ -289,15 +292,20 @@ class RuntimeAssuranceProjection:
         normalized: dict[str, DomainProjection] = {}
         for key, value in dict(self.domains).items():
             if not isinstance(value, DomainProjection):
-                raise TypeError(f"domains[{key!r}] must be DomainProjection, got {type(value)!r}")
+                raise TypeError(
+                    f"domains[{key!r}] must be DomainProjection, got {type(value)!r}"
+                )
             if value.domain != key:
                 raise ValueError(
-                    f"domain key {key!r} mismatches DomainProjection.domain {value.domain!r}"
+                    f"domain key {key!r} mismatches DomainProjection.domain "
+                    f"{value.domain!r}"
                 )
             normalized[key] = value
         missing = set(PROJECTION_DOMAINS) - set(normalized)
         if missing:
-            raise ValueError(f"projection missing required domains: {sorted(missing)}")
+            raise ValueError(
+                f"projection missing required domains: {sorted(missing)}"
+            )
         object.__setattr__(self, "domains", MappingProxyType(normalized))
 
     def domain(self, name: str) -> DomainProjection:
@@ -438,16 +446,25 @@ def project_payload_to_assurance(
             "api_expired": payload.api_expired,
             "is_api_success": payload.is_api_success,
             "transaction_type": payload.transaction_type,
-            "created_at": (payload.created_at.isoformat() if payload.created_at else None),
-            "resolved_at": (payload.resolved_at.isoformat() if payload.resolved_at else None),
-            "expires_at": (payload.expires_at.isoformat() if payload.expires_at else None),
+            "created_at": (
+                payload.created_at.isoformat() if payload.created_at else None
+            ),
+            "resolved_at": (
+                payload.resolved_at.isoformat() if payload.resolved_at else None
+            ),
+            "expires_at": (
+                payload.expires_at.isoformat() if payload.expires_at else None
+            ),
             "content_digest": payload.content_digest,
             "raw_meta_digest": payload.raw_meta_digest,
-            "request_summary": (dict(payload.request_summary) if include_request_summary else None),
+            "request_summary": (
+                dict(payload.request_summary) if include_request_summary else None
+            ),
             "request_summary_omitted": not include_request_summary,
         },
         assumptions=(
-            "API lifecycle states remain distinct and never collapse into ledger finality",
+            "API lifecycle states remain distinct and never collapse into "
+            "ledger finality",
             "API success is never settlement",
         ),
         notes="Lifecycle is a runtime observation; formal models stay under logic/.",
@@ -505,7 +522,8 @@ def project_payload_to_assurance(
         },
         assumptions=(
             "A6: the declared XRPL finality threshold is sufficient",
-            "A9: external XRPL providers may lie, delay, or censor only within modeled bounds",
+            "A9: external XRPL providers may lie, delay, or censor only within "
+            "modeled bounds",
             "API success alone never establishes finality",
             "only XRPL-validated settlement yields is_ledger_settled=true",
         ),
@@ -544,15 +562,18 @@ def project_ledger_record_to_assurance(
     if not isinstance(record, Mapping):
         raise TypeError("record must be a mapping")
 
-    network = _optional_str(record.get("network")) or _optional_str(record.get("chain_network"))
+    network = (
+        _optional_str(record.get("network"))
+        or _optional_str(record.get("chain_network"))
+    )
     account = _optional_str(record.get("account"))
-    tx_hash = _optional_str(record.get("transaction_hash")) or _optional_str(record.get("hash"))
+    tx_hash = _optional_str(record.get("transaction_hash")) or _optional_str(
+        record.get("hash")
+    )
     validated = bool(record.get("validated"))
     finality_state = _optional_str(record.get("finality_state"))
-    uuid = (
-        payload_uuid
-        or _optional_str(record.get("payload_uuid"))
-        or (f"ledger:{tx_hash}" if tx_hash else "ledger:unknown")
+    uuid = payload_uuid or _optional_str(record.get("payload_uuid")) or (
+        f"ledger:{tx_hash}" if tx_hash else "ledger:unknown"
     )
 
     if network and account and tx_hash:
@@ -585,7 +606,9 @@ def project_ledger_record_to_assurance(
                 "ledger_index": record.get("ledger_index"),
                 "provider_kind": _optional_str(record.get("provider_kind")),
             },
-            assumptions=("ledger record network identity is provider-reported",),
+            assumptions=(
+                "ledger record network identity is provider-reported",
+            ),
         ),
         "payload_lifecycle": DomainProjection(
             domain="payload_lifecycle",
@@ -604,11 +627,15 @@ def project_ledger_record_to_assurance(
                 "runtime_can_sign": False,
                 "ledger_record_has_no_signing_authority": True,
             },
-            assumptions=("ledger observation does not reconstruct the signing decision",),
+            assumptions=(
+                "ledger observation does not reconstruct the signing decision",
+            ),
         ),
         "submission": DomainProjection(
             domain="submission",
-            status=(AssuranceStatus.OBSERVED if tx_hash else AssuranceStatus.MISSING),
+            status=(
+                AssuranceStatus.OBSERVED if tx_hash else AssuranceStatus.MISSING
+            ),
             facts={
                 "transaction_hash": tx_hash,
                 "runtime_can_submit": False,
@@ -649,7 +676,9 @@ def project_many(
     """Project a sequence of payloads (order-preserving)."""
 
     return tuple(
-        project_payload_to_assurance(item, include_request_summary=include_request_summary)
+        project_payload_to_assurance(
+            item, include_request_summary=include_request_summary
+        )
         for item in payloads
     )
 
