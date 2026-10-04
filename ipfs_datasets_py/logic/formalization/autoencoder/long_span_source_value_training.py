@@ -231,7 +231,8 @@ def train(student, training_rows, validation_rows, *, training_references, valid
           count_exposure="current_stage", source_value_weight=0.,
           order_augmentation=None, generated_boundary_weight=0., generated_boundary_gradient_scope="all_trainable",
           source_contexts=None, action_contrastive_weight=0., generated_boundary_site_policy="first_last",
-          generated_field_weight=0., generated_site_interval=1, non_action_learning_rate_multiplier=1.0):
+          generated_field_weight=0., generated_site_interval=1, non_action_learning_rate_multiplier=1.0,
+          joint_generated_replay=False):
     """Fresh reference-supervised fit; source fidelity gates experimental selection.
 
     The last complete attempt is retained as an explicitly unselected diagnostic.
@@ -241,6 +242,9 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     rate, including the resulting rate-scaled decoupled weight decay.  The opt-in
     scheduler uses proportional floors and zero reduction epsilon so its group
     rates retain their ratio.  The default follows the original single group.
+    Explicit joint replay permits a zero-field-weight execution control: both
+    components' sites and CE are measured, but only positive-weight losses enter
+    the objective.  The ordinary zero-field path retains its original helper.
     """
     started = time.monotonic()
     core._require(config is None or type(config) is dict, "configuration must be a mapping")
@@ -275,6 +279,8 @@ def train(student, training_rows, validation_rows, *, training_references, valid
         "targeted boundary policy requires positive boundary weight")
     core._require(type(generated_field_weight) in (int, float) and math.isfinite(generated_field_weight)
         and 0 <= generated_field_weight <= 1, "invalid generated-field weight")
+    core._require(type(joint_generated_replay) is bool, "joint generated replay must be a boolean")
+    use_joint_generated_replay = joint_generated_replay or generated_field_weight > 0.
     core._require(type(generated_site_interval) is int and 1 <= generated_site_interval <= 32,
         "generated-site interval must be an integer1..32")
     core._require(generated_site_interval == 1 or generated_field_weight > 0,
@@ -298,7 +304,7 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     contextual_boundary = bool(generated_boundary_weight and (contextual or generated_boundary_site_policy != "first_last"))
     core._require(not contextual_boundary or generated_boundary_gradient_scope == "all_trainable",
         "contextual or targeted boundary loss requires all-trainable gradients")
-    core._require(generated_field_weight == 0. or contextual and generated_boundary_weight > 0
+    core._require(not use_joint_generated_replay or contextual and generated_boundary_weight > 0
         and generated_boundary_gradient_scope == "all_trainable",
         "generated-field training requires contextual model and positive all-trainable boundary loss")
     context_receipt = None
@@ -361,7 +367,7 @@ def train(student, training_rows, validation_rows, *, training_references, valid
         action_inventory = action_owner.prepare_training_inventory(training_rows, training_references,
             contexts=training_contexts, codec=codec, validate_rule=validate_rule)
     field_owner = field_inventory = None
-    if generated_field_weight:
+    if use_joint_generated_replay:
         from . import generated_field_training as field_owner
         field_inventory = field_owner.prepare_training_inventory(training_rows, training_references,
             contexts=training_contexts, codec=codec, validate_rule=validate_rule)
@@ -554,7 +560,7 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                         break
                     if generated_result["boundary_loss"] is not None:
                         objective = objective + generated_boundary_weight*generated_result["boundary_loss"]
-                    if generated_result["field_loss"] is not None:
+                    if generated_field_weight != 0. and generated_result["field_loss"] is not None:
                         objective = objective + generated_field_weight*generated_result["field_loss"]
                 elif boundary_owner is not None:
                     try:
@@ -779,6 +785,10 @@ def train(student, training_rows, validation_rows, *, training_references, valid
             generated_site_joint_replay=True, generated_field_used_for_selection=False,
             generated_site_scheduled_updates=sum(update["generated_sites"]["scheduled"] for update in committed_updates),
             generated_site_skipped_updates=sum(not update["generated_sites"]["scheduled"] for update in committed_updates))
+    if joint_generated_replay:
+        report.update(joint_generated_replay=True,
+            generated_field_objective_enabled=generated_field_weight != 0.,
+            generated_field_diagnostic_only=generated_field_weight == 0.)
     if action_owner is not None:
         report.update(action_contrastive_weight=action_contrastive_weight,
             action_contrastive_temperature=action_owner.TEMPERATURE,
