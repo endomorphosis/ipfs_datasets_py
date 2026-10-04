@@ -51,6 +51,7 @@ from ..process import (
     ToolRunResult,
     ToolRuntime,
 )
+from ..resource_admission import ResourceAdmittedToolRunner
 from ..results import (
     ProtocolResult,
     ResultAuthority,
@@ -71,15 +72,33 @@ DEFAULT_MAX_DIAGNOSTIC_CHARS: Final = 512
 DEFAULT_MAX_DIAGNOSTICS: Final = 32
 DEFAULT_MAX_SOURCE_BYTES: Final = 1_048_576
 
+# Reservation estimates for one Haskell capability plus Maude and launcher
+# helpers. Multiple Maude handles can coexist; these are not OS process caps.
+TAMARIN_CPU_SLOTS: Final = 2
+TAMARIN_PROCESS_SLOTS: Final = 8
+TAMARIN_ADDRESS_SPACE_FLOOR_BYTES: Final = 2 * 1024**3
+_MAUDE_COMMAND = re.compile(r"[A-Za-z0-9_./+][A-Za-z0-9_./+\-]*", re.ASCII)
+
 _DIGEST = re.compile(r"^[0-9a-f]{64}$")
 _CONTROL = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
-_LEMMA_LINE = re.compile(
-    r"(?im)^\s*(?:lemma|//\s*lemma)\s+([A-Za-z_][A-Za-z0-9_]*)\s*:"
+_LEMMA_HEADER = re.compile(
+    r"lemma\s+(?:\(\s*modulo\s+E\s*\)\s*)?([A-Za-z_][A-Za-z0-9_]*)\s*"
+    r"(?:\[\s*((?:sources|reuse|use_induction)"
+    r"(?:\s*,\s*(?:sources|reuse|use_induction))*)\s*\]\s*)?:\s*"
+    r"(?:(all-traces|exists-trace)\s*)?\"", re.ASCII,
 )
-_VERIFIED = re.compile(
-    r"(?im)^\s*(?:lemma\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*(?:\([^)\n]*\)\s*)?:"
-    r"\s*(verified|falsified|analysis incomplete|timeout|partial)\b"
+_SUMMARY_HEADER = re.compile(r"(?m)^[ \t]*summary of summaries:[ \t]*$")
+_RESULT_ROW = re.compile(
+    r"[ \t]*(?:(lemma)[ \t]+)?([A-Za-z_][A-Za-z0-9_]*)[ \t]*"
+    r"(?:\(([^()\r\n]*)\)[ \t]*)?:[ \t]*(.*)", re.ASCII,
 )
+_STATUS_TEXT = (
+    r"verified|falsified(?: - (?:found trace|no trace found))?|analysis incomplete|"
+    r"analysis undetermined|analysis cannot be finished \(reducible operators in subterms\)|"
+    r"proof has been invalidated|timeout|partial"
+)
+_NATIVE_STATUS = re.compile(rf"({_STATUS_TEXT}) \([0-9]+ steps\)[ \t]*", re.ASCII)
+_LEGACY_STATUS = re.compile(rf"({_STATUS_TEXT})(?: \((all-traces|exists-trace)\))?[ \t]*", re.ASCII)
 _ATTACK_STEP = re.compile(
     r"(?im)^\s*(?:#?\d+[:.)\]]\s*)?(?:rule|action|step|event)\s+"
     r"([A-Za-z_][A-Za-z0-9_'.]*)(?:\s*\((.*?)\))?"
@@ -793,46 +812,210 @@ def parse_attack_trace(
     )
 
 
+def _source_lemma_declarations(source: str) -> tuple[tuple[str, str], ...] | None:
+    """Extract a closed lemma-binding subset, not validate Tamarin syntax.
+
+    Native success remains required by the backend. Unsupported lexical forms
+    fail closed instead of allowing a partial source population to bind output.
+    Duplicate declarations are retained for the caller's uniqueness check.
+    """
+    if (not isinstance(source, str) or "\x00" in source
+            or len(source.encode("utf-8")) > DEFAULT_MAX_SOURCE_BYTES):
+        return None
+    masked = list(source)
+    offset = 0
+
+    def hide(start: int, end: int) -> None:
+        for index in range(start, end):
+            if masked[index] not in "\r\n":
+                masked[index] = " "
+
+    while offset < len(source):
+        start = offset
+        if source.startswith("//", offset):
+            end = source.find("\n", offset + 2)
+            offset = len(source) if end < 0 else end
+            hide(start, offset)
+        elif source.startswith("/*", offset):
+            depth = 1
+            offset += 2
+            while offset < len(source) and depth:
+                if source.startswith("/*", offset):
+                    depth += 1
+                    offset += 2
+                elif source.startswith("*/", offset):
+                    depth -= 1
+                    offset += 2
+                else:
+                    offset += 1
+            if depth:
+                return None
+            hide(start, offset)
+        elif source.startswith("{*", offset):
+            end = source.find("*}", offset + 2)
+            if end < 0:
+                return None
+            offset = end + 2
+            hide(start, offset)
+        elif source.startswith(("*/", "*}"), offset):
+            return None
+        elif source[offset] in "\"'":
+            quote = source[offset]
+            # Apostrophes within identifiers need a larger lexical profile.
+            if quote == "'" and offset and (source[offset - 1].isalnum() or source[offset - 1] == "_"):
+                return None
+            offset += 1
+            while offset < len(source) and source[offset] != quote:
+                offset += 2 if source[offset] == "\\" else 1
+            if offset >= len(source):
+                return None
+            hide(start + 1, offset)
+            offset += 1
+        else:
+            offset += 1
+    text = "".join(masked)
+    if ("#" in text or re.search(r"\b(?:diffLemma|equivLemma|diffEquivLemma|accountabilityLemma)\b", text)):
+        return None
+    declarations: list[tuple[str, str]] = []
+    for token in re.finditer(r"\blemma\b", text, flags=re.ASCII):
+        header = _LEMMA_HEADER.match(text, token.start())
+        if header is None:
+            return None
+        declarations.append((header.group(1), header.group(3) or "all-traces"))
+    return tuple(declarations)
+
+
+def _tamarin_result_rows(
+    stdout: str, stderr: str, expected: Mapping[str, Any],
+) -> tuple[tuple[str, ClaimVerdict, str | None, str], ...]:
+    """Read final native summaries, or complete legacy fixture rows.
+
+    Native output echoes the source before its summary. Never scan that prefix
+    for verdicts. Rows outside a native summary cannot fill missing claims.
+    """
+    streams = (stdout, stderr)
+    streams = tuple(text.replace("\r\n", "\n") for text in streams)
+    headers = [tuple(_SUMMARY_HEADER.finditer(text)) for text in streams]
+    native = any(headers)
+    source_echo = not native and any(re.search(r"(?m)^[ \t]*theory\b", text) for text in streams)
+    rows: list[tuple[str, ClaimVerdict, str | None, str]] = []
+    if any(re.search(r"wellformedness check failed|analysis results might be wrong", text, flags=re.I)
+           for text in streams):
+        rows.append(("diagnostic:wellformedness", ClaimVerdict.UNKNOWN, None,
+            "Tamarin reported potentially unsound wellformedness analysis"))
+    for text, markers in zip(streams, headers):
+        inside_summary = bool(markers)
+        if markers:
+            text = text[markers[-1].end():]
+        for line in text.split("\n"):
+            line = line.removesuffix("\r")
+            stripped = line.strip(" \t")
+            metadata = re.fullmatch(r"(analyzed|output):[ \t]+\S.*", stripped)
+            if inside_summary and (not stripped or stripped == "=" * 78
+                    or (metadata is not None and metadata.group(1) not in expected)
+                    or re.fullmatch(r"processing time: [0-9]+\.[0-9]+s", stripped)):
+                continue
+            match = _RESULT_ROW.fullmatch(line)
+            if match is None:
+                prefix = re.match(r"[ \t]*(?:lemma[ \t]+)?([A-Za-z_][A-Za-z0-9_]*)\b", line)
+                if prefix is not None and prefix.group(1) in expected:
+                    rows.append((prefix.group(1), ClaimVerdict.UNKNOWN, None,
+                        "malformed Tamarin row for an expected lemma"))
+                elif inside_summary:
+                    rows.append(("diagnostic:summary", ClaimVerdict.UNKNOWN, None,
+                        "unrecognized text in Tamarin's final summary"))
+                continue
+            keyword, name, mode, status_text = match.groups()
+            # Skip normal diagnostics such as "analyzed: protocol.spthy".
+            # A malformed row for an expected lemma still blocks completeness.
+            if not (keyword or mode is not None or name in expected
+                    or re.match(r"(?:verified|falsified|analysis|proof has|timeout|partial)\b", status_text)):
+                if inside_summary:
+                    rows.append((name, ClaimVerdict.UNKNOWN, None,
+                        "unrecognized row in Tamarin's final summary"))
+                continue
+            parsed = _NATIVE_STATUS.fullmatch(status_text) if mode is not None else None
+            if not native and parsed is None:
+                parsed = _LEGACY_STATUS.fullmatch(status_text)
+                if parsed is not None and parsed.lastindex == 2:
+                    suffix_mode = parsed.group(2)
+                    if mode is not None and suffix_mode != mode:
+                        parsed = None
+                    else:
+                        mode = suffix_mode
+            reason = ""
+            if (source_echo or parsed is None or (mode is not None and mode not in {"all-traces", "exists-trace"})
+                    or (native and (not inside_summary or mode is None or keyword is not None))):
+                verdict = ClaimVerdict.UNKNOWN
+                reason = "Tamarin result is outside the supported complete summary format"
+            else:
+                token = parsed.group(1)
+                verdict = (ClaimVerdict.VERIFIED if token == "verified" else
+                    ClaimVerdict.FALSIFIED if token.startswith("falsified") else
+                    ClaimVerdict.TIMEOUT if token == "timeout" else ClaimVerdict.INCOMPLETE)
+            rows.append((name, verdict, mode, reason))
+    return tuple(rows)
+
+
 def parse_tamarin_claim_outcomes(
     stdout: str,
     stderr: str,
     *,
     claim_lemmas: Mapping[str, str],
+    source: str | None = None,
 ) -> tuple[ClaimOutcome, ...]:
-    """Parse per-lemma verified/falsified lines into claim outcomes."""
+    """Bind unique, complete lemma results; withhold unvalidated attacks.
 
-    combined = f"{stdout}\n{stderr}"
-    verdicts: dict[str, ClaimVerdict] = {}
-    for match in _VERIFIED.finditer(combined):
-        name = match.group(1)
-        token = match.group(2).lower()
-        if token == "verified":
-            verdicts[name] = ClaimVerdict.VERIFIED
-        elif token == "falsified":
-            verdicts[name] = ClaimVerdict.FALSIFIED
-        elif token == "timeout":
-            verdicts[name] = ClaimVerdict.TIMEOUT
-        else:
-            verdicts[name] = ClaimVerdict.INCOMPLETE
-
-    raw_digest = content_digest(combined)
-    inverse = {lemma: claim for claim, lemma in claim_lemmas.items()}
+    The canonical backend always supplies source. Direct callers omitting it
+    retain a map-only binding contract, without source validation.
+    """
+    if not isinstance(claim_lemmas, Mapping):
+        raise TamarinBackendError("claim_lemmas must be a mapping")
+    inverse: dict[str, list[str]] = {}
+    for claim, lemma in claim_lemmas.items():
+        if (_text(claim, "claim_id") != claim or not isinstance(lemma, str)
+                or re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", lemma, flags=re.ASCII) is None):
+            raise TamarinBackendError("claim_lemmas requires exact non-empty claim IDs and supported lemma names")
+        inverse.setdefault(lemma, []).append(claim)
+    declarations = _source_lemma_declarations(source) if source is not None else None
+    source_modes = dict(declarations or ())
+    source_bound = source is None or (
+        declarations is not None and len(declarations) == len(source_modes)
+        and len(claim_lemmas) == len(declarations) and set(inverse) == set(source_modes)
+    )
+    binding_valid = bool(claim_lemmas) and source_bound and all(len(claims) == 1 for claims in inverse.values())
     outcomes: list[ClaimOutcome] = []
     seen_claims: set[str] = set()
-
-    for lemma_name, verdict in verdicts.items():
-        claim_id = inverse.get(lemma_name, lemma_name)
-        attack = None
+    seen_results: set[tuple[str, ClaimVerdict]] = set()
+    reserved_ids = set(claim_lemmas)
+    for lemma_name, verdict, mode, reason in _tamarin_result_rows(stdout, stderr, inverse):
+        candidates = inverse.get(lemma_name, ()) if binding_valid else ()
+        if len(candidates) != 1:
+            claim_id = f"unbound-result:{len(outcomes)}"
+            while claim_id in reserved_ids:
+                claim_id = "unbound:" + claim_id
+            reserved_ids.add(claim_id)
+            outcomes.append(ClaimOutcome(
+                claim_id=claim_id, lemma_name=lemma_name, verdict=ClaimVerdict.UNKNOWN,
+                reason="Tamarin result has no unique complete requested/source lemma binding",
+            ))
+            continue
+        claim_id = candidates[0]
+        if source is not None and mode is not None and mode != source_modes[lemma_name]:
+            verdict = ClaimVerdict.UNKNOWN
+            reason = "Tamarin result trace quantifier differs from its source lemma"
+        identity = (claim_id, verdict)
+        if identity in seen_results:
+            continue
+        seen_results.add(identity)
         if verdict is ClaimVerdict.FALSIFIED:
-            attack = parse_attack_trace(
-                combined, claim_id=claim_id, raw_digest=raw_digest
-            )
+            reason = "falsified lemma requires validated attack reconstruction; no attack is inferred"
         outcomes.append(
             ClaimOutcome(
                 claim_id=claim_id,
                 lemma_name=lemma_name,
                 verdict=verdict,
-                attack_trace=attack,
+                reason=reason,
             )
         )
         seen_claims.add(claim_id)
@@ -889,9 +1072,7 @@ def classify_claim_outcomes(
                     "Tamarin reported both verified and falsified claims; "
                     "the batch is quarantined rather than promoted"
                 ),
-                claim_ids=tuple(
-                    item.claim_id for item in (*verified, *falsified)
-                ),
+                claim_ids=tuple(dict.fromkeys(item.claim_id for item in (*verified, *falsified))),
             ),
             False,
         )
@@ -906,10 +1087,10 @@ def classify_claim_outcomes(
                 ResultQuarantine(
                     reason=QuarantineReason.MALFORMED_OUTPUT,
                     detail=(
-                        "falsified claims lack a normalizable attack trace; "
+                        "falsified claims lack validated attack reconstruction; "
                         "results are quarantined"
                     ),
-                    claim_ids=tuple(item.claim_id for item in missing_trace),
+                    claim_ids=tuple(dict.fromkeys(item.claim_id for item in missing_trace)),
                 ),
                 False,
             )
@@ -922,7 +1103,7 @@ def classify_claim_outcomes(
                         "attack found for some claims while others remain "
                         "inconclusive; quarantined"
                     ),
-                    claim_ids=tuple(item.claim_id for item in incomplete),
+                    claim_ids=tuple(dict.fromkeys(item.claim_id for item in incomplete)),
                 ),
                 False,
             )
@@ -934,7 +1115,7 @@ def classify_claim_outcomes(
             ResultQuarantine(
                 reason=QuarantineReason.INCONCLUSIVE,
                 detail="one or more claims remain incomplete, timed out, or unknown",
-                claim_ids=tuple(item.claim_id for item in incomplete),
+                claim_ids=tuple(dict.fromkeys(item.claim_id for item in incomplete)),
             ),
             False,
         )
@@ -947,7 +1128,7 @@ def classify_claim_outcomes(
         ResultQuarantine(
             reason=QuarantineReason.INCONCLUSIVE,
             detail="unable to classify Tamarin claim outcomes",
-            claim_ids=tuple(item.claim_id for item in outcomes),
+            claim_ids=tuple(dict.fromkeys(item.claim_id for item in outcomes)),
         ),
         False,
     )
@@ -992,9 +1173,7 @@ class TamarinCompiler:
 
     def compile_source(self, source: str, *, source_format: str = "spthy") -> TamarinCompileResult:
         text = _source_text(source)
-        lemmas = {
-            name: name for name in _LEMMA_LINE.findall(text)
-        }
+        lemmas = {name: name for name, _ in (_source_lemma_declarations(text) or ())}
         ceiling = SymbolicModelCeiling.disclose(
             equational_theories=(EquationalTheory.FREE.value,),
             claim_kinds=tuple(lemmas),
@@ -1241,7 +1420,18 @@ class TamarinBackend:
         self.executable = _text(executable, "executable")
         self.maude_executable = _text(maude_executable, "maude_executable")
         self.maude_version = _text(maude_version, "maude_version", optional=True)
-        self._runner = runner or BoundedToolRunner()
+        self._owns_runner = runner is None
+        if self._owns_runner and _MAUDE_COMMAND.fullmatch(self.maude_executable) is None:
+            # Tamarin uses this value both as a subprocess executable and in a
+            # shell command. Shell quoting would break the former invocation.
+            raise TamarinBackendError("managed maude_executable must be a shell-safe path or name")
+        self._runner = (
+            ResourceAdmittedToolRunner(
+                cpu_slots=TAMARIN_CPU_SLOTS,
+                child_process_slots=TAMARIN_PROCESS_SLOTS,
+            )
+            if self._owns_runner else runner
+        )
         if not isinstance(self._runner, BoundedToolRunner):
             raise TamarinBackendError("runner must be a BoundedToolRunner")
         if version_probe is not None and not callable(version_probe):
@@ -1367,17 +1557,30 @@ class TamarinBackend:
             bounds.max_output_bytes * 2,
             len(source.encode("utf-8")) + bounds.max_output_bytes + 1024,
         )
+        argv = (self.executable, "--prove", "{workspace}/protocol.spthy")
+        memory_bytes = bounds.max_memory_bytes
+        resident_memory_bytes = None
+        if self._owns_runner:
+            # The GHC runtime otherwise defaults to all cores. Its virtual
+            # reservation must fit the separate finite address-space limit.
+            # Keep physical memory admission tied to the caller's bound and
+            # leave space for Maude/runtime overhead.
+            # Heap and sampled tree RSS limits are not hard aggregate OOM caps.
+            argv = (
+                self.executable, "--prove", f"--with-maude={self.maude_executable}",
+                "{workspace}/protocol.spthy", "+RTS", "-N1",
+                f"-M{max(1, bounds.max_memory_bytes // 2)}", "-RTS",
+            )
+            resident_memory_bytes = bounds.max_memory_bytes
+            memory_bytes = max(TAMARIN_ADDRESS_SPACE_FLOOR_BYTES, 4 * bounds.max_memory_bytes)
         return ToolRunRequest(
-            argv=(
-                self.executable,
-                "--prove",
-                "{workspace}/protocol.spthy",
-            ),
+            argv=argv,
             runtime=ToolRuntime.NATIVE,
             limits=ToolRunLimits(
                 timeout_seconds=bounds.timeout_ms / 1000,
                 cpu_seconds=bounds.timeout_ms / 1000,
-                memory_bytes=bounds.max_memory_bytes,
+                memory_bytes=memory_bytes,
+                resident_memory_bytes=resident_memory_bytes,
                 max_output_bytes=bounds.max_output_bytes,
                 max_input_bytes=bounds.max_output_bytes,
                 max_workspace_bytes=max_workspace_bytes,
@@ -1396,6 +1599,7 @@ class TamarinBackend:
         compile_result: TamarinCompileResult,
         reason: str = "",
         diagnostics: Sequence[str] = (),
+        process: ToolRunResult | None = None,
     ) -> ProtocolResult:
         witness: dict[str, Any] = {
             "receipt_id": receipt.receipt_id,
@@ -1418,6 +1622,29 @@ class TamarinBackend:
                 for item in receipt.claim_outcomes
                 if item.attack_trace is not None
             ]
+        metadata: dict[str, Any] = {
+            "adapter_interface": TAMARIN_BACKEND_VERSION,
+            "protocol_receipt": receipt.to_dict(),
+            "source_binding": binding.to_dict(),
+            "symbolic_model_ceiling": receipt.ceiling.to_dict(),
+        }
+        if process is not None:
+            metadata["process"] = {
+                "cancelled": process.cancelled,
+                "command": list(process.command),
+                "error": process.error,
+                "output_truncated": process.output_truncated,
+                "process_tree_terminated": process.process_tree_terminated,
+                "returncode": process.returncode,
+                "resource_exhausted": process.resource_exhausted,
+                "stderr_digest": stable_digest({"content": process.stderr}),
+                "stdout_digest": stable_digest({"content": process.stdout}),
+                "timed_out": process.timed_out,
+                "termination_reason": process.termination_reason,
+                "unavailable": process.unavailable,
+                "workspace_cleaned": process.workspace_cleaned,
+                "workspace_limit_exceeded": process.workspace_limit_exceeded,
+            }
         return ProtocolResult(
             result_id=_result_id(self.backend_id, request),
             backend_id=self.backend_id,
@@ -1435,12 +1662,7 @@ class TamarinBackend:
             witness=witness,
             diagnostics=bound_diagnostics(diagnostics),
             reason=sanitize_diagnostic(reason) if reason else "",
-            metadata={
-                "adapter_interface": TAMARIN_BACKEND_VERSION,
-                "protocol_receipt": receipt.to_dict(),
-                "source_binding": binding.to_dict(),
-                "symbolic_model_ceiling": receipt.ceiling.to_dict(),
-            },
+            metadata=metadata,
         )
 
     def run(
@@ -1556,8 +1778,32 @@ class TamarinBackend:
                 detail=reason,
             )
             accepted = False
-        elif process.resource_exhausted or process.output_truncated:
+        elif (process.resource_exhausted or process.output_truncated
+              or process.workspace_limit_exceeded):
             reason = process.error or "Tamarin exceeded a resource or output bound"
+            status = ResultStatus.ERROR
+            outcomes = ()
+            quarantine = None
+            accepted = False
+        elif (process.error or not process.workspace_cleaned
+              or process.process_tree_terminated):
+            reason = process.error or "Tamarin did not complete a clean native lifecycle"
+            status = ResultStatus.ERROR
+            outcomes = ()
+            quarantine = None
+            accepted = False
+        elif usage.output_bytes > request.bounds.max_output_bytes:
+            reason = "Tamarin exceeded its combined output bound"
+            status = ResultStatus.ERROR
+            outcomes = ()
+            quarantine = None
+            accepted = False
+        elif type(process.returncode) is not int or process.returncode != 0:
+            reason = (
+                "Tamarin did not report an integer exit status"
+                if type(process.returncode) is not int
+                else f"Tamarin exited with status {process.returncode}"
+            )
             status = ResultStatus.ERROR
             outcomes = ()
             quarantine = None
@@ -1567,21 +1813,10 @@ class TamarinBackend:
                 process.stdout,
                 process.stderr,
                 claim_lemmas=compile_result.claim_lemmas.to_dict(),
+                source=compile_result.source,
             )
             status, quarantine, accepted = classify_claim_outcomes(outcomes)
-            reason = process.error or ""
-            if process.returncode not in (0, None) and status is ResultStatus.SECURE:
-                # Non-zero exit with all-verified is treated as inconclusive.
-                status = ResultStatus.UNKNOWN
-                accepted = False
-                quarantine = ResultQuarantine(
-                    reason=QuarantineReason.INCONCLUSIVE,
-                    detail=(
-                        f"Tamarin exited with status {process.returncode} despite "
-                        "verified lemmas; quarantined"
-                    ),
-                )
-                reason = quarantine.detail
+            reason = ""
 
         diagnostics = bound_diagnostics(
             [
@@ -1614,6 +1849,7 @@ class TamarinBackend:
             compile_result=compile_result,
             reason=reason,
             diagnostics=diagnostics,
+            process=process,
         )
         return TamarinBackendOutcome(
             request_digest=request.digest,

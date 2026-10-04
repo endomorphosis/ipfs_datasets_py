@@ -1,0 +1,21 @@
+{
+  "external_provers_run": false,
+  "failed": 0,
+  "logs": [
+    "/home/barberb/lift_coding/artifacts/ir-training-complete-20261002/tests-final.log",
+    "/home/barberb/lift_coding/artifacts/ir-training-complete-20261002/public-training-tests.log"
+  ],
+  "scope": "union of the final84-test run and40-test public API run replacing31 previously passing cases",
+  "source_decoder_quality_accepted": false,
+  "test_files": {
+    "test_autoencoder_family_complete_training.py": 13,
+    "test_autoencoder_family_ridge_path.py": 5,
+    "test_autoencoder_runtime_registry.py": 15,
+    "test_checkpoint_hub_384.py": 25,
+    "test_domain_384_autoencoder.py": 10,
+    "test_domain_family_complete_training.py": 15,
+    "test_legal_384_package.py": 2,
+    "test_logic_submodule_registry.py": 8
+  },
+  "unique_targeted_tests_passed": 93
+}

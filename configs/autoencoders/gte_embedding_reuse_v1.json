@@ -1,0 +1,22 @@
+{
+  "schema": "gte-embedding-reuse-config/v1",
+  "workspace_root": "/home/barberb/lift_coding",
+  "mode": "reuse",
+  "expected_asset_manifest_sha256": "8beb874aa7b06599346173fde12e95f9f926b3028942d5014cdd2f99c4385166",
+  "rows_384": {
+    "path": "artifacts/gte-multilingual-preparation-20261001/inputs-01/transfer-input-rows.json",
+    "sha256": "1bf8fd385e0b484c4c99ef6465b1be9cfedfb24bcc252d354959a9610e73f0f3"
+  },
+  "corpus_audit": {
+    "path": "artifacts/gte-migration-preparation-20261001/run-02/corpus-audit.json",
+    "sha256": "588dde10f54207476e429323ad0f6834d9b1bffb501dd7df5913e89bd9f180a1"
+  },
+  "tasks": {
+    "path": "artifacts/gte-multilingual-preparation-20261001/run-01/tasks.json",
+    "sha256": "887dc1d23a9f0ed7a99c2b2f7c2500833f9328ddd97afd3ef750ddbffa5eb826"
+  },
+  "receipts_768": {
+    "path": "artifacts/gte-multilingual-preparation-20261001/embed-01/receipts.json",
+    "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+  }
+}

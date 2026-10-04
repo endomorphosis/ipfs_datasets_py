@@ -179,3 +179,6 @@ workspace/todo-queues/
 workspace/todo-queues/legal-ir-hparam8h-20260530T230404Z-*
 workspace/todo-queues/legal-ir-hparam8h-rerun-20260531T073020Z-*
 ipfs_datasets_py.egg-info/SOURCES.txt
+# Local prover/tool installations and generated release archives are retained on disk.
+/workspace/
+/docs/implementation/reports/evidence/**/*.tar.xz

@@ -21,12 +21,23 @@
     "sparse": true,
     "unexplained_reachable_gap": 0
   },
+  "cell_count": 237,
   "conformance_report": {
+    "content_id": "sha256:c59765b65b291b416122d9617090b6d49b654ca34602f82b2944868228c46deb",
+    "content_sha256": "c59765b65b291b416122d9617090b6d49b654ca34602f82b2944868228c46deb",
     "goal_id": "LFP2-G080",
     "interface": "LogicConformanceReport@2",
     "schema_version": "logic-conformance-report/v2",
+    "summary": {
+      "acceptance_holds": true,
+      "hard_zero_floors_clear": true,
+      "matrix_content_id": "sha256:b8932f0a4533c14221fb0e7db4b0c9f130a41966c116e8c56dcd42e43a86dc8d",
+      "matrix_interface": "ReachableConformanceMatrix@2"
+    },
     "task_id": "LFP2-047"
   },
+  "content_id": "sha256:c580c062d71d0f4f28e894b7d75dccb7d1b62b2148573d8fe490df8e30e811aa",
+  "content_sha256": "c580c062d71d0f4f28e894b7d75dccb7d1b62b2148573d8fe490df8e30e811aa",
   "description": "Sparse reachable conformance matrix joining domain source, profile, translation path, provider feature, execution, replay, disposition, and authority with machine-checked hard-zero safety floors.",
   "evidence_subset": [
     "reachable",
@@ -51,8 +62,10 @@
     "unexplained_reachable_gap": 0
   },
   "interface": "ReachableConformanceMatrix@2",
+  "live_matrix_content_id": "sha256:b8932f0a4533c14221fb0e7db4b0c9f130a41966c116e8c56dcd42e43a86dc8d",
+  "live_matrix_content_sha256": "b8932f0a4533c14221fb0e7db4b0c9f130a41966c116e8c56dcd42e43a86dc8d",
   "materialization": "ipfs_datasets_py.logic.conformance.matrix_v2:build_default_reachable_conformance_matrix",
-  "notes": "Sparse join of domain bindings, family extension provider routes, admitted reachable-graph routes, and hermetic execution/replay dispositions. Hard-zero floors are machine checked and must remain zero. Live process capability remains a separate scheduled lane. Full cell bodies are rematerialized through the materialization target.",
+  "notes": "Sparse join of domain bindings, family extension provider routes, admitted reachable-graph routes, and hermetic execution/replay dispositions. Hard-zero floors are machine checked and must remain zero. Live process capability remains a separate scheduled lane.",
   "producer_id": "reachable-conformance-matrix@2",
   "program_id": "ipfs-datasets-logic-family-parser-v2",
   "required_join_dimensions": [
@@ -76,8 +89,42 @@
   },
   "summary": {
     "acceptance_holds": true,
+    "cell_count": 237,
+    "domain_count": 5,
+    "domain_ids": [
+      "crypto_ir",
+      "intent_ir",
+      "legal_ir",
+      "security_ir",
+      "software_verification"
+    ],
     "every_cell_has_all_join_dimensions": true,
     "hard_zero_floors_clear": true,
+    "provider_count": 22,
+    "provider_ids": [
+      "apalache",
+      "autohyper",
+      "cvc5",
+      "datalog_secpal",
+      "eprover",
+      "ergoai",
+      "hammer",
+      "hyperltl",
+      "hyperltl_autohyper_mchyper",
+      "isabelle",
+      "lean",
+      "mchyper",
+      "model_check",
+      "proverif",
+      "rocq",
+      "runtime_mtl",
+      "symbolicai",
+      "tamarin",
+      "tla_tlc",
+      "vampire",
+      "z3",
+      "zk_proof_authority"
+    ],
     "required_join_dimensions": [
       "domain_source",
       "profile",

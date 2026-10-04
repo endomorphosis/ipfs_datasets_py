@@ -1,0 +1,575 @@
+{
+  "schema": "intent-codebase-grounding-pilot-spec/v1",
+  "status": "authored_acceptance_specification",
+  "guide": "README.md",
+  "adapter_contracts": "adapter_contracts.json",
+  "validation_schema": "pilot_spec.schema.json",
+  "pipeline_plan": "../../codebase_ir_repository_pipeline_plan.json",
+  "work_items": "../../codebase_ir_proof_index_work_items.json",
+  "inspection_record": "../../../../../../artifacts/codebase-ir-grounding-pilot-contracts-20261002/inspection.json",
+  "first_milestone": "registered_capture_conditional_evidence_and_read_only_intent_grounding",
+  "scope": {
+    "path": "counter.py",
+    "function": "increment",
+    "parameter": "x",
+    "profile": "python-integer-offset@1",
+    "repository_selection": "isolated authored fixture when executed; never scan current dirty workspace",
+    "whole_repository_claim": false,
+    "first_milestone_executes_edit": false,
+    "first_milestone_trains_model": false,
+    "missing_models_block_deterministic_milestone": false
+  },
+  "source_fixtures": [
+    {
+      "source_fixture_id": "source_offset1",
+      "path": "counter.py",
+      "encoding": "ASCII",
+      "line_endings": "LF",
+      "source_text": "def increment(x: int) -> int:\n    return x + 1\n",
+      "bytes": 47,
+      "sha256": "0dd0ad7d52d1ab3e94fc605124500b83fe8b433afdb205aa3003433324676ec7",
+      "raw_source_cid": "bafkreian2cwx2uwrvm7jj7dakesfac4d72fugox5wic2umadimzsiz3oy4",
+      "fixture_status": "authored_not_captured_repository",
+      "static_profile_guard_checked": true
+    },
+    {
+      "source_fixture_id": "source_offset2",
+      "path": "counter.py",
+      "encoding": "ASCII",
+      "line_endings": "LF",
+      "source_text": "def increment(x: int) -> int:\n    return x + 2\n",
+      "bytes": 47,
+      "sha256": "2d6f0f19d5010e9f2482dec6cd6fa7e90a583625dd7f19ca7767fbcb801d34a6",
+      "raw_source_cid": "bafkreibnn4hrtvibb2psjaw6y3gw7j7jbjmdmjo5p4m4u53h7pfyahjuuy",
+      "fixture_status": "authored_not_captured_repository",
+      "static_profile_guard_checked": true
+    }
+  ],
+  "contract_fixtures": [
+    {
+      "contract_fixture_id": "contract_offset1",
+      "native_contract": {
+        "schema": "codebase-integer-offset-contract@1",
+        "profile": "python-integer-offset@1",
+        "path": "counter.py",
+        "function_name": "increment",
+        "parameter": "x",
+        "offset": 1
+      },
+      "native_contract_cid": "baguqeerao5o4g5er7f7ccqpsjuarvg5f6l76rcndaszflm6v5w4jdmebxccq",
+      "owner_roundtrip_checked": true
+    },
+    {
+      "contract_fixture_id": "contract_offset2",
+      "native_contract": {
+        "schema": "codebase-integer-offset-contract@1",
+        "profile": "python-integer-offset@1",
+        "path": "counter.py",
+        "function_name": "increment",
+        "parameter": "x",
+        "offset": 2
+      },
+      "native_contract_cid": "baguqeerajnfdipg5h4xgy2hlu5d3xcpnj4g2nn5xzwn4osnz3jqbfih5e5ka",
+      "owner_roundtrip_checked": true
+    }
+  ],
+  "normative_checker_assumptions": [
+    "The argument is an exact built-in Python int, excluding bool and subclasses; source annotations do not enforce this.",
+    "Integer arithmetic uses the unbounded mathematical model; allocation failure, resource exhaustion and asynchronous interruption are excluded from modeled execution.",
+    "The captured function is called directly with one supplied argument in sequential execution; module loading, rebinding and concurrent code changes are outside the model."
+  ],
+  "intent_fixture": {
+    "text": "Change increment so that its result equals x + 2 under the declared integer-offset assumptions.",
+    "status": "authored_desired_requirement_not_verified_intent_ir",
+    "desired_contract_fixture_id": "contract_offset2",
+    "actual_verified_intent_artifact_ref": null,
+    "actual_verified_formalization_artifact_ref": null
+  },
+  "runtime_bindings": {
+    "repository_id": null,
+    "source_mode_receipt": null,
+    "head_h0": null,
+    "head_h1": null,
+    "current_graph_cid": null,
+    "native_subject_version_h0": null,
+    "planned_post_subject_ref": null,
+    "observed_subject_version_h1": null,
+    "program_transition_query_ref": null,
+    "program_transition_observation_ref": null,
+    "checker_environment": null,
+    "producer_runner_manifest": null,
+    "fresh_receipt_offset1_h0": null,
+    "fresh_receipt_offset2_h0": null,
+    "fresh_receipt_offset2_h1": null,
+    "owner_grounding_receipt": null
+  },
+  "runtime_materialization": "A future run creates a new immutable owner-bound manifest resolving these handles; this authored specification is not rewritten or treated as operational evidence.",
+  "required_canonical_owners": [
+    "RepositoryCodebaseIndex",
+    "CodebaseHead",
+    "IntegerOffsetContract",
+    "CanonicalProofCacheKey",
+    "CodebaseEvidenceRecord",
+    "ProgramTransitionQuery@1",
+    "ProgramTransitionCandidate@1",
+    "ProgramTransitionObservation@1",
+    "ProgramTransitionAdmission@1",
+    "TypedPredicate",
+    "ObservedFact",
+    "ProducerRule",
+    "TaskCandidate",
+    "IntentConstraintAdapter"
+  ],
+  "proof_index_admission": {
+    "current_accepted_statuses": [
+      "proved",
+      "refuted"
+    ],
+    "scope": "conditional_integer_contract",
+    "evidence_kind": "conditional_smt",
+    "fresh_native_check_required_for_current_use": true,
+    "kernel_checked": false,
+    "behavior_authority": false,
+    "execution_authority": false,
+    "completion_authority": false,
+    "other_outcomes": "Proposed separate attempt journal or reviewed owner extension; raised cancellation/stale failures mapped explicitly."
+  },
+  "inherited_asset_observations": {
+    "source8_parent": {
+      "receipt": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/codebase-source-training-qualification-20261002/parent-checkpoint.json",
+        "bytes": 673933,
+        "sha256": "53318593b6aa77d5d352c9499c48d92d513215c8d2f945f7d6838205528ba17c"
+      },
+      "input_width": 53,
+      "latent_width": 8,
+      "dimension_role": "internal_latent",
+      "selections": [
+        {
+          "contracts": [],
+          "path": "canary.py",
+          "role": "canary"
+        },
+        {
+          "contracts": [],
+          "path": "train.py",
+          "role": "train"
+        },
+        {
+          "contracts": [],
+          "path": "tune.py",
+          "role": "tune"
+        }
+      ],
+      "train_coverage": [
+        {
+          "known_atoms": 2,
+          "projection_id": "codebase_ir.contracts@1",
+          "unknown_atoms": 0
+        },
+        {
+          "known_atoms": 51,
+          "projection_id": "codebase_ir.program@1",
+          "unknown_atoms": 0
+        }
+      ],
+      "tuning_coverage": [
+        {
+          "known_atoms": 2,
+          "projection_id": "codebase_ir.contracts@1",
+          "unknown_atoms": 0
+        },
+        {
+          "known_atoms": 50,
+          "projection_id": "codebase_ir.program@1",
+          "unknown_atoms": 1
+        }
+      ],
+      "canary_coverage": [
+        {
+          "known_atoms": 2,
+          "projection_id": "codebase_ir.contracts@1",
+          "unknown_atoms": 0
+        },
+        {
+          "known_atoms": 50,
+          "projection_id": "codebase_ir.program@1",
+          "unknown_atoms": 1
+        }
+      ],
+      "heldout_canary": false
+    },
+    "source8_child": {
+      "receipt": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/codebase-source-training-qualification-20261002/child-checkpoint.json",
+        "bytes": 815238,
+        "sha256": "c00a0c54f8b1adb24d1822ab2ac98cec2d414e5b2ec55fad9da69ad7630be6a6"
+      },
+      "input_width": 53,
+      "latent_width": 8,
+      "dimension_role": "internal_latent",
+      "selections": [
+        {
+          "contracts": [],
+          "path": "canary.py",
+          "role": "canary"
+        },
+        {
+          "contracts": [],
+          "path": "train.py",
+          "role": "train"
+        },
+        {
+          "contracts": [],
+          "path": "tune.py",
+          "role": "tune"
+        }
+      ],
+      "train_coverage": [
+        {
+          "known_atoms": 2,
+          "projection_id": "codebase_ir.contracts@1",
+          "unknown_atoms": 0
+        },
+        {
+          "known_atoms": 50,
+          "projection_id": "codebase_ir.program@1",
+          "unknown_atoms": 1
+        },
+        {
+          "known_atoms": 2,
+          "projection_id": "codebase_ir.contracts@1",
+          "unknown_atoms": 0
+        },
+        {
+          "known_atoms": 51,
+          "projection_id": "codebase_ir.program@1",
+          "unknown_atoms": 0
+        }
+      ],
+      "tuning_coverage": [
+        {
+          "known_atoms": 2,
+          "projection_id": "codebase_ir.contracts@1",
+          "unknown_atoms": 0
+        },
+        {
+          "known_atoms": 50,
+          "projection_id": "codebase_ir.program@1",
+          "unknown_atoms": 1
+        }
+      ],
+      "canary_coverage": [
+        {
+          "known_atoms": 2,
+          "projection_id": "codebase_ir.contracts@1",
+          "unknown_atoms": 0
+        },
+        {
+          "known_atoms": 50,
+          "projection_id": "codebase_ir.program@1",
+          "unknown_atoms": 1
+        }
+      ],
+      "heldout_canary": false
+    }
+  },
+  "derived_basis_facts": {
+    "method": "Pure traversal of saved JSON projection leaves and comparison with frozen feature columns; no model inference.",
+    "projection_id": "codebase_ir.program@1",
+    "known_literal": 1,
+    "child_changed_train_literal": 2,
+    "tune_literal": 3,
+    "canary_literal": 5,
+    "these_critical_tokens_absent_from_frozen_columns": true,
+    "registered_counter_path": false,
+    "pilot_model_outcome": "migration_required",
+    "historical_canary_is_independent_holdout": false
+  },
+  "identity_policy": {
+    "raw_source_cid_is_repository_snapshot": false,
+    "raw_content_sha_is_target_source_digest": false,
+    "target_source_digest_is_vector_profile_key": false,
+    "native_identity_cid_is_full_record_transport_cid": false,
+    "pinned_artifact_ref_accepts_raw_python_bytes": false,
+    "native_transition_observation_replaces_query_subject_with_successor": false,
+    "canonical_ids_from_existing_owner": true
+  },
+  "cases": [
+    {
+      "case_id": "G01",
+      "title": "Current source matches offset1",
+      "gate": "native_conditional_check",
+      "input_refs": [
+        "source_offset1",
+        "contract_offset1"
+      ],
+      "expected_outcome": "conditional_proved_with_fresh_z3_cvc5_agreement",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "G02",
+      "title": "Current source refutes offset2",
+      "gate": "native_conditional_check",
+      "input_refs": [
+        "source_offset1",
+        "contract_offset2"
+      ],
+      "expected_outcome": "conditional_refuted_preserved_as_current_false",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "G03",
+      "title": "Successor source matches offset2",
+      "gate": "native_conditional_check",
+      "input_refs": [
+        "source_offset2",
+        "contract_offset2"
+      ],
+      "expected_outcome": "conditional_proved_for_new_observed_head",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "G04",
+      "title": "Successor source refutes offset1",
+      "gate": "native_conditional_check",
+      "input_refs": [
+        "source_offset2",
+        "contract_offset1"
+      ],
+      "expected_outcome": "conditional_refuted_for_new_observed_head",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "G05",
+      "title": "Same-head history repeat or cold restart",
+      "gate": "live_source_and_native_check",
+      "input_refs": [
+        "source_offset1",
+        "contract_offset1"
+      ],
+      "expected_outcome": "historical_hit_if_present_plus_fresh_native_checker_execution",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "G06",
+      "title": "Restore first source after successor",
+      "gate": "head_currentness",
+      "input_refs": [
+        "source_offset1",
+        "source_offset2"
+      ],
+      "expected_outcome": "new_generation_old_head_ineligible",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "G07",
+      "title": "Source changes while checking or sealing",
+      "gate": "live_source_and_native_check",
+      "input_refs": [
+        "source_offset1"
+      ],
+      "expected_outcome": "stale_current_result_withheld",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "G08",
+      "title": "Unavailable timeout unknown or disagreement",
+      "gate": "attempt_journal",
+      "input_refs": [
+        "source_offset1",
+        "contract_offset1"
+      ],
+      "expected_outcome": "nonterminal_attempt_no_terminal_index_admission",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "G09",
+      "title": "Unsupported source grammar",
+      "gate": "native_source_guard",
+      "input_refs": [],
+      "expected_outcome": "unsupported_without_solver_or_repository_code_execution",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "G10",
+      "title": "Current false versus desired future repair",
+      "gate": "state_semantic_key",
+      "input_refs": [
+        "source_offset1",
+        "contract_offset2"
+      ],
+      "expected_outcome": "retain_current_false_and_distinct_planned_post_subject",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "G11",
+      "title": "Predicate ID changes but same semantic subject",
+      "gate": "state_semantic_key",
+      "input_refs": [],
+      "expected_outcome": "same_semantic_key_conflict_not_future_goal",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "G12",
+      "title": "Prediction used as observation or H1 replaces query H0 subject",
+      "gate": "native_transition_codec",
+      "input_refs": [],
+      "expected_outcome": "reject_type_or_query_subject_binding",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "G13",
+      "title": "Unknown facts need observation workflow",
+      "gate": "intent_grounding",
+      "input_refs": [],
+      "expected_outcome": "review_or_separate_admitted_observation_then_recompile",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "G14",
+      "title": "Wrong root role store family or stale source",
+      "gate": "typed_root_admission",
+      "input_refs": [],
+      "expected_outcome": "reject_current_applicability",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "G15",
+      "title": "Worker IDs or copied plan values claim observed success",
+      "gate": "evidence_owner_and_live_observer",
+      "input_refs": [],
+      "expected_outcome": "reject_without_real_eligible_post_evidence",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "G16",
+      "title": "Missing inherited parent",
+      "gate": "model_lane",
+      "input_refs": [
+        "source8_parent"
+      ],
+      "expected_outcome": "model_unavailable_without_random_bootstrap_source_registration_continues",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "G17",
+      "title": "Authentic source8 checkpoint but unregistered counter cohort",
+      "gate": "model_lane",
+      "input_refs": [
+        "source8_parent",
+        "source_offset1"
+      ],
+      "expected_outcome": "artifact_reuse_available_training_and_inference_migration_required",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "G18",
+      "title": "Saved critical atom omitted from frozen basis",
+      "gate": "model_lane",
+      "input_refs": [
+        "source8_parent",
+        "source8_child"
+      ],
+      "expected_outcome": "migration_required_preserve_unknown_coverage_and_exposure",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "G19",
+      "title": "Offset fixture passed to source384 two-operand adapter",
+      "gate": "model_lane",
+      "input_refs": [
+        "source_offset1"
+      ],
+      "expected_outcome": "unsupported_two_distinct_parameters_required",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "G20",
+      "title": "Missing native Codebase768 head or inputs",
+      "gate": "model_lane",
+      "input_refs": [],
+      "expected_outcome": "lane_unavailable_smaller_cells_and_deterministic_checks_independent",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "G21",
+      "title": "Full-record transport CID confused with native identity CID",
+      "gate": "native_identity_codec",
+      "input_refs": [],
+      "expected_outcome": "reject_alias_redecode_and_recompute_native_record",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "G22",
+      "title": "Raw content digest confused with target envelope digest",
+      "gate": "source_target_vector_identity",
+      "input_refs": [],
+      "expected_outcome": "reject_wrong_digest_domain",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "G23",
+      "title": "Nonterminal receipt inserted into existing proof index",
+      "gate": "proof_index_status",
+      "input_refs": [],
+      "expected_outcome": "reject_current_index_use_separate_attempt_journal",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    }
+  ],
+  "implementation_handoffs": [
+    "C00",
+    "C01",
+    "C04",
+    "C05",
+    "C07",
+    "C17",
+    "C10",
+    "C08",
+    "C09"
+  ],
+  "actions_performed": {
+    "repository_scan": false,
+    "solver_execution": false,
+    "repository_code_execution": false,
+    "model_inference": false,
+    "model_training": false,
+    "embedding_regeneration": false,
+    "downloads": false,
+    "runtime_databases_created": false,
+    "remote_repositories_created": false,
+    "git_merge_or_push": false,
+    "runtime_promotion": false,
+    "effect_execution": false
+  },
+  "authoring_checks": {
+    "canonical_source_and_contract_serialization": true,
+    "native_contract_roundtrip": true,
+    "native_static_source_guard": true,
+    "runtime_admission": false,
+    "expected_solver_outcomes_executed": false
+  }
+}

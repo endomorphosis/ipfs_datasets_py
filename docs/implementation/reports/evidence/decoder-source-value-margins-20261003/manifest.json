@@ -1,0 +1,1966 @@
+{
+  "admitted": false,
+  "archive": {
+    "bytes": 37117455,
+    "sha256": "8d110e31d258b5807d3192b02b523c1ce8b4a69a39a89d170a8b11b0d70c49ac"
+  },
+  "archive_dependencies": [
+    {
+      "archive": {
+        "bytes": 52323358,
+        "path": "docs/implementation/reports/evidence/decoder-source-value-training-20261002/evidence.tar.gz",
+        "sha256": "beabe05a1be910708280c072381456402718ac2bbb2047e8fdbb8b46f5101d43"
+      },
+      "contains_all_referenced_members": true,
+      "git_commit": "491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "manifest": {
+        "bytes": 141702,
+        "path": "docs/implementation/reports/evidence/decoder-source-value-training-20261002/manifest.json",
+        "sha256": "c20b449d63d53d319f750646c79e13c4ad88ab9ece50f971dd2c6a52e147b205"
+      },
+      "repository": "https://github.com/endomorphosis/ipfs_datasets_py",
+      "results": {
+        "bytes": 15723753,
+        "path": "docs/implementation/reports/evidence/decoder-source-value-training-20261002/results.json",
+        "sha256": "b801575d8461060641902161f23137bc778f34b45b2323d29f6d643f17b62290"
+      },
+      "retrieval": "Read the exact repository Git blob at git_commit:path; verify SHA-256 and byte length before extraction."
+    }
+  ],
+  "archive_maximum_bytes": 90000000,
+  "archive_standalone": false,
+  "checkpoint_promoted": false,
+  "convergence_proven": false,
+  "dependency_scope": "Historical inputs and controls reside in the exact prior Git archive; all new raw observations are physical members.",
+  "formalized": false,
+  "fresh_holdout": false,
+  "lake_executed": false,
+  "members": {
+    "historical/audit-helpers/decoder-gradient-trace-20261002/independent_audit.py": {
+      "bytes": 39224,
+      "sha256": "9f0b1cdfd992d744c89c7a35566963782b19d9923986491d47d5b1bf615f15fb"
+    },
+    "historical/audit-helpers/decoder-prefix-diagnostics-20261002/independent_audit.py": {
+      "bytes": 37943,
+      "sha256": "d900a513d2771549bbcb138e8b036f84b9f31f2c19fb43e62b308f277c94700d"
+    },
+    "historical/audit-helpers/decoder-transition-ramp-20261002/independent_audit.py": {
+      "bytes": 26437,
+      "sha256": "28619a5dbebdae44329f4515351c1df5a69eadd9b8cbd891a47290d9e534b97e"
+    },
+    "historical/dependency-source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py": {
+      "bytes": 36718,
+      "sha256": "5ed9b83f571a4a892e1fac4a1fe6f5a995950d0725bad8461a0876a9415a03d1"
+    },
+    "historical/dependency-source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py": {
+      "bytes": 82754,
+      "sha256": "a418e84f70ed8509ba0518feea69e7a8c27865139f83b6c81349eefdfd5893a4"
+    },
+    "predecessor-public/manifest.json": {
+      "bytes": 141702,
+      "sha256": "c20b449d63d53d319f750646c79e13c4ad88ab9ece50f971dd2c6a52e147b205"
+    },
+    "predecessor-public/results.json": {
+      "bytes": 15723753,
+      "sha256": "b801575d8461060641902161f23137bc778f34b45b2323d29f6d643f17b62290"
+    },
+    "source/docs/autoencoders/decoder_length_distillation.md": {
+      "bytes": 116215,
+      "sha256": "b16cdfb6760a610de99502ee35a9ba79111c32c6bc809946b51fdf26f01c7fa6"
+    },
+    "source/ipfs_datasets_py/__init__.py": {
+      "bytes": 56829,
+      "sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9"
+    },
+    "source/ipfs_datasets_py/logic/TDFOL/__init__.py": {
+      "bytes": 11004,
+      "sha256": "42c252ba4fb85301b649bc3afe497a2799d27460b9556e57c7398b5441ba13e8"
+    },
+    "source/ipfs_datasets_py/logic/TDFOL/compiler_repairs.py": {
+      "bytes": 3636,
+      "sha256": "c0306a55184bc6baabf7528bf7a255604ff8c49d2c510afde13eae2e8108ff88"
+    },
+    "source/ipfs_datasets_py/logic/TDFOL/strategies/__init__.py": {
+      "bytes": 1866,
+      "sha256": "96a6aae98c7d6ee877559b847f455f57e60a81c476468c61d77d6fde86b774b1"
+    },
+    "source/ipfs_datasets_py/logic/TDFOL/strategies/base.py": {
+      "bytes": 4332,
+      "sha256": "3763cc86f14697a68cb7a38dab9c7e6a9d0160910b73ba1ea2e965cd89d6e905"
+    },
+    "source/ipfs_datasets_py/logic/TDFOL/strategies/cec_delegate.py": {
+      "bytes": 6937,
+      "sha256": "ebaf1bde83b2c00d5b0028fa34f43c52e6e0628d19bb8ffeb1a6c1987b61a9ef"
+    },
+    "source/ipfs_datasets_py/logic/TDFOL/strategies/forward_chaining.py": {
+      "bytes": 12658,
+      "sha256": "0c56b8663063aeb30c5bbbda045a3f723ab26fffe08e23b14f3c94e866392f09"
+    },
+    "source/ipfs_datasets_py/logic/TDFOL/strategies/modal_tableaux.py": {
+      "bytes": 12397,
+      "sha256": "ffc1489b684e0630b7940b2ba688ddb99142f7fcce203e06fbfa55643826d1c4"
+    },
+    "source/ipfs_datasets_py/logic/TDFOL/strategies/strategy_selector.py": {
+      "bytes": 8483,
+      "sha256": "5b7b71c5256dca709917fd6e8d55fd014d7ec0d4a216b56cff1b633b2143f501"
+    },
+    "source/ipfs_datasets_py/logic/TDFOL/tdfol_core.py": {
+      "bytes": 28721,
+      "sha256": "67be350d1fb0422a64ab040349b2d51c4008fbeeb8b59a99b8901d681d7d71c7"
+    },
+    "source/ipfs_datasets_py/logic/TDFOL/tdfol_prover.py": {
+      "bytes": 24431,
+      "sha256": "41fa83374a9e7b188255476710e778a056a3090ee1fdfe3b151caa6359855476"
+    },
+    "source/ipfs_datasets_py/logic/__init__.py": {
+      "bytes": 4434,
+      "sha256": "f25a9702ddc282092dbae1bc1731afdcc35576c10745487dccedaa531ccc9e79"
+    },
+    "source/ipfs_datasets_py/logic/autoformal/__init__.py": {
+      "bytes": 52609,
+      "sha256": "9fe9ca06f142b1af8a2bd5d5a89bd38ac79c1ac7f01a476a63160bb8c5b7bd03"
+    },
+    "source/ipfs_datasets_py/logic/autoformal/tree_pin.py": {
+      "bytes": 1948,
+      "sha256": "587165942fb06ea9effc836b555e0ac0606c5876b013a374a1e76d25ee069e4d"
+    },
+    "source/ipfs_datasets_py/logic/common/__init__.py": {
+      "bytes": 2438,
+      "sha256": "e574c74067e7059cc506b32c780bc0444de89c63b55dade3df00ae9fd563431e"
+    },
+    "source/ipfs_datasets_py/logic/common/bounded_cache.py": {
+      "bytes": 6656,
+      "sha256": "29a450b5fc08c5577964774035717dc5d7be85c159cfd502fba5252c4ec9c9fa"
+    },
+    "source/ipfs_datasets_py/logic/common/converters.py": {
+      "bytes": 13962,
+      "sha256": "f530c453775f2c1a4a2f8a26aa647df1f725be109078df258288eab33a427fde"
+    },
+    "source/ipfs_datasets_py/logic/common/errors.py": {
+      "bytes": 2268,
+      "sha256": "10d21acd8d0fd6049297a1b36d10db1fcc09146095f1dabfe5a686b887f4b8cf"
+    },
+    "source/ipfs_datasets_py/logic/common/feature_detection.py": {
+      "bytes": 4875,
+      "sha256": "a285d84f9b13ee3c2c54023e07ccf9da94ce93e6736362c1881421db9e509d76"
+    },
+    "source/ipfs_datasets_py/logic/common/proof_cache.py": {
+      "bytes": 168205,
+      "sha256": "b68c36ff934ba6ee7a308162ee7035c78f4c522a5483e85e536b428db8485b36"
+    },
+    "source/ipfs_datasets_py/logic/common/utility_monitor.py": {
+      "bytes": 6398,
+      "sha256": "ef23631a622dfd555cefcdf69793e78a7c64a115c7451aea4dfff5389b014985"
+    },
+    "source/ipfs_datasets_py/logic/common/validators.py": {
+      "bytes": 8374,
+      "sha256": "e58dbba7d3f346545e2ff572928ed9c7bb9adc71b20e8cc8dc816a7fc060e0c7"
+    },
+    "source/ipfs_datasets_py/logic/deontic/__init__.py": {
+      "bytes": 2644,
+      "sha256": "1eeb1a57e388c37415facf3989a26d3b960b176b4bf1e65eef66e106c1aadb4b"
+    },
+    "source/ipfs_datasets_py/logic/deontic/analyzer.py": {
+      "bytes": 19375,
+      "sha256": "8953235974d062f968334106c952d0978cc31a58408206bb56c26da174f29d6c"
+    },
+    "source/ipfs_datasets_py/logic/deontic/compiler_repairs.py": {
+      "bytes": 2743,
+      "sha256": "53ff5b4b6cf3303f46569f43e748b5d15a75b1895dbb4c4a054b541e9fc5569e"
+    },
+    "source/ipfs_datasets_py/logic/deontic/converter.py": {
+      "bytes": 27572,
+      "sha256": "e1749ca0403f34834374b5089d78523f1866d53d3ec923137b6fb526fdffe7c8"
+    },
+    "source/ipfs_datasets_py/logic/deontic/decoder.py": {
+      "bytes": 31862,
+      "sha256": "051a5e7a98ef2cf8a63326218cebeabcca2c528f6839a1a3cb11756ee7c1aab9"
+    },
+    "source/ipfs_datasets_py/logic/deontic/exports.py": {
+      "bytes": 221362,
+      "sha256": "ac46bf1efa79925620199b56f6f1dbde34c92889a0a2a474cc6b9e408ea3c3de"
+    },
+    "source/ipfs_datasets_py/logic/deontic/formula_builder.py": {
+      "bytes": 395573,
+      "sha256": "dc53e7c4875a2afa98e100177c0d70e224e1945048f18993333f72c313529109"
+    },
+    "source/ipfs_datasets_py/logic/deontic/graph.py": {
+      "bytes": 22853,
+      "sha256": "5a595b05f5bec6d74f6c8c06129cc7f1a7860a2beff98d1f28b9fde6635bdfde"
+    },
+    "source/ipfs_datasets_py/logic/deontic/ir.py": {
+      "bytes": 114441,
+      "sha256": "a6bafa2aa4b1e8d9c368d4c4354e56b924888d43eb1f817c11058767f17f3416"
+    },
+    "source/ipfs_datasets_py/logic/deontic/knowledge_base.py": {
+      "bytes": 7285,
+      "sha256": "a6e59bf538caa19cfeff6e02aa5da0b964b83c73396d05e58c3830e39dd97d9a"
+    },
+    "source/ipfs_datasets_py/logic/deontic/legal_text_to_deontic.py": {
+      "bytes": 11583,
+      "sha256": "abb138e7b51dbb071b9ab98865e3fb6c64dfd6a6cc5674a0853d523f00a7797a"
+    },
+    "source/ipfs_datasets_py/logic/deontic/metrics.py": {
+      "bytes": 15413,
+      "sha256": "5a2f92bc24154e14d3d2e3b6e73dcc128e6183957b5832b9bc1d72e60f7370da"
+    },
+    "source/ipfs_datasets_py/logic/deontic/prover_syntax.py": {
+      "bytes": 67553,
+      "sha256": "1946190c1d1ec8e8ea659c0d7c9a0a8da29f2f6b0aca8326193a95a57deaad31"
+    },
+    "source/ipfs_datasets_py/logic/deontic/support_map.py": {
+      "bytes": 6124,
+      "sha256": "e48a537061611eee0cacff129839ce04992db838b86a3edbe8f422f1018fda84"
+    },
+    "source/ipfs_datasets_py/logic/deontic/utils/__init__.py": {
+      "bytes": 112,
+      "sha256": "6b3ede4588f4d18b84b6a06ebc774b8d3755627a0b5313147de7838503032f3c"
+    },
+    "source/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py": {
+      "bytes": 305902,
+      "sha256": "71daafa62c800a10db3ea7ddc948997b2a119012e9444d5007bdbd3b67487822"
+    },
+    "source/ipfs_datasets_py/logic/formalization/__init__.py": {
+      "bytes": 2073,
+      "sha256": "91c60c1dfbf9038b8271ae6b1495dbbaf0be8d6ce438524c33f4f7a586f17266"
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/__init__.py": {
+      "bytes": 97,
+      "sha256": "82206d6ca08b8626b2afd37534679ac3ea001005f934ed211aa0f1f4eb81f073"
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_cardinality_experiment.py": {
+      "bytes": 14873,
+      "sha256": "44f1d91edb8f8cc8bafdc517ab450a003fece945d2e9a25bba933da2e9e12ac1"
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment.py": {
+      "bytes": 36512,
+      "sha256": "b4252de4d9d890a0f493e43a1da15bcd09fd2e31e94b762a6adc6899132d42a8"
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment_v2.py": {
+      "bytes": 13794,
+      "sha256": "0352c392a518c9ea6ff215c32e5ddd6345d776e2bb32f22fd137b5e34d93c6c6"
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_gradient_replay.py": {
+      "bytes": 23136,
+      "sha256": "b2fd4dfed5050b020afeda957d96857ad92f9343c6fcf3e3edaa36c8eca37811"
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_prefix_diagnostics.py": {
+      "bytes": 24974,
+      "sha256": "44ee361b1f1bc0ae7074537b88fd4ef735cbfd8729c4e4d4ae10bec1c4479d78"
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_source_fidelity.py": {
+      "bytes": 17186,
+      "sha256": "2f8d9a9722d1375582768e9502b9ca49af0f1961df115b49f2778b4f0e07fa25"
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_source_slot_probe.py": {
+      "bytes": 26371,
+      "sha256": "75a998fc26ee3ea20b51dd816d42f1ce9f73c682fee464ca11b096073ff03029"
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_source_value_margins.py": {
+      "bytes": 20503,
+      "sha256": "2afe60dfbbea71505846cc5da536fa1cd2c026802e0c315f43dc3e798cff1229"
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/long_span_cardinality_training.py": {
+      "bytes": 18807,
+      "sha256": "a24257b4b893bae3af9e01745789ab6957fb9d74eb23305b1eab43db7bf70ab9"
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/long_span_count_exposure_training.py": {
+      "bytes": 26439,
+      "sha256": "cb337e344d92dc8ed5bb0cd8c6f65fe01875b8c37bef1e616a2023a7be7db968"
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/long_span_decoder_training.py": {
+      "bytes": 17676,
+      "sha256": "e030596898619fc802424ba94f954224e18b5d2c8077488802621aa67a3ccdbe"
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/long_span_gradient_trace_training.py": {
+      "bytes": 38605,
+      "sha256": "6ae48fc1d12b5562c5516d04d52bf1b99f1fbe4aa626ff3e3fb8fb8d70a76b76"
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/long_span_source_value_training.py": {
+      "bytes": 28837,
+      "sha256": "fc701a43823082e29d2d511f2f0dd57d1cb4d451a47d00eb6f87596cef8fc207"
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/long_span_transition_training.py": {
+      "bytes": 46141,
+      "sha256": "366ae0de02382a682baa70de2faebd1f931d0b2df9f2961484ccdcf6be2404c5"
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/source_length_curriculum.py": {
+      "bytes": 17329,
+      "sha256": "aa9ef5661b3b571275e220c6bf562a8d3cb2f18b4cc7a02bd66d31c512fc5a9b"
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/source_value_decoder_experiment.py": {
+      "bytes": 14816,
+      "sha256": "dcc63a3bd10c1a699fbd0addfb44a04ffab8cbf6b4594164bb4ed824bdb5dbf1"
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/source_value_freeze_experiment.py": {
+      "bytes": 5089,
+      "sha256": "5583b0b046b7137e52f9a814801fb45dff87f20aa653b9076995f7fa63c10d16"
+    },
+    "source/ipfs_datasets_py/logic/legal_document.py": {
+      "bytes": 20391,
+      "sha256": "b44785f720df1a60495bb7086a78fc00325a5d653a7e1782c0712fb7691454f2"
+    },
+    "source/ipfs_datasets_py/logic/legal_ir/__init__.py": {
+      "bytes": 2708,
+      "sha256": "53ce51e56a292ea3210010fa17b352e9d40eb5b59cf15c5e732147000b40fee1"
+    },
+    "source/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py": {
+      "bytes": 38352,
+      "sha256": "9980c3699a2407d360e8a2feedab575a4d4f5b3462ddf0ed761143f22ef61ea5"
+    },
+    "source/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": {
+      "bytes": 109257,
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "source/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py": {
+      "bytes": 14528,
+      "sha256": "26b4e2e2d5d55b41ebae245b7d236bf1612c020a1d469df8bd747f83e982dfdc"
+    },
+    "source/ipfs_datasets_py/logic/types/__init__.py": {
+      "bytes": 3873,
+      "sha256": "60359f47e39c12483d2ffa702d66b611ecba8451678d7a1f7e228e30e795402e"
+    },
+    "source/ipfs_datasets_py/logic/types/bridge_types.py": {
+      "bytes": 3009,
+      "sha256": "5ec9c47e1d5c527f66a01ec0790335ff70d784e6d3e20cc2dd73e1bc647449ad"
+    },
+    "source/ipfs_datasets_py/logic/types/common_types.py": {
+      "bytes": 2859,
+      "sha256": "0ad8f7b7e6f38540414c94dc9d6da6aba9665d4dee6283499d8a637a53dfc500"
+    },
+    "source/ipfs_datasets_py/logic/types/deontic_types.py": {
+      "bytes": 10681,
+      "sha256": "6fa123ecf0afb1d3293736c24633043aeb3349a3b3f7728247bfd08ea8cafe94"
+    },
+    "source/ipfs_datasets_py/logic/types/fol_types.py": {
+      "bytes": 3529,
+      "sha256": "d1debd330e7a3102a1580efcbc6e06b863ee8ca9d78b2e34a60cd98b5ba1e902"
+    },
+    "source/ipfs_datasets_py/logic/types/proof_types.py": {
+      "bytes": 741,
+      "sha256": "8c96df27865d86cd54ae242497e4d9ddeaf89c5cd7484718b521dccf123fcb97"
+    },
+    "source/ipfs_datasets_py/logic/types/translation_types.py": {
+      "bytes": 2591,
+      "sha256": "5a0e4314692fdd4945bfd3c9b04d80e2fda86aa7f4b264f4c9c21964afe1343e"
+    },
+    "source/ipfs_datasets_py/optimizers/__init__.py": {
+      "bytes": 957,
+      "sha256": "a12bab3724da07be67b447719ace42fc1f480cb5635581f320a99a372f02f450"
+    },
+    "source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py": {
+      "bytes": 69336,
+      "sha256": "9d693fa576f00dc36899faad75ef3044c437e2bfec5c62306f7031236725bb0e"
+    },
+    "source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py": {
+      "bytes": 14622,
+      "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+    },
+    "source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py": {
+      "bytes": 42137,
+      "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+    },
+    "source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py": {
+      "bytes": 146870,
+      "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+    },
+    "source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_latent_formula.py": {
+      "bytes": 35427,
+      "sha256": "ec5bdcd752d157c9fc0257a45551cfe9ce7be172af767e8ed769bf1bc8a31d36"
+    },
+    "source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py": {
+      "bytes": 38995,
+      "sha256": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6"
+    },
+    "source/ipfs_datasets_py/router_deps.py": {
+      "bytes": 5845,
+      "sha256": "56f66dfff183d9d0ee7977a314c49adbaa181e6fe0087c8f1c581a7d2973bf4c"
+    },
+    "source/ipfs_datasets_py/utils/__init__.py": {
+      "bytes": 175,
+      "sha256": "78f4cd7f8e14b4fff482c0c91ada5c49f8b9edf707bffd9cd58840b5503e66c2"
+    },
+    "source/ipfs_datasets_py/utils/anyio_compat.py": {
+      "bytes": 12149,
+      "sha256": "75fe36e8ffb3f8cec2240aa3fd91385493555fba6d573dff1d3c1d6270b58530"
+    },
+    "source/ipfs_datasets_py/utils/cid_utils.py": {
+      "bytes": 4428,
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    },
+    "source/scripts/ops/autoencoder/benchmark_decoder_cardinality.py": {
+      "bytes": 16976,
+      "sha256": "752831424653c5730cdb1f150bce9a7db705fff88f6583ff87bf990c23398107"
+    },
+    "source/scripts/ops/autoencoder/benchmark_decoder_count_exposure.py": {
+      "bytes": 19664,
+      "sha256": "9ee88d87225ecdedc485882e3ba39a8edf9c8165a3979dd06af6f8a6ed27747a"
+    },
+    "source/scripts/ops/autoencoder/benchmark_decoder_gradient_trace.py": {
+      "bytes": 18303,
+      "sha256": "c853b1218595fdc7505b103bf62e941b51dcf6024da603b30bb0b391a2d06178"
+    },
+    "source/scripts/ops/autoencoder/benchmark_decoder_prefix_diagnostics.py": {
+      "bytes": 15107,
+      "sha256": "afa7dd06dc3101c52f3a9cde833563b7412b245b7a1097992193114e7798c480"
+    },
+    "source/scripts/ops/autoencoder/benchmark_decoder_source_fidelity.py": {
+      "bytes": 20049,
+      "sha256": "4ab6d8b525a3edf0255e13936f74eb34fc56b2deb443f3b332466e9161fe92eb"
+    },
+    "source/scripts/ops/autoencoder/benchmark_decoder_source_slot_probe.py": {
+      "bytes": 16949,
+      "sha256": "96c3cd461ad99a211ad75710f6b29987853c5d93a7374b1f46fac6e84c2109c7"
+    },
+    "source/scripts/ops/autoencoder/benchmark_decoder_source_value_freeze.py": {
+      "bytes": 26555,
+      "sha256": "c86ae7be01c21594784aeb8322c6226f355d6224eda37ec907ed0ef7ff13fdcf"
+    },
+    "source/scripts/ops/autoencoder/benchmark_decoder_source_value_margins.py": {
+      "bytes": 11453,
+      "sha256": "70a0600095fb758cb480687093c246a953e293e33b22bbd8b399c158c781ca24"
+    },
+    "source/scripts/ops/autoencoder/benchmark_decoder_source_value_training.py": {
+      "bytes": 19272,
+      "sha256": "965ba8f7cd6a7259e5346c0ab3dcd054682fa5e1c99c27a8494a5521e3bc8209"
+    },
+    "source/scripts/ops/autoencoder/benchmark_decoder_transition_ramp.py": {
+      "bytes": 15172,
+      "sha256": "eac1025d119e5e8a4a9aeaf40f496bd835075a78a9666d01e43df1c124fc5e42"
+    },
+    "source/scripts/ops/autoencoder/benchmark_long_span_decoder.py": {
+      "bytes": 22309,
+      "sha256": "66f74d13b9982c2491d48f1bda5efde6f951a75b819cf43638aa50fe4540f269"
+    },
+    "source/scripts/ops/autoencoder/decoder_fidelity_replay.py": {
+      "bytes": 6799,
+      "sha256": "72e40876252e9e889908d233e3a56f645f5bad1e711f5d5f87bbc2501f6e4acf"
+    },
+    "source/tests/unit/logic/formalization/autoencoder/test_benchmark_decoder_cardinality.py": {
+      "bytes": 13310,
+      "sha256": "d174ab18fd694b2072903db2d1fdf9f5c85e14ad6d147be98a0ac452d52675b4"
+    },
+    "source/tests/unit/logic/formalization/autoencoder/test_benchmark_decoder_count_exposure.py": {
+      "bytes": 15627,
+      "sha256": "6576aa984389d89677e353230ed89910382be91f73b2c8d2b49d5504411616b9"
+    },
+    "source/tests/unit/logic/formalization/autoencoder/test_benchmark_decoder_gradient_trace.py": {
+      "bytes": 8759,
+      "sha256": "e0cbad5abff56ffbbce1c71beabba3b788863ab3c5ae5fd960062b458bb0eae9"
+    },
+    "source/tests/unit/logic/formalization/autoencoder/test_benchmark_decoder_prefix_diagnostics.py": {
+      "bytes": 6047,
+      "sha256": "06142167d8c542f6ecdaef76c82b320239b9636ff70730c957c50d0fccbaa51c"
+    },
+    "source/tests/unit/logic/formalization/autoencoder/test_benchmark_decoder_source_fidelity.py": {
+      "bytes": 8281,
+      "sha256": "b875fb3a76ba4eb7d8e72fd73b48d2dcb5d4b3000c474b73a4e2758b0c627846"
+    },
+    "source/tests/unit/logic/formalization/autoencoder/test_benchmark_decoder_source_slot_probe.py": {
+      "bytes": 6460,
+      "sha256": "a04de3f77ae9e15a7482ea81032d8d95bbf2dc3ee304c617688fba706eef1f18"
+    },
+    "source/tests/unit/logic/formalization/autoencoder/test_benchmark_decoder_source_value_freeze.py": {
+      "bytes": 12082,
+      "sha256": "95d85577f4a68bbfff1d43caf23a585b016b9f5f754fd67573fd7ee3d99593bf"
+    },
+    "source/tests/unit/logic/formalization/autoencoder/test_benchmark_decoder_source_value_margins.py": {
+      "bytes": 3205,
+      "sha256": "05c0ecf2e30d242d225204f876b5ada48e073614e78007b88b894166f6e1061d"
+    },
+    "source/tests/unit/logic/formalization/autoencoder/test_benchmark_decoder_source_value_training.py": {
+      "bytes": 4261,
+      "sha256": "3ff9552b03f0ccb278b7bbf2f90951474587bb12911c266a8d1bb667181da5e7"
+    },
+    "source/tests/unit/logic/formalization/autoencoder/test_benchmark_decoder_transition_ramp.py": {
+      "bytes": 5240,
+      "sha256": "43046d72b820b7ef56aa37bf6fb988852ab15ed1c13629a13d80af5ecb79107b"
+    },
+    "source/tests/unit/logic/formalization/autoencoder/test_decoder_cardinality_experiment.py": {
+      "bytes": 15899,
+      "sha256": "ea7c504f2f8b08d326818c53d44022774093c2a2e449d3a79aa9d5f9e927b039"
+    },
+    "source/tests/unit/logic/formalization/autoencoder/test_decoder_distillation_experiment.py": {
+      "bytes": 22202,
+      "sha256": "1a4f757ba72911d79dda4f0747f1eff8344c2f26ca2df1819a2b27f481c66cae"
+    },
+    "source/tests/unit/logic/formalization/autoencoder/test_decoder_distillation_experiment_v2.py": {
+      "bytes": 17690,
+      "sha256": "df1ef9e84fc232eb11f0c73596c7a05a6080f73ff35c5b71c71bfa998f8fa7d3"
+    },
+    "source/tests/unit/logic/formalization/autoencoder/test_decoder_gradient_replay.py": {
+      "bytes": 14972,
+      "sha256": "9106a56d5041efd382dfbdcf115912f58d86fd8b502dfba3246d79a48d4947dc"
+    },
+    "source/tests/unit/logic/formalization/autoencoder/test_decoder_prefix_diagnostics.py": {
+      "bytes": 15937,
+      "sha256": "6d3f1ba8d637aa30a001ef49cbaf4ff9d6af08b42b5efba2af52cd78c0703c14"
+    },
+    "source/tests/unit/logic/formalization/autoencoder/test_decoder_source_fidelity.py": {
+      "bytes": 13587,
+      "sha256": "ae311096039a7d82b15b3bca0789bd0b0d4152a6d4b6fd29ebded18182f289cb"
+    },
+    "source/tests/unit/logic/formalization/autoencoder/test_decoder_source_slot_probe.py": {
+      "bytes": 12442,
+      "sha256": "cf1fc2aa5b630dca7bf7bed4aeda584d819de622cf939d215e82e630fa5ffd26"
+    },
+    "source/tests/unit/logic/formalization/autoencoder/test_decoder_source_value_margins.py": {
+      "bytes": 17786,
+      "sha256": "b85ef0b7406b57c1ea0493d4a9f0758fbbe4d55c1f97749292335c55fcd58faa"
+    },
+    "source/tests/unit/logic/formalization/autoencoder/test_evaluate_rejected_decoder_controls.py": {
+      "bytes": 15290,
+      "sha256": "a31eb70f5b4519bedf616a841e6f06e9e6e9a94c28ecbd8b6677010204812194"
+    },
+    "source/tests/unit/logic/formalization/autoencoder/test_long_span_cardinality_training.py": {
+      "bytes": 29835,
+      "sha256": "40af57239d866fd4a0f6d603e64db849cf8fac2da8463c528473233d01045909"
+    },
+    "source/tests/unit/logic/formalization/autoencoder/test_long_span_count_exposure_training.py": {
+      "bytes": 14137,
+      "sha256": "1d07993b673d8df7929655642342d61eabc74daa790ca3d99b11a9a37217c066"
+    },
+    "source/tests/unit/logic/formalization/autoencoder/test_long_span_decoder_benchmark.py": {
+      "bytes": 8504,
+      "sha256": "71f6f2d8f2c1ef3e5797e687e324dd3d59477da4eebab028327ef26846dad49a"
+    },
+    "source/tests/unit/logic/formalization/autoencoder/test_long_span_decoder_training.py": {
+      "bytes": 19523,
+      "sha256": "f661dfffcbf4f4acd71a97789f68759c92aa1092e76d4aa29b1f79edd34c7915"
+    },
+    "source/tests/unit/logic/formalization/autoencoder/test_long_span_gradient_trace_training.py": {
+      "bytes": 12232,
+      "sha256": "10f4e767373f583ee1fb9df1409e1410cb3d186f0719fe15bbb8a20c4f2d1105"
+    },
+    "source/tests/unit/logic/formalization/autoencoder/test_long_span_source_value_training.py": {
+      "bytes": 15370,
+      "sha256": "531c7265af5e31ba448e92365fb056e81c1f2706bc09bfb3a878a34e266a7a0d"
+    },
+    "source/tests/unit/logic/formalization/autoencoder/test_long_span_transition_training.py": {
+      "bytes": 12035,
+      "sha256": "f7f4a9d607dac0ff635f5fd66eda77e945920c2f48561a1a4b3f8dc08c209790"
+    },
+    "source/tests/unit/logic/formalization/autoencoder/test_source_length_curriculum.py": {
+      "bytes": 12225,
+      "sha256": "9d14dc769fe71f4e2c3a3a1e1b277efdb823e6a0d14c563a17dcc551cc92ff11"
+    },
+    "source/tests/unit/logic/formalization/autoencoder/test_source_value_decoder_experiment.py": {
+      "bytes": 16293,
+      "sha256": "03c4f299d781b8c71fe76fabbc9e3d7fdb0a0e2cee3b07ea996aef3125a4f551"
+    },
+    "source/tests/unit/logic/formalization/autoencoder/test_source_value_freeze_experiment.py": {
+      "bytes": 4870,
+      "sha256": "df1d5ece4215eb22235cee1d5e8df88ee0b78e75a123225093095a4852d6fa2c"
+    },
+    "validation/adopt_shared_scheduler.py": {
+      "bytes": 10999,
+      "sha256": "c16eb27b9c46bd7e06541bd36ffb5d5f1edc686e15ca12143aca68ea9bfc2dee"
+    },
+    "validation/base.json": {
+      "bytes": 133,
+      "sha256": "337ccfddea843661e6b45d339270fbebe6dc3931a85949c47f26d73be6965229"
+    },
+    "validation/build_evidence.py": {
+      "bytes": 28716,
+      "sha256": "ab4a70eb4e9753ebbdf080e8b6f4dab4430fa13d2e405eab2dd60abf1db50a0f"
+    },
+    "validation/code-files.json": {
+      "bytes": 733,
+      "sha256": "ffd829600d5ae4ff93370d4528792bfcca7ee86b1963301348b6145d40973074"
+    },
+    "validation/diagnostic-ready.json": {
+      "bytes": 655,
+      "sha256": "4610dbe73cf1f72d9dff7eaafa925490b6ed1b7e4a9f2c70e9adec47a7c787dd"
+    },
+    "validation/diagnostic-tests.log": {
+      "bytes": 916,
+      "sha256": "b87e05c253568f29fcaac34963a683bc245fbc3ec58b4f5c3acaf93a5a9ecf62"
+    },
+    "validation/diagnostic-tests.xml": {
+      "bytes": 4769,
+      "sha256": "267a2d58c582a0511a3c9f6d8631a8b13cffc7f5c6fe7a09e3fb449f500c5ae8"
+    },
+    "validation/freeze.py": {
+      "bytes": 2747,
+      "sha256": "78aae83f725d56a10591ffbfef59d38858e9fffc5f26290ce938d91f7fdb606f"
+    },
+    "validation/independent-audit.json": {
+      "bytes": 53874,
+      "sha256": "987c8815687ef320779ffb5ce051344722fcd8a2bc55c99d3f41c3833df86c80"
+    },
+    "validation/independent-training-audit-r1.json": {
+      "bytes": 392425,
+      "sha256": "2fd79702279c5bbee9017b90ddce02d93faa611473e3d6c03b8431ff5907ae08"
+    },
+    "validation/independent-training-audit.json": {
+      "bytes": 392886,
+      "sha256": "84beb58c05cc7856a3ee9f93d8308cb4434292e623134c47b75f057603a01cf2"
+    },
+    "validation/independent_audit.py": {
+      "bytes": 40823,
+      "sha256": "284340cdea43baf3fc169d29dd8b4a00d6af929b28e2e65e606aa43de1574cad"
+    },
+    "validation/independent_training_audit.py": {
+      "bytes": 41694,
+      "sha256": "d5be76126fa07b34d935af7dc0395dd3f461b7c91d1d9f38d2b624a12b0d3c60"
+    },
+    "validation/input-manifest-draft.json": {
+      "bytes": 26456,
+      "sha256": "7d9ceb45d8696595c837c64e0d43e921190a6dbd6ad4bbd27fe6217652831e07"
+    },
+    "validation/manifest.json": {
+      "bytes": 27136,
+      "sha256": "71a5a7df3ca3d1fc4d4bf16f3225b3fab37fc857efff4b1f210ebbe6b3e2c655"
+    },
+    "validation/owned-files.json": {
+      "bytes": 1016,
+      "sha256": "40d79e311b013be0179debb143fdcb826dfa123bde3a1d8fa9b97b5945bd9bbf"
+    },
+    "validation/packaging-review.json": {
+      "bytes": 4543,
+      "sha256": "3106c19b9f561aeae503b46e0776dc79136958ab46bd7252ed1a9ca6c0b3028b"
+    },
+    "validation/plan.json": {
+      "bytes": 1064,
+      "sha256": "7f4bab65348fd42297d11c6e2405427eb3ee9c0cee967b8e3bc4dddac22196f1"
+    },
+    "validation/post-audit-integrity.json": {
+      "bytes": 1632,
+      "sha256": "baa6a85bc6426443113fb25f622e11c195d9e2c0fae810154fb76c75e8c5eb02"
+    },
+    "validation/publication-compatibility.json": {
+      "bytes": 12447,
+      "sha256": "df0ba5b0d65035d87a08c5f992095bde0096a75b7dfa1828e9cfd7da38cf6682"
+    },
+    "validation/publish.py": {
+      "bytes": 7089,
+      "sha256": "71f3a91afc54a922757bfc546f4f372dde4e29eae659ab49b1c9d762f48b836d"
+    },
+    "validation/readiness.json": {
+      "bytes": 3310,
+      "sha256": "dc24324bcc60562d5490d8c1508e5e2a87e0a132f7b1559e4bc985737d96167e"
+    },
+    "validation/resource-compatibility.json": {
+      "bytes": 2110,
+      "sha256": "4b47ca1c70e5f431db47aeba71827e971dcd645b15513627081b4dbaac149743"
+    },
+    "validation/run_reserved.py": {
+      "bytes": 12608,
+      "sha256": "23d9c93b4c2e959557d479409a56957725c8e9929aa6f65aeb11782b56a8fb3e"
+    },
+    "validation/run_training_reserved.py": {
+      "bytes": 12652,
+      "sha256": "c65908dca4f4613c3f04aeb5f4cb0347537b5c5c0a5bbc4a0723094b88533940"
+    },
+    "validation/scheduler-tests.log": {
+      "bytes": 882,
+      "sha256": "92e80a9a7903a1610900fa0897ca5f7f548dce8a0b5cb6dc7de0042c871f39d1"
+    },
+    "validation/scheduler-tests.xml": {
+      "bytes": 7336,
+      "sha256": "986348c330b8239c92c45383c053b8e5f5d1577899de7af752b824d59de4c84d"
+    },
+    "validation/smoke-r1-guardian.log": {
+      "bytes": 2189,
+      "sha256": "f1a37e464d7df4ba4d992792963a78623535e76b1acb51ba40cd6d16663f1a70"
+    },
+    "validation/smoke-r1/admission-failure.json": {
+      "bytes": 2509,
+      "sha256": "32d354bb578177365b9079bbed419d45b82495ce223b454a5bbdfe402b931788"
+    },
+    "validation/smoke-r1/failure.json": {
+      "bytes": 4437,
+      "sha256": "7ddee697d89f73da6db49a04eb85879d438a8bb7697ab3a8621fae5dd7f52fcb"
+    },
+    "validation/smoke-r1/unused-reservation-final.json": {
+      "bytes": 3960,
+      "sha256": "d9810634b0c7b0b60b8dc26560fe424cf78aaf3e2581f0b8015ace257c5f1abe"
+    },
+    "validation/smoke-r2-guardian.log": {
+      "bytes": 3802,
+      "sha256": "41515e8233f23b0a3f33738982797f9b4c1331ab62cbe4fc52ee570f451ffec2"
+    },
+    "validation/smoke-r2-scheduler-adoption.json": {
+      "bytes": 4648,
+      "sha256": "52d0eb0aae4e84415ffa9a19f58e0b50a228f6de224748b40bc86b20f79464f6"
+    },
+    "validation/smoke-r2/child-exit.json": {
+      "bytes": 324,
+      "sha256": "f5d7e678ad3a4c92e8f837721b8ff7746dd9cd16eab467da60f27703a6ad3967"
+    },
+    "validation/smoke-r2/child-identity.json": {
+      "bytes": 42,
+      "sha256": "30f7c4ea97f4b07877f667b753d934e4f405e022bc7a2694fc15fd16a8803a6e"
+    },
+    "validation/smoke-r2/child.log": {
+      "bytes": 4107,
+      "sha256": "2391fdcc52f149a126bd3a793648e0129ed1ecb54d8a5c8e637785117b62df68"
+    },
+    "validation/smoke-r2/command.json": {
+      "bytes": 6356,
+      "sha256": "675e27fff0fbbed7a70b3ad01e108a200c58c01967e30127bd0ce50db03a3538"
+    },
+    "validation/smoke-r2/resource-observations.json": {
+      "bytes": 1748,
+      "sha256": "06791425ab0d5fff7fd1657138d4d81c80ce441e2d6907de172f43c91addb992"
+    },
+    "validation/smoke-r2/resources-final.json": {
+      "bytes": 4378,
+      "sha256": "1c690f6a3c3c0b85efc76ab8aa36be74843fbef3b6eb443b8cd7fc780dc0c618"
+    },
+    "validation/smoke-r2/resources-start.json": {
+      "bytes": 3172,
+      "sha256": "5224b27067ca51733d54e6c1125585b85ca0b419c2d5b447c903d4b386723c9d"
+    },
+    "validation/smoke-r2/results/conditioning48-1729-last-attempt/train-conditioned.json": {
+      "bytes": 3290641,
+      "sha256": "0d962360180a8bbdf8a175d38445d50c03558f8bc3e1902e03bcc6e16de5ec62"
+    },
+    "validation/smoke-r2/results/conditioning48-1729-last-attempt/train-source_shuffle.json": {
+      "bytes": 3233162,
+      "sha256": "3aa2716905e9baa761d416ba6902da5f9afe5715a22b1330cf6c45ccf69ad1c0"
+    },
+    "validation/smoke-r2/results/conditioning48-1729-last-attempt/validation-conditioned.json": {
+      "bytes": 3493525,
+      "sha256": "28df6d0fc968a0aff4d20195c38b39e803ccb7b1aa50a5d56c7be813a5e069cd"
+    },
+    "validation/smoke-r2/results/conditioning48-1729-last-attempt/validation-source_shuffle.json": {
+      "bytes": 3490654,
+      "sha256": "7203e8f583128b90595c4cf3967e8259371f261dfd947dddf82e6f0e45ff9334"
+    },
+    "validation/smoke-r2/results/conditioning48-2718-last-attempt/train-conditioned.json": {
+      "bytes": 1263118,
+      "sha256": "edf526273cb49c2606391a3a7221c57e0ded8e4e000c0eb37ba2f4710c1de4b8"
+    },
+    "validation/smoke-r2/results/conditioning48-2718-last-attempt/train-source_shuffle.json": {
+      "bytes": 1205997,
+      "sha256": "e95c55ef979d06c9ede29e14f5fb6d601c2c6a157d614601a0775908a60398fd"
+    },
+    "validation/smoke-r2/results/conditioning48-2718-last-attempt/validation-conditioned.json": {
+      "bytes": 1239490,
+      "sha256": "6f50501193ed92df4dcdb7853eb43b5b910e83f23eea2d4a0d1f21e0a16eb6ae"
+    },
+    "validation/smoke-r2/results/conditioning48-2718-last-attempt/validation-source_shuffle.json": {
+      "bytes": 1230304,
+      "sha256": "6eb67522740fc5badd907649d4229ef6f6c87688700053fdec3d435332d25e6d"
+    },
+    "validation/smoke-r2/results/projected384-1729-last-attempt/train-conditioned.json": {
+      "bytes": 3989090,
+      "sha256": "da95265ebbb31d4dd1e6154759b70d97896049c0a3a8fe3f898ed49d30a6efb8"
+    },
+    "validation/smoke-r2/results/projected384-1729-last-attempt/train-source_shuffle.json": {
+      "bytes": 3935460,
+      "sha256": "bd1a9dc978ab9e2e1cec22c3c6611edf6f70bb16f2956846d81454dc50336e1f"
+    },
+    "validation/smoke-r2/results/projected384-1729-last-attempt/validation-conditioned.json": {
+      "bytes": 3958120,
+      "sha256": "f965c8554251da97ab47e62704e035a79920b3120bf7bbc3d70a3d805ea6ab01"
+    },
+    "validation/smoke-r2/results/projected384-1729-last-attempt/validation-source_shuffle.json": {
+      "bytes": 3958285,
+      "sha256": "9f40cdfce1f894ad7aa9e906bc5d186515badd399aed6882a939521f660ac9bf"
+    },
+    "validation/smoke-r2/results/projected384-1729-selected/train-conditioned.json": {
+      "bytes": 1221674,
+      "sha256": "846e5396c1a82177d7583fb8982460d868c6a518072d0124620b4d8d29dbe9e8"
+    },
+    "validation/smoke-r2/results/projected384-1729-selected/validation-conditioned.json": {
+      "bytes": 1207599,
+      "sha256": "033268713db26b81b652095c3f2cd0ce56bbc72eac70053ceac0fe156d2814da"
+    },
+    "validation/smoke-r2/results/projected384-2718-last-attempt/train-conditioned.json": {
+      "bytes": 7398237,
+      "sha256": "9310e08a5ba39a3b1708b576acd3ba1161b5e1451a90a8105aeb6f6ab7528c3e"
+    },
+    "validation/smoke-r2/results/projected384-2718-last-attempt/train-source_shuffle.json": {
+      "bytes": 7344126,
+      "sha256": "88f55affd30c33f395ee9cdb939e6e48bef9e4f5b1786a933a3fcaca1cbf4e5a"
+    },
+    "validation/smoke-r2/results/projected384-2718-last-attempt/validation-conditioned.json": {
+      "bytes": 7727225,
+      "sha256": "3228f46c50feec77ddd2ce103e1276f339cd4d606bbf766e12fd339908608296"
+    },
+    "validation/smoke-r2/results/projected384-2718-last-attempt/validation-source_shuffle.json": {
+      "bytes": 7724271,
+      "sha256": "8462d71ad5e23f67b7c373987d50c5964c881d9a60ef9a4723dd4d11ca640b7d"
+    },
+    "validation/smoke-r2/results/sealed-recipe.json": {
+      "bytes": 27778,
+      "sha256": "27d9b32edc6cf54ee75de2eeee6c7be10a56c3c9b63fd14de3d040bed3417407"
+    },
+    "validation/smoke-r2/results/summary.json": {
+      "bytes": 340854,
+      "sha256": "ccc819d3c2f509b41d97fc8381b8dbbe2fef0f7fcf6e8026062121b48ad1fd49"
+    },
+    "validation/test-files.json": {
+      "bytes": 2548,
+      "sha256": "964e14fc041f876c4c1217b22073aeb02c3c7fba71fffb13f00f01c50e134a9f"
+    },
+    "validation/test_adopt_shared_scheduler.py": {
+      "bytes": 7514,
+      "sha256": "7d15561af9dc3801f28f78e925332ca5fd9c6989ed7d5de7dc70eb58541ffa6c"
+    },
+    "validation/tests-frozen.log": {
+      "bytes": 5795,
+      "sha256": "6d8e9bd521ac5651c1a1ed24a18b717259f5e7566d451c8bb13cd897bb1648de"
+    },
+    "validation/tests-frozen.xml": {
+      "bytes": 214701,
+      "sha256": "e0869c6d706f505c7ed1a6f861b0b1778bf33eb523888f97abb024d80363a06b"
+    },
+    "validation/training-manifest-draft.json": {
+      "bytes": 27136,
+      "sha256": "6180fac1a6e617ac6589f3861fe1f955c0267c5d560b780f1896cb1c1f80cdb3"
+    },
+    "validation/training-manifest.json": {
+      "bytes": 28808,
+      "sha256": "f67e9155c28f5293fa0c1f765c9e596915a15ebd1eee193cd10005e9099f53b1"
+    },
+    "validation/training-plan.json": {
+      "bytes": 2931,
+      "sha256": "b1c5aea122790bf6fb8ccaa6c9398342f393f7ee9a986bec16847596dbef9255"
+    },
+    "validation/training-r1-guardian.log": {
+      "bytes": 3812,
+      "sha256": "d177ebd1f5ec6f37a21cab6c5c01685c7aff5bcc528c2ef896548775448db593"
+    },
+    "validation/training-r1-scheduler-adoption.json": {
+      "bytes": 4648,
+      "sha256": "fb438768d5f64a155fea5149f18b9f83b118488b7c54dca099a411b496db2780"
+    },
+    "validation/training-r1/child-exit.json": {
+      "bytes": 323,
+      "sha256": "a619a73152a252e37fb99dc8d1b7c0a5fc27ac7a9d19024c446d20c09aeadc4c"
+    },
+    "validation/training-r1/child-identity.json": {
+      "bytes": 42,
+      "sha256": "9061d447d43868b12a58f8050a007e6c5593650431429d02f367279a0d85d2e9"
+    },
+    "validation/training-r1/child.log": {
+      "bytes": 2366,
+      "sha256": "a9383b52f9ecf9672c839429bf57fea082f92594887085b6ab8cc932a535000f"
+    },
+    "validation/training-r1/command.json": {
+      "bytes": 6385,
+      "sha256": "7b89cf695b31e509302b600e034a7f697b8c561c932891c30267562a22206795"
+    },
+    "validation/training-r1/resource-observations.json": {
+      "bytes": 2627,
+      "sha256": "3c3c282a0d6664083ab53b424a6bc1adf34049822084397f203ec55501bc28df"
+    },
+    "validation/training-r1/resources-final.json": {
+      "bytes": 4388,
+      "sha256": "bb0a6ba989cc157e0ce541276e18f1a486a8d1e0e0526be9c224d46dafc3ab4d"
+    },
+    "validation/training-r1/resources-start.json": {
+      "bytes": 3176,
+      "sha256": "09627552e5aad553c7d773b364ac366c6540dbfd6340c5fa1b951933b5760b0f"
+    },
+    "validation/training-r1/results/conditioning48-1729/freeze-policy.json": {
+      "bytes": 2804,
+      "sha256": "ca9d42a059a81d02eced1007bab2d0f6dbb3f2eaf213db3440d2c5bb9d82b6d7"
+    },
+    "validation/training-r1/results/conditioning48-1729/last-attempt-predictions.json": {
+      "bytes": 398949,
+      "sha256": "c24f7a22de17b33621377440425b1733a75182f54156af1f0492923cf74d5869"
+    },
+    "validation/training-r1/results/conditioning48-1729/last-attempt-state.json": {
+      "bytes": 1306629,
+      "sha256": "21175d3a21b393bb69e1e10ef1fc1b853164180a999e861eedf0192c87c4ac01"
+    },
+    "validation/training-r1/results/conditioning48-1729/last-attempt/evaluation-source-shuffle.json": {
+      "bytes": 1595047,
+      "sha256": "b62c9f4fc65ec382fa9db23361a877e61cbe9d5fbe20930584839e192b5eafe2"
+    },
+    "validation/training-r1/results/conditioning48-1729/last-attempt/evaluation-training-source-shuffle.json": {
+      "bytes": 1591859,
+      "sha256": "3f8ed27797bf50b8ac437cc8e8248e8b7edcefec6d248c66b47ffea029a8b831"
+    },
+    "validation/training-r1/results/conditioning48-1729/last-attempt/evaluation-training.json": {
+      "bytes": 1578332,
+      "sha256": "2c10767b9a2c158ed331a748d82ceaa27919c1bdc05bbe57c49c7f343f500cb6"
+    },
+    "validation/training-r1/results/conditioning48-1729/last-attempt/evaluation-validation.json": {
+      "bytes": 1581258,
+      "sha256": "a97e8951c3c6c1fc7608002e0eea74a0a1880e35bd7fbde7b9f994dbec7c61e0"
+    },
+    "validation/training-r1/results/conditioning48-1729/last-attempt/evaluation-zero-condition.json": {
+      "bytes": 1637827,
+      "sha256": "26965735e02c574333985a1df8a0841e61b45be5c4f8a9b5e5540369aac43ae0"
+    },
+    "validation/training-r1/results/conditioning48-1729/selected-predictions.json": {
+      "bytes": 398906,
+      "sha256": "f2985be0ce3f29cca54c120839856dedb5b512cd429866f7362379f6c9113608"
+    },
+    "validation/training-r1/results/conditioning48-1729/selected-state.json": {
+      "bytes": 751709,
+      "sha256": "8d7e0b5aa3fbc3e3da68649f04be07494bf51cd00f381209a1f587ce66edfc5a"
+    },
+    "validation/training-r1/results/conditioning48-1729/selected/evaluation-source-shuffle.json": {
+      "bytes": 835595,
+      "sha256": "e2d931daef0f3e2ad36c62cd3bba7c4b9dcda0a19883c7fcd83244d888d5de7d"
+    },
+    "validation/training-r1/results/conditioning48-1729/selected/evaluation-training-source-shuffle.json": {
+      "bytes": 832543,
+      "sha256": "79d9f2d3e4be6ab244318a89cb4891d4dce9572320d3495423ae95349c0cc5a6"
+    },
+    "validation/training-r1/results/conditioning48-1729/selected/evaluation-training.json": {
+      "bytes": 819004,
+      "sha256": "b0ab21d05d31f3c2f2c115f0c7e3d5625288c05ebf372956cd288e1b2ff801d3"
+    },
+    "validation/training-r1/results/conditioning48-1729/selected/evaluation-validation.json": {
+      "bytes": 821803,
+      "sha256": "cab55f322fc29206d6537355d4cb1e7a3fa60c1293f232d5500838d0d74a42c6"
+    },
+    "validation/training-r1/results/conditioning48-1729/selected/evaluation-zero-condition.json": {
+      "bytes": 812468,
+      "sha256": "b423710c8e20c5d27a5b02f2320f81e17bdc4104c0f63fb46107ed9ce506585e"
+    },
+    "validation/training-r1/results/conditioning48-1729/summary.json": {
+      "bytes": 3646064,
+      "sha256": "410222f9f49e7e607b9dcc254b514aa346fa821b85bfa96bd3bb7e43d4e483d9"
+    },
+    "validation/training-r1/results/conditioning48-1729/training.json": {
+      "bytes": 2664536,
+      "sha256": "0a8f69e55d740c2697c331b8cdddb22803ced9fd7a03f74b431fd2774148d086"
+    },
+    "validation/training-r1/results/conditioning48-2718/freeze-policy.json": {
+      "bytes": 2804,
+      "sha256": "ca9d42a059a81d02eced1007bab2d0f6dbb3f2eaf213db3440d2c5bb9d82b6d7"
+    },
+    "validation/training-r1/results/conditioning48-2718/last-attempt-predictions.json": {
+      "bytes": 398949,
+      "sha256": "3053a4b3e34632b646875193ef94c7855c2800653e7df1c402586ce40e3bd5c9"
+    },
+    "validation/training-r1/results/conditioning48-2718/last-attempt-state.json": {
+      "bytes": 1306748,
+      "sha256": "82b9076bd358cce2fd22a36bc9e2391aecf0895533738db47eb759772dfcdc99"
+    },
+    "validation/training-r1/results/conditioning48-2718/last-attempt/evaluation-source-shuffle.json": {
+      "bytes": 1595008,
+      "sha256": "15d2874e3465cc8e14defefdaf9b9c262f39dd2b7d4e693bf5b70390c24739d5"
+    },
+    "validation/training-r1/results/conditioning48-2718/last-attempt/evaluation-training-source-shuffle.json": {
+      "bytes": 1591918,
+      "sha256": "6756f5b98f202246ed966296521a1e3d5406b777b63bc8322585005cfedc4e61"
+    },
+    "validation/training-r1/results/conditioning48-2718/last-attempt/evaluation-training.json": {
+      "bytes": 1578373,
+      "sha256": "caaa8bbe11bf3466278e969f83ee92d4d795eccc48fbd655bec208aaaacb3f1d"
+    },
+    "validation/training-r1/results/conditioning48-2718/last-attempt/evaluation-validation.json": {
+      "bytes": 1581200,
+      "sha256": "f932ae79bdc241baed2640cdaad17f047acc03ded1b563c160ac25a57a72baa7"
+    },
+    "validation/training-r1/results/conditioning48-2718/last-attempt/evaluation-zero-condition.json": {
+      "bytes": 1637894,
+      "sha256": "a4452e1e6bc5d862a3e122fff17136ec0ff090b39aca5d8e8f021f5c84293548"
+    },
+    "validation/training-r1/results/conditioning48-2718/selected-predictions.json": {
+      "bytes": 398906,
+      "sha256": "f2985be0ce3f29cca54c120839856dedb5b512cd429866f7362379f6c9113608"
+    },
+    "validation/training-r1/results/conditioning48-2718/selected-state.json": {
+      "bytes": 751709,
+      "sha256": "a1e1fa9cfc1e8c152b313c9be933cc8c8e42b1e64dee668c916d4c9b2f0779c5"
+    },
+    "validation/training-r1/results/conditioning48-2718/selected/evaluation-source-shuffle.json": {
+      "bytes": 835593,
+      "sha256": "99f13c162b03ae2a833c98fcdf3140e1f566cd4c5563119fd61b384c5628d020"
+    },
+    "validation/training-r1/results/conditioning48-2718/selected/evaluation-training-source-shuffle.json": {
+      "bytes": 832546,
+      "sha256": "0b449702d8d9d0f519a7ca701924e49430334bba70367c3803c29fff369ce6f5"
+    },
+    "validation/training-r1/results/conditioning48-2718/selected/evaluation-training.json": {
+      "bytes": 819001,
+      "sha256": "d37beff617c5e7b4a2ec4032925f4efda6c259721c3bd8af46ffbed08b95e6f6"
+    },
+    "validation/training-r1/results/conditioning48-2718/selected/evaluation-validation.json": {
+      "bytes": 821804,
+      "sha256": "bce63f33a82d8ad328103a8237f23ebfae456c5f91c909d6644c9b8b8330df90"
+    },
+    "validation/training-r1/results/conditioning48-2718/selected/evaluation-zero-condition.json": {
+      "bytes": 812468,
+      "sha256": "b8900136c6cc67de841345bbaa2bebf2109d131ccce87327b3e00a7ad11af8fc"
+    },
+    "validation/training-r1/results/conditioning48-2718/summary.json": {
+      "bytes": 3646327,
+      "sha256": "b61af0452ed4497bdc5a2ad27352c834cbe2392606fb7bf505c84522cad83bcf"
+    },
+    "validation/training-r1/results/conditioning48-2718/training.json": {
+      "bytes": 2664929,
+      "sha256": "87cc379b570ee98cceb5b031050c93cfd2d7c50886b7ec68e2e23d9d967cb594"
+    },
+    "validation/training-r1/results/projected384-1729/freeze-policy.json": {
+      "bytes": 2800,
+      "sha256": "a5a915dbcdd0e959ac77e575f8da038a8ace45b6965f454f37c88c6206c05048"
+    },
+    "validation/training-r1/results/projected384-1729/last-attempt-predictions.json": {
+      "bytes": 398941,
+      "sha256": "27acc714fe1c6588bf5bf8f8cf8ddcb49b06d9b2ed8400dbd3da02993d78000d"
+    },
+    "validation/training-r1/results/projected384-1729/last-attempt-state.json": {
+      "bytes": 8566584,
+      "sha256": "ec6f160615d99ca60b2962c84ffc6f2c0409e3aeeab9c4992bf84af7deec3e15"
+    },
+    "validation/training-r1/results/projected384-1729/last-attempt/evaluation-source-shuffle.json": {
+      "bytes": 1594416,
+      "sha256": "3dde521e7fc0484a0983d595df611e1cbdc8845276d78accfe7e84fecd7d66c2"
+    },
+    "validation/training-r1/results/projected384-1729/last-attempt/evaluation-training-source-shuffle.json": {
+      "bytes": 1591188,
+      "sha256": "2c4ea863b07900346564eb8a9715ba2ce8cde3870e5c7a16cd39d9fe9d19dc3a"
+    },
+    "validation/training-r1/results/projected384-1729/last-attempt/evaluation-training.json": {
+      "bytes": 1577664,
+      "sha256": "38565aafeb4c14bf403b05b7c59e0eca649e559e615f2f8fbdd05466469f6a6d"
+    },
+    "validation/training-r1/results/projected384-1729/last-attempt/evaluation-validation.json": {
+      "bytes": 1580620,
+      "sha256": "38b0a0b8914272e5030479b98b65b1525c66adc3539a374f984f7dd8b330b257"
+    },
+    "validation/training-r1/results/projected384-1729/last-attempt/evaluation-zero-condition.json": {
+      "bytes": 1630764,
+      "sha256": "5a213e3ac8423cb27e3abf41737b006fc438136795dd97485567da6c1d3f77f6"
+    },
+    "validation/training-r1/results/projected384-1729/selected-predictions.json": {
+      "bytes": 398906,
+      "sha256": "f2985be0ce3f29cca54c120839856dedb5b512cd429866f7362379f6c9113608"
+    },
+    "validation/training-r1/results/projected384-1729/selected-state.json": {
+      "bytes": 2127948,
+      "sha256": "5b5ac5e156e5bb7d090965db1113cddce5bef57dc204e692978053a4119ca856"
+    },
+    "validation/training-r1/results/projected384-1729/selected/evaluation-source-shuffle.json": {
+      "bytes": 835592,
+      "sha256": "b2167bf74d061c2fe9f7b03c29478a7eab04112532f06f7ced46f7e3871e54aa"
+    },
+    "validation/training-r1/results/projected384-1729/selected/evaluation-training-source-shuffle.json": {
+      "bytes": 832543,
+      "sha256": "acc2a330197341ab8024ee958ad1e9a36051b6e44add6e21393bbe6c85df544a"
+    },
+    "validation/training-r1/results/projected384-1729/selected/evaluation-training.json": {
+      "bytes": 819000,
+      "sha256": "500ad4a4d8a6d3884582790af80e0728c546ff44d4f56a56b2303ff85f2d2489"
+    },
+    "validation/training-r1/results/projected384-1729/selected/evaluation-validation.json": {
+      "bytes": 821801,
+      "sha256": "dd01d4e9c8208b82f333a2078ce3c8f834f4d5c63ea91193edfc40e2f2538b36"
+    },
+    "validation/training-r1/results/projected384-1729/selected/evaluation-zero-condition.json": {
+      "bytes": 812465,
+      "sha256": "3ccbe7dcd9dfbad127c5bd026cfe0b1ad880bb4e50e26ffa531264c30590b318"
+    },
+    "validation/training-r1/results/projected384-1729/summary.json": {
+      "bytes": 3651391,
+      "sha256": "b214ec5cc97b93b4577ff9bc219c4430a76560bb27fe47b8dd4839ac4ffef8b1"
+    },
+    "validation/training-r1/results/projected384-1729/training.json": {
+      "bytes": 2669586,
+      "sha256": "c2e9a6760f0beb1f302088ac6bb71f9e660b22950c5f24d31d44cb618bec50af"
+    },
+    "validation/training-r1/results/projected384-2718/freeze-policy.json": {
+      "bytes": 2800,
+      "sha256": "a5a915dbcdd0e959ac77e575f8da038a8ace45b6965f454f37c88c6206c05048"
+    },
+    "validation/training-r1/results/projected384-2718/last-attempt-predictions.json": {
+      "bytes": 398938,
+      "sha256": "93982f1854e9c57737e5cdec42b3497bd006d87e8738abab96b1a1d5d863e2ab"
+    },
+    "validation/training-r1/results/projected384-2718/last-attempt-state.json": {
+      "bytes": 8566272,
+      "sha256": "319413d79f2b0f079f2f8a040a3e77bfec5a7faa78d9df89f845cd363fdb89ff"
+    },
+    "validation/training-r1/results/projected384-2718/last-attempt/evaluation-source-shuffle.json": {
+      "bytes": 1594612,
+      "sha256": "2f998c96f1d5b39b649ee2fa54e0b3f90230272376ab2f390bd69bb1bfd8700f"
+    },
+    "validation/training-r1/results/projected384-2718/last-attempt/evaluation-training-source-shuffle.json": {
+      "bytes": 1591563,
+      "sha256": "c341c2e675177afb48c18272c9d253d6e97e271f4a2d7679ea7aad0363dfb312"
+    },
+    "validation/training-r1/results/projected384-2718/last-attempt/evaluation-training.json": {
+      "bytes": 1578029,
+      "sha256": "bd49a482ca95ceb11ac0d47208b0ae7e20e1196e330d3f062fdab821b77a96bf"
+    },
+    "validation/training-r1/results/projected384-2718/last-attempt/evaluation-validation.json": {
+      "bytes": 1580802,
+      "sha256": "a460db326bc7dbe24d09c4e4300cca47e92169f3183e04d787069e86c0013da7"
+    },
+    "validation/training-r1/results/projected384-2718/last-attempt/evaluation-zero-condition.json": {
+      "bytes": 1629531,
+      "sha256": "0874ecf30db96213ee66617e4a3acae07f56e54224009d45e21c2209fcb11d54"
+    },
+    "validation/training-r1/results/projected384-2718/selected-predictions.json": {
+      "bytes": 398906,
+      "sha256": "f2985be0ce3f29cca54c120839856dedb5b512cd429866f7362379f6c9113608"
+    },
+    "validation/training-r1/results/projected384-2718/selected-state.json": {
+      "bytes": 2127948,
+      "sha256": "befc3bb0bf7c3690a3c1b13dacf3247d81aae595f2016fe559ee2f9ea2d135ba"
+    },
+    "validation/training-r1/results/projected384-2718/selected/evaluation-source-shuffle.json": {
+      "bytes": 835591,
+      "sha256": "9736d22b14d31aeefedf10924d81ce99be5bd53b8b68262cb02c58da9ac61dda"
+    },
+    "validation/training-r1/results/projected384-2718/selected/evaluation-training-source-shuffle.json": {
+      "bytes": 832540,
+      "sha256": "68b17ad21201de2b8bc100d28826943e6d5c038e1fe7462632d587fb32936a3f"
+    },
+    "validation/training-r1/results/projected384-2718/selected/evaluation-training.json": {
+      "bytes": 819000,
+      "sha256": "d5d2db114d1191c08c72825bce81eb77b2284f6c376a66a5dc5ae555a123a795"
+    },
+    "validation/training-r1/results/projected384-2718/selected/evaluation-validation.json": {
+      "bytes": 821800,
+      "sha256": "85ef3963bac245cc52c2a8593d9f72c22e4d295e9de45e8ec42b89103d6eb23c"
+    },
+    "validation/training-r1/results/projected384-2718/selected/evaluation-zero-condition.json": {
+      "bytes": 812464,
+      "sha256": "7cbea503c98df1410bfcc92fbf22d2fc261c1c07422770afead5b6c7c9a830d6"
+    },
+    "validation/training-r1/results/projected384-2718/summary.json": {
+      "bytes": 3650332,
+      "sha256": "a020edc55c3cde4b7f5584a038907e12e037de7aeffe1dd38d916ffbda71fd13"
+    },
+    "validation/training-r1/results/projected384-2718/training.json": {
+      "bytes": 2668792,
+      "sha256": "bf51e81bef4e01a0166d86f3e7cea72aa7baab657d4f6d97b6f5c90116048244"
+    },
+    "validation/training-r1/results/sealed-recipe.json": {
+      "bytes": 33970,
+      "sha256": "9878a2bff5089e42d5dba644ba94e8061f8c4e7c7c4df500f3a2c2228ee7c8a1"
+    },
+    "validation/training-r1/results/summary.json": {
+      "bytes": 14606107,
+      "sha256": "0e43278e26e9427e615fe01f7444eb66cc50d27c96eecbcc05618f37f982b7b4"
+    },
+    "validation/training-ready.json": {
+      "bytes": 1641,
+      "sha256": "3b541e978bf3a758a0073c76ed9da2130a43887ed5bd89135104974027581bd1"
+    },
+    "validation/validated-test-source.json": {
+      "bytes": 4520,
+      "sha256": "f04f9f923e01b82032f33f9b78ef3f689ad20369cabfd79600fd6b97b332d298"
+    }
+  },
+  "native_validation_executed": false,
+  "optimizer_resumable": false,
+  "original_artifact_archive_paths": {
+    "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/decoder_length_distillation.md": "source/docs/autoencoders/decoder_length_distillation.md",
+    "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/decoder-source-value-training-20261002/manifest.json": "predecessor-public/manifest.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/decoder-source-value-training-20261002/results.json": "predecessor-public/results.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_benchmark_decoder_cardinality.py": "source/tests/unit/logic/formalization/autoencoder/test_benchmark_decoder_cardinality.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_benchmark_decoder_count_exposure.py": "source/tests/unit/logic/formalization/autoencoder/test_benchmark_decoder_count_exposure.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_benchmark_decoder_gradient_trace.py": "source/tests/unit/logic/formalization/autoencoder/test_benchmark_decoder_gradient_trace.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_benchmark_decoder_prefix_diagnostics.py": "source/tests/unit/logic/formalization/autoencoder/test_benchmark_decoder_prefix_diagnostics.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_benchmark_decoder_source_fidelity.py": "source/tests/unit/logic/formalization/autoencoder/test_benchmark_decoder_source_fidelity.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_benchmark_decoder_source_slot_probe.py": "source/tests/unit/logic/formalization/autoencoder/test_benchmark_decoder_source_slot_probe.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_benchmark_decoder_source_value_freeze.py": "source/tests/unit/logic/formalization/autoencoder/test_benchmark_decoder_source_value_freeze.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_benchmark_decoder_source_value_margins.py": "source/tests/unit/logic/formalization/autoencoder/test_benchmark_decoder_source_value_margins.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_benchmark_decoder_source_value_training.py": "source/tests/unit/logic/formalization/autoencoder/test_benchmark_decoder_source_value_training.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_benchmark_decoder_transition_ramp.py": "source/tests/unit/logic/formalization/autoencoder/test_benchmark_decoder_transition_ramp.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_decoder_cardinality_experiment.py": "source/tests/unit/logic/formalization/autoencoder/test_decoder_cardinality_experiment.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_decoder_distillation_experiment.py": "source/tests/unit/logic/formalization/autoencoder/test_decoder_distillation_experiment.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_decoder_distillation_experiment_v2.py": "source/tests/unit/logic/formalization/autoencoder/test_decoder_distillation_experiment_v2.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_decoder_gradient_replay.py": "source/tests/unit/logic/formalization/autoencoder/test_decoder_gradient_replay.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_decoder_prefix_diagnostics.py": "source/tests/unit/logic/formalization/autoencoder/test_decoder_prefix_diagnostics.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_decoder_source_fidelity.py": "source/tests/unit/logic/formalization/autoencoder/test_decoder_source_fidelity.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_decoder_source_slot_probe.py": "source/tests/unit/logic/formalization/autoencoder/test_decoder_source_slot_probe.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_decoder_source_value_margins.py": "source/tests/unit/logic/formalization/autoencoder/test_decoder_source_value_margins.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_evaluate_rejected_decoder_controls.py": "source/tests/unit/logic/formalization/autoencoder/test_evaluate_rejected_decoder_controls.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_long_span_cardinality_training.py": "source/tests/unit/logic/formalization/autoencoder/test_long_span_cardinality_training.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_long_span_count_exposure_training.py": "source/tests/unit/logic/formalization/autoencoder/test_long_span_count_exposure_training.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_long_span_decoder_benchmark.py": "source/tests/unit/logic/formalization/autoencoder/test_long_span_decoder_benchmark.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_long_span_decoder_training.py": "source/tests/unit/logic/formalization/autoencoder/test_long_span_decoder_training.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_long_span_gradient_trace_training.py": "source/tests/unit/logic/formalization/autoencoder/test_long_span_gradient_trace_training.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_long_span_source_value_training.py": "source/tests/unit/logic/formalization/autoencoder/test_long_span_source_value_training.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_long_span_transition_training.py": "source/tests/unit/logic/formalization/autoencoder/test_long_span_transition_training.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_source_length_curriculum.py": "source/tests/unit/logic/formalization/autoencoder/test_source_length_curriculum.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_source_value_decoder_experiment.py": "source/tests/unit/logic/formalization/autoencoder/test_source_value_decoder_experiment.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_source_value_freeze_experiment.py": "source/tests/unit/logic/formalization/autoencoder/test_source_value_freeze_experiment.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-gradient-trace-20261002/independent_audit.py": "historical/audit-helpers/decoder-gradient-trace-20261002/independent_audit.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-prefix-diagnostics-20261002/independent_audit.py": "historical/audit-helpers/decoder-prefix-diagnostics-20261002/independent_audit.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/adopt_shared_scheduler.py": "validation/adopt_shared_scheduler.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/base.json": "validation/base.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/build_evidence.py": "validation/build_evidence.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/code-files.json": "validation/code-files.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/diagnostic-ready.json": "validation/diagnostic-ready.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/diagnostic-tests.log": "validation/diagnostic-tests.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/diagnostic-tests.xml": "validation/diagnostic-tests.xml",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_cardinality_experiment.py": "source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_cardinality_experiment.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment.py": "source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment_v2.py": "source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment_v2.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_gradient_replay.py": "source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_gradient_replay.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_prefix_diagnostics.py": "source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_prefix_diagnostics.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_source_fidelity.py": "source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_source_fidelity.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_source_slot_probe.py": "source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_source_slot_probe.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_source_value_margins.py": "source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_source_value_margins.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/long_span_cardinality_training.py": "source/ipfs_datasets_py/logic/formalization/autoencoder/long_span_cardinality_training.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/long_span_count_exposure_training.py": "source/ipfs_datasets_py/logic/formalization/autoencoder/long_span_count_exposure_training.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/long_span_decoder_training.py": "source/ipfs_datasets_py/logic/formalization/autoencoder/long_span_decoder_training.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/long_span_gradient_trace_training.py": "source/ipfs_datasets_py/logic/formalization/autoencoder/long_span_gradient_trace_training.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/long_span_source_value_training.py": "source/ipfs_datasets_py/logic/formalization/autoencoder/long_span_source_value_training.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/long_span_transition_training.py": "source/ipfs_datasets_py/logic/formalization/autoencoder/long_span_transition_training.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/source_length_curriculum.py": "source/ipfs_datasets_py/logic/formalization/autoencoder/source_length_curriculum.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/source_value_decoder_experiment.py": "source/ipfs_datasets_py/logic/formalization/autoencoder/source_value_decoder_experiment.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/source_value_freeze_experiment.py": "source/ipfs_datasets_py/logic/formalization/autoencoder/source_value_freeze_experiment.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/experiment-source/scripts/ops/autoencoder/benchmark_decoder_cardinality.py": "source/scripts/ops/autoencoder/benchmark_decoder_cardinality.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/experiment-source/scripts/ops/autoencoder/benchmark_decoder_count_exposure.py": "source/scripts/ops/autoencoder/benchmark_decoder_count_exposure.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/experiment-source/scripts/ops/autoencoder/benchmark_decoder_gradient_trace.py": "source/scripts/ops/autoencoder/benchmark_decoder_gradient_trace.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/experiment-source/scripts/ops/autoencoder/benchmark_decoder_prefix_diagnostics.py": "source/scripts/ops/autoencoder/benchmark_decoder_prefix_diagnostics.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/experiment-source/scripts/ops/autoencoder/benchmark_decoder_source_fidelity.py": "source/scripts/ops/autoencoder/benchmark_decoder_source_fidelity.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/experiment-source/scripts/ops/autoencoder/benchmark_decoder_source_slot_probe.py": "source/scripts/ops/autoencoder/benchmark_decoder_source_slot_probe.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/experiment-source/scripts/ops/autoencoder/benchmark_decoder_source_value_freeze.py": "source/scripts/ops/autoencoder/benchmark_decoder_source_value_freeze.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/experiment-source/scripts/ops/autoencoder/benchmark_decoder_source_value_margins.py": "source/scripts/ops/autoencoder/benchmark_decoder_source_value_margins.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/experiment-source/scripts/ops/autoencoder/benchmark_decoder_source_value_training.py": "source/scripts/ops/autoencoder/benchmark_decoder_source_value_training.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/experiment-source/scripts/ops/autoencoder/benchmark_decoder_transition_ramp.py": "source/scripts/ops/autoencoder/benchmark_decoder_transition_ramp.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/experiment-source/scripts/ops/autoencoder/benchmark_long_span_decoder.py": "source/scripts/ops/autoencoder/benchmark_long_span_decoder.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/experiment-source/scripts/ops/autoencoder/decoder_fidelity_replay.py": "source/scripts/ops/autoencoder/decoder_fidelity_replay.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/freeze.py": "validation/freeze.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/independent-audit.json": "validation/independent-audit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/independent-training-audit-r1.json": "validation/independent-training-audit-r1.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/independent-training-audit.json": "validation/independent-training-audit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/independent_audit.py": "validation/independent_audit.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/independent_training_audit.py": "validation/independent_training_audit.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/input-manifest-draft.json": "validation/input-manifest-draft.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/manifest.json": "validation/manifest.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/owned-files.json": "validation/owned-files.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/packaging-review.json": "validation/packaging-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/plan.json": "validation/plan.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/post-audit-integrity.json": "validation/post-audit-integrity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/publication-compatibility.json": "validation/publication-compatibility.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/publish.py": "validation/publish.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/readiness.json": "validation/readiness.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/resource-compatibility.json": "validation/resource-compatibility.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/run_reserved.py": "validation/run_reserved.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/run_training_reserved.py": "validation/run_training_reserved.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/scheduler-tests.log": "validation/scheduler-tests.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/scheduler-tests.xml": "validation/scheduler-tests.xml",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/smoke-r1-guardian.log": "validation/smoke-r1-guardian.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/smoke-r1/admission-failure.json": "validation/smoke-r1/admission-failure.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/smoke-r1/failure.json": "validation/smoke-r1/failure.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/smoke-r1/unused-reservation-final.json": "validation/smoke-r1/unused-reservation-final.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/smoke-r2-guardian.log": "validation/smoke-r2-guardian.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/smoke-r2-scheduler-adoption.json": "validation/smoke-r2-scheduler-adoption.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/smoke-r2/child-exit.json": "validation/smoke-r2/child-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/smoke-r2/child-identity.json": "validation/smoke-r2/child-identity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/smoke-r2/child.log": "validation/smoke-r2/child.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/smoke-r2/command.json": "validation/smoke-r2/command.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/smoke-r2/resource-observations.json": "validation/smoke-r2/resource-observations.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/smoke-r2/resources-final.json": "validation/smoke-r2/resources-final.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/smoke-r2/resources-start.json": "validation/smoke-r2/resources-start.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/smoke-r2/results/conditioning48-1729-last-attempt/train-conditioned.json": "validation/smoke-r2/results/conditioning48-1729-last-attempt/train-conditioned.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/smoke-r2/results/conditioning48-1729-last-attempt/train-source_shuffle.json": "validation/smoke-r2/results/conditioning48-1729-last-attempt/train-source_shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/smoke-r2/results/conditioning48-1729-last-attempt/validation-conditioned.json": "validation/smoke-r2/results/conditioning48-1729-last-attempt/validation-conditioned.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/smoke-r2/results/conditioning48-1729-last-attempt/validation-source_shuffle.json": "validation/smoke-r2/results/conditioning48-1729-last-attempt/validation-source_shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/smoke-r2/results/conditioning48-2718-last-attempt/train-conditioned.json": "validation/smoke-r2/results/conditioning48-2718-last-attempt/train-conditioned.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/smoke-r2/results/conditioning48-2718-last-attempt/train-source_shuffle.json": "validation/smoke-r2/results/conditioning48-2718-last-attempt/train-source_shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/smoke-r2/results/conditioning48-2718-last-attempt/validation-conditioned.json": "validation/smoke-r2/results/conditioning48-2718-last-attempt/validation-conditioned.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/smoke-r2/results/conditioning48-2718-last-attempt/validation-source_shuffle.json": "validation/smoke-r2/results/conditioning48-2718-last-attempt/validation-source_shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/smoke-r2/results/projected384-1729-last-attempt/train-conditioned.json": "validation/smoke-r2/results/projected384-1729-last-attempt/train-conditioned.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/smoke-r2/results/projected384-1729-last-attempt/train-source_shuffle.json": "validation/smoke-r2/results/projected384-1729-last-attempt/train-source_shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/smoke-r2/results/projected384-1729-last-attempt/validation-conditioned.json": "validation/smoke-r2/results/projected384-1729-last-attempt/validation-conditioned.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/smoke-r2/results/projected384-1729-last-attempt/validation-source_shuffle.json": "validation/smoke-r2/results/projected384-1729-last-attempt/validation-source_shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/smoke-r2/results/projected384-1729-selected/train-conditioned.json": "validation/smoke-r2/results/projected384-1729-selected/train-conditioned.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/smoke-r2/results/projected384-1729-selected/validation-conditioned.json": "validation/smoke-r2/results/projected384-1729-selected/validation-conditioned.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/smoke-r2/results/projected384-2718-last-attempt/train-conditioned.json": "validation/smoke-r2/results/projected384-2718-last-attempt/train-conditioned.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/smoke-r2/results/projected384-2718-last-attempt/train-source_shuffle.json": "validation/smoke-r2/results/projected384-2718-last-attempt/train-source_shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/smoke-r2/results/projected384-2718-last-attempt/validation-conditioned.json": "validation/smoke-r2/results/projected384-2718-last-attempt/validation-conditioned.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/smoke-r2/results/projected384-2718-last-attempt/validation-source_shuffle.json": "validation/smoke-r2/results/projected384-2718-last-attempt/validation-source_shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/smoke-r2/results/sealed-recipe.json": "validation/smoke-r2/results/sealed-recipe.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/smoke-r2/results/summary.json": "validation/smoke-r2/results/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/test-files.json": "validation/test-files.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/test_adopt_shared_scheduler.py": "validation/test_adopt_shared_scheduler.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/tests-frozen.log": "validation/tests-frozen.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/tests-frozen.xml": "validation/tests-frozen.xml",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-manifest-draft.json": "validation/training-manifest-draft.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-manifest.json": "validation/training-manifest.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-plan.json": "validation/training-plan.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1-guardian.log": "validation/training-r1-guardian.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1-scheduler-adoption.json": "validation/training-r1-scheduler-adoption.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/child-exit.json": "validation/training-r1/child-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/child-identity.json": "validation/training-r1/child-identity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/child.log": "validation/training-r1/child.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/command.json": "validation/training-r1/command.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/resource-observations.json": "validation/training-r1/resource-observations.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/resources-final.json": "validation/training-r1/resources-final.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/resources-start.json": "validation/training-r1/resources-start.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/conditioning48-1729/freeze-policy.json": "validation/training-r1/results/conditioning48-1729/freeze-policy.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/conditioning48-1729/last-attempt-predictions.json": "validation/training-r1/results/conditioning48-1729/last-attempt-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/conditioning48-1729/last-attempt-state.json": "validation/training-r1/results/conditioning48-1729/last-attempt-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/conditioning48-1729/last-attempt/evaluation-source-shuffle.json": "validation/training-r1/results/conditioning48-1729/last-attempt/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/conditioning48-1729/last-attempt/evaluation-training-source-shuffle.json": "validation/training-r1/results/conditioning48-1729/last-attempt/evaluation-training-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/conditioning48-1729/last-attempt/evaluation-training.json": "validation/training-r1/results/conditioning48-1729/last-attempt/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/conditioning48-1729/last-attempt/evaluation-validation.json": "validation/training-r1/results/conditioning48-1729/last-attempt/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/conditioning48-1729/last-attempt/evaluation-zero-condition.json": "validation/training-r1/results/conditioning48-1729/last-attempt/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/conditioning48-1729/selected-predictions.json": "validation/training-r1/results/conditioning48-1729/selected-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/conditioning48-1729/selected-state.json": "validation/training-r1/results/conditioning48-1729/selected-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/conditioning48-1729/selected/evaluation-source-shuffle.json": "validation/training-r1/results/conditioning48-1729/selected/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/conditioning48-1729/selected/evaluation-training-source-shuffle.json": "validation/training-r1/results/conditioning48-1729/selected/evaluation-training-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/conditioning48-1729/selected/evaluation-training.json": "validation/training-r1/results/conditioning48-1729/selected/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/conditioning48-1729/selected/evaluation-validation.json": "validation/training-r1/results/conditioning48-1729/selected/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/conditioning48-1729/selected/evaluation-zero-condition.json": "validation/training-r1/results/conditioning48-1729/selected/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/conditioning48-1729/summary.json": "validation/training-r1/results/conditioning48-1729/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/conditioning48-1729/training.json": "validation/training-r1/results/conditioning48-1729/training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/conditioning48-2718/freeze-policy.json": "validation/training-r1/results/conditioning48-2718/freeze-policy.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/conditioning48-2718/last-attempt-predictions.json": "validation/training-r1/results/conditioning48-2718/last-attempt-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/conditioning48-2718/last-attempt-state.json": "validation/training-r1/results/conditioning48-2718/last-attempt-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/conditioning48-2718/last-attempt/evaluation-source-shuffle.json": "validation/training-r1/results/conditioning48-2718/last-attempt/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/conditioning48-2718/last-attempt/evaluation-training-source-shuffle.json": "validation/training-r1/results/conditioning48-2718/last-attempt/evaluation-training-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/conditioning48-2718/last-attempt/evaluation-training.json": "validation/training-r1/results/conditioning48-2718/last-attempt/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/conditioning48-2718/last-attempt/evaluation-validation.json": "validation/training-r1/results/conditioning48-2718/last-attempt/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/conditioning48-2718/last-attempt/evaluation-zero-condition.json": "validation/training-r1/results/conditioning48-2718/last-attempt/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/conditioning48-2718/selected-predictions.json": "validation/training-r1/results/conditioning48-2718/selected-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/conditioning48-2718/selected-state.json": "validation/training-r1/results/conditioning48-2718/selected-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/conditioning48-2718/selected/evaluation-source-shuffle.json": "validation/training-r1/results/conditioning48-2718/selected/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/conditioning48-2718/selected/evaluation-training-source-shuffle.json": "validation/training-r1/results/conditioning48-2718/selected/evaluation-training-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/conditioning48-2718/selected/evaluation-training.json": "validation/training-r1/results/conditioning48-2718/selected/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/conditioning48-2718/selected/evaluation-validation.json": "validation/training-r1/results/conditioning48-2718/selected/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/conditioning48-2718/selected/evaluation-zero-condition.json": "validation/training-r1/results/conditioning48-2718/selected/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/conditioning48-2718/summary.json": "validation/training-r1/results/conditioning48-2718/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/conditioning48-2718/training.json": "validation/training-r1/results/conditioning48-2718/training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/projected384-1729/freeze-policy.json": "validation/training-r1/results/projected384-1729/freeze-policy.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/projected384-1729/last-attempt-predictions.json": "validation/training-r1/results/projected384-1729/last-attempt-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/projected384-1729/last-attempt-state.json": "validation/training-r1/results/projected384-1729/last-attempt-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/projected384-1729/last-attempt/evaluation-source-shuffle.json": "validation/training-r1/results/projected384-1729/last-attempt/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/projected384-1729/last-attempt/evaluation-training-source-shuffle.json": "validation/training-r1/results/projected384-1729/last-attempt/evaluation-training-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/projected384-1729/last-attempt/evaluation-training.json": "validation/training-r1/results/projected384-1729/last-attempt/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/projected384-1729/last-attempt/evaluation-validation.json": "validation/training-r1/results/projected384-1729/last-attempt/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/projected384-1729/last-attempt/evaluation-zero-condition.json": "validation/training-r1/results/projected384-1729/last-attempt/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/projected384-1729/selected-predictions.json": "validation/training-r1/results/projected384-1729/selected-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/projected384-1729/selected-state.json": "validation/training-r1/results/projected384-1729/selected-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/projected384-1729/selected/evaluation-source-shuffle.json": "validation/training-r1/results/projected384-1729/selected/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/projected384-1729/selected/evaluation-training-source-shuffle.json": "validation/training-r1/results/projected384-1729/selected/evaluation-training-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/projected384-1729/selected/evaluation-training.json": "validation/training-r1/results/projected384-1729/selected/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/projected384-1729/selected/evaluation-validation.json": "validation/training-r1/results/projected384-1729/selected/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/projected384-1729/selected/evaluation-zero-condition.json": "validation/training-r1/results/projected384-1729/selected/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/projected384-1729/summary.json": "validation/training-r1/results/projected384-1729/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/projected384-1729/training.json": "validation/training-r1/results/projected384-1729/training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/projected384-2718/freeze-policy.json": "validation/training-r1/results/projected384-2718/freeze-policy.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/projected384-2718/last-attempt-predictions.json": "validation/training-r1/results/projected384-2718/last-attempt-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/projected384-2718/last-attempt-state.json": "validation/training-r1/results/projected384-2718/last-attempt-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/projected384-2718/last-attempt/evaluation-source-shuffle.json": "validation/training-r1/results/projected384-2718/last-attempt/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/projected384-2718/last-attempt/evaluation-training-source-shuffle.json": "validation/training-r1/results/projected384-2718/last-attempt/evaluation-training-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/projected384-2718/last-attempt/evaluation-training.json": "validation/training-r1/results/projected384-2718/last-attempt/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/projected384-2718/last-attempt/evaluation-validation.json": "validation/training-r1/results/projected384-2718/last-attempt/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/projected384-2718/last-attempt/evaluation-zero-condition.json": "validation/training-r1/results/projected384-2718/last-attempt/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/projected384-2718/selected-predictions.json": "validation/training-r1/results/projected384-2718/selected-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/projected384-2718/selected-state.json": "validation/training-r1/results/projected384-2718/selected-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/projected384-2718/selected/evaluation-source-shuffle.json": "validation/training-r1/results/projected384-2718/selected/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/projected384-2718/selected/evaluation-training-source-shuffle.json": "validation/training-r1/results/projected384-2718/selected/evaluation-training-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/projected384-2718/selected/evaluation-training.json": "validation/training-r1/results/projected384-2718/selected/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/projected384-2718/selected/evaluation-validation.json": "validation/training-r1/results/projected384-2718/selected/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/projected384-2718/selected/evaluation-zero-condition.json": "validation/training-r1/results/projected384-2718/selected/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/projected384-2718/summary.json": "validation/training-r1/results/projected384-2718/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/projected384-2718/training.json": "validation/training-r1/results/projected384-2718/training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/sealed-recipe.json": "validation/training-r1/results/sealed-recipe.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-r1/results/summary.json": "validation/training-r1/results/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/training-ready.json": "validation/training-ready.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-margins-20261003/validated-test-source.json": "validation/validated-test-source.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-transition-ramp-20261002/independent_audit.py": "historical/audit-helpers/decoder-transition-ramp-20261002/independent_audit.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/__init__.py": "source/ipfs_datasets_py/__init__.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/TDFOL/__init__.py": "source/ipfs_datasets_py/logic/TDFOL/__init__.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/TDFOL/compiler_repairs.py": "source/ipfs_datasets_py/logic/TDFOL/compiler_repairs.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/TDFOL/strategies/__init__.py": "source/ipfs_datasets_py/logic/TDFOL/strategies/__init__.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/TDFOL/strategies/base.py": "source/ipfs_datasets_py/logic/TDFOL/strategies/base.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/TDFOL/strategies/cec_delegate.py": "source/ipfs_datasets_py/logic/TDFOL/strategies/cec_delegate.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/TDFOL/strategies/forward_chaining.py": "source/ipfs_datasets_py/logic/TDFOL/strategies/forward_chaining.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/TDFOL/strategies/modal_tableaux.py": "source/ipfs_datasets_py/logic/TDFOL/strategies/modal_tableaux.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/TDFOL/strategies/strategy_selector.py": "source/ipfs_datasets_py/logic/TDFOL/strategies/strategy_selector.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/TDFOL/tdfol_core.py": "source/ipfs_datasets_py/logic/TDFOL/tdfol_core.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/TDFOL/tdfol_prover.py": "source/ipfs_datasets_py/logic/TDFOL/tdfol_prover.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/__init__.py": "source/ipfs_datasets_py/logic/__init__.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/autoformal/__init__.py": "source/ipfs_datasets_py/logic/autoformal/__init__.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/autoformal/tree_pin.py": "source/ipfs_datasets_py/logic/autoformal/tree_pin.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/common/__init__.py": "source/ipfs_datasets_py/logic/common/__init__.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/common/bounded_cache.py": "source/ipfs_datasets_py/logic/common/bounded_cache.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/common/converters.py": "source/ipfs_datasets_py/logic/common/converters.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/common/errors.py": "source/ipfs_datasets_py/logic/common/errors.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/common/feature_detection.py": "source/ipfs_datasets_py/logic/common/feature_detection.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/common/proof_cache.py": "source/ipfs_datasets_py/logic/common/proof_cache.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/common/utility_monitor.py": "source/ipfs_datasets_py/logic/common/utility_monitor.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/common/validators.py": "source/ipfs_datasets_py/logic/common/validators.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/deontic/__init__.py": "source/ipfs_datasets_py/logic/deontic/__init__.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/deontic/analyzer.py": "source/ipfs_datasets_py/logic/deontic/analyzer.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/deontic/compiler_repairs.py": "source/ipfs_datasets_py/logic/deontic/compiler_repairs.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/deontic/converter.py": "source/ipfs_datasets_py/logic/deontic/converter.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/deontic/decoder.py": "source/ipfs_datasets_py/logic/deontic/decoder.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/deontic/exports.py": "source/ipfs_datasets_py/logic/deontic/exports.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/deontic/formula_builder.py": "source/ipfs_datasets_py/logic/deontic/formula_builder.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/deontic/graph.py": "source/ipfs_datasets_py/logic/deontic/graph.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/deontic/ir.py": "source/ipfs_datasets_py/logic/deontic/ir.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/deontic/knowledge_base.py": "source/ipfs_datasets_py/logic/deontic/knowledge_base.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/deontic/legal_text_to_deontic.py": "source/ipfs_datasets_py/logic/deontic/legal_text_to_deontic.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/deontic/metrics.py": "source/ipfs_datasets_py/logic/deontic/metrics.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/deontic/prover_syntax.py": "source/ipfs_datasets_py/logic/deontic/prover_syntax.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/deontic/support_map.py": "source/ipfs_datasets_py/logic/deontic/support_map.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/deontic/utils/__init__.py": "source/ipfs_datasets_py/logic/deontic/utils/__init__.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py": "source/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/formalization/__init__.py": "source/ipfs_datasets_py/logic/formalization/__init__.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/formalization/autoencoder/__init__.py": "source/ipfs_datasets_py/logic/formalization/autoencoder/__init__.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/legal_document.py": "source/ipfs_datasets_py/logic/legal_document.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/legal_ir/__init__.py": "source/ipfs_datasets_py/logic/legal_ir/__init__.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py": "source/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": "source/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py": "source/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/types/__init__.py": "source/ipfs_datasets_py/logic/types/__init__.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/types/bridge_types.py": "source/ipfs_datasets_py/logic/types/bridge_types.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/types/common_types.py": "source/ipfs_datasets_py/logic/types/common_types.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/types/deontic_types.py": "source/ipfs_datasets_py/logic/types/deontic_types.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/types/fol_types.py": "source/ipfs_datasets_py/logic/types/fol_types.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/types/proof_types.py": "source/ipfs_datasets_py/logic/types/proof_types.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/logic/types/translation_types.py": "source/ipfs_datasets_py/logic/types/translation_types.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/__init__.py": "source/ipfs_datasets_py/optimizers/__init__.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py": "source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py": "historical/dependency-source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py": "source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py": "source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py": "source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_latent_formula.py": "source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_latent_formula.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py": "historical/dependency-source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py": "source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/router_deps.py": "source/ipfs_datasets_py/router_deps.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/utils/__init__.py": "source/ipfs_datasets_py/utils/__init__.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/utils/anyio_compat.py": "source/ipfs_datasets_py/utils/anyio_compat.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/utils/cid_utils.py": "source/ipfs_datasets_py/utils/cid_utils.py"
+  },
+  "production_checkpoint": false,
+  "proof_authority": false,
+  "qualified": false,
+  "referenced_artifacts": {
+    "/home/barberb/lift_coding/artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/raw_ce-1729-checkpoint.json": {
+      "bytes": 614534,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "inputs/6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61/raw_ce-1729-checkpoint.json",
+      "sha256": "6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-cardinality-20261002/audit.py": {
+      "bytes": 43299,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "prior-control/workspace/test-logs/decoder-cardinality-20261002/audit.py",
+      "sha256": "ea440ebb1fc7b978da165329c864a69631be88048f2b694690522674cdc98c47"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-count-exposure-20261002/independent_audit.py": {
+      "bytes": 31777,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "prior-control/workspace/test-logs/decoder-count-exposure-20261002/independent_audit.py",
+      "sha256": "b7eab0337a44328e140947ab0964a3265692e1fad74d3a560c6cd5495d8c3bf3"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-distillation-limits-20261002/smoke-r2/results/embedding-results.json": {
+      "bytes": 825180,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "inputs/72a812c21cb266b44cf17fd5db60541390a7391d0e10683ed5c17e836189b07e/embedding-results.json",
+      "sha256": "72a812c21cb266b44cf17fd5db60541390a7391d0e10683ed5c17e836189b07e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-distillation-limits-20261002/smoke-r2/results/paragraphs.json": {
+      "bytes": 652662,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "inputs/d8418379af64cdce826ae29f9ce9014248d164ab33da417b9585d0329c82dbef/paragraphs.json",
+      "sha256": "d8418379af64cdce826ae29f9ce9014248d164ab33da417b9585d0329c82dbef"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-distillation-limits-20261002/smoke-r2/results/source-curriculum-inputs.json": {
+      "bytes": 259448,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "inputs/259bf8130dfc55e7f732197f9435a3beeb1d96763c230791680d338991bdc4c1/source-curriculum-inputs.json",
+      "sha256": "259bf8130dfc55e7f732197f9435a3beeb1d96763c230791680d338991bdc4c1"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-distillation-limits-20261002/smoke-r2/results/source-curriculum.json": {
+      "bytes": 96930,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "inputs/1b64413ef84fa3563859eb65e70e8ec858f98184b83bba9f892a75a5629cf8cf/source-curriculum.json",
+      "sha256": "1b64413ef84fa3563859eb65e70e8ec858f98184b83bba9f892a75a5629cf8cf"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/independent-audit.json": {
+      "bytes": 459967,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/independent-audit.json",
+      "sha256": "d3b8bc78d2621724f7b83d4e09b92d398b63df47b75af6d54d81b18e93457918"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/independent_audit.py": {
+      "bytes": 34434,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/independent_audit.py",
+      "sha256": "bf16b0d13dbc9792ead46bcab431169a35a6c5eac76a43bdcc6dad0f2f572ca6"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/conditioning48-1729/last-attempt-state.json": {
+      "bytes": 1697237,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/conditioning48-1729/last-attempt-state.json",
+      "sha256": "08cf3e286d625b7ede7e0f7d8b2ab7a1679856b80f330177b760b5b7026d43f5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/conditioning48-1729/last-attempt/evaluation-source-shuffle.json": {
+      "bytes": 1676853,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/conditioning48-1729/last-attempt/evaluation-source-shuffle.json",
+      "sha256": "b8554c2319a66fedece77cc3045d21e7f6f298fe5719072267258a7eae05e2a7"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/conditioning48-1729/last-attempt/evaluation-training-source-shuffle.json": {
+      "bytes": 1671284,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/conditioning48-1729/last-attempt/evaluation-training-source-shuffle.json",
+      "sha256": "04619c944a94fc2af4d386271350dda32d2eef812edf52d417cbf10a01772b29"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/conditioning48-1729/last-attempt/evaluation-training.json": {
+      "bytes": 1657726,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/conditioning48-1729/last-attempt/evaluation-training.json",
+      "sha256": "1b2c981dff4b428828854e8fd6ed575a4d00b9bf6fa3f7dca1b8e42d47d37708"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/conditioning48-1729/last-attempt/evaluation-validation.json": {
+      "bytes": 1663049,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/conditioning48-1729/last-attempt/evaluation-validation.json",
+      "sha256": "2088654037ab3b32d66cb3965f02cc9c3a48f160d0b883f0eb4d9fb421f687fe"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/conditioning48-1729/last-attempt/evaluation-zero-condition.json": {
+      "bytes": 1698452,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/conditioning48-1729/last-attempt/evaluation-zero-condition.json",
+      "sha256": "6d4692f0c30bf3eae99467e8aec40e4802a9f82cfaf8cf6ae9b43f6028ba629d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/conditioning48-1729/selected-state.json": {
+      "bytes": 748236,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/conditioning48-1729/selected-state.json",
+      "sha256": "983b2aa62a0abde8891b980c4f6fe391f5ef20b92da3bdbba1d96675c05a7709"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/conditioning48-1729/selected/evaluation-source-shuffle.json": {
+      "bytes": 835588,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/conditioning48-1729/selected/evaluation-source-shuffle.json",
+      "sha256": "8b25c4f08e43091bf13c8e2e34ce4f724f026e95e229ac8614338ae6f9ae5149"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/conditioning48-1729/selected/evaluation-training-source-shuffle.json": {
+      "bytes": 832538,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/conditioning48-1729/selected/evaluation-training-source-shuffle.json",
+      "sha256": "9563f91ae88a2594ba8b53946d99366d52e7eca30282b81875e47f29ca8bdbb6"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/conditioning48-1729/selected/evaluation-training.json": {
+      "bytes": 818996,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/conditioning48-1729/selected/evaluation-training.json",
+      "sha256": "2b07d8f64a4e79f750a36862d754073d1657151e21134e215ce14e2b8e7ce3df"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/conditioning48-1729/selected/evaluation-validation.json": {
+      "bytes": 821795,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/conditioning48-1729/selected/evaluation-validation.json",
+      "sha256": "56952dd06898cc257a4bd1eaba2545d5337eb73ddc4a612602eaacbae185b842"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/conditioning48-1729/selected/evaluation-zero-condition.json": {
+      "bytes": 812459,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/conditioning48-1729/selected/evaluation-zero-condition.json",
+      "sha256": "bcfd8350de79ebd1ffdc32db1312b76964f3b9f1c0fb121e3f6162bad5423942"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/conditioning48-1729/training.json": {
+      "bytes": 2714381,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/conditioning48-1729/training.json",
+      "sha256": "e778af6a673f42df1e38cac3e446159d693ff1dbccd6141097d579ef7da63b5a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/conditioning48-2718/last-attempt-state.json": {
+      "bytes": 1698473,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/conditioning48-2718/last-attempt-state.json",
+      "sha256": "e7a16d806729f89ac260abe9e4200773713bcfc10e7caeb3c941941d2b2d14d0"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/conditioning48-2718/last-attempt/evaluation-source-shuffle.json": {
+      "bytes": 1645522,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/conditioning48-2718/last-attempt/evaluation-source-shuffle.json",
+      "sha256": "41b9694fd06a272bb92018a9790527a8d530e2a00b61f453ab739af1589b22bf"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/conditioning48-2718/last-attempt/evaluation-training-source-shuffle.json": {
+      "bytes": 1642514,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/conditioning48-2718/last-attempt/evaluation-training-source-shuffle.json",
+      "sha256": "57b31d108b6b7d8fae6080592dd6154cad49659df0a217d3c0d710346fad1dcf"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/conditioning48-2718/last-attempt/evaluation-training.json": {
+      "bytes": 1628943,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/conditioning48-2718/last-attempt/evaluation-training.json",
+      "sha256": "09ddb2bbd1455ea06b4326214a0ee9c575deb3bd765a6bed1506ea5a1e5e6e31"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/conditioning48-2718/last-attempt/evaluation-validation.json": {
+      "bytes": 1631734,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/conditioning48-2718/last-attempt/evaluation-validation.json",
+      "sha256": "9afad35c775914c4604bd8e3c46c05b47b55f6eb25a8d88d98f633abf5d6f991"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/conditioning48-2718/last-attempt/evaluation-zero-condition.json": {
+      "bytes": 1697129,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/conditioning48-2718/last-attempt/evaluation-zero-condition.json",
+      "sha256": "5d2d5f01f861feb7d0a4bc965b1ddad99a3a24f70aea72418d95a1f3d2ca10a1"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/conditioning48-2718/selected-state.json": {
+      "bytes": 748236,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/conditioning48-2718/selected-state.json",
+      "sha256": "dc29313f655e8e7c016dd34b931e6ff89ede5a5d712479db05879d24ba0e48e3"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/conditioning48-2718/selected/evaluation-source-shuffle.json": {
+      "bytes": 835586,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/conditioning48-2718/selected/evaluation-source-shuffle.json",
+      "sha256": "dcafda41cfa0acc4b7f76e9abf560ce4ae2f1bf5d1a1002a7434bcddfcedda60"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/conditioning48-2718/selected/evaluation-training-source-shuffle.json": {
+      "bytes": 832538,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/conditioning48-2718/selected/evaluation-training-source-shuffle.json",
+      "sha256": "fded4b1ddf1dc7dfbdd550265699b352d1c5142f2b90ef562e05b95038995ea7"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/conditioning48-2718/selected/evaluation-training.json": {
+      "bytes": 818995,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/conditioning48-2718/selected/evaluation-training.json",
+      "sha256": "3b40ee481a4183aef6179fe1bb6e82664bb2517339a10bea567ff129574e376d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/conditioning48-2718/selected/evaluation-validation.json": {
+      "bytes": 821795,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/conditioning48-2718/selected/evaluation-validation.json",
+      "sha256": "9c4f66e1177a0807ad27bc7dbadbc8a98f9f86b58368a14ad76cf15f07587d3b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/conditioning48-2718/selected/evaluation-zero-condition.json": {
+      "bytes": 812458,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/conditioning48-2718/selected/evaluation-zero-condition.json",
+      "sha256": "e89d63819e745d100a10ce4b9a594f913bba1e9f69728b3f4fd5d66e856c3ff6"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/conditioning48-2718/training.json": {
+      "bytes": 2712169,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/conditioning48-2718/training.json",
+      "sha256": "3360767ee801e73f27f98243fc17c85e72c851dfd342a288a20f7cda26d14826"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/projected384-1729/last-attempt-state.json": {
+      "bytes": 8747233,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/projected384-1729/last-attempt-state.json",
+      "sha256": "df5e0df3f04fd2e063c1171911f5310508a1b2e55b4737a681183249672cd2e5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/projected384-1729/last-attempt/evaluation-source-shuffle.json": {
+      "bytes": 1691793,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/projected384-1729/last-attempt/evaluation-source-shuffle.json",
+      "sha256": "588b71bf261427763d7ce61d193d5abe9c161bfa6bd92e859906b7203a5e4c3d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/projected384-1729/last-attempt/evaluation-training-source-shuffle.json": {
+      "bytes": 1688551,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/projected384-1729/last-attempt/evaluation-training-source-shuffle.json",
+      "sha256": "ffdecbb614340fa2cf5b369e05f2c917a9ecc0d9c22479ed0faf5dee485b34ff"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/projected384-1729/last-attempt/evaluation-training.json": {
+      "bytes": 1674984,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/projected384-1729/last-attempt/evaluation-training.json",
+      "sha256": "3cf2e7462c98287acf779cb89200dcdeb681eb813f7e22ac7bd9ecd6764807f9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/projected384-1729/last-attempt/evaluation-validation.json": {
+      "bytes": 1678065,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/projected384-1729/last-attempt/evaluation-validation.json",
+      "sha256": "2c62fa72e1bc4239f367cc52d9e1bd470e42f7a6992c5d34be9eedd0b413b1be"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/projected384-1729/last-attempt/evaluation-zero-condition.json": {
+      "bytes": 1689831,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/projected384-1729/last-attempt/evaluation-zero-condition.json",
+      "sha256": "bd8ec62479c2587d73163174e4b84a573b3de47c3193c1bcebd1c980d8264b9b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/projected384-1729/selected-state.json": {
+      "bytes": 2124478,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/projected384-1729/selected-state.json",
+      "sha256": "6c3e21d52ef57e34155f88ebbdcd3a02f455b22223fdfdbb8aa2d4798aafa730"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/projected384-1729/selected/evaluation-source-shuffle.json": {
+      "bytes": 835583,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/projected384-1729/selected/evaluation-source-shuffle.json",
+      "sha256": "c05b180581171068bcf4438df14a23d0663a2e476791fa1095c5f50eeba809d5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/projected384-1729/selected/evaluation-training-source-shuffle.json": {
+      "bytes": 832535,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/projected384-1729/selected/evaluation-training-source-shuffle.json",
+      "sha256": "b884954c9f1d30bac22788701a08d1c018dbbe37fcbd9a83c69025e249257951"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/projected384-1729/selected/evaluation-training.json": {
+      "bytes": 818993,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/projected384-1729/selected/evaluation-training.json",
+      "sha256": "2693c7496d014fcb002e7ccd53815e7f14ffa74457ad56e3fd286beb48021ebd"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/projected384-1729/selected/evaluation-validation.json": {
+      "bytes": 821793,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/projected384-1729/selected/evaluation-validation.json",
+      "sha256": "1936c858cbe6ebb5d0e39adc69ca02c2aedf115e85cd26af5be959395b23e7c9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/projected384-1729/selected/evaluation-zero-condition.json": {
+      "bytes": 812456,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/projected384-1729/selected/evaluation-zero-condition.json",
+      "sha256": "52f9ee3b09189ee314397afbc499195abc51db6e7007c23df478d359806c6fc7"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/projected384-1729/training.json": {
+      "bytes": 2732465,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/projected384-1729/training.json",
+      "sha256": "4b993c65710a51116c7e01908c70c7a9586088fcb4e3530960839a1738c19770"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/projected384-2718/last-attempt-state.json": {
+      "bytes": 8748951,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/projected384-2718/last-attempt-state.json",
+      "sha256": "523b89267eefbfcc0f39b41e4d6954e98447997255ea44a52f4f79317e06e056"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/projected384-2718/last-attempt/evaluation-source-shuffle.json": {
+      "bytes": 1740050,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/projected384-2718/last-attempt/evaluation-source-shuffle.json",
+      "sha256": "8d3c8eefdfaa69c6e82530bddd3d355a2bbbac5f678ba6c10e40acb3ab1042b3"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/projected384-2718/last-attempt/evaluation-training-source-shuffle.json": {
+      "bytes": 1732486,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/projected384-2718/last-attempt/evaluation-training-source-shuffle.json",
+      "sha256": "4cdc0c141d00028fb4eaab0ae54159bee90b121c4a5d5a6dba65a9e56b7e4d98"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/projected384-2718/last-attempt/evaluation-training.json": {
+      "bytes": 1718879,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/projected384-2718/last-attempt/evaluation-training.json",
+      "sha256": "ec6c810eed83476b0d5b6ec1a8d663b67c8ac955ac0ff7a21e52f49be7f36ab6"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/projected384-2718/last-attempt/evaluation-validation.json": {
+      "bytes": 1726270,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/projected384-2718/last-attempt/evaluation-validation.json",
+      "sha256": "5c1fa795fd1a4b42b78df8ec12d95c841581eff530f82846f6082676a3007412"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/projected384-2718/last-attempt/evaluation-zero-condition.json": {
+      "bytes": 1693961,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/projected384-2718/last-attempt/evaluation-zero-condition.json",
+      "sha256": "f3399eafdec3441dc06643eb799010a004b9015dd843259b8c0d10b0e441883f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/projected384-2718/selected-state.json": {
+      "bytes": 2124478,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/projected384-2718/selected-state.json",
+      "sha256": "bcb5e96b72cc8ae15b65e1127041962f25b6355f82ce21d84d054c1a73bcff96"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/projected384-2718/selected/evaluation-source-shuffle.json": {
+      "bytes": 835583,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/projected384-2718/selected/evaluation-source-shuffle.json",
+      "sha256": "390c8e553df70e6dae6fba5afb16715f55e7f3aef1ad6f1d8c04aeb463938519"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/projected384-2718/selected/evaluation-training-source-shuffle.json": {
+      "bytes": 832537,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/projected384-2718/selected/evaluation-training-source-shuffle.json",
+      "sha256": "7a89157bfd807e202bed055a4f45c5c17dbfc917ad3ecde39ee2e00563ba735e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/projected384-2718/selected/evaluation-training.json": {
+      "bytes": 818995,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/projected384-2718/selected/evaluation-training.json",
+      "sha256": "6110641968d8a7ed971f8b832d79c965ab602c6c1014705172a8e8f881f619f2"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/projected384-2718/selected/evaluation-validation.json": {
+      "bytes": 821795,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/projected384-2718/selected/evaluation-validation.json",
+      "sha256": "75094ff806ac33c5783a6f9039d99849eacb30986789f489ccccceb2ee208610"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/projected384-2718/selected/evaluation-zero-condition.json": {
+      "bytes": 812458,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/projected384-2718/selected/evaluation-zero-condition.json",
+      "sha256": "e707a11d51f68b0c2dda45ae4487de10340d6d276483d444fa399e521bf745f9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/projected384-2718/training.json": {
+      "bytes": 2738571,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/projected384-2718/training.json",
+      "sha256": "1b4753d14d401a005efa59cff4299eb3358e8aeb7f34d3560b9155d89e55f720"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-value-training-20261002/smoke-r1/results/summary.json": {
+      "bytes": 20736321,
+      "dependency_id": "source-value-training-491b15dd41b105e92817c6d2e0663983a0bb9f7e",
+      "kind": "archive_member",
+      "member": "validation/smoke-r1/results/summary.json",
+      "sha256": "b0b83d1305c667524a800cbaa3cdf5236fb1c89f4bc58b9680e5cbe44e3df366"
+    }
+  },
+  "roundtrip_ok": false,
+  "schema": "decoder-source-value-margins-archive/v1",
+  "source_semantics_verified": false,
+  "validated_producer_source_sha256": {
+    "ipfs_datasets_py/__init__.py": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9",
+    "ipfs_datasets_py/logic/TDFOL/__init__.py": "42c252ba4fb85301b649bc3afe497a2799d27460b9556e57c7398b5441ba13e8",
+    "ipfs_datasets_py/logic/TDFOL/compiler_repairs.py": "c0306a55184bc6baabf7528bf7a255604ff8c49d2c510afde13eae2e8108ff88",
+    "ipfs_datasets_py/logic/TDFOL/strategies/__init__.py": "96a6aae98c7d6ee877559b847f455f57e60a81c476468c61d77d6fde86b774b1",
+    "ipfs_datasets_py/logic/TDFOL/strategies/base.py": "3763cc86f14697a68cb7a38dab9c7e6a9d0160910b73ba1ea2e965cd89d6e905",
+    "ipfs_datasets_py/logic/TDFOL/strategies/cec_delegate.py": "ebaf1bde83b2c00d5b0028fa34f43c52e6e0628d19bb8ffeb1a6c1987b61a9ef",
+    "ipfs_datasets_py/logic/TDFOL/strategies/forward_chaining.py": "0c56b8663063aeb30c5bbbda045a3f723ab26fffe08e23b14f3c94e866392f09",
+    "ipfs_datasets_py/logic/TDFOL/strategies/modal_tableaux.py": "ffc1489b684e0630b7940b2ba688ddb99142f7fcce203e06fbfa55643826d1c4",
+    "ipfs_datasets_py/logic/TDFOL/strategies/strategy_selector.py": "5b7b71c5256dca709917fd6e8d55fd014d7ec0d4a216b56cff1b633b2143f501",
+    "ipfs_datasets_py/logic/TDFOL/tdfol_core.py": "67be350d1fb0422a64ab040349b2d51c4008fbeeb8b59a99b8901d681d7d71c7",
+    "ipfs_datasets_py/logic/TDFOL/tdfol_prover.py": "41fa83374a9e7b188255476710e778a056a3090ee1fdfe3b151caa6359855476",
+    "ipfs_datasets_py/logic/__init__.py": "f25a9702ddc282092dbae1bc1731afdcc35576c10745487dccedaa531ccc9e79",
+    "ipfs_datasets_py/logic/autoformal/__init__.py": "9fe9ca06f142b1af8a2bd5d5a89bd38ac79c1ac7f01a476a63160bb8c5b7bd03",
+    "ipfs_datasets_py/logic/autoformal/tree_pin.py": "587165942fb06ea9effc836b555e0ac0606c5876b013a374a1e76d25ee069e4d",
+    "ipfs_datasets_py/logic/common/__init__.py": "e574c74067e7059cc506b32c780bc0444de89c63b55dade3df00ae9fd563431e",
+    "ipfs_datasets_py/logic/common/bounded_cache.py": "29a450b5fc08c5577964774035717dc5d7be85c159cfd502fba5252c4ec9c9fa",
+    "ipfs_datasets_py/logic/common/converters.py": "f530c453775f2c1a4a2f8a26aa647df1f725be109078df258288eab33a427fde",
+    "ipfs_datasets_py/logic/common/errors.py": "10d21acd8d0fd6049297a1b36d10db1fcc09146095f1dabfe5a686b887f4b8cf",
+    "ipfs_datasets_py/logic/common/feature_detection.py": "a285d84f9b13ee3c2c54023e07ccf9da94ce93e6736362c1881421db9e509d76",
+    "ipfs_datasets_py/logic/common/proof_cache.py": "b68c36ff934ba6ee7a308162ee7035c78f4c522a5483e85e536b428db8485b36",
+    "ipfs_datasets_py/logic/common/utility_monitor.py": "ef23631a622dfd555cefcdf69793e78a7c64a115c7451aea4dfff5389b014985",
+    "ipfs_datasets_py/logic/common/validators.py": "e58dbba7d3f346545e2ff572928ed9c7bb9adc71b20e8cc8dc816a7fc060e0c7",
+    "ipfs_datasets_py/logic/deontic/__init__.py": "1eeb1a57e388c37415facf3989a26d3b960b176b4bf1e65eef66e106c1aadb4b",
+    "ipfs_datasets_py/logic/deontic/analyzer.py": "8953235974d062f968334106c952d0978cc31a58408206bb56c26da174f29d6c",
+    "ipfs_datasets_py/logic/deontic/compiler_repairs.py": "53ff5b4b6cf3303f46569f43e748b5d15a75b1895dbb4c4a054b541e9fc5569e",
+    "ipfs_datasets_py/logic/deontic/converter.py": "e1749ca0403f34834374b5089d78523f1866d53d3ec923137b6fb526fdffe7c8",
+    "ipfs_datasets_py/logic/deontic/decoder.py": "051a5e7a98ef2cf8a63326218cebeabcca2c528f6839a1a3cb11756ee7c1aab9",
+    "ipfs_datasets_py/logic/deontic/exports.py": "ac46bf1efa79925620199b56f6f1dbde34c92889a0a2a474cc6b9e408ea3c3de",
+    "ipfs_datasets_py/logic/deontic/formula_builder.py": "dc53e7c4875a2afa98e100177c0d70e224e1945048f18993333f72c313529109",
+    "ipfs_datasets_py/logic/deontic/graph.py": "5a595b05f5bec6d74f6c8c06129cc7f1a7860a2beff98d1f28b9fde6635bdfde",
+    "ipfs_datasets_py/logic/deontic/ir.py": "a6bafa2aa4b1e8d9c368d4c4354e56b924888d43eb1f817c11058767f17f3416",
+    "ipfs_datasets_py/logic/deontic/knowledge_base.py": "a6e59bf538caa19cfeff6e02aa5da0b964b83c73396d05e58c3830e39dd97d9a",
+    "ipfs_datasets_py/logic/deontic/legal_text_to_deontic.py": "abb138e7b51dbb071b9ab98865e3fb6c64dfd6a6cc5674a0853d523f00a7797a",
+    "ipfs_datasets_py/logic/deontic/metrics.py": "5a2f92bc24154e14d3d2e3b6e73dcc128e6183957b5832b9bc1d72e60f7370da",
+    "ipfs_datasets_py/logic/deontic/prover_syntax.py": "1946190c1d1ec8e8ea659c0d7c9a0a8da29f2f6b0aca8326193a95a57deaad31",
+    "ipfs_datasets_py/logic/deontic/support_map.py": "e48a537061611eee0cacff129839ce04992db838b86a3edbe8f422f1018fda84",
+    "ipfs_datasets_py/logic/deontic/utils/__init__.py": "6b3ede4588f4d18b84b6a06ebc774b8d3755627a0b5313147de7838503032f3c",
+    "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py": "71daafa62c800a10db3ea7ddc948997b2a119012e9444d5007bdbd3b67487822",
+    "ipfs_datasets_py/logic/formalization/__init__.py": "91c60c1dfbf9038b8271ae6b1495dbbaf0be8d6ce438524c33f4f7a586f17266",
+    "ipfs_datasets_py/logic/formalization/autoencoder/__init__.py": "82206d6ca08b8626b2afd37534679ac3ea001005f934ed211aa0f1f4eb81f073",
+    "ipfs_datasets_py/logic/formalization/autoencoder/decoder_cardinality_experiment.py": "44f1d91edb8f8cc8bafdc517ab450a003fece945d2e9a25bba933da2e9e12ac1",
+    "ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment.py": "b4252de4d9d890a0f493e43a1da15bcd09fd2e31e94b762a6adc6899132d42a8",
+    "ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment_v2.py": "0352c392a518c9ea6ff215c32e5ddd6345d776e2bb32f22fd137b5e34d93c6c6",
+    "ipfs_datasets_py/logic/formalization/autoencoder/decoder_gradient_replay.py": "b2fd4dfed5050b020afeda957d96857ad92f9343c6fcf3e3edaa36c8eca37811",
+    "ipfs_datasets_py/logic/formalization/autoencoder/decoder_prefix_diagnostics.py": "44ee361b1f1bc0ae7074537b88fd4ef735cbfd8729c4e4d4ae10bec1c4479d78",
+    "ipfs_datasets_py/logic/formalization/autoencoder/decoder_source_fidelity.py": "2f8d9a9722d1375582768e9502b9ca49af0f1961df115b49f2778b4f0e07fa25",
+    "ipfs_datasets_py/logic/formalization/autoencoder/decoder_source_slot_probe.py": "75a998fc26ee3ea20b51dd816d42f1ce9f73c682fee464ca11b096073ff03029",
+    "ipfs_datasets_py/logic/formalization/autoencoder/decoder_source_value_margins.py": "2afe60dfbbea71505846cc5da536fa1cd2c026802e0c315f43dc3e798cff1229",
+    "ipfs_datasets_py/logic/formalization/autoencoder/long_span_cardinality_training.py": "a24257b4b893bae3af9e01745789ab6957fb9d74eb23305b1eab43db7bf70ab9",
+    "ipfs_datasets_py/logic/formalization/autoencoder/long_span_count_exposure_training.py": "cb337e344d92dc8ed5bb0cd8c6f65fe01875b8c37bef1e616a2023a7be7db968",
+    "ipfs_datasets_py/logic/formalization/autoencoder/long_span_decoder_training.py": "e030596898619fc802424ba94f954224e18b5d2c8077488802621aa67a3ccdbe",
+    "ipfs_datasets_py/logic/formalization/autoencoder/long_span_gradient_trace_training.py": "6ae48fc1d12b5562c5516d04d52bf1b99f1fbe4aa626ff3e3fb8fb8d70a76b76",
+    "ipfs_datasets_py/logic/formalization/autoencoder/long_span_source_value_training.py": "fc701a43823082e29d2d511f2f0dd57d1cb4d451a47d00eb6f87596cef8fc207",
+    "ipfs_datasets_py/logic/formalization/autoencoder/long_span_transition_training.py": "366ae0de02382a682baa70de2faebd1f931d0b2df9f2961484ccdcf6be2404c5",
+    "ipfs_datasets_py/logic/formalization/autoencoder/source_length_curriculum.py": "aa9ef5661b3b571275e220c6bf562a8d3cb2f18b4cc7a02bd66d31c512fc5a9b",
+    "ipfs_datasets_py/logic/formalization/autoencoder/source_value_decoder_experiment.py": "dcc63a3bd10c1a699fbd0addfb44a04ffab8cbf6b4594164bb4ed824bdb5dbf1",
+    "ipfs_datasets_py/logic/formalization/autoencoder/source_value_freeze_experiment.py": "5583b0b046b7137e52f9a814801fb45dff87f20aa653b9076995f7fa63c10d16",
+    "ipfs_datasets_py/logic/legal_document.py": "b44785f720df1a60495bb7086a78fc00325a5d653a7e1782c0712fb7691454f2",
+    "ipfs_datasets_py/logic/legal_ir/__init__.py": "53ce51e56a292ea3210010fa17b352e9d40eb5b59cf15c5e732147000b40fee1",
+    "ipfs_datasets_py/logic/legal_ir/canonical_compiler.py": "9980c3699a2407d360e8a2feedab575a4d4f5b3462ddf0ed761143f22ef61ea5",
+    "ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b",
+    "ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py": "26b4e2e2d5d55b41ebae245b7d236bf1612c020a1d469df8bd747f83e982dfdc",
+    "ipfs_datasets_py/logic/types/__init__.py": "60359f47e39c12483d2ffa702d66b611ecba8451678d7a1f7e228e30e795402e",
+    "ipfs_datasets_py/logic/types/bridge_types.py": "5ec9c47e1d5c527f66a01ec0790335ff70d784e6d3e20cc2dd73e1bc647449ad",
+    "ipfs_datasets_py/logic/types/common_types.py": "0ad8f7b7e6f38540414c94dc9d6da6aba9665d4dee6283499d8a637a53dfc500",
+    "ipfs_datasets_py/logic/types/deontic_types.py": "6fa123ecf0afb1d3293736c24633043aeb3349a3b3f7728247bfd08ea8cafe94",
+    "ipfs_datasets_py/logic/types/fol_types.py": "d1debd330e7a3102a1580efcbc6e06b863ee8ca9d78b2e34a60cd98b5ba1e902",
+    "ipfs_datasets_py/logic/types/proof_types.py": "8c96df27865d86cd54ae242497e4d9ddeaf89c5cd7484718b521dccf123fcb97",
+    "ipfs_datasets_py/logic/types/translation_types.py": "5a0e4314692fdd4945bfd3c9b04d80e2fda86aa7f4b264f4c9c21964afe1343e",
+    "ipfs_datasets_py/optimizers/__init__.py": "a12bab3724da07be67b447719ace42fc1f480cb5635581f320a99a372f02f450",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py": "9d693fa576f00dc36899faad75ef3044c437e2bfec5c62306f7031236725bb0e",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_latent_formula.py": "ec5bdcd752d157c9fc0257a45551cfe9ce7be172af767e8ed769bf1bc8a31d36",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6",
+    "ipfs_datasets_py/router_deps.py": "56f66dfff183d9d0ee7977a314c49adbaa181e6fe0087c8f1c581a7d2973bf4c",
+    "ipfs_datasets_py/utils/__init__.py": "78f4cd7f8e14b4fff482c0c91ada5c49f8b9edf707bffd9cd58840b5503e66c2",
+    "ipfs_datasets_py/utils/anyio_compat.py": "75fe36e8ffb3f8cec2240aa3fd91385493555fba6d573dff1d3c1d6270b58530",
+    "ipfs_datasets_py/utils/cid_utils.py": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf",
+    "scripts/ops/autoencoder/benchmark_decoder_cardinality.py": "752831424653c5730cdb1f150bce9a7db705fff88f6583ff87bf990c23398107",
+    "scripts/ops/autoencoder/benchmark_decoder_count_exposure.py": "9ee88d87225ecdedc485882e3ba39a8edf9c8165a3979dd06af6f8a6ed27747a",
+    "scripts/ops/autoencoder/benchmark_decoder_gradient_trace.py": "c853b1218595fdc7505b103bf62e941b51dcf6024da603b30bb0b391a2d06178",
+    "scripts/ops/autoencoder/benchmark_decoder_prefix_diagnostics.py": "afa7dd06dc3101c52f3a9cde833563b7412b245b7a1097992193114e7798c480",
+    "scripts/ops/autoencoder/benchmark_decoder_source_fidelity.py": "4ab6d8b525a3edf0255e13936f74eb34fc56b2deb443f3b332466e9161fe92eb",
+    "scripts/ops/autoencoder/benchmark_decoder_source_slot_probe.py": "96c3cd461ad99a211ad75710f6b29987853c5d93a7374b1f46fac6e84c2109c7",
+    "scripts/ops/autoencoder/benchmark_decoder_source_value_freeze.py": "c86ae7be01c21594784aeb8322c6226f355d6224eda37ec907ed0ef7ff13fdcf",
+    "scripts/ops/autoencoder/benchmark_decoder_source_value_margins.py": "70a0600095fb758cb480687093c246a953e293e33b22bbd8b399c158c781ca24",
+    "scripts/ops/autoencoder/benchmark_decoder_source_value_training.py": "965ba8f7cd6a7259e5346c0ab3dcd054682fa5e1c99c27a8494a5521e3bc8209",
+    "scripts/ops/autoencoder/benchmark_decoder_transition_ramp.py": "eac1025d119e5e8a4a9aeaf40f496bd835075a78a9666d01e43df1c124fc5e42",
+    "scripts/ops/autoencoder/benchmark_long_span_decoder.py": "66f74d13b9982c2491d48f1bda5efde6f951a75b819cf43638aa50fe4540f269",
+    "scripts/ops/autoencoder/decoder_fidelity_replay.py": "72e40876252e9e889908d233e3a56f645f5bad1e711f5d5f87bbc2501f6e4acf"
+  }
+}

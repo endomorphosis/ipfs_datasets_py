@@ -64,6 +64,9 @@ REQUIRED_EXECUTABLE_IDS = {
     "proverif",
     "tamarin",
     "hyperltl_autohyper_mchyper",
+    "hyperltl",
+    "autohyper",
+    "mchyper",
     "vampire",
     "eprover",
     "hammer",
@@ -184,9 +187,6 @@ def test_catalog_enumerates_every_executable_matrix_id_and_reviewed_alias() -> N
         "tlc": "tla_tlc",
         "datalog-authorization": "datalog_secpal",
         "secpal-authorization": "datalog_secpal",
-        "hyperltl": "hyperltl_autohyper_mchyper",
-        "autohyper": "hyperltl_autohyper_mchyper",
-        "mchyper": "hyperltl_autohyper_mchyper",
         "e": "eprover",
         "coq": "rocq",
         "coqc": "rocq",
@@ -195,6 +195,12 @@ def test_catalog_enumerates_every_executable_matrix_id_and_reviewed_alias() -> N
         assert REVIEWED_EXECUTABLE_PROVIDER_ALIASES[alias] == canonical
         assert catalog.resolve(alias).provider_id == canonical
         assert catalog.reviewed_aliases[alias] == canonical
+
+    # Engine selectors are canonical entries; the legacy family remains separate.
+    for provider_id in ("hyperltl", "autohyper", "mchyper"):
+        assert provider_id not in REVIEWED_EXECUTABLE_PROVIDER_ALIASES
+        assert catalog.resolve(provider_id).provider_id == provider_id
+    assert catalog.resolve("hyperltl_autohyper_mchyper").provider_id == "hyperltl_autohyper_mchyper"
 
     # Advisory reviewed aliases.
     assert catalog.resolve("ergo_ai").provider_id == "ergoai"

@@ -1,0 +1,174 @@
+{
+  "schema": "gte-multilingual-migration-source-review/v1",
+  "review_kind": "read_only_planning_inspection",
+  "captured_at_utc": "2026-10-01T18:45:43.006240+00:00",
+  "user_planning_date": "2026-10-01",
+  "target_transfer_month": "2026-11",
+  "repository": {
+    "relative_workspace_path": "external/ipfs_datasets",
+    "head": "6bd6eaabd2d3dde46e664b7386efb134253eb928",
+    "uncommitted_changes_present": true,
+    "identity_scope": "listed_file_bytes_only_not_entire_tree_or_transitive_dependency_graph"
+  },
+  "files": [
+    {
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_384.py",
+      "bytes": 3468,
+      "sha256": "fb3a5aa8ec005e98a2c62dc1d7e3e807a75820fedc156a8080c1f18063d17da7"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/source_training_v2.py",
+      "bytes": 31851,
+      "sha256": "8de8096e895de9df08ccf5352dfd704806823296821d98b5badf08bb553a52e4"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/structured_source_384.py",
+      "bytes": 27328,
+      "sha256": "3f9ca9ce7b4cf2a2d10d6aeb1fae78543c468133d2fa0df9fcb32f63f89e90f7"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/grouped_source_training_384.py",
+      "bytes": 8595,
+      "sha256": "c6dda0f85937f7ece993cf0bc82aebc72144457507db218cf83f9c9b495994a4"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/complete_training.py",
+      "bytes": 9406,
+      "sha256": "3237d133cf9c67c616e6cc9420e263534dfc4ba4bc1c2b866f3948fdcdcd417a"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/checkpoint_hub.py",
+      "bytes": 12516,
+      "sha256": "c9f4979b629c56f61dae380d9f947aa288792ff9b4bf6fd8a1c40223888b1a7b"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/source_document.py",
+      "bytes": 17390,
+      "sha256": "ca14c73abe5116e076d71a496dd14b49402ed666d248672a7afc2d433b807191"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/security/checkpoint_migration.py",
+      "bytes": 4511,
+      "sha256": "8f773dedc39c50981638595f8cf2f21ae4673dd1b609bf79b5d87eaf549e4d48"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/security/security_cve_source_context.py",
+      "bytes": 30424,
+      "sha256": "515be9aa5209c3547be8ef3bef75b541c00073bab74eac0445002b8ed13e2318"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/formalization/coherent_spans.py",
+      "bytes": 18602,
+      "sha256": "96cf37e04d07694c36e271d7da899c755132acf4e17f31dd788d623951393101"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/formalization/token_windows.py",
+      "bytes": 23901,
+      "sha256": "d0c148f0214a43905edba78595c814d310c319c29a90c99b7a3f0c63036a0e38"
+    },
+    {
+      "path": "ipfs_datasets_py/ml/embeddings/window_boundaries.py",
+      "bytes": 16466,
+      "sha256": "8f9c3ba901768b5c24ea6a2ddbcd7c878b18051d736b4a436b9e3ac2009e49e2"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_latent_formula.py",
+      "bytes": 35427,
+      "sha256": "ec5bdcd752d157c9fc0257a45551cfe9ce7be172af767e8ed769bf1bc8a31d36"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/domain_384_autoencoder.py",
+      "bytes": 34679,
+      "sha256": "66c5ee320f9c7aacd3b246d0666c7fc3ee928e4679892e1e90c838e1b291dbc6"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py",
+      "bytes": 26219,
+      "sha256": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py",
+      "bytes": 16725,
+      "sha256": "27855f5ffd59ebc45444d5e37c18ff1569618084cd27b1503db112940051ffb0"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_receipt_set.py",
+      "bytes": 23050,
+      "sha256": "7ed4aeff1bec961690b31e2f2ea17975aa6523d947ce12a1c1ee24517bc1475c"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_runtime_registry.py",
+      "bytes": 36645,
+      "sha256": "e8f000712a553eb5b6ba13ad188bf21f57758952a1c7319da29e7265432bebf2"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_teacher_distillation.py",
+      "bytes": 19485,
+      "sha256": "adca358567c1520905c9bffec8166c01bfebe0dc6a8c63ad39940cb78ba43ff3"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_paired_text.py",
+      "bytes": 26736,
+      "sha256": "0097b0128e21bcf386380490ae39023c9a15a44111088fb913f9fab5c366c9a3"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_paired_copy.py",
+      "bytes": 28557,
+      "sha256": "bb23ea196d90e3fd8fc667599cf2904793f2f27c90f7ff82ba34aacc10c8f238"
+    },
+    {
+      "path": "docs/autoencoders/reconstruction_training.md",
+      "bytes": 36019,
+      "sha256": "a5c7777c8059505158ee15d339ee3e4994b0796b0fd479d89f7d4d2e89cfe7a8"
+    },
+    {
+      "path": "docs/autoencoders/multidomain_reconstruction_training.md",
+      "bytes": 46286,
+      "sha256": "8affa9c6bec971042e6085709a0f102fdd5efcf4ee38c7b3c4baa26ac57d5944"
+    },
+    {
+      "path": "docs/implementation/reports/source_corpus_delivery.md",
+      "bytes": 15025,
+      "sha256": "ac1589fdc8178d3400b273c67521ac2b2db459ca8098e6b4a1663fc1f23591f0"
+    }
+  ],
+  "upstream_metadata": [
+    {
+      "repository": "Alibaba-NLP/gte-multilingual-base",
+      "api_url": "https://huggingface.co/api/models/Alibaba-NLP/gte-multilingual-base",
+      "observed_revision": "9bbca17d9273fd0d03d5725c7a4b0f6b45142062",
+      "api_response_sha256": "3c636e97c151b3e83bd16c43c8bd283b2be231130613001bcfe13700df4561a8",
+      "last_modified": "2025-07-05T01:38:16.000Z"
+    },
+    {
+      "repository": "Alibaba-NLP/new-impl",
+      "api_url": "https://huggingface.co/api/models/Alibaba-NLP/new-impl",
+      "observed_revision": "40ced75c3017eb27626c9d4ea981bde21a2662f4",
+      "api_response_sha256": "b411d73999ce7c4d723b4e7423e988dc29783dbad6f40731a60d43aa22fe6d13",
+      "last_modified": "2024-08-11T02:13:35.000Z"
+    }
+  ],
+  "target_config": {
+    "url": "https://huggingface.co/Alibaba-NLP/gte-multilingual-base/resolve/9bbca17d9273fd0d03d5725c7a4b0f6b45142062/config.json",
+    "sha256": "711bdc81365fc25d30533cf05b9fdf588e5ba01f18540fbbb1307d787597a313",
+    "hidden_size": 768,
+    "max_position_embeddings": 8192,
+    "auto_map": {
+      "AutoConfig": "Alibaba-NLP/new-impl--configuration.NewConfig",
+      "AutoModelForMaskedLM": "Alibaba-NLP/new-impl--modeling.NewForMaskedLM",
+      "AutoModel": "Alibaba-NLP/new-impl--modeling.NewModel",
+      "AutoModelForMultipleChoice": "Alibaba-NLP/new-impl--modeling.NewForMultipleChoice",
+      "AutoModelForQuestionAnswering": "Alibaba-NLP/new-impl--modeling.NewForQuestionAnswering",
+      "AutoModelForSequenceClassification": "Alibaba-NLP/new-impl--modeling.NewForSequenceClassification",
+      "AutoModelForTokenClassification": "Alibaba-NLP/new-impl--modeling.NewForTokenClassification"
+    }
+  },
+  "limits": [
+    "No local multilingual model weights were downloaded or loaded",
+    "No training, inference, benchmark or semantic qualification was executed during this planning review",
+    "Existing diagnostic panels are exposed evidence, not a new independent evaluation",
+    "Observed remote revisions require asset/code verification before a production profile is admitted",
+    "Document thresholds are proposed targets rather than measured results",
+    "File hashes capture this actively changing checkout at review time"
+  ]
+}

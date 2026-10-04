@@ -1,0 +1,428 @@
+{
+  "canary_prediction_repair_performed": false,
+  "canonical_intent_unchanged": true,
+  "checkpoint_bytes_unchanged": true,
+  "checkpoint_path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/security_ir/augmented-0-checkpoint.json",
+  "checkpoint_sha256": "be2ec82a1d2a71171d86c3ffee3f9023a884df13302c33879b38f401f34ff843",
+  "completion_authority": false,
+  "device_observation": {
+    "cli_exit_code": 0,
+    "cuda_available": true,
+    "elapsed_seconds": 6.873279608087614,
+    "embedding_helper_sha256": "fb3a5aa8ec005e98a2c62dc1d7e3e807a75820fedc156a8080c1f18063d17da7",
+    "gpu_name": "NVIDIA GB10",
+    "model_substitutions": false,
+    "observation_scope": "read-only inspection of encoder retained by the actual supervisor CLI invocation",
+    "retained_encoder_models": [
+      {
+        "cache_key": [
+          2205973,
+          "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/snapshots/17e1f347d17fe144873b1201da91788898c639cd",
+          "cuda:0"
+        ],
+        "embedding_dimension": 384,
+        "parameter_devices": [
+          "cuda:0"
+        ],
+        "parameter_dtypes": [
+          "torch.float32"
+        ]
+      }
+    ],
+    "source_executed": false
+  },
+  "download_calls": 0,
+  "ducklake_projection": {
+    "authoritative": false,
+    "completion_authority": false,
+    "status": "projected",
+    "stored_bindings": 0,
+    "stored_catalogs": 2,
+    "stored_links": 2
+  },
+  "embedding_views_reused": 2,
+  "event_watermark_after": 4,
+  "event_watermark_before": 4,
+  "execution_authority": false,
+  "input_view": "guarded_ast_normalized",
+  "lake_execution": {
+    "backend_executed": true,
+    "command": [
+      "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+      "build",
+      "SecuritySourcePrograms"
+    ],
+    "executable_sha256": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+    "input_files_sha256": {
+      "SecuritySourcePrograms.lean": "eaa0488aa90a5ae2f22d5a7cb506ed2e913211fbebdf427f7588fce58028c376",
+      "lakefile.toml": "6a8c32403c919f8307bcec185866e40e6b9f7fd598ddc487e5a60dbd292ff6c5",
+      "lean-toolchain": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b"
+    },
+    "output_truncated": false,
+    "returncode": 0,
+    "status": "passed",
+    "stderr": "info: native_family_securitysourceprograms: no previous manifest, creating one from scratch\ninfo: toolchain not updated; already up-to-date\n",
+    "stdout": "\u2714 [2/3] Built SecuritySourcePrograms (670ms)\nBuild completed successfully (3 jobs).\n",
+    "timed_out": false,
+    "toolchain": "leanprover/lean4:v4.34.1",
+    "workspace_limit_exceeded": false
+  },
+  "lake_status": "passed",
+  "learned_head_sha256": "8b3a6746c800a1d3b2ceae20775006236cbdab40f3cb3c710f10ab3bf4626f0f",
+  "learned_projection_sha256": "4e90ec5a3ff3978d3f6d40fb366ea01f2a056fe6c59b3fddcf7c50f66366afd7",
+  "limitations": [
+    "Lake checks the emitted native definitions and their types, not Python semantic equivalence or security correctness.",
+    "Opt-in candidate advice is preserved as a supervisor sidecar; it is not promoted into proof admission or task completion.",
+    "Only the configured local checkpoint is consumed; no model publication or default promotion is performed.",
+    "This explicit hybrid AST-normalized input contract is not a raw-text neural reconstruction quality result."
+  ],
+  "mutation_authority": false,
+  "normalization_profile": "guarded-source-normalization-384/v1",
+  "normalization_status_counts": {
+    "normalized": 5
+  },
+  "permitted_source_bytes_unchanged": true,
+  "plan_projection_cid_after": "baguqeerak3drhyb264db62ouiahiqhsgyzyurd5wkncajymnzamt5heupz3a",
+  "plan_projection_cid_before": "baguqeerak3drhyb264db62ouiahiqhsgyzyurd5wkncajymnzamt5heupz3a",
+  "primary_lake_passed": 4,
+  "primary_source_qualified": 4,
+  "proof_authority": false,
+  "provider_calls": 0,
+  "raw_comparison": {
+    "normalized_canary_decoded_operator": "==",
+    "normalized_canary_source_contract": "qualified",
+    "normalized_primary_qualified": 4,
+    "raw_canary_decoded_operator": "!=",
+    "raw_canary_source_contract": "mismatch",
+    "raw_primary_qualified": 4,
+    "same_checkpoint_sha256": true,
+    "same_source_bytes": true,
+    "summary_path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/supervisor-smoke-01/summary.json",
+    "summary_sha256": "5a059660612d9c91bd755af2ff06531fb4cf0b3af1b178cf22d75af151ff57e3"
+  },
+  "raw_decoder_quality_metric": false,
+  "rows": [
+    {
+      "candidate_sha256": "5147e45a0cd9f862614ef00b7071de6e6775f3278e403bf14835e903f3f08f2a",
+      "decoded_operator": "==",
+      "decoded_type": "boolean",
+      "inference_id": "input-0",
+      "lake_status": "passed",
+      "path": "previously_failed_canary.py",
+      "source_contract_reason": null,
+      "source_contract_status": "qualified",
+      "source_normalization": {
+        "assumptions": [
+          "The annotation name int denotes exact built-in Python integers; annotations do not enforce runtime types.",
+          "The mathematical integer model excludes resource exhaustion and concurrent environment changes.",
+          "Native effects and purity retain the source adapter's conservative classification."
+        ],
+        "ast_used": true,
+        "completion_authority": false,
+        "execution_authority": false,
+        "hybrid_profile": "guarded-source-normalization-384/v1",
+        "input_view": "guarded_ast_normalized",
+        "normalization_applied": true,
+        "normalized_source_sha256": "7ae975f940cbdb561dd62fc6fc6e8f476e6bcdf8cfa6c51d1273cc129a12c11f",
+        "normalized_source_text": "def assess(capacity: int, threshold: int) -> bool:\n    return capacity == threshold\n",
+        "original_source_required_for_qualification": true,
+        "original_source_sha256": "61f2d0ef942cc5684363e452308196db64c25ff73d49c8f58202cd8a5baf2f10",
+        "prediction_repair_performed": false,
+        "proof_authority": false,
+        "reason": null,
+        "schema": "security-source-normalization-384/v1",
+        "security_specification_inferred": false,
+        "signature_preserved": true,
+        "source_executed": false,
+        "source_semantics_verified": false,
+        "source_signature": {
+          "function_name": "assess",
+          "native_operator": "eq",
+          "operator": "==",
+          "ordered_operands": [
+            "capacity",
+            "threshold"
+          ],
+          "parameters": [
+            {
+              "annotation": "int",
+              "name": "capacity"
+            },
+            {
+              "annotation": "int",
+              "name": "threshold"
+            }
+          ],
+          "result_type": "boolean",
+          "return_annotation": "bool"
+        },
+        "status": "normalized",
+        "target_access": false,
+        "target_dependent_normalization": false,
+        "temporary_eliminated": true,
+        "whole_program_semantics_verified": false
+      },
+      "source_sha256": "61f2d0ef942cc5684363e452308196db64c25ff73d49c8f58202cd8a5baf2f10"
+    },
+    {
+      "candidate_sha256": "5147e45a0cd9f862614ef00b7071de6e6775f3278e403bf14835e903f3f08f2a",
+      "decoded_operator": "==",
+      "decoded_type": "boolean",
+      "inference_id": "input-1",
+      "lake_status": "passed",
+      "path": "primary_boolean_direct.py",
+      "source_contract_reason": null,
+      "source_contract_status": "qualified",
+      "source_normalization": {
+        "assumptions": [
+          "The annotation name int denotes exact built-in Python integers; annotations do not enforce runtime types.",
+          "The mathematical integer model excludes resource exhaustion and concurrent environment changes.",
+          "Native effects and purity retain the source adapter's conservative classification."
+        ],
+        "ast_used": true,
+        "completion_authority": false,
+        "execution_authority": false,
+        "hybrid_profile": "guarded-source-normalization-384/v1",
+        "input_view": "guarded_ast_normalized",
+        "normalization_applied": false,
+        "normalized_source_sha256": "2652bfb02b52be9d648215edf866d29cfba986de0659144b4d68293b864a9140",
+        "normalized_source_text": "def derive(capacity: int, threshold: int) -> bool:\n    return capacity == threshold\n",
+        "original_source_required_for_qualification": true,
+        "original_source_sha256": "2652bfb02b52be9d648215edf866d29cfba986de0659144b4d68293b864a9140",
+        "prediction_repair_performed": false,
+        "proof_authority": false,
+        "reason": null,
+        "schema": "security-source-normalization-384/v1",
+        "security_specification_inferred": false,
+        "signature_preserved": true,
+        "source_executed": false,
+        "source_semantics_verified": false,
+        "source_signature": {
+          "function_name": "derive",
+          "native_operator": "eq",
+          "operator": "==",
+          "ordered_operands": [
+            "capacity",
+            "threshold"
+          ],
+          "parameters": [
+            {
+              "annotation": "int",
+              "name": "capacity"
+            },
+            {
+              "annotation": "int",
+              "name": "threshold"
+            }
+          ],
+          "result_type": "boolean",
+          "return_annotation": "bool"
+        },
+        "status": "normalized",
+        "target_access": false,
+        "target_dependent_normalization": false,
+        "temporary_eliminated": false,
+        "whole_program_semantics_verified": false
+      },
+      "source_sha256": "2652bfb02b52be9d648215edf866d29cfba986de0659144b4d68293b864a9140"
+    },
+    {
+      "candidate_sha256": "5147e45a0cd9f862614ef00b7071de6e6775f3278e403bf14835e903f3f08f2a",
+      "decoded_operator": "==",
+      "decoded_type": "boolean",
+      "inference_id": "input-2",
+      "lake_status": "passed",
+      "path": "primary_boolean_temporary.py",
+      "source_contract_reason": null,
+      "source_contract_status": "qualified",
+      "source_normalization": {
+        "assumptions": [
+          "The annotation name int denotes exact built-in Python integers; annotations do not enforce runtime types.",
+          "The mathematical integer model excludes resource exhaustion and concurrent environment changes.",
+          "Native effects and purity retain the source adapter's conservative classification."
+        ],
+        "ast_used": true,
+        "completion_authority": false,
+        "execution_authority": false,
+        "hybrid_profile": "guarded-source-normalization-384/v1",
+        "input_view": "guarded_ast_normalized",
+        "normalization_applied": true,
+        "normalized_source_sha256": "2652bfb02b52be9d648215edf866d29cfba986de0659144b4d68293b864a9140",
+        "normalized_source_text": "def derive(capacity: int, threshold: int) -> bool:\n    return capacity == threshold\n",
+        "original_source_required_for_qualification": true,
+        "original_source_sha256": "b77e1c73e7d04c5a506a0301c18dcd855cc60f0db962482edc8dde97b8e1041e",
+        "prediction_repair_performed": false,
+        "proof_authority": false,
+        "reason": null,
+        "schema": "security-source-normalization-384/v1",
+        "security_specification_inferred": false,
+        "signature_preserved": true,
+        "source_executed": false,
+        "source_semantics_verified": false,
+        "source_signature": {
+          "function_name": "derive",
+          "native_operator": "eq",
+          "operator": "==",
+          "ordered_operands": [
+            "capacity",
+            "threshold"
+          ],
+          "parameters": [
+            {
+              "annotation": "int",
+              "name": "capacity"
+            },
+            {
+              "annotation": "int",
+              "name": "threshold"
+            }
+          ],
+          "result_type": "boolean",
+          "return_annotation": "bool"
+        },
+        "status": "normalized",
+        "target_access": false,
+        "target_dependent_normalization": false,
+        "temporary_eliminated": true,
+        "whole_program_semantics_verified": false
+      },
+      "source_sha256": "b77e1c73e7d04c5a506a0301c18dcd855cc60f0db962482edc8dde97b8e1041e"
+    },
+    {
+      "candidate_sha256": "c4b486aa76a253a49c24b1bc6350694c04ef4d00bf73c86782c1b1c5dcd75237",
+      "decoded_operator": "+",
+      "decoded_type": "integer",
+      "inference_id": "input-3",
+      "lake_status": "passed",
+      "path": "primary_integer_direct.py",
+      "source_contract_reason": null,
+      "source_contract_status": "qualified",
+      "source_normalization": {
+        "assumptions": [
+          "The annotation name int denotes exact built-in Python integers; annotations do not enforce runtime types.",
+          "The mathematical integer model excludes resource exhaustion and concurrent environment changes.",
+          "Native effects and purity retain the source adapter's conservative classification."
+        ],
+        "ast_used": true,
+        "completion_authority": false,
+        "execution_authority": false,
+        "hybrid_profile": "guarded-source-normalization-384/v1",
+        "input_view": "guarded_ast_normalized",
+        "normalization_applied": false,
+        "normalized_source_sha256": "2cb37012bd8780e9d0b640e1f094e7f1b203c0246fa54f4d9c525d9dc295db84",
+        "normalized_source_text": "def derive(volume: int, threshold: int) -> int:\n    return volume + threshold\n",
+        "original_source_required_for_qualification": true,
+        "original_source_sha256": "2cb37012bd8780e9d0b640e1f094e7f1b203c0246fa54f4d9c525d9dc295db84",
+        "prediction_repair_performed": false,
+        "proof_authority": false,
+        "reason": null,
+        "schema": "security-source-normalization-384/v1",
+        "security_specification_inferred": false,
+        "signature_preserved": true,
+        "source_executed": false,
+        "source_semantics_verified": false,
+        "source_signature": {
+          "function_name": "derive",
+          "native_operator": "add",
+          "operator": "+",
+          "ordered_operands": [
+            "volume",
+            "threshold"
+          ],
+          "parameters": [
+            {
+              "annotation": "int",
+              "name": "volume"
+            },
+            {
+              "annotation": "int",
+              "name": "threshold"
+            }
+          ],
+          "result_type": "integer",
+          "return_annotation": "int"
+        },
+        "status": "normalized",
+        "target_access": false,
+        "target_dependent_normalization": false,
+        "temporary_eliminated": false,
+        "whole_program_semantics_verified": false
+      },
+      "source_sha256": "2cb37012bd8780e9d0b640e1f094e7f1b203c0246fa54f4d9c525d9dc295db84"
+    },
+    {
+      "candidate_sha256": "c4b486aa76a253a49c24b1bc6350694c04ef4d00bf73c86782c1b1c5dcd75237",
+      "decoded_operator": "+",
+      "decoded_type": "integer",
+      "inference_id": "input-4",
+      "lake_status": "passed",
+      "path": "primary_integer_temporary.py",
+      "source_contract_reason": null,
+      "source_contract_status": "qualified",
+      "source_normalization": {
+        "assumptions": [
+          "The annotation name int denotes exact built-in Python integers; annotations do not enforce runtime types.",
+          "The mathematical integer model excludes resource exhaustion and concurrent environment changes.",
+          "Native effects and purity retain the source adapter's conservative classification."
+        ],
+        "ast_used": true,
+        "completion_authority": false,
+        "execution_authority": false,
+        "hybrid_profile": "guarded-source-normalization-384/v1",
+        "input_view": "guarded_ast_normalized",
+        "normalization_applied": true,
+        "normalized_source_sha256": "2cb37012bd8780e9d0b640e1f094e7f1b203c0246fa54f4d9c525d9dc295db84",
+        "normalized_source_text": "def derive(volume: int, threshold: int) -> int:\n    return volume + threshold\n",
+        "original_source_required_for_qualification": true,
+        "original_source_sha256": "c7f3859a7956841b79109bf6386727571cb876bade1070542351eaf40130e21d",
+        "prediction_repair_performed": false,
+        "proof_authority": false,
+        "reason": null,
+        "schema": "security-source-normalization-384/v1",
+        "security_specification_inferred": false,
+        "signature_preserved": true,
+        "source_executed": false,
+        "source_semantics_verified": false,
+        "source_signature": {
+          "function_name": "derive",
+          "native_operator": "add",
+          "operator": "+",
+          "ordered_operands": [
+            "volume",
+            "threshold"
+          ],
+          "parameters": [
+            {
+              "annotation": "int",
+              "name": "volume"
+            },
+            {
+              "annotation": "int",
+              "name": "threshold"
+            }
+          ],
+          "result_type": "integer",
+          "return_annotation": "int"
+        },
+        "status": "normalized",
+        "target_access": false,
+        "target_dependent_normalization": false,
+        "temporary_eliminated": true,
+        "whole_program_semantics_verified": false
+      },
+      "source_sha256": "c7f3859a7956841b79109bf6386727571cb876bade1070542351eaf40130e21d"
+    }
+  ],
+  "schema": "security-source-supervisor-live-smoke/v2",
+  "scope": "Actual supervisor prepare_task_context CLI, local checkpoint, CUDA embeddings, source qualification, native Lake",
+  "security_specification_inferred": false,
+  "semantic_context_capsules": 10,
+  "source_count": 5,
+  "source_executed": false,
+  "source_qualified_count": 5,
+  "source_selection": "Four previously evaluated primary rows and one previously failed canary; integration smoke, not a new benchmark score",
+  "source_semantics_verified": false,
+  "status": "passed",
+  "training_steps": 0,
+  "unique_embedding_views": 3
+}

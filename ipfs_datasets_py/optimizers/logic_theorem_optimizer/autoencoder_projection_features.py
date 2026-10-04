@@ -475,7 +475,13 @@ def register_feature_candidate(registry, contract, space, result, directory, *, 
         parent = registry.get_version(parent_version_id)
         _require(parent['variant_id'] == contract.variant_id, 'parent variant mismatch')
         registry.verify_artifact(parent['artifact'])
-        saved = json.loads(registry.artifact_path(parent['artifact']).read_bytes())
+        with registry.artifact_path(parent['artifact']).open('rb') as stream:
+            parent_raw = stream.read(32 * 1024 * 1024 + 1)
+        _require(len(parent_raw) <= 32 * 1024 * 1024, 'parent exceeds checkpoint bound')
+        _require(len(parent_raw) == parent['artifact']['bytes'] and
+                 hashlib.sha256(parent_raw).hexdigest() == parent['artifact']['sha256'],
+                 'parent artifact changed during candidate registration')
+        saved = json.loads(parent_raw)
         _require(digest(saved['state']) == result['report']['base_state_sha256'], 'candidate numerical parent differs from registry parent')
     else:
         _require(result['report']['base_state_sha256'] is None, 'resumed candidate requires its exact registry parent')

@@ -261,12 +261,12 @@ def _install_synthetic_upstream(
             _executable(cwd / "LTL_SAT_solver" / "aalta", b"\x7fELF-aalta")
             _executable(cwd / "LTL_SAT_solver" / "pltl", b"\x7fELF-pltl")
         elif tool_id == hp.TOOL_AUTOHYPER:
-            if "restore" in argv:
-                (cwd / "packages.lock.json").write_text(
+            if "-target:Restore" in argv:
+                (cwd / "src" / "AutoHyper" / "packages.lock.json").write_text(
                     '{"version": 1, "dependencies": {}}\n', encoding="utf-8"
                 )
-            if "build" in argv:
-                _executable(cwd.parent.parent / "app" / "AutoHyper", b"\x7fELF-autohyper")
+            if "-target:Build" in argv:
+                _executable(cwd / "app" / "AutoHyper", b"\x7fELF-autohyper")
         else:
             _executable(cwd / "Main", b"\x7fELF-mchyper-kernel")
 
@@ -346,7 +346,10 @@ def test_vendor_install_preserves_explicit_dependency_blockers(
 
     assert receipt.status == "blocked"
     assert receipt.block_reasons == (reason,)
-    assert not install_root.exists()
+    # Admission to the transaction creates only its persistent ownership lock;
+    # dependency blockers must still precede any download or install payload.
+    assert {path.relative_to(install_root).parts[0] for path in install_root.rglob("*")} == {".install-locks"}
+    assert len(list((install_root / ".install-locks").iterdir())) == 1
 
 
 @pytest.mark.parametrize("tool_id", hp.EXTERNAL_TOOLS)

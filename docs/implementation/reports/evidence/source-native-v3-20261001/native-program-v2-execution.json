@@ -1,0 +1,139 @@
+{
+  "checkpoint_freeze_preserved": true,
+  "executions": {
+    "canary": {
+      "all_candidates_compiled": false,
+      "assumptions": [
+        "Explicit int annotations are input assumptions, not runtime enforcement.",
+        "Integer arithmetic uses mathematical unbounded Int.",
+        "A successful build checks definitions/types; it does not prove a security specification."
+      ],
+      "backend_executed": true,
+      "count": 60,
+      "execution": {
+        "backend_executed": true,
+        "command": [
+          "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+          "build",
+          "SecuritySourcePrograms"
+        ],
+        "executable_sha256": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+        "input_files_sha256": {
+          "SecuritySourcePrograms.lean": "641556802baae4fcf9447c2c4b91008cfd23f96a649bf68b30f02c398953d992",
+          "lakefile.toml": "6a8c32403c919f8307bcec185866e40e6b9f7fd598ddc487e5a60dbd292ff6c5",
+          "lean-toolchain": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b"
+        },
+        "output_truncated": false,
+        "returncode": 0,
+        "status": "passed",
+        "stderr": "info: native_family_securitysourceprograms: no previous manifest, creating one from scratch\ninfo: toolchain not updated; already up-to-date\n",
+        "stdout": "\u2714 [2/3] Built SecuritySourcePrograms (3.6s)\nBuild completed successfully (3 jobs).\n",
+        "timed_out": false,
+        "toolchain": "leanprover/lean4:v4.34.1",
+        "workspace_limit_exceeded": false
+      },
+      "lean_source_sha256": "641556802baae4fcf9447c2c4b91008cfd23f96a649bf68b30f02c398953d992",
+      "original_receipt": {
+        "path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/native-program-v2-01/canary-lake/receipt.json",
+        "sha256": "c272a447812cc7136f5183e7a6f117214db3cf350d1aa8cecd9422709dc35364"
+      },
+      "proof_authority": false,
+      "scope": "bounded native operational definitions and metadata declarations, not Python equivalence or security correctness",
+      "source_semantics_verified": false,
+      "status": "partial",
+      "supported_count": 39,
+      "tool_binary_sha256": {
+        "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+        "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean": "79fb1d26fa5a39385d59fdc48a711a14b0710ca6480271acce99b4d177cea085"
+      },
+      "tool_pin_scope": "native Lake and Lean binaries, not all toolchain libraries"
+    },
+    "test": {
+      "all_candidates_compiled": true,
+      "assumptions": [
+        "Explicit int annotations are input assumptions, not runtime enforcement.",
+        "Integer arithmetic uses mathematical unbounded Int.",
+        "A successful build checks definitions/types; it does not prove a security specification."
+      ],
+      "backend_executed": true,
+      "count": 120,
+      "execution": {
+        "backend_executed": true,
+        "command": [
+          "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+          "build",
+          "SecuritySourcePrograms"
+        ],
+        "executable_sha256": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+        "input_files_sha256": {
+          "SecuritySourcePrograms.lean": "693f132adbffb1b375754f9f37d574d0d8f1b0b1bd5659a3708efee68f6fd0b7",
+          "lakefile.toml": "6a8c32403c919f8307bcec185866e40e6b9f7fd598ddc487e5a60dbd292ff6c5",
+          "lean-toolchain": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b"
+        },
+        "output_truncated": false,
+        "returncode": 0,
+        "status": "passed",
+        "stderr": "info: native_family_securitysourceprograms: no previous manifest, creating one from scratch\ninfo: toolchain not updated; already up-to-date\n",
+        "stdout": "\u2714 [2/3] Built SecuritySourcePrograms (12s)\nBuild completed successfully (3 jobs).\n",
+        "timed_out": false,
+        "toolchain": "leanprover/lean4:v4.34.1",
+        "workspace_limit_exceeded": false
+      },
+      "lean_source_sha256": "693f132adbffb1b375754f9f37d574d0d8f1b0b1bd5659a3708efee68f6fd0b7",
+      "original_receipt": {
+        "path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/native-program-v2-01/test-lake/receipt.json",
+        "sha256": "bd2a22ef935571c8d70b2310208c2df171ae7116010c59b91752bf2666975efa"
+      },
+      "proof_authority": false,
+      "scope": "bounded native operational definitions and metadata declarations, not Python equivalence or security correctness",
+      "source_semantics_verified": false,
+      "status": "passed",
+      "supported_count": 120,
+      "tool_binary_sha256": {
+        "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+        "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean": "79fb1d26fa5a39385d59fdc48a711a14b0710ca6480271acce99b4d177cea085"
+      },
+      "tool_pin_scope": "native Lake and Lean binaries, not all toolchain libraries"
+    }
+  },
+  "passed_tests": 241,
+  "producer_and_input_hashes_rechecked": true,
+  "proof_authority": false,
+  "publication_performed": false,
+  "replay_report_sha256": "b1ac19fa9637111174e00fc959ba5da9b373b0c26a0a66ad680cf9d3adff8c44",
+  "schema": "source-bound-program-384-execution-evidence/v2",
+  "scope": "Native Int/Bool definitions and closed metadata; no Python-equivalence or security-specification proof",
+  "source_semantics_verified": false,
+  "training_performed": false,
+  "validation": [
+    {
+      "errors": 0,
+      "failures": 0,
+      "files": [
+        "tests.unit.logic.formalization.autoencoder.test_native_program_lean",
+        "tests.unit.logic.formalization.autoencoder.test_native_program_lean_v2",
+        "tests.unit.logic.formalization.autoencoder.test_security_source_program_binding_384",
+        "tests.unit.logic.formalization.autoencoder.test_security_source_program_binding_384_v2",
+        "tests.unit.logic.formalization.autoencoder.test_source_program_lake_384",
+        "tests.unit.logic.formalization.autoencoder.test_source_program_runtime_384",
+        "tests.unit.logic.formalization.autoencoder.test_source_qualification_api_384"
+      ],
+      "path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/native-program-v2-01/validation.xml",
+      "sha256": "f2f7284f31e4b8f78830ecbc9772010323e78d1a0aa77b5aa6bbf41ec8038a77",
+      "skipped": 0,
+      "tests": 199
+    },
+    {
+      "errors": 0,
+      "failures": 0,
+      "files": [
+        "tests.unit.logic.formalization.autoencoder.test_source_embeddings_384_device",
+        "tests.unit.logic.formalization.autoencoder.test_structured_source_384"
+      ],
+      "path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/native-program-v2-01/numerical-validation.xml",
+      "sha256": "4ef468e351eb36da94ee753768e57509515cffa1eec83153b9927fa5307b8988",
+      "skipped": 0,
+      "tests": 42
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "comparison.json": {
+    "sha256": "78f14bb9b9ff73d0791b674d73d72d210f6cee008db71996c9e7a0231cc87412",
+    "source_path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/run-02/report.json"
+  },
+  "freeze.json": {
+    "sha256": "3e22e90f1e8e0b94f271b8ae667e0a095ce5f6641f0f0140f2dba1e05fa0a2ff",
+    "source_path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/run-02/freeze.json"
+  },
+  "legacy-regression.json": {
+    "sha256": "1dbd1b46eac39dc28faaea188540936a6dc67f248e0494b26ec4eeda68a8d53e",
+    "source_path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/legacy-regression-01/report.json"
+  },
+  "plan.json": {
+    "sha256": "05358882f2ce24b9ebaa5a470e312667975b0c02c4bac392ef8f892199a4c932",
+    "source_path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/run-02/plan.json"
+  },
+  "producer-snapshots.json": {
+    "sha256": "f2cf41c730655627f9e061098521d812ed34cdb0b4f76ef9c5104c1f1bd969d9",
+    "source_path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/producer-snapshots/manifest.json"
+  },
+  "reference-equivalence.json": {
+    "sha256": "a1d5d690d6dcb28796733006fae8c250ffafa2ad4528c97971ba8bce0708cd0b",
+    "source_path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/run-02/reference-equivalence.json"
+  },
+  "supervisor-normalized.json": {
+    "sha256": "60c38e07c57ef03ee9ece5445adab54f6594b9858ebfc4d5420c175907f58b08",
+    "source_path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/supervisor-normalized-smoke-01/summary.json"
+  },
+  "supervisor-raw.json": {
+    "sha256": "5a059660612d9c91bd755af2ff06531fb4cf0b3af1b178cf22d75af151ff57e3",
+    "source_path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/supervisor-smoke-01/summary.json"
+  },
+  "supervisor-validation.json": {
+    "sha256": "f7569bdac660ffdc120671c7b8f6e454c36931d0e95c07709167e168360dc075",
+    "source_path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/supervisor-normalized-smoke-01/test-receipt.json"
+  },
+  "throughput.json": {
+    "sha256": "4c06c01468a323325ec7163cf6a1e9946f78fd28d1120d58bc35bed0190fda7d",
+    "source_path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/throughput-followup-01/receipt.json"
+  }
+}

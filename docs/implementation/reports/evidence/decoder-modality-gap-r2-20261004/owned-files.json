@@ -1,0 +1,17 @@
+[
+  "ipfs_datasets_py/logic/formalization/autoencoder/long_span_source_value_training.py",
+  "ipfs_datasets_py/logic/formalization/autoencoder/source_modality_auxiliary_training.py",
+  "ipfs_datasets_py/logic/formalization/autoencoder/contextual_generated_boundary_training.py",
+  "scripts/ops/autoencoder/benchmark_source_modality_training.py",
+  "tests/unit/logic/formalization/autoencoder/test_source_modality_auxiliary_training.py",
+  "tests/unit/logic/formalization/autoencoder/test_source_modality_training_integration.py",
+  "tests/unit/logic/formalization/autoencoder/test_source_modality_training_runner.py",
+  "tests/unit/logic/formalization/autoencoder/test_contextual_boundary_replay_retry.py",
+  "docs/autoencoders/source_modality_training.md",
+  "docs/implementation/reports/evidence/decoder-modality-gap-r2-20261004/evidence.tar.xz.part-001",
+  "docs/implementation/reports/evidence/decoder-modality-gap-r2-20261004/evidence.tar.xz.part-002",
+  "docs/implementation/reports/evidence/decoder-modality-gap-r2-20261004/evidence.tar.xz.part-003",
+  "docs/implementation/reports/evidence/decoder-modality-gap-r2-20261004/manifest.json",
+  "docs/implementation/reports/evidence/decoder-modality-gap-r2-20261004/results.json",
+  "docs/implementation/reports/evidence/decoder-modality-gap-r2-20261004/README.md"
+]

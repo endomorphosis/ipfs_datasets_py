@@ -1,0 +1,42 @@
+{
+  "schema": "gte-decoder-native-preparation-config/v1",
+  "workspace_root": "/home/barberb/lift_coding",
+  "mode": "prepare",
+  "expected_asset_manifest_sha256": "8beb874aa7b06599346173fde12e95f9f926b3028942d5014cdd2f99c4385166",
+  "parent_manifest": {
+    "path": "artifacts/gte-decoder-transfer-preparation-20261002/run-01/manifest.json",
+    "sha256": "d470c0771e19af2c829afa543ea6fe91bff17f8b734726cbcae32151d44c995a"
+  },
+  "initialization": {
+    "path": "artifacts/gte-decoder-reuse-20261001/run-01/student-initialization.json",
+    "sha256": "7443c8a60cb1f95e9a35017edcd394c0f47fd457c3733e0863d37bfc09a09a12"
+  },
+  "donor_pins": {
+    "path": "artifacts/gte-decoder-reuse-20261001/run-01/donor-pins.json",
+    "sha256": "8284f3dda68384de197c71f38a641bfc71cc036cdb8497b464e9a511337bb965"
+  },
+  "batch": {
+    "path": "artifacts/gte-decoder-transfer-preparation-20261002/run-01/batch.json",
+    "sha256": "038eaaddf8b55db79ff00ed5de3a5eedc57d20be4bd6458b4613aaa2ed9cec79"
+  },
+  "replay": {
+    "path": "artifacts/gte-decoder-transfer-preparation-20261002/run-01/replay.json",
+    "sha256": "5d67a62d0c803ca480d0bba1b0d8f9416a76da1e32f5a67b143203c7e97be676"
+  },
+  "primary_training_archive": {
+    "path": "artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/train.json",
+    "sha256": "f4ad1d39677ed3184d019ad8556bf0cabd0957f855281c64343e8dfd73319c7b"
+  },
+  "primary_validation_archive": {
+    "path": "artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/validation.json",
+    "sha256": "4b55671a16186773dd65fa9b4b2d51aa7677e4ef89504e55b9937b1f9594fac7"
+  },
+  "legacy8_inputs": {
+    "path": "external/ipfs_datasets/workspace/test-logs/modal-joint-e2e-20261001-final/legacy_v1/schema/inputs.json",
+    "sha256": "2180ac2d5d0b666d4f3088ded217e31d630a00b68fe736b81d2b8e28ed07107d"
+  },
+  "receipts_768": {
+    "path": "artifacts/gte-multilingual-preparation-20261001/embed-01/receipts.json",
+    "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+  }
+}

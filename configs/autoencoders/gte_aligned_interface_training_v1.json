@@ -1,0 +1,40 @@
+{
+  "schema": "gte-aligned-interface-training-config/v1",
+  "workspace_root": "/home/barberb/lift_coding",
+  "mode": "prepare",
+  "steps": 8,
+  "learning_rate": 0.001,
+  "max_grad_norm": 1.0,
+  "head_weights": {
+    "primary384": 1.0,
+    "legacy8": 1.0
+  },
+  "native_parent_manifest": {
+    "path": "artifacts/gte-decoder-native-preparation-20261002/run-01/manifest.json",
+    "sha256": "6c9981030a5c38a0b2d4557561163b24e36cb814fe818a4b5081234d3d7a70c7"
+  },
+  "initialization": {
+    "path": "artifacts/gte-decoder-reuse-20261001/run-01/student-initialization.json",
+    "sha256": "7443c8a60cb1f95e9a35017edcd394c0f47fd457c3733e0863d37bfc09a09a12"
+  },
+  "donor_pins": {
+    "path": "artifacts/gte-decoder-reuse-20261001/run-01/donor-pins.json",
+    "sha256": "8284f3dda68384de197c71f38a641bfc71cc036cdb8497b464e9a511337bb965"
+  },
+  "batch": {
+    "path": "artifacts/gte-decoder-transfer-preparation-20261002/run-01/batch.json",
+    "sha256": "038eaaddf8b55db79ff00ed5de3a5eedc57d20be4bd6458b4613aaa2ed9cec79"
+  },
+  "replay": {
+    "path": "artifacts/gte-decoder-transfer-preparation-20261002/run-01/replay.json",
+    "sha256": "5d67a62d0c803ca480d0bba1b0d8f9416a76da1e32f5a67b143203c7e97be676"
+  },
+  "native_batch": {
+    "path": "artifacts/gte-decoder-native-preparation-20261002/run-01/native-batch.json",
+    "sha256": "bdb0a6baefc5acef19544cbc44421fbc1440546f5a903643502b3dd53615ce56"
+  },
+  "aligned_parent_manifest": {
+    "path": "artifacts/gte-aligned-decoder-preparation-20261002/run-01/manifest.json",
+    "sha256": "3fbbbc68ff1c4da7afac0b33c4d0f52bc466ffb34589ccf75fef80ecbb33523d"
+  }
+}

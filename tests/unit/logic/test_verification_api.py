@@ -192,8 +192,29 @@ def test_list_providers_and_capabilities_do_not_require_tools() -> None:
     assert "provider:not-a-backend" in missing.unsupported_features
 
 
-def test_compile_check_portfolio_and_counterexample() -> None:
-    api = get_verification_api(reset=True)
+def test_compile_check_portfolio_and_counterexample(monkeypatch) -> None:
+    from ipfs_datasets_py.logic.backends import resource_admission
+    from ipfs_datasets_py.logic.backends.cvc5 import CVC5Backend
+    from ipfs_datasets_py.logic.backends.registry import BackendRunnerOutput, ProofBackendRegistry
+    from ipfs_datasets_py.logic.backends.z3 import Z3Backend
+
+    # This unit test checks the API envelope and real portfolio selection, with
+    # explicit solver fixtures independent of installed tools and the host pool.
+    calls = []
+
+    def solver_fixture(compiled, request):
+        calls.append(request.requested_backend_id)
+        return BackendRunnerOutput(stdout="sat\n", returncode=0)
+
+    def forbid_host_scheduler():
+        pytest.fail("API envelope fixtures must not access the shared host scheduler")
+
+    monkeypatch.setattr(resource_admission, "get_global_resource_scheduler", forbid_host_scheduler)
+    registry = ProofBackendRegistry((
+        Z3Backend(runner=solver_fixture, availability_probe=lambda: True),
+        CVC5Backend(runner=solver_fixture, availability_probe=lambda: True),
+    ))
+    api = LogicVerificationAPI(backend_registry=registry)
 
     compiled = api.compile_verification_artifact(
         {"obligation_id": "obl:unit", "statement": "true"},
@@ -225,11 +246,7 @@ def test_compile_check_portfolio_and_counterexample() -> None:
         },
         request_id="req:check",
     )
-    assert checked.status in {
-        VerificationStatus.SUCCEEDED,
-        VerificationStatus.UNAVAILABLE,
-        VerificationStatus.ERROR,
-    }
+    assert checked.status is VerificationStatus.SUCCEEDED
     assert "status" in checked.to_dict()
     assert "authority" in checked.to_dict()
     assert "assumptions" in checked.to_dict()
@@ -245,13 +262,13 @@ def test_compile_check_portfolio_and_counterexample() -> None:
             "assumption_ids": ("a:1",),
         }
     )
-    assert portfolio.status in {
-        VerificationStatus.SUCCEEDED,
-        VerificationStatus.PARTIAL,
-    }
+    assert portfolio.status is VerificationStatus.SUCCEEDED
     assert portfolio.authority is VerificationAuthority.BOUNDED
     assert portfolio.assumptions == ("a:1",)
     assert portfolio.result["attempt_count"] >= 1
+    assert portfolio.result["executed"] is True
+    assert {item["backend_id"] for item in portfolio.result["outcomes"]} == {"z3", "cvc5"}
+    assert len(calls) == 3 and {"z3", "cvc5"} <= set(calls)
 
     explained = api.explain_counterexample(
         {"kind": "model", "model": {"x": "1"}, "summary": "x assigned 1"}

@@ -1,0 +1,432 @@
+{
+  "schema": "ir-family-dimension-inventory-directory-plan/v1",
+  "status": "declarative_plan",
+  "ir_family_ids": [
+    "codebase_ir",
+    "security_ir",
+    "legal_ir",
+    "intent_ir"
+  ],
+  "dimensions": [
+    8,
+    384,
+    768
+  ],
+  "cell_count": 12,
+  "default_hf_namespace_suggestion": "Publicus",
+  "namespace_status": "observed in existing384 descriptor; deployment write access not checked",
+  "cells": [
+    {
+      "cell_id": "codebase_ir_8d",
+      "ir_family_id": "codebase_ir",
+      "dimension": 8,
+      "inventory_manifest": "inventories/codebase_ir/8d.json",
+      "storage": {
+        "status": "planned_not_created",
+        "root_template": "<ir_store_root>/codebase_ir/8d",
+        "inventory_export": "<ir_store_root>/codebase_ir/8d/inventory.json",
+        "registry_database": "<ir_store_root>/codebase_ir/8d/registry.duckdb",
+        "index_database": "<ir_store_root>/codebase_ir/8d/index.duckdb",
+        "ducklake_catalog_database": "<ir_store_root>/codebase_ir/8d/lake/catalog.duckdb",
+        "ducklake_data_prefix": "<ir_store_root>/codebase_ir/8d/lake/data/",
+        "mutable_artifact_root": "<ir_store_root>/codebase_ir/8d/artifacts/",
+        "run_namespace": "<ir_store_root>/codebase_ir/8d/runs/<task>/<profile>/<run_id>/",
+        "database_writer_policy": "separate serialized owner per physical database; registry forbids foreign tables",
+        "canonical_repository_source_owner": "RepositoryCodebaseIndex captures repository code once; cell indexes reference exact admitted source/semantic heads when relevant",
+        "family_source_owner": "Canonical repository/source snapshot and source-correspondence owners",
+        "source_roots_required": [
+          "family source/corpus version and complete span/context manifest",
+          "repository source/semantic roots when code-grounding applies",
+          "applicability source revisions and both typed join endpoint roots"
+        ],
+        "ducklake_layout_adapter_required": true,
+        "current_isolated_history_limits": {
+          "metadata_name": "history.ducklake",
+          "byte_cap": 268435456,
+          "production_supported": false
+        }
+      },
+      "huggingface_repository_template": "<hf_namespace>/codebase-ir-autoencoder-8d",
+      "suggested_huggingface_repository": "Publicus/codebase-ir-autoencoder-8d",
+      "status": "planned_inventory_with_scoped_read_only_evidence"
+    },
+    {
+      "cell_id": "codebase_ir_384d",
+      "ir_family_id": "codebase_ir",
+      "dimension": 384,
+      "inventory_manifest": "inventories/codebase_ir/384d.json",
+      "storage": {
+        "status": "planned_not_created",
+        "root_template": "<ir_store_root>/codebase_ir/384d",
+        "inventory_export": "<ir_store_root>/codebase_ir/384d/inventory.json",
+        "registry_database": "<ir_store_root>/codebase_ir/384d/registry.duckdb",
+        "index_database": "<ir_store_root>/codebase_ir/384d/index.duckdb",
+        "ducklake_catalog_database": "<ir_store_root>/codebase_ir/384d/lake/catalog.duckdb",
+        "ducklake_data_prefix": "<ir_store_root>/codebase_ir/384d/lake/data/",
+        "mutable_artifact_root": "<ir_store_root>/codebase_ir/384d/artifacts/",
+        "run_namespace": "<ir_store_root>/codebase_ir/384d/runs/<task>/<profile>/<run_id>/",
+        "database_writer_policy": "separate serialized owner per physical database; registry forbids foreign tables",
+        "canonical_repository_source_owner": "RepositoryCodebaseIndex captures repository code once; cell indexes reference exact admitted source/semantic heads when relevant",
+        "family_source_owner": "Canonical repository/source snapshot and source-correspondence owners",
+        "source_roots_required": [
+          "family source/corpus version and complete span/context manifest",
+          "repository source/semantic roots when code-grounding applies",
+          "applicability source revisions and both typed join endpoint roots"
+        ],
+        "ducklake_layout_adapter_required": true,
+        "current_isolated_history_limits": {
+          "metadata_name": "history.ducklake",
+          "byte_cap": 268435456,
+          "production_supported": false
+        }
+      },
+      "huggingface_repository_template": "<hf_namespace>/codebase-ir-autoencoder-384d",
+      "suggested_huggingface_repository": "Publicus/codebase-ir-autoencoder-384d",
+      "status": "planned_inventory_with_scoped_read_only_evidence"
+    },
+    {
+      "cell_id": "codebase_ir_768d",
+      "ir_family_id": "codebase_ir",
+      "dimension": 768,
+      "inventory_manifest": "inventories/codebase_ir/768d.json",
+      "storage": {
+        "status": "planned_not_created",
+        "root_template": "<ir_store_root>/codebase_ir/768d",
+        "inventory_export": "<ir_store_root>/codebase_ir/768d/inventory.json",
+        "registry_database": "<ir_store_root>/codebase_ir/768d/registry.duckdb",
+        "index_database": "<ir_store_root>/codebase_ir/768d/index.duckdb",
+        "ducklake_catalog_database": "<ir_store_root>/codebase_ir/768d/lake/catalog.duckdb",
+        "ducklake_data_prefix": "<ir_store_root>/codebase_ir/768d/lake/data/",
+        "mutable_artifact_root": "<ir_store_root>/codebase_ir/768d/artifacts/",
+        "run_namespace": "<ir_store_root>/codebase_ir/768d/runs/<task>/<profile>/<run_id>/",
+        "database_writer_policy": "separate serialized owner per physical database; registry forbids foreign tables",
+        "canonical_repository_source_owner": "RepositoryCodebaseIndex captures repository code once; cell indexes reference exact admitted source/semantic heads when relevant",
+        "family_source_owner": "Canonical repository/source snapshot and source-correspondence owners",
+        "source_roots_required": [
+          "family source/corpus version and complete span/context manifest",
+          "repository source/semantic roots when code-grounding applies",
+          "applicability source revisions and both typed join endpoint roots"
+        ],
+        "ducklake_layout_adapter_required": true,
+        "current_isolated_history_limits": {
+          "metadata_name": "history.ducklake",
+          "byte_cap": 268435456,
+          "production_supported": false
+        }
+      },
+      "huggingface_repository_template": "<hf_namespace>/codebase-ir-autoencoder-768d",
+      "suggested_huggingface_repository": "Publicus/codebase-ir-autoencoder-768d",
+      "status": "planned_inventory_with_scoped_read_only_evidence"
+    },
+    {
+      "cell_id": "security_ir_8d",
+      "ir_family_id": "security_ir",
+      "dimension": 8,
+      "inventory_manifest": "inventories/security_ir/8d.json",
+      "storage": {
+        "status": "planned_not_created",
+        "root_template": "<ir_store_root>/security_ir/8d",
+        "inventory_export": "<ir_store_root>/security_ir/8d/inventory.json",
+        "registry_database": "<ir_store_root>/security_ir/8d/registry.duckdb",
+        "index_database": "<ir_store_root>/security_ir/8d/index.duckdb",
+        "ducklake_catalog_database": "<ir_store_root>/security_ir/8d/lake/catalog.duckdb",
+        "ducklake_data_prefix": "<ir_store_root>/security_ir/8d/lake/data/",
+        "mutable_artifact_root": "<ir_store_root>/security_ir/8d/artifacts/",
+        "run_namespace": "<ir_store_root>/security_ir/8d/runs/<task>/<profile>/<run_id>/",
+        "database_writer_policy": "separate serialized owner per physical database; registry forbids foreign tables",
+        "canonical_repository_source_owner": "RepositoryCodebaseIndex captures repository code once; cell indexes reference exact admitted source/semantic heads when relevant",
+        "family_source_owner": "Security declaration and CVE/body/diff/description corpus owners, plus separately bound repository code when applicable",
+        "source_roots_required": [
+          "family source/corpus version and complete span/context manifest",
+          "repository source/semantic roots when code-grounding applies",
+          "applicability source revisions and both typed join endpoint roots"
+        ],
+        "ducklake_layout_adapter_required": true,
+        "current_isolated_history_limits": {
+          "metadata_name": "history.ducklake",
+          "byte_cap": 268435456,
+          "production_supported": false
+        }
+      },
+      "huggingface_repository_template": "<hf_namespace>/security-ir-autoencoder-8d",
+      "suggested_huggingface_repository": "Publicus/security-ir-autoencoder-8d",
+      "status": "planned_inventory_with_scoped_read_only_evidence"
+    },
+    {
+      "cell_id": "security_ir_384d",
+      "ir_family_id": "security_ir",
+      "dimension": 384,
+      "inventory_manifest": "inventories/security_ir/384d.json",
+      "storage": {
+        "status": "planned_not_created",
+        "root_template": "<ir_store_root>/security_ir/384d",
+        "inventory_export": "<ir_store_root>/security_ir/384d/inventory.json",
+        "registry_database": "<ir_store_root>/security_ir/384d/registry.duckdb",
+        "index_database": "<ir_store_root>/security_ir/384d/index.duckdb",
+        "ducklake_catalog_database": "<ir_store_root>/security_ir/384d/lake/catalog.duckdb",
+        "ducklake_data_prefix": "<ir_store_root>/security_ir/384d/lake/data/",
+        "mutable_artifact_root": "<ir_store_root>/security_ir/384d/artifacts/",
+        "run_namespace": "<ir_store_root>/security_ir/384d/runs/<task>/<profile>/<run_id>/",
+        "database_writer_policy": "separate serialized owner per physical database; registry forbids foreign tables",
+        "canonical_repository_source_owner": "RepositoryCodebaseIndex captures repository code once; cell indexes reference exact admitted source/semantic heads when relevant",
+        "family_source_owner": "Security declaration and CVE/body/diff/description corpus owners, plus separately bound repository code when applicable",
+        "source_roots_required": [
+          "family source/corpus version and complete span/context manifest",
+          "repository source/semantic roots when code-grounding applies",
+          "applicability source revisions and both typed join endpoint roots"
+        ],
+        "ducklake_layout_adapter_required": true,
+        "current_isolated_history_limits": {
+          "metadata_name": "history.ducklake",
+          "byte_cap": 268435456,
+          "production_supported": false
+        }
+      },
+      "huggingface_repository_template": "<hf_namespace>/security-ir-autoencoder-384d",
+      "suggested_huggingface_repository": "Publicus/security-ir-autoencoder-384d",
+      "status": "planned_inventory_with_scoped_read_only_evidence"
+    },
+    {
+      "cell_id": "security_ir_768d",
+      "ir_family_id": "security_ir",
+      "dimension": 768,
+      "inventory_manifest": "inventories/security_ir/768d.json",
+      "storage": {
+        "status": "planned_not_created",
+        "root_template": "<ir_store_root>/security_ir/768d",
+        "inventory_export": "<ir_store_root>/security_ir/768d/inventory.json",
+        "registry_database": "<ir_store_root>/security_ir/768d/registry.duckdb",
+        "index_database": "<ir_store_root>/security_ir/768d/index.duckdb",
+        "ducklake_catalog_database": "<ir_store_root>/security_ir/768d/lake/catalog.duckdb",
+        "ducklake_data_prefix": "<ir_store_root>/security_ir/768d/lake/data/",
+        "mutable_artifact_root": "<ir_store_root>/security_ir/768d/artifacts/",
+        "run_namespace": "<ir_store_root>/security_ir/768d/runs/<task>/<profile>/<run_id>/",
+        "database_writer_policy": "separate serialized owner per physical database; registry forbids foreign tables",
+        "canonical_repository_source_owner": "RepositoryCodebaseIndex captures repository code once; cell indexes reference exact admitted source/semantic heads when relevant",
+        "family_source_owner": "Security declaration and CVE/body/diff/description corpus owners, plus separately bound repository code when applicable",
+        "source_roots_required": [
+          "family source/corpus version and complete span/context manifest",
+          "repository source/semantic roots when code-grounding applies",
+          "applicability source revisions and both typed join endpoint roots"
+        ],
+        "ducklake_layout_adapter_required": true,
+        "current_isolated_history_limits": {
+          "metadata_name": "history.ducklake",
+          "byte_cap": 268435456,
+          "production_supported": false
+        }
+      },
+      "huggingface_repository_template": "<hf_namespace>/security-ir-autoencoder-768d",
+      "suggested_huggingface_repository": "Publicus/security-ir-autoencoder-768d",
+      "status": "planned_inventory_with_scoped_read_only_evidence"
+    },
+    {
+      "cell_id": "legal_ir_8d",
+      "ir_family_id": "legal_ir",
+      "dimension": 8,
+      "inventory_manifest": "inventories/legal_ir/8d.json",
+      "storage": {
+        "status": "planned_not_created",
+        "root_template": "<ir_store_root>/legal_ir/8d",
+        "inventory_export": "<ir_store_root>/legal_ir/8d/inventory.json",
+        "registry_database": "<ir_store_root>/legal_ir/8d/registry.duckdb",
+        "index_database": "<ir_store_root>/legal_ir/8d/index.duckdb",
+        "ducklake_catalog_database": "<ir_store_root>/legal_ir/8d/lake/catalog.duckdb",
+        "ducklake_data_prefix": "<ir_store_root>/legal_ir/8d/lake/data/",
+        "mutable_artifact_root": "<ir_store_root>/legal_ir/8d/artifacts/",
+        "run_namespace": "<ir_store_root>/legal_ir/8d/runs/<task>/<profile>/<run_id>/",
+        "database_writer_policy": "separate serialized owner per physical database; registry forbids foreign tables",
+        "canonical_repository_source_owner": "RepositoryCodebaseIndex captures repository code once; cell indexes reference exact admitted source/semantic heads when relevant",
+        "family_source_owner": "Canonical Legal source/corpus version and span owners, plus separately bound applicability and repository subjects",
+        "source_roots_required": [
+          "family source/corpus version and complete span/context manifest",
+          "repository source/semantic roots when code-grounding applies",
+          "applicability source revisions and both typed join endpoint roots"
+        ],
+        "ducklake_layout_adapter_required": true,
+        "current_isolated_history_limits": {
+          "metadata_name": "history.ducklake",
+          "byte_cap": 268435456,
+          "production_supported": false
+        }
+      },
+      "huggingface_repository_template": "<hf_namespace>/legal-ir-autoencoder-8d",
+      "suggested_huggingface_repository": "Publicus/legal-ir-autoencoder-8d",
+      "status": "planned_inventory_with_scoped_read_only_evidence"
+    },
+    {
+      "cell_id": "legal_ir_384d",
+      "ir_family_id": "legal_ir",
+      "dimension": 384,
+      "inventory_manifest": "inventories/legal_ir/384d.json",
+      "storage": {
+        "status": "planned_not_created",
+        "root_template": "<ir_store_root>/legal_ir/384d",
+        "inventory_export": "<ir_store_root>/legal_ir/384d/inventory.json",
+        "registry_database": "<ir_store_root>/legal_ir/384d/registry.duckdb",
+        "index_database": "<ir_store_root>/legal_ir/384d/index.duckdb",
+        "ducklake_catalog_database": "<ir_store_root>/legal_ir/384d/lake/catalog.duckdb",
+        "ducklake_data_prefix": "<ir_store_root>/legal_ir/384d/lake/data/",
+        "mutable_artifact_root": "<ir_store_root>/legal_ir/384d/artifacts/",
+        "run_namespace": "<ir_store_root>/legal_ir/384d/runs/<task>/<profile>/<run_id>/",
+        "database_writer_policy": "separate serialized owner per physical database; registry forbids foreign tables",
+        "canonical_repository_source_owner": "RepositoryCodebaseIndex captures repository code once; cell indexes reference exact admitted source/semantic heads when relevant",
+        "family_source_owner": "Canonical Legal source/corpus version and span owners, plus separately bound applicability and repository subjects",
+        "source_roots_required": [
+          "family source/corpus version and complete span/context manifest",
+          "repository source/semantic roots when code-grounding applies",
+          "applicability source revisions and both typed join endpoint roots"
+        ],
+        "ducklake_layout_adapter_required": true,
+        "current_isolated_history_limits": {
+          "metadata_name": "history.ducklake",
+          "byte_cap": 268435456,
+          "production_supported": false
+        }
+      },
+      "huggingface_repository_template": "<hf_namespace>/legal-ir-autoencoder-384d",
+      "suggested_huggingface_repository": "Publicus/legal-ir-autoencoder-384d",
+      "status": "planned_inventory_with_scoped_read_only_evidence"
+    },
+    {
+      "cell_id": "legal_ir_768d",
+      "ir_family_id": "legal_ir",
+      "dimension": 768,
+      "inventory_manifest": "inventories/legal_ir/768d.json",
+      "storage": {
+        "status": "planned_not_created",
+        "root_template": "<ir_store_root>/legal_ir/768d",
+        "inventory_export": "<ir_store_root>/legal_ir/768d/inventory.json",
+        "registry_database": "<ir_store_root>/legal_ir/768d/registry.duckdb",
+        "index_database": "<ir_store_root>/legal_ir/768d/index.duckdb",
+        "ducklake_catalog_database": "<ir_store_root>/legal_ir/768d/lake/catalog.duckdb",
+        "ducklake_data_prefix": "<ir_store_root>/legal_ir/768d/lake/data/",
+        "mutable_artifact_root": "<ir_store_root>/legal_ir/768d/artifacts/",
+        "run_namespace": "<ir_store_root>/legal_ir/768d/runs/<task>/<profile>/<run_id>/",
+        "database_writer_policy": "separate serialized owner per physical database; registry forbids foreign tables",
+        "canonical_repository_source_owner": "RepositoryCodebaseIndex captures repository code once; cell indexes reference exact admitted source/semantic heads when relevant",
+        "family_source_owner": "Canonical Legal source/corpus version and span owners, plus separately bound applicability and repository subjects",
+        "source_roots_required": [
+          "family source/corpus version and complete span/context manifest",
+          "repository source/semantic roots when code-grounding applies",
+          "applicability source revisions and both typed join endpoint roots"
+        ],
+        "ducklake_layout_adapter_required": true,
+        "current_isolated_history_limits": {
+          "metadata_name": "history.ducklake",
+          "byte_cap": 268435456,
+          "production_supported": false
+        }
+      },
+      "huggingface_repository_template": "<hf_namespace>/legal-ir-autoencoder-768d",
+      "suggested_huggingface_repository": "Publicus/legal-ir-autoencoder-768d",
+      "status": "planned_inventory_with_scoped_read_only_evidence"
+    },
+    {
+      "cell_id": "intent_ir_8d",
+      "ir_family_id": "intent_ir",
+      "dimension": 8,
+      "inventory_manifest": "inventories/intent_ir/8d.json",
+      "storage": {
+        "status": "planned_not_created",
+        "root_template": "<ir_store_root>/intent_ir/8d",
+        "inventory_export": "<ir_store_root>/intent_ir/8d/inventory.json",
+        "registry_database": "<ir_store_root>/intent_ir/8d/registry.duckdb",
+        "index_database": "<ir_store_root>/intent_ir/8d/index.duckdb",
+        "ducklake_catalog_database": "<ir_store_root>/intent_ir/8d/lake/catalog.duckdb",
+        "ducklake_data_prefix": "<ir_store_root>/intent_ir/8d/lake/data/",
+        "mutable_artifact_root": "<ir_store_root>/intent_ir/8d/artifacts/",
+        "run_namespace": "<ir_store_root>/intent_ir/8d/runs/<task>/<profile>/<run_id>/",
+        "database_writer_policy": "separate serialized owner per physical database; registry forbids foreign tables",
+        "canonical_repository_source_owner": "RepositoryCodebaseIndex captures repository code once; cell indexes reference exact admitted source/semantic heads when relevant",
+        "family_source_owner": "Intent instruction/SkillCenter corpus and context/span owners, plus separately observed repository grounding",
+        "source_roots_required": [
+          "family source/corpus version and complete span/context manifest",
+          "repository source/semantic roots when code-grounding applies",
+          "applicability source revisions and both typed join endpoint roots"
+        ],
+        "ducklake_layout_adapter_required": true,
+        "current_isolated_history_limits": {
+          "metadata_name": "history.ducklake",
+          "byte_cap": 268435456,
+          "production_supported": false
+        }
+      },
+      "huggingface_repository_template": "<hf_namespace>/intent-ir-autoencoder-8d",
+      "suggested_huggingface_repository": "Publicus/intent-ir-autoencoder-8d",
+      "status": "planned_inventory_with_scoped_read_only_evidence"
+    },
+    {
+      "cell_id": "intent_ir_384d",
+      "ir_family_id": "intent_ir",
+      "dimension": 384,
+      "inventory_manifest": "inventories/intent_ir/384d.json",
+      "storage": {
+        "status": "planned_not_created",
+        "root_template": "<ir_store_root>/intent_ir/384d",
+        "inventory_export": "<ir_store_root>/intent_ir/384d/inventory.json",
+        "registry_database": "<ir_store_root>/intent_ir/384d/registry.duckdb",
+        "index_database": "<ir_store_root>/intent_ir/384d/index.duckdb",
+        "ducklake_catalog_database": "<ir_store_root>/intent_ir/384d/lake/catalog.duckdb",
+        "ducklake_data_prefix": "<ir_store_root>/intent_ir/384d/lake/data/",
+        "mutable_artifact_root": "<ir_store_root>/intent_ir/384d/artifacts/",
+        "run_namespace": "<ir_store_root>/intent_ir/384d/runs/<task>/<profile>/<run_id>/",
+        "database_writer_policy": "separate serialized owner per physical database; registry forbids foreign tables",
+        "canonical_repository_source_owner": "RepositoryCodebaseIndex captures repository code once; cell indexes reference exact admitted source/semantic heads when relevant",
+        "family_source_owner": "Intent instruction/SkillCenter corpus and context/span owners, plus separately observed repository grounding",
+        "source_roots_required": [
+          "family source/corpus version and complete span/context manifest",
+          "repository source/semantic roots when code-grounding applies",
+          "applicability source revisions and both typed join endpoint roots"
+        ],
+        "ducklake_layout_adapter_required": true,
+        "current_isolated_history_limits": {
+          "metadata_name": "history.ducklake",
+          "byte_cap": 268435456,
+          "production_supported": false
+        }
+      },
+      "huggingface_repository_template": "<hf_namespace>/intent-ir-autoencoder-384d",
+      "suggested_huggingface_repository": "Publicus/intent-ir-autoencoder-384d",
+      "status": "planned_inventory_with_scoped_read_only_evidence"
+    },
+    {
+      "cell_id": "intent_ir_768d",
+      "ir_family_id": "intent_ir",
+      "dimension": 768,
+      "inventory_manifest": "inventories/intent_ir/768d.json",
+      "storage": {
+        "status": "planned_not_created",
+        "root_template": "<ir_store_root>/intent_ir/768d",
+        "inventory_export": "<ir_store_root>/intent_ir/768d/inventory.json",
+        "registry_database": "<ir_store_root>/intent_ir/768d/registry.duckdb",
+        "index_database": "<ir_store_root>/intent_ir/768d/index.duckdb",
+        "ducklake_catalog_database": "<ir_store_root>/intent_ir/768d/lake/catalog.duckdb",
+        "ducklake_data_prefix": "<ir_store_root>/intent_ir/768d/lake/data/",
+        "mutable_artifact_root": "<ir_store_root>/intent_ir/768d/artifacts/",
+        "run_namespace": "<ir_store_root>/intent_ir/768d/runs/<task>/<profile>/<run_id>/",
+        "database_writer_policy": "separate serialized owner per physical database; registry forbids foreign tables",
+        "canonical_repository_source_owner": "RepositoryCodebaseIndex captures repository code once; cell indexes reference exact admitted source/semantic heads when relevant",
+        "family_source_owner": "Intent instruction/SkillCenter corpus and context/span owners, plus separately observed repository grounding",
+        "source_roots_required": [
+          "family source/corpus version and complete span/context manifest",
+          "repository source/semantic roots when code-grounding applies",
+          "applicability source revisions and both typed join endpoint roots"
+        ],
+        "ducklake_layout_adapter_required": true,
+        "current_isolated_history_limits": {
+          "metadata_name": "history.ducklake",
+          "byte_cap": 268435456,
+          "production_supported": false
+        }
+      },
+      "huggingface_repository_template": "<hf_namespace>/intent-ir-autoencoder-768d",
+      "suggested_huggingface_repository": "Publicus/intent-ir-autoencoder-768d",
+      "status": "planned_inventory_with_scoped_read_only_evidence"
+    }
+  ],
+  "shared_assets": "Immutable authenticated CAS/model/tokenizer/vector objects only; mutable databases/heads/leases are independent.",
+  "directory_role": "Routing/configuration and published receipts only; no duplicate authority over model/proof state.",
+  "physical_runtime_stores_created": false,
+  "remote_repositories_created": false
+}

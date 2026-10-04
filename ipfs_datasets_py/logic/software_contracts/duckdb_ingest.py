@@ -4,7 +4,7 @@ Ingests tracked Git source revisions into :class:`~.duckdb_ast_store.DuckDBASTSt
 
 * resolve explicit Git object identity (full commit + tree SHAs);
 * apply an explicit dirty-tree policy (fail-closed by default);
-* reuse unchanged source shards by source CID without reparsing;
+* reuse unchanged source shards only under the same extraction context;
 * invalidate changed/deleted files and the symbols/edges they own;
 * publish each complete revision atomically (build fully, then commit).
 
@@ -18,8 +18,8 @@ import re
 import subprocess
 import threading
 import time
-from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, field
+from collections.abc import Callable, Mapping, Sequence
+from dataclasses import dataclass, field, replace
 from enum import StrEnum
 from pathlib import Path, PurePosixPath
 from typing import Any, Final, Protocol, runtime_checkable
@@ -32,12 +32,16 @@ from ipfs_datasets_py.logic.software_contracts.content import (
     cid_for_bytes,
     cid_for_structured,
 )
+from ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot import (
+    RepositorySnapshot,
+)
 from ipfs_datasets_py.logic.software_contracts.duckdb_ast_store import (
     ASTCatalogProjection,
     DuckDBASTStore,
     InvalidationRow,
     SymbolRow,
     build_duckdb_ast_store,
+    classify_parse_status,
     project_ast_record,
 )
 from ipfs_datasets_py.logic.software_contracts.python_frontend import (
@@ -300,6 +304,35 @@ class GitObjectIdentity:
         )
 
 
+@dataclass(frozen=True, slots=True)
+class SnapshotIngestIdentity:
+    """Exact canonical snapshot identity, independent of Git availability."""
+
+    snapshot: RepositorySnapshot
+
+    @property
+    def snapshot_cid(self) -> str:
+        return self.snapshot.snapshot_cid
+
+    @property
+    def revision(self) -> str:
+        return f"snapshot:{self.snapshot_cid}"
+
+    def repository_id(self, *, label: str = "repository") -> str:
+        return self.snapshot.repository_id
+
+    def repository_tree_cid(self) -> str:
+        return self.snapshot_cid
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema": "duckdb-ast-ingest/snapshot-identity@1",
+            "snapshot_cid": self.snapshot_cid,
+            "revision": self.revision,
+            "snapshot": self.snapshot.to_dict(),
+        }
+
+
 def _git_rev_parse(repository: Path, treeish: str) -> tuple[str, str]:
     """Return ``(commit, tree)`` object ids for ``treeish``."""
 
@@ -495,7 +528,7 @@ class RevisionPublication:
     revision_id: str
     repository_id: str
     revision: str
-    identity: GitObjectIdentity
+    identity: GitObjectIdentity | SnapshotIngestIdentity
     repository_tree_cid: str
     projections: tuple[ASTCatalogProjection, ...]
     decisions: tuple[FileIngestDecision, ...]
@@ -586,7 +619,7 @@ def rebind_ast_record(
     revision: str,
     repository_tree_cid: str | None,
 ) -> ASTRecord:
-    """Rebind an already-parsed ASTRecord to a new revision/path.
+    """Rebind an already-parsed ASTRecord to new provenance at the same path.
 
     Structural facts (scopes, symbols, edges, frontend) are preserved.  Only
     :class:`SourceProvenance` changes, so the source CID stays identical and
@@ -596,6 +629,8 @@ def rebind_ast_record(
 
     if type(record) is not ASTRecord:
         raise DuckDBIngestError("rebind_ast_record requires an exact ASTRecord")
+    if _normalize_repo_path(path) != record.provenance.path:
+        raise DuckDBIngestError("path changes require reparsing module and symbol names")
     provenance = SourceProvenance(
         source_cid=record.provenance.source_cid,
         path=_normalize_repo_path(path),
@@ -624,43 +659,83 @@ def _language_for_path(path: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Source-CID shard cache (reuse without reparse)
+# Extraction-context shard cache (reuse without reparse)
 # ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class SourceShardContext:
+    """All non-source inputs to a qualified, provenance-independent parser."""
+
+    language: str
+    path: str
+    module_name: str | None
+    frontend_cid: str
+    configuration_cid: str
+    implementation_cid: str
+    ast_schema: str
+
+    @property
+    def cid(self) -> str:
+        return cid_for_structured({
+            "schema": "duckdb-ast-ingest/source-shard-context@1",
+            "language": self.language, "path": self.path,
+            "module_name": self.module_name, "frontend_cid": self.frontend_cid,
+            "configuration_cid": self.configuration_cid,
+            "implementation_cid": self.implementation_cid, "ast_schema": self.ast_schema,
+        })
+
+    def verify(self, record: ASTRecord, source_cid: str) -> None:
+        if (type(record) is not ASTRecord
+                or record.provenance.source_cid != source_cid
+                or record.provenance.path != self.path
+                or record.frontend.cid != self.frontend_cid
+                or record.schema_version.identifier != self.ast_schema
+                or (self.module_name is not None and record.module.name != self.module_name)):
+            raise DuckDBIngestError("cached AST does not match its source/extraction context")
 
 
 @dataclass
 class SourceShardCache:
-    """In-memory cache of parsed AST IR keyed by source-byte CID.
+    """Verified AST bytes keyed by source and complete extraction context.
 
-    Unchanged source shards are reused across revisions and renames by looking
-    up ``source_cid`` — the parser is never re-entered for a cache hit.
+    Legacy source-only calls remain callable but cannot produce cache hits.
+    Revision rebinding is allowed only for a parser whose context is qualified
+    independently of repository provenance. Custom frontends are reparsed.
     """
 
-    _by_source_cid: dict[str, ASTRecord] = field(default_factory=dict)
+    _entries: dict[tuple[str, str], tuple[str, bytes]] = field(default_factory=dict)
     hits: int = 0
     misses: int = 0
 
-    def get(self, source_cid: str) -> ASTRecord | None:
-        found = self._by_source_cid.get(source_cid)
+    def get(self, source_cid: str, *, context: SourceShardContext | None = None) -> ASTRecord | None:
+        found = None if context is None else self._entries.get((source_cid, context.cid))
         if found is None:
             self.misses += 1
             return None
+        expected_cid, payload = found
+        record = ASTRecord.from_dict(json.loads(payload))
+        if record.cid != expected_cid:
+            raise DuckDBIngestError("cached AST payload identity does not verify")
+        context.verify(record, source_cid)
         self.hits += 1
-        return found
+        return record
 
-    def put(self, record: ASTRecord) -> None:
+    def put(self, record: ASTRecord, *, context: SourceShardContext | None = None) -> None:
         if type(record) is not ASTRecord:
             raise DuckDBIngestError("cache requires an exact ASTRecord")
-        self._by_source_cid[record.provenance.source_cid] = record
+        if context is not None:
+            context.verify(record, record.provenance.source_cid)
+            self._entries[(record.provenance.source_cid, context.cid)] = (record.cid, record.canonical_bytes)
 
     def __contains__(self, source_cid: object) -> bool:
-        return source_cid in self._by_source_cid
+        return any(key[0] == source_cid for key in self._entries)
 
     def __len__(self) -> int:
-        return len(self._by_source_cid)
+        return len(self._entries)
 
     def clear(self) -> None:
-        self._by_source_cid.clear()
+        self._entries.clear()
         self.hits = 0
         self.misses = 0
 
@@ -704,6 +779,39 @@ class CountingFrontend:
         self.parsed_paths.clear()
 
 
+def _frontend_cache_context(frontend: ASTFrontendProtocol, *, language: str, path: str) -> SourceShardContext | None:
+    """Qualify the native Python parser's complete extraction inputs.
+
+    Arbitrary protocol implementations may depend on revision, external state
+    or undeclared options. They remain usable, but are never cached by guessing
+    their configuration from a name or capability declaration. External-worker
+    frontends likewise require a separately qualified toolchain cache profile.
+    """
+    while type(frontend) is CountingFrontend:
+        frontend = frontend._frontend
+    if type(frontend) is not PythonASTExtractor or language != "python":
+        return None
+    expected_options = {"feature_version", "max_source_bytes", "max_ast_nodes", "max_ast_depth"}
+    if set(vars(frontend)) != expected_options:
+        return None
+    from . import ast_ir, python_frontend, schema_versions
+
+    capability = frontend.capability
+    return SourceShardContext(
+        language=language, path=path, module_name=None,
+        frontend_cid=capability.cid,
+        configuration_cid=cid_for_structured({
+            key: list(value) if isinstance(value, tuple) else value
+            for key, value in vars(frontend).items()
+        }),
+        implementation_cid=cid_for_structured({
+            module.__name__: cid_for_bytes(Path(module.__file__).read_bytes())
+            for module in (ast_ir, python_frontend, schema_versions)
+        }),
+        ast_schema=capability.ast_schema.identifier,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Ingestor
 # ---------------------------------------------------------------------------
@@ -719,7 +827,7 @@ class DuckDBASTIngestor:
     2. Apply :class:`DirtyTreePolicy`.
     3. Inventory tracked parseable blobs (Git objects, not dirty worktree
        bytes, unless the caller supplies an explicit source map).
-    4. For each path: reuse by ``source_cid`` or parse once.
+    4. For each path: reuse the exact qualified extraction context or parse once.
     5. Diff against the previous complete publication for the same
        ``repository_id`` label family: invalidate deleted/changed paths.
     6. Publish the complete revision atomically into the AST store.
@@ -865,6 +973,81 @@ class DuckDBASTIngestor:
             else DirtyTreePolicy(str(dirty_tree_policy))
         )
         identity = apply_dirty_tree_policy(identity, policy)
+        with self._lock:
+            return self._ingest_sources(
+                sources=sources, identity=identity, blobs=blobs,
+                dirty_tree_policy=policy.value, created_at=created_at,
+                repository_id=repository_id,
+            )
+
+    def ingest_snapshot(
+        self,
+        snapshot: RepositorySnapshot,
+        *,
+        created_at: float | None = None,
+        checkpoint: Callable[[], None] | None = None,
+        before_publish: Callable[[RevisionPublication], None] | None = None,
+        publish_batch: Callable[[RevisionPublication], None] | None = None,
+    ) -> RevisionPublication:
+        """Publish exact captured bytes for clean, dirty, unborn or filesystem views.
+
+        A deserialized manifest without its captured bytes cannot be ingested.
+        ``publish_batch`` is a trusted owner integration: it replaces the default
+        store mutation and must atomically commit the complete projection batch.
+        It also runs for an idempotent cached publication, so the owner can check
+        its durable operation and expected head. It must raise on failure.
+        No current checkout bytes or Git commands are consulted. Opaque entries
+        remain explicit skipped decisions and part of the snapshot root.
+        ``before_publish`` may seal referenced immutable artifacts before SQL
+        publication. Failure leaves the previous catalog view active. The
+        callback receives a complete unpublished plan, or an existing active
+        publication on an idempotent retry.
+        """
+        if type(snapshot) is not RepositorySnapshot:
+            raise DuckDBIngestError("ingest_snapshot requires an exact RepositorySnapshot")
+        # Replay the closed manifest contract independently of ephemeral bytes.
+        verified = RepositorySnapshot.from_dict(snapshot.to_dict())
+        sources: dict[str, bytes] = {}
+        skipped: list[FileIngestDecision] = []
+        for entry in snapshot.entries:
+            if checkpoint is not None:
+                checkpoint()
+            if entry.is_opaque:
+                skipped.append(FileIngestDecision(
+                    path=entry.path, source_cid=entry.source_cid or "",
+                    language=_language_for_path(entry.path), action=IngestAction.SKIPPED.value,
+                    git_oid=entry.git_blob_oid or "", detail=entry.opaque_reason or "opaque",
+                ))
+                continue
+            data = entry.captured_bytes
+            if (type(data) is not bytes or cid_for_bytes(data) != entry.source_cid
+                    or entry.size_bytes != len(data) or len(data) > snapshot.max_file_bytes):
+                raise DuckDBIngestError(f"snapshot captured bytes do not verify: {entry.path}")
+            if _normalize_repo_path(entry.path) != entry.path:
+                raise DuckDBIngestError(f"snapshot path cannot be represented by AST provenance: {entry.path}")
+            sources[entry.path] = data
+        identity = SnapshotIngestIdentity(verified)
+        with self._lock:
+            return self._ingest_sources(
+                sources=sources, identity=identity, dirty_tree_policy="captured_snapshot",
+                created_at=created_at, skipped_decisions=skipped, checkpoint=checkpoint,
+                before_publish=before_publish, publish_batch=publish_batch,
+            )
+
+    def _ingest_sources(
+        self,
+        *,
+        sources: Mapping[str, bytes],
+        identity: GitObjectIdentity | SnapshotIngestIdentity,
+        dirty_tree_policy: str,
+        blobs: Sequence[TrackedBlob] | None = None,
+        created_at: float | None = None,
+        repository_id: str | None = None,
+        skipped_decisions: Sequence[FileIngestDecision] = (),
+        checkpoint: Callable[[], None] | None = None,
+        before_publish: Callable[[RevisionPublication], None] | None = None,
+        publish_batch: Callable[[RevisionPublication], None] | None = None,
+    ) -> RevisionPublication:
         now = time.time() if created_at is None else float(created_at)
         repo_id = repository_id or identity.repository_id(
             label=self._repository_label
@@ -876,21 +1059,25 @@ class DuckDBASTIngestor:
         normalized_sources = {
             _normalize_repo_path(path): data for path, data in sources.items()
         }
+        if len(normalized_sources) != len(sources) or any(type(data) is not bytes for data in normalized_sources.values()):
+            raise DuckDBIngestError("sources require distinct normalized paths and exact bytes")
         blob_by_path: dict[str, TrackedBlob] = {}
         if blobs is not None:
             for blob in blobs:
                 blob_by_path[_normalize_repo_path(blob.path)] = blob
 
         # --- Phase 1: plan (no store mutations) ---------------------------
-        decisions: list[FileIngestDecision] = []
+        decisions: list[FileIngestDecision] = list(skipped_decisions)
         planned: list[tuple[str, ASTRecord, IngestAction]] = []
         parseable_paths = 0
         parsed = 0
         reused = 0
-        skipped = 0
+        skipped = len(skipped_decisions)
         parse_failed = 0
 
         for path in sorted(normalized_sources):
+            if checkpoint is not None:
+                checkpoint()
             data = normalized_sources[path]
             language = _language_for_path(path)
             blob = blob_by_path.get(path)
@@ -988,12 +1175,12 @@ class DuckDBASTIngestor:
                     break
 
         # Diff against previous complete publication for invalidations.
-        previous = self._previous_publication(repo_id)
+        previous = self._previous_publication(identity)
         invalidations: list[InvalidationRow] = []
         deleted_paths = 0
         changed_paths = 0
         renamed_paths = 0
-        if previous is not None:
+        if previous is not None and previous.revision_id != revision_id:
             prev_by_path = {
                 item.source_file.path: item for item in previous.projections
             }
@@ -1065,7 +1252,7 @@ class DuckDBASTIngestor:
             )
 
         stats = RevisionIngestStats(
-            scanned_path_count=len(normalized_sources),
+            scanned_path_count=len(normalized_sources) + len(skipped_decisions),
             parseable_path_count=parseable_paths,
             parsed_count=parsed,
             reused_count=reused,
@@ -1080,97 +1267,79 @@ class DuckDBASTIngestor:
 
         # --- Phase 2: atomic publish --------------------------------------
         with self._lock:
+            if checkpoint is not None:
+                checkpoint()
             if revision_id in self._publications:
                 existing = self._publications[revision_id]
                 if existing.published:
-                    return existing
-            committed_projections: list[ASTCatalogProjection] = []
-            committed_invalidations: list[InvalidationRow] = []
-            try:
-                for projection in projections:
-                    stored = self._store.put_projection(projection)
-                    committed_projections.append(stored)
-                    # Seed shard cache from durable payload so subsequent
-                    # revisions can rebind without reparsing.
-                    try:
-                        record = ASTRecord.from_dict(
-                            json.loads(stored.ast_blob.payload_json)
-                        )
-                        self._shard_cache.put(record)
-                    except Exception:
-                        # Cache population is best-effort; projection already stored.
-                        pass
-                for planned_inv in invalidations:
-                    row = self._store.invalidate(
-                        blob_id=planned_inv.blob_id,
-                        file_id=planned_inv.file_id,
-                        revision_id=planned_inv.revision_id,
-                        reason=planned_inv.reason,
-                        actor_id=planned_inv.actor_id,
-                        detail=planned_inv.detail,
-                        created_at=planned_inv.created_at,
-                    )
-                    committed_invalidations.append(row)
-                publication = RevisionPublication(
-                    revision_id=revision_id,
-                    repository_id=repo_id,
-                    revision=revision,
-                    identity=identity,
-                    repository_tree_cid=tree_cid,
-                    projections=tuple(committed_projections),
-                    decisions=tuple(decisions),
-                    invalidations=tuple(committed_invalidations),
-                    stats=stats,
-                    dirty_tree_policy=policy.value,
-                    published=True,
-                    created_at=now,
+                    if (existing.identity.to_dict() != identity.to_dict()
+                            or [(row.source_file.path, row.ast_cid) for row in existing.projections]
+                            != [(row.source_file.path, row.ast_cid) for row in projections]):
+                        raise DuckDBIngestError("revision identity already binds different source or extraction context")
+                    latest_id = self._latest_by_label.get(self._publication_chain(identity))
+                    if latest_id == revision_id and all(
+                        self._store.get_by_ast_cid(row.ast_cid) == row
+                        for row in existing.projections
+                    ):
+                        if before_publish is not None:
+                            before_publish(existing)
+                        if checkpoint is not None:
+                            checkpoint()
+                        if publish_batch is not None:
+                            publish_batch(existing)
+                        return existing
+            pending_publication = RevisionPublication(
+                revision_id=revision_id,
+                repository_id=repo_id,
+                revision=revision,
+                identity=identity,
+                repository_tree_cid=tree_cid,
+                projections=tuple(projections),
+                decisions=tuple(decisions),
+                invalidations=tuple(invalidations),
+                stats=stats,
+                dirty_tree_policy=dirty_tree_policy,
+                published=False,
+                created_at=now,
+            )
+            if before_publish is not None:
+                before_publish(pending_publication)
+            if checkpoint is not None:
+                checkpoint()
+            if publish_batch is None:
+                committed_projections, committed_invalidations = self._store.apply_batch(
+                    projections=projections, invalidations=invalidations,
                 )
-                self._publications[revision_id] = publication
-                # Track latest by stable label (not commit-bound repository_id)
-                # so successive commits for the same logical repo chain.
-                self._latest_by_label[self._repository_label] = revision_id
-                self._stats["revisions_published"] += 1
-                self._stats["parse_invocations"] += parsed + parse_failed
-                self._stats["reuse_hits"] += reused
-                self._stats["invalidations"] += len(committed_invalidations)
-                return publication
-            except Exception:
-                # Best-effort rollback of projections written in this attempt.
-                for projection in committed_projections:
-                    try:
-                        self._store.invalidate(
-                            blob_id=projection.blob_id,
-                            file_id=projection.source_file.file_id,
-                            revision_id=projection.source_revision.revision_id,
-                            reason="manual",
-                            actor_id=INGEST_ACTOR_ID,
-                            detail="atomic_publish_rollback",
-                            created_at=now,
-                        )
-                    except Exception:
-                        pass
-                raise
+            else:
+                publish_batch(pending_publication)
+                committed_projections, committed_invalidations = tuple(projections), tuple(invalidations)
+            publication = replace(
+                pending_publication, projections=tuple(committed_projections),
+                invalidations=tuple(committed_invalidations), published=True,
+            )
+            self._publications[revision_id] = publication
+            # Canonical snapshots have a stable repository identity. Legacy Git
+            # ingestion chains commit-bound identities by its configured label.
+            chain = self._publication_chain(identity)
+            self._latest_by_label[chain] = revision_id
+            self._stats["revisions_published"] += 1
+            self._stats["parse_invocations"] += parsed + parse_failed
+            self._stats["reuse_hits"] += reused
+            self._stats["invalidations"] += len(committed_invalidations)
+            return publication
 
     # -- internals ---------------------------------------------------------
 
+    def _publication_chain(self, identity: GitObjectIdentity | SnapshotIngestIdentity) -> str:
+        if isinstance(identity, SnapshotIngestIdentity):
+            return "snapshot:" + identity.snapshot.repository_id
+        return "git-label:" + self._repository_label
+
     def _previous_publication(
-        self, repository_id: str
+        self, identity: GitObjectIdentity | SnapshotIngestIdentity,
     ) -> RevisionPublication | None:
-        """Return the previous complete publication for the logical repo label.
-
-        Publications bind ``repository_id`` to a specific commit/tree, so chain
-        continuity uses the stable ``repository_label`` rather than equality of
-        the commit-bound id.
-        """
-
-        latest_id = self._latest_by_label.get(self._repository_label)
-        if latest_id is None:
-            # Fallback: any published revision sharing the label prefix pattern.
-            for publication in reversed(list(self._publications.values())):
-                if publication.published:
-                    return publication
-            return None
-        return self._publications.get(latest_id)
+        latest_id = self._latest_by_label.get(self._publication_chain(identity))
+        return self._publications.get(latest_id) if latest_id is not None else None
 
     def _parse_or_reuse(
         self,
@@ -1183,69 +1352,35 @@ class DuckDBASTIngestor:
         revision: str,
         repository_tree_cid: str,
     ) -> tuple[ASTRecord, IngestAction]:
-        cached = self._shard_cache.get(source_cid)
-        if cached is not None and cached.provenance.source_cid == source_cid:
+        frontend = self._frontends.get(language)
+        if frontend is None:
+            raise DuckDBIngestError(f"no frontend registered for {language}")
+        if cid_for_bytes(data) != source_cid:
+            raise DuckDBIngestError("source identity does not match exact parser bytes")
+        context = _frontend_cache_context(frontend, language=language, path=path)
+        cached = self._shard_cache.get(source_cid, context=context)
+        if cached is not None:
             rebound = rebind_ast_record(
-                cached,
-                path=path,
-                repository_id=repository_id,
-                revision=revision,
+                cached, path=path, repository_id=repository_id, revision=revision,
                 repository_tree_cid=repository_tree_cid,
             )
             return rebound, IngestAction.REUSED
 
-        frontend = self._frontends.get(language)
-        if frontend is None:
-            raise DuckDBIngestError(f"no frontend registered for {language}")
         record = frontend.extract_from_source(
-            data,
-            path=path,
-            repository_id=repository_id,
-            revision=revision,
+            data, path=path, repository_id=repository_id, revision=revision,
             repository_tree_cid=repository_tree_cid,
         )
-        # Ensure provenance source_cid matches the inventory identity.
-        if record.provenance.source_cid != source_cid:
-            record = rebind_ast_record(
-                record,
-                path=path,
-                repository_id=repository_id,
-                revision=revision,
-                repository_tree_cid=repository_tree_cid,
-            )
-            # rebind preserves prior source_cid; force alignment when parse
-            # used the same bytes (cid_for_bytes must match).
-            if record.provenance.source_cid != source_cid:
-                # Rebuild provenance with the inventory CID when bytes agree.
-                if cid_for_bytes(data) == source_cid:
-                    record = ASTRecord(
-                        provenance=SourceProvenance(
-                            source_cid=source_cid,
-                            path=path,
-                            repository_id=repository_id,
-                            revision=revision,
-                            repository_tree_cid=repository_tree_cid,
-                        ),
-                        frontend=record.frontend,
-                        module=record.module,
-                        scopes=record.scopes,
-                        symbols=record.symbols,
-                        imports=record.imports,
-                        references=record.references,
-                        calls=record.calls,
-                        effects=record.effects,
-                        diagnostics=record.diagnostics,
-                        unsupported=record.unsupported,
-                        schema_version=record.schema_version,
-                    )
-        self._shard_cache.put(record)
+        expected = SourceProvenance(
+            source_cid=source_cid, path=path, repository_id=repository_id,
+            revision=revision, repository_tree_cid=repository_tree_cid,
+        )
+        if type(record) is not ASTRecord or record.provenance != expected:
+            raise DuckDBIngestError("frontend returned AST provenance inconsistent with supplied source")
+        if context != _frontend_cache_context(frontend, language=language, path=path):
+            raise DuckDBIngestError("frontend extraction context changed during parsing")
+        self._shard_cache.put(record, context=context)
         # Parse failures remain durable AST facts; classify action for stats.
-        failed = any(
-            "parse_error" in item.code
-            or "invalid_encoding" in item.code
-            or item.code.endswith("resource_limit")
-            for item in record.diagnostics
-        ) and not record.symbols
+        failed = classify_parse_status(record) == "failed"
         action = IngestAction.PARSE_FAILED if failed else IngestAction.PARSED
         return record, action
 
@@ -1372,7 +1507,8 @@ def ingest_schema_descriptor() -> dict[str, Any]:
         "default_languages": sorted(DEFAULT_INGEST_LANGUAGES),
         "guarantees": {
             "unchanged_source_not_reparsed": True,
-            "reuse_by_source_cid": True,
+            "reuse_by_source_cid": False,
+            "reuse_by_source_and_extraction_context": True,
             "deleted_symbols_cannot_leak": True,
             "atomic_revision_publish": True,
             "dirty_tree_policy_explicit": True,
@@ -1401,6 +1537,8 @@ __all__ = [
     "RevisionIngestStats",
     "RevisionPublication",
     "SourceShardCache",
+    "SourceShardContext",
+    "SnapshotIngestIdentity",
     "apply_dirty_tree_policy",
     "build_duckdb_ast_ingestor",
     "ingest_schema_descriptor",

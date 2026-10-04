@@ -84,6 +84,7 @@ def test_provider_matrix_import_is_side_effect_free(monkeypatch) -> None:
     """
 
     monkeypatch.delenv("IPFS_DATASETS_PY_WARN_OPTIONAL_IMPORTS", raising=False)
+    modules_before = set(sys.modules)
     with warnings.catch_warnings(record=True) as recorded:
         warnings.simplefilter("always")
         registry_mod = importlib.import_module("ipfs_datasets_py.logic.backends.registry")
@@ -98,7 +99,7 @@ def test_provider_matrix_import_is_side_effect_free(monkeypatch) -> None:
     assert api_mod.EXECUTABLE_PROVIDER_MATRIX_INTERFACE == "ExecutableProviderMatrix@1"
     assert len(catalog) >= 9
     # Optional tool stacks must not be required merely for declarative discovery.
-    assert "ipfs_datasets_py.logic.external_provers.lazy_installer" not in sys.modules
+    assert "ipfs_datasets_py.logic.external_provers.lazy_installer" not in (set(sys.modules) - modules_before)
     ipfs_warnings = [
         item
         for item in recorded

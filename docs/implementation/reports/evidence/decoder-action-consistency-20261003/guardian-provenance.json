@@ -1,0 +1,39 @@
+{
+  "admitted": false,
+  "archive_unchanged": true,
+  "frozen_source_root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2",
+  "production_resource_owner_validated_by_this_campaign": false,
+  "production_scheduler_validated_by_this_campaign": false,
+  "proof_authority": false,
+  "provenance_scope": "The guarded experiment used these authenticated historical modules. Current production scheduler/resource modules are separate and are preserved on publication.",
+  "qualified": false,
+  "schema": "historical-guardian-resource-provenance/v1",
+  "sources": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py": {
+      "classification": "historical_guardian_runtime_not_current_production_module",
+      "original_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+      "reference": {
+        "bytes": 36718,
+        "dependency_id": "source-head-learning-rate-582fe739e568bae7057d132c42430123bb598852",
+        "kind": "archive_member",
+        "member": "additional-inputs/5ed9b83f571a4a892e1fac4a1fe6f5a995950d0725bad8461a0876a9415a03d1-autoencoder_daemon_resources.py",
+        "sha256": "5ed9b83f571a4a892e1fac4a1fe6f5a995950d0725bad8461a0876a9415a03d1"
+      }
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py": {
+      "classification": "historical_guardian_runtime_not_current_production_module",
+      "original_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py",
+      "reference": {
+        "bytes": 82754,
+        "dependency_id": "source-head-learning-rate-582fe739e568bae7057d132c42430123bb598852",
+        "kind": "archive_member",
+        "member": "additional-inputs/a418e84f70ed8509ba0518feea69e7a8c27865139f83b6c81349eefdfd5893a4-resource_scheduler.py",
+        "sha256": "a418e84f70ed8509ba0518feea69e7a8c27865139f83b6c81349eefdfd5893a4"
+      }
+    }
+  },
+  "successful_adoption_receipt": {
+    "member": "validation/training-r1-scheduler-adoption.json",
+    "sha256": "9d4b09d500959ad48a1c7bd18365cc44619b45bfb25b7caad701a7a49dfddbd6"
+  }
+}
