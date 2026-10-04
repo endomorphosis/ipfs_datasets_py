@@ -11,6 +11,7 @@ Acceptance:
 from __future__ import annotations
 
 import hashlib
+from importlib.util import find_spec
 from pathlib import Path
 
 import pytest
@@ -91,6 +92,15 @@ def _note_path() -> Path:
         candidate = parent / note_relative
         if candidate.is_file():
             return candidate
+    # The supervisor may be a sibling checkout or the vendored bootstrap
+    # package. Resolve the selected package instead of assuming a monorepo root.
+    supervisor = find_spec("ipfs_accelerate_py")
+    if supervisor is not None and supervisor.origin is not None:
+        package = Path(supervisor.origin).resolve().parent
+        for root in (package, package.parent):
+            candidate = root / note_relative
+            if candidate.is_file():
+                return candidate
     return Path(__file__).resolve().parents[5] / note_relative
 
 

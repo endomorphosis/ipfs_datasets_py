@@ -64,6 +64,7 @@ from __future__ import annotations
 
 import concurrent.futures
 import hashlib
+import math
 import os
 import re
 import sys
@@ -401,7 +402,9 @@ def run_bounded_solver_process(
 
 
 def _probe_solver_version(
-    executable_path: str, spec, *, timeout: float = _VERSION_PROBE_TIMEOUT_SECONDS
+    executable_path: str, spec, *, timeout: float = _VERSION_PROBE_TIMEOUT_SECONDS,
+    memory_mb: Optional[int] = None, cpu_seconds: Optional[float] = None,
+    cancel_event=None,
 ):
     """Run a single bounded ``--version``-style metadata query against an
     already-resolved executable. Never raises; returns ``None`` on any
@@ -416,12 +419,17 @@ def _probe_solver_version(
     completed = get_process_supervisor().run(
         [executable_path, *spec.version_args],
         kind=kind,
-        limits=ProcessLimits(wall_time_seconds=max(0.001, float(timeout))),
+        limits=ProcessLimits(wall_time_seconds=float(timeout),
+                             memory_mb=memory_mb, cpu_seconds=cpu_seconds),
+        cancel_event=cancel_event,
     )
-    if completed.error or completed.timed_out:
+    if completed.error or completed.timed_out or completed.cancelled:
         return None
     output = (completed.stdout or completed.stderr or "").strip().splitlines()
     return output[0].strip() if output else None
+
+
+_NATIVE_VERSION_PROBER = _probe_solver_version
 
 
 # ---------------------------------------------------------------------------
@@ -550,6 +558,14 @@ class SolverPortfolio:
     defaults.  ``resource_scheduler`` defaults to the one host-global
     process-safe scheduler; callers that already hold a Hammer request lease
     can pass it to :meth:`run` as ``parent_lease``.
+
+    One finite overall deadline includes admission, queueing, version probes
+    and solver execution. It defaults to ``policy.hammer_policy.timeout_seconds``;
+    an explicit ``overall_timeout_seconds`` can select a different finite run
+    budget while each solver retains its own execution cap. The optional
+    ``resource_wait_timeout_seconds`` further caps each admission (zero means
+    an immediate attempt). Injected Python callbacks and filesystem cleanup
+    remain cooperative; this class cannot forcibly stop an arbitrary callback.
     """
 
     def __init__(
@@ -561,6 +577,7 @@ class SolverPortfolio:
         resource_scheduler: Optional[GlobalResourceScheduler] = None,
         resource_lane: str = ResourceLane.HAMMER_LEAN.value,
         resource_wait_timeout_seconds: Optional[float] = None,
+        overall_timeout_seconds: Optional[float] = None,
     ) -> None:
         policy.validate()
         self.policy = policy
@@ -575,9 +592,61 @@ class SolverPortfolio:
         self.resource_lane = str(resource_lane).strip()
         if not self.resource_lane:
             raise ValueError("resource_lane must be non-empty")
-        if resource_wait_timeout_seconds is not None and resource_wait_timeout_seconds < 0:
-            raise ValueError("resource_wait_timeout_seconds cannot be negative")
+        if resource_wait_timeout_seconds is not None and (
+            isinstance(resource_wait_timeout_seconds, bool)
+            or not isinstance(resource_wait_timeout_seconds, (int, float))
+            or not math.isfinite(resource_wait_timeout_seconds)
+            or resource_wait_timeout_seconds < 0
+        ):
+            raise ValueError("resource_wait_timeout_seconds must be finite and nonnegative")
         self.resource_wait_timeout_seconds = resource_wait_timeout_seconds
+        overall = policy.hammer_policy.timeout_seconds if overall_timeout_seconds is None else overall_timeout_seconds
+        if (isinstance(overall, bool) or not isinstance(overall, (int, float))
+                or not math.isfinite(overall) or overall <= 0):
+            raise ValueError("overall_timeout_seconds must be finite and positive")
+        self.overall_timeout_seconds = float(overall)
+
+    def _acquire_before_deadline(self, *, deadline: float, cancel_event, **request) -> ResourceLease:
+        """Keep every admission within the same run deadline, including late grants."""
+        if cancel_event is not None and cancel_event.is_set():
+            raise LeaseCancelledError("solver portfolio cancelled before resource admission")
+        now = time.monotonic()
+        if now >= deadline:
+            raise LeaseTimeoutError("solver portfolio overall deadline exceeded before resource admission")
+        wait_cap = self.resource_wait_timeout_seconds
+        admission_deadline = deadline if wait_cap is None else min(deadline, now + wait_cap)
+        lease = self.resource_scheduler.acquire(
+            self.resource_lane, timeout=max(0.0, admission_deadline - now),
+            cancel_event=cancel_event, **request)
+        try:
+            if lease.combined_cancellation_signal(cancel_event).is_set():
+                raise LeaseCancelledError("solver portfolio cancelled during resource admission")
+            observed = time.monotonic()
+            if observed >= deadline or (wait_cap != 0 and observed >= admission_deadline):
+                raise LeaseTimeoutError("solver portfolio resource admission exceeded its deadline")
+            return lease
+        except BaseException:
+            lease.release()
+            raise
+
+    def _execution_budget(self, solver_name: str) -> SolverBudget:
+        """Apply a bounded SMT/ATP default without constraining ITP fallbacks."""
+        budget = self.policy.budget_for(solver_name)
+        for name in ("timeout_seconds", "cpu_seconds"):
+            value = getattr(budget, name)
+            if value is not None and (isinstance(value, bool) or not isinstance(value, (int, float))
+                    or not math.isfinite(value) or value <= 0):
+                raise PolicyError(f"solver {name} must be finite and positive")
+        config = self.resource_scheduler.config
+        if config.proof_safety_enabled and budget.memory_mb is None:
+            capacity = config.total_memory_mb - config.reserved_memory_mb - sum(
+                item.memory_mb for lane, item in config.reservations().items()
+                if lane != self.resource_lane
+            )
+            if capacity <= 0:
+                raise PolicyError("no memory capacity remains for solver execution")
+            budget = replace(budget, memory_mb=min(1024, capacity))
+        return budget
 
     def _execution_budget(self, solver_name: str) -> SolverBudget:
         """Apply a bounded SMT/ATP default without constraining ITP fallbacks."""
@@ -664,11 +733,21 @@ class SolverPortfolio:
 
         return permitted, denied
 
-    def _solver_version(self, executable_path: str, solver_name: str) -> Optional[str]:
+    def _solver_version(self, executable_path: str, solver_name: str, *,
+                        budget: SolverBudget, cancel_event=None) -> Optional[str]:
         with self._version_cache_lock:
             if executable_path in self._version_cache:
                 return self._version_cache[executable_path]
-        version = self._version_prober(executable_path, solver_spec(solver_name))
+        if self._version_prober is _NATIVE_VERSION_PROBER:
+            timeout = min(_VERSION_PROBE_TIMEOUT_SECONDS, budget.timeout_seconds)
+            version = self._version_prober(executable_path, solver_spec(solver_name),
+                timeout=timeout, memory_mb=budget.memory_mb,
+                cpu_seconds=min(timeout, budget.cpu_seconds) if budget.cpu_seconds is not None else timeout,
+                cancel_event=cancel_event)
+        else:
+            # Keep the historical two-argument injectable test seam. Native
+            # production probes always use the bounded, cancellable path above.
+            version = self._version_prober(executable_path, solver_spec(solver_name))
         with self._version_cache_lock:
             self._version_cache[executable_path] = version
         return version
@@ -691,6 +770,8 @@ class SolverPortfolio:
         """
 
         _require_nonempty_str(request_id, field_name="request_id", owner="SolverPortfolio.run")
+        run_started = time.monotonic()
+        deadline = run_started + self.overall_timeout_seconds
 
         permitted, denied = self.resolve_attempts(attempts)
         try:
@@ -736,13 +817,12 @@ class SolverPortfolio:
             sorted((int(budget.memory_mb or 0) for budget in budgets), reverse=True)[:max_workers]
         )
         telemetry_before = self.resource_scheduler.snapshot()
-        with self.resource_scheduler.acquire(
-            self.resource_lane,
+        with self._acquire_before_deadline(
+            deadline=deadline,
             cpu_slots=max_workers,
             memory_mb=concurrent_memory,
             child_process_slots=max_workers if self.resource_scheduler.config.proof_safety_enabled else 0,
             parent_lease=parent_lease,
-            timeout=self.resource_wait_timeout_seconds,
             cancel_event=portfolio_cancel_event,
             request_id=request_id,
         ) as portfolio_lease:
@@ -763,6 +843,7 @@ class SolverPortfolio:
                             item,
                             portfolio_cancel_event,
                             portfolio_lease.token,
+                            deadline,
                         )
                         for item in work_items
                     ]
@@ -789,6 +870,9 @@ class SolverPortfolio:
                 "lane": self.resource_lane,
                 "portfolio_cpu_slots": max_workers,
                 "portfolio_memory_mb": concurrent_memory,
+                "overall_timeout_seconds": self.overall_timeout_seconds,
+                "observed_elapsed_seconds": time.monotonic() - run_started,
+                "overall_deadline_exceeded": time.monotonic() >= deadline,
                 "wait_time_seconds_before": telemetry_before["wait_time_seconds"],
                 "scheduler": self.resource_scheduler.snapshot(),
             },
@@ -800,6 +884,7 @@ class SolverPortfolio:
         item: Tuple[PortfolioAttemptSpec, str, SolverBudget, str, str],
         cancel_event: _PortfolioCancellationSignal,
         portfolio_lease: ResourceLeaseToken,
+        deadline: float,
     ) -> Tuple[str, SolverAttemptRecord, SolverAttemptEvidence, bool]:
         spec, executable_path, budget, attempt_id, tmp_dir = item
         translation = spec.translation
@@ -824,36 +909,73 @@ class SolverPortfolio:
         solver_version: Optional[str] = None
 
         started_at = _utcnow()
+        attempt_started = time.monotonic()
         solver_lease: Optional[ResourceLease] = None
+        native_execution_started = False
+        applied_timeout_seconds = budget.timeout_seconds
         try:
-            solver_lease = self.resource_scheduler.acquire(
-                self.resource_lane,
+            solver_lease = self._acquire_before_deadline(
+                deadline=deadline,
                 cpu_slots=1,
                 memory_mb=int(budget.memory_mb or 0),
                 child_process_slots=1 if self.resource_scheduler.config.proof_safety_enabled else 0,
                 parent_lease=portfolio_lease,
-                timeout=self.resource_wait_timeout_seconds,
                 cancel_event=cancel_event,
                 request_id=attempt_id,
             )
         except LeaseCancelledError:
             outcome = SolverProcessOutcome(command=command, cancelled=True)
         except LeaseTimeoutError as exc:
-            outcome = SolverProcessOutcome(command=command, error=str(exc))
+            outcome = SolverProcessOutcome(command=command, error=str(exc),
+                                           wall_time_seconds=time.monotonic() - attempt_started)
         else:
             with solver_lease:
                 lease_cancellation = solver_lease.combined_cancellation_signal(cancel_event)
+                execution_started = time.monotonic()
+                execution_deadline = min(deadline, execution_started + budget.timeout_seconds)
+                execution_window = execution_deadline - execution_started
+                applied_timeout_seconds = execution_window if execution_window > 0 else budget.timeout_seconds
                 if lease_cancellation.is_set():
                     outcome = SolverProcessOutcome(command=command, cancelled=True)
+                elif execution_window <= 0:
+                    # An admission timeout is not evidence that a native solver
+                    # ran for (or exhausted) its independent solver budget.
+                    outcome = SolverProcessOutcome(command=command,
+                        error="solver portfolio overall deadline exceeded before native execution")
                 else:
                     # Version discovery also launches the solver executable
                     # and therefore belongs inside this child-process lease.
-                    solver_version = self._solver_version(executable_path, spec.solver_name)
-                    outcome = self._process_runner(
-                        command,
-                        budget=budget,
-                        cancel_event=lease_cancellation,
-                    )
+                    probe_started = time.monotonic()
+                    probe_budget = replace(budget, timeout_seconds=applied_timeout_seconds)
+                    solver_version = self._solver_version(executable_path, spec.solver_name,
+                        budget=probe_budget, cancel_event=lease_cancellation)
+                    probe_seconds = time.monotonic() - probe_started
+                    remaining_seconds = execution_deadline - time.monotonic()
+                    if lease_cancellation.is_set():
+                        outcome = SolverProcessOutcome(command=command, cancelled=True,
+                                                       wall_time_seconds=probe_seconds)
+                    elif remaining_seconds <= 0:
+                        outcome = SolverProcessOutcome(command=command, timed_out=True,
+                                                       wall_time_seconds=probe_seconds)
+                    else:
+                        native_budget = replace(budget, timeout_seconds=remaining_seconds,
+                            cpu_seconds=min(budget.cpu_seconds, remaining_seconds)
+                            if budget.cpu_seconds is not None else None)
+                        command = self.policy.build_command(spec.solver_name, executable_path, input_path, native_budget)
+                        native_execution_started = True
+                        outcome = self._process_runner(
+                            command,
+                            budget=native_budget,
+                            cancel_event=lease_cancellation,
+                        )
+                        outcome.wall_time_seconds += probe_seconds
+                        # Native completion can coincide with revocation or
+                        # expiry. Preserve output as evidence, never its late
+                        # conclusive verdict.
+                        if lease_cancellation.is_set():
+                            outcome = replace(outcome, cancelled=True, error=None)
+                        elif time.monotonic() >= execution_deadline:
+                            outcome = replace(outcome, timed_out=True, error=None)
         finished_at = _utcnow()
 
         raw_output_digest = compute_content_digest(
@@ -877,10 +999,15 @@ class SolverPortfolio:
         wall_time_seconds = outcome.wall_time_seconds
         # Guard the model's TIMEOUT-implies-wall-time-at-least-the-budget
         # invariant even if the OS scheduler let the kill land a hair early.
-        if verdict is SolverVerdict.TIMEOUT and wall_time_seconds < budget.timeout_seconds:
-            wall_time_seconds = budget.timeout_seconds
+        if verdict is SolverVerdict.TIMEOUT and wall_time_seconds < applied_timeout_seconds:
+            wall_time_seconds = applied_timeout_seconds
 
-        resource_usage: Dict[str, Any] = {}
+        resource_usage: Dict[str, Any] = {
+            "configured_solver_timeout_seconds": budget.timeout_seconds,
+            "observed_elapsed_seconds": time.monotonic() - attempt_started,
+            "native_execution_started": native_execution_started,
+            "overall_deadline_exceeded": time.monotonic() >= deadline,
+        }
         if outcome.cpu_seconds is not None:
             resource_usage["cpu_seconds"] = outcome.cpu_seconds
         if outcome.max_rss_mb is not None:
@@ -899,7 +1026,7 @@ class SolverPortfolio:
             solver_name=spec.solver_name,
             solver_version=solver_version,
             target=translation.target,
-            timeout_seconds=budget.timeout_seconds,
+            timeout_seconds=applied_timeout_seconds,
             verdict=verdict,
             exit_code=outcome.returncode,
             wall_time_seconds=wall_time_seconds,

@@ -30,17 +30,22 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import platform
 import re
+import shlex
 import shutil
+import stat
 import subprocess
 import tarfile
 import tempfile
 import threading
+import time
 import zipfile
 from collections.abc import Callable, Mapping, Sequence
 from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import asdict, dataclass, field
 from functools import wraps
 from pathlib import Path
@@ -88,6 +93,30 @@ JAVA_OPTION_ENV_VARS: Final = (
     "JAVA_TOOL_OPTIONS",
     "_JAVA_OPTIONS",
     "JDK_JAVA_OPTIONS",
+)
+JAVA_PROBE_PROFILE: Final = "admitted-jvm-identity-probe@1"
+JAVA_PROBE_RESIDENT_BYTES: Final = 256 * 1024**2
+JAVA_PROBE_ADDRESS_SPACE_BYTES: Final = 4 * 1024**3
+JAVA_PROBE_OUTPUT_BYTES: Final = 65_536
+JAVA_PROBE_MAX_TIMEOUT_SECONDS: Final = (2**31 - 1) / 1000
+JAVA_PROBE_ARGUMENTS: Final = (
+    "-Xms16m", "-Xmx128m", "-Xss1m", "-XX:+UseSerialGC",
+    "-XX:ActiveProcessorCount=1", "-XX:MaxMetaspaceSize=128m",
+    "-XX:ReservedCodeCacheSize=64m", "-XX:-UsePerfData", "-version",
+)
+_JAVA_PROBE_OPERATION = ContextVar("java_identity_probe_operation", default=None)
+
+# Help/version commands load more of the tool than Java's identity probe.
+# These are support observations, not model checks or proof execution.
+STATE_MODEL_PROBE_PROFILE: Final = "admitted-state-model-runtime-probe@1"
+STATE_MODEL_PROBE_RESIDENT_BYTES: Final = 512 * 1024**2
+STATE_MODEL_PROBE_ADDRESS_SPACE_BYTES: Final = 4 * 1024**3
+STATE_MODEL_PROBE_OUTPUT_BYTES: Final = 65_536
+STATE_MODEL_LAUNCHER_MAX_BYTES: Final = 16_384
+STATE_MODEL_PROBE_JAVA_ARGUMENTS: Final = (
+    "-Xms16m", "-Xmx256m", "-Xss1m", "-XX:+UseSerialGC",
+    "-XX:ActiveProcessorCount=1", "-XX:MaxMetaspaceSize=128m",
+    "-XX:ReservedCodeCacheSize=64m", "-XX:-UsePerfData",
 )
 
 # Reviewed fallback pins when the lock file is unavailable (tests / offline).
@@ -384,25 +413,107 @@ def read_java_version_banner(
     java_executable: str,
     *,
     timeout: float = 10.0,
+    scheduler=None,
+    parent_lease=None,
+    cancellation=None,
 ) -> tuple[int | None, str | None]:
-    """Return ``(exit_code, banner)`` from a bounded ``java -version`` probe."""
+    """Read JVM identity with default shared admission and finite native limits.
+
+    Only clean zero-exit observations return a banner. Local timeout,
+    cancellation or admission refusal returns ``(None, None)``; interruption of
+    an enclosing proof operation propagates its typed error after native cleanup.
+    An actual parent lease allocates a child instead of a new root reservation.
+    """
+    from ..process import ToolProcessError, ToolRunLimits, ToolRunRequest, ToolRuntime
+    from ..resource_admission import ResourceAdmittedToolRunner
 
     try:
-        completed = subprocess.run(
-            [java_executable, "-version"],
-            check=False,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-            shell=False,
-            env=_runtime_environment(),
-        )
-    except (OSError, subprocess.SubprocessError):
+        with _java_probe_scope(timeout, cancellation) as operation:
+            runner = ResourceAdmittedToolRunner(scheduler=scheduler, parent_lease=parent_lease,
+                cpu_slots=1, child_process_slots=1, base_environment=_runtime_environment())
+            remaining = operation.checkpoint("before JVM identity execution")
+            request = ToolRunRequest(argv=(os.fspath(java_executable), *JAVA_PROBE_ARGUMENTS), runtime=ToolRuntime.JVM,
+                limits=ToolRunLimits(timeout_seconds=remaining, cpu_seconds=remaining,
+                    memory_bytes=JAVA_PROBE_ADDRESS_SPACE_BYTES,
+                    resident_memory_bytes=JAVA_PROBE_RESIDENT_BYTES,
+                    max_output_bytes=JAVA_PROBE_OUTPUT_BYTES, max_input_bytes=1024,
+                    max_workspace_bytes=1024**2, max_file_bytes=1024**2))
+            try:
+                completed = runner.run(request, cancellation=operation)
+            except (OSError, ToolProcessError):
+                operation.checkpoint("after failed JVM identity execution")
+                return None, None
+            operation.checkpoint("after JVM identity execution")
+            if (completed.returncode != 0 or completed.error or not completed.workspace_cleaned
+                    or any((completed.timed_out, completed.cancelled, completed.unavailable,
+                            completed.resource_exhausted, completed.output_truncated,
+                            completed.workspace_limit_exceeded, completed.process_tree_terminated))):
+                return None, None
+            if len(completed.stdout.encode("utf-8")) + len(completed.stderr.encode("utf-8")) > JAVA_PROBE_OUTPUT_BYTES:
+                return None, None
+            text = "\n".join(part for part in (completed.stdout, completed.stderr) if part).strip()
+            return completed.returncode, text or None
+    except _JavaProbeStopped:
         return None, None
-    text = "\n".join(
-        part for part in (completed.stdout, completed.stderr) if part
-    ).strip()
-    return completed.returncode, text or None
+
+
+class _JavaProbeStopped(Exception):
+    """Internal nonconclusive local stop; never overrides an ambient stop."""
+
+
+class _JavaProbeOperation:
+    def __init__(self, timeout, cancellation, parent, ambient):
+        self.started = time.monotonic()
+        self.deadline = self.started + timeout
+        if not math.isfinite(self.started) or not math.isfinite(self.deadline):
+            raise ValueError("JVM probe requires a finite monotonic deadline")
+        for enclosing in (parent, ambient):
+            if enclosing is not None:
+                self.deadline = min(self.deadline, enclosing.deadline)
+        self.parent, self.ambient, self.cancellation = parent, ambient, cancellation
+        self.stopped = False
+
+    def is_set(self):
+        # Native polling must return a boolean so cleanup always completes.
+        from ..process import _is_cancelled
+
+        if (self.stopped or (self.parent is not None and self.parent.is_set())
+                or (self.ambient is not None and self.ambient.is_set())
+                or _is_cancelled(self.cancellation) or time.monotonic() >= self.deadline):
+            self.stopped = True
+        return self.stopped
+
+    def checkpoint(self, phase):
+        if self.ambient is not None:
+            self.ambient.checkpoint(phase)
+        if self.is_set():
+            raise _JavaProbeStopped()
+        remaining = self.deadline - time.monotonic()
+        if remaining <= 0:
+            self.stopped = True
+            raise _JavaProbeStopped()
+        return remaining
+
+
+@contextmanager
+def _java_probe_scope(timeout, cancellation):
+    if (isinstance(timeout, bool) or not isinstance(timeout, (int, float))
+            or not 0 < timeout <= JAVA_PROBE_MAX_TIMEOUT_SECONDS):
+        raise ValueError("JVM probe timeout must be finite and positive within the supported range")
+    from ..smt.operation_budget import current_proof_operation
+
+    operation = _JavaProbeOperation(timeout, cancellation, _JAVA_PROBE_OPERATION.get(), current_proof_operation())
+    token = _JAVA_PROBE_OPERATION.set(operation)
+    try:
+        operation.checkpoint("JVM probe entry")
+        try:
+            yield operation
+        except Exception:
+            operation.checkpoint("JVM probe exception boundary")
+            raise
+        operation.checkpoint("JVM probe return")
+    finally:
+        _JAVA_PROBE_OPERATION.reset(token)
 
 
 def java_major_version(banner: str | None) -> int | None:
@@ -425,23 +536,48 @@ def probe_java_runtime(
     java_executable: str | Path | None = None,
     minimum_major: int,
     timeout: float = 10.0,
+    scheduler=None,
+    parent_lease=None,
+    cancellation=None,
 ) -> JavaRuntimeProbe:
-    """Resolve and validate one JVM against a tool-specific minimum version."""
+    """Resolve and validate one JVM under one admitted, cooperative budget.
 
-    resolved, source = resolve_java_executable(java_executable)
-    if resolved is None:
-        reason = (
-            "java_override_invalid"
-            if source in {"argument", "environment", "java_home"}
-            else "java_support_missing"
-        )
-        return JavaRuntimeProbe(
-            executable=None,
-            source=source,
-            minimum_major=minimum_major,
-            reason_code=reason,
-        )
-    returncode, banner = read_java_version_banner(resolved, timeout=timeout)
+    Resolution and final banner validation consume the same timeout as native
+    execution. Standalone local stops produce an unusable probe. An enclosing
+    proof operation retains its own typed interruption and final return gate.
+    No JVM is installed and its identity grants no model-checking authority.
+    """
+    resolved, source = None, "path"
+    try:
+        with _java_probe_scope(timeout, cancellation) as operation:
+            _, source = _java_candidate(java_executable)
+            operation.checkpoint("before JVM resolution")
+            resolved, source = resolve_java_executable(java_executable)
+            operation.checkpoint("after JVM resolution")
+            if resolved is None:
+                reason = (
+                    "java_override_invalid"
+                    if source in {"argument", "environment", "java_home"}
+                    else "java_support_missing"
+                )
+                return JavaRuntimeProbe(executable=None, source=source,
+                    minimum_major=minimum_major, reason_code=reason)
+            # Existing injected readers often accept only the original timeout
+            # keyword. Ambient/local scopes carry the budget without requiring
+            # a signature change when callers supply no new controls.
+            options = {name: value for name, value in (
+                ("scheduler", scheduler), ("parent_lease", parent_lease),
+                ("cancellation", cancellation)) if value is not None}
+            returncode, banner = read_java_version_banner(resolved,
+                timeout=operation.checkpoint("before JVM banner read"), **options)
+            operation.checkpoint("after JVM banner read")
+            return _java_runtime_observation(resolved, source, minimum_major, returncode, banner)
+    except _JavaProbeStopped:
+        return JavaRuntimeProbe(executable=resolved, source=source,
+            minimum_major=minimum_major, reason_code="java_probe_failed")
+
+
+def _java_runtime_observation(resolved, source, minimum_major, returncode, banner):
     major = java_major_version(banner)
     if returncode is None or returncode != 0:
         return JavaRuntimeProbe(
@@ -903,56 +1039,168 @@ def _runtime_environment(
     return env
 
 
+def _runtime_probe_options(*, scheduler=None, parent_lease=None, cancellation=None):
+    # Preserve existing injected reader signatures when no new control is used.
+    return {key: value for key, value in (
+        ("scheduler", scheduler), ("parent_lease", parent_lease),
+        ("cancellation", cancellation),
+    ) if value is not None}
+
+
+def _failed_runtime_probe(command=(), *, reason="runtime_probe_failed") -> RuntimeCommandProbe:
+    # Semantic TLC help parsing deliberately accepts clean rc=1. An unsafe
+    # transport must withhold both its return code and marker-bearing output.
+    return RuntimeCommandProbe(command=tuple(command), returncode=None, output="",
+                               usable=False, reason_code=reason)
+
+
+def _stop_runtime_probe(operation) -> None:
+    # Native failure flags can arrive before a caller's event/deadline changes.
+    # Latch the local support operation so fallback cannot resurrect it. An
+    # otherwise-live ambient proof operation keeps its independent semantics.
+    while operation is not None:
+        operation.stopped = True
+        operation = operation.parent
+
+
+def _direct_tlc_probe_command(java_executable, jar_path) -> tuple[str, ...]:
+    return (str(java_executable), *STATE_MODEL_PROBE_JAVA_ARGUMENTS,
+            "-cp", str(_absolute_lexical_path(jar_path)), "tlc2.TLC", "-help")
+
+
+def _canonical_tlc_probe_command(
+    executable: str, *, java_executable: str | Path | None = None,
+) -> tuple[str, ...] | None:
+    """Expand only the complete, existing managed TLC launcher contract.
+
+    A bounded regular-file read never follows the final symlink or opens a FIFO
+    in blocking mode. Parsed tokens are only candidates for byte-exact renderer
+    comparison; arbitrary launchers remain unchanged. No launcher is modified.
+    """
+    if not hasattr(os, "O_NOFOLLOW") or not hasattr(os, "O_NONBLOCK"):
+        return None
+    path = os.fspath(executable)
+    if not os.path.dirname(path):
+        path = shutil.which(path, path=_runtime_environment(java_executable).get("PATH"))
+        if path is None:
+            return None
+    descriptor = None
+    try:
+        descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        before = os.fstat(descriptor)
+        if (not stat.S_ISREG(before.st_mode) or not before.st_mode & 0o111
+                or not 0 < before.st_size <= STATE_MODEL_LAUNCHER_MAX_BYTES):
+            return None
+        raw = os.read(descriptor, STATE_MODEL_LAUNCHER_MAX_BYTES + 1)
+        after = os.fstat(descriptor)
+        identity = lambda value: (value.st_dev, value.st_ino, value.st_size, value.st_mtime_ns)
+        if len(raw) != before.st_size or identity(before) != identity(after):
+            return None
+        body = raw.decode("utf-8")
+        lines = body.splitlines()
+        exports = [shlex.split(line) for line in lines if line.startswith("export ")]
+        executions = [shlex.split(line) for line in lines if line.startswith("exec ")]
+        if len(exports) != 1 or len(executions) != 1:
+            return None
+        export, command = exports[0], executions[0]
+        if (len(export) != 2 or not export[1].startswith("TLA2TOOLS_JAR=")
+                or len(command) != 6 or command[0] != "exec" or command[2] != "-cp"
+                or command[4:] != ["tlc2.TLC", "$@"]):
+            return None
+        java, jar = command[1], command[3]
+        if (not Path(java).is_absolute() or not Path(jar).is_absolute()
+                or export[1] != "TLA2TOOLS_JAR=" + jar):
+            return None
+        if java_executable is not None and Path(java).resolve() != Path(java_executable).resolve():
+            return None
+        expected = _launcher_body(Path(jar), java_jar=Path(jar), java_main="tlc2.TLC",
+                                 java_executable=java, environment={"TLA2TOOLS_JAR": jar})
+        if body != expected:
+            return None
+        return _direct_tlc_probe_command(java, jar)
+    except (OSError, ValueError, UnicodeError):
+        return None
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
+
+
 def _run_runtime_command(
     command: Sequence[str],
     *,
     timeout: float,
     java_executable: str | Path | None = None,
+    scheduler=None,
+    parent_lease=None,
+    cancellation=None,
 ) -> RuntimeCommandProbe:
-    normalized = tuple(str(part) for part in command)
+    """Admit one finite support command and withhold unsafe output.
+
+    Direct TLC JVM commands reserve one process. Opaque launchers and Apalache
+    reserve three to cover the reviewed script helpers; arbitrary custom
+    launchers remain caller-trusted. This is not hard aggregate PID containment.
+    """
+    from ..process import ToolProcessError, ToolRunLimits, ToolRunRequest, ToolRuntime
+    from ..resource_admission import ResourceAdmittedToolRunner
+
+    normalized = ()
     try:
-        completed = subprocess.run(
-            list(normalized),
-            check=False,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-            shell=False,
-            env=_runtime_environment(java_executable),
-        )
-    except (OSError, subprocess.SubprocessError):
-        return RuntimeCommandProbe(
-            command=normalized,
-            returncode=None,
-            output="",
-            usable=False,
-            reason_code="runtime_probe_failed",
-        )
-    text = "\n".join(
-        part for part in (completed.stdout, completed.stderr) if part
-    ).strip()
-    if completed.returncode != 0:
-        return RuntimeCommandProbe(
-            command=normalized,
-            returncode=completed.returncode,
-            output=text,
-            usable=False,
-            reason_code="runtime_probe_nonzero_exit",
-        )
-    if not text:
-        return RuntimeCommandProbe(
-            command=normalized,
-            returncode=completed.returncode,
-            output="",
-            usable=False,
-            reason_code="runtime_probe_empty_output",
-        )
-    return RuntimeCommandProbe(
-        command=normalized,
-        returncode=completed.returncode,
-        output=text,
-        usable=True,
-    )
+        with _java_probe_scope(timeout, cancellation) as operation:
+            normalized = tuple(str(part) for part in command)
+            direct_tlc = (len(normalized) == len(STATE_MODEL_PROBE_JAVA_ARGUMENTS) + 5
+                and normalized[1:-4] == STATE_MODEL_PROBE_JAVA_ARGUMENTS
+                and normalized[-4] == "-cp" and normalized[-2:] == ("tlc2.TLC", "-help"))
+            environment = _runtime_environment(java_executable)
+            # Apalache's reviewed launcher adds a 4-GiB heap and G1 GC unless
+            # these two variables are supplied. Caller values cannot widen it.
+            environment["JVM_ARGS"] = " ".join(arg for arg in STATE_MODEL_PROBE_JAVA_ARGUMENTS
+                                              if arg != "-XX:+UseSerialGC")
+            environment["JVM_GC_ARGS"] = "-XX:+UseSerialGC"
+            runner = ResourceAdmittedToolRunner(scheduler=scheduler, parent_lease=parent_lease,
+                cpu_slots=1, child_process_slots=1 if direct_tlc else 3,
+                base_environment=environment)
+            remaining = operation.checkpoint("before state-model support execution")
+            request = ToolRunRequest(argv=normalized, runtime=ToolRuntime.JVM,
+                limits=ToolRunLimits(timeout_seconds=remaining, cpu_seconds=remaining,
+                    memory_bytes=STATE_MODEL_PROBE_ADDRESS_SPACE_BYTES,
+                    resident_memory_bytes=STATE_MODEL_PROBE_RESIDENT_BYTES,
+                    max_output_bytes=STATE_MODEL_PROBE_OUTPUT_BYTES, max_input_bytes=1024,
+                    max_workspace_bytes=16 * 1024**2, max_file_bytes=1024**2))
+            try:
+                completed = runner.run(request, cancellation=operation)
+            except (OSError, ToolProcessError):
+                operation.checkpoint("after failed state-model support execution")
+                _stop_runtime_probe(operation)
+                return _failed_runtime_probe(normalized)
+            operation.checkpoint("after state-model support execution")
+            if (completed.unavailable and completed.pid is None and completed.returncode is None
+                    and not completed.stdout and not completed.stderr and completed.workspace_cleaned
+                    and not any((completed.timed_out, completed.cancelled, completed.resource_exhausted,
+                                 completed.output_truncated, completed.workspace_limit_exceeded,
+                                 completed.process_tree_terminated))):
+                # Pure executable discovery failure has no native lifecycle to
+                # distrust. A caller may still try its explicit JAR fallback.
+                return _failed_runtime_probe(normalized)
+            if (completed.returncode is None or completed.error or not completed.workspace_cleaned
+                    or any((completed.timed_out, completed.cancelled, completed.unavailable,
+                            completed.resource_exhausted, completed.output_truncated,
+                            completed.workspace_limit_exceeded, completed.process_tree_terminated))):
+                _stop_runtime_probe(operation)
+                return _failed_runtime_probe(normalized)
+            if len(completed.stdout.encode("utf-8")) + len(completed.stderr.encode("utf-8")) > STATE_MODEL_PROBE_OUTPUT_BYTES:
+                _stop_runtime_probe(operation)
+                return _failed_runtime_probe(normalized)
+            text = "\n".join(part for part in (completed.stdout, completed.stderr) if part).strip()
+            if completed.returncode != 0:
+                return RuntimeCommandProbe(command=normalized, returncode=completed.returncode,
+                    output=text, usable=False, reason_code="runtime_probe_nonzero_exit")
+            if not text:
+                return RuntimeCommandProbe(command=normalized, returncode=completed.returncode,
+                    output="", usable=False, reason_code="runtime_probe_empty_output")
+            return RuntimeCommandProbe(command=normalized, returncode=completed.returncode,
+                                       output=text, usable=True)
+    except _JavaProbeStopped:
+        return _failed_runtime_probe(normalized)
 
 
 def read_version_banner(
@@ -984,35 +1232,40 @@ def read_tlc_version_banner(
     jar_path: str | Path | None = None,
     java_executable: str | Path | None = None,
     timeout: float = 10.0,
+    scheduler=None,
+    parent_lease=None,
+    cancellation=None,
 ) -> str | None:
-    """Probe TLC identity via launcher or ``java -cp jar tlc2.TLC``."""
-
-    binary = executable or which_executable(TLC_EXECUTABLE)
-    if binary:
-        probe = probe_tlc_runtime(
-            executable=binary,
-            java_executable=java_executable,
-            timeout=timeout,
-        )
-        if probe.usable:
-            return probe.output
-    jar = Path(jar_path) if jar_path else None
-    if jar is None and binary:
-        # Launcher may live next to the managed jar.
-        managed = expand_user_local_root() / "tlc" / TLC_VERSION / TLC_JAR_NAME
-        if managed.is_file():
-            jar = managed
-    if jar is not None and jar.is_file():
-        java, _ = resolve_java_executable(java_executable)
-        if java:
-            probe = probe_tlc_runtime(
-                jar_path=jar,
-                java_executable=java,
-                timeout=timeout,
-            )
-            if probe.usable:
-                return probe.output
-    return None
+    """Read admitted TLC help; launcher and JAR fallback share one deadline."""
+    options = _runtime_probe_options(scheduler=scheduler, parent_lease=parent_lease,
+                                     cancellation=cancellation)
+    try:
+        with _java_probe_scope(timeout, cancellation) as operation:
+            binary = executable or which_executable(TLC_EXECUTABLE)
+            operation.checkpoint("after TLC launcher resolution")
+            if binary:
+                probe = probe_tlc_runtime(executable=binary, java_executable=java_executable,
+                    timeout=operation.checkpoint("before TLC launcher probe"), **options)
+                operation.checkpoint("after TLC launcher probe")
+                if probe.usable:
+                    return probe.output
+            jar = Path(jar_path) if jar_path else None
+            if jar is None and binary:
+                managed = expand_user_local_root() / "tlc" / TLC_VERSION / TLC_JAR_NAME
+                if managed.is_file():
+                    jar = managed
+            if jar is not None and jar.is_file():
+                java, _ = resolve_java_executable(java_executable)
+                operation.checkpoint("after TLC fallback resolution")
+                if java:
+                    probe = probe_tlc_runtime(jar_path=jar, java_executable=java,
+                        timeout=operation.checkpoint("before TLC JAR fallback"), **options)
+                    operation.checkpoint("after TLC JAR fallback")
+                    if probe.usable:
+                        return probe.output
+            return None
+    except _JavaProbeStopped:
+        return None
 
 
 def read_apalache_version_banner(
@@ -1020,21 +1273,30 @@ def read_apalache_version_banner(
     *,
     java_executable: str | Path | None = None,
     timeout: float = 15.0,
+    scheduler=None,
+    parent_lease=None,
+    cancellation=None,
 ) -> str | None:
-    binary = executable or which_executable(APALACHE_EXECUTABLE)
-    if not binary:
-        binary = which_executable("apalache")
-    if not binary:
+    options = _runtime_probe_options(scheduler=scheduler, parent_lease=parent_lease,
+                                     cancellation=cancellation)
+    try:
+        with _java_probe_scope(timeout, cancellation) as operation:
+            binary = executable or which_executable(APALACHE_EXECUTABLE)
+            if not binary:
+                binary = which_executable("apalache")
+            operation.checkpoint("after Apalache launcher resolution")
+            if not binary:
+                return None
+            probe = _run_runtime_command([binary, "version"],
+                timeout=operation.checkpoint("before Apalache banner execution"),
+                java_executable=java_executable, **options)
+            operation.checkpoint("after Apalache banner execution")
+            if not probe.usable:
+                return None
+            output = _ANSI_ESCAPE_RE.sub("", probe.output).strip()
+            return output if _APALACHE_VERSION_RE.fullmatch(output) else None
+    except _JavaProbeStopped:
         return None
-    probe = _run_runtime_command(
-        [binary, "version"],
-        timeout=timeout,
-        java_executable=java_executable,
-    )
-    if not probe.usable:
-        return None
-    output = _ANSI_ESCAPE_RE.sub("", probe.output).strip()
-    return output if _APALACHE_VERSION_RE.fullmatch(output) else None
 
 
 def observed_version_matches_lock(banner: str | None, expected: str) -> bool:
@@ -1077,43 +1339,39 @@ def probe_tlc_runtime(
     jar_path: str | Path | None = None,
     java_executable: str | Path | None = None,
     timeout: float = 15.0,
+    scheduler=None,
+    parent_lease=None,
+    cancellation=None,
 ) -> RuntimeCommandProbe:
-    """Prove TLC starts under the selected JVM before reporting it usable."""
+    """Observe TLC help under finite admission; this grants no model authority.
 
-    jar = Path(jar_path) if jar_path is not None else None
-    if jar is not None and jar.is_file():
-        if java_executable is None:
-            return RuntimeCommandProbe(
-                command=(),
-                returncode=None,
-                output="",
-                usable=False,
-                reason_code="java_support_missing",
-            )
-        return _tlc_help_probe(_run_runtime_command(
-            [
-                str(java_executable),
-                "-cp",
-                str(jar),
-                "tlc2.TLC",
-                "-help",
-            ],
-            timeout=timeout,
-            java_executable=java_executable,
-        ))
-    if executable:
-        return _tlc_help_probe(_run_runtime_command(
-            [executable, "-help"],
-            timeout=timeout,
-            java_executable=java_executable,
-        ))
-    return RuntimeCommandProbe(
-        command=(),
-        returncode=None,
-        output="",
-        usable=False,
-        reason_code="runtime_executable_missing",
-    )
+    Explicit JAR commands and byte-exact managed TLC launchers use an explicitly
+    sized JVM. Unrecognized launchers keep their command and may be unusable
+    under the finite RSS/address-space budget.
+    """
+    options = _runtime_probe_options(scheduler=scheduler, parent_lease=parent_lease,
+                                     cancellation=cancellation)
+    command = ()
+    try:
+        with _java_probe_scope(timeout, cancellation) as operation:
+            jar = Path(jar_path) if jar_path is not None else None
+            if jar is not None and jar.is_file():
+                if java_executable is None:
+                    return _failed_runtime_probe(reason="java_support_missing")
+                command = _direct_tlc_probe_command(java_executable, jar)
+            elif executable:
+                command = (_canonical_tlc_probe_command(executable, java_executable=java_executable)
+                           or (str(executable), "-help"))
+            else:
+                return _failed_runtime_probe(reason="runtime_executable_missing")
+            operation.checkpoint("after TLC runtime command resolution")
+            probe = _run_runtime_command(command,
+                timeout=operation.checkpoint("before TLC help execution"),
+                java_executable=java_executable, **options)
+            operation.checkpoint("after TLC help execution")
+            return _tlc_help_probe(probe)
+    except _JavaProbeStopped:
+        return _failed_runtime_probe(command)
 
 
 def probe_apalache_runtime(
@@ -1122,40 +1380,34 @@ def probe_apalache_runtime(
     java_executable: str | Path | None = None,
     expected_version: str | None = APALACHE_VERSION,
     timeout: float = 20.0,
+    scheduler=None,
+    parent_lease=None,
+    cancellation=None,
 ) -> RuntimeCommandProbe:
-    """Prove Apalache starts, exits cleanly, and reports the locked version."""
-
-    probe = _run_runtime_command(
-        [executable, "version"],
-        timeout=timeout,
-        java_executable=java_executable,
-    )
-    if not probe.usable:
-        return probe
-    output = _ANSI_ESCAPE_RE.sub("", probe.output).strip()
-    match = _APALACHE_VERSION_RE.fullmatch(output)
-    if match is None:
-        return RuntimeCommandProbe(
-            command=probe.command,
-            returncode=probe.returncode,
-            output=output,
-            usable=False,
-            reason_code="runtime_version_unreadable",
-        )
-    if expected_version is not None and match.group("version") != expected_version:
-        return RuntimeCommandProbe(
-            command=probe.command,
-            returncode=probe.returncode,
-            output=output,
-            usable=False,
-            reason_code="runtime_version_mismatch",
-        )
-    return RuntimeCommandProbe(
-        command=probe.command,
-        returncode=probe.returncode,
-        output=output,
-        usable=True,
-    )
+    """Admit Apalache's version command and require a clean locked identity."""
+    options = _runtime_probe_options(scheduler=scheduler, parent_lease=parent_lease,
+                                     cancellation=cancellation)
+    command = (str(executable), "version")
+    try:
+        with _java_probe_scope(timeout, cancellation) as operation:
+            probe = _run_runtime_command(command,
+                timeout=operation.checkpoint("before Apalache version execution"),
+                java_executable=java_executable, **options)
+            operation.checkpoint("after Apalache version execution")
+            if not probe.usable:
+                return probe
+            output = _ANSI_ESCAPE_RE.sub("", probe.output).strip()
+            match = _APALACHE_VERSION_RE.fullmatch(output)
+            if match is None:
+                return RuntimeCommandProbe(command=probe.command, returncode=probe.returncode,
+                    output=output, usable=False, reason_code="runtime_version_unreadable")
+            if expected_version is not None and match.group("version") != expected_version:
+                return RuntimeCommandProbe(command=probe.command, returncode=probe.returncode,
+                    output=output, usable=False, reason_code="runtime_version_mismatch")
+            return RuntimeCommandProbe(command=probe.command, returncode=probe.returncode,
+                                       output=output, usable=True)
+    except _JavaProbeStopped:
+        return _failed_runtime_probe(command)
 
 
 # ---------------------------------------------------------------------------
@@ -1177,18 +1429,62 @@ def download_artifact(
     require_checksum: bool = True,
     timeout: float = 180.0,
     on_progress: ProgressCallback | None = None,
+    max_download_bytes: int = 512 * 1024 * 1024,
+    cancellation: Any | None = None,
 ) -> tuple[bool, str | None]:
-    """Download ``url`` to ``destination`` and optionally verify checksum.
+    """Stream a bounded artifact into a private file, then publish atomically.
 
     Returns ``(ok, observed_sha256)``.  When ``sha256`` is empty and
     ``require_checksum`` is True, the download succeeds only if the file is
     obtained and a digest is computed for the install receipt (lock pins that
     leave sha256 empty still bind identity at install time).
+    The byte cap applies to cached and downloaded files. Cancellation and the
+    overall deadline are checked between network reads; an in-progress socket
+    operation has an inactivity timeout of at most ten seconds. DNS, headers
+    and chunk framing can delay those checks; this is a cooperative deadline,
+    not a fixed wall/cancellation latency guarantee. This helper does not
+    acquire a host lease or bound the installer's separate probes.
     """
-
+    if type(max_download_bytes) is not int or max_download_bytes <= 0:
+        raise ValueError("max_download_bytes must be a positive integer")
+    if (isinstance(timeout, bool) or not isinstance(timeout, (float, int))
+            or not math.isfinite(timeout) or timeout <= 0):
+        raise ValueError("timeout must be finite and positive")
+    if cancellation is not None and not callable(getattr(cancellation, "is_set", None)):
+        raise TypeError("cancellation must supply is_set()")
+    deadline = time.monotonic() + timeout
+    def check_running():
+        if cancellation is not None and cancellation.is_set():
+            raise InterruptedError("artifact download cancelled")
+        if time.monotonic() >= deadline:
+            raise TimeoutError("artifact download deadline expired")
+    try:
+        check_running()
+    except (InterruptedError, TimeoutError) as exc:
+        _announce(str(exc), on_progress, phase="failed")
+        return False, None
     destination.parent.mkdir(parents=True, exist_ok=True)
     if destination.is_file():
-        observed = content_sha256(destination)
+        if destination.stat().st_size > max_download_bytes:
+            _announce("Cached artifact exceeds max_download_bytes", on_progress, phase="failed")
+            return False, None
+        try:
+            cached_hash, received = hashlib.sha256(), 0
+            with destination.open("rb") as stream:
+                while True:
+                    check_running()
+                    chunk = stream.read(min(64 * 1024, max_download_bytes - received + 1))
+                    check_running()
+                    if not chunk:
+                        break
+                    received += len(chunk)
+                    if received > max_download_bytes:
+                        raise ValueError("Cached artifact exceeds max_download_bytes")
+                    cached_hash.update(chunk)
+            observed = cached_hash.hexdigest()
+        except (OSError, ValueError) as exc:
+            _announce(str(exc), on_progress, phase="failed")
+            return False, None
         if sha256:
             if observed == sha256.lower():
                 _announce(
@@ -1209,14 +1505,9 @@ def download_artifact(
     request = Request(
         url, headers={"User-Agent": "ipfs-datasets-py-state-model-installer/1"}
     )
-    try:
-        with urlopen(request, timeout=timeout) as response:  # noqa: S310 - reviewed pin URL
-            data = response.read()
-    except Exception as exc:  # pragma: no cover - network failures host-specific
-        _announce(f"Download failed: {exc}", on_progress, phase="failed")
-        return False, None
     temporary: Path | None = None
     try:
+        check_running()
         with tempfile.NamedTemporaryFile(
             mode="wb",
             dir=destination.parent,
@@ -1224,11 +1515,36 @@ def download_artifact(
             suffix=".partial",
             delete=False,
         ) as handle:
-            handle.write(data)
+            temporary = Path(handle.name)
+            hasher, received = hashlib.sha256(), 0
+            with urlopen(request, timeout=min(10.0, max(.001, deadline - time.monotonic()))) as response:  # noqa: S310 - reviewed pin URL
+                headers = getattr(response, "headers", {})
+                declared = headers.get("Content-Length")
+                if declared is not None:
+                    if not str(declared).isascii() or not str(declared).isdigit():
+                        raise ValueError("invalid Content-Length")
+                    declared = int(declared)
+                    if declared > max_download_bytes:
+                        raise ValueError("artifact exceeds max_download_bytes")
+                # HTTPResponse.read1 returns after one buffered/socket read,
+                # allowing deadline/cancellation checks even for slow streams.
+                reader = getattr(response, "read1", response.read)
+                while True:
+                    check_running()
+                    chunk = reader(min(64 * 1024, max_download_bytes - received + 1))
+                    check_running()
+                    if not chunk:
+                        break
+                    received += len(chunk)
+                    if received > max_download_bytes:
+                        raise ValueError("artifact exceeds max_download_bytes")
+                    handle.write(chunk)
+                    hasher.update(chunk)
+                if declared is not None and received != declared:
+                    raise ValueError("artifact does not match Content-Length")
             handle.flush()
             os.fsync(handle.fileno())
-            temporary = Path(handle.name)
-        observed = content_sha256(temporary)
+        observed = hasher.hexdigest()
         if sha256 and observed != sha256.lower():
             _announce(
                 f"Checksum mismatch for {url}; refusing install",
@@ -1238,9 +1554,13 @@ def download_artifact(
             return False, None
         if require_checksum and not observed:
             return False, None
+        check_running()
         temporary.replace(destination)
         temporary = None
         return True, observed
+    except Exception as exc:
+        _announce(f"Download failed: {exc}", on_progress, phase="failed")
+        return False, None
     finally:
         if temporary is not None:
             temporary.unlink(missing_ok=True)

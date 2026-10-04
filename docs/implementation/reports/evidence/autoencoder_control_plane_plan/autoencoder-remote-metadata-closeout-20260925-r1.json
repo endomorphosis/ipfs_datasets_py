@@ -1,0 +1,132 @@
+{
+  "admitted": false,
+  "all_selected_tests_unchanged_since_capture": true,
+  "checkpoint_format_changed": false,
+  "combined_source_guard_passed": true,
+  "combined_test_execution_passed": true,
+  "constitution_formalized": false,
+  "default_storage_changed": false,
+  "disk_after": {
+    "charged_bytes": 36926360597,
+    "inventory": {
+      "apparent_bytes": 34926360597,
+      "entry_count": 63424,
+      "special_file_count": 11,
+      "symlink_count": 3051
+    },
+    "limit_bytes": 50000000000,
+    "retained_reservations": [
+      {
+        "reservation_id": "297afa219ed346c6b0e77ac2dcb04783",
+        "status": "retained",
+        "storage_bytes": 1000000000
+      },
+      {
+        "reservation_id": "8827ac316aae4ecbbfddf9dedf0332d7",
+        "status": "retained",
+        "storage_bytes": 1000000000
+      }
+    ]
+  },
+  "documents": [
+    {
+      "bytes": 7487,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/autoencoder_remote_metadata_verification.md",
+      "sha256": "1aa40bacb8f17b7908d58b3784b4338fce9fdf9cfcbc6119a48d6e9de697b875"
+    },
+    {
+      "bytes": 73313,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "sha256": "653d60db3c900a9febae9a945ccf9cf4b5ee191bae8877c260427f3d7bcad55a"
+    },
+    {
+      "bytes": 81836,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "sha256": "66ea1710b2b043ba6015ac8e1e38fc1660e71e0c7f0a88ef9df4341f6ccce00a"
+    }
+  ],
+  "end_to_end_performance_claim": false,
+  "full_checkpoint_authoritative": true,
+  "junit_totals": {
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "tests": 235
+  },
+  "live_hub_qualified": false,
+  "metadata_fixture_only": true,
+  "native_cycle_performed": false,
+  "native_listener_performed": false,
+  "native_validation_deferred_by_user": true,
+  "network_guard": {
+    "denied_syscalls": [
+      "socket",
+      "connect",
+      "sendto",
+      "sendmsg",
+      "sendmmsg"
+    ],
+    "mechanism": "linux_seccomp",
+    "socket_denial_verified": true
+  },
+  "original_publisher_verification_unchanged": true,
+  "outbox_acknowledgement_performed": false,
+  "outbox_consumer_implemented": false,
+  "owned_production_unchanged_since_capture": true,
+  "passed": true,
+  "pinned_inode": 57804548,
+  "pinned_links": 2,
+  "production": [
+    {
+      "bytes": 13628,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/huggingface/autoencoder_remote_metadata.py",
+      "sha256": "ded1f93d83b09a19dbd85e9d422f125fb327313b26ffcf79ea1b76227265167a"
+    }
+  ],
+  "production_activated": false,
+  "promotion_performed": false,
+  "protected_artifacts": [
+    {
+      "bytes": 25895338,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+      "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+    },
+    {
+      "bytes": 25895897,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-one-step.state.json",
+      "sha256": "23fa2a50725fa5afe3f96da9ae84ea686df5fb49262aa1b6614321023a91799c"
+    },
+    {
+      "bytes": 8889,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-measurement.json",
+      "sha256": "bcc035a9a923ff0d60f70837a4604b3dd65092c04bc0c7afbd525a52f72b56b1"
+    },
+    {
+      "bytes": 1148,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-one-step.json",
+      "sha256": "f799be3ff83d48513bd6a23669d334b24c73f08564c7cfdc86841bc21b696535"
+    },
+    {
+      "bytes": 55254,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/constitution-on-restart12.json",
+      "sha256": "da3cbac63a44bdd1862bfe6809f0179b73db337f66a1051ee491c823789cd1a3"
+    }
+  ],
+  "protected_unchanged": true,
+  "publication_performed": false,
+  "qualification_status": "passed",
+  "recorded_at": "2026-09-25T21:41:51.049091+00:00",
+  "regression": {
+    "bytes": 2556126,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-remote-metadata-20260925/combined-r1-receipt.json",
+    "sha256": "7f810b3af224d032e9580eb6cb68b5a32f542ce51fe0f99fab17eb2bab9b2910"
+  },
+  "relative_document_links_checked": 106,
+  "remote_bytes_downloaded": 0,
+  "schema": "autoencoder-remote-metadata-closeout-v1",
+  "source_changed_after_capture": [],
+  "source_changed_during_capture": [],
+  "source_files_during_capture": 7744,
+  "synthetic_persistence_fixtures": true,
+  "unknown_upload_recovery_implemented": false
+}

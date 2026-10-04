@@ -2466,14 +2466,23 @@ class LogicVerificationAPI:
         unavailability stay explicit; this adapter never invents a verdict.
         """
 
-        from ipfs_datasets_py.logic.backends.smt.differential import (
+        from ipfs_datasets_py.logic.backends.smt.admitted_differential import (
+            _effective_bounds,
             run_z3_cvc5_differential,
         )
-
-        return _check_compositional_result(
-            "run_z3_cvc5_differential",
-            run_z3_cvc5_differential(_require_present(obligation, "obligation"), **kwargs),
+        from ipfs_datasets_py.logic.backends.smt.operation_budget import (
+            proof_operation_scope,
+            validate_operation_timeout_ms,
         )
+
+        timeout = validate_operation_timeout_ms(kwargs.get("operation_timeout_ms"))
+        if timeout is None:
+            timeout = _effective_bounds(kwargs.get("bounds")).timeout_ms
+        with proof_operation_scope(timeout_ms=timeout, cancellation=kwargs.get("cancellation")):
+            return _check_compositional_result(
+                "run_z3_cvc5_differential",
+                run_z3_cvc5_differential(_require_present(obligation, "obligation"), **kwargs),
+            )
 
     # ── LFP-044 Canonical discovery / dual-read one-write migration ───────
 

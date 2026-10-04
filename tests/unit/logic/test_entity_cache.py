@@ -14,6 +14,8 @@ import pyarrow.parquet as pq
 import pytest
 
 from ipfs_datasets_py.logic.autoformal import entity_cache as module
+from ipfs_datasets_py.logic.autoformal.lean_units import term_fingerprint
+from ipfs_datasets_py.logic.autoformal.span_cache import terms_from_rule
 
 
 def _row(eid='doc:1', kind='legal_document', label='A section', properties='{}'):
@@ -460,6 +462,52 @@ def test_task_board_ids_bind_full_entity_identity_not_shared_prefix(tmp_path):
     actual=cache._db.execute('SELECT task_id,entity_id FROM task_board ORDER BY entity_id').fetchall()
     assert actual==[('AFTD-E-'+hashlib.sha256(eid.encode()).hexdigest(),eid) for eid in (prefix+'a',prefix+'b')]
     assert len({row[0] for row in actual})==2
+    cache.close()
+
+
+def test_sealed_span_attaches_pending_and_third_cite_stay_out(tmp_path):
+    rows=[_row('doc:1'),_row('section:1','section'),_row('title:1','usc_title')]
+    edges=[dict(type='HAS_SECTION',source='doc:1',target='section:1'),
+           dict(type='IN_TITLE',source='doc:1',target='title:1')]
+    cache=_ready(tmp_path,rows,edges)
+    title_before=cache._db.execute("SELECT context_json FROM entity_queue WHERE entity_type='usc_title'").fetchone()[0]
+    spans=[
+        dict(legal_id='usc:us:1:1',source_span_id='span-sealed',status='sealed',text='Records shall be made.',
+             rule=dict(actor='',action='make')),
+        dict(legal_id='usc:us:1:1',source_span_id='span-pending',status='pending',text='Still pending.'),
+        dict(legal_id='usc:us:1:1',source_span_id='span-gap',status='gap',text='A gap remains.'),
+    ]
+    cache.assign_span_context(spans)
+    context=json.loads(cache._db.execute("SELECT context_json FROM entity_queue WHERE entity_type='section'").fetchone()[0])
+    assert context['span_legal_id']=='usc:us:1:1'
+    assert context['contained_span_ids']==['span-sealed']
+    assert 'span-pending' not in context['contained_span_ids']
+    assert context['gap_span_ids']==['span-gap']
+    assert context['open_stitch_slots']==['stitch:span-sealed:actor']
+    cites=[dict(source_legal_id='usc:us:1:1',target_legal_id='usc:us:1:9'),
+           dict(source_legal_id='usc:us:1:9',target_legal_id='usc:us:1:8'),
+           dict(source_legal_id='usc:us:1:8',target_legal_id='usc:us:9:9'),
+           dict(source_legal_id='usc:us:1:1',target_legal_id='',unresolved=True)]
+    cache.assign_definition_closure(cites)
+    context=json.loads(cache._db.execute("SELECT context_json FROM entity_queue WHERE entity_type='section'").fetchone()[0])
+    assert context['definition_targets']==['usc:us:1:8','usc:us:1:9']
+    assert 'usc:us:9:9' not in context['definition_targets']
+    assert 'unresolved_citation' in context['reasons']
+    title_after=cache._db.execute("SELECT context_json FROM entity_queue WHERE entity_type='usc_title'").fetchone()[0]
+    assert title_after==title_before
+    terms=terms_from_rule(dict(modality='obligation',actor='Agency',action='make',object='records'),
+                          decompiled='Agency must make records available.')
+    for term in terms:
+        term['statute_ids']=['usc:us:1:1']
+    proof=module.proof_sources_for_section(context,spans,terms)
+    assert str(term_fingerprint('actor','Agency')) in proof['term_lean']
+    assert str(term_fingerprint('object','usc:us:1:1')) not in proof['term_lean']
+    assert str(term_fingerprint('object',context['span_legal_id'])) not in proof['statute_lean']
+    assert proof['admitted'] is proof['formalized'] is False
+    found=cache.record_inconsistencies(spans)
+    kinds={row['kind'] for row in found}
+    assert 'section_not_ready' in kinds
+    assert 'span_not_in_section' not in kinds
     cache.close()
 
 

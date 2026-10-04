@@ -1,0 +1,185 @@
+{
+  "schema": "ir-family-dimension-inventory-plan/v1",
+  "status": "declarative_plan_not_runtime_inventory",
+  "cell_id": "codebase_ir_8d",
+  "ir_family_id": "codebase_ir",
+  "dimension": 8,
+  "store_id_proposed": "ir-cell:codebase_ir:8d",
+  "store_identity_dimensions": [
+    "ir_family_id",
+    "dimension"
+  ],
+  "variant_identity_additions": [
+    "dimension_role",
+    "task_id",
+    "input_representation_profile",
+    "encoder_tokenizer_revisions",
+    "decoder_architecture",
+    "target_ir_family",
+    "target_schema",
+    "target_codec",
+    "input_budget",
+    "output_budget",
+    "span_profile",
+    "objective_implementation"
+  ],
+  "native_semantics": [
+    "observed code and source versions",
+    "typed ProgramIR/contracts",
+    "calls/effects/dependencies",
+    "native Codebase grammar and code inverse"
+  ],
+  "canonical_ir_identity_depends_on_model_dimension": false,
+  "storage": {
+    "status": "planned_not_created",
+    "root_template": "<ir_store_root>/codebase_ir/8d",
+    "inventory_export": "<ir_store_root>/codebase_ir/8d/inventory.json",
+    "registry_database": "<ir_store_root>/codebase_ir/8d/registry.duckdb",
+    "index_database": "<ir_store_root>/codebase_ir/8d/index.duckdb",
+    "ducklake_catalog_database": "<ir_store_root>/codebase_ir/8d/lake/catalog.duckdb",
+    "ducklake_data_prefix": "<ir_store_root>/codebase_ir/8d/lake/data/",
+    "mutable_artifact_root": "<ir_store_root>/codebase_ir/8d/artifacts/",
+    "run_namespace": "<ir_store_root>/codebase_ir/8d/runs/<task>/<profile>/<run_id>/",
+    "database_writer_policy": "separate serialized owner per physical database; registry forbids foreign tables",
+    "canonical_repository_source_owner": "RepositoryCodebaseIndex captures repository code once; cell indexes reference exact admitted source/semantic heads when relevant",
+    "family_source_owner": "Canonical repository/source snapshot and source-correspondence owners",
+    "source_roots_required": [
+      "family source/corpus version and complete span/context manifest",
+      "repository source/semantic roots when code-grounding applies",
+      "applicability source revisions and both typed join endpoint roots"
+    ],
+    "ducklake_layout_adapter_required": true,
+    "current_isolated_history_limits": {
+      "metadata_name": "history.ducklake",
+      "byte_cap": 268435456,
+      "production_supported": false
+    }
+  },
+  "huggingface": {
+    "status": "proposed_not_created",
+    "repo_type": "model",
+    "repository_id_template": "<hf_namespace>/codebase-ir-autoencoder-8d",
+    "suggested_namespace_from_existing_release_descriptors": "Publicus",
+    "suggested_repository_id": "Publicus/codebase-ir-autoencoder-8d",
+    "namespace_write_access_verified": false,
+    "release_path_template": "releases/<task>/<profile>/<release_id>/",
+    "load_requires": [
+      "full immutable commit",
+      "manifest SHA256",
+      "matching family/dimension role/task/profile/codec",
+      "actual checkpoint SHA256"
+    ],
+    "existing_read_only_descriptors": [],
+    "existing_descriptor_source": null,
+    "visibility": null,
+    "visibility_status": "explicit deployment configuration required; no visibility changes performed during planning"
+  },
+  "dimension_profile": {
+    "dimension": 8,
+    "encoder_kind": "historical explicit input or compiler-derived internal latent; new source-only projection profile must be declared",
+    "hard_encoder_token_limit": null,
+    "qualified_source_token_limit": null,
+    "unknown_limit_policy": "retain unknown provenance; freeze a producer-specific small-span budget before source-only qualification",
+    "dimension_role_required": true
+  },
+  "task_profiles_to_inventory": [
+    "source_to_native_ir",
+    "structural_reconstruction",
+    "native_ir_to_logic",
+    "native_ir_to_source",
+    "retained_source_byte_restoration"
+  ],
+  "source_only_raw_text_decoder_admission": "not asserted by this plan; task/profile evidence and complete source access must be qualified independently",
+  "existing_checkpoint_evidence": [
+    {
+      "role": "trained structural parent",
+      "receipt": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/codebase-source-training-qualification-20261002/parent-checkpoint.json",
+        "bytes": 673933,
+        "sha256": "53318593b6aa77d5d352c9499c48d92d513215c8d2f945f7d6838205528ba17c"
+      },
+      "dimension_role": "latent",
+      "input_width": 53,
+      "latent_width": 8,
+      "source_access": "compiler-derived structural features",
+      "formal_decoder": false
+    },
+    {
+      "role": "trained structural child",
+      "receipt": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/codebase-source-training-qualification-20261002/child-checkpoint.json",
+        "bytes": 815238,
+        "sha256": "c00a0c54f8b1adb24d1822ab2ac98cec2d414e5b2ec55fad9da69ad7630be6a6"
+      },
+      "dimension_role": "latent",
+      "input_width": 53,
+      "latent_width": 8,
+      "continuation": "saved Adam state plus ancestral replay",
+      "formal_decoder": false
+    }
+  ],
+  "checkpoint_discovery_complete": false,
+  "existing_cached_vector_rows": [],
+  "cached_codebase_rows_in_previous2640_transfer_inventory": 0,
+  "old_asset_policy": "Adopt authenticated read-only references. No recomputation, relabeling, in-place training or physical migration during planning.",
+  "span_curriculum": [
+    {
+      "stage_id": "S0",
+      "subject_scope": "same inherited expression cohort",
+      "qualified_input_budget": null,
+      "qualified_output_budget": null,
+      "budget_status": "freeze from pinned-tokenizer/codec measurements before fitting",
+      "requires_complete_span_accounting": true
+    },
+    {
+      "stage_id": "S1",
+      "subject_scope": "complete supported expression/function",
+      "qualified_input_budget": null,
+      "qualified_output_budget": null,
+      "budget_status": "freeze from pinned-tokenizer/codec measurements before fitting",
+      "requires_complete_span_accounting": true
+    },
+    {
+      "stage_id": "S2",
+      "subject_scope": "connected calls/import context",
+      "qualified_input_budget": null,
+      "qualified_output_budget": null,
+      "budget_status": "freeze from pinned-tokenizer/codec measurements before fitting",
+      "requires_complete_span_accounting": true
+    },
+    {
+      "stage_id": "S3",
+      "subject_scope": "complete supported function/module unit",
+      "qualified_input_budget": null,
+      "qualified_output_budget": null,
+      "budget_status": "freeze from pinned-tokenizer/codec measurements before fitting",
+      "requires_complete_span_accounting": true
+    },
+    {
+      "stage_id": "S4",
+      "subject_scope": "sealed module/dependency-slice aggregation",
+      "qualified_input_budget": null,
+      "qualified_output_budget": null,
+      "budget_status": "freeze from pinned-tokenizer/codec measurements before fitting",
+      "requires_complete_span_accounting": true
+    }
+  ],
+  "independent_heads": [
+    "source_applicability",
+    "serving_model_by_task_profile",
+    "candidate_training",
+    "lake_history_delivery",
+    "hub_publication"
+  ],
+  "promotion_policy": "Independent family/task/profile gate; original parent and shorter-span replay retained; another cell cannot grant qualification.",
+  "notes": [
+    "Historical8D roles/inputs differ; desired source-only small-span family decoder is a separate profile and may be unavailable."
+  ],
+  "runtime_databases_created": false,
+  "remote_repository_created": false,
+  "model_or_embeddings_modified": false,
+  "continuation_and_transfer_policy": {
+    "same_variant_resume_parent_required": true,
+    "cross_cell_or_contract_transfer": "Use authenticated donor store/version/checkpoint refs and explicit transfer/KD edge, then initialize a new compatible variant; never fake same-variant parentage."
+  }
+}

@@ -1,0 +1,299 @@
+{
+  "schema": "codebase-ir-git-candidate-handoff/v1",
+  "captured_at_utc": "2026-10-02T17:54:23.961290+00:00",
+  "status": "isolated_git_candidate_tested_uncommitted_proof_acquisition_pending",
+  "completion_scope": "Seven staged backend/test files qualified in final Git paths; static proof-source inventory and actionable acquisition plan",
+  "worktree": "/tmp/ir-lifecycle-integration-20261002",
+  "branch": "codex/backend-pipe-lifecycle-20261002",
+  "baseline_commit": "8de37ba8d216cd21a5d7134292de01d9e12c9a56",
+  "branch_tip": "8de37ba8d216cd21a5d7134292de01d9e12c9a56",
+  "release_commit": null,
+  "accepted_release_manifest": null,
+  "admission": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-git-candidate-20261002/admission.json",
+    "bytes": 10460,
+    "sha256": "f90d560ab8d046d3fd9c5d9e7cbd4eefd839a40cae1c6f70c51e79230c1d1a5d"
+  },
+  "retained_patch": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-backend-lifecycle-qualification-20261002/release-payload.patch",
+    "bytes": 78722,
+    "sha256": "abd6c6bfa49e5f4a4d26632a956317380ba7bb23fd185cfe329853e134d80435"
+  },
+  "staged_paths": [
+    "ipfs_datasets_py/logic/backends/process.py",
+    "tests/unit/logic/backends/test_process_descendant_sessions.py",
+    "tests/unit/logic/backends/test_process_exception_cleanup.py",
+    "tests/unit/logic/backends/test_process_file_limits.py",
+    "tests/unit/logic/backends/test_process_lifecycle.py",
+    "tests/unit/logic/backends/test_process_parallel_limits.py",
+    "tests/unit/logic/backends/test_process_pipe_workers.py"
+  ],
+  "staged_file_count": 7,
+  "uncommitted_payload_transport": "Retained patch or staged worktree payload; branch tip still contains only baseline bytes",
+  "test_result": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-git-candidate-20261002/runs/worktree-all-01/result.json",
+    "bytes": 81226,
+    "sha256": "d22dcd3f0edcf025c47344ab558ae5e8c13b5a90e45ff178ce6a8645c323cdfa"
+  },
+  "tests": {
+    "passed": 99,
+    "failed": 0,
+    "skipped": 0,
+    "authored_native_launches": 69
+  },
+  "admitted_source_files": 13,
+  "harness": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-git-candidate-20261002/run_lifecycle_tests.py",
+    "bytes": 12769,
+    "sha256": "e51f22dc74f069a67c1b3f58d7f005d005c6e385833b6796193d97b6d99075dc"
+  },
+  "source_lineage_observations": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-git-candidate-20261002/source-lineage-observations.json",
+    "bytes": 281679,
+    "sha256": "ed90923716e540d33fdcb9e90ac48f6c05070533250608faf1179a33ab01b609"
+  },
+  "locally_observed_origin": "aeff1f635085a6bb7d43bc7e3dc8468eeb4385ee",
+  "scoped_base_origin_paths_matching": 11,
+  "fresh_remote_state_verified": false,
+  "recommended_proof_route": "typed_general",
+  "runtime_proof_route_acquired": false,
+  "alternative_proof_route": "Retain released typed Codebase route and separately port/review/qualify its backend correction",
+  "released_integer_checker_process_owner": "ipfs_datasets_py/logic/backends/codebase_process.py",
+  "tested_process_owner": "ipfs_datasets_py/logic/backends/process.py",
+  "general_patch_repairs_released_fork": false,
+  "workspace_conditional_proof_seed_count": 77,
+  "seed_classification": {
+    "released_base": {
+      "match": 59,
+      "missing": 8,
+      "divergent": 10
+    },
+    "observed_local_origin": {
+      "match": 59,
+      "missing": 8,
+      "divergent": 10
+    },
+    "git_candidate": {
+      "match": 59,
+      "missing": 8,
+      "divergent": 10
+    },
+    "active_workspace": {
+      "match": 73,
+      "divergent": 4
+    }
+  },
+  "missing_owner_ids": [
+    "F005",
+    "F006",
+    "F007",
+    "F014",
+    "F015",
+    "F059",
+    "F060",
+    "F061"
+  ],
+  "remaining_different_foundation_ids": [
+    "F013",
+    "F020",
+    "F041",
+    "F043",
+    "F044",
+    "F045",
+    "F047",
+    "F095",
+    "F100"
+  ],
+  "new_local_variant_ids_requiring_review": [
+    "F007",
+    "F015",
+    "F061"
+  ],
+  "original_manifest_current_source_counts": {
+    "match": 266,
+    "divergent": 4
+  },
+  "original_manifest_current_difference_ids": [
+    "F007",
+    "F015",
+    "F061",
+    "F062"
+  ],
+  "original_manifest_accepted": false,
+  "original_manifest_or_earlier_candidate_repinned": false,
+  "default_supervisor_evidence_enabled_in_both_typed_routes": true,
+  "static_inputs_are_runtime_admitted": false,
+  "actions": [
+    {
+      "id": "GA01",
+      "status": "planned",
+      "depends_on": [],
+      "action": "Acquire a coherent typed-general proof source selection in a separate isolated candidate",
+      "file_ids": [
+        "F005",
+        "F006",
+        "F007",
+        "F014",
+        "F015",
+        "F059",
+        "F060",
+        "F061",
+        "F013",
+        "F020",
+        "F041",
+        "F043",
+        "F044",
+        "F045",
+        "F047",
+        "F095",
+        "F100",
+        "F062"
+      ],
+      "review_new_local_variants": [
+        "F007",
+        "F015",
+        "F061"
+      ],
+      "acceptance": [
+        "Review missing/differing owners and tests together",
+        "Choose original versus revised F007/F015/F061 explicitly",
+        "Pin complete selected imports/identities without mixing released typed fork and older general modules",
+        "Create a new versioned candidate manifest; preserve original declarations"
+      ]
+    },
+    {
+      "id": "GA02",
+      "status": "planned",
+      "depends_on": [
+        "GA01"
+      ],
+      "action": "Qualify the selected dependency and supervisor origins",
+      "acceptance": [
+        "Bind default supervisor provider and imported sources, including fallback behavior",
+        "Exercise loaded/unavailable/ordinary-exception provider branches",
+        "Admit indexed verifier batch/worker identity owners",
+        "Review a supervisor-free profile separately if selected"
+      ]
+    },
+    {
+      "id": "GA03",
+      "status": "planned",
+      "depends_on": [
+        "GA02"
+      ],
+      "action": "Run fresh native integer and resource qualification",
+      "acceptance": [
+        "Admit exact Z3/CVC5 launcher/target/prlimit origins and verify readiness",
+        "Check positive/negative/signed offsets and model replay",
+        "Check unavailable/error/disagreement/cancellation/pressure/deadline",
+        "Reject unsuccessful cleanup/capture before interpreting stdout",
+        "Qualify aggregate budgets and parallel workers separately"
+      ]
+    },
+    {
+      "id": "GA04",
+      "status": "planned",
+      "depends_on": [
+        "GA03"
+      ],
+      "action": "Qualify proof indexing, history and currentness",
+      "acceptance": [
+        "Test changed implementation/environment identities and invalidation",
+        "Test append-only history and index/catalog worker transactions",
+        "Require admitted current source/semantic heads for applicability",
+        "Retain assumptions and owner policy with conditional evidence",
+        "Use historical proofs as candidates requiring fresh checks"
+      ]
+    },
+    {
+      "id": "GA05",
+      "status": "planned",
+      "depends_on": [
+        "GA04"
+      ],
+      "action": "Scan the repository and ground IntentIR planning in current CodebaseIR evidence",
+      "acceptance": [
+        "Capture source-bound code spans and supported formal obligations",
+        "Join intent/codebase evidence by typed roots and applicability",
+        "Exercise intended change, repository mutation, invalidation and re-planning",
+        "Export evidence status/scope/assumptions/currentness to the symbolic planner"
+      ]
+    },
+    {
+      "id": "GA06",
+      "status": "planned",
+      "depends_on": [
+        "GA05"
+      ],
+      "action": "Integrate the accepted proof release and verify installed inventories",
+      "acceptance": [
+        "Commit reviewed source/test selection on isolated branches",
+        "Issue accepted manifest only after the relevant gates",
+        "Propagate selected parent gitlinks and verify installed imports",
+        "Retain explicit transport manifests for external checkpoints and cached embeddings"
+      ]
+    },
+    {
+      "id": "GA07",
+      "status": "ongoing_independent_model_plan",
+      "depends_on": [],
+      "action": "Preserve twelve independent IR/dimension cells and reuse original donor assets for decoder distillation",
+      "families": [
+        "codebase_ir",
+        "security_ir",
+        "legal_ir",
+        "intent_ir"
+      ],
+      "dimensions": [
+        8,
+        384,
+        768
+      ],
+      "acceptance": [
+        "Keep per-cell decoders, inventories, token/span profiles, physical registry/index/lake namespaces and HF destinations",
+        "Use authentic 8D/384D donors and cached embeddings with aligned source/span/split/encoder identities",
+        "Warm start compatible decoder bodies and train explicit dimension adapters before progressive long-span training",
+        "Measure legal source-byte/surface/IR/semantic roundtrips separately and exclude source copying from generative exactness",
+        "Qualify each cell independently with held-out task metrics, beyond training loss"
+      ]
+    }
+  ],
+  "preservation": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-git-candidate-20261002/preservation.json",
+    "bytes": 413780,
+    "sha256": "bc7900b0014d948a233b864b9c44fa41b4a7a9e087ffae65c3bea46d169bf288"
+  },
+  "original_assets_unchanged": 26,
+  "original_inventory_documents_unchanged": 13,
+  "prior_bound_file_counts_preserved": [
+    481,
+    17,
+    30,
+    82
+  ],
+  "observation_limitations": [
+    "Endpoint/static byte and AST observations, not atomic or continuous executed closure",
+    "Scoped local Git refs, not fresh remote state or whole-repository compatibility",
+    "Parent audit events and selected import/plugin origins, not full child transitive activity",
+    "Authored Python subprocess lifecycle tests, not native solver proof qualification",
+    "Source selection does not automatically include ambient native/shared-library closure"
+  ],
+  "source_dependency_closure_qualified": false,
+  "proof_profile_qualified": false,
+  "proof_authority": false,
+  "runtime_release_qualified": false,
+  "model_task_qualified": false,
+  "training_admitted": false,
+  "promotion_admitted": false,
+  "solver_executions": 0,
+  "model_executions": 0,
+  "database_operations": 0,
+  "network_fetches": 0,
+  "installed_package_changes": 0,
+  "git_worktrees_created": 1,
+  "git_branches_created": 1,
+  "commits": 0,
+  "merges": 0,
+  "pushes": 0,
+  "parent_gitlinks_changed": 0
+}

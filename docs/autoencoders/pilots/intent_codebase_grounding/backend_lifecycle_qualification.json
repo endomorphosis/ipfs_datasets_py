@@ -1,0 +1,316 @@
+{
+  "schema": "codebase-ir-backend-lifecycle-handoff/v1",
+  "captured_at_utc": "2026-10-02T17:24:08.864964+00:00",
+  "status": "tested_candidate_patch_ready_full_release_pending",
+  "completion_scope": "Narrow copied-owner Linux lifecycle correction and seven-file patch applicability; no full proof/model/runtime release qualification",
+  "source_candidates": {
+    "v1": {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-backend-lifecycle-qualification-20261002/candidate/v1/ipfs_datasets_py/logic/backends/process.py",
+      "bytes": 68367,
+      "sha256": "9035ba1982cf5fbd0db40ec994a3829902d9f4a25cc7aeb0c0ae2705f233cbf5"
+    },
+    "v2": {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-backend-lifecycle-qualification-20261002/candidate/v2/ipfs_datasets_py/logic/backends/process.py",
+      "bytes": 69941,
+      "sha256": "fe75b7e8a38bea59c53a73e2ea062fc6109fb867832d3c342624db27412c8c5e"
+    }
+  },
+  "final_test_result": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-backend-lifecycle-qualification-20261002/runs/extended-all-v2-02/result.json",
+    "bytes": 72234,
+    "sha256": "f543cdc8dc35fd0321f5e8daa181286185b3ae08a7878952e215e7ac5feec0ae"
+  },
+  "final_tests_passed": 99,
+  "final_tests_failed": 0,
+  "final_tests_skipped": 0,
+  "existing_test_cases": 76,
+  "extended_regression_cases": 23,
+  "extended_baseline_negative_cases_reproduced": 19,
+  "runs": [
+    {
+      "run_id": "baseline-existing-v1",
+      "receipt": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-backend-lifecycle-qualification-20261002/runs/baseline-existing-v1/result.json",
+        "bytes": 57378,
+        "sha256": "505d067ff44b01248c4265fe499f0424d47c1b7b3200fc4e91b8a6a60ec4b973"
+      },
+      "candidate": "v1",
+      "cohort": "existing",
+      "exit_code": 0,
+      "passed": 76,
+      "failed": 0,
+      "skipped": 0,
+      "qualification_role": "passing_focused_cohort"
+    },
+    {
+      "run_id": "baseline-regression-v1",
+      "receipt": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-backend-lifecycle-qualification-20261002/runs/baseline-regression-v1/result.json",
+        "bytes": 8819,
+        "sha256": "8c36ea5403fa856e6330857c78ec519a96b3d7e79a5627e2f9546f71af5c00ad"
+      },
+      "candidate": "v1",
+      "cohort": "regression",
+      "exit_code": 1,
+      "passed": 3,
+      "failed": 4,
+      "skipped": 0,
+      "qualification_role": "baseline_failure_control"
+    },
+    {
+      "run_id": "corrected-all-v2",
+      "receipt": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-backend-lifecycle-qualification-20261002/runs/corrected-all-v2/result.json",
+        "bytes": 61751,
+        "sha256": "acad558072ee04eea091c99084e7d73f5cab200c5ec23dcb0e664fd498dcb269"
+      },
+      "candidate": "v2",
+      "cohort": "all",
+      "exit_code": 0,
+      "passed": 83,
+      "failed": 0,
+      "skipped": 0,
+      "qualification_role": "passing_focused_cohort"
+    },
+    {
+      "run_id": "extended-regression-v1",
+      "receipt": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-backend-lifecycle-qualification-20261002/runs/extended-regression-v1/result.json",
+        "bytes": 5468,
+        "sha256": "736713e3427128d50f00fe3fa998af82600dd5c1043e6c02813b525d9c3fd651"
+      },
+      "candidate": "v1",
+      "cohort": "regression",
+      "exit_code": 3,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "qualification_role": "retained_harness_startup_failure"
+    },
+    {
+      "run_id": "extended-all-v2",
+      "receipt": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-backend-lifecycle-qualification-20261002/runs/extended-all-v2/result.json",
+        "bytes": 7538,
+        "sha256": "fd772f87b66c9297d6884a900017f5bdae29ff4ddd7564f6728f7867f1748049"
+      },
+      "candidate": "v2",
+      "cohort": "all",
+      "exit_code": 3,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "qualification_role": "retained_harness_startup_failure"
+    },
+    {
+      "run_id": "extended-regression-v1-02",
+      "receipt": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-backend-lifecycle-qualification-20261002/runs/extended-regression-v1-02/result.json",
+        "bytes": 19296,
+        "sha256": "ddb2496344bde5ad663ba09ffd12634f0d9a84331d3aac1987616d7b9848064f"
+      },
+      "candidate": "v1",
+      "cohort": "regression",
+      "exit_code": 1,
+      "passed": 4,
+      "failed": 19,
+      "skipped": 0,
+      "qualification_role": "baseline_failure_control"
+    },
+    {
+      "run_id": "extended-all-v2-02",
+      "receipt": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-backend-lifecycle-qualification-20261002/runs/extended-all-v2-02/result.json",
+        "bytes": 72234,
+        "sha256": "f543cdc8dc35fd0321f5e8daa181286185b3ae08a7878952e215e7ac5feec0ae"
+      },
+      "candidate": "v2",
+      "cohort": "all",
+      "exit_code": 0,
+      "passed": 99,
+      "failed": 0,
+      "skipped": 0,
+      "qualification_role": "passing_focused_cohort"
+    }
+  ],
+  "patch": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-backend-lifecycle-qualification-20261002/release-payload.patch",
+    "bytes": 78722,
+    "sha256": "abd6c6bfa49e5f4a4d26632a956317380ba7bb23fd185cfe329853e134d80435"
+  },
+  "patch_check": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-backend-lifecycle-qualification-20261002/patch-check.json",
+    "bytes": 5466,
+    "sha256": "0de99c0330f919c968e2c79c9fec2177e0118549fe26d9eabf4474c9cb97c236"
+  },
+  "patch_baseline_commit": "8de37ba8d216cd21a5d7134292de01d9e12c9a56",
+  "patch_payload": [
+    {
+      "repository_path": "ipfs_datasets_py/logic/backends/process.py",
+      "released_sha256": "742cdee25455c35d43945b0463ebbc606da5c1826e95691b69afb07e9d3fd96f",
+      "target": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-backend-lifecycle-qualification-20261002/candidate/v2/ipfs_datasets_py/logic/backends/process.py",
+        "bytes": 69941,
+        "sha256": "fe75b7e8a38bea59c53a73e2ea062fc6109fb867832d3c342624db27412c8c5e"
+      }
+    },
+    {
+      "repository_path": "tests/unit/logic/backends/test_process_lifecycle.py",
+      "released_sha256": "04e316e0837acd6ef609d13ebe3685a62410d272dfd29a65ef74cb81e94deb0c",
+      "target": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-backend-lifecycle-qualification-20261002/candidate/v2/tests/test_process_lifecycle.py",
+        "bytes": 19695,
+        "sha256": "38a65143d09e5933d55e2dd3b4cea35c57429db2cb321c08830798f9e248640f"
+      }
+    },
+    {
+      "repository_path": "tests/unit/logic/backends/test_process_exception_cleanup.py",
+      "released_sha256": null,
+      "target": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-backend-lifecycle-qualification-20261002/candidate/v2/tests/test_process_exception_cleanup.py",
+        "bytes": 7757,
+        "sha256": "51493334500956c863d297b537335a5822157dea2e9c3da9af423e1b81dde2ce"
+      }
+    },
+    {
+      "repository_path": "tests/unit/logic/backends/test_process_descendant_sessions.py",
+      "released_sha256": null,
+      "target": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-backend-lifecycle-qualification-20261002/candidate/v2/tests/test_process_descendant_sessions.py",
+        "bytes": 6834,
+        "sha256": "05124a54c286596ffb98b87dd8085ee40ec070fcd39503d6e482afe52ef60328"
+      }
+    },
+    {
+      "repository_path": "tests/unit/logic/backends/test_process_file_limits.py",
+      "released_sha256": null,
+      "target": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-backend-lifecycle-qualification-20261002/candidate/v2/tests/test_process_file_limits.py",
+        "bytes": 5037,
+        "sha256": "14c7e5088a70a8eeda68f2851896de80bcced252183c4eae6259a7d365ee729d"
+      }
+    },
+    {
+      "repository_path": "tests/unit/logic/backends/test_process_parallel_limits.py",
+      "released_sha256": null,
+      "target": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-backend-lifecycle-qualification-20261002/candidate/v2/tests/test_process_parallel_limits.py",
+        "bytes": 4327,
+        "sha256": "79535342d125743034baaf74264a89ed4b8f792c106e30f9159a1beedc800914"
+      }
+    },
+    {
+      "repository_path": "tests/unit/logic/backends/test_process_pipe_workers.py",
+      "released_sha256": null,
+      "target": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-backend-lifecycle-qualification-20261002/regression_tests/test_process_pipe_workers.py",
+        "bytes": 17823,
+        "sha256": "7464276e121db3db36ecff7fb03a406b3beb2d707a843d625976e347cbad02e6"
+      }
+    }
+  ],
+  "unchanged_owner_prerequisites": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-backend-lifecycle-qualification-20261002/release-baseline.json",
+    "bytes": 4871,
+    "sha256": "b7241d95d26edb882216bd757c8c58c90c732aa15e2874697292ed7f44844688"
+  },
+  "acquisition": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-backend-lifecycle-qualification-20261002/acquisition.json",
+    "bytes": 7273,
+    "sha256": "a283e4840c366ed50b80229a4c7251679442e03ee13d61ed2528c862bf568dfe"
+  },
+  "system_startup_profile": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-backend-lifecycle-qualification-20261002/system-startup-profile.json",
+    "bytes": 2706,
+    "sha256": "028625937774c4e8ea9e62b0e610e074ccff3357e37003117b7b6f5c21528930"
+  },
+  "harness": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-backend-lifecycle-qualification-20261002/run_lifecycle_tests.py",
+    "bytes": 11947,
+    "sha256": "cd024e5f9971ae8c3c6708a39a205ca1ad636372b85cf2f186c916c3b20b9108"
+  },
+  "current_regression_source": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-backend-lifecycle-qualification-20261002/regression_tests/test_process_pipe_workers.py",
+    "bytes": 17823,
+    "sha256": "7464276e121db3db36ecff7fb03a406b3beb2d707a843d625976e347cbad02e6"
+  },
+  "retained_input_versions": [
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-backend-lifecycle-qualification-20261002/inputs/run_lifecycle_tests-v1.py",
+      "bytes": 10023,
+      "sha256": "17e6a3acdfd77df419161c8d019cd7698742856e9e129431955ec6d5c2dc650f"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-backend-lifecycle-qualification-20261002/inputs/run_lifecycle_tests-v2.py",
+      "bytes": 11861,
+      "sha256": "f92dacf32a5715c05fdbe5fbdb2e75e0a730aaf963a9f15d3bb0f9480f5331d3"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-backend-lifecycle-qualification-20261002/inputs/test_process_pipe_workers-v1.py",
+      "bytes": 12694,
+      "sha256": "362a79a1a581504c9d8d3be40785d9aaadf6cfe6605bc58893cb4d3d5ef6da58"
+    }
+  ],
+  "historical_source_receipt_relocations": [
+    {
+      "original_path": "/home/barberb/lift_coding/artifacts/codebase-ir-backend-lifecycle-qualification-20261002/regression_tests/test_process_pipe_workers.py",
+      "sha256": "362a79a1a581504c9d8d3be40785d9aaadf6cfe6605bc58893cb4d3d5ef6da58",
+      "retained_path": "/home/barberb/lift_coding/artifacts/codebase-ir-backend-lifecycle-qualification-20261002/inputs/test_process_pipe_workers-v1.py",
+      "reason": "Executed seven-case source retained before the extended regression cohort replaced its working path"
+    },
+    {
+      "original_path": "/home/barberb/lift_coding/artifacts/codebase-ir-backend-lifecycle-qualification-20261002/run_lifecycle_tests.py",
+      "sha256": "f92dacf32a5715c05fdbe5fbdb2e75e0a730aaf963a9f15d3bb0f9480f5331d3",
+      "retained_path": "/home/barberb/lift_coding/artifacts/codebase-ir-backend-lifecycle-qualification-20261002/inputs/run_lifecycle_tests-v2.py",
+      "reason": "Harness version that rejected built-in plugin classes retained before module/class identity correction"
+    }
+  ],
+  "observation_limitations": [
+    "Source/input/native file receipts are before/after observations, not continuous or atomic executed-byte attestation",
+    "Parent -I -S isolation does not apply to unchanged ordinary-system-startup child argv",
+    "Observed module/startup/helper receipts do not attest transitive native/shared-library or all child execution closure",
+    "Per-worker joins and refusal do not guarantee reclamation or one end-to-end preparation/execution/cleanup deadline",
+    "Cached Git patch check does not execute candidate imports or integrate/merge/push the source"
+  ],
+  "transition_gate_evidence": {
+    "BT00": "source snapshots and seven-file patch applicability only; clean installed/acquired release pending",
+    "BT01": "narrow package/module/plugin/native startup observations only; full installed proof closure pending",
+    "BT02": "99 focused candidate-bound Linux tests pass; retain dependency/prerequisite scope",
+    "BT03": "inherited limits plus pipe-refusal behavior tested; aggregate end-to-end budget qualification pending",
+    "BT04": "not_executed_native_integer_proof_checks_pending",
+    "BT05": "not_executed_proof_index_and_intent_current_applicability_pending",
+    "BT06": "26 original assets and13 inventory documents match; no model task promotion",
+    "BT07": "patch_ready_not_integrated_accepted_manifest_and_gitlinks_pending"
+  },
+  "preservation": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-backend-lifecycle-qualification-20261002/preservation.json",
+    "bytes": 352386,
+    "sha256": "5be93d50c4e97d6acb769c49fc24d2204b65763082c40eb9474f1b337d7e0b32"
+  },
+  "original_assets_unchanged": 26,
+  "inventory_documents_unchanged": 13,
+  "prior_bound_file_counts_preserved": [
+    481,
+    17,
+    30
+  ],
+  "original_manifest_or_candidate_repinned": false,
+  "active_worktree_modified_by_patch_check": false,
+  "active_git_index_and_refs_endpoints_match": true,
+  "clean_git_candidate_integrated": false,
+  "accepted_release_manifest": null,
+  "release_commit": null,
+  "source_dependency_closure_qualified": false,
+  "proof_profile_qualified": false,
+  "proof_authority": false,
+  "runtime_release_qualified": false,
+  "model_task_qualified": false,
+  "training_admitted": false,
+  "promotion_admitted": false,
+  "solver_execution": false,
+  "model_execution": false,
+  "database_operations": false,
+  "network_fetch_performed": false,
+  "installed_packages_modified": false,
+  "commits_merges_pushes": 0
+}

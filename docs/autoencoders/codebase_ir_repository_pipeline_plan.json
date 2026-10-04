@@ -1,0 +1,1705 @@
+{
+  "schema": "codebase-ir-repository-pipeline-plan/v1",
+  "status": "declarative_implementation_plan",
+  "created_at_utc": "2026-10-02T08:41:40.716082+00:00",
+  "guide": "codebase_ir_repository_pipeline_improvement_plan.md",
+  "comprehensive_guide": "codebase_ir_proof_index_improvement_plan.md",
+  "work_items": "codebase_ir_proof_index_work_items.json",
+  "cell_directory": "ir_family_dimension_inventory_plan.json",
+  "inspection_record": "../../../../artifacts/codebase-ir-repository-pipeline-plan-20261002/inspection.json",
+  "cell_policy": {
+    "ir_family_ids": [
+      "codebase_ir",
+      "security_ir",
+      "legal_ir",
+      "intent_ir"
+    ],
+    "dimensions": [
+      8,
+      384,
+      768
+    ],
+    "cell_count": 12,
+    "existing_cell_manifests_modified": false,
+    "required_cells_only": true,
+    "repository_adaptation_is_variant_in_owning_cell": true,
+    "native_schema_redefined_per_repository": false,
+    "source_capture_shared_by_reference": true,
+    "wider_cell_readiness_blocks8d_384d": false,
+    "runtime_stores_and_hub_repositories": "Use existing twelve proposed routes; no creation during planning."
+  },
+  "stages": [
+    {
+      "stage_id": "R00",
+      "title": "Register repository and select authenticated cells",
+      "depends_on": [],
+      "work_items": [
+        "C00",
+        "C01",
+        "C12",
+        "C15"
+      ],
+      "owner": "repository/source and cell owners",
+      "inputs": [
+        "registered repository profile",
+        "authenticated family/task/checkpoint selectors",
+        "source policy and environment"
+      ],
+      "outputs": [
+        "registration receipt",
+        "required cell/profile set"
+      ],
+      "admission": "Reject ambiguous repository identity or undeclared source mode. Register explicit unavailable model lanes; require compatible inherited weights only when admitting model-dependent execution or inherited training.",
+      "implementation_state": "planned",
+      "model_unavailability_blocks_repository_registration": false
+    },
+    {
+      "stage_id": "R01",
+      "title": "Capture complete declared inventory",
+      "depends_on": [
+        "R00"
+      ],
+      "work_items": [
+        "C02"
+      ],
+      "owner": "RepositoryCodebaseIndex and CodebaseCatalog",
+      "inputs": [
+        "registration receipt",
+        "expected repository head",
+        "capture policy"
+      ],
+      "outputs": [
+        "captured source manifest",
+        "coverage/disposition ledger",
+        "exact observed head"
+      ],
+      "admission": "All nonexcluded entries reconcile within frozen bounds; selections cannot narrow inventory; replay needs fresh applicability.",
+      "implementation_state": "planned"
+    },
+    {
+      "stage_id": "R02",
+      "title": "Derive native Codebase IR and dependency graph",
+      "depends_on": [
+        "R01"
+      ],
+      "work_items": [
+        "C02",
+        "C04"
+      ],
+      "owner": "native Codebase/AST/semantic owners",
+      "inputs": [
+        "captured source manifest",
+        "frontend and native schema"
+      ],
+      "outputs": [
+        "source-bound native units",
+        "symbol/dependency map",
+        "unsupported/unresolved ledger"
+      ],
+      "admission": "Native structural observations retain exact spans/versions; unknown semantics remain explicit.",
+      "implementation_state": "planned"
+    },
+    {
+      "stage_id": "R03",
+      "title": "Admit model and vector inputs",
+      "depends_on": [
+        "R02"
+      ],
+      "work_items": [
+        "C03",
+        "C13"
+      ],
+      "owner": "owning cell registry/input-admission adapter",
+      "inputs": [
+        "native unit/span/context refs",
+        "checkpoint/profile selectors",
+        "old vector references"
+      ],
+      "outputs": [
+        "authenticated input receipts",
+        "explicit model-input unavailable states"
+      ],
+      "admission": "Reuse only exact input/profile matches; unavailable model lanes retain a deterministic native path.",
+      "implementation_state": "planned",
+      "missing_model_inputs_block_deterministic_path": false
+    },
+    {
+      "stage_id": "R04",
+      "title": "Autoformalize typed obligations",
+      "depends_on": [
+        "R02",
+        "R03"
+      ],
+      "work_items": [
+        "C04",
+        "C13"
+      ],
+      "owner": "native/logic projection and decoder owners",
+      "inputs": [
+        "native subjects",
+        "optional authenticated candidate inputs",
+        "logic/translator/source mapping profile"
+      ],
+      "outputs": [
+        "typed obligation inventory",
+        "model candidates",
+        "source correspondence and unresolved facets"
+      ],
+      "admission": "Models propose; expected obligation and unsupported coverage are accounted for independently.",
+      "implementation_state": "planned"
+    },
+    {
+      "stage_id": "R05",
+      "title": "Check and index exact evidence",
+      "depends_on": [
+        "R04"
+      ],
+      "work_items": [
+        "C05",
+        "C06"
+      ],
+      "owner": "trusted checker and cell evidence-index owners",
+      "inputs": [
+        "typed obligations",
+        "canonical key/dependency bindings",
+        "checker/environment/resource profile"
+      ],
+      "outputs": [
+        "trusted outcome receipts",
+        "historical proof-index records",
+        "current evidence eligibility view"
+      ],
+      "admission": "Historical cache hits do not skip fresh native checks under the existing profile; preserve conditional/kernel/test authority distinctions.",
+      "implementation_state": "planned"
+    },
+    {
+      "stage_id": "R06",
+      "title": "Ground versioned intent against observed code",
+      "depends_on": [
+        "R02",
+        "R05"
+      ],
+      "work_items": [
+        "C07",
+        "C17"
+      ],
+      "owner": "Intent/codebase grounding and typed federation adapters",
+      "inputs": [
+        "IntentIR source/version",
+        "exact current symbol versions",
+        "eligible facts and source/applicability roots"
+      ],
+      "outputs": [
+        "grounding receipt",
+        "state-qualified transition goals",
+        "unresolved intent requirements"
+      ],
+      "admission": "Preserve current false facts and separate planned-post subjects; ambiguity/unknowns cannot become true.",
+      "implementation_state": "planned"
+    },
+    {
+      "stage_id": "R07",
+      "title": "Compile admitted symbolic plan",
+      "depends_on": [
+        "R06"
+      ],
+      "work_items": [
+        "C07",
+        "C10"
+      ],
+      "owner": "IntentConstraintAdapter and formal/symbolic planner owners",
+      "inputs": [
+        "verified Intent/Formalization artifacts",
+        "grounded state/transition bindings",
+        "reviewed producer/task catalog"
+      ],
+      "outputs": [
+        "compiled validated task graph",
+        "exact runners/checks/effect scope",
+        "plan admission receipt"
+      ],
+      "admission": "No fallback marker substitutes for an actual check; review graphs route to a separate approved observation request.",
+      "implementation_state": "planned"
+    },
+    {
+      "stage_id": "R08",
+      "title": "Execute measure verify and refresh",
+      "depends_on": [
+        "R07"
+      ],
+      "work_items": [
+        "C06",
+        "C10"
+      ],
+      "owner": "DecisionRuntime isolated worker and trusted live observers",
+      "inputs": [
+        "admitted plan",
+        "fresh source/policy/lease observation",
+        "exact runner/environment bindings"
+      ],
+      "outputs": [
+        "measured diff/post-tree",
+        "fresh check receipts",
+        "planned-to-actual subject map",
+        "successor source/index heads"
+      ],
+      "admission": "Observe before dispatch and around checks; derive satisfaction from actual post-state evidence.",
+      "implementation_state": "planned"
+    },
+    {
+      "stage_id": "R09",
+      "title": "Freeze eligible training and evaluation corpus",
+      "depends_on": [
+        "R02"
+      ],
+      "work_items": [
+        "C08",
+        "C09"
+      ],
+      "owner": "native target and private model-corpus owners",
+      "inputs": [
+        "admitted source-bound targets",
+        "compatible inherited lineage",
+        "coverage/exposure/split policy"
+      ],
+      "outputs": [
+        "frozen cohort/replay/split roots",
+        "unknown-feature coverage report",
+        "preregistered evaluation contract"
+      ],
+      "admission": "Training labels are independently established; missing compatible parent or unknown critical atoms require migration/unavailable.",
+      "implementation_state": "planned"
+    },
+    {
+      "stage_id": "R10",
+      "title": "Adapt private repository candidate",
+      "depends_on": [
+        "R03",
+        "R09"
+      ],
+      "work_items": [
+        "C08"
+      ],
+      "owner": "cell registry and admitted numerical trainer",
+      "inputs": [
+        "exact compatible parent",
+        "frozen corpus/replay",
+        "update-policy/resource/operation bindings"
+      ],
+      "outputs": [
+        "immutable candidate",
+        "numerical execution/provenance receipts",
+        "client/queue acknowledgment state"
+      ],
+      "admission": "Inherited mode forbids absent-parent random bootstrap; update algorithms and their replay/optimizer semantics remain explicit.",
+      "implementation_state": "planned"
+    },
+    {
+      "stage_id": "R11",
+      "title": "Evaluate and promote scoped candidate",
+      "depends_on": [
+        "R10"
+      ],
+      "work_items": [
+        "C08",
+        "C09",
+        "C14"
+      ],
+      "owner": "independent evaluator and owner promotion validator",
+      "inputs": [
+        "candidate and original parent",
+        "independent/retention cohorts",
+        "fresh source/model heads"
+      ],
+      "outputs": [
+        "evaluated candidate receipt",
+        "task-profile promotion or rejection",
+        "rollback receipt"
+      ],
+      "admission": "Absolute task fidelity, coverage, retention and authority gates precede compare-and-swap; no loss-only or proof-closing promotion.",
+      "implementation_state": "planned"
+    },
+    {
+      "stage_id": "R12",
+      "title": "Deliver immutable history and recover",
+      "depends_on": [
+        "R00"
+      ],
+      "work_items": [
+        "C11",
+        "C16"
+      ],
+      "owner": "per-owner outbox lake/Hub delivery and recovery owners",
+      "inputs": [
+        "durable stage/model/evidence receipts as they become available",
+        "required delivery mapping"
+      ],
+      "outputs": [
+        "pending/complete delivery receipts",
+        "recovery journal",
+        "independent history references"
+      ],
+      "admission": "Streaming side branch; preserve local completion versus optional delivery; recover artifacts/acknowledgments without rerunning training.",
+      "implementation_state": "planned",
+      "streaming_side_branch": true,
+      "not_required_for_local_model_promotion": true
+    }
+  ],
+  "repository_registration": {
+    "required": [
+      "stable repository identity with worktree/source-mode instance distinction",
+      "exact commit/tree and captured overlay/index/untracked dispositions when admitted",
+      "declared exclusions and full inventory population",
+      "nested-root/symlink boundaries",
+      "frontend/dependency/build/environment profiles",
+      "expected durable head and live observation",
+      "cell/task/span/checkpoint selectors"
+    ],
+    "pilot_source_mode": "proposed strict-clean gate over existing committed Git-root capture policy",
+    "existing_policy_admitted_modes": [
+      "git-clean",
+      "git-working"
+    ],
+    "selection_paths_filter_capture_inventory": false,
+    "capture_inventory": "all nonexcluded entries",
+    "current_pilot_max_entries": 256,
+    "current_pilot_max_file_bytes": 65536,
+    "larger_scope_requires_new_sealed_paged_profile": true,
+    "point_in_time_observation_is_filesystem_lock": false,
+    "policy_currentness_includes_ignore_inputs": true
+  },
+  "coverage_contract": {
+    "denominators": [
+      "inventory entries",
+      "parsed AST units",
+      "supported native units",
+      "supported decoder units",
+      "expected/emitted formal obligations",
+      "checked outcomes",
+      "currently eligible source-correspondent claims"
+    ],
+    "unsupported_omitted_and_unresolved_accounted": true,
+    "only_emitted_successes_define_coverage": false,
+    "aggregate_requires_single_consistent_source_root": true
+  },
+  "cache_policy": {
+    "classes": [
+      "source_ast_native",
+      "vectors",
+      "model_candidates",
+      "checked_evidence"
+    ],
+    "source_reuse": "Exact source/parser/path/module/frontend/configuration/implementation/schema context.",
+    "vector_reuse": "Exact input/span/context and encoder/tokenizer/code/pooling/normalization/precision/dimension role.",
+    "candidate_reuse": "Exact vector plus decoder/checkpoint/task/codec/generation/output budget.",
+    "proof_reuse": "Existing canonical16-field key and independently validated current applicability.",
+    "warm_ast_cache_is_process_local": true,
+    "semantic_preparation_rescans": true,
+    "cold_restart_durable_invalidation_available": true,
+    "durable_shard_hydration": "proposed C02 performance adapter",
+    "current_historical_hit_skips_fresh_native_checker": false,
+    "cache_counters": [
+      "warm_ast_hit",
+      "cold_artifact_load",
+      "semantic_rescan",
+      "vector_hit",
+      "candidate_hit",
+      "history_hit",
+      "fresh_checker_execution",
+      "certificate_rechecked"
+    ],
+    "portable_certificate_profile": "future separately reviewed adapter; not current historical-cache authority",
+    "similarity_result_is_exact_proof_hit": false
+  },
+  "state_transition_binding": {
+    "status": "proposed_closed_adapter",
+    "phases": [
+      "current",
+      "planned_post",
+      "observed_post"
+    ],
+    "required": [
+      "intent root/node/constraint",
+      "typed store/family/source/applicability bindings",
+      "exact source/semantic/current subject version",
+      "environment/policy",
+      "state phase and distinct semantic subject",
+      "reviewed producer/template",
+      "preconditions/effects/dependencies/paths/runner/args/checks/budgets",
+      "planned-to-actual subject map",
+      "measured observed post-tree/semantic roots",
+      "eligible actual post-state evidence"
+    ],
+    "current_false_fact_preserved": true,
+    "predicate_id_alone_separates_semantic_states": false,
+    "planned_post_subject_is_observed_tree": false,
+    "false_mandatory_policy_precondition_blocks": true,
+    "unknown_resolution": "Separate admitted observation/context-resolution request, then re-ground and recompile.",
+    "unknown_automatically_converted_to_task_by_current_compiler": false,
+    "satisfaction_ids_derived_by_trusted_evidence_owner": true
+  },
+  "planner_handoffs": {
+    "verified_intent_and_formalization_artifacts_required": true,
+    "codebase_native_registry_slot_currently_exists": false,
+    "codebase_to_formalization_bridge": "reviewed typed registration preserving upstream canonical types",
+    "reviewed_producer_task_catalog_required": true,
+    "actual_runner_arguments_effects_leases_checks_required": true,
+    "fallback_validation_marker_is_executable_check": false,
+    "trusted_live_observer_before_dispatch_and_around_checks_required": true,
+    "copied_plan_values_are_live_observations": false,
+    "worker_model_ids_are_implementation_evidence": false
+  },
+  "online_adaptation": {
+    "execution": "independent durable shadow queue outside active planner request",
+    "allowed_triggers": [
+      "admitted source successor",
+      "reviewed counterexample",
+      "measured failure in supported reconstruction/retrieval task"
+    ],
+    "preregister": [
+      "minimum eligible cohort",
+      "trigger thresholds",
+      "cooldown/coalescing",
+      "priority",
+      "retry/supersession policy",
+      "finite resources",
+      "absolute fidelity/coverage/retention/independent evaluation thresholds"
+    ],
+    "request_identity": [
+      "cell/task/profile",
+      "exact source/corpus/replay roots",
+      "parent checkpoint",
+      "update policy digest"
+    ],
+    "inherited_mode_requires_parent": true,
+    "absent_parent_random_bootstrap_in_reuse_mode": false,
+    "unchecked_predictions_are_ground_truth": false,
+    "unknown_feature_coverage_gate_required": true,
+    "cohort_basis_or_eval_expansion_requires_reviewed_migration": true,
+    "loss_reduction_suffices_for_promotion": false,
+    "training_completion_discharges_proof_or_intent": false,
+    "serving_parent_mutated_in_place": false,
+    "model_promotion_owner_validator_and_fresh_head_cas_required": true,
+    "bounds_exhaustion": "Stop and declare anchor/migration work preserving old ancestry, exposure and replay; no silent limit raise/pruning.",
+    "update_policies": [
+      {
+        "policy_id": "source8_exact_adam_continuation",
+        "scope": "structural source8, frozen basis/cohort/contract/split roles",
+        "parent_required": true,
+        "optimizer": "compatible saved Adam moments/progress/settings",
+        "inference": "exact registered current head and cohort paths",
+        "original_root_replay_in_fit": true,
+        "intermediate_ancestral_rows": "Exposure ledger retained; not automatically replayed in this current fitting policy."
+      },
+      {
+        "policy_id": "source8_federated_aggregate",
+        "scope": "current inherited training path partition",
+        "parent_required": true,
+        "replay": "diagnostic; separate retention gate required",
+        "optimizer": "aggregate_fresh_adam_zero_moments_and_progress@1",
+        "lineage_reader": "federated provenance adapter",
+        "synchronized_gradient_execution_available": false,
+        "original_root_replay_in_fit": false
+      },
+      {
+        "policy_id": "source384_ridge_readout",
+        "scope": "actual narrow Security-payload Codebase wrapper",
+        "parent_required": true,
+        "retention_inputs": "authenticated old rows/vectors or sufficient statistics",
+        "old_weights_are_sufficient_statistics": false
+      },
+      {
+        "policy_id": "native768_compatible_transfer",
+        "scope": "future authenticated Codebase codec/head/representation alignment",
+        "native_training_ready_asserted": false,
+        "cross_cell_donors_are_native_resume_parents": false,
+        "legal768_initializer_is_codebase_head": false
+      }
+    ],
+    "lifecycle_states": [
+      "queued",
+      "admitted",
+      "client_receipt_durable",
+      "queue_acknowledged",
+      "producer_run_completed",
+      "candidate_durable",
+      "provenance_delivery_pending_or_complete",
+      "candidate_evaluated",
+      "serving_promoted_or_rejected"
+    ],
+    "retry_completed_fit_executes_optimizer_again": false,
+    "completed_producer_run_is_resumable_same_run": false,
+    "next_round_requires_new_operation_id_and_exact_parent": true,
+    "rollback": "Task/profile-scoped previous selector plus new fencing receipt; proof applicability remains separately observed."
+  },
+  "delivery_policy": {
+    "registry_and_index_separate_owners": true,
+    "writer_process_per_database": "serialized owner, workers return immutable artifacts",
+    "optional_history_or_hub_delivery_blocks_valid_local_head": false,
+    "aggregate_may_reference_missing_required_receipts": false,
+    "global_atomic_transaction_claimed": false,
+    "recovery_reexecutes_model_training_or_solver_work": false
+  },
+  "acceptance_fixtures": [
+    {
+      "fixture_id": "F01",
+      "case": "achievable currently-false repair",
+      "expected": "Preserve current false claim; plan an admitted transition to a distinct post-state subject.",
+      "implementation_state": "planned"
+    },
+    {
+      "fixture_id": "F02",
+      "case": "contradictory current facts",
+      "expected": "Block matching current-state TRUE/FALSE contradiction.",
+      "implementation_state": "planned"
+    },
+    {
+      "fixture_id": "F03",
+      "case": "false mandatory policy or missing producer",
+      "expected": "Block effects and report unsatisfied preconditions.",
+      "implementation_state": "planned"
+    },
+    {
+      "fixture_id": "F04",
+      "case": "unknown or unsupported semantic facts",
+      "expected": "Use a separate admitted observation/review request and recompile.",
+      "implementation_state": "planned"
+    },
+    {
+      "fixture_id": "F05",
+      "case": "stale proof or wrong typed root or unmapped subject",
+      "expected": "Reject post-state satisfaction.",
+      "implementation_state": "planned"
+    },
+    {
+      "fixture_id": "F06",
+      "case": "incomplete or oversized or truncated coverage",
+      "expected": "Reject admission or report explicit incomplete scope.",
+      "implementation_state": "planned"
+    },
+    {
+      "fixture_id": "F07",
+      "case": "warm process cold restart and operation replay",
+      "expected": "Report cache classes separately; reobserve source after receipt replay.",
+      "implementation_state": "planned"
+    },
+    {
+      "fixture_id": "F08",
+      "case": "missing parent or new unknown feature atoms or changed eval units",
+      "expected": "Return unavailable/migration without silent random initialization.",
+      "implementation_state": "planned"
+    },
+    {
+      "fixture_id": "F09",
+      "case": "completed fit interrupted before queue/provenance acknowledgment",
+      "expected": "Recover exact candidate without another optimizer invocation.",
+      "implementation_state": "planned"
+    },
+    {
+      "fixture_id": "F10",
+      "case": "cancellation budgets or stale promotion heads",
+      "expected": "Keep serving parent selected.",
+      "implementation_state": "planned"
+    },
+    {
+      "fixture_id": "F11",
+      "case": "lower loss with fidelity or retention regression",
+      "expected": "Reject promotion.",
+      "implementation_state": "planned"
+    },
+    {
+      "fixture_id": "F12",
+      "case": "wrong family task codec span or evidence authority",
+      "expected": "Reject incompatible decoding and evidence admission.",
+      "implementation_state": "planned"
+    }
+  ],
+  "worked_pilot": {
+    "current_source": "declared integer-offset function returning x+1",
+    "intent": "post-change function returns x+2 under declared assumptions",
+    "state_binding": "H0 exact current subject; distinct planned-post subject; H1 measured function version",
+    "current_refuted_offset2_retained": true,
+    "pre_tree_receipt_closes_post_goal": false,
+    "training_eligibility_independent_of_verified_edit": true,
+    "new_literal8d_basis_migration_may_be_required": true,
+    "source384_two_operand_cohort_eligibility_inferred": false
+  },
+  "actions_performed": {
+    "runtime_code_changed": false,
+    "repository_scan_executed": false,
+    "model_training": false,
+    "distillation": false,
+    "embedding_regeneration": false,
+    "model_inference": false,
+    "model_download": false,
+    "runtime_databases_created": false,
+    "remote_repositories_created": false,
+    "git_merge_or_push": false,
+    "runtime_promotion": false,
+    "supervisor_effect_execution": false
+  },
+  "grounding_pilot_pack": {
+    "guide": "pilots/intent_codebase_grounding/README.md",
+    "specification": "pilots/intent_codebase_grounding/pilot_spec.json",
+    "closed_specification_schema": "pilots/intent_codebase_grounding/pilot_spec.schema.json",
+    "adapter_contracts": "pilots/intent_codebase_grounding/adapter_contracts.json",
+    "status": "authored_planning_pack_not_executed"
+  },
+  "existing_transition_owner_reuse": {
+    "canonical_types": "ProgramTransitionQuery/Candidate/Prediction/Observation/Admission and PatchSketchIR/RepairOperator",
+    "outer_state_adapter": "proposed; existing native payloads unchanged",
+    "repair_query_requires_current_graph": true,
+    "observation_subject_remains_query_subject": true,
+    "native_identity_and_full_record_transport_identity_separate": true,
+    "native_transition_admission_grants_effect_or_completion_authority": false
+  },
+  "current_conditional_index_status_admission": {
+    "accepted": [
+      "proved",
+      "refuted"
+    ],
+    "nonterminal": "separate proposed attempt journal or reviewed owner extension",
+    "historical_record_is_authoritative_supervisor_proof": false
+  },
+  "saved_source8_unknown_coverage": {
+    "scope": "authenticated parent/child source-training qualification fixture; no inference",
+    "input_width": 53,
+    "latent_width": 8,
+    "unknown_program_atoms_parent_tuning": 1,
+    "unknown_program_atoms_child_changed_train": 1,
+    "unknown_program_atoms_tuning_and_canary": 1,
+    "root_training_replay_unknown_program_atoms": 0,
+    "counter_py_in_registered_cohort": false,
+    "pilot_model_outcome": "migration_required",
+    "historical_canary_is_independent_holdout": false
+  },
+  "normalized_conditional_query_increment": {
+    "status": "implemented_bounded_local_increment_production_exits_open",
+    "qualification": "../../workspace/codebase-evidence-query-qualification-20261002/REPORT.md",
+    "owner": "CodebaseVerificationCatalog",
+    "lookup_uses_normalized_projection_by_default": true,
+    "legacy_records_require_explicit_admitted_rebuild": true,
+    "query_inventory_integrity": "complete_bounded_scan_before_exact_selection",
+    "cursor_binding": [
+      "complete_structural_head",
+      "exact_selector",
+      "sealed_inventory",
+      "monotonic_evidence_epoch",
+      "starting_entry"
+    ],
+    "supervisor_initial_page_size": 2,
+    "runtime_requirements_remain_residual": true,
+    "historical_record_is_authoritative_supervisor_proof": false,
+    "hard_process_rss_limit": false,
+    "remaining": [
+      "sublinear_and_many_core_query_scaling",
+      "retention_and_gc",
+      "DuckLake_delivery",
+      "broader_source_semantics",
+      "learned_semantic_decoding",
+      "production_planner_admission"
+    ]
+  },
+  "bounded_conditional_execution_increment": {
+    "status": "implemented_default_v2_partial_acceptance",
+    "qualification": "../../workspace/codebase-smt-execution-qualification-20261002/REPORT.md",
+    "owners": [
+      "codebase_verification",
+      "codebase_applicability"
+    ],
+    "process_owner": "existing BoundedToolRunner under actual producer child leases",
+    "protocol": [
+      "version",
+      "verdict",
+      "applicable_model_or_unsat_core"
+    ],
+    "default_per_logical_call_timeout_ms": 5000,
+    "default_native_memory_bytes": 134217728,
+    "per_process_address_space_enforced": true,
+    "tree_rss_guard": "sampled",
+    "aggregate_kernel_memory_limit": false,
+    "parent_python_rss_limit": false,
+    "output_capture": "per_stream_bounded_with_combined_retention_check",
+    "fresh_admission_each_phase": true,
+    "deadline_includes_admission": true,
+    "active_native_cancellation": true,
+    "legacy_replay": "explicit exact reviewed @1 producer inventory and unchanged semantic dependencies",
+    "legacy_artifacts_rewritten": false,
+    "historical_execution_attested": false,
+    "new_proof_or_runtime_behavior_authority": false,
+    "remaining": [
+      "aggregate_cgroups",
+      "hostile_daemon_containment",
+      "generic_backend_admission",
+      "large_scale_index_queries",
+      "DuckLake_delivery",
+      "broader_source_semantics"
+    ]
+  },
+  "restart_safety_increment": {
+    "status": "implemented_partial_acceptance",
+    "qualification": "../../workspace/codebase-restart-safety-qualification-20261002/REPORT.md",
+    "owners": [
+      "resource_scheduler",
+      "proof_resource_safety"
+    ],
+    "new_lease_and_waiter_boot_identity": true,
+    "unknown_or_legacy_boot_identity": "conservative existing PID and birth-marker liveness",
+    "configuration_change_requires_drained_owners": true,
+    "stale_facade_configuration_drift": "refuse before mutation; explicit idle constructor or reconfiguration required",
+    "known_cgroup_v2_memory_counter_failure": "existing unknown-telemetry admission backoff",
+    "saved_pool_capacity_widened": false,
+    "conditional_producer_schema_changed": false,
+    "historical_artifacts_rewritten": false,
+    "aggregate_kernel_memory_limit_added": false,
+    "new_proof_or_runtime_behavior_authority": false,
+    "next_index_increment": "bounded operation-scoped batch queries with complete inventory validation and no cross-call integrity cache",
+    "remaining": [
+      "aggregate_cgroups",
+      "cgroup_v1_sampling",
+      "optional_CPU_PSI_strictness",
+      "generic_backend_admission",
+      "sublinear_authenticated_queries"
+    ]
+  },
+  "query_many_increment": {
+    "status": "implemented_partial_acceptance",
+    "qualification": "../../workspace/codebase-query-many-qualification-20261003/REPORT.md",
+    "catalog_api": "CodebaseVerificationCatalog.query_many_current",
+    "supervisor_api": "conditional_codebase_batch.match_conditional_codebase_requirements",
+    "default_max_requests": 32,
+    "default_max_requested_entries": 1024,
+    "default_max_request_bytes": 1048576,
+    "default_max_receipt_bytes": 67108864,
+    "default_max_retained_evidence_bytes": 67108864,
+    "supervisor_max_raw_request_bytes": 4194304,
+    "supervisor_max_prepared_request_bytes": 4194304,
+    "supervisor_max_result_bytes": 8388608,
+    "complete_inventory_validation_per_operation": true,
+    "projection_reuse": "operation-local only",
+    "source_entry_exit_observations": true,
+    "whole_batch_withheld_on_failure": true,
+    "page_and_cursor_schemas_changed": false,
+    "historical_artifacts_rewritten": false,
+    "public_preparation_activated": false,
+    "new_proof_or_runtime_behavior_authority": false,
+    "production_tasks_closed": [],
+    "remaining": [
+      "aggregate_cgroups",
+      "sublinear_authenticated_queries",
+      "DuckLake_delivery",
+      "learned_semantic_IR",
+      "production_planner_admission"
+    ]
+  },
+  "generic_prover_admission_increment": {
+    "status": "implemented_partial_acceptance",
+    "qualification": "../../workspace/generic-prover-admission-qualification-20261003/REPORT.md",
+    "default_execution_adapters": [
+      "LeanKernelBackend",
+      "RocqKernelBackend",
+      "IsabelleKernelBackend",
+      "TLCBackend"
+    ],
+    "runner": "ResourceAdmittedToolRunner",
+    "actual_parent_child_ownership": true,
+    "pressure_backoff": "existing shared scheduler; new launches pause",
+    "deadline_scope": "admission, workspace preparation and execution per invocation",
+    "memory_admission": "explicit RSS before explicit address space; ceil MiB; no silent resizing",
+    "plain_injected_runners": "caller-owned admission unchanged",
+    "lean_default_profile": {
+      "cpu_slots": 1,
+      "child_process_slots": 1,
+      "stack_kb": 65536,
+      "address_space_floor_bytes": 4294967296,
+      "resident_memory_budget": "request bounds"
+    },
+    "aggregate_kernel_memory_limit_added": false,
+    "historical_artifacts_rewritten": false,
+    "new_proof_or_runtime_behavior_authority": false,
+    "production_tasks_closed": [],
+    "remaining": [
+      "aggregate_cgroups",
+      "generic_SMT_and_Apalache_admission",
+      "whole_operation_setup_deadlines",
+      "supervisor_owner_integration",
+      "sublinear_authenticated_queries",
+      "DuckLake_delivery",
+      "learned_semantic_IR",
+      "production_planner_admission"
+    ]
+  },
+  "generic_smt_admission_increment": {
+    "status": "implemented_partial_acceptance",
+    "qualification": "../../workspace/generic-smt-admission-qualification-20261003/REPORT.md",
+    "default_execution_entry_points": [
+      "logic.backends.z3 public adapters",
+      "logic.backends.cvc5 public adapters",
+      "standard backend registry factories",
+      "SmtExecutionEngineV2"
+    ],
+    "runner": "ResourceAdmittedToolRunner",
+    "actual_parent_child_ownership": true,
+    "pressure_backoff": "existing shared scheduler; new admissions pause",
+    "deadline_scope": "per solver: compilation checkpoint, verdict, applicable artifact replay, version collection including admission/workspace/execution",
+    "output_scope": "combined native phases; failures withhold conclusive output",
+    "native_protocol": "bounded single-check; only applicable model/core; matching clean replay verdict",
+    "default_cpu_and_process_slots": 1,
+    "memory_profile": "requested finite address-space and sampled RSS limits",
+    "exact_max_steps_enforced": false,
+    "legacy_compiler_and_differential_sources_unchanged": true,
+    "historical_artifacts_rewritten": false,
+    "aggregate_kernel_memory_limit_added": false,
+    "new_proof_or_runtime_behavior_authority": false,
+    "production_tasks_closed": [],
+    "remaining": [
+      "legacy_SMT_consumers_and_Apalache_admission",
+      "whole_differential_and_setup_deadlines",
+      "aggregate_cgroups",
+      "supervisor_owner_integration",
+      "sublinear_authenticated_queries",
+      "DuckLake_delivery",
+      "learned_semantic_IR",
+      "production_planner_admission"
+    ]
+  },
+  "smt_consumer_admission_increment": {
+    "status": "implemented_partial_acceptance",
+    "qualification": "../../workspace/smt-consumer-admission-qualification-20261003/REPORT.md",
+    "default_execution_entry_points": [
+      "logic.verification_api.run_z3_cvc5_differential",
+      "ClassicalBackendAdapter SMT routes",
+      "logic.backends.smt public differential helpers",
+      "logic.software_verification public pipeline class and helper"
+    ],
+    "existing_semantic_owners_unchanged": true,
+    "explicit_injected_backends": "caller-owned execution contract preserved",
+    "compile_only": "no default solver backend construction",
+    "pressure_backoff": "existing shared scheduler; new native admissions pause",
+    "budget_scope": "per solver operation, not aggregate differential/pipeline",
+    "intra_pair_parallel_execution_added": false,
+    "historical_artifacts_rewritten": false,
+    "aggregate_kernel_memory_limit_added": false,
+    "new_proof_or_runtime_behavior_authority": false,
+    "production_tasks_closed": [],
+    "remaining": [
+      "direct_legacy_compiler_differential_pipeline_migration",
+      "self_hashed_header_checker_migration",
+      "Apalache_admission",
+      "whole_pipeline_and_setup_deadlines",
+      "aggregate_cgroups",
+      "supervisor_owner_integration",
+      "sublinear_authenticated_queries",
+      "DuckLake_delivery",
+      "learned_semantic_IR",
+      "production_planner_admission"
+    ]
+  },
+  "smt_aggregate_operation_increment": {
+    "status": "implemented_partial_acceptance",
+    "qualification": "../../workspace/smt-operation-control-qualification-20261003/REPORT.md",
+    "default_scope": [
+      "public differential helpers and default verifier",
+      "public source pipeline",
+      "canonical verification API differential operation including validation"
+    ],
+    "default_timeout": "effective bounds.timeout_ms",
+    "explicit_timeout_keyword": "operation_timeout_ms",
+    "cancellation_keyword": "cancellation",
+    "nested_scope": "minimum deadline and inherited cancellation; observed interruption latches",
+    "per_solver_receipt_bounds_unchanged": true,
+    "late_or_partial_conclusions": "typed operation exception; no returned report",
+    "native_interruption": "shared remaining deadline/cancellation through admission, process execution and cleanup",
+    "python_callbacks": "cooperative checkpoints; cannot be forcibly preempted",
+    "aggregate_output_or_memory_budget_added": false,
+    "historical_semantic_producers_unchanged": true,
+    "historical_artifacts_rewritten": false,
+    "runtime_source_evolution": "explicit before snapshots and after hashes in qualification",
+    "new_proof_or_runtime_behavior_authority": false,
+    "production_tasks_closed": [],
+    "remaining": [
+      "legacy_header_setup_operation_migration",
+      "Apalache_admission",
+      "aggregate_cgroups",
+      "supervisor_owner_integration",
+      "sublinear_authenticated_queries",
+      "DuckLake_delivery",
+      "learned_semantic_IR",
+      "production_planner_admission"
+    ],
+    "completed_follow_up": "smt_v2_operation_increment"
+  },
+  "smt_v2_operation_increment": {
+    "status": "implemented_partial_acceptance",
+    "qualification": "../../workspace/smt-v2-operation-control-qualification-20261003/REPORT.md",
+    "default_scope": [
+      "V2 execute and convenience helpers",
+      "differential participants and immediate primary replay",
+      "explicit replay including final comparison and receipt"
+    ],
+    "default_timeout": "effective request bounds.timeout_ms",
+    "runtime_controls": [
+      "operation_timeout_ms",
+      "cancellation"
+    ],
+    "constructor_and_call_signals_combine": true,
+    "nested_deadline_cannot_extend_parent": true,
+    "serialized_request_and_evidence_schemas_changed": false,
+    "late_conclusive_results_or_matched_replay_receipts": "withheld via typed operation exceptions",
+    "minimal_bounds_and_control_coercion_precedes_scope": true,
+    "python_callbacks": "cooperative; no hard preemption",
+    "runtime_source_evolution": "execution_v2.py exact before/after source records",
+    "historical_codebase_semantic_producers_changed": false,
+    "historical_qualification_artifacts_rewritten": false,
+    "aggregate_output_or_memory_budget_added": false,
+    "production_tasks_closed": [],
+    "remaining": [
+      "legacy_header_setup_operation_migration",
+      "Apalache_admission",
+      "aggregate_cgroups",
+      "supervisor_owner_integration",
+      "production_scheduler_schema_negotiation",
+      "sublinear_authenticated_queries",
+      "DuckLake_delivery",
+      "learned_semantic_IR",
+      "production_planner_admission"
+    ]
+  },
+  "jvm_probe_admission_increment": {
+    "status": "implemented_partial_acceptance",
+    "qualification": "../../workspace/jvm-probe-admission-qualification-20261003/REPORT.md",
+    "default_routes": [
+      "read_java_version_banner",
+      "probe_java_runtime",
+      "TLC constructor Java identity",
+      "Apalache constructor Java identity",
+      "registry TLC factory Java identity"
+    ],
+    "profile": {
+      "cpu_slots": 1,
+      "child_process_slots": 1,
+      "resident_memory_mb": 256,
+      "address_space_mb": 4096,
+      "max_heap_mb": 128,
+      "max_output_bytes": 65536
+    },
+    "optional_controls": [
+      "scheduler",
+      "parent_lease",
+      "cancellation"
+    ],
+    "local_timeout_default_seconds": 10,
+    "ambient_operation_budget_inherited": true,
+    "local_probe_failure_revokes_live_ambient_operation": false,
+    "constructor_and_later_proof_owner_unified": false,
+    "native_model_check_executed": false,
+    "installer_or_later_tool_probe_migrated": false,
+    "historical_semantic_producers_changed": false,
+    "production_tasks_closed": [],
+    "remaining": [
+      "setup_to_proof_parent_and_deadline",
+      "installer_and_tool_specific_probes",
+      "legacy_header_operation_migration",
+      "Apalache_execution",
+      "aggregate_cgroups",
+      "supervisor_owner_integration",
+      "production_scheduler_schema_negotiation",
+      "sublinear_authenticated_queries",
+      "DuckLake_delivery",
+      "learned_semantic_IR",
+      "production_planner_admission"
+    ]
+  },
+  "state_model_probe_admission_increment": {
+    "status": "implemented_partial_acceptance",
+    "qualification": "../../workspace/state-model-probe-admission-qualification-20261003/REPORT.md",
+    "default_routes": [
+      "probe_tlc_runtime",
+      "probe_apalache_runtime",
+      "read_tlc_version_banner",
+      "read_apalache_version_banner"
+    ],
+    "profile": {
+      "cpu_slots": 1,
+      "resident_memory_mb": 512,
+      "address_space_mb": 4096,
+      "max_heap_mb": 256,
+      "max_combined_accepted_output_bytes": 65536,
+      "direct_tlc_child_process_slots": 1,
+      "launcher_child_process_slots": 3
+    },
+    "optional_controls": [
+      "scheduler",
+      "parent_lease",
+      "cancellation"
+    ],
+    "one_local_deadline_includes_fallback_and_normalization": true,
+    "ambient_proof_operation_budget_inherited": true,
+    "managed_launcher_bytes_changed": false,
+    "managed_tlc_probe_expansion_changes_executed_command": true,
+    "clean_tlc_help_exit_one_accepted": true,
+    "incomplete_native_output_establishes_usability": false,
+    "whole_install_operation_control": false,
+    "native_model_check_executed": false,
+    "historical_semantic_producers_changed": false,
+    "production_tasks_closed": [],
+    "remaining": [
+      "whole_install_lock_download_extraction_budgets",
+      "setup_to_proof_parent_and_deadline",
+      "generic_legacy_version_readers",
+      "TLA_interrupted_counterexample_classification",
+      "Apalache_execution",
+      "legacy_header_operation_migration",
+      "aggregate_cgroups",
+      "supervisor_owner_integration",
+      "production_scheduler_schema_negotiation",
+      "sublinear_authenticated_queries",
+      "DuckLake_delivery",
+      "learned_semantic_IR",
+      "production_planner_admission"
+    ],
+    "jvm_flags_apply_to": [
+      "constructed_direct_TLC_commands",
+      "reviewed_Apalache_script_consuming_owned_JVM_ARGS"
+    ],
+    "unrecognized_launcher_heap_options_enforced": false,
+    "incomplete_native_execution_permits_fallback": false,
+    "missing_executable_before_native_launch_permits_fallback": true
+  },
+  "tla_outcome_integrity_increment": {
+    "status": "implemented_tla_scope_with_unresolved_source_drift",
+    "qualification": "../../workspace/tla-outcome-integrity-qualification-20261003/REPORT.md",
+    "default_routes": [
+      "TLCBackend.check",
+      "ApalacheBackend.check"
+    ],
+    "lifecycle_checks_precede_success_and_counterexample_markers": true,
+    "unsafe_model_launches_followup_version": false,
+    "unsafe_version_revokes_local_conclusion": true,
+    "late_stop_clears_receipt_counterexample_and_result_witness": true,
+    "clean_tlc_counterexample_exit_12_preserved": true,
+    "clean_tlc_help_exit_1_preserved": true,
+    "wire_schemas_changed": false,
+    "native_tlc_model_check_executed": true,
+    "native_apalache_model_check_executed": false,
+    "constructor_compile_check_v2_aggregate_control": false,
+    "production_tasks_closed": [],
+    "remaining": [
+      "resolve_independent_mirroring_control_source_drift_and_historical_compatibility",
+      "constructor_compile_check_v2_operation_ownership",
+      "whole_install_lock_download_extraction_budgets",
+      "setup_to_proof_parent_and_deadline",
+      "generic_legacy_version_readers",
+      "Apalache_execution",
+      "legacy_header_operation_migration",
+      "aggregate_cgroups",
+      "supervisor_owner_integration",
+      "production_scheduler_schema_negotiation",
+      "sublinear_authenticated_queries",
+      "DuckLake_delivery",
+      "learned_semantic_IR",
+      "production_planner_admission"
+    ],
+    "accepted_combined_utf8_output_bounded": true,
+    "historical_semantic_producers_changed_by_this_increment": false,
+    "historical_source_preservation_verified": false,
+    "observed_independent_source_changes": [
+      "software_verification/pipeline.py",
+      "software_verification/source_adapters.py"
+    ],
+    "prior_qualification_and_proof_cache_artifacts_unchanged": true
+  },
+  "source_mirroring_compatibility_increment": {
+    "status": "implemented_partial_acceptance",
+    "qualification": "../../workspace/source-mirroring-compatibility-qualification-20261003/REPORT.md",
+    "default_mirroring_enabled": true,
+    "public_routes_support_per_call_mirror_false": true,
+    "exact_boolean_required": true,
+    "unsupported_disabled_mirroring_retries_without_control": false,
+    "historical_source_bytes_preserved_as_current": false,
+    "historical_hash_aliases_added": false,
+    "compatibility_tables_changed": false,
+    "fresh_receipts_bind_actual_current_module_inventory": true,
+    "integer_profile_added_to_explicit_source_inventory": true,
+    "old_artifacts_mutated": false,
+    "fresh_evidence_authority": "conditional_only",
+    "production_tasks_closed": [],
+    "remaining": [
+      "optional_supervisor_provider_version_negotiation",
+      "whole_install_budgets",
+      "setup_compile_check_v2_ownership",
+      "Apalache_execution",
+      "aggregate_cgroups",
+      "supervisor_scheduler_owner",
+      "production_scheduler_schema_negotiation",
+      "authenticated_index_scaling",
+      "DuckLake_delivery",
+      "learned_semantic_IR",
+      "production_planner_admission"
+    ],
+    "legacy_optional_provider_disabled_mirroring_fails_closed": true,
+    "positive_parser_fixture_provider_explicitly_selected": true,
+    "production_optional_provider_import_selection_changed": false
+  },
+  "program_ast_provider_capability_increment": {
+    "status": "implemented_partial_acceptance",
+    "qualification": "../../workspace/program-ast-provider-qualification-20261003/REPORT.md",
+    "default_mirroring_enabled": true,
+    "disabled_mirroring_checked_before_provider_callbacks": true,
+    "explicit_keyword_capability_required": true,
+    "signature_probe_invokes_provider": false,
+    "provider_import_selection_changed": false,
+    "provider_replaced_or_installed": false,
+    "capability_diagnostic_is_semantic_attestation": false,
+    "result_wire_schema_changed": false,
+    "historical_hash_aliases_added": false,
+    "old_artifacts_mutated": false,
+    "fresh_evidence_authority": "conditional_only",
+    "production_tasks_closed": [],
+    "remaining": [
+      "compatible_provider_deployment_selection",
+      "whole_install_budgets",
+      "setup_compile_check_v2_ownership",
+      "Apalache_execution",
+      "aggregate_cgroups",
+      "supervisor_scheduler_owner",
+      "authenticated_index_scaling",
+      "DuckLake_delivery",
+      "learned_semantic_IR",
+      "production_planner_admission"
+    ]
+  },
+  "bundled_program_ast_provider_deployment_increment": {
+    "status": "implemented_partial_acceptance",
+    "qualification": "../../workspace/bundled-program-ast-provider-qualification-20261003/REPORT.md",
+    "bundled_provider_mirror_false_supported": true,
+    "default_mirroring_enabled": true,
+    "all_adapter_return_paths_covered": true,
+    "provider_import_selection_changed": false,
+    "external_provider_installed_or_upgraded": false,
+    "native_producer_source_generation_changed": false,
+    "historical_hash_aliases_added": false,
+    "old_artifacts_mutated": false,
+    "new_native_solver_phases": 0,
+    "conditional_receipts_replayed_without_solvers": true,
+    "production_tasks_closed": [],
+    "remaining": [
+      "external_provider_deployment",
+      "whole_install_budgets",
+      "setup_compile_check_v2_ownership",
+      "Apalache_execution",
+      "aggregate_cgroups",
+      "supervisor_scheduler_owner",
+      "authenticated_index_scaling",
+      "DuckLake_delivery",
+      "learned_semantic_IR",
+      "production_planner_admission"
+    ]
+  },
+  "tla_aggregate_operation_increment": {
+    "status": "implemented_partial_acceptance",
+    "qualification": "../../workspace/tla-operation-control-qualification-20261003/REPORT.md",
+    "default_aggregate_timeout": "request_bounds_or_30000_ms",
+    "explicit_override": "operation_timeout_ms",
+    "cancellation_inherited": true,
+    "v2_default_provider_construction": "lazy_selected_provider",
+    "native_phase_admission": "existing_per_phase_reservations",
+    "aggregate_root_reservation_added": false,
+    "standalone_constructor_migrated": false,
+    "whole_install_preemptive_budget": false,
+    "native_apalache_qualified": false,
+    "result_schema_changed": false,
+    "prior_artifacts_mutated": false,
+    "production_tasks_closed": [],
+    "remaining": [
+      "whole_install_budgets",
+      "setup_parent_lease_ownership",
+      "standalone_constructor_facade_operation",
+      "Apalache_execution_admission",
+      "aggregate_cgroups",
+      "supervisor_scheduler_owner",
+      "authenticated_index_scaling",
+      "DuckLake_delivery",
+      "learned_semantic_IR",
+      "production_planner_admission"
+    ],
+    "v2_tool_version_summary": "complete_bounded_banner_or_unknown_preserving_raw_receipt"
+  },
+  "apalache_execution_admission_increment": {
+    "status": "implemented_partial_acceptance",
+    "qualification": "../../workspace/apalache-execution-admission-qualification-20261003/REPORT.md",
+    "default_admission_enabled": true,
+    "cpu_slots": 1,
+    "child_process_slots": 3,
+    "minimum_requested_rss_mib": 256,
+    "heap_fraction_of_requested_rss": 0.5,
+    "max_file_mib": 64,
+    "max_workspace_mib": 128,
+    "requested_rss_raised": false,
+    "native_smt": "in_process_z3_jni",
+    "runtime_config_isolated": true,
+    "raw_counterexample_retained": true,
+    "native_apalache_trace_parsing": false,
+    "whole_install_budget_added": false,
+    "aggregate_root_reservation_added": false,
+    "hard_aggregate_containment_added": false,
+    "production_tasks_closed": [],
+    "generic_registry_result_normalization_fixed": false,
+    "native_qualified_routes": [
+      "v2_engine",
+      "v2_helper"
+    ],
+    "heap_rounding": "floor_whole_MiB",
+    "profile_scope": "reviewed_stock_launcher_default_environment",
+    "native_counterexample_legacy_replayed_flag_is_not_replay_evidence": true,
+    "selected_regression_tests_passed": 1708,
+    "new_admission_tests": 47,
+    "accepted_native_phases": 60,
+    "native_full_seconds": 23.417965499000275,
+    "benchmark_requested_workers": [
+      1,
+      2,
+      4
+    ],
+    "benchmark_effective_workers": [
+      1,
+      1,
+      1
+    ],
+    "many_core_scaling_established": false
+  },
+  "registry_foreign_outcome_increment": {
+    "status": "passed_partial_scope",
+    "qualification": "../../workspace/registry-foreign-outcome-qualification-20261003/REPORT.md",
+    "generic_foreign_conclusion": "unknown",
+    "typed_result_retained_as": "descriptive_payload",
+    "authority_promotion": false,
+    "protocol_pair_path_changed": false,
+    "production_aggregate_setup_budget_added": false,
+    "native_qualification_outer_budget": "explicit_benchmark_owned",
+    "proof_cache_producer_changes": false,
+    "production_tasks_closed": [],
+    "serialized_tla_artifact_round_trip_fixed": false,
+    "native_qualification_compile_steps": 64,
+    "foreign_callbacks_hard_bounded": false,
+    "selected_tests": 1914,
+    "focused_tests": 363,
+    "new_foreign_tests": 82,
+    "accepted_native_cases": 2,
+    "accepted_native_phases": 6,
+    "total_native_phases_across_attempts": 9,
+    "native_seconds": 3.5439060329954373,
+    "prior_qualifications_preserved": 16,
+    "prior_artifact_bodies_preserved": 1341,
+    "many_core_scaling_established": false
+  },
+  "tla_artifact_payload_increment": {
+    "status": "passed_partial_scope",
+    "qualification": "../../workspace/tla-artifact-payload-qualification-20261003/REPORT.md",
+    "canonical_artifact_round_trip": true,
+    "typed_and_v2_share_decoder": true,
+    "native_qualification_compile_steps": 3,
+    "source_metadata_retained": true,
+    "source_semantics_independently_verified": false,
+    "request_identity_schema_changed": false,
+    "authority_promotion": false,
+    "production_aggregate_setup_budget_added": false,
+    "native_qualification_outer_budget": "explicit_benchmark_owned",
+    "proof_cache_producer_changes": false,
+    "production_tasks_closed": [],
+    "native_v2_execution": false,
+    "many_core_scaling_established": false,
+    "selected_tests": 2015,
+    "focused_tests": 531,
+    "new_artifact_tests": 101,
+    "accepted_native_cases": 2,
+    "accepted_native_phases": 6,
+    "native_seconds": 3.4703292560006958,
+    "prior_qualifications_preserved": 17,
+    "prior_artifact_bodies_preserved": 1420,
+    "test_counts_summed": false
+  },
+  "tla_counterexample_replay_increment": {
+    "status": "validated_partial_scope",
+    "qualification": "../../workspace/tla-counterexample-replay-qualification-20261003/REPORT.md",
+    "apalache_state_operator_format_supported": true,
+    "raw_trace_retained": true,
+    "replay_scope": "structural_source_symbol_validation_only",
+    "semantic_transition_replay": false,
+    "invariant_rechecked": false,
+    "raw_only_trace_promoted_to_replayed": false,
+    "native_qualification_compile_steps": 3,
+    "native_v2_execution": false,
+    "authority_promotion": false,
+    "proof_cache_producer_changes": false,
+    "production_tasks_closed": [],
+    "production_registry_aggregate_setup_budget_added": false,
+    "many_core_scaling_established": false,
+    "selected_tests": 2089,
+    "focused_tests": 605,
+    "new_counterexample_tests": 74,
+    "deselected_legacy_native_tests": 15,
+    "native_cases": 2,
+    "native_phases": 6,
+    "native_seconds": 4.2299266760092,
+    "prior_qualifications_preserved": 18,
+    "prior_artifact_bodies_preserved": 1509,
+    "initial_failed_attempt_retained": true,
+    "parser_max_states": 512,
+    "parser_max_characters": 262144,
+    "parser_max_nesting": 128
+  },
+  "registry_operation_budget_increment": {
+    "status": "validated_partial_scope",
+    "qualification": "../../workspace/registry-operation-budget-qualification-20261003/REPORT.md",
+    "default_enabled": true,
+    "operation_timeout_override_can_extend_request": false,
+    "request_identity_changed": false,
+    "cooperative_python_boundaries": true,
+    "native_qualification_provider": "apalache",
+    "benchmark_owned_outer_scope": false,
+    "all_native_adapters_propagate_deadline": false,
+    "hard_aggregate_containment": false,
+    "whole_installer_cancellation": false,
+    "many_core_scaling_established": false,
+    "production_tasks_closed": [],
+    "selected_tests": 2215,
+    "focused_tests": 747,
+    "new_operation_budget_tests": 126,
+    "deselected_legacy_native_tests": 15,
+    "native_cases": 2,
+    "native_phases": 6,
+    "native_seconds": 3.9174893340095878,
+    "prior_qualifications_preserved": 19,
+    "prior_artifact_bodies_preserved": 1618,
+    "production_registry_aggregate_setup_budget_added": true,
+    "interrupted_lazy_initialization_retryable": true,
+    "concurrent_lazy_wait_cancellable": true
+  },
+  "native_operation_inheritance_increment": {
+    "status": "qualified_partial_scope",
+    "qualification": "../../workspace/native-operation-inheritance-qualification-20261003/REPORT.md",
+    "default_admitted_runner_inherits_ambient_budget": true,
+    "request_identity_changed": false,
+    "admission_and_workspace_time_consumes_budget": true,
+    "ambient_cancellation_polled_by_native_executor": true,
+    "original_failure_flags_preserved": true,
+    "post_release_check_uses_caller_and_operation_signals": true,
+    "all_native_adapters_migrated": false,
+    "native_qualification_providers": [
+      "lean",
+      "rocq"
+    ],
+    "python_transport_controls_are_solver_cancellation_proofs": false,
+    "native_isabelle_execution": false,
+    "hard_aggregate_containment": false,
+    "whole_installer_cancellation": false,
+    "many_core_scaling_established": false,
+    "production_tasks_closed": [],
+    "selected_tests": 2314,
+    "focused_tests": 818,
+    "new_inheritance_tests": 58,
+    "additionally_selected_existing_kernel_tests": 41,
+    "retained_previous_tests": 2215,
+    "deselected_legacy_native_tests": 15,
+    "test_counts_summed": false,
+    "native_kernel_cases": 4,
+    "native_transport_controls": 2,
+    "native_phases": 6,
+    "native_seconds": 2.269656820993987,
+    "deadline_control_seconds": 1.0279356590035604,
+    "cancellation_control_seconds": 0.18727217000559904,
+    "prior_qualifications_preserved": 20,
+    "prior_artifacts_preserved": 1708,
+    "initial_failed_test_run_preserved": true,
+    "existing_clock_fixtures_corrected": 3,
+    "initial_native_import_guard_failure_preserved": true,
+    "benchmark_sibling_import_order_corrected": true
+  },
+  "atp_default_admission_increment": {
+    "status": "qualified_partial_scope",
+    "qualification": "../../workspace/atp-default-admission-qualification-20261003/REPORT.md",
+    "canonical_defaults_admitted": true,
+    "v2_live_fallback_admitted": true,
+    "explicit_runner_behavior_preserved": true,
+    "hermetic_mode_requires_injection": true,
+    "native_v2_execution": false,
+    "raw_solver_success_promoted_to_theorem": false,
+    "e_satisfiable_exit_normalization_fixed": false,
+    "hard_aggregate_containment": false,
+    "many_core_scaling_established": false,
+    "production_tasks_closed": [],
+    "unsafe_lifecycle_output_rejected_before_reconstruction": true,
+    "combined_output_byte_bound_enforced": true,
+    "original_lifecycle_flags_retained": true,
+    "standalone_v2_aggregate_budget": false,
+    "vampire_szs_and_tptp_proof_flags_corrected": true,
+    "registry_alias_valued_request_bindings_fixed": false,
+    "vampire_separate_option_values_corrected": true,
+    "selected_tests": 2408,
+    "focused_tests": 370,
+    "new_admission_tests": 53,
+    "additionally_selected_existing_atp_tests": 41,
+    "retained_previous_tests": 2314,
+    "deselected_legacy_native_tests": 15,
+    "test_counts_summed": false,
+    "native_atp_cases": 4,
+    "native_seconds": 0.34354265699221287,
+    "native_wrapper_seconds": 0.6650756519957213,
+    "native_candidate_results": 3,
+    "native_existing_e_exit_error_cases": 1,
+    "native_memory_mb": 128,
+    "native_request_timeout_seconds": 5,
+    "prior_qualifications_preserved": 21,
+    "prior_artifacts_preserved": 1902,
+    "all_attempts_preserved": true,
+    "owned_work_drained": true,
+    "native_atp_cancellation_tested": false
+  },
+  "eprover_satisfiable_exit_increment": {
+    "status": "qualified_partial_scope",
+    "qualification": "../../workspace/eprover-satisfiable-exit-qualification-20261003/REPORT.md",
+    "e_integer_exit_one_allowed_statuses": [
+      "Satisfiable",
+      "CounterSatisfiable"
+    ],
+    "lifecycle_and_combined_output_gates_precede_parsing": true,
+    "accepted_nonzero_status_parsed_once": true,
+    "malformed_or_disallowed_nonzero_status_is_error": true,
+    "other_backends_nonzero_policy_changed": false,
+    "raw_exit_and_termination_metadata_preserved": true,
+    "default_candidate_authority_preserved": true,
+    "explicit_validator_contract_preserved": true,
+    "selected_tests": 2458,
+    "focused_tests": 420,
+    "new_exit_status_tests": 50,
+    "retained_previous_tests": 2408,
+    "deselected_legacy_native_tests": 15,
+    "test_counts_summed": false,
+    "native_atp_cases": 6,
+    "native_candidate_results": 6,
+    "native_generic_unknown_results": 6,
+    "native_e_exit_one_candidate_cases": 2,
+    "native_seconds": 0.47366133199830074,
+    "native_wrapper_seconds": 0.8160540480021155,
+    "native_memory_mb": 128,
+    "native_request_timeout_seconds": 5,
+    "native_source_count": 98,
+    "selected_source_count": 185,
+    "prior_qualifications_preserved": 22,
+    "prior_artifacts_preserved": 2109,
+    "owned_work_drained": true,
+    "saved_pool_configuration_unchanged": true,
+    "real_resource_sampler_preserved": true,
+    "native_v2_execution": false,
+    "native_atp_cancellation_tested": false,
+    "native_atp_stress_tested": false,
+    "many_core_scaling_established": false,
+    "hard_aggregate_containment": false,
+    "registry_alias_valued_request_bindings_fixed": false,
+    "standalone_v2_aggregate_budget": false,
+    "next_runner_migration": "ProVerif with lifecycle/output gates and managed-launcher review",
+    "production_tasks_closed": []
+  },
+  "proverif_default_admission_increment": {
+    "status": "qualified_partial_scope",
+    "qualification": "../../workspace/proverif-default-admission-qualification-20261004/REPORT.md",
+    "canonical_default_admitted": true,
+    "registry_default_admitted": true,
+    "protocol_v2_default_admitted": true,
+    "explicit_runner_behavior_preserved": true,
+    "falsey_runner_preserved": true,
+    "discovery_inert": true,
+    "native_output_requires_clean_lifecycle_and_integer_zero_exit": true,
+    "combined_output_utf8_bound_enforced": true,
+    "process_metadata_retained": true,
+    "controlled_pressure_recovery_and_queue_interruption_tested": true,
+    "selected_tests": 2556,
+    "focused_tests": 374,
+    "new_admission_tests": 59,
+    "retained_previous_tests": 2458,
+    "additionally_selected_existing_protocol_tests": 39,
+    "deselected_legacy_native_tests": 15,
+    "test_counts_summed": false,
+    "existing_test_files_changed": 0,
+    "native_proverif_cases": 2,
+    "native_seconds": 0.19213317800313234,
+    "native_wrapper_seconds": 0.565334074999555,
+    "native_memory_mb": 128,
+    "native_request_timeout_seconds": 5,
+    "native_raw_verdicts": [
+      "true",
+      "false"
+    ],
+    "native_typed_results": [
+      "unknown",
+      "unknown"
+    ],
+    "native_query_normalization_fixed": false,
+    "native_results_quarantined": true,
+    "semantic_attack_replay": false,
+    "verified_toolchain_identity": false,
+    "native_protocol_v2_execution": false,
+    "managed_launcher_native_execution": false,
+    "native_cancellation_tested": false,
+    "native_stress_tested": false,
+    "standalone_protocol_v2_aggregate_budget": false,
+    "many_core_scaling_established": false,
+    "hard_aggregate_containment": false,
+    "initial_native_parse_error_preserved": true,
+    "native_fixture_reserved_identifier_corrected": true,
+    "initial_failed_launches": 1,
+    "initial_native_returncode": 2,
+    "native_source_count": 107,
+    "selected_source_count": 194,
+    "prior_qualifications_preserved": 23,
+    "prior_artifacts_preserved": 2209,
+    "owned_work_drained": true,
+    "saved_pool_configuration_unchanged": true,
+    "real_resource_sampler_preserved": true,
+    "next_semantic_gap": "Bind native query spelling/polarity to explicit source claim identity; reject foreign/ambiguous claims.",
+    "remaining_default_runner_migrations": [
+      "Tamarin with Haskell/Maude profile",
+      "Hyper with finite budgets and guarded probes"
+    ],
+    "production_tasks_closed": []
+  },
+  "proverif_query_binding_increment": {
+    "status": "qualified_partial_scope",
+    "qualification": "../../workspace/proverif-query-binding-qualification-20261004/REPORT.md",
+    "source_qualified_ground_free_secrecy_binding": true,
+    "complete_unique_source_claim_population_required": true,
+    "case_sensitive_identifiers": true,
+    "native_verdict_inversion": false,
+    "native_inconclusive_grammar_supported": true,
+    "foreign_ambiguous_results_quarantined": true,
+    "duplicate_verdicts_deduplicated": true,
+    "conflicting_verdicts_quarantined": true,
+    "new_native_false_attack_trace": false,
+    "legacy_exact_trace_semantics_changed": false,
+    "selected_tests": 2612,
+    "focused_tests": 430,
+    "new_query_binding_tests": 56,
+    "retained_previous_tests": 2556,
+    "deselected_legacy_native_tests": 15,
+    "test_counts_summed": false,
+    "existing_test_files_changed": 1,
+    "synthetic_disagreement_fixture_corrected": true,
+    "initial_failed_attempt_preserved": true,
+    "native_proverif_cases": 3,
+    "native_seconds": 0.27456637599971145,
+    "native_wrapper_seconds": 0.6152203009987716,
+    "native_memory_mb": 128,
+    "native_request_timeout_seconds": 5,
+    "native_typed_results": [
+      "secure",
+      "unknown",
+      "unknown"
+    ],
+    "native_generic_results": [
+      "unknown",
+      "unknown",
+      "unknown"
+    ],
+    "semantic_attack_replay": false,
+    "verified_toolchain_identity": false,
+    "native_protocol_v2_execution": false,
+    "native_cancellation_tested": false,
+    "native_stress_tested": false,
+    "many_core_scaling_established": false,
+    "hard_aggregate_containment": false,
+    "native_source_count": 109,
+    "selected_source_count": 196,
+    "prior_qualifications_preserved": 24,
+    "prior_artifacts_preserved": 2394,
+    "external_scheduler_generation_separately_reviewed": true,
+    "external_scheduler_sha256": "9cb9f263c5a72cd1b1fa2dd9dcd070a549e11bd5483937d35508c6a86d929166",
+    "external_scheduler_historical_bodies_recovered": false,
+    "source_capture_refusal_preserved": true,
+    "owned_work_drained": true,
+    "saved_pool_configuration_unchanged": true,
+    "real_resource_sampler_preserved": true,
+    "remaining_semantic_gaps": [
+      "broader query and compiler coverage",
+      "semantic attack reconstruction",
+      "verified toolchain identity"
+    ],
+    "remaining_default_runner_migrations": [
+      "Tamarin",
+      "Hyper"
+    ],
+    "standalone_protocol_v2_aggregate_budget": false,
+    "production_tasks_closed": []
+  },
+  "protocol_v2_operation_budget_increment": {
+    "status": "qualified_partial_scope",
+    "qualification": "../../workspace/protocol-operation-budget-qualification-20261004/REPORT.md",
+    "standalone_protocol_v2_aggregate_budget": true,
+    "enabled_by_default": true,
+    "default_timeout_ms_when_bounds_omitted": 1000,
+    "request_and_parent_deadlines_only_tighten": true,
+    "constructor_and_call_signals_combined": true,
+    "observed_cancellation_latched": true,
+    "split_partial_results_withheld": true,
+    "late_evidence_withheld": true,
+    "legacy_callbacks_exactly_once": true,
+    "wire_identities_unchanged": true,
+    "opaque_python_callbacks_preempted": false,
+    "selected_tests": 2702,
+    "focused_tests": 578,
+    "new_operation_control_tests": 90,
+    "retained_previous_tests": 2612,
+    "deselected_legacy_native_tests": 15,
+    "test_counts_summed": false,
+    "existing_test_files_changed": 1,
+    "retained_signal_expectation_updated": true,
+    "initial_failed_attempt_preserved": true,
+    "native_proverif_cases": 3,
+    "native_protocol_v2_execution": true,
+    "native_seconds": 0.41369363899866585,
+    "native_wrapper_seconds": 0.7657438640017062,
+    "native_memory_mb": 128,
+    "native_request_timeout_seconds": 5,
+    "native_engine_scope_observed": true,
+    "native_phase_observations_per_case": 14,
+    "native_v2_dispositions": [
+      "secure",
+      "quarantined",
+      "quarantined"
+    ],
+    "native_typed_results": [
+      "secure",
+      "unknown",
+      "unknown"
+    ],
+    "native_registry_execution": false,
+    "native_tamarin_execution": false,
+    "native_split_provider_execution": false,
+    "native_cancellation_qualified": false,
+    "native_stress_qualified": false,
+    "many_core_scaling_established": false,
+    "hard_aggregate_containment": false,
+    "semantic_attack_replay": false,
+    "verified_toolchain_identity": false,
+    "native_source_count": 111,
+    "selected_source_count": 198,
+    "prior_qualifications_preserved": 25,
+    "prior_artifacts_preserved": 2519,
+    "external_dependency_generations_changed": 0,
+    "owned_work_drained": true,
+    "saved_pool_configuration_unchanged": true,
+    "real_resource_sampler_preserved": true,
+    "next_tamarin_requirements": [
+      "complete lifecycle/output gates",
+      "bounded Haskell capabilities",
+      "explicit Maude selection",
+      "reviewed descendant process reservation",
+      "finite native profile"
+    ],
+    "remaining_default_runner_migrations": [
+      "Tamarin",
+      "Hyper"
+    ],
+    "production_tasks_closed": []
+  }
+}
