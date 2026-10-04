@@ -1,0 +1,70 @@
+{
+  "files": [
+    {
+      "bytes": 1671,
+      "path": "README.md",
+      "sha256": "52096bb7dd32964a8e295610c1b2a601aea300c213f60408a6c3f636d4fbcb46"
+    },
+    {
+      "bytes": 3069,
+      "path": "datasets-command.json",
+      "sha256": "42a6b1cb85574619aa5671811ffe06168c1e5905fba30e620328daba0e6c30f6"
+    },
+    {
+      "bytes": 88,
+      "path": "datasets-exit.json",
+      "sha256": "d6d7cfc4d2e1c8faa9410ffb973e06ef1e0c8e470b42fd79731f6102568618f6"
+    },
+    {
+      "bytes": 0,
+      "path": "datasets.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 1844,
+      "path": "datasets.stdout",
+      "sha256": "1dfa1de33bb8464de5bf14a8e6bc3c0ccd39703b0b422367f75ddcf4a1cbfeff"
+    },
+    {
+      "bytes": 22226,
+      "path": "datasets.xml",
+      "sha256": "7b810507fc70a60153deb5a9acd4e9363573cf0cbbf6a1568252a86c6adda92f"
+    },
+    {
+      "bytes": 586,
+      "path": "qualification.json",
+      "sha256": "a0f2d67f1892b56b381b4ea86f9683dccbc8c0432ba4776f7e7f55c7771b2af9"
+    },
+    {
+      "bytes": 92662,
+      "path": "sources/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py",
+      "sha256": "8879ed5a881dc799e99ccb06073a2014fd65c2a5d4d8cf279de0d42e3e5057ad"
+    },
+    {
+      "bytes": 9428,
+      "path": "sources/datasets/tests/unit/logic/software_contracts/test_codebase_resources.py",
+      "sha256": "fcad4e07a46acc3066d4e7553b638d76e85cc45c75568358b385d234bfd17a9d"
+    },
+    {
+      "bytes": 5909,
+      "path": "sources/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_admission_observation.py",
+      "sha256": "5c1c6c37b33afc97f084417003526712b2f9a5b9edc71d66de60fc2af8b583be"
+    },
+    {
+      "bytes": 12868,
+      "path": "sources/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_global_resource_scheduler.py",
+      "sha256": "f792a512bd757f5a1ce32cdcb7bdd541a2b27d115cf10cff610c0f9b9f224eca"
+    },
+    {
+      "bytes": 14577,
+      "path": "sources/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_proof_resource_recovery.py",
+      "sha256": "b3210e2bdcc31204ef8c2844b1efff4da414cf94c5ec298ed5aa0ad1022cc1ef"
+    },
+    {
+      "bytes": 11686,
+      "path": "sources/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_proof_resource_safety.py",
+      "sha256": "1ce5b627c6bdcf9d8848ef150da2daa8a55d40e869606b302fdf9aca3acb40ad"
+    }
+  ],
+  "schema": "admission-observation-evidence@1"
+}

@@ -1,0 +1,42 @@
+{
+  "argv": [
+    "/home/barberb/.local/bin/python",
+    "-B",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_admission_observation.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_global_resource_scheduler.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_proof_resource_safety.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_proof_resource_recovery.py",
+    "tests/unit/logic/software_contracts/test_codebase_resources.py",
+    "--junitxml=/home/barberb/lift_coding/artifacts/source384-admission-observation-20261004/datasets.xml"
+  ],
+  "cwd": "/home/barberb/lift_coding/.worktrees/ir-admission-observation-datasets-20261004",
+  "environment_overrides": {
+    "PYTHONPATH": "/home/barberb/lift_coding/.worktrees/ir-release-accelerate-20261002:/home/barberb/lift_coding/.worktrees/ir-admission-observation-datasets-20261004:/home/barberb/lift_coding/.venvs/terminal-bench-harbor/lib/python3.12/site-packages",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1",
+    "NUMEXPR_MAX_THREADS": "1",
+    "CUDA_VISIBLE_DEVICES": "",
+    "TOKENIZERS_PARALLELISM": "false",
+    "HF_HUB_OFFLINE": "1",
+    "TRANSFORMERS_OFFLINE": "1",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "IPFS_ACCELERATE_PYTEST_SEAL_DUCKDB": "/home/barberb/lift_coding/artifacts/source384-admission-observation-20261004/datasets-seal.duckdb",
+    "IPFS_DATASETS_PY_SEAL_KEY_STORE_PATH": "/home/barberb/lift_coding/artifacts/source384-admission-observation-20261004/datasets-keys.db"
+  },
+  "source_pins": {
+    "datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py": "8879ed5a881dc799e99ccb06073a2014fd65c2a5d4d8cf279de0d42e3e5057ad",
+    "accelerate/benchmarks/agent_supervisor/container_coding/terminal_resource_diagnostics.py": "6a5769e1839cf239d1b03b3a3ec5189dd6b40e6fcb7c290758f98aa3381ad5f3",
+    "accelerate/benchmarks/agent_supervisor/container_coding/terminal_container_supervisor.py": "c5c167a00a984156f5d9e392b852c49c1d270ddf571cf75604e7860fc14a8997",
+    "accelerate/benchmarks/agent_supervisor/container_coding/terminal_source384_qualification.py": "2d453a435a5bdaf5da12324df0ff68b134e37c3439b47338c5237fe445c6fab7",
+    "datasets/tests/unit/optimizers/logic_theorem_optimizer/test_admission_observation.py": "5c1c6c37b33afc97f084417003526712b2f9a5b9edc71d66de60fc2af8b583be",
+    "datasets/tests/unit/optimizers/logic_theorem_optimizer/test_global_resource_scheduler.py": "f792a512bd757f5a1ce32cdcb7bdd541a2b27d115cf10cff610c0f9b9f224eca",
+    "datasets/tests/unit/optimizers/logic_theorem_optimizer/test_proof_resource_safety.py": "1ce5b627c6bdcf9d8848ef150da2daa8a55d40e869606b302fdf9aca3acb40ad",
+    "datasets/tests/unit/optimizers/logic_theorem_optimizer/test_proof_resource_recovery.py": "b3210e2bdcc31204ef8c2844b1efff4da414cf94c5ec298ed5aa0ad1022cc1ef",
+    "datasets/tests/unit/logic/software_contracts/test_codebase_resources.py": "fcad4e07a46acc3066d4e7553b638d76e85cc45c75568358b385d234bfd17a9d"
+  }
+}

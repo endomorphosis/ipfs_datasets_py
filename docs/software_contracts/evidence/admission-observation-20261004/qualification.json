@@ -1,0 +1,20 @@
+{
+  "actual_scheduler_with_controlled_pressure_samples": true,
+  "additional_sampler_calls": false,
+  "benchmark_result": false,
+  "complete_admission_decision_captured": false,
+  "distinct_passed": 121,
+  "docker_qualified": false,
+  "failed": 0,
+  "resource_limits_changed": false,
+  "schema": "admission-observation-component-controls@1",
+  "scopes": {
+    "datasets": 121
+  },
+  "skipped": 0,
+  "source_base_revisions": {
+    "accelerate": "26097b3b80e6eaa33bda702bdf8385f09b1e42e3",
+    "datasets": "582fe739e568bae7057d132c42430123bb598852"
+  },
+  "source_pins_unchanged": true
+}
