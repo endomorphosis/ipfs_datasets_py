@@ -1003,6 +1003,12 @@ class GlobalResourceScheduler:
             self._validate_recovery_state(state)
             state["config"] = expected
             return
+        if not allow_reconfigure:
+            raise ResourceConfigurationError(
+                f"scheduler configuration changed at {self.state_path}; "
+                "open a new scheduler facade with the intended configuration"
+            )
+        self._recover_stale_locked(state, time.time())
         if state.get("leases") or state.get("waiters") or state.get("proof_recovery"):
             raise ResourceConfigurationError(
                 f"scheduler capacity differs from active shared state at {self.state_path}"
