@@ -1,0 +1,39 @@
+{
+  "argv": [
+    "/home/barberb/.local/bin/python",
+    "-B",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/unit/logic/software_contracts/test_ast_text_validation.py",
+    "tests/unit/logic/software_contracts/test_ast_ir.py",
+    "tests/unit/logic/software_contracts/test_python_frontend.py",
+    "tests/unit/logic/software_contracts/test_duckdb_ast_store.py",
+    "tests/unit/logic/software_contracts/test_duckdb_ast_store_persistence.py",
+    "--junitxml=/home/barberb/lift_coding/artifacts/ast-text-printability-20261004/focused-01.xml"
+  ],
+  "cwd": "/home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004",
+  "environment_overrides": {
+    "PYTHONPATH": "/home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1"
+  },
+  "source_sha256": {
+    "ipfs_datasets_py/logic/software_contracts/ast_ir.py": "a72626b9ce6b554a83d6d2d6fc8e5d0336b547ff49379337c7ffe0619ccbb95b",
+    "ipfs_datasets_py/logic/software_contracts/python_frontend.py": "baf1c1ec5e6a5f83a0eb640b988850264d35311cdcedc87d22cff610d05308df",
+    "ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py": "2432a160769b9beba678ea646f0204a29229bb9d4ec8111dc0ac23f8fd8da51e",
+    "ipfs_datasets_py/logic/software_contracts/content.py": "1e8c9bb9019bb593d6812ac6d1d1fa46e882be291d5f41bbb4894fb171056b43",
+    "ipfs_datasets_py/logic/software_contracts/schema_versions.py": "fd7270cada2126606c00870dcb7291d27d7f8182e0e861d4f83905031668bbc6",
+    "ipfs_datasets_py/logic/software_contracts/codebase_ir.py": "67b879102d056aa03f2bed3faaccd0fe02ac763eb7a9c4005a0b59e6c31320f0",
+    "ipfs_datasets_py/logic/software_contracts/semantic_index/models.py": "b8f92371322ac941edf9e625f9fc7f94efa5facafd7020b805338790561adc9d",
+    "tests/unit/logic/software_contracts/test_ast_text_validation.py": "f094d61c653ab461c6ae12a5907a00f7717d1b1cc3c25064c3db1efca0d45553",
+    "tests/unit/logic/software_contracts/test_ast_ir.py": "df185b86f30a4daebac51b279e78e4d6a1f1c1642d63f0fd6178cc36fe22450c",
+    "tests/unit/logic/software_contracts/test_python_frontend.py": "a87147cb360f9ce81abeefc2faf48ea63464a99ea6bfd50b6e92db55612287f2",
+    "tests/unit/logic/software_contracts/test_duckdb_ast_store.py": "dd2d5044f1d897c18a19309bc3a8cdb993d1c702f42c7a98435017a8fe9dee50",
+    "tests/unit/logic/software_contracts/test_duckdb_ast_store_persistence.py": "9bcc781834d477ed4951f8e4483bc36ee5fff99308a810e3b1adac9c9cd1b28d"
+  },
+  "timeout_seconds": 180,
+  "controller_sha256": "d9356e808d28c388c2dea57f18a18221e652cdc4905adb85636da946eb6f1be7"
+}

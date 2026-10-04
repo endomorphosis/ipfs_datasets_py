@@ -177,7 +177,7 @@ def _text(
         raise ASTIRValidationError(f"{field_name} exceeds {maximum} characters")
     if unicodedata.normalize("NFC", value) != value:
         raise ASTIRValidationError(f"{field_name} must be NFC-normalized")
-    if value and not value.isprintable():
+    if any(not character.isprintable() for character in value):
         raise ASTIRValidationError(f"{field_name} contains a control character")
     if no_whitespace and any(character.isspace() for character in value):
         raise ASTIRValidationError(f"{field_name} must not contain whitespace")

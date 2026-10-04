@@ -1,0 +1,52 @@
+{
+  "schema": "public-bottle-ast-reconstruction-diagnostic@1",
+  "mode": "current",
+  "scope": "one public source; actual immutable AST and isolated reopened DuckDB; no model, Docker or verifier",
+  "effective_owner": "/home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/ast_ir.py",
+  "source_pins_before": {
+    "ipfs_datasets_py/logic/software_contracts/ast_ir.py": "a72626b9ce6b554a83d6d2d6fc8e5d0336b547ff49379337c7ffe0619ccbb95b",
+    "ipfs_datasets_py/logic/software_contracts/python_frontend.py": "baf1c1ec5e6a5f83a0eb640b988850264d35311cdcedc87d22cff610d05308df",
+    "ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py": "2432a160769b9beba678ea646f0204a29229bb9d4ec8111dc0ac23f8fd8da51e",
+    "ipfs_datasets_py/logic/software_contracts/content.py": "1e8c9bb9019bb593d6812ac6d1d1fa46e882be291d5f41bbb4894fb171056b43",
+    "ipfs_datasets_py/logic/software_contracts/schema_versions.py": "fd7270cada2126606c00870dcb7291d27d7f8182e0e861d4f83905031668bbc6",
+    "ipfs_datasets_py/logic/software_contracts/codebase_ir.py": "67b879102d056aa03f2bed3faaccd0fe02ac763eb7a9c4005a0b59e6c31320f0",
+    "ipfs_datasets_py/logic/software_contracts/semantic_index/models.py": "b8f92371322ac941edf9e625f9fc7f94efa5facafd7020b805338790561adc9d"
+  },
+  "script_sha256": "4360a76c457f22c82ac98e84f28bb67a9f2d732537d3e13a682e27a06310b8f6",
+  "source_sha256": "761756ce31753e526c48d28ccbca13a5d2493b16fe37aff3e1e4d2efaf3a2bba",
+  "extract": {
+    "cpu_seconds": 0.221825072,
+    "wall_seconds": 0.22184107500652317
+  },
+  "payload_bytes": 3590438,
+  "payload_sha256": "eac07c8b60a75e6e4e46a588ce86301282f13e2ad416b97bb55c510f278407f2",
+  "ast_cid": "baguqeera5lahzc3au5pg4tsguwem5brqckbpcprk2qlls65vlriq6j4ea7za",
+  "symbols": 1344,
+  "references": 8268,
+  "calls": 1449,
+  "scopes": 479,
+  "from_dict": {
+    "cpu_seconds": 0.149860624,
+    "wall_seconds": 0.14124209299916402
+  },
+  "persist": {
+    "cpu_seconds": 2.248487984,
+    "wall_seconds": 2.254210744999
+  },
+  "reopened_store_read": {
+    "cpu_seconds": 0.741091392,
+    "wall_seconds": 0.7411025100009283
+  },
+  "reopened_ast_cid": "baguqeera5lahzc3au5pg4tsguwem5brqckbpcprk2qlls65vlriq6j4ea7za",
+  "status": "passed",
+  "source_pins_after": {
+    "ipfs_datasets_py/logic/software_contracts/ast_ir.py": "a72626b9ce6b554a83d6d2d6fc8e5d0336b547ff49379337c7ffe0619ccbb95b",
+    "ipfs_datasets_py/logic/software_contracts/python_frontend.py": "baf1c1ec5e6a5f83a0eb640b988850264d35311cdcedc87d22cff610d05308df",
+    "ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py": "2432a160769b9beba678ea646f0204a29229bb9d4ec8111dc0ac23f8fd8da51e",
+    "ipfs_datasets_py/logic/software_contracts/content.py": "1e8c9bb9019bb593d6812ac6d1d1fa46e882be291d5f41bbb4894fb171056b43",
+    "ipfs_datasets_py/logic/software_contracts/schema_versions.py": "fd7270cada2126606c00870dcb7291d27d7f8182e0e861d4f83905031668bbc6",
+    "ipfs_datasets_py/logic/software_contracts/codebase_ir.py": "67b879102d056aa03f2bed3faaccd0fe02ac763eb7a9c4005a0b59e6c31320f0",
+    "ipfs_datasets_py/logic/software_contracts/semantic_index/models.py": "b8f92371322ac941edf9e625f9fc7f94efa5facafd7020b805338790561adc9d"
+  },
+  "source_pins_unchanged": true
+}
