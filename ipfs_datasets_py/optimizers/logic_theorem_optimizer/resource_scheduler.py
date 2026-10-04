@@ -1494,6 +1494,8 @@ class GlobalResourceScheduler:
                 except Exception:
                     # Diagnostics must preserve telemetry-refusal behavior.
                     observation.update(primary_gate=None, last_sample=None)
+                if host is None:
+                    observation["last_sample"] = None
                 # Scope attribution belongs only to this request's existing
                 # sample. Failure to project optional metadata must not erase
                 # a valid gate/scalar sample or change the admission decision.
@@ -1694,7 +1696,7 @@ class GlobalResourceScheduler:
         started_mono = time.monotonic()
         deadline = None if timeout is None else started_mono + float(timeout)
         terminal: Optional[str] = None
-        admission_observation: Optional[Mapping[str, Any]] = None
+        proof_refusal_observation: Optional[Mapping[str, Any]] = None
         granted_record: Optional[Dict[str, Any]] = None
         admission_observation: Dict[str, Any] = dict(
             schema="resource-admission-observation@1", scope="proof_primary_gate",
@@ -1782,7 +1784,7 @@ class GlobalResourceScheduler:
                     self._lane_metrics(state, lane_value)["cancellations_total"] += 1
                     terminal = "cancelled"
                 elif timed_out and not can_grant_now:
-                    admission_observation = deepcopy(waiter.get("last_proof_refusal"))
+                    proof_refusal_observation = deepcopy(waiter.get("last_proof_refusal"))
                     state["waiters"].pop(waiter_id, None)
                     wait_seconds = now_mono - started_mono
                     self._record_wait(state, lane_value, wait_seconds)
@@ -1840,11 +1842,13 @@ class GlobalResourceScheduler:
 
         if terminal == "cancelled":
             error = LeaseCancelledError("resource lease request was cancelled")
-            error.admission_observation = deepcopy(admission_observation)
+            error.admission_observation = deepcopy(dict(admission_observation, terminal=terminal))
+            error.proof_refusal_observation = deepcopy(proof_refusal_observation)
             raise error
         if terminal == "timeout":
             error = LeaseTimeoutError("timed out waiting for a resource lease")
-            error.admission_observation = deepcopy(admission_observation)
+            error.admission_observation = deepcopy(dict(admission_observation, terminal=terminal))
+            error.proof_refusal_observation = deepcopy(proof_refusal_observation)
             raise error
         assert granted_record is not None
         return ResourceLease(self, granted_record)

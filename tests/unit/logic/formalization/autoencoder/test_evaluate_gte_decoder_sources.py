@@ -63,6 +63,8 @@ def actual():
         pytest.skip("actual source evaluation configuration is outside this checkout")
     config = _read(CONFIG)
     root = Path(config["workspace_root"])
+    if root.resolve() != WORKSPACE.resolve():
+        pytest.skip("actual donor configuration belongs to another pinned checkout")
     paths = {name: root / config[name]["path"] for name in subject.REFERENCES}
     if not all(path.is_file() for path in paths.values()):
         pytest.skip("actual cached donor artifacts are outside this checkout")

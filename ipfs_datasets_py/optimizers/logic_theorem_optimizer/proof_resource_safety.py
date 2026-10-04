@@ -289,9 +289,6 @@ def collect_proof_host_resources(
     host_pid_budget = _host_pid_budget(proc_root)
     if host_pid_budget is not None:
         pid_budgets.append(host_pid_budget)
-    memory_stall = _psi(proc_root / "pressure/memory", "full")
-    cpu_stall = _psi(proc_root / "pressure/cpu", "some")
-    io_stall = _psi(proc_root / "pressure/io", "full")
     host_readings = (_psi_reading(proc_root / "pressure/memory", "full"),
                      _psi_reading(proc_root / "pressure/cpu", "some"),
                      _psi_reading(proc_root / "pressure/io", "full"))
