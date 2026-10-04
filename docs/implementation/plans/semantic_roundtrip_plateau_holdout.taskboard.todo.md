@@ -63,7 +63,7 @@ Semantic e2e loss and preregistered holdout gates remain promotion authority.
 
 ## PLAT2-000 Seal holdout plan artifacts
 
-- Status: completed
+- Status: todo
 - Completion: auto
 - Priority: P0
 - Track: plateau-holdout
@@ -87,7 +87,7 @@ Semantic e2e loss and preregistered holdout gates remain promotion authority.
 
 ## PLAT2-010 Extend residual catalog for preregistered populations
 
-- Status: completed
+- Status: todo
 - Completion: auto
 - Priority: P0
 - Track: residual
@@ -111,7 +111,7 @@ Semantic e2e loss and preregistered holdout gates remain promotion authority.
 
 ## PLAT2-020 Freeze repair-development and blind-holdout populations
 
-- Status: completed
+- Status: todo
 - Completion: auto
 - Priority: P0
 - Track: corpus
@@ -135,7 +135,7 @@ Semantic e2e loss and preregistered holdout gates remain promotion authority.
 
 ## PLAT2-025 Freeze repair-development baseline and experiment contract
 
-- Status: completed
+- Status: todo
 - Completion: auto
 - Priority: P0
 - Track: baseline
@@ -159,7 +159,7 @@ Semantic e2e loss and preregistered holdout gates remain promotion authority.
 
 ## PLAT2-030 Repair-development packets and materializer
 
-- Status: completed
+- Status: todo
 - Completion: auto
 - Priority: P0
 - Track: packets
@@ -183,7 +183,7 @@ Semantic e2e loss and preregistered holdout gates remain promotion authority.
 
 ## PLAT2-035 Preregister intervention roles, capabilities, and ablations
 
-- Status: completed
+- Status: todo
 - Completion: auto
 - Priority: P0
 - Track: interventions
@@ -207,7 +207,7 @@ Semantic e2e loss and preregistered holdout gates remain promotion authority.
 
 ## PLAT2-040 Optional evidence-gated teachers on repair-development residuals
 
-- Status: completed
+- Status: todo
 - Completion: auto
 - Priority: P1
 - Track: teachers
@@ -233,7 +233,7 @@ Semantic e2e loss and preregistered holdout gates remain promotion authority.
 
 ## PLAT2-050 Deterministic compiler edit waves on repair-development
 
-- Status: completed
+- Status: todo
 - Completion: auto
 - Priority: P0
 - Track: det-compiler
@@ -257,7 +257,7 @@ Semantic e2e loss and preregistered holdout gates remain promotion authority.
 
 ## PLAT2-055 Freeze candidate, attribution evidence, and holdout authorization
 
-- Status: completed
+- Status: todo
 - Completion: auto
 - Priority: P0
 - Track: candidate-freeze
@@ -281,7 +281,7 @@ Semantic e2e loss and preregistered holdout gates remain promotion authority.
 
 ## PLAT2-060 One-shot blind-holdout evaluation and decision
 
-- Status: completed
+- Status: todo
 - Completion note: One-shot ran 2026-07-28T08:58:44.684+00:00 (54 tests). Worktree discarded pre-merge; seal opened — no re-run. Operator recovery landed evaluation modules, path-free access ledger (ledger_cid baguqeeraymcdbko5peokdyicgbunpycrawxgvrscvuzq6ndxfaixrsioselq matches session), and session-attested remeasure/decision/results envelopes (report_cid baguqeeraupu46elxeoebbowyzawfytlueifxzv7hywdxkg6nzas2b4pef2ja; decision promotion_declined). Full per-case tables not recoverable without forbidden re-score.
 - Completion: auto
 - Priority: P0
