@@ -1,1 +1,0 @@
-# TODO Make whisper processor
