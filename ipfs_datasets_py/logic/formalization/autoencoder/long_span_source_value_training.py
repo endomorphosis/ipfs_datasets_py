@@ -290,7 +290,8 @@ def train(student, training_rows, validation_rows, *, training_references, valid
           generated_field_weight=0., generated_site_interval=1, non_action_learning_rate_multiplier=1.0,
           joint_generated_replay=False, generated_source_margin_weight=0.,
           generated_source_margin_replay=False, auxiliary_source_modality_bank=None,
-          auxiliary_source_modality_weight=0., generated_boundary_retry_on_mismatch=False):
+          auxiliary_source_modality_weight=0., generated_boundary_retry_on_mismatch=False,
+          auxiliary_source_modality_sampler="independent"):
     """Fresh reference-supervised fit; source fidelity gates experimental selection.
 
     The last complete attempt is retained as an explicitly unselected diagnostic.
@@ -311,6 +312,10 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     An explicit auxiliary modality bank can add training-only source-head CE.
     It reuses frozen preprocessing and never supplies targets to generation.
     Its zero default bypasses bank preparation, sampling and graph attachment.
+    Optional content-matched sampling groups all six modality/style variants of
+    one source content tuple per update in complete30-update cycles. Remaining
+    updates retain original independent selections; full-budget source exposure
+    stays equal. Early termination need not retain that full-budget equality.
     Optional boundary retry preserves the original collection batch and strict
     logit tolerance; a failed bulk graph never contributes a loss or update.
     """
@@ -341,6 +346,12 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     core._require((auxiliary_source_modality_bank is None and not use_auxiliary_modality)
         or (type(auxiliary_source_modality_bank) is dict and use_auxiliary_modality),
         "auxiliary source-modality bank and positive weight must be paired")
+    core._require(type(auxiliary_source_modality_sampler) is str
+        and auxiliary_source_modality_sampler in ("independent", "content_matched_cycles"),
+        "unknown auxiliary source-modality sampler")
+    core._require(auxiliary_source_modality_sampler == "independent" or
+        (use_auxiliary_modality and auxiliary_source_modality_bank.get("bank_kind") == "full180"),
+        "content-matched sampler requires positive auxiliary weight and the complete full180 bank")
     core._require(type(action_contrastive_weight) in (int, float) and math.isfinite(action_contrastive_weight)
         and 0 <= action_contrastive_weight <= 1, "invalid action-contrastive weight")
     core._require(type(generated_boundary_weight) in (int, float) and math.isfinite(generated_boundary_weight)
@@ -596,7 +607,9 @@ def train(student, training_rows, validation_rows, *, training_references, valid
         try:
             modality_cache = modality_owner.prepare_tensor_cache(torch, working, auxiliary_source_modality_bank,
                 codec=codec, input_transform=input_transform, seed=options["seed"], deadline=deadline,
-                max_optimizer_steps=modality_update_bound)
+                max_optimizer_steps=modality_update_bound,
+                **({} if auxiliary_source_modality_sampler == "independent"
+                   else {"sampler": auxiliary_source_modality_sampler}))
             modality_cache_receipt = deepcopy(modality_cache.receipt)
         except TimeoutError:
             modality_preparation_timed_out = True
@@ -1078,6 +1091,15 @@ def train(student, training_rows, validation_rows, *, training_references, valid
             auxiliary_source_modality_objective="ordinary_objective_plus_weight_times_full_vocabulary_modality_CE",
             source_value_training_row_policy="primary scalar labels use decoder batch; auxiliary modality bank adds supervised sources",
             source_context_training_policy="unique_source_clause_normalization; original_paragraph_supervision; plus explicit auxiliary source modality bank")
+        if auxiliary_source_modality_sampler == "content_matched_cycles":
+            report.update(auxiliary_source_modality_sampler=auxiliary_source_modality_sampler,
+                auxiliary_source_modality_matched_update_bound=(modality_update_bound//30)*30,
+                auxiliary_source_modality_independent_remainder_updates_planned=modality_update_bound%30,
+                auxiliary_source_modality_matched_committed_updates=sum(
+                    update["receipt"]["sampling_mode"] == "content_matched" for update in auxiliary_updates),
+                auxiliary_source_modality_independent_remainder_committed_updates=sum(
+                    update["receipt"]["sampling_mode"] == "independent_remainder" for update in auxiliary_updates),
+                auxiliary_source_modality_full_budget_exposure_equivalence_reached=len(auxiliary_updates)==modality_update_bound)
     return dict(state_dict=best_state, report=report,
         last_complete_attempt_state_dict=diagnostic_state,
         predictions=[] if selected is None else deepcopy(selected["predictions"]),

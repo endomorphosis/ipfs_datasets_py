@@ -280,7 +280,8 @@ def validate_training_binding(bank, training_rows, validation_rows, *, source_co
 
 
 class _TensorCache:
-    __slots__ = ("_model", "_data", "_vectors", "_mask", "_targets", "_orders", "_rows", "_fixed", "_versions", "_receipt", "_max_steps")
+    __slots__ = ("_model", "_data", "_vectors", "_mask", "_targets", "_orders", "_rows", "_fixed", "_versions", "_receipt", "_max_steps",
+                 "_sampler", "_content_groups", "_matched_bound")
 
     def __setattr__(self, name, value):
         raise AttributeError("prepared modality cache is immutable")
@@ -290,10 +291,22 @@ class _TensorCache:
         return deepcopy(self._receipt)
 
 
-def prepare_tensor_cache(torch, model, bank, *, codec, input_transform, seed, deadline, max_optimizer_steps=340):
-    """Validate once and cache source-only tensors using existing preprocessing."""
+def prepare_tensor_cache(torch, model, bank, *, codec, input_transform, seed, deadline, max_optimizer_steps=340,
+                         sampler="independent"):
+    """Cache sources; optionally group complete cycles by authored content.
+
+    Matched cycles require the complete180 bank: each of30 actor/action/object
+    groups must contain exactly the six modality/style variants. Only complete
+    30-update cycles are matched; the final incomplete cycle uses the original
+    independent sampler at its original committed-step indices. This preserves
+    every source's full-budget exposure, without advancing a mutable cursor.
+    """
     started = time.monotonic(); _deadline(deadline)
     estimate = estimate_training_work_bytes(bank, max_optimizer_steps=max_optimizer_steps)
+    _require(type(sampler) is str and sampler in ("independent", "content_matched_cycles"),
+             "unknown auxiliary source-modality sampler")
+    matched = sampler == "content_matched_cycles"
+    _require(not matched or bank["bank_kind"] == "full180", "content-matched sampling requires the complete full180 bank")
     authored._codec(codec)
     _require(type(seed) is int and 0 <= seed <= 2**31-1, "bounded explicit auxiliary sampler seed required")
     _require(bank.get("bank_sha256") == digest({k:v for k,v in bank.items() if k != "bank_sha256"})
@@ -310,6 +323,7 @@ def prepare_tensor_cache(torch, model, bank, *, codec, input_transform, seed, de
     rows = bank["rows"]
     _require(type(rows) is list and len(rows) == bank["selected_rows"], "bank rows differ")
     identities, texts, strata = set(), set(), {key:[] for key in STRATA}
+    content = {}
     for index, row in enumerate(rows):
         _deadline(deadline)
         rule = _source(row["source_text"], row["wording_style"]); _identity(row); _vector(row["input"])
@@ -320,7 +334,25 @@ def prepare_tensor_cache(torch, model, bank, *, codec, input_transform, seed, de
                  and type(row["modality_token_id"]) is int
                  and row["modality_token_id"] == codec["target_vocabulary"].index('"'+rule["modality"]+'"'), "cache source/reference digest differs")
         identities.add(row["id"]); texts.add(row["source_text"]); strata[row["modality"],row["wording_style"]].append(index)
+        if matched:
+            # Derive content from the authenticated literal source, never a
+            # paragraph position, held-out label, or caller-supplied group tag.
+            key = tuple(rule[field] for field in ("actor", "action", "object"))
+            members = content.setdefault(key, {})
+            stratum = (rule["modality"], row["wording_style"])
+            _require(stratum not in members, "duplicate content/modality/style variant")
+            members[stratum] = index
     _require(all(strata.values()), "cache requires six nonempty strata")
+    groups = ()
+    matched_bound = 0
+    if matched:
+        _require(len(rows) == 180 and len(content) == 30
+                 and all(set(members) == set(STRATA) for members in content.values()),
+                 "content-matched sampling requires30 complete six-variant source groups")
+        groups = tuple((key, tuple(content[key][stratum] for stratum in STRATA))
+                       for key in sorted(content, key=lambda key: digest([seed, "content_matched_cycles", key])))
+        matched_bound = (max_optimizer_steps // len(groups)) * len(groups)
+        _deadline(deadline)
     sources = [dict(id=row["id"], source_text=row["source_text"]) for row in rows]
     cached = [dict(source, input=row["input"]) for source,row in zip(sources,rows)]
     source_contexts = contexts.build_source_contexts(sources,cached)
@@ -342,10 +374,18 @@ def prepare_tensor_cache(torch, model, bank, *, codec, input_transform, seed, de
         full_vocabulary_size=32,loss_field="modality",source_slot=0,normalization_fitted=False,encoder_executed=False,
         recurrent_forward_executed=False,count_forward_executed=False,model_copied=False,
         per_step_bank_rehash=False,elapsed_seconds=time.monotonic()-started,**FALSE)
+    if matched:
+        group_receipt = [dict(actor=key[0], action=key[1], object=key[2], indices=list(indices)) for key,indices in groups]
+        receipt.update(sampler_policy=sampler, content_group_count=len(groups),
+            content_group_order=group_receipt, content_group_order_sha256=digest(group_receipt),
+            matched_update_bound=matched_bound, independent_remainder_updates=max_optimizer_steps-matched_bound,
+            sampling="complete hash-ordered content cycles; final incomplete cycle retains original independent step indices",
+            full_budget_per_source_exposure_matches_independent=True)
     cache = _TensorCache()
     for name,value in dict(_model=model,_data=data,_vectors=packet["vectors"],_mask=packet["mask"],_targets=targets,
         _orders=orders,_rows=tuple((row["id"],row["source_sha256"],row["modality"],row["wording_style"]) for row in rows),
-        _fixed=tuple(fixed),_versions=tuple(t._version for t in tensors),_receipt=receipt,_max_steps=max_optimizer_steps).items():
+        _fixed=tuple(fixed),_versions=tuple(t._version for t in tensors),_receipt=receipt,_max_steps=max_optimizer_steps,
+        _sampler=sampler,_content_groups=groups,_matched_bound=matched_bound).items():
         object.__setattr__(cache,name,value)
     _deadline(deadline)
     return cache
@@ -355,6 +395,8 @@ def select_indices(cache, committed_step):
     """Pure selection: retrying the same uncommitted update chooses the same6."""
     _require(type(cache) is _TensorCache and type(committed_step) is int and 0 <= committed_step < cache._max_steps,
              "bounded committed update index and prepared cache required")
+    if cache._sampler == "content_matched_cycles" and committed_step < cache._matched_bound:
+        return cache._content_groups[committed_step % len(cache._content_groups)][1]
     return tuple(order[committed_step % len(order)] for order in cache._orders)
 
 
@@ -391,5 +433,14 @@ def modality_loss(torch, model, cache, *, committed_step, deadline):
         source_head_forward_calls=1,recurrent_forward_calls=0,count_forward_calls=0,encoder_forward_calls=0,
         labels_passed_to_model=False,validation_labels_used=False,normalization_fitted=False,model_copied=False,
         bank_rehashed=False,sampler_state_advanced=False,elapsed_seconds=time.monotonic()-started,**FALSE)
+    if cache._sampler == "content_matched_cycles":
+        matched = committed_step < cache._matched_bound
+        receipt.update(sampler_policy=cache._sampler, matched_update_bound=cache._matched_bound,
+                       sampling_mode="content_matched" if matched else "independent_remainder")
+        if matched:
+            group_index = committed_step % len(cache._content_groups)
+            content = cache._content_groups[group_index][0]
+            receipt.update(content_group_index=group_index, content_cycle_index=committed_step//len(cache._content_groups),
+                           content_group=dict(zip(("actor", "action", "object"), content)))
     _deadline(deadline)
     return dict(loss=loss,receipt=receipt)
