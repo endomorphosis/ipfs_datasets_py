@@ -298,7 +298,8 @@ def train(student, training_rows, validation_rows, *, training_references, valid
           joint_generated_replay=False, generated_source_margin_weight=0.,
           generated_source_margin_replay=False, auxiliary_source_modality_bank=None,
           auxiliary_source_modality_weight=0., generated_boundary_retry_on_mismatch=False,
-          auxiliary_source_modality_sampler="independent"):
+          auxiliary_source_modality_sampler="independent", auxiliary_source_object_bank=None,
+          auxiliary_source_object_weight=0.):
     """Fresh reference-supervised fit; source fidelity gates experimental selection.
 
     The last complete attempt is retained as an explicitly unselected diagnostic.
@@ -319,6 +320,9 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     An explicit auxiliary modality bank can add training-only source-head CE.
     It reuses frozen preprocessing and never supplies targets to generation.
     Its zero default bypasses bank preparation, sampling and graph attachment.
+    A separate opt-in object auxiliary uses the exact same independent six-source
+    batches and complete authenticated targets. Object and modality auxiliaries
+    are mutually exclusive for matched exposure; neither changes selection.
     Optional content-matched sampling groups all six modality/style variants of
     one source content tuple per update in complete30-update cycles. Remaining
     updates retain original independent selections; full-budget source exposure
@@ -359,6 +363,15 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     core._require(auxiliary_source_modality_sampler == "independent" or
         (use_auxiliary_modality and auxiliary_source_modality_bank.get("bank_kind") == "full180"),
         "content-matched sampler requires positive auxiliary weight and the complete full180 bank")
+    core._require(type(auxiliary_source_object_weight) in (int, float)
+        and math.isfinite(auxiliary_source_object_weight) and 0 <= auxiliary_source_object_weight <= 1,
+        "invalid auxiliary source-object weight")
+    use_auxiliary_object = auxiliary_source_object_weight > 0.
+    core._require((auxiliary_source_object_bank is None and not use_auxiliary_object)
+        or (type(auxiliary_source_object_bank) is dict and use_auxiliary_object),
+        "auxiliary source-object bank and positive weight must be paired")
+    core._require(not (use_auxiliary_object and use_auxiliary_modality),
+        "matched object/modality experiment requires separate auxiliary arms")
     core._require(type(action_contrastive_weight) in (int, float) and math.isfinite(action_contrastive_weight)
         and 0 <= action_contrastive_weight <= 1, "invalid action-contrastive weight")
     core._require(type(generated_boundary_weight) in (int, float) and math.isfinite(generated_boundary_weight)
@@ -423,6 +436,13 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     core._require(not use_auxiliary_modality or not (use_source_margin or use_joint_generated_replay)
         and generated_boundary_gradient_scope == "all_trainable",
         "auxiliary modality trial requires the original all-trainable boundary path")
+    core._require(not use_auxiliary_object or contextual and head_specification.get("schema") in (
+        "action-factorized-clause-source-decoder-development/v1",
+        "ordered-clause-recurrent-source-decoder-development/v1"),
+        "auxiliary object training requires checked factorized contextual source heads")
+    core._require(not use_auxiliary_object or not (use_source_margin or use_joint_generated_replay)
+        and generated_boundary_gradient_scope == "all_trainable",
+        "auxiliary object trial requires the original all-trainable boundary path")
     core._require(not generated_boundary_retry_on_mismatch or contextual_boundary
         and generated_boundary_gradient_scope == "all_trainable"
         and not (use_source_margin or use_joint_generated_replay),
@@ -518,6 +538,17 @@ def train(student, training_rows, validation_rows, *, training_references, valid
         modality_update_bound = min(options["max_optimizer_steps"], sum(
             ((len(stage["training_ids"])+options["batch_size"]-1)//options["batch_size"])*stage["epochs"]
             for stage in stages))
+    object_owner = object_cache = object_cache_receipt = object_binding_receipt = None
+    object_preparation_seconds = 0.
+    object_preparation_timed_out = False
+    if use_auxiliary_object:
+        from . import source_object_auxiliary_training as object_owner
+        object_binding_receipt = object_owner.validate_training_binding(
+            auxiliary_source_object_bank, training_rows, validation_rows,
+            source_contexts=source_contexts, codec=codec, deadline=deadline)
+        object_update_bound = min(options["max_optimizer_steps"], sum(
+            ((len(stage["training_ids"])+options["batch_size"]-1)//options["batch_size"])*stage["epochs"]
+            for stage in stages))
     parameter_bytes = sum(t.numel()*t.element_size() for t in student.state_dict().values())
     width = max(len(r["target_ids"]) for r in [*training_rows, *validation_rows])
     estimate = parameter_bytes*24 + 16*options["batch_size"]*width*len(codec["target_vocabulary"])*4
@@ -583,6 +614,9 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     if modality_owner is not None:
         estimate += modality_owner.estimate_training_work_bytes(auxiliary_source_modality_bank,
             max_optimizer_steps=modality_update_bound)
+    if object_owner is not None:
+        estimate += object_owner.estimate_training_work_bytes(auxiliary_source_object_bank,
+            max_optimizer_steps=object_update_bound)
     if generated_boundary_retry_on_mismatch:
         # Retain both attempted full-vocabulary comparisons, plus one pending
         # update and the bounded original-batch differentiable retry graph.
@@ -626,10 +660,20 @@ def train(student, training_rows, validation_rows, *, training_references, valid
         except TimeoutError:
             modality_preparation_timed_out = True
         modality_preparation_seconds = time.monotonic()-preparation_started
+    if object_owner is not None:
+        preparation_started = time.monotonic()
+        try:
+            object_cache = object_owner.prepare_tensor_cache(torch, working, auxiliary_source_object_bank,
+                codec=codec, input_transform=input_transform, seed=options["seed"], deadline=deadline,
+                max_optimizer_steps=object_update_bound)
+            object_cache_receipt = deepcopy(object_cache.receipt)
+        except TimeoutError:
+            object_preparation_timed_out = True
+        object_preparation_seconds = time.monotonic()-preparation_started
     evaluate = lambda: _evaluate(torch, working, validation_rows, validation_references, input_transform,
         options, codec, deadline, validate_rule, validator_id, validation_source_labels,
         **({} if validation_contexts is None else {"source_contexts": validation_contexts}))
-    baseline = None if modality_preparation_timed_out else evaluate()
+    baseline = None if modality_preparation_timed_out or object_preparation_timed_out else evaluate()
     selected = last_complete = baseline
     last_complete_step = 0 if baseline is not None else None
     selected_epoch = 0 if baseline is not None else None
@@ -639,6 +683,8 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     stopped = "deadline_before_complete_baseline" if baseline is None else "epochs_completed"
     if modality_preparation_timed_out:
         stopped = "deadline_during_auxiliary_modality_preparation"
+    if object_preparation_timed_out:
+        stopped = "deadline_during_auxiliary_object_preparation"
     by_id = {row["id"]: row for row in training_rows}
     count_presentations = 0
     count_by_class = {str(value+1): 0 for value in sorted(set(count_labels.values()))}
@@ -802,6 +848,17 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                         break
                     modality_base_objective = objective.detach()
                     objective = objective + auxiliary_source_modality_weight*modality_result["loss"]
+                object_result = object_base_objective = None
+                if object_cache is not None:
+                    try:
+                        object_result = object_owner.object_loss(torch, working, object_cache,
+                            committed_step=steps, deadline=deadline)
+                    except TimeoutError:
+                        optimizer.zero_grad(set_to_none=True)
+                        stopped, complete = "deadline_during_auxiliary_object", False
+                        break
+                    object_base_objective = objective.detach()
+                    objective = objective + auxiliary_source_object_weight*object_result["loss"]
                 core._require(core._finite(torch, objective) and core._finite(torch, source_loss), "nonfinite objective")
                 if time.monotonic() >= deadline:
                     stopped, complete = "deadline", False
@@ -818,6 +875,10 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                 if modality_result is not None and time.monotonic() >= deadline:
                     optimizer.zero_grad(set_to_none=True)
                     stopped, complete = "deadline_after_auxiliary_modality_backward", False
+                    break
+                if object_result is not None and time.monotonic() >= deadline:
+                    optimizer.zero_grad(set_to_none=True)
+                    stopped, complete = "deadline_after_auxiliary_object_backward", False
                     break
                 if margin_result is not None:
                     if time.monotonic() >= deadline:
@@ -860,6 +921,12 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                         base_objective=float(modality_base_objective),
                         weighted_loss=float((auxiliary_source_modality_weight*modality_result["loss"]).detach()),
                         receipt=modality_result["receipt"])
+                if object_result is not None:
+                    committed_updates[-1]["auxiliary_source_object"] = dict(
+                        zero_based_committed_step=steps-1, weight=auxiliary_source_object_weight,
+                        base_objective=float(object_base_objective),
+                        weighted_loss=float((auxiliary_source_object_weight*object_result["loss"]).detach()),
+                        receipt=object_result["receipt"])
                 if margin_result is not None:
                     margin_gradient_receipt.update(combined_preclip_norm=float(preclip_norm.detach()),
                         shared_clip_factor=float((options["max_grad_norm"]/(preclip_norm.detach()+1e-6)).clamp(max=1.)))
@@ -1119,6 +1186,25 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                 auxiliary_source_modality_independent_remainder_committed_updates=sum(
                     update["receipt"]["sampling_mode"] == "independent_remainder" for update in auxiliary_updates),
                 auxiliary_source_modality_full_budget_exposure_equivalence_reached=len(auxiliary_updates)==modality_update_bound)
+    if object_owner is not None:
+        auxiliary_updates = [update["auxiliary_source_object"] for update in committed_updates]
+        labels = [label for update in auxiliary_updates for label in update["receipt"]["object_labels"]]
+        report.update(auxiliary_source_object_weight=auxiliary_source_object_weight,
+            auxiliary_source_object_bank_receipt=object_cache_receipt,
+            auxiliary_source_object_binding_receipt=object_binding_receipt,
+            auxiliary_source_object_preparation_elapsed_seconds=object_preparation_seconds,
+            auxiliary_source_object_max_updates_estimated=object_update_bound,
+            auxiliary_source_object_committed_updates=len(auxiliary_updates),
+            auxiliary_source_object_presentations=6*len(auxiliary_updates),
+            auxiliary_source_object_presentations_per_class={name:labels.count(name) for name in sorted(set(labels))},
+            auxiliary_source_object_training_only=True, auxiliary_source_object_used_for_selection=False,
+            auxiliary_source_object_normalization_refitted=False, auxiliary_source_object_encoder_executed=False,
+            auxiliary_source_object_zero_weight_graph_attached=False,
+            auxiliary_source_object_source_indices_identical_to_modality_control=True,
+            auxiliary_source_object_gradient_scope="object_readout_and_shared_non_action_projection; shared_global_clipping",
+            auxiliary_source_object_objective="ordinary_objective_plus_weight_times_full_vocabulary_object_CE",
+            source_value_training_row_policy="primary scalar labels use decoder batch; auxiliary object bank adds supervised sources",
+            source_context_training_policy="unique_source_clause_normalization; original_paragraph_supervision; plus explicit auxiliary source object bank")
     return dict(state_dict=best_state, report=report,
         last_complete_attempt_state_dict=diagnostic_state,
         predictions=[] if selected is None else deepcopy(selected["predictions"]),

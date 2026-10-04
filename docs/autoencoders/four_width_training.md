@@ -286,3 +286,190 @@ one CPU worker, empty bridge list, disabled provers and disabled metric disk
 cache. No separate R6 evaluation ran for this rejected experimental head.
 It remains an explicit experiment, not a production default or a replacement
 for the historical linguistic teacher.
+
+## Additional head training and native 4096D preparation
+
+These follow-ups train formula-sidecar decoders and projections over fixed source
+representations. They do not fine-tune the native semantic encoders or replace
+the historical 8D linguistic teacher. Context and decoder output limits remain
+512 tokens, temperature remains zero, and fidelity selection is unchanged.
+Exact authored reconstruction, lower loss, syntax validity and successful native
+execution are distinct from semantic qualification. None is a Lake admission.
+No checkpoint in these follow-ups is promoted as formalizing federal law.
+
+### Matched 8D auxiliary objectives
+
+`benchmark_object_auxiliary_continuation.py` compares no auxiliary loss, a
+modality auxiliary loss at 0.05, and an object auxiliary loss at 0.05. All three
+start from the same saved 8D endpoint, use the existing architecture and fresh
+optimizer, and complete 170 updates. The two auxiliary arms receive the same
+six source identities per update: 1,020 presentations each. Targets, ordinary
+losses, original development selection and all nine control panels are retained.
+The no-auxiliary endpoint reproduces its recorded R10 counterpart exactly.
+
+| Auxiliary objective | Final training exact / 48 | Final development exact / 48 | Generated training objects / 180 | Generated development objects / 180 | Fit seconds |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| None | 12 | 1 | 116 | 97 | 25.88 |
+| Modality, 0.05 | 12 | 1 | 114 | 96 | 26.47 |
+| Object, 0.05 | 14 | 1 | 119 | 94 | 25.51 |
+
+All three retain their initial selected checkpoint. The object objective improves
+some in-sample reconstruction while reducing development object accuracy. Its
+raw object-head development accuracy also falls from 88 to 84/180 relative to
+the no-auxiliary arm, despite slightly lower raw object cross-entropy. This is
+not evidence that the 8D fidelity gap is solved. Each fit presents 1,220 decoder
+rows, giving 47.14, 46.09 and 47.83 presentations/second respectively. Those
+rates include in-call development evaluations, not resource admission or the
+separate control-panel measurements. The full guarded phase takes 241.99 seconds
+and releases normally. Saved evidence is under
+`workspace/test-logs/decoder-object-auxiliary-20261004`.
+
+### New authored style observation and selected-parent continuation
+
+A separate authored style cohort contains 48 paragraphs, 180 unique clauses and
+216 unique paragraph/clause source strings. It uses the
+`actor_normative_status`, `gerund_normative_subject` and `norm_noun_subject`
+template families. Verified local 384D/768D encoders produce its fixed source
+vectors under the existing 512-token limit; no weights are downloaded. Its first
+observation of the preselected R10 higher-rate endpoints gives 19/48 exact for
+384D and 46/48 for 768D. These are authored examples, not a statutory holdout or
+legal semantic validation. After that observation, the cohort is exposed and
+subsequent scores are regression measurements.
+
+`benchmark_selected_checkpoint_continuation.py` then starts from those exact R10
+selected states and runs 170 further updates per width. Before updates, restored
+tensors and original development predictions must match the parents exactly.
+The optimizer and plateau scheduler start fresh at base learning rate 0.0001,
+with the inherited non-action head multiplier of ten. The 384D arm keeps the
+existing used113 modality auxiliary loss; the 768D arm keeps its previous losses.
+The recipe is fixed rather than tuned in response to the style scores. Both
+widths retain 48/48 exact on original development and select their final states
+at epoch 40.
+
+| Width | Original development token CE, parent → continuation | Exposed style exact / 48 | Exposed style token CE, parent → continuation | Fit seconds | Decoder presentations/second |
+| --- | --- | --- | --- | ---: | ---: |
+| 384 | 0.003976 → 0.002534 | 19 → 20 | 0.029584 → 0.030021 | 38.16 | 31.97 |
+| 768 | 0.003655 → 0.002472 | 46 → 46 | 0.005471 → 0.004246 | 47.79 | 25.53 |
+
+Selected and final style outputs agree within each width. The 384D gain is one
+corrected modality: 137→138/180, with action accuracy unchanged at 178/180.
+Its slightly worse cross-entropy makes the result mixed. The 768D modality and
+action counts stay at 178/180 and 180/180, with improved cross-entropy. None of
+these observations proves general convergence or a global minimum.
+
+The evaluator persists all four source-only greedy prediction panels before
+opening style references. The score phase uses the saved predictions and a
+separate teacher-forced loss calculation; it cannot train or select a checkpoint.
+Greedy generation takes approximately 0.00782 and 0.00914 seconds per span for
+384D and 768D selected states, on 48 spans each. These times exclude encoder
+production, scoring, model restoration, admission and accounting. Inputs are
+warm cached representations, worker count is one, bridge names are `[]`, provers
+are off and the legal-IR metric disk cache is off. No bridge-on evaluate occurs.
+
+The guarded training phase takes 198.25 seconds and its maximum sampled process
+group RSS is 1,055,072,256 bytes, from nine samples under a 1.5 GiB reservation.
+The successful exposed evaluation takes 63.99 seconds including its guardian;
+its maximum sampled RSS is 798,687,232 bytes. These are sampled observations,
+not continuously measured peaks. Successful attempts release their leases and
+accounted storage. The evaluation retains a pre-import command-path failure and
+a separate preadmission ValueError; neither executes a model. The failure-time
+configuration and actor of the latter are not established. Saved evidence is
+under `workspace/test-logs/decoder-selected-continuation-20261004`, with the
+source-cache study under `decoder-fresh-normative-style-r2-20261004`.
+
+### Private native owner, memory limits and failed V2 pilot
+
+The new private CPU backend copies the authenticated local llama.cpp revision
+and changes only the loader's eager mapping argument from true to false. It
+disables eager model prefetch and CPU extra buffers without changing the shared
+checkout, service or existing backend. The resulting profile is explicitly
+`leanstral4096:cpu1:last:l2:single-sequence:tokens512:lazy-mmap:v2`; equivalence
+with the older batch profile is not assumed.
+
+`leanstral4096_authorized_worker.cpp` emits an entry receipt and waits before
+loading the model. The full owner verifies the held model descriptor and content,
+executable and actual executable library mappings, and bounded process/cgroup
+membership before authorizing load. The worker later requires a closing
+acknowledgment so mappings and operation identity can be rechecked while it is
+still alive. CPU execution, actual native output width and complete untruncated
+tokens must be observed; a caller-written receipt cannot open the gate.
+
+The private build completes in 137.95 seconds, or 453.76 seconds with admission
+and accounting. It runs under a 2 GiB hard cgroup limit with swap disabled; kernel
+memory charge peaks at 866,152,448 bytes, with no OOM event. Kernel charge is not
+process RSS. The declared four-process build estimate was exceeded by the
+observed five-process compiler chain, and sparse guardian RSS samples miss the
+compiler peak; neither limitation is hidden. Seven compiled negative protocol
+controls pass without valid model authorization. They do not exercise a real
+embedding or the successful closing handshake. The first build's rejection of
+CMake library symlinks is retained; the revised isolated packaging uses regular,
+byte-identical library alias copies. No native compiler or linker flags are
+changed by that packaging fix.
+
+The subsequent two-source V2 full-forward pilot verifies the local model content
+and authorizes the worker, but stops at the combined owner/native 8 GiB RSS
+limit before emitting any vector. Owned cleanup succeeds. It performs zero
+4096D training updates and supplies no validated embedding output. Disabling
+eager prefault alone therefore does not establish an acceptable resident-memory
+profile. File-backed pages can contribute to process RSS even when their cgroup
+charge belongs elsewhere. The hard cgroup limit and the independent RSS guard
+remain enforced. Build and failure evidence live under
+`native4096-low-resident-r2-20261004` and
+`native4096-four-width-20261004` in `workspace/test-logs`.
+
+### Native 4096D head pilot and retained failures
+
+The final guarded run produces three real 4096D vectors: two original training
+clauses and a repeat of the first after clearing the KV state. The repeat L2
+difference is 0. It verifies the entire local 67.1 GB model,
+actual executable/library mappings, source/token bindings, CPU observations,
+36 synchronized layer completions per row, and the closing acknowledgment.
+The exact profile is `leanstral4096:cpu1:last:l2:single-sequence:tokens512:layer-reclaim:v3`. This work does not modify the shared service.
+
+The worker releases only its own authenticated read-only model mappings after
+completed layers. It neither changes model bytes nor evicts the shared file cache.
+Two subsequent guard failures are retained: this backend floors idle performance
+counters at one and leaves ordinary CPU buffer device pointers null. The fixed
+accounting retains raw counts/timings and derives only the provably idle branch.
+CPU evidence uses exact registered CPU buffer-type identity; unknown buffers stay
+unknown, known non-CPU buffers fail, and positive recognized CPU evidence is required.
+A real tiny CPU graph exercises that path before the final model run. These are
+compatibility fixes, not relaxed semantic or resource thresholds.
+
+A separate 4096D-to-GRU formula head then completes 20 AdamW updates
+on the two training clauses, starting from copied donor token/recurrent weights
+and newly initialized source-conditioning paths. Training token cross-entropy
+changes 2.79595 → 1.56058,
+and exact training reconstruction changes 0 → 0/2.
+Final zero-source CE is 0.342045 and rotated-source
+CE is 1.56308. This pilot has no holdout,
+selection or promotion. It is not architecture parity with the factorized
+8D/384D/768D heads, encoder fine-tuning, or production `embed_rows()` readiness.
+Its saved weights omit optimizer state and are not an exact optimizer resume.
+
+The zero-source control is substantially better than the conditioned model, and
+both conditioned training rows remain inexact. Consequently, this run establishes
+actual native execution and decoder updates; it does **not** establish useful
+source conditioning, reconstruction fidelity, or convergence. Improving and
+evaluating this head is a remaining training gap.
+
+The head fit takes 0.141951 seconds for 40 row
+presentations. The owned embedding operation takes 97.527 seconds
+for three requested rows, including 82.221 seconds
+hashing the full model; the native child takes 15.304
+seconds including initialization and ownership checks. That is
+32.509 seconds per requested row including the repeat and
+integrity work, not a steady-state forward benchmark. Maximum sampled combined
+Python/native RSS is 1,091,571,712 bytes under the unchanged
+8 GiB RSS and cgroup limits. Page-cache warmth is uncontrolled. One CPU worker,
+bridge names `[]`, provers off, metric disk cache off, and no bridge-on evaluate.
+All successful resources release; failed claims remain charged and archived.
+Evidence is in `workspace/test-logs/native4096-layer-reclaim-pilot-r3-20261004`.
+
+The campaign storage allocation was separately raised from 140 to 145 GB under
+the ledger lock, using the user's existing allocation authorization. All 427
+reservation records and tracked roots were preserved, and no reservation was
+active during the migration. The original frozen resource owner remains intact;
+new guardians bind the exact new owner copy. This is disk allocation, not an
+increase to native RAM, encoder context or qualification thresholds. The migration
+receipt is `native4096-four-width-20261004/resource-cap/receipt.json`.
