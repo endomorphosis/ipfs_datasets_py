@@ -67,7 +67,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-001 Create branch and freeze LIG architecture docs
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: false
 - Review only: false
@@ -93,7 +93,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-002 Extract shared formalization protocols without domain imports
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: false
 - Review only: false
@@ -119,7 +119,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-003 Align Legal measured compiler with shared protocols (residual CID hygiene)
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -145,7 +145,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-004 Intent formalizer implements shared compiler protocol
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: false
 - Review only: false
@@ -171,7 +171,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-005 Prompt and MCP tool Intent source adapters
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -196,7 +196,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-006 Offline Intent formalization fixtures for gate inputs
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -221,7 +221,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-007 Legal proof cache put/get with integrity rehash
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -246,7 +246,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-008 Legal constraint ZKP attestation path
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -271,7 +271,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-009 Security constraint cache put/get
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -296,7 +296,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-010 Security formalization adapter protocol alignment
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: false
 - Review only: false
@@ -322,7 +322,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-011 Proof corpus store package and schemas
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -347,7 +347,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-012 Proof corpus query API
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -372,7 +372,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-013 Attestation verify helper in proof corpus
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -397,7 +397,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-014 Admissibility profiles and reason codes
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -422,7 +422,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-015 Composite admissibility gate core
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -447,7 +447,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-016 Integration test for end-to-end admissibility
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -472,7 +472,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-017 Supervisor admissibility bridge
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -497,7 +497,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-018 MCP tools for normalize formalize query check
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -522,7 +522,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-019 Admissibility benchmark and leakage guards
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -547,7 +547,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-020 Rollout runbook shadow and canary
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -572,7 +572,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-021 Multi-lane supervisor launch recipe for LIG board
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: false
 - Review only: false
@@ -598,7 +598,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-022 Define the canonical invocation intent envelope
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -625,7 +625,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-023 Define shared constraint and applicability contracts
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -652,7 +652,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-024 Adapt SkillCenter intent into invocation envelopes
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -679,7 +679,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-025 Adapt prompt intent into invocation envelopes
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -706,7 +706,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-026 Adapt MCP intent into invocation envelopes
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -733,7 +733,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-027 Select applicable Legal constraints
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -760,7 +760,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-028 Select applicable Security constraints and evidence
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -787,7 +787,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-029 Define authority-grade proof envelopes and trust policy
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -814,7 +814,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-030 Add immutable proof-corpus manifests and revocation snapshots
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -841,7 +841,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-031 Enforce hard-filtered proof query and redacted audit traces
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -868,7 +868,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-032 Independently verify proof evidence and quarantine legacy caches
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -895,7 +895,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-033 Compose authorization obligations and portfolio decisions
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -922,7 +922,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-034 Implement exact-context decision receipts and capability contracts
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -949,7 +949,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-035 Integrate the side-effect-free intent authorization service
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -976,7 +976,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-036 Add tenant-safe decision caching and pre-dispatch enforcement
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -1003,7 +1003,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-037 Harden agent-supervisor pre-dispatch integration
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -1030,7 +1030,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-038 Harden Python and MCP authorization APIs
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -1057,7 +1057,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-039 Add redacted telemetry and staged rollout policy
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -1084,7 +1084,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-040 Build the attested-authorization golden and adversarial corpus
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -1111,7 +1111,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-041 Integrate exports, conformance, operations, and release gates
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Is schedulable: true
 - Review only: false
